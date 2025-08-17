@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
@@ -100,6 +102,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	BlockingQueue<IRun<L, ?>> mWorkerTaskQueue = new LinkedBlockingQueue<>();
 	BlockingQueue<WorkerThreadResult<L, A>> mWorkerResultQueue = new LinkedBlockingQueue<>();
 
+	public static final Object refinementLock = new Object();
+
 	// need global program cache, but worker need to get copy otherwise we synchronize
 	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
 
@@ -107,12 +111,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	public final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
 	private Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
 	private final HashMap<HashSet<L>, ParallelRefinementStrategy<L>> mPpStrategyMap = new HashMap<>();
-	private boolean mVisitLoopsOnlyOnce; // a strategy where we focus on spread before pathprograms
 	private final boolean mUseIsEmptyHeuristicForparallelCexSearch;
 
 	// Testing Strategies
-	private final boolean useGoalSetForIsEmpty;
-	private final Set<IPredicate> mActiveErrorLocs = new HashSet<>();
+	private final boolean mUseGoalSetForIsEmpty;
+	private final boolean mBfsAndGoalSearch;
+
 	private final HashMap<Integer, Integer> mInActiveErrorLocs = new HashMap<>();
 
 	// Addtional Statistiks for Evaluation
@@ -179,8 +183,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mExec = Executors.newFixedThreadPool(mThreadLimit);
 		// mECS = new ExecutorCompletionService<>(mExec);
 
-		useGoalSetForIsEmpty = mPref.useGoalSetForIsEmpty;
-		mVisitLoopsOnlyOnce = mPref.mVisitLoopsOnlyOnce;
+		mUseGoalSetForIsEmpty = mPref.useGoalSetForIsEmpty;
+		mBfsAndGoalSearch = mPref.bfsAndGoalSearch;
 		mUseIsEmptyHeuristicForparallelCexSearch = mPref.mUseIsEmptyHeuristicForparallelCexSearch;
 		Thread.currentThread().setName("Main Cegar Thread");
 		getServices().getStorage().pushMarker(mDestroyEverything);
@@ -226,9 +230,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			// TODO need different hoareAnnotationLocs
 			throw new AssertionError("Hoare Annotations not yet supported in Parallel cegar loop");
 		}
-		final PredicateFactoryRefinement stateFactoryForRefinement =
-				new PredicateFactoryRefinement(mServices, freshToolKit.getManagedScript(), predicateFactory,
-						mComputeHoareAnnotation, hoareAnnotationLocs);
+		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
+				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
 
 		// make sure that mPref.getCfgSmtToolkit returns the worker toolkit
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
@@ -244,8 +247,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		return new CegarNwaContinuesWorkerThread<>(mLogger, mPref, id, mResultBuilder, mCegarLoopBenchmark,
 				iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
 				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, this,
-				WorkerGeneralizationMode.YES,
-				mWorkerResultQueue, mWorkerTaskQueue);
+				WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue);
 	}
 
 	/*
@@ -326,11 +328,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					mWorkerResultQueue);
 		}
 		// setup up a default strategy for example CAMEL
-		strategy =
-				strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-						predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-						mPref.getRefinementStrategy());// , mProgramCache);
+		strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), predicateFactoryInterpolantAutomata,
+				getPreconditionProvider(), getPostconditionProvider(), mPref.getRefinementStrategy());// ,
+																										// mProgramCache);
 		// start worker
 		return new CegarNwaWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
 				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
@@ -353,11 +354,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		boolean didntFindCexLastIteration = false;
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
-
+		boolean useQuickCheck = mPref.mUseQuickCheckWorker;
 		for (int i = 0; i < mThreadLimit; i++) {
 			try {
 				if (mPref.mUseContinuesWorker) {
-					setUpContinuesWorker(iterationServices, i, false);// (i == 3)); // TODO setting for quickcheckworker
+					setUpContinuesWorker(iterationServices, i, useQuickCheck);
+					useQuickCheck = false;
 				}
 			} catch (final InterruptedException e) {
 				throw new AssertionError("TODO");
@@ -415,10 +417,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 					} catch (final CancellationException e) {
 						mLogger.warn("Worker was cancelled! " + e);
-						mVisitLoopsOnlyOnce = false;
 					} catch (final Exception e) {
 						mLogger.warn("Worker Failed! " + e);
-						mVisitLoopsOnlyOnce = false;
 						throw e;
 					} finally {
 
@@ -430,11 +430,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				assert workerResult == null;
 
 			} catch (final ToolchainCanceledException e) {
-				mVisitLoopsOnlyOnce = false;
 				mLogger.warn("Worker Failed! " + e);
 				throw e;
 			} catch (final InterruptedException ie) {
-				mVisitLoopsOnlyOnce = false;
 				ie.printStackTrace();
 				mLogger.warn("Worker was interrupted! " + ie);
 			}
@@ -449,7 +447,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			}
 
 			boolean firstIteration = true;
-			assert mWorkerTaskQueue.isEmpty();
+			if (!mWorkerTaskQueue.isEmpty()) {
+				assert mWorkerTaskQueue.isEmpty();
+			}
 			while (mRunningThreads < mThreadLimit && !didntFindCexLastIteration) {
 
 				assert mRunningThreads >= 0;
@@ -471,8 +471,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
 
 	}
-
-
 
 	private void updateAndPrintStatistics() {
 		if (mRunningThreads > maxActiveThreads) {
@@ -518,7 +516,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	private void updateTestGoalSet(final WorkerThreadResult<L, A> workerResult) {
 		// In useGoalSetForIsEmpty mode we omit error automata
-		if (useGoalSetForIsEmpty) {
+		if (mUseGoalSetForIsEmpty) {
 			final List<L> trace = workerResult.getCounterexample().getWord().asList();
 			final int traceHash = trace.hashCode();
 			final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
@@ -568,9 +566,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					mPpStrategyMap.get(ppRepresentative))) {
 				break;
 			}
-			if (mVisitLoopsOnlyOnce) {
-				break;
-			}
 		}
 		mCounterexamplesChecked += 1;
 		// add mCounterexample to list such that we dont get it twice in our search
@@ -609,7 +604,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		if (!mPpStrategyMap.containsKey(ppRepresentative)) {
 			final ParallelRefinementStrategy<L> strategy =
 					new ParallelRefinementStrategy<>(mLogger, ppRepresentative, mThreadLimit);
-			strategy.quickCheckIf(mVisitLoopsOnlyOnce);
 			strategy.setRunningThreadsOfPP(mProgramCache.getPathProgramCount(mCounterexample.getWord()));
 			mPpStrategyMap.put(ppRepresentative, strategy);
 			updateExecutorSizes();
@@ -693,6 +687,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		// Removed 26.1.25: iterate over active counterexamples, check if included else kill worker
 		// Was too expensive, lead to unwanted synchronizations
 		mLogger.info("Refinement done.");
+		synchronized (ParallelNwaCegarLoop.refinementLock) {
+			refinementLock.notifyAll();
+		}
+
 	}
 
 	/*
@@ -765,24 +763,23 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	private void updateActiveTestGoals() {
-		assert useGoalSetForIsEmpty;
+		assert mUseGoalSetForIsEmpty;
 		final List<?> sequence = mCounterexample.getStateSequence();
 		final IPredicate currentGoal = (IPredicate) sequence.get(sequence.size() - 1);
-		assert mActiveErrorLocs.contains(currentGoal);
+
 		// mark test goal as busy/occupied
 		final ISLPredicate testGoalISL = (ISLPredicate) currentGoal;
-		// final IAnnotations pLocAnno =
-		// testGoalISL.getProgramPoint().getPayload().getAnnotations().get(TestGoalAnnotation.class.getName());
+		final IAnnotations pLocAnno =
+				testGoalISL.getProgramPoint().getPayload().getAnnotations().get(TestGoalAnnotation.class.getName());
 		final List<L> trace = mCounterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
 		// use traceHash as identifier so we can calculate the identifier later
-		// mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
+		mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
 		// WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
 	}
 
 	// If we fail in only loop mode, we use our resources on pathprograms (differen assertion orders)
 	private void changeToNotVisistLoopsOnlyOnceMode() {
-		mVisitLoopsOnlyOnce = false;
 		if (mCounterexamplesToBeRemovedFromActiveCexMap == null) {
 			return;
 		}
@@ -809,7 +806,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final int traceHash = trace.hashCode();
 		mLogger.info("Subtrahend traceHash: " + traceHash);
 		// Only remove after the counterexample is no longer in the abstraction
-		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel && !mVisitLoopsOnlyOnce) {
+		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
 			mActiveCounterexamples.remove(traceHash);
 		} else {
 			if (mCounterexamplesToBeRemovedFromActiveCexMap == null) {
@@ -835,11 +832,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			if (mUseIsEmptyHeuristicForparallelCexSearch) {
 				return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
 						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
-						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mVisitLoopsOnlyOnce);
+						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mPref.mSearchLoopBound);
 			} else {
 				return new IsEmptyParallelLegacy<>(new AutomataLibraryServices(mServices), mAbstraction,
 						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
-						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mVisitLoopsOnlyOnce);
+						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples);
 			}
 
 		default:
@@ -880,25 +877,33 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		 * Optimization that ensures we find a trace to a not yet targeted test goal / error loc
 		 */
 		// TODO readd Test-Case generation
-		if (useGoalSetForIsEmpty) {
-			mActiveErrorLocs.clear();
+		if (mUseGoalSetForIsEmpty) {
+			final Set<IPredicate> mActiveErrorLocs = new HashSet<>();
 			for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
 				final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-				// final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
-				// .get(TestGoalAnnotation.class.getName());
-				// if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
-				// continue;
-				// }
-				// if (pLocAnno instanceof TestGoalAnnotation) {
-				// mActiveErrorLocs.add(testGoal);
-				// }
+				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+						.get(TestGoalAnnotation.class.getName());
+				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
+					continue;
+				}
+				if (pLocAnno instanceof TestGoalAnnotation) {
+					mActiveErrorLocs.add(testGoal);
+				}
 			}
 			if (mActiveErrorLocs.isEmpty()) {
 				return null;
 			}
 			possibleEndPoints = mActiveErrorLocs;
-
 			updateActiveTestGoals();
+			if (mBfsAndGoalSearch) {
+				final IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.BFS, possibleEndPoints);
+				if (isSearchCorrectAndTraceFresh(search)) {
+					mCountBfsFoundCex += 1;
+					mLogger.info("Found new Counterexample via BFS!");
+					return search.getNestedRun();
+				}
+				return null;
+			}
 		}
 		if (onlyDoIsEmptyParallel) {
 			final IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
@@ -924,14 +929,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		if (isSearchCorrectAndTraceFresh(search)) {
 			mLogger.info("Found new Counterexample via IsEmptyParallel!");
 			return search.getNestedRun();
-		}
-		if (mVisitLoopsOnlyOnce) {
-			changeToNotVisistLoopsOnlyOnceMode();
-			search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
-			if (isSearchCorrectAndTraceFresh(search)) {
-				mLogger.info("Found new Counterexample via IsEmptyParallel!");
-				return search.getNestedRun();
-			}
 		}
 		// search = getSearch(IsEmpty.SearchStrategy.DFS, possibleEndPoints);
 		// if (isSearchCorrectAndTraceFresh(search)) {
@@ -1153,6 +1150,7 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 	PredicateFactory mPredicateFactory;
 	private final boolean mWasPerfect;
 	private final boolean mSatOnlyWorker;
+
 	/**
 	 * @param automatonType
 	 * @param predicateFactory

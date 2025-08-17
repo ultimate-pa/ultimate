@@ -117,11 +117,9 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	private final WorkerGeneralizationMode mGeneralize;
 
 	public CegarNwaContinuesWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
-			final CegarLoopResultBuilder resultBuilder,
-			final CegarLoopStatisticsGenerator statistcs, final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit,
-			final IIcfg<? extends IcfgLocation> icfg,
-			final PredicateFactory predicateFactory,
+			final CegarLoopResultBuilder resultBuilder, final CegarLoopStatisticsGenerator statistcs,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final IIcfg<? extends IcfgLocation> icfg, final PredicateFactory predicateFactory,
 			final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
@@ -163,7 +161,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
 			// TODO seems to work not sure if it is usefull
 			mMainThread.reportFailedContinuesWorkerThread();
-		    System.out.println("Uncaught exception: " + ex);
+			System.out.println("Uncaught exception: " + ex);
 		};
 		workerThread.setUncaughtExceptionHandler(exhandler);
 		workerThread.start();
@@ -193,8 +191,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 					continue;
 				}
 
-				final AbstractCegarLoop.AutomatonType automatonType =
-						processFeasibilityCheckResult(strategy,
+				final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(strategy,
 						isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
 				constructRefinementAutomaton(automatonType);
 				mThreadResult = refineAbstractionInternally();
@@ -205,7 +202,6 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 			mBlockingQueueForResults.put(mThreadResult);
 		}
 	}
-
 
 	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> run) {
 		if (IcfgUtils.isConcurrent(mIcfg)) {
@@ -231,25 +227,21 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	 */
 	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) throws InterruptedException {
 
-
-		mStrategyFactory =
-				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
-						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz,
-						mMainThread.getCurrentProgramCache());
+		mStrategyFactory = new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
+				mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz,
+				mMainThread.getCurrentProgramCache());
 
 		final ITARefinementStrategy<L> strategy;
 		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7) {
-			strategy =
-					mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
-							new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-							mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-							RefinementStrategy.ACCELERATED_TRACE_CHECK);
+			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
+					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+					RefinementStrategy.ACCELERATED_TRACE_CHECK);
 		} else {
-			strategy =
-					mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
-							new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-							mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-							mPref.getRefinementStrategy());
+			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
+					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+					mPref.getRefinementStrategy());
 		}
 		return strategy;
 	}
@@ -262,8 +254,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		return IPostconditionProvider.constructDefaultPostconditionProvider();
 	}
 
-	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible(
-			final ITARefinementStrategy<L> strategy) {
+	protected Pair<LBool, IProgramExecution<L, Term>>
+			isCounterexampleFeasible(final ITARefinementStrategy<L> strategy) {
 		IStatisticsDataProvider refinementEngineStats = null;
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
@@ -303,8 +295,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	 * @param strategy
 	 */
 	public AbstractCegarLoop.AutomatonType processFeasibilityCheckResult(final ITARefinementStrategy<L> strategy,
-			final LBool isCounterexampleFeasible,
-			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
+			final LBool isCounterexampleFeasible, final IProgramExecution<L, Term> programExecution,
+			final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
 			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
 			if (mPref.stopAfterFirstViolation()) {

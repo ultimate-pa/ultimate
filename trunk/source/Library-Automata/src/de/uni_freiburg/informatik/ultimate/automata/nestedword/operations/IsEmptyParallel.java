@@ -52,10 +52,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnknownState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -89,7 +92,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	private int mCountRecursionSteps = 0; // To prevent stack overflows
 	private int countFailedRunConstruction = 0;
 	private boolean mTimedout = false;
-	private boolean mNoLoopsMode = false;
+	private int mLoopBound = -1;
 	// a -> b then state is a
 	private final List<Pair<STATE, LETTER>> mCurrentPrefix = new ArrayList<>();
 
@@ -115,13 +118,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
 			final SearchStrategy strategy, final HashMap<Integer, NestedRun<LETTER, ?>> counterexamples,
-			final boolean visitLoopsOnlyOnce) throws AutomataOperationCanceledException {
-		super(services, operand, startStates, forbiddenStates, goalStates, goalStateIsAcceptingState,
-				strategy, true);
+			final int loopBound) throws AutomataOperationCanceledException {
+		super(services, operand, startStates, forbiddenStates, goalStates, goalStateIsAcceptingState, strategy, true);
 
 		// BFS or DFS for search when we call IsEmpty at the end of parallel search
 		assert mStrategy.equals(SearchStrategy.BFS);
-		mNoLoopsMode = visitLoopsOnlyOnce;
+		mLoopBound = loopBound;
 
 		mStart = System.nanoTime() / 1000000000;
 		mTimeOut = mStart + 50000; // 5 sec timeout atm
@@ -131,7 +133,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		}
 		mActiveCounterexamples = counterexamples;
 
-			mAcceptingRun = getAcceptingRunParallel(mActiveCounterexamples.keySet());
+		mAcceptingRun = getAcceptingRunParallel(mActiveCounterexamples.keySet());
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -303,9 +305,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	}
 
 	private boolean increaseScore(final NestedRun<LETTER, ?> counterexample, final STATE state, final STATE succ,
-			final LETTER symbol,
-			final int position) {
-		final boolean stateBasedScore = true;
+			final LETTER symbol, final int position) {
+		final boolean stateBasedScore = false;
 		if (stateBasedScore) {
 			return increaseScoreBasedOnStates(counterexample, succ);
 		}
@@ -330,15 +331,13 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			}
 			final IcfgLocation a = ((ISLPredicate) state).getProgramPoint();
 			/*
-			 * We have the following problem:
-			 * If we have an edge that is a loop body, often for loop
-			 * Then it can be just one assume statement and a selfloop on the state.
-			 * We will detect this as diverging from previous cex and falsy claim we found a new cex
-			 * even tho it is semantically the same.
+			 * We have the following problem: If we have an edge that is a loop body, often for loop Then it can be just
+			 * one assume statement and a selfloop on the state. We will detect this as diverging from previous cex and
+			 * falsy claim we found a new cex even tho it is semantically the same.
 			 */
 			/*
-			 * Solution, if we have a loop. One more iteration does not count as "new counterexample"
-			 * So the cost has to be the same at the loop head, if we already entered once!
+			 * Solution, if we have a loop. One more iteration does not count as "new counterexample" So the cost has to
+			 * be the same at the loop head, if we already entered once!
 			 */
 
 			// if (a.getPayload().getAnnotations().containsKey(LoopEntryAnnotation.class.getName())) {
@@ -422,6 +421,57 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				true);
 	}
 
+	private boolean exploreThisSuccessor(final STATE state, final LETTER letter, final STATE succ) {
+		if (mForbiddenStates.contains(succ)) {
+			return false;
+		}
+		if (atLoopBound(state, letter)) {
+			return false;
+		}
+		return true;
+	}
+
+	private boolean atLoopBound(final STATE state, final LETTER letter) {
+		if (mLoopBound == -1) {
+			return false;
+		}
+		if (isLoopEntryLocation(state) && entersLoopBody(letter)) {
+			int countLetters = 0; // amount of loop unrollings
+			int countStates = 0; // amount of new loop unrollings
+			for (final Pair<STATE, LETTER> transition : mCurrentPrefix) {
+				if (transition.getSecond().equals(letter)) {
+					countLetters += 1;
+				}
+				// letter can be the same but state different
+				// Then its an unknownstate and the loop was already unrolled
+				if (transition.getFirst().equals(state)) {
+					countStates += 1;
+				}
+			}
+			if (countLetters >= mLoopBound && countStates > 1) { // we see it once when exiting the loop
+				return true;
+			}
+		}
+		return false;
+
+	}
+
+	private boolean entersLoopBody(final LETTER letter) {
+		final StatementSequence stmt = ((StatementSequence) letter);
+		if (stmt.getPayload().getAnnotations().containsKey(LoopExitAnnotation.class.getName())) {
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isLoopEntryLocation(final STATE state) {
+		final IcfgLocation a = ((ISLPredicate) state).getProgramPoint();
+		if (a.getPayload().getAnnotations().containsKey(LoopEntryAnnotation.class.getName())) {
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Sort the outgoing transitions by how many @param counterexamples cover them. The least has highest priority.
 	 *
@@ -429,8 +479,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
 			final ArrayList<Integer> counterexamples) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
-
-
 
 		if (mSummaryReturnPred.containsKey(state)) {
 			if (!mSummaryReturnSymbol.containsKey(state)) {
@@ -445,12 +493,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		}
 
 		boolean firstIteration = true;
-		final Iterator<OutgoingInternalTransition<LETTER, STATE>> internalIterator = mOperand.internalSuccessors(state).iterator();
+		final Iterator<OutgoingInternalTransition<LETTER, STATE>> internalIterator =
+				mOperand.internalSuccessors(state).iterator();
 		while (internalIterator.hasNext()) {
-			final OutgoingInternalTransition<LETTER, STATE> transition =
-					internalIterator.next();
+			final OutgoingInternalTransition<LETTER, STATE> transition = internalIterator.next();
 			final STATE succ = transition.getSucc();
-			if (mForbiddenStates.contains(succ) || isLoopsInNoLoopMode(succ)) {
+			if (!exploreThisSuccessor(state, transition.getLetter(), succ)) {
 				continue;
 			}
 			if (firstIteration && !internalIterator.hasNext()) {
@@ -466,7 +514,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		while (callIterator.hasNext()) {
 			final OutgoingCallTransition<LETTER, STATE> transition = callIterator.next();
 			final STATE succ = transition.getSucc();
-			if (mForbiddenStates.contains(succ) || isLoopsInNoLoopMode(succ)) {
+			if (!exploreThisSuccessor(state, transition.getLetter(), succ)) {
 				continue;
 			}
 			if (firstIteration && !callIterator.hasNext()) {
@@ -478,7 +526,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			firstIteration = false;
 		}
 
-
 		if (stateK == mOperand.getEmptyStackState()) {
 			// there is no return transition
 			return pq;
@@ -489,7 +536,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		while (returnIterator.hasNext()) {
 			final OutgoingReturnTransition<LETTER, STATE> transition = returnIterator.next();
 			final STATE succ = transition.getSucc();
-			if (mForbiddenStates.contains(succ) || isLoopsInNoLoopMode(succ)) {
+			if (!exploreThisSuccessor(state, transition.getLetter(), succ)) {
 				continue;
 			}
 			if (firstIteration && !returnIterator.hasNext()) {
@@ -501,21 +548,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			firstIteration = false;
 		}
 
-
 		return pq;
 	}
-
-	/*
-	 * True, if we visited this state before during our search and it is in the prefix we currently consider
-	 */
-	private boolean isLoopsInNoLoopMode(final STATE succ) {
-		if (mNoLoopsMode) {
-			return mCurrentPrefix.contains(succ);
-		}
-		return false;
-	}
-
-
 
 	private PriorityQueue<PQState> pickStartToExplore(final Collection<STATE> states, final Set<Integer> set) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
@@ -588,16 +622,13 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				final Predicate<STATE> funIsForbiddenState = a -> false;
 				final Predicate<STATE> asd = a -> mGoalStates.contains(a);
 				final Set<STATE> startset = new HashSet<>(mStartStates);
-				runsearch =
-						new IsEmptyHeuristic<>(mServices, mOperand,
-								startset, funIsForbiddenState, asd,
-					IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0), new ArrayList<>(mCurrentPrefix),
-					mNoLoopsMode);
-			}else{
-				runsearch =
-					new IsEmptyHeuristic<>(mServices, mOperand,
-							IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0), new ArrayList<>(mCurrentPrefix),
-							mNoLoopsMode);
+				runsearch = new IsEmptyHeuristic<>(mServices, mOperand, startset, funIsForbiddenState, asd,
+						IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0), new ArrayList<>(mCurrentPrefix),
+						false); // TODO no Loop mode
+			} else {
+				runsearch = new IsEmptyHeuristic<>(mServices, mOperand,
+						IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0), new ArrayList<>(mCurrentPrefix),
+						false);
 			}
 			// final IsEmpty<LETTER, STATE> runsearch = new IsEmpty<>(super.mServices, mOperand, mCurrentPrefix);
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();

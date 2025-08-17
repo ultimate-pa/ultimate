@@ -101,12 +101,16 @@ public final class TAPreferences {
 	private final int mThreadLimitPerCex;
 	private final boolean mParallelCegarLoop;
 	public boolean useGoalSetForIsEmpty;
+	public boolean bfsAndGoalSearch;
 	public boolean parallelSearchSrategy;
 	public boolean considerOnlyActiveCounterexamplesInIsEmptyParallel;
 	public boolean minimizeAbstractionPerWorker;
 	public boolean mVisitLoopsOnlyOnce;
 	public boolean mUseContinuesWorker;
+	public boolean mUseQuickCheckWorker;
 	public boolean mUseIsEmptyHeuristicForparallelCexSearch;
+	public int mQuickCheckLoopBound;
+	public int mSearchLoopBound;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -215,12 +219,17 @@ public final class TAPreferences {
 		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
 		mThreadLimitPerCex = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREAD_LIMIT_PER_CEX);
 		useGoalSetForIsEmpty = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_GOALSET);
+		bfsAndGoalSearch = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_BFS_GOAL);
 		considerOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		minimizeAbstractionPerWorker =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
 		mVisitLoopsOnlyOnce = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_VISIT_LOOPS_ONLY_ONCE);
+
+		mQuickCheckLoopBound = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_QUICK_CHECK_LOOP_BOUND);
+		mSearchLoopBound = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEARCH_LOOP_BOUND);
 		mUseContinuesWorker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_CONTINUES_WORKER);
+		mUseQuickCheckWorker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_QUICK_CHECK);
 		mUseIsEmptyHeuristicForparallelCexSearch =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ISEMPTYHEURISIC);
 	}
@@ -607,4 +616,5 @@ public final class TAPreferences {
 	public boolean visitLoopsOnlyOnce() {
 		return mVisitLoopsOnlyOnce;
 	}
+
 }

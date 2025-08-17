@@ -99,7 +99,6 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
 
-
 	private final WorkerGeneralizationMode mGeneralize;
 	INestedWordAutomaton<L, IPredicate> mAbstraction;
 	private final HashMap<Integer, NestedRun<L, ?>> mCounterexamples = new HashMap<>();
@@ -111,8 +110,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	int mFoundFeasiblePaths = 0;
 
 	/*
-	 * A continues worker that addionaly searches its own counterexamples
-	 * Still put the results in the result queue
+	 * A continues worker that addionaly searches its own counterexamples Still put the results in the result queue
 	 */
 	public CegarNWAContiuesIndependentWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
 			final CegarLoopResultBuilder resultBuilder, final CegarLoopStatisticsGenerator statistcs,
@@ -149,40 +147,39 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		mBlockingQueueForResults = blockingQueueForResults;
 		mWorkerTaskQueue = workerTaskQueue;
 
-
 		csToolkit.setQuickCheck();
 
 		final Thread workerThread = new Thread(() -> {
 			try {
 				executeThread();
-			} catch (final InterruptedException e) {
+			} catch (final InterruptedException | AutomataOperationCanceledException e) {
 				throw new AssertionError(e);
 			}
 		});
 		workerThread.start();
 	}
 
-
-	public void executeThread() throws InterruptedException {
+	public void executeThread() throws InterruptedException, AutomataOperationCanceledException {
 		mAbstraction = mMainThread.getAbstraction();
 
 		int maxId = -1;
 
 		for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
 			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-			final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
-					.get(TestGoalAnnotation.class.getName());
+			final IAnnotations pLocAnno =
+					testGoalISL.getProgramPoint().getPayload().getAnnotations().get(TestGoalAnnotation.class.getName());
 
 			if (pLocAnno instanceof TestGoalAnnotation) {
-					mTestGoalTodoStack.add(((TestGoalAnnotation) pLocAnno).mId);
-					if (((TestGoalAnnotation) pLocAnno).mId > maxId) {
-						maxId = ((TestGoalAnnotation) pLocAnno).mId;
-					}
+				mTestGoalTodoStack.add(((TestGoalAnnotation) pLocAnno).mId);
+				if (((TestGoalAnnotation) pLocAnno).mId > maxId) {
+					maxId = ((TestGoalAnnotation) pLocAnno).mId;
+				}
 			}
 		}
 		mTestGoalTodoStack.sort(null);
-		assert maxId != -1;
-		mTestGoalWorkingSet.add(maxId);
+		if (maxId != -1) { // if not, not in test case generation mode
+			mTestGoalWorkingSet.add(maxId);
+		}
 		// mTestGoalWorkingSet.addAll(mTestGoalTodoStack);
 		mCounterexamples.putAll(mMainThread.mActiveCounterexamples);
 		int workerIterations = 0;
@@ -192,11 +189,8 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		boolean clearOnce = true;
 		while (true) {
-			if (mCounterexample == null || workerIterations % 10 == 0) {
-				// Thread.sleep(500); // 5s = 5000
-			}
+
 			mAbstraction = mMainThread.getAbstraction();
 			mLogger.info("--------Sat Continues Worker Stats--------");
 			mLogger.info(workerIterations);
@@ -222,26 +216,21 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 				mFoundFeasiblePaths += 1;
 				final AbstractCegarLoop.AutomatonType automatonType =
 						processFeasibilityCheckResult(isCexResult, mCurrentErrorLoc);
-				try {
-					constructRefinementAutomaton(automatonType);
-				} catch (final AutomataOperationCanceledException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+
+				constructRefinementAutomaton(automatonType);
+
 				try {
 					mThreadResult = refineAbstractionInternally();
 				} catch (final AutomataLibraryException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					throw new AssertionError(e);
 				}
 
 				for (final Object testGoal : mThreadResult.getCounterexample().getStateSequence()) {
 					final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-					final IAnnotations pLocAnno =
-							testGoalISL.getProgramPoint().getPayload().getAnnotations()
-									.get(TestGoalAnnotation.class.getName());
-					if ((pLocAnno instanceof TestGoalAnnotation)
-					) {
+					final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+							.get(TestGoalAnnotation.class.getName());
+					if ((pLocAnno instanceof TestGoalAnnotation)) {
 						// assert mTestGoalWorkingSet.contains(((TestGoalAnnotation) pLocAnno).mId);
 						mCoveredTestGoals.add(((TestGoalAnnotation) pLocAnno).mId);
 					}
@@ -249,55 +238,53 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 
 				mBlockingQueueForResults.put(mThreadResult);
 			}
-			try {
-				mCounterexample = searchForErrorTrace();
-				if (isCexResult.equals(LBool.SAT)) {
-					mCounterexamples.remove(traceHash);
-					// this is faster then the differnece we wil lfind the same again
-				}
 
-			} catch (final AutomataOperationCanceledException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			mCounterexample = searchForErrorTrace();
+			if (isCexResult.equals(LBool.SAT)) {
+				// mCounterexamples.remove(traceHash);
+				// this is faster then the differnece we wil lfind the same again
 			}
+
 			if (!mTestGoalTodoStack.isEmpty() && workerIterations % 10 == 0) {
 				mTestGoalWorkingSet.add(mTestGoalTodoStack.getLast());
 				mTestGoalTodoStack.removeLast();
 			}
-			if (mTestGoalTodoStack.isEmpty() && workerIterations > 1000 && clearOnce) {
-				mCounterexamples.clear();
-				clearOnce = false;
-			}
-			if (mCounterexample == null && clearOnce) {
-				mCounterexamples.clear();
-				try {
-					mCounterexample = searchForErrorTrace();
-				} catch (final AutomataOperationCanceledException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
 
-			}
 			if (!mTestGoalTodoStack.isEmpty() && mTestGoalWorkingSet.isEmpty() && mCounterexample == null) {
 				mTestGoalWorkingSet.add(mTestGoalTodoStack.getLast());
 				mTestGoalTodoStack.removeLast();
-			} else if (mCounterexample == null) {
-				mLogger.info("SAT-Worker EXITING!!!");
-				mCsToolkit.getManagedScript().getScript().exit();
-				break;
+			} else {
+				boolean flag = false;
+				while (mCounterexample == null) {
+					mLogger.info("--------Sat Continues Worker Stats--------");
+					mLogger.info(workerIterations);
+					mLogger.info(mFoundFeasiblePaths);
+					mLogger.info(mCoveredTestGoals.size());
+					mLogger.info("SAT-Worker Going to sleep!!!");
+					synchronized (ParallelNwaCegarLoop.refinementLock) {
+						ParallelNwaCegarLoop.refinementLock.wait();
+						mAbstraction = mMainThread.getAbstraction();
+					}
+					mLogger.info("SAT-Worker Waking Up !!!");
+					// mCsToolkit.getManagedScript().getScript().exit();
+					// break;
+					mCounterexample = searchForErrorTrace();
+					flag = true;
+				}
+				if (flag) {
+					mLogger.info("SAT-Worker Continues after waking up!!!");
+				}
+
 			}
-			assert mCounterexample != null;
 		}
 
 	}
-
-
 
 	/*
 	 * Search for an error trace in the current mAbstraction. First we try BFS, then IsEmptyParallel and finally DFS
 	 */
 	private NestedRun<L, IPredicate> searchForErrorTrace() throws AutomataOperationCanceledException {
-		final Set<IPredicate> possibleEndPoints = calculateGoals();
+		final Set<IPredicate> possibleEndPoints = null;// calculateGoals();
 
 		final IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
 		if (isSearchCorrectAndTraceFresh(search)) {
@@ -339,7 +326,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		final boolean visitLoopsOnlyOnce = true;
 		return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
 				mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, possibleEndPoints == null,
-				IsEmpty.SearchStrategy.BFS, mCounterexamples, visitLoopsOnlyOnce);
+				IsEmpty.SearchStrategy.BFS, mCounterexamples, mPref.mQuickCheckLoopBound);
 
 	}
 
@@ -394,20 +381,17 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
 						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, cacheNotNeeded);
 
-
 		final ITARefinementStrategy<L> strategy;
 		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7) {
-			strategy =
-					mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-							new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-							mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-							RefinementStrategy.ACCELERATED_TRACE_CHECK, cacheNotNeeded);
+			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+					RefinementStrategy.ACCELERATED_TRACE_CHECK);
 		} else {
-			strategy =
-					mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-							new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-							mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-							mPref.getRefinementStrategy(), cacheNotNeeded);
+			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+					mPref.getRefinementStrategy());
 		}
 
 		return strategy;
@@ -478,8 +462,6 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		mInterpolAutomaton = null;
 	}
 
-
-
 	protected IUltimateServiceProvider getServices() {
 		return mServices;
 	}
@@ -510,11 +492,10 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		subtrahendBeforeEnhancement = mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
 
-		final WorkerThreadResult<L, A> workerResult =
-				new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
-						exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
-						mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
-						mRefinementResult.somePerfectSequenceFound(), true);
+		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
+				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
+				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
+				mRefinementResult.somePerfectSequenceFound(), true);
 		return workerResult;
 	}
 }

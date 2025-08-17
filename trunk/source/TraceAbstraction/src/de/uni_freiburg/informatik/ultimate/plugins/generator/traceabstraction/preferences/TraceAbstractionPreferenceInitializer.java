@@ -526,6 +526,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	// ========================================================================
 	public static final String LABEL_GOALSET = "Search using Goal Set ";
 	public static final boolean DEF_GOALSET = false;
+	public static final String LABEL_BFS_GOAL = "Search using BFSGoal";
+	public static final boolean DEF_BFS_GOAL = false;
+
 	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
 	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
@@ -533,6 +536,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = false;
 	public static final String LABEL_VISIT_LOOPS_ONLY_ONCE = "Initially visit loops only once";
 	public static final boolean DEF_VISIT_LOOPS_ONLY_ONCE = false;
+
+	public static final String LABEL_QUICK_CHECK_LOOP_BOUND = "Quick check loop bound";
+	public static final int DEF_QUICK_CHECK_LOOP_BOUND = 1;
+	public static final String LABEL_SEARCH_LOOP_BOUND = "search loop bound";
+	public static final int DEF_SEARCH_LOOP_BOUND = -1;
+	public static final String LABEL_QUICK_CHECK = "use quick check";
+	public static final boolean DEF_QUICK_CHECK = false;
+
 	public static final String LABEL_USE_CONTINUES_WORKER = "Use continues worker";
 	public static final boolean DEF_USE_CONTINUES_WORKER = true;
 	public static final String LABEL_USE_ISEMPTYHEURISIC = "Use isemptyheuristic in isemptyparallel";
@@ -830,11 +841,17 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_VISIT_LOOPS_ONLY_ONCE, DEF_VISIT_LOOPS_ONLY_ONCE,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_QUICK_CHECK_LOOP_BOUND, DEF_QUICK_CHECK_LOOP_BOUND,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_QUICK_CHECK, DEF_QUICK_CHECK, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_ISEMPTYHEURISIC, DEF_USE_ISEMPTYHEURISIC,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_GOALSET, DEF_GOALSET, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_BFS_GOAL, DEF_BFS_GOAL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
 						PreferenceType.Boolean));
 
