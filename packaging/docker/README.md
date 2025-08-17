@@ -7,15 +7,23 @@ An Ultimate `PRODUCT` can be built with the following Docker call
 docker build -t <PRODUCT> --target <PRODUCT> .
 ```
 
-where `PRODUCT` is a placeholder for one of the products
+where `PRODUCT` is a placeholder for one of the pre-configured products
+
+  - `ultimate-automizer`
+  - `ultimate-deltadebugger`
+  - `ultimate-eliminator`
+  - `ultimate-gemcutter`
+  - `ultimate-kojak`
+  - `ultimate-referee`
+  - `ultimate-reqanalyzer`
+  - `ultimate-taipan`
+  - `ultimate-webbackend`
+  - `ultimate-webfrontend`
+
+or one of the basic products without any configuration (e.g., for your own Docker images or for debugging and development)
 
   - `ultimate-cli`
   - `ultimate-debug`
-  - `ultimate-reqanalyzer`
-  - `ultimate-deltadebugger`
-  - `ultimate-eliminator`
-  - `ultimate-webbackend`
-  - `ultimate-webfrontend`
 
 shipped with the Ultimate program analysis framework.
 
@@ -33,7 +41,10 @@ If you want to run Ultimate interactively for any verification input, you can sp
 docker run -it <PRODUCT> /bin/bash
 <PRODUCT> -tc <TOOLCHAIN> -s <SETTINGS> -i <PROGRAM>
 ```
-Calling the Ultimate `PRODUCT` within the container then follows as usual, where a `TOOLCHAIN`, `SETTINGS`, and `PROGRAM` file path should be specified for a verification run.
+Calling the Ultimate `PRODUCT` within the container then follows as usual, where a `TOOLCHAIN`, `SETTINGS`, and `PROGRAM` file should be specified for a verification run.
+The pre-configured products are already provided with the appropriate tool-specific configuration files (toolchain and setting files).
+You can access the configuration directory within a Docker container via the environment variable `ULTIMATE\_CONFIG\_PATH`.
+
 An exception is a start of the graphical Ultimate Debug UI.
 To do this, a graphic connection to the host system must be established via the X11 protocol, which can be done with the following Docker call.
 ```shell

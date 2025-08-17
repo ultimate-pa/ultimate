@@ -1,40 +1,39 @@
 #------------------------------------------------------------------------------
-# Dockerfile: compile and package Ultimate toolchains
+# Dockerfile: compile and package Ultimate products
 #------------------------------------------------------------------------------
 # Author: Manuel Bentele
 # Copyright (c) 2023
 #------------------------------------------------------------------------------
 # common build arguments for multi-staged Docker build
 #------------------------------------------------------------------------------
-ARG REPO_MAVEN_ROOT="trunk/source/BA_MavenParentUltimate"
-ARG REPO_FRONTEND_ROOT="trunk/source/WebsiteStatic"
-ARG REPO_DIR_BUILD="trunk/source/BA_SiteRepository/target/products"
+ARG REPO_DIR_FRONTEND="trunk/source/WebsiteStatic"
+ARG REPO_DIR_BUILD="releaseScripts/default"
 ARG REPO_DIR_TOOLS="releaseScripts/default/adds"
 ARG DIR_BUILD="/home/build"
 ARG DIR_ULTIMATE="${DIR_BUILD}/ultimate"
-ARG DIR_OUTPUT="${DIR_ULTIMATE}/${REPO_DIR_BUILD}"
-ARG DIR_OUTPUT_FRONTEND="${DIR_ULTIMATE}/${REPO_FRONTEND_ROOT}"
+ARG DIR_OUTPUT_BUILD="${DIR_ULTIMATE}/${REPO_DIR_BUILD}"
+ARG DIR_OUTPUT_FRONTEND="${DIR_ULTIMATE}/${REPO_DIR_FRONTEND}"
 ARG DIR_TOOLS="${DIR_ULTIMATE}/${REPO_DIR_TOOLS}"
 ARG USER_NAME="ultimate"
 ARG USER_GROUP="ultimate"
 ARG USER_HOME="/home/${USER_NAME}"
 
 #------------------------------------------------------------------------------
-# 1st build stage: compile and materialize Ultimate
+# 1st build stage: compile and build Ultimate products
 #------------------------------------------------------------------------------
-FROM alpine:3 AS build
+FROM alpine:3 AS build-products
 
 ARG REPO_URL="https://github.com/ultimate-pa/ultimate.git"
 ARG REPO_BRANCH="dev"
 
-ARG REPO_MAVEN_ROOT
 ARG REPO_DIR_BUILD
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 
 # install build dependencies for an entire Ultimate build
-RUN apk add --no-cache "git" \
+RUN apk add --no-cache "bash" \
+                       "git" \
                        "maven" \
                        "openjdk21"
 
@@ -44,20 +43,20 @@ RUN mkdir -p "${DIR_BUILD}" && \
 
 # build all Ultimate products
 WORKDIR "${DIR_ULTIMATE}"
-RUN mvn -f "${REPO_MAVEN_ROOT}" clean package -P materialize
+RUN cd "${DIR_OUTPUT_BUILD}" && bash makeBuild.sh
 
 #------------------------------------------------------------------------------
 # 2nd build stage: compile and build the Ultimate web interface
 #------------------------------------------------------------------------------
-FROM build AS build-webfrontend
+FROM build-products AS build-webfrontend
 
 ARG ULTIMATE_FRONTEND_BASEURL="/website"
 
-ARG REPO_FRONTEND_ROOT
+ARG REPO_DIR_FRONTEND
 ARG REPO_DIR_BUILD
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 
 # install build dependencies for building the Ultimate web frontend
 RUN apk add --no-cache "gcc" \
@@ -71,8 +70,8 @@ RUN apk add --no-cache "gcc" \
                        "ruby-dev"
 
 # build the Ultimate web frontend
-WORKDIR "${REPO_FRONTEND_ROOT}"
-ENV PATH="${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64:${PATH}"
+WORKDIR "${REPO_DIR_FRONTEND}"
+ENV PATH="${DIR_OUTPUT_BUILD}/CLI-E4/linux/gtk/x86_64:${PATH}"
 RUN python3 scripts/build.py --baseurl "${ULTIMATE_FRONTEND_BASEURL}"
 
 #------------------------------------------------------------------------------
@@ -84,7 +83,7 @@ ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 ARG DIR_TOOLS
 ARG USER_NAME
 ARG USER_GROUP
@@ -102,11 +101,8 @@ RUN mkdir -p "${USER_HOME}" && \
     chown -R "${USER_NAME}:${USER_GROUP}" "${USER_HOME}"
 WORKDIR "${USER_HOME}"
 
-# install alread compiled tools for all Ultimate products
-COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
-COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
-COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
-COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
+# make Ultimate executable, scripts, and solvers available
+ENV PATH="${USER_HOME}:${PATH}"
 
 # add Welcome script to print Ultimate version
 ADD "welcome.sh" "/etc/profile.d/welcome.sh"
@@ -192,15 +188,14 @@ ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 ARG DIR_TOOLS
 ARG USER_NAME
 ARG USER_GROUP
 ARG USER_HOME
 
 # install already built Ultimate CLI product
-COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64" "${USER_HOME}"
-RUN ln -s "${USER_HOME}/Ultimate" "/usr/bin/Ultimate"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UCLI-E4-linux" "${USER_HOME}"
 
 # run the Ultimate CLI product as non-root user
 USER "${USER_NAME}"
@@ -217,7 +212,7 @@ ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 ARG DIR_TOOLS
 ARG USER_NAME
 ARG USER_GROUP
@@ -231,8 +226,7 @@ RUN apk add --no-cache "openjdk21-jre" \
                        "xauth"
 
 # install already built Ultimate Debug UI product
-COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/Debug-E4/linux/gtk/x86_64" "${USER_HOME}"
-RUN ln -s "${USER_HOME}/UltimateDebug" "/usr/bin/UltimateDebug"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UDebug-E4-linux" "${USER_HOME}"
 
 # run the Ultimate Debug UI product as non-root user
 USER "${USER_NAME}"
@@ -241,25 +235,25 @@ USER "${USER_NAME}"
 ENTRYPOINT ["/bin/sh", "-l"]
 
 #------------------------------------------------------------------------------
-# 3rd build stage: package Ultimate ReqAnalyzer
+# 3rd build stage: package Ultimate Automizer
 #------------------------------------------------------------------------------
-FROM ultimate-common AS ultimate-reqanalyzer
+FROM ultimate-common AS ultimate-automizer
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 ARG DIR_TOOLS
 ARG USER_NAME
 ARG USER_GROUP
 ARG USER_HOME
 
-# install already built Ultimate ReqAnalyzer product
-COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/ReqAnalyzer/linux/gtk/x86_64" "${USER_HOME}"
-RUN ln -s "${USER_HOME}/ReqAnalyzer" "/usr/bin/ReqAnalyzer"
+# install already built Ultimate Automizer product
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UAutomizer-linux" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "${USER_HOME}/Automizer"
 
-# run the Ultimate ReqAnalyzer product as non-root user
+# run the Ultimate Automizer product as non-root user
 USER "${USER_NAME}"
 
 # default entry point to print installed Ultimate version
@@ -274,15 +268,15 @@ ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 ARG DIR_TOOLS
 ARG USER_NAME
 ARG USER_GROUP
 ARG USER_HOME
 
 # install already built Ultimate DeltaDebugger product
-COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/DeltaDebugger/linux/gtk/x86_64" "${USER_HOME}"
-RUN ln -s "${USER_HOME}/Ultimate" "/usr/bin/Ultimate"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UDeltaDebugger-linux" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "${USER_HOME}/DeltaDebugger"
 
 # default entry point to print installed Ultimate version
 ENTRYPOINT ["/bin/sh", "-l"]
@@ -296,17 +290,142 @@ ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 ARG DIR_TOOLS
 ARG USER_NAME
 ARG USER_GROUP
 ARG USER_HOME
 
 # install already built Ultimate Eliminator product
-COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/UltimateEliminator/linux/gtk/x86_64" "${USER_HOME}"
-RUN ln -s "${USER_HOME}/Ultimate" "/usr/bin/Ultimate"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UEliminator-linux" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "${USER_HOME}/Eliminator"
 
 # run the Ultimate Eliminator product as non-root user
+USER "${USER_NAME}"
+
+# default entry point to print installed Ultimate version
+ENTRYPOINT ["/bin/sh", "-l"]
+
+#------------------------------------------------------------------------------
+# 3rd build stage: package Ultimate GemCutter
+#------------------------------------------------------------------------------
+FROM ultimate-common AS ultimate-gemcutter
+
+ARG REPO_DIR_BUILD
+ARG REPO_DIR_TOOLS
+ARG DIR_BUILD
+ARG DIR_ULTIMATE
+ARG DIR_OUTPUT_BUILD
+ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
+
+# install already built Ultimate GemCutter product
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UGemCutter-linux" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "${USER_HOME}/GemCutter"
+
+# run the Ultimate GemCutter product as non-root user
+USER "${USER_NAME}"
+
+# default entry point to print installed Ultimate version
+ENTRYPOINT ["/bin/sh", "-l"]
+
+#------------------------------------------------------------------------------
+# 3rd build stage: package Ultimate Kojak
+#------------------------------------------------------------------------------
+FROM ultimate-common AS ultimate-kojak
+
+ARG REPO_DIR_BUILD
+ARG REPO_DIR_TOOLS
+ARG DIR_BUILD
+ARG DIR_ULTIMATE
+ARG DIR_OUTPUT_BUILD
+ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
+
+# install already built Ultimate Kojak product
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UKojak-linux" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "${USER_HOME}/Kojak"
+
+# run the Ultimate Kojak product as non-root user
+USER "${USER_NAME}"
+
+# default entry point to print installed Ultimate version
+ENTRYPOINT ["/bin/sh", "-l"]
+
+#------------------------------------------------------------------------------
+# 3rd build stage: package Ultimate Referee
+#------------------------------------------------------------------------------
+FROM ultimate-common AS ultimate-referee
+
+ARG REPO_DIR_BUILD
+ARG REPO_DIR_TOOLS
+ARG DIR_BUILD
+ARG DIR_ULTIMATE
+ARG DIR_OUTPUT_BUILD
+ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
+
+# install already built Ultimate Referee product
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UReferee-linux" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "${USER_HOME}/Referee"
+
+# run the Ultimate Referee product as non-root user
+USER "${USER_NAME}"
+
+# default entry point to print installed Ultimate version
+ENTRYPOINT ["/bin/sh", "-l"]
+
+#------------------------------------------------------------------------------
+# 3rd build stage: package Ultimate ReqAnalyzer
+#------------------------------------------------------------------------------
+FROM ultimate-common AS ultimate-reqanalyzer
+
+ARG REPO_DIR_BUILD
+ARG REPO_DIR_TOOLS
+ARG DIR_BUILD
+ARG DIR_ULTIMATE
+ARG DIR_OUTPUT_BUILD
+ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
+
+# install already built Ultimate ReqAnalyzer product
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UReqCheck-linux" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "${USER_HOME}/ReqAnalyzer"
+
+# run the Ultimate ReqAnalyzer product as non-root user
+USER "${USER_NAME}"
+
+# default entry point to print installed Ultimate version
+ENTRYPOINT ["/bin/sh", "-l"]
+
+#------------------------------------------------------------------------------
+# 3rd build stage: package Ultimate Taipan
+#------------------------------------------------------------------------------
+FROM ultimate-common AS ultimate-taipan
+
+ARG REPO_DIR_BUILD
+ARG REPO_DIR_TOOLS
+ARG DIR_BUILD
+ARG DIR_ULTIMATE
+ARG DIR_OUTPUT_BUILD
+ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
+
+# install already built Ultimate Taipan product
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UTaipan-linux" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "${USER_HOME}/Taipan"
+
+# run the Ultimate Taipan product as non-root user
 USER "${USER_NAME}"
 
 # default entry point to print installed Ultimate version
@@ -321,7 +440,7 @@ ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
 ARG DIR_BUILD
 ARG DIR_ULTIMATE
-ARG DIR_OUTPUT
+ARG DIR_OUTPUT_BUILD
 ARG DIR_TOOLS
 ARG USER_NAME
 ARG USER_GROUP
@@ -352,14 +471,13 @@ RUN apk add --no-cache "wget" \
     apk del --no-cache "wget"
 
 # install already built Ultimate WebBackend product
-COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/WebBackend/linux/gtk/x86_64" "${USER_HOME}"
-RUN ln -s "${USER_HOME}/WebBackend" "/usr/bin/WebBackend"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_OUTPUT_BUILD}/UWebBackend-linux" "${USER_HOME}"
 
 # run the Ultimate WebBackend product as non-root user
 USER "${USER_NAME}"
 
 # add configuration files and templates for 'dockerize' and Ultimate
-COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_WEBSITE_CONFIG}/backend/settings_whitelist.json" "${USER_HOME}/settings_whitelist.json"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-products "${DIR_WEBSITE_CONFIG}/backend/settings_whitelist.json" "${USER_HOME}/settings_whitelist.json"
 ADD "web.config.properties.tpl" "${USER_HOME}/web.config.properties.tpl"
 ADD "WebBackend.ini.tpl" "${USER_HOME}/WebBackend.ini.tpl"
 RUN rm -f "${USER_HOME}/WebBackend.ini"
