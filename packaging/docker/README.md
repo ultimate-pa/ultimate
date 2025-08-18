@@ -1,10 +1,11 @@
-# Package Ultimate for Docker
+# Docker Packaging and Deployment of Ultimate Products
 
 ## Build Ultimate Docker images
+
 An Ultimate `PRODUCT` can be built with the following Docker call
 
 ```shell
-docker build -t <PRODUCT> --target <PRODUCT> .
+docker build --platform linux/amd64 --tag <PRODUCT> --target <PRODUCT> .
 ```
 
 where `PRODUCT` is a placeholder for one of the pre-configured products
@@ -27,6 +28,10 @@ or one of the basic products without any configuration (e.g., for your own Docke
 
 shipped with the Ultimate program analysis framework.
 
+> [!NOTE]
+> Building the Ultimate product images is currently limited to the Docker target platform `linux/amd64` (Linux containers for the 64-bit x86 architecture).
+> However, these images can still be used on a Windows system with [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) configured with the WSL2 or Hyper-V backend in order to create and run Linux containers on a Windows system.
+
 For validating the built Ultimate `PRODUCT` image, you can create and run a Docker container based on this image with the following Docker call.
 ```shell
 docker run -it <PRODUCT>
@@ -42,8 +47,10 @@ docker run -it <PRODUCT> /bin/bash
 <PRODUCT> -tc <TOOLCHAIN> -s <SETTINGS> -i <PROGRAM>
 ```
 Calling the Ultimate `PRODUCT` within the container then follows as usual, where a `TOOLCHAIN`, `SETTINGS`, and `PROGRAM` file should be specified for a verification run.
-The pre-configured products are already provided with the appropriate tool-specific configuration files (toolchain and setting files).
-You can access the configuration directory within a Docker container via the environment variable `ULTIMATE\_CONFIG\_PATH`.
+
+> [!NOTE]
+> The pre-configured products are already provided with the appropriate configuration (toolchain and setting files).
+> You can access the configuration directory within a Docker container via the environment variable `ULTIMATE_CONFIG_PATH`.
 
 An exception is a start of the graphical Ultimate Debug UI.
 To do this, a graphic connection to the host system must be established via the X11 protocol, which can be done with the following Docker call.
