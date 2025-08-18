@@ -1872,13 +1872,13 @@ public class MemoryHandler {
 		mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(),
 				deallocDeclaration);
 
-		final List<Pair<Expression, Set<VariableLHS>>> mallocSpecificationExpressions =
+		final List<Pair<Expression, Set<VariableLHS>>> deallocSpecificationExpressions =
 				mMemoryModel.constructDeallocSpecificationExpressions(tuLoc, mRequiredMemoryModelFeatures,
 						mMemoryModelDeclarationsHandler);
 
 		final List<Specification> deallocSpecifications = new ArrayList<>();
 
-		for (final Pair<Expression, Set<VariableLHS>> pair : mallocSpecificationExpressions) {
+		for (final Pair<Expression, Set<VariableLHS>> pair : deallocSpecificationExpressions) {
 			deallocSpecifications.add(
 					mProcedureManager.constructEnsuresSpecification(tuLoc, false, pair.getFirst(), pair.getSecond()));
 		}
