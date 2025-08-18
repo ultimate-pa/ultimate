@@ -160,6 +160,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Whether allocInit should be used to for initial allocations."
 					+ "This speeds up the verification if there is a high amount of allocations that can be made initially.";
 
+	public static final String LABEL_USE_QUANTORS_IN_MEMORY_FUNCTIONS = "Use quantors in memory functions";
+	private static final String DESC_USE_QUANTORS_IN_MEMORY_FUNCTIONS =
+			"If this settings is enabled, memset, memcpy, and memove have a Boogie representation using quantors instead of the default one that uses a loop";
+
 	public enum CheckMode {
 		IGNORE, ASSUME, CHECK
 	}
@@ -367,6 +371,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false,
 								DESC_ENFORCE_IF_FOR_CONDITIONAL, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION, true,
-								DESC_FIXED_ADDRESSES_FOR_INITIALIZATION, PreferenceType.Boolean)) };
+								DESC_FIXED_ADDRESSES_FOR_INITIALIZATION, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_USE_QUANTORS_IN_MEMORY_FUNCTIONS, false,
+								DESC_USE_QUANTORS_IN_MEMORY_FUNCTIONS, PreferenceType.Boolean)) };
 	}
 }
