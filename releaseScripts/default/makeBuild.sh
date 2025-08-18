@@ -11,7 +11,7 @@ if [[ ! -d "${DIR}" ]]; then DIR="${PWD}"; fi
 source "${DIR}/makeSettings.sh"
 source "${DIR}/semver2.sh"
 
-start() {
+build_init() {
   printf '▗▄▄▖ ▗▖ ▗▖▗▄▄▄▖▗▖   ▗▄▄▄ \n'
   printf '▐▌ ▐▌▐▌ ▐▌  █  ▐▌   ▐▌  █\n'
   printf '▐▛▀▚▖▐▌ ▐▌  █  ▐▌   ▐▌  █\n'
@@ -22,7 +22,7 @@ start() {
   print_newline
 }
 
-check() {
+build_check() {
   # Check if build tools are installed
   test_if_cmd_is_available   mvn
   test_if_cmd_is_available  java
@@ -37,7 +37,7 @@ check() {
   test_cmd_version_greater_equal "${VERS_JDK}" "21.0" "Java Development Kit"
 }
 
-build() {
+build_run() {
   spushd "../../trunk/source/BA_MavenParentUltimate/"
 
   print_heading "Using the build tools"
@@ -53,7 +53,7 @@ build() {
   spopd
 }
 
-package() {
+build_package() {
   for platform in {linux,win32}; do
     # makePackageConfig.sh <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
     print_heading "Package Ultimate Taipan [${platform}]"
@@ -104,7 +104,7 @@ package() {
   done
 }
 
-start
-check
-build
-package
+build_init
+build_check
+build_run
+build_package

@@ -13,7 +13,18 @@ source "${DIR}/makeSettings.sh"
 # Load and execute all Ultimate build steps before archive function is called.
 source "${DIR}/makeBuild.sh"
 
-archive() {
+archive_init() {
+  printf ' ▗▄▖ ▗▄▄▖  ▗▄▄▖▗▖ ▗▖▗▄▄▄▖▗▖  ▗▖▗▄▄▄▖\n'
+  printf '▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌ ▐▌  █  ▐▌  ▐▌▐▌   \n'
+  printf '▐▛▀▜▌▐▛▀▚▖▐▌   ▐▛▀▜▌  █  ▐▌  ▐▌▐▛▀▀▘\n'
+  printf '▐▌ ▐▌▐▌ ▐▌▝▚▄▄▖▐▌ ▐▌▗▄█▄▖ ▝▚▞▘ ▐▙▄▄▖\n'
+  printf '┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n'
+  printf '┃        Ultimate Products         ┃\n'
+  printf '┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n'
+  print_newline
+}
+
+archive_run() {
   for platform in {linux,win32}; do
     # makeZip.sh <toolname> <targetarch>
     print_heading "Archive Ultimate Taipan [${platform}]"
@@ -62,4 +73,5 @@ archive() {
   done
 }
 
-archive
+archive_init
+archive_run
