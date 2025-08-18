@@ -25,50 +25,50 @@ archive_init() {
 }
 
 archive_run() {
-  for platform in {linux,win32}; do
+  for PLATFORM in "${PLATFORMS[@]}"; do
     # makeZip.sh <toolname> <targetarch>
-    print_heading "Archive Ultimate Taipan [${platform}]"
-    exit_on_fail bash makeZip.sh "Taipan" "${platform}"
+    print_heading "Archive Ultimate Taipan [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Taipan" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate Automizer [${platform}]"
-    exit_on_fail bash makeZip.sh "Automizer" "${platform}"
+    print_heading "Archive Ultimate Automizer [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Automizer" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate Kojak [${platform}]"
-    exit_on_fail bash makeZip.sh "Kojak" "${platform}"
+    print_heading "Archive Ultimate Kojak [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Kojak" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate GemCutter [${platform}]"
-    exit_on_fail bash makeZip.sh "GemCutter" "${platform}"
+    print_heading "Archive Ultimate GemCutter [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "GemCutter" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate Referee [${platform}]"
-    exit_on_fail bash makeZip.sh "Referee" "${platform}"
+    print_heading "Archive Ultimate Referee [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Referee" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate DeltaDebugger [${platform}]"
-    exit_on_fail bash makeZip.sh "DeltaDebugger" "${platform}"
+    print_heading "Archive Ultimate DeltaDebugger [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "DeltaDebugger" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate Eliminator [${platform}]"
-    exit_on_fail bash makeZip.sh "Eliminator" "${platform}"
+    print_heading "Archive Ultimate Eliminator [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Eliminator" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate WebBackend [${platform}]"
-    exit_on_fail bash makeZip.sh "WebBackend" "${platform}"
+    print_heading "Archive Ultimate WebBackend [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "WebBackend" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate ReqCheck [${platform}]"
-    exit_on_fail bash makeZip.sh "ReqCheck" "${platform}"
+    print_heading "Archive Ultimate ReqCheck [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "ReqCheck" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate Command Line [${platform}]"
-    exit_on_fail bash makeZip.sh "CLI-E4" "${platform}"
+    print_heading "Archive Ultimate Command Line [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "CLI-E4" "${PLATFORM}"
     print_newline
 
-    print_heading "Archive Ultimate Debug UI [${platform}]"
-    exit_on_fail bash makePackageSmall.sh "Debug-E4" "${platform}"
+    print_heading "Archive Ultimate Debug UI [${PLATFORM}]"
+    exit_on_fail bash makePackageSmall.sh "Debug-E4" "${PLATFORM}"
     print_newline
   done
 }

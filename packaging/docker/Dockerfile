@@ -43,7 +43,7 @@ RUN mkdir -p "${DIR_BUILD}" && \
 
 # build all Ultimate products
 WORKDIR "${DIR_ULTIMATE}"
-RUN cd "${DIR_OUTPUT_BUILD}" && bash makeBuild.sh
+RUN cd "${DIR_OUTPUT_BUILD}" && bash makeBuild.sh -p linux
 
 #------------------------------------------------------------------------------
 # 2nd build stage: compile and build the Ultimate web interface

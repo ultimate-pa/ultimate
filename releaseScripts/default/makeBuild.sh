@@ -11,6 +11,56 @@ if [[ ! -d "${DIR}" ]]; then DIR="${PWD}"; fi
 source "${DIR}/makeSettings.sh"
 source "${DIR}/semver2.sh"
 
+# Default platforms for the build of Ultimate
+PLATFORMS=("linux" "win32")
+
+build_printhelp() {
+  printf 'Usage: %s [-o all|linux|win32]\n' "${0}"
+  print_newline
+  printf 'Options:\n'
+  printf '  -p    Specify platforms to build for:\n'
+  printf '          all    build for Linux and Windows [default]\n'
+  printf '          linux  build only for Linux\n'
+  printf '          win32  build only for Windows\n'
+  printf '  -h    Show this help message\n'
+}
+
+build_parseopts() {
+  while getopts "p:h" OPT; do
+    case "${OPT}" in
+      p)
+        case "${OPTARG}" in
+          all)
+            # Use all platforms by default
+            ;;
+          linux)
+            PLATFORMS=("linux")
+            ;;
+          windows)
+            PLATFORMS=("win32")
+            ;;
+          *)
+            printf '%s: invalid option for -p -- %s\n' "${0}" "${OPTARG}"
+            print_newline
+            build_printhelp
+            exit 1
+            ;;
+        esac
+        ;;
+      h)
+        print_newline
+        build_printhelp
+        exit 1
+        ;;
+      *)
+        print_newline
+        build_printhelp
+        exit 1
+        ;;
+    esac
+  done
+}
+
 build_init() {
   printf '▗▄▄▖ ▗▖ ▗▖▗▄▄▄▖▗▖   ▗▄▄▄ \n'
   printf '▐▌ ▐▌▐▌ ▐▌  █  ▐▌   ▐▌  █\n'
@@ -54,56 +104,57 @@ build_run() {
 }
 
 build_package() {
-  for platform in {linux,win32}; do
+  for PLATFORM in "${PLATFORMS[@]}"; do
     # makePackageConfig.sh <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
-    print_heading "Package Ultimate Taipan [${platform}]"
-    exit_on_fail bash makePackageConfig.sh "Taipan" "${platform}" "AutomizerCInline_WitnessPrinter.xml" "NONE" "AutomizerCInline.xml" "AutomizerCInline_WitnessPrinter.xml" "NONE" "NONE"
+    print_heading "Package Ultimate Taipan [${PLATFORM}]"
+    exit_on_fail bash makePackageConfig.sh "Taipan" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "NONE" "AutomizerCInline.xml" "AutomizerCInline_WitnessPrinter.xml" "NONE" "NONE"
     print_newline
 
-    print_heading "Package Ultimate Automizer [${platform}]"
-    exit_on_fail bash makePackageConfig.sh "Automizer" "${platform}" "AutomizerCInline_WitnessPrinter.xml" "BuchiAutomizerCInline_WitnessPrinter.xml" "AutomizerCInline_IcfgBuilder.xml" "AutomizerCInline_WitnessPrinter.xml" "LTLAutomizerC.xml" "BuchiAutomizerCInline.xml"
+    print_heading "Package Ultimate Automizer [${PLATFORM}]"
+    exit_on_fail bash makePackageConfig.sh "Automizer" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "BuchiAutomizerCInline_WitnessPrinter.xml" "AutomizerCInline_IcfgBuilder.xml" "AutomizerCInline_WitnessPrinter.xml" "LTLAutomizerC.xml" "BuchiAutomizerCInline.xml"
     print_newline
 
-    print_heading "Package Ultimate Kojak [${platform}]"
-    exit_on_fail bash makePackageConfig.sh "Kojak" "${platform}" "KojakC_WitnessPrinter.xml" "NONE" "NONE" "KojakC_WitnessPrinter.xml" "NONE" "NONE"
+    print_heading "Package Ultimate Kojak [${PLATFORM}]"
+    exit_on_fail bash makePackageConfig.sh "Kojak" "${PLATFORM}" "KojakC_WitnessPrinter.xml" "NONE" "NONE" "KojakC_WitnessPrinter.xml" "NONE" "NONE"
     print_newline
 
-    print_heading "Package Ultimate GemCutter [${platform}]"
-    exit_on_fail bash makePackageConfig.sh "GemCutter" "${platform}" "AutomizerCInline_WitnessPrinter.xml" "NONE" "AutomizerCInline.xml" "AutomizerCInline_WitnessPrinter.xml" "NONE" "NONE"
+    print_heading "Package Ultimate GemCutter [${PLATFORM}]"
+    exit_on_fail bash makePackageConfig.sh "GemCutter" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "NONE" "AutomizerCInline.xml" "AutomizerCInline_WitnessPrinter.xml" "NONE" "NONE"
     print_newline
 
-    print_heading "Package Ultimate Referee [${platform}]"
-    exit_on_fail bash makePackageConfig.sh "Referee" "${platform}" "RefereeCInline.xml" "NONE" "RefereeCInline_IcfgBuilder.xml" "NONE" "NONE" "NONE"
+    print_heading "Package Ultimate Referee [${PLATFORM}]"
+    exit_on_fail bash makePackageConfig.sh "Referee" "${PLATFORM}" "RefereeCInline.xml" "NONE" "RefereeCInline_IcfgBuilder.xml" "NONE" "NONE" "NONE"
     print_newline
 
     # makePackageSmall.sh <toolname> <targetarch>
-    print_heading "Package Ultimate Command Line [${platform}]"
-    exit_on_fail bash makePackageSmall.sh "CLI-E4" "${platform}"
+    print_heading "Package Ultimate Command Line [${PLATFORM}]"
+    exit_on_fail bash makePackageSmall.sh "CLI-E4" "${PLATFORM}"
     print_newline
 
-    print_heading "Package Ultimate Debug UI [${platform}]"
-    exit_on_fail bash makePackageSmall.sh "Debug-E4" "${platform}"
+    print_heading "Package Ultimate Debug UI [${PLATFORM}]"
+    exit_on_fail bash makePackageSmall.sh "Debug-E4" "${PLATFORM}"
     print_newline
 
-    print_heading "Package Ultimate DeltaDebugger [${platform}]"
-    exit_on_fail bash makePackageSmall.sh "DeltaDebugger" "${platform}"
+    print_heading "Package Ultimate DeltaDebugger [${PLATFORM}]"
+    exit_on_fail bash makePackageSmall.sh "DeltaDebugger" "${PLATFORM}"
     print_newline
 
-    print_heading "Package Ultimate Eliminator [${platform}]"
-    exit_on_fail bash makePackageSmall.sh "Eliminator" "${platform}"
+    print_heading "Package Ultimate Eliminator [${PLATFORM}]"
+    exit_on_fail bash makePackageSmall.sh "Eliminator" "${PLATFORM}"
     print_newline
 
-    print_heading "Package Ultimate WebBackend [${platform}]"
-    exit_on_fail bash makePackageSmall.sh "WebBackend" "${platform}"
+    print_heading "Package Ultimate WebBackend [${PLATFORM}]"
+    exit_on_fail bash makePackageSmall.sh "WebBackend" "${PLATFORM}"
     print_newline
 
     # makePackageReqCheck.sh <toolname> <targetarch> <reqchecktc> <testgentc>
-    print_heading "Package Ultimate ReqCheck [${platform}]"
-    exit_on_fail bash makePackageReqCheck.sh "ReqCheck" "${platform}" "ReqCheck.xml" "ReqCheck.xml"
+    print_heading "Package Ultimate ReqCheck [${PLATFORM}]"
+    exit_on_fail bash makePackageReqCheck.sh "ReqCheck" "${PLATFORM}" "ReqCheck.xml" "ReqCheck.xml"
     print_newline
   done
 }
 
+build_parseopts "${@}"
 build_init
 build_check
 build_run
