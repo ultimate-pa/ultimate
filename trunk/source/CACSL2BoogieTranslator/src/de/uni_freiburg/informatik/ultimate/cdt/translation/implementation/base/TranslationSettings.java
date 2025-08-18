@@ -89,6 +89,7 @@ public final class TranslationSettings {
 	private final boolean mEnforceIfForConditional;
 	private final MemoryAddressing mMemoryAddressing;
 	private final boolean mFixedAddressesForInitialization;
+	private final boolean mUseQuantorsInMemoryFunctions;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -149,6 +150,8 @@ public final class TranslationSettings {
 		mMemoryAddressing = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_ADDRESSING, MemoryAddressing.class);
 		mFixedAddressesForInitialization =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION);
+		mUseQuantorsInMemoryFunctions =
+				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_QUANTORS_IN_MEMORY_FUNCTIONS);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -165,7 +168,8 @@ public final class TranslationSettings {
 			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
-			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization) {
+			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization,
+			final boolean useQuantorsInMemoryFunctions) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -197,6 +201,7 @@ public final class TranslationSettings {
 		mEnforceIfForConditional = enforceIfForConditional;
 		mMemoryAddressing = memoryAddressingPreference;
 		mFixedAddressesForInitialization = fixedAddressesForInitialization;
+		mUseQuantorsInMemoryFunctions = useQuantorsInMemoryFunctions;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -335,6 +340,10 @@ public final class TranslationSettings {
 		return mFixedAddressesForInitialization;
 	}
 
+	public boolean useQuantorsInMemoryFunctions() {
+		return mUseQuantorsInMemoryFunctions;
+	}
+
 	public TranslationSettings setMemoryStructurePreference(final MemoryStructure memoryStructure) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
@@ -345,7 +354,7 @@ public final class TranslationSettings {
 				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
-				mFixedAddressesForInitialization);
+				mFixedAddressesForInitialization, mUseQuantorsInMemoryFunctions);
 	}
 
 	/**
