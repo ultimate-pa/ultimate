@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -46,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -214,35 +215,6 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
 		check.annotate(spec);
 		return Collections.singletonList(spec);
-	}
-
-	/**
-	 * Create an arithmetic expression from a pointer component (base or offset) and another expression.
-	 *
-	 * @param op
-	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
-	 * @returns The expression.
-	 */
-	private Expression constructPointerBinaryArithmeticExpression(final ILocation loc, final int op,
-			final Expression left, final Expression right) {
-		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
-		return mExpressionTranslation.constructArithmeticExpression(loc, op, left, cTypeOfPointerComponent, right,
-				cTypeOfPointerComponent);
-	}
-
-	/**
-	 * Compare a pointer component (base or offset) to another expression.
-	 *
-	 * @param op
-	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
-	 * @return The expression.
-	 */
-	private Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
-			final Expression left, final Expression right) {
-		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
-
-		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left, cTypeOfPointerComponent, right,
-				cTypeOfPointerComponent);
 	}
 
 	@Override
@@ -533,5 +505,60 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return MemoryMetadataDefault2D.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+	}
+
+	@Override
+	public List<Expression> constructMemsetQuantorSpecificationExpressions(final ILocation loc,
+			final String procedureName, final Expression ptrExpr, final Expression amountExpr,
+			final Expression valueExpr, final HeapDataArray hda) {
+		// ensures (forall #p : $Pointer$ :: (#p!base == #ptr!base && #p!offset >= #ptr!offset && #p!offset <
+		// (#ptr!offset+#amount)) ==> #memory_int[#p] == #value);
+
+		final String paramName = "#p";
+		final Expression paramExpr =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), paramName,
+						new DeclarationInformation(StorageClass.QUANTIFIED, null));
+
+		final VarList paramVar = new VarList(loc, new String[] { paramName }, mTypeHandler.constructPointerType(loc));
+
+		// #p!base
+		final Expression paramBase = mMemoryPointer.getPointerAddress(paramExpr, loc);
+		// #ptr!base
+		final Expression ptrBase = mMemoryPointer.getPointerAddress(ptrExpr, loc);
+		// #p!base == #ptr!base
+		final Expression baseEqualsExpr =
+				constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals, paramBase, ptrBase);
+
+		// #p!offset
+		final Expression paramOffset = mMemoryPointer.pointerOffset(paramExpr, loc);
+		// #ptr!offset
+		final Expression ptrOffset = mMemoryPointer.pointerOffset(ptrExpr, loc);
+
+		// #p!offset >= #ptr!offset
+		final Expression offsetGreaterEqualsExpr = constructPointerBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, paramOffset, ptrOffset);
+
+		// #ptr!offset+#amount
+		final Expression offsetPlusAmountExpr =
+				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, ptrOffset, amountExpr);
+
+		// #p!offset < (#ptr!offset+#amount)
+		final Expression paramOffsetSmallerThanExpr = constructPointerBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessThan, paramOffset, offsetPlusAmountExpr);
+
+		final Expression andExpr = ExpressionFactory.and(loc,
+				Arrays.asList(baseEqualsExpr, offsetGreaterEqualsExpr, paramOffsetSmallerThanExpr));
+
+		// #memory_int[#p] == #value
+		final Expression arrayCompare = MemoryModelExpressionHelper.ensuresArrayHasValue(loc, valueExpr, paramExpr,
+				hda.getIdentifierExpression());
+
+		// (#p!base >= #ptr!base && #p!base < (#ptr!base+#amount)) ==> #memory_int[#p] == #value
+		final Expression inner =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICIMPLIES, andExpr, arrayCompare);
+
+		final Expression result = ExpressionFactory.quantifier(loc, true, Collections.singletonList(paramVar), inner);
+
+		return Collections.singletonList(result);
 	}
 }
