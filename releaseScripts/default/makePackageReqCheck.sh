@@ -68,17 +68,17 @@ SETTINGS="../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*"
 
 # Check toolchain argument
 if [ ! -z "${3}" -a ! "NONE" = "${3}" ]; then
-	TOOLCHAIN=../../trunk/examples/toolchains/${3}
+	TOOLCHAIN="../../trunk/examples/toolchains/${3}"
 else
 	echo "No reach toolchain specified, ommitting..."
 	TOOLCHAIN=
 fi
 
 if [ ! -z "${4}" -a ! "NONE" = "${4}" ]; then
-	TESTTOOLCHAIN=../../trunk/examples/toolchains/${4}
+	TESTTOOLCHAIN="../../trunk/examples/toolchains/${4}"
 else
 	echo "No test toolchain specified, ommitting..."
-	TESTTOOLCHAIN=
+	TESTTOOLCHAIN=""
 fi
 
 # Removing files and dirs from previous deployments

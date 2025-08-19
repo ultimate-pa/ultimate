@@ -73,45 +73,45 @@ SETTINGS="../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*"
 
 # Check all toolchain arguments
 if [ -n "${3}" -a ! "NONE" = "${3}" ]; then
-  TOOLCHAIN=../../trunk/examples/toolchains/${3}
+  TOOLCHAIN="../../trunk/examples/toolchains/${3}"
 else
   echo "No reach toolchain specified, ommitting..."
-  TOOLCHAIN=
+  TOOLCHAIN=""
 fi
 
 if [ ! -z "${4}" -a ! "NONE" = "${4}" ]; then
-  TERMTOOLCHAIN=../../trunk/examples/toolchains/${4}
+  TERMTOOLCHAIN="../../trunk/examples/toolchains/${4}"
 else
   echo "No termination toolchain specified, ommitting..."
-  TERMTOOLCHAIN=
+  TERMTOOLCHAIN=""
 fi
 
 if [ ! -z "${5}" -a ! "NONE" = "${5}" ]; then
-  VALTOOLCHAIN=../../trunk/examples/toolchains/${5}
+  VALTOOLCHAIN="../../trunk/examples/toolchains/${5}"
 else
   echo "No witness validation toolchain specified, ommitting..."
-  VALTOOLCHAIN=
+  VALTOOLCHAIN=""
 fi
 
 if [ ! -z "${6}" -a ! "NONE" = "${6}" ]; then
-  MEMDEREFMEMTRACKTOOLCHAIN=../../trunk/examples/toolchains/${6}
+  MEMDEREFMEMTRACKTOOLCHAIN="../../trunk/examples/toolchains/${6}"
 else
   echo "No memory deref toolchain specified, ommitting..."
-  MEMDEREFMEMTRACKTOOLCHAIN=
+  MEMDEREFMEMTRACKTOOLCHAIN=""
 fi
 
 if [ ! -z "${7}" -a ! "NONE" = "${7}" ]; then
-  LTLTOOLCHAIN=../../trunk/examples/toolchains/${7}
+  LTLTOOLCHAIN="../../trunk/examples/toolchains/${7}"
 else
   echo "No LTL toolchain specified, ommitting..."
-  LTLTOOLCHAIN=
+  LTLTOOLCHAIN=""
 fi
 
 if [ ! -z "${8}" -a ! "NONE" = "${8}" ]; then
-  TERMVALTOOLCHAIN=../../trunk/examples/toolchains/${8}
+  TERMVALTOOLCHAIN="../../trunk/examples/toolchains/${8}"
 else
   echo "No termination witness validation toolchain specified, ommitting..."
-  TERMVALTOOLCHAIN=
+  TERMVALTOOLCHAIN=""
 fi
 
 # Removing files and dirs from previous deployments
