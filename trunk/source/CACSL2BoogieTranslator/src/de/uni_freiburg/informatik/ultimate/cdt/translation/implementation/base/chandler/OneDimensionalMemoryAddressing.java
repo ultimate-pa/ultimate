@@ -252,17 +252,15 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 
 		final List<Statement> stmts = new ArrayList<>();
 
-		for (final HeapDataArray hda : heapDataArrays) {
-			final CallStatement call =
-					StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { resultLhsImpl },
-							SFO.C_MEMCPY, new Expression[] { resultExprImpl, ptrIdExprImpl, sizeIdExprImpl });
+		final CallStatement call =
+				StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { resultLhsImpl }, SFO.C_MEMCPY,
+						new Expression[] { resultExprImpl, ptrIdExprImpl, sizeIdExprImpl });
 
-			// add marker for global declaration to memory handler
-			MemoryModelExpressionHelper.requireMemoryModelFeature(MemoryModelDeclarations.C_MEMCPY, requiredFeatures,
-					memoryModelDeclarationsHandler);
+		// add marker for global declaration to memory handler
+		MemoryModelExpressionHelper.requireMemoryModelFeature(MemoryModelDeclarations.C_MEMCPY, requiredFeatures,
+				memoryModelDeclarationsHandler);
 
-			stmts.add(call);
-		}
+		stmts.add(call);
 
 		return stmts;
 	}
