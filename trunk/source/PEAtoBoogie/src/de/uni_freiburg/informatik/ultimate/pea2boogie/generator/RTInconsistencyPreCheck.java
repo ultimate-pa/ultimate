@@ -26,248 +26,270 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 
 public class RTInconsistencyPreCheck {
+	public boolean mDebugReasonCOunter = true;
+	public int[] reasonCounter = new int[4];
+	
 	private Script mScript;
 	private ManagedScript mManagedScript;
 	private ILogger mLogger;
 	private CddToSmt mCddToSmt;
 	private IUltimateServiceProvider mServices;
-	public List<ReqWithRTIPCattributes> mListWithChainLinkReqs;
-	public Map<TermVariable, List<ReqWithRTIPCattributes>> VariablesDict;
-	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> mrtiSets;
-	public List<List<ReqWithRTIPCattributes>> mRtiSetsAll;
 	public int mCombinationNum;
+	public Term mDebugTerm;
+	public List<ReqsWithAttributes> mListChainLinkReqs = new ArrayList<>();
+	public Map<TermVariable, List<ReqsWithAttributes>> mDictVar = new HashMap<>();
+	
+	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> mRTIReturnSet;
+	public List<List<ReqsWithAttributes>> mRTICombinations = new ArrayList<>();
+	
 
-	public class ReqWithRTIPCattributes {
-		public String mName; // not important, just for debug reasons
+
+	public class ReqsWithAttributes {
+		public String mName;
+		public Phase mPenultimatePhase ;
+		public Phase mMaxPhase;
+		public Phase mBeforeMaxPhase;
 		public ReqPeas mOriginalPea;
-		public DCPhase mPenultimatePhase;
-		public DCPhase mMaxPhase;
-		public PhaseEventAutomata mPEA;
-
-		public List<Term> mExitOptions;
-		public Term mFullExitOption;
-		public Term mTermInvariantMaxPhase;
+		public PhaseEventAutomata mOriginalPeaEventAutomata;
+		public Term mFullExitCondition;
+		public Term[] mExitConditions;
 		public boolean mChainLinkReq;
-		public Term mPhaseBeforeMaxPhase;
+		public CounterTrace mCounterTrace;
+		
 
-		public ReqWithRTIPCattributes(final ReqPeas reqPea) {
+		public ReqsWithAttributes(final ReqPeas reqPea) {
 			mOriginalPea = reqPea;
+			mChainLinkReq = false;
 		}
+
+		public String getName() {
+			return mName;
+			
+		}
+
+	}
+	
+	public class Phase{
+		DCPhase mDCPhase;
+		Term mInvariant;
+		TermVariable[] mInvariantVar;
+		Term mBound;
+		public Phase(DCPhase dcPhase) {
+			mDCPhase = dcPhase;
+
+		}
+		
 	}
 
-	/**
-	 * This method is used to check the RTI sets of the requirements. First single reqs (so depth of search = 2), later
-	 * sets with chain-link requirements (depth of search >= 3)
-	 *
-	 * @param services
-	 * @param managedScript
-	 *
-	 * @param reqs
-	 *            List of ReqWithRTIPCattributes containing the requirements to be formatted.
-	 * @return An array of Map.Entry objects representing the formatted RTI sets.
-	 */
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
 			final ILogger logger, final Script script, final CddToSmt cddToSmt, final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final int range) {
-		mScript = script;
-		mManagedScript = managedScript;
-		mLogger = logger;
-		mServices = services;
-		mCddToSmt = cddToSmt;
-		mCombinationNum = range;
-		mListWithChainLinkReqs = new ArrayList<>();
-		VariablesDict = new HashMap();
-		mrtiSets = new ArrayList<>();
-		mRtiSetsAll = new ArrayList<>();
+	    mScript = script;
+	    mManagedScript = managedScript;
+        mLogger = logger;
+        mCddToSmt = cddToSmt;
+        mServices = services;
+        mRTIReturnSet = new ArrayList<>();
+        mCombinationNum = range;
+        
+		mDebugTerm = null;
+        
+        
+		for (final ReqPeas reqPea : reqPeas) {
+        	for (final Entry<CounterTrace, PhaseEventAutomata> reqChild : reqPea.getCounterTrace2Pea()) {
+        		ReqsWithAttributes newReq = new ReqsWithAttributes(reqPea);
+        		newReq.mName = reqChild.getValue().getName();
+        		newReq.mOriginalPeaEventAutomata = reqChild.getValue();
+        		
 
-		getAttributesForReqs(reqPeas);
-
-		for (final Map.Entry<TermVariable, List<ReqWithRTIPCattributes>> varialesList : VariablesDict.entrySet()) {
-			for (int i = 0; i < varialesList.getValue().size(); i++) {
-				final ReqWithRTIPCattributes req1 = varialesList.getValue().get(i);
-
-				for (int j = i + 1; j < varialesList.getValue().size(); j++) {
-					final ReqWithRTIPCattributes req2 = varialesList.getValue().get(j);
-					mLogger.info("---------Neuer Vergleich---------");
-					mLogger.info(req1.mName);
-					mLogger.info(req2.mName);
-
-					final Entry<PatternType<?>, PhaseEventAutomata>[] combo =
-							rtiSetsFormatted(Arrays.asList(req1, req2));
-					if (!mrtiSets.contains(combo) && !makePreCheck(req1, req2)) {
-						mrtiSets.add(combo);
-
-					}
-				}
-			}
-		}
-		doChainLinkTest();
-		/*
-		 * // for chain-link requirements if (mCombinationNum >= 1) { int counter = 1; while (counter <=
-		 * mCombinationNum) { counter++; mLogger.info("START DOING CHAIN REQS"); mLogger.info("depth:" + counter);
-		 *
-		 * for (final ReqWithRTIPCattributes req : mListWithChainLinkReqs) { boolean help = true;
-		 * mLogger.info("---------Neuer Vergleich---------"); mLogger.info(req.mName);
-		 * mLogger.info(req.mOriginalPea.getPattern().toString());
-		 *
-		 * final List<List<ReqWithRTIPCattributes>> list = new ArrayList<>(); for (final Term exitOption :
-		 * req.mExitOptions) { final List<ReqWithRTIPCattributes> helpList = new ArrayList<>(); final
-		 * List<ReqWithRTIPCattributes> actualList = new ArrayList<>(); final TermVariable[] Variables =
-		 * exitOption.getFreeVars(); for (final TermVariable variable : Variables) { mLogger.info(variable); if
-		 * (VariablesDict.containsKey(variable) && VariablesDict.get(variable).size() > 0) {
-		 * helpList.addAll(VariablesDict.get(variable)); } } for (final ReqWithRTIPCattributes huhu : helpList) { if
-		 * (!makePreCheckForChainLink(huhu, req, exitOption)) { actualList.add(huhu); } }
-		 *
-		 * if (actualList.size() != 0) { list.add(actualList); } else { mLogger.info("keine rti möglich"); help = false;
-		 * break;
-		 *
-		 * }
-		 *
-		 * } if (help) { mLogger.info("erstmal" + cartesianProduct(list).size()); for (final
-		 * List<ReqWithRTIPCattributes> reqCombo : cartesianProduct(list)) { mLogger.info("neuer Vegleich"); if
-		 * (!mrtiSets.contains(reqCombo)) { for (final List<ReqWithRTIPCattributes> rtisFound : mRtiSetsAll) { if
-		 * (reqCombo.containsAll(rtisFound)) { mLogger.info("rausgeschmissen weil schon drin"); continue; }
-		 *
-		 * }
-		 *
-		 * final List<ReqWithRTIPCattributes> ll = new ArrayList<>(reqCombo); ll.add(req); if (!makePreCheckFromList(ll)
-		 * && !mrtiSets.contains(rtiSetsFormatted(ll))) { mrtiSets.add(rtiSetsFormatted(ll));
-		 * mLogger.info("RTI WITH CHIANLINKL FOUND"); }
-		 *
-		 * } } }
-		 *
-		 * } } }
-		 */
-		// ✅ Logger-Ausgaben und Rückgabe jetzt innerhalb der Methode
-		mLogger.info("PreCheck found possible rt-inconsistent sets::");
-		mLogger.info("Number of sets: " + mrtiSets.size());
-		for (final Entry<PatternType<?>, PhaseEventAutomata>[] rtiSet : mrtiSets) {
-			mLogger.info("----------RTI SET-----------:");
-			for (final Entry<PatternType<?>, PhaseEventAutomata> entry : rtiSet) {
-				mLogger.info(entry.getValue().getName() + ":" + entry.getKey().toString());
-			}
-		}
-
-		return mrtiSets;
-
-	}
-
-	private void doChainLinkTest() {
-		int counter = 1;
-		while (counter <= mCombinationNum) {
-			final List<List<ReqWithRTIPCattributes>> combos = kombinationen(mListWithChainLinkReqs, counter);
-			for (final List<ReqWithRTIPCattributes> combo : combos) {
-				TermVariable[] variables = combo.get(0).mFullExitOption.getFreeVars();
-				Term CombinedEC = combo.get(0).mFullExitOption;
-				boolean RtiPossible = true;
-				for (int i = 1; i < combo.size(); i++) {
-
-					if (habenSchnittmenge(combo.get(i).mFullExitOption.getFreeVars(), variables)) {
-						CombinedEC = SmtUtils.and(mScript, CombinedEC, combo.get(i).mFullExitOption);
-						variables = CombinedEC.getFreeVars();
-					} else {
-						RtiPossible = false;
+        		//penultimate Phase
+        		newReq.mPenultimatePhase = new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2]);
+        		newReq.mPenultimatePhase.mInvariant =  mCddToSmt.toSmt(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2].getInvariant());
+        		TermVariable[] vars = newReq.mPenultimatePhase.mInvariant.getFreeVars();
+				for (TermVariable var : vars) {
+					if (var.getName().equals("x")) {
+						// if the variable is x, we can just skip it
+						mDebugTerm = var;
 						break;
-					}
-
-				}
-				if (!RtiPossible) {
-					continue;
-				}
-				final Term[] combinedEOptions = SmtUtils.getDisjuncts(CombinedEC);
-
-				// find singles
-				final List<List<ReqWithRTIPCattributes>> list = new ArrayList<>();
-				for (final Term exitOption : combinedEOptions) {
-					final List<ReqWithRTIPCattributes> helpList = new ArrayList<>();
-					final List<ReqWithRTIPCattributes> actualList = new ArrayList<>();
-					final TermVariable[] Variables = exitOption.getFreeVars();
-					for (final TermVariable variable : Variables) {
-						mLogger.info(variable);
-						if (VariablesDict.containsKey(variable) && VariablesDict.get(variable).size() > 0) {
-							helpList.addAll(VariablesDict.get(variable));
-						}
-					}
-					for (final ReqWithRTIPCattributes huhu : helpList) {
-						if (!makePreCheckForChainLink(huhu, req, exitOption)) {
-							actualList.add(huhu);
-						}
-
-					}
-					if (actualList.size() != 0) {
-						list.add(actualList);
-					} else {
-						mLogger.info("keine rti möglich");
-						help = false;
-					}
-					break;
+					} 
 				}
 
+        	}
+		}
+        getAttribtes(reqPeas);
+        rtiCheckSingles();
+        rtiCheckChainLinkReqs();
+        
+        mLogger.info("RTI PreCheck found " + this.mRTIReturnSet.size() + " sets");
+		for (Entry<PatternType<?>, PhaseEventAutomata>[] entry : this.mRTIReturnSet) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("[");
+			for (Entry<PatternType<?>, PhaseEventAutomata> e : entry) {
+				sb.append(e.getValue().getName()+ " ");
 			}
-			counter++;
+			sb.append("]");
+			mLogger.info(sb.toString());
 		}
-		// TODO Auto-generated method stub
-
+        return mRTIReturnSet;
+        
 	}
 
-	public static <T> boolean habenSchnittmenge(final TermVariable[] vars1, final TermVariable[] variables) {
-		for (final TermVariable elem : variables) {
-			if (Arrays.asList(vars1).contains(elem)) {
-				return true; // Überschneidung gefunden
-			}
+	private void rtiCheckChainLinkReqs() {
+		if(this.mCombinationNum > 0) {
+			for(int counter = 1; counter <= this.mCombinationNum; counter++) {
+				mLogger.info("DEPTH " + counter);
+              
+              for(ReqsWithAttributes req : this.mListChainLinkReqs) {
+            	  List<ReqsWithAttributes>testSet = new ArrayList<>();
+            	  testSet.add(req);
+            	  Term joinedEC = req.mFullExitCondition;
+            	  int chainLinkCounter = this.mListChainLinkReqs.indexOf(req);
+              
+            	  addChainLinkRecursive(chainLinkCounter, testSet, joinedEC, counter);
+
+				}
+              }
+			
 		}
-		return false; // Keine gemeinsamen Elemente
+		
 	}
 
-	public static <T> List<List<ReqWithRTIPCattributes>> kombinationen(final List<ReqWithRTIPCattributes> liste,
-			final int n) {
-		final List<List<ReqWithRTIPCattributes>> ergebnis = new ArrayList<>();
-		kombiHelfer(liste, n, 0, new ArrayList<>(), ergebnis);
-		return ergebnis;
+	private void addChainLinkRecursive(int startIdx,
+            List<ReqsWithAttributes> testSet,
+            Term joinedEC,
+            int counter) {
+
+	// Basisfälle
+	if (testSet.size() == counter) {
+	fillwithSingles(testSet, joinedEC);
+	return;
+	}
+	if (testSet.size() > counter) {
+	return;
+	}
+	
+	for (int i = startIdx + 1; i < this.mListChainLinkReqs.size(); i++) {
+	ReqsWithAttributes req = this.mListChainLinkReqs.get(i);
+	
+	if (ChainLinkTest(joinedEC.getFreeVars(),
+	   req.mFullExitCondition.getFreeVars())) {
+	
+	mLogger.info("adding " + req.mName);
+	
+	// wählen
+	testSet.add(req);
+	
+	// NICHT joinedEC überschreiben; lokale, erweiterte Variante bilden
+	Term nextJoinedEC = SmtUtils.and(mScript, joinedEC, req.mFullExitCondition);
+	
+	// weitergehen
+	addChainLinkRecursive(i, testSet, nextJoinedEC, counter);
+	
+	// backtrack: Auswahl rückgängig machen
+	testSet.remove(testSet.size() - 1);
+	} else {
+	mLogger.info("not adding " + req.mName + " because of ChainLinkTest");
+	}
+	}
 	}
 
-	private static <T> void kombiHelfer(final List<ReqWithRTIPCattributes> liste, final int n, final int start,
-			final List<ReqWithRTIPCattributes> aktuell, final List<List<ReqWithRTIPCattributes>> ergebnis) {
-		if (aktuell.size() == n) {
-			ergebnis.add(new ArrayList<>(aktuell));
-			return;
+	private void fillwithSingles(List<ReqsWithAttributes> testSet, Term joinedEC) {
+		mLogger.info("try to fill with singles");
+		joinedEC = testSet.get(0).mFullExitCondition;
+		for(int i = 1; i < testSet.size(); i++) {
+			joinedEC = SmtUtils.and(mScript, joinedEC, testSet.get(i).mFullExitCondition);
 		}
-		for (int i = start; i < liste.size(); i++) {
-			aktuell.add(liste.get(i));
-			kombiHelfer(liste, n, i + 1, aktuell, ergebnis);
-			aktuell.remove(aktuell.size() - 1);
+	    joinedEC = SmtUtils.toDnf(mServices, mManagedScript, joinedEC);
+	    Term[] exitConditions = SmtUtils.getDisjuncts(joinedEC);
+	    List<List<ReqsWithAttributes>> list = new ArrayList<>();
+	    boolean help = true;
+
+	    
+	    for (final Term exitOption : exitConditions) {
+	        final List<ReqsWithAttributes> helpList = new ArrayList<>();
+	        final TermVariable[] Variables = exitOption.getFreeVars();
+
+	        for (final TermVariable variable : Variables) {
+	            mLogger.info(variable);
+	            if (this.mDictVar.containsKey(variable) && mDictVar.get(variable).size() > 0) {
+	                helpList.addAll(mDictVar.get(variable));
+	            }
+	        }
+
+	        if (helpList.size() != 0) {
+	            list.add(helpList);
+	        } else {
+	            mLogger.info("keine rti möglich");
+	            help = false;
+	        }
+	    }
+	        if (help) {
+	            mLogger.info("erstmal " + cartesianProduct(list).size());
+
+	            for (final List<ReqsWithAttributes> reqCombo : cartesianProduct(list)) {
+	                mLogger.info("neuer Vergleich");
+					for (final ReqsWithAttributes req : testSet) {
+						mLogger.info("chainLink enthält " + req.mName);
+					}
+					for( final ReqsWithAttributes req : reqCombo) {
+						mLogger.info("single enthält " + req.mName);
+					}
+
+	                if (!this.mRTICombinations.contains(reqCombo)) {
+	                    boolean alreadyContained = false;
+
+	                    for (final List<ReqsWithAttributes> rtisFound : mRTICombinations) {
+	                        if (reqCombo.containsAll(rtisFound)) {
+	                            mLogger.info("rausgeschmissen weil schon drin");
+	                            alreadyContained = true;
+	                            break;
+	                        }
+	                    }
+
+	                    if (!alreadyContained) {
+	                        final List<ReqsWithAttributes> ll = new ArrayList<>(reqCombo);
+	                        ll.addAll(testSet);
+
+	                        if (!makePreCheckFromList(ll)) {
+	                        	mRTICombinations.add(ll);
+	                        	this.mRTIReturnSet.add(rtiSetsFormatted(ll));
+	                        	 mLogger.info("RTI WITH CHAINLINK FOUND");
+	                        } else {
+	                        	mLogger.info("RTI WITH CHAINLINK NOT FOUND");
+	                        }
+	                       
+	                    }
+	                }
+	            }
+	        }
+	        
+	    }
+	
+	
+	private boolean makePreCheckFromList(final List<ReqsWithAttributes> reqs) {
+		// check exit conditions
+		Term combination = reqs.get(0).mFullExitCondition;
+		for (int i = 1; i < reqs.size(); i++) {
+			combination = SmtUtils.and(mScript, combination, reqs.get(i).mFullExitCondition);
 		}
+		LBool result = SmtUtils.checkSatTerm(mScript, combination);
+		if (result == LBool.SAT) {
+			return true;
+		}
+
+		combination = reqs.get(0).mMaxPhase.mInvariant;
+		for (int i = 1; i < reqs.size(); i++) {
+			combination = SmtUtils.and(mScript, combination, reqs.get(i).mMaxPhase.mInvariant);
+		}
+		result = SmtUtils.checkSatTerm(mScript, combination);
+		if (result == LBool.UNSAT) {
+			return true;
+		}
+		return false;
 	}
 
-	/**
-	 * Formats the RTI sets into an array of entries with PatternType and PhaseEventAutomata. This Format is needed for
-	 * the actual RTI check in the BoogieGenerator.
-	 *
-	 * @param reqs
-	 *            List of ReqWithRTIPCattributes containing the requirements to be formatted.
-	 * @return An array of Map.Entry objects representing the formatted RTI sets.
-	 */
-	public Entry<PatternType<?>, PhaseEventAutomata>[] rtiSetsFormatted(final List<ReqWithRTIPCattributes> reqs) {
-		final List<Map.Entry<PatternType<?>, PhaseEventAutomata>> entryList = new ArrayList<>();
-		for (final ReqWithRTIPCattributes req : reqs) {
-			final Map.Entry<PatternType<?>, PhaseEventAutomata> entry1 =
-					new AbstractMap.SimpleEntry<>(req.mOriginalPea.getPattern(), req.mPEA);
-			entryList.add(entry1);
-		}
-		final Map.Entry<PatternType<?>, PhaseEventAutomata>[] entryArray = entryList.toArray(new Map.Entry[0]);
-		Arrays.sort(entryArray, Comparator.comparing(Map.Entry::getValue));
-		return entryArray;
-	}
-
-	/**
-	 * Computes the Cartesian product of a list of lists of Requirements.
-	 *
-	 * @param lists
-	 *            A list of lists, where each sublist contains elements to be combined.
-	 * @return A list containing all combinations of elements from the input lists.
-	 */
 	public static <ReqWithRTIPCattributes> List<List<ReqWithRTIPCattributes>>
-			cartesianProduct(final List<List<ReqWithRTIPCattributes>> lists) {
+	cartesianProduct(final List<List<ReqWithRTIPCattributes>> lists) {
 		List<List<ReqWithRTIPCattributes>> result = new ArrayList<>();
 		result.add(new ArrayList<>()); // Start with empty combination
 
@@ -294,169 +316,257 @@ public class RTInconsistencyPreCheck {
 		return result;
 	}
 
-	/*
-	 * This method is used to check if the two requirements are rt-inconsistent. RETURN true if they are rt-consistent
-	 * RETURN false if they are rt-inconsistent
-	 */
-	private boolean makePreCheck(final ReqWithRTIPCattributes req1, final ReqWithRTIPCattributes req2) {
-		// check exit conditions
-		Term combination = SmtUtils.and(mScript, req1.mFullExitOption, req2.mFullExitOption);
-		LBool result = SmtUtils.checkSatTerm(mScript, combination);
+
+
+	private boolean ChainLinkTest(TermVariable[] exitCinditions1, TermVariable[] exitConditions2) {
+		if (habenSchnittmenge(exitCinditions1, exitConditions2)) {
+			return false; // Überschneidung gefunden
+		}
+		
+		return true;
+	}
+	
+	public static <T> boolean habenSchnittmenge(final TermVariable[] vars1, final TermVariable[] variables) {
+		for (final TermVariable elem : variables) {
+			if (Arrays.asList(vars1).contains(elem)) {
+				return true; // Überschneidung gefunden
+			}
+		}
+		return false; // Keine gemeinsamen Elemente
+	}
+
+	private void rtiCheckSingles() {
+		for(Entry variablesEntry: this.mDictVar.entrySet()) {
+			 List<List<ReqsWithAttributes>> combinations = combinations2((List<ReqsWithAttributes>) variablesEntry.getValue());
+			 for(List<ReqsWithAttributes> pair : combinations) {
+				 List<ReqsWithAttributes> psorted = new ArrayList<>(pair);
+				 psorted.sort(Comparator.comparing(ReqsWithAttributes::getName));
+
+				 if(this.mRTICombinations.contains(psorted)) {
+					 continue; // already checked this combination
+				 }
+
+
+                 if(rtiCheckFor2Reqs(pair.get(0), pair.get(1))) {
+	                mLogger.info("RTI found for " + pair.get(0).mName + " and " + pair.get(1).mName);
+	                this.mRTIReturnSet.add(rtiSetsFormatted(pair));
+                 }
+			 }
+
+			
+		}
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private boolean rtiCheckFor2Reqs(ReqsWithAttributes reqsWithAttributes, ReqsWithAttributes reqsWithAttributes2) {
+		mLogger.info("RTI check for " + reqsWithAttributes.mName + " and " + reqsWithAttributes2.mName);
+		mLogger.info(reqsWithAttributes.mCounterTrace);
+		mLogger.info(reqsWithAttributes2.mCounterTrace);
+		boolean help = true;
+
+		Term conjunction = SmtUtils.and(mScript, reqsWithAttributes.mFullExitCondition, reqsWithAttributes2.mFullExitCondition);
+		LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
 		if (result != LBool.UNSAT) {
-			return true;
-		}
-		mRtiSetsAll.add(Arrays.asList(req1, req2));
-		// Check if the Max Phases can be combined
-		combination = SmtUtils.and(mScript, req1.mTermInvariantMaxPhase, req2.mTermInvariantMaxPhase);
-		result = SmtUtils.checkSatTerm(mScript, combination);
-		if (result == LBool.UNSAT) {
-			return true;
-		}
-
-		if (req1.mMaxPhase.getBoundType() != 0 && req2.mMaxPhase.getBoundType() != 0
-				&& req1.mTermInvariantMaxPhase == req2.mTermInvariantMaxPhase) {
-			if (((req1.mMaxPhase.getBoundType() > 0) && req2.mMaxPhase.getBoundType() < 0)
-					&& (req1.mMaxPhase.getBound() > req2.mMaxPhase.getBound())) {
-				return true;
+			mLogger.info("aussportiert wegen ExitCondition passen nicht");
+			if (mDebugReasonCOunter) {
+				help = false;
+				reasonCounter[0]++;
+			} else {
+				return false; // Exit conditions are not disjoint
 			}
+			
+			
+			//return false;
 		}
+		if (reqsWithAttributes.mBeforeMaxPhase != null && reqsWithAttributes2.mBeforeMaxPhase != null) {
+			if (reqsWithAttributes.mPenultimatePhase.mBound
+					.equals(reqsWithAttributes2.mPenultimatePhase.mBound)) {
+				if (reqsWithAttributes.mPenultimatePhase.mBound == reqsWithAttributes2.mPenultimatePhase.mBound) {
 
-		if (req2.mMaxPhase.getBoundType() != 0 && req1.mMaxPhase.getBoundType() != 0
-				&& req1.mTermInvariantMaxPhase == req2.mTermInvariantMaxPhase) {
-			if (((req2.mMaxPhase.getBoundType() > 0) && req2.mMaxPhase.getBoundType() < 0)
-					&& (req2.mMaxPhase.getBound() > req1.mMaxPhase.getBound())) {
-				return true;
-			}
-		}
-
-		if ((req1.mPenultimatePhase.getBoundType() == req2.mPenultimatePhase.getBoundType())
-				&& (req1.mPenultimatePhase.getBound() == req2.mPenultimatePhase.getBound())) {
-			combination = SmtUtils.and(mScript, req1.mPhaseBeforeMaxPhase, req2.mPhaseBeforeMaxPhase);
-			result = SmtUtils.checkSatTerm(mScript, combination);
-			if (result == LBool.UNSAT) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean makePreCheckForChainLink(final ReqWithRTIPCattributes req1, final ReqWithRTIPCattributes req2,
-			final Term exitOption) {
-		// check exit conditions
-		Term combination = SmtUtils.and(mScript, req1.mFullExitOption, exitOption);
-		LBool result = SmtUtils.checkSatTerm(mScript, combination);
-		if (result != LBool.UNSAT) {
-			return true;
-		}
-		mRtiSetsAll.add(Arrays.asList(req1, req2));
-		// Check if the Max Phases can be combined
-		combination = SmtUtils.and(mScript, req1.mTermInvariantMaxPhase, req2.mTermInvariantMaxPhase);
-		result = SmtUtils.checkSatTerm(mScript, combination);
-		if (result == LBool.UNSAT) {
-			return true;
-		}
-
-		if (req1.mMaxPhase.getBoundType() != 0 && req2.mMaxPhase.getBoundType() != 0
-				&& req1.mTermInvariantMaxPhase == req2.mTermInvariantMaxPhase) {
-			if (((req1.mMaxPhase.getBoundType() > 0) && req2.mMaxPhase.getBoundType() < 0)
-					&& (req1.mMaxPhase.getBound() > req2.mMaxPhase.getBound())) {
-				return true;
-			}
-		}
-
-		if (req2.mMaxPhase.getBoundType() != 0 && req1.mMaxPhase.getBoundType() != 0
-				&& req1.mTermInvariantMaxPhase == req2.mTermInvariantMaxPhase) {
-			if (((req2.mMaxPhase.getBoundType() > 0) && req2.mMaxPhase.getBoundType() < 0)
-					&& (req2.mMaxPhase.getBound() > req1.mMaxPhase.getBound())) {
-				return true;
-			}
-		}
-
-		if ((req1.mPenultimatePhase.getBoundType() == req2.mPenultimatePhase.getBoundType())
-				&& (req1.mPenultimatePhase.getBound() == req2.mPenultimatePhase.getBound())) {
-			combination = SmtUtils.and(mScript, req1.mPhaseBeforeMaxPhase, req2.mPhaseBeforeMaxPhase);
-			result = SmtUtils.checkSatTerm(mScript, combination);
-			if (result == LBool.UNSAT) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean makePreCheckFromList(final List<ReqWithRTIPCattributes> reqs) {
-		// check exit conditions
-		Term combination = reqs.get(0).mFullExitOption;
-		for (int i = 1; i < reqs.size(); i++) {
-			combination = SmtUtils.and(mScript, combination, reqs.get(i).mFullExitOption);
-		}
-		LBool result = SmtUtils.checkSatTerm(mScript, combination);
-		if (result == LBool.SAT) {
-			return true;
-		}
-
-		combination = reqs.get(0).mTermInvariantMaxPhase;
-		for (int i = 1; i < reqs.size(); i++) {
-			combination = SmtUtils.and(mScript, combination, reqs.get(i).mTermInvariantMaxPhase);
-		}
-		result = SmtUtils.checkSatTerm(mScript, combination);
-		if (result == LBool.UNSAT) {
-			return true;
-		}
-		return false;
-	}
-
-	/*
-	 * This method is used to get all the attributes of the requirements needed of the precheck. Containing
-	 * PenultimatePhase, MaxPhase, FullExitOption, TermInvariantMaxPhase
-	 */
-	private void getAttributesForReqs(final List<ReqPeas> reqPeas) {
-		for (final ReqPeas reqPea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> reqChild : reqPea.getCounterTrace2Pea()) {
-				final ReqWithRTIPCattributes newReq = new ReqWithRTIPCattributes(reqPea);
-				mLogger.info(reqChild.getValue().getName()); // DEBUG
-				newReq.mName = reqChild.getValue().getName(); // just for DEBUG reason
-
-				// penultimate Phase
-				newReq.mPenultimatePhase = reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2];
-				final CDD[] exitOptionsCDD = newReq.mPenultimatePhase.getInvariant().negate().toDNF();
-				newReq.mFullExitOption = mCddToSmt.toSmt(newReq.mPenultimatePhase.getInvariant().negate());
-				newReq.mPEA = reqChild.getValue();
-
-				// generate exit Options
-				newReq.mExitOptions = new ArrayList<>();
-				for (final CDD exitOption : exitOptionsCDD) {
-					newReq.mExitOptions.add(mCddToSmt.toSmt(exitOption));
-				}
-
-				// ChainLink Reqs
-				if (newReq.mExitOptions.size() > 1) {
-					newReq.mChainLinkReq = true;
-					mListWithChainLinkReqs.add(newReq);
-				} else {
-					for (final TermVariable variable : newReq.mExitOptions.get(0).getFreeVars()) {
-						if (!VariablesDict.containsKey(variable)) {
-							VariablesDict.put(variable, new ArrayList<>());
+					conjunction = SmtUtils.and(mScript, reqsWithAttributes.mBeforeMaxPhase.mInvariant,
+							reqsWithAttributes2.mBeforeMaxPhase.mInvariant);
+					result = SmtUtils.checkSatTerm(mScript, conjunction);
+					if (result == LBool.UNSAT) {
+						mLogger.info("aussportiert wegen BeforeMaxPhase invariant");
+						if (mDebugReasonCOunter) {
+							help = false;
+							reasonCounter[3]++;
+						} else {
+							return false; // Exit conditions are not disjoint
 						}
-						VariablesDict.get(variable).add(newReq);
 					}
 				}
 
-				// Max Phase, needed later to eliminate false positives
-				if (newReq.mPenultimatePhase.getBoundType() != 0) {
-					newReq.mMaxPhase = newReq.mPenultimatePhase;
-					if (reqChild.getKey().getPhases().length >= 3) {
-						newReq.mPhaseBeforeMaxPhase = mCddToSmt.toSmt(
-								reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 3].getInvariant());
-					}
-				} else {
-					newReq.mMaxPhase = reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 3];
-					if (reqChild.getKey().getPhases().length >= 4) {
-						newReq.mPhaseBeforeMaxPhase = mCddToSmt.toSmt(
-								reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 4].getInvariant());
-					}
-				}
-				newReq.mTermInvariantMaxPhase = mCddToSmt.toSmt(newReq.mMaxPhase.getInvariant());
+
+				
+			}
+
+		}
+		this.mRTICombinations.add(Arrays.asList(reqsWithAttributes, reqsWithAttributes2));
+		conjunction = SmtUtils.and(mScript, reqsWithAttributes.mMaxPhase.mInvariant, reqsWithAttributes2.mMaxPhase.mInvariant);
+		result = SmtUtils.checkSatTerm(mScript, conjunction);
+		if (result == LBool.UNSAT) {
+			mLogger.info("aussportiert wegen MaxPhase invariant");
+			if (mDebugReasonCOunter) {
+				help = false;
+				reasonCounter[1]++;
+			} else {
+				return false; // Exit conditions are not disjoint
 			}
 		}
+		/*if (reqsWithAttributes.mMaxPhase == reqsWithAttributes2.mMaxPhase) {
+			conjunction = SmtUtils.and(mScript, reqsWithAttributes.mMaxPhase.mBound, reqsWithAttributes2.mMaxPhase.mBound);
+			result = SmtUtils.checkSatTerm(mScript, conjunction);
+			if (result == LBool.UNSAT) {
+				mLogger.info("aussportiert wegen MaxPhase Bound");
+				if (mDebugReasonCOunter) {
+					help = false;
+					reasonCounter[2]++;
+				} else {
+					return false; // Exit conditions are not disjoint
+				}
+			}
+
+		}*/
+		
+	
+		// TODO Auto-generated method stub
+		if (!help) {
+			return false;
+		} else {
+			return true;
+		}
+		
+	}
+
+	public static List<List<ReqsWithAttributes>> combinations2 (List<ReqsWithAttributes> args) {
+        List<List<ReqsWithAttributes>> pairs = new ArrayList<>();
+
+        for (int i = 0; i < args.size(); i++) {
+            for (int j = i + 1; j < args.size(); j++) {
+                pairs.add(Arrays.asList(args.get(i), args.get(j)));
+            }
+        }
+
+        return pairs;
+    }
+
+	private void getAttribtes(List<ReqPeas> reqPeas) {
+		
+        for (final ReqPeas reqPea : reqPeas) {
+        	for (final Entry<CounterTrace, PhaseEventAutomata> reqChild : reqPea.getCounterTrace2Pea()) {
+        		ReqsWithAttributes newReq = new ReqsWithAttributes(reqPea);
+        		newReq.mName = reqChild.getValue().getName();
+        		newReq.mOriginalPeaEventAutomata = reqChild.getValue();
+        		newReq.mCounterTrace = reqChild.getKey();
+        		
+
+        		//penultimate Phase
+        		newReq.mPenultimatePhase = new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2]);
+        		newReq.mPenultimatePhase.mInvariant =  mCddToSmt.toSmt(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2].getInvariant());
+        		
+
+        		newReq.mPenultimatePhase.mInvariantVar = newReq.mPenultimatePhase.mInvariant.getFreeVars();
+        		newReq.mPenultimatePhase.mBound = BoundToSmt(newReq.mPenultimatePhase);
+        		Term help = SmtUtils.not( mScript, newReq.mPenultimatePhase.mInvariant);
+        		newReq.mFullExitCondition = SmtUtils.toDnf(mServices, mManagedScript,  help);
+        		newReq.mExitConditions = SmtUtils.getDisjuncts(newReq.mFullExitCondition);
+				if (newReq.mExitConditions.length > 1) {
+					newReq.mChainLinkReq = true;
+					this.mListChainLinkReqs.add(newReq);
+				} else {
+					TermVariable[] vars = newReq.mPenultimatePhase.mInvariant.getFreeVars();
+					for (TermVariable var : vars) {
+						if (!this.mDictVar.containsKey(var)) {
+							this.mDictVar.put(var, new ArrayList<>());
+						}
+							this.mDictVar.get(var).add(newReq);
+						
+					}
+				}
+        		//Max Phase bestimmen
+				if (newReq.mPenultimatePhase.mDCPhase.getBoundType() != 0) {
+					newReq.mMaxPhase = new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2]);
+					if (reqChild.getKey().getPhases().length > 2) {
+						newReq.mBeforeMaxPhase =
+								new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 3]);
+					}
+				} else {
+					newReq.mMaxPhase = new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 3]);
+					if (reqChild.getKey().getPhases().length > 3) {
+						newReq.mBeforeMaxPhase =
+								new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 4]);
+					}
+				} 
+				newReq.mMaxPhase.mInvariant =  mCddToSmt.toSmt(newReq.mMaxPhase.mDCPhase.getInvariant());
+				newReq.mMaxPhase.mInvariantVar = newReq.mMaxPhase.mInvariant.getFreeVars();
+				newReq.mMaxPhase.mBound = BoundToSmt(newReq.mMaxPhase);
+				if(newReq.mBeforeMaxPhase != null) {
+					newReq.mBeforeMaxPhase.mInvariant = mCddToSmt.toSmt(newReq.mBeforeMaxPhase.mDCPhase.getInvariant());
+					newReq.mBeforeMaxPhase.mInvariantVar = newReq.mBeforeMaxPhase.mInvariant.getFreeVars();
+					newReq.mBeforeMaxPhase.mBound = BoundToSmt(newReq.mBeforeMaxPhase);
+					
+				}
+				
+				
+				
+        	
+				
+        		
+        		
+
+        		
+
+        		
+        		
+        	}
+
+        	
+        	
+        }
+
+		
+	}
+	
+	public Entry<PatternType<?>, PhaseEventAutomata>[] rtiSetsFormatted(final List<ReqsWithAttributes> reqs) {
+		final List<Map.Entry<PatternType<?>, PhaseEventAutomata>> entryList = new ArrayList<>();
+		for (final ReqsWithAttributes req : reqs) {
+			final Map.Entry<PatternType<?>, PhaseEventAutomata> entry1 =
+					new AbstractMap.SimpleEntry<>(req.mOriginalPea.getPattern(), req.mOriginalPeaEventAutomata);
+			entryList.add(entry1);
+		}
+		final Map.Entry<PatternType<?>, PhaseEventAutomata>[] entryArray = entryList.toArray(new Map.Entry[0]);
+		Arrays.sort(entryArray, Comparator.comparing(Map.Entry::getValue));
+		return entryArray;
+	}
+
+
+	private Term BoundToSmt(Phase phase) {
+		Term boundTerm =  mScript.term("true");
+		if (phase.mDCPhase.getBoundType() == 0) {
+			return mScript.term("true");
+		} else if (phase.mDCPhase.getBoundType() == 2) {
+			 Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
+			 return  SmtUtils.greater(mScript, mDebugTerm, rhs);
+			//t = SmtUtils.leq(mScript, startTerm, SmtUtils.term("x", phase.mDCPhase.getBound()));
+			//return mScript.term("x>" + phase.mDCPhase.getBound());
+			
+		} else if (phase.mDCPhase.getBoundType() == 1) {
+			Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
+			return SmtUtils.geq(mScript, mDebugTerm, rhs);
+			// t = SmtUtils.geq(mScript, startTerm, SmtUtils.term("x", phase.mDCPhase.getBound()));
+			// return mScript.term("x<" + phase.mDCPhase.getBound());
+		} else if (phase.mDCPhase.getBoundType() == -2) {
+			Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
+			return SmtUtils.less(mScript, mDebugTerm, rhs);
+			// t = SmtUtils.eq(mScript, startTerm, SmtUtils.term("x", phase.mDCPhase.getBound()));
+			// return mScript.term("x==" + phase.mDCPhase.getBound());
+		}else {
+			Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
+			return SmtUtils.leq(mScript, mDebugTerm, rhs);
+		}
+
 	}
 }
+		

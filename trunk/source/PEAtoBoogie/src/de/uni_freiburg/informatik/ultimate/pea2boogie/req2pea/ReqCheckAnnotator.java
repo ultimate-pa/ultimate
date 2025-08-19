@@ -106,6 +106,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mGenerateFailurePath;
 
 	private int mRTIPreCheckRange;
+	private boolean mRTICheckRangeIgnore;
 
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
@@ -150,6 +151,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
 		mRTIPreCheckRange = prefs.getInt(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS);
+		mRTICheckRangeIgnore = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_IGNORE_RANGE);
+		if (mRTICheckRangeIgnore) {
+			mCombinationNum = mRTIPreCheckRange +3;
+		}
 
 		// log preferences
 		mLogger.info(
