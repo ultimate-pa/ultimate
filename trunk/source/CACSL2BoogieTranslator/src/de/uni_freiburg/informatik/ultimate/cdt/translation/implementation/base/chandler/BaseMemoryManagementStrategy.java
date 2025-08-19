@@ -34,9 +34,9 @@ public abstract class BaseMemoryManagementStrategy implements IMemoryManagementS
 	protected Expression baseGreaterThanBarrier(final ILocation tuLoc, final Expression stackHeapBarrierExpr,
 			final Expression resultExpr) {
 		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-				IASTBinaryExpression.op_lessThan, stackHeapBarrierExpr,
-				mExpressionTranslation.getCTypeOfPointerComponents(),
+				IASTBinaryExpression.op_greaterThan,
 				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
+				mExpressionTranslation.getCTypeOfPointerComponents(), stackHeapBarrierExpr,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 	}
 

@@ -81,26 +81,46 @@ public class SimpleIncreasingStrategy<T extends OneDimensionalMemoryAddressing> 
 		final var baseNotEqualZeroExpr = baseNotEqualZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
 		expressions.add(new Pair<>(baseNotEqualZeroExpr, Collections.emptySet()));
 
+		// #res!base > 0;
+		final var baseGreaterZeroExpr = mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
+				IASTBinaryExpression.op_greaterThan,
+				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
+				cTypeOfPointerComponent, zeroNumericValueExpr, cTypeOfPointerComponent);
+
+		expressions.add(new Pair<>(baseGreaterZeroExpr, Collections.emptySet()));
+
 		if (memoryArea == MemoryArea.STACK) {
-			// #StackHeapBarrier < res!base
+			// res!base > #StackHeapBarrier
 			final var baseGreaterThanBarrierExpr = baseGreaterThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
 			expressions.add(new Pair<>(baseGreaterThanBarrierExpr, Collections.emptySet()));
+
+			// #StackAllocations > #StackHeapBarrier;
+			final var stackAllocationsGreaterThanBarrier = mExpressionTranslation
+					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_greaterThan,
+							counterExpression, cTypeOfPointerComponent, stackHeapBarrierExpr, cTypeOfPointerComponent);
+			expressions.add(new Pair<>(stackAllocationsGreaterThanBarrier, Collections.emptySet()));
+
 		} else if (memoryArea == MemoryArea.HEAP) {
 			// res!base < #StackHeapBarrier
 			final var baseSmallerThanBarrierExpr = baseSmallerThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
 			expressions.add(new Pair<>(baseSmallerThanBarrierExpr, Collections.emptySet()));
 
-			// #InitialAllocation < res!base
-			final var baseGreaterThanInitialAllocsExpr =
-					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-							IASTBinaryExpression.op_lessThan, initialAllocCounterExpr, cTypeOfPointerComponent,
+			// res!base > #InitialAllocation
+			final var baseGreaterThanInitialAllocsExpr = mExpressionTranslation
+					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_greaterThan,
 							ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
-							cTypeOfPointerComponent);
+							cTypeOfPointerComponent, initialAllocCounterExpr, cTypeOfPointerComponent);
 			expressions.add(new Pair<>(baseGreaterThanInitialAllocsExpr, Collections.emptySet()));
+
+			// #HeapAllocations < #StackHeapBarrier;
+			final var stackAllocationsGreaterThanBarrier = mExpressionTranslation
+					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_lessThan,
+							counterExpression, cTypeOfPointerComponent, stackHeapBarrierExpr, cTypeOfPointerComponent);
+			expressions.add(new Pair<>(stackAllocationsGreaterThanBarrier, Collections.emptySet()));
 		}
 
-		// StackAllocCounter == old(StackAllocCounter) + ~size
-		// HeapAllocCounter == old(HeapAllocCounter) + ~size
+		// StackAllocations == old(StackAllocations) + ~size
+		// HeapAllocations == old(HeapAllocations) + ~size
 		final var oldExpr =
 				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression);
 		final var sumExpr = mExpressionTranslation.constructArithmeticExpression(tuLoc, IASTBinaryExpression.op_plus,
