@@ -58,7 +58,7 @@ test_cmd_version_greater_equal() {
 }
 
 get_cmd_version() {
-  ${@} | grep -m1 -Po "(\d+\.)+\d+"
+  ${@} | grep -m1 -Eo "([[:digit:]]+\.)+[[:digit:]]+"
 }
 
 print_cmd_version() {
