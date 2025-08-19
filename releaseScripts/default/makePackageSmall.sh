@@ -29,7 +29,9 @@ echo "Using ${TOOLNAME} (${LCTOOLNAME}) as toolname"
 
 # Additional files for all architectures
 ADDS=(
-  "adds/LICENSE*"
+  "adds/LICENSE"
+  "adds/LICENSE.GPL"
+  "adds/LICENSE.GPL.LESSER"
   "adds/z3-LICENSE"
   "adds/cvc4-LICENSE"
   "adds/mathsat-LICENSE"
@@ -79,11 +81,7 @@ exit_on_fail cp -a ../../trunk/source/BA_SiteRepository/target/"${ARCHPATH}"/* "
 
 # Copy all adds to target dir
 for add in "${ADDS[@]}" ; do
-  if ! readlink -fe ${add} > /dev/null ; then
-    echo "${add} does not exist, aborting..."
-    exit 1
-  fi
-  exit_on_fail cp ${add} "${TARGETDIR}/"
+  exit_on_fail cp "${add}" "${TARGETDIR}/"
 done
 
 echo "Modifying Ultimate.py with version and toolname"
