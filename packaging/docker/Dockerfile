@@ -71,7 +71,7 @@ RUN apk add --no-cache "gcc" \
 
 # build the Ultimate web frontend
 WORKDIR "${REPO_DIR_FRONTEND}"
-ENV PATH="${DIR_OUTPUT_BUILD}/CLI-E4/linux/gtk/x86_64:${PATH}"
+ENV PATH="${DIR_OUTPUT_BUILD}/UCLI-E4-linux:${PATH}"
 RUN python3 scripts/build.py --baseurl "${ULTIMATE_FRONTEND_BASEURL}"
 
 #------------------------------------------------------------------------------
