@@ -37,52 +37,42 @@ public class TestCaseExporter {
 
 	private static final boolean WRITE_TESTCASES_TO_FILE = true;
 	LinkedHashSet<TestVector> tvSet = new LinkedHashSet<>();
-	private static TestCaseExporter instance = null;
 	private String mDirName = null;
 	private boolean foundMakefileAndDir = false;
 	private String pathToDir;
 
 	/*
-	 * Export Tests in:
-	 * 1: one directory for all programs
-	 * 2: one directory for each program
+	 * Export Tests in: 1: one directory for all programs 2: one directory for each program
 	 */
 	public void exportTests(final TestVector testV, final String i, final boolean allInOneFile) throws Exception {
 
-		FileOutputStream output;
 		final String name = "testcase" + i;
 		final boolean noDirectories = false;
 		final boolean allInOneDirecotry = true;
 		if (noDirectories) {
-			output = new FileOutputStream(name + ".xml");
 		} else if (allInOneDirecotry) {
 			Files.createDirectories(Paths.get("test-suite"));
-			output = new FileOutputStream("test-suite/" + name + ".xml");
+
 		} else { // testsuites directory and subdirectory for every program that contains the tests
 			if (!foundMakefileAndDir) {
 				findMakeFileAndDir();
 			}
 			if (mDirName == null) {
 				Files.createDirectories(Paths.get("testsuites"));
-
-				output = new FileOutputStream("testsuites/" + name + ".xml");
 			} else {
 				Files.createDirectories(Paths.get(mDirName));
-				output = new FileOutputStream("testsuites/" + name + ".xml");
 			}
 		}
-		writeXml(createXML(testV.values), output);
-		if (testV.need64Bit) {
-			output = new FileOutputStream("test-suite/" + name + "64bit" + ".xml");
-			writeXml(createXML(testV.values64Bit), output);
-		}
-	}
 
-	public static final TestCaseExporter getInstance() {
-		if (instance == null) {
-			instance = new TestCaseExporter();
+		try (FileOutputStream output = new FileOutputStream("test-suite/" + name + ".xml")) {
+			writeXml(createXML(testV.values), output);
+
 		}
-		return instance;
+		if (testV.need64Bit) {
+			try (FileOutputStream output = new FileOutputStream("test-suite/" + name + "64bit" + ".xml");) {
+				writeXml(createXML(testV.values64Bit), output);
+			}
+		}
 	}
 
 	// TODO split exportation and creation of the testvectors. Means
@@ -122,9 +112,9 @@ public class TestCaseExporter {
 		// pretty print XML
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		final DOMImplementation domImpl = doc.getImplementation();
-		final DocumentType doctype = domImpl.createDocumentType("testcase",
-				"+//IDN sosy-lab.org//DTD test-format testcase 1.1//EN",
-				"https://sosy-lab.org/test-format/testcase-1.1.dtd");
+		final DocumentType doctype =
+				domImpl.createDocumentType("testcase", "+//IDN sosy-lab.org//DTD test-format testcase 1.1//EN",
+						"https://sosy-lab.org/test-format/testcase-1.1.dtd");
 		transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
 		transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
 		final DOMSource source = new DOMSource(doc);
@@ -422,8 +412,8 @@ class TestVector {
 				final BigInteger value = new BigInteger(valueInRange);
 				if (value.compareTo(new BigInteger("2147483647")) == 1) {
 					// wenn 2147483648 dann -2,147,483,648
-					final BigInteger newValue = new BigInteger("-2147483648")
-							.add((value.subtract(new BigInteger("2147483648"))));
+					final BigInteger newValue =
+							new BigInteger("-2147483648").add((value.subtract(new BigInteger("2147483648"))));
 					valueInRange = String.valueOf(newValue);
 				}
 				if (SmtSortUtils.getBitvectorLength(valueTerm.getSort()) <= 32) {

@@ -235,9 +235,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
 				if (icfgProgramExecution != null) {
 					/*
-					 * For parallel Trace Abstraction:
-					 * for us to be able to translate the counterexample to C, we need to know the script it came from
-					 * We use this "hack" and set mCfgManagedScript as the main script of the real main script
+					 * For parallel Trace Abstraction: for us to be able to translate the counterexample to C, we need
+					 * to know the script it came from We use this "hack" and set mCfgManagedScript as the main script
+					 * of the real main script
 					 */
 					if (((HistoryRecordingScript) mCfgManagedScript.getScript()).getMainScript() != null) {
 						((HistoryRecordingScript) ((HistoryRecordingScript) mCfgManagedScript.getScript())
@@ -367,10 +367,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
-			final TraceCheck<L> tc =
-						new TraceCheck<>(mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(),
-								mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
-								AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
+			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
+					mNestedFormulas.getPostcondition(), mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
 			switch (tc.isCorrect()) {
 			case SAT:
 				return tc.getRcfgProgramExecution();
@@ -431,7 +430,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		if (RcfgPreferenceInitializer.getPreferences(mServices).getBoolean(RcfgPreferenceInitializer.LABEL_TEST_GEN)) {
 			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb);
 			final boolean mExportAllInOneFile = true;
-			final String identifier = "" + rpeb.mTrace.hashCode();
+			final String identifier = "" + rpeb.mTrace.hashCode() + Thread.currentThread().threadId();
 			exportTest(testV, identifier, mExportAllInOneFile);
 			cleanupAndUnlockSolver();
 			return rpeb.getIcfgProgramExecution();
@@ -491,18 +490,15 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 								if ((index >= 0) && (rpeb.mTrace.asList().get(index) instanceof StatementSequence)) {
 									final StatementSequence stsq = (StatementSequence) rpeb.mTrace.asList().get(index);
 
-									final Matcher m =
-											Pattern.compile("__VERIFIER_nondet_(\\w*)")
-													.matcher(stsq.getPayload().toString());
+									final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
+											.matcher(stsq.getPayload().toString());
 									if (m.find()) {
 										final String type = m.group(1);
 										testV.addValueAssignment(valueT, index, type);
-										final TermTransferrer test =
-												new TermTransferrer(mCfgManagedScript.getScript(),
-														mTcSmtManager.getScript());
-										final Term varEqValue =
-												SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-														test.transform(indexedVar), test.transform(valueT));
+										final TermTransferrer test = new TermTransferrer(mCfgManagedScript.getScript(),
+												mTcSmtManager.getScript());
+										final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+												test.transform(indexedVar), test.transform(valueT));
 										final Pair<Term, Term> varValuePair =
 												new Pair<>(test.transform(indexedVar), test.transform(valueT));
 										varAssignmentPair.add(varValuePair);
@@ -527,7 +523,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		try {
 			if (!testV.isEmpty()) {
 				mTraceCheckBenchmarkGenerator.reportTestExported();
-				TestCaseExporter.getInstance().exportTests(testV, identifier, allInOneFile);
+				new TestCaseExporter().exportTests(testV, identifier, allInOneFile);
 			}
 		} catch (final Exception e) {
 			// TODO TestGeneration Auto-generated catch block
