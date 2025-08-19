@@ -232,7 +232,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				mMainThread.getCurrentProgramCache());
 
 		final ITARefinementStrategy<L> strategy;
-		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7) {
+		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7 && false) {
 			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
 					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
 					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
