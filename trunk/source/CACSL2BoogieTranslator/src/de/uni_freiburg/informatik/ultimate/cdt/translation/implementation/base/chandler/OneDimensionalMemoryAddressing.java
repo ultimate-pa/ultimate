@@ -3,10 +3,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -261,5 +264,53 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 		stmts.add(call);
 
 		return stmts;
+	}
+
+	@Override
+	public List<Expression> constructMemsetQuantorSpecificationExpressions(final ILocation loc,
+			final String procedureName, final Expression ptrExpr, final Expression amountExpr,
+			final Expression valueExpr, final HeapDataArray hda) {
+		// (forall #p : $Pointer$ :: (#p!base >= #ptr!base && #p!base < (#ptr!base+#amount)) ==> #memory_int[#p] ==
+		// #value);
+
+		final String paramName = "#p";
+		final Expression paramExpr =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), paramName,
+						new DeclarationInformation(StorageClass.QUANTIFIED, null));
+
+		final VarList paramVar = new VarList(loc, new String[] { paramName }, mTypeHandler.constructPointerType(loc));
+
+		// #p!base
+		final Expression paramBase = mMemoryPointer.pointerAddress(paramExpr, loc);
+		// #ptr!base
+		final Expression ptrBase = mMemoryPointer.pointerAddress(ptrExpr, loc);
+
+		// #p!base >= #ptr!base
+		final Expression baseGreaterThanExpr = constructPointerBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, paramBase, ptrBase);
+
+		// #ptr!base+#amount
+		final Expression basePlusAmountExpr =
+				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, ptrBase, amountExpr);
+
+		// #p!base < (#ptr!base+#amount))
+		final Expression paramBaseSmallerThanExpr = constructPointerBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessThan, paramBase, basePlusAmountExpr);
+
+		// (#p!base >= #ptr!base && #p!base < (#ptr!base+#amount))
+		final Expression andExpr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseGreaterThanExpr,
+				paramBaseSmallerThanExpr);
+
+		// #memory_int[#p] == #value
+		final Expression arrayCompare = MemoryModelExpressionHelper.ensuresArrayHasValue(loc, valueExpr, paramExpr,
+				hda.getIdentifierExpression());
+
+		// (#p!base >= #ptr!base && #p!base < (#ptr!base+#amount)) ==> #memory_int[#p] == #value
+		final Expression inner =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICIMPLIES, andExpr, arrayCompare);
+
+		final Expression result = ExpressionFactory.quantifier(loc, true, Collections.singletonList(paramVar), inner);
+
+		return Collections.singletonList(result);
 	}
 }

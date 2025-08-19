@@ -35,6 +35,7 @@ public final class RequiredMemoryModelFeatures {
 	 */
 	private boolean mMemoryStructureInfrastructureRequired;
 
+	private final Set<CPrimitives> mMemsetRequired; // Holds the primitives which need a memset procedure.
 	private final Set<CPrimitives> mDataOnHeapRequired;
 	private final Set<CPrimitives> mDataUncheckedWriteRequired;
 	private final Set<CPrimitives> mDataInitWriteRequired;
@@ -63,6 +64,7 @@ public final class RequiredMemoryModelFeatures {
 	private final List<MemoryModelDeclarations> mMetaDataDeclarations;
 
 	public RequiredMemoryModelFeatures(final List<MemoryModelDeclarations> metaDataDeclarations) {
+		mMemsetRequired = new HashSet<>();
 		mDataOnHeapRequired = new HashSet<>();
 		mRequiredMemoryStructureDeclarations = new HashSet<>();
 		mDataUncheckedWriteRequired = new HashSet<>();
@@ -89,6 +91,22 @@ public final class RequiredMemoryModelFeatures {
 		}
 
 		return true;
+	}
+
+	/** Reports that a memset procedure for this primitive is required */
+	public boolean reportMemsetForTypeRequired(final CPrimitives primitive) {
+		if (mMemsetRequired.contains(primitive)) {
+			return false;
+		}
+		checkNotFrozen();
+		requireMemoryStructureInfrastructure();
+		mMemsetRequired.add(primitive);
+		return true;
+	}
+
+	/** Returns all primitives that require a memset procedure */
+	public Set<CPrimitives> memSetForTypeRequired() {
+		return mMemsetRequired;
 	}
 
 	public boolean reportPointerOnHeapRequired() {

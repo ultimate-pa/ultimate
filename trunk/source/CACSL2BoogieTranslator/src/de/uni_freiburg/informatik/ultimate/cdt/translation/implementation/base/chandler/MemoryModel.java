@@ -504,4 +504,16 @@ public class MemoryModel {
 				ptrIdExprImpl, resultLhsImpl, resultExprImpl, sizeIdExprImpl, requiredFeatures,
 				memoryModelDeclarationsHandler);
 	}
+
+	/**
+	 * Constructs the quantor specifications for memset.
+	 *
+	 * @return The specifications.
+	 */
+	public List<Expression> constructMemsetQuantorExpressions(final ILocation loc, final String procedureName,
+			final Expression ptrExpr, final Expression amountExpr, final Expression valueExpr,
+			final HeapDataArray hda) {
+		return mMemoryAddressing.constructMemsetQuantorSpecificationExpressions(loc, procedureName, ptrExpr, amountExpr,
+				valueExpr, hda);
+	}
 }

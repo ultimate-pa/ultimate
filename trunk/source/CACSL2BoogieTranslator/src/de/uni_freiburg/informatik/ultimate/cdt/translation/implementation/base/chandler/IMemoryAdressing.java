@@ -244,4 +244,12 @@ public interface IMemoryAdressing {
 			final IdentifierExpression resultExprImpl, final IdentifierExpression sizeIdExprImpl,
 			final RequiredMemoryModelFeatures requiredFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Constructs the quantor expressions for memset.
+	 *
+	 * @return The expressions.
+	 */
+	List<Expression> constructMemsetQuantorSpecificationExpressions(final ILocation loc, final String procedureName,
+			final Expression ptrExpr, final Expression amountExpr, final Expression valueExpr, final HeapDataArray hda);
 }

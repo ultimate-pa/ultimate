@@ -246,4 +246,33 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 
 		return offsetDifferenceDividedByTypesize;
 	}
+
+	/**
+	 * Create an arithmetic expression from a pointer component (base or offset) and another expression.
+	 *
+	 * @param op
+	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
+	 * @returns The expression.
+	 */
+	protected Expression constructPointerBinaryArithmeticExpression(final ILocation loc, final int op,
+			final Expression left, final Expression right) {
+		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+		return mExpressionTranslation.constructArithmeticExpression(loc, op, left, cTypeOfPointerComponent, right,
+				cTypeOfPointerComponent);
+	}
+
+	/**
+	 * Compare a pointer component (base or offset) to another expression.
+	 *
+	 * @param op
+	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
+	 * @return The expression.
+	 */
+	protected Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
+			final Expression left, final Expression right) {
+		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left, cTypeOfPointerComponent, right,
+				cTypeOfPointerComponent);
+	}
 }
