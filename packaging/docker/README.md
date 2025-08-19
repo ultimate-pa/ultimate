@@ -43,7 +43,7 @@ As an expected result, you should then receive the Ultimate version output from 
 
 If you want to run Ultimate interactively for any verification input, you can spwan a bash in a created and started Ultimate `PRODUCT` container as follows.
 ```shell
-docker run -it <PRODUCT> /bin/bash
+docker run -it <PRODUCT>
 <PRODUCT> -tc <TOOLCHAIN> -s <SETTINGS> -i <PROGRAM>
 ```
 Calling the Ultimate `PRODUCT` within the container then follows as usual, where a `TOOLCHAIN`, `SETTINGS`, and `PROGRAM` file should be specified for a verification run.
