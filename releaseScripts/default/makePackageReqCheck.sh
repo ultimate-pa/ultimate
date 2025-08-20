@@ -11,12 +11,15 @@ if [[ ! -d "${DIR}" ]]; then DIR="${PWD}"; fi
 source "${DIR}/makeSettings.sh"
 
 # Start the actual script
-if [ "${#}" -lt 4 ]; then
+if [ "${#}" -lt 7 ]; then
     echo "Not enough arguments supplied -- use arguments in the following order"
 	echo "1. the toolname"
-	echo "2. 'linux' or 'win32' for the target platform"
-	echo "3. ReqCheck toolchain (e.g., 'ReqCheck.xml')"
-	echo "4. TestGen toolchain (e.g., 'ReqToTest.xml')"
+	echo "2. the launcher name"
+	echo "3. the maximum heap memory size"
+	echo "4. the maximum stack memory size"
+	echo "5. 'linux' or 'win32' for the target platform"
+	echo "6. ReqCheck toolchain (e.g., 'ReqCheck.xml')"
+	echo "7. TestGen toolchain (e.g., 'ReqToTest.xml')"
     exit 1
 fi
 
@@ -42,18 +45,18 @@ ADDS=(
 )
 
 # Architecture-specific variables
-if [ "${2}" == "linux" ]; then
+if [ "${5}" == "linux" ]; then
     echo "Packaging for linux..."
 	ARCH="linux"
 	ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
     ADDS+=("adds/z3" "adds/cvc4nyu" "adds/cvc4" "adds/mathsat")
-elif [ "${2}" == "win32" ]; then
+elif [ "${5}" == "win32" ]; then
 	echo "Packaging for win32..."
 	ARCH="win32"
 	ARCHPATH="products/CLI-E4/win32/win32/x86_64"
     ADDS+=("adds/z3.exe" "adds/cvc4nyu.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll")
 else
-    echo "Wrong argument: ""${2}"" -- use 'linux' or 'win32'"
+    echo "Wrong argument: ""${5}"" -- use 'linux' or 'win32'"
 	exit 1
 fi
 
@@ -67,15 +70,15 @@ DATADIR="${TARGETDIR}"/data
 SETTINGS="../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*"
 
 # Check toolchain argument
-if [ ! -z "${3}" -a ! "NONE" = "${3}" ]; then
-	TOOLCHAIN="../../trunk/examples/toolchains/${3}"
+if [ ! -z "${6}" -a ! "NONE" = "${6}" ]; then
+	TOOLCHAIN="../../trunk/examples/toolchains/${6}"
 else
 	echo "No reach toolchain specified, ommitting..."
 	TOOLCHAIN=
 fi
 
-if [ ! -z "${4}" -a ! "NONE" = "${4}" ]; then
-	TESTTOOLCHAIN="../../trunk/examples/toolchains/${4}"
+if [ ! -z "${7}" -a ! "NONE" = "${7}" ]; then
+	TESTTOOLCHAIN="../../trunk/examples/toolchains/${7}"
 else
 	echo "No test toolchain specified, ommitting..."
 	TESTTOOLCHAIN=""
@@ -102,3 +105,6 @@ exit_on_fail cp ${SETTINGS} "${CONFIGDIR}"/.
 for add in "${ADDS[@]}" ; do
     exit_on_fail cp "${add}" "${TARGETDIR}/"
 done
+
+setup_ultimate_product_info "${TARGETDIR}" "${2}" "${TOOLNAME}" "${VERSION}"
+setup_ultimate_product_memory "${TARGETDIR}" "${2}" "${3}" "${4}"

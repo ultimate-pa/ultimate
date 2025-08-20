@@ -11,16 +11,19 @@ if [[ ! -d "${DIR}" ]]; then DIR="${PWD}"; fi
 source "${DIR}/makeSettings.sh"
 
 # Start the actual script
-if [ "${#}" -le 2 ]; then
+if [ "${#}" -le 5 ]; then
   echo "Not enough arguments supplied -- use arguments in the following order"
-  echo "1. the toolname"
-  echo "2. 'linux' or 'win32' for the target platform"
-  echo "3. (optional) the reach toolchain (e.g., 'AutomizerC_WitnessPrinter.xml')"
-  echo "4. (optional) the termination toolchain or NONE"
-  echo "5. (optional) the witness validation toolchain or NONE"
-  echo "6. (optional) the memsafety deref and memtrack toolchain or NONE"
-  echo "7. (optional) the ltl toolchain or NONE"
-  echo "8. (optional) the termination witness validation toolchain or NONE"
+  echo " 1. the toolname"
+  echo " 2. the launcher name"
+  echo " 3. the maximum heap memory size"
+  echo " 4. the maximum stack memory size"
+  echo " 5. 'linux' or 'win32' for the target platform"
+  echo " 6. (optional) the reach toolchain (e.g., 'AutomizerC_WitnessPrinter.xml')"
+  echo " 7. (optional) the termination toolchain or NONE"
+  echo " 8. (optional) the witness validation toolchain or NONE"
+  echo " 9. (optional) the memsafety deref and memtrack toolchain or NONE"
+  echo "10. (optional) the ltl toolchain or NONE"
+  echo "11. (optional) the termination witness validation toolchain or NONE"
   exit 1
 fi
 
@@ -42,23 +45,22 @@ ADDS=(
   "adds/mathsat-LICENSE"
   "adds/ltl2ba-LICENSE"
   "adds/Ultimate.py"
-  "adds/Ultimate.ini"
   "adds/README"
 )
 
 # Architecture-specific variables
-if [ "${2}" == "linux" ]; then
+if [ "${5}" == "linux" ]; then
   echo "Packaging for linux..."
   ARCH="linux"
   ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
   ADDS+=("adds/z3" "adds/cvc4" "adds/mathsat" "adds/ltl2ba")
-elif [ "${2}" == "win32" ]; then
+elif [ "${5}" == "win32" ]; then
   echo "Packaging for win32..."
   ARCH="win32"
   ARCHPATH="products/CLI-E4/win32/win32/x86_64"
   ADDS+=("adds/z3.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll" "adds/mathsat.dll" "adds/ltl2ba.exe")
 else
-  echo "Wrong argument: ""${2}"" -- use 'linux' or 'win32'"
+  echo "Wrong argument: ""${5}"" -- use 'linux' or 'win32'"
   exit 1
 fi
 
@@ -72,43 +74,43 @@ DATADIR="${TARGETDIR}"/data
 SETTINGS="../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*"
 
 # Check all toolchain arguments
-if [ -n "${3}" -a ! "NONE" = "${3}" ]; then
-  TOOLCHAIN="../../trunk/examples/toolchains/${3}"
+if [ -n "${6}" -a ! "NONE" = "${6}" ]; then
+  TOOLCHAIN="../../trunk/examples/toolchains/${6}"
 else
   echo "No reach toolchain specified, ommitting..."
   TOOLCHAIN=""
 fi
 
-if [ ! -z "${4}" -a ! "NONE" = "${4}" ]; then
-  TERMTOOLCHAIN="../../trunk/examples/toolchains/${4}"
+if [ ! -z "${7}" -a ! "NONE" = "${7}" ]; then
+  TERMTOOLCHAIN="../../trunk/examples/toolchains/${7}"
 else
   echo "No termination toolchain specified, ommitting..."
   TERMTOOLCHAIN=""
 fi
 
-if [ ! -z "${5}" -a ! "NONE" = "${5}" ]; then
-  VALTOOLCHAIN="../../trunk/examples/toolchains/${5}"
+if [ ! -z "${8}" -a ! "NONE" = "${8}" ]; then
+  VALTOOLCHAIN="../../trunk/examples/toolchains/${8}"
 else
   echo "No witness validation toolchain specified, ommitting..."
   VALTOOLCHAIN=""
 fi
 
-if [ ! -z "${6}" -a ! "NONE" = "${6}" ]; then
-  MEMDEREFMEMTRACKTOOLCHAIN="../../trunk/examples/toolchains/${6}"
+if [ ! -z "${9}" -a ! "NONE" = "${9}" ]; then
+  MEMDEREFMEMTRACKTOOLCHAIN="../../trunk/examples/toolchains/${9}"
 else
   echo "No memory deref toolchain specified, ommitting..."
   MEMDEREFMEMTRACKTOOLCHAIN=""
 fi
 
-if [ ! -z "${7}" -a ! "NONE" = "${7}" ]; then
-  LTLTOOLCHAIN="../../trunk/examples/toolchains/${7}"
+if [ ! -z "${10}" -a ! "NONE" = "${10}" ]; then
+  LTLTOOLCHAIN="../../trunk/examples/toolchains/${10}"
 else
   echo "No LTL toolchain specified, ommitting..."
   LTLTOOLCHAIN=""
 fi
 
-if [ ! -z "${8}" -a ! "NONE" = "${8}" ]; then
-  TERMVALTOOLCHAIN="../../trunk/examples/toolchains/${8}"
+if [ ! -z "${11}" -a ! "NONE" = "${11}" ]; then
+  TERMVALTOOLCHAIN="../../trunk/examples/toolchains/${11}"
 else
   echo "No termination witness validation toolchain specified, ommitting..."
   TERMVALTOOLCHAIN=""
@@ -140,10 +142,5 @@ for add in "${ADDS[@]}" ; do
   exit_on_fail cp "${add}" "${TARGETDIR}/"
 done
 
-echo "Modifying Ultimate.py with version and toolname"
-# Replacing version value in Ultimate.py
-exit_on_fail sed -i "s/^version =.*$/version = \'${VERSION}\'/g" "${TARGETDIR}"/Ultimate.py
-# Replacing toolname value in Ultimate.py
-exit_on_fail sed -i "s/toolname =.*$/toolname = \'${TOOLNAME}\'/g" "${TARGETDIR}"/Ultimate.py
-# Adjust permission to execute Ultimate.py
-exit_on_fail chmod a+x "${TARGETDIR}"/Ultimate.py
+setup_ultimate_product_info "${TARGETDIR}" "${2}" "${TOOLNAME}" "${VERSION}"
+setup_ultimate_product_memory "${TARGETDIR}" "${2}" "${3}" "${4}"

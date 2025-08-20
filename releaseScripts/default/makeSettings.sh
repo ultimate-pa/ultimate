@@ -57,6 +57,44 @@ test_cmd_version_greater_equal() {
   fi
 }
 
+setup_ultimate_product_info() {
+  local PRODUCT_PATH="${1}"
+  local PRODUCT_LAUNCHER="${2}"
+  local PRODUCT_NAME="${3}"
+  local PRODUCT_VERSION="${4}"
+
+  if [[ -f "${PRODUCT_PATH}/Ultimate.py" ]]; then
+    echo "Setup version and toolname for Ultimate.py"
+    # Replacing toolname value in Ultimate.py
+    exit_on_fail sed -i "s/^toolname =.*$/toolname = \'${PRODUCT_NAME}\'/g" "${PRODUCT_PATH}/Ultimate.py"
+    # Replacing version value in Ultimate.py
+    exit_on_fail sed -i "s/^version =.*$/version = \'${PRODUCT_VERSION}\'/g" "${PRODUCT_PATH}/Ultimate.py"
+    # Adjust permission to execute Ultimate.py
+    exit_on_fail chmod a+x "${PRODUCT_PATH}/Ultimate.py"
+  fi
+
+  if [[ -f "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}" ]]; then
+    echo "Change permissions to run ${PRODUCT_LAUNCHER}"
+    # Adjust permission to execute product launcher (e.g., 'Ultimate' launcher executable)
+    exit_on_fail chmod a+x "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}"
+  fi
+}
+
+setup_ultimate_product_memory() {
+  local PRODUCT_PATH="${1}"
+  local PRODUCT_LAUNCHER="${2}"
+  local PRODUCT_MEM_HEAP_MAX="${3}"
+  local PRODUCT_MEM_STACK_MAX="${4}"
+
+  if [[ -f "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini" ]]; then
+    echo "Setup maximum stack and heap size for ${PRODUCT_LAUNCHER}"
+    # Replacing maximum heap memory value in *.ini
+    exit_on_fail sed -i "s/^-Xmx.*$/-Xmx${PRODUCT_MEM_HEAP_MAX}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
+    # Replacing maximum stack memory value in *.ini
+    exit_on_fail sed -i "s/^-Xms.*$/-Xms${PRODUCT_MEM_STACK_MAX}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
+  fi
+}
+
 get_cmd_version() {
   ${@} | grep -m1 -Eo "([[:digit:]]+\.)+[[:digit:]]+"
 }
@@ -66,6 +104,13 @@ print_cmd_version() {
   local CMD_NAME="${2}"
 
   printf '%s: %s\n' "${CMD_NAME}" "${CMD_VERS}"
+}
+
+print_memory_size() {
+  local MEM_SIZE="${1}"
+  local MEM_NAME="${2}"
+
+  printf '%s: %s\n' "${MEM_NAME}" "${MEM_SIZE}"
 }
 
 print_newline() {
