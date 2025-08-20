@@ -6,7 +6,7 @@ services:
       dockerfile: "Dockerfile"
       target: "ultimate-webbackend"
       args:
-        ULTIMATE_TMP_DIR: "${ULTIMATE_TMP_DIR-/tmp/ultimate}"
+        ULTIMATE_DIR_TMP: "${ULTIMATE_DIR_TMP-/tmp/ultimate}"
     image: "ultimate-webbackend"
     environment:
       ULTIMATE_BACKEND_HOST: "${ULTIMATE_BACKEND_HOST-localhost}"
