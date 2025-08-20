@@ -102,7 +102,7 @@ RUN mkdir -p "${USER_HOME}" && \
 WORKDIR "${USER_HOME}"
 
 # make Ultimate executable, scripts, and solvers available
-ENV PATH="${USER_HOME}:${PATH}"
+RUN echo "export PATH=\"${USER_HOME}:${PATH}\"" > /etc/profile.d/ultimate_path.sh
 
 # enable colorized prompt
 RUN ln -s /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh
