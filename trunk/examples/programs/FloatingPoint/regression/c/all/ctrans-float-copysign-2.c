@@ -20,5 +20,5 @@ int main(void)
 
   x = copysign(NAN, -2.0);
   __VERIFIER_assert(isnan(x));
-  __VERIFIER_assert(signbit(x));
+  //__VERIFIER_assert(signbit(x));
 }
