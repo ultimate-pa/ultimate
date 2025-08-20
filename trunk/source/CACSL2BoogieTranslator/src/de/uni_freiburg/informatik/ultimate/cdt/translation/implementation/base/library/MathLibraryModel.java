@@ -282,8 +282,6 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("isnormal", this::handleIsNormal));
 
 		// http://en.cppreference.com/w/c/numeric/math/signbit
-		// TODO: Handle negative NaN correctly, only overapproximated until then
-		// signbit(x) := isNegative(x) ? 1 : 0;
 		result.add(new FunctionModel("signbit", this::handleSignbit));
 		result.add(new FunctionModel("__signbit", this::handleSignbit));
 		result.add(new FunctionModel("__signbitl", this::handleSignbit));
@@ -291,7 +289,6 @@ public class MathLibraryModel implements ILibraryModel {
 
 		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
 		// if second is negative, return -abs(first), else return abs(first)
-		// TODO: Overapproximate if second is NaN
 		result.add(new FunctionModel("copysign",
 				(main, node, loc, name) -> handleCopysign(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("copysignf",
@@ -974,6 +971,8 @@ public class MathLibraryModel implements ILibraryModel {
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType, AUXVAR.RETURNED);
 		builder.addAuxVarWithDeclaration(auxVar);
 		final Statement nondet = new HavocStatement(loc, new VariableLHS[] { auxVar.getLhs() });
+		// TODO: Handle negative NaN correctly, only overapproximated until then
+		// signbit(x) := isNegative(x) ? 1 : 0;
 		new OverapproxVariable("sign of NaN", loc).annotate(nondet);
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.ZERO);
 		builder.addStatement(StatementFactory.constructIfStatement(loc,
@@ -1009,6 +1008,7 @@ public class MathLibraryModel implements ILibraryModel {
 								loc, IASTBinaryExpression.op_equals, auxVar.getExp(), type, mExpressionTranslation
 										.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, first, type),
 								type)));
+		// TODO: Overapproximate if second is NaN
 		new OverapproxVariable("sign of NaN", loc).annotate(nondet);
 		builder.addStatement(StatementFactory.constructIfStatement(loc, mExpressionTranslation.isNan(loc, first, type),
 				// If the first argument is NaN, just return it. This works for now, as we cannot handle negative NaN
