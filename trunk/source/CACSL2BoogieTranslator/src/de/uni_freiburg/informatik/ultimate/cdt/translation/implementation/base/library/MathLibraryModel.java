@@ -428,14 +428,12 @@ public class MathLibraryModel implements ILibraryModel {
 		 * fmod functions return zero is implementation- defined.
 		 */
 		// fmod guarantees that the return value is the same sign as the first argument (x)
-		// fmod(x,y) := copysign(remainder(x,y), x)
-		// TODO: Only overapproximated until unsoundness can be investigated
-		result.add(new FunctionModel("fmod", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
-				loc, name, 2, new CPrimitive(CPrimitives.DOUBLE))));
-		result.add(new FunctionModel("fmodf", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
-				loc, name, 2, new CPrimitive(CPrimitives.FLOAT))));
-		result.add(new FunctionModel("fmodl", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
-				loc, name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
+		result.add(new FunctionModel("fmod",
+				(main, node, loc, name) -> handleFmod(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("fmodf",
+				(main, node, loc, name) -> handleFmod(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("fmodl",
+				(main, node, loc, name) -> handleFmod(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
 		return result;
 	}
@@ -993,7 +991,13 @@ public class MathLibraryModel implements ILibraryModel {
 		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
 		final Expression first = arguments.get(0).getLrValue().getValue();
 		final Expression second = arguments.get(1).getLrValue().getValue();
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(arguments);
+		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
+				.addAllIncludingLrValue(handleCopysign(first, second, loc, type)).build();
+	}
+
+	private ExpressionResult handleCopysign(final Expression first, final Expression second, final ILocation loc,
+			final CPrimitive type) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
 		builder.addAuxVarWithDeclaration(auxVar);
 		final Expression abs = mExpressionTranslation.abs(loc, first, type);
@@ -1028,6 +1032,26 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression second = arguments.get(1).getLrValue().getValue();
 		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
 				.setLrValue(new RValue(mExpressionTranslation.remainder(loc, first, second, type), type)).build();
+	}
+
+	private ExpressionResult handleFmod(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
+		final Expression first = arguments.get(0).getLrValue().getValue();
+		final Expression second = arguments.get(1).getLrValue().getValue();
+		// fmod(x, y) {
+		// r = remainder(fabs(x), fabs(y));
+		// pr = isPositive(r) ? r : r + y;
+		// return copysign(pr, x)
+		// }
+		final Expression remainder = mExpressionTranslation.remainder(loc, mExpressionTranslation.abs(loc, first, type),
+				mExpressionTranslation.abs(loc, second, type), type);
+		final Expression positiveRemainder = ExpressionFactory.constructIfThenElseExpression(loc,
+				mExpressionTranslation.isPositive(loc, remainder, type), remainder,
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, remainder, type,
+						second, type));
+		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
+				.addAllIncludingLrValue(handleCopysign(positiveRemainder, first, loc, type)).build();
 	}
 
 	@Override
