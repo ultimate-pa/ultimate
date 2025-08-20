@@ -468,6 +468,10 @@ ENV ULTIMATE_TIMEOUT=90
 # create directory to store temporary files
 RUN mkdir -p "${ULTIMATE_DIR_TMP}"
 
+# install runtime dependencies for the WebBackend
+RUN apk add --no-cache "gcc" \
+                       "libc-dev"
+
 # install 'dockerize' for automatic configuration file creation
 ENV DOCKERIZE_VERSION="v0.9.5"
 RUN apk add --no-cache "wget" \
