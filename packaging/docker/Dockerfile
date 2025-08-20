@@ -500,14 +500,17 @@ ENV ULTIMATE_FRONTEND_SERVE="False"
 ENV ULTIMATE_FRONTEND_PATH="${USER_HOME}"
 ENV ULTIMATE_FRONTEND_ROUTE="/website"
 
-# expose communication port of the Webbackend
+# expose communication port of the WebBackend
 EXPOSE "${ULTIMATE_BACKEND_PORT}"
 
-# define health check to supervise the Ultimate Webbackend's availability 
+# define health check to supervise the Ultimate WebBackend's availability
 HEALTHCHECK --interval=1m --timeout=10s --start-period=20s \
     CMD curl -f "http://${ULTIMATE_BACKEND_HOST}:${ULTIMATE_BACKEND_PORT}${ULTIMATE_BACKEND_ROUTE}" || exit 1
 
-# default entry point to automatically configure and start the Ultimate Webbackend product
+# append WebBackend executable and solvers directory to the PATH environment variable to ensure they are accessible by the Docker entrypoint command
+ENV PATH="${USER_HOME}:${PATH}"
+
+# default entry point to automatically configure and start the Ultimate WebBackend product
 ENTRYPOINT ["dockerize", "-template", "web.config.properties.tpl:web.config.properties", \
                          "-template", "WebBackend.ini.tpl:WebBackend.ini", \
                          "WebBackend"]
