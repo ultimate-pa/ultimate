@@ -104,6 +104,9 @@ WORKDIR "${USER_HOME}"
 # make Ultimate executable, scripts, and solvers available
 ENV PATH="${USER_HOME}:${PATH}"
 
+# enable colorized prompt
+RUN ln -s /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh
+
 # add Welcome script to print Ultimate version
 ADD "welcome.sh" "/etc/profile.d/welcome.sh"
 
