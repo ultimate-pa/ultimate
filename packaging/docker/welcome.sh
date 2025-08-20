@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ULTIMATE_CONFIG_PATH="config"
+ULTIMATE_CONFIG_PATH="/home/ultimate/config"
 
 check_and_print_version() {
     for cmd in "${@}"; do
@@ -14,7 +14,7 @@ check_and_print_version() {
 check_and_print_config() {
     if [ -d "${ULTIMATE_CONFIG_PATH}" ] && [ "$(ls -A "${ULTIMATE_CONFIG_PATH}")" ]; then
         export ULTIMATE_CONFIG_PATH="${ULTIMATE_CONFIG_PATH}"
-        echo "Product-specific toolchain and setting files for Ultimate are available at: ${PWD}/${ULTIMATE_CONFIG_PATH}"
+        echo "Product-specific toolchain and setting files for Ultimate are available at: ${ULTIMATE_CONFIG_PATH}"
         echo "You can access the configuration directory via the environment variable 'ULTIMATE_CONFIG_PATH'."
     else
         echo "Product-specific toolchain and setting files for Ultimate are not part of this installation."
