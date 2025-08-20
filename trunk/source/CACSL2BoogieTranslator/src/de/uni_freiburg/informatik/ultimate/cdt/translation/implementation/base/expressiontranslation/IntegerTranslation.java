@@ -861,4 +861,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive type) {
 		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
 	}
+
+	@Override
+	public Expression remainder(final ILocation loc, final Expression firstArgument, final Expression secondArgument,
+			final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
 }

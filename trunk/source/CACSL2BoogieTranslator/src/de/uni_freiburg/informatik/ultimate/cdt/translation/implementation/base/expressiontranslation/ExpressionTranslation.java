@@ -575,6 +575,9 @@ public abstract class ExpressionTranslation {
 
 	public abstract Expression max(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
 
+	public abstract Expression remainder(ILocation loc, Expression firstArgument, Expression secondArgument,
+			CPrimitive type);
+
 	public static Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
 		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox(reason, loc).annotate(assertFalse);

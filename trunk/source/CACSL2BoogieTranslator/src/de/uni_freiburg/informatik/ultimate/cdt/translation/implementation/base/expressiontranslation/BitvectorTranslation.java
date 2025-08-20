@@ -1364,4 +1364,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final CPrimitive type) {
 		return delegateOtherBinaryFloatOperationToSmt(loc, firstArgument, secondArgument, "fp.max", type);
 	}
+
+	@Override
+	public Expression remainder(final ILocation loc, final Expression firstArgument, final Expression secondArgument,
+			final CPrimitive type) {
+		return delegateOtherBinaryFloatOperationToSmt(loc, firstArgument, secondArgument, "fp.rem", type);
+	}
 }

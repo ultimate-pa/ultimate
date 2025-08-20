@@ -411,13 +411,12 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("islessgreater", this::handleIsLessGreater));
 
 		// see 7.12.10.2 or http://en.cppreference.com/w/c/numeric/math/remainder
-		// TODO: Only overapproximated until unsoundness can be investigated
-		result.add(new FunctionModel("remainder", (main, node, loc, name) -> mHelper.handleByOverapproximation(main,
-				node, loc, name, 2, new CPrimitive(CPrimitives.DOUBLE))));
-		result.add(new FunctionModel("remainderf", (main, node, loc, name) -> mHelper.handleByOverapproximation(main,
-				node, loc, name, 2, new CPrimitive(CPrimitives.FLOAT))));
-		result.add(new FunctionModel("remainderl", (main, node, loc, name) -> mHelper.handleByOverapproximation(main,
-				node, loc, name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
+		result.add(new FunctionModel("remainder",
+				(main, node, loc, name) -> handleRemainder(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("remainderf",
+				(main, node, loc, name) -> handleRemainder(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("remainderl", (main, node, loc, name) -> handleRemainder(main, node, loc, name,
+				new CPrimitive(CPrimitives.LONGDOUBLE))));
 
 		/**
 		 * 7.12.10.1 The fmod functions
@@ -1020,6 +1019,15 @@ public class MathLibraryModel implements ILibraryModel {
 										mExpressionTranslation.constructUnaryExpression(loc,
 												IASTUnaryExpression.op_minus, abs, type))))))));
 		return builder.setLrValue(new RValue(auxVar.getExp(), type)).build();
+	}
+
+	private ExpressionResult handleRemainder(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
+		final Expression first = arguments.get(0).getLrValue().getValue();
+		final Expression second = arguments.get(1).getLrValue().getValue();
+		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
+				.setLrValue(new RValue(mExpressionTranslation.remainder(loc, first, second, type), type)).build();
 	}
 
 	@Override
