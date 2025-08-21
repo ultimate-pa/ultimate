@@ -25,7 +25,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
@@ -55,11 +57,14 @@ public final class ConstructMemcpyOrMemmove {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TypeSizes mTypeSizes;
 	private final DataRaceChecker mDataRaceChecker;
+	private final TranslationSettings mSettings;
+	private final MemoryModel mMemoryModel;
 
 	public ConstructMemcpyOrMemmove(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final TypeSizes typeSizes, final DataRaceChecker dataRaceChecker) {
+			final TypeSizes typeSizes, final DataRaceChecker dataRaceChecker, final TranslationSettings settings,
+			final MemoryModel memoryModel) {
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureHandler;
 		mTypeHandler = typeHandler;
@@ -68,6 +73,8 @@ public final class ConstructMemcpyOrMemmove {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mTypeSizes = typeSizes;
 		mDataRaceChecker = dataRaceChecker;
+		mSettings = settings;
+		mMemoryModel = memoryModel;
 	}
 
 	/**
@@ -100,69 +107,96 @@ public final class ConstructMemcpyOrMemmove {
 		final VarList[] inParams = { inPDest, inPSrc, inPSize };
 		final VarList[] outParams = { outP };
 
-		{
-			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),
-					new String[0], inParams, outParams, new Specification[0], null);
-			mProcedureManager.beginCustomProcedure(main, ignoreLoc, memCopyOrMemMove.getName(), memCpyProcDecl);
-		}
+		final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),
+				new String[0], inParams, outParams, new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(main, ignoreLoc, memCopyOrMemMove.getName(), memCpyProcDecl);
 
 		final List<Declaration> bodyDecl = new ArrayList<>();
 		final List<Statement> stmt = new ArrayList<>();
 
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 
-		{
-			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
-			bodyDecl.add(loopCtrAux.getVarDec());
-
-			final ExpressionResult loopBody = constructMemcpyOrMemmoveDataLoopAssignment(loopCtrAux, SFO.MEMCPY_DEST,
-					SFO.MEMCPY_SRC, memCopyOrMemMove.getName());
-			bodyDecl.addAll(loopBody.getDeclarations());
-
-			final IdentifierExpression sizeIdExprBody = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-					mTypeHandler.getBoogieTypeForSizeT(), SFO.MEMCPY_SIZE,
-					new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
-
-			final Expression one = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-
-			stmt.addAll(mMemoryHandler.constructCountingLoop(
-					mMemoryHandler.constructBoundExitCondition(sizeIdExprBody, loopCtrAux), loopCtrAux, one,
-					loopBody.getStatements()));
-		}
-
-		{
-			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
-			bodyDecl.add(loopCtrAux.getVarDec());
-
-			final ExpressionResult loopBody = constructMemcpyOrMemmovePointerLoopAssignment(loopCtrAux, SFO.MEMCPY_DEST,
-					SFO.MEMCPY_SRC, memCopyOrMemMove.getName());
-			bodyDecl.addAll(loopBody.getDeclarations());
-
-			final IdentifierExpression sizeIdExprBody = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-					mTypeHandler.getBoogieTypeForSizeT(), SFO.MEMCPY_SIZE,
-					new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
-
-			final Expression pointerSize = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
-					mExpressionTranslation.getCTypeOfPointerComponents(),
-					new BigInteger(Integer.toString(mTypeSizes.getSizeOfPointer())));
-
-			stmt.addAll(mMemoryHandler.constructCountingLoop(
-					mMemoryHandler.constructBoundExitCondition(sizeIdExprBody, loopCtrAux), loopCtrAux, pointerSize,
-					loopBody.getStatements()));
-		}
-
-		final Body procBody =
-				mProcedureManager.constructBody(ignoreLoc, bodyDecl.toArray(new VariableDeclaration[bodyDecl.size()]),
-						stmt.toArray(new Statement[stmt.size()]), memCopyOrMemMove.getName());
-
 		// make the specifications
 		final ArrayList<Specification> specs = new ArrayList<>();
 
-		final IdentifierExpression sizeIdExprDecl = // new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
-				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
-						SFO.MEMCPY_SIZE,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
+		final IdentifierExpression sizeIdExprDecl = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+				mTypeHandler.getBoogieTypeForSizeT(), SFO.MEMCPY_SIZE,
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
+
+		final IdentifierExpression destExprDecl = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+				mTypeHandler.getBoogiePointerType(), SFO.MEMCPY_DEST,
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
+
+		if (mSettings.useQuantorsInMemoryFunctions()) {
+			final IdentifierExpression srcExprDecl = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+					mTypeHandler.getBoogiePointerType(), SFO.MEMCPY_SRC,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
+
+			for (final var cPrim : mMemoryHandler.getRequiredMemoryStructureFeatures().getDataOnHeapRequired()) {
+				final var hda = mMemoryModel.getDataHeapArray(cPrim);
+				final var expressions = mMemoryModel.constructMemcpyMemmoveQuantorExpressions(ignoreLoc, hda,
+						sizeIdExprDecl, destExprDecl, srcExprDecl);
+
+				for (final var expr : expressions) {
+					final var ensuresSpec = mProcedureManager.constructEnsuresSpecification(ignoreLoc, false, expr,
+							Collections.singleton(hda.getVariableLHS()));
+					specs.add(ensuresSpec);
+				}
+			}
+
+		} else {
+			{
+				final AuxVarInfo loopCtrAux =
+						mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
+				bodyDecl.add(loopCtrAux.getVarDec());
+
+				final ExpressionResult loopBody = constructMemcpyOrMemmoveDataLoopAssignment(loopCtrAux,
+						SFO.MEMCPY_DEST, SFO.MEMCPY_SRC, memCopyOrMemMove.getName());
+				bodyDecl.addAll(loopBody.getDeclarations());
+
+				final IdentifierExpression sizeIdExprBody = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+						mTypeHandler.getBoogieTypeForSizeT(), SFO.MEMCPY_SIZE,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
+
+				final Expression one = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
+
+				stmt.addAll(mMemoryHandler.constructCountingLoop(
+						mMemoryHandler.constructBoundExitCondition(sizeIdExprBody, loopCtrAux), loopCtrAux, one,
+						loopBody.getStatements()));
+			}
+
+			{
+				final AuxVarInfo loopCtrAux =
+						mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
+				bodyDecl.add(loopCtrAux.getVarDec());
+
+				final ExpressionResult loopBody = constructMemcpyOrMemmovePointerLoopAssignment(loopCtrAux,
+						SFO.MEMCPY_DEST, SFO.MEMCPY_SRC, memCopyOrMemMove.getName());
+				bodyDecl.addAll(loopBody.getDeclarations());
+
+				final IdentifierExpression sizeIdExprBody = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+						mTypeHandler.getBoogieTypeForSizeT(), SFO.MEMCPY_SIZE,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
+
+				final Expression pointerSize = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents(),
+						new BigInteger(Integer.toString(mTypeSizes.getSizeOfPointer())));
+
+				stmt.addAll(mMemoryHandler.constructCountingLoop(
+						mMemoryHandler.constructBoundExitCondition(sizeIdExprBody, loopCtrAux), loopCtrAux, pointerSize,
+						loopBody.getStatements()));
+			}
+
+			final Body procBody = mProcedureManager.constructBody(ignoreLoc,
+					bodyDecl.toArray(new VariableDeclaration[bodyDecl.size()]),
+					stmt.toArray(new Statement[stmt.size()]), memCopyOrMemMove.getName());
+
+			// add the procedure implementation
+			final Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),
+					new String[0], inParams, outParams, null, procBody);
+			memCpyDecl.add(memCpyProc);
+		}
 
 		// add requires #valid[dest!base];
 		specs.addAll(mMemoryHandler.constructPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST,
@@ -184,24 +218,14 @@ public final class ConstructMemcpyOrMemmove {
 				mProcedureManager.constructEnsuresSpecification(ignoreLoc, true,
 						ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
 								ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-										mTypeHandler.getBoogiePointerType(), SFO.RES,
-										new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
-												memCopyOrMemMove.getName())),
-								ExpressionFactory
-										.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
-												SFO.MEMCPY_DEST, new DeclarationInformation(
-														StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()))),
+										mTypeHandler.getBoogiePointerType(), SFO.RES, new DeclarationInformation(
+												StorageClass.PROC_FUNC_OUTPARAM, memCopyOrMemMove.getName())),
+								destExprDecl),
 						Collections.emptySet());
 		specs.add(returnValue);
 
 		// add the procedure declaration
 		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
-
-		// add the procedure implementation
-		final Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),
-				new String[0], inParams, outParams, null, procBody);
-		memCpyDecl.add(memCpyProc);
-
 		mProcedureManager.endCustomProcedure(main, memCopyOrMemMove.getName());
 
 		return memCpyDecl;
