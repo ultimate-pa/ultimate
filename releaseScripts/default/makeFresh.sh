@@ -68,7 +68,7 @@ archive_run() {
     print_newline
 
     print_heading "Archive Ultimate Debug UI [${PLATFORM}]"
-    exit_on_fail bash makePackageSmall.sh "Debug-E4" "${PLATFORM}"
+    exit_on_fail bash makeZip.sh "Debug-E4" "${PLATFORM}"
     print_newline
   done
 }
