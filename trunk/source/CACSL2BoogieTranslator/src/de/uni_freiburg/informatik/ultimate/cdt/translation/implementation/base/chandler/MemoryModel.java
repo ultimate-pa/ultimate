@@ -432,7 +432,7 @@ public class MemoryModel {
 	/**
 	 * Constructs the quantor specifications for memset.
 	 *
-	 * @return The specifications.
+	 * @return The expressions.
 	 */
 	public List<Expression> constructMemsetQuantorExpressions(final ILocation loc, final String procedureName,
 			final Expression ptrExpr, final Expression amountExpr, final Expression valueExpr,
@@ -440,4 +440,15 @@ public class MemoryModel {
 		return mMemoryAddressing.constructMemsetQuantorSpecificationExpressions(loc, procedureName, ptrExpr, amountExpr,
 				valueExpr, hda);
 	}
+
+	/**
+	 * Constructs the quantor specifications of memcpy/memmove for the given memory region.
+	 *
+	 * @return The expressions.
+	 */
+	public List<Expression> constructMemcpyMemmoveQuantorExpressions(final ILocation loc, final HeapDataArray hda,
+			final Expression sizeExpr, final Expression destExpr, final Expression srcExpr) {
+		return mMemoryAddressing.constructMemcpyMemmoveQuantorExpressions(loc, hda, sizeExpr, destExpr, srcExpr);
+	}
+
 }

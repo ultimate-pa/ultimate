@@ -33,11 +33,16 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -330,5 +335,77 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 
 		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left, cTypeOfPointerComponent, right,
 				cTypeOfPointerComponent);
+	}
+
+	/**
+	 * 1D and 2D Addressing can use the same code, because the necessary differences are already made in
+	 * addExpressionToPointer(). The comments above the expressions only show the 1D representation.
+	 */
+	@Override
+	public List<Expression> constructMemcpyMemmoveQuantorExpressions(final ILocation loc, final HeapDataArray hda,
+			final Expression sizeExpr, final Expression destExpr, final Expression srcExpr) {
+		// 2D: ensures (forall #i : int :: #i >= 0 && #i < size ==> #memory_int[{base: dest!base, offset: dest!offset +
+		// #i}]
+		// == old(#memory_int[{base: src!base, offset: src!offset + #i}]));
+
+		// 1D: ensures (forall #i : int :: #i >= 0 && #i < size ==> #memory_int[{base: dest!base + #i}] ==
+		// old(#memory_int[{base: src!base + #i}]));
+
+		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		// #i
+		final String paramName = "#i";
+		final Expression paramExpr =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogieTypeForPointerComponents(),
+						paramName, new DeclarationInformation(StorageClass.QUANTIFIED, null));
+
+		final VarList paramVar =
+				new VarList(loc, new String[] { paramName }, mTypeHandler.cType2AstType(loc, cTypeOfPointerComponent));
+
+		// 0
+		final var zeroNumericValueExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
+
+		// #i >= 0
+		final var paramGreaterZeroExpr =
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_greaterEqual,
+						paramExpr, cTypeOfPointerComponent, zeroNumericValueExpr, cTypeOfPointerComponent);
+
+		// #i < size
+		final var paramSmallerSizeExpr =
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
+						paramExpr, cTypeOfPointerComponent, sizeExpr, cTypeOfPointerComponent);
+
+		// #i >= 0 && #i < size
+		final var andExpr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, paramGreaterZeroExpr,
+				paramSmallerSizeExpr);
+
+		// dest!base + #i
+		final var destPlusParamExpr = addExpressionToPointer(loc, destExpr, paramExpr);
+
+		// src!base + #i
+		final var srcPlusParamExpr = addExpressionToPointer(loc, srcExpr, paramExpr);
+
+		// #memory_int[{base: src!base + #i}]
+		final var srcAccessExpr = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				hda.getIdentifierExpression(), new Expression[] { srcPlusParamExpr });
+
+		// old(#memory_int[{base: src!base + #i}])
+		final var oldSrcAccessExpr =
+				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, srcAccessExpr);
+
+		// #memory_int[{base: dest!base + #i}] == old(#memory_int[{base: src!base + #i}])
+		final var memoryEqualExpr = MemoryModelExpressionHelper.ensuresArrayHasValue(loc, oldSrcAccessExpr,
+				destPlusParamExpr, hda.getIdentifierExpression());
+
+		// #i >= 0 && #i < size ==> #memory_int[{base: dest!base + #i}] == old(#memory_int[{base: src!base + #i}])
+		final Expression inner =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICIMPLIES, andExpr, memoryEqualExpr);
+
+		// (forall #i : int :: #i >= 0 && #i < size ==> #memory_int[{base: dest!base + #i}] ==
+		// old(#memory_int[{base: src!base + #i}]))
+		final Expression result = ExpressionFactory.quantifier(loc, true, Collections.singletonList(paramVar), inner);
+
+		return Collections.singletonList(result);
 	}
 }

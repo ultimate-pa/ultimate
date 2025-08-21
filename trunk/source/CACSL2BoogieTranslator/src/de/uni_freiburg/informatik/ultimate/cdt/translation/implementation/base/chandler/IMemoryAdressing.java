@@ -286,4 +286,12 @@ public interface IMemoryAdressing {
 	 */
 	List<Expression> constructMemsetQuantorSpecificationExpressions(final ILocation loc, final String procedureName,
 			final Expression ptrExpr, final Expression amountExpr, final Expression valueExpr, final HeapDataArray hda);
+
+	/**
+	 * Constructs the quantor specifications of memcpy/memmove for the given memory region.
+	 *
+	 * @return The expressions.
+	 */
+	List<Expression> constructMemcpyMemmoveQuantorExpressions(final ILocation loc, final HeapDataArray hda,
+			final Expression sizeExpr, final Expression destExpr, final Expression srcExpr);
 }
