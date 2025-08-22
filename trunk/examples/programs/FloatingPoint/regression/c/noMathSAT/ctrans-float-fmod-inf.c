@@ -13,7 +13,7 @@ int main(void)
 	__VERIFIER_assert(fmod(5.1, INFINITY) == 5.1);
 	__VERIFIER_assert(fmod(5.1, -INFINITY) == 5.1);
   
-  int i = isnan(fmod(INFINITY, 3));
+	int i = isnan(fmod(INFINITY, 3));
 	__VERIFIER_assert(i);
 	i = isnan(fmod(-INFINITY, 3));
 	__VERIFIER_assert(i);

@@ -10,9 +10,9 @@ void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } r
 
 int main(void)
 {
-  double r = remainder(0.0, 1);
+	double r = remainder(0.0, 1);
 	__VERIFIER_assert(r == 0 && !signbit(r));
-  r = remainder(-0.0, 1);
+	r = remainder(-0.0, 1);
 	__VERIFIER_assert(r == 0 && signbit(r));
 
 	return 0;
