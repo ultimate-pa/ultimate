@@ -114,14 +114,16 @@ public class OneDimensionalPointer extends BaseMemoryPointer {
 			final ExpressionTranslation expressionTranslation, final int op, final ExpressionResult left,
 			final ExpressionResult right) {
 
+		// The pointer relation is only dependent on the relation of base
+		final Expression pointerRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
+				right.getLrValue().getValue(), SFO.POINTER_BASE, expressionTranslation);
+
 		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
 		case CHECK:
 		case ASSUME:
 			return ExpressionFactory.createBooleanLiteral(loc, true);
 		case IGNORE:
-			return baseEquality;
-		// TODO: Do not use conjunction. Use nondeterministic value
-		// if baseEquality does not hold.
+			return pointerRelation;
 		default:
 			throw new AssertionError("unknown value");
 		}
