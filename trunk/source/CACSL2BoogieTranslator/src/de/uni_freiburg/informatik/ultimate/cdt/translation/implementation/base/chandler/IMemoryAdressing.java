@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * The interface defining the functions for the different addressing modes.
@@ -57,7 +58,7 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The expressions.
 	 */
-	List<Pair<Expression, Set<VariableLHS>>> constructDeallocSpecificationExpressions(ILocation tuLoc,
+	List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(ILocation tuLoc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 

@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * This interface defines the functions for different memory management strategies. E.g. counting up, counting down, or
@@ -29,7 +30,7 @@ public interface IMemoryManagementStrategy {
 	 *
 	 * @return The expressions.
 	 */
-	List<Pair<Expression, Set<VariableLHS>>> constructDeallocSpecificationExpressions(ILocation tuLoc,
+	List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(ILocation tuLoc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
