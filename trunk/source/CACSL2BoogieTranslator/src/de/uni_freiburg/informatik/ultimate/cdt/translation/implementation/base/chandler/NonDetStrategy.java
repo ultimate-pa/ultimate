@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * This strategy is the default strategy for the 2D-memory addressing mode. The generic parameter is used to ensure that
@@ -124,8 +125,8 @@ public class NonDetStrategy<T extends TwoDimensionalMemoryAddressing> extends Ba
 	}
 
 	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructDeallocSpecificationExpressions(final ILocation tuLoc,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(
+			final ILocation tuLoc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 
 		final var falseExpr = mBooleanArrayHelper.constructFalse();
@@ -147,8 +148,8 @@ public class NonDetStrategy<T extends TwoDimensionalMemoryAddressing> extends Ba
 		final Expression updateValidArrayExpr =
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, validArrayExpr, arrayStoreExpr);
 
-		return Collections.singletonList(new Pair<>(updateValidArrayExpr,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
+		return Collections.singletonList(new Triple<>(updateValidArrayExpr,
+				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr)), true));
 	}
 
 	@Override

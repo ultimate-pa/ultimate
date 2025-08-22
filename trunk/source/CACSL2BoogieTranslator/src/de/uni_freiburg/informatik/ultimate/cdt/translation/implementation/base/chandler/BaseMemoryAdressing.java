@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements IMemoryAdressing {
 	ITypeHandler mTypeHandler;
@@ -90,8 +91,8 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 	}
 
 	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructDeallocSpecificationExpressions(final ILocation tuLoc,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(
+			final ILocation tuLoc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return mMemoryManagementStrategy.constructDeallocSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);

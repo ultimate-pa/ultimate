@@ -127,6 +127,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @author Markus Lindenmann
@@ -1872,15 +1873,15 @@ public class MemoryHandler {
 		mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(),
 				deallocDeclaration);
 
-		final List<Pair<Expression, Set<VariableLHS>>> deallocSpecificationExpressions =
+		final List<Triple<Expression, Set<VariableLHS>, Boolean>> deallocSpecificationExpressions =
 				mMemoryModel.constructDeallocSpecificationExpressions(tuLoc, mRequiredMemoryModelFeatures,
 						mMemoryModelDeclarationsHandler);
 
 		final List<Specification> deallocSpecifications = new ArrayList<>();
 
-		for (final Pair<Expression, Set<VariableLHS>> pair : deallocSpecificationExpressions) {
-			deallocSpecifications.add(
-					mProcedureManager.constructEnsuresSpecification(tuLoc, false, pair.getFirst(), pair.getSecond()));
+		for (final Triple<Expression, Set<VariableLHS>, Boolean> triple : deallocSpecificationExpressions) {
+			deallocSpecifications.add(mProcedureManager.constructEnsuresSpecification(tuLoc, triple.getThird(),
+					triple.getFirst(), triple.getSecond()));
 		}
 
 		mProcedureManager.addSpecificationsToCurrentProcedure(deallocSpecifications);
