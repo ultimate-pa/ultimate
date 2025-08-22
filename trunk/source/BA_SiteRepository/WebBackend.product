@@ -9,7 +9,7 @@
    <launcherArgs>
       <programArgs>-nosplash -consoleLog
       </programArgs>
-      <vmArgs>-Xms4M -Xmx4G -Xss2M -Dequinox.resolver.revision.batch.size=1 -Dosgi.noShutdown=true -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog -DWebBackend.SETTINGS_FILE=\path\to\web.config.properties.dist
+      <vmArgs>-Xms2M -Xmx4G -Xss1M -Dequinox.resolver.revision.batch.size=1 -Dosgi.noShutdown=true -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog -DWebBackend.SETTINGS_FILE=\path\to\web.config.properties.dist
       </vmArgs>
    </launcherArgs>
 

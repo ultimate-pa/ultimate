@@ -14,11 +14,11 @@ source "${DIR}/semver2.sh"
 # Default platforms for the build of Ultimate
 PLATFORMS=("linux" "win32")
 # Default initial heap memory size for Ultimate products
-MEM_HEAP_INIT_SIZE="4M"
+MEM_HEAP_INIT_SIZE="2M"
 # Default maximum heap memory size for Ultimate products
-MEM_HEAP_MAX_SIZE="12G"
+MEM_HEAP_MAX_SIZE="4G"
 # Default maximum stack memory size for Ultimate products
-MEM_STACK_MAX_SIZE="512M"
+MEM_STACK_MAX_SIZE="1M"
 
 _print_help() {
   printf 'Usage: %s [-i <size>] [-m <size>] [-s <size>] [-p all|linux|win32] [-h]\n' "${0}"

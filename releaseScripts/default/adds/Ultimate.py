@@ -20,9 +20,9 @@ from functools import lru_cache
 # fmt: off
 version = '4f54f8f5'
 toolname = 'Automizer'
-memory_heap_size_init = '4M'
-memory_heap_size_max = '12G'
-memory_stack_size_max = '512M'
+memory_heap_size_init = '2M'
+memory_heap_size_max = '4G'
+memory_stack_size_max = '1M'
 # fmt: on
 
 write_ultimate_output_to_file = True

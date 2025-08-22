@@ -16,7 +16,7 @@
    <launcherArgs>
       <programArgs>-consoleLog -nosplash
       </programArgs>
-      <vmArgs>-Xms256m -Xmx1024m
+      <vmArgs>-Xms2M -Xmx4G -Xss1M
       </vmArgs>
    </launcherArgs>
 

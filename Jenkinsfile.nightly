@@ -85,11 +85,11 @@ pipeline {
         }
       }
       steps {
-          withMaven(mavenOpts: '-Xmx4g -Xss4m -ea', options: [artifactsPublisher(disabled: true), junitPublisher(healthScaleFactor: 1.0, keepLongStdio: true, skipPublishingChecks: false)]) {
+          withMaven(mavenOpts: '-Xmx4G -Xss4M -ea', options: [artifactsPublisher(disabled: true), junitPublisher(healthScaleFactor: 1.0, keepLongStdio: true, skipPublishingChecks: false)]) {
             sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install -Pcoverage -Dmaven.test.failure.ignore=true -DexcludedGroups=de.uni_freiburg.informatik.ultimate.test.junitextension.categories.NoRegression'
           }
           // TODO: Fix Jenkins coverage
-          // withEnv(['JAVA_ARGS="-Xmx4g"']) {
+          // withEnv(['JAVA_ARGS="-Xmx4G"']) {
           //   recordCoverage(tools: [[parser: 'JACOCO', pattern: '**/target/site/jacoco-aggregate/jacoco.xml']])
           // }
       }
@@ -117,7 +117,7 @@ pipeline {
       }
       steps {
         withCredentials([string(credentialsId: 'SonarTokenJenkinsPipeline', variable: 'SONAR_TOKEN')]) {
-          withMaven(mavenOpts: '-Xmx4g -Xss4m', publisherStrategy: 'EXPLICIT', traceability: true) {
+          withMaven(mavenOpts: '-Xmx4G -Xss4M', publisherStrategy: 'EXPLICIT', traceability: true) {
             sh 'cd trunk/source/BA_MavenParentUltimate && mvn install -Psonar -Dsonar.host.url=https://sonar.sopranium.de -Dsonar.token=$SONAR_TOKEN'
           }
         }
@@ -132,7 +132,7 @@ pipeline {
         }
       }
       steps {
-        withMaven(mavenOpts: '-Xmx4g -Xss4m', publisherStrategy: 'EXPLICIT') {
+        withMaven(mavenOpts: '-Xmx4G -Xss4M', publisherStrategy: 'EXPLICIT') {
             sh 'cd releaseScripts/default && ./makeFresh.sh'
         }
         sshagent(credentials: ['jenkins-deploy']) {

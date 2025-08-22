@@ -20,9 +20,9 @@ from tqdm import tqdm
 
 # quoting style is important here
 # fmt: off
-memory_heap_size_init = '4M'
-memory_heap_size_max = '12G'
-memory_stack_size_max = '2M'
+memory_heap_size_init = '2M'
+memory_heap_size_max = '4G'
+memory_stack_size_max = '1M'
 # fmt: on
 
 
