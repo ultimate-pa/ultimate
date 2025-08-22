@@ -106,6 +106,16 @@ setup_ultimate_product_memory() {
     # Replacing maximum stack memory size in Ultimate.py
     exit_on_fail sed -i "s/^memory_stack_size_max =.*$/memory_stack_size_max = \'${PRODUCT_MEM_STACK_MAX}\'/g" "${PRODUCT_PATH}/Ultimate.py"
   fi
+
+  if [[ -f "${PRODUCT_PATH}/run_complete_analysis.py" ]]; then
+    echo "Setup stack and heap sizes in run_complete_analysis.py"
+    # Replacing maximum heap memory size in reqchecker/run_complete_analysis.py
+    exit_on_fail sed -i "s/^memory_heap_size_max =.*$/memory_heap_size_max = \'${PRODUCT_MEM_HEAP_MAX}\'/g" "${PRODUCT_PATH}/run_complete_analysis.py"
+    # Replacing initial heap memory size in reqchecker/run_complete_analysis.py
+    exit_on_fail sed -i "s/^memory_heap_size_init =.*$/memory_heap_size_init = \'${PRODUCT_MEM_HEAP_INIT}\'/g" "${PRODUCT_PATH}/run_complete_analysis.py"
+    # Replacing maximum stack memory size in reqchecker/run_complete_analysis.py
+    exit_on_fail sed -i "s/^memory_stack_size_max =.*$/memory_stack_size_max = \'${PRODUCT_MEM_STACK_MAX}\'/g" "${PRODUCT_PATH}/run_complete_analysis.py"
+  fi
 }
 
 get_cmd_version() {
