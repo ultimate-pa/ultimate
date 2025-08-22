@@ -1041,7 +1041,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression second = arguments.get(1).getLrValue().getValue();
 		// fmod(x, y) {
 		// r = remainder(fabs(x), fabs(y));
-		// pr = isPositive(r) ? r : r + y;
+		// pr = isPositive(r) ? r : r + fabs(y);
 		// return copysign(pr, x)
 		// }
 		final Expression remainder = mExpressionTranslation.remainder(loc, mExpressionTranslation.abs(loc, first, type),
@@ -1049,7 +1049,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression positiveRemainder = ExpressionFactory.constructIfThenElseExpression(loc,
 				mExpressionTranslation.isPositive(loc, remainder, type), remainder,
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, remainder, type,
-						second, type));
+						mExpressionTranslation.abs(loc, second, type), type));
 		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
 				.addAllIncludingLrValue(handleCopysign(positiveRemainder, first, loc, type)).build();
 	}
