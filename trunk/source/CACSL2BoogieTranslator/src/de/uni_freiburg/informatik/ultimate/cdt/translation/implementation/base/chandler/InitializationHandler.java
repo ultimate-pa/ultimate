@@ -1052,11 +1052,10 @@ public class InitializationHandler {
 		final Expression flatCellNumber =
 				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, new BigInteger(Integer.toString(product)));
 
-		final var newPointer = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
-				arrayBaseAddress.getAddress(), new RValue(flatCellNumber, sizeT), sizeT);
+		final var newPointer = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, loc,
+				arrayBaseAddress.getAddress(), new RValue(flatCellNumber, sizeT), cArrayType.getValueType(), sizeT);
 
-		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer.getLrValue().getValue(),
-				cArrayType.getValueType(), null);
+		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cArrayType.getValueType(), null);
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
@@ -1073,10 +1072,14 @@ public class InitializationHandler {
 
 		final ICType cellType = cArrayType.getValueType();
 
-		final var newPointer = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
-				addressRVal.getValue(), new RValue(flatCellNumber, pointerComponentType), cellType);
+		// final var newPointer = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
+		// addressRVal.getValue(), new RValue(flatCellNumber, pointerComponentType), cellType);
 
-		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer.getLrValue().getValue(), cellType, null);
+		final var newPointer = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, loc,
+				addressRVal.getValue(), new RValue(flatCellNumber, pointerComponentType), cArrayType.getValueType(),
+				pointerComponentType);
+
+		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cellType, null);
 
 	}
 

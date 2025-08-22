@@ -236,10 +236,10 @@ public final class ConstructMemcpyOrMemmove {
 		{
 			final Expression currentSrc = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					srcId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType);
+					charCType, mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					destId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType);
+					charCType, mExpressionTranslation.getCTypeOfPointerComponents());
 
 			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryStructureFeatures()
 					.getDataOnHeapRequired()) {
@@ -286,24 +286,28 @@ public final class ConstructMemcpyOrMemmove {
 		{
 			final Expression currentSrc = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					srcId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType);
+					charCType, mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					destId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType);
-			final ICType cPointer = CPointer.voidPointer();
-			final Expression srcAcc;
-			{
-				final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);
-				srcAcc = srcAccExpRes.getLrValue().getValue();
-				loopBody.addStatements(srcAccExpRes.getStatements());
-				loopBody.addDeclarations(srcAccExpRes.getDeclarations());
-				assert srcAccExpRes.getOverapprs().isEmpty();
-			}
-			{
-				final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
-						LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null), srcAcc, cPointer,
-						true);
-				loopBody.addStatements(writeCall);
+					charCType, mExpressionTranslation.getCTypeOfPointerComponents());
+
+			if (mMemoryHandler.getRequiredMemoryStructureFeatures().isPointerOnHeapRequired()) {
+				final ICType cPointer = CPointer.voidPointer();
+				final Expression srcAcc;
+				{
+					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);
+					srcAcc = srcAccExpRes.getLrValue().getValue();
+					loopBody.addStatements(srcAccExpRes.getStatements());
+					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
+					assert srcAccExpRes.getOverapprs().isEmpty();
+				}
+
+				{
+					final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
+							LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null), srcAcc,
+							cPointer, true);
+					loopBody.addStatements(writeCall);
+				}
 			}
 		}
 

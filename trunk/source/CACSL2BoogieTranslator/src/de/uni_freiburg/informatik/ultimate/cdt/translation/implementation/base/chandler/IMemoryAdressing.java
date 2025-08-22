@@ -85,7 +85,7 @@ public interface IMemoryAdressing {
 	 * @return The calculated pointer.
 	 */
 	Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
-			final RValue integer, final ICType valueType);
+			final RValue integer, final ICType valueType, final CPrimitive integerExpressionType);
 
 	/**
 	 * Returns the step size in which the base value of the initial allocations must be increased.

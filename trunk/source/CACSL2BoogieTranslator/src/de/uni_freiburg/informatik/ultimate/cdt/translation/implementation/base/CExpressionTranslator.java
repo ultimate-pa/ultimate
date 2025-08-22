@@ -889,7 +889,8 @@ public class CExpressionTranslator {
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
-			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
+			valueIncremented =
+					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), oneType);
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
 		} else if (ctype instanceof final CPrimitive cPrimitive) {
 			final Expression one;

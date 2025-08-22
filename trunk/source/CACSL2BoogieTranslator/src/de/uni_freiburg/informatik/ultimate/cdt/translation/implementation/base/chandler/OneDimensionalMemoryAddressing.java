@@ -135,21 +135,19 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 
 	@Override
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
-			final RValue integer, final ICType valueType) {
-
-		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+			final RValue integer, final ICType valueType, final CPrimitive integerExpressionType) {
 
 		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
-				.getSize(cTypeOfPointerComponent.getType())) {
+				.getSize(integerExpressionType.getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
 
 		final Expression pointerBase = mMemoryPointer.pointerAddress(ptrAddress, loc);
 		final Expression timesSizeOf =
-				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), cTypeOfPointerComponent);
+				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), integerExpressionType);
 
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, operator, pointerBase,
-				cTypeOfPointerComponent, timesSizeOf, cTypeOfPointerComponent);
+				integerExpressionType, timesSizeOf, integerExpressionType);
 
 		return mMemoryPointer.createPointerFromBase(sum, loc);
 	}
