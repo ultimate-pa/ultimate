@@ -83,21 +83,26 @@ setup_ultimate_product_info() {
 setup_ultimate_product_memory() {
   local PRODUCT_PATH="${1}"
   local PRODUCT_LAUNCHER="${2}"
-  local PRODUCT_MEM_HEAP_MAX="${3}"
-  local PRODUCT_MEM_STACK_MAX="${4}"
+  local PRODUCT_MEM_HEAP_INIT="${3}"
+  local PRODUCT_MEM_HEAP_MAX="${4}"
+  local PRODUCT_MEM_STACK_MAX="${5}"
 
   if [[ -f "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini" ]]; then
-    echo "Setup maximum stack and heap size for ${PRODUCT_LAUNCHER}"
+    echo "Setup stack and heap sizes for ${PRODUCT_LAUNCHER}"
     # Replacing maximum heap memory size in *.ini
     exit_on_fail sed -i "s/^-Xmx.*$/-Xmx${PRODUCT_MEM_HEAP_MAX}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
+    # Replacing initial heap memory size in *.ini
+    exit_on_fail sed -i "s/^-Xms.*$/-Xms${PRODUCT_MEM_HEAP_INIT}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
     # Replacing maximum stack memory size in *.ini
-    exit_on_fail sed -i "s/^-Xms.*$/-Xms${PRODUCT_MEM_STACK_MAX}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
+    exit_on_fail sed -i "s/^-Xss.*$/-Xss${PRODUCT_MEM_STACK_MAX}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
   fi
 
   if [[ -f "${PRODUCT_PATH}/Ultimate.py" ]]; then
-    echo "Setup maximum stack and heap size in Ultimate.py"
+    echo "Setup stack and heap sizes in Ultimate.py"
     # Replacing maximum heap memory size in Ultimate.py
     exit_on_fail sed -i "s/^memory_heap_size_max =.*$/memory_heap_size_max = \'${PRODUCT_MEM_HEAP_MAX}\'/g" "${PRODUCT_PATH}/Ultimate.py"
+    # Replacing initial heap memory size in Ultimate.py
+    exit_on_fail sed -i "s/^memory_heap_size_init =.*$/memory_heap_size_init = \'${PRODUCT_MEM_HEAP_INIT}\'/g" "${PRODUCT_PATH}/Ultimate.py"
     # Replacing maximum stack memory size in Ultimate.py
     exit_on_fail sed -i "s/^memory_stack_size_max =.*$/memory_stack_size_max = \'${PRODUCT_MEM_STACK_MAX}\'/g" "${PRODUCT_PATH}/Ultimate.py"
   fi

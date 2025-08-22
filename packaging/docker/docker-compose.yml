@@ -7,6 +7,7 @@ services:
       target: "ultimate-webbackend"
       args:
         ULTIMATE_DIR_TMP: "${ULTIMATE_DIR_TMP-/tmp/ultimate}"
+        ULTIMATE_MEMORY_HEAP_INIT: ${ULTIMATE_MEMORY_HEAP_INIT-4M}
         ULTIMATE_MEMORY_HEAP_MAX: "${ULTIMATE_MEMORY_HEAP_MAX-12G}"
         ULTIMATE_MEMORY_STACK_MAX: "${ULTIMATE_MEMORY_STACK_MAX-512M}"
     image: "ultimate-webbackend"
@@ -27,6 +28,7 @@ services:
       target: "ultimate-webfrontend"
       args:
         ULTIMATE_FRONTEND_BASEURL: "${ULTIMATE_FRONTEND_ROUTE-/website}"
+        ULTIMATE_MEMORY_HEAP_INIT: ${ULTIMATE_MEMORY_HEAP_INIT-4M}
         ULTIMATE_MEMORY_HEAP_MAX: "${ULTIMATE_MEMORY_HEAP_MAX-12G}"
         ULTIMATE_MEMORY_STACK_MAX: "${ULTIMATE_MEMORY_STACK_MAX-512M}"
     image: "ultimate-webfrontend"

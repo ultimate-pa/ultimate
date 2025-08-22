@@ -20,6 +20,7 @@ from functools import lru_cache
 # fmt: off
 version = '4f54f8f5'
 toolname = 'Automizer'
+memory_heap_size_init = '4M'
 memory_heap_size_max = '12G'
 memory_stack_size_max = '512M'
 # fmt: on
@@ -283,8 +284,9 @@ def create_ultimate_base_call():
     ultimate_bin = [
         get_java(),
         "-Dosgi.configuration.area=" + os.path.join(datadir, "config"),
+        "-Xms" + memory_heap_size_init,
         "-Xmx" + memory_heap_size_max,
-        "-Xms" + memory_stack_size_max,
+        "-Xss" + memory_stack_size_max,
     ]
 
     if enable_assertions:

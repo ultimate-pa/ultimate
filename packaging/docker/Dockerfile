@@ -26,6 +26,7 @@ FROM alpine:3 AS build-products
 ARG REPO_URL="https://github.com/ultimate-pa/ultimate.git"
 ARG REPO_BRANCH="dev"
 
+ARG ULTIMATE_MEMORY_HEAP_INIT="4M"
 ARG ULTIMATE_MEMORY_HEAP_MAX="12G"
 ARG ULTIMATE_MEMORY_STACK_MAX="512M"
 
@@ -46,7 +47,8 @@ RUN mkdir -p "${DIR_BUILD}" && \
 
 # build all Ultimate products
 WORKDIR "${DIR_ULTIMATE}"
-RUN cd "${DIR_OUTPUT_BUILD}" && bash makeBuild.sh -m "${ULTIMATE_MEMORY_HEAP_MAX}" -s "${ULTIMATE_MEMORY_STACK_MAX}" -p linux
+RUN cd "${DIR_OUTPUT_BUILD}" && \
+    bash makeBuild.sh -i "${ULTIMATE_MEMORY_HEAP_INIT}" -m "${ULTIMATE_MEMORY_HEAP_MAX}" -s "${ULTIMATE_MEMORY_STACK_MAX}" -p linux
 
 #------------------------------------------------------------------------------
 # 2nd build stage: compile and build the Ultimate web interface

@@ -13,15 +13,18 @@ source "${DIR}/semver2.sh"
 
 # Default platforms for the build of Ultimate
 PLATFORMS=("linux" "win32")
+# Default initial heap memory size for Ultimate products
+MEM_HEAP_INIT_SIZE="4M"
 # Default maximum heap memory size for Ultimate products
 MEM_HEAP_MAX_SIZE="12G"
 # Default maximum stack memory size for Ultimate products
 MEM_STACK_MAX_SIZE="512M"
 
 _print_help() {
-  printf 'Usage: %s [-m <size>] [-s <size>] [-p all|linux|win32] [-h]\n' "${0}"
+  printf 'Usage: %s [-i <size>] [-m <size>] [-s <size>] [-p all|linux|win32] [-h]\n' "${0}"
   print_newline
   printf 'Options:\n'
+  printf '  -i    Set initial heap memory size for Ultimate products (default: %s)\n' "${MEM_HEAP_INIT_SIZE}"
   printf '  -m    Set maximum heap memory size for Ultimate products (default: %s)\n' "${MEM_HEAP_MAX_SIZE}"
   printf '  -s    Set maximum stack memory size for Ultimate products (default: %s)\n' "${MEM_STACK_MAX_SIZE}"
   printf '  -p    Specify platforms to build for:\n'
@@ -45,8 +48,12 @@ _validate_memory_size() {
 }
 
 build_parseopts() {
-  while getopts "m:s:p:h" OPT; do
+  while getopts "i:m:s:p:h" OPT; do
     case "${OPT}" in
+      i)
+        _validate_memory_size "-i" "${OPTARG}"
+        MEM_HEAP_INIT_SIZE="${OPTARG}"
+        ;;
       m)
         _validate_memory_size "-m" "${OPTARG}"
         MEM_HEAP_MAX_SIZE="${OPTARG}"
@@ -124,8 +131,9 @@ build_run() {
   print_newline
 
   print_heading "Using the configuration for Ultimate"
-  print_memory_size "${MEM_HEAP_MAX_SIZE}" "Maximum memory heap  size"
-  print_memory_size "${MEM_STACK_MAX_SIZE}" "Maximum memory stack size"
+  print_memory_size "${MEM_HEAP_INIT_SIZE}" "Initial heap  memory size"
+  print_memory_size "${MEM_HEAP_MAX_SIZE}"  "Maximum heap  memory size"
+  print_memory_size "${MEM_STACK_MAX_SIZE}" "Maximum stack memory size"
   print_newline
 
   print_heading "Start Ultimate build"
@@ -137,51 +145,51 @@ build_run() {
 
 build_package() {
   for PLATFORM in "${PLATFORMS[@]}"; do
-    # makePackageConfig.sh <toolname> <launchername> <memheap> <memstack> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
+    # makePackageConfig.sh <toolname> <launchername> <meminitheap> <memmaxheap> <memmaxstack> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
     print_heading "Package Ultimate Taipan [${PLATFORM}]"
-    exit_on_fail bash makePackageConfig.sh "Taipan" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "NONE" "AutomizerCInline.xml" "AutomizerCInline_WitnessPrinter.xml" "NONE" "NONE"
+    exit_on_fail bash makePackageConfig.sh "Taipan" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "NONE" "AutomizerCInline.xml" "AutomizerCInline_WitnessPrinter.xml" "NONE" "NONE"
     print_newline
 
     print_heading "Package Ultimate Automizer [${PLATFORM}]"
-    exit_on_fail bash makePackageConfig.sh "Automizer" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "BuchiAutomizerCInline_WitnessPrinter.xml" "AutomizerCInline_IcfgBuilder.xml" "AutomizerCInline_WitnessPrinter.xml" "LTLAutomizerC.xml" "BuchiAutomizerCInline.xml"
+    exit_on_fail bash makePackageConfig.sh "Automizer" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "BuchiAutomizerCInline_WitnessPrinter.xml" "AutomizerCInline_IcfgBuilder.xml" "AutomizerCInline_WitnessPrinter.xml" "LTLAutomizerC.xml" "BuchiAutomizerCInline.xml"
     print_newline
 
     print_heading "Package Ultimate Kojak [${PLATFORM}]"
-    exit_on_fail bash makePackageConfig.sh "Kojak" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "KojakC_WitnessPrinter.xml" "NONE" "NONE" "KojakC_WitnessPrinter.xml" "NONE" "NONE"
+    exit_on_fail bash makePackageConfig.sh "Kojak" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "KojakC_WitnessPrinter.xml" "NONE" "NONE" "KojakC_WitnessPrinter.xml" "NONE" "NONE"
     print_newline
 
     print_heading "Package Ultimate GemCutter [${PLATFORM}]"
-    exit_on_fail bash makePackageConfig.sh "GemCutter" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "NONE" "AutomizerCInline.xml" "AutomizerCInline_WitnessPrinter.xml" "NONE" "NONE"
+    exit_on_fail bash makePackageConfig.sh "GemCutter" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "AutomizerCInline_WitnessPrinter.xml" "NONE" "AutomizerCInline.xml" "AutomizerCInline_WitnessPrinter.xml" "NONE" "NONE"
     print_newline
 
     print_heading "Package Ultimate Referee [${PLATFORM}]"
-    exit_on_fail bash makePackageConfig.sh "Referee" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "RefereeCInline.xml" "NONE" "RefereeCInline_IcfgBuilder.xml" "NONE" "NONE" "NONE"
+    exit_on_fail bash makePackageConfig.sh "Referee" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "RefereeCInline.xml" "NONE" "RefereeCInline_IcfgBuilder.xml" "NONE" "NONE" "NONE"
     print_newline
 
-    # makePackageSmall.sh <toolname> <launchername> <memheap> <memstack> <targetarch>
+    # makePackageSmall.sh <toolname> <launchername> <meminitheap> <memmaxheap> <memmaxstack> <targetarch>
     print_heading "Package Ultimate Command Line [${PLATFORM}]"
-    exit_on_fail bash makePackageSmall.sh "CLI-E4" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
+    exit_on_fail bash makePackageSmall.sh "CLI-E4" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
     print_newline
 
     print_heading "Package Ultimate Debug UI [${PLATFORM}]"
-    exit_on_fail bash makePackageSmall.sh "Debug-E4" "UltimateDebug" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
+    exit_on_fail bash makePackageSmall.sh "Debug-E4" "UltimateDebug" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
     print_newline
 
     print_heading "Package Ultimate DeltaDebugger [${PLATFORM}]"
-    exit_on_fail bash makePackageSmall.sh "DeltaDebugger" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
+    exit_on_fail bash makePackageSmall.sh "DeltaDebugger" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
     print_newline
 
     print_heading "Package Ultimate Eliminator [${PLATFORM}]"
-    exit_on_fail bash makePackageSmall.sh "Eliminator" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
+    exit_on_fail bash makePackageSmall.sh "Eliminator" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
     print_newline
 
     print_heading "Package Ultimate WebBackend [${PLATFORM}]"
-    exit_on_fail bash makePackageSmall.sh "WebBackend" "WebBackend" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
+    exit_on_fail bash makePackageSmall.sh "WebBackend" "WebBackend" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}"
     print_newline
 
-    # makePackageReqCheck.sh <toolname> <launchername> <memheap> <memstack> <targetarch> <reqchecktc> <testgentc>
+    # makePackageReqCheck.sh <toolname> <launchername> <meminitheap> <memmaxheap> <memmaxstack> <targetarch> <reqchecktc> <testgentc>
     print_heading "Package Ultimate ReqCheck [${PLATFORM}]"
-    exit_on_fail bash makePackageReqCheck.sh "ReqCheck" "Ultimate" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "ReqCheck.xml" "ReqCheck.xml"
+    exit_on_fail bash makePackageReqCheck.sh "ReqCheck" "Ultimate" "${MEM_HEAP_INIT_SIZE}" "${MEM_HEAP_MAX_SIZE}" "${MEM_STACK_MAX_SIZE}" "${PLATFORM}" "ReqCheck.xml" "ReqCheck.xml"
     print_newline
   done
 }
