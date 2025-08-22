@@ -2048,7 +2048,8 @@ public class MemoryHandler {
 
 		final Expression arrayAddress = hlv.getAddress();
 		final Expression valueTypeSize = calculateSizeOf(loc, valueType.getValueType());
-		final int typeSize = mTypeSizes.extractIntegerValue(valueTypeSize, arrayValueType).intValue();
+		final int typeSize = mTypeSizes
+				.extractIntegerValue(valueTypeSize, mExpressionTranslation.getCTypeOfPointerComponents()).intValue();
 
 		final int dim = dimBigInteger.intValue();
 
