@@ -139,11 +139,10 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimen
 
 	@Override
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
-			final RValue integer, final ICType valueType) {
-		final var pointerComponentType = mExpressionTranslation.getCTypeOfPointerComponents();
+			final RValue integer, final ICType valueType, final CPrimitive integerExpressionType) {
 
 		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
-				.getSize(pointerComponentType.getType())) {
+				.getSize(integerExpressionType.getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
 
@@ -151,10 +150,10 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimen
 		final Expression pointerOffset = mMemoryPointer.pointerOffset(ptrAddress, loc);
 
 		final Expression timesSizeOf =
-				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), pointerComponentType);
+				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), integerExpressionType);
 
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, operator, pointerOffset,
-				pointerComponentType, timesSizeOf, pointerComponentType);
+				integerExpressionType, timesSizeOf, integerExpressionType);
 
 		return mMemoryPointer.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 	}

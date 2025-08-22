@@ -865,8 +865,8 @@ public class MemoryHandler {
 	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset + integer * sizeof(valueType)}
 	 */
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
-			final RValue integer, final ICType valueType) {
-		return mMemoryModel.doPointerArithmetic(operator, loc, ptrAddress, integer, valueType);
+			final RValue integer, final ICType valueType, final CPrimitive integerExpressionType) {
+		return mMemoryModel.doPointerArithmetic(operator, loc, ptrAddress, integer, valueType, integerExpressionType);
 	}
 
 	/**
@@ -878,8 +878,8 @@ public class MemoryHandler {
 			final Expression ptrAddress, final RValue integer, final ICType valueType) {
 		final ExpressionResult eres = mExpressionTranslation.convertIntToInt(loc, new ExpressionResult(integer),
 				mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression resultExpression =
-				doPointerArithmetic(operator, loc, ptrAddress, (RValue) eres.getLrValue(), valueType);
+		final Expression resultExpression = doPointerArithmetic(operator, loc, ptrAddress, (RValue) eres.getLrValue(),
+				valueType, mExpressionTranslation.getCTypeOfPointerComponents());
 		final RValue newRValue = new RValue(resultExpression, mExpressionTranslation.getCTypeOfPointerComponents());
 		return new ExpressionResultBuilder().addAllExceptLrValue(eres).setLrValue(newRValue).build();
 	}
@@ -1128,10 +1128,10 @@ public class MemoryHandler {
 		{
 			final Expression currentSrc = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, srcId,
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					new CPrimitive(CPrimitives.CHAR));
+					new CPrimitive(CPrimitives.CHAR), mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destId,
 					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					new CPrimitive(CPrimitives.CHAR));
+					new CPrimitive(CPrimitives.CHAR), mExpressionTranslation.getCTypeOfPointerComponents());
 
 			/*
 			 * do pointer validity checks for current pointers (src/dest + offset) (using #valid and #length)
@@ -1294,7 +1294,7 @@ public class MemoryHandler {
 
 		final Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr,
 				new RValue(loopCtr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-				new CPrimitive(CPrimitives.VOID));
+				new CPrimitive(CPrimitives.VOID), mExpressionTranslation.getCTypeOfPointerComponents());
 		for (final HeapDataArray hda : heapDataArrays) {
 			final Expression convertedValue;
 			ExpressionResult exprRes = new ExpressionResult(new RValue(valueExpr, new CPrimitive(CPrimitives.UCHAR)));

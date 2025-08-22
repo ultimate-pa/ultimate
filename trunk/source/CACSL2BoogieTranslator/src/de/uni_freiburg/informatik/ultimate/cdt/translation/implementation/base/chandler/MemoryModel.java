@@ -291,8 +291,9 @@ public class MemoryModel {
 	 * @return The calculated pointer.
 	 */
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
-			final RValue integer, final ICType valueType) {
-		return mMemoryAddressing.doPointerArithmetic(operator, loc, ptrAddress, integer, valueType);
+			final RValue integer, final ICType valueType, final CPrimitive integerExpressionType) {
+		return mMemoryAddressing.doPointerArithmetic(operator, loc, ptrAddress, integer, valueType,
+				integerExpressionType);
 	}
 
 	/**
