@@ -10,7 +10,7 @@ void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } r
 
 int main(void)
 {
-	__VERIFIER_assert(remainder(5.1f, 3) == -0x1.ccccdp-1);
+	__VERIFIER_assert(remainderf(5.1f, 3) == -0x1.ccccdp-1);
 
 	return 0;
 }
