@@ -455,7 +455,8 @@ public class ExpressionResultTransformer {
 		builder.addAuxVarWithDeclaration(newArrayAuxvar);
 
 		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType);
-		final int typeSize = mTypeSizes.extractIntegerValue(valueTypeSize, arrayValueType).intValue();
+		final int typeSize =
+				mTypeSizes.extractIntegerValue(valueTypeSize, mExprTrans.getCTypeOfPointerComponents()).intValue();
 
 		for (int pos = 0; pos < bound; pos++) {
 
