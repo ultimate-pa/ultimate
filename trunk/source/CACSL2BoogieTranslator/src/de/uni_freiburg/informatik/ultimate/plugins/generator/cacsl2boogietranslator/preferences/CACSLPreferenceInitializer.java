@@ -86,7 +86,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "if the program lost track of allocated memory. If this is set to false we are unsound (at SV-COMP) in "
 			+ "cases where not all memory is freed but pointers to that memory are live at the end of the "
 			+ "main procedure.";
-	public static final String LABEL_MEMORY_STRUCTURE = "Memory Structure";
+	public static final String LABEL_MEMORY_STRUCTURE = "Memory structure";
 	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
 	public static final String LABEL_BITPRECISE_BITFIELDS = "Bitprecise bitfields";
