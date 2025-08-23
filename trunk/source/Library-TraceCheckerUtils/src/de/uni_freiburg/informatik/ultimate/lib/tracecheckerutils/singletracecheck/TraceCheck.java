@@ -473,49 +473,102 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		final ArrayList<Term> varAssignment = new ArrayList<>();
 		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<>();
 
-		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
-			final IProgramVar bv = entry.getKey();
-			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
-			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-				boolean evenRepresentative = true;
-				for (final var representative : indexedRepresentatives.entrySet()) {
-					final Integer index = representative.getKey();
-					final Term indexedVar = representative.getValue();
-					final Term valueT = funGetValue.apply(indexedVar);
-					if (indexedVar instanceof ApplicationTerm) {
-						assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
-						if (indexedVar.toStringDirect().contains("nondet")) {
-							if (evenRepresentative) {
-								// TODO Not sure if save, but by far the best solution
-								if ((index >= 0) && (rpeb.mTrace.asList().get(index) instanceof StatementSequence)) {
-									final StatementSequence stsq = (StatementSequence) rpeb.mTrace.asList().get(index);
+		for (int i = 0; i < mTrace.length(); i++) {
+			if ((mTrace.asList().get(i) instanceof final StatementSequence stmt)
+					&& stmt.getPrettyPrintedStatements().contains("nondet")) {
 
-									final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
-											.matcher(stsq.getPayload().toString());
-									if (m.find()) {
-										final String type = m.group(1);
-										testV.addValueAssignment(valueT, index, type);
-										final TermTransferrer test = new TermTransferrer(mCfgManagedScript.getScript(),
-												mTcSmtManager.getScript());
-										final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-												test.transform(indexedVar), test.transform(valueT));
-										final Pair<Term, Term> varValuePair =
-												new Pair<>(test.transform(indexedVar), test.transform(valueT));
-										varAssignmentPair.add(varValuePair);
-										varAssignment.add(varEqValue);
-									}
-								}
-								evenRepresentative = !evenRepresentative;
-							} else {
-								evenRepresentative = !evenRepresentative;
+				final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(stmt.getPayload().toString());
+				if (m.find()) {
+					final String type = m.group(1);
+					boolean foundAMatchingVar = false;
+					for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
+						final IProgramVar bv = entry.getKey();
+						final Map<Integer, Term> indexedRepresentatives = entry.getValue();
+						// if () {
+						if (!bv.getGloballyUniqueId().contains("nondet") && indexedRepresentatives.containsKey(i)) {
+							assert (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort()));
+							final Integer index = i;
+							final Term indexedVar = indexedRepresentatives.get(i);
+							final Term valueT = funGetValue.apply(indexedVar);
+							if (indexedVar instanceof ApplicationTerm) {
+								assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
+								foundAMatchingVar = true;
+								testV.addValueAssignment(valueT, index, type);
+								final TermTransferrer test =
+										new TermTransferrer(mCfgManagedScript.getScript(), mTcSmtManager.getScript());
+								final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+										test.transform(indexedVar), test.transform(valueT));
+								final Pair<Term, Term> varValuePair =
+										new Pair<>(test.transform(indexedVar), test.transform(valueT));
+								varAssignmentPair.add(varValuePair);
+								varAssignment.add(varEqValue);
 							}
 						}
 					}
-					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
-
+					assert foundAMatchingVar;
+				} else {
+					assert false;
 				}
+				// checks that indicate we have indeed an sv-comp style input
+				assert stmt.getTransformula().getInVars().size() == 0;
+				assert stmt.getTransformula().getOutVars().size() == 2;
+				assert stmt.getStatements().size() >= 3;
 			}
+
 		}
+
+		// final if word contains nondet and final of form havoc final assingment havoc
+		// final get position final of word
+		// for entry final in indexvars
+		// if reresentnive key== position
+		// ..and..
+		//
+
+		// wir suchen havoc statement mit nondet
+
+		// for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
+		// final IProgramVar bv = entry.getKey();
+		// final Map<Integer, Term> indexedRepresentatives = entry.getValue();
+		// if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+		// boolean evenRepresentative = true;
+		// for (final var representative : indexedRepresentatives.entrySet()) {
+		// final Integer index = representative.getKey();
+		// final Term indexedVar = representative.getValue();
+		// final Term valueT = funGetValue.apply(indexedVar);
+		// if (indexedVar instanceof ApplicationTerm) {
+		// assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
+		// if (indexedVar.toStringDirect().contains("nondet")) {
+		// if (evenRepresentative) {
+		// // TODO Not sure if save, but by far the best solution
+		// if ((index >= 0) && (rpeb.mTrace.asList().get(index) instanceof StatementSequence)) {
+		// final StatementSequence stsq = (StatementSequence) rpeb.mTrace.asList().get(index);
+		//
+		// final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
+		// .matcher(stsq.getPayload().toString());
+		// if (m.find()) {
+		// final String type = m.group(1);
+		// testV.addValueAssignment(valueT, index, type);
+		// final TermTransferrer test = new TermTransferrer(mCfgManagedScript.getScript(),
+		// mTcSmtManager.getScript());
+		// final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+		// test.transform(indexedVar), test.transform(valueT));
+		// final Pair<Term, Term> varValuePair =
+		// new Pair<>(test.transform(indexedVar), test.transform(valueT));
+		// varAssignmentPair.add(varValuePair);
+		// varAssignment.add(varEqValue);
+		// }
+		// }
+		// evenRepresentative = !evenRepresentative;
+		// } else {
+		// evenRepresentative = !evenRepresentative;
+		// }
+		// }
+		// }
+		// rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
+		//
+		// }
+		// }
+		// }
 		return testV;
 	}
 

@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +47,7 @@ public class TestCaseExporter {
 	 */
 	public void exportTests(final TestVector testV, final String i, final boolean allInOneFile) throws Exception {
 
-		final String name = "testcase" + i;
+		final String name = "testcase" + i + UUID.randomUUID().toString();
 		final boolean noDirectories = false;
 		final boolean allInOneDirecotry = true;
 		if (noDirectories) {
@@ -66,11 +67,12 @@ public class TestCaseExporter {
 
 		try (FileOutputStream output = new FileOutputStream("test-suite/" + name + ".xml")) {
 			writeXml(createXML(testV.values), output);
-
+			output.close();
 		}
 		if (testV.need64Bit) {
 			try (FileOutputStream output = new FileOutputStream("test-suite/" + name + "64bit" + ".xml");) {
 				writeXml(createXML(testV.values64Bit), output);
+				output.close();
 			}
 		}
 	}

@@ -353,6 +353,17 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
 				mMainThread.getAbstraction(), mIteration);
 		mInterpolAutomaton = null;
+
+		// for (final Object testGoal : mCounterexample.getStateSequence()) {
+		// final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+		// if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
+		// .containsKey(TestGoalAnnotation.class.getName())) {
+		// // TODO check if sound
+		// mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton((IPredicate) testGoal,
+		// mMainThread.getAbstraction().internalPredecessors((IPredicate) testGoal));
+		// }
+		//
+		// }
 		// for (final IPredicate testGoal : mMainThread.getAbstraction().getFinalStates()) {
 		// final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
 		// if (testGoalISL.getProgramPoint().getPayload().getAnnotations()

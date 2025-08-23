@@ -404,7 +404,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 						mRefinementsDone += 1;
 						// assert mRefinementsDone <= mCounterexamplesChecked * mThreadsPerCex;
 						refinement(workerResult);
-						abstractionWasRefined = workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
+						abstractionWasRefined = true;
 
 						// Not sure if necessary
 						workerResult.garbageCollect();
@@ -667,9 +667,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mAbstraction = diff.getResult();
 
 		if (mPref.minimizeAbstractionPerWorker) {
-			// TODO we minize after all worker results were refined
-			// minimizeAbstractionIfEnabled(stateFactoryForRefinement,
-			// new PredicateFactoryResultChecking(mPredicateFactory));
+			minimizeAbstractionIfEnabled(stateFactoryForRefinement,
+					new PredicateFactoryResultChecking(mPredicateFactory));
 		}
 
 		if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {

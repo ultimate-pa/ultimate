@@ -57,8 +57,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnknownState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -457,7 +457,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	}
 
 	private boolean entersLoopBody(final LETTER letter) {
-		final StatementSequence stmt = ((StatementSequence) letter);
+		final CodeBlock stmt = ((CodeBlock) letter);
 		if (stmt.getPayload().getAnnotations().containsKey(LoopExitAnnotation.class.getName())) {
 			return false;
 		}

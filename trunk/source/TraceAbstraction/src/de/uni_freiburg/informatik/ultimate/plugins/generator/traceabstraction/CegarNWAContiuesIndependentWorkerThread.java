@@ -241,7 +241,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 
 			mCounterexample = searchForErrorTrace();
 			if (isCexResult.equals(LBool.SAT)) {
-				// needs to be done after seraching, since we are faster then the difference in main
+				// needs to be done after searching, since we are faster then the difference in main
 				mCounterexamples.remove(traceHash);
 			}
 
