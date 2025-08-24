@@ -158,15 +158,12 @@ class TestVector {
 		if (position < 0) {
 			throw new UnsupportedOperationException("Negative Position fo NonDet in SSA");
 			// addNegativPositionToLinkedList(valuesWithNegativeIndices, position, value);
-		} else {
-			countNonDets += 1;
+		}
+		countNonDets += 1;
 
-			addToLinkedList(position, value, type);
-			if (need64Bit) {
-				addToLinkedList64Bit(position, value, type);
-			}
-
-			// addToLinkedList(valuesWithPositiveIndices, position, value);
+		addToLinkedList(position, value, type);
+		if (need64Bit) {
+			addToLinkedList64Bit(position, value, type);
 		}
 
 	}
@@ -312,7 +309,7 @@ class TestVector {
 		String valueInRange = null;
 		switch (valueTerm.getSort().getName()) {
 		case SmtSortUtils.FLOATINGPOINT_SORT: {
-			if (type.equals("float")) {
+			if (type.equals("float") || type.equals("double")) {
 				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
 					assert valueTerm instanceof ApplicationTerm;
 					// final ApplicationTerm cva = (ApplicationTerm) valueTerm;
@@ -346,7 +343,7 @@ class TestVector {
 					}
 					break;
 				}
-			} else if (type.equals("double")) {
+			} else if (false && type.equals("double")) {
 				assert valueTerm instanceof ApplicationTerm;
 				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
 					final ApplicationTerm cva = (ApplicationTerm) valueTerm;
