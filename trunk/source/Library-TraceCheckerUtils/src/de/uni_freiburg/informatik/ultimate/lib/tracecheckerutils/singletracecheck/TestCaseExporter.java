@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -193,8 +194,9 @@ class TestVector {
 				final BigInteger value = new BigInteger(valueInRange);
 				if (value.compareTo(new BigInteger("9223372036854775807")) == 1) {
 					// wenn 2147483648 dann -2,147,483,648
-					final BigInteger newValue = new BigInteger("-9223372036854775807")
-							.add((value.subtract(new BigInteger("9223372036854775808"))));
+					final BigInteger newValue =
+							new BigInteger("-9223372036854775807")
+									.add((value.subtract(new BigInteger("9223372036854775808"))));
 
 					valueInRange = String.valueOf(newValue);
 				}
@@ -328,8 +330,7 @@ class TestVector {
 					// final String floatAsBitString = sign + exponent + significant;
 					// final int intBits = Integer.parseInt(floatAsBitString, 2);
 					final int intBits = new BigInteger(floatAsBitString, 2).intValue();
-					final float asFloat = Float.intBitsToFloat(intBits);
-					valueInRange = asFloat + "";
+					valueInRange = new BigDecimal(Float.intBitsToFloat(intBits)).toPlainString();
 					break;
 				} else {
 					if (valueTerm.toStringDirect().contains("+oo")) {
@@ -359,8 +360,7 @@ class TestVector {
 					significant = significant.replaceAll("[^01]", "");
 					final String floatAsBitString = sign + exponent + significant;
 					final long longBits = (new BigInteger(floatAsBitString, 2)).longValue();
-					final double asDouble = Double.longBitsToDouble(longBits);
-					valueInRange = asDouble + "";
+					valueInRange = new BigDecimal(Double.longBitsToDouble(longBits)).toPlainString();
 					break;
 				} else {
 					if (valueTerm.toStringDirect().contains("+oo")) {
@@ -401,9 +401,7 @@ class TestVector {
 				// final String floatAsBitString = sign + exponent + significant;
 				// final int intBits = Integer.parseInt(floatAsBitString, 2);
 				final int intBits = new BigInteger(floatAsBitString, 2).intValue();
-				final float myFloat = Float.intBitsToFloat(intBits);
-
-				valueInRange = myFloat + "";
+				valueInRange = new BigDecimal(Float.intBitsToFloat(intBits)).toPlainString();
 				break;
 			}
 
