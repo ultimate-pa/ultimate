@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -474,7 +476,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<>();
 
 		int countFoundNondets = 0;
-		String lastSeenPayloadWithNondets = "";
+		List<String> lastSeenPayloadWithNondets = new ArrayList<>();
 
 		for (int i = 0; i < mTrace.length(); i++) {
 			if ((mTrace.asList().get(i) instanceof final StatementSequence stmt)
@@ -487,10 +489,14 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					// if () {
 					if (!bv.getGloballyUniqueId().contains("nondet") && indexedRepresentatives.containsKey(i)) {
 
-						if (lastSeenPayloadWithNondets.equals(stmt.getPayload().toString())) {
+						/*
+						 * read payload line by line filter nondet lines
+						 */
+
+						if (lastSeenPayloadWithNondets.equals(extractNondetLines(stmt.getPayload().toString()))) {
 							countFoundNondets += 1;
 						} else {
-							lastSeenPayloadWithNondets = stmt.getPayload().toString();
+							lastSeenPayloadWithNondets = extractNondetLines(stmt.getPayload().toString());
 							countFoundNondets = 0;
 						}
 						final String type;
@@ -583,6 +589,12 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		// }
 		// }
 		return testV;
+	}
+
+	public static List<String> extractNondetLines(final String code) {
+		return Arrays.stream(code.split("\\R")) // split by line breaks
+				.map(String::trim) // remove leading/trailing spaces
+				.filter(line -> line.contains("__VERIFIER_nondet")).collect(Collectors.toList());
 	}
 
 	private void exportTest(final TestVector testV, final String identifier, final boolean allInOneFile) {
