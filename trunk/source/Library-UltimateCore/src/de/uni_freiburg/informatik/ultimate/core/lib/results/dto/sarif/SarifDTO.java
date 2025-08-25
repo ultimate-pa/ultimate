@@ -14,6 +14,7 @@ public final class SarifDTO implements Serializable {
 	@SerializedName("$schema")
 	private static final String SCHEMA = "https://json.schemastore.org/sarif-2.1.0-rtm.5.json";
 
+	@SerializedName("runs")
 	private final List<SarifRun> mRuns;
 
 	public SarifDTO(final List<SarifRun> runs) {
