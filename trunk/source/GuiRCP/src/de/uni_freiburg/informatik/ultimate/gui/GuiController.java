@@ -196,6 +196,10 @@ public class GuiController implements IController<RunDefinition> {
 		final IResultConverter convertery = ResultConverterFactory.create(ResultOutputFormat.YAML);
 		final String simpleYml = convertery.convert(toolchain, mCore, results);
 		System.out.println(simpleYml);
+
+		final IResultConverter converterS = ResultConverterFactory.create(ResultOutputFormat.SARIF);
+		final String simpleSarif = converterS.convert(toolchain, mCore, results);
+		System.out.println(simpleSarif);
 	}
 
 	@Override
