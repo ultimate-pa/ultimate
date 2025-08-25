@@ -473,43 +473,56 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		final ArrayList<Term> varAssignment = new ArrayList<>();
 		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<>();
 
+		int countFoundNondets = 0;
+		String lastSeenPayloadWithNondets = "";
+
 		for (int i = 0; i < mTrace.length(); i++) {
 			if ((mTrace.asList().get(i) instanceof final StatementSequence stmt)
 					&& stmt.getPrettyPrintedStatements().contains("nondet")) {
 
-				final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(stmt.getPayload().toString());
-				if (m.find()) {
-					final String type = m.group(1);
-					boolean foundAMatchingVar = false;
-					for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
-						final IProgramVar bv = entry.getKey();
-						final Map<Integer, Term> indexedRepresentatives = entry.getValue();
-						// if () {
-						if (!bv.getGloballyUniqueId().contains("nondet") && indexedRepresentatives.containsKey(i)) {
-							assert (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort()));
-							final Integer index = i;
-							final Term indexedVar = indexedRepresentatives.get(i);
-							final Term valueT = funGetValue.apply(indexedVar);
-							if (indexedVar instanceof ApplicationTerm) {
-								assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
-								foundAMatchingVar = true;
-								testV.addValueAssignment(valueT, index, type);
-								final TermTransferrer test =
-										new TermTransferrer(mCfgManagedScript.getScript(), mTcSmtManager.getScript());
-								final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-										test.transform(indexedVar), test.transform(valueT));
-								final Pair<Term, Term> varValuePair =
-										new Pair<>(test.transform(indexedVar), test.transform(valueT));
-								varAssignmentPair.add(varValuePair);
-								varAssignment.add(varEqValue);
-							}
+				boolean foundAMatchingVar = false;
+				for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
+					final IProgramVar bv = entry.getKey();
+					final Map<Integer, Term> indexedRepresentatives = entry.getValue();
+					// if () {
+					if (!bv.getGloballyUniqueId().contains("nondet") && indexedRepresentatives.containsKey(i)) {
+
+						if (lastSeenPayloadWithNondets.equals(stmt.getPayload().toString())) {
+							countFoundNondets += 1;
+						} else {
+							lastSeenPayloadWithNondets = stmt.getPayload().toString();
+							countFoundNondets = 0;
+						}
+						final String type;
+						final Matcher m =
+								Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(stmt.getPayload().toString());
+						final List<String> types = new ArrayList<>();
+						while (m.find()) {
+							types.add(m.group(1));
+						}
+						type = types.get(countFoundNondets);
+						assert (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort()));
+						final Integer index = i;
+						final Term indexedVar = indexedRepresentatives.get(i);
+						final Term valueT = funGetValue.apply(indexedVar);
+						if (indexedVar instanceof ApplicationTerm) {
+							assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
+							foundAMatchingVar = true;
+							testV.addValueAssignment(valueT, index, type);
+							final TermTransferrer test =
+									new TermTransferrer(mCfgManagedScript.getScript(), mTcSmtManager.getScript());
+							final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+									test.transform(indexedVar), test.transform(valueT));
+							final Pair<Term, Term> varValuePair =
+									new Pair<>(test.transform(indexedVar), test.transform(valueT));
+							varAssignmentPair.add(varValuePair);
+							varAssignment.add(varEqValue);
 						}
 					}
-					assert foundAMatchingVar;
-				} else {
-					assert false;
 				}
-				// checks that indicate we have indeed an sv-comp style input
+				assert foundAMatchingVar;
+
+				// checks that indicate we have indeed an sv-comp sinput
 				assert stmt.getTransformula().getInVars().size() == 0;
 				assert stmt.getTransformula().getOutVars().size() == 2;
 				assert stmt.getStatements().size() >= 3;

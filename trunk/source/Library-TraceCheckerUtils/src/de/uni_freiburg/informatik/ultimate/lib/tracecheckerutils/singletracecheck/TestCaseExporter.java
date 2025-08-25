@@ -191,9 +191,8 @@ class TestVector {
 				final BigInteger value = new BigInteger(valueInRange);
 				if (value.compareTo(new BigInteger("9223372036854775807")) == 1) {
 					// wenn 2147483648 dann -2,147,483,648
-					final BigInteger newValue =
-							new BigInteger("-9223372036854775807")
-									.add((value.subtract(new BigInteger("9223372036854775808"))));
+					final BigInteger newValue = new BigInteger("-9223372036854775807")
+							.add((value.subtract(new BigInteger("9223372036854775808"))));
 
 					valueInRange = String.valueOf(newValue);
 				}
@@ -309,7 +308,7 @@ class TestVector {
 		String valueInRange = null;
 		switch (valueTerm.getSort().getName()) {
 		case SmtSortUtils.FLOATINGPOINT_SORT: {
-			if (type.equals("float") || type.equals("double")) {
+			if (type.equals("float")) {
 				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
 					assert valueTerm instanceof ApplicationTerm;
 					// final ApplicationTerm cva = (ApplicationTerm) valueTerm;
@@ -343,7 +342,7 @@ class TestVector {
 					}
 					break;
 				}
-			} else if (false && type.equals("double")) {
+			} else if (type.equals("double")) {
 				assert valueTerm instanceof ApplicationTerm;
 				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
 					final ApplicationTerm cva = (ApplicationTerm) valueTerm;
