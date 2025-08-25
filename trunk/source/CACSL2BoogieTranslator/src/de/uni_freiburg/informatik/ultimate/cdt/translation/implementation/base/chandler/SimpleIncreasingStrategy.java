@@ -106,19 +106,19 @@ public class SimpleIncreasingStrategy<T extends OneDimensionalMemoryAddressing> 
 			final var baseSmallerThanBarrierExpr = baseSmallerThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
 			expressions.add(new Pair<>(baseSmallerThanBarrierExpr, Collections.emptySet()));
 
-			// res!base > #InitialAllocation
-			final var baseGreaterThanInitialAllocsExpr = mExpressionTranslation
-					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_greaterThan,
-							ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
-							cTypeOfPointerComponent, initialAllocCounterExpr, cTypeOfPointerComponent);
-			expressions.add(new Pair<>(baseGreaterThanInitialAllocsExpr, Collections.emptySet()));
-
 			// #HeapAllocations < #StackHeapBarrier;
 			final var stackAllocationsGreaterThanBarrier = mExpressionTranslation
 					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_lessThan,
 							counterExpression, cTypeOfPointerComponent, stackHeapBarrierExpr, cTypeOfPointerComponent);
 			expressions.add(new Pair<>(stackAllocationsGreaterThanBarrier, Collections.emptySet()));
 		}
+
+		// res!base > #InitialAllocation
+		final var baseGreaterThanInitialAllocsExpr = mExpressionTranslation.constructBinaryComparisonIntegerExpression(
+				tuLoc, IASTBinaryExpression.op_greaterThan,
+				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
+				cTypeOfPointerComponent, initialAllocCounterExpr, cTypeOfPointerComponent);
+		expressions.add(new Pair<>(baseGreaterThanInitialAllocsExpr, Collections.emptySet()));
 
 		// StackAllocations == old(StackAllocations) + ~size
 		// HeapAllocations == old(HeapAllocations) + ~size
@@ -146,8 +146,12 @@ public class SimpleIncreasingStrategy<T extends OneDimensionalMemoryAddressing> 
 	public List<Statement> constructUltimateInitStatements(final ILocation loc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
+		final List<Statement> stmts = new ArrayList<>();
 
 		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		final var initialAllocationsExpr = MemoryModelExpressionHelper.getInitialAllocCounter(loc,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 
 		// Add assume(fixedAddressCounter == #InitialAllocations)
 		final Expression fixedAddressCounterExpr =
@@ -155,14 +159,21 @@ public class SimpleIncreasingStrategy<T extends OneDimensionalMemoryAddressing> 
 
 		final Expression initialAllocCounterEqualsFixedAddressCounterExpr =
 				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
-						fixedAddressCounterExpr, cTypeOfPointerComponent,
-						MemoryModelExpressionHelper.getInitialAllocCounter(loc, requiredMemoryModelFeatures,
-								memoryModelDeclarationsHandler),
+						fixedAddressCounterExpr, cTypeOfPointerComponent, initialAllocationsExpr,
 						cTypeOfPointerComponent);
 
-		final Statement statement = new AssumeStatement(loc, initialAllocCounterEqualsFixedAddressCounterExpr);
+		stmts.add(new AssumeStatement(loc, initialAllocCounterEqualsFixedAddressCounterExpr));
 
-		return Collections.singletonList(statement);
+		// Add assume(#StackHeapBarrier > #InitialAllocations)
+		final var stackHeapBarrierExpr = MemoryModelExpressionHelper.getStackHeapBarrier(loc,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+
+		final Expression barrierGreaterThanInitialAllocationsExpr = mExpressionTranslation
+				.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_greaterThan,
+						stackHeapBarrierExpr, cTypeOfPointerComponent, initialAllocationsExpr, cTypeOfPointerComponent);
+
+		stmts.add(new AssumeStatement(loc, barrierGreaterThanInitialAllocationsExpr));
+		return stmts;
 	}
 
 	@Override
