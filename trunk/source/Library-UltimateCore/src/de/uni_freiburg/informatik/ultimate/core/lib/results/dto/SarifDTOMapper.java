@@ -3,17 +3,23 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results.dto;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifArtifactLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifDTO;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifDriver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifMessage;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifPhysicalLocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifRegion;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif.SarifTool;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 public final class SarifDTOMapper implements IResultDTOMapper<SarifDTO> {
@@ -40,6 +46,17 @@ public final class SarifDTOMapper implements IResultDTOMapper<SarifDTO> {
 			ruleId = ctxRes.getCheckedSpecification().getSpec().toString();
 		}
 
-		return new SarifResult(ruleId, new SarifMessage(res.getShortDescription()));
+		final List<SarifLocation> locations;
+		if (res instanceof final AbstractResultAtElement<?> resAtE) {
+			final ILocation loc = resAtE.getLocation();
+			final SarifRegion sRegion = new SarifRegion(loc.getStartLine(), loc.getStartColumn());
+			final SarifLocation sLoc =
+					new SarifLocation(new SarifPhysicalLocation(new SarifArtifactLocation(loc.getFileName()), sRegion));
+			locations = List.of(sLoc);
+		} else {
+			locations = List.of();
+		}
+
+		return new SarifResult(ruleId, new SarifMessage(res.getShortDescription()), locations);
 	}
 }

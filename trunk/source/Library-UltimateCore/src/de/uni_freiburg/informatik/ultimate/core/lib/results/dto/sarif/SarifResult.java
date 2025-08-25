@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results.dto.sarif;
 
 import java.io.Serializable;
+import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -13,17 +14,13 @@ public final class SarifResult implements Serializable {
 	@SerializedName("message")
 	private final SarifMessage mMessage;
 
-	public SarifResult(final String ruleId, final SarifMessage message) {
+	@SerializedName("locations")
+	private final List<SarifLocation> mLocations;
+
+	public SarifResult(final String ruleId, final SarifMessage message, final List<SarifLocation> locations) {
 		mRuleId = ruleId;
 		mMessage = message;
-	}
-
-	public String getRuleId() {
-		return mRuleId;
-	}
-
-	public SarifMessage getMessage() {
-		return mMessage;
+		mLocations = locations;
 	}
 
 }
