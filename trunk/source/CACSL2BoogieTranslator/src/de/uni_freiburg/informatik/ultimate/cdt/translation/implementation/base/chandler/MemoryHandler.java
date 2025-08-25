@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -450,59 +451,154 @@ public class MemoryHandler {
 	}
 
 	/**
+	 * Creates the memset call for an real type.
+	 *
+	 * @return The statement.
+	 */
+	private CallStatement createMemsetCallToReal(final ILocation loc, final HeapDataArray hda, ExpressionResult exprRes,
+			final String procName, final VariableLHS[] lhs, final Expression pointer, final Expression amount,
+			final CPrimitives primitives) {
+		mRequiredMemoryModelFeatures.reportMemsetForTypeRequired(primitives);
+		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitives);
+
+		final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
+		exprRes = mExpressionTranslation.convertIntToFloat(loc, exprRes, new CPrimitive(primitive));
+		final Expression convertedValue = exprRes.getLrValue().getValue();
+
+		final Expression[] params = { pointer, convertedValue, amount };
+
+		return StatementFactory.constructCallStatement(loc, false, lhs, procName, params);
+	}
+
+	/**
+	 * Creates the memset call for an integer type.
+	 *
+	 * @return The statement.
+	 */
+	private CallStatement createMemsetCallToInt(final ILocation loc, final HeapDataArray hda, ExpressionResult exprRes,
+			final String procName, final VariableLHS[] lhs, final Expression pointer, final Expression amount,
+			final CPrimitives primitives) {
+		mRequiredMemoryModelFeatures.reportMemsetForTypeRequired(primitives);
+		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitives);
+
+		// convert to smallest
+		final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
+		exprRes = mExpressionTranslation.convertIntToInt(loc, exprRes, new CPrimitive(primitive));
+		final Expression convertedValue = exprRes.getLrValue().getValue();
+
+		final Expression[] params = { pointer, convertedValue, amount };
+
+		return StatementFactory.constructCallStatement(loc, false, lhs, procName, params);
+
+	}
+
+	/**
+	 * Creates memset calls to all memory regions that are available.
+	 *
+	 * @return the calls.
+	 */
+	private List<CallStatement> createMemsetCallsToAllRegions(final ILocation loc, final Expression pointer,
+			final Expression value, final LRValue amount, final VariableLHS resVar) {
+		MemoryModelExpressionHelper.requireMemoryModelFeature(MemoryModelDeclarations.C_MEMSET,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+
+		final Set<HeapDataArray> distinctHdas = new HashSet<>();
+		distinctHdas.add(mMemoryModel.getDataHeapArray(CPrimitives.INT));
+		distinctHdas.add(mMemoryModel.getDataHeapArray(CPrimitives.FLOAT));
+
+		final ExpressionResult exprRes = new ExpressionResult(new RValue(value, new CPrimitive(CPrimitives.INT)));
+		final VariableLHS[] lhs = resVar == null ? new VariableLHS[0] : new VariableLHS[] { resVar };
+
+		final List<CallStatement> stmts = new ArrayList<>();
+
+		for (final var hda : distinctHdas) {
+			final var procName = createMemsetDeclarationName(hda);
+
+			if (hda.getName().equals(SFO.REAL)) {
+				stmts.add(createMemsetCallToReal(loc, hda, exprRes, procName, lhs, pointer, amount.getValue(),
+						CPrimitives.FLOAT));
+			} else if (hda.getName().equals(SFO.INT)) {
+				stmts.add(createMemsetCallToInt(loc, hda, exprRes, procName, lhs, pointer, amount.getValue(),
+						CPrimitives.INT));
+			} else {
+				throw new UnsupportedOperationException("Pointer to a wrong type!");
+			}
+		}
+
+		return stmts;
+	}
+
+	/**
+	 * Creates the correct memset call statements for the given primitive
+	 *
+	 * @return The statements.
+	 */
+	public List<CallStatement> getMemsetCallPrimitive(final ILocation loc, final Expression pointer,
+			final Expression value, final LRValue amount, final VariableLHS resVar, final CPrimitive cPrimitive) {
+		MemoryModelExpressionHelper.requireMemoryModelFeature(MemoryModelDeclarations.C_MEMSET,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+
+		if (cPrimitive.isVoidType()) {
+			return createMemsetCallsToAllRegions(loc, pointer, value, amount, resVar);
+		}
+
+		final CPrimitives primitives = cPrimitive.getType();
+		final var hda = mMemoryModel.getDataHeapArray(primitives);
+
+		final var procName = createMemsetDeclarationName(hda);
+
+		final ExpressionResult exprRes = new ExpressionResult(new RValue(value, new CPrimitive(CPrimitives.INT)));
+
+		final VariableLHS[] lhs = resVar == null ? new VariableLHS[0] : new VariableLHS[] { resVar };
+
+		final CallStatement callStmt;
+
+		if (hda.getName().equals(SFO.REAL)) {
+			callStmt = createMemsetCallToReal(loc, hda, exprRes, procName, lhs, pointer, value, primitives);
+		} else if (hda.getName().equals(SFO.INT)) {
+			callStmt = createMemsetCallToInt(loc, hda, exprRes, procName, lhs, pointer, value, primitives);
+		} else {
+			throw new UnsupportedOperationException("Pointer to a wrong type!");
+		}
+
+		return Collections.singletonList(callStmt);
+	}
+
+	/**
 	 * Returns a call to the memory-region specific memset procedure and announces that this memset procedure is
 	 * required by the Memory structure. When using quantors each memory region has a dedicated memset representation
 	 * similar to read and write.
 	 *
 	 * @return The call statement.
 	 */
-	public CallStatement getCorrectMemsetCall(final ILocation loc, final LRValue pointer, final Expression value,
-			final Expression amount, final VariableLHS resVar) {
+	public List<CallStatement> getCorrectMemsetCall(final ILocation loc, final LRValue pointer, final Expression value,
+			final LRValue amount, final VariableLHS resVar) {
 		assert (pointer.getCType() instanceof CPointer);
 		final CPointer cPointer = (CPointer) pointer.getCType();
-		assert (cPointer.getPointsToType() instanceof CPrimitive);
+		final ICType ptrPointsToType = cPointer.getPointsToType().getUnderlyingType();
 
-		MemoryModelExpressionHelper.requireMemoryModelFeature(MemoryModelDeclarations.C_MEMSET,
-				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
-
-		final CPrimitives primitives = ((CPrimitive) cPointer.getPointsToType()).getType();
-		final var hda = mMemoryModel.getDataHeapArray(primitives);
-		mRequiredMemoryModelFeatures.reportMemsetForTypeRequired(primitives);
-		final var procName = createMemsetDeclarationName(hda);
-
-		final Expression convertedValue;
-		ExpressionResult exprRes = new ExpressionResult(new RValue(value, new CPrimitive(CPrimitives.UCHAR)));
-
-		if (hda.getName().equals(SFO.REAL)) {
-			final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
-			exprRes = mExpressionTranslation.convertIntToFloat(loc, exprRes, new CPrimitive(primitive));
-			convertedValue = exprRes.getLrValue().getValue();
-		} else if (hda.getName().equals(SFO.INT)) {
-			// convert to smallest
-			final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
-			exprRes = mExpressionTranslation.convertIntToInt(loc, exprRes, new CPrimitive(primitive));
-			convertedValue = exprRes.getLrValue().getValue();
-		} else {
-			throw new UnsupportedOperationException("Pointer points to a wrong type!");
+		if (ptrPointsToType instanceof final CPrimitive cPrim) {
+			return getMemsetCallPrimitive(loc, pointer.getValue(), value, amount, resVar, cPrim);
+		} else if (ptrPointsToType instanceof CStructOrUnion) {
+			return createMemsetCallsToAllRegions(loc, pointer.getValue(), value, amount, resVar);
 		}
 
-		final VariableLHS[] lhs = resVar == null ? new VariableLHS[0] : new VariableLHS[] { resVar };
+		throw new UnsupportedOperationException(
+				"Quantified Memset is not supported for a pointer pointing to: " + ptrPointsToType);
 
-		final Expression[] params = { pointer.getValue(), convertedValue, amount };
-
-		return StatementFactory.constructCallStatement(loc, false, lhs, procName, params);
 	}
 
 	/**
 	 * Returns call to our memset procedure and announces that memset is required by our Memory Structure.
 	 */
-	public CallStatement constructUltimateMemsetCall(final ILocation loc, final LRValue pointer, final Expression value,
-			final Expression amount, final VariableLHS resVar) {
+	public List<CallStatement> constructUltimateMemsetCall(final ILocation loc, final LRValue pointer,
+			final Expression value, final LRValue amount, final VariableLHS resVar) {
 		if (mSettings.useQuantorsInMemoryFunctions()) {
 			return getCorrectMemsetCall(loc, pointer, value, amount, resVar);
 		}
 
-		return constructCall(MemoryModelDeclarations.C_MEMSET, loc, resVar, pointer.getValue(), value, amount);
+		return Collections.singletonList(constructCall(MemoryModelDeclarations.C_MEMSET, loc, resVar,
+				pointer.getValue(), value, amount.getValue()));
 	}
 
 	// calls to functions for locks should be atomic, for sound data race detection
@@ -1453,7 +1549,7 @@ public class MemoryHandler {
 
 		if (mSettings.useQuantorsInMemoryFunctions()) {
 			// each memory region has it's own designated memset procedure, otherwise there are type-errors
-			for (final var hda : heapDataArrays) {
+			for (final var hda : heapDataArrays.stream().distinct().toList()) {
 
 				final String procName = createMemsetDeclarationName(hda);
 
