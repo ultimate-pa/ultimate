@@ -2,7 +2,7 @@
 
 //@ ltl invariant positive: ( <>[] ( AP(output == 0)));
 
-extern void __VERIFIER_assume();
+extern void __VERIFIER_assume(int);
 extern int __VERIFIER_nondet_int();
 
 int output, input;

@@ -329,7 +329,7 @@ extern void funlockfile (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int();
 int error, tempDisplay, warnLED, tempIn, chainBroken,
 warnLight, temp, limit, init;
 void display(int tempdiff, int warning)
