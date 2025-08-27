@@ -99,6 +99,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mCheckVacuity;
 	private boolean mRTIPreCheck;
 	private int mCombinationNum;
+	private boolean mPreCheckFullSet;
 	private boolean mCheckConsistency;
 	private boolean mCheckComplement;
 	private boolean mCheckRedundancy;
@@ -106,7 +107,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mGenerateFailurePath;
 
 	private int mRTIPreCheckRange;
-	private boolean mRTICheckRangeIgnore;
+
 
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
@@ -151,10 +152,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
 		mRTIPreCheckRange = prefs.getInt(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS);
-		mRTICheckRangeIgnore = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_IGNORE_RANGE);
-		if (mRTICheckRangeIgnore) {
-			mCombinationNum = mRTIPreCheckRange +3;
-		}
+		mPreCheckFullSet = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET);
+
 
 		// log preferences
 		mLogger.info(
@@ -368,7 +367,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final List<Statement> stmtList = new ArrayList<>();
 		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = new ArrayList<>();
 		if (mRTIPreCheck) {
-			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mRTIPreCheckRange);
+			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mRTIPreCheckRange, mPreCheckFullSet);
 
 		} else {
 

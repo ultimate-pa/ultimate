@@ -61,7 +61,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
 	
 	public static final String LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK = "rt-inconsistency pre-check";
-	private static final boolean DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK = true;
+	private static final boolean DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK = false;
 	private static final String DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK = """
 			This settings makes a Pre-Check before the actual rt-inconsistency Check. This should reduce the time for the rt-inconsistency check""";
 	
@@ -71,14 +71,13 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			This settings makes the range for chain link requirements for the rt-inconsistency check. The value is different from the rt-range, since
 			the size is counted diefferently. The rt-range is the number of requirements that are checked at once, while the chain-link requirements
 			is the size of the chain of requirements that are checked at once, with any additional number of requriements.\\
-		    For using this setting fully, increase the size of the rt-inconsistency range.\\
+		   	This setting overwrites the range set for the rt-inconsisteny check.
 			""";
 	
-	public static final String LABEL_CHECK_RT_INCONSISTENCY_IGNORE_RANGE= "ignore range of rt-inconsistency";
-	private static final boolean DEF_CHECK_RT_INCONSISTENCY_IGNORE_RANGE = false;
-	private static final String DESC_CHECK_RT_INCONSISTENCY_IGNORE_RANGE = """
-			This settings ignores the range of the rt-inconsistency check. This means all the posssible rt-inconsistent sets from the pre-check are checked, 
-			ignoring the range of the rt-inconsistent range setting
+	public static final String LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET= "Check full set";
+	private static final boolean DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET = false;
+	private static final String DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET = """
+			This settings checks the complete set for rt-inconsicies. Warning: This can take a very long time!
 			""";
 	
 	
@@ -164,8 +163,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS, DEF_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS,
 								DESC_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS,PreferenceType.Integer,
 								IUltimatePreferenceItemValidator.ONLY_POSITIVE),
-						new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY_IGNORE_RANGE, DEF_CHECK_RT_INCONSISTENCY_IGNORE_RANGE,
-								DESC_CHECK_RT_INCONSISTENCY_IGNORE_RANGE, PreferenceType.Boolean)
+						new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET, DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET,
+								DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET, PreferenceType.Boolean)
 						),
 				new UltimatePreferenceItemGroup("Rt-Inconsistency",
 						
