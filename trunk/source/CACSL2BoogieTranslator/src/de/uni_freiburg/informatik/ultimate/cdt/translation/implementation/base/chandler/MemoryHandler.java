@@ -366,7 +366,7 @@ public class MemoryHandler {
 				.contains(MemoryModelDeclarations.C_MEMCPY)) {
 			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager, mTypeHandler,
 					mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes, dataRaceChecker,
-					mSettings, mMemoryModel);
+					mSettings, mMemoryModel, mRequiredMemoryModelFeatures);
 			declarations.addAll(cmcom.declareMemcpyOrMemmove(main, MemoryModelDeclarations.C_MEMCPY));
 		}
 
@@ -374,7 +374,7 @@ public class MemoryHandler {
 				.contains(MemoryModelDeclarations.C_MEMMOVE)) {
 			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager, mTypeHandler,
 					mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes, dataRaceChecker,
-					mSettings, mMemoryModel);
+					mSettings, mMemoryModel, mRequiredMemoryModelFeatures);
 			declarations.addAll(cmcom.declareMemcpyOrMemmove(main, MemoryModelDeclarations.C_MEMMOVE));
 		}
 

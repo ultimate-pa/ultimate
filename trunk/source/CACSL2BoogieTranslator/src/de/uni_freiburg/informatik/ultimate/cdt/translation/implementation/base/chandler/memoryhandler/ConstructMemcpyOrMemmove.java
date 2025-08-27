@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -59,12 +60,13 @@ public final class ConstructMemcpyOrMemmove {
 	private final DataRaceChecker mDataRaceChecker;
 	private final TranslationSettings mSettings;
 	private final MemoryModel mMemoryModel;
+	private final RequiredMemoryModelFeatures mRequiredMemoryModelFeatures;
 
 	public ConstructMemcpyOrMemmove(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final TypeSizes typeSizes, final DataRaceChecker dataRaceChecker, final TranslationSettings settings,
-			final MemoryModel memoryModel) {
+			final MemoryModel memoryModel, final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureHandler;
 		mTypeHandler = typeHandler;
@@ -75,6 +77,7 @@ public final class ConstructMemcpyOrMemmove {
 		mDataRaceChecker = dataRaceChecker;
 		mSettings = settings;
 		mMemoryModel = memoryModel;
+		mRequiredMemoryModelFeatures = requiredMemoryModelFeatures;
 	}
 
 	/**
@@ -132,8 +135,7 @@ public final class ConstructMemcpyOrMemmove {
 					mTypeHandler.getBoogiePointerType(), SFO.MEMCPY_SRC,
 					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
 
-			for (final var cPrim : mMemoryHandler.getRequiredMemoryStructureFeatures().getDataOnHeapRequired()) {
-				final var hda = mMemoryModel.getDataHeapArray(cPrim);
+			for (final var hda : mMemoryHandler.getDataHeapArrays(mRequiredMemoryModelFeatures)) {
 				final var expressions = mMemoryModel.constructMemcpyMemmoveQuantorExpressions(ignoreLoc, hda,
 						sizeIdExprDecl, destExprDecl, srcExprDecl);
 
