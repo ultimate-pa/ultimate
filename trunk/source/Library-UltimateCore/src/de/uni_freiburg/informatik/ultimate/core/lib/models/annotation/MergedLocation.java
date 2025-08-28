@@ -101,12 +101,32 @@ public class MergedLocation extends DefaultLocation {
 			endLine = newLines.getSecond();
 			startColum = newColumns.getFirst();
 			endColumn = newColumns.getSecond();
+		} else if ((!(loc.getFileName() == null) && !loc.getFileName().isEmpty()) && (otherLoc.getFileName() == null)) {
+			fileName = loc.getFileName();
+			startLine = loc.getStartLine();
+			endLine = loc.getEndLine();
+			startColum = loc.getStartColumn();
+			endColumn = loc.getEndColumn();
 		} else {
-			fileName = MSG_UNKNOWN;
-			startLine = -1;
-			endLine = -1;
-			startColum = -1;
-			endColumn = -1;
+			if (!(loc.getFileName() == null) && !loc.getFileName().isEmpty()) {
+				fileName = loc.getFileName();
+				startLine = loc.getStartLine();
+				endLine = loc.getEndLine();
+				startColum = loc.getStartColumn();
+				endColumn = loc.getEndColumn();
+			} else if (!(otherLoc.getFileName() == null) && !otherLoc.getFileName().isEmpty()) {
+				fileName = otherLoc.getFileName();
+				startLine = otherLoc.getStartLine();
+				endLine = otherLoc.getEndLine();
+				startColum = otherLoc.getStartColumn();
+				endColumn = otherLoc.getEndColumn();
+			} else {
+				fileName = MSG_UNKNOWN;
+				startLine = -1;
+				endLine = -1;
+				startColum = -1;
+				endColumn = -1;
+			}
 		}
 		return new MergedLocation(fileName, startLine, endLine, startColum, endColumn, origins);
 	}
