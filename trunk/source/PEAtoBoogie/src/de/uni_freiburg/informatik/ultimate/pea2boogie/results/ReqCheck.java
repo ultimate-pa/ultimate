@@ -108,7 +108,7 @@ public class ReqCheck extends Check {
 		if (reqIds.length != 1) {
 			sb.append("s");
 		}
-		final Iterator<String> iter = Arrays.stream(reqIds).iterator();
+		final Iterator<String> iter = Arrays.stream(peaNames).iterator();
 		sb.append(" ").append(iter.next());
 		while (iter.hasNext()) {
 			sb.append(", ").append(iter.next());
