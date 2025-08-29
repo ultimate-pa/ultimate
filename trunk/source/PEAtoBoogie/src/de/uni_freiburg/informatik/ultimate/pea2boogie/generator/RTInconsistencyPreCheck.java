@@ -121,7 +121,7 @@ public class RTInconsistencyPreCheck {
 	}
 
 	private void printResults() {
-		mLogger.info("RTI PreCheck found " + mRTIReturnSet.size() + " sets");
+		mLogger.info("-------------------RTI PreCheck found " + mRTIReturnSet.size() + " sets----------------------");
 		for (final Entry<PatternType<?>, PhaseEventAutomata>[] entry : mRTIReturnSet) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append("[");
