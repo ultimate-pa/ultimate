@@ -41,12 +41,12 @@ public class RTInconsistencyPreCheck {
 	public int mCombinationNum;
 	public Term mDebugTerm;
 	public TermVariable mDebugVar;
-	public List<ReqsWithAttributes> mListChainLinkReqs = new ArrayList<>();
-	public Map<TermVariable, List<ReqsWithAttributes>> mDictVar = new HashMap<>();
+	public List<ReqsWithAttributes> mListChainLinkReqs;
+	public Map<TermVariable, List<ReqsWithAttributes>> mDictVar;
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> mRTIReturnSet;
-	public List<List<ReqsWithAttributes>> mRTICombinations = new ArrayList<>();
-	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mChainLinkSingles = new HashMap<>();
+	public List<List<ReqsWithAttributes>> mRTICombinations ;
+	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mChainLinkSingles;
 
 	public class ReqsWithAttributes {
 		public String mName;
@@ -95,14 +95,15 @@ public class RTInconsistencyPreCheck {
 		mServices = services;
 		mRTIReturnSet = new ArrayList<>();
 		mCombinationNum = range;
-
-		mDebugTerm = null;
-		mDebugVar = null;
-
+		mListChainLinkReqs = new ArrayList<>();
+		mDictVar = new HashMap<>();
+		mRTICombinations = new ArrayList<>();
+		mChainLinkSingles = new HashMap<>();
 		mFullSet = preCheckFullSet;
 
 		getDebugTerm();
-
+		
+		//--------START OF RTI CHECK----------------
 		getAttributes(reqPeas);
 		findSinglesForChains();
 		// If the preference "full Set" is set, the maximum chain link depth is set to the number of chainLink
@@ -110,10 +111,12 @@ public class RTInconsistencyPreCheck {
 		mCombinationNum = mFullSet ? mListChainLinkReqs.size() : mCombinationNum;
 		rtiCheckSingles();
 		rtiCheckChainLinkReqs();
-		mLogger.info("Number of chain link requirements: " + mListChainLinkReqs.size()); // Print out found sets in
-																							// console
+		mLogger.info("Number of chain link requirements: " + mListChainLinkReqs.size()); // Print out found sets
+		for (ReqsWithAttributes r : mListChainLinkReqs) { //prints names of chain-link requirements (for debug reasons)
+			mLogger.info("   " + r.mName);
+		}
 		printResults();
-		return mRTIReturnSet;
+		return mRTIReturnSet; //returns found sets in format for checking to reduce false positives
 
 	}
 
@@ -141,7 +144,7 @@ public class RTInconsistencyPreCheck {
 		for (final ReqsWithAttributes req : mListChainLinkReqs) {
 			final List<ReqsWithAttributes> singles = mChainLinkSingles.computeIfAbsent(req, r -> new ArrayList<>());
 
-			// avoid duplicates if the same otherReq appears via multiple vars
+			// avoid duplicates if the same otherReq appears via multiple variables
 			final var seen = new java.util.LinkedHashSet<ReqsWithAttributes>();
 
 			for (final TermVariable var : req.mFullExitCondition.getFreeVars()) {
@@ -185,7 +188,7 @@ public class RTInconsistencyPreCheck {
 
 	}
 
-	public static <T> boolean haveIntersection(final TermVariable[] vars1, final TermVariable[] variables) {
+	public static boolean haveIntersection(final TermVariable[] vars1, final TermVariable[] variables) {
 		for (final TermVariable elem : variables) {
 			if (Arrays.asList(vars1).contains(elem)) {
 				return true; // intersection of variables found
@@ -204,7 +207,7 @@ public class RTInconsistencyPreCheck {
 		}
 
 		for (int depth = 1; depth <= mCombinationNum; depth++) {
-			mLogger.info("-------------- DEPTH (number of chain links) {} ------------------", depth);
+			mLogger.info("-------------- DEPTH " + depth + "(number of chain links) ------------------");
 
 			for (int i = 0; i < mListChainLinkReqs.size(); i++) {
 				// Simple progress indicator
@@ -288,12 +291,12 @@ public class RTInconsistencyPreCheck {
 	private void findSinglesForChains(final List<ReqsWithAttributes> chainLinkRes, final List<Term> exitConditions) {
 
 		mLogger.debug("Finding singles for chain link requirements: ");
-		mLogger.info("new CHhain set:");
+		mLogger.info("New Chain Set:");
 		for (final ReqsWithAttributes r : chainLinkRes) {
 			mLogger.info("   " + r.mName);
 		}
 
-		List<ReqsWithAttributes> potentialSingles = new ArrayList();
+		List<ReqsWithAttributes> potentialSingles = new ArrayList<>();
 		if (chainLinkRes.size() == 1) {
 			potentialSingles = mChainLinkSingles.get(chainLinkRes.get(0));
 		} else {
@@ -307,7 +310,7 @@ public class RTInconsistencyPreCheck {
 			return;
 		}
 		mLogger.debug("Potential singles found: " + potentialSingles.size());
-		fillWithSinglesRecursive(potentialSingles, chainLinkRes, exitConditions, new ArrayList());
+		fillWithSinglesRecursive(potentialSingles, chainLinkRes, exitConditions, new ArrayList<>());
 
 	}
 
@@ -324,7 +327,7 @@ public class RTInconsistencyPreCheck {
 	private void fillWithSinglesRecursive(final List<ReqsWithAttributes> potentialSingles,
 			final List<ReqsWithAttributes> chainLinkRes, final List<Term> exitConditions,
 			final List<ReqsWithAttributes> usedSingles) {
-		mLogger.debug("add single, potential singles left: {}", potentialSingles.size());
+		mLogger.debug("add single, potential singles left: " + potentialSingles.size());
 
 		// optional short-circuits
 		if (potentialSingles.isEmpty()) {
@@ -361,8 +364,6 @@ public class RTInconsistencyPreCheck {
 				// All ECs eliminated → check and record RTI
 				chainLinkRtiFoundCheck(chainLinkRes, newUsedSingles);
 			} else {
-				mLogger.debug("Reduced exit conditions to {} (from {}) via {}", reducedExitConditions.size(),
-						exitConditions.size(), candidate.mName);
 
 				final List<ReqsWithAttributes> tail =
 						new ArrayList<>(potentialSingles.subList(i + 1, potentialSingles.size()));
@@ -378,9 +379,8 @@ public class RTInconsistencyPreCheck {
 	private void chainLinkRtiFoundCheck(final List<ReqsWithAttributes> chainLinkRes,
 			final List<ReqsWithAttributes> usedSingles) {
 		for (final List<ReqsWithAttributes> rtiSet : mRTICombinations) {
-			boolean allFound = true;
+
 			if (usedSingles.containsAll(rtiSet)) {
-				allFound = true;
 
 				mLogger.debug("set not minimal");
 				return;
@@ -390,17 +390,34 @@ public class RTInconsistencyPreCheck {
 
 		final List<ReqsWithAttributes> fullSet = new ArrayList<>(chainLinkRes);
 		fullSet.addAll(usedSingles);
-
+		//check for exit conditions
 		Term conjunction = fullSet.get(0).mFullExitCondition;
 
 		for (int i = 1; i < fullSet.size(); i++) {
 			conjunction = SmtUtils.and(mScript, conjunction, fullSet.get(i).mFullExitCondition);
 		}
 
-		final LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
+		LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
 		if (result != LBool.UNSAT) {
 			mLogger.debug("set not disjoint");
 			return;
+		}
+		//check if max phases are all valid together
+		conjunction = fullSet.get(0).mMaxPhase.mInvariant;
+
+		for (int i = 1; i < fullSet.size(); i++) {
+			conjunction = SmtUtils.and(mScript, conjunction, fullSet.get(i).mMaxPhase.mInvariant);
+		}
+
+		result = SmtUtils.checkSatTerm(mScript, conjunction);
+		if (result == LBool.UNSAT) {
+			mLogger.debug("set not disjoint");
+			return;
+		}
+		//if we reach this point the set is rt-inconsistent
+		mLogger.info("RTI found for chain link set:");
+		for (final ReqsWithAttributes r : fullSet) {
+			mLogger.info("   " + r.mName);
 		}
 		mRTIReturnSet.add(rtiSetsFormatted(fullSet));
 	}
@@ -418,7 +435,7 @@ public class RTInconsistencyPreCheck {
 	}
 
 	/**
-	 * Checks for all non-chain-link req, so for set size 2, for rt-inconsistencies.
+	 * Checks for all non-chain-link requirement, so for set size 2, for rt-inconsistencies.
 	 *
 	 */
 	private void rtiCheckSingles() {
@@ -448,7 +465,9 @@ public class RTInconsistencyPreCheck {
 				mRTICombinations.add(canonicalPair);
 
 				if (rtiCheckFor2Reqs(a, b)) {
-					mLogger.info("RTI found for:" + a.mName + " and " + b.mName);
+					mLogger.info("RTI found for:");
+					mLogger.info("   " + a.mName);
+					mLogger.info("   " + b.mName);
 					mRTIReturnSet.add(rtiSetsFormatted(canonicalPair));
 
 				}
@@ -617,6 +636,7 @@ public class RTInconsistencyPreCheck {
 	/**
 	 * Formats the found rt-inconsistencies into format of the rt-inconsistency check
 	 */
+
 	public Entry<PatternType<?>, PhaseEventAutomata>[] rtiSetsFormatted(final List<ReqsWithAttributes> reqs) {
 		return reqs.stream()
 				.map(req -> new AbstractMap.SimpleEntry<>(req.mOriginalPea.getPattern(), req.mOriginalPeaEventAutomata))
