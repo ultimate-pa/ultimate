@@ -211,8 +211,8 @@ public class RTInconsistencyPreCheck {
 
 			for (int i = 0; i < mListChainLinkReqs.size(); i++) {
 				// Simple progress indicator
-				final float progress = (i * 100.0f) / mListChainLinkReqs.size();
-				mLogger.info("STATUS: depth: " + depth + " out of " + mCombinationNum + ": " + progress + "%");
+				final int progress = (int) ((i * 100.0f) / mListChainLinkReqs.size());
+				mLogger.info("STATUS: depth " + depth + " out of " + mCombinationNum + ": " + progress + "%");
 
 				// Start a new chain link result set with one element
 				final List<ReqsWithAttributes> chainLinkRes = new ArrayList<>();
@@ -304,7 +304,7 @@ public class RTInconsistencyPreCheck {
 	private void findSinglesForChains(final List<ReqsWithAttributes> chainLinkRes, final List<Term> exitConditions) {
 
 		mLogger.debug("Finding singles for chain link requirements: ");
-		mLogger.info("New Chain Set:");
+		mLogger.info("New chain found:");
 		for (final ReqsWithAttributes r : chainLinkRes) {
 			mLogger.info("   " + r.mName);
 		}
@@ -428,7 +428,7 @@ public class RTInconsistencyPreCheck {
 			return;
 		}
 		//if we reach this point the set is rt-inconsistent
-		mLogger.info("RTI found for chain link set:");
+		mLogger.info("Rt-inconsistent set with chain-link found:");
 		for (final ReqsWithAttributes r : fullSet) {
 			mLogger.info("   " + r.mName);
 		}
@@ -478,7 +478,7 @@ public class RTInconsistencyPreCheck {
 				mRTICombinations.add(canonicalPair);
 
 				if (rtiCheckFor2Reqs(a, b)) {
-					mLogger.info("RTI found for:");
+					mLogger.info("Rt-inconsistent set found");
 					mLogger.info("   " + a.mName);
 					mLogger.info("   " + b.mName);
 					mRTIReturnSet.add(rtiSetsFormatted(canonicalPair));
