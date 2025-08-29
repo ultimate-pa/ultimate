@@ -26,12 +26,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 
 public class RTInconsistencyPreCheck {
 	public boolean mDebugReasonCOunter = true;
 	public int[] reasonCounter = new int[4];
-	
+
 	public boolean mFullSet;
 
 	private Script mScript;
@@ -48,7 +47,6 @@ public class RTInconsistencyPreCheck {
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> mRTIReturnSet;
 	public List<List<ReqsWithAttributes>> mRTICombinations = new ArrayList<>();
 	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mChainLinkSingles = new HashMap<>();
-	
 
 	public class ReqsWithAttributes {
 		public String mName;
@@ -89,7 +87,7 @@ public class RTInconsistencyPreCheck {
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
 			final ILogger logger, final Script script, final CddToSmt cddToSmt, final IUltimateServiceProvider services,
-			final ManagedScript managedScript, final int range, boolean preCheckFullSet) {
+			final ManagedScript managedScript, final int range, final boolean preCheckFullSet) {
 		mScript = script;
 		mManagedScript = managedScript;
 		mLogger = logger;
@@ -100,20 +98,26 @@ public class RTInconsistencyPreCheck {
 
 		mDebugTerm = null;
 		mDebugVar = null;
-		
-		mFullSet = preCheckFullSet;
 
+		mFullSet = preCheckFullSet;
 
 		getDebugTerm();
 
-		getAttribtes(reqPeas);
+		getAttributes(reqPeas);
 		findSinglesForChains();
-		if (mFullSet) {
-			mCombinationNum = this.mListChainLinkReqs.size();
-		}
+		// If the preference "full Set" is set, the maximum chain link depth is set to the number of chainLink
+		// requirements
+		mCombinationNum = mFullSet ? mListChainLinkReqs.size() : mCombinationNum;
 		rtiCheckSingles();
 		rtiCheckChainLinkReqs();
+		mLogger.info("Number of chain link requirements: " + mListChainLinkReqs.size()); // Print out found sets in
+																							// console
+		printResults();
+		return mRTIReturnSet;
 
+	}
+
+	private void printResults() {
 		mLogger.info("RTI PreCheck found " + mRTIReturnSet.size() + " sets");
 		for (final Entry<PatternType<?>, PhaseEventAutomata>[] entry : mRTIReturnSet) {
 			final StringBuilder sb = new StringBuilder();
@@ -124,36 +128,45 @@ public class RTInconsistencyPreCheck {
 			sb.append("]");
 			mLogger.info(sb.toString());
 		}
-		return mRTIReturnSet;
-
 	}
 
+	/**
+	 * checks for each chain-link requirement potential singles. This reduces checking later.
+	 *
+	 * @param gets
+	 *            the list mListChainLinkReqs and mChainLinkSingles
+	 */
 	private void findSinglesForChains() {
-		for (final ReqsWithAttributes req : mListChainLinkReqs) {
-			mChainLinkSingles.put(req, new ArrayList<>());
-			final TermVariable[] variables = req.mFullExitCondition.getFreeVars();
-			for (final TermVariable var : variables) {
-				final List<ReqsWithAttributes> potentialReqs = mDictVar.get(var);
-				if (potentialReqs != null) {
-					for (final ReqsWithAttributes otherReq : potentialReqs) {
-						if (ChainLinkTest(req, otherReq)) {
-							mChainLinkSingles.get(req).add(otherReq);
 
-						}
+		for (final ReqsWithAttributes req : mListChainLinkReqs) {
+			final List<ReqsWithAttributes> singles = mChainLinkSingles.computeIfAbsent(req, r -> new ArrayList<>());
+
+			// avoid duplicates if the same otherReq appears via multiple vars
+			final var seen = new java.util.LinkedHashSet<ReqsWithAttributes>();
+
+			for (final TermVariable var : req.mFullExitCondition.getFreeVars()) {
+				for (final ReqsWithAttributes other : mDictVar.getOrDefault(var, java.util.List.of())) {
+					if (other != req && ChainLinkTest(req, other) && seen.add(other)) {
+						singles.add(other);
 					}
 				}
-
 			}
-
 		}
 
 	}
-	
-	private boolean ChainLinkTest(final ReqsWithAttributes req1, final ReqsWithAttributes req2) {
-		if (!habenSchnittmenge(req1.mFullExitCondition.getFreeVars(), req2.mFullExitCondition.getFreeVars())) {
-			return false; // Überschneidung gefunden
-		}
 
+	/**
+	 * Checks if a chain-link and a single can possible match. So if they deal with the same variable and if it is
+	 * possible that the conjunction of the max phases are possible
+	 *
+	 * @param req1
+	 * @param req2
+	 * @return
+	 */
+	private boolean ChainLinkTest(final ReqsWithAttributes req1, final ReqsWithAttributes req2) {
+		if (!haveIntersection(req1.mFullExitCondition.getFreeVars(), req2.mFullExitCondition.getFreeVars())) {
+			return false; // intersection not found
+		}
 		if (((req1.mBeforeMaxPhase != null && req2.mBeforeMaxPhase != null)
 				&& req1.mPenultimatePhase.mBound.equals(req2.mPenultimatePhase.mBound))
 				&& (req1.mPenultimatePhase.mBound == req2.mPenultimatePhase.mBound)) {
@@ -162,54 +175,65 @@ public class RTInconsistencyPreCheck {
 					SmtUtils.and(mScript, req1.mBeforeMaxPhase.mInvariant, req2.mBeforeMaxPhase.mInvariant);
 			final LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
 			if (result == LBool.UNSAT) {
-				
 
-				return false; // Exit conditions are not disjoint
+				return false;
 
 			}
 		}
 
 		return true;
+
 	}
-	
-	public static <T> boolean habenSchnittmenge(final TermVariable[] vars1, final TermVariable[] variables) {
+
+	public static <T> boolean haveIntersection(final TermVariable[] vars1, final TermVariable[] variables) {
 		for (final TermVariable elem : variables) {
 			if (Arrays.asList(vars1).contains(elem)) {
-				return true; // Überschneidung gefunden
+				return true; // intersection of variables found
 			}
 		}
-		return false; // Keine gemeinsamen Elemente
+		return false; // do not contain same variable-> no further checking needed
 	}
 
+	/**
+	 * Iterates over all chain-link requirements and tries to build combinations up to the configured maximum size
+	 * (mCombinationNum). For each depth, it starts recursive exploration with each element as the initial chain link.
+	 */
 	private void rtiCheckChainLinkReqs() {
-		if (mCombinationNum > 0) {
-			for (int depth = 1; depth <= mCombinationNum; depth++) {
-				mLogger.info("--------------DEPTH (number of chain links) " + depth + "------------------");
-
-
-				for(int i = 0; i< mListChainLinkReqs.size(); i++) {
-					float progress = (i*100)/mListChainLinkReqs.size();
-					mLogger.info("STATUS: for depth" + depth + " outOf " + mCombinationNum + "Progress: " + progress + "%");
-					
-					List<ReqsWithAttributes> chainLinkRes = new ArrayList();
-					chainLinkRes.add(mListChainLinkReqs.get(i));
-		            
-						addChainLinkRecursive(chainLinkRes, depth, this.mListChainLinkReqs.get(i).mExitConditions, 
-								new ArrayList<>(this.mListChainLinkReqs.subList(i+1, mListChainLinkReqs.size())));
-					
-
-
-                }
-				
-				
-			}
-
+		if (mCombinationNum <= 0) {
+			return;
 		}
 
+		for (int depth = 1; depth <= mCombinationNum; depth++) {
+			mLogger.info("-------------- DEPTH (number of chain links) {} ------------------", depth);
+
+			for (int i = 0; i < mListChainLinkReqs.size(); i++) {
+				// Simple progress indicator
+				final float progress = (i * 100.0f) / mListChainLinkReqs.size();
+				mLogger.info("STATUS: depth: " + depth + " out of " + mCombinationNum + ": " + progress + "%");
+
+				// Start a new chain link result set with one element
+				final List<ReqsWithAttributes> chainLinkRes = new ArrayList<>();
+				chainLinkRes.add(mListChainLinkReqs.get(i));
+
+				// Pass exit conditions of the first element + all following as remaining candidates
+				addChainLinkRecursive(chainLinkRes, depth, mListChainLinkReqs.get(i).mExitConditions,
+						new ArrayList<>(mListChainLinkReqs.subList(i + 1, mListChainLinkReqs.size())));
+			}
+		}
 	}
 
-	private void addChainLinkRecursive( List<ReqsWithAttributes> chainLinkRes, int depth, List<Term> exitConditions, List<ReqsWithAttributes> remainingChainLinks) {
-		//Case more chain Links have to be added
+	/**
+	 * Creates a set of chain-link-requirements with the size of "depth". Therefore checks if the chain links can form a
+	 * "chain".
+	 *
+	 * @param chainLinkRes
+	 * @param depth
+	 * @param exitConditions
+	 * @param remainingChainLinks
+	 */
+	private void addChainLinkRecursive(final List<ReqsWithAttributes> chainLinkRes, final int depth,
+			final List<Term> exitConditions, final List<ReqsWithAttributes> remainingChainLinks) {
+		// Case more chain Links have to be added
 		if (depth > chainLinkRes.size()) {
 			mLogger.debug("add chain link, remaining chain links: " + remainingChainLinks.size());
 			if (remainingChainLinks.isEmpty()) {
@@ -217,68 +241,65 @@ public class RTInconsistencyPreCheck {
 				return;
 			}
 			for (int i = 0; i < remainingChainLinks.size(); i++) {
-				for(Term ec: exitConditions) {
-					for (Term ecNew : remainingChainLinks.get(i).mExitConditions) {
-						Term conjunction = SmtUtils.and(mScript, ec, ecNew);
+				for (final Term ec : exitConditions) {
+					for (final Term ecNew : remainingChainLinks.get(i).mExitConditions) {
+						final Term conjunction = SmtUtils.and(mScript, ec, ecNew);
 						if (LBool.SAT != SmtUtils.checkSatTerm(mScript, conjunction)) {
 							mLogger.debug("Chain link added");
-							List<ReqsWithAttributes> newChainLinkRes = new ArrayList<>(chainLinkRes);
+							final List<ReqsWithAttributes> newChainLinkRes = new ArrayList<>(chainLinkRes);
 							newChainLinkRes.add(remainingChainLinks.get(i));
-							List<Term> newExitConditions = new ArrayList<>();
-							for (Term exitCond : exitConditions) {
-								if(exitCond != ec) {
+							final List<Term> newExitConditions = new ArrayList<>();
+							for (final Term exitCond : exitConditions) {
+								if (exitCond != ec) {
 									newExitConditions.add(exitCond);
 								}
 							}
-							for (Term exitCond : remainingChainLinks.get(i).mExitConditions) {
+							for (final Term exitCond : remainingChainLinks.get(i).mExitConditions) {
 								if (exitCond != ecNew) {
 									newExitConditions.add(exitCond);
 								}
 							}
-							if(remainingChainLinks.size() > i+1) {
-								addChainLinkRecursive(newChainLinkRes, depth, newExitConditions,
-										new ArrayList<>(remainingChainLinks.subList(i+1, remainingChainLinks.size())));
+							if (remainingChainLinks.size() > i + 1) {
+								addChainLinkRecursive(newChainLinkRes, depth, newExitConditions, new ArrayList<>(
+										remainingChainLinks.subList(i + 1, remainingChainLinks.size())));
 							}
 
 						}
 					}
 				}
-				
+
 			}
 		}
-		//Case number of chainlinks reached
+		// Case number of chain links reached
 		else if (depth == chainLinkRes.size()) {
 			findSinglesForChains(chainLinkRes, exitConditions);
-			
+
 		}
-		
+
 	}
 
-	private void findSinglesForChains(List<ReqsWithAttributes> chainLinkRes, List<Term> exitConditions) {
+	/**
+	 * For a set of chain link requirements finds all potential singles. -> Singles that fit to the chain-link
+	 * requirements This is done to reduce the possible singles for a chain test
+	 *
+	 * @param chainLinkRes
+	 * @param exitConditions
+	 */
+	private void findSinglesForChains(final List<ReqsWithAttributes> chainLinkRes, final List<Term> exitConditions) {
 
-		mLogger.warn("Finding singles for chain link requirements: " );
-		for (ReqsWithAttributes r : chainLinkRes) {
+		mLogger.debug("Finding singles for chain link requirements: ");
+		mLogger.info("new CHhain set:");
+		for (final ReqsWithAttributes r : chainLinkRes) {
 			mLogger.info("   " + r.mName);
 		}
-		
+
 		List<ReqsWithAttributes> potentialSingles = new ArrayList();
 		if (chainLinkRes.size() == 1) {
 			potentialSingles = mChainLinkSingles.get(chainLinkRes.get(0));
 		} else {
-			for (ReqsWithAttributes req : chainLinkRes) {
+			for (final ReqsWithAttributes req : chainLinkRes) {
 				potentialSingles.addAll(mChainLinkSingles.get(req));
-				/*
-				for(int i = 1;  i < chainLinkRes.size(); i++) {
-					if(mChainLinkSingles.get(chainLinkRes.get(i)).contains(req)) {
-                       break;
-                    }
-				}
-				for (Term exitCond : exitConditions) {
-					if(habenSchnittmenge(exitCond.getFreeVars(), req.mFullExitCondition.getFreeVars() )){
-						potentialSingles.add(req);
-					}
-				}
-				*/
+
 			}
 		}
 		if (potentialSingles.isEmpty()) {
@@ -287,73 +308,96 @@ public class RTInconsistencyPreCheck {
 		}
 		mLogger.debug("Potential singles found: " + potentialSingles.size());
 		fillWithSinglesRecursive(potentialSingles, chainLinkRes, exitConditions, new ArrayList());
-		
-		
+
 	}
 
-	private void fillWithSinglesRecursive(List<ReqsWithAttributes> potentialSingles,
-			List<ReqsWithAttributes> chainLinkRes, List<Term> exitConditions, List<ReqsWithAttributes> usedSingles) {
-		mLogger.debug("add single, potential singles left: " + potentialSingles.size());
-		for (int i = 0; i< potentialSingles.size(); i++) {
+	/**
+	 * For a list of chainLinkReqs which are possible rt-inconsistent: try to fill with singles to create a
+	 * rt-inconsitency. This is done recursive, adding one single after another. Tries to eliminate the exit options
+	 * from the combined chain link. If no exit options are left-> Possible rt-inconsistency
+	 *
+	 * @param potentialSingles
+	 * @param chainLinkRes
+	 * @param exitConditions
+	 * @param usedSingles
+	 */
+	private void fillWithSinglesRecursive(final List<ReqsWithAttributes> potentialSingles,
+			final List<ReqsWithAttributes> chainLinkRes, final List<Term> exitConditions,
+			final List<ReqsWithAttributes> usedSingles) {
+		mLogger.debug("add single, potential singles left: {}", potentialSingles.size());
 
-			List<ReqsWithAttributes> newUsedSingles = new ArrayList<>(usedSingles);
-			List<Term> reducedExitConditions = new ArrayList<>();
-			for(Term exitCon: exitConditions) {
-				Term conjunction = SmtUtils.and(mScript, exitCon, potentialSingles.get(i).mFullExitCondition);
-				if (LBool.SAT == SmtUtils.checkSatTerm(mScript, conjunction)) {
-					reducedExitConditions.add(exitCon);
+		// optional short-circuits
+		if (potentialSingles.isEmpty()) {
+			return;
+		}
+		if (exitConditions.isEmpty()) {
+			// already disjoint → found an RTI candidate
+			chainLinkRtiFoundCheck(chainLinkRes, usedSingles);
+			return;
+		}
+
+		for (int i = 0; i < potentialSingles.size(); i++) {
+			final ReqsWithAttributes candidate = potentialSingles.get(i);
+
+			// filter exit conditions that remain feasible with this candidate
+			final List<Term> reducedExitConditions = new ArrayList<>();
+			for (final Term ec : exitConditions) {
+				final Term conj = SmtUtils.and(mScript, ec, candidate.mFullExitCondition);
+				if (SmtUtils.checkSatTerm(mScript, conj) == LBool.SAT) {
+					reducedExitConditions.add(ec); // keep ec (filter), or add 'conj' if you intend to strengthen
 				}
 			}
-			if(reducedExitConditions.size() == exitConditions.size()) {
-				mLogger.debug("No reduction of exit conditions");
-				
-            } 
-			else{
-				newUsedSingles.add(potentialSingles.get(i));
-			
-			
+
+			if (reducedExitConditions.size() == exitConditions.size()) {
+				mLogger.debug("No reduction of exit conditions for {}", candidate.mName);
+				continue; // nothing gained by choosing this candidate now
+			}
+
+			// take candidate into the current path
+			final List<ReqsWithAttributes> newUsedSingles = new ArrayList<>(usedSingles);
+			newUsedSingles.add(candidate);
+
 			if (reducedExitConditions.isEmpty()) {
+				// All ECs eliminated → check and record RTI
 				chainLinkRtiFoundCheck(chainLinkRes, newUsedSingles);
-			} else if (reducedExitConditions.size() < exitConditions.size()) {
-				mLogger.debug("Reduced exit conditions to " + reducedExitConditions.size());
-				fillWithSinglesRecursive(
-					    new ArrayList<>(potentialSingles.subList(i, potentialSingles.size())),
-					    chainLinkRes,
-					    reducedExitConditions, newUsedSingles
-					);
+			} else {
+				mLogger.debug("Reduced exit conditions to {} (from {}) via {}", reducedExitConditions.size(),
+						exitConditions.size(), candidate.mName);
 
-			} 
-		}
-		}
+				final List<ReqsWithAttributes> tail =
+						new ArrayList<>(potentialSingles.subList(i + 1, potentialSingles.size()));
 
-		
+				fillWithSinglesRecursive(tail, chainLinkRes, reducedExitConditions, newUsedSingles);
+			}
+		}
 	}
 
-	private void chainLinkRtiFoundCheck(List<ReqsWithAttributes> chainLinkRes, List<ReqsWithAttributes> usedSingles) {
-		for (List<ReqsWithAttributes> rtiSet : mRTICombinations) {
+	/**
+	 * Checks for sets > 2 if the set is rt-inconsistent If rt-inconsistent -> adds them to mRTIReturnSet
+	 */
+	private void chainLinkRtiFoundCheck(final List<ReqsWithAttributes> chainLinkRes,
+			final List<ReqsWithAttributes> usedSingles) {
+		for (final List<ReqsWithAttributes> rtiSet : mRTICombinations) {
 			boolean allFound = true;
-			if(rtiSet.containsAll(usedSingles)) {
+			if (usedSingles.containsAll(rtiSet)) {
 				allFound = true;
-				
-				mLogger.debug("set not minimal");	
+
+				mLogger.debug("set not minimal");
 				return;
-			} 
-					
-				
-			
+			}
+
 		}
-		mLogger.info("RTI found for chain link reqs: ");
-		List<ReqsWithAttributes> fullSet = new ArrayList<>();
-		fullSet.addAll(chainLinkRes);
+
+		final List<ReqsWithAttributes> fullSet = new ArrayList<>(chainLinkRes);
 		fullSet.addAll(usedSingles);
-		
+
 		Term conjunction = fullSet.get(0).mFullExitCondition;
 
 		for (int i = 1; i < fullSet.size(); i++) {
-		    conjunction = SmtUtils.and(mScript, conjunction, fullSet.get(i).mFullExitCondition);
+			conjunction = SmtUtils.and(mScript, conjunction, fullSet.get(i).mFullExitCondition);
 		}
 
-		LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
+		final LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
 		if (result != LBool.UNSAT) {
 			mLogger.debug("set not disjoint");
 			return;
@@ -361,223 +405,247 @@ public class RTInconsistencyPreCheck {
 		mRTIReturnSet.add(rtiSetsFormatted(fullSet));
 	}
 
+	/**
+	 * Creates a debug term variable which is needed for DCPhase to SMT
+	 */
 	public void getDebugTerm() {
 		// BIG TODO, workaround
 		final Logics logic = Logics.QF_UFNIA;
 		final Theory theo = new Theory(logic);
 		final Term rhs = mScript.decimal(Double.toString(2.0));
 		final Sort sort2 = rhs.getSort();
-		final Sort sort = theo.getRealSort();
 		mDebugVar = theo.createTermVariable("debugVar", sort2);
-		final boolean geko = true;
 	}
 
-
-
+	/**
+	 * Checks for all non-chain-link req, so for set size 2, for rt-inconsistencies.
+	 *
+	 */
 	private void rtiCheckSingles() {
-		for (final Entry variablesEntry : mDictVar.entrySet()) {
-			final List<List<ReqsWithAttributes>> combinations =
-					combinations2((List<ReqsWithAttributes>) variablesEntry.getValue());
+
+		for (final Map.Entry<TermVariable, List<ReqsWithAttributes>> e : mDictVar.entrySet()) {
+			final List<ReqsWithAttributes> reqs = e.getValue();
+			if (reqs == null || reqs.size() < 2) {
+				continue;
+			}
+
+			final List<List<ReqsWithAttributes>> combinations = combinations2(reqs);
+
 			for (final List<ReqsWithAttributes> pair : combinations) {
-				final List<ReqsWithAttributes> psorted = new ArrayList<>(pair);
-				psorted.sort(Comparator.comparing(ReqsWithAttributes::getName));
+				final ReqsWithAttributes a = pair.get(0);
+				final ReqsWithAttributes b = pair.get(1);
 
-				if (mRTICombinations.contains(psorted)) {
-					continue; // already checked this combination
+				// canonical key (unordered pair)
+				final String k1 = a.getName();
+				final String k2 = b.getName();
+
+				final List<ReqsWithAttributes> canonicalPair =
+						(k1.compareTo(k2) <= 0) ? java.util.List.of(a, b) : java.util.List.of(b, a);
+
+				if (mRTICombinations.contains(canonicalPair)) {
+					continue; // already checked/recorded this combination
 				}
+				mRTICombinations.add(canonicalPair);
 
-				if (rtiCheckFor2Reqs(pair.get(0), pair.get(1))) {
-					mLogger.info("RTI found for " + pair.get(0).mName + " and " + pair.get(1).mName);
-					mRTIReturnSet.add(rtiSetsFormatted(pair));
+				if (rtiCheckFor2Reqs(a, b)) {
+					mLogger.info("RTI found for:" + a.mName + " and " + b.mName);
+					mRTIReturnSet.add(rtiSetsFormatted(canonicalPair));
+
 				}
 			}
-
 		}
-		// TODO Auto-generated method stub
-
 	}
 
-	private boolean rtiCheckFor2Reqs(final ReqsWithAttributes reqsWithAttributes,
-			final ReqsWithAttributes reqsWithAttributes2) {
-
-		boolean help = true;
-
-		Term conjunction =
-				SmtUtils.and(mScript, reqsWithAttributes.mFullExitCondition, reqsWithAttributes2.mFullExitCondition);
-		LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
-		if (result != LBool.UNSAT) {
-
-			if (mDebugReasonCOunter) {
-				help = false;
-				reasonCounter[0]++;
-			} else {
-				return false; // Exit conditions are not disjoint
-			}
-
-			// return false;
+	/**
+	 * Checks for 2 non-chain-link requirements if they are rt-inconsistent
+	 *
+	 * @param req1
+	 * @param req2
+	 * @return rt-inconsistent -> true not rt-inconsistent -> false
+	 */
+	private boolean rtiCheckFor2Reqs(final ReqsWithAttributes r1, final ReqsWithAttributes r2) {
+		// 1)exit condition check
+		Term conj = SmtUtils.and(mScript, r1.mFullExitCondition, r2.mFullExitCondition);
+		LBool res = SmtUtils.checkSatTerm(mScript, conj);
+		if (res != LBool.UNSAT) {
+			return failReason(0, "Exit conditions overlap or UNKNOWN");
 		}
-		if (((reqsWithAttributes.mBeforeMaxPhase != null && reqsWithAttributes2.mBeforeMaxPhase != null)
-				&& reqsWithAttributes.mPenultimatePhase.mBound.equals(reqsWithAttributes2.mPenultimatePhase.mBound))
-				&& (reqsWithAttributes.mPenultimatePhase.mBound == reqsWithAttributes2.mPenultimatePhase.mBound)) {
 
-			conjunction = SmtUtils.and(mScript, reqsWithAttributes.mBeforeMaxPhase.mInvariant,
-					reqsWithAttributes2.mBeforeMaxPhase.mInvariant);
-			result = SmtUtils.checkSatTerm(mScript, conjunction);
-			if (result == LBool.UNSAT) {
+		// 2) before max phase check
+		if (r1.mBeforeMaxPhase != null && r2.mBeforeMaxPhase != null
+				&& safeEquals(r1.mPenultimatePhase.mBound, r2.mPenultimatePhase.mBound)) {
 
-				if (mDebugReasonCOunter) {
-					help = false;
-					reasonCounter[3]++;
-				} else {
-					return false; // Exit conditions are not disjoint
-				}
+			conj = SmtUtils.and(mScript, r1.mBeforeMaxPhase.mInvariant, r2.mBeforeMaxPhase.mInvariant);
+			res = SmtUtils.checkSatTerm(mScript, conj);
+			if (res == LBool.UNSAT) {
+				return failReason(3, "beforeMax invariants incompatible (UNSAT)");
 			}
 		}
-		mRTICombinations.add(Arrays.asList(reqsWithAttributes, reqsWithAttributes2));
-		conjunction = SmtUtils.and(mScript, reqsWithAttributes.mMaxPhase.mInvariant,
-				reqsWithAttributes2.mMaxPhase.mInvariant);
-		result = SmtUtils.checkSatTerm(mScript, conjunction);
-		if (result == LBool.UNSAT) {
 
-			if (mDebugReasonCOunter) {
-				help = false;
-				reasonCounter[1]++;
-			} else {
-				return false; // Exit conditions are not disjoint
-			}
+		// 3) Max-Phases have to be compatible
+		if (r1.mMaxPhase == null || r2.mMaxPhase == null) {
+			return failReason(4, "missing max phase");
 		}
-		/*
-		 * if (reqsWithAttributes.mMaxPhase == reqsWithAttributes2.mMaxPhase) { conjunction = SmtUtils.and(mScript,
-		 * reqsWithAttributes.mMaxPhase.mBound, reqsWithAttributes2.mMaxPhase.mBound); result =
-		 * SmtUtils.checkSatTerm(mScript, conjunction); if (result == LBool.UNSAT) {
-		 * mLogger.info("aussportiert wegen MaxPhase Bound"); if (mDebugReasonCOunter) { help = false;
-		 * reasonCounter[2]++; } else { return false; // Exit conditions are not disjoint } }
-		 *
-		 * }
-		 */
-
-		// TODO Auto-generated method stub
-		if (!help) {
-			return false;
-		} else {
-			return true;
+		conj = SmtUtils.and(mScript, r1.mMaxPhase.mInvariant, r2.mMaxPhase.mInvariant);
+		res = SmtUtils.checkSatTerm(mScript, conj);
+		if (res == LBool.UNSAT) {
+			return failReason(1, "max invariants incompatible (UNSAT)");
 		}
 
+		// if 1-3 do not fail return true -> requirements are rt-inconsistent
+		return true;
 	}
 
+	private boolean failReason(final int idx, final String msg) {
+		if (mDebugReasonCOunter) {
+			reasonCounter[idx]++;
+			mLogger.debug("rtiCheckFor2Reqs: {}", msg);
+
+		}
+		return false;
+	}
+
+	private static boolean safeEquals(final Object a, final Object b) {
+		return (a == b) || (a != null && a.equals(b));
+	}
+
+	/**
+	 * finds all combinations of a set with the size of two
+	 *
+	 * @param args
+	 * @return
+	 */
 	public static List<List<ReqsWithAttributes>> combinations2(final List<ReqsWithAttributes> args) {
 		final List<List<ReqsWithAttributes>> pairs = new ArrayList<>();
-
 		for (int i = 0; i < args.size(); i++) {
 			for (int j = i + 1; j < args.size(); j++) {
 				pairs.add(Arrays.asList(args.get(i), args.get(j)));
 			}
 		}
-
 		return pairs;
 	}
 
-	private void getAttribtes(final List<ReqPeas> reqPeas) {
-
+	/**
+	 * Populate attributes for each requirement/countertrace pair. - Extracts penultimate/max/before-max phases (with
+	 * bounds & invariants). - Computes full exit condition (DNF of the negated penultimate invariant). - Classifies
+	 * requirements into chain-link vs. non-chain-link by EC count. - Indexes non-chain-link requirements by free
+	 * variables of the penultimate invariant.
+	 */
+	private void getAttributes(final List<ReqPeas> reqPeas) {
 		for (final ReqPeas reqPea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> reqChild : reqPea.getCounterTrace2Pea()) {
-				final ReqsWithAttributes newReq = new ReqsWithAttributes(reqPea);
-				newReq.mName = reqChild.getValue().getName();
-				newReq.mOriginalPeaEventAutomata = reqChild.getValue();
-				newReq.mCounterTrace = reqChild.getKey();
+			for (final Map.Entry<CounterTrace, PhaseEventAutomata> child : reqPea.getCounterTrace2Pea()) {
 
-				// penultimate Phase
-				newReq.mPenultimatePhase =
-						new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2]);
-				newReq.mPenultimatePhase.mInvariant = mCddToSmt
-						.toSmt(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2].getInvariant());
+				final CounterTrace ct = child.getKey();
+				final PhaseEventAutomata pea = child.getValue();
+				final DCPhase[] phases = ct.getPhases();
+				final int n = phases.length;
 
-				newReq.mPenultimatePhase.mInvariantVar = newReq.mPenultimatePhase.mInvariant.getFreeVars();
-				newReq.mPenultimatePhase.mBound = BoundToSmt(newReq.mPenultimatePhase);
-				final Term help = SmtUtils.not(mScript, newReq.mPenultimatePhase.mInvariant);
-				newReq.mFullExitCondition = SmtUtils.toDnf(mServices, mManagedScript, help);
-				newReq.mExitConditions = new ArrayList<>(Arrays.asList( SmtUtils.getDisjuncts(newReq.mFullExitCondition)));
-				if (newReq.mExitConditions.size() > 1) {
-					newReq.mChainLinkReq = true;
-					mListChainLinkReqs.add(newReq);
+				// We need at least 2 phases to have a "penultimate"
+				if (n < 2) {
+					mLogger.warn("CounterTrace too short ({} phases) for {}", n, pea.getName());
+					continue;
+				}
+
+				final ReqsWithAttributes req = new ReqsWithAttributes(reqPea);
+				req.mName = pea.getName();
+				req.mOriginalPeaEventAutomata = pea;
+				req.mCounterTrace = ct;
+
+				// --------------------------
+				// Penultimate phase (always exists because n >= 2)
+				// --------------------------
+				final DCPhase penultDC = phases[n - 2];
+				req.mPenultimatePhase = new Phase(penultDC);
+				req.mPenultimatePhase.mInvariant = mCddToSmt.toSmt(penultDC.getInvariant());
+				req.mPenultimatePhase.mInvariantVar = req.mPenultimatePhase.mInvariant.getFreeVars();
+				req.mPenultimatePhase.mBound = boundToSmt(req.mPenultimatePhase);
+
+				// Full exit condition = DNF(not(penult invariant))
+				final Term negInv = SmtUtils.not(mScript, req.mPenultimatePhase.mInvariant);
+				req.mFullExitCondition = SmtUtils.toDnf(mServices, mManagedScript, negInv);
+				req.mExitConditions = new ArrayList<>(Arrays.asList(SmtUtils.getDisjuncts(req.mFullExitCondition)));
+
+				// --------------------------
+				// Max / Before-Max phase selection
+				// --------------------------
+				// If penultimate has a bound, then penultimate is the "max" phase,
+				// otherwise the max is one step earlier (n-3).
+				final boolean penultHasBound = penultDC.getBoundType() != 0;
+				final int maxIdxFromEnd = penultHasBound ? 2 : 3; // n-2 or n-3
+				final int beforeIdxFromEnd = penultHasBound ? 3 : 4; // n-3 or n-4
+
+				// Guard against short traces
+				if (n - maxIdxFromEnd < 0) {
+					mLogger.warn("Cannot determine max phase (n={}) for {}", n, pea.getName());
+					continue;
+				}
+
+				req.mMaxPhase = new Phase(phases[n - maxIdxFromEnd]);
+				req.mMaxPhase.mInvariant = mCddToSmt.toSmt(req.mMaxPhase.mDCPhase.getInvariant());
+				req.mMaxPhase.mInvariantVar = req.mMaxPhase.mInvariant.getFreeVars();
+				req.mMaxPhase.mBound = boundToSmt(req.mMaxPhase);
+
+				if (n - beforeIdxFromEnd >= 0) {
+					req.mBeforeMaxPhase = new Phase(phases[n - beforeIdxFromEnd]);
+					req.mBeforeMaxPhase.mInvariant = mCddToSmt.toSmt(req.mBeforeMaxPhase.mDCPhase.getInvariant());
+					req.mBeforeMaxPhase.mInvariantVar = req.mBeforeMaxPhase.mInvariant.getFreeVars();
+					req.mBeforeMaxPhase.mBound = boundToSmt(req.mBeforeMaxPhase);
 				} else {
-					final TermVariable[] vars = newReq.mPenultimatePhase.mInvariant.getFreeVars();
-					for (final TermVariable var : vars) {
-						if (!mDictVar.containsKey(var)) {
-							mDictVar.put(var, new ArrayList<>());
+					req.mBeforeMaxPhase = null;
+				}
+
+				// --------------------------
+				// Chain-link classification and variable index
+				// --------------------------
+				if (req.mExitConditions.size() > 1) {
+					// multiple disjuncts → chain-link candidate
+					req.mChainLinkReq = true;
+					mListChainLinkReqs.add(req);
+				} else {
+					// single EC → index by free vars of the *penultimate invariant*
+					final TermVariable[] vars = req.mPenultimatePhase.mInvariantVar;
+					if (vars != null) {
+						for (final TermVariable v : vars) {
+							mDictVar.computeIfAbsent(v, k -> new ArrayList<>()).add(req);
 						}
-						mDictVar.get(var).add(newReq);
-
 					}
 				}
-				// Max Phase bestimmen
-				if (newReq.mPenultimatePhase.mDCPhase.getBoundType() != 0) {
-					newReq.mMaxPhase =
-							new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 2]);
-					if (reqChild.getKey().getPhases().length > 2) {
-						newReq.mBeforeMaxPhase =
-								new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 3]);
-					}
-				} else {
-					newReq.mMaxPhase =
-							new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 3]);
-					if (reqChild.getKey().getPhases().length > 3) {
-						newReq.mBeforeMaxPhase =
-								new Phase(reqChild.getKey().getPhases()[reqChild.getKey().getPhases().length - 4]);
-					}
-				}
-				newReq.mMaxPhase.mInvariant = mCddToSmt.toSmt(newReq.mMaxPhase.mDCPhase.getInvariant());
-				newReq.mMaxPhase.mInvariantVar = newReq.mMaxPhase.mInvariant.getFreeVars();
-				newReq.mMaxPhase.mBound = BoundToSmt(newReq.mMaxPhase);
-				if (newReq.mBeforeMaxPhase != null) {
-					newReq.mBeforeMaxPhase.mInvariant = mCddToSmt.toSmt(newReq.mBeforeMaxPhase.mDCPhase.getInvariant());
-					newReq.mBeforeMaxPhase.mInvariantVar = newReq.mBeforeMaxPhase.mInvariant.getFreeVars();
-					newReq.mBeforeMaxPhase.mBound = BoundToSmt(newReq.mBeforeMaxPhase);
-
-				}
-
 			}
-
 		}
-
 	}
 
+	/**
+	 * Formats the found rt-inconsistencies into format of the rt-inconsistency check
+	 */
 	public Entry<PatternType<?>, PhaseEventAutomata>[] rtiSetsFormatted(final List<ReqsWithAttributes> reqs) {
-		final List<Map.Entry<PatternType<?>, PhaseEventAutomata>> entryList = new ArrayList<>();
-		for (final ReqsWithAttributes req : reqs) {
-			final Map.Entry<PatternType<?>, PhaseEventAutomata> entry1 =
-					new AbstractMap.SimpleEntry<>(req.mOriginalPea.getPattern(), req.mOriginalPeaEventAutomata);
-			entryList.add(entry1);
-		}
-		final Map.Entry<PatternType<?>, PhaseEventAutomata>[] entryArray = entryList.toArray(new Map.Entry[0]);
-		Arrays.sort(entryArray, Comparator.comparing(Map.Entry::getValue));
-		return entryArray;
+		return reqs.stream()
+				.map(req -> new AbstractMap.SimpleEntry<>(req.mOriginalPea.getPattern(), req.mOriginalPeaEventAutomata))
+				.sorted(Comparator.comparing(Entry::getValue)).toArray(Entry[]::new);
 	}
 
-	private Term BoundToSmt(final Phase phase) {
-		final Term boundTerm = mScript.term("true");
-		if (phase.mDCPhase.getBoundType() == 0) {
+	/**
+	 * Creates for the given phase a new term from the bound of the DCPhase. for all terms an extra debug variable is
+	 * used. Allows to compare time bounds from phases later
+	 *
+	 * @param phase
+	 * @return Term
+	 */
+	private Term boundToSmt(final Phase phase) {
+		final int bt = phase.mDCPhase.getBoundType();
+		if (bt == 0) {
 			return mScript.term("true");
-		} else if (phase.mDCPhase.getBoundType() == 2) {
-			final Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
-			return SmtUtils.greater(mScript, mDebugVar, rhs);
-			// t = SmtUtils.leq(mScript, startTerm, SmtUtils.term("x", phase.mDCPhase.getBound()));
-			// return mScript.term("x>" + phase.mDCPhase.getBound());
-
-		} else if (phase.mDCPhase.getBoundType() == 1) {
-			final Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
-			return SmtUtils.geq(mScript, mDebugVar, rhs);
-			// t = SmtUtils.geq(mScript, startTerm, SmtUtils.term("x", phase.mDCPhase.getBound()));
-			// return mScript.term("x<" + phase.mDCPhase.getBound());
-		} else if (phase.mDCPhase.getBoundType() == -2) {
-			final Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
-			return SmtUtils.less(mScript, mDebugVar, rhs);
-			// t = SmtUtils.eq(mScript, startTerm, SmtUtils.term("x", phase.mDCPhase.getBound()));
-			// return mScript.term("x==" + phase.mDCPhase.getBound());
-		} else {
-			final Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
-			return SmtUtils.leq(mScript, mDebugVar, rhs);
 		}
 
+		final Term rhs = mScript.decimal(Double.toString(phase.mDCPhase.getBound()));
+		switch (bt) {
+		case 2:
+			return SmtUtils.greater(mScript, mDebugVar, rhs); // >
+		case 1:
+			return SmtUtils.geq(mScript, mDebugVar, rhs); // >=
+		case -2:
+			return SmtUtils.less(mScript, mDebugVar, rhs); // <
+		default:
+			return SmtUtils.leq(mScript, mDebugVar, rhs); // <= (covers -1 and others)
+		}
 	}
 }

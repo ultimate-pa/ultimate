@@ -108,7 +108,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private int mRTIPreCheckRange;
 
-
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
@@ -153,7 +152,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
 		mRTIPreCheckRange = prefs.getInt(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS);
 		mPreCheckFullSet = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET);
-
+		if (mPreCheckFullSet) {
+			mLogger.info("check full set");
+		}
 
 		// log preferences
 		mLogger.info(
