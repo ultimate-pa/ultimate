@@ -108,7 +108,7 @@ public class RTInconsistencyPreCheck {
 		findSinglesForChains();
 		// If the preference "full Set" is set, the maximum chain link depth is set to the number of chainLink
 		// requirements
-		mCombinationNum = mFullSet ? mListChainLinkReqs.size() : mCombinationNum;
+		mCombinationNum = mFullSet ? mListChainLinkReqs.size() : mCombinationNum; 
 		rtiCheckSingles();
 		rtiCheckChainLinkReqs();
 		mLogger.info("Number of chain link requirements: " + mListChainLinkReqs.size()); // Print out found sets
@@ -234,51 +234,64 @@ public class RTInconsistencyPreCheck {
 	 * @param exitConditions
 	 * @param remainingChainLinks
 	 */
-	private void addChainLinkRecursive(final List<ReqsWithAttributes> chainLinkRes, final int depth,
-			final List<Term> exitConditions, final List<ReqsWithAttributes> remainingChainLinks) {
-		// Case more chain Links have to be added
-		if (depth > chainLinkRes.size()) {
-			mLogger.debug("add chain link, remaining chain links: " + remainingChainLinks.size());
-			if (remainingChainLinks.isEmpty()) {
-				mLogger.debug("No remaining chain links");
-				return;
-			}
-			for (int i = 0; i < remainingChainLinks.size(); i++) {
-				for (final Term ec : exitConditions) {
-					for (final Term ecNew : remainingChainLinks.get(i).mExitConditions) {
-						final Term conjunction = SmtUtils.and(mScript, ec, ecNew);
-						if (LBool.SAT != SmtUtils.checkSatTerm(mScript, conjunction)) {
-							mLogger.debug("Chain link added");
-							final List<ReqsWithAttributes> newChainLinkRes = new ArrayList<>(chainLinkRes);
-							newChainLinkRes.add(remainingChainLinks.get(i));
-							final List<Term> newExitConditions = new ArrayList<>();
-							for (final Term exitCond : exitConditions) {
-								if (exitCond != ec) {
-									newExitConditions.add(exitCond);
-								}
-							}
-							for (final Term exitCond : remainingChainLinks.get(i).mExitConditions) {
-								if (exitCond != ecNew) {
-									newExitConditions.add(exitCond);
-								}
-							}
-							if (remainingChainLinks.size() > i + 1) {
-								addChainLinkRecursive(newChainLinkRes, depth, newExitConditions, new ArrayList<>(
-										remainingChainLinks.subList(i + 1, remainingChainLinks.size())));
-							}
-
-						}
-					}
-				}
-
-			}
-		}
-		// Case number of chain links reached
-		else if (depth == chainLinkRes.size()) {
-			findSinglesForChains(chainLinkRes, exitConditions);
-
-		}
-
+	private void addChainLinkRecursive(
+	        final List<ReqsWithAttributes> chainLinkRes,
+	        final int depth,
+	        final List<Term> exitConditions,
+	        final List<ReqsWithAttributes> remainingChainLinks) {
+	
+	    // Target size reached → look for singles that fit this chain
+	    if (chainLinkRes.size() == depth) {
+	        findSinglesForChains(chainLinkRes, exitConditions);
+	        return;
+	    }
+	
+	    // More chain links required, but no candidates left
+	    if (remainingChainLinks.isEmpty()) {
+	        mLogger.debug("No remaining chain links");
+	        return;
+	    }
+	
+	
+	    mLogger.debug("Add chain link, remaining: {}", remainingChainLinks.size());
+	
+	    for (int i = 0; i < remainingChainLinks.size(); i++) {
+	        final ReqsWithAttributes candidate = remainingChainLinks.get(i);
+	
+	        for (final Term exitA : exitConditions) {
+	            for (final Term exitB : candidate.mExitConditions) {
+	                final Term conj = SmtUtils.and(mScript, exitA, exitB);
+	                final LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+	
+	                // We need disjoint exit conditions here (i.e., NOT SAT)
+	                if (sat == LBool.SAT) {
+	                    continue;
+	                }
+	                // Add next chain link
+	                final List<ReqsWithAttributes> nextChain = new ArrayList<>(chainLinkRes);
+	                nextChain.add(candidate);
+	
+	                // Remove the two exit conditions we just paired (identity-based removal preserved intentionally)
+	                final List<Term> nextExit = new ArrayList<>(
+	                        exitConditions.size() + candidate.mExitConditions.size() - 2);
+	
+	                for (final Term ec : exitConditions) {
+	                    if (ec != exitA) nextExit.add(ec);
+	                }
+	                for (final Term ec : candidate.mExitConditions) {
+	                    if (ec != exitB) nextExit.add(ec);
+	                }
+	
+	                // Remaining candidates to the right of i
+	                final int nextIndex = i + 1;
+	                if (nextIndex < remainingChainLinks.size()) {
+	                    final List<ReqsWithAttributes> tail =
+	                            new ArrayList<>(remainingChainLinks.subList(nextIndex, remainingChainLinks.size()));
+	                    addChainLinkRecursive(nextChain, depth, nextExit, tail);
+	                }
+	            }
+	        }
+	    }
 	}
 
 	/**
