@@ -943,17 +943,11 @@ public class MemoryHandler {
 	 * caution or improve this method.
 	 */
 	public boolean isNullPointerLiteral(final Expression expr) {
+
 		if (expr instanceof StructConstructor) {
-			final StructConstructor sc = (StructConstructor) expr;
-			final Expression[] fieldValues = sc.getFieldValues();
-			if (fieldValues.length == 2) {
-				final BigInteger fst = mTypeSizes.extractIntegerValue(fieldValues[0], new CPrimitive(CPrimitives.LONG));
-				final BigInteger snd = mTypeSizes.extractIntegerValue(fieldValues[1], new CPrimitive(CPrimitives.LONG));
-				if (BigInteger.ZERO.equals(fst) && BigInteger.ZERO.equals(snd)) {
-					return true;
-				}
-			}
+			return mMemoryPointer.isNullPointer(expr);
 		}
+
 		final BigInteger integerValue = mTypeSizes.extractIntegerValue(expr, new CPrimitive(CPrimitives.LONG));
 		if (BigInteger.ZERO.equals(integerValue)) {
 			return true;
