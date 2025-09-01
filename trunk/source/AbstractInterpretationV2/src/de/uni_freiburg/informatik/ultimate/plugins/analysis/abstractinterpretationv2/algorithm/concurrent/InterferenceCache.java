@@ -21,12 +21,17 @@ record IntersectionPair<STATE extends IAbstractState<STATE>>(STATE state1, STATE
 
 public class InterferenceCache<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private final Map<StateItfPrestatePair<STATE, ACTION, LOC>, Collection<STATE>> itfCache = new LRUCache<>(10000);
+	private final Map<StateItfPair<STATE, ACTION, LOC>, Collection<STATE>> simpleItfCache = new LRUCache<>(10000);
 
 	public InterferenceCache() {
 	}
 
 	public Map<StateItfPrestatePair<STATE, ACTION, LOC>, Collection<STATE>> getItfCache() {
 		return itfCache;
+	}
+
+	public Map<StateItfPair<STATE, ACTION, LOC>, Collection<STATE>> getSimpleItfCache() {
+		return simpleItfCache;
 	}
 
 	private class LRUCache<K, V> extends LinkedHashMap<K, V> {

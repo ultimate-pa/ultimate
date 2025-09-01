@@ -61,23 +61,32 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
-		mMaxUnwindings = threadModPrefs.maxItf();
 		mUnderlyingDomain = params.getAbstractDomain();
 		mLogger = params.getLogger();
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		mMaxInterferenceFixpointUnwindings = threadModPrefs.maxItf();
 		InterferenceFIxpoint.iterationsReached = 0;
+		InterferenceFIxpoint.postOnly = false;
 		mCfg = icfg;
 		mLocationAbstractionCalculator = new LocationAbstraction<>();
 		final StaticAbstractLocationMap<LOC> absMap = mLocationAbstractionCalculator
 				.computeLocationAbstraction(threadModPrefs.locationAbstraction(), services, icfg);
 		mLocationAbstraction = absMap;
-		if (absMap.maximumOfAll() > threadModPrefs.maxStates()) {
-			mMaxParallelStates = threadModPrefs.maxStates();
+		if (threadModPrefs.locationAbstraction().equals("Split at Guard Entry and Exit")) {
+			mMaxParallelStates = 4;
+			mMaxUnwindings = 4;
+		} else if (threadModPrefs.locationAbstraction().equals("Split at all Guard variable occurences")) {
+			mMaxParallelStates = 1000;
+			mMaxUnwindings = 1000;
+		} else if (threadModPrefs.locationAbstraction().equals("Non-relational Singleton")) {
+			mMaxParallelStates = 1;
+			mMaxUnwindings = 1;
+			InterferenceFIxpoint.postOnly = true;
 		} else {
-			mMaxParallelStates = threadModPrefs.maxStates();
-//			mMaxParallelStates = absMap.maximumOfAll();
+			mMaxParallelStates = 1;
+			mMaxUnwindings = 1;
 		}
+
 		params.setMaxParallelStates(1);
 		mCache = new InterferenceCache<>();
 		mDomain = new InterferenceDomain<>(mCfg, mUnderlyingDomain, mLogger, mLocationAbstraction, mMaxParallelStates,
@@ -149,7 +158,6 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 				break;
 			}
 			interferences = newMaybeWidened;
-			printInterferenceLog(interferences);
 			mIteration++;
 		}
 	}
@@ -186,7 +194,8 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 	}
 
 	private AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeNewInterferences() {
-		final var newInterferences = InterferenceCreator.computeInterferences(mEntryLocs, mCfg, mStateStorage,
+		final var itfCreator = new InterferenceCreator<UNDERLYINGSTATE, ACTION, LOC>();
+		final var newInterferences = itfCreator.computeInterferences(mEntryLocs, mCfg, mStateStorage,
 				mTransitionProvider, mLocationAbstraction);
 		return newInterferences;
 	}
@@ -200,14 +209,6 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 					mCfg.getCfgSmtToolkit().getProcedures());
 		}
 		return newInterferences;
-	}
-
-	private void printInterferenceLog(
-			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState) {
-		mLogger.error("new Interference Set");
-//		for (final String termString : newInterferenceState.interferenceStrings()) {
-//			mLogger.info(termString);
-//		}
 	}
 
 	private ConcStatistics updateStatistics(final ConcStatistics stats) {

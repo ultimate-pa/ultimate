@@ -31,6 +31,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final Set<IProgramNonOldVar> mGlobals;
 	private final IUltimateServiceProvider mServices;
 	private final Map<LOC, Integer> mMutexVarSplitMapWithExitMarked;
+	private final Map<LOC, Integer> mMutexVarSplitMapWithAllVarLinesMarked;
 	final Map<String, Set<IProgramVar>> mWrittenByThread = new HashMap<>();
 
 	public HeuristicLocationAbstraction(final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
@@ -43,7 +44,8 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			mWrittenByThread.put(thread, new HashSet<>());
 			mPerThreadLocationCounterMap.put(thread, 0);
 		}
-		mMutexVarSplitMapWithExitMarked = broadMutexSplitting();
+		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(true);
+		mMutexVarSplitMapWithAllVarLinesMarked = broadMutexSplitting(true);
 	}
 
 	/*
@@ -51,12 +53,20 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	 * potential mutex guard, or any location which writes or reads a variable contained in a mutex guard, if it occurs
 	 * before a mutex guard.
 	 */
-	public StaticAbstractLocationMap<LOC> mutexVarSplitting() {
-		return new StaticAbstractLocationMap<>(this::mutexVarSplitFun, mIcfg);
+	public StaticAbstractLocationMap<LOC> entryExitSplitting() {
+		return new StaticAbstractLocationMap<>(this::entryExitMarked, mIcfg);
 	}
 
-	private int mutexVarSplitFun(final LOC loc) {
+	public StaticAbstractLocationMap<LOC> allVarOccurencesSplit() {
+		return new StaticAbstractLocationMap<>(this::allVarOccurencesMarked, mIcfg);
+	}
+
+	private int entryExitMarked(final LOC loc) {
 		return mMutexVarSplitMapWithExitMarked.get(loc);
+	}
+
+	private int allVarOccurencesMarked(final LOC loc) {
+		return mMutexVarSplitMapWithAllVarLinesMarked.get(loc);
 	}
 
 	private int getThreadLocationCounter(final String thread) {
@@ -69,7 +79,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return counter;
 	}
 
-	private Map<LOC, Integer> broadMutexSplitting() {
+	private Map<LOC, Integer> broadMutexSplitting(final boolean fullyPrecise) {
 		final Map<LOC, Integer> abstractLocationMapping = new HashMap<>();
 		final var mutexGuardToVarsMap = computeMutexVars();
 		final var mEntryLocs = mIcfg.getProcedureEntryNodes();
@@ -82,7 +92,8 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 				if (mutexGuardToVarsMap.containsKey(loc)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
 					seenOneGuard = true;
-				} else if (seenOneGuard && containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap)) {
+				} else if ((fullyPrecise || seenOneGuard)
+						&& containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
 					seenOneGuard = false;
 				} else {

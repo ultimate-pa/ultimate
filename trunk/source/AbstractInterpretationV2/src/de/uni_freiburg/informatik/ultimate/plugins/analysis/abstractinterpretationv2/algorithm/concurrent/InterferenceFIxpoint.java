@@ -29,6 +29,7 @@ public class InterferenceFIxpoint<STATE extends IAbstractState<STATE>, ACTION ex
 	private InterferenceDomainPostOperator<STATE, ACTION, LOC> mPostOp;
 	private final Map<InterferenceWithSourceThread<STATE, ACTION, LOC>, Set<InterferenceDomainState<STATE, ACTION, LOC>>> mSeenStatesMap;
 	private final IIcfg<?> mCfg;
+	public static boolean postOnly;
 
 	public InterferenceFIxpoint(final IIcfg<?> cfg, final ILogger logger,
 			final InterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
@@ -41,9 +42,7 @@ public class InterferenceFIxpoint<STATE extends IAbstractState<STATE>, ACTION ex
 		mMaxItf = maxItf;
 		mMaxParallelStates = maxParallelStates;
 		iterationsReached = 0;
-		// TODO: why needed
-		mPostOp = (InterferenceDomainPostOperator<STATE, ACTION, LOC>) mGuardedInterferenceDomain
-				.getPostOperator();
+		mPostOp = (InterferenceDomainPostOperator<STATE, ACTION, LOC>) mGuardedInterferenceDomain.getPostOperator();
 		mAllInterfs = new HashSet<>();
 		mItfUtils = new InterferenceUtils<>();
 		mSeenStatesMap = new HashMap<>();
@@ -53,6 +52,13 @@ public class InterferenceFIxpoint<STATE extends IAbstractState<STATE>, ACTION ex
 	public DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> computeInterferenceFixpoint(
 			final DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result,
 			final String ownerThread, final InterferenceCache<STATE, ACTION, LOC> cache) {
+		if (postOnly) {
+			if (!prepareAndFilterItfs(result, ownerThread)) {
+				return result;
+			}
+			return applyNonRelationalFixpoint(result, ownerThread, cache);
+		}
+
 		if (!prepareAndFilterItfs(result, ownerThread)) {
 			return result;
 		}
@@ -77,14 +83,72 @@ public class InterferenceFIxpoint<STATE extends IAbstractState<STATE>, ACTION ex
 			}
 		}
 		mAllInterfs = validInterferenceThreadPairs;
-		mPostOp = (InterferenceDomainPostOperator<STATE, ACTION, LOC>) mGuardedInterferenceDomain
-				.getPostOperator();
+		mPostOp = (InterferenceDomainPostOperator<STATE, ACTION, LOC>) mGuardedInterferenceDomain.getPostOperator();
 		return true;
 	}
 
+	private DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> applyNonRelationalFixpoint(
+			DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result, final String ownerThread,
+			final InterferenceCache<STATE, ACTION, LOC> cache) {
+		final InterferenceApplier<STATE, ACTION, LOC> itfApplier = new InterferenceApplier<>(cache);
+		int iteration = 0;
+		boolean changed = true;
+		while (changed) {
+			iteration++;
+			if (iteration % 10 == 0) {
+				mLogger.warn("High interference-fixpoint iteration:" + iteration);
+			}
+			final var oldResult = result;
+			for (final var interference : mAllInterfs) {
+				InterferenceDomain.totalInnerInterferenceIterations++;
+				final Set<InterferenceDomainState<STATE, ACTION, LOC>> interferable;
+				interferable = result.getStates().stream().filter(s -> !mSeenStatesMap.get(interference).contains(s))
+						.collect(Collectors.toSet());
+				mSeenStatesMap.get(interference).addAll(interferable);
+				if (interferable.isEmpty()) {
+					continue;
+				}
+				final boolean isSelfInterference = ownerThread.equals(interference.sourceThread());
+
+				final Set<InterferenceDomainState<STATE, ACTION, LOC>> resultSet = new HashSet<>();
+				for (final InterferenceDomainState<STATE, ACTION, LOC> single : interferable) {
+					final var singlepost = itfApplier.applyInterferenceToStateNonRelational(
+							interference.interf().preState(), interference.interf().action(), single, mPostOp,
+							isSelfInterference, mCfg);
+					resultSet.addAll(singlepost);
+				}
+
+				if (resultSet.isEmpty()) {
+					continue;
+				}
+				final var post = DisjunctiveAbstractState.createDisjunction(resultSet, mMaxParallelStates);
+
+				final var moved = post;
+
+				if (iteration <= mMaxItf) {
+					result = result.union(moved);
+				} else {
+					result = result.widen(mGuardedInterferenceDomain.getWideningOperator(), moved);
+				}
+			}
+			if (result.isSubsetOf(oldResult).equals(SubsetResult.NONE)) {
+				changed = true;
+			} else {
+				changed = false;
+			}
+			if (!changed) {
+				InterferenceDomain.maxStatesInOneItf = Math.max(InterferenceDomain.maxStatesInOneItf,
+						result.getStates().size());
+				break;
+			}
+		}
+		return result;
+
+	}
+
 	private DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> applyFixpoint(
-			DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result,
-			final String ownerThread, final InterferenceCache<STATE, ACTION, LOC> cache) {
+			DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result, final String ownerThread,
+			final InterferenceCache<STATE, ACTION, LOC> cache) {
 		final InterferenceApplier<STATE, ACTION, LOC> itfApplier = new InterferenceApplier<>(cache);
 		int iteration = 0;
 		boolean changed = true;

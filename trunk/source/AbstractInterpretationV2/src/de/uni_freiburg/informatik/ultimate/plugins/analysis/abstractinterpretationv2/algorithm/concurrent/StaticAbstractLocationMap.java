@@ -53,21 +53,6 @@ public final class StaticAbstractLocationMap<LOC extends IcfgLocation> {
 		return mLocationCountMap.get(thread);
 	}
 
-	public int maxParallelOtherLocationsOf(final String thread) {
-		return mMaxParallelLocationStates.get(thread);
-	}
-
-	public int maximumOfAll() {
-		int max = 0;
-		for (final String thread : mEntryLocs.keySet()) {
-			if (thread.equals("ULTIMATE.start")) {
-				continue;
-			}
-			max = Math.max(max, maxParallelOtherLocationsOf(thread));
-		}
-		return max;
-	}
-
 	private void computeMaxAndFinalLocs() {
 		mEntryLocs.keySet().forEach(t -> mFinalLocations.put(t, mCfg.getProcedureExitNodes().get(t)));
 		for (final LOC entryLoc : mEntryLocs.values()) {
@@ -84,17 +69,6 @@ public final class StaticAbstractLocationMap<LOC extends IcfgLocation> {
 				abstractLocationSet.add(abstraction);
 			}
 			mLocationCountMap.put(ownerThreadString, counter);
-		}
-		for (final String thread : mEntryLocs.keySet()) {
-			int maxCombinations = 1;
-			for (final String otherThread : mEntryLocs.keySet()) {
-				if (otherThread != thread) {
-					maxCombinations = maxCombinations * mLocationCountMap.get(otherThread);
-				}
-			}
-			// respecting Threadcounter combinations
-			maxCombinations = maxCombinations * 2;
-			mMaxParallelLocationStates.put(thread, maxCombinations);
 		}
 	}
 }

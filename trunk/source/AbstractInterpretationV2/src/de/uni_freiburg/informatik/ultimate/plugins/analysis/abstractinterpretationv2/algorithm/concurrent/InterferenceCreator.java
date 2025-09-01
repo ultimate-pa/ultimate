@@ -13,9 +13,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 
-public class InterferenceCreator {
+public class InterferenceCreator<UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 
-	public static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeInterferences(
+	public InterferenceCreator() {
+	}
+
+	public AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeInterferences(
 			final Map<String, ? extends LOC> mEntryLocs, final IIcfg<? extends LOC> icfg,
 			final IAbstractStateStorage<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage,
 			final ITransitionProvider<ACTION, LOC> mTransitionProvider,
@@ -32,8 +35,13 @@ public class InterferenceCreator {
 					if (!isInterferingTransition((ACTION) edge, icfg, mLocationAbstraction)) {
 						continue;
 					}
-					final var disjPreState = mStateStorage
+					var disjPreState = mStateStorage
 							.getAbstractState(mTransitionProvider.getSource((ACTION) edge));
+					if (InterferenceFIxpoint.postOnly) {
+					disjPreState = mStateStorage
+							.getAbstractState(mTransitionProvider.getTarget((ACTION) edge));
+						
+					}
 					if (disjPreState == null) {
 						continue;
 					}
@@ -45,20 +53,18 @@ public class InterferenceCreator {
 		return result;
 	}
 
-	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Interference<UNDERLYINGSTATE, ACTION, LOC> computeInterference(
+	private Interference<UNDERLYINGSTATE, ACTION, LOC> computeInterference(
 			final DisjunctiveAbstractState<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> preState,
 			final IcfgEdge edge) {
 		final Interference<UNDERLYINGSTATE, ACTION, LOC> interference;
 		{
-			interference = new Interference<>((ACTION) edge,
-					preState.getSingleState(InterferenceDomainState::union));
+			interference = new Interference<>((ACTION) edge, preState.getSingleState(InterferenceDomainState::union));
 		}
 		return interference;
 	}
 
 	// with naive location abstraction we cannot skip any interferences, even if they are a "skip"
-	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> boolean isInterferingTransition(
-			final ACTION transition, final IIcfg<? extends LOC> icfg,
+	private boolean isInterferingTransition(final ACTION transition, final IIcfg<? extends LOC> icfg,
 			final StaticAbstractLocationMap<LOC> mLocationAbstraction) {
 		if (mLocationAbstraction.getAbstractLocation(transition.getSource()) != mLocationAbstraction
 				.getAbstractLocation(transition.getTarget())) {

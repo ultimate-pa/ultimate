@@ -75,27 +75,24 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	};
 
-	public static final String[] VALUES_ABSTRACT_DOMAIN_FUTURE =
-			{ EmptyDomain.class.getSimpleName(), VPDomain.class.getSimpleName(), DataflowDomain.class.getSimpleName(),
-					LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
-					PoormanAbstractDomain.class.getSimpleName() };
+	public static final String[] VALUES_ABSTRACT_DOMAIN_FUTURE = { EmptyDomain.class.getSimpleName(),
+			VPDomain.class.getSimpleName(), DataflowDomain.class.getSimpleName(),
+			LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
+			PoormanAbstractDomain.class.getSimpleName() };
 
-	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Split at Guards and Exit"};
+	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Non-relational Singleton", "Singleton",
+			"Split at Guard Entry and Exit", "Split at all Guard variable occurences" };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
-	public static final String LABEL_MAX_EVALUATION_RECURSION_DETPH =
-			"Maximum recursion depth of evaluation operations";
-	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN =
-			"Settings for the abstract domain to use. Select the Abstract domain to use here.\n\nChange the settings for each abstract domain in the corresponding sub-page.";
+	public static final String LABEL_MAX_EVALUATION_RECURSION_DETPH = "Maximum recursion depth of evaluation operations";
+	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN = "Settings for the abstract domain to use. Select the Abstract domain to use here.\n\nChange the settings for each abstract domain in the corresponding sub-page.";
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract domain";
-	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE =
-			"Settings for the abstract domain to be used when analyzing a program with the RCFG-of-the-future interface.";
+	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE = "Settings for the abstract domain to be used when analyzing a program with the RCFG-of-the-future interface.";
 	public static final String LABEL_ABSTRACT_DOMAIN_FUTURE = "Abstract domain for RCFG-of-the-future";
 
 	public static final String LABEL_RUN_AS_PRE_ANALYSIS = "Run as pre-analysis";
-	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS =
-			"Do not report any results, suppress all exceptions except OOM, use 20% of available time.";
+	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS = "Do not report any results, suppress all exceptions except OOM, use 20% of available time.";
 
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
@@ -103,8 +100,6 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 	public static final String DEF_ABSTRACT_DOMAIN_FUTURE = VALUES_ABSTRACT_DOMAIN_FUTURE[0];
-	public static final int DEF_MAXSTATES_CONC = 16;
-	public static final int DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING = 8;
 
 	public static final String INDENT = "   ";
 	public static final String DINDENT = INDENT + INDENT;
@@ -112,8 +107,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_USE_FUTURE_RCFG = "Use the RCFG-of-the-future interface";
 	private static final Boolean DEF_USE_FUTURE_RCFG = false;
-	private static final String TOOLTIP_USE_FUTURE_RCFG =
-			"Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
+	private static final String TOOLTIP_USE_FUTURE_RCFG = "Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
 
 	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction Method";
 	public static final String LABEL_MAXIMUM_ITF_RECURSION_DEPTH = "Maximum ITF iterations before widening";
@@ -138,8 +132,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				PreferenceType.Boolean));
 
 		// Abstract Domains Container
-		final UltimatePreferenceItemContainer abstractDomainContainer =
-				new UltimatePreferenceItemContainer("Abstract Domains");
+		final UltimatePreferenceItemContainer abstractDomainContainer = new UltimatePreferenceItemContainer(
+				"Abstract Domains");
 		abstractDomainContainer
 				.addItem(new UltimatePreferenceItem<>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN,
@@ -160,16 +154,10 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		rtr.add(abstractDomainContainer);
 
 		// Abstract Location Container
-		final UltimatePreferenceItemContainer concurrencyContainer =
-				new UltimatePreferenceItemContainer("Concurrency settings");
+		final UltimatePreferenceItemContainer concurrencyContainer = new UltimatePreferenceItemContainer(
+				"Concurrency settings");
 		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_LOCATION_ABSTRACTION,
 				VALUES_LOCATION_ABSTRACTION[0], PreferenceType.Combo, VALUES_LOCATION_ABSTRACTION));
-		concurrencyContainer
-				.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_PARALLEL_STATES_CONC, DEF_MAXSTATES_CONC,
-						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
-		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_ITF_RECURSION_DEPTH,
-				DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING, PreferenceType.Integer,
-				new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 
 		rtr.add(concurrencyContainer);
 

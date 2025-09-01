@@ -20,16 +20,11 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 		// TODO: parametrize countervalues
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
 		final StaticAbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
-		case "Singleton" -> new StaticAbstractLocationMap<>((l -> 1), icfg);
-		case "Split at Guards and Exit" -> mHeuristicLocationAbstraction.mutexVarSplitting();
-		default -> mHeuristicLocationAbstraction.mutexVarSplitting();
+		case "Singleton" -> new StaticAbstractLocationMap<>((l -> 0), icfg);
+		case "Split at Guard Entry and Exit" -> mHeuristicLocationAbstraction.entryExitSplitting();
+		case "Split at all Guard variable occurences" -> mHeuristicLocationAbstraction.allVarOccurencesSplit();
+		default -> mHeuristicLocationAbstraction.entryExitSplitting();
 		};
 		return absMap;
-	}
-
-	private int getAndIncrementThreadLocationCounter(final String thread) {
-		final int counter = mPerThreadLocationCounterMap.getOrDefault(thread, 0);
-		mPerThreadLocationCounterMap.put(thread, counter + 1);
-		return counter;
 	}
 }

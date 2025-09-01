@@ -23,6 +23,49 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		mCache = cache;
 	}
 
+	public Collection<InterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToStateNonRelational(
+			final InterferenceDomainState<STATE, ACTION, LOC> interferingStateGuarded, final ACTION action,
+			final InterferenceDomainState<STATE, ACTION, LOC> targetStateGuarded,
+			final InterferenceDomainPostOperator<STATE, ACTION, LOC> postOp, final boolean isSelfInterfering,
+			final IIcfg<?> cfg) {
+
+		final var threadCounterPost = postOp.applyThreadCounter(targetStateGuarded.threadCounter(),
+				targetStateGuarded.abstractLocationState(), action);
+		final boolean isinfinite = targetStateGuarded.threadCounter().getThreadInstances()
+				.get(action.getPrecedingProcedure()).getUpper().isInfinity();
+		final var absLocPost = postOp.applyAbstractLocation(targetStateGuarded.abstractLocationState(), action,
+				isSelfInterfering, isinfinite);
+		final var touple = new StateItfPair<>(targetStateGuarded.state(), action);
+		final var cached = mCache.getSimpleItfCache().get(touple);
+		if (cached != null) {
+			InterferenceDomain.applierCacheHits++;
+			return cached.stream()
+					.map(s -> new InterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost))
+					.toList();
+		}
+		/*
+		 * Add local variables to both states to be able to intersect. This is necessary since our interference
+		 * transition might contain local variables of the interfering thread.
+		 */
+		final var adjustedTarget = adjustStateForIntersection(targetStateGuarded.state(),
+				interferingStateGuarded.state());
+		// postop
+		var postState = postOp.applyState(adjustedTarget, action).stream().filter(s -> !s.isBottom()).toList();
+		InterferenceDomain.postoperatorCalls++;
+
+		// remove local variables of other state we added earlier
+		final var missingLocals = DataStructureUtils.difference(interferingStateGuarded.getVariables(),
+				targetStateGuarded.getVariables());
+		if (!missingLocals.isEmpty()) {
+			postState = postState.stream().map(s -> s.removeVariables(missingLocals)).toList();
+		}
+		final var postStateWithGuard = postState.stream()
+				.map(s -> new InterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost)).toList();
+
+		mCache.getSimpleItfCache().put(touple, postState);
+		return postStateWithGuard;
+	}
+
 	public Collection<InterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToState(
 			final InterferenceDomainState<STATE, ACTION, LOC> interferingStateGuarded, final ACTION action,
 			final InterferenceDomainState<STATE, ACTION, LOC> targetStateGuarded,
