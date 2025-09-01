@@ -75,7 +75,8 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 		if (absMap.maximumOfAll() > threadModPrefs.maxStates()) {
 			mMaxParallelStates = threadModPrefs.maxStates();
 		} else {
-			mMaxParallelStates = absMap.maximumOfAll();
+			mMaxParallelStates = threadModPrefs.maxStates();
+//			mMaxParallelStates = absMap.maximumOfAll();
 		}
 		params.setMaxParallelStates(1);
 		mCache = new InterferenceCache<>();

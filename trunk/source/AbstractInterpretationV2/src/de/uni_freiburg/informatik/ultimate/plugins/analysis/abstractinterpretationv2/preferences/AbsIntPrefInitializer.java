@@ -80,9 +80,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 					LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
 					PoormanAbstractDomain.class.getSimpleName() };
 
-	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Split only at Guards",
-			"Mutex Guard and Vars Splitting", "Mutex Guard and Vars Splitting no Cutoff", "Fully precise" };
-	public static final Boolean DEF_PRECISE_INTERFERENCE_PRESTATE = false;
+	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Split at Guards and Exit"};
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
@@ -105,8 +103,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 	public static final String DEF_ABSTRACT_DOMAIN_FUTURE = VALUES_ABSTRACT_DOMAIN_FUTURE[0];
-	public static final int DEF_MAXSTATES_CONC = 3;
-	public static final int DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING = 2;
+	public static final int DEF_MAXSTATES_CONC = 16;
+	public static final int DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING = 8;
 
 	public static final String INDENT = "   ";
 	public static final String DINDENT = INDENT + INDENT;
@@ -118,7 +116,6 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 			"Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
 
 	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction Method";
-	public static final String LABEL_PRECISE_INTERFERENCE_PRESTATES = "Precise Interference Prestates";
 	public static final String LABEL_MAXIMUM_ITF_RECURSION_DEPTH = "Maximum ITF iterations before widening";
 	public static final String LABEL_MAXIMUM_PARALLEL_STATES_CONC = "Maximum states in upper Concurrent Fixpointengine";
 
@@ -167,8 +164,6 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItemContainer("Concurrency settings");
 		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_LOCATION_ABSTRACTION,
 				VALUES_LOCATION_ABSTRACTION[0], PreferenceType.Combo, VALUES_LOCATION_ABSTRACTION));
-		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_PRECISE_INTERFERENCE_PRESTATES,
-				DEF_PRECISE_INTERFERENCE_PRESTATE, "", PreferenceType.Boolean));
 		concurrencyContainer
 				.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_PARALLEL_STATES_CONC, DEF_MAXSTATES_CONC,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));

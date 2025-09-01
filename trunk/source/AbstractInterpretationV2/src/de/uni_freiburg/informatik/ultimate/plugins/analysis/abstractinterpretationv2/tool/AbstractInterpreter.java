@@ -132,10 +132,9 @@ public final class AbstractInterpreter {
 
 	private static ThreadModularAbsintPrefs getThreadModPrefs(final IPreferenceProvider prefs) {
 		final var locationAbstraction = prefs.getString(AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION);
-		final var interferencePrestates = prefs.getString(AbsIntPrefInitializer.LABEL_PRECISE_INTERFERENCE_PRESTATES);
 		final var maxStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAXIMUM_PARALLEL_STATES_CONC);
 		final var maxItf = prefs.getInt(AbsIntPrefInitializer.LABEL_MAXIMUM_ITF_RECURSION_DEPTH);
-		return new ThreadModularAbsintPrefs(locationAbstraction, interferencePrestates, maxStates, maxItf);
+		return new ThreadModularAbsintPrefs(locationAbstraction, maxStates, maxItf);
 	}
 
 	/**
