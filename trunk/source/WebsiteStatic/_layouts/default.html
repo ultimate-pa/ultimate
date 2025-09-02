@@ -30,7 +30,7 @@
   <body>
     <div class="d-flex h-100 flex-column">
       <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{{ '/' | relative_url }}"> <img
+        <a class="navbar-brand" href="{{ '/' | relative_url }}"  style="margin: 0px !important;"> <img
           src="{{ 'img/ultimate_logo.png' | relative_url }}" width="30" height="30"
           class="d-inline-block align-top" alt=""> Ultimate
         </a>
@@ -42,7 +42,7 @@
 		<ul class="navbar-nav" id="navbar_breadcrumb">
           {% if page.url != '/' %}
             <li class="nav-item active">
-              <a class="nav-link" href="{{ page.url | relative_url }}">{{ page.title }} <span class="sr-only">(current)</span></a>
+              <a class="nav-link" href="{{ page.url | relative_url }}" style="font-size: 20px; margin: 0px;">{{ page.title }} <span class="sr-only">(current)</span></a>
             </li>
           {% endif %}
           </ul>
@@ -56,9 +56,10 @@
         {{ content }}
       </div>
       <footer class="bg-light py-2">
-		<p id="version_info_text" class="float-end mx-2"></p>
+		<p id="version_info_text" class="mx-2 d-inline-flex align-items-center" style="font-size:4px;"></p>
 		<a class="float-end mx-2"  href="{{ 'privacy-policy/' | relative_url }}">Privacy Policy</a>
-        <a class="float-end mx-2" href="{{ 'imprint/' | relative_url }}">Imprint</a>
+		<a class="float-end mx-2"  href="{{ 'imprint/' | relative_url }}">Imprint</a>
+        
       </footer>
     </div>
   </body>

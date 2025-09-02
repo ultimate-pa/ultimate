@@ -745,10 +745,10 @@ function set_canceling_spinner(activate) {
 	if (activate) {
 		exec_button.addClass('disable');
 		cancel_button.html(
-			'<span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>Canceling ... '
+			'<span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span> Canceling ...'
 		);
 	} else {
 		exec_button.removeClass('disable');
-		cancel_button.html('Cancel execute');
+		cancel_button.html('Cancel execute <span class="oi oi-media-stop"></span>');
 	}
 }

@@ -20,24 +20,24 @@ js: [ "redirect_legacy_urls.js" ]
       {% for tool in site.tools %}
       <div class="card border-secondary shadow mb-3 tool-card border-start">
         <div class="card-header">
-          <a class="link-primary" href="{{ tool.url | relative_url }}">{{tool.title}}</a>
+          <a class="link-primary" style="color: black !important;" href="{{ tool.url | relative_url }}">{{tool.title}}</a>
           <span class="float-end">
           {% for lang in tool.languages %}
 		  <span class="badge rounded-pill
-		    {% if lang.language == 'C' %} text-bg-danger
-		    {% elsif lang.language == 'Boogie' %} text-bg-warning
-			{% elsif lang.language == 'Smt' %} text-bg-success
-			{% elsif lang.language == 'automata_script' %} text-bg-info
+		    {% if lang.language == 'C' %} text-bg-danger-light
+		    {% elsif lang.language == 'Boogie' %} text-bg-warning-light
+			{% elsif lang.language == 'Smt' %} text-bg-success-light
+			{% elsif lang.language == 'automata_script' %} text-bg-info-light
 		    {% else %} text-bg-secondary
 		    {% endif %}
 		  ">{{lang.language}}</span>
           {% endfor %}</span></div>
-        <div class="card-body text-black-70">
+        <div class="card-body text-black-80">
           <p class="card-text text-justify">{{tool.description}}</p>
         </div>
         <div class="card-footer text-right">
-          <a href="{{ tool.url | relative_url }}" class="btn btn-secondary rounded" style="border-radius: 6px !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); filter: brightness(80%);">Read more</a>
-          <a href="{{ 'webinterface/?tool=' | append: tool.tool_id | relative_url }}" class="btn btn-secondary rounded" style="border-radius: 6px !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); filter: brightness(80%);">Try online</a>
+          <a href="{{ tool.url | relative_url }}" class="btn btn-secondary rounded" style="border-radius: 6px !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); filter: brightness(110%);">Read more</a>
+          <a href="{{ 'webinterface/?tool=' | append: tool.tool_id | relative_url }}" class="btn btn-secondary rounded" style="border-radius: 6px !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); filter: brightness(110%);">Try online</a>
         </div>
       </div>
       {% endfor %}
