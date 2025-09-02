@@ -147,6 +147,27 @@ textarea {
 	display: none !important;
 }
 
+.text-bg-info-light {
+   background-color: #73c9eb !important; /* Helleres Bootstrap-Info-Blau */
+   color: #070808 !important; /* Dunklerer Text für Kontrast */
+ }
+ 
+ .text-bg-success-light {
+    background-color: #76f250 !important; /* Helleres Bootstrap grün */
+    color: #070808 !important; /* Dunklerer Text für Kontrast */
+  }
+ .text-bg-warning-light {
+     background-color: #f5aa5f !important; /* Helleres Bootstrap orange*/
+     color: #070808 !important; /* Dunklerer Text für Kontrast */
+   }
+ .text-bg-danger-light {
+      background-color: #f5776e !important; /* Helleres Bootstrap rot */
+      color: #070808 !important; /* Dunklerer Text für Kontrast */
+    }
+ .text-bg-secondary-light {
+	   background-color: #73c9eb !important; /* Helleres Bootstrap grau*/
+	   color: #070808 !important; /* Dunklerer Text für Kontrast */
+	 }
 /*
  * Break text into multilines.
  */
