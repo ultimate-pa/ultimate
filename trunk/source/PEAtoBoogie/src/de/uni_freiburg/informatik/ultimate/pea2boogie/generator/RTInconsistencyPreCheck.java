@@ -205,11 +205,17 @@ public class RTInconsistencyPreCheck {
 
 		for (int depth = 1; depth <= mCombinationNum; depth++) {
 			mLogger.info("-------------- DEPTH (number of chain links) {} ------------------", depth);
+			double progressCounter = 0.0f;
 
 			for (int i = 0; i < mListChainLinkReqs.size(); i++) {
 				// Simple progress indicator
 				final float progress = (i * 100.0f) / mListChainLinkReqs.size();
-				mLogger.info("STATUS: depth: " + depth + " out of " + mCombinationNum + ": " + progress + "%");
+				if (progress > progressCounter + 10.0f) {
+					progressCounter += 10.0f;
+					mLogger.info(
+							"STATUS: depth: " + depth + " out of " + mCombinationNum + ": " + progressCounter + "%");
+
+				}
 
 				// Start a new chain link result set with one element
 				final List<ReqsWithAttributes> chainLinkRes = new ArrayList<>();
@@ -288,9 +294,9 @@ public class RTInconsistencyPreCheck {
 	private void findSinglesForChains(final List<ReqsWithAttributes> chainLinkRes, final List<Term> exitConditions) {
 
 		mLogger.debug("Finding singles for chain link requirements: ");
-		mLogger.info("new CHhain set:");
+		mLogger.debug("new CHhain set:");
 		for (final ReqsWithAttributes r : chainLinkRes) {
-			mLogger.info("   " + r.mName);
+			mLogger.debug("   " + r.mName);
 		}
 
 		List<ReqsWithAttributes> potentialSingles = new ArrayList();
@@ -448,7 +454,7 @@ public class RTInconsistencyPreCheck {
 				mRTICombinations.add(canonicalPair);
 
 				if (rtiCheckFor2Reqs(a, b)) {
-					mLogger.info("RTI found for:" + a.mName + " and " + b.mName);
+					mLogger.debug("RTI found for:" + a.mName + " and " + b.mName);
 					mRTIReturnSet.add(rtiSetsFormatted(canonicalPair));
 
 				}
