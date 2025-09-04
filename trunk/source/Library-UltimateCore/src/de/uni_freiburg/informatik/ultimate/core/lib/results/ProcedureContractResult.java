@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
 
 	private final ProcedureContract<E, ? extends E> mContract;
+	private final ProcedureContract<String, String> mStringContract;
 	private final String mProcedureName;
 	private final Set<Check> mChecks;
 
@@ -51,10 +52,12 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 	 *            the Location
 	 */
 	public ProcedureContractResult(final String plugin, final ELEM position, final String procedureName,
-			final ProcedureContract<E, ? extends E> contract, final Set<Check> checks) {
+			final ProcedureContract<E, ? extends E> contract, final ProcedureContract<String, String> stringContract,
+			final Set<Check> checks) {
 		super(position, plugin);
 		mProcedureName = procedureName;
 		mContract = contract;
+		mStringContract = stringContract;
 		mChecks = checks;
 	}
 
@@ -77,16 +80,25 @@ public class ProcedureContractResult<ELEM extends IElement, E> extends AbstractR
 		sb.append("Derived contract for procedure ");
 		sb.append(mProcedureName);
 		sb.append(".");
-		final var requires = getRequires();
-		if (requires != null) {
+
+		if (getRequires() != null) {
 			sb.append(" Requires: ");
-			sb.append(requires);
+			sb.append(mStringContract.getRequires());
+			sb.append(".");
 		}
-		final var ensures = getEnsures();
-		if (ensures != null) {
+
+		if (getEnsures() != null) {
 			sb.append(" Ensures: ");
-			sb.append(ensures);
+			sb.append(mStringContract.getEnsures());
+			sb.append(".");
 		}
+
+		if (mContract.hasModifies()) {
+			sb.append(" Modifies: ");
+			sb.append(mStringContract.getModifies());
+			sb.append(".");
+		}
+
 		return sb.toString();
 	}
 
