@@ -215,7 +215,7 @@ public class RTInconsistencyPreCheck {
 			for (int i = 0; i < mListChainLinkReqs.size(); i++) {
 				// Simple progress indicator
 				final float progress = (i * 100.0f) / mListChainLinkReqs.size();
-				if (progress > (progressCounter + 0.10f)) {
+				if (progress > (progressCounter + 1.0f)) {
 					progressCounter = progress;
 					mLogger.info(
 							"STATUS: depth: " + depth + " out of " + mCombinationNum + ": " + (int) progress + "%");
