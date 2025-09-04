@@ -208,16 +208,19 @@ public class RTInconsistencyPreCheck {
 		}
 
 		for (int depth = 1; depth <= mCombinationNum; depth++) {
-			mLogger.info("-------------- DEPTH (number of chain links) {} ------------------", depth);
+			mLogger.info("-------------- DEPTH (number of chain links)" + depth + "------------------");
 			double progressCounter = 0.0f;
-
+			int maxSets = mListChainLinkReqs.size() * (mListChainLinkReqs.size() - 1) / depth;
+			mLogger.info("Max number of chains to check:" + maxSets);
 			for (int i = 0; i < mListChainLinkReqs.size(); i++) {
 				// Simple progress indicator
 				final float progress = (i * 100.0f) / mListChainLinkReqs.size();
-				if (progress > progressCounter + 10.0f) {
-					progressCounter += 10.0f;
+				if (progress > (progressCounter + 0.10f)) {
+					progressCounter = progress;
 					mLogger.info(
-							"STATUS: depth: " + depth + " out of " + mCombinationNum + ": " + progressCounter + "%");
+							"STATUS: depth: " + depth + " out of " + mCombinationNum + ": " + (int) progress + "%");
+					maxSets = (mListChainLinkReqs.size() - i) * (mListChainLinkReqs.size() - 1 - i) / depth;
+					mLogger.info("max number of chains remaining: " + maxSets);
 
 				}
 
