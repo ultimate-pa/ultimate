@@ -210,7 +210,7 @@ public class RTInconsistencyPreCheck {
 		for (int depth = 1; depth <= mCombinationNum; depth++) {
 			mLogger.info("-------------- DEPTH (number of chain links)" + depth + "------------------");
 			double progressCounter = 0.0f;
-			int maxSets = mListChainLinkReqs.size() * (mListChainLinkReqs.size() - 1) / depth;
+			int maxSets = (int) nCk(mListChainLinkReqs.size(), depth);
 			mLogger.info("Max number of chains to check:" + maxSets);
 			for (int i = 0; i < mListChainLinkReqs.size(); i++) {
 				// Simple progress indicator
@@ -219,7 +219,7 @@ public class RTInconsistencyPreCheck {
 					progressCounter = progress;
 					mLogger.info(
 							"STATUS: depth: " + depth + " out of " + mCombinationNum + ": " + (int) progress + "%");
-					maxSets = (mListChainLinkReqs.size() - i) * (mListChainLinkReqs.size() - 1 - i) / depth;
+					maxSets = (int) nCk(mListChainLinkReqs.size() - i, depth);
 					mLogger.info("max number of chains remaining: " + maxSets);
 
 				}
@@ -235,6 +235,24 @@ public class RTInconsistencyPreCheck {
 		}
 	}
 
+	public static long nCk(final int n, int k) {
+		if (k < 0 || k > n) {
+			return 0;
+		}
+		if (k == 0 || k == n) {
+			return 1;
+		}
+
+		// Symmetrie nutzen: nCk == nC(n-k)
+		k = Math.min(k, n - k);
+
+		long result = 1;
+		for (int i = 1; i <= k; i++) {
+			result = result * (n - i + 1) / i;
+		}
+		return result;
+	}
+
 	/**
 	 * Creates a set of chain-link-requirements with the size of "depth". Therefore checks if the chain links can form a
 	 * "chain".
@@ -243,6 +261,7 @@ public class RTInconsistencyPreCheck {
 	 * @param depth
 	 * @param exitConditions
 	 * @param remainingChainLinks
+	 *
 	 */
 	private void addChainLinkRecursive(final List<ReqsWithAttributes> chainLinkRes, final int depth,
 			final List<Term> exitConditions, final List<ReqsWithAttributes> remainingChainLinks) {
