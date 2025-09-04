@@ -44,7 +44,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			mWrittenByThread.put(thread, new HashSet<>());
 			mPerThreadLocationCounterMap.put(thread, 0);
 		}
-		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(true);
+		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(false);
 		mMutexVarSplitMapWithAllVarLinesMarked = broadMutexSplitting(true);
 	}
 
@@ -84,18 +84,17 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		final var mutexGuardToVarsMap = computeMutexVars();
 		final var mEntryLocs = mIcfg.getProcedureEntryNodes();
 		for (final String thread : mEntryLocs.keySet()) {
-			boolean seenOneGuard = false;
+			boolean seen = false;
 			final var entryLoc = mEntryLocs.get(thread);
 			final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(entryLoc);
 			while (iter.hasNext()) {
 				final LOC loc = iter.next();
 				if (mutexGuardToVarsMap.containsKey(loc)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
-					seenOneGuard = true;
-				} else if ((fullyPrecise || seenOneGuard)
-						&& containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap)) {
+					seen = true;
+				} else if ((fullyPrecise || seen) && containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
-					seenOneGuard = false;
+					seen = false;
 				} else {
 					abstractLocationMapping.put(loc, getThreadLocationCounter(thread));
 				}
@@ -143,10 +142,25 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		final var guards = outgoing.stream()
 				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
 				.toList();
-		final var term = SmtUtils.simplify(mManagedScript, SmtUtils.or(mScript, guards), mServices,
-				SimplificationTechnique.POLY_PAC);
 		final Map<TermVariable, IProgramVar> termToGlobalMap = mGlobals.stream()
 				.collect(Collectors.toMap(IProgramVar::getTermVariable, v -> v));
+		final Set<IProgramVar> allVars = new HashSet<>();
+		for (final var term : guards) {
+			final var freeVars = Arrays.stream(term.getFreeVars()).filter(termToGlobalMap::containsKey)
+					.map(termToGlobalMap::get).collect(Collectors.toSet());
+			allVars.addAll(freeVars);
+		}
+		return allVars;
+	}
+
+	public Set<IProgramVar> getGuardVarsStrict(final List<IcfgEdge> outgoing) {
+		final var guards = outgoing.stream()
+				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
+				.toList();
+		final Map<TermVariable, IProgramVar> termToGlobalMap = mGlobals.stream()
+				.collect(Collectors.toMap(IProgramVar::getTermVariable, v -> v));
+		final var term = SmtUtils.simplify(mManagedScript, SmtUtils.or(mScript, guards), mServices,
+				SimplificationTechnique.POLY_PAC);
 		final var freeVars = Arrays.stream(term.getFreeVars()).filter(termToGlobalMap::containsKey)
 				.map(termToGlobalMap::get).collect(Collectors.toSet());
 		return freeVars;
@@ -157,6 +171,19 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	 * possible Mutex/ other critical locations.
 	 */
 	public boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
+		final var guards = outgoing.stream()
+				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
+				.toList();
+		final var globals = mGlobals.stream().map(v -> v.getTermVariable()).collect(Collectors.toSet());
+		for (final var term : guards) {
+			if (Arrays.stream(term.getFreeVars()).anyMatch(globals::contains)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean shouldDifferentiateStrict(final List<IcfgEdge> outgoing) {
 		final var guards = outgoing.stream()
 				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
 				.toList();

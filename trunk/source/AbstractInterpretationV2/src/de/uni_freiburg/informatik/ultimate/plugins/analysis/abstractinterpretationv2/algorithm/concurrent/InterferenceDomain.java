@@ -21,7 +21,6 @@ public class InterferenceDomain<STATE extends IAbstractState<STATE>, ACTION exte
 	private final ThreadInstanceCounterFactory<LOC> mThreadInstanceCounterFactory;
 
 	private final StaticAbstractLocationMap<LOC> mAbstractLocationMap;
-	public boolean mWiden = false;
 
 	public static int postoperatorCalls;
 	public static int postOpCacheHits;

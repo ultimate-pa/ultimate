@@ -31,7 +31,7 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 
 	private final ILogger mLogger;
 	private final int mMaxUnwindings;
-	private final int mMaxInterferenceFixpointUnwindings;
+	private int mMaxInterferenceFixpointUnwindings;
 	private final int mMaxParallelStates;
 	private int mIteration = 0;
 
@@ -73,19 +73,20 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 				.computeLocationAbstraction(threadModPrefs.locationAbstraction(), services, icfg);
 		mLocationAbstraction = absMap;
 		if (threadModPrefs.locationAbstraction().equals("Split at Guard Entry and Exit")) {
-			mMaxParallelStates = 4;
-			mMaxUnwindings = 4;
+			mMaxParallelStates = 32;
+			mMaxInterferenceFixpointUnwindings = 8;
 		} else if (threadModPrefs.locationAbstraction().equals("Split at all Guard variable occurences")) {
 			mMaxParallelStates = 1000;
-			mMaxUnwindings = 1000;
+			mMaxInterferenceFixpointUnwindings = 1000;
 		} else if (threadModPrefs.locationAbstraction().equals("Non-relational Singleton")) {
 			mMaxParallelStates = 1;
-			mMaxUnwindings = 1;
+			mMaxInterferenceFixpointUnwindings = 1;
 			InterferenceFIxpoint.postOnly = true;
 		} else {
 			mMaxParallelStates = 1;
-			mMaxUnwindings = 1;
+			mMaxInterferenceFixpointUnwindings = 1;
 		}
+		mMaxUnwindings = mMaxInterferenceFixpointUnwindings;
 
 		params.setMaxParallelStates(1);
 		mCache = new InterferenceCache<>();
@@ -166,9 +167,6 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 			final String procedure, final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> interferences) {
 		final var newDomain = new InterferenceDomain<>(mCfg, mUnderlyingDomain, mLogger, mLocationAbstraction,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings, interferences, mCache);
-		if (mIteration > mMaxUnwindings) {
-			newDomain.mWiden = true;
-		}
 		final var initialFactory = new InitialStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates, newDomain,
 				mEntryLocs, mCache);
 		final var paramsWithInterferences = mParams.setStorage(mStateStorage.copy())
