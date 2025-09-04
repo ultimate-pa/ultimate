@@ -435,9 +435,9 @@ public class RTInconsistencyPreCheck {
 			return;
 		}
 		// if we reach this point the set is rt-inconsistent
-		mLogger.info("Rt-inconsistent set with chain-link found:");
+		mLogger.debug("Rt-inconsistent set with chain-link found:");
 		for (final ReqsWithAttributes r : fullSet) {
-			mLogger.info("   " + r.mName);
+			mLogger.debug("   " + r.mName);
 		}
 		mRTIReturnSet.add(rtiSetsFormatted(fullSet));
 	}
