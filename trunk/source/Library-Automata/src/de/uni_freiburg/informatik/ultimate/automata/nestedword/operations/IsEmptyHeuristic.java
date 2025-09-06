@@ -238,7 +238,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Current: %s", current));
 			}
-			if (mIsGoalState.test(current.mTargetState)) {
+			if (mIsGoalState.test(current.mTargetState) && !stillFollowingWayPoint) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("  Is target");
 					printDebugStats(lowestCall, lowestOther, summaries);

@@ -385,7 +385,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					final long time = System.nanoTime() / 1000000000;
 					try {
 						mLogger.info("Main: A Thread is Done");
-
+						if (workerResult.workerCrashed()) {
+							mLogger.error("Main: Worker Crashed! exiting CEGAR loop.");
+							final IcfgLocation errorloc =
+									getErrorLocFromSpecificCounterexample(workerResult.getCounterexample());
+							mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
+							shutDownAndDestroy(mDestroyEverything);
+							return;
+						}
 						// If Error automaton terminate immediately
 						if (mPref.stopAfterFirstViolation()
 								&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
@@ -458,6 +465,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				if (mCounterexample == null) {
 					didntFindCexLastIteration = true;
 					break;
+				} else {
+					updateActiveTestGoals();
 				}
 				if (mCounterexample != null && mPref.mUseContinuesWorker) {
 					mWorkerTaskQueue.add(mCounterexample);
@@ -830,11 +839,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		case PARALLEL:
 			if (mUseIsEmptyHeuristicForparallelCexSearch) {
 				return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
-						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
+						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints,
+						possibleEndPoints == null,
 						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mPref.mSearchLoopBound);
 			} else {
 				return new IsEmptyParallelLegacy<>(new AutomataLibraryServices(mServices), mAbstraction,
-						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
+						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints,
+						possibleEndPoints == null,
 						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples);
 			}
 
@@ -893,7 +904,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				return null;
 			}
 			possibleEndPoints = mActiveErrorLocs;
-			updateActiveTestGoals();
+
 			if (mBfsAndGoalSearch) {
 				final IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.BFS, possibleEndPoints);
 				if (isSearchCorrectAndTraceFresh(search)) {
@@ -1149,6 +1160,7 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 	PredicateFactory mPredicateFactory;
 	private final boolean mWasPerfect;
 	private final boolean mSatOnlyWorker;
+	private final boolean mWorkerCrashed;
 
 	/**
 	 * @param automatonType
@@ -1161,7 +1173,8 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final InterpolantAutomatonEnhancement enhanceMode, final boolean useErrorAutomaton,
 			final AutomatonType automatonType, final ManagedScript mgdScript, final IRun<L, ?> counterexample,
-			final PredicateFactory predicateFactory, final boolean wasPerfect, final boolean satOnlyWorker) {
+			final PredicateFactory predicateFactory, final boolean wasPerfect, final boolean satOnlyWorker,
+			final boolean workerCrashed) {
 		mSubtrahend = subtrahend;
 		mAutomatonType = automatonType;
 		mUseErrorAutomaton = useErrorAutomaton;
@@ -1173,10 +1186,15 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 		mPredicateFactory = predicateFactory;
 		mWasPerfect = wasPerfect;
 		mSatOnlyWorker = satOnlyWorker;
+		mWorkerCrashed = workerCrashed;
 	}
 
 	public boolean fromSATonlyWorker() {
 		return mSatOnlyWorker;
+	}
+
+	public boolean workerCrashed() {
+		return mWorkerCrashed;
 	}
 
 	public IIpTcStrategyModule<?, L> getModule() {

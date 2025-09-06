@@ -160,6 +160,15 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 
 		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
 			// TODO seems to work not sure if it is usefull
+			mThreadResult =
+					new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
+							null, mCounterexample, null, true, false, true);
+			try {
+				mBlockingQueueForResults.put(mThreadResult);
+			} catch (final InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			mMainThread.reportFailedContinuesWorkerThread();
 			System.out.println("Uncaught exception: " + ex);
 		};
@@ -183,13 +192,13 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
 				final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(strategy);
 
-				if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
-					// in this setting we dont use error automata
-					mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
-							mCsToolkit.getManagedScript(), mCounterexample, null, true, false);
-					mBlockingQueueForResults.put(mThreadResult);
-					continue;
-				}
+				// if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
+				// // in this setting we dont use error automata
+				// mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
+				// mCsToolkit.getManagedScript(), mCounterexample, null, true, false, false);
+				// mBlockingQueueForResults.put(mThreadResult);
+				// continue;
+				// }
 
 				final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(strategy,
 						isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
@@ -470,7 +479,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
 				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
-				mRefinementResult.somePerfectSequenceFound(), false);
+				mRefinementResult.somePerfectSequenceFound(), false, false);
 
 		// TODO missing a lot of stuff from NwaCegarLoop
 

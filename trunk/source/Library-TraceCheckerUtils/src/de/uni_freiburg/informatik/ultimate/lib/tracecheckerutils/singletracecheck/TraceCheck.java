@@ -506,7 +506,13 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						while (m.find()) {
 							types.add(m.group(1));
 						}
-						type = types.get(countFoundNondets);
+						if (types.size() > countFoundNondets) {
+							type = types.get(countFoundNondets);
+						} else {
+							countFoundNondets = 0;
+							type = types.get(countFoundNondets);
+						}
+
 						assert (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort()));
 						final Integer index = i;
 						final Term indexedVar = indexedRepresentatives.get(i);

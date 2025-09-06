@@ -533,7 +533,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
 			"Minimize Abstraction every time a worker is done";
-	public static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = false;
+	public static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = true;
 	public static final String LABEL_VISIT_LOOPS_ONLY_ONCE = "Initially visit loops only once";
 	public static final boolean DEF_VISIT_LOOPS_ONLY_ONCE = false;
 

@@ -510,6 +510,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 	}
 
+	protected IcfgLocation getErrorLocFromSpecificCounterexample(final IRun<L, ?> counterexample) {
+		return counterexample.getSymbol(counterexample.getLength() - 2).getTarget();
+	}
+
 	/**
 	 * Report results from a feasibility check if necessary and return the type of the refinement automaton
 	 */

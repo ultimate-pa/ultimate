@@ -495,7 +495,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
 				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
-				mRefinementResult.somePerfectSequenceFound(), true);
+				mRefinementResult.somePerfectSequenceFound(), true, false);
 		return workerResult;
 	}
 }
