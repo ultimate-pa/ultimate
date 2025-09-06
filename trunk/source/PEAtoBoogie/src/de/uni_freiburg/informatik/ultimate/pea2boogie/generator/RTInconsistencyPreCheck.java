@@ -49,6 +49,7 @@ public class RTInconsistencyPreCheck {
 	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mChainLinkSingles;
 
 	public class ReqsWithAttributes {
+		public boolean mTimed;
 		public String mName;
 		public Phase mPenultimatePhase;
 		public Phase mMaxPhase;
@@ -401,9 +402,21 @@ public class RTInconsistencyPreCheck {
 
 		}
 
+
 		final List<ReqsWithAttributes> fullSet = new ArrayList<>(chainLinkRes);
 		fullSet.addAll(usedSingles);
 		//check for exit conditions
+		boolean timedChcecker = false;
+		for (final ReqsWithAttributes r : fullSet) {
+			if (r.mTimed) {
+				timedChcecker = true;
+			}
+		}
+		
+		if (!timedChcecker) {
+			mLogger.debug("set not timed");
+			return;
+		}
 		Term conjunction = fullSet.get(0).mFullExitCondition;
 
 		for (int i = 1; i < fullSet.size(); i++) {
@@ -452,6 +465,7 @@ public class RTInconsistencyPreCheck {
 	 *
 	 */
 	private void rtiCheckSingles() {
+		
 
 		for (final Map.Entry<TermVariable, List<ReqsWithAttributes>> e : mDictVar.entrySet()) {
 			final List<ReqsWithAttributes> reqs = e.getValue();
@@ -474,6 +488,9 @@ public class RTInconsistencyPreCheck {
 
 				if (mRTICombinations.contains(canonicalPair)) {
 					continue; // already checked/recorded this combination
+				}
+				if (!a.mTimed && !b.mTimed) {
+					continue; // skip timed requirements
 				}
 				mRTICombinations.add(canonicalPair);
 
@@ -571,6 +588,8 @@ public class RTInconsistencyPreCheck {
 				final PhaseEventAutomata pea = child.getValue();
 				final DCPhase[] phases = ct.getPhases();
 				final int n = phases.length;
+				
+
 
 				// We need at least 2 phases to have a "penultimate"
 				if (n < 2) {
@@ -582,6 +601,12 @@ public class RTInconsistencyPreCheck {
 				req.mName = pea.getName();
 				req.mOriginalPeaEventAutomata = pea;
 				req.mCounterTrace = ct;
+				
+				if (pea.getClocks().size() > 0) {
+					req.mTimed = true; // skip timed requirements
+				}else {
+					req.mTimed = false;
+				}
 
 				// --------------------------
 				// Penultimate phase (always exists because n >= 2)
