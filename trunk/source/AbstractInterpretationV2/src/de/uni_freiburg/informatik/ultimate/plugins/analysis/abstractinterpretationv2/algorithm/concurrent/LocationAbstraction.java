@@ -20,11 +20,14 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 		// TODO: parametrize countervalues
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
 		final StaticAbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
-		case "Singleton" -> new StaticAbstractLocationMap<>((l -> 0), icfg);
-		case "Split at Guard Entry and Exit" -> mHeuristicLocationAbstraction.entryExitSplitting();
-		case "Split at all Guard variable occurences" -> mHeuristicLocationAbstraction.allVarOccurencesSplit();
-		default -> mHeuristicLocationAbstraction.entryExitSplitting();
+		case "Singleton, Fast Widening", "Singleton, Slow Widening" -> new StaticAbstractLocationMap<>((l -> 0), icfg);
+		case "Low Split, Fast Widening", "Low Split, Slow Widening" ->
+			mHeuristicLocationAbstraction.entryExitSplitting();
+		case "High Split, Fast Widening", "High Split, Slow Widening" ->
+			mHeuristicLocationAbstraction.allVarOccurencesSplit();
+		default -> new StaticAbstractLocationMap<>((l -> 0), icfg);
 		};
+
 		return absMap;
 	}
 }

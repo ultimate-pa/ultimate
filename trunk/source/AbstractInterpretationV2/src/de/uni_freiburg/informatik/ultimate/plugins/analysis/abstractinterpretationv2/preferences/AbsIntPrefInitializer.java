@@ -80,8 +80,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 			LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
 			PoormanAbstractDomain.class.getSimpleName() };
 
-	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Non-relational Singleton", "Singleton",
-			"Split at Guard Entry and Exit", "Split at all Guard variable occurences" };
+	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Non-relational Singleton", "Singleton, Fast Widening", "Singleton, Slow Widening",
+			"Low Split, Fast Widening", "Low Split, Slow Widening", "High Split, Fast Widening",
+			"High Split, Slow Widening" };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";

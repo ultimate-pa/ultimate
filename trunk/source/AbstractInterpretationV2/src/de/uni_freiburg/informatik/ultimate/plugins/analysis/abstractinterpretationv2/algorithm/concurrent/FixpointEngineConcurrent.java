@@ -66,26 +66,49 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		mMaxInterferenceFixpointUnwindings = threadModPrefs.maxItf();
 		InterferenceFIxpoint.iterationsReached = 0;
-		InterferenceFIxpoint.postOnly = false;
+		InterferenceFIxpoint.nonRelational = false;
 		mCfg = icfg;
 		mLocationAbstractionCalculator = new LocationAbstraction<>();
 		final StaticAbstractLocationMap<LOC> absMap = mLocationAbstractionCalculator
 				.computeLocationAbstraction(threadModPrefs.locationAbstraction(), services, icfg);
 		mLocationAbstraction = absMap;
-		if (threadModPrefs.locationAbstraction().equals("Split at Guard Entry and Exit")) {
-			mMaxParallelStates = 32;
-			mMaxInterferenceFixpointUnwindings = 8;
-		} else if (threadModPrefs.locationAbstraction().equals("Split at all Guard variable occurences")) {
-			mMaxParallelStates = 1000;
-			mMaxInterferenceFixpointUnwindings = 1000;
-		} else if (threadModPrefs.locationAbstraction().equals("Non-relational Singleton")) {
+
+		switch (threadModPrefs.locationAbstraction()) {
+		case "Non-relational Singleton" -> {
 			mMaxParallelStates = 1;
 			mMaxInterferenceFixpointUnwindings = 1;
-			InterferenceFIxpoint.postOnly = true;
-		} else {
+			InterferenceFIxpoint.nonRelational = true;
+		}
+		case "Singleton, Fast Widening" -> {
 			mMaxParallelStates = 1;
 			mMaxInterferenceFixpointUnwindings = 1;
 		}
+		case "Singleton, Slow Widening" -> {
+			mMaxParallelStates = 8;
+			mMaxInterferenceFixpointUnwindings = 8;
+		}
+		case "Low Split, Fast Widening" -> {
+			mMaxParallelStates = 32;
+			mMaxInterferenceFixpointUnwindings = 2;
+		}
+		case "Low Split, Slow Widening" -> {
+			mMaxParallelStates = 32;
+			mMaxInterferenceFixpointUnwindings = 16;
+		}
+		case "High Split, Fast Widening" -> {
+			mMaxParallelStates = 1000;
+			mMaxInterferenceFixpointUnwindings = 2;
+		}
+		case "High Split, Slow Widening" -> {
+			mMaxParallelStates = 1000;
+			mMaxInterferenceFixpointUnwindings = 1000;
+		}
+		default -> {
+			mMaxParallelStates = 1;
+			mMaxInterferenceFixpointUnwindings = 1;
+		}
+		}
+
 		mMaxUnwindings = mMaxInterferenceFixpointUnwindings;
 
 		params.setMaxParallelStates(1);

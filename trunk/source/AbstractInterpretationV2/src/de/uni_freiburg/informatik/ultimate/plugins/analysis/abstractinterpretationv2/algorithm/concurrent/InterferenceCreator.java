@@ -35,13 +35,8 @@ public class InterferenceCreator<UNDERLYINGSTATE extends IAbstractState<UNDERLYI
 					if (!isInterferingTransition((ACTION) edge, icfg, mLocationAbstraction)) {
 						continue;
 					}
-					var disjPreState = mStateStorage
+					final var disjPreState = mStateStorage
 							.getAbstractState(mTransitionProvider.getSource((ACTION) edge));
-					if (InterferenceFIxpoint.postOnly) {
-					disjPreState = mStateStorage
-							.getAbstractState(mTransitionProvider.getTarget((ACTION) edge));
-						
-					}
 					if (disjPreState == null) {
 						continue;
 					}

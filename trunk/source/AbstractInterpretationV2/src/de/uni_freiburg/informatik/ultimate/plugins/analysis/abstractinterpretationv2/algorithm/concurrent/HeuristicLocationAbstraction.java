@@ -44,8 +44,12 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			mWrittenByThread.put(thread, new HashSet<>());
 			mPerThreadLocationCounterMap.put(thread, 0);
 		}
-		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(false);
-		mMutexVarSplitMapWithAllVarLinesMarked = broadMutexSplitting(true);
+		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(true);
+		for (final String thread : mIcfg.getProcedureEntryNodes().keySet()) {
+			mWrittenByThread.put(thread, new HashSet<>());
+			mPerThreadLocationCounterMap.put(thread, 0);
+		}
+		mMutexVarSplitMapWithAllVarLinesMarked = broadMutexSplitting(false);
 	}
 
 	/*
@@ -79,9 +83,9 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return counter;
 	}
 
-	private Map<LOC, Integer> broadMutexSplitting(final boolean fullyPrecise) {
+	private Map<LOC, Integer> broadMutexSplitting(final boolean strict) {
 		final Map<LOC, Integer> abstractLocationMapping = new HashMap<>();
-		final var mutexGuardToVarsMap = computeMutexVars();
+		final var mutexGuardToVarsMap = computeMutexVars(strict);
 		final var mEntryLocs = mIcfg.getProcedureEntryNodes();
 		for (final String thread : mEntryLocs.keySet()) {
 			boolean seen = false;
@@ -92,7 +96,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 				if (mutexGuardToVarsMap.containsKey(loc)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
 					seen = true;
-				} else if ((fullyPrecise || seen) && containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap)) {
+				} else if ((!strict || seen) && containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
 					seen = false;
 				} else {
@@ -107,7 +111,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	 * Computes for each location which contains an (assumed) mutex or similarily critical, flag-like location, the set
 	 * of Program variables used for the mutex.
 	 */
-	private Map<LOC, Set<IProgramVar>> computeMutexVars() {
+	private Map<LOC, Set<IProgramVar>> computeMutexVars(final boolean fullyPrecise) {
 		final Set<IProgramVar> mutexVarsIProgramVarrs = new LinkedHashSet<>();
 		final Map<LOC, Set<IProgramVar>> mutexGuardToVarsMap = new HashMap<>();
 		final var mEntryLocs = mIcfg.getProcedureEntryNodes();
@@ -116,9 +120,9 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			while (iter.hasNext()) {
 				final LOC loc = iter.next();
 				final var outgoing = loc.getOutgoingEdges();
-				if (shouldDifferentiate(outgoing)) {
-					mutexVarsIProgramVarrs.addAll(getGuardVars(outgoing));
-					mutexGuardToVarsMap.put(loc, getGuardVars(outgoing));
+				if (shouldDifferentiate(outgoing, fullyPrecise)) {
+					mutexVarsIProgramVarrs.addAll(getGuardVars(outgoing, fullyPrecise));
+					mutexGuardToVarsMap.put(loc, getGuardVars(outgoing, fullyPrecise));
 				}
 				final var writtenGlobals = outgoing.stream()
 						.flatMap(e -> e.getTransformula().getOutVars().keySet().stream()).filter(mGlobals::contains)
@@ -138,7 +142,10 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 				.anyMatch(entry -> entry.getValue().stream().anyMatch(vars::contains));
 	}
 
-	public Set<IProgramVar> getGuardVars(final List<IcfgEdge> outgoing) {
+	public Set<IProgramVar> getGuardVars(final List<IcfgEdge> outgoing, final boolean fullyPrecise) {
+		if (fullyPrecise) {
+			return getGuardVarsStrict(outgoing);
+		}
 		final var guards = outgoing.stream()
 				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
 				.toList();
@@ -170,7 +177,10 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	 * Computes if the outgoing edges of a location contain a guarded term of global variables. Used to look for
 	 * possible Mutex/ other critical locations.
 	 */
-	public boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
+	public boolean shouldDifferentiate(final List<IcfgEdge> outgoing, final boolean fullyPrecise) {
+		if (fullyPrecise) {
+			return shouldDifferentiateStrict(outgoing);
+		}
 		final var guards = outgoing.stream()
 				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
 				.toList();

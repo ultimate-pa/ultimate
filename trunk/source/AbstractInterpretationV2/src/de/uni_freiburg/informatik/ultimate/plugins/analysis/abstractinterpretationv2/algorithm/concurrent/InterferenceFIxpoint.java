@@ -29,7 +29,7 @@ public class InterferenceFIxpoint<STATE extends IAbstractState<STATE>, ACTION ex
 	private InterferenceDomainPostOperator<STATE, ACTION, LOC> mPostOp;
 	private final Map<InterferenceWithSourceThread<STATE, ACTION, LOC>, Set<InterferenceDomainState<STATE, ACTION, LOC>>> mSeenStatesMap;
 	private final IIcfg<?> mCfg;
-	public static boolean postOnly;
+	public static boolean nonRelational;
 
 	public InterferenceFIxpoint(final IIcfg<?> cfg, final ILogger logger,
 			final InterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
@@ -52,16 +52,13 @@ public class InterferenceFIxpoint<STATE extends IAbstractState<STATE>, ACTION ex
 	public DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> computeInterferenceFixpoint(
 			final DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result,
 			final String ownerThread, final InterferenceCache<STATE, ACTION, LOC> cache) {
-		if (postOnly) {
-			if (!prepareAndFilterItfs(result, ownerThread)) {
-				return result;
-			}
-			return applyNonRelationalFixpoint(result, ownerThread, cache);
-		}
-
 		if (!prepareAndFilterItfs(result, ownerThread)) {
 			return result;
 		}
+		if (nonRelational) {
+			return applyNonRelationalFixpoint(result, ownerThread, cache);
+		}
+
 		return applyFixpoint(result, ownerThread, cache);
 	}
 
