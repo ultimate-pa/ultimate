@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -106,17 +108,18 @@ public class RTInconsistencyPreCheck {
 
 		// --------START OF RTI CHECK----------------
 		getAttributes(reqPeas);
+		mLogger.info("Number of chain link requirements: " + mListChainLinkReqs.size()); // Print out found sets
+		for (final ReqsWithAttributes r : mListChainLinkReqs) { // prints names of chain-link requirements (for debug
+																// reasons)
+			mLogger.info("   " + r.mName);
+		}
 		findSinglesForChains();
 		// If the preference "full Set" is set, the maximum chain link depth is set to the number of chainLink
 		// requirements
 		mCombinationNum = mFullSet ? mListChainLinkReqs.size() : mCombinationNum;
 		rtiCheckSingles();
 		rtiCheckChainLinkReqs();
-		mLogger.info("Number of chain link requirements: " + mListChainLinkReqs.size()); // Print out found sets
-		for (final ReqsWithAttributes r : mListChainLinkReqs) { // prints names of chain-link requirements (for debug
-																// reasons)
-			mLogger.info("   " + r.mName);
-		}
+
 		printResults();
 		return mRTIReturnSet; // returns found sets in format for checking to reduce false positives
 
@@ -331,31 +334,39 @@ public class RTInconsistencyPreCheck {
 	 * @param chainLinkRes
 	 * @param exitConditions
 	 */
-	private void findSinglesForChains(final List<ReqsWithAttributes> chainLinkRes, final List<Term> exitConditions) {
+	private void findSinglesForChains(final List<ReqsWithAttributes> chainLinkRes,
+            final List<Term> exitConditions) {
 
 		mLogger.debug("Finding singles for chain link requirements: ");
 		mLogger.debug("new Chain set:");
 		for (final ReqsWithAttributes r : chainLinkRes) {
 			mLogger.debug("   " + r.mName);
 		}
-
-		List<ReqsWithAttributes> potentialSingles = new ArrayList<>();
+		
+		// erst als Set sammeln, um Duplikate zu vermeiden (Reihenfolge bleibt erhalten)
+		final Set<ReqsWithAttributes> singlesSet = new LinkedHashSet<>();
+		
 		if (chainLinkRes.size() == 1) {
-			potentialSingles = mChainLinkSingles.get(chainLinkRes.get(0));
-		} else {
-			for (final ReqsWithAttributes req : chainLinkRes) {
-				potentialSingles.addAll(mChainLinkSingles.get(req));
-
-			}
+			final List<ReqsWithAttributes> list = mChainLinkSingles.get(chainLinkRes.get(0));
+			if (list != null) singlesSet.addAll(list);
+			} else {
+				for (final ReqsWithAttributes req : chainLinkRes) {
+					final List<ReqsWithAttributes> list = mChainLinkSingles.get(req);
+				if (list != null) singlesSet.addAll(list);
+				}
 		}
-		if (potentialSingles.isEmpty()) {
+		
+		if (singlesSet.isEmpty()) {
 			mLogger.debug("No potential singles found");
 			return;
 		}
-		mLogger.debug("Potential singles found: " + potentialSingles.size());
+		
+		mLogger.debug("Potential singles found (unique): " + singlesSet.size());
+		
+		final List<ReqsWithAttributes> potentialSingles = new ArrayList<>(singlesSet);
 		fillWithSinglesRecursive(potentialSingles, chainLinkRes, exitConditions, new ArrayList<>());
+		}
 
-	}
 
 	/**
 	 * For a list of chainLinkReqs which are possible rt-inconsistent: try to fill with singles to create a
