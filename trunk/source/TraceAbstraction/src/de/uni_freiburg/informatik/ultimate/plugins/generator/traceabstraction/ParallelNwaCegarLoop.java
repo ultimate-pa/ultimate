@@ -389,9 +389,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 							mLogger.error("Main: Worker Crashed! exiting CEGAR loop.");
 							final IcfgLocation errorloc =
 									getErrorLocFromSpecificCounterexample(workerResult.getCounterexample());
-							mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
+							// mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 							shutDownAndDestroy(mDestroyEverything);
-							return;
+							throw new AssertionError("Worker Crashed!, Exiting CEGAR loop!");
 						}
 						// If Error automaton terminate immediately
 						if (mPref.stopAfterFirstViolation()
@@ -771,7 +771,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	private void updateActiveTestGoals() {
-		assert mUseGoalSetForIsEmpty;
+		if (!mUseGoalSetForIsEmpty) {
+			return;
+		}
 		final List<?> sequence = mCounterexample.getStateSequence();
 		final IPredicate currentGoal = (IPredicate) sequence.get(sequence.size() - 1);
 
