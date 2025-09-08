@@ -429,13 +429,14 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
-		if (RcfgPreferenceInitializer.getPreferences(mServices).getBoolean(RcfgPreferenceInitializer.LABEL_TEST_GEN)) {
+		if (RcfgPreferenceInitializer.getPreferences(mServices)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_TEST_GEN)) {
 			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb);
 			final boolean mExportAllInOneFile = true;
 			final String identifier = "" + rpeb.mTrace.hashCode() + Thread.currentThread().threadId();
 			exportTest(testV, identifier, mExportAllInOneFile);
-			cleanupAndUnlockSolver();
-			return rpeb.getIcfgProgramExecution();
+			// cleanupAndUnlockSolver();
+			// return rpeb.getIcfgProgramExecution();
 		}
 
 		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
@@ -460,6 +461,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 							throw uoe;
 						}
 					}
+
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
 			}
@@ -482,23 +484,21 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			if ((mTrace.asList().get(i) instanceof final StatementSequence stmt)
 					&& stmt.getPrettyPrintedStatements().contains("nondet")) {
 
+
 				boolean foundAMatchingVar = false;
 				for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
 					final IProgramVar bv = entry.getKey();
 					final Map<Integer, Term> indexedRepresentatives = entry.getValue();
-					// if () {
-					if (!bv.getGloballyUniqueId().contains("nondet") && indexedRepresentatives.containsKey(i)) {
-
 						/*
 						 * read payload line by line filter nondet lines
 						 */
-
 						if (lastSeenPayloadWithNondets.equals(extractNondetLines(stmt.getPayload().toString()))) {
 							countFoundNondets += 1;
 						} else {
 							lastSeenPayloadWithNondets = extractNondetLines(stmt.getPayload().toString());
 							countFoundNondets = 0;
 						}
+						assert !lastSeenPayloadWithNondets.isEmpty();
 						final String type;
 						final Matcher m =
 								Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(stmt.getPayload().toString());
@@ -506,31 +506,53 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						while (m.find()) {
 							types.add(m.group(1));
 						}
+						assert !types.isEmpty();
 						if (types.size() > countFoundNondets) {
 							type = types.get(countFoundNondets);
 						} else {
 							countFoundNondets = 0;
 							type = types.get(countFoundNondets);
 						}
-
-						assert (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort()));
-						final Integer index = i;
-						final Term indexedVar = indexedRepresentatives.get(i);
-						final Term valueT = funGetValue.apply(indexedVar);
-						if (indexedVar instanceof ApplicationTerm) {
-							assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
-							foundAMatchingVar = true;
-							testV.addValueAssignment(valueT, index, type);
-							final TermTransferrer test =
-									new TermTransferrer(mCfgManagedScript.getScript(), mTcSmtManager.getScript());
-							final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-									test.transform(indexedVar), test.transform(valueT));
-							final Pair<Term, Term> varValuePair =
-									new Pair<>(test.transform(indexedVar), test.transform(valueT));
-							varAssignmentPair.add(varValuePair);
-							varAssignment.add(varEqValue);
+						if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+						for (final var representative : indexedRepresentatives.entrySet()) {
+							final Integer index = representative.getKey();
+							final Term indexedVar = representative.getValue();
+							final Term valueT;
+							try {
+								valueT = funGetValue.apply(indexedVar);
+							} catch (final UnsupportedOperationException uoe) {
+								// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
+								// crash while using SMTInterpol on quantified formulas. See {@link
+								// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
+								// is able to produce values for the sorts `Int` and `Bool` this catch block
+								// should be removed.
+								if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
+									continue;
+								} else {
+									throw uoe;
+								}
+							}
+							if (index == i) {
+								assert (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort()));
+								if (indexedVar instanceof ApplicationTerm) {
+									assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
+									foundAMatchingVar = true;
+									testV.addValueAssignment(valueT, index, type);
+									final TermTransferrer test =
+											new TermTransferrer(mCfgManagedScript.getScript(),
+													mTcSmtManager.getScript());
+									final Term varEqValue =
+											SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+													test.transform(indexedVar), test.transform(valueT));
+									final Pair<Term, Term> varValuePair =
+											new Pair<>(test.transform(indexedVar), test.transform(valueT));
+									varAssignmentPair.add(varValuePair);
+									varAssignment.add(varEqValue);
+								}
+							}
 						}
-					}
+
+				}
 				}
 				assert foundAMatchingVar;
 
