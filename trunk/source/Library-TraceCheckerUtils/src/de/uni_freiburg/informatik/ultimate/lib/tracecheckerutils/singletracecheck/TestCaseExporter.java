@@ -381,24 +381,7 @@ class TestVector {
 		case SmtSortUtils.BITVECTOR_SORT: {
 			if (valueTerm.toStringDirect().startsWith("(fp")
 					&& (((ApplicationTerm) valueTerm).getParameters().length == 3)) {
-				assert valueTerm instanceof ApplicationTerm;
-				// final ApplicationTerm cva = (ApplicationTerm) valueTerm;
-				final String bitString = valueTerm.toStringDirect();
-				final String floatAsBitString = bitString.replaceAll("[^01]", "");
-
-				// String sign = cva.getParameters()[0].toStringDirect();
-				// sign = sign.replaceAll("[^01]", "");
-				//
-				// String exponent = cva.getParameters()[1].toStringDirect();
-				// exponent = exponent.replaceAll("[^01]", "");
-				//
-				// String significant = cva.getParameters()[2].toStringDirect();
-				// significant = significant.replaceAll("[^01]", "");
-				// final String floatAsBitString = sign + exponent + significant;
-				// final int intBits = Integer.parseInt(floatAsBitString, 2);
-				final int intBits = new BigInteger(floatAsBitString, 2).intValue();
-				valueInRange = new BigDecimal(Float.intBitsToFloat(intBits)).toPlainString();
-				break;
+				throw new AssertionError("Should be handled above, case FloatingPoint sort");
 			}
 
 			final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(valueTerm.toStringDirect());
@@ -422,6 +405,10 @@ class TestVector {
 					final BigInteger newValue = new BigInteger("-32768").add((value.subtract(new BigInteger("32768"))));
 					valueInRange = String.valueOf(newValue);
 				}
+			} else if (type.equals("uchar")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				final BigInteger newValue = value.mod(new BigInteger("256"));
+				valueInRange = String.valueOf(newValue);
 			} else if (type.equals("short")) {
 				final BigInteger value = new BigInteger(valueInRange);
 				if (value.compareTo(new BigInteger("127")) == 1) {
@@ -438,6 +425,24 @@ class TestVector {
 				// final BigInteger value = new BigInteger(valueInRange);
 				// final BigInteger newValue = value.mod(new BigInteger("2"));
 				// valueInRange = String.valueOf(newValue);
+			} else if (type.equals("ushort")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				final BigInteger newValue = value.mod(new BigInteger("65536"));
+				valueInRange = String.valueOf(newValue);
+
+			} else if (type.equals("uint") || type.equals("ulong")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				final BigInteger newValue = value.mod(new BigInteger("4294967296"));
+				valueInRange = String.valueOf(newValue);
+
+			} else if (type.equals("ulonglong")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				final BigInteger newValue = value.mod(new BigInteger("18446744073709551616"));
+				valueInRange = String.valueOf(newValue);
+
+			} else if (type.equals("double") || type.equals("float")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				valueInRange = String.valueOf(value);
 			}
 			break;
 		}
@@ -486,13 +491,7 @@ class TestVector {
 				}
 				break;
 			}
-			case "ushort": {
-				// 0 to 65,535
-				final BigInteger newValue = value.mod(new BigInteger("65536"));
-				valueInRange = String.valueOf(newValue);
 
-				break;
-			}
 			case "int":
 			case "long": {
 				if (value.compareTo(new BigInteger("2147483647")) == 1) {
@@ -503,6 +502,13 @@ class TestVector {
 					// valueInRange = String.valueOf(newValue.negate());
 					valueInRange = String.valueOf(newValue);
 				}
+				break;
+			}
+			case "ushort": {
+				// 0 to 65,535
+				final BigInteger newValue = value.mod(new BigInteger("65536"));
+				valueInRange = String.valueOf(newValue);
+
 				break;
 			}
 			case "uint":
@@ -539,7 +545,7 @@ class TestVector {
 		}
 
 		default: {
-			throw new AssertionError("Unexpected Sort For Test Output");
+			throw new AssertionError("Unexpected Sort For Test Output " + type + " and sort " + valueTerm.getSort());
 		}
 		}
 
