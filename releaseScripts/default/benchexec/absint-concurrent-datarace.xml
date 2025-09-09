@@ -9,24 +9,32 @@
   <option name="--abstractinterpretationv2.use.the.rcfg-of-the-future.interface">true</option>
   <option name="--rcfgbuilder.future-live.optimization">false</option>
 
-  <rundefinition name="singleton">
-    <option name="--abstractinterpretationv2.location.abstraction.method">Singleton</option>
+  <rundefinition name="singleton-nonrel">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Non-relational Singleton"</option>
   </rundefinition>
 
-  <rundefinition name="fully-precise">
-    <option name="--abstractinterpretationv2.location.abstraction.method">"Fully precise"</option>
+  <rundefinition name="singleton-fast">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Singleton, Fast Widening"</option>
   </rundefinition>
 
-  <rundefinition name="guard-splitting">
-    <option name="--abstractinterpretationv2.location.abstraction.method">"Split only at Guards"</option>
+  <rundefinition name="singleton-slow">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Singleton, Slow Widening"</option>
   </rundefinition>
 
-  <rundefinition name="mutex-guard-splitting">
-    <option name="--abstractinterpretationv2.location.abstraction.method">"Mutex Guard and Vars Splitting"</option>
+  <rundefinition name="low-fast">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Low Split, Fast Widening"</option>
   </rundefinition>
 
-  <rundefinition name="mutex-guard-splitting-no-cutoff">
-    <option name="--abstractinterpretationv2.location.abstraction.method">"Mutex Guard and Vars Splitting no Cutoff"</option>
+  <rundefinition name="low-slow">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Low Split, Slow Widening"</option>
+  </rundefinition>
+
+  <rundefinition name="high-fast">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"High Split, Fast Widening"</option>
+  </rundefinition>
+
+  <rundefinition name="high-slow">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"High Split, Slow Widening"</option>
   </rundefinition>
 
   <tasks name="SVCOMP-Concurrency">
