@@ -485,6 +485,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					&& stmt.getPrettyPrintedStatements().contains("nondet")) {
 				/*
 				 * read payload line by line filter nondet lines
+				 * there are two statements right after each otehr with same nondet
+				 * 
 				 */
 				if (lastSeenPayloadWithNondets.equals(extractNondetLines(stmt.getPayload().toString()))) {
 					countFoundNondets += 1;

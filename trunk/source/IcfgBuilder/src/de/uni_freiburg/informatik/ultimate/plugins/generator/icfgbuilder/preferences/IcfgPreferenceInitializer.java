@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activat
 public class IcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum CodeBlockSize {
-		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock;
+		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock, SequenceOfStatementsBreakOnNondet;
 
 		public boolean isConcurrencySafe() {
 			switch (this) {
@@ -58,6 +58,7 @@ public class IcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 			}
 		}
 	}
+
 
 	// some solver commands
 	public static final String Z3_NO_EXTENSIONAL_ARRAYS =
