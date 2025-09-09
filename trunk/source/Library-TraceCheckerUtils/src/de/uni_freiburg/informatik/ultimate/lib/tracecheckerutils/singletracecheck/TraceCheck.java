@@ -79,8 +79,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
- * negative.
+ * Check if a trace fulfills a specification. Provides an execution (that
+ * violates the specification) if the check was negative.
  * <p>
  * Given
  * <ul>
@@ -88,11 +88,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>a postcondition stated by predicate φ_n
  * <li>a trace (which is a word of CodeBlocks) cb_0 cb_2 ... cb_{n-1},
  * </ul>
- * check if the trace always fulfills the postcondition φ_n if the precondition φ_0 holds before the execution of the
- * trace, i.e. we check if the following inclusion of predicates is valid. post(φ_0, cb_1 cb_2 ... cb_n) ⊆ φ_n
+ * check if the trace always fulfills the postcondition φ_n if the precondition
+ * φ_0 holds before the execution of the trace, i.e. we check if the following
+ * inclusion of predicates is valid. post(φ_0, cb_1 cb_2 ... cb_n) ⊆ φ_n
  * <p>
- * A feasibility check of a trace can be seen as the special case of this trace check. A trace is feasible if and only
- * if the trace does not fulfill the specification given by the precondition <i>true</i> and the postcondition
+ * A feasibility check of a trace can be seen as the special case of this trace
+ * check. A trace is feasible if and only if the trace does not fulfill the
+ * specification given by the precondition <i>true</i> and the postcondition
  * <i>false</i>. See Example1.
  * <p>
  * Example1: If
@@ -121,9 +123,11 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	/**
-	 * After constructing a new traceCheck satisfiability of the trace was checked. However, the trace check is not yet
-	 * finished, and the SmtManager is still locked by this traceCheck to allow the computation of an interpolants or an
-	 * execution. The trace check is only finished after the unlockSmtManager() method was called.
+	 * After constructing a new traceCheck satisfiability of the trace was checked.
+	 * However, the trace check is not yet finished, and the SmtManager is still
+	 * locked by this traceCheck to allow the computation of an interpolants or an
+	 * execution. The trace check is only finished after the unlockSmtManager()
+	 * method was called.
 	 */
 	protected boolean mTraceCheckFinished;
 	protected final CfgSmtToolkit mCsToolkit;
@@ -134,18 +138,21 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected final ManagedScript mTcSmtManager;
 	protected final TraceCheckLock mTraceCheckLock = new TraceCheckLock();
 	/**
-	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
-	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
+	 * Maps a procedure name to the set of global variables which may be modified by
+	 * the procedure. The set of variables is represented as a map where the
+	 * identifier of the variable is mapped to the type of the variable.
 	 */
 	protected final NestedWord<L> mTrace;
 	protected final IPredicate mPrecondition;
 	protected final IPredicate mPostcondition;
 	/**
-	 * If the trace contains "pending returns" (returns without corresponding calls) we have to provide a predicate for
-	 * each pending return that specifies what held in the calling context to which we return. (If the trace would
-	 * contain the corresponding call, this predicate would be the predecessor of the call). We call these predicates
-	 * "pending contexts". These pending contexts are provided via a mapping from the position of the pending return
-	 * (given as Integer) to the predicate.
+	 * If the trace contains "pending returns" (returns without corresponding calls)
+	 * we have to provide a predicate for each pending return that specifies what
+	 * held in the calling context to which we return. (If the trace would contain
+	 * the corresponding call, this predicate would be the predecessor of the call).
+	 * We call these predicates "pending contexts". These pending contexts are
+	 * provided via a mapping from the position of the pending return (given as
+	 * Integer) to the predicate.
 	 */
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
 	protected AnnotateAndAsserter<L> mAAA;
@@ -159,9 +166,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected final FeasibilityCheckResult mFeasibilityResult;
 
 	/**
-	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
-	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
-	 * the context to which the return leads the trace.
+	 * Check if trace fulfills specification given by precondition, postcondition
+	 * and pending contexts. The pendingContext maps the positions of pending
+	 * returns to predicates which define possible variable valuations in the
+	 * context to which the return leads the trace.
 	 */
 	public TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final Counterexample<L> counterexample,
@@ -237,15 +245,15 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
 				if (icfgProgramExecution != null) {
 					/*
-					 * For parallel Trace Abstraction: for us to be able to translate the counterexample to C, we need
-					 * to know the script it came from We use this "hack" and set mCfgManagedScript as the main script
-					 * of the real main script
+					 * For parallel Trace Abstraction: for us to be able to translate the
+					 * counterexample to C, we need to know the script it came from We use this
+					 * "hack" and set mCfgManagedScript as the main script of the real main script
 					 */
 					if (((HistoryRecordingScript) mCfgManagedScript.getScript()).getMainScript() != null) {
 						((HistoryRecordingScript) ((HistoryRecordingScript) mCfgManagedScript.getScript())
 								.getMainScript().getScript()).setMainScript(mCfgManagedScript);
 					}
-					providesIcfgProgramExecution = true;
+					providesIcfgProgramExecution = false;
 				}
 				mTraceCheckFinished = true;
 			} else if (!feasibilityResult.isSolverCrashed()) {
@@ -260,11 +268,11 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, e, ExceptionHandlingCategory.KNOWN_IGNORE),
 					false);
 		} catch (final SMTLIBException e) {
-			feasibilityResult =
-					new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckReasonUnknown.constructReasonUnknown(e), true);
+			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
+					TraceCheckReasonUnknown.constructReasonUnknown(e), true);
 		} catch (final InnerTraceCheckException e) {
-			feasibilityResult =
-					new FeasibilityCheckResult(LBool.UNKNOWN, e.getTraceCheckReasonUnknown(), e.hasSolverCrashed());
+			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN, e.getTraceCheckReasonUnknown(),
+					e.hasSolverCrashed());
 		} catch (final Exception e) {
 			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
 					new TraceCheckReasonUnknown(Reason.SOLVER_CRASH_OTHER, e, ExceptionHandlingCategory.UNKNOWN), true);
@@ -286,8 +294,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final List<? extends IAction> trace) {
 		final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 		final NestedWord<IAction> nw = NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()])));
-		final NestedFormulas<IAction, UnmodifiableTransFormula, IPredicate> rv =
-				new DefaultTransFormulas<>(nw, pre, post, pendingContexts, toolkit.getOldVarsAssignmentCache(), false);
+		final NestedFormulas<IAction, UnmodifiableTransFormula, IPredicate> rv = new DefaultTransFormulas<>(nw, pre,
+				post, pendingContexts, toolkit.getOldVarsAssignmentCache(), false);
 		final AssertCodeBlockOrder acbo = new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
 		final boolean computeRcfgProgramExecution = true;
 		final boolean collectInterpolatSequenceStatistics = false;
@@ -310,8 +318,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	}
 
 	/**
-	 * Like three-argument-checkTrace-Method above but for traces which contain pending returns. The pendingContext maps
-	 * the positions of pending returns to predicates which define possible variable valuations in the context to which
+	 * Like three-argument-checkTrace-Method above but for traces which contain
+	 * pending returns. The pendingContext maps the positions of pending returns to
+	 * predicates which define possible variable valuations in the context to which
 	 * the return leads the trace.
 	 */
 	protected FeasibilityCheckResult checkTrace() {
@@ -336,7 +345,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			result = new FeasibilityCheckResult(isSafe, tcru, false);
 		} catch (final SMTLIBException e) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				// there was a cancellation request, probably responsible for abnormal solver termination
+				// there was a cancellation request, probably responsible for abnormal solver
+				// termination
 				result = new FeasibilityCheckResult(LBool.UNKNOWN, new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT,
 						null, ExceptionHandlingCategory.KNOWN_IGNORE), true);
 			} else {
@@ -350,10 +360,12 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	}
 
 	/**
-	 * Compute a program execution for the checked trace. If the checked trace violates its specification (result of
-	 * trace check is SAT), we compute a program execution that contains program states that witness the violation of
-	 * the specification (however, this can still be partial program states e.g., no values assigned to arrays) and that
-	 * contains information which branch of a parallel composed CodeBlock violates the specification.
+	 * Compute a program execution for the checked trace. If the checked trace
+	 * violates its specification (result of trace check is SAT), we compute a
+	 * program execution that contains program states that witness the violation of
+	 * the specification (however, this can still be partial program states e.g., no
+	 * values assigned to arrays) and that contains information which branch of a
+	 * parallel composed CodeBlock violates the specification.
 	 *
 	 * @param managedScriptTc
 	 *
@@ -374,12 +386,14 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
 			switch (tc.isCorrect()) {
 			case SAT:
-				return tc.getRcfgProgramExecution();
+				return null;
 			case UNKNOWN:
 				final Exception ex = tc.getTraceCheckReasonUnknown().getException();
 				if (ex instanceof ToolchainCanceledException || ex instanceof AutomataOperationCanceledException) {
-					// TODO: 20210701 DD: It might be useful to set a higher timeout for a TraceCheck here because the
-					// chance of getting a program execution if the previous TC was already successful is high.
+					// TODO: 20210701 DD: It might be useful to set a higher timeout for a
+					// TraceCheck here because the
+					// chance of getting a program execution if the previous TC was already
+					// successful is high.
 					throw new ToolchainCanceledException((IRunningTaskStackProvider) ex,
 							new RunningTaskInfo(getClass(), "computing program execution"));
 				}
@@ -396,30 +410,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	}
 
 	/**
-	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
+	 * Compute program execution in the case that the checked specification is
+	 * violated (result of trace check is SAT).
 	 */
 	private IcfgProgramExecution<L> computeRcfgProgramExecution(final NestedSsaBuilder<L> nsb) {
-		final RelevantVariables<L> relVars =
-				new RelevantVariables<>(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
-		final IcfgProgramExecutionBuilder<L> rpeb =
-				new IcfgProgramExecutionBuilder<>(mCsToolkit.getModifiableGlobalsTable(), mTrace, relVars);
-		for (int i = 0; i < mTrace.length(); i++) {
-			if (mTrace.getSymbol(i) instanceof IActionWithBranchEncoders) {
-				final IActionWithBranchEncoders cb = (IActionWithBranchEncoders) mTrace.getSymbol(i);
-				final UnmodifiableTransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
-				if (!tf.getBranchEncoders().isEmpty()) {
-					final Map<TermVariable, Boolean> beMapping = new HashMap<>();
-					for (final TermVariable tv : tf.getBranchEncoders()) {
-						final String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
-						final Term indexedBe = mTcSmtManager.getScript().term(nameOfConstant);
-						final Term value = getValue(indexedBe);
-						final Boolean booleanValue = getBooleanValue(value);
-						beMapping.put(tv, booleanValue);
-					}
-					rpeb.setBranchEncoders(i, beMapping);
-				}
-			}
-		}
 
 		final Function<Term, Term> funGetValue;
 		if (mCfgManagedScript != mTcSmtManager) {
@@ -429,63 +423,37 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
-		if (RcfgPreferenceInitializer.getPreferences(mServices)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_TEST_GEN)) {
-			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb);
+		if (RcfgPreferenceInitializer.getPreferences(mServices).getBoolean(RcfgPreferenceInitializer.LABEL_TEST_GEN)) {
+			final TestVector testV = extractTestVector(nsb, funGetValue);
 			final boolean mExportAllInOneFile = true;
-			final String identifier = "" + rpeb.mTrace.hashCode() + Thread.currentThread().threadId();
+			final String identifier = "" + mTrace.hashCode() + Thread.currentThread().threadId();
 			exportTest(testV, identifier, mExportAllInOneFile);
 			// cleanupAndUnlockSolver();
 			// return rpeb.getIcfgProgramExecution();
 		}
 
-		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
-			final IProgramVar bv = entry.getKey();
-			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
-			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-				for (final var representative : indexedRepresentatives.entrySet()) {
-					final Integer index = representative.getKey();
-					final Term indexedVar = representative.getValue();
-					final Term valueT;
-					try {
-						valueT = funGetValue.apply(indexedVar);
-					} catch (final UnsupportedOperationException uoe) {
-						// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
-						// crash while using SMTInterpol on quantified formulas. See {@link
-						// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
-						// is able to produce values for the sorts `Int` and `Bool` this catch block
-						// should be removed.
-						if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
-							continue;
-						} else {
-							throw uoe;
-						}
-					}
 
-					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
-				}
-			}
-		}
 		cleanupAndUnlockSolver();
-		return rpeb.getIcfgProgramExecution();
+		return null;
 	}
 
-	// does rpeb.addValueAtVarAssignmentPosition and creates a testVector at the same time
-	private TestVector extractTestVector(final NestedSsaBuilder<L> nsb, final Function<Term, Term> funGetValue,
-			final IcfgProgramExecutionBuilder<L> rpeb) {
+	// does rpeb.addValueAtVarAssignmentPosition and creates a testVector at the
+	// same time
+	private TestVector extractTestVector(final NestedSsaBuilder<L> nsb, final Function<Term, Term> funGetValue) {
 		final TestVector testV = new TestVector();
 		final ArrayList<Term> varAssignment = new ArrayList<>();
 		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<>();
 
 		int countFoundNondets = 0;
+		int indexOfFirstSeenSameNondet = -10;
 		List<String> lastSeenPayloadWithNondets = new ArrayList<>();
-
 		for (int i = 0; i < mTrace.length(); i++) {
 			if ((mTrace.asList().get(i) instanceof final StatementSequence stmt)
-					&& stmt.getPrettyPrintedStatements().contains("nondet")) {
+					&& stmt.getPrettyPrintedStatements().contains("nondet") && i > indexOfFirstSeenSameNondet + 2) {
+				indexOfFirstSeenSameNondet = i;
 				/*
-				 * read payload line by line filter nondet lines
-				 * there are two statements right after each otehr with same nondet
+				 * read payload line by line filter nondet lines there are two statements right
+				 * after each otehr with same nondet
 				 * 
 				 */
 				if (lastSeenPayloadWithNondets.equals(extractNondetLines(stmt.getPayload().toString()))) {
@@ -508,118 +476,58 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					countFoundNondets = 0;
 					type = types.get(countFoundNondets);
 				}
-				boolean onlyOnevaasd = false;
+
 				boolean foundAMatchingVar = false;
 				for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
 
 					final IProgramVar bv = entry.getKey();
 					final Map<Integer, Term> indexedRepresentatives = entry.getValue();
-					if (!bv.getGloballyUniqueId().contains("nondet")
+					if (bv.getGloballyUniqueId().contains("nondet")
 							&& SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-
 						for (final var representative : indexedRepresentatives.entrySet()) {
-						final Integer index = representative.getKey();
-							if (index != i || onlyOnevaasd) {
-							continue;
-						}
-						onlyOnevaasd = true;
-						final Term indexedVar = representative.getValue();
-						final Term valueT;
-						try {
-							valueT = funGetValue.apply(indexedVar);
-						} catch (final UnsupportedOperationException uoe) {
-							// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
-							// crash while using SMTInterpol on quantified formulas. See {@link
-							// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
-							// is able to produce values for the sorts `Int` and `Bool` this catch block
-							// should be removed.
-							if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
+							final Integer index = representative.getKey();
+							if (index != i) {
 								continue;
-							} else {
-								throw uoe;
+							}
+							final Term indexedVar = representative.getValue();
+							final Term valueT;
+							try {
+								valueT = funGetValue.apply(indexedVar);
+							} catch (final UnsupportedOperationException uoe) {
+								// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
+								// crash while using SMTInterpol on quantified formulas. See {@link
+								// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
+								// is able to produce values for the sorts `Int` and `Bool` this catch block
+								// should be removed.
+								if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
+									continue;
+								} else {
+									throw uoe;
+								}
+							}
+							if (indexedVar instanceof ApplicationTerm) {
+								assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
+								foundAMatchingVar = true;
+								testV.addValueAssignment(valueT, index, type);
+								final TermTransferrer test = new TermTransferrer(mCfgManagedScript.getScript(),
+										mTcSmtManager.getScript());
+								final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+										test.transform(indexedVar), test.transform(valueT));
+								final Pair<Term, Term> varValuePair = new Pair<>(test.transform(indexedVar),
+										test.transform(valueT));
+								varAssignmentPair.add(varValuePair);
+								varAssignment.add(varEqValue);
 							}
 						}
-						if (indexedVar instanceof ApplicationTerm) {
-							assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
-							foundAMatchingVar = true;
-							testV.addValueAssignment(valueT, index, type);
-							final TermTransferrer test =
-									new TermTransferrer(mCfgManagedScript.getScript(),
-											mTcSmtManager.getScript());
-							final Term varEqValue =
-									SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-											test.transform(indexedVar), test.transform(valueT));
-							final Pair<Term, Term> varValuePair =
-									new Pair<>(test.transform(indexedVar), test.transform(valueT));
-							varAssignmentPair.add(varValuePair);
-							varAssignment.add(varEqValue);
-						}
-					}
 
-}
-		}
+					}
+				}
 				assert foundAMatchingVar;
 
-				// checks that indicate we have indeed an sv-comp sinput
-				assert stmt.getTransformula().getInVars().size() == 0;
-				assert stmt.getTransformula().getOutVars().size() == 2;
-				assert stmt.getStatements().size() >= 3;
-			}
+			} 
 
 		}
 
-		// final if word contains nondet and final of form havoc final assingment havoc
-		// final get position final of word
-		// for entry final in indexvars
-		// if reresentnive key== position
-		// ..and..
-		//
-
-		// wir suchen havoc statement mit nondet
-
-		// for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
-		// final IProgramVar bv = entry.getKey();
-		// final Map<Integer, Term> indexedRepresentatives = entry.getValue();
-		// if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-		// boolean evenRepresentative = true;
-		// for (final var representative : indexedRepresentatives.entrySet()) {
-		// final Integer index = representative.getKey();
-		// final Term indexedVar = representative.getValue();
-		// final Term valueT = funGetValue.apply(indexedVar);
-		// if (indexedVar instanceof ApplicationTerm) {
-		// assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
-		// if (indexedVar.toStringDirect().contains("nondet")) {
-		// if (evenRepresentative) {
-		// // TODO Not sure if save, but by far the best solution
-		// if ((index >= 0) && (rpeb.mTrace.asList().get(index) instanceof StatementSequence)) {
-		// final StatementSequence stsq = (StatementSequence) rpeb.mTrace.asList().get(index);
-		//
-		// final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
-		// .matcher(stsq.getPayload().toString());
-		// if (m.find()) {
-		// final String type = m.group(1);
-		// testV.addValueAssignment(valueT, index, type);
-		// final TermTransferrer test = new TermTransferrer(mCfgManagedScript.getScript(),
-		// mTcSmtManager.getScript());
-		// final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-		// test.transform(indexedVar), test.transform(valueT));
-		// final Pair<Term, Term> varValuePair =
-		// new Pair<>(test.transform(indexedVar), test.transform(valueT));
-		// varAssignmentPair.add(varValuePair);
-		// varAssignment.add(varEqValue);
-		// }
-		// }
-		// evenRepresentative = !evenRepresentative;
-		// } else {
-		// evenRepresentative = !evenRepresentative;
-		// }
-		// }
-		// }
-		// rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
-		//
-		// }
-		// }
-		// }
 		return testV;
 	}
 
@@ -715,15 +623,17 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	}
 
 	/**
-	 * Package private class used by trace checker to lock the {@link ManagedScript}.
+	 * Package private class used by trace checker to lock the
+	 * {@link ManagedScript}.
 	 */
 	static class TraceCheckLock {
 		// this abomination helps Matthias debug
 	}
 
 	/**
-	 * @return true iff trace check was successfully finished. Examples for a not successfully finished trace check are:
-	 *         Crash of solver, Toolchain cancelled,
+	 * @return true iff trace check was successfully finished. Examples for a not
+	 *         successfully finished trace check are: Crash of solver, Toolchain
+	 *         cancelled,
 	 */
 	@Override
 	public boolean wasTracecheckFinishedNormally() {

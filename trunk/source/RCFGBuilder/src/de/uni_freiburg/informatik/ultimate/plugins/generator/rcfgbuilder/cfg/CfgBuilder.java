@@ -178,8 +178,7 @@ public class CfgBuilder {
 
 	private final boolean mRemoveAssumeTrueStmt;
 	private final boolean mFutureLiveOptimization;
-
-	private VariableLHS mOldNondetId = null;
+	
 
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) {
 		mServices = services;
@@ -1163,16 +1162,16 @@ public class CfgBuilder {
 
 		private void processAssuAssiHavoStatement(final Statement st) {
 			if (mCurrent instanceof BoogieIcfgLocation) {
+				startNewStatementSequenceAndAddStatement(st);
 				if ((st instanceof final HavocStatement havocSt)
 						&& st.getPayload().toString().contains("__VERIFIER_nondet_")) {
 					assert havocSt.getIdentifiers().length == 1;
-					final VariableLHS nondetId = havocSt.getIdentifiers()[0];
-					// mCurrent.
+					final VariableLHS nondetId = havocSt.getIdentifiers()[0];				
 					if (nondetId.toString().contains("nondet")) {
-						mOldNondetId = nondetId;
+						endCurrentStatementSequence(st);
+						startNewStatementSequence();											
 					}
-				}
-				startNewStatementSequenceAndAddStatement(st);
+				} 
 			} else if (mCurrent instanceof CodeBlock) {
 				switch (mCodeBlockSize) {
 				case LoopFreeBlock:
@@ -1184,15 +1183,13 @@ public class CfgBuilder {
 							&& st.getPayload().toString().contains("__VERIFIER_nondet_")) {
 						assert havocSt.getIdentifiers().length == 1;
 						final VariableLHS nondetId = havocSt.getIdentifiers()[0];
-						// mCurrent.
+					
 						if (nondetId.toString().contains("nondet")) {
-							if (nondetId.equals(mOldNondetId)) {
-								endCurrentStatementSequence(st);
-								startNewStatementSequenceAndAddStatement(st);
-								// endCurrentStatementSequence(st);
-								break;
-							}
-							mOldNondetId = nondetId;
+							endCurrentStatementSequence(st);
+							startNewStatementSequenceAndAddStatement(st);
+							endCurrentStatementSequence(st);
+							startNewStatementSequence();
+							break;							
 						}
 					}
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
