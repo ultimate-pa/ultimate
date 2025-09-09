@@ -571,7 +571,7 @@ public class RTInconsistencyPreCheck {
 					if (subList.size() != 0 && newExitConditions.size() == 0) {
 						 boolean found = tryToFindChain(newExitConditions, subList.subList(1, subList.size()));
 						 if (found) {
-			                    return true; /
+			                    return true; 
 			                }
 					}
 	               
