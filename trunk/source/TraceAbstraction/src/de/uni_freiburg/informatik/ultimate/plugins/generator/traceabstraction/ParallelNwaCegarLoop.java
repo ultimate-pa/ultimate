@@ -369,7 +369,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		// start worker for initial cex:
 		mWorkerTaskQueue.add(mCounterexample);
 		startWorker();
-		mRunningThreads += 1;
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			abortIfTimeout();
