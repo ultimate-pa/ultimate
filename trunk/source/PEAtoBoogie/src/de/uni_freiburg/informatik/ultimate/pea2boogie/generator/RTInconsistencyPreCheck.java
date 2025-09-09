@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,11 @@ public class RTInconsistencyPreCheck {
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> mRTIReturnSet;
 	public List<List<ReqsWithAttributes>> mRTICombinations;
 	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mChainLinkSingles;
-
+	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mChainLinkFriends;
+	public List<List<ReqsWithAttributes>> combinationsHelper;
+	public List<List<Term>> LeftOverExitConditionsHelper;
+	public int helperCounter;
+	
 	public class ReqsWithAttributes {
 		public boolean mTimed;
 		public String mName;
@@ -62,7 +67,7 @@ public class RTInconsistencyPreCheck {
 		public List<Term> mExitConditions;
 		public boolean mChainLinkReq;
 		public CounterTrace mCounterTrace;
-
+		
 		public ReqsWithAttributes(final ReqPeas reqPea) {
 			mOriginalPea = reqPea;
 			mChainLinkReq = false;
@@ -102,6 +107,7 @@ public class RTInconsistencyPreCheck {
 		mDictVar = new HashMap<>();
 		mRTICombinations = new ArrayList<>();
 		mChainLinkSingles = new HashMap<>();
+		mChainLinkFriends = new HashMap<>();
 		mFullSet = preCheckFullSet;
 
 		getDebugTerm();
@@ -114,6 +120,8 @@ public class RTInconsistencyPreCheck {
 			mLogger.info("   " + r.mName);
 		}
 		findSinglesForChains();
+		findFriendsForChains();
+		
 		// If the preference "full Set" is set, the maximum chain link depth is set to the number of chainLink
 		// requirements
 		mCombinationNum = mFullSet ? mListChainLinkReqs.size() : mCombinationNum;
@@ -123,6 +131,51 @@ public class RTInconsistencyPreCheck {
 		printResults();
 		return mRTIReturnSet; // returns found sets in format for checking to reduce false positives
 
+	}
+
+	private void findFriendsForChains() {
+	    // Map vorbereiten
+	    for (ReqsWithAttributes req : mListChainLinkReqs) {
+	        mChainLinkFriends.put(req, new ArrayList<>());
+	    }
+
+	    // Paare nur einmal betrachten (i < j)
+	    for (int i = 0; i < mListChainLinkReqs.size(); i++) {
+	        ReqsWithAttributes a = mListChainLinkReqs.get(i);
+
+	        for (int j = i + 1; j < mListChainLinkReqs.size(); j++) {
+	            ReqsWithAttributes b = mListChainLinkReqs.get(j);
+
+	            if (!checkExitOptionsDisjoint(a, b)) continue;
+	            if (!checkMaxPhaseDisjoint(a, b))    continue;
+
+	            // symmetrisch eintragen
+	            mChainLinkFriends.get(a).add(b);
+	            mChainLinkFriends.get(b).add(a);
+	        }
+	    }
+	}
+
+	private boolean checkMaxPhaseDisjoint(ReqsWithAttributes req, ReqsWithAttributes other) {
+		Term conj = SmtUtils.and(mScript, req.mMaxPhase.mInvariant, other.mMaxPhase.mInvariant);
+		LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+		if (sat != LBool.UNSAT) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean checkExitOptionsDisjoint(ReqsWithAttributes req, ReqsWithAttributes other) {
+		for (Term exitA : req.mExitConditions) {
+			for (Term exitB : other.mExitConditions) {
+				Term conj = SmtUtils.and(mScript, exitA, exitB);
+				LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+				if (sat != LBool.SAT) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private void printResults() {
@@ -145,8 +198,10 @@ public class RTInconsistencyPreCheck {
 	 *            the list mListChainLinkReqs and mChainLinkSingles
 	 */
 	private void findSinglesForChains() {
+		mLogger.info("Finding potential singles for chain-link requirements, this may take a while...");
 
 		for (final ReqsWithAttributes req : mListChainLinkReqs) {
+			
 			final List<ReqsWithAttributes> singles = mChainLinkSingles.computeIfAbsent(req, r -> new ArrayList<>());
 
 			// avoid duplicates if the same otherReq appears via multiple variables
@@ -215,8 +270,94 @@ public class RTInconsistencyPreCheck {
 			mLogger.info("-------------- DEPTH (number of chain links)" + depth + "------------------");
 			double progressCounter = 0.0f;
 			int maxSets = (int) nCk(mListChainLinkReqs.size(), depth);
-			mLogger.info("Max number of chains to check:" + maxSets);
-			for (int i = 0; i < mListChainLinkReqs.size(); i++) {
+			mLogger.info("   Max number of chains to check:" + maxSets);
+			
+			boolean ChainPossible = true;
+			
+			this.combinationsHelper = new ArrayList<>();
+			for (ReqsWithAttributes req : mListChainLinkReqs) {
+				List<ReqsWithAttributes> friends = mChainLinkFriends.get(req);
+				if (friends == null && depth > 1) {
+					ChainPossible = false;
+					continue;
+				}
+				List<ReqsWithAttributes> ChainSet = new ArrayList<>();
+				ChainSet.add(req);
+				
+				findFriendChain(ChainSet,  friends, depth);
+
+				boolean iugiugiug = true;
+				
+				
+				
+			}
+
+			mLogger.info("Number of chains found: " + this.combinationsHelper.size());
+			checkIfRealChainPossible();
+			mLogger.info("Number of chains reduced to: " + this.combinationsHelper.size());
+			
+			if (combinationsHelper.size() == 0 ) {
+				mLogger.info("No possible chains found for depth " + depth);
+				mLogger.info("Stopping search for larger depths");
+				long remaingSets = 0;
+				for (int i = depth; i <= mCombinationNum; i++) {
+					remaingSets += (int) nCk(mListChainLinkReqs.size(), i);
+				}
+				mLogger.info("Skipping " + remaingSets + " possible chains");
+				return;
+			}
+			mLogger.info("Now Trying to Add Singles To Chains");
+			
+			
+
+			for (List<ReqsWithAttributes> combination : this.combinationsHelper) {
+				
+				
+				List<List<Term>> leftOverExitConditions = new ArrayList<>();
+				this.LeftOverExitConditionsHelper = new ArrayList<>();
+				//if (combination.size() == 1) {
+					//this.LeftOverExitConditionsHelper.add(combination.get(0).mExitConditions);
+				//} else {
+					LeftOverEC(combination.get(0).mExitConditions, combination.subList(1, combination.size()));
+				//}
+				
+				
+				
+				List<ReqsWithAttributes> potentialSingles = new ArrayList<>();
+				for (ReqsWithAttributes req : combination) {
+					List<ReqsWithAttributes> singles = mChainLinkSingles.get(req);
+					if (singles != null) {
+						for (ReqsWithAttributes single : singles) {
+							if (!potentialSingles.contains(single) && !combination.contains(single)) {
+								potentialSingles.add(single);
+							}
+						}
+					}
+				}
+				
+					
+					
+					
+				
+				mLogger.info(formatChainLog(this.combinationsHelper, combination, potentialSingles));
+
+				Term conjunction = conjunctionExitConditions(combination);
+				this.helperCounter = 0;
+				for (List<Term> leftOverEC : this.LeftOverExitConditionsHelper) {
+					AddSinglesRecursive(leftOverEC,  new ArrayList(), potentialSingles, combination);
+				}
+				mLogger.info("   " + this.helperCounter + " out of " + (pow(2,potentialSingles.size())*this.LeftOverExitConditionsHelper.size()-1)+ " checks were nedded.");
+				
+				
+				
+
+				
+				
+			}
+			
+		
+			
+			/*for (int i = 0; i < mListChainLinkReqs.size(); i++) {
 				// Simple progress indicator
 				final float progress = (i * 100.0f) / mListChainLinkReqs.size();
 				if (progress > (progressCounter + 1.0f)) {
@@ -235,9 +376,334 @@ public class RTInconsistencyPreCheck {
 				// Pass exit conditions of the first element + all following as remaining candidates
 				addChainLinkRecursive(chainLinkRes, depth, mListChainLinkReqs.get(i).mExitConditions,
 						new ArrayList<>(mListChainLinkReqs.subList(i + 1, mListChainLinkReqs.size())));
-			}
+			}*/
 		}
 	}
+	
+	private void LeftOverEC(List<Term> exitConditions, List<ReqsWithAttributes> subList) {
+	    if (subList == null || subList.isEmpty()) {
+	    	List<Term> exitConditionsCopy = new ArrayList<>(exitConditions);
+	    	exitConditionsCopy.sort(Comparator.comparing(Term::toString));
+	    	this.LeftOverExitConditionsHelper.add(exitConditions);
+	        return; // Abbruch-Bedingung: Kette gefunden
+	    }
+
+	    for (Term exitA : exitConditions) {
+	        for (Term exitB : exitConditions) {
+	            Term conj = SmtUtils.and(mScript, exitA, exitB);
+	            LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+	            if (sat != LBool.SAT) {
+	                List<Term> newExitConditions = new ArrayList<>(exitConditions);
+	                newExitConditions.remove(exitA);
+	                newExitConditions.addAll(subList.get(0).mExitConditions);
+	                newExitConditions.remove(exitB);
+
+	                boolean found = tryToFindChain(newExitConditions, subList.subList(1, subList.size()));
+
+	            }
+	        }
+	    }
+
+	}
+	public static int pow(int i, int n) {
+		int[]a=new int[n];
+		Arrays.fill(a,i);
+		int r=1;
+		for (int j=0; j<n; j++) {
+			r*=i;
+		}
+		return r;
+	}
+	
+	private String formatChainLog(List<List<ReqsWithAttributes>> combinationsHelper,
+	        List<ReqsWithAttributes> combination,
+	        List<ReqsWithAttributes> potentialSingles) {
+	StringBuilder sb = new StringBuilder();
+	sb.append("   Check New Chain: ")
+	.append(combinationsHelper.indexOf(combination))
+	.append(" out of ")
+	.append(combinationsHelper.size())
+	.append(" | Chain: [");
+	
+	for (ReqsWithAttributes req : combination) {
+	sb.append(req.mName).append(", ");
+	}
+	if (!combination.isEmpty()) {
+	sb.setLength(sb.length() - 2); 
+	}
+	sb.append("] | Potential Singles: ")
+	.append(potentialSingles.size());
+	sb.append("] |Number of Different Chains: ")
+	.append(this.LeftOverExitConditionsHelper.size());
+	sb.append(" - Thefore up to " + (pow(2,potentialSingles.size())*this.LeftOverExitConditionsHelper.size()-1) + " combinations to check");
+	
+	return sb.toString();
+	}
+
+	public void AddSinglesRecursive(List<Term> leftOverEC, List<ReqsWithAttributes> singlesList, List<ReqsWithAttributes> potentialSingles, 
+			List<ReqsWithAttributes> chainLinks) {
+		
+		if (leftOverEC == null || leftOverEC.size() == 0) {
+			chainLinkRtiFoundCheck(singlesList, chainLinks);
+			return;
+		}
+		for(int  singleIndex = 0; singleIndex < potentialSingles.size(); singleIndex++) {
+			ReqsWithAttributes single = potentialSingles.get(singleIndex);
+			List<ReqsWithAttributes> newSinglesList = new ArrayList<>(singlesList);
+			newSinglesList.add(single);
+			List<Term> newExitCondtitions = new ArrayList<>();
+			this.helperCounter++;
+			for( Term exitA : leftOverEC) {
+				Term conj = SmtUtils.and(mScript, exitA, single.mFullExitCondition);
+				LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+			    if (sat != LBool.UNSAT) {
+                    newExitCondtitions.add(exitA);
+				}
+			}
+			if (newExitCondtitions.size() == 0) {
+				chainLinkRtiFoundCheck(chainLinks, newSinglesList);
+				
+			}
+			
+			else if (newExitCondtitions.size() < leftOverEC.size()){
+				
+			
+				
+				List<ReqsWithAttributes> newPotentialSingles = new ArrayList();
+					newPotentialSingles = potentialSingles.subList(singleIndex + 1, potentialSingles.size());
+				AddSinglesRecursive(newExitCondtitions, newSinglesList, newPotentialSingles, chainLinks);
+				
+			}
+        }
+		
+	}
+
+	private void ChainRtiCheck(final List<ReqsWithAttributes> chainLinkRes, final List<ReqsWithAttributes> usedSingles) {
+		for (final List<ReqsWithAttributes> rtiSet : mRTICombinations) {
+
+			if (usedSingles.containsAll(rtiSet)) {
+
+				mLogger.debug("set not minimal");
+				return;
+			}
+
+		}
+
+
+		final List<ReqsWithAttributes> fullSet = new ArrayList<>(chainLinkRes);
+		fullSet.addAll(usedSingles);
+		//check for exit conditions
+		boolean timedChcecker = false;
+		for (final ReqsWithAttributes r : fullSet) {
+			if (r.mTimed) {
+				timedChcecker = true;
+			}
+		}
+		
+		if (!timedChcecker) {
+			mLogger.debug("set not timed");
+			return;
+		}
+		Term conjunction = fullSet.get(0).mFullExitCondition;
+
+		for (int i = 1; i < fullSet.size(); i++) {
+			conjunction = SmtUtils.and(mScript, conjunction, fullSet.get(i).mFullExitCondition);
+		}
+
+		LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
+		if (result != LBool.UNSAT) {
+			mLogger.debug("set not disjoint");
+			return;
+		}
+		// check if max phases are all valid together
+		conjunction = fullSet.get(0).mMaxPhase.mInvariant;
+
+		for (int i = 1; i < fullSet.size(); i++) {
+			conjunction = SmtUtils.and(mScript, conjunction, fullSet.get(i).mMaxPhase.mInvariant);
+		}
+
+		result = SmtUtils.checkSatTerm(mScript, conjunction);
+		if (result == LBool.UNSAT) {
+			mLogger.debug("set not disjoint");
+			return;
+		}
+		// if we reach this point the set is rt-inconsistent
+		mLogger.info("Rt-inconsistent set with chain-link found:");
+		for (final ReqsWithAttributes r : fullSet) {
+			mLogger.info("   " + r.mName);
+		}
+		mRTIReturnSet.add(rtiSetsFormatted(fullSet));
+	}
+	public void checkIfRealChainPossible(){
+		List<List<ReqsWithAttributes>> realChains = new ArrayList<>();
+
+		for (List<ReqsWithAttributes> combination : this.combinationsHelper) {
+			List<Term> exitConditions = combination.get(0).mExitConditions;
+			if(!MaxPhaseSatCheck(combination)) {
+				continue;
+			}
+			if(tryToFindChain(exitConditions, combination.subList(1, combination.size()))) {
+				realChains.add(combination);
+				
+
+			}
+
+				
+			}
+		this.combinationsHelper = realChains;
+		}
+	private boolean tryToFindChain(List<Term> exitConditions, List<ReqsWithAttributes> subList) {
+	    if (subList.isEmpty()) {
+	        return true; // Abbruch-Bedingung: Kette gefunden
+	    }
+
+	    for (Term exitA : exitConditions) {
+	        for (Term exitB : exitConditions) {
+	            Term conj = SmtUtils.and(mScript, exitA, exitB);
+	            LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+	            if (sat != LBool.SAT) {
+	            	
+	            	
+	                List<Term> newExitConditions = new ArrayList<>(exitConditions);
+	                newExitConditions.remove(exitA);
+	                newExitConditions.addAll(subList.get(0).mExitConditions);
+	                newExitConditions.remove(exitB);
+					if (subList.size() != 0 && newExitConditions.size() == 0) {
+						 boolean found = tryToFindChain(newExitConditions, subList.subList(1, subList.size()));
+						 if (found) {
+			                    return true; /
+			                }
+					}
+	               
+	                
+	            }
+	        }
+	    }
+	    return false;
+	}
+
+	
+
+	private void findFriendChain(List<ReqsWithAttributes> chainList,  List<ReqsWithAttributes> friends,
+			int depth) {
+		if (chainList.size() == depth) {
+			List<ReqsWithAttributes> chainCopy = new ArrayList<>(chainList);
+			// sort to avoid different orders of same combinations
+			chainCopy.sort(Comparator.comparing(ReqsWithAttributes::getName));
+			if( !this.combinationsHelper.contains(chainCopy)) {
+				this.combinationsHelper.add(chainCopy);
+				
+			}
+			return;
+			
+		}
+		for (ReqsWithAttributes friend : friends) {
+			if (!chainList.contains(friend)) {
+				List<ReqsWithAttributes> newChain = new ArrayList<>(chainList);
+				newChain.add(friend);
+				List<ReqsWithAttributes> friendFriends = mChainLinkFriends.get(friend);
+				if (friendFriends != null) {
+					List<ReqsWithAttributes> chainListCopy =chainList;
+					chainListCopy.add(friend);
+					findFriendChain(newChain,  friendFriends, depth);
+				}
+			}
+		}
+		
+	}
+
+	public List<ReqsWithAttributes> removeAt(List<ReqsWithAttributes> list, int index) {
+		List<ReqsWithAttributes> newList = new ArrayList<>(list);
+		newList.remove(index);
+		return newList;
+	}
+    public boolean tryToAddChainLink(List<ReqsWithAttributes> remainingChainLinks, 
+                                 List<Term> exitConditions, 
+                                 int depth) {
+    if (remainingChainLinks.isEmpty()) {
+        return false; // no more chain links to add
+    }
+    if (depth == remainingChainLinks.size()) {
+        return true; // success reached
+    }
+
+    for (int i = 0; i < remainingChainLinks.size(); i++) {
+        for (final Term exitA : exitConditions) {
+            for (final Term exitB : remainingChainLinks.get(i).mExitConditions) {
+                final Term conj = SmtUtils.and(mScript, exitA, exitB);
+                final LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+
+                if (sat != LBool.SAT) {
+                    
+                    List<Term> newExitConditions = new ArrayList<>(exitConditions);
+                    newExitConditions.remove(exitA);
+                    newExitConditions.addAll(remainingChainLinks.get(i).mExitConditions);
+                    newExitConditions.remove(exitB);
+
+                    
+                    List<ReqsWithAttributes> nextChain = new ArrayList<>(remainingChainLinks);
+                    nextChain.remove(i);
+
+                   
+                    boolean result = tryToAddChainLink(nextChain, newExitConditions, depth);
+                    if (result) {
+                        return true; 
+                    }
+                }
+            }
+        }
+    }
+    return false; // kein Erfolg gefunden
+}
+
+
+	public Term conjunctionExitConditions(List<ReqsWithAttributes> combination) {
+		Term conjunction = null;
+		for (ReqsWithAttributes req : combination) {	
+			if (conjunction == null) {
+				conjunction = req.mFullExitCondition;
+			} else {
+				conjunction = SmtUtils.and(mScript, conjunction, req.mFullExitCondition);
+			}
+		}
+		return conjunction;
+    }
+	public boolean MaxPhaseSatCheck(List<ReqsWithAttributes> combination) {
+		Term conjunction = null;
+		for (ReqsWithAttributes req : combination) {	
+			if (conjunction == null) {
+				conjunction = req.mMaxPhase.mInvariant;
+			} else {
+				conjunction = SmtUtils.and(mScript, conjunction, req.mMaxPhase.mInvariant);
+			}
+		}
+		LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
+		if( result == LBool.UNSAT) {
+			return false;
+		}
+		return true;
+    }
+
+	public static <T> List<List<T>> powerSet(List<T> input, int depth) {
+        List<List<T>> result = new ArrayList<>();
+        backtrack(input, depth, 0, new ArrayList<>(), result);
+        return result;
+    }
+
+    private static <T> void backtrack(List<T> input, int depth, int start, List<T> current, List<List<T>> result) {
+        if (current.size() == depth) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+        for (int i = start; i < input.size(); i++) {
+            current.add(input.get(i));
+            backtrack(input, depth, i + 1, current, result);
+            current.remove(current.size() - 1);
+        }
+    }
+
+
+
 
 	public static long nCk(final int n, int k) {
 		if (k < 0 || k > n) {
@@ -409,6 +875,8 @@ public class RTInconsistencyPreCheck {
 				mLogger.debug("No reduction of exit conditions for {}", candidate.mName);
 				continue; // nothing gained by choosing this candidate now
 			}
+			
+			
 
 			// take candidate into the current path
 			final List<ReqsWithAttributes> newUsedSingles = new ArrayList<>(usedSingles);
@@ -486,6 +954,7 @@ public class RTInconsistencyPreCheck {
 			mLogger.debug("   " + r.mName);
 		}
 		mRTIReturnSet.add(rtiSetsFormatted(fullSet));
+		mLogger.info("Rt-inconsistent set with chain-link found");
 	}
 
 	/**
@@ -668,7 +1137,20 @@ public class RTInconsistencyPreCheck {
 				final boolean penultHasBound = penultDC.getBoundType() != 0;
 				final int maxIdxFromEnd = penultHasBound ? 2 : 3; // n-2 or n-3
 				final int beforeIdxFromEnd = penultHasBound ? 3 : 4; // n-3 or n-4
-
+				
+				if (req.mExitConditions.size() > 1) {
+					// multiple disjuncts → chain-link candidate
+					req.mChainLinkReq = true;
+					mListChainLinkReqs.add(req);
+				} else {
+					// single EC → index by free vars of the *penultimate invariant*
+					final TermVariable[] vars = req.mPenultimatePhase.mInvariantVar;
+					if (vars != null) {
+						for (final TermVariable v : vars) {
+							mDictVar.computeIfAbsent(v, k -> new ArrayList<>()).add(req);
+						}
+					}
+				}
 				// Guard against short traces
 				if (n - maxIdxFromEnd < 0) {
 					mLogger.warn("Cannot determine max phase (n={}) for {}", n, pea.getName());
@@ -692,19 +1174,7 @@ public class RTInconsistencyPreCheck {
 				// --------------------------
 				// Chain-link classification and variable index
 				// --------------------------
-				if (req.mExitConditions.size() > 1) {
-					// multiple disjuncts → chain-link candidate
-					req.mChainLinkReq = true;
-					mListChainLinkReqs.add(req);
-				} else {
-					// single EC → index by free vars of the *penultimate invariant*
-					final TermVariable[] vars = req.mPenultimatePhase.mInvariantVar;
-					if (vars != null) {
-						for (final TermVariable v : vars) {
-							mDictVar.computeIfAbsent(v, k -> new ArrayList<>()).add(req);
-						}
-					}
-				}
+				
 			}
 		}
 	}
