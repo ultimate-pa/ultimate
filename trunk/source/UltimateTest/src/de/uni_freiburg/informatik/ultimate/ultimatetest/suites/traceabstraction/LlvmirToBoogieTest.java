@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2925 Peter Ritter
+ * Copyright (C) 2025 Peter Ritter
  *
  * This file is part of the ULTIMATE Test Library.
  *
