@@ -31,10 +31,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -56,11 +58,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -81,12 +88,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private final ILogger mLogger;
 	private Unit mResult;
 	private final String mFilename;
-	private LlvmirLocation mLocation;
+	private static LlvmirLocation mLocation;
 	private final static String mLabelIdentifier = "aux#label";
 	private final static String mUndefIdentifier = "aux#undef";
 	private final String mCDivIdentifier = "aux#cdiv";
 
-	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
+	private final static ArrayList<Declaration> mDeclarations = new ArrayList<>();
 	private final HashMap<String, Pair<Declaration, Statement>> mGlobalVars = new HashMap<>();
 
 	public LlvmirToBoogieVisitor(final IUltimateServiceProvider services, final ILogger logger, final String filename) {
@@ -239,7 +246,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * @return The return type of the #main procedure.
 	 * @throws IllegalStateException if no #main procedure is found in the declarations.
 	 */
-	private String getMainReturnType() throws IllegalStateException {
+	private static String getMainReturnType() throws IllegalStateException {
 		final Procedure main = (Procedure) mDeclarations.stream()
 				.filter(decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("#main"))
 				.findFirst().orElseThrow(() -> new IllegalStateException("No #main declaration found"));
@@ -560,7 +567,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * @return The Procedure object corresponding to the identifier.
 	 * @throws AssertionError if no procedure with the given identifier is found.
 	 */
-	private Procedure getProcedureFromDeclarations(final String identifier) throws AssertionError {
+	private static Procedure getProcedureFromDeclarations(final String identifier) throws AssertionError {
 		return mDeclarations.stream().filter(dec -> dec instanceof Procedure).map(dec -> (Procedure) dec)
 				.filter(proc -> proc.getIdentifier().equals(identifier)).findFirst()
 				.orElseThrow(() -> new AssertionError("Procedure with identifier '" + identifier + "' not found."));
@@ -625,6 +632,82 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final Procedure procedure = new Procedure(mLocation, new Attribute[] {}, mCDivIdentifier, new String[] {},
 				inParams.toArray(VarList[]::new), outParams.toArray(VarList[]::new), new Specification[] {}, body);
 		mDeclarations.add(procedure);
+	}
+
+	/**
+	 * This method searches the list of declarations for a TypeDeclaration with an identifier matching the format
+	 * "i{bitLength}Pair".
+	 *
+	 * @param bitLength The bit length to check for.
+	 * @return true if a matching TypeDeclaration exists, false otherwise.
+	 */
+	public static boolean bitLengthPairExists(final int bitLength) {
+		final Optional<TypeDeclaration> typeDec = mDeclarations.stream().filter(dec -> dec instanceof TypeDeclaration)
+				.map(dec -> (TypeDeclaration) dec)
+				.filter(typeDecl -> typeDecl.getIdentifier().equals("i" + bitLength + "Pair")).findFirst();
+		return typeDec.isPresent();
+	}
+
+	/**
+	 * Constructs a variable declaration and an assignment statement for an LLVM operation with overflow handling.
+	 *
+	 * This method creates a VariableDeclaration for a struct type that holds the result of the operation and an
+	 * overflow flag. It also constructs an AssignmentStatement that assigns the result of the operation and the
+	 * overflow status to the struct fields.
+	 *
+	 * @param operation  The expression representing the LLVM operation.
+	 * @param bitlength  The bit length of the integer type involved in the operation.
+	 * @param isSigned   Indicates whether the integer type is signed or unsigned.
+	 * @param Identifier The identifier for the variable to be declared and assigned.
+	 * @param location   The location in the source code where this operation occurs.
+	 * @return A Pair containing the VariableDeclaration and AssignmentStatement.
+	 */
+	public static Pair<VariableDeclaration, AssignmentStatement> constructLlvmOperationWithOverflow(
+			final Expression operation, final int bitlength, final boolean isSigned, final String Identifier,
+			final LlvmirLocation location) {
+		if (!bitLengthPairExists(bitlength)) {
+			final ArrayList<VarList> varLists = new ArrayList<>();
+			final PrimitiveType intType = new PrimitiveType(location, "int");
+			final VarList varList1 = new VarList(location, new String[] { "e0" }, intType);
+			varLists.add(varList1);
+			final PrimitiveType boolType = new PrimitiveType(location, "bool");
+			final VarList varList2 = new VarList(location, new String[] { "e1" }, boolType);
+			varLists.add(varList2);
+			final StructType structType = new StructType(location, varLists.toArray(VarList[]::new));
+			final TypeDeclaration typeDeclaration = new TypeDeclaration(location, new Attribute[] {}, true,
+					"i" + bitlength + "Pair", new String[] {}, structType);
+			mDeclarations.add(typeDeclaration);
+		}
+		final NamedType namedType = new NamedType(location, "i" + bitlength + "Pair", new ASTType[] {});
+		final VarList varList = new VarList(location, new String[] { Identifier }, namedType);
+		final VariableDeclaration varDec = new VariableDeclaration(location, new Attribute[] {},
+				new VarList[] { varList });
+
+		final String[] fieldIdentifiers = { "e0", "e1" };
+		final Expression[] fieldValues = {};
+		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitlength, false);
+		final BinaryExpression binaryExpr1 = new BinaryExpression(location, Operator.ARITHMOD, operation,
+				bitLengthLiteral);
+		fieldValues[0] = binaryExpr1;
+
+		final IntegerLiteral signedBitLengthLiteral = constructBitLengthLiteral(location, bitlength, isSigned);
+		final BinaryExpression binaryExpr2 = new BinaryExpression(location, Operator.COMPGT, operation,
+				signedBitLengthLiteral);
+
+		final Expression expr = isSigned
+				? new UnaryExpression(location, UnaryExpression.Operator.ARITHNEGATIVE, signedBitLengthLiteral)
+				: new IntegerLiteral(location, "0");
+		final BinaryExpression binaryExpr3 = new BinaryExpression(location, Operator.ARITHPLUS, operation, expr);
+
+		final BinaryExpression binaryExpr4 = new BinaryExpression(location, Operator.LOGICOR, binaryExpr2, binaryExpr3);
+		fieldValues[1] = binaryExpr4;
+
+		final StructConstructor structConstructor = new StructConstructor(location, fieldIdentifiers, fieldValues);
+		final VariableLHS varLhs = new VariableLHS(location, Identifier);
+		final AssignmentStatement assignmentStmt = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+				new Expression[] { structConstructor });
+
+		return new Pair<>(varDec, assignmentStmt);
 	}
 
 	/**
@@ -1203,6 +1286,45 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 						new IdentifierExpression(location, identifier), minValueLiteral);
 				final AssumeStatement assumeStmt2 = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr2);
 				result.addFuncBlock(assumeStmt2);
+			} else if (callIdentifier.equals("@llvm.abs.i32")) {
+				final LLVMIRParser.ArgContext arg = instructionType.callInst().args().arg(0);
+				final LLVMIRParser.ConcreteTypeContext argType = arg.concreteType();
+				final LLVMIRParser.ValueContext argValue = arg.value();
+				final int bitLength = getBitLengthFromType(argType);
+				final IntegerLiteral intLiteral0 = new IntegerLiteral(location, "0");
+				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPLT,
+						constructSignedExpression(constructExpressionFromValue(argValue, argType, location, false),
+								bitLength, location),
+						intLiteral0);
+				final UnaryExpression unaryExpr = new UnaryExpression(location, UnaryExpression.Operator.LOGICNEG,
+						constructSignedExpression(constructExpressionFromValue(argValue, argType, location, false),
+								bitLength, location));
+				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
+				final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMOD, unaryExpr,
+						bitLengthLiteral);
+				final Expression elseExpr = constructExpressionFromValue(argValue, argType, location, false);
+				final IfThenElseExpression ifThenElseExpr = new IfThenElseExpression(location, binaryExpr, thenExpr,
+						elseExpr);
+				final VariableLHS varLhs = new VariableLHS(location, identifier);
+				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+						new Expression[] { ifThenElseExpr });
+				result.addFuncBlock(assignment);
+			} else if (callIdentifier.startsWith("@llvm.sadd.with.overflow")) {
+				final LLVMIRParser.ArgContext arg0 = instructionType.callInst().args().arg(0);
+				final LLVMIRParser.ArgContext arg1 = instructionType.callInst().args().arg(1);
+				final LLVMIRParser.ConcreteTypeContext arg0Type = arg0.concreteType();
+				final LLVMIRParser.ValueContext arg0Value = arg0.value();
+				final LLVMIRParser.ValueContext arg1Value = arg1.value();
+				final int bitLength = getBitLengthFromType(arg0Type);
+				final BinaryExpression expr = new BinaryExpression(location, Operator.ARITHPLUS,
+						constructSignedExpression(constructExpressionFromValue(arg0Value, arg0Type, location, false),
+								bitLength, location),
+						constructSignedExpression(constructExpressionFromValue(arg1Value, arg0Type, location, false),
+								bitLength, location));
+				final Pair<VariableDeclaration, AssignmentStatement> operationWithOverflowPair = constructLlvmOperationWithOverflow(
+						expr, bitLength, true, identifier, location);
+				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
+				result.addFuncBlock(operationWithOverflowPair.getSecond());
 			} else {
 				final Procedure proc = getProcedureFromDeclarations(unifyIdentifier(callIdentifier));
 				for (final Specification spec : proc.getSpecification()) {
