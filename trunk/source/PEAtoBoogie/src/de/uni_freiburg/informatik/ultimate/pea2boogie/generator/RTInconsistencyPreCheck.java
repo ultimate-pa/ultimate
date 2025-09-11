@@ -41,6 +41,7 @@ public class RTInconsistencyPreCheck {
 	private CddToSmt mCddToSmt;
 	private IUltimateServiceProvider mServices;
 	public int mCombinationNum;
+	public boolean mRTIPreCheckOnly = false;
 	public Term mDebugTerm;
 	public TermVariable mDebugVar;
 	public List<ReqsWithAttributes> mListChainLinkReqs;
@@ -94,7 +95,7 @@ public class RTInconsistencyPreCheck {
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
 			final ILogger logger, final Script script, final CddToSmt cddToSmt, final IUltimateServiceProvider services,
-			final ManagedScript managedScript, final int range, final boolean preCheckFullSet) {
+			final ManagedScript managedScript, final int range, final boolean preCheckFullSet, boolean onlyPreCheck) {
 		mScript = script;
 		mManagedScript = managedScript;
 		mLogger = logger;
@@ -108,6 +109,7 @@ public class RTInconsistencyPreCheck {
 		mChainLinkSingles = new HashMap<>();
 		mChainLinkFriends = new HashMap<>();
 		mFullSet = preCheckFullSet;
+		mRTIPreCheckOnly = onlyPreCheck;
 
 		getDebugTerm();
 
@@ -124,16 +126,22 @@ public class RTInconsistencyPreCheck {
 		// If the preference "full Set" is set, the maximum chain link depth is set to the number of chainLink
 		// requirements
 		mCombinationNum = mFullSet ? mListChainLinkReqs.size() : mCombinationNum;
+		mLogger.info("Sort done, starting RTI PreCheck...");
 		rtiCheckSingles();
 		rtiCheckChainLinkReqs();
 
+		
 		printResults();
+		if (mRTIPreCheckOnly) {
+			mLogger.warn("RTI PreCheck only, stopping here. Note that the results are not verified! ");
+			return new ArrayList<>();
+		}
 		return mRTIReturnSet; // returns found sets in format for checking to reduce false positives
 
 	}
 
 	private void findFriendsForChains() {
-
+		mLogger.info("Finding friends for chain-link requirements, this might take a while...");
 		for (final ReqsWithAttributes req : mListChainLinkReqs) {
 			mChainLinkFriends.put(req, new ArrayList<>());
 		}
@@ -158,6 +166,10 @@ public class RTInconsistencyPreCheck {
 	}
 
 	private boolean checkMaxPhaseDisjoint(final ReqsWithAttributes req, final ReqsWithAttributes other) {
+		 if (req.mMaxPhase == null || other.mMaxPhase == null) {
+		        mLogger.warn("checkMaxPhaseDisjoint: missing max phase");
+		        return true;
+		    }
 		final Term conj = SmtUtils.and(mScript, req.mMaxPhase.mInvariant, other.mMaxPhase.mInvariant);
 		final LBool sat = SmtUtils.checkSatTerm(mScript, conj);
 		if (sat != LBool.UNSAT) {
@@ -199,7 +211,7 @@ public class RTInconsistencyPreCheck {
 	 *            the list mListChainLinkReqs and mChainLinkSingles
 	 */
 	private void findSinglesForChains() {
-		mLogger.info("Finding potential friends for chain-link requirements, this might take a while...");
+		mLogger.info("Finding potential singles for chain-link requirements, this might take a while...");
 
 		for (final ReqsWithAttributes req : mListChainLinkReqs) {
 
@@ -363,7 +375,7 @@ public class RTInconsistencyPreCheck {
 		if (subList == null || subList.isEmpty()) {
 			final List<Term> exitConditionsCopy = new ArrayList<>(exitConditions);
 			exitConditionsCopy.sort(Comparator.comparing(Term::toString));
-			LeftOverExitConditionsHelper.add(exitConditions);
+			LeftOverExitConditionsHelper.add(exitConditionsCopy);
 			return; // Abbruch-Bedingung: Kette gefunden
 		}
 
@@ -571,7 +583,7 @@ public class RTInconsistencyPreCheck {
 				if (friendFriends != null) {
 					final List<ReqsWithAttributes> chainListCopy = chainList;
 					chainListCopy.add(friend);
-					findFriendChain(newChain, friendFriends, depth);
+					findFriendChain(chainListCopy, friendFriends, depth);
 				}
 			}
 		}
@@ -1111,7 +1123,7 @@ public class RTInconsistencyPreCheck {
 				}
 				// Guard against short traces
 				if (n - maxIdxFromEnd < 0) {
-					mLogger.warn("Cannot determine max phase (n={}) for {}", n, pea.getName());
+					mLogger.warn("Cannot determine max phase");
 					continue;
 				}
 

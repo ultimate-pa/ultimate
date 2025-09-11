@@ -116,6 +116,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private final Durations mDurations;
 
+	private boolean mRTIPreCheckOnly;
+
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
 			final IReqSymbolTable symbolTable, final Durations durations) {
 		mLogger = logger;
@@ -155,6 +157,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		if (mPreCheckFullSet) {
 			mLogger.info("check full set");
 		}
+		mRTIPreCheckOnly = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_ONLY);
 
 		// log preferences
 		mLogger.info(
@@ -368,7 +371,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final List<Statement> stmtList = new ArrayList<>();
 		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = new ArrayList<>();
 		if (mRTIPreCheck) {
-			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mRTIPreCheckRange, mPreCheckFullSet);
+			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mRTIPreCheckRange, mPreCheckFullSet, mRTIPreCheckOnly);
 
 		} else {
 
