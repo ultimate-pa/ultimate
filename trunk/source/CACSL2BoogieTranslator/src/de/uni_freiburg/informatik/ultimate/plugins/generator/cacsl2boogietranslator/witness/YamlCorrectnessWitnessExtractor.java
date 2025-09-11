@@ -161,8 +161,10 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants) {
 		if (!(node instanceof IASTWhileStatement) && !(node instanceof IASTForStatement)
 				&& !(node instanceof IASTDoStatement)) {
-			throw new UnsupportedOperationException(
-					"Loop invariant is only allowed at loop (found " + node.getClass().getSimpleName() + ")");
+			throw new UnsupportedOperationException("Loop invariant is only allowed at loop (found "
+					+ node.getClass().getSimpleName() + " [" + node.getFileLocation().getFileName() + ":"
+					+ node.getFileLocation().getStartingLineNumber() + "-"
+					+ node.getFileLocation().getEndingLineNumber() + "])");
 		}
 		String invariant = current.getInvariant();
 		final ExtractedLoopInvariant old = loopInvariants.get(node);
