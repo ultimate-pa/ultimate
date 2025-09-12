@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -1329,10 +1330,8 @@ public class CHandler {
 		final String declName;
 		final ICType cType;
 		ResultWithSideEffects sideEffects = null;
-		if (node instanceof IASTArrayDeclarator) {
-			final IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
-
-			// the innermost type is the value type..
+		if (node instanceof final IASTArrayDeclarator arrDecl) {
+			// the innermost type is the value type.
 			ICType arrayType = resType.getCType();
 
 			// expression results of from array modifiers
@@ -1401,10 +1400,9 @@ public class CHandler {
 			cType = arrayType;
 			declName = getNonFunctionDeclaratorName(node);
 			sideEffects = allResults;
-		} else if (node instanceof IASTStandardFunctionDeclarator) {
+		} else if (node instanceof final IASTStandardFunctionDeclarator funcDecl) {
 			// functions as well as function pointers can have
 			// IASTStandardFunctionDeclarator
-			final IASTStandardFunctionDeclarator funcDecl = (IASTStandardFunctionDeclarator) node;
 			final IASTParameterDeclaration[] paramDecls = funcDecl.getParameters();
 			CDeclaration[] paramsParsed = new CDeclaration[paramDecls.length];
 			for (int i = 0; i < paramDecls.length; i++) {
@@ -1442,21 +1440,42 @@ public class CHandler {
 						"Cannot extract function type from binding " + binding.getClass());
 			}
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
-		} else if (node instanceof ICASTKnRFunctionDeclarator) {
-			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
-
-			assert funcDecl.getParameterDeclarations().length == funcDecl.getParameterNames().length
+		} else if (node instanceof final ICASTKnRFunctionDeclarator funcDecl) {
+			// Check that each parameter has a declarator.
+			// (Simply comparing the lengths of the arrays is insufficient, as multiple parameter names may have a
+			// common declarator when using K&R-style function definitions.)
+			assert Arrays.stream(funcDecl.getParameterNames())
+					.allMatch(name -> funcDecl.getDeclaratorForParameterName(name) != null)
 					: "implicit int declarations are forbidden from C99 on, this is one, right?";
 
-			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
-			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
-				final DeclarationResult paramDeclRes =
-						(DeclarationResult) main.dispatch(funcDecl.getParameterDeclarations()[i]);
-				assert paramDeclRes.getDeclarations().size() == 1;
-				paramsParsed[i] = paramDeclRes.getDeclarations().get(0);
+			// Dispatch each IASTDeclaration.
+			// In the case of K&R-style function declarations, these may declare multiple parameters, and occur in a
+			// different order than in the parameter list.
+			final var decl2Result = new HashMap<IASTDeclarator, CDeclaration>();
+			for (final IASTDeclaration astDecl : funcDecl.getParameterDeclarations()) {
+				final DeclarationResult paramDeclRes = (DeclarationResult) main.dispatch(astDecl);
+				final IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) astDecl;
+				assert paramDeclRes.getDeclarations().size() == simpleDecl.getDeclarators().length;
+
+				for (int i = 0; i < simpleDecl.getDeclarators().length; ++i) {
+					final IASTDeclarator declarator = simpleDecl.getDeclarators()[i];
+					final CDeclaration cdecl = paramDeclRes.getDeclarations().get(i);
+
+					assert declarator.getName().toString().equals(cdecl.getName()) : "mismatch in parameter names";
+					decl2Result.put(declarator, cdecl);
+				}
 			}
+
+			// For each parameter, as ordered by the parameter list, find the translated CDeclaration.
+			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterNames().length];
+			for (int i = 0; i < funcDecl.getParameterNames().length; ++i) {
+				final IASTDeclarator decl = funcDecl.getDeclaratorForParameterName(funcDecl.getParameterNames()[i]);
+				paramsParsed[i] = decl2Result.get(decl);
+				assert paramsParsed[i] != null;
+			}
+
 			cType = CFunction.createCFunction(resType.getCType(), paramsParsed,
-					(IFunction) funcDecl.getName().getBinding());
+					(IFunction) funcDecl.getName().resolveBinding());
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
 		} else {
 			cType = resType.getCType();
