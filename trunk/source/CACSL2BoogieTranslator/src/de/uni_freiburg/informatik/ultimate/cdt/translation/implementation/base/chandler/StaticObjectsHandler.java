@@ -177,9 +177,7 @@ public class StaticObjectsHandler {
 
 	private static Triple<VariableDeclaration, CDeclaration, Integer>
 			computeSuitableVarDecl(final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls) {
-		if (decls.size() == 1) {
-			return decls.iterator().next();
-		}
+		// Try to find a declaration with an initializer
 		Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
 		for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
 			if (pair.getSecond().getInitializer() != null) {
@@ -190,11 +188,11 @@ public class StaticObjectsHandler {
 				}
 			}
 		}
-		if (suiteableDecl == null) {
-			// no declaration has an initializer, pick some
-			suiteableDecl = decls.iterator().next();
+		if (suiteableDecl != null) {
+			return suiteableDecl;
 		}
-		return suiteableDecl;
+		// no declaration has an initializer, pick some
+		return decls.iterator().next();
 	}
 
 	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,
