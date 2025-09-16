@@ -191,7 +191,12 @@ public class StaticObjectsHandler {
 		if (suiteableDecl != null) {
 			return suiteableDecl;
 		}
-		// no declaration has an initializer, pick some
+		// If no declaration has an initializer, choose a non-extern declaration (if possible)
+		final var nonExternDecl = decls.stream().filter(x -> !x.getSecond().isExtern()).findAny();
+		if (nonExternDecl.isPresent()) {
+			return nonExternDecl.get();
+		}
+		// If there are only extern declarations, pick any
 		return decls.iterator().next();
 	}
 
