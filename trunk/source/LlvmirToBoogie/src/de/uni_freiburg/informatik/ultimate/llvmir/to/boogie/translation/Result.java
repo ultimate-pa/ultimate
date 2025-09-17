@@ -33,6 +33,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 
 /**
  * Instances of this class are used to represent the result of a visitor function in the Boogie AST.
@@ -67,8 +68,28 @@ public class Result {
 		mFuncLocalVars.addAll(funcLocalVars);
 	}
 
+	/**
+	 * Adds a modifies specification to the list of modified global variables if it is not already present. Two modifies
+	 * specifications are considered the same if their first identifier is the same.
+	 *
+	 * @param funcModifiedGlobalVar the modifies specification to add
+	 */
 	public void addFuncModifiedGlobalVar(final ModifiesSpecification funcModifiedGlobalVar) {
-		mFuncModifiedGlobalVars.add(funcModifiedGlobalVar);
+		final VariableLHS[] newIdentifiers = funcModifiedGlobalVar.getIdentifiers();
+		if (newIdentifiers.length == 0) {
+			return;
+		}
+		final VariableLHS newVar = newIdentifiers[0];
+		final String newVarName = newVar.getIdentifier();
+
+		final boolean alreadyPresent = mFuncModifiedGlobalVars.stream().anyMatch(existingSpec -> {
+			final VariableLHS[] existingIdentifiers = existingSpec.getIdentifiers();
+			return existingIdentifiers.length > 0 && existingIdentifiers[0].getIdentifier().equals(newVarName);
+		});
+
+		if (!alreadyPresent) {
+			mFuncModifiedGlobalVars.add(funcModifiedGlobalVar);
+		}
 	}
 
 	public void addFuncBlock(final Statement funcBlock) {
@@ -87,7 +108,7 @@ public class Result {
 	 */
 	public Result merge(final Result other) {
 		mFuncLocalVars.addAll(other.getFuncLocalVars());
-		mFuncModifiedGlobalVars.addAll(other.getFuncModifiedGlobalVars());
+		other.getFuncModifiedGlobalVars().forEach(this::addFuncModifiedGlobalVar);
 		mFuncBlock.addAll(other.getFuncBlock());
 		return this;
 	}
