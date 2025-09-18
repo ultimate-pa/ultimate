@@ -707,7 +707,21 @@ public class TypeHandler implements ITypeHandler {
 	 * @return
 	 */
 	public static boolean isCompatibleType(final ICType type1, final ICType type2) {
-		// TODO: check the notion of compatibility with the standard
+		// TODO: Fully implement the notion of compatibility, as specified in C11 Section 6.2.7 (and others)
+
+		if (type1.equals(type2)) {
+			// C11 6.2.7.1: "Two types have compatible type if their types are the same."
+			// (an extraordinary sentence)
+			return true;
+		}
+
+		if (type1 instanceof final CNamed named1) {
+			return isCompatibleType(named1.getUnderlyingType(), type2);
+		}
+		if (type2 instanceof final CNamed named2) {
+			return isCompatibleType(type1, named2.getUnderlyingType());
+		}
+
 		if (isCharArray(type1) && isCharArray(type2)) {
 			return true;
 		}
