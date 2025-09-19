@@ -127,10 +127,10 @@ public class StaticObjectsHandler {
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final ICType cType = cDec.getType();
 		if (cType.isIncomplete() && !cDec.getType().isVoidType()) {
-			if (cType instanceof CStructOrUnion) {
-				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
-			} else if (cType instanceof CEnum) {
-				mIncompleteType2TypeDecl.put(((CEnum) cType).getName(), boogieDec);
+			if (cType instanceof final CStructOrUnion structOrUnion) {
+				mIncompleteType2TypeDecl.put(structOrUnion.getName(), boogieDec);
+			} else if (cType instanceof final CEnum enumType) {
+				mIncompleteType2TypeDecl.put(enumType.getName(), boogieDec);
 			} else if (cType instanceof CNamed) {
 				// do nothing, this is handled by TypeHandler::redirectNamedType
 			} else {

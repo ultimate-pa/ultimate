@@ -103,11 +103,11 @@ public class AcslTypeUtils {
 	}
 
 	public static ACSLType translateCTypeToAcslType(final ICType type) {
-		if (!(type instanceof CPrimitive)) {
+		if (!(type instanceof final CPrimitive cPrimitive)) {
 			// TODO: Implement this for other types
 			throw new UnsupportedOperationException(
 					"Currently only primitive types are supported, got " + type.getClass().getSimpleName());
 		}
-		return new ACSLType(((CPrimitive) type).getType().getTypeName());
+		return new ACSLType(cPrimitive.getType().getTypeName());
 	}
 }

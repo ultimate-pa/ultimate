@@ -685,8 +685,8 @@ public class FunctionHandler {
 				ICType expectedParamType =
 						calleeProcInfo.getCType().getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
-				if (expectedParamType instanceof CPrimitive
-						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE
+				if ((expectedParamType instanceof final CPrimitive cPrimitive
+						&& cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE)
 						|| expectedParamType instanceof CEnum) {
 					in = mExprResultTransformer.rexBoolToInt(in, loc);
 				}
@@ -694,9 +694,9 @@ public class FunctionHandler {
 					// workaround - better: make this conversion already in declaration
 					expectedParamType = new CPointer(expectedParamType);
 				}
-				if (expectedParamType instanceof CArray) {
+				if (expectedParamType instanceof final CArray cArray) {
 					// workaround - better: make this conversion already in declaration
-					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
+					expectedParamType = new CPointer(cArray.getValueType());
 				}
 				// implicit casts
 				in = mExprResultTransformer.performImplicitConversion(in, expectedParamType, loc);

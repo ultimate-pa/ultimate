@@ -38,7 +38,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
  * @date 18.09.2012
  * @author nutz
  */
-public interface ICType {
+public sealed interface ICType permits CArray, CEnum, CFunction, CNamed, CPointer, CPrimitive, CStructOrUnion {
 	/**
 	 * Returns true iff this type is incomplete according to the definition 6.2.5.1/19/22/23 in the C11 standard.
 	 */

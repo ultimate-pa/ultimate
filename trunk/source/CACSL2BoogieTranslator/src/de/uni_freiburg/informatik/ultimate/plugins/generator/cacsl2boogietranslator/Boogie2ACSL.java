@@ -479,12 +479,10 @@ public final class Boogie2ACSL {
 		if (type1 == null || type2 == null) {
 			return null;
 		}
-		if (!(type1 instanceof CPrimitive) || !(type2 instanceof CPrimitive)) {
+		if (!(type1 instanceof final CPrimitive prim1) || !(type2 instanceof final CPrimitive prim2)) {
 			// TODO: What to do here?
 			return type1;
 		}
-		final CPrimitive prim1 = (CPrimitive) type1;
-		final CPrimitive prim2 = (CPrimitive) type2;
 		if (!prim1.isIntegerType() || !prim2.isIntegerType()) {
 			// TODO: What to do here?
 			return type1;
@@ -778,10 +776,9 @@ public final class Boogie2ACSL {
 	}
 
 	private BigInterval getRangeForCType(final ICType type) {
-		if (type == null || !(type.getUnderlyingType() instanceof CPrimitive)) {
+		if (type == null || !(type.getUnderlyingType() instanceof final CPrimitive prim)) {
 			return BigInterval.unbounded();
 		}
-		final CPrimitive prim = (CPrimitive) type.getUnderlyingType();
 		if (!prim.isIntegerType()) {
 			return BigInterval.unbounded();
 		}

@@ -896,9 +896,7 @@ public class CExpressionTranslator {
 			final RValue one = new RValue(oneEpr, oneType);
 			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
-		} else if (ctype instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) ctype;
-
+		} else if (ctype instanceof final CPrimitive cPrimitive) {
 			final Expression one;
 			if (ctype.isFloatingType()) {
 				one = mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ONE);

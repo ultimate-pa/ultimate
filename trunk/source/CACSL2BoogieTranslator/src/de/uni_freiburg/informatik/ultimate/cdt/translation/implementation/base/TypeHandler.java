@@ -553,24 +553,22 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public ASTType cType2AstType(final ILocation loc, final ICType cType) {
-		if (cType instanceof CPrimitive) {
-			return cPrimitive2AstType(loc, (CPrimitive) cType);
+		if (cType instanceof final CPrimitive primitive) {
+			return cPrimitive2AstType(loc, primitive);
 		} else if (cType instanceof CPointer) {
 			return constructPointerType(loc);
-		} else if (cType instanceof CArray) {
+		} else if (cType instanceof final CArray cArrayType) {
 			/*
 			 * note: we are using nested Boogie array types (thus the Boogie ArrayType we use will always have a
 			 * one-element array for the index types
 			 */
-			final CArray cArrayType = (CArray) cType;
 			final ASTType indexType = cType2AstType(loc, cArrayType.getBound().getCType());
 			final ASTType valueType = cType2AstType(loc, cArrayType.getValueType());
 			final BoogieArrayType boogieType =
 					BoogieType.createArrayType(0, new BoogieType[] { (BoogieType) indexType.getBoogieType() },
 							(BoogieType) valueType.getBoogieType());
 			return new ArrayType(loc, boogieType, new String[0], new ASTType[] { indexType }, valueType);
-		} else if (cType instanceof CStructOrUnion) {
-			final CStructOrUnion cstruct = (CStructOrUnion) cType;
+		} else if (cType instanceof final CStructOrUnion cstruct) {
 			// if (cstruct.isIncomplete()) {
 			// // TODO 2018-09-10: before I added this UnsupportedOperation
 			// // Exception we just returned null which is probably a bad
@@ -589,7 +587,7 @@ public class TypeHandler implements ITypeHandler {
 			}
 			final BoogieStructType boogieType = BoogieType.createStructType(fieldNames, fieldBoogieTypes);
 			return new StructType(loc, boogieType, fields);
-		} else if (cType instanceof CNamed) {
+		} else if (cType instanceof final CNamed cNamed) {
 			final BoogieType boogieType;
 			if (cType.getUnderlyingType().isIncomplete()) {
 				boogieType = null;
@@ -597,7 +595,7 @@ public class TypeHandler implements ITypeHandler {
 				boogieType = (BoogieType) cType2AstType(loc, cType.getUnderlyingType()).getBoogieType();
 			}
 			// should work as we save the unique typename we computed in CNamed, not the name from the source c file
-			return new NamedType(loc, boogieType, ((CNamed) cType).getName(), new ASTType[0]);
+			return new NamedType(loc, boogieType, cNamed.getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {
 			return constructPointerType(loc);
 		} else if (cType instanceof CEnum) {
@@ -750,12 +748,12 @@ public class TypeHandler implements ITypeHandler {
 	public BoogieType getBoogieTypeForCType(final ICType cTypeRaw) {
 		final ICType cType = cTypeRaw.getUnderlyingType();
 
-		if (cType instanceof CPrimitive) {
+		if (cType instanceof final CPrimitive cPrimitive) {
 			if (mTranslationSettings.isBitvectorTranslation()) {
-				final Integer byteSize = mTypeSizes.getSize(((CPrimitive) cType).getType());
+				final Integer byteSize = mTypeSizes.getSize(cPrimitive.getType());
 				return BoogieType.createBitvectorType(byteSize * 8);
 			}
-			return switch (((CPrimitive) cType).getGeneralType()) {
+			return switch (cPrimitive.getGeneralType()) {
 			case FLOATTYPE -> BoogieType.TYPE_REAL;
 			case INTTYPE -> BoogieType.TYPE_INT;
 			case VOID -> BoogieType.TYPE_ERROR;
@@ -764,15 +762,14 @@ public class TypeHandler implements ITypeHandler {
 			return getBoogiePointerType();
 		} else if (cType instanceof CEnum) {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
-		} else if (cType instanceof CArray) {
+		} else if (cType instanceof final CArray cArrayType) {
 			final BoogieType[] indexTypes =
 					{ getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
-			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
+			final BoogieType valueType = getBoogieTypeForCType(cArrayType.getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
 			return getBoogiePointerType();
-		} else if (cType instanceof CStructOrUnion) {
-			final CStructOrUnion cStructType = (CStructOrUnion) cType;
+		} else if (cType instanceof final CStructOrUnion cStructType) {
 			final BoogieType[] boogieFieldTypes = new BoogieType[cStructType.getFieldCount()];
 			for (int i = 0; i < cStructType.getFieldCount(); i++) {
 				boogieFieldTypes[i] = getBoogieTypeForCType(cStructType.getFieldTypes()[i]);
@@ -893,11 +890,11 @@ public class TypeHandler implements ITypeHandler {
 		if (i >= flat.length) {
 			return t;
 		}
-		if (t instanceof ArrayType) {
-			return traverseForType(loc, ((ArrayType) t).getValueType(), flat, i);
+		if (t instanceof final ArrayType array) {
+			return traverseForType(loc, array.getValueType(), flat, i);
 		}
-		if (t instanceof StructType) {
-			for (final VarList vl : ((StructType) t).getFields()) {
+		if (t instanceof final StructType struct) {
+			for (final VarList vl : struct.getFields()) {
 				assert vl.getIdentifiers().length == 1;
 				// should hold by construction!
 				if (vl.getIdentifiers()[0].equals(flat[i])) {

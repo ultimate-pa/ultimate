@@ -3164,10 +3164,10 @@ public class CHandler {
 			if (cType.isIncomplete() && !cType.isVoidType()) {
 				final ICType underlying = cType.getUnderlyingType();
 				final String identifier;
-				if (underlying instanceof CStructOrUnion) {
-					identifier = ((CStructOrUnion) underlying).getName();
-				} else if (underlying instanceof CEnum) {
-					identifier = ((CEnum) underlying).getName();
+				if (underlying instanceof final CStructOrUnion structOrUnion) {
+					identifier = structOrUnion.getName();
+				} else if (underlying instanceof final CEnum enumType) {
+					identifier = enumType.getName();
 				} else {
 					throw new AssertionError("missing support for global incomplete " + cType);
 				}

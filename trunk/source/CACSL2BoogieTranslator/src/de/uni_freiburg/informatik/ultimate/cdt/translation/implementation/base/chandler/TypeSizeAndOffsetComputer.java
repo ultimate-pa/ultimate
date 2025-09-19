@@ -176,12 +176,12 @@ public class TypeSizeAndOffsetComputer {
 		}
 		SizeTValue sizeTValue = mTypeSizeCache.get(underlyingType);
 		if (sizeTValue == null) {
-			if (underlyingType instanceof CPrimitive) {
-				sizeTValue = constructSizeTValuePrimitive(loc, (CPrimitive) underlyingType);
-			} else if (underlyingType instanceof CArray) {
-				sizeTValue = constructSizeTValueArray(loc, (CArray) underlyingType);
-			} else if (underlyingType instanceof CStructOrUnion) {
-				sizeTValue = constructSizeTValueAndOffsetsStructAndUnion(loc, (CStructOrUnion) underlyingType);
+			if (underlyingType instanceof final CPrimitive primitive) {
+				sizeTValue = constructSizeTValuePrimitive(loc, primitive);
+			} else if (underlyingType instanceof final CArray array) {
+				sizeTValue = constructSizeTValueArray(loc, array);
+			} else if (underlyingType instanceof final CStructOrUnion structOrUnion) {
+				sizeTValue = constructSizeTValueAndOffsetsStructAndUnion(loc, structOrUnion);
 			} else if (underlyingType instanceof CFunction) {
 				// https://gcc.gnu.org/onlinedocs/gcc/Pointer-Arith.html
 				sizeTValue = new SizeTValueInteger(BigInteger.ONE);

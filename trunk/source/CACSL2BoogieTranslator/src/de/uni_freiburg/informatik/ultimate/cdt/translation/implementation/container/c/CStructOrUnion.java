@@ -228,8 +228,8 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	public static boolean isUnion(final ICType cType) {
-		if (cType instanceof CStructOrUnion) {
-			return ((CStructOrUnion) cType).isStructOrUnion() == StructOrUnion.UNION;
+		if (cType instanceof final CStructOrUnion cStructOrUnion) {
+			return cStructOrUnion.isStructOrUnion() == StructOrUnion.UNION;
 		}
 		return false;
 	}

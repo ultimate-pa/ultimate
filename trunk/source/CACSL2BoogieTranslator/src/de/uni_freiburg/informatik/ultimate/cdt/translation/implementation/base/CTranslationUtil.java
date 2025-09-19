@@ -177,9 +177,8 @@ public class CTranslationUtil {
 	 */
 	public static boolean isAggregateType(final ICType valueTypeRaw) {
 		final ICType valueType = valueTypeRaw.getUnderlyingType();
-		return (valueType instanceof CStructOrUnion
-				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.STRUCT)
-				|| valueType instanceof CArray);
+		return (valueType instanceof final CStructOrUnion structOrUnion
+				&& structOrUnion.isStructOrUnion() == StructOrUnion.STRUCT) || valueType instanceof CArray;
 	}
 
 	public static boolean isAggregateOrUnionType(final ICType valueTypeRaw) {
@@ -189,8 +188,8 @@ public class CTranslationUtil {
 
 	private static boolean isUnionType(final ICType valueTypeRaw) {
 		final ICType valueType = valueTypeRaw.getUnderlyingType();
-		return valueType instanceof CStructOrUnion
-				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.UNION);
+		return valueType instanceof final CStructOrUnion structOrUnion
+				&& structOrUnion.isStructOrUnion() == StructOrUnion.UNION;
 	}
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
@@ -443,16 +442,16 @@ public class CTranslationUtil {
 	public static Set<ICType> extractNonAggregateNonUnionTypes(final ICType aggregateOrUnionCType) {
 		assert isAggregateOrUnionType(aggregateOrUnionCType) : "not an aggregate or union type";
 		final ICType underlyingType = aggregateOrUnionCType.getUnderlyingType();
-		if (underlyingType instanceof CArray) {
-			final ICType valueType = getValueTypeOfNestedArray((CArray) underlyingType).getUnderlyingType();
+		if (underlyingType instanceof final CArray array) {
+			final ICType valueType = getValueTypeOfNestedArray(array).getUnderlyingType();
 			if (isAggregateOrUnionType(valueType)) {
 				return extractNonAggregateNonUnionTypes(valueType);
 			} else {
 				return Collections.singleton(valueType.getUnderlyingType());
 			}
-		} else if (underlyingType instanceof CStructOrUnion) {
+		} else if (underlyingType instanceof final CStructOrUnion structOrUnion) {
 			final Set<ICType> result = new HashSet<>();
-			for (final ICType fieldType : ((CStructOrUnion) underlyingType).getFieldTypes()) {
+			for (final ICType fieldType : structOrUnion.getFieldTypes()) {
 				if (isAggregateOrUnionType(fieldType)) {
 					result.addAll(extractNonAggregateNonUnionTypes(fieldType.getUnderlyingType()));
 				} else {

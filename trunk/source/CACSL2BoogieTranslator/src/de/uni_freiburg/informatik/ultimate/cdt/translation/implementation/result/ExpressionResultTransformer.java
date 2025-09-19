@@ -271,14 +271,13 @@ public class ExpressionResultTransformer {
 								: mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
-			} else if (underlyingType instanceof CArray) {
-				final CArray cArray = (CArray) underlyingType;
+			} else if (underlyingType instanceof final CArray cArray) {
 				newValue = new RValue(hlv.getAddress(), new CPointer(cArray.getValueType()), false, false);
 			} else if (underlyingType instanceof CEnum) {
 				throw new AssertionError("handled above");
-			} else if (underlyingType instanceof CStructOrUnion) {
-				final ExpressionResult rex = readStructFromHeap(expr, loc, hlv.getAddress(),
-						(CStructOrUnion) underlyingType, hook, unchecked);
+			} else if (underlyingType instanceof final CStructOrUnion cStructOrUnion) {
+				final ExpressionResult rex =
+						readStructFromHeap(expr, loc, hlv.getAddress(), cStructOrUnion, hook, unchecked);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CNamed) {
@@ -347,9 +346,9 @@ public class ExpressionResultTransformer {
 		for (int i = 0; i < fieldIds.length; i++) {
 			fieldIdentifiers.add(fieldIds[i]);
 
-			ICType underlyingType;
-			if (fieldTypes[i] instanceof CNamed) {
-				underlyingType = ((CNamed) fieldTypes[i]).getUnderlyingType();
+			final ICType underlyingType;
+			if (fieldTypes[i] instanceof final CNamed cNamed) {
+				underlyingType = cNamed.getUnderlyingType();
 			} else {
 				underlyingType = fieldTypes[i];
 			}
@@ -370,11 +369,10 @@ public class ExpressionResultTransformer {
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
-			} else if (underlyingType instanceof CArray) {
+			} else if (underlyingType instanceof final CArray cArray) {
 				final Expression arrayPointer =
 						mStructHandler.computeStructFieldAddress(loc, i, structOnHeapAddress, structType);
-				final ExpressionResult xres1 =
-						readArrayFromHeap(old, loc, arrayPointer, (CArray) underlyingType, hook, unchecked);
+				final ExpressionResult xres1 = readArrayFromHeap(old, loc, arrayPointer, cArray, hook, unchecked);
 				final ExpressionResult xres = xres1;
 
 				fieldLRVal = xres.getLrValue();
@@ -390,7 +388,7 @@ public class ExpressionResultTransformer {
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
-			} else if (underlyingType instanceof CStructOrUnion) {
+			} else if (underlyingType instanceof final CStructOrUnion cStructOrUnion) {
 
 				final Offset innerStructOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, i);
 				if (innerStructOffset.isBitfieldOffset()) {
@@ -403,8 +401,8 @@ public class ExpressionResultTransformer {
 				final Expression innerStructAddress =
 						MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, offsetSum, loc);
 
-				final ExpressionResult fieldRead = readStructFromHeap(old, loc, innerStructAddress,
-						(CStructOrUnion) underlyingType, hook, unchecked);
+				final ExpressionResult fieldRead =
+						readStructFromHeap(old, loc, innerStructAddress, cStructOrUnion, hook, unchecked);
 
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
@@ -476,8 +474,8 @@ public class ExpressionResultTransformer {
 			final Expression readAddress =
 					MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
 			final ExpressionResult readRex;
-			if (arrayValueType instanceof CStructOrUnion) {
-				readRex = readStructFromHeap(old, loc, readAddress, (CStructOrUnion) arrayValueType, hook, unchecked);
+			if (arrayValueType instanceof final CStructOrUnion cStructOrUnion) {
+				readRex = readStructFromHeap(old, loc, readAddress, cStructOrUnion, hook, unchecked);
 			} else if (unchecked) {
 				readRex = mMemoryHandler.getReadUnchecked(readAddress, arrayType.getValueType());
 			} else {
@@ -700,7 +698,7 @@ public class ExpressionResultTransformer {
 			throw new AssertionError("cannot convert to CFunction");
 		}
 		if (newType instanceof CStructOrUnion) {
-			throw new UnsupportedSyntaxException(loc, "conversion to CStruct not implemented.");
+			throw new UnsupportedSyntaxException(loc, "conversion to CStructOrUnion not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
 	}
@@ -709,8 +707,7 @@ public class ExpressionResultTransformer {
 			final CPrimitive newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
 		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
-		if (oldType instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) oldType;
+		if (oldType instanceof final CPrimitive cPrimitive) {
 			if (cPrimitive.isIntegerType()) {
 				return mExprTrans.convertIntToInt(loc, rexp, newType);
 			}
@@ -735,7 +732,7 @@ public class ExpressionResultTransformer {
 			throw new AssertionError("cannot convert from CFunction");
 		}
 		if (oldType instanceof CStructOrUnion) {
-			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
+			throw new UnsupportedSyntaxException(loc, "conversion from CStructOrUnion not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
 	}
@@ -744,8 +741,7 @@ public class ExpressionResultTransformer {
 			final CPointer newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
 		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
-		if (oldType instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) oldType;
+		if (oldType instanceof final CPrimitive cPrimitive) {
 			if (cPrimitive.isIntegerType()) {
 				return mExprTrans.convertIntToPointer(loc, rexp, newType);
 			}
@@ -813,7 +809,7 @@ public class ExpressionResultTransformer {
 				// ok: we just keep the old value but change the type
 				// alternative might be to set the value to null because it should never be used
 			} else {
-				throw new UnsupportedSyntaxException(loc, "cannot convert from CStruct to " + newType);
+				throw new UnsupportedSyntaxException(loc, "cannot convert from CStructOrUnion to " + newType);
 			}
 		} else {
 			throw new AssertionError("unknown type " + newType);
@@ -828,8 +824,7 @@ public class ExpressionResultTransformer {
 			final CPrimitive newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
 		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
-		if (oldType instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) oldType;
+		if (oldType instanceof final CPrimitive cPrimitive) {
 			if (cPrimitive.isIntegerType()) {
 				return convertIfNecessary(loc, rexp, newType);
 			}
@@ -854,7 +849,7 @@ public class ExpressionResultTransformer {
 			throw new AssertionError("cannot convert from CFunction");
 		}
 		if (oldType instanceof CStructOrUnion) {
-			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
+			throw new UnsupportedSyntaxException(loc, "conversion from CStructOrUnion not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
 	}
@@ -922,12 +917,9 @@ public class ExpressionResultTransformer {
 	 */
 	public final ExpressionResult promoteToIntegerIfNecessary(final ILocation loc, final ExpressionResult operand) {
 		final ICType ctype = CEnum.replaceEnumWithInt(operand.getLrValue().getCType().getUnderlyingType());
-		if (ctype instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) ctype;
-			if (integerPromotionNeeded(cPrimitive)) {
-				final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
-				return mExprTrans.convertIntToInt(loc, operand, promotedType);
-			}
+		if ((ctype instanceof final CPrimitive cPrimitive) && integerPromotionNeeded(cPrimitive)) {
+			final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
+			return mExprTrans.convertIntToInt(loc, operand, promotedType);
 		}
 		return operand;
 	}
