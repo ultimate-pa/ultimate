@@ -871,8 +871,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	@Override
 	public Result visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = constructLocation(ctx);
-		constructCDivFunction(mLocation);
-		contructRemainderFunction(mLocation);
+		mDeclarations.add(constructCDivFunction(mLocation));
+		mDeclarations.add(contructRemainderFunction(mLocation));
 
 		ParseTree mainFunc = null;
 
