@@ -248,7 +248,8 @@ public class CTranslationUtil {
 				return i;
 			}
 		}
-		throw new AssertionError("designator does not occur in struct type");
+		throw new AssertionError(
+				"designator '" + rootDesignator + "' does not occur in struct type '" + targetCType.getName() + "'");
 	}
 
 	public static LocalLValue constructOffHeapStructAccessLhs(final ILocation loc,
