@@ -566,7 +566,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Retrieves a Procedure object from the list of declarations based on the given identifier.
 	 *
-	 * @param identifier The identifier of the procedure to retrieve.
+	 * @param identifier   The identifier of the procedure to retrieve.
+	 * @param declarations The list of declarations to search.
 	 * @return The Procedure object corresponding to the identifier.
 	 * @throws AssertionError if no procedure with the given identifier is found.
 	 */
@@ -577,7 +578,16 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				.orElseThrow(() -> new AssertionError("Procedure with identifier '" + identifier + "' not found."));
 	}
 
-	// TODO: Add comment
+	/**
+	 * Constructs the aux#cdiv function for signed and unsigned integer division.
+	 *
+	 * This method creates a FunctionDeclaration for the aux#cdiv function, which performs division while handling
+	 * signedness and absolute values. It takes into account various cases of operand signs to ensure correct division
+	 * results.
+	 *
+	 * @param location The location in the source code where this function is defined.
+	 * @return A FunctionDeclaration representing the aux#cdiv function.
+	 */
 	private static FunctionDeclaration constructCDivFunction(final LlvmirLocation location) {
 		final String xIdentifier = "aux#x";
 		final String yIdentifier = "aux#y";
@@ -639,6 +649,16 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				inParams.toArray(VarList[]::new), outParam, resultIsPosNoneNeg);
 	}
 
+	/**
+	 * Constructs the aux#rem function for signed and unsigned integer remainder.
+	 *
+	 * This method creates a FunctionDeclaration for the aux#rem function, which computes the remainder while handling
+	 * signedness and absolute values. It takes into account various cases of operand signs to ensure correct remainder
+	 * results.
+	 *
+	 * @param location The location in the source code where this function is defined.
+	 * @return A FunctionDeclaration representing the aux#rem function.
+	 */
 	private static FunctionDeclaration contructRemainderFunction(final LlvmirLocation location) {
 		final String xIdentifier = "aux#x";
 		final String yIdentifier = "aux#y";
@@ -719,7 +739,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * This method searches the list of declarations for a TypeDeclaration with an identifier matching the format
 	 * "i{bitLength}Pair".
 	 *
-	 * @param bitLength The bit length to check for.
+	 * @param bitLength    The bit length to check for.
+	 * @param declarations The list of declarations to search.
 	 * @return true if a matching TypeDeclaration exists, false otherwise.
 	 */
 	public static boolean bitLengthPairExists(final int bitLength, final ArrayList<Declaration> declarations) {
@@ -792,6 +813,16 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		return new Pair<>(varDec, assignmentStmt);
 	}
 
+	/**
+	 * Checks if a procedure with the same signature already exists in the list of declarations.
+	 *
+	 * This method compares the identifier, input parameters, and output parameters of the given procedure with those in
+	 * the list of declarations to determine if an identical procedure is already present.
+	 *
+	 * @param procedure    The procedure to check for duplicates.
+	 * @param declarations The list of declarations to search.
+	 * @return true if an identical procedure is found, false otherwise.
+	 */
 	private static boolean procedureAlreadyPresent(final Procedure procedure,
 			final ArrayList<Declaration> declarations) {
 		return declarations.stream().filter(dec -> dec instanceof Procedure).map(dec -> (Procedure) dec)
