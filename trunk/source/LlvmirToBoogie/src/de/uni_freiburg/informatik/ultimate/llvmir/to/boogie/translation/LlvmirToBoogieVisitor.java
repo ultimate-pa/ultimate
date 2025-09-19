@@ -666,8 +666,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final IntegerLiteral maxValueLiteral = new IntegerLiteral(location,
 				BigInteger.ONE.shiftLeft(bitLength - 1).subtract(BigInteger.ONE).toString());
 		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, expr, maxValueLiteral);
-		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, true);
-		final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMINUS, expr, bitLengthLiteral);
+		final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMINUS, expr, maxValueLiteral);
 		final IfThenElseExpression ifThenElseExpr = new IfThenElseExpression(location, binaryExpr, thenExpr, expr);
 		return ifThenElseExpr;
 	}
@@ -811,15 +810,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				zeroExpr, xAbsMinusYAbsMulCdiv);
 		final BinaryExpression xValueMinusYMulCdiv = new BinaryExpression(location, Operator.ARITHMINUS, xValue,
 				yMulCdiv);
-		final BinaryExpression negatedXValueMinusYValueMulCdiv = new BinaryExpression(location, Operator.ARITHMINUS,
-				zeroExpr, xValueMinusYMulCdiv);
 		final BinaryExpression xMinusYValueMulCdiv = new BinaryExpression(location, Operator.ARITHMINUS, xExpr,
 				yValueMulCdiv);
 
 		final Expression bothNonNeg = new BinaryExpression(location, Operator.LOGICAND, xNonNeg, yNonNeg);
 		final Expression bothNeg = new BinaryExpression(location, Operator.LOGICAND, xIsNeg, yIsNeg);
 
-		final Expression resultOneNeg = new IfThenElseExpression(location, xIsNeg, negatedXValueMinusYValueMulCdiv,
+		final Expression resultOneNeg = new IfThenElseExpression(location, xIsNeg, xValueMinusYMulCdiv,
 				xMinusYValueMulCdiv);
 		final Expression resultBothNeg = new IfThenElseExpression(location, bothNeg, negatedXAbsMinusYAbsMulCdiv,
 				resultOneNeg);
