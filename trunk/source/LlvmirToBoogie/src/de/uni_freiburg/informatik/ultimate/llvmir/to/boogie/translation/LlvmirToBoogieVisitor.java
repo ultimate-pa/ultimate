@@ -36,6 +36,7 @@ import java.util.Optional;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -74,6 +75,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
@@ -328,8 +331,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final ParserRuleContext typeContext, final LlvmirLocation location, final boolean isSigned)
 			throws AssertionError {
 		if (valueContext.LocalIdent() != null) {
-			final String operandName = valueContext.LocalIdent().getText();
-			return new IdentifierExpression(location, unifyIdentifier(operandName));
+			return constructIdentifierExpression(location, valueContext, typeContext);
 		} else if (valueContext.constant() != null) {
 			return constructExpressionFromConstant(valueContext.constant(), typeContext, location, isSigned);
 		} else {
@@ -423,6 +425,113 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			throw new AssertionError("Bit length must be a positive integer.");
 		}
 		return new IntegerLiteral(location, BigInteger.ONE.shiftLeft(bitLength - (isSigned ? 1 : 0)).toString());
+	}
+
+	/**
+	 * Constructs an identifier expression from a value context and type context.
+	 *
+	 * This method constructs an IdentifierExpression based on the provided value context and type context. It assumes
+	 * that the value context contains a local identifier and uses the type context to determine the type of the
+	 * identifier.
+	 *
+	 * @param location     The location in the source code where this identifier is defined.
+	 * @param valueContext The context containing the value to be converted into an identifier expression.
+	 * @param typeContext  The context containing the type information for the identifier.
+	 * @return An IdentifierExpression representing the local identifier.
+	 * @throws AssertionError if the value context does not contain a local identifier or if the contexts are null.
+	 */
+	private static IdentifierExpression constructIdentifierExpression(final LlvmirLocation location,
+			final LLVMIRParser.ValueContext valueContext, final ParserRuleContext typeContext) throws AssertionError {
+		if (valueContext == null || typeContext == null) {
+			throw new AssertionError("Value context and type context must not be null.");
+		}
+		if (valueContext.LocalIdent() == null) {
+			throw new AssertionError("Value context must contain a LocalIdent.");
+		}
+
+		final BoogiePrimitiveType type = typeContext.getText().equals("i1") ? BoogieType.TYPE_BOOL
+				: BoogieType.TYPE_INT;
+		final String operandName = valueContext.LocalIdent().getText();
+		final DeclarationInformation.StorageClass storageClass = isParamInProcedure(unifyIdentifier(operandName),
+				valueContext) ? DeclarationInformation.StorageClass.PROC_FUNC_INPARAM
+						: DeclarationInformation.StorageClass.LOCAL;
+		final String procedureIdentifier = getProcedureIdentifierFromContext(valueContext);
+		final DeclarationInformation declInfo = new DeclarationInformation(storageClass, procedureIdentifier);
+		return new IdentifierExpression(location, type, unifyIdentifier(operandName), declInfo);
+	}
+
+	/**
+	 * Retrieves the procedure identifier from the context by traversing the parent hierarchy.
+	 *
+	 * This method searches for the nearest FuncDefContext in the parent hierarchy of the given context and extracts the
+	 * procedure identifier from its FuncHeaderContext.
+	 *
+	 * @param ctx The context from which to start searching for the procedure identifier.
+	 * @return The procedure identifier as a String.
+	 * @throws AssertionError if the context is null or if no FuncDefContext or GlobalIdent is found.
+	 */
+	private static String getProcedureIdentifierFromContext(final ParserRuleContext ctx) throws AssertionError {
+		if (ctx == null) {
+			throw new AssertionError("Context must not be null.");
+		}
+		LLVMIRParser.FuncDefContext funcDefCtx = null;
+		ParserRuleContext tmpCtx = ctx;
+		while (funcDefCtx == null) {
+			if (tmpCtx.getParent() == null) {
+				throw new AssertionError("No FuncDefContext found in the parent hierarchy");
+			}
+			if (tmpCtx.getParent() instanceof LLVMIRParser.FuncDefContext) {
+				funcDefCtx = (LLVMIRParser.FuncDefContext) tmpCtx.getParent();
+			} else {
+				tmpCtx = tmpCtx.getParent();
+			}
+		}
+		final LLVMIRParser.FuncHeaderContext funcHeaderCtx = funcDefCtx.funcHeader();
+		if (funcHeaderCtx == null || funcHeaderCtx.GlobalIdent() == null) {
+			throw new AssertionError("No FuncHeaderContext or GlobalIdent found for FuncHeaderContext");
+		}
+		return unifyIdentifier(funcHeaderCtx.GlobalIdent().getText());
+	}
+
+	/**
+	 * Checks if a given identifier is a parameter in the procedure associated with the provided context.
+	 *
+	 * This method traverses the parent hierarchy of the given context to find the function definition and then checks
+	 * if the specified identifier is listed as a parameter in that function.
+	 *
+	 * @param identifier The identifier to check.
+	 * @param ctx        The context from which to start searching for the function definition.
+	 * @return true if the identifier is a parameter in the procedure; false otherwise.
+	 * @throws AssertionError if the context or identifier is null or empty, or if no function definition is found.
+	 */
+	private static boolean isParamInProcedure(final String identifier, final ParserRuleContext ctx)
+			throws AssertionError {
+		if (ctx == null || identifier == null || identifier.isEmpty()) {
+			throw new AssertionError("Context and identifier must not be null or empty");
+		}
+		LLVMIRParser.FuncDefContext funcDefCtx = null;
+		ParserRuleContext tmpCtx = ctx;
+		while (funcDefCtx == null) {
+			if (tmpCtx.getParent() == null) {
+				throw new AssertionError("No FuncDefContext found in the parent hierarchy");
+			}
+			if (tmpCtx.getParent() instanceof LLVMIRParser.FuncDefContext) {
+				funcDefCtx = (LLVMIRParser.FuncDefContext) tmpCtx.getParent();
+			} else {
+				tmpCtx = tmpCtx.getParent();
+			}
+		}
+		final LLVMIRParser.FuncHeaderContext funcHeaderCtx = funcDefCtx.funcHeader();
+		if (funcHeaderCtx == null) {
+			throw new AssertionError("No FuncHeaderContext found for FuncDefContext");
+		}
+		final LLVMIRParser.ParamsContext params = funcHeaderCtx.params();
+		for (final LLVMIRParser.ParamContext param : params.param()) {
+			if (param.LocalIdent() != null && unifyIdentifier(param.LocalIdent().getText()).equals(identifier)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
