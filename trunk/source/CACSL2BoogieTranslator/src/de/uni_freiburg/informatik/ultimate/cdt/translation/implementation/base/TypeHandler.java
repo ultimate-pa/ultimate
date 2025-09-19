@@ -35,12 +35,16 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
@@ -679,56 +683,6 @@ public class TypeHandler implements ITypeHandler {
 		return mFloatingTypesNeeded;
 	}
 
-	/**
-	 * Checks if two CTypes are equivalent. Replaces (some of) our uses of CType.equals(..).
-	 *
-	 * Avoids the potential endless recursion of the implementation of CType.equals(..) (which we should replace some
-	 * time (Nov 17).
-	 *
-	 * Applications: (unclear, collect here)
-	 *
-	 * @param type1
-	 * @param type2
-	 * @return
-	 */
-	public static boolean areMatchingTypes(final ICType type1, final ICType type2) {
-		return areMatchingTypes(type1, type2, new SymmetricHashRelation<>());
-	}
-
-	/**
-	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13 The initializer for a
-	 * structure or union object that has automatic storage duration shall be either an initializer list as described
-	 * below, or a single expression that has compatible structure or union type.
-	 *
-	 * @param type1
-	 * @param type2
-	 * @return
-	 */
-	public static boolean isCompatibleType(final ICType type1, final ICType type2) {
-		// TODO: Fully implement the notion of compatibility, as specified in C11 Section 6.2.7 (and others)
-
-		if (type1.equals(type2)) {
-			// C11 6.2.7.1: "Two types have compatible type if their types are the same."
-			// (an extraordinary sentence)
-			return true;
-		}
-
-		if (type1 instanceof final CNamed named1) {
-			return isCompatibleType(named1.getUnderlyingType(), type2);
-		}
-		if (type2 instanceof final CNamed named2) {
-			return isCompatibleType(type1, named2.getUnderlyingType());
-		}
-
-		if (isCharArray(type1) && isCharArray(type2)) {
-			return true;
-		}
-		if (type1 instanceof CStructOrUnion && type2 instanceof CStructOrUnion) {
-			return areMatchingTypes(type1, type2);
-		}
-		return false;
-	}
-
 	@Override
 	public BoogieType getBoogieTypeForBoogieASTType(final ASTType asttype) {
 		if (asttype == null) {
@@ -788,23 +742,6 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public BoogieType getBoogieTypeForPointerComponents() {
 		return getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents());
-	}
-
-	private static boolean isCharArray(final ICType cTypeRaw) {
-		final ICType cType = cTypeRaw.getUnderlyingType();
-		if (!(cType instanceof CArray)) {
-			return false;
-		}
-		final CArray cArrayType = (CArray) cType;
-		if (!(cArrayType.getValueType().getUnderlyingType() instanceof CPrimitive)) {
-			return false;
-		}
-		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType().getUnderlyingType();
-		if (primitiveValueType.getType() != CPrimitives.CHAR && primitiveValueType.getType() != CPrimitives.UCHAR
-				&& primitiveValueType.getType() != CPrimitives.SCHAR) {
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -930,145 +867,6 @@ public class TypeHandler implements ITypeHandler {
 		};
 	}
 
-	private static boolean areMatchingTypes(final ICType type1, final ICType type2,
-			final SymmetricHashRelation<ICType> visitedPairs) {
-		if (type1 == type2) {
-			return true;
-		}
-
-		final ICType ulType1 = type1.getUnderlyingType();
-		final ICType ulType2 = type2.getUnderlyingType();
-
-		if (!ulType1.getClass().equals(ulType2.getClass())) {
-			return false;
-		}
-
-		if (visitedPairs.containsPair(type1, type2)) {
-			// found a cycle in the c type --> types match
-			return true;
-		}
-
-		if (ulType1.getClass().equals(CPrimitive.class)) {
-			return areMatchingTypes((CPrimitive) ulType1, (CPrimitive) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CEnum.class)) {
-			return areMatchingTypes((CEnum) ulType1, (CEnum) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CPointer.class)) {
-			return areMatchingTypes((CPointer) ulType1, (CPointer) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CStructOrUnion.class)) {
-			return areMatchingTypes((CStructOrUnion) ulType1, (CStructOrUnion) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CArray.class)) {
-			return areMatchingTypes((CArray) ulType1, (CArray) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CFunction.class)) {
-			return areMatchingTypes((CFunction) ulType1, (CFunction) ulType2, visitedPairs);
-		} else {
-			throw new UnsupportedOperationException("unknown CType");
-		}
-	}
-
-	private static boolean areMatchingTypes(final CPrimitive type1, final CPrimitive type2,
-			final SymmetricHashRelation<ICType> visitedPairs) {
-		return type1.getType() == type2.getType();
-	}
-
-	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
-			final SymmetricHashRelation<ICType> visitedPairs) {
-
-		if (!type1.getName().equals(type2.getName())) {
-			return false;
-		}
-
-		if (type1.getFieldCount() != type2.getFieldCount()) {
-			return false;
-		}
-		for (int i = 0; i < type1.getFieldCount(); i++) {
-			if (!type1.getFieldIds()[i].equals(type2.getFieldIds()[i])) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static boolean areMatchingTypes(final CPointer type1, final CPointer type2,
-			final SymmetricHashRelation<ICType> visitedPairs) {
-		return areMatchingTypes(type1.getPointsToType(), type2.getPointsToType(), visitedPairs);
-	}
-
-	private static boolean areMatchingTypes(final CFunction type1, final CFunction type2,
-			final SymmetricHashRelation<ICType> visitedPairs) {
-
-		visitedPairs.addPair(type1, type2);
-
-		// function have different number of arguments
-		if (type1.getParameterTypes().length != type2.getParameterTypes().length) {
-			return false;
-		}
-
-		// one function takes varargs, the other does not
-		if (type1.hasVarArgs() != type2.hasVarArgs()) {
-			return false;
-		}
-
-		// function result types are different
-		if (!areMatchingTypes(type1.getResultType(), type2.getResultType(), visitedPairs)) {
-			return false;
-		}
-
-		// function parameter types are different
-		for (int i = 0; i < type1.getParameterTypes().length; i++) {
-			if (!areMatchingTypes(type1.getParameterTypes()[i].getType(), type2.getParameterTypes()[i].getType(),
-					visitedPairs)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static boolean areMatchingTypes(final CStructOrUnion type1, final CStructOrUnion type2,
-			final SymmetricHashRelation<ICType> visitedPairs) {
-
-		visitedPairs.addPair(type1, type2);
-
-		// different number of fields means structs dont match
-		if (type1.getFieldIds().length != type2.getFieldIds().length) {
-			return false;
-		}
-
-		// different number of field types mean structs dont match
-		// DD: this looks like it should be an invariant in CStruct, or is it possible to have unnamed fields? If yes,
-		// how are they matched to their type?
-		if (type1.getFieldTypes().length != type2.getFieldTypes().length) {
-			return false;
-		}
-
-		// TODO: DD: Do field names really impact type matching? I am not so sure that this is always the case
-		for (int i = 0; i < type1.getFieldIds().length - 1; i++) {
-			if (!type1.getFieldIds()[i].equals(type2.getFieldIds()[i])) {
-				return false;
-			}
-		}
-
-		// check if the types of the field match
-		for (int i = 0; i < type1.getFieldTypes().length; i++) {
-			if (!areMatchingTypes(type1.getFieldTypes()[i], type2.getFieldTypes()[i], visitedPairs)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static boolean areMatchingTypes(final CArray type1, final CArray type2,
-			final SymmetricHashRelation<ICType> visitedPairs) {
-		// if dimensions dont match, array dont match
-		if (!type1.getBound().toString().equals(type2.getBound().toString())) {
-			return false;
-		}
-		// compare value types
-		if (!areMatchingTypes(type1.getValueType(), type2.getValueType(), visitedPairs)) {
-			return false;
-		}
-		return true;
-	}
-
 	@Override
 	public void registerNamedIncompleteType(final String incompleteType, final String named) {
 		mNamedIncompleteTypes.addPair(incompleteType, named);
@@ -1082,5 +880,247 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public void addLibraryTypes(final Map<String, ICType> libraryTypes) {
 		mLibraryTypes.putAll(libraryTypes);
+	}
+
+	/**
+	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13:
+	 *
+	 * <quote>The initializer for a structure or union object that has automatic storage duration shall be either an
+	 * initializer list as described below, or a single expression that has compatible structure or union type.</quote>
+	 */
+	public static boolean areCompatibleStructOrUnionTypes(final ICType type1, final ICType type2) {
+		return type1.getUnderlyingType() instanceof CStructOrUnion
+				&& type2.getUnderlyingType() instanceof CStructOrUnion && areCompatibleTypes(type1, type2);
+	}
+
+	/**
+	 * Checks if type1 and type2 are "compatible" as in C11 6.2.7.
+	 *
+	 * Note: The "compatible" relation is symmetric and reflexive, but not transitive (e.g. two different enum types are
+	 * both compatible with int but not with each other).
+	 */
+	public static boolean areCompatibleTypes(final ICType type1, final ICType type2) {
+		return areCompatibleTypes(type1, type2, new SymmetricHashRelation<>());
+	}
+
+	private static boolean areCompatibleTypes(final ICType type1, final ICType type2,
+			final SymmetricHashRelation<ICType> visitedPairs) {
+		// Implementation based on the summary at cppreference.com, as of September 18, 2025.
+		// <https://en.cppreference.com/w/c/language/compatible_type.html#Compatible_types>
+
+		if (type1 == type2) {
+			// C11 6.2.7 §1: Two types have compatible type if their types are the same.
+			// Note: The use of reference equality (==) above is intentional, as ICType::equals would (redundantly) have
+			// to do the same recursion we implement here.
+			return true;
+		}
+
+		if (visitedPairs.containsPair(type1, type2)) {
+			// We found a cycle in the C type (e.g. a linked list struct type containing a pointer to the same linked
+			// list struct type). As long as we do not find any other counterexample to compatibility, the types are
+			// indeed compatible. Thus, we return true here.
+			// (This probably means compatibility is formally defined as some kind of greatest fixpoint.)
+			return true;
+		}
+
+		// Resolve typedef names.
+		// C11 6.7.8 §3: A typedef declaration does not introduce a new type, only a synonym for the type so specified.
+		final ICType actualType1 = type1.getUnderlyingType();
+		final ICType actualType2 = type2.getUnderlyingType();
+
+		return switch (actualType1) {
+		case final CArray array1 ->
+				actualType2 instanceof final CArray array2 && areCompatibleArrayTypes(array1, array2, visitedPairs);
+
+		case final CEnum enum1 -> (actualType2 instanceof final CEnum enum2 && areCompatibleEnumTypes(enum1, enum2))
+				|| (actualType2 instanceof final CPrimitive primitive2
+						&& isCompatiblePrimitiveForEnum(enum1, primitive2));
+
+		case final CFunction function1 -> actualType2 instanceof final CFunction function2
+				&& areCompatibleFunctionTypes(function1, function2, visitedPairs);
+
+		case final CNamed named1 -> throw new AssertionError("getUnderlyingType() must not return CNamed");
+
+		// C11 6.7.6.1 §2: For two pointer types to be compatible, both shall be identically qualified and both shall be
+		// pointers to compatible types.
+		// (Note: We currently do not track type qualifiers.)
+		case final CPointer pointer1 -> actualType2 instanceof final CPointer pointer2
+				&& areCompatibleTypes(pointer1.getPointsToType(), pointer2.getPointsToType(), visitedPairs);
+
+		case final CPrimitive primitive1 -> (actualType2 instanceof final CPrimitive primitive2
+				&& primitive1.getType() == primitive2.getType())
+				|| (actualType2 instanceof final CEnum enum2 && isCompatiblePrimitiveForEnum(enum2, primitive1));
+
+		case final CStructOrUnion structOrUnion1 -> actualType2 instanceof final CStructOrUnion structOrUnion2
+				&& areCompatibleStructOrUnionTypes(structOrUnion1, structOrUnion2, visitedPairs);
+		};
+	}
+
+	private static boolean areCompatibleEnumTypes(final CEnum enum1, final CEnum enum2) {
+		// C 6.2.7 §1: If one is declared with a tag, the other shall be declared with the same tag.
+		// (Note: If neither is declared with a tag, we test for equality of two empty strings.)
+		if (!Objects.equals(enum1.getName(), enum2.getName())) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: If both are completed anywhere within their respective translation units, then the following
+		// additional requirements apply: [...]
+		if (enum1.isIncomplete() || enum2.isIncomplete()) {
+			return true;
+		}
+
+		// C11 6.2.7 §1: [...] there shall be a one-to-one correspondence between their members such that [...]
+		if (enum1.getFieldCount() != enum2.getFieldCount()) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: [...] For two enumerations, corresponding members shall have the same values.
+		// (Note: We do not track values in the type, and instead check if the enum constants are in the same order.)
+		for (int i = 0; i < enum1.getFieldCount(); i++) {
+			if (!enum1.getFieldIds()[i].equals(enum2.getFieldIds()[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean isCompatiblePrimitiveForEnum(final CEnum enum1, final CPrimitive primitive2) {
+		// C11 6.7.2.2 §4: Each enumerated type shall be compatible with char, a signed integer type, or an
+		// unsigned integer type. The choice of type is implementation-defined
+		// (Note: In Ultimate, enumeration types are always compatible with int.)
+		return primitive2.getType() == CPrimitives.INT;
+	}
+
+	private static boolean areCompatibleFunctionTypes(final CFunction function1, final CFunction function2,
+			final SymmetricHashRelation<ICType> visitedPairs) {
+		visitedPairs.addPair(function1, function2);
+
+		// C11 6.7.6.3 §15: For two function types to be compatible, both shall specify compatible return types. [...]
+		if (!areCompatibleTypes(function1.getResultType(), function2.getResultType(), visitedPairs)) {
+			return false;
+		}
+
+		// C11 6.7.6.3 §15: [...] Moreover, the parameter type lists, if both are present, shall agree in the number of
+		// parameters and in use of the ellipsis terminator; [...]
+		// (Note: CFunction does not track whether or not the parameter list is present.)
+		if (function1.getParameterTypes().length != function2.getParameterTypes().length
+				|| function1.hasVarArgs() != function2.hasVarArgs()) {
+			return false;
+		}
+
+		// C11 6.7.6.3 §15: [...] corresponding parameters shall have compatible types.
+		for (int i = 0; i < function1.getParameterTypes().length; i++) {
+			if (!areCompatibleTypes(function1.getParameterTypes()[i].getType(),
+					function2.getParameterTypes()[i].getType(), visitedPairs)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean areCompatibleStructOrUnionTypes(final CStructOrUnion structOrUnion1,
+			final CStructOrUnion structOrUnion2, final SymmetricHashRelation<ICType> visitedPairs) {
+		visitedPairs.addPair(structOrUnion1, structOrUnion2);
+
+		// A struct is not compatible to a union.
+		if (structOrUnion1.isStructOrUnion() != structOrUnion2.isStructOrUnion()) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: If one is declared with a tag, the other shall be declared with the same tag.
+		// (Note: If neither is declared with a tag, we test for equality of two empty strings.)
+		if (!Objects.equals(structOrUnion1.getName(), structOrUnion2.getName())) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: If both are completed anywhere within their respective translation units, then the following
+		// additional requirements apply: [...]
+		if (structOrUnion1.isIncomplete() || structOrUnion2.isIncomplete()) {
+			return true;
+		}
+
+		// C11 6.2.7 §1: [...] there shall be a one-to-one correspondence between their members such that [...]
+		if (structOrUnion1.getFieldCount() != structOrUnion2.getFieldCount()) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: [...] if one member of the pair is declared with a name, the other is declared with the same
+		// name. For two structures, corresponding members shall be declared in the same order.
+		final var lookup =
+				structOrUnion1.isStructOrUnion() == StructOrUnion.STRUCT ? makeStructFieldLookup(structOrUnion2)
+						: makeUnionFieldLookup(structOrUnion2);
+
+		for (int index1 = 0; index1 < structOrUnion1.getFieldCount(); ++index1) {
+			final String id = structOrUnion1.getFieldIds()[index1];
+			final OptionalInt index2 = lookup.apply(index1, id);
+			if (index2.isEmpty()) {
+				// (no one-to-one corresponding member found)
+				return false;
+			}
+
+			// C11 6.2.7 §1: [...] each pair of corresponding members are declared with compatible types; [...]
+			if (!areCompatibleTypes(structOrUnion1.getFieldTypes()[index1],
+					structOrUnion2.getFieldTypes()[index2.getAsInt()], visitedPairs)) {
+				return false;
+			}
+			// C11 6.2.7 §1: [...] corresponding bit-fields shall have the same widths.
+			if (structOrUnion1.getBitfieldWidth(id) != structOrUnion2.getBitfieldWidth(id)) {
+				return false;
+			}
+		}
+
+		// all requirements satisfied
+		return true;
+	}
+
+	private static BiFunction<Integer, String, OptionalInt> makeStructFieldLookup(final CStructOrUnion structType) {
+		assert structType.isStructOrUnion() == StructOrUnion.STRUCT;
+		return (index, id) -> {
+			if (index >= structType.getFieldCount() || !Objects.equals(id, structType.getFieldIds()[index])) {
+				return OptionalInt.empty();
+			}
+			return OptionalInt.of(index);
+		};
+	}
+
+	private static BiFunction<Integer, String, OptionalInt> makeUnionFieldLookup(final CStructOrUnion unionType) {
+		assert unionType.isStructOrUnion() == StructOrUnion.UNION;
+		return (index, id) -> {
+			if (index >= unionType.getFieldCount()) {
+				return OptionalInt.empty();
+			}
+			if (Objects.equals(id, unionType.getFieldIds()[index])) {
+				// Shortcut for efficiency
+				return OptionalInt.of(index);
+			}
+			final int actualIndex = Arrays.asList(unionType.getFieldIds()).indexOf(id);
+			return actualIndex == -1 ? OptionalInt.empty() : OptionalInt.of(actualIndex);
+		};
+	}
+
+	private static boolean areCompatibleArrayTypes(final CArray array1, final CArray array2,
+			final SymmetricHashRelation<ICType> visitedPairs) {
+		// C11 6.7.6.2 §6: For two array types to be compatible, both shall have compatible element types, and if both
+		// size specifiers are present, and are integer constant expressions, then both size specifiers shall have the
+		// same constant value.
+
+		if (!areCompatibleTypes(array1.getValueType(), array2.getValueType(), visitedPairs)) {
+			return false;
+		}
+		if (array1.isIncomplete() || array2.isIncomplete()) {
+			return true;
+		}
+		final BigInteger bound1 = CTranslationUtil.extractIntegerValue(array1.getBound().getValue());
+		final BigInteger bound2 = CTranslationUtil.extractIntegerValue(array2.getBound().getValue());
+		return bound1 == null || bound2 == null || bound1.equals(bound2);
+	}
+
+	public static boolean isCharArray(final ICType cTypeRaw) {
+		return cTypeRaw.getUnderlyingType() instanceof final CArray cArrayType
+				&& cArrayType.getValueType().getUnderlyingType() instanceof final CPrimitive cPrimitive
+				&& (cPrimitive.getType() == CPrimitives.CHAR || cPrimitive.getType() == CPrimitives.UCHAR
+						|| cPrimitive.getType() == CPrimitives.SCHAR);
 	}
 }

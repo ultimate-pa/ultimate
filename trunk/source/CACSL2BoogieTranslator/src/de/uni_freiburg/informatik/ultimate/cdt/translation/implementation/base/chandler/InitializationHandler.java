@@ -1300,15 +1300,21 @@ public class InitializationHandler {
 			 * union type. In the latter case, the initial value of the object, including unnamed members, is that of
 			 * the expression.
 			 */
-			if (rest.peekFirst().isInitializerList() || (
-			// TODO: make a more general compatibility check, for example for array and pointer
-			rest.peekFirst().hasRootExpressionResult() && TypeHandler.isCompatibleType(cellType,
-					rest.peekFirst().getRootExpressionResult().getLrValue().getCType()))) {
+			if (firstOfRest.isInitializerList()
+					|| (firstOfRest.hasRootExpressionResult() && TypeHandler.areCompatibleStructOrUnionTypes(cellType,
+							firstOfRest.getRootExpressionResult().getLrValue().getCType()))
+					|| (firstOfRest.getRootExpressionResult() instanceof StringLiteralResult
+							&& TypeHandler.isCharArray(cellType))) {
 				/*
-				 * case "{", i.e. one more brace opens Then the cell is initialized with the list belonging to that
-				 * brace (until the matching brace). No residue is taken over if too many elements are left.
+				 * first case: "{", i.e. one more brace opens (initializer list). Then the cell is initialized with the
+				 * list belonging to that brace (until the matching brace). No residue is taken over if too many
+				 * elements are left.
 				 *
-				 * other case: first list entry has a compatible struct or union type
+				 * second case: first list entry has a compatible struct or union type
+				 *
+				 * third case (C11 6.7.9 §21): If there are [...] fewer characters in a string literal used to
+				 * initialize an array of known size than there are elements in the array, the remainder of the
+				 * aggregate shall be initialized implicitly the same as objects that have static storage duration.
 				 */
 
 				final InitializerResult first = rest.pollFirst();

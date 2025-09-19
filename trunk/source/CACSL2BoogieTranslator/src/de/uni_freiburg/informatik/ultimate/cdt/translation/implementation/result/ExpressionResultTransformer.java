@@ -663,7 +663,7 @@ public class ExpressionResultTransformer {
 		final BoogieType oldBoogieType = (BoogieType) expr.getLrValue().getValue().getType();
 		final BoogieType newBoogieType = mTypeHandler.getBoogieTypeForCType(targetCType);
 
-		if (TypeHandler.areMatchingTypes(newType, oldType) && !newType.equals(new CPrimitive(CPrimitives.BOOL))
+		if (TypeHandler.areCompatibleTypes(newType, oldType) && !newType.equals(new CPrimitive(CPrimitives.BOOL))
 				&& oldBoogieType.equals(newBoogieType)) {
 			// types are already identical -- nothing to do
 			// For _Bool we always do the conversion to ensure that the resulting value is 0 or 1
