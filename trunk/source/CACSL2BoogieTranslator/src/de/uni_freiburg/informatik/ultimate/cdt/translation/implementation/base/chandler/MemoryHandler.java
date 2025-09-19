@@ -37,7 +37,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -344,17 +343,7 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.C_MEMSET)) {
-			if (mSettings.useQuantorsInMemoryFunctions()) {
-				final ArrayList<HeapDataArray> memsetRequiredHdas = new ArrayList<>();
-				for (final var type : mRequiredMemoryModelFeatures.memSetForTypeRequired()) {
-					final var hda = mMemoryModel.getDataHeapArray(type);
-					memsetRequiredHdas.add(hda);
-				}
-				declarations.addAll(declareMemset(main, memsetRequiredHdas));
-			} else {
-				declarations.addAll(declareMemset(main, heapDataArrays));
-			}
-
+			declarations.addAll(declareMemset(main, heapDataArrays));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
@@ -448,151 +437,10 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Creates the memset call for an real type.
-	 *
-	 * @return The statement.
-	 */
-	private CallStatement createMemsetCallToReal(final ILocation loc, final HeapDataArray hda, ExpressionResult exprRes,
-			final String procName, final VariableLHS[] lhs, final Expression pointer, final Expression amount,
-			final CPrimitives primitives) {
-		mRequiredMemoryModelFeatures.reportMemsetForTypeRequired(primitives);
-		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitives);
-
-		final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
-		exprRes = mExpressionTranslation.convertIntToFloat(loc, exprRes, new CPrimitive(primitive));
-		final Expression convertedValue = exprRes.getLrValue().getValue();
-
-		final Expression[] params = { pointer, convertedValue, amount };
-
-		return StatementFactory.constructCallStatement(loc, false, lhs, procName, params);
-	}
-
-	/**
-	 * Creates the memset call for an integer type.
-	 *
-	 * @return The statement.
-	 */
-	private CallStatement createMemsetCallToInt(final ILocation loc, final HeapDataArray hda, ExpressionResult exprRes,
-			final String procName, final VariableLHS[] lhs, final Expression pointer, final Expression amount,
-			final CPrimitives primitives) {
-		mRequiredMemoryModelFeatures.reportMemsetForTypeRequired(primitives);
-		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitives);
-
-		// convert to smallest
-		final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
-		exprRes = mExpressionTranslation.convertIntToInt(loc, exprRes, new CPrimitive(primitive));
-		final Expression convertedValue = exprRes.getLrValue().getValue();
-
-		final Expression[] params = { pointer, convertedValue, amount };
-
-		return StatementFactory.constructCallStatement(loc, false, lhs, procName, params);
-
-	}
-
-	/**
-	 * Creates memset calls to all memory regions that are available.
-	 *
-	 * @return the calls.
-	 */
-	private List<CallStatement> createMemsetCallsToAllRegions(final ILocation loc, final Expression pointer,
-			final Expression value, final LRValue amount, final VariableLHS resVar) {
-		MemoryModelExpressionHelper.requireMemoryModelFeature(MemoryModelDeclarations.C_MEMSET,
-				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
-
-		final Set<HeapDataArray> distinctHdas = new HashSet<>();
-		distinctHdas.add(mMemoryModel.getDataHeapArray(CPrimitives.INT));
-		distinctHdas.add(mMemoryModel.getDataHeapArray(CPrimitives.FLOAT));
-
-		final ExpressionResult exprRes = new ExpressionResult(new RValue(value, new CPrimitive(CPrimitives.INT)));
-		final VariableLHS[] lhs = resVar == null ? new VariableLHS[0] : new VariableLHS[] { resVar };
-
-		final List<CallStatement> stmts = new ArrayList<>();
-
-		for (final var hda : distinctHdas) {
-			final var procName = createMemsetDeclarationName(hda);
-
-			if (hda.getName().equals(SFO.REAL)) {
-				stmts.add(createMemsetCallToReal(loc, hda, exprRes, procName, lhs, pointer, amount.getValue(),
-						CPrimitives.FLOAT));
-			} else if (hda.getName().equals(SFO.INT)) {
-				stmts.add(createMemsetCallToInt(loc, hda, exprRes, procName, lhs, pointer, amount.getValue(),
-						CPrimitives.INT));
-			} else {
-				throw new UnsupportedOperationException("Pointer to a wrong type!");
-			}
-		}
-
-		return stmts;
-	}
-
-	/**
-	 * Creates the correct memset call statements for the given primitive
-	 *
-	 * @return The statements.
-	 */
-	public List<CallStatement> getMemsetCallPrimitive(final ILocation loc, final Expression pointer,
-			final Expression value, final LRValue amount, final VariableLHS resVar, final CPrimitive cPrimitive) {
-		MemoryModelExpressionHelper.requireMemoryModelFeature(MemoryModelDeclarations.C_MEMSET,
-				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
-
-		if (cPrimitive.isVoidType()) {
-			return createMemsetCallsToAllRegions(loc, pointer, value, amount, resVar);
-		}
-
-		final CPrimitives primitives = cPrimitive.getType();
-		final var hda = mMemoryModel.getDataHeapArray(primitives);
-
-		final var procName = createMemsetDeclarationName(hda);
-
-		final ExpressionResult exprRes = new ExpressionResult(new RValue(value, new CPrimitive(CPrimitives.INT)));
-
-		final VariableLHS[] lhs = resVar == null ? new VariableLHS[0] : new VariableLHS[] { resVar };
-
-		final CallStatement callStmt;
-
-		if (hda.getName().equals(SFO.REAL)) {
-			callStmt = createMemsetCallToReal(loc, hda, exprRes, procName, lhs, pointer, value, primitives);
-		} else if (hda.getName().equals(SFO.INT)) {
-			callStmt = createMemsetCallToInt(loc, hda, exprRes, procName, lhs, pointer, value, primitives);
-		} else {
-			throw new UnsupportedOperationException("Pointer to a wrong type!");
-		}
-
-		return Collections.singletonList(callStmt);
-	}
-
-	/**
-	 * Returns a call to the memory-region specific memset procedure and announces that this memset procedure is
-	 * required by the Memory structure. When using quantors each memory region has a dedicated memset representation
-	 * similar to read and write.
-	 *
-	 * @return The call statement.
-	 */
-	public List<CallStatement> getCorrectMemsetCall(final ILocation loc, final LRValue pointer, final Expression value,
-			final LRValue amount, final VariableLHS resVar) {
-		assert (pointer.getCType() instanceof CPointer);
-		final CPointer cPointer = (CPointer) pointer.getCType();
-		final ICType ptrPointsToType = cPointer.getPointsToType().getUnderlyingType();
-
-		if (ptrPointsToType instanceof final CPrimitive cPrim) {
-			return getMemsetCallPrimitive(loc, pointer.getValue(), value, amount, resVar, cPrim);
-		} else if (ptrPointsToType instanceof CStructOrUnion) {
-			return createMemsetCallsToAllRegions(loc, pointer.getValue(), value, amount, resVar);
-		}
-
-		throw new UnsupportedOperationException(
-				"Quantified Memset is not supported for a pointer pointing to: " + ptrPointsToType);
-
-	}
-
-	/**
 	 * Returns call to our memset procedure and announces that memset is required by our Memory Structure.
 	 */
 	public List<CallStatement> constructUltimateMemsetCall(final ILocation loc, final LRValue pointer,
 			final Expression value, final LRValue amount, final VariableLHS resVar) {
-		if (mSettings.useQuantorsInMemoryFunctions()) {
-			return getCorrectMemsetCall(loc, pointer, value, amount, resVar);
-		}
 
 		return Collections.singletonList(constructCall(MemoryModelDeclarations.C_MEMSET, loc, resVar,
 				pointer.getValue(), value, amount.getValue()));
@@ -1497,6 +1345,101 @@ public class MemoryHandler {
 	}
 
 	/**
+	 * Declares the quantor-base memset procedures for the present memory regions.
+	 */
+	private void declareTypeDependentQuantorMemset(final CHandler main, final Collection<HeapDataArray> heapDataArrays,
+			final CPrimitive sizeT, final ILocation ignoreLoc) {
+		for (final var hda : heapDataArrays) {
+			final String procName = createMemsetDeclarationName(hda);
+
+			final MemsetDeclarations memsetDeclarations =
+					new MemsetDeclarations(ignoreLoc, procName, hda.getASTType(), mTypeHandler);
+			final var procDecl = memsetDeclarations.procedureDeclaration(sizeT);
+
+			mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, procDecl);
+
+			final IdentifierExpression inParamAmountExprImpl = ExpressionFactory.constructIdentifierExpression(
+					ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(), MemsetDeclarations.inParamAmount,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+
+			final IdentifierExpression inParamPtrExprImpl = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+					mTypeHandler.getBoogiePointerType(), MemsetDeclarations.inParamPtr,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+
+			final IdentifierExpression inParamValueExpr = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+					hda.getArrayContentBoogieType(), MemsetDeclarations.inParamValue,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+
+			final ArrayList<Specification> specs =
+					new ArrayList<>(memsetMemSafetySpecifications(ignoreLoc, memsetDeclarations.procName()));
+			specs.add(memsetDeclarations.resEqualsDestSpecification(mProcedureManager));
+
+			final var expressions = mMemoryModel.constructMemsetQuantorExpressions(ignoreLoc, procName,
+					inParamPtrExprImpl, inParamAmountExprImpl, inParamValueExpr, hda);
+
+			for (final var expr : expressions) {
+				final var spec = mProcedureManager.constructEnsuresSpecification(ignoreLoc, false, expr,
+						Collections.singleton(hda.getVariableLHS()));
+				specs.add(spec);
+			}
+
+			mProcedureManager.addSpecificationsToCurrentProcedure(specs);
+			mProcedureManager.endCustomProcedure(main, procName);
+		}
+	}
+
+	/**
+	 * Creates the call statements to the present quantor-based memset procedure, in the implementation of the general
+	 * memset procedure.
+	 *
+	 * @return The statements.
+	 */
+	private List<Statement> createMemsetCallStmts(final ILocation loc, final Collection<HeapDataArray> heapDataArrays,
+			final IdentifierExpression inParamAmountExprImpl, final IdentifierExpression inParamValueExpr) {
+		final List<Statement> stmts = new ArrayList<>();
+
+		for (final var hda : heapDataArrays) {
+			final String procName = createMemsetDeclarationName(hda);
+			final Expression convertedValue;
+
+			final IdentifierExpression ptrExpr = ExpressionFactory.constructIdentifierExpression(loc,
+					mTypeHandler.getBoogiePointerType(), MemsetDeclarations.inParamPtr, new DeclarationInformation(
+							StorageClass.IMPLEMENTATION_INPARAM, MemoryModelDeclarations.C_MEMSET.getName()));
+
+			// converted value to unsigned char
+			ExpressionResult exprRes =
+					new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
+
+			if (hda.getName().equals(SFO.POINTER)) {
+				exprRes = mExpressionTranslation.convertIntToInt(loc, exprRes,
+						mExpressionTranslation.getCTypeOfPointerComponents());
+				convertedValue =
+						mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+			} else if (hda.getName().equals(SFO.REAL)) {
+				final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
+				exprRes = mExpressionTranslation.convertIntToFloat(loc, exprRes, new CPrimitive(primitive));
+				convertedValue = exprRes.getLrValue().getValue();
+			} else {
+				// convert to smallest
+				final CPrimitives primitive = getCprimitiveThatFitsBest(hda.getSize());
+				exprRes = mExpressionTranslation.convertIntToInt(loc, exprRes, new CPrimitive(primitive));
+				convertedValue = exprRes.getLrValue().getValue();
+			}
+			final Expression[] params = { ptrExpr, convertedValue, inParamAmountExprImpl };
+
+			final VariableLHS resLhs = ExpressionFactory.constructVariableLHS(loc, mTypeHandler.getBoogiePointerType(),
+					SFO.RES, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+							MemoryModelDeclarations.C_MEMSET.getName()));
+
+			final var stmt =
+					StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { resLhs }, procName, params);
+			stmts.add(stmt);
+
+		}
+		return stmts;
+	}
+
+	/**
 	 * Construct specification and implementation for our Boogie representation of the memset function defined in
 	 * 7.24.6.1 of C11. void *memset(void *s, int c, size_t n);
 	 *
@@ -1509,69 +1452,36 @@ public class MemoryHandler {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 
-		if (mSettings.useQuantorsInMemoryFunctions()) {
-			// each memory region has it's own designated memset procedure, otherwise there are type-errors
-			for (final var hda : heapDataArrays.stream().distinct().toList()) {
+		final List<VariableDeclaration> decl = new ArrayList<>();
+		final List<Statement> stmts = new ArrayList<>();
 
-				final String procName = createMemsetDeclarationName(hda);
+		final String procName = MemoryModelDeclarations.C_MEMSET.getName();
+		final MemsetDeclarations memsetDeclarations = new MemsetDeclarations(ignoreLoc, procName,
+				mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT)), mTypeHandler);
 
-				final MemsetDeclarations memsetDeclarations =
-						new MemsetDeclarations(ignoreLoc, procName, hda.getASTType(), mTypeHandler);
-				final var procDecl = memsetDeclarations.procedureDeclaration(sizeT);
+		final var procDecl = memsetDeclarations.procedureDeclaration(sizeT);
+		mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, procDecl);
+		final ArrayList<Specification> specs =
+				new ArrayList<>(memsetMemSafetySpecifications(ignoreLoc, memsetDeclarations.procName()));
 
-				mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, procDecl);
+		specs.add(memsetDeclarations.resEqualsDestSpecification(mProcedureManager));
+		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
+		mProcedureManager.endCustomProcedure(main, procName);
 
-				final ArrayList<Specification> specs =
-						new ArrayList<>(memsetMemSafetySpecifications(ignoreLoc, memsetDeclarations.procName()));
-				specs.add(memsetDeclarations.resEqualsDestSpecification(mProcedureManager));
+		final IdentifierExpression inParamAmountExprImpl = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+				mTypeHandler.getBoogieTypeForSizeT(), MemsetDeclarations.inParamAmount,
+				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
-				final IdentifierExpression inParamAmountExprImpl = ExpressionFactory.constructIdentifierExpression(
-						ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(), MemsetDeclarations.inParamAmount,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+		// converted value to unsigned char
+		final IdentifierExpression inParamValueExpr = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+				(BoogieType) mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT)).getBoogieType(),
+				MemsetDeclarations.inParamValue,
+				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
-				final IdentifierExpression inParamPtrExprImpl = ExpressionFactory.constructIdentifierExpression(
-						ignoreLoc, mTypeHandler.getBoogiePointerType(), MemsetDeclarations.inParamPtr,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+		if (!mSettings.useQuantorsInMemoryFunctions()) {
 
-				final IdentifierExpression inParamValueExpr = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-						hda.getArrayContentBoogieType(), MemsetDeclarations.inParamValue,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
-
-				final var expressions = mMemoryModel.constructMemsetQuantorExpressions(ignoreLoc, procName,
-						inParamPtrExprImpl, inParamAmountExprImpl, inParamValueExpr, hda);
-
-				for (final var expr : expressions) {
-					final var spec = mProcedureManager.constructEnsuresSpecification(ignoreLoc, false, expr,
-							Collections.singleton(hda.getVariableLHS()));
-					specs.add(spec);
-				}
-
-				mProcedureManager.addSpecificationsToCurrentProcedure(specs);
-				mProcedureManager.endCustomProcedure(main, procName);
-			}
-		} else {
-
-			final String procName = MemoryModelDeclarations.C_MEMSET.getName();
-			final MemsetDeclarations memsetDeclarations = new MemsetDeclarations(ignoreLoc, procName,
-					mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT)), mTypeHandler);
-
-			final var procDecl = memsetDeclarations.procedureDeclaration(sizeT);
-			mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, procDecl);
-
-			final ArrayList<Specification> specs =
-					new ArrayList<>(memsetMemSafetySpecifications(ignoreLoc, memsetDeclarations.procName()));
-
-			specs.add(memsetDeclarations.resEqualsDestSpecification(mProcedureManager));
-
-			final List<VariableDeclaration> decl = new ArrayList<>();
 			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 			decl.add(loopCtrAux.getVarDec());
-
-			// converted value to unsigned char
-			final IdentifierExpression inParamValueExpr = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-					(BoogieType) mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT)).getBoogieType(),
-					MemsetDeclarations.inParamValue,
-					new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 			final ExpressionResult exprRes =
 					new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
 			final ExpressionResult convertedExprRes =
@@ -1582,25 +1492,24 @@ public class MemoryHandler {
 					MemsetDeclarations.inParamPtr, convertedValue, procName);
 
 			final Expression one = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, sizeT, BigInteger.ONE);
-			final IdentifierExpression inParamAmountExprImpl = ExpressionFactory.constructIdentifierExpression(
-					ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(), MemsetDeclarations.inParamAmount,
-					new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
-			final List<Statement> stmt = constructCountingLoop(
-					constructBoundExitCondition(inParamAmountExprImpl, loopCtrAux), loopCtrAux, one, loopBody);
+			stmts.addAll(constructCountingLoop(constructBoundExitCondition(inParamAmountExprImpl, loopCtrAux),
+					loopCtrAux, one, loopBody));
 
-			final Body procBody =
-					mProcedureManager.constructBody(ignoreLoc, decl.toArray(new VariableDeclaration[decl.size()]),
-							stmt.toArray(new Statement[stmt.size()]), procName);
-
-			// add the procedure implementation
-			final Procedure procImpl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0],
-					memsetDeclarations.inParams(sizeT), memsetDeclarations.outParams(), null, procBody);
-			decls.add(procImpl);
-
-			mProcedureManager.addSpecificationsToCurrentProcedure(specs);
-			mProcedureManager.endCustomProcedure(main, procName);
+		} else {
+			declareTypeDependentQuantorMemset(main, heapDataArrays, sizeT, ignoreLoc);
+			stmts.addAll(createMemsetCallStmts(ignoreLoc, heapDataArrays, inParamAmountExprImpl, inParamValueExpr));
 		}
+
+		final Body procBody =
+				mProcedureManager.constructBody(ignoreLoc, decl.toArray(new VariableDeclaration[decl.size()]),
+						stmts.toArray(new Statement[stmts.size()]), procName);
+
+		// add the procedure implementation
+		final Procedure procImpl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0],
+				memsetDeclarations.inParams(sizeT), memsetDeclarations.outParams(), null, procBody);
+
+		decls.add(procImpl);
 
 		return decls;
 	}
