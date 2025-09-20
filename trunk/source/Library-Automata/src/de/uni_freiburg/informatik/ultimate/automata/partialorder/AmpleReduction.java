@@ -34,7 +34,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -47,9 +46,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 
 /**
- * DFS with ample sets. Only applicable to deterministic input automata in which every state is final.
+ * Performs an ample set-based partial order reduction on a given Büchi automaton. The reduction algorithm is inspired
+ * by the ample set method as presented in the book "Principles of Model Checking" by Baier and Katoen, but adapted to
+ * use a given independence relation, and to ensure the existence of Mazurkiewicz-equivalent representatives (rather
+ * than stutter-equivalent ones, as in Baier/Katoen).
+ *
+ * The reduction is computed by a depth-first traversal of the input automaton. A visitor is informed about every state
+ * and edge of the reduced automaton.This implementation is only applicable to deterministic input Büchi automata in
+ * which every state is final.
+ *
+ * (Note: We currently cannot implement this reduction as a lazy automaton construction like sleep sets and persistent
+ * sets, as we need to detect cycles in the input automaton. As a consequence, this class duplicates some code of the
+ * DepthFirstTraversal class.)
  *
  * @param <L>
  *            The type of letters in the traversed automaton
@@ -71,10 +82,6 @@ public class AmpleReduction<L, S> {
 	private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
 	private final DfsBookkeeping<S> mDfs = new DfsBookkeeping<>();
 
-	// to check if input automaton only has final states
-	// TODO Why introduce a separate field for this? We could just call mOperand.isFinal(...) directly.
-	private final Predicate<S> mIsFinal;
-
 	// Used to store the ample sets of the reduction state. Note that the trivial ample set (set of all outgoing edges)
 	// is represented by null.
 	private final Map<S, Set<L>> mAmpleSets = new HashMap<>();
@@ -83,20 +90,9 @@ public class AmpleReduction<L, S> {
 	// TODO: think about whether to remove trivial nodes cache altogether
 	private final Set<S> mTrivialNodes = new HashSet<>();
 
-	// TODO Move statistics-related field into a statistics class
-	// count number of incidents where upon fist discovery, a node was identified as a loop node and upon a subsequent
-	// discovery wasn't
-	private int mLoopNotLoopCount;
-	// count number of nodes that were assigned non-trivial ample set on first encounter
-	private int mAssignedNonTrivialAmple;
-	private int mPrunedTS;
-	private int mPersistentTrivial;
-	private int mTargetAlreadyLN;
-	private int mSomeOtherNodeOnCycleAlreadyLN;
-	// number of times a trivial set was assigned bc of node being a loop node
-	private int mLoopCausedTrivial;
-
 	private int mIndentLevel = -1;
+
+	private final Statistics mStatistics = new Statistics();
 
 	/**
 	 * Do a DFS-traversal on the ample set reduction of the input automaton. This constructor is called purely for its
@@ -121,7 +117,7 @@ public class AmpleReduction<L, S> {
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
 			final IDfsVisitor<L, S> visitor, final S startingState, final IPersistentSetChoice<L, S> persistent)
 			throws AutomataOperationCanceledException {
-		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
+		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "AmpleReduction supports only finite automata";
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(AmpleReduction.class);
 
@@ -130,23 +126,14 @@ public class AmpleReduction<L, S> {
 		mOrder = order;
 		mVisitor = visitor;
 		mPersistent = persistent;
-		mIsFinal = operand::isFinal;
 
 		mLogger.info("Starting ample reduction");
+
 		mAmpleSets.put(mStartState, mPersistent.persistentSet(startingState));
 		traverse();
 
-		// TODO move statistics fields into a Statistics class & print it here, but also return from #getStatistics()
-		mLogger.warn("Number of pruned transitions: " + mPrunedTS);
-		mLogger.warn("Loop nodes with \"changing loop node status\": %s ", mLoopNotLoopCount);
-		mLogger.warn("Number of trivial sets caused by loops: " + mLoopCausedTrivial);
-		mLogger.warn("Number of not loop caused trivial ample sets:" + mPersistentTrivial);
-		mLogger.warn("Number of  initially assigned non-trivial ample sets:" + mAssignedNonTrivialAmple);
-		mLogger.warn("Times succ was already a loop node:" + mTargetAlreadyLN);
-		mLogger.warn(
-				"Times some other node on the cycle already had a trivial ample set:" + mSomeOtherNodeOnCycleAlreadyLN);
-
 		mLogger.info("Finished ample reduction");
+		mLogger.info("Ample reduction statistics: " + getStatistics());
 	}
 
 	/**
@@ -209,7 +196,7 @@ public class AmpleReduction<L, S> {
 
 			// ------------------------------------------ ample red stuff ----------------------------------------------
 			assert mAmpleSets.containsKey(currentState) : "Ample set for this state should have been already computed.";
-			assert mIsFinal.test(currentState) : "All states of the automaton should be final!";
+			assert mOperand.isFinal(currentState) : "All states of the automaton should be final!";
 
 			final Set<L> currentAmple = mAmpleSets.get(currentState);
 			final L letter = currentTransition.getLetter();
@@ -255,7 +242,7 @@ public class AmpleReduction<L, S> {
 							if (mAmpleSets.get(currentTS.getSucc()) == null) {
 								// it is so often the case that the target node already has a trivial ample set that it
 								// seemed worthwhile to measure separately
-								mTargetAlreadyLN++;
+								mStatistics.reportTargetAlreadyLoopNode();
 								assert mAmpleSets.containsKey(currentTS.getSucc())
 										: "missing ample set for successor node on stack";
 								continue;
@@ -263,15 +250,15 @@ public class AmpleReduction<L, S> {
 							if (loop.stream().anyMatch(nodeOnCycle -> mAmpleSets.get(nodeOnCycle) == null)) {
 								assert loop.stream().allMatch(mAmpleSets::containsKey)
 										: "missing ample set for node on stack";
-								mSomeOtherNodeOnCycleAlreadyLN++;
+								mStatistics.reportOtherTrivialNodeOnCycle();
 								continue;
 							}
 
 							mTrivialNodes.add(nextState);
 							final var oldAmple = mAmpleSets.put(nextState, null);
-							mLoopCausedTrivial++;
+							mStatistics.reportLoopCausedTrivialAmpleSet();
 							if (oldAmple != null) {
-								mLoopNotLoopCount++;
+								mStatistics.reportChangingLoopNodeStatus();
 								mLogger.warn("Non-loop node is now a loop node: " + nextState);
 							}
 							break;
@@ -283,9 +270,9 @@ public class AmpleReduction<L, S> {
 					// counting for statistics
 					final var nextAmple = mPersistent.persistentSet(nextState);
 					if (nextAmple != null) {
-						mAssignedNonTrivialAmple++;
+						mStatistics.reportNonTrivialAmpleSet();
 					} else {
-						mPersistentTrivial++;
+						mStatistics.reportNonLoopCausedTrivialAmpleSet();
 						mTrivialNodes.add(nextState);
 					}
 					mAmpleSets.put(nextState, nextAmple);
@@ -301,7 +288,7 @@ public class AmpleReduction<L, S> {
 
 			final int stackIndex;
 			if (prune) {
-				mPrunedTS++;
+				mStatistics.reportPrunedTransition();
 				debugIndent("-> transition was pruned");
 			} else if (!mDfs.isVisited(nextState)) {
 				final boolean abortNow = visitState(nextState);
@@ -383,5 +370,59 @@ public class AmpleReduction<L, S> {
 
 	private void debugIndent(final String msg, final Object... params) {
 		mLogger.debug("  ".repeat(mIndentLevel) + msg, params);
+	}
+
+	public Statistics getStatistics() {
+		return mStatistics;
+	}
+
+	private static final class Statistics extends AbstractStatisticsDataProvider {
+		private int mLoopNotLoopCount;
+		private int mAssignedNonTrivialAmple;
+		private int mPrunedTransitions;
+		private int mLoopCausedTrivial;
+		private int mPersistentTrivial;
+		private int mTargetAlreadyLoopNode;
+		private int mOtherNodeOnCycleAlreadyTrivial;
+
+		private Statistics() {
+			declareCounter("Loop nodes with changing loop node status", () -> mLoopNotLoopCount);
+			declareCounter("Non-trivial ample set", () -> mAssignedNonTrivialAmple);
+			declareCounter("Pruned transitions", () -> mPrunedTransitions);
+			declareCounter("Trivial sets caused by loops", () -> mLoopCausedTrivial);
+			declareCounter("Trivial sets not caused by loops", () -> mPersistentTrivial);
+			declareCounter("Initially non-trivial ample sets", () -> mAssignedNonTrivialAmple);
+			declareCounter("Successor was already a loop node", () -> mTargetAlreadyLoopNode);
+			declareCounter("Another node on cycle already had trivial ample set",
+					() -> mOtherNodeOnCycleAlreadyTrivial);
+		}
+
+		private void reportChangingLoopNodeStatus() {
+			mLoopNotLoopCount++;
+		}
+
+		private void reportNonTrivialAmpleSet() {
+			mAssignedNonTrivialAmple++;
+		}
+
+		private void reportPrunedTransition() {
+			mPrunedTransitions++;
+		}
+
+		private void reportLoopCausedTrivialAmpleSet() {
+			mLoopCausedTrivial++;
+		}
+
+		private void reportNonLoopCausedTrivialAmpleSet() {
+			mPersistentTrivial++;
+		}
+
+		private void reportTargetAlreadyLoopNode() {
+			mTargetAlreadyLoopNode++;
+		}
+
+		private void reportOtherTrivialNodeOnCycle() {
+			mOtherNodeOnCycleAlreadyTrivial++;
+		}
 	}
 }
