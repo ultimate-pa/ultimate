@@ -664,9 +664,11 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private static Expression constructSignedExpression(final Expression expr, final int bitLength,
 			final LlvmirLocation location) {
 		final IntegerLiteral maxValueLiteral = new IntegerLiteral(location,
-				BigInteger.ONE.shiftLeft(bitLength - 1).toString());
-		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, expr, maxValueLiteral);
-		final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMINUS, expr, maxValueLiteral);
+				BigInteger.ONE.shiftLeft(bitLength - 1).subtract(BigInteger.ONE).toString());
+		final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location,
+				BigInteger.ONE.shiftLeft(bitLength).toString());
+		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGT, expr, maxValueLiteral);
+		final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMINUS, expr, bitLengthLiteral);
 		final IfThenElseExpression ifThenElseExpr = new IfThenElseExpression(location, binaryExpr, thenExpr, expr);
 		return ifThenElseExpr;
 	}
@@ -1354,7 +1356,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final int oldBitLength = getBitLengthFromType(oldTypeContext);
 				final int newBitLength = getBitLengthFromType(newTypeContext);
-				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, newBitLength, true);
+				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, newBitLength, false);
 				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
 						constructSignedExpression(
 								constructExpressionFromValue(instructionType.sExtInst().typeValue().value(),
