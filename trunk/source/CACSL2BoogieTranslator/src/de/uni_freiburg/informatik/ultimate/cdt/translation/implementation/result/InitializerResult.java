@@ -144,10 +144,10 @@ public class InitializerResult extends Result {
 		throw new AssertionError("found no value in initializer");
 	}
 
-	public static abstract class Designator {
+	public static sealed abstract class Designator permits ArrayDesignator, StructDesignator {
 	}
 
-	public static class StructDesignator extends Designator {
+	public static final class StructDesignator extends Designator {
 		final String mStructFieldId;
 
 		public StructDesignator(final String structFieldId) {
@@ -164,7 +164,7 @@ public class InitializerResult extends Result {
 		}
 	}
 
-	public static class ArrayDesignator extends Designator {
+	public static final class ArrayDesignator extends Designator {
 		final Integer mArrayCellId;
 
 		public ArrayDesignator(final Integer arrayCellId) {

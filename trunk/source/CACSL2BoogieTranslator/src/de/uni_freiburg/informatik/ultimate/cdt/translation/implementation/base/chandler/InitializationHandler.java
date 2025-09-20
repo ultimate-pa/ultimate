@@ -1152,15 +1152,13 @@ public class InitializationHandler {
 			 * We are initializing through an (possibly aggregate-type) expression (not through a list of expressions).
 			 */
 
-			if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
+			if (initializerResult.getRootExpressionResult() instanceof final StringLiteralResult slr
 					&& targetCTypeRaw instanceof CArray) {
 				/*
 				 * Case like 'char a[] = "bla"' in C, initialization would copy the char array contents to a position on
 				 * the stack we create an InitializerInfo that corresponds to the initializer { 'b', 'l', 'a', '\0' }.
 				 * (For this purpose, StringLiteralResult holds the original string contents.)
 				 */
-
-				final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
 
 				final List<Overapprox> overapproxList;
 				if (!slr.getOverapprs().isEmpty()) {
@@ -1273,18 +1271,21 @@ public class InitializationHandler {
 		Deque<InitializerResult> rest = new ArrayDeque<>(initializerResults);
 		int currentCellIndex = -1;
 		while (!rest.isEmpty() && (currentCellIndex < bound - 1 || rest.peekFirst().hasRootDesignator())) {
-			if (rest.peekFirst().hasRootDesignator()) {
-				final Designator designator = rest.peekFirst().getRootDesignator();
-				if (designator instanceof ArrayDesignator) {
-					assert targetCType instanceof CArray;
-					currentCellIndex = ((ArrayDesignator) designator).getArrayCellId();
-				} else if (designator instanceof StructDesignator) {
-					assert targetCType instanceof CStructOrUnion;
-					currentCellIndex = CTranslationUtil.findIndexOfStructField((CStructOrUnion) targetCType,
-							((StructDesignator) designator).getStructFieldId());
-				} else {
-					throw new AssertionError("missing case (designator)?");
+			final InitializerResult firstOfRest = rest.peekFirst();
+			if (firstOfRest.hasRootDesignator()) {
+				final Designator designator = firstOfRest.getRootDesignator();
+				currentCellIndex = switch (designator) {
+				case final ArrayDesignator ad -> {
+					assert targetCType instanceof CArray : "Expected CArray, but got "
+							+ targetCType.getClass().getSimpleName() + " (" + targetCType + ")";
+					yield ad.getArrayCellId();
 				}
+				case final StructDesignator sd -> {
+					assert targetCType instanceof CStructOrUnion : "Expected CStructOrUnion, but got "
+							+ targetCType.getClass().getSimpleName() + " (" + targetCType + ")";
+					yield CTranslationUtil.findIndexOfStructField((CStructOrUnion) targetCType, sd.getStructFieldId());
+				}
+				};
 			} else {
 				currentCellIndex++;
 			}
