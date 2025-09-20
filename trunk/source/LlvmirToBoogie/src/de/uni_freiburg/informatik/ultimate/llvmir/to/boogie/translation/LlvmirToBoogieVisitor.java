@@ -664,7 +664,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private static Expression constructSignedExpression(final Expression expr, final int bitLength,
 			final LlvmirLocation location) {
 		final IntegerLiteral maxValueLiteral = new IntegerLiteral(location,
-				BigInteger.ONE.shiftLeft(bitLength - 1).subtract(BigInteger.ONE).toString());
+				BigInteger.ONE.shiftLeft(bitLength - 1).toString());
 		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, expr, maxValueLiteral);
 		final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMINUS, expr, maxValueLiteral);
 		final IfThenElseExpression ifThenElseExpr = new IfThenElseExpression(location, binaryExpr, thenExpr, expr);
