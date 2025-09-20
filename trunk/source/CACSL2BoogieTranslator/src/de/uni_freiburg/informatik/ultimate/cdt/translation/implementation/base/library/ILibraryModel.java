@@ -27,9 +27,15 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
 import java.util.Collection;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler.IFunctionModelHandler;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * An interface to abstract the model of libraries (mostly libraries from the C standard) in Boogie.
@@ -37,6 +43,47 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface ILibraryModel {
+	/**
+	 * An interface to represent the model of a library function.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	@FunctionalInterface
+	interface IFunctionModelHandler {
+		/**
+		 * Translates a library function.
+		 *
+		 * @param main
+		 *            A dispatcher.
+		 * @param node
+		 *            A node for the function call.
+		 * @param loc
+		 *            A location.
+		 * @param methodName
+		 *            The name of the called function.
+		 * @return The model of the call to a library function.
+		 */
+		Result handleFunction(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+				String methodName);
+	}
+
+	/**
+	 * An interface to represent the model of a constant macro.
+	 *
+	 * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+	 */
+	@FunctionalInterface
+	interface IConstantModelHandler {
+		/**
+		 * Models the constant as an {@link ExpressionResult}.
+		 *
+		 * @param loc
+		 *            A location.
+		 * @return An {@link ExpressionResult} as a model of the constant.
+		 */
+		ExpressionResult handleConstant(ILocation loc);
+	}
+
 	/**
 	 * Model of a translated function, consisting of the name of the function and our translated model (represented as a
 	 * {@link IFunctionModelHandler}).
@@ -53,23 +100,46 @@ public interface ILibraryModel {
 	}
 
 	/**
+	 * Model of a predefined constant, consisting of the name of the type and our translated model (represented as a
+	 * {@link IConstantModelHandler}).
+	 */
+	public record ConstantModel(String name, IConstantModelHandler model) {
+		// empty
+	}
+
+	/**
 	 * Gets the model of the supported functions.
 	 *
 	 * @return a collection of {@link FunctionModel} of the functions that can be handled.
 	 */
-	Collection<FunctionModel> getFunctionModels();
+	default Collection<FunctionModel> getFunctionModels() {
+		return List.of();
+	}
 
 	/**
 	 * Gets the functions that are not supported.
 	 *
 	 * @return names of the unsupported functions, i.e., where we expect to cancel the translation on encounter.
 	 */
-	Collection<String> getUnsupportedFunctions();
+	default Collection<String> getUnsupportedFunctions() {
+		return List.of();
+	}
 
 	/**
 	 * Gets the model of the predefined types.
 	 *
 	 * @return a collection of {@link TypeModel} of the types that are defined.
 	 */
-	Collection<TypeModel> getTypeModels();
+	default Collection<TypeModel> getTypeModels() {
+		return List.of();
+	}
+
+	/**
+	 * Get the model of the predefined constants
+	 *
+	 * @return a collection of {@link ConstantModel} of the constants that are defined.
+	 */
+	default Collection<ConstantModel> getConstantModels() {
+		return List.of();
+	}
 }

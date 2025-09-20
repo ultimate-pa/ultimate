@@ -78,7 +78,6 @@ public class AssertLibraryModel implements ILibraryModel {
 		/** C standard library functions (from assert.h) to define the 'assert' macro */
 		result.add(new FunctionModel("__assert_fail", this::handleAssertFail));
 		result.add(new FunctionModel("__assert_func", this::handleAssertFail));
-		// TODO: This should not occur in the preprocessed file, but we handle it for now
 		result.add(new FunctionModel("assert", this::handleAssert));
 		/** C11 static assertion (C language keyword, deprecated in C23) */
 		result.add(new FunctionModel("_Static_assert", this::handleStaticAssert));
@@ -86,11 +85,6 @@ public class AssertLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("static_assert", this::handleStaticAssert));
 
 		return result;
-	}
-
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
 	}
 
 	private Result handleAssertFail(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -167,10 +161,5 @@ public class AssertLibraryModel implements ILibraryModel {
 
 		/* handle as regular assertion */
 		return handleAssert(main, node, loc, name);
-	}
-
-	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
 	}
 }

@@ -28,9 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -39,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
@@ -48,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.Cc
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -76,6 +74,16 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = true;
+
+	/**
+	 * Try to simplify modulo terms.
+	 */
+	private static final boolean APPLY_MODULO_SIMPLIFICATION = true;
+	/**
+	 * Try to apply a select-over-store simplification.
+	 */
+	private static final boolean APPLY_ARRAY_SIMPLIFICATION = true;
+
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
@@ -122,46 +130,32 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		} else if (term instanceof QuantifiedFormula) {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
+		Term result = term;
 		if (APPLY_CONSTANT_FOLDING) {
-			final Term tmp = applyConstantFolding(mMgdScript, context, term);
-			if (tmp != term) {
-				return new TermContextTransformationEngine.FinalResultForAscend(tmp);
-			}
+			result = SimplificationUtils.applyConstantFolding(mMgdScript, context, result);
 		}
-		return new TermContextTransformationEngine.FinalResultForAscend(term);
+		if (APPLY_MODULO_SIMPLIFICATION) {
+			result = SimplificationUtils.tryModSimplification(mMgdScript,
+					x -> isValidInContext(mMgdScript.getScript(), context, x), result);
+		}
+		if (APPLY_ARRAY_SIMPLIFICATION) {
+			result = SimplificationUtils.tryArraySimplification(mMgdScript,
+					x -> isValidInContext(mMgdScript.getScript(), context, x), result);
+		}
+		return new TermContextTransformationEngine.FinalResultForAscend(result);
 	}
 
 	/**
-	 * Use equalities of the form `x=l` (where x is a constant symbol or variable and l is a number) to substitute all
-	 * occurrences of x by the number l.
-	 *
-	 * @param context
-	 *            Term that we check for equalities. This term is not added to the result. E.g., in the
-	 *            {@link PolyPacSimplificationTermWalker} this is the critical constraint.
-	 * @param term
-	 *            Term in which we apply the substitution.
+	 * Check if the conjunction of the terms is valid in the given context. (Resp. check if the context implies each of
+	 * the terms.) This check uses the PolyPoNeUtils and is very fast but incomplete.
 	 */
-	public static Term applyConstantFolding(final ManagedScript mgdScript, final Term context, final Term term) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Term conjunct : SmtUtils.getConjuncts(context)) {
-			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
-				continue;
-			}
-			final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), conjunct);
-			if (polyRel != null) {
-				final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mgdScript.getScript());
-				if (sbr != null) {
-					substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
-				}
-			}
-		}
-		final Term result;
-		if (!substitutionMapping.isEmpty()) {
-			result = Substitution.apply(mgdScript, substitutionMapping, term);
+	private static LBool isValidInContext(final Script script, final Term context, final Term... terms) {
+		final Term simplifiedConjunction = PolyPoNeUtils.and(script, context, Arrays.asList(terms));
+		if (SmtUtils.isTrueLiteral(simplifiedConjunction)) {
+			return LBool.UNSAT;
 		} else {
-			result = term;
+			return LBool.UNKNOWN;
 		}
-		return result;
 	}
 
 	@Override

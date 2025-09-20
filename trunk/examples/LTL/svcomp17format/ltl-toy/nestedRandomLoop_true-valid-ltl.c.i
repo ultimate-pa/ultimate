@@ -1,4 +1,4 @@
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int();
 unsigned int n;
 unsigned int i = 1;
 int main()

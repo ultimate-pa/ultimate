@@ -489,6 +489,23 @@ public class PthreadLibraryModel implements ILibraryModel {
 	public Collection<TypeModel> getTypeModels() {
 		// TODO: Handle more types here that are declared in pthread.h
 		return List.of(new TypeModel("pthread_t", mTypeHandler.getThreadIdType()),
-				new TypeModel("__pthread_list_t", CPointer.voidPointer()));
+				new TypeModel("__pthread_list_t", CPointer.voidPointer()),
+				// TODO: We may want to use a specific type to simplify the mutex/lock handling
+				new TypeModel("pthread_mutex_t", new CPrimitive(CPrimitives.INT)),
+				new TypeModel("pthread_rwlock_t", new CPrimitive(CPrimitives.INT)),
+				new TypeModel("pthread_cond_t", new CPrimitive(CPrimitives.INT)));
+	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		// TODO: Add more constants?
+		// TODO: Model initializers properly?
+		return List.of(
+				new ConstantModel("PTHREAD_MUTEX_INITIALIZER",
+						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
+				new ConstantModel("PTHREAD_RWLOCK_INITIALIZER",
+						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
+				new ConstantModel("PTHREAD_COND_INITIALIZER",
+						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))));
 	}
 }

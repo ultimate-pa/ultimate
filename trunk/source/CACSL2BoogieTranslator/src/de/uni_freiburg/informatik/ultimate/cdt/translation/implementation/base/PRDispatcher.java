@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.text.ParseException;
 import java.util.List;
 import java.util.Set;
 
@@ -196,7 +195,7 @@ public class PRDispatcher implements IDispatcher {
 	}
 
 	@Override
-	public NextACSL nextACSLStatement() throws ParseException {
+	public NextACSL nextACSLStatement() {
 		throw new UnsupportedOperationException();
 	}
 

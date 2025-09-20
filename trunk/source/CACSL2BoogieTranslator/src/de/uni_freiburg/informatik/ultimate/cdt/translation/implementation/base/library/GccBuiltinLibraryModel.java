@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -51,12 +52,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
@@ -335,5 +336,34 @@ public class GccBuiltinLibraryModel implements ILibraryModel {
 		// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
 		// https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
 		return List.of(new TypeModel("__float128", new CPrimitive(CPrimitives.LONGDOUBLE)));
+	}
+
+	private ExpressionResult handleFunction(final ILocation loc) {
+		final ICType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, SFO.AUXVAR.NONDET);
+		final RValue rvalue = new RValue(auxvar.getExp(), returnType);
+		return new ExpressionResult(List.of(), rvalue, List.of(auxvar.getVarDec()), Set.of(auxvar));
+	}
+
+	private ConstantModel modelSizeofConstant(final String name, final ICType type) {
+		return new ConstantModel(name, loc -> new ExpressionResult(
+				new RValue(mTypeSizeComputer.constructBytesizeExpression(loc, type), type)));
+	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		return List.of(new ConstantModel("__PRETTY_FUNCTION__", this::handleFunction),
+				new ConstantModel("__FUNCTION__", this::handleFunction),
+				new ConstantModel("__func__", this::handleFunction),
+				modelSizeofConstant("__SIZEOF_INT__", new CPrimitive(CPrimitives.INT)),
+				modelSizeofConstant("__SIZEOF_LONG__", new CPrimitive(CPrimitives.LONG)),
+				modelSizeofConstant("__SIZEOF_LONG_LONG__", new CPrimitive(CPrimitives.LONGLONG)),
+				modelSizeofConstant("__SIZEOF_SHORT__", new CPrimitive(CPrimitives.SHORT)),
+				modelSizeofConstant("__SIZEOF_POINTER__", CPointer.voidPointer()),
+				modelSizeofConstant("__SIZEOF_FLOAT__", new CPrimitive(CPrimitives.FLOAT)),
+				modelSizeofConstant("__SIZEOF_DOUBLE__", new CPrimitive(CPrimitives.DOUBLE)),
+				modelSizeofConstant("__SIZEOF_LONG_DOUBLE__", new CPrimitive(CPrimitives.LONGDOUBLE)),
+				modelSizeofConstant("__SIZEOF_SIZE_T__", mTypeSizeComputer.getSizeT()),
+				modelSizeofConstant("__SIZEOF_INT128__", new CPrimitive(CPrimitives.INT128)));
 	}
 }

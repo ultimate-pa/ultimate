@@ -324,20 +324,21 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("__builtin_huge_val", (main, node, loc, name) -> handleNaNOrInfinity(loc, "inf")));
 		result.add(
 				new FunctionModel("__builtin_huge_valf", (main, node, loc, name) -> handleNaNOrInfinity(loc, "inff")));
-		result.add(new FunctionModel("__builtin_isgreater",
-				(main, node, loc, name) -> handleFloatBuiltinBinaryComparison(main, node, loc, name,
-						IASTBinaryExpression.op_greaterThan)));
-		result.add(new FunctionModel("__builtin_isgreaterequal",
-				(main, node, loc, name) -> handleFloatBuiltinBinaryComparison(main, node, loc, name,
-						IASTBinaryExpression.op_greaterEqual)));
-		result.add(new FunctionModel("__builtin_isless", (main, node, loc,
-				name) -> handleFloatBuiltinBinaryComparison(main, node, loc, name, IASTBinaryExpression.op_lessThan)));
-		result.add(new FunctionModel("__builtin_islessequal", (main, node, loc,
-				name) -> handleFloatBuiltinBinaryComparison(main, node, loc, name, IASTBinaryExpression.op_lessEqual)));
-		result.add(new FunctionModel("__builtin_isunordered", this::handleFloatBuiltinIsUnordered));
-		result.add(new FunctionModel("__builtin_islessgreater", this::handleFloatBuiltinIsLessGreater));
+		result.add(new FunctionModel("__builtin_isgreater", this::handleIsGreater));
+		result.add(new FunctionModel("__builtin_isgreaterequal", this::handleIsGreaterEqual));
+		result.add(new FunctionModel("__builtin_isless", this::handleIsLess));
+		result.add(new FunctionModel("__builtin_islessequal", this::handleIsLessEqual));
+		result.add(new FunctionModel("__builtin_isunordered", this::handleIsUnordered));
+		result.add(new FunctionModel("__builtin_islessgreater", this::handleIsLessGreater));
 		result.add(new FunctionModel("__builtin_isnan",
 				(main, node, loc, name) -> handleUnaryFloatFunction(main, node, loc, "isnan")));
+
+		result.add(new FunctionModel("isgreater", this::handleIsGreater));
+		result.add(new FunctionModel("isgreaterequal", this::handleIsGreaterEqual));
+		result.add(new FunctionModel("isless", this::handleIsLess));
+		result.add(new FunctionModel("islessequal", this::handleIsLessEqual));
+		result.add(new FunctionModel("isunordered", this::handleIsUnordered));
+		result.add(new FunctionModel("islessgreater", this::handleIsLessGreater));
 
 		return result;
 	}
@@ -397,7 +398,31 @@ public class MathLibraryModel implements ILibraryModel {
 		return rtr;
 	}
 
-	private Result handleFloatBuiltinBinaryComparison(final IDispatcher main, final IASTFunctionCallExpression node,
+	// http://en.cppreference.com/w/c/numeric/math/isless
+	private Result handleIsLess(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		return handleBinaryComparison(main, node, loc, name, IASTBinaryExpression.op_lessThan);
+	}
+
+	// http://en.cppreference.com/w/c/numeric/math/islessequal
+	private Result handleIsLessEqual(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		return handleBinaryComparison(main, node, loc, name, IASTBinaryExpression.op_lessEqual);
+	}
+
+	// http://en.cppreference.com/w/c/numeric/math/isgreater
+	private Result handleIsGreater(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		return handleBinaryComparison(main, node, loc, name, IASTBinaryExpression.op_greaterThan);
+	}
+
+	// http://en.cppreference.com/w/c/numeric/math/isgreaterequal
+	private Result handleIsGreaterEqual(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		return handleBinaryComparison(main, node, loc, name, IASTBinaryExpression.op_greaterEqual);
+	}
+
+	private Result handleBinaryComparison(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final int op) {
 		/*
 		 * Handle the following float comparisons
@@ -437,8 +462,8 @@ public class MathLibraryModel implements ILibraryModel {
 	 * See also http://en.cppreference.com/w/c/numeric/math/isunordered
 	 *
 	 */
-	private Result handleFloatBuiltinIsUnordered(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
+	private Result handleIsUnordered(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 2, name, arguments);
 
@@ -463,7 +488,7 @@ public class MathLibraryModel implements ILibraryModel {
 		return rtr;
 	}
 
-	private Result handleFloatBuiltinIsLessGreater(final IDispatcher main, final IASTFunctionCallExpression node,
+	private Result handleIsLessGreater(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		/*
 		 * http://en.cppreference.com/w/c/numeric/math/islessgreater
@@ -509,6 +534,26 @@ public class MathLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		return List.of();
+		return List.of(
+				// most efficient floating-point type at least as wide as float -> We choose float
+				new TypeModel("float_t", new CPrimitive(CPrimitives.FLOAT)),
+				// most efficient floating-point type at least as wide as double -> We choose double
+				new TypeModel("double_t", new CPrimitive(CPrimitives.DOUBLE)));
+	}
+
+	private ConstantModel modelNumberClassificationMacro(final String name) {
+		return new ConstantModel(name,
+				loc -> new ExpressionResult(mExpressionTranslation.handleNumberClassificationMacro(loc, name)));
+	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		return List.of(new ConstantModel("NAN", loc -> mExpressionTranslation.createNanOrInfinity(loc, "NAN")),
+				new ConstantModel("INFINITY", loc -> mExpressionTranslation.createNanOrInfinity(loc, "INFINITY")),
+				new ConstantModel("inf", loc -> mExpressionTranslation.createNanOrInfinity(loc, "inf")),
+				// Check if id is number classification macro according to 7.12.6 of C11.
+				modelNumberClassificationMacro("FP_NAN"), modelNumberClassificationMacro("FP_INFINITE"),
+				modelNumberClassificationMacro("FP_ZERO"), modelNumberClassificationMacro("FP_SUBNORMAL"),
+				modelNumberClassificationMacro("FP_NORMAL"));
 	}
 }

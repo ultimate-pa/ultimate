@@ -27,6 +27,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 
 public class LargeBlockEncoding {
+
+	/**
+	 * Omit compositions if this would lead to the removal of a loop location or of a location of interest.
+	 */
+	public static final boolean PRESERVE_LOOP_HEADS_AND_LOCATIONS_OF_INTEREST = true;
+
 	/**
 	 * Defines which statements will be composed.
 	 */
@@ -117,6 +123,10 @@ public class LargeBlockEncoding {
 	 * on what kind of composition is to be performed.
 	 */
 	private void considerCompositionCandidate(final BoogieIcfgLocation pp, final boolean allowComplex) {
+		if (PRESERVE_LOOP_HEADS_AND_LOCATIONS_OF_INTEREST
+				&& (mIcfg.getLoopLocations().contains(pp) || mIcfg.getLocationsOfInterest().contains(pp))) {
+			return;
+		}
 		mLogger.debug("Considering composition at " + pp);
 		final SequentialCompositionType seq = classifySequentialCompositionNode(pp);
 		if (seq == SequentialCompositionType.STRAIGHTLINE) {

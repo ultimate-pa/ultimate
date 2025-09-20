@@ -350,4 +350,10 @@ public class FunctionModelHelper {
 
 		return builder.build();
 	}
+
+	public ExpressionResult constructIntegerLiteral(final ILocation loc, final BigInteger value,
+			final CPrimitive type) {
+		return new ExpressionResult(
+				new RValue(mExpressionTranslation.constructLiteralForIntegerType(loc, type, value), type));
+	}
 }

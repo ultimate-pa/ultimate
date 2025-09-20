@@ -151,10 +151,18 @@ public final class CPrimitive implements ICType {
 	 */
 	private final CPrimitiveCategory mGeneralType;
 
-	public CPrimitive(final CPrimitives type) {
+	private CPrimitive(final CPrimitives type, final boolean isAtomic) {
 		mType = type;
 		mGeneralType = getGeneralType(type);
-		mIsAtomic = false;
+		mIsAtomic = isAtomic;
+	}
+
+	public CPrimitive(final CPrimitives type) {
+		this(type, false);
+	}
+
+	public static CPrimitive constructAtomicType(final CPrimitives type) {
+		return new CPrimitive(type, true);
 	}
 
 	/**

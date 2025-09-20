@@ -239,20 +239,21 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 	}
 
 	private Pair<OUTLOC, OUTLOC> splitLocation(final INLOC oldInitTarget, final String containingprocedure) {
+		final boolean isLocationOfInterest = mInputIcfg.getLocationsOfInterest().contains(oldInitTarget);
 		Pair<OUTLOC, OUTLOC> p;
 		{
 			final boolean wasProcedureEntryNode = !mInputIcfg.getProcedureEntryNodes().isEmpty()
 					&& mInputIcfg.getProcedureEntryNodes().get(containingprocedure).equals(oldInitTarget);
 			final OUTLOC s1 = createAndAddNewLocation(oldInitTarget,
 					mInputIcfg.getInitialNodes().contains(oldInitTarget), false, wasProcedureEntryNode, false, false,
-					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"));
+					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"), isLocationOfInterest);
 
 			final boolean wasProcedureExitNode = !mInputIcfg.getProcedureExitNodes().isEmpty()
 					&& mInputIcfg.getProcedureExitNodes().get(containingprocedure).equals(oldInitTarget);
 			final OUTLOC s2 = createAndAddNewLocation(oldInitTarget, false,
 					mInputIcfg.getProcedureErrorNodes().get(containingprocedure).contains(oldInitTarget), false,
 					wasProcedureExitNode, mInputIcfg.getLoopLocations().contains(oldInitTarget),
-					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-2"));
+					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-2"), isLocationOfInterest);
 			p = new Pair<>(s1, s2);
 		}
 		return p;
@@ -260,14 +261,15 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 	private OUTLOC createAndAddNewLocation(final INLOC originalInitNode, final boolean isInitial, final boolean isError,
 			final boolean isProcEntry, final boolean isProcExit, final boolean isLoopLocation,
-			final DebugIdentifier locName) {
+			final DebugIdentifier locName, final boolean isLocationOfInterest) {
 		// TODO: general solution.. this one works for BoogieIcfgLocations
 		// final String debugString = this.getClass().toString() + "freshInit" + originalInitNode.hashCode();
 		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(locName, originalInitNode.getProcedure(), false,
 				((BoogieIcfgLocation) originalInitNode).getBoogieASTNode());
 
 		// add fresh location to resultIcfg
-		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation,
+				isLocationOfInterest);
 
 		return freshLoc;
 	}

@@ -485,7 +485,13 @@ public class StdlibLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		return List.of(new TypeModel("size_t", mTypeSizes.getSizeT()),
-				new TypeModel("ssize_t", mTypeSizes.getSsizeT()));
+		return List.of(new TypeModel("size_t", mTypeSizes.getSizeT()), new TypeModel("ssize_t", mTypeSizes.getSsizeT()),
+				new TypeModel("wchar_t", new CPrimitive(CPrimitives.USHORT)));
+	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		return List.of(new ConstantModel("NULL", loc -> new ExpressionResult(
+				new RValue(mExpressionTranslation.constructNullPointer(loc), CPointer.voidPointer()))));
 	}
 }

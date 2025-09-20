@@ -93,11 +93,6 @@ public class TimeLibraryModel implements ILibraryModel {
 		return result;
 	}
 
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
 	private Result handleTime(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -113,10 +108,5 @@ public class TimeLibraryModel implements ILibraryModel {
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
 				builder);
 		return builder.build();
-	}
-
-	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
 	}
 }

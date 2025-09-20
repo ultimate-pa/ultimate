@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -146,26 +147,6 @@ public class PostProcessor {
 
 	private final Set<String> mFunctions;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param overapproximateFloatingPointOperations
-	 * @param services
-	 * @param typeHandler
-	 * @param reporter
-	 * @param checkedMethod
-	 * @param auxVarInfoBuilder
-	 * @param functions
-	 * @param typeSizes
-	 * @param symbolTable
-	 * @param staticObjectsHandler
-	 * @param settings
-	 * @param procedureManager
-	 * @param memoryHandler
-	 * @param initHandler
-	 * @param functionhandler
-	 * @param chandler
-	 */
 	public PostProcessor(final ILogger logger, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final Set<String> functions, final TypeSizes typeSizes,
@@ -204,10 +185,10 @@ public class PostProcessor {
 		final Set<String> undefinedTypes = mTypeHandler.getUndefinedTypes();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 
-		final String checkedMethod = mSettings.getEntryMethod();
+		final String entryFunction = mSettings.getEntryFunction();
 
-		if (!checkedMethod.equals(SFO.EMPTY) && mProcedureManager.hasProcedure(checkedMethod)) {
-			mLogger.info("Analyzing one entry point: " + checkedMethod);
+		if (!entryFunction.equals(SFO.EMPTY) && mProcedureManager.hasProcedure(entryFunction)) {
+			mLogger.info("Analyzing one entry point: " + entryFunction);
 
 			final UltimateInitProcedure initProcedure =
 					createUltimateInitProcedure(loc, hook, additionalInitializations);
@@ -376,11 +357,10 @@ public class PostProcessor {
 		return decls;
 	}
 
+	// TODO: This function is used to handle the rounding mode. The constants are defined in FenvLibraryModel and the
+	// actual handling of the rounding mode should happen also there, but this was not moved yet (this might also
+	// require some refactoring).
 	private ArrayList<Declaration> createUltimateSetCurrentRoundingProcedure(final ILocation loc, final IASTNode hook) {
-		/*
-		 * Hardcoded to the following constants: FE_DOWNWARD 1024 FE_TONEAREST 0 FE_TOWARDZERO 3072 FE_UPWARD 2048
-		 */
-
 		final String functionName = BitvectorTranslation.ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE;
 		final String functionArgumentVariableName = "i";
 		final String returnVariableName = "r";
@@ -407,13 +387,13 @@ public class PostProcessor {
 
 		// rounding macros constants
 		final Expression rtzIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3072));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_TOWARDZERO);
 		final Expression rneIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_TONEAREST);
 		final Expression rtpIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2048));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_UPWARD);
 		final Expression rtnIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(1024));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_DOWNWARD);
 
 		final IdentifierExpression functionArgumentIdentifierExpression =
 				ExpressionFactory.constructIdentifierExpression(loc, intBoogieType, functionArgumentVariableName,
@@ -914,16 +894,16 @@ public class PostProcessor {
 		final ArrayList<VariableDeclaration> startDecl = new ArrayList<>();
 		startStmt.add(
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], SFO.INIT, new Expression[0]));
-		final String checkedMethod = mSettings.getEntryMethod();
-		final VarList[] checkedMethodOutParams =
-				mProcedureManager.getProcedureDeclaration(checkedMethod).getOutParams();
-		final VarList[] checkedMethodInParams = mProcedureManager.getProcedureDeclaration(checkedMethod).getInParams();
-		final Specification[] checkedMethodSpec =
-				mProcedureManager.getProcedureDeclaration(checkedMethod).getSpecification();
+		final String entryFunction = mSettings.getEntryFunction();
+		final VarList[] entryFunctionOutParams =
+				mProcedureManager.getProcedureDeclaration(entryFunction).getOutParams();
+		final VarList[] entryFunctionInParams = mProcedureManager.getProcedureDeclaration(entryFunction).getInParams();
+		final Specification[] entryFunctionSpec =
+				mProcedureManager.getProcedureDeclaration(entryFunction).getSpecification();
 
 		// find out the requires specs of the checked method and assume it before its start
 		final ArrayList<Statement> reqSpecsAssumes = new ArrayList<>();
-		for (final Specification spec : checkedMethodSpec) {
+		for (final Specification spec : entryFunctionSpec) {
 			if (spec instanceof RequiresSpecification) {
 				reqSpecsAssumes.add(new AssumeStatement(loc, ((RequiresSpecification) spec).getFormula()));
 			}
@@ -931,9 +911,9 @@ public class PostProcessor {
 		startStmt.addAll(reqSpecsAssumes);
 
 		final ArrayList<Expression> args = new ArrayList<>();
-		if (checkedMethodInParams.length > 0) {
-			startDecl.add(new VariableDeclaration(loc, new Attribute[0], checkedMethodInParams));
-			for (final VarList arg : checkedMethodInParams) {
+		if (entryFunctionInParams.length > 0) {
+			startDecl.add(new VariableDeclaration(loc, new Attribute[0], entryFunctionInParams));
+			for (final VarList arg : entryFunctionInParams) {
 				assert arg.getIdentifiers().length == 1;
 				final String id = arg.getIdentifiers()[0];
 				final IdentifierExpression idEx =
@@ -941,20 +921,20 @@ public class PostProcessor {
 				args.add(idEx);
 			}
 		}
-		if (checkedMethodOutParams.length != 0) {
-			assert checkedMethodOutParams.length == 1;
+		if (entryFunctionOutParams.length != 0) {
+			assert entryFunctionOutParams.length == 1;
 			// there is 1(!) return value
-			final ICType checkedMethodResultCType = mProcedureManager.getCFunctionType(checkedMethod).getResultType();
-			final AuxVarInfo checkedMethodReturnAuxVar =
-					mAuxVarInfoBuilder.constructAuxVarInfo(loc, checkedMethodResultCType, SFO.AUXVAR.RETURNED);
-			mSymboltable.addBoogieCIdPair(checkedMethodReturnAuxVar.getExp().getIdentifier(),
-					SFO.NO_REAL_C_VAR + checkedMethodReturnAuxVar.getExp().getIdentifier(), loc);
-			startDecl.add(checkedMethodReturnAuxVar.getVarDec());
+			final ICType entryFunctionResultCType = mProcedureManager.getCFunctionType(entryFunction).getResultType();
+			final AuxVarInfo entryFunctionReturnAuxVar =
+					mAuxVarInfoBuilder.constructAuxVarInfo(loc, entryFunctionResultCType, SFO.AUXVAR.RETURNED);
+			mSymboltable.addBoogieCIdPair(entryFunctionReturnAuxVar.getExp().getIdentifier(),
+					SFO.NO_REAL_C_VAR + entryFunctionReturnAuxVar.getExp().getIdentifier(), loc);
+			startDecl.add(entryFunctionReturnAuxVar.getVarDec());
 			startStmt.add(StatementFactory.constructCallStatement(loc, false,
-					new VariableLHS[] { checkedMethodReturnAuxVar.getLhs() }, checkedMethod,
+					new VariableLHS[] { entryFunctionReturnAuxVar.getLhs() }, entryFunction,
 					args.toArray(new Expression[args.size()])));
 		} else {
-			startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], checkedMethod,
+			startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], entryFunction,
 					args.toArray(new Expression[args.size()])));
 		}
 

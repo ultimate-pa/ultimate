@@ -180,11 +180,6 @@ public class SvcompLibraryModel implements ILibraryModel {
 		return result;
 	}
 
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
 	private ExpressionResult handleVerifierNondetBool(final IDispatcher main, final ILocation loc) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final CPrimitive cType = new CPrimitive(CPrimitives.BOOL);
@@ -285,10 +280,5 @@ public class SvcompLibraryModel implements ILibraryModel {
 		final AssumeStatement assumeStmt = new AssumeStatement(loc, new NamedAttribute[] { ltlAttribute },
 				ExpressionFactory.createBooleanLiteral(loc, true));
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
-	}
-
-	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
 	}
 }

@@ -112,7 +112,9 @@ public final class BranchUnfoldIcfgTransformer {
 						final boolean isProcEntry = initial;
 						final boolean isProcExit = false;
 						final boolean isLoopLocation = mInputIcfg.getLoopLocations().contains(inputLoc);
-						mResultIcfg.addLocation(resultLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+						final boolean isLocationOfInterest = mInputIcfg.getLocationsOfInterest().contains(inputLoc);
+						mResultIcfg.addLocation(resultLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation,
+								isLocationOfInterest);
 						mOldLoc2NewLoc.addPair(inputLoc, resultLoc);
 						// if (!mVisited.contains(pair)) {
 						// mVisited.add(pair);

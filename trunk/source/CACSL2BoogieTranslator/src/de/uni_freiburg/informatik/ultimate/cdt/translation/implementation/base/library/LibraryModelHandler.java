@@ -44,6 +44,8 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.IConstantModelHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -62,8 +64,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class LibraryModelHandler {
 	private final LocationFactory mLocationFactory;
-	private final Map<String, IFunctionModelHandler> mFunctionModels;
-	private final Map<String, ICType> mTypeModels;
+	private final Map<String, IFunctionModelHandler> mFunctionModels = new HashMap<>();
+	private final Map<String, ICType> mTypeModels = new HashMap<>();
+	private final Map<String, IConstantModelHandler> mConstantModels = new HashMap<>();
 	private final Map<String, IASTNode> mFunctionTable;
 	private final FlatSymbolTable mSymboltable;
 	private final boolean mCheckErrorFunction;
@@ -77,8 +80,7 @@ public class LibraryModelHandler {
 		mSymboltable = symboltable;
 		mCheckErrorFunction = checkErrorFunction;
 		mLocationFactory = locationFactory;
-		mFunctionModels = getFunctionModels(libraryModels);
-		mTypeModels = getTypeModels(libraryModels);
+		addModels(libraryModels);
 	}
 
 	/**
@@ -124,34 +126,23 @@ public class LibraryModelHandler {
 	}
 
 	public Map<String, ICType> getTypeModels() {
-		return mTypeModels;
+		return Collections.unmodifiableMap(mTypeModels);
 	}
 
-	private static Map<String, IFunctionModelHandler> getFunctionModels(final List<ILibraryModel> libraryModels) {
+	public Map<String, IConstantModelHandler> getConstantModels() {
+		return Collections.unmodifiableMap(mConstantModels);
+	}
+
+	private void addModels(final List<ILibraryModel> libraryModels) {
 		final IFunctionModelHandler die = (main, node, loc, name) -> {
 			throw new UnsupportedSyntaxException(loc, "Unsupported function: " + name);
 		};
-		final Map<String, IFunctionModelHandler> map = new HashMap<>();
 		for (final var model : libraryModels) {
-			for (final var fun : model.getFunctionModels()) {
-				fill(map, fun.functionName(), fun.functionModel());
-			}
-			for (final var unsupportedName : model.getUnsupportedFunctions()) {
-				fill(map, unsupportedName, die);
-			}
+			model.getFunctionModels().forEach(fun -> fill(mFunctionModels, fun.functionName(), fun.functionModel()));
+			model.getUnsupportedFunctions().forEach(name -> fill(mFunctionModels, name, die));
+			model.getTypeModels().forEach(type -> fill(mTypeModels, type.typeName(), type.cType()));
+			model.getConstantModels().forEach(cons -> fill(mConstantModels, cons.name(), cons.model()));
 		}
-		return Collections.unmodifiableMap(map);
-	}
-
-	private static Map<String, ICType> getTypeModels(final List<ILibraryModel> libraryModels) {
-		final Map<String, ICType> map = new HashMap<>();
-		for (final var model : libraryModels) {
-			for (final var type : model.getTypeModels()) {
-				fill(map, type.typeName(), type.cType());
-			}
-		}
-
-		return Collections.unmodifiableMap(map);
 	}
 
 	private static <K, V> void fill(final Map<K, V> map, final K key, final V value) {
@@ -159,29 +150,5 @@ public class LibraryModelHandler {
 		if (old != null) {
 			throw new AssertionError("Accidentally overwrote definition for " + key);
 		}
-	}
-
-	/**
-	 * An interface to represent the model of a library function.
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 */
-	@FunctionalInterface
-	interface IFunctionModelHandler {
-		/**
-		 * Translates a library function.
-		 *
-		 * @param main
-		 *            A dispatcher.
-		 * @param node
-		 *            A node for the function call.
-		 * @param loc
-		 *            A location.
-		 * @param methodName
-		 *            The name of the called function.
-		 * @return The model of the call to a library function.
-		 */
-		Result handleFunction(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-				String methodName);
 	}
 }

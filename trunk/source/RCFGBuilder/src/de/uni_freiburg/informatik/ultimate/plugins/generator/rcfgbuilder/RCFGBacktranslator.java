@@ -403,4 +403,8 @@ public class RCFGBacktranslator extends
 		return mTerm2Expression.translate(term);
 	}
 
+	@Override
+	public String targetExpressionToString(final Expression expression) {
+		return BoogiePrettyPrinter.print(expression);
+	}
 }

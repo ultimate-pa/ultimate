@@ -60,6 +60,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -177,11 +179,6 @@ public class StdioLibraryModel implements ILibraryModel {
 
 		return result;
 
-	}
-
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
 	}
 
 	// Overapproximates sprintf as follows:
@@ -465,9 +462,18 @@ public class StdioLibraryModel implements ILibraryModel {
 		return handlePrintFunction(main, node, loc);
 	}
 
+	private static ICType getFileType() {
+		final var charPointer = new CPointer(new CPrimitive(CPrimitives.CHAR));
+		final var intType = new CPrimitive(CPrimitives.INT);
+		// We just chose the same definition as GCC for now
+		return new CStructOrUnion(StructOrUnion.STRUCT, "FILE",
+				List.of("_ptr", "_cnt", "_base", "_flag", "_file", "_charbuf", "_bufsiz", "_tmpfname"),
+				List.of(charPointer, intType, charPointer, intType, intType, intType, intType, charPointer),
+				List.of(-1, -1, -1, -1, -1, -1, -1, -1));
+	}
+
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		// TODO: Handle e.g., file types here
-		return List.of();
+		return List.of(new TypeModel("FILE", getFileType()));
 	}
 }

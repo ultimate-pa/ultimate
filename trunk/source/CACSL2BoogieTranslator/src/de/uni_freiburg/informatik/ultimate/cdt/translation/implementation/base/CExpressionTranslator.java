@@ -179,7 +179,7 @@ public class CExpressionTranslator {
 			final Expression offsetRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
 					right.getLrValue().getValue(), SFO.POINTER_OFFSET);
 			switch (mPointerSubtractionAndComparisonValidityCheckMode) {
-			case ASSERTandASSUME:
+			case CHECK:
 				final Statement assertStm = new AssertStatement(loc, baseEquality);
 				final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 				chk.annotate(assertStm);
@@ -896,9 +896,7 @@ public class CExpressionTranslator {
 			final RValue one = new RValue(oneEpr, oneType);
 			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
-		} else if (ctype instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) ctype;
-
+		} else if (ctype instanceof final CPrimitive cPrimitive) {
 			final Expression one;
 			if (ctype.isFloatingType()) {
 				one = mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ONE);
@@ -956,7 +954,7 @@ public class CExpressionTranslator {
 		final Statement additionalStatement;
 		if (checkMode == CheckMode.ASSUME) {
 			additionalStatement = new AssumeStatement(loc, divisorNotZero);
-		} else if (checkMode == CheckMode.ASSERTandASSUME) {
+		} else if (checkMode == CheckMode.CHECK) {
 			additionalStatement = new AssertStatement(loc, divisorNotZero);
 			final Check check = new Check(Spec.DIVISION_BY_ZERO);
 			check.annotate(additionalStatement);
@@ -1063,7 +1061,7 @@ public class CExpressionTranslator {
 		final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals, leftPtr,
 				rightPtr, SFO.POINTER_BASE);
 		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
-		case ASSERTandASSUME:
+		case CHECK:
 			final Statement assertStm = new AssertStatement(loc, baseEquality);
 			final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 			chk.annotate(assertStm);

@@ -3,8 +3,8 @@
 //@ ltl invariant positive: [](AP(ADCR < 33152) ==> <>(AP(bald_low_batt == 1)));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume(int);
+extern int __VERIFIER_nondet_int();
 
 bool					bald_low_batt;          // 1: F.KO-Batterien nur noch <= 20 Std    
 unsigned char			timer_batt;             // Zeitgeber fuer Batteriehandling Zeitbasis 1s

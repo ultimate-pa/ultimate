@@ -45,7 +45,7 @@ public class AssertOrderShuffledSingletons<L extends IAction> implements IAssert
 		for (int i = 0; i < counterexample.getWord().length(); i++) {
 			list.add(Set.of(i));
 		}
-		Collections.shuffle(list, new Random(counterexample.hashCode()));
+		Collections.shuffle(list, new Random(counterexample.getWord().asList().hashCode()));
 		return list;
 	}
 }

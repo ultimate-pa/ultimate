@@ -2,8 +2,8 @@
 #include <stdio.h>  
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume(int);
+extern int __VERIFIER_nondet_int();
 
 int error, tempDisplay, warnLED = 0, tempIn = 0, chainBroken,
  temp, otime = 0, time = 0, limit = 0, init = 0;

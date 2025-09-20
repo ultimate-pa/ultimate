@@ -166,11 +166,6 @@ public class StringLibraryModel implements ILibraryModel {
 		return result;
 	}
 
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
 	/**
 	 * This function is used to model functions that perform string search and return a substring (like memchr, strstr,
 	 * strrchr).
@@ -568,10 +563,5 @@ public class StringLibraryModel implements ILibraryModel {
 		// mProcedureManager.registerCall(mmDecl.getName());
 
 		return resultBuilder.build();
-	}
-
-	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
 	}
 }

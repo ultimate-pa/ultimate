@@ -111,6 +111,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -820,8 +821,7 @@ public class MemoryHandler {
 
 	private String determineReadProcedure(final ICType resultType, final ILocation loc) throws AssertionError {
 		final ICType ut = resultType.getUnderlyingType();
-		if (ut instanceof CPrimitive) {
-			final CPrimitive cp = (CPrimitive) ut;
+		if (ut instanceof final CPrimitive cp) {
 			checkFloatOnHeapSupport(loc, cp);
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
 			return determineReadProcedureForPrimitive(cp.getType());
@@ -886,19 +886,16 @@ public class MemoryHandler {
 			final ICType valueType, final HeapWriteMode writeMode) {
 		final ICType realValueType = valueType.getUnderlyingType();
 
-		if (realValueType instanceof CPrimitive) {
-			return getWriteCallPrimitive(loc, hlv, value, (CPrimitive) realValueType, writeMode);
-		} else if (realValueType instanceof CEnum) {
-			return getWriteCallEnum(loc, hlv, value, writeMode);
-		} else if (realValueType instanceof CPointer) {
-			return getWriteCallPointer(loc, hlv, value, writeMode);
-		} else if (realValueType instanceof CStructOrUnion) {
-			return getWriteCallStruct(loc, hlv, value, (CStructOrUnion) realValueType, writeMode);
-		} else if (realValueType instanceof CArray) {
-			return getWriteCallArray(loc, hlv, value, (CArray) realValueType, writeMode);
-		} else {
-			throw new UnsupportedSyntaxException(loc, "we don't recognize this type: " + realValueType);
-		}
+		return switch (realValueType) {
+		case final CPrimitive primitive -> getWriteCallPrimitive(loc, hlv, value, primitive, writeMode);
+		case final CEnum enumType -> getWriteCallEnum(loc, hlv, value, writeMode);
+		case final CPointer pointer -> getWriteCallPointer(loc, hlv, value, writeMode);
+		case final CStructOrUnion structOrUnion -> getWriteCallStruct(loc, hlv, value, structOrUnion, writeMode);
+		case final CArray array -> getWriteCallArray(loc, hlv, value, array, writeMode);
+		case final CNamed named -> throw new AssertionError("getUnderlyingType() must not return CNamed");
+		case final CFunction function ->
+				throw new UnsupportedSyntaxException(loc, "Write calls for function types unsupported: " + function);
+		};
 	}
 
 	/**
@@ -2149,7 +2146,7 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
 			final String ptrName, final String procedureName) {
-		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.IGNORE) {
+		if (mSettings.checkPointerDerefValidity() == CheckMode.IGNORE) {
 			// add nothing
 			return Collections.emptyList();
 		}
@@ -2200,10 +2197,10 @@ public class MemoryHandler {
 		final Expression offsetInAllocatedRange =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, offsetGeqZero);
 		final boolean isFreeRequires;
-		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.ASSERTandASSUME) {
+		if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
 			isFreeRequires = false;
 		} else {
-			assert mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.ASSUME;
+			assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME;
 			isFreeRequires = true;
 		}
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
@@ -2229,7 +2226,7 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName) {
-		if (mSettings.getPointerBaseValidityMode() == CheckMode.IGNORE) {
+		if (mSettings.checkPointerDerefValidity() == CheckMode.IGNORE) {
 			// add nothing
 			return Collections.emptyList();
 		}
@@ -2238,10 +2235,10 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 		final Expression isValid = constructPointerBaseValidityCheckExpr(loc, ptrExpr);
 		final boolean isFreeRequires;
-		if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
+		if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
 			isFreeRequires = false;
 		} else {
-			assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME;
+			assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME;
 			isFreeRequires = true;
 		}
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
@@ -3013,8 +3010,8 @@ public class MemoryHandler {
 				final HeapDataArray hda = mMemoryModel.getPointerHeapArray();
 				mRequiredMemoryModelFeatures.reportPointerOnHeapInitFunctionRequired();
 				relevantHeapArrays.add(hda);
-			} else if (baseType instanceof CPrimitive) {
-				final CPrimitives primitive = ((CPrimitive) baseType).getType();
+			} else if (baseType instanceof final CPrimitive cPrimitive) {
+				final CPrimitives primitive = cPrimitive.getType();
 				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
 				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
 				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
@@ -3312,23 +3309,23 @@ public class MemoryHandler {
 	public List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue) {
 		final List<Statement> result = new ArrayList<>();
-		if (mSettings.getPointerBaseValidityMode() != CheckMode.IGNORE) {
+		if (mSettings.checkPointerDerefValidity() != CheckMode.IGNORE) {
 
 			// valid[s.base]
 			final Expression validBase = constructPointerBaseValidityCheckExpr(loc, pointerValue);
 
-			if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
+			if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
 				final AssertStatement assertion = new AssertStatement(loc, validBase);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
-				assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME : "missed a case?";
+				assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME : "missed a case?";
 				final Statement assume = new AssumeStatement(loc, validBase);
 				result.add(assume);
 			}
 		}
-		if (mSettings.getPointerTargetFullyAllocatedMode() != CheckMode.IGNORE) {
+		if (mSettings.checkPointerDerefValidity() != CheckMode.IGNORE) {
 
 			// s.offset < length[s.base])
 			final Expression offsetSmallerLength = mExpressionTranslation.constructBinaryComparisonIntegerExpression(
@@ -3349,13 +3346,13 @@ public class MemoryHandler {
 					// new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
 							offsetNonnegative);
-			if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
+			if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
-				assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME : "missed a case?";
+				assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME : "missed a case?";
 				final Statement assume = new AssumeStatement(loc, aAndB);
 				result.add(assume);
 			}

@@ -115,11 +115,6 @@ public class LinuxLibraryModel implements ILibraryModel {
 						(main, node, loc, name) -> handleFfs(main, node, loc, name, CPrimitives.LONGLONG)));
 	}
 
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
 	private Result handleSleep(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -243,10 +238,5 @@ public class LinuxLibraryModel implements ILibraryModel {
 		builder.setLrValue(new LocalLValue(resultInfo.getLhs(), resultType, null));
 
 		return builder.build();
-	}
-
-	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
 	}
 }

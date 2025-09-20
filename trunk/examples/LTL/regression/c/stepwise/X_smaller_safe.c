@@ -7,8 +7,8 @@
 #include <math.h>
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER_ltl_step() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern void __VERIFIER_ltl_step();
+extern int __VERIFIER_nondet_int();
 
 int x,y;
 

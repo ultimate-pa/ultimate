@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -73,10 +74,33 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class AtomicLibraryModel implements ILibraryModel {
-	/**
-	 * See MEMORY_ORDER_SEQ_CST in stdatomic.h
-	 */
-	private static final int MEMORY_ORDER_SEQ_CST = 5;
+	private enum MemoryOrder {
+		RELAXED("memory_order_relaxed", "__ATOMIC_RELAXED", 0), CONSUME("memory_order_consume", "__ATOMIC_CONSUME", 1),
+		ACQUIRE("memory_order_acquire", "__ATOMIC_ACQUIRE", 2), RELEASE("memory_order_release", "__ATOMIC_RELEASE", 3),
+		ACQ_REL("memory_order_acq_rel", "__ATOMIC_ACQ_REL", 4), SEQ_CST("memory_order_seq_cst", "__ATOMIC_SEQ_CST", 5);
+
+		private final String mFieldName;
+		private final String mGccConstantName;
+		private final int mValue;
+
+		MemoryOrder(final String fieldName, final String gccConstantName, final int value) {
+			mFieldName = fieldName;
+			mGccConstantName = gccConstantName;
+			mValue = value;
+		}
+
+		public String getFieldName() {
+			return mFieldName;
+		}
+
+		public String getGccConstantName() {
+			return mGccConstantName;
+		}
+
+		public BigInteger getValue() {
+			return BigInteger.valueOf(mValue);
+		}
+	}
 
 	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
@@ -129,11 +153,6 @@ public class AtomicLibraryModel implements ILibraryModel {
 				.handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(CPrimitives.BOOL))));
 
 		return result;
-	}
-
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
 	}
 
 	private Result handleAtomicClear(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -455,8 +474,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 
 		// create condition checking whether all memory orders are supported
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-		final Expression seqCst = mExpressionTranslation.constructLiteralForIntegerType(loc, intType,
-				BigInteger.valueOf(MEMORY_ORDER_SEQ_CST));
+		final Expression seqCst =
+				mExpressionTranslation.constructLiteralForIntegerType(loc, intType, MemoryOrder.SEQ_CST.getValue());
 		final var conjuncts = Arrays.stream(memoryOrders)
 				.map(memoryOrder -> mExpressionTranslation.constructBinaryEqualityExpression(loc,
 						IASTBinaryExpression.op_equals, memoryOrder, intType, seqCst, intType))
@@ -480,7 +499,31 @@ public class AtomicLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		// TODO: Handle types like atomic_int etc. here
-		return List.of();
+		return List.of(new TypeModel("atomic_bool", CPrimitive.constructAtomicType(CPrimitives.BOOL)),
+				new TypeModel("atomic_char", CPrimitive.constructAtomicType(CPrimitives.CHAR)),
+				new TypeModel("atomic_schar", CPrimitive.constructAtomicType(CPrimitives.SCHAR)),
+				new TypeModel("atomic_uchar", CPrimitive.constructAtomicType(CPrimitives.UCHAR)),
+				new TypeModel("atomic_short", CPrimitive.constructAtomicType(CPrimitives.SHORT)),
+				new TypeModel("atomic_ushort", CPrimitive.constructAtomicType(CPrimitives.USHORT)),
+				new TypeModel("atomic_int", CPrimitive.constructAtomicType(CPrimitives.INT)),
+				new TypeModel("atomic_uint", CPrimitive.constructAtomicType(CPrimitives.UINT)),
+				new TypeModel("atomic_long", CPrimitive.constructAtomicType(CPrimitives.LONG)),
+				new TypeModel("atomic_ulong", CPrimitive.constructAtomicType(CPrimitives.ULONG)),
+				new TypeModel("atomic_llong", CPrimitive.constructAtomicType(CPrimitives.LONGLONG)),
+				new TypeModel("atomic_ullong", CPrimitive.constructAtomicType(CPrimitives.ULONGLONG)),
+				new TypeModel("memory_order", new CEnum("memory_order",
+						Arrays.stream(MemoryOrder.values()).map(MemoryOrder::getFieldName).toArray(String[]::new))));
+	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		final List<ConstantModel> result = new ArrayList<>();
+		for (final MemoryOrder memOrder : MemoryOrder.values()) {
+			final IConstantModelHandler model =
+					loc -> mHelper.constructIntegerLiteral(loc, memOrder.getValue(), new CPrimitive(CPrimitives.INT));
+			result.add(new ConstantModel(memOrder.getFieldName(), model));
+			result.add(new ConstantModel(memOrder.getGccConstantName(), model));
+		}
+		return result;
 	}
 }
