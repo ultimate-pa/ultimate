@@ -77,7 +77,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  * 2) Compatibility conflicts: Optional. Needed to ensure the choice of persistent sets is compatible with the IDfsOrder
  * used by sleep-set reduction.
  *
- *
  * 3) Error conflicts: Optional. Needed to ensure the computed set is a membrane (no error can be reached without
  * executing some action in the set).
  *
@@ -101,7 +100,10 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	private final IIndependenceRelation<?, IcfgEdge> mIndependence;
 	private final IDfsOrder<IcfgEdge, IPredicate> mOrder;
 	private final Collection<? extends IcfgLocation> mErrorLocs;
-	boolean mErrorConflictsDisabled; // Added to disable error conflicts for ample set reduction. False by default
+
+	// Set to true to disable error conflicts. In this case, the computed set is not guaranteed to be a membrane.
+	// TODO mErrorLocs is also used in the definition of join conflicts. Figure out how to soundly deal with these.
+	private final boolean mCheckErrorConflicts;
 
 	private final ThreadBasedPersistentSetStatistics mStatistics;
 
@@ -124,13 +126,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 */
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
 			final IIndependenceRelation<?, IcfgEdge> independence) {
-		this(services, icfg, independence, null, null, false);
-	}
-
-	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
-			final IIndependenceRelation<?, IcfgEdge> independence, final IDfsOrder<IcfgEdge, IPredicate> order,
-			final Collection<? extends IcfgLocation> errorLocs) {
-		this(services, icfg, independence, order, errorLocs, false);
+		this(services, icfg, independence, null, null);
 	}
 
 	/**
@@ -150,7 +146,31 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 */
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
 			final IIndependenceRelation<?, IcfgEdge> independence, final IDfsOrder<IcfgEdge, IPredicate> order,
-			final Collection<? extends IcfgLocation> errorLocs, final boolean disableErrorConflicts) {
+			final Collection<? extends IcfgLocation> errorLocs) {
+		this(services, icfg, independence, order, errorLocs, true);
+	}
+
+	/**
+	 * Create a new instance for a given CFG, and (optionally) enforce compatibility with a given DFS order.
+	 *
+	 * @param services
+	 *            Ultimate services, used for logging
+	 * @param icfg
+	 *            An {@link IIcfg} based on which persistent sets will be computed
+	 * @param independence
+	 *            An unconditional independence relation which is used to compute persistent sets
+	 * @param order
+	 *            A DFS traversal order with which the persistent sets should be compatible. Set this to null if
+	 *            compatibility should not be enforced.
+	 * @param errorLocs
+	 *            The set of error locations to be considered. If null, all error locations of the CFG are used.
+	 * @param checkErrorConflicts
+	 *            Whether or not to check for error conflicts. If this is set to {@code false}, the computed sets are
+	 *            not necessarily membranes.
+	 */
+	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
+			final IIndependenceRelation<?, IcfgEdge> independence, final IDfsOrder<IcfgEdge, IPredicate> order,
+			final Collection<? extends IcfgLocation> errorLocs, final boolean checkErrorConflicts) {
 		assert !independence.isConditional() : "Conditional independence currently not supported";
 
 		mLogger = services.getLoggingService().getLogger(ThreadBasedPersistentSets.class);
@@ -160,7 +180,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		mOrder = order;
 		mErrorLocs = errorLocs == null ? IcfgUtils.getErrorLocations(icfg) : errorLocs;
 		mStatistics = new ThreadBasedPersistentSetStatistics(independence);
-		mErrorConflictsDisabled = disableErrorConflicts;
+		mCheckErrorConflicts = checkErrorConflicts;
 	}
 
 	@Override
@@ -307,7 +327,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		for (final IcfgLocation persistentLoc : locations) {
 			for (final IcfgLocation otherLoc : locations) {
 				if (hasCommutativityConflict(persistentLoc, otherLoc)
-						|| hasErrorConflict(persistentLoc, otherLoc, mErrorConflictsDisabled)
+						|| (mCheckErrorConflicts && hasErrorConflict(persistentLoc, otherLoc))
 						|| hasJoinConflict(persistentLoc, otherLoc)) {
 					result.addPair(persistentLoc, otherLoc);
 				}
@@ -417,11 +437,9 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 	}
 
-	private boolean hasErrorConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc,
-			final boolean disabled) {
+	private boolean hasErrorConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc) {
 		final String persistentThread = persistentLoc.getProcedure();
-		// TODO: check for a more elegant way to optionalize error conflicts
-		if (disabled || persistentThread.equals(sourceLoc.getProcedure())) {
+		if (persistentThread.equals(sourceLoc.getProcedure())) {
 			return false;
 		}
 		return canReachConflict(persistentThread, sourceLoc, e -> mErrorLocs.contains(e.getTarget()),
