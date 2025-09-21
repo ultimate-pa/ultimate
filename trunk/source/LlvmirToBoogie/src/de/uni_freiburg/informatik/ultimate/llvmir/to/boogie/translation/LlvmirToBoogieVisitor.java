@@ -1716,6 +1716,37 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final IfStatement ifStmt = new IfStatement(location, ifExpr, new Statement[] { thenAssignment },
 					new Statement[] { elseAssignment });
 			result.addFuncBlock(ifStmt);
+		} else if (instructionType.truncInst() != null) {
+			final LLVMIRParser.TypeContext newTypeContext = instructionType.truncInst().type();
+			final LLVMIRParser.ConcreteTypeContext oldTypeContext = instructionType.truncInst().typeValue()
+					.firstClassType().concreteType();
+			final int newBitLength = getBitLengthFromType(newTypeContext);
+			final VariableDeclaration varDecl = (constructVarDecFromTypeContext(newTypeContext, identifier, location));
+			result.addFuncLocalVar(varDecl);
+			if (newBitLength == 1) {
+				final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
+				final IntegerLiteral twoLiteral = new IntegerLiteral(location, "2");
+				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
+						constructExpressionFromValue(instructionType.truncInst().typeValue().value(), oldTypeContext,
+								location, false),
+						twoLiteral);
+				final BinaryExpression conditionalExpr = new BinaryExpression(location, Operator.COMPEQ, binaryExpr,
+						oneLiteral);
+				final VariableLHS varLhs = new VariableLHS(location, identifier);
+				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+						new Expression[] { conditionalExpr });
+				result.addFuncBlock(assignment);
+			} else {
+				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, newBitLength, false);
+				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
+						constructExpressionFromValue(instructionType.truncInst().typeValue().value(), oldTypeContext,
+								location, false),
+						bitLengthLiteral);
+				final VariableLHS varLhs = new VariableLHS(location, identifier);
+				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+						new Expression[] { binaryExpr });
+				result.addFuncBlock(assignment);
+			}
 		} else if (instructionType.andInst() != null) {
 			constructHavocStatementFromTypeValue(result, instructionType.andInst().typeValue(), location, identifier,
 					"andInst");
