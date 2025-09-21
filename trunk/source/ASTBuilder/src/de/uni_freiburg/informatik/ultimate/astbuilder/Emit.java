@@ -347,7 +347,8 @@ public class Emit {
 		for (final Parameter parameter : node.getParameters()) {
 			if (optional || !parameter.isOptional()) {
 				final String pname = parameter.getName();
-				mWriter.println("        this." + pname + " = " + pname + SEMICOLON);
+				final String fieldName = getFieldName(parameter);
+				mWriter.println("        " + fieldName + " = " + pname + SEMICOLON);
 			}
 		}
 		emitConstructorAfterParamAssign(node, optional);
@@ -381,7 +382,7 @@ public class Emit {
 		/* Optional constructor is only emitted if there are optional fields */
 		Node ancestor = node;
 		while (ancestor != null) {
-			for (final Parameter p : ancestor.parameters) {
+			for (final Parameter p : ancestor.getParameters()) {
 				numTotalParams++;
 				if (!p.isWriteable()) {
 					numNotWriteableParams++;
@@ -462,6 +463,7 @@ public class Emit {
 
 		final String toStringComment = "Returns a textual description of this object.";
 		formatComment(mWriter, "    ", toStringComment);
+		mWriter.println("    @Override");
 		mWriter.println("    public String toString() {");
 		if (emitParams) {
 			emitParams2(name, parameters);
@@ -533,7 +535,7 @@ public class Emit {
 
 		for (final Parameter parameter : parameters) {
 			formatComment(mWriter, "    ", parameter.getComment());
-			mWriter.println("    " + parameter.getType() + BLANK + parameter.getName() + SEMICOLON);
+			mWriter.println("    " + parameter.getType() + BLANK + getFieldName(parameter) + SEMICOLON);
 			mWriter.println();
 		}
 	}
@@ -543,15 +545,15 @@ public class Emit {
 		mWriter.println("        sb.append(\"" + name + "\").append('[');");
 		String comma = EMPTY_STRING;
 		for (final Parameter parameter : parameters) {
-			final String pname = parameter.getName();
+			final String fname = getFieldName(parameter);
 			final String ptype = parameter.getType();
 			if (ptype.endsWith("[]")) {
 				if (!EMPTY_STRING.equals(comma)) {
 					mWriter.println("        sb" + comma + SEMICOLON);
 				}
-				emitArrayToStringCode(pname, ptype, INDENT_SPACE, 1);
+				emitArrayToStringCode(fname, ptype, INDENT_SPACE, 1);
 			} else {
-				mWriter.println("        sb" + comma + ".append(" + pname + CLOSE_PARENTHESIS_SEMICOLON);
+				mWriter.println("        sb" + comma + ".append(" + fname + CLOSE_PARENTHESIS_SEMICOLON);
 			}
 			comma = ".append(',')";
 		}
@@ -563,6 +565,7 @@ public class Emit {
 			mWriter.println();
 
 			final String pname = parameter.getName();
+			final String fname = getFieldName(parameter);
 			final String ptype = parameter.getType();
 			final String pcomment = parameter.getComment();
 			final String cpname = capitalize(pname);
@@ -597,22 +600,27 @@ public class Emit {
 			}
 			formatComment(mWriter, "    ", getComment);
 			mWriter.println("    public " + ptype + BLANK + getName + "() {");
-			mWriter.println("        return " + pname + SEMICOLON);
+			mWriter.println("        return " + fname + SEMICOLON);
 			mWriter.println("    }");
 
 			if (parameter.isWriteable()) {
 				mWriter.println();
 				formatComment(mWriter, "    ", setComment);
 				mWriter.println("    public void " + setName + OPEN_PARENTHESIS + ptype + BLANK + pname + ") {");
-				if (parameter.isWriteableOnce) {
+				if (parameter.isWriteableOnce()) {
 					mWriter.println("        //Writeable only once");
-					mWriter.println("        if(this." + pname + " != null && " + pname + " != this." + pname + "){");
+					mWriter.println("        if(" + fname + " != null && " + pname + " != " + fname + "){");
 					mWriter.println("                throw new AssertionError(\"Value is only writeable once\");");
 					mWriter.println("        }");
 				}
-				mWriter.println("        this." + pname + " = " + pname + SEMICOLON);
+				mWriter.println("        " + fname + " = " + pname + SEMICOLON);
 				mWriter.println("    }");
 			}
 		}
+	}
+
+	public static String getFieldName(final Parameter parameter) {
+		final String parameterName = parameter.getName();
+		return "m" + Character.toUpperCase(parameterName.charAt(0)) + parameterName.substring(1);
 	}
 }
