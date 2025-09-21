@@ -9,32 +9,32 @@ public final class Parameter {
     /**
      * The name of this parameter.
      */
-    String name;
+    String mName;
 
     /**
      * The type of this parameter.
      */
-    String type;
+    String mType;
 
     /**
      * The comment of this parameter.
      */
-    String comment;
+    String mComment;
 
     /**
      * True iff this parameter is writeable.
      */
-    boolean isWriteable;
+    boolean mIsWriteable;
 
     /**
      * True iff this parameter is writeable once.
      */
-    boolean isWriteableOnce;
+    boolean mIsWriteableOnce;
 
     /**
      * True iff this parameter is optional.
      */
-    boolean isOptional;
+    boolean mIsOptional;
 
     /**
      * The constructor taking initial values.
@@ -47,26 +47,27 @@ public final class Parameter {
      */
     public Parameter(String name, String type, String comment, boolean isWriteable, boolean isWriteableOnce, boolean isOptional) {
         super();
-        this.name = name;
-        this.type = type;
-        this.comment = comment;
-        this.isWriteable = isWriteable;
-        this.isWriteableOnce = isWriteableOnce;
-        this.isOptional = isOptional;
+        mName = name;
+        mType = type;
+        mComment = comment;
+        mIsWriteable = isWriteable;
+        mIsWriteableOnce = isWriteableOnce;
+        mIsOptional = isOptional;
     }
 
     /**
      * Returns a textual description of this object.
      */
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("Parameter").append('[');
-        sb.append(name);
-        sb.append(',').append(type);
-        sb.append(',').append(comment);
-        sb.append(',').append(isWriteable);
-        sb.append(',').append(isWriteableOnce);
-        sb.append(',').append(isOptional);
+        sb.append(mName);
+        sb.append(',').append(mType);
+        sb.append(',').append(mComment);
+        sb.append(',').append(mIsWriteable);
+        sb.append(',').append(mIsWriteableOnce);
+        sb.append(',').append(mIsOptional);
         return sb.append(']').toString();
     }
 
@@ -75,7 +76,7 @@ public final class Parameter {
      * @return the name of this parameter.
      */
     public String getName() {
-        return name;
+        return mName;
     }
 
     /**
@@ -83,7 +84,7 @@ public final class Parameter {
      * @return the type of this parameter.
      */
     public String getType() {
-        return type;
+        return mType;
     }
 
     /**
@@ -91,7 +92,7 @@ public final class Parameter {
      * @param type the type of this parameter.
      */
     public void setType(String type) {
-        this.type = type;
+        mType = type;
     }
 
     /**
@@ -99,7 +100,7 @@ public final class Parameter {
      * @return the comment of this parameter.
      */
     public String getComment() {
-        return comment;
+        return mComment;
     }
 
     /**
@@ -107,7 +108,7 @@ public final class Parameter {
      * @return true iff this parameter is writeable.
      */
     public boolean isWriteable() {
-        return isWriteable;
+        return mIsWriteable;
     }
 
     /**
@@ -115,7 +116,7 @@ public final class Parameter {
      * @return true iff this parameter is writeable once.
      */
     public boolean isWriteableOnce() {
-        return isWriteableOnce;
+        return mIsWriteableOnce;
     }
 
     /**
@@ -123,6 +124,6 @@ public final class Parameter {
      * @return true iff this parameter is optional.
      */
     public boolean isOptional() {
-        return isOptional;
+        return mIsOptional;
     }
 }

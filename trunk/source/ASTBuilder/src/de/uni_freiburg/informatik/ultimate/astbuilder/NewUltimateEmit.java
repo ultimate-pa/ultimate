@@ -58,7 +58,6 @@ public class NewUltimateEmit extends EmitAstWithVisitors {
 	public void emitPreamble(final Node node) {
 		super.emitPreamble(node);
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;");
-		mWriter.println("import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;");
 
 	}
 
@@ -89,7 +88,7 @@ public class NewUltimateEmit extends EmitAstWithVisitors {
 
 	@Override
 	public void setGrammar(final Grammar grammar) {
-		final List<Entry<String, Node>> parentless = grammar.nodeTable.entrySet().stream()
+		final List<Entry<String, Node>> parentless = grammar.getNodeTable().entrySet().stream()
 				.filter(entry -> entry.getValue().getParent() == null).collect(Collectors.toList());
 		for (final Entry<String, Node> p : parentless) {
 			final Parameter[] oldParams = p.getValue().getParameters();

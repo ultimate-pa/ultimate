@@ -51,7 +51,6 @@ public abstract class EmitAstWithVisitors extends Emit {
 	private static final String NEW = "new";
 	private static final String OR = " || ";
 	private static final int LENGTH_OF_OR = 4;
-	private static final int MIN_SIZE_EMIT_CLASS_DECLARATION = 33;
 
 	protected boolean isNonClassicNode(final Node node) {
 		return getNonClassicNode().contains(node.getName());
@@ -138,9 +137,9 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 	@Override
 	public void emitNodeHook(final Node node) {
-		if (node.name.equals(getVisitorName())) {
+		if (node.getName().equals(getVisitorName())) {
 			emitVisitorHook();
-		} else if (node.name.equals(getTransformerName())) {
+		} else if (node.getName().equals(getTransformerName())) {
 			emitTransformerHook();
 		} else {
 			emitClassicNodeHook(node);
@@ -149,6 +148,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 	private void emitClassicNodeHook(final Node node) {
 		mWriter.println();
+		mWriter.println("    @Override");
 		mWriter.println("    public List<" + getRootClassName() + "> getOutgoingNodes() {");
 		mWriter.println("        List<" + getRootClassName() + "> children = super.getOutgoingNodes();");
 		final Parameter[] parameters = node.getParameters();
@@ -160,12 +160,13 @@ public abstract class EmitAstWithVisitors extends Emit {
 			}
 			System.out.println(parameter.getName() + " is an array? " + isArray(parameter.getType()));
 
+			final String fname = getFieldName(parameter);
 			if (isArray(parameter.getType())) {
-				mWriter.println(String.format("        if(%s!=null){", parameter.getName()));
-				mWriter.println(String.format("            children.addAll(Arrays.asList(%s));", parameter.getName()));
+				mWriter.println(String.format("        if(%s!=null){", fname));
+				mWriter.println(String.format("            children.addAll(Arrays.asList(%s));", fname));
 				mWriter.println("        }");
 			} else {
-				mWriter.println("        children.add(" + parameter.getName() + CLOSE_PARENTHESIS_SEMICOLON);
+				mWriter.println("        children.add(" + fname + CLOSE_PARENTHESIS_SEMICOLON);
 			}
 		}
 		mWriter.println("        return children;");
@@ -178,10 +179,12 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 		} else {
 			mWriter.println();
+			mWriter.println("    @Override");
 			mWriter.println("    public abstract void accept(" + getVisitorName() + " visitor);");
 
 			mWriter.println();
-			mWriter.println("    public abstract " + node.name + " accept(" + getTransformerName() + " visitor);");
+			mWriter.println("    @Override");
+			mWriter.println("    public abstract " + node.getName() + " accept(" + getTransformerName() + " visitor);");
 		}
 	}
 
@@ -192,7 +195,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 			}
 			final String parent = getAbstractParentName(n);
 			mWriter.println();
-			mWriter.println("    public " + parent + " transform(" + n.name + " node) {");
+			mWriter.println("    public " + parent + " transform(" + n.getName() + " node) {");
 			mWriter.println("        return node;");
 			mWriter.println("    }");
 		}
@@ -202,16 +205,16 @@ public abstract class EmitAstWithVisitors extends Emit {
 		final Node parentNode = getAbstractParent(n);
 
 		if (parentNode == null) {
-			return n.name;
+			return n.getName();
 		}
-		return parentNode.name;
+		return parentNode.getName();
 	}
 
 	private Node getAbstractParent(final Node n) {
-		if (n == null || n.isAbstract) {
+		if (n == null || n.isAbstract()) {
 			return n;
 		}
-		return getAbstractParent(n.parent);
+		return getAbstractParent(n.getParent());
 	}
 
 	private void emitVisitorHook() {
@@ -220,7 +223,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 				continue;
 			}
 			mWriter.println();
-			mWriter.println("    public boolean visit(" + n.name + " node) {");
+			mWriter.println("    public boolean visit(" + n.getName() + " node) {");
 			mWriter.println("        return true;");
 			mWriter.println("    }");
 		}
@@ -235,7 +238,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 		/* Optional constructor is only emitted if there are optional fields */
 		Node ancestor = node;
 		while (ancestor != null) {
-			for (final Parameter p : ancestor.parameters) {
+			for (final Parameter p : ancestor.getParameters()) {
 				numTotalParams++;
 				if (!p.isOptional()) {
 					numNotOptionalParams++;
@@ -291,6 +294,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 		// accept method for transformer
 		final String parent = getAbstractParentName(node);
 		mWriter.println();
+		mWriter.println("    @Override");
 		mWriter.println("    public " + parent + " accept(" + getTransformerName() + " visitor) {");
 		mWriter.println("        " + parent + " node = visitor.transform(this);");
 		mWriter.println("        if(node != this){");
@@ -308,7 +312,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 			if (isArrayType) {
 				type = getBaseType(p);
 			} else {
-				type = p.type;
+				type = p.getType();
 			}
 
 			// declarations
@@ -322,15 +326,23 @@ public abstract class EmitAstWithVisitors extends Emit {
 				mWriter.println("            " + type + BLANK + newName + " = null;");
 			}
 
-			mWriter.println("        if(" + p.getName() + " != null){");
+			final String cast;
+			{
+				final Node pnode = mGrammar.getNodeTable().get(type);
+				final String pparent = getAbstractParentName(pnode);
+				cast = pparent.equals(type) ? "" : ("(" + type + ")");
+			}
+
+			final String fname = getFieldName(p);
+			mWriter.println("        if(" + fname + " != null){");
 			if (isArrayType) {
-				mWriter.println("            for(" + type + " elem : " + p.getName() + "){");
-				mWriter.println("                " + type + BLANK + newName + " = (" + type + ")elem.accept(visitor);");
+				mWriter.println("            for(" + type + " elem : " + fname + "){");
+				mWriter.println("                " + type + BLANK + newName + " = " + cast + "elem.accept(visitor);");
 				mWriter.println("                isChanged = isChanged || " + newName + " != elem;");
 				mWriter.println("                " + listName + ".add(" + newName + ");");
 				mWriter.println("            }");
 			} else {
-				mWriter.println("            " + newName + " = (" + type + ")" + p.getName() + ".accept(visitor);");
+				mWriter.println("            " + newName + " = " + cast + fname + ".accept(visitor);");
 			}
 			mWriter.println("        }");
 		}
@@ -348,16 +360,17 @@ public abstract class EmitAstWithVisitors extends Emit {
 				if (isArrayType(p)) {
 					continue;
 				}
+				final String fname = getFieldName(p);
 				final String newName = NEW + p.getName();
-				builder.append(p.name).append(" != ").append(newName).append(OR);
+				builder.append(fname).append(" != ").append(newName).append(OR);
 			}
 			if (OR.equals(builder.substring(builder.length() - LENGTH_OF_OR, builder.length()))) {
 				builder.delete(builder.length() - LENGTH_OF_OR, builder.length());
 			}
 			builder.append("){");
 			mWriter.println(builder.toString());
-			mWriter.println(
-					"            return new " + node.name + "(" + getNewCallParams(node) + CLOSE_PARENTHESIS_SEMICOLON);
+			mWriter.println("            return new " + node.getName() + "(" + getNewCallParams(node)
+					+ CLOSE_PARENTHESIS_SEMICOLON);
 			mWriter.println("        }");
 		}
 		mWriter.println("        return this;");
@@ -380,8 +393,8 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 		for (final Parameter param : node.getParameters()) {
 			String pname;
-			if (!mGrammar.nodeTable.containsKey(getBaseType(param))) {
-				pname = param.getName();
+			if (!mGrammar.getNodeTable().containsKey(getBaseType(param))) {
+				pname = getFieldName(param);
 			} else if (isArrayType(param)) {
 				pname = "tmpListnew" + param.getName() + ".toArray(new " + getBaseType(param) + "[0])";
 			} else {
@@ -397,6 +410,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 	private void writeVisitorAcceptMethod(final Node node, final List<Parameter> allAcslParameters) {
 		// accept method for visitor
 		mWriter.println();
+		mWriter.println("    @Override");
 		mWriter.println("    public void accept(" + getVisitorName() + " visitor) {");
 
 		final String lineSep = System.getProperty("line.separator");
@@ -414,7 +428,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 					localIndent = localIndent + indent;
 					index2--;
 				}
-				builder.append(localIndent).append(String.format("if (visitor.visit((%s)this)) {", parent.name))
+				builder.append(localIndent).append(String.format("if (visitor.visit((%s)this)) {", parent.getName()))
 						.append(lineSep);
 				builder.append(localIndent).append(indent).append("//visit parent types higher up if necessary")
 						.append(lineSep);
@@ -443,14 +457,15 @@ public abstract class EmitAstWithVisitors extends Emit {
 		} else {
 			mWriter.println("        if (visitor.visit(this)) {");
 			for (final Parameter p : allAcslParameters) {
-				mWriter.println("            if(" + p.getName() + "!=null){");
+				final String fname = getFieldName(p);
+				mWriter.println("            if(" + fname + "!=null){");
 				if (isArrayType(p)) {
-					mWriter.println("                for (" + getBaseType(p) + " elem : " + p.getName() + ") {");
+					mWriter.println("                for (" + getBaseType(p) + " elem : " + fname + ") {");
 					mWriter.println("                    elem.accept(visitor);");
 					mWriter.println("                }");
 
 				} else {
-					mWriter.println("                " + p.getName() + ".accept(visitor);");
+					mWriter.println("                " + fname + ".accept(visitor);");
 				}
 				mWriter.println("            }");
 			}
@@ -464,7 +479,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 		Node current = node;
 		while (current != null) {
 			for (final Parameter p : current.getParameters()) {
-				if (mGrammar.nodeTable.containsKey(getBaseType(p))) {
+				if (mGrammar.getNodeTable().containsKey(getBaseType(p))) {
 					allParameters.add(p);
 				}
 			}
@@ -477,7 +492,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 	public void setGrammar(final Grammar grammar) {
 		final HashSet<String> types = new HashSet<>();
 		for (final Node n : grammar.getNodeTable().values()) {
-			types.add(n.name);
+			types.add(n.getName());
 		}
 		grammar.getNodeTable().put(getVisitorName(),
 				new Node(getVisitorName(), null, null, "", types, false, new Parameter[0]));
