@@ -464,7 +464,7 @@ public class CHandler {
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
 						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
-								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), true)
+								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations())
 						: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
@@ -558,7 +558,7 @@ public class CHandler {
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
 						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
-								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), false)
+								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations())
 						: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,

@@ -81,12 +81,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 public final class DataRaceChecker {
-	private static final boolean SUPPORT_ARRAY_STRUCT_LHS = true;
-
-	private static final String UNSUPPORTED_MSG =
-			"Race detection currently only supports simple variables and data on heap. "
-					+ "Structs and arrays are not yet supported (unless they are on the heap).";
-
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
 	private final ITypeHandler mTypeHandler;
@@ -94,13 +88,12 @@ public final class DataRaceChecker {
 	private final TypeSizes mTypeSizes;
 	private final ProcedureManager mProcedureManager;
 	private final FunctionDeclarations mFunDecl;
-	private final boolean mIsPreRun;
 
 	private final Map<String, BoogieType> mRaceIndicators = new HashMap<>();
 
 	public DataRaceChecker(final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeComputer, final TypeSizes typeSizes,
-			final ProcedureManager procMan, final FunctionDeclarations funDecl, final boolean isPreRun) {
+			final ProcedureManager procMan, final FunctionDeclarations funDecl) {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mMemoryHandler = memoryHandler;
 		mTypeHandler = typeHandler;
@@ -108,7 +101,6 @@ public final class DataRaceChecker {
 		mTypeSizes = typeSizes;
 		mProcedureManager = procMan;
 		mFunDecl = funDecl;
-		mIsPreRun = isPreRun;
 	}
 
 	/**
@@ -129,27 +121,9 @@ public final class DataRaceChecker {
 			return;
 		}
 
-		if (!SUPPORT_ARRAY_STRUCT_LHS && isUnsupportedArrayOrStruct(lrVal)) {
-			if (mIsPreRun) {
-				// call #getMemoryRaceArray to make sure it is marked as required
-				mMemoryHandler.getMemoryRaceArray(loc);
-				return;
-			}
-			// should be moved to heap in main run
-			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
-		}
-
 		final Expression raceValue = createRaceRead();
 		final Race[] races = updateRaceIndicator(erb, loc, lrVal, raceValue, false);
 		addAssert(erb, loc, lrVal, raceValue, races);
-	}
-
-	private static boolean isUnsupportedArrayOrStruct(final LRValue lrVal) {
-		if (lrVal instanceof LocalLValue) {
-			final LocalLValue locVal = (LocalLValue) lrVal;
-			return !(locVal.getLhs() instanceof VariableLHS);
-		}
-		return false;
 	}
 
 	private Expression createRaceRead() {
@@ -172,16 +146,6 @@ public final class DataRaceChecker {
 		}
 		if (isRaceImpossible(lrVal)) {
 			return;
-		}
-
-		if (!SUPPORT_ARRAY_STRUCT_LHS && isUnsupportedArrayOrStruct(lrVal)) {
-			if (mIsPreRun) {
-				// call #getMemoryRaceArray to make sure it is marked as required
-				mMemoryHandler.getMemoryRaceArray(loc);
-				return;
-			}
-			// should be moved to heap in main run
-			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
 		}
 
 		// TODO For better performance, make the statements created by #createRaceWrite and #updateRaceIndicator atomic.
@@ -243,20 +207,20 @@ public final class DataRaceChecker {
 	}
 
 	private static ImmutableList<String> getAccessPath(final LeftHandSide lhs) {
-		if (lhs instanceof VariableLHS) {
-			return ImmutableList.singleton(((VariableLHS) lhs).getIdentifier());
-		}
-		if (lhs instanceof StructLHS) {
-			final ImmutableList<String> prefix = getAccessPath(((StructLHS) lhs).getStruct());
+		switch (lhs) {
+		case final VariableLHS variable:
+			return ImmutableList.singleton(variable.getIdentifier());
+
+		case final StructLHS struct:
+			final ImmutableList<String> prefix = getAccessPath(struct.getStruct());
 			if (prefix == null) {
 				return null;
 			}
-			return new ImmutableList<>(((StructLHS) lhs).getField(), prefix);
-		}
-		if (lhs instanceof ArrayLHS) {
+			return new ImmutableList<>(struct.getField(), prefix);
+
+		case final ArrayLHS array:
 			return null;
 		}
-		throw new IllegalArgumentException("unknown type of LHS: " + lhs);
 	}
 
 	private static boolean isRaceImpossible(final LRValue lrVal) {
@@ -264,40 +228,33 @@ public final class DataRaceChecker {
 			// Atomic types cannot lead to data races
 			return true;
 		}
-		if (lrVal instanceof HeapLValue) {
-			final Expression address = ((HeapLValue) lrVal).getAddress();
-			return address instanceof IdentifierExpression
-					&& ((IdentifierExpression) address).getIdentifier().startsWith(SFO.FUNCTION_ADDRESS);
+		if (lrVal instanceof final HeapLValue hlv) {
+			return hlv.getAddress() instanceof final IdentifierExpression id
+					&& id.getIdentifier().startsWith(SFO.FUNCTION_ADDRESS);
 		}
-		if (!(lrVal instanceof LocalLValue)) {
+		if (!(lrVal instanceof final LocalLValue llv)) {
 			return false;
 		}
 
 		// Non-heap LHS whose root variable is not global do not admit races. Even when passed to other threads, they
 		// are either copied (primitives, structs) or passed via pointer (but then they must be on heap!).
-		final VariableLHS varLhs = getRootLhs(((LocalLValue) lrVal).getLhs());
+		final VariableLHS varLhs = getRootLhs(llv.getLhs());
 		return switch (varLhs.getDeclarationInformation().getStorageClass()) {
 		case LOCAL, IMPLEMENTATION_INPARAM, IMPLEMENTATION_OUTPARAM, PROC_FUNC -> true;
 		case GLOBAL, IMPLEMENTATION, PROC_FUNC_INPARAM, PROC_FUNC_OUTPARAM, QUANTIFIED -> false;
 		};
 	}
 
-	private static VariableLHS getRootLhs(LeftHandSide lhs) {
-		while (!(lhs instanceof VariableLHS)) {
-			if (lhs instanceof StructLHS) {
-				lhs = ((StructLHS) lhs).getStruct();
-			} else if (lhs instanceof ArrayLHS) {
-				lhs = ((ArrayLHS) lhs).getArray();
-			} else {
-				throw new IllegalArgumentException("unknown type of LHS: " + lhs);
-			}
-		}
-		return (VariableLHS) lhs;
+	private static VariableLHS getRootLhs(final LeftHandSide lhs) {
+		return switch (lhs) {
+		case final StructLHS struct -> getRootLhs(struct.getStruct());
+		case final ArrayLHS array -> getRootLhs(array.getArray());
+		case final VariableLHS variable -> variable;
+		};
 	}
 
 	private LeftHandSide[] getRaceLhs(final ILocation loc, final LRValue lrVal) {
-		if (lrVal instanceof HeapLValue) {
-			final HeapLValue hlv = (HeapLValue) lrVal;
+		if (lrVal instanceof final HeapLValue hlv) {
 			final LeftHandSide raceLhs = mMemoryHandler.getMemoryRaceArrayLhs(loc);
 
 			final LeftHandSide[] lhs = new LeftHandSide[getTypeSize(loc, hlv.getUnderlyingType())];
@@ -309,8 +266,8 @@ public final class DataRaceChecker {
 			}
 			return lhs;
 		}
-		if (lrVal instanceof LocalLValue) {
-			return new LeftHandSide[] { getRaceIndicatorLhs(loc, (LocalLValue) lrVal) };
+		if (lrVal instanceof final LocalLValue llv) {
+			return new LeftHandSide[] { getRaceIndicatorLhs(loc, llv) };
 		}
 		throw new UnsupportedOperationException();
 	}
@@ -329,39 +286,31 @@ public final class DataRaceChecker {
 	}
 
 	private LeftHandSide createRaceIndicatorLhs(final ILocation loc, final LeftHandSide lhs) {
-		if (lhs instanceof VariableLHS) {
-			final String name = "#race" + ((VariableLHS) lhs).getIdentifier();
-			final VariableLHS raceLhs = new VariableLHS(loc, getRaceIndicatorType(lhs.getType()), name,
+		switch (lhs) {
+		case final VariableLHS variable:
+			final String name = "#race" + variable.getIdentifier();
+			final VariableLHS raceLhs = new VariableLHS(loc, getRaceIndicatorType(variable.getType()), name,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			assert mRaceIndicators.getOrDefault(name, (BoogieType) raceLhs.getType()).equals(raceLhs.getType())
 					: "Ambiguous types for " + name + ": " + mRaceIndicators.get(name) + " vs. " + raceLhs.getType();
 			mRaceIndicators.put(name, (BoogieType) raceLhs.getType());
 			return raceLhs;
-		}
 
-		if (!SUPPORT_ARRAY_STRUCT_LHS) {
-			throw new UnsupportedOperationException(UNSUPPORTED_MSG);
-		}
+		case final ArrayLHS array:
+			final LeftHandSide arrayRaceLhs = createRaceIndicatorLhs(loc, array.getArray());
+			return ExpressionFactory.constructNestedArrayLHS(loc, arrayRaceLhs, array.getIndices());
 
-		if (lhs instanceof ArrayLHS) {
-			final LeftHandSide raceLhs = createRaceIndicatorLhs(loc, ((ArrayLHS) lhs).getArray());
-			return ExpressionFactory.constructNestedArrayLHS(loc, raceLhs, ((ArrayLHS) lhs).getIndices());
+		case final StructLHS struct:
+			final LeftHandSide structRaceLhs = createRaceIndicatorLhs(loc, struct.getStruct());
+			return ExpressionFactory.constructStructAccessLhs(loc, structRaceLhs, struct.getField());
 		}
-
-		if (lhs instanceof StructLHS) {
-			final LeftHandSide raceLhs = createRaceIndicatorLhs(loc, ((StructLHS) lhs).getStruct());
-			return ExpressionFactory.constructStructAccessLhs(loc, raceLhs, ((StructLHS) lhs).getField());
-		}
-
-		throw new UnsupportedOperationException("Cannot detect races for " + lhs);
 	}
 
 	private BoogieType getRaceIndicatorType(final IBoogieType type) {
 		if (type instanceof BoogiePrimitiveType || type.equals(mTypeHandler.getBoogiePointerType())) {
 			return getBoolType();
 		}
-		if (type instanceof BoogieArrayType) {
-			final BoogieArrayType arrType = (BoogieArrayType) type;
+		if (type instanceof final BoogieArrayType arrType) {
 			assert arrType.getNumPlaceholders() == 0;
 			final BoogieType[] indices = new BoogieType[arrType.getIndexCount()];
 			for (int i = 0; i < indices.length; ++i) {
@@ -369,8 +318,7 @@ public final class DataRaceChecker {
 			}
 			return BoogieType.createArrayType(0, indices, getRaceIndicatorType(arrType.getValueType()));
 		}
-		if (type instanceof BoogieStructType) {
-			final BoogieStructType strType = (BoogieStructType) type;
+		if (type instanceof final BoogieStructType strType) {
 			final BoogieType[] fieldTypes =
 					Arrays.stream(strType.getFieldTypes()).map(this::getRaceIndicatorType).toArray(BoogieType[]::new);
 			return BoogieType.createStructType(strType.getFieldIds(), fieldTypes);
@@ -382,11 +330,10 @@ public final class DataRaceChecker {
 		if (type instanceof BoogiePrimitiveType || type.equals(mTypeHandler.getBoogiePointerType())) {
 			return value;
 		}
-		if (type instanceof BoogieArrayType) {
-			return ConstantArrayUtil.getConstantArray(mFunDecl, loc, (BoogieArrayType) type, value);
+		if (type instanceof final BoogieArrayType arrType) {
+			return ConstantArrayUtil.getConstantArray(mFunDecl, loc, arrType, value);
 		}
-		if (type instanceof BoogieStructType) {
-			final BoogieStructType strType = (BoogieStructType) type;
+		if (type instanceof final BoogieStructType strType) {
 			final Expression[] fieldValues = Arrays.stream(strType.getFieldTypes())
 					.map(t -> wrapRaceIndicatorValue(loc, value, t)).toArray(Expression[]::new);
 			return ExpressionFactory.constructStructConstructor(loc, strType.getFieldIds(), fieldValues);
