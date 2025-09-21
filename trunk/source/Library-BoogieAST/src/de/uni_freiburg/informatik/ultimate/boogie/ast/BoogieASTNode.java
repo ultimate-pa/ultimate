@@ -63,15 +63,15 @@ public sealed class BoogieASTNode extends BasePayloadContainer implements ISimpl
 	static {
 		final Predicate<BoogieASTNode> iexprValidator = instance -> {
 			final IdentifierExpression iexpr = (IdentifierExpression) instance;
-			return Pattern.matches(IDENTIFIER_REGEX, iexpr.identifier);
+			return Pattern.matches(IDENTIFIER_REGEX, iexpr.mIdentifier);
 		};
 		final Predicate<BoogieASTNode> procIdValidator = instance -> {
 			final Procedure proc = (Procedure) instance;
-			return Pattern.matches(IDENTIFIER_REGEX, proc.identifier);
+			return Pattern.matches(IDENTIFIER_REGEX, proc.mIdentifier);
 		};
 		final Predicate<BoogieASTNode> funDeclValidator = instance -> {
 			final FunctionDeclaration funDecl = (FunctionDeclaration) instance;
-			return Pattern.matches(IDENTIFIER_REGEX, funDecl.identifier);
+			return Pattern.matches(IDENTIFIER_REGEX, funDecl.mIdentifier);
 		};
 		final Predicate<BoogieASTNode> funArrayAllNonNullElementsValidator = instance -> {
 			final HasNullElementVisitor visitor = new HasNullElementVisitor();
@@ -118,6 +118,10 @@ public sealed class BoogieASTNode extends BasePayloadContainer implements ISimpl
 
 	public void accept(final GeneratedBoogieAstVisitor visitor) {
 		throw new UnsupportedOperationException("The base class does not accept visitors");
+	}
+
+	public BoogieASTNode accept(final GeneratedBoogieAstTransformer visitor) {
+		throw new UnsupportedOperationException("The base class does not accept transformers");
 	}
 
 	public static Check createDefaultCheck(final BoogieASTNode node) {

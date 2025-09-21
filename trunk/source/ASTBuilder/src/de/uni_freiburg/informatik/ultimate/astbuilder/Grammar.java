@@ -11,17 +11,17 @@ public final class Grammar {
     /**
      * The package name of this grammar.
      */
-    String packageName;
+    String mPackageName;
 
     /**
      * The imports of this grammar.
      */
-    ArrayList<String> imports;
+    ArrayList<String> mImports;
 
     /**
      * The node table of this grammar.
      */
-    HashMap<String,Node> nodeTable;
+    HashMap<String,Node> mNodeTable;
 
     /**
      * The constructor taking initial values.
@@ -31,20 +31,21 @@ public final class Grammar {
      */
     public Grammar(String packageName, ArrayList<String> imports, HashMap<String,Node> nodeTable) {
         super();
-        this.packageName = packageName;
-        this.imports = imports;
-        this.nodeTable = nodeTable;
+        mPackageName = packageName;
+        mImports = imports;
+        mNodeTable = nodeTable;
     }
 
     /**
      * Returns a textual description of this object.
      */
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("Grammar").append('[');
-        sb.append(packageName);
-        sb.append(',').append(imports);
-        sb.append(',').append(nodeTable);
+        sb.append(mPackageName);
+        sb.append(',').append(mImports);
+        sb.append(',').append(mNodeTable);
         return sb.append(']').toString();
     }
 
@@ -53,7 +54,7 @@ public final class Grammar {
      * @return the package name of this grammar.
      */
     public String getPackageName() {
-        return packageName;
+        return mPackageName;
     }
 
     /**
@@ -61,7 +62,7 @@ public final class Grammar {
      * @return the imports of this grammar.
      */
     public ArrayList<String> getImports() {
-        return imports;
+        return mImports;
     }
 
     /**
@@ -69,6 +70,6 @@ public final class Grammar {
      * @return the node table of this grammar.
      */
     public HashMap<String,Node> getNodeTable() {
-        return nodeTable;
+        return mNodeTable;
     }
 }

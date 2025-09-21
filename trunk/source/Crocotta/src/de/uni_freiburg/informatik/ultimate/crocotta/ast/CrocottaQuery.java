@@ -16,7 +16,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CrocottaQuery extends BasePayloadContainer implements ISimpleAST<CrocottaQuery, VisualizationNode> {
+public abstract class CrocottaQuery extends BasePayloadContainer
+		implements ISimpleAST<CrocottaQuery, VisualizationNode> {
 
 	private static final long serialVersionUID = 1L;
 	// do not rename this field as auto-generated subclasses depend on it
@@ -36,4 +37,8 @@ public class CrocottaQuery extends BasePayloadContainer implements ISimpleAST<Cr
 	public List<CrocottaQuery> getOutgoingNodes() {
 		throw new UnsupportedOperationException();
 	}
+
+	public abstract void accept(CrocottaAstVisitor visitor);
+
+	public abstract CrocottaQuery accept(CrocottaAstTransformer visitor);
 }
