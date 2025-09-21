@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec.Gro
 
 /**
  * Message provider for {@link Group.PROGRAM} labeled specifications that are checked.
- * 
+ *
  * @author Manuel Bentele
  */
 public class CheckMessageProvider extends MessageProvider {
@@ -47,7 +47,7 @@ public class CheckMessageProvider extends MessageProvider {
 
 	/**
 	 * Overwrite message for error function specifications ({@link Spec.ERROR_FUNCTION}).
-	 * 
+	 *
 	 * @param functionName
 	 *            name of the error function.
 	 */
@@ -62,7 +62,7 @@ public class CheckMessageProvider extends MessageProvider {
 
 	/**
 	 * Overwrite message for specification ({@link Spec}) with given error message.
-	 * 
+	 *
 	 * @param spec
 	 *            specification type whose message should be overwritten.
 	 * @param errorMsg
@@ -77,7 +77,7 @@ public class CheckMessageProvider extends MessageProvider {
 
 	/**
 	 * Overwrite message for assertion specifications ({@link Spec.ASSERT}) with named attributes.
-	 * 
+	 *
 	 * @param namedAttributes
 	 *            description of the named attributes.
 	 */

@@ -207,10 +207,8 @@ public final class AbstractInterpreter {
 			final List<String> trackedArrays) {
 		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
-		return runFuture(root, services, logger, isSilent,
-				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(
-						logger, root, services, additionalLiterals, trackedArrays))
-						.setTimer(timer),
+		return runFuture(root, services, logger, isSilent, params.setDomain(FixpointEngineFutureParameterFactory
+				.createEqualityDomain(logger, root, services, additionalLiterals, trackedArrays)).setTimer(timer),
 				FixpointEngine::new);
 	}
 

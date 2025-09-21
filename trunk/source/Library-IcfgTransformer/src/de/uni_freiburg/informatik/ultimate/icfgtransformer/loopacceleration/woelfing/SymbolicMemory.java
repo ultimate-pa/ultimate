@@ -111,7 +111,7 @@ public class SymbolicMemory {
 			return newTerm == null ? term : replaceTermVars(newTerm, termInVars);
 		}
 
-		if (termInVars != null && termInVars.values().contains(term)) {
+		if (termInVars != null && termInVars.containsValue(term)) {
 			for (final Map.Entry<IProgramVar, TermVariable> entry : termInVars.entrySet()) {
 				if (entry.getValue() == term && mOutVars.containsKey(entry.getKey())) {
 					return replaceTermVars(mOutVars.get(entry.getKey()), termInVars);
@@ -147,7 +147,8 @@ public class SymbolicMemory {
 		Term term = mScript.getScript().term("true");
 
 		for (final Map.Entry<TermVariable, Term> entry : mVariableTerms.entrySet()) {
-			term = SmtUtils.and(mScript.getScript(), term, mScript.getScript().term("=", entry.getKey(), entry.getValue()));
+			term = SmtUtils.and(mScript.getScript(), term,
+					mScript.getScript().term("=", entry.getKey(), entry.getValue()));
 		}
 
 		return term;

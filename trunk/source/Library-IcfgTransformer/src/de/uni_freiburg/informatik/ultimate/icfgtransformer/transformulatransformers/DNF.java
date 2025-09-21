@@ -53,7 +53,6 @@ public class DNF extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 
 	public DNF(final IUltimateServiceProvider services) {
-		super();
 		mServices = services;
 
 	}
@@ -72,7 +71,8 @@ public class DNF extends TransitionPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf)
+			throws TermException {
 		final Term dnf = SmtUtils.toDnf(mServices, script, tf.getFormula());
 		tf.setFormula(dnf);
 		return tf;

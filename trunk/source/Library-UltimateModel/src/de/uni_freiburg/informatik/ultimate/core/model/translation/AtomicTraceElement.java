@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.core.model.translation;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Objects;
 
@@ -114,16 +115,17 @@ public class AtomicTraceElement<TE> {
 		assert step != null;
 		assert info != null;
 		assert toStringProvider != null;
-		assert !(info.size() > 1 && info.contains(StepInfo.NONE)) : "You cannot combine NONE with other values: "
-				+ element;
+		assert !(info.size() > 1 && info.contains(StepInfo.NONE))
+				: "You cannot combine NONE with other values: " + element;
 		assert !info.isEmpty();
-		assert !info.contains(StepInfo.FORK)
-				|| forkedThreadId != null : "If this step is a fork, you must have a forked thread id: " + element;
-		assert !info.contains(StepInfo.JOIN)
-				|| joinedThreadId != null : "If this step is a join, you must have a joined thread id: " + element;
+		assert !info.contains(StepInfo.FORK) || forkedThreadId != null
+				: "If this step is a fork, you must have a forked thread id: " + element;
+		assert !info.contains(StepInfo.JOIN) || joinedThreadId != null
+				: "If this step is a join, you must have a joined thread id: " + element;
 		assert hasAnyStepInfo(info, StepInfo.PROC_CALL, StepInfo.PROC_RETURN) || threadId != null
-				|| Objects.equals(precedingProcedure, succeedingProcedure) : "You must have same procedures"
-						+ " except when you have threads or when this is a call or a return: " + element;
+				|| Objects.equals(precedingProcedure, succeedingProcedure)
+				: "You must have same procedures" + " except when you have threads or when this is a call or a return: "
+						+ element;
 		mElement = element;
 		mStep = step;
 		mStepInfo = info;
@@ -186,7 +188,7 @@ public class AtomicTraceElement<TE> {
 	}
 
 	public int getThreadId() {
-		return mThreadId.intValue();
+		return mThreadId;
 	}
 
 	public boolean isMainThread() {
@@ -194,11 +196,11 @@ public class AtomicTraceElement<TE> {
 	}
 
 	public int getForkedThreadId() {
-		return mForkedThreadId.intValue();
+		return mForkedThreadId;
 	}
 
 	public int getJoinedThreadId() {
-		return mJoinedThreadId.intValue();
+		return mJoinedThreadId;
 	}
 
 	public IRelevanceInformation getRelevanceInformation() {
@@ -380,9 +382,7 @@ public class AtomicTraceElement<TE> {
 				return this;
 			}
 			mStepInfo.clear();
-			for (final StepInfo info : stepInfo) {
-				mStepInfo.add(info);
-			}
+			Collections.addAll(mStepInfo, stepInfo);
 			if (mStepInfo.size() > 1 && mStepInfo.contains(StepInfo.NONE)) {
 				throw new IllegalArgumentException("Cannot combine NONE with any other value");
 			}

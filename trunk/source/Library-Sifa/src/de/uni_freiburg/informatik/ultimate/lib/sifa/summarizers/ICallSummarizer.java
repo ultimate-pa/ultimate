@@ -38,12 +38,13 @@ public interface ICallSummarizer {
 	/**
 	 * Given an input and procedure name, computes an (over-approximated) output.
 	 *
-	 * @param callee Name of the called procedure
-	 * @param inputAfterCall State when starting to execute the procedure body.
-	 *                       The arguments from the caller are already assigned to the callee's parameters.
-	 *                       There are no local variables of the caller left in the state.
-	 * @return Over-approximated output before the return statement.
-	 *         The callee's return values still have to be assigned to the caller's local variables.
+	 * @param callee
+	 *            Name of the called procedure
+	 * @param inputAfterCall
+	 *            State when starting to execute the procedure body. The arguments from the caller are already assigned
+	 *            to the callee's parameters. There are no local variables of the caller left in the state.
+	 * @return Over-approximated output before the return statement. The callee's return values still have to be
+	 *         assigned to the caller's local variables.
 	 */
 	IPredicate summarize(String callee, IPredicate inputAfterCall);
 }

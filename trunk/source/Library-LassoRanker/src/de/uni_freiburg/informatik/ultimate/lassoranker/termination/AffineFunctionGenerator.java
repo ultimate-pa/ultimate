@@ -107,8 +107,9 @@ public class AffineFunctionGenerator implements Serializable {
 	 */
 	public AffineFunctionGenerator(final Script script, final Collection<IProgramVar> variables, final String prefix,
 			final boolean withoutCoefficients) {
-		assert withoutCoefficients : "This constructor is called only if the program variables shouldn't have any coefficients which"
-				+ "need to be determined";
+		assert withoutCoefficients
+				: "This constructor is called only if the program variables shouldn't have any coefficients which"
+						+ "need to be determined";
 		// Create variables
 		mConstant = SmtUtils.buildNewConstant(script, constName(prefix), SmtSortUtils.REAL_SORT);
 		mCoefficients = new LinkedHashMap<>();

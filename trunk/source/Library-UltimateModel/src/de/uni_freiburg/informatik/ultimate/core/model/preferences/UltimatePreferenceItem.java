@@ -113,11 +113,8 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		mDescription = description;
 		mIsExperimental = isExperimental;
 
-		if (mType == PreferenceType.Radio || mType == PreferenceType.Combo) {
-			if (mChoices == null) {
-				throw new IllegalArgumentException(
-						"You have to supply choices if you use PreferenceType Radio or Combo ");
-			}
+		if ((mType == PreferenceType.Radio || mType == PreferenceType.Combo) && (mChoices == null)) {
+			throw new IllegalArgumentException("You have to supply choices if you use PreferenceType Radio or Combo ");
 		}
 	}
 

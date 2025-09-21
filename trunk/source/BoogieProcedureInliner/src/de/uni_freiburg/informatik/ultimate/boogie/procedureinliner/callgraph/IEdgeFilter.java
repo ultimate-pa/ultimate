@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
 /**
- * Filter for edges of a graph. This can be used in graph algorithms to ignore unwanted edges without having
- * to build a modified copy of the graph.
+ * Filter for edges of a graph. This can be used in graph algorithms to ignore unwanted edges without having to build a
+ * modified copy of the graph.
  *
  * @author schaetzc@informatik.uni-freiburg.de
  *

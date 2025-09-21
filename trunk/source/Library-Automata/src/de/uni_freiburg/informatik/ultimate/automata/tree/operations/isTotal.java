@@ -17,18 +17,20 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
 /***
  * Check if a given tree automaton is total or not.
+ *
  * @author mostafa
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public class isTotal<LETTER extends IRankedLetter, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class isTotal<LETTER extends IRankedLetter, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>>
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	
+
 	private final boolean mResultTreeRun;
-	
-	public isTotal(AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> tree) {
+
+	public isTotal(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		super(services);
 		mTreeAutomaton = tree;
 		// mResultTreeRun = computeResult();
@@ -63,7 +65,7 @@ public class isTotal<LETTER extends IRankedLetter, STATE> extends GeneralOperati
 		}
 		return true;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResultTreeRun;
@@ -80,7 +82,7 @@ public class isTotal<LETTER extends IRankedLetter, STATE> extends GeneralOperati
 	}
 
 	@Override
-	public boolean checkResult(IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

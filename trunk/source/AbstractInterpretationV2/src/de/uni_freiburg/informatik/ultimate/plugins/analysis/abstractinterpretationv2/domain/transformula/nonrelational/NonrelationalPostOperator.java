@@ -238,8 +238,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 	@Override
 	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving, final ACTION transition) {
-		assert transition instanceof Call || transition instanceof Return
-				|| transition instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
+		assert transition instanceof Call || transition instanceof Return || transition instanceof Summary
+				: "Cannot calculate hierachical post for non-hierachical transition";
 
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;

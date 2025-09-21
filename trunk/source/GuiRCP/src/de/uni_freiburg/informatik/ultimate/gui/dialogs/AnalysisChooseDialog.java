@@ -35,8 +35,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -67,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
+import jakarta.xml.bind.JAXBException;
 
 /**
  *
@@ -242,14 +241,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final TableColumn tableColumn = new TableColumn(mAvailableToolsTable, SWT.NONE);
 
-		Collections.sort(mAvailableTools, new Comparator<ITool>() {
-
-			@Override
-			public int compare(final ITool o1, final ITool o2) {
-				return o1.getPluginName().compareTo(o2.getPluginName());
-			}
-
-		});
+		Collections.sort(mAvailableTools, Comparator.comparing(ITool::getPluginName));
 
 		for (final IToolchainPlugin analysis : mAvailableTools) {
 			final TableItem availableToolsTableItem = new TableItem(mAvailableToolsTable, SWT.BORDER);
@@ -308,7 +300,6 @@ public class AnalysisChooseDialog extends Dialog {
 			newItem.setData(data);
 			setCaption(newItem);
 			mSelectedToolsTable.select(otherindex);
-			return;
 		}
 	}
 

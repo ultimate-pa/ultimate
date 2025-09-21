@@ -48,7 +48,7 @@ public abstract class BoogieType implements IBoogieType {
 	 */
 	private static final long serialVersionUID = -1366978000551630241L;
 
-	private static final BoogieType[] EMPTY = new BoogieType[0];
+	private static final BoogieType[] EMPTY = {};
 
 	private static final ArrayList<BoogiePlaceholderType> PLACEHOLDER_TYPES = new ArrayList<>();
 	private static final ArrayList<BoogiePrimitiveType> BITVECTOR_TYPES = new ArrayList<>();
@@ -112,8 +112,8 @@ public abstract class BoogieType implements IBoogieType {
 			final BoogieType... params) {
 		assert constr.getParamCount() == params.length;
 		int hashcode = constr.hashCode();
-		for (int i = 0; i < params.length; i++) {
-			hashcode = hashcode * 31 + params[i].hashCode();
+		for (final BoogieType param : params) {
+			hashcode = hashcode * 31 + param.hashCode();
 		}
 		for (final BoogieType t : GLOBAL_TYPES.iterateHashCode(hashcode)) {
 			if (!(t instanceof BoogieConstructedType)) {
@@ -164,8 +164,8 @@ public abstract class BoogieType implements IBoogieType {
 	public static BoogieArrayType createArrayType(final int numPlaceholders, final BoogieType[] indexTypes,
 			final BoogieType valueType) {
 		int hashcode = numPlaceholders;
-		for (int i = 0; i < indexTypes.length; i++) {
-			hashcode = hashcode * 31 + indexTypes[i].hashCode();
+		for (final BoogieType indexType : indexTypes) {
+			hashcode = hashcode * 31 + indexType.hashCode();
 		}
 		hashcode = hashcode * 31 + valueType.hashCode();
 		for (final BoogieType t : GLOBAL_TYPES.iterateHashCode(hashcode)) {
@@ -354,7 +354,7 @@ public abstract class BoogieType implements IBoogieType {
 	public boolean isUnifiableTo(final BoogieType other) {
 		final BoogieType realThis = getUnderlyingType();
 		final BoogieType realOther = other.getUnderlyingType();
-		return realThis.isUnifiableTo(0, realOther, new ArrayList<BoogieType>());
+		return realThis.isUnifiableTo(0, realOther, new ArrayList<>());
 	}
 
 	/**

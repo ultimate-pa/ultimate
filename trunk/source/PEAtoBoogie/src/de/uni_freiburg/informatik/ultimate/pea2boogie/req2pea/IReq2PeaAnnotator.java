@@ -35,18 +35,18 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 /**
  * An {@link IReq2PeaAnnotator} is used to specify checks (i.e., assertions) during the transformation from
  * {@link PhaseEventAutomata} to Boogie program. transformation.
- * 
+ *
  * @author Vincent Langenfeld <langenfv@tf.uni-freiburg.de>
  *
  */
 public interface IReq2PeaAnnotator {
 
-	public List<Statement> getStateChecks();
+	List<Statement> getStateChecks();
 
-	public List<Statement> getPreChecks();
+	List<Statement> getPreChecks();
 
-	public List<Statement> getPostTransitionChecks();
+	List<Statement> getPostTransitionChecks();
 
-	public PeaResultUtil getPeaResultUtil();
+	PeaResultUtil getPeaResultUtil();
 
 }

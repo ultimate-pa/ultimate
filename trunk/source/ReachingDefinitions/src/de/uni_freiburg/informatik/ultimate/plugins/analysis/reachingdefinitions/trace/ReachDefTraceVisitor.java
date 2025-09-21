@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ReachingDefinitions plug-in.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ReachingDefinitions plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 
 /**
  * @author dietsch
- * 
+ *
  */
 public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 
@@ -58,9 +58,9 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	private final ScopedBoogieVarBuilder mBuilder;
 	private final int mKey;
 
-	public ReachDefTraceVisitor(IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider, CodeBlock predecessor, ILogger logger,
-			ScopedBoogieVarBuilder builder, int index) {
+	public ReachDefTraceVisitor(final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
+			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider, final CodeBlock predecessor,
+			final ILogger logger, final ScopedBoogieVarBuilder builder, final int index) {
 		mLogger = logger;
 		mPredecessor = predecessor;
 		mStatementProvider = stmtProvider;
@@ -69,7 +69,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 		mKey = index;
 	}
 
-	public void process(CodeBlock current) {
+	public void process(final CodeBlock current) {
 		final String key = String.valueOf(mKey);
 		ReachDefEdgeAnnotation annot = mEdgeProvider.getAnnotation(current, key);
 		if (annot == null) {
@@ -80,14 +80,14 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	}
 
 	@Override
-	protected void visit(SequentialComposition c) {
+	protected void visit(final SequentialComposition c) {
 		final List<Statement> stmts = new ArrayList<>();
 		for (final IActionWithBranchEncoders cb : c.getCodeBlocks()) {
 			if (cb instanceof StatementSequence) {
 				stmts.addAll(((StatementSequence) cb).getStatements());
 			} else {
-				throw new UnsupportedOperationException("Cannot unwrap SequentialComposition because I dont know "
-						+ cb.getClass().getSimpleName());
+				throw new UnsupportedOperationException(
+						"Cannot unwrap SequentialComposition because I dont know " + cb.getClass().getSimpleName());
 			}
 		}
 		processEdge(c, stmts);
@@ -95,12 +95,12 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	}
 
 	@Override
-	protected void visit(StatementSequence edge) {
+	protected void visit(final StatementSequence edge) {
 		processEdge(edge, edge.getStatements());
 		super.visit(edge);
 	}
 
-	private void processEdge(CodeBlock edge, List<Statement> stmts) {
+	private void processEdge(final CodeBlock edge, final List<Statement> stmts) {
 		final String key = String.valueOf(mKey);
 		for (final Statement stmt : stmts) {
 			ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(stmt, key);
@@ -124,8 +124,8 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 		}
 	}
 
-	private ReachDefBoogieAnnotator createBoogieAnnotator(List<Statement> stmts, Statement currentStmt,
-			ReachDefStatementAnnotation stmtAnnotation) {
+	private ReachDefBoogieAnnotator createBoogieAnnotator(final List<Statement> stmts, final Statement currentStmt,
+			final ReachDefStatementAnnotation stmtAnnotation) {
 
 		Collection<ReachDefStatementAnnotation> predecessors;
 
@@ -136,14 +136,15 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 			// its not the first statement, so we only need the straight line
 			// predecessor
 			final String key = String.valueOf(mKey);
-			final ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(
-					stmts.get(currentIndex - 1), key);
+			final ReachDefStatementAnnotation annot =
+					mStatementProvider.getAnnotation(stmts.get(currentIndex - 1), key);
 			predecessors.add(annot);
 		} else if (mPredecessor != null) {
 			// it is the first statement, we only need one predecessor
 			// from the trace and only if this is not the first codeblock
 			final String key = String.valueOf(mKey - 1);
-			final ReachDefTracePredecessorGenerator generator = new ReachDefTracePredecessorGenerator(mStatementProvider, key);
+			final ReachDefTracePredecessorGenerator generator =
+					new ReachDefTracePredecessorGenerator(mStatementProvider, key);
 			predecessors = generator.process(mPredecessor);
 		}
 

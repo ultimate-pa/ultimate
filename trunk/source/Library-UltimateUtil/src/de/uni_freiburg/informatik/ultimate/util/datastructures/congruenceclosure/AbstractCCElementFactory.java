@@ -11,6 +11,7 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 	final NestedMap2<ELEM, ELEM, ELEM> mFunctionToArgToFuncAppElem = new NestedMap2<>();
 
 	protected abstract ELEM newBaseElement(CONTENT c, boolean isLiteral);
+
 	protected abstract ELEM newFuncAppElement(ELEM f, ELEM arg);
 
 	public ELEM getBaseElement(final CONTENT content) {
@@ -30,8 +31,7 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 		return getFuncAppElement(func, argument, false);
 	}
 
-	public ELEM getFuncAppElement(final ELEM func, final ELEM argument,
-			final boolean forceExisting) {
+	public ELEM getFuncAppElement(final ELEM func, final ELEM argument, final boolean forceExisting) {
 		ELEM fae = mFunctionToArgToFuncAppElem.get(func, argument);
 		if (fae == null) {
 			if (forceExisting) {

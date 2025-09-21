@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -125,12 +125,12 @@ public class StaticObjectsHandler {
 	public void addGlobalTypeDeclaration(final TypeDeclaration boogieDec, final CDeclaration cDec) {
 		assert boogieDec != null && cDec != null : "Part of global type declaration is null";
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
-		final CType cType = cDec.getType();
+		final ICType cType = cDec.getType();
 		if (cType.isIncomplete() && !cDec.getType().isVoidType()) {
-			if (cType instanceof CStructOrUnion) {
-				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
-			} else if (cType instanceof CEnum) {
-				mIncompleteType2TypeDecl.put(((CEnum) cType).getName(), boogieDec);
+			if (cType instanceof final CStructOrUnion structOrUnion) {
+				mIncompleteType2TypeDecl.put(structOrUnion.getName(), boogieDec);
+			} else if (cType instanceof final CEnum enumType) {
+				mIncompleteType2TypeDecl.put(enumType.getName(), boogieDec);
 			} else if (cType instanceof CNamed) {
 				// do nothing, this is handled by TypeHandler::redirectNamedType
 			} else {
@@ -177,9 +177,7 @@ public class StaticObjectsHandler {
 
 	private static Triple<VariableDeclaration, CDeclaration, Integer>
 			computeSuitableVarDecl(final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls) {
-		if (decls.size() == 1) {
-			return decls.iterator().next();
-		}
+		// Try to find a declaration with an initializer
 		Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
 		for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
 			if (pair.getSecond().getInitializer() != null) {
@@ -190,11 +188,16 @@ public class StaticObjectsHandler {
 				}
 			}
 		}
-		if (suiteableDecl == null) {
-			// no declaration has an initializer, pick some
-			suiteableDecl = decls.iterator().next();
+		if (suiteableDecl != null) {
+			return suiteableDecl;
 		}
-		return suiteableDecl;
+		// If no declaration has an initializer, choose a non-extern declaration (if possible)
+		final var nonExternDecl = decls.stream().filter(x -> !x.getSecond().isExtern()).findAny();
+		if (nonExternDecl.isPresent()) {
+			return nonExternDecl.get();
+		}
+		// If there are only extern declarations, pick any
+		return decls.iterator().next();
 	}
 
 	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,
@@ -212,7 +215,7 @@ public class StaticObjectsHandler {
 	 * @param cvar
 	 * @param incompleteStruct
 	 */
-	public void completeTypeDeclaration(final String incompleteType, final CType completedType,
+	public void completeTypeDeclaration(final String incompleteType, final ICType completedType,
 			final ITypeHandler typeHandler) {
 		final TypeDeclaration oldBoogieDec = mIncompleteType2TypeDecl.remove(incompleteType);
 		if (oldBoogieDec == null) {
@@ -221,8 +224,8 @@ public class StaticObjectsHandler {
 			return;
 		}
 		final CDeclaration oldCDec = mTypeDeclarationToCDeclaration.get(oldBoogieDec);
-		assert oldCDec != null : "We have a Boogie declaration, we should also have a C declaration: "
-				+ oldBoogieDec.getIdentifier();
+		assert oldCDec != null
+				: "We have a Boogie declaration, we should also have a C declaration: " + oldBoogieDec.getIdentifier();
 
 		final TypeDeclaration newBoogieDec = new TypeDeclaration(oldBoogieDec.getLocation(),
 				oldBoogieDec.getAttributes(), oldBoogieDec.isFinite(), oldBoogieDec.getIdentifier(),
@@ -245,8 +248,6 @@ public class StaticObjectsHandler {
 
 	public void addStatementsForUltimateInit(final List<Statement> stmts) {
 		assert !mIsFrozen;
-		for (final Statement stmt : stmts) {
-			mStatementsForUltimateInit.add(stmt);
-		}
+		mStatementsForUltimateInit.addAll(stmts);
 	}
 }

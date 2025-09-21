@@ -26,8 +26,7 @@
  * to convey the resulting work.
  */
 /**
- * Package contains classes and interfaces for the analysis of concurrent
- * programs.
+ * Package contains classes and interfaces for the analysis of concurrent programs.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */

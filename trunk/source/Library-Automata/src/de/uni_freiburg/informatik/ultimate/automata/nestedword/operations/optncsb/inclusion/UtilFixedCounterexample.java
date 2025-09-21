@@ -204,8 +204,7 @@ public class UtilFixedCounterexample<LETTER extends IIcfgTransition<?>, STATE> {
 			final int iteration) throws AutomataLibraryException {
 		final NestedLassoWord<LETTER> word = this.getNestedLassoWord(automaton, name, iteration);
 		if (word == null) {
-			System.err.println("Empty word");
-			System.exit(-1);
+			throw new AssertionError("Empty word");
 		}
 		if (automaton instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> gba =

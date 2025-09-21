@@ -35,21 +35,21 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 
 /**
  * This is a reflection based workaround to prevent internal calls to ASTComment.getOffset() from
- * isPartOfTranslationUnitFile(), getFileLocation() and other methods performing location computations.
- * A significant performance overhead occurs because a comments file offset is first converted into sequence number by
- * an expensive operation and then converted it back to file offset. The reason for this is unknown and this hack may
- * have negative side effects - but for now, it seems to work just fine.
+ * isPartOfTranslationUnitFile(), getFileLocation() and other methods performing location computations. A significant
+ * performance overhead occurs because a comments file offset is first converted into sequence number by an expensive
+ * operation and then converted it back to file offset. The reason for this is unknown and this hack may have negative
+ * side effects - but for now, it seems to work just fine.
  */
 public class CommentLocationHack {
 	private final ILogger mLogger;
-	
+
 	private final boolean mEnabled;
 	private final boolean mEnableFallbackForUnsupportedMethods;
-	
+
 	private Field mAstCommentFilePath;
 	private Field mAstNodeOffset;
 	private Field mAstNodeLength;
-	
+
 	/**
 	 * Create instance with default options.
 	 *
@@ -59,7 +59,7 @@ public class CommentLocationHack {
 	public CommentLocationHack(final ILogger logger) {
 		this(logger, true, true);
 	}
-	
+
 	/**
 	 * @param logger
 	 *            Logger instance.
@@ -93,7 +93,7 @@ public class CommentLocationHack {
 		mEnabled = enabled;
 		mEnableFallbackForUnsupportedMethods = enableFallbackForUnsupportedMethods;
 	}
-	
+
 	/**
 	 * @param node
 	 *            AST comment node.
@@ -119,10 +119,10 @@ public class CommentLocationHack {
 				mLogger.warn("CommentLocationHack access exception: " + e);
 			}
 		}
-		
+
 		return node.getFileLocation();
 	}
-	
+
 	/**
 	 * @param node
 	 *            AST comment node.

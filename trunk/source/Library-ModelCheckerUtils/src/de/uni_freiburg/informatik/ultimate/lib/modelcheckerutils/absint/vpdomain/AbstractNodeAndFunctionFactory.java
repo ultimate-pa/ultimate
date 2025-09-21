@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.AbstractCCElementFactory;
 
 public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentifier<NODE>, CONTENT>
-			extends AbstractCCElementFactory<NODE, CONTENT> {
+		extends AbstractCCElementFactory<NODE, CONTENT> {
 
 	public abstract NODE getOrConstructNode(CONTENT c);
 
@@ -40,4 +40,3 @@ public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentif
 
 	public abstract Term getNonTheoryLiteralDisequalities();
 }
-

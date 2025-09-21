@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
@@ -25,9 +26,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-/**
- *
- */
+
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
@@ -36,17 +35,18 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
- * @author heizmann@informatik.uni-freiburg.de, musab@informatik.uni-freiburg.de
- *
+ * @author Betim Musa (musab@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AssertOrderHeuristicsEvaluation extends
-		AbstractTraceAbstractionTestSuite {
+public class AssertOrderHeuristicsEvaluation extends AbstractTraceAbstractionTestSuite {
 
 	/**
 	 * Limit the number of files per directory.
 	 */
 	private static int mFilesPerDirectoryLimit = 25;
 
+	// @formatter:off
 	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
 //			/*** Category 1. Arrays ***/
 //			new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
@@ -82,8 +82,14 @@ public class AssertOrderHeuristicsEvaluation extends
 //			new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 //			new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
 //
-//			new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
-//			new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+			new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-crafted/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-simple/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+			new DirectoryFileEndingsPair("examples/svcomp/recursive-with-pointer/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-invariants/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+			new DirectoryFileEndingsPair("examples/svcomp/recursified_nla-digbench/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+
 //
 //			new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
 //
@@ -105,16 +111,18 @@ public class AssertOrderHeuristicsEvaluation extends
 //			new DirectoryFileEndingsPair("examples/svcomp/ldv-challenges/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 	};
 
+
 	private static final String[] mUltimateRepository = {
 //		"examples/programs/nonlinearArithmetic",
 //		"examples/programs/quantifier",
 //		"examples/programs/random",
 //		"examples/programs/real-life",
 //		"examples/programs/reals",
-//		"examples/programs/recursive/regression",
-//		"examples/programs/regression",
+		"examples/programs/recursive/regression",
+		"examples/programs/regression",
 //		"examples/programs/scalable",
-		"examples/programs/toy",
+//		"examples/programs/toy",
+//		"examples/programs/toy/tooDifficultLoopInvariant/",
 //		"examples/programs/20170304-DifficultPathPrograms/",
 //		"examples/programs/20181015-LoopsPathprograms/",
 	};
@@ -192,9 +200,10 @@ public class AssertOrderHeuristicsEvaluation extends
 		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-H4.epf",
 		/*** Heuristic 5 (TERMS_WITH_SMALL_CONSTANTS_FIRST) ***/
 		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-H5.epf",
-
+		/*** Heuristic 6 (SHUFFLED_SINGLETONS) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-ShuffSing.epf",
 	};
-
+	// @formatter:on
 
 	/**
 	 * {@inheritDoc}
@@ -204,28 +213,17 @@ public class AssertOrderHeuristicsEvaluation extends
 		return 10 * 1000;
 	}
 
-
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final String setting : mSettings) {
-			addTestCase("AutomizerCInline.xml",
-					setting,
-					mSVCOMP_Examples);
+			addTestCase("AutomizerC.xml", setting, mSVCOMP_Examples);
 		}
 
 		for (final String setting : mSettings) {
-			addTestCase(
-					"AutomizerBplInline.xml",
-					setting,
-					mUltimateRepository,
-				    new String[] {".bpl"});
+			addTestCase("AutomizerBpl.xml", setting, mUltimateRepository, new String[] { ".bpl" });
 		}
 		for (final String setting : mSettings) {
-			addTestCase(
-					"AutomizerCInline.xml",
-					setting,
-					mUltimateRepository,
-				    new String[] {".c", ".i"});
+			addTestCase("AutomizerC.xml", setting, mUltimateRepository, new String[] { ".c", ".i" });
 		}
 		return super.createTestCases();
 	}

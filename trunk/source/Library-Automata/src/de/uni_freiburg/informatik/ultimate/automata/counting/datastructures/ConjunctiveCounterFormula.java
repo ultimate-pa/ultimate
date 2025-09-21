@@ -33,8 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Represents a conjunction of atomic counter guards. As usual, an empty
- * conjunction represents 'true'.
+ * Represents a conjunction of atomic counter guards. As usual, an empty conjunction represents 'true'.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -44,7 +43,6 @@ public class ConjunctiveCounterFormula {
 	private final LinkedHashSet<IAtomicCounterGuard> mConjuncts;
 
 	public ConjunctiveCounterFormula(final LinkedHashSet<IAtomicCounterGuard> conjuncts) {
-		super();
 		Objects.nonNull(conjuncts);
 		mConjuncts = conjuncts;
 	}

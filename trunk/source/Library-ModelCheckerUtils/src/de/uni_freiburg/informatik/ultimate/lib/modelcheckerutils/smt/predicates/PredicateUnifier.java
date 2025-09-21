@@ -86,10 +86,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class PredicateUnifier implements IPredicateUnifier {
 
 	/**
-	 * Option for writing a file if we find a quantified formula and a
-	 * quantifier-free formula that are equivalent. (Rationale: case where
-	 * quantifier elimination is possible but our quantifier elimination is not
-	 * successful.)
+	 * Option for writing a file if we find a quantified formula and a quantifier-free formula that are equivalent.
+	 * (Rationale: case where quantifier elimination is possible but our quantifier elimination is not successful.)
 	 *
 	 */
 	private static final boolean DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES = false;

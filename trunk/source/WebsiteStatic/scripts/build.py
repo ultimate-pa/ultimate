@@ -10,7 +10,7 @@ import sys
 from webinterface.build_all_settings import build_all_settings
 from webinterface.copy_examples import clean_examples, copy_examples
 from webinterface.refresh_index import refresh_index
-from webinterface.externals import get_jekyll_cli, get_ultimate_cli
+from webinterface.externals import get_jekyll_cli, get_ultimate_cli, ensure_bundle_install
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -24,6 +24,9 @@ def parse_args() -> argparse.Namespace:
         parser = argparse.ArgumentParser(description="Build static website.")
         parser.add_argument(
             "--production", action="store_true", help="build site for deployment"
+        )
+        parser.add_argument(
+            "--skip-settings", action="store_true", help="skip rebuilding settings (useful during debugging)"
         )
         return parser.parse_args()
     except argparse.ArgumentError as exc:
@@ -50,13 +53,16 @@ def copy_webinterface_config(production_build):
         shutil.copyfile(src, tgt)
 
 
-def build(production_build=False):
+def build(production_build=False, skip_settings=False):
     # check if external tools are available
-    get_ultimate_cli()
+    if not skip_settings:
+        get_ultimate_cli()
+    ensure_bundle_install()
     get_jekyll_cli()
 
     # create settings JSON for webinterface
-    build_all_settings()
+    if not skip_settings:
+        build_all_settings()
 
     # copy and index examples for webinterface
     clean_examples()
@@ -72,4 +78,4 @@ def build(production_build=False):
 
 if __name__ == "__main__":
     args = parse_args()
-    build(args.production)
+    build(args.production, args.skip_settings)

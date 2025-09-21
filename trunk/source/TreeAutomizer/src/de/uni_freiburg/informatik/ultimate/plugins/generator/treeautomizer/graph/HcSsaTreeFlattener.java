@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Constructed from a TreeRun with SsaInfos. Computes the post-order flattening of the tree as needed for a
- *  (get-interpolants.. ) request in (e.g.) SMTInterpol format.
+ * (get-interpolants.. ) request in (e.g.) SMTInterpol format.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -95,16 +95,18 @@ public class HcSsaTreeFlattener {
 			final int currentDepth = depthOfSubtrees.get(i);
 			final int difference = currentDepth - previousDepth;
 			if (difference == 0) {
-				/* subtree depth unchanged
-				 * do nothing */
+				/*
+				 * subtree depth unchanged do nothing
+				 */
 			} else if (difference > 0) {
 				/* submerged into a deeper subtree */
 				for (int j = 0; j < difference; j++) {
 					starts.push(i);
 				}
 			} else {
-				/* difference < 0
-				 * emerged into a shallower subtree */
+				/*
+				 * difference < 0 emerged into a shallower subtree
+				 */
 				for (int j = difference; j < 0; j++) {
 					starts.pop();
 				}
@@ -124,9 +126,9 @@ public class HcSsaTreeFlattener {
 	}
 
 	/**
-	 * Returns a name for the given term. The term must be one of those that are in the List returned by flatten().
-	 * The name will be used by Tree checker for making annotated terms out of the flattened terms, and for posing
-	 * the get-interpolants query.
+	 * Returns a name for the given term. The term must be one of those that are in the List returned by flatten(). The
+	 * name will be used by Tree checker for making annotated terms out of the flattened terms, and for posing the
+	 * get-interpolants query.
 	 *
 	 * @param t
 	 * @return
@@ -136,9 +138,8 @@ public class HcSsaTreeFlattener {
 	}
 
 	/**
-	 * Computes a flat (i.e. array instead of tree) version of the SSA.
-	 * This flat version is used by the TreeChecker to construct named formulas from it and assert each one in the
-	 *  solver.
+	 * Computes a flat (i.e. array instead of tree) version of the SSA. This flat version is used by the TreeChecker to
+	 * construct named formulas from it and assert each one in the solver.
 	 *
 	 * The order of the flattened list corresponds to a post-order over the tree, this
 	 *

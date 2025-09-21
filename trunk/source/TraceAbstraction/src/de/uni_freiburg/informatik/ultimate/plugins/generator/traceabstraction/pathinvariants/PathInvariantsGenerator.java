@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
@@ -169,8 +168,7 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 				if (!word.isInternalPosition(i - 1)) {
 					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
 				}
-				final UnmodifiableTransFormula transFormula =
-						((IInternalAction) word.getSymbol(i - 1)).getTransformula();
+				final UnmodifiableTransFormula transFormula = word.getSymbol(i - 1).getTransformula();
 				transitions.add(edgeFac.createInternalTransition(previousLocation, currentLocation,
 						currentLocation.getPayload(), transFormula));
 			}
@@ -290,8 +288,7 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		// the sum of the time needed per round to construct the constraints
 		ConstraintsConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// Sat status
-		SatStatus(String.class, s1 -> s2 -> new String((String) s1 + "; " + (String) s2),
-				StatisticsType.KEY_BEFORE_DATA);
+		SatStatus(String.class, s1 -> s2 -> ((String) s1 + "; " + (String) s2), StatisticsType.KEY_BEFORE_DATA);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

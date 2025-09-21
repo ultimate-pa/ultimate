@@ -23,13 +23,12 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-
 public class ScopedLinkedHashSet<E> implements Set<E> {
 
 	private final ScopedLinkedHashMap<E, Object> mBacking;
 
 	public ScopedLinkedHashSet() {
-		mBacking = new ScopedLinkedHashMap<E, Object>();
+		mBacking = new ScopedLinkedHashMap<>();
 	}
 
 	public void beginScope() {
@@ -41,12 +40,12 @@ public class ScopedLinkedHashSet<E> implements Set<E> {
 	}
 
 	@Override
-	public boolean add(E e) {
+	public boolean add(final E e) {
 		return mBacking.put(e, this) == null;
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends E> c) {
+	public boolean addAll(final Collection<? extends E> c) {
 		boolean changed = false;
 		for (final E e : c) {
 			changed |= add(e);
@@ -60,12 +59,12 @@ public class ScopedLinkedHashSet<E> implements Set<E> {
 	}
 
 	@Override
-	public boolean contains(Object o) {
+	public boolean contains(final Object o) {
 		return mBacking.get(o) == this;
 	}
 
 	@Override
-	public boolean containsAll(Collection<?> c) {
+	public boolean containsAll(final Collection<?> c) {
 		for (final Object o : c) {
 			if (!contains(o)) {
 				return false;
@@ -89,12 +88,12 @@ public class ScopedLinkedHashSet<E> implements Set<E> {
 	}
 
 	@Override
-	public boolean remove(Object o) {
+	public boolean remove(final Object o) {
 		return mBacking.remove(o) != null;
 	}
 
 	@Override
-	public boolean removeAll(Collection<?> c) {
+	public boolean removeAll(final Collection<?> c) {
 		boolean res = false;
 		for (final Object o : c) {
 			res |= remove(o);
@@ -103,7 +102,7 @@ public class ScopedLinkedHashSet<E> implements Set<E> {
 	}
 
 	@Override
-	public boolean retainAll(Collection<?> c) {
+	public boolean retainAll(final Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -114,24 +113,26 @@ public class ScopedLinkedHashSet<E> implements Set<E> {
 
 	@Override
 	public Object[] toArray() {
-		final Object [] res = new Object[size()];
+		final Object[] res = new Object[size()];
 		int pos = -1;
 		final Iterator<E> it = iterator();
 		while (it.hasNext()) {
-			res[++pos] = it.next();
+			pos++;
+			res[pos] = it.next();
 		}
 		return res;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T[] toArray(T[] a) {
+	public <T> T[] toArray(final T[] a) {
 		final int s = size();
 		final T[] res = a.length >= s ? a : Arrays.copyOf(a, s);
 		int pos = -1;
 		final Iterator<E> it = iterator();
 		while (it.hasNext()) {
-			res[++pos] = (T)it.next();
+			pos++;
+			res[pos] = (T) it.next();
 		}
 		return res;
 	}

@@ -68,9 +68,9 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	public ThreeValuedEquivalenceRelation(final ThreeValuedEquivalenceRelation<E> tver) {
-		this.mUnionFind = tver.mUnionFind.clone();
-		this.mDisequalities = new HashRelation<>(tver.mDisequalities);
-		this.mIsInconsistent = tver.mIsInconsistent;
+		mUnionFind = tver.mUnionFind.clone();
+		mDisequalities = new HashRelation<>(tver.mDisequalities);
+		mIsInconsistent = tver.mIsInconsistent;
 		assert sanityCheck();
 	}
 
@@ -95,13 +95,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 	/**
 	 * Remove the given element (first argument) from this Tver.
 	 *
-	 * If elem is not the only element in its equivalence class and is the representative before removal,
-	 *  we need to choose another representative, the second argument allows the caller to participate in that choice.
+	 * If elem is not the only element in its equivalence class and is the representative before removal, we need to
+	 * choose another representative, the second argument allows the caller to participate in that choice.
 	 *
 	 * @param elem
-	 * @param newRepChoice if newRepChoice is non-null, and elem was representative before removal, newRepChoice will
-	 *  be picked as new representative, otherwise this method picks some candidate (nondeterministically, depending on
-	 *  the hashing order)
+	 * @param newRepChoice
+	 *            if newRepChoice is non-null, and elem was representative before removal, newRepChoice will be picked
+	 *            as new representative, otherwise this method picks some candidate (nondeterministically, depending on
+	 *            the hashing order)
 	 * @return the representative of elem's equivalence class after removal of elem, null if it was the only element of
 	 *         its equivalence class
 	 */
@@ -137,12 +138,12 @@ public class ThreeValuedEquivalenceRelation<E> {
 		} else {
 			newRep = newRepChoice;
 		}
-		assert newRep!= null;
+		assert newRep != null;
 		mDisequalities.replaceDomainElement(elem, newRep);
 		mDisequalities.replaceRangeElement(elem, newRep);
 		assert sanityCheck();
-		assert getRepresentative(newRep) == newRep : "the returned element must be a representative, "
-				+ newRep + " is its own rep, but " +  getRepresentative(newRep) + " is.";
+		assert getRepresentative(newRep) == newRep : "the returned element must be a representative, " + newRep
+				+ " is its own rep, but " + getRepresentative(newRep) + " is.";
 		return newRep;
 	}
 
@@ -296,8 +297,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	/**
 	 *
-	 * Note that this sanity check currently forbids null entries for the relation -- if we want null entries, we
-	 * have to revise this.
+	 * Note that this sanity check currently forbids null entries for the relation -- if we want null entries, we have
+	 * to revise this.
 	 *
 	 * @return true iff sanity check is passed
 	 */
@@ -307,7 +308,6 @@ public class ThreeValuedEquivalenceRelation<E> {
 		if (!mUnionFind.sanityCheck()) {
 			return false;
 		}
-
 
 		// mDisequalities may not contain null entries
 		for (final Entry<E, E> en : mDisequalities.getSetOfPairs()) {
@@ -372,9 +372,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	public Set<E> getRepresentativesUnequalTo(final E rep) {
 		assert isRepresentative(rep);
-		final Set<E> result = new HashSet<>();
-
-		result.addAll(mDisequalities.getImage(rep));
+		final Set<E> result = new HashSet<>(mDisequalities.getImage(rep));
 
 		for (final E domEl : mDisequalities.getDomain()) {
 			if (mDisequalities.getImage(domEl).contains(rep)) {
@@ -386,8 +384,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	/**
-	 * @return Set of all elements that are known by this
-	 *         {@link ThreeValuedEquivalenceRelation} and are equivalent to
+	 * @return Set of all elements that are known by this {@link ThreeValuedEquivalenceRelation} and are equivalent to
 	 *         <code>elem</code>.
 	 */
 	public Set<E> getEquivalenceClass(final E elem) {
@@ -395,19 +392,18 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	public ThreeValuedEquivalenceRelation<E> join(final ThreeValuedEquivalenceRelation<E> other) {
-		final UnionFind<E> newPartition =
-				UnionFind.intersectPartitionBlocks(this.mUnionFind, other.mUnionFind).getFirst();
+		final UnionFind<E> newPartition = UnionFind.intersectPartitionBlocks(mUnionFind, other.mUnionFind).getFirst();
 		return new ThreeValuedEquivalenceRelation<>(newPartition, xJoinDisequalities(this, other, newPartition, true));
 	}
 
 	public ThreeValuedEquivalenceRelation<E> meet(final ThreeValuedEquivalenceRelation<E> other) {
-		final UnionFind<E> newPartition = UnionFind.unionPartitionBlocks(this.mUnionFind, other.mUnionFind);
+		final UnionFind<E> newPartition = UnionFind.unionPartitionBlocks(mUnionFind, other.mUnionFind);
 		return new ThreeValuedEquivalenceRelation<>(newPartition, xJoinDisequalities(this, other, newPartition, false));
 	}
 
-	public Triple<UnionFind<E>, HashRelation<E, E>, HashRelation<E, E>> joinPartitions(
-			final ThreeValuedEquivalenceRelation<E> other) {
-		return UnionFind.intersectPartitionBlocks(this.mUnionFind, other.mUnionFind);
+	public Triple<UnionFind<E>, HashRelation<E, E>, HashRelation<E, E>>
+			joinPartitions(final ThreeValuedEquivalenceRelation<E> other) {
+		return UnionFind.intersectPartitionBlocks(mUnionFind, other.mUnionFind);
 	}
 
 	/**
@@ -444,7 +440,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		final Map<E, E> result = new HashMap<>();
 		for (final Set<E> eqc : mUnionFind.getAllEquivalenceClasses()) {
 			E lastElement = null;
-			;
+
 			for (final E e : eqc) {
 				if (lastElement != null) {
 					result.put(e, lastElement);
@@ -482,24 +478,24 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	/**
-	 * Computes a ThreeValuedEquivalenceRelation that has the same constraints as this except some are filtered out.
-	 * In Particular only constraints are kept where on at least one side an element from the given set elems occurs.
-	 * (if we think of this TVER as two sets pairs, equalities and disequalities)
-	 * The elements that become unconstrained through this are omitted from the result.
+	 * Computes a ThreeValuedEquivalenceRelation that has the same constraints as this except some are filtered out. In
+	 * Particular only constraints are kept where on at least one side an element from the given set elems occurs. (if
+	 * we think of this TVER as two sets pairs, equalities and disequalities) The elements that become unconstrained
+	 * through this are omitted from the result.
 	 *
-	 * Example, in the partition view:
-	 * elems {q1, q2}
-	 * this: {q1, a, b}, {d, e, f}, {q2}, q1 != e
-	 * result: {q1, a, b}, {q2}, q1 != e
+	 * Example, in the partition view: elems {q1, q2} this: {q1, a, b}, {d, e, f}, {q2}, q1 != e result: {q1, a, b},
+	 * {q2}, q1 != e
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
-	 * @param elem element constraints over which are to be kept
+	 * @param elem
+	 *            element constraints over which are to be kept
 	 * @return a new, projected ThreeValuedEquivalenceRelation
 	 */
 	public ThreeValuedEquivalenceRelation<E> filterAndKeepOnlyConstraintsThatIntersectWith(final Set<E> elems) {
-		final UnionFind<E> newUf = mUnionFind.getElementComparator() != null
-				? new UnionFind<>(mUnionFind.getElementComparator()) : new UnionFind<>();
+		final UnionFind<E> newUf =
+				mUnionFind.getElementComparator() != null ? new UnionFind<>(mUnionFind.getElementComparator())
+						: new UnionFind<>();
 		for (final E elem : elems) {
 			if (newUf.find(elem) != null) {
 				// already constructed current elem's equivalence class
@@ -512,13 +508,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 			final ImmutableSet<E> elemEqc = mUnionFind.getEquivalenceClassMembers(elem);
 			// retain representatives because otherwise we have to do extra work for literal set constraints
 			newUf.addEquivalenceClass(elemEqc, mUnionFind.find(elem));
-//			newUf.addEquivalenceClass(elemEqc);
+			// newUf.addEquivalenceClass(elemEqc);
 		}
 		final HashRelation<E, E> newDisequalities = new HashRelation<>();
 		for (final Entry<E, E> deq : mDisequalities.getSetOfPairs()) {
-//			if (elems.contains(deq.getKey()) || elems.contains(deq.getValue())) {
+			// if (elems.contains(deq.getKey()) || elems.contains(deq.getValue())) {
 			if (DataStructureUtils.getSomeCommonElement(getEquivalenceClass(deq.getKey()), elems).isPresent()
-				|| DataStructureUtils.getSomeCommonElement(getEquivalenceClass(deq.getValue()), elems).isPresent()) {
+					|| DataStructureUtils.getSomeCommonElement(getEquivalenceClass(deq.getValue()), elems)
+							.isPresent()) {
 				newDisequalities.addPair(newUf.findAndConstructEquivalenceClassIfNeeded(deq.getKey()),
 						newUf.findAndConstructEquivalenceClassIfNeeded(deq.getValue()));
 			}
@@ -526,16 +523,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
 	}
 
-
 	/**
-	 * Constructs a new {@link ThreeValuedEquivalenceRelation} that is similar to
-	 * this but restricted to contraints where both elements occur in the set
-	 * elems.
+	 * Constructs a new {@link ThreeValuedEquivalenceRelation} that is similar to this but restricted to contraints
+	 * where both elements occur in the set elems.
 	 */
 	public ThreeValuedEquivalenceRelation<E> projectTo(final Set<E> elems) {
-		final UnionFind<E> newUf = mUnionFind.getElementComparator() != null ?
-				new UnionFind<>(mUnionFind.getElementComparator()) :
-					new UnionFind<>();
+		final UnionFind<E> newUf =
+				mUnionFind.getElementComparator() != null ? new UnionFind<>(mUnionFind.getElementComparator())
+						: new UnionFind<>();
 		for (final E elem : elems) {
 			if (newUf.find(elem) != null) {
 				// already constructed current elem's equivalence class
@@ -550,19 +545,18 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 		final HashRelation<E, E> newDisequalities = new HashRelation<>();
 		for (final Entry<E, E> deq : mDisequalities.getSetOfPairs()) {
-			final Optional<E> lhsRep = DataStructureUtils.getSomeCommonElement(elems, getEquivalenceClass(deq.getKey()));
+			final Optional<E> lhsRep =
+					DataStructureUtils.getSomeCommonElement(elems, getEquivalenceClass(deq.getKey()));
 			if (lhsRep.isPresent()) {
-				final Optional<E> rhsRep = DataStructureUtils.getSomeCommonElement(elems, getEquivalenceClass(deq.getValue()));
+				final Optional<E> rhsRep =
+						DataStructureUtils.getSomeCommonElement(elems, getEquivalenceClass(deq.getValue()));
 				if (rhsRep.isPresent()) {
-					newDisequalities.addPair(newUf.find(lhsRep.get()),
-							newUf.find(rhsRep.get()));
+					newDisequalities.addPair(newUf.find(lhsRep.get()), newUf.find(rhsRep.get()));
 				}
 			}
 		}
 		return new ThreeValuedEquivalenceRelation<>(newUf, newDisequalities);
 	}
-
-
 
 	/**
 	 * We call an element constrained iff this TVER puts any non-tautological constraint on it. In particular, the

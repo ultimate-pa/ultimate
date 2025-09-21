@@ -250,7 +250,8 @@ public class PartialOrderCache<E> {
 		return topSortIntern(TopologicalSorter::reversedTopologicalOrdering);
 	}
 
-	private List<E> topSortIntern(BiFunction<TopologicalSorter<E>, Collection<E>, Optional<List<E>>> sortingFunction) {
+	private List<E>
+			topSortIntern(final BiFunction<TopologicalSorter<E>, Collection<E>, Optional<List<E>>> sortingFunction) {
 		final TopologicalSorter<E> sorter = new TopologicalSorter<>(this::successor);
 		return sortingFunction.apply(sorter, mMaximalElements)
 				.orElseThrow(() -> new AssertionError("Cycle in partial order"));

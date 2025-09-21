@@ -217,11 +217,9 @@ public class HornClause implements IRankedLetter {
 		final String head;
 		{
 			final String headPred = mHeadIsFalse ? "false" : mHeadPredicate.getName();
-			head = headPred
-					+ mHeadPredVariables.stream()
-							.map(t -> PureSubstitution.apply(mHornClauseSymbolTable.getManagedScript(),
-									prettyVariableSubstitution, t.getTermVariable()))
-							.collect(Collectors.toList());
+			head = headPred + mHeadPredVariables.stream().map(t -> PureSubstitution
+					.apply(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution, t.getTermVariable()))
+					.collect(Collectors.toList());
 		}
 		return String.format("%s(%s) /\\ (%s) --> %s", hasComment() ? (getComment() + "| ") : "", body, PureSubstitution
 				.apply(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution, mFormula).toString(),
@@ -272,8 +270,7 @@ public class HornClause implements IRankedLetter {
 			final Set<HcVar> bodyVars = getBodyVariables();
 			headVars = headVarList.stream().map(hv -> hv.getTermVariable()).collect(Collectors.toList());
 
-			final List<TermVariable> qVarsList = new ArrayList<>();
-			qVarsList.addAll(headVars);
+			final List<TermVariable> qVarsList = new ArrayList<>(headVars);
 			bodyVars.forEach(bv -> qVarsList.add(bv.getTermVariable()));
 			qVars = qVarsList.toArray(new TermVariable[qVarsList.size()]);
 		}
@@ -341,14 +338,7 @@ public class HornClause implements IRankedLetter {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mBodyPredToArgs == null) ? 0 : mBodyPredToArgs.hashCode());
-		result = prime * result + ((mBodyPreds == null) ? 0 : mBodyPreds.hashCode());
-		result = prime * result + ((mFormula == null) ? 0 : mFormula.hashCode());
-		result = prime * result + (mHeadIsFalse ? 1231 : 1237);
-		result = prime * result + ((mHeadPredicate == null) ? 0 : mHeadPredicate.hashCode());
-		return result;
+		return Objects.hash(mBodyPredToArgs, mBodyPreds, mFormula, mHeadIsFalse, mHeadPredicate);
 	}
 
 	@Override

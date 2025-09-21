@@ -235,14 +235,14 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
-		return () -> new NestedIteratorNoopConstruction<>(
-				lettersSummary(hier).iterator(), x -> summarySuccessors(hier, x).iterator());
+		return () -> new NestedIteratorNoopConstruction<>(lettersSummary(hier).iterator(),
+				x -> summarySuccessors(hier, x).iterator());
 	}
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
 			final LETTER letter) {
-		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -271,13 +271,13 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
-		return () -> new NestedIteratorNoopConstruction<>(
-				lettersInternalIncoming(succ).iterator(), x -> internalPredecessors(succ, x).iterator());
+		return () -> new NestedIteratorNoopConstruction<>(lettersInternalIncoming(succ).iterator(),
+				x -> internalPredecessors(succ, x).iterator());
 	}
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
-		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -306,14 +306,14 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
-		return () -> new NestedIteratorNoopConstruction<>(
-				lettersCallIncoming(succ).iterator(), x -> callPredecessors(succ, x).iterator());
+		return () -> new NestedIteratorNoopConstruction<>(lettersCallIncoming(succ).iterator(),
+				x -> callPredecessors(succ, x).iterator());
 	}
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
 			final LETTER letter) {
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -345,27 +345,25 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
-		return () -> new NestedIteratorNoopConstruction<>(
-				predReturnHier(succ, letter).iterator(), x -> returnPredecessors(succ, x, letter).iterator());
+		return () -> new NestedIteratorNoopConstruction<>(predReturnHier(succ, letter).iterator(),
+				x -> returnPredecessors(succ, x, letter).iterator());
 	}
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
-		return () -> new NestedIteratorNoopConstruction<>(
-				lettersReturnIncoming(succ).iterator(), x -> returnPredecessors(succ, x).iterator());
+		return () -> new NestedIteratorNoopConstruction<>(lettersReturnIncoming(succ).iterator(),
+				x -> returnPredecessors(succ, x).iterator());
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
-		return () -> new NestedIteratorNoopConstruction<>(
-				hierarchicalPredecessorsOutgoing(state, letter).iterator(),
+		return () -> new NestedIteratorNoopConstruction<>(hierarchicalPredecessorsOutgoing(state, letter).iterator(),
 				x -> returnSuccessors(state, x, letter).iterator());
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
-		return () -> new NestedIteratorNoopConstruction<>(
-				hierarchicalPredecessorsOutgoing(state).iterator(),
+		return () -> new NestedIteratorNoopConstruction<>(hierarchicalPredecessorsOutgoing(state).iterator(),
 				x -> returnSuccessorsGivenHier(state, x).iterator());
 	}
 

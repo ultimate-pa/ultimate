@@ -43,12 +43,12 @@ public interface IMinimizer {
 	 * @return initial algorithm state
 	 */
 	<E> IMinimizerStep<E> create(List<E> input);
-	
+
 	/**
 	 * @return Whether duplicate variants may be generated or not.
 	 */
 	boolean isEachVariantUnique();
-	
+
 	/**
 	 * Returns whether the result is a local minimum wrt. this minimizer. This flag tell whether applying the same
 	 * minimizer again may result in a further reduction or not. It does not mean the result is a globally minimal and

@@ -8,43 +8,47 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * This strategy maintains a global template level and increases it if it is reached by all locations.
- * The template setting for a given location is changed only if it has not reached the global template level, yet.
+ * This strategy maintains a global template level and increases it if it is reached by all locations. The template
+ * setting for a given location is changed only if it has not reached the global template level, yet.
  */
 public class DynamicPatternSettingsStrategyWithGlobalTemplateLevel extends DynamicPatternSettingsStrategy {
 	private Pair<Integer, Integer> mCurrentGlobalTemplateLevel;
 
-	public DynamicPatternSettingsStrategyWithGlobalTemplateLevel(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
-			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
-		super(dimensionsStrat, maxRounds, allProgramVariables,
-				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
-		mCurrentGlobalTemplateLevel = new Pair<Integer, Integer>(dimensionsStrat.getInitialDisjuncts(), dimensionsStrat.getInitialConjuncts());
-	}
-	
-	@Override
-	public void changePatternSettingForLocation(IcfgLocation location, final int round) {
-		if (mLoc2PatternSetting.containsKey(location)) {
-			PatternSetting ps = mLoc2PatternSetting.get(location);
-			// Change the template setting for the current location only if it is not at the global template level
-			if (!mCurrentGlobalTemplateLevel.equals(new Pair<Integer, Integer>(ps.getNumOfDisjuncts(), ps.getNumOfConjuncts()))) {
-				ps.changeSetting(location, round);
-			}
-		} 		
+	public DynamicPatternSettingsStrategyWithGlobalTemplateLevel(
+			final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, final int maxRounds,
+			final Set<IProgramVar> allProgramVariables, final Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
+			final boolean alwaysStrictAndNonStrictCopies, final boolean useStrictInequalitiesAlternatingly) {
+		super(dimensionsStrat, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies,
+				useStrictInequalitiesAlternatingly);
+		mCurrentGlobalTemplateLevel =
+				new Pair<>(dimensionsStrat.getInitialDisjuncts(), dimensionsStrat.getInitialConjuncts());
 	}
 
 	@Override
-	public void changePatternSettingForLocation(IcfgLocation location, final int round , Set<IcfgLocation> locationsInUnsatCore) {
+	public void changePatternSettingForLocation(final IcfgLocation location, final int round) {
+		if (mLoc2PatternSetting.containsKey(location)) {
+			final PatternSetting ps = mLoc2PatternSetting.get(location);
+			// Change the template setting for the current location only if it is not at the global template level
+			if (!mCurrentGlobalTemplateLevel.equals(new Pair<>(ps.getNumOfDisjuncts(), ps.getNumOfConjuncts()))) {
+				ps.changeSetting(location, round);
+			}
+		}
+	}
+
+	@Override
+	public void changePatternSettingForLocation(final IcfgLocation location, final int round,
+			final Set<IcfgLocation> locationsInUnsatCore) {
 		// TODO: The method allLocationsAtGlobalTemplateLevel should be called only once per round.
 		if (allLocationsAtGlobalTemplateLevel(locationsInUnsatCore)) {
 			changeGlobalTemplateLevel();
 		}
 		changePatternSettingForLocation(location, round);
 	}
-	
+
 	private void changeGlobalTemplateLevel() {
-		int currentNumOfDisjuncts = mCurrentGlobalTemplateLevel.getFirst();
+		final int currentNumOfDisjuncts = mCurrentGlobalTemplateLevel.getFirst();
 		int newNumOfDisjuncts = currentNumOfDisjuncts;
-		int currentNumOfConjuncts = mCurrentGlobalTemplateLevel.getSecond();
+		final int currentNumOfConjuncts = mCurrentGlobalTemplateLevel.getSecond();
 		int newNumOfConjuncts = currentNumOfConjuncts;
 		if (currentNumOfConjuncts < 3) {
 			newNumOfConjuncts = currentNumOfConjuncts + 1;
@@ -59,14 +63,14 @@ public class DynamicPatternSettingsStrategyWithGlobalTemplateLevel extends Dynam
 				newNumOfConjuncts = currentNumOfConjuncts + 1;
 			}
 		}
-		mCurrentGlobalTemplateLevel = new Pair<Integer, Integer>(newNumOfDisjuncts, newNumOfConjuncts);
+		mCurrentGlobalTemplateLevel = new Pair<>(newNumOfDisjuncts, newNumOfConjuncts);
 	}
-	
-	private boolean allLocationsAtGlobalTemplateLevel(Set<IcfgLocation> locations) {
-		for (IcfgLocation loc : locations) {
+
+	private boolean allLocationsAtGlobalTemplateLevel(final Set<IcfgLocation> locations) {
+		for (final IcfgLocation loc : locations) {
 			if (mLoc2PatternSetting.containsKey(loc)) {
-				PatternSetting ps = mLoc2PatternSetting.get(loc);
-				if (!mCurrentGlobalTemplateLevel.equals(new Pair<Integer, Integer>(ps.getNumOfDisjuncts(), ps.getNumOfConjuncts()))) {
+				final PatternSetting ps = mLoc2PatternSetting.get(loc);
+				if (!mCurrentGlobalTemplateLevel.equals(new Pair<>(ps.getNumOfDisjuncts(), ps.getNumOfConjuncts()))) {
 					return false;
 				}
 			}

@@ -109,10 +109,10 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			final E representative = entry.getValue();
 			final ImmutableSet<E> equivalenceClass = entry.getKey();
 			for (final E equivalenceClassMember : equivalenceClass) {
-				final Set<E> oldValue = this.mEquivalenceClass.put(equivalenceClassMember, equivalenceClass);
+				final Set<E> oldValue = mEquivalenceClass.put(equivalenceClassMember, equivalenceClass);
 				assert oldValue == null : "element was contained twice";
 			}
-			this.mRepresentative.put(equivalenceClass, representative);
+			mRepresentative.put(equivalenceClass, representative);
 		}
 		mElementComparator = unionFind.mElementComparator;
 		assert representativesAreMinimal();
@@ -421,11 +421,13 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	}
 
 	/**
-	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not
-	 * have to be the representatives of this equivalence classes).
+	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not have to be the representatives of this
+	 * equivalence classes).
 	 *
-	 * @param elem1 first element
-	 * @param elem2 second element
+	 * @param elem1
+	 *            first element
+	 * @param elem2
+	 *            second element
 	 * @return true iff two equivalence classes were merged
 	 */
 	public boolean union(final E elem1, final E elem2) {
@@ -578,7 +580,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			}
 		}
 		for (final Set<E> eqc : mRepresentative.keySet()) {
-			if (!mEquivalenceClass.values().contains(eqc)) {
+			if (!mEquivalenceClass.containsValue(eqc)) {
 				return false;
 			}
 		}

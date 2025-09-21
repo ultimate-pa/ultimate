@@ -56,20 +56,9 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	}
 
 	@Override
-	public <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
-		return "";
-	}
-
-	@Override
 	public <SE, TE, CTX> TE translateExpressionWithContext(final SE expression, final CTX context,
 			final Class<SE> clazz) {
 		return translateExpression(expression, clazz);
-	}
-
-	@Override
-	public <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
-			final Class<SE> clazz) {
-		return translateExpressionToString(expression, clazz);
 	}
 
 	@Override
@@ -91,8 +80,8 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	@Override
 	public <STE, SE> Lasso<IProgramExecution<?, ?>>
 			translateLassoProgramExecution(final Lasso<IProgramExecution<STE, SE>> lasso) {
-		return new IBacktranslationService.Lasso<>(translateProgramExecution(lasso.getStem()),
-				translateProgramExecution(lasso.getLoop()));
+		return new IBacktranslationService.Lasso<>(translateProgramExecution(lasso.stem()),
+				translateProgramExecution(lasso.loop()));
 	}
 
 	@Override

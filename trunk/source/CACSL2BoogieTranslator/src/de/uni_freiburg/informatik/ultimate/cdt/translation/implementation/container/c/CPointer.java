@@ -26,22 +26,23 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a pointer given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
+
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
+ * Pointer type (see C11 6.2.5.20.5)
+ *
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
-public class CPointer extends CType {
+public final class CPointer implements ICType {
 	/**
 	 * The type, this pointer points to.
 	 */
-	private final CType mPointsToType;
+	private final ICType mPointsToType;
 
 	/**
 	 * Constructor.
@@ -49,17 +50,11 @@ public class CPointer extends CType {
 	 * @param pointsToType
 	 *            the type, this pointer points to.
 	 */
-	public CPointer(final CType pointsToType) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, false);
+	public CPointer(final ICType pointsToType) {
 		mPointsToType = pointsToType;
 	}
 
-	public CType getPointsToType() {
-		return mPointsToType;
-	}
-
-	public CType getTargetType() {
+	public ICType getPointsToType() {
 		return mPointsToType;
 	}
 
@@ -72,7 +67,7 @@ public class CPointer extends CType {
 	@Override
 	public String toString() {
 		CPointer pointer = this;
-		CType pointsTo = null;
+		ICType pointsTo = null;
 		int i = 1;
 		while (true) {
 			pointsTo = pointer.getPointsToType();
@@ -92,25 +87,36 @@ public class CPointer extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mPointsToType == null) ? 0 : mPointsToType.hashCode());
-		return result;
+		return Objects.hash(mPointsToType);
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (this == o) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (!(o instanceof CType)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (oType instanceof CPointer) {
-			return mPointsToType.equals(((CPointer) oType).mPointsToType);
-		}
+		return Objects.equals(mPointsToType, ((CPointer) obj).mPointsToType);
+	}
+
+	@Override
+	public boolean isAtomic() {
 		return false;
 	}
 
+	@Override
+	public boolean isScalarType() {
+		return true;
+	}
+
+	@Override
+	public boolean isVoidPointerType() {
+		return mPointsToType.getUnderlyingType().isVoidType();
+	}
+
+	public static CPointer voidPointer() {
+		return new CPointer(new CPrimitive(CPrimitive.CPrimitives.VOID));
+	}
 }

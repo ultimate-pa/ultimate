@@ -63,7 +63,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 
 		if (init.size() > 1) {
 			mLogger.info("Unable to accelerate with more than one entries");
-			return new HashSet<IcfgLoop<INLOC>>();
+			return new HashSet<>();
 		}
 
 		final Deque<INLOC> open = new ArrayDeque<>();
@@ -168,7 +168,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 					loopbodies.get(head).addNestedLoop(loopbodies.get(nestedhead));
 					loopbodies.remove(nestedhead);
 					mLogger.info("Unable to accelerate, since loop contains nested loops");
-					return new HashSet<IcfgLoop<INLOC>>();
+					return new HashSet<>();
 				}
 			}
 		}
@@ -203,13 +203,14 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 					paths.addLast(newPath);
 				}
 			}
-			result.add(new IcfgLoop<INLOC>(mServices, loopBody, head));
+			result.add(new IcfgLoop<>(mServices, loopBody, head));
 		}
 		return result;
 	}
 
 	public Set<IcfgLoop<INLOC>> getResult() {
-		mLoops.forEach(l -> mLogger.info("Loop @"+l.getHead()+": "+l.getLoopbody()+"; nested @"+l.getNestedLoopHeads()));
+		mLoops.forEach(l -> mLogger
+				.info("Loop @" + l.getHead() + ": " + l.getLoopbody() + "; nested @" + l.getNestedLoopHeads()));
 		return mLoops;
 	}
 }

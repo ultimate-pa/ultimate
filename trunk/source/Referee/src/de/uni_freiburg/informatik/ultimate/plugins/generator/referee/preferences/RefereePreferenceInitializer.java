@@ -48,5 +48,5 @@ public class RefereePreferenceInitializer extends UltimatePreferenceInitializer 
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<>(LABEL_ALLOW_LOOPS_WITHOUT_ANNOTATION,
 				DEF_ALLOW_LOOPS_WITHOUT_ANNOTATION, PreferenceType.Boolean), };
-	};
+	}
 }

@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 
 /**
- * Looks for all IdentifierExpressions with a global variable inside a given Expression.
- * Note that this will crash if any IdentifierExpression.
+ * Looks for all IdentifierExpressions with a global variable inside a given Expression. Note that this will crash if
+ * any IdentifierExpression.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *

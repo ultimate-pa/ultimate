@@ -94,7 +94,12 @@ public interface ITraceCheckPreferences {
 		/**
 		 * Use the SMT feature heuristic together with additional parameters.
 		 */
-		SMT_FEATURE_HEURISTIC
+		SMT_FEATURE_HEURISTIC,
+
+		/**
+		 * See {@link AssertOrderShuffledSingletons}
+		 */
+		SHUFFLED_SINGLETONS,
 	}
 
 	public enum SmtFeatureHeuristicPartitioningType {

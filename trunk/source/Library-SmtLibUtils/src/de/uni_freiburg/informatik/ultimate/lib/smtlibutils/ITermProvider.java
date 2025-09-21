@@ -30,14 +30,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Classes that implement this interface represent certain kinds of
- * {@link Term}s. In contrast to {@link Term} these classes have methods (e.g.,
- * getters) that give us direct access to information that is only available
- * these kinds of {@link Term}s (e.g, direct access to parameters of this term).
- * <br />
- * In contrast to {@link ITermWrapper} this interface does not require its
- * objects to store the {@link Term}. The {@link Term} can be constructed
- * on-demand using the {@link Script} that is an argument of the
+ * Classes that implement this interface represent certain kinds of {@link Term}s. In contrast to {@link Term} these
+ * classes have methods (e.g., getters) that give us direct access to information that is only available these kinds of
+ * {@link Term}s (e.g, direct access to parameters of this term). <br />
+ * In contrast to {@link ITermWrapper} this interface does not require its objects to store the {@link Term}. The
+ * {@link Term} can be constructed on-demand using the {@link Script} that is an argument of the
  * {@link ITermProvider#toTerm} method.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -45,5 +42,5 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public interface ITermProvider {
 
-	public Term toTerm(Script script);
+	Term toTerm(Script script);
 }

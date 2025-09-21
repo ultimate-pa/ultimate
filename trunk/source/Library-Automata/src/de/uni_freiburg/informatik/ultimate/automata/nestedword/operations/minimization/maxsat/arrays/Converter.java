@@ -61,13 +61,15 @@ final class Converter<LETTER, STATE> {
 	private final IMergeStateFactory<STATE> mFactory;
 	private final INestedWordAutomaton<LETTER, STATE> mAutomaton;
 
-	/* LETTERs are shared between old (input) and new (output) automaton
+	/*
+	 * LETTERs are shared between old (input) and new (output) automaton
 	 */
 	private final Set<LETTER> mIAlphabet;
 	private final Set<LETTER> mCAlphabet;
 	private final Set<LETTER> mRAlphabet;
 
-	/* LETTERs <-> Integers bijection
+	/*
+	 * LETTERs <-> Integers bijection
 	 */
 	private final HashMap<LETTER, Integer> mISymIndex;
 	private final HashMap<LETTER, Integer> mCSymIndex;
@@ -76,13 +78,15 @@ final class Converter<LETTER, STATE> {
 	private final ArrayList<LETTER> mCSym;
 	private final ArrayList<LETTER> mRSym;
 
-	/* STATEs are *not* shared between old and new automaton
+	/*
+	 * STATEs are *not* shared between old and new automaton
 	 */
 	private final Set<STATE> mOldStates;
 	private final Set<STATE> mOldInitialStates;
 	private final Collection<STATE> mOldFinalStates;
 
-	/* STATEs <-> Integers bijection
+	/*
+	 * STATEs <-> Integers bijection
 	 */
 	private final HashMap<STATE, Integer> mOldStateIndex;
 	private final ArrayList<STATE> mOldState;
@@ -103,9 +107,9 @@ final class Converter<LETTER, STATE> {
 	Converter(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 
-		this.mServices = services;
-		this.mFactory = stateFactory;
-		this.mAutomaton = automaton;
+		mServices = services;
+		mFactory = stateFactory;
+		mAutomaton = automaton;
 
 		mOldStates = automaton.getStates();
 		mOldInitialStates = automaton.getInitialStates();
@@ -221,7 +225,8 @@ final class Converter<LETTER, STATE> {
 		final int numclasses = partition.mNumClasses;
 		final int[] classOf = partition.mClassOf;
 
-		/* Avoid duplicate edges in the merged automaton
+		/*
+		 * Avoid duplicate edges in the merged automaton
 		 */
 
 		final HashSet<ITrans> newITrans = new HashSet<>();
@@ -238,13 +243,14 @@ final class Converter<LETTER, STATE> {
 			newRTrans.add(new RTrans(classOf[x.mSrc], x.mSym, classOf[x.mTop], classOf[x.mDst]));
 		}
 
-		/* For each equivalence class, remember the old STATEs in it
+		/*
+		 * For each equivalence class, remember the old STATEs in it
 		 */
 
 		final ArrayList<ArrayList<STATE>> statesOfclass = new ArrayList<>();
 
 		for (int i = 0; i < numclasses; i++) {
-			statesOfclass.add(new ArrayList<STATE>());
+			statesOfclass.add(new ArrayList<>());
 		}
 
 		for (int i = 0; i < mOldState.size(); i++) {
@@ -255,7 +261,8 @@ final class Converter<LETTER, STATE> {
 			assert !statesOfclass.get(i).isEmpty();
 		}
 
-		/* Make a new STATE for each equivalence class of old STATEs
+		/*
+		 * Make a new STATE for each equivalence class of old STATEs
 		 */
 
 		final ArrayList<STATE> newState = new ArrayList<>();
@@ -277,11 +284,12 @@ final class Converter<LETTER, STATE> {
 			}
 		}
 
-		/* Construct result NestedWordAutomaton
+		/*
+		 * Construct result NestedWordAutomaton
 		 */
 
 		NestedWordAutomaton<LETTER, STATE> nwa;
-		nwa = new NestedWordAutomaton<LETTER, STATE>(mServices, new VpAlphabet<>(mIAlphabet, mCAlphabet, mRAlphabet), mFactory);
+		nwa = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(mIAlphabet, mCAlphabet, mRAlphabet), mFactory);
 
 		for (final STATE st : newState) {
 			nwa.addState(newInitialStates.contains(st), newFinalStates.contains(st), st);
@@ -303,12 +311,14 @@ final class Converter<LETTER, STATE> {
 		return nwa;
 	}
 
-	/* Compute history states, using a INestedWordAutomaton based implementation
+	/*
+	 * Compute history states, using a INestedWordAutomaton based implementation
 	 */
 
 	ArrayList<Hist> computeHistoryStates() {
-		/* casting doesn't really make sense here, but it seems this is
-		 * currently the only implementation of history states
+		/*
+		 * casting doesn't really make sense here, but it seems this is currently the only implementation of history
+		 * states
 		 */
 		if (!(mAutomaton instanceof IDoubleDeckerAutomaton<?, ?>)) {
 			throw new IllegalArgumentException("Operand must be an IDoubleDeckerAutomaton.");

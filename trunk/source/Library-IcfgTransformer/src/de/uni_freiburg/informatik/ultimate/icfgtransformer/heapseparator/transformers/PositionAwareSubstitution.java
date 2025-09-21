@@ -20,9 +20,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
- * Variant of {@link PureSubstitution}. Also substitutes {@link Term}s by other Terms. However, the substituted Terms are
- * identified by their position in the formula. Thus the same Term may be substituted by different Terms when it occurs
- * more than once in the original formula (which is also a {@link Term}).
+ * Variant of {@link PureSubstitution}. Also substitutes {@link Term}s by other Terms. However, the substituted Terms
+ * are identified by their position in the formula. Thus the same Term may be substituted by different Terms when it
+ * occurs more than once in the original formula (which is also a {@link Term}).
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -34,7 +34,6 @@ public class PositionAwareSubstitution extends PositionAwareTermTransformer {
 	public PositionAwareSubstitution(final Script script,
 			final Map<? extends SubtreePosition, ? extends Term> positionSubstitution,
 			final Map<Term, Term> termSubstitution) {
-		super();
 		mScopedPositionSubstitutionMapping = new ScopedHashMap<>();
 		mScopedPositionSubstitutionMapping.putAll(positionSubstitution);
 		mScopedTermSubstitutionMapping = new ScopedHashMap<>();
@@ -52,7 +51,6 @@ public class PositionAwareSubstitution extends PositionAwareTermTransformer {
 		this(script, positionBasedSubstitution, Collections.emptyMap());
 	}
 
-
 	public PositionAwareSubstitution(final ManagedScript mgdScript,
 			final Map<? extends SubtreePosition, ? extends Term> positionBasedSubstitution) {
 		this(mgdScript, positionBasedSubstitution, Collections.emptyMap());
@@ -69,9 +67,9 @@ public class PositionAwareSubstitution extends PositionAwareTermTransformer {
 				mScopedPositionSubstitutionMapping.beginScope();
 				mScopedTermSubstitutionMapping.beginScope();
 				throw new UnsupportedOperationException("quantified formulas are not yet supported by this class");
-//				final QuantifiedFormula qFormula = (QuantifiedFormula) term;
-//				removeQuantifiedVarContainingKeys(qFormula);
-//				term = renameQuantifiedVarsThatOccurInValues(qFormula);
+				// final QuantifiedFormula qFormula = (QuantifiedFormula) term;
+				// removeQuantifiedVarContainingKeys(qFormula);
+				// term = renameQuantifiedVarsThatOccurInValues(qFormula);
 			} else if (term instanceof LetTerm) {
 				throw new UnsupportedOperationException("LetTerm not supported");
 			}
@@ -91,16 +89,16 @@ public class PositionAwareSubstitution extends PositionAwareTermTransformer {
 				varsOccuringInValues(qFormula.getVariables(), mScopedPositionSubstitutionMapping),
 				varsOccuringInValues(qFormula.getVariables(), mScopedTermSubstitutionMapping));
 		throw new UnsupportedOperationException("quantified formulas are not yet supported by this class");
-//		if (toRename.isEmpty()) {
-//			return qFormula;
-//		}
-//		if (mMgdScript == null) {
-//			throw new UnsupportedOperationException("Substitution in quantified formula such that substitute "
-//					+ "containes quantified variable. This (rare) case is "
-//					+ "only supported if you call substitution with fresh " + "variable construction.");
-//		}
-//		final Term result = SmtUtils.renameQuantifiedVariables(mMgdScript, qFormula, toRename, "subst");
-//		return result;
+		// if (toRename.isEmpty()) {
+		// return qFormula;
+		// }
+		// if (mMgdScript == null) {
+		// throw new UnsupportedOperationException("Substitution in quantified formula such that substitute "
+		// + "containes quantified variable. This (rare) case is "
+		// + "only supported if you call substitution with fresh " + "variable construction.");
+		// }
+		// final Term result = SmtUtils.renameQuantifiedVariables(mMgdScript, qFormula, toRename, "subst");
+		// return result;
 	}
 
 	/**
@@ -111,15 +109,15 @@ public class PositionAwareSubstitution extends PositionAwareTermTransformer {
 	private void removeQuantifiedVarContainingKeys(final QuantifiedFormula qFormula) {
 		throw new UnsupportedOperationException("quantified formulas are not yet supported by this class");
 
-//		final Iterator<Entry<SubtreePosition, Term>> it = mScopedPositionSubstitutionMapping.entrySet().iterator();
-//		while (it.hasNext()) {
-//			final Entry<SubtreePosition, Term> entry = it.next();
-//			final List<TermVariable> quantifiedVars = Arrays.asList(qFormula.getVariables());
-//			final List<TermVariable> occuringVars = Arrays.asList(entry.getKey().getFreeVars());
-//			if (!Collections.disjoint(quantifiedVars, occuringVars)) {
-//				it.remove();
-//			}
-//		}
+		// final Iterator<Entry<SubtreePosition, Term>> it = mScopedPositionSubstitutionMapping.entrySet().iterator();
+		// while (it.hasNext()) {
+		// final Entry<SubtreePosition, Term> entry = it.next();
+		// final List<TermVariable> quantifiedVars = Arrays.asList(qFormula.getVariables());
+		// final List<TermVariable> occuringVars = Arrays.asList(entry.getKey().getFreeVars());
+		// if (!Collections.disjoint(quantifiedVars, occuringVars)) {
+		// it.remove();
+		// }
+		// }
 	}
 
 	/**
@@ -154,35 +152,35 @@ public class PositionAwareSubstitution extends PositionAwareTermTransformer {
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		throw new UnsupportedOperationException("quantified formulas are not yet supported by this class");
-//		Term result;
-//		// to avoid capturing of variables we had to rename quantified vars
-//		// to fresh vars in subterms. Now we have to construct the appropriate
-//		// supterterm.
-//		// How can we detect if a variable was renamed?
-//		// If a variable (of the old superterm) was renamed, it is a key in the
-//		// current substitution mapping.
-//		TermVariable[] newQuantifiedVars = new TermVariable[old.getVariables().length];
-//		boolean quantifiedVariablesChanged = false;
-//		for (int i = 0; i < old.getVariables().length; i++) {
-//			if (mScopedPositionSubstitutionMapping.containsKey(old.getVariables()[i])) {
-//				newQuantifiedVars[i] = old.getVariables()[i];
-//				quantifiedVariablesChanged = true;
-//			} else {
-//				newQuantifiedVars[i] = old.getVariables()[i];
-//			}
-//		}
-//		if (old.getSubformula() == newBody) {
-//			assert !quantifiedVariablesChanged;
-//			result = old;
-//		} else {
-//			if (!quantifiedVariablesChanged) {
-//				// reuse old array
-//				newQuantifiedVars = old.getVariables();
-//			}
-//			result = mScript.quantifier(old.getQuantifier(), newQuantifiedVars, newBody);
-//		}
-//		mScopedPositionSubstitutionMapping.endScope();
-//		setResult(result);
+		// Term result;
+		// // to avoid capturing of variables we had to rename quantified vars
+		// // to fresh vars in subterms. Now we have to construct the appropriate
+		// // supterterm.
+		// // How can we detect if a variable was renamed?
+		// // If a variable (of the old superterm) was renamed, it is a key in the
+		// // current substitution mapping.
+		// TermVariable[] newQuantifiedVars = new TermVariable[old.getVariables().length];
+		// boolean quantifiedVariablesChanged = false;
+		// for (int i = 0; i < old.getVariables().length; i++) {
+		// if (mScopedPositionSubstitutionMapping.containsKey(old.getVariables()[i])) {
+		// newQuantifiedVars[i] = old.getVariables()[i];
+		// quantifiedVariablesChanged = true;
+		// } else {
+		// newQuantifiedVars[i] = old.getVariables()[i];
+		// }
+		// }
+		// if (old.getSubformula() == newBody) {
+		// assert !quantifiedVariablesChanged;
+		// result = old;
+		// } else {
+		// if (!quantifiedVariablesChanged) {
+		// // reuse old array
+		// newQuantifiedVars = old.getVariables();
+		// }
+		// result = mScript.quantifier(old.getQuantifier(), newQuantifiedVars, newBody);
+		// }
+		// mScopedPositionSubstitutionMapping.endScope();
+		// setResult(result);
 	}
 
 	@Override

@@ -120,7 +120,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void nonDlc1() throws IOException {
-		final FunDecl[] funDecls = new FunDecl[] {};
+		final FunDecl[] funDecls = {};
 		final String formulaAsString =
 				CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/nonDlc1");
 		final String expectedResult = "true";
@@ -130,8 +130,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void nonDlc2() throws IOException {
-		final FunDecl[] funDecls =
-				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "Gen_SWCS_2255_ISS_5161_0_ct0_X2"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "Gen_SWCS_2255_ISS_5161_0_ct0_X2"), };
 		final String formulaAsString =
 				CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/nonDlc2");
 		final String expectedResult = "true";
@@ -141,7 +140,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void nonDlc3() throws IOException {
-		final FunDecl[] funDecls = new FunDecl[] {};
+		final FunDecl[] funDecls = {};
 		final String formulaAsString =
 				CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/nonDlc3");
 		final String expectedResult = "true";
@@ -151,8 +150,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void nonDlc4() throws IOException {
-		final FunDecl[] funDecls =
-				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "Gen_SWCS_2255_ISS_4650_0_ct0_X2"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "Gen_SWCS_2255_ISS_4650_0_ct0_X2"), };
 		final String formulaAsString =
 				CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/nonDlc4");
 		final String expectedResult = "true";
@@ -162,9 +160,9 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void cinderella_ae_iter_0_2() throws IOException {
-		final FunDecl[] funDecls =
-				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
-		final String formulaAsString = CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ae_iter_0_2.smt2");
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
+		final String formulaAsString = CoreUtil.readFile(
+				"src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ae_iter_0_2.smt2");
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
 				mServices, mLogger, mMgdScript, mCsvWriter);
@@ -172,9 +170,9 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void cinderella_ae_iter_0_3() throws IOException {
-		final FunDecl[] funDecls =
-				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
-		final String formulaAsString = CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ae_iter_0_3.smt2");
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
+		final String formulaAsString = CoreUtil.readFile(
+				"src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ae_iter_0_3.smt2");
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
 				mServices, mLogger, mMgdScript, mCsvWriter);
@@ -182,9 +180,9 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void cinderella_ea_iter_0_3() throws IOException {
-		final FunDecl[] funDecls =
-				new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
-		final String formulaAsString = CoreUtil.readFile("src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ea_iter_0_3.smt2");
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "b1", "b2", "b3", "b4", "b5"), };
+		final String formulaAsString = CoreUtil.readFile(
+				"src/de/uni_freiburg/informatik/ultimate/modelcheckerutils/smt/large/cinderella_ea_iter_0_3.smt2");
 		final String expectedResult = null;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true,
 				mServices, mLogger, mMgdScript, mCsvWriter);
@@ -193,7 +191,7 @@ public class QuantifierEliminationTodos {
 	//@formatter:off
 	@Test
 	public void plrTest3() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getBoolSort, "HI", "HJ", "HK", "HL", "HM", "HO", "HP", "HQ", "HS", "HT", "HU", "HW", "HX", "HY", "HZ", "IA", "IB", "IC", "ID", "IE", "IF", "IG", "AA", "II", "IJ", "AC", "IK", "IL", "AE", "AF", "IN", "AG", "AI", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AU", "AW", "AX", "AY", "AZ", "BA", "BC", "BD", "C", "BE", "D", "BF", "BG", "E", "F", "BI", "G", "H", "I", "BK", "J", "BL", "K", "BM", "L", "BO", "BP", "N", "O", "BQ", "BR", "P", "BS", "Q", "R", "BT", "BU", "S", "T", "U", "V", "W", "BY", "BZ", "X", "CB", "CC", "CD", "CE", "CI", "CJ", "CK", "CL", "CN", "CO", "CQ", "CS", "CT", "CW", "CX", "CY", "CZ", "DA", "DB", "DD", "DH", "DI", "DJ", "DK", "DO", "DP", "DQ", "DR", "DS", "DU", "DX", "DZ", "EA", "EB", "ED", "EE", "EF", "EG", "EH", "EI", "EJ", "EK", "EM", "EN", "EO", "EP", "ES", "EU", "EV", "EW", "EX", "EZ", "FA", "FB", "FC", "FE", "FF", "FG", "FH", "FI", "FK", "FL", "FM", "FN", "FP", "FR", "FS", "FT", "FW", "FX", "GA", "GB", "GE", "GF", "GH", "GI", "GJ", "GK", "GO", "GP", "GR", "GS", "GT", "GU", "GV", "GW", "GX", "GY", "GZ", "HA", "HB", "HC", "HE", "HF", "HG"),
 				new FunDecl(SmtSortUtils::getRealSort, "AB", "DE", "CF", "IM", "CH", "AH", "CM", "FQ", "EQ", "HV", "DV", "T1", "GD", "FD"),
 				new FunDecl(SmtSortUtils::getIntSort, "HH", "DF", "DG", "HN", "DL", "DM", "DN", "HR", "DT", "DW", "DY", "EC", "IH", "AD", "EL", "AJ", "ER", "ET", "AT", "EY", "AV", "BB", "A", "B", "FJ", "BH", "BJ", "FO", "BN", "M", "FU", "FV", "FY", "BV", "FZ", "BW", "BX", "Y", "Z", "GC", "CA", "GG", "CG", "GL", "GM", "GN", "GQ", "CP", "CR", "CU", "CV", "HD", "DC"),
@@ -208,7 +206,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void dll_01_2big() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "main_#t~mem20.offset", "main_#t~mem20.base"),
 		};
 		final String formulaAsString =
@@ -218,7 +216,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void FakeFloatingMountaineer01 () {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~a~0", "~#f~0.offset", "~g~0"),
 				new FunDecl(SmtSortUtils::getRoundingmodeSort, "currentRoundingMode"),
 		};
@@ -231,7 +229,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void ALIA_piVC_piVC_d91441() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "V_6", "V_5", "t", "ix", "j", "i"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
 		};
@@ -242,7 +240,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void maybeTooDifficult() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_save_byte_from_array_~storage.base", "ULTIMATE.start_save_byte_from_array_~storage.offset", "ULTIMATE.start_save_byte_from_array_~array.base", "ULTIMATE.start_save_byte_from_array_~array.offset", "ULTIMATE.start_aws_array_eq_harness_~rhs~0.base", "ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.base", "ULTIMATE.start_aws_array_eq_harness_~#old_byte_from_lhs~0.offset", "ULTIMATE.start_aws_array_eq_harness_~lhs~0.offset", "ULTIMATE.start_aws_array_eq_harness_~lhs~0.base", "#StackHeapBarrier"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 		};
@@ -253,7 +251,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void selfUpdateAraucaria() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "v_ArrVal_398", "v_ArrVal_400", "ULTIMATE.start_main_~l~0#1.base"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_#memory_$Pointer$.base_58"),
@@ -265,7 +263,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void selfUpdateAraucariaSimplified() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "v1", "v2", "x"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
@@ -277,7 +275,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void substitutionProblem() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "v_inv_hbv_inv_1_Int_133", "v_inv_hbv_inv_1_Int_131", "v_ArrVal_267"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_inv_hbv_inv_2_Array_Int_Int_124", "v_arrayElimArr_20"),
 		};
@@ -291,7 +289,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void somePreinerSchollBenchmarkSubformula() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "?lambda", "x5"),
 
 		};
@@ -307,7 +305,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void heap_data_cart2() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idxDim1", "idxDim2"),
 				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Bv32Sort, "arr"),
 		};
@@ -331,7 +329,7 @@ public class QuantifierEliminationTodos {
 	 */
 	//	@Test
 	public void derDivByIntVarForall() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
 		};
@@ -345,7 +343,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void derIntPoly1Forall() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(forall ((x Int)) (or (not (= (* x a a a 2) t)) (not (= (* x x x) 8))))";
 		final String expectedResultAsString = "(let ((.cse2 (= a 0)) (.cse0 (div t 2)) (.cse1 (not (= (mod t 2) 0)))) (and (or (not (= .cse0 0)) .cse1 (not .cse2)) (let ((.cse3 (* a a a))) (or (not (= (mod .cse0 .cse3) 0)) .cse2 (not (= (let ((.cse4 (div .cse0 .cse3))) (* .cse4 .cse4 .cse4)) 8)) .cse1))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -357,7 +355,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void tirRealPoly1Exists() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "a", "b", "t", "hi", "lo"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "a", "b", "t", "hi", "lo"), };
 		final String formulaAsString = "(exists ((x Int)) (and (<= (* x a a b (- 2)) t) (<= lo x) (<= x hi)))";
 		final String expectedResultAsString = "true";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -368,7 +366,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void derDivByIntVarExists() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "q", "b"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "a"),
 		};
@@ -409,7 +407,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void maybeInfinite() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "ULTIMATE.start_main_~mask_SORT_1~0#1"),
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "ULTIMATE.start_main_~state_66~0#1", "ULTIMATE.start_main_~state_61~0#1"),
 		};
@@ -419,7 +417,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void maybeInfinite2() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "ULTIMATE.start_main_~state_63~0#1", "ULTIMATE.start_main_~mask_SORT_1~0#1"),
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "ULTIMATE.start_main_~state_66~0#1", "ULTIMATE.start_main_~state_61~0#1"),
 		};
@@ -429,7 +427,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void test01() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "~waterLevel~0", "~pumpRunning~0", "#NULL.base", "#NULL.offset", "~head~0.base", "~head~0.offset", "~cleanupTimeShifts~0", "~systemActive~0", "#StackHeapBarrier", "old(~methaneLevelCritical~0)", "~methaneLevelCritical~0", "test_~splverifierCounter~0", "old(~waterLevel~0)", "test_~tmp~1"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "~waterLevel~0", "~pumpRunning~0", "#NULL.base", "#NULL.offset", "~head~0.base", "~head~0.offset", "~cleanupTimeShifts~0", "~systemActive~0", "#StackHeapBarrier", "old(~methaneLevelCritical~0)", "~methaneLevelCritical~0", "test_~splverifierCounter~0", "old(~waterLevel~0)", "test_~tmp~1"), };
 		final String formulaAsString = "(exists ((|v_old(~methaneLevelCritical~0)_AFTER_CALL_2| Int)) (let ((.cse9 (<= 2 ~waterLevel~0)) (.cse13 (<= ~waterLevel~0 2)) (.cse0 (<= ~cleanupTimeShifts~0 4)) (.cse1 (<= ~head~0.offset 0)) (.cse2 (<= ~pumpRunning~0 0)) (.cse3 (<= 0 |#NULL.base|)) (.cse4 (<= 0 |v_old(~methaneLevelCritical~0)_AFTER_CALL_2|)) (.cse7 (<= 0 ~head~0.offset)) (.cse21 (<= ~waterLevel~0 1)) (.cse8 (<= 1 ~systemActive~0)) (.cse10 (<= |#NULL.offset| 0)) (.cse11 (<= |v_old(~methaneLevelCritical~0)_AFTER_CALL_2| 0)) (.cse12 (<= 4 ~cleanupTimeShifts~0)) (.cse22 (<= 1 ~waterLevel~0)) (.cse14 (<= 0 ~head~0.base)) (.cse15 (<= |#NULL.base| 0)) (.cse16 (<= 0 ~pumpRunning~0)) (.cse17 (<= ~head~0.base 0)) (.cse18 (<= 0 |#NULL.offset|)) (.cse19 (<= 0 |#StackHeapBarrier|)) (.cse20 (<= ~systemActive~0 1))) (and (let ((.cse5 (<= ~methaneLevelCritical~0 1)) (.cse6 (<= 1 ~methaneLevelCritical~0))) (or (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse8 .cse9 .cse10 .cse11 .cse12 .cse13 .cse14 .cse15 .cse16 .cse17 .cse18 .cse19 .cse20) (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse21 .cse8 .cse10 .cse11 .cse12 .cse22 .cse14 .cse15 .cse16 .cse17 .cse18 .cse19 .cse20))) (let ((.cse23 (<= 0 test_~splverifierCounter~0)) (.cse24 (<= |old(~methaneLevelCritical~0)| 0)) (.cse25 (<= 0 |old(~methaneLevelCritical~0)|)) (.cse26 (<= test_~splverifierCounter~0 0)) (.cse27 (<= 1 |old(~waterLevel~0)|)) (.cse28 (<= |old(~waterLevel~0)| 1))) (or (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse7 .cse23 (<= test_~tmp~1 2147483647) .cse24 .cse8 .cse9 .cse10 .cse11 .cse12 .cse25 .cse13 .cse14 .cse26 .cse15 .cse27 .cse16 .cse17 .cse28 (<= 0 (+ test_~tmp~1 2147483648)) .cse18 .cse19 .cse20) (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse7 .cse23 .cse24 .cse21 .cse8 (<= test_~tmp~1 0) .cse10 .cse11 .cse12 (<= 0 test_~tmp~1) .cse25 .cse22 .cse14 .cse26 .cse15 .cse27 .cse16 .cse17 .cse28 .cse18 .cse19 .cse20))))))";
 		final String expectedResultAsString = "(let ((.cse0 (<= ~methaneLevelCritical~0 1)) (.cse1 (<= test_~splverifierCounter~0 0)) (.cse2 (<= |old(~methaneLevelCritical~0)| 0)) (.cse3 (<= |#NULL.base| 0)) (.cse4 (<= 0 |#NULL.base|)) (.cse5 (<= |old(~waterLevel~0)| 1)) (.cse6 (<= 0 ~head~0.offset)) (.cse7 (<= ~systemActive~0 1)) (.cse8 (<= 1 ~systemActive~0)) (.cse9 (<= 4 ~cleanupTimeShifts~0)) (.cse10 (<= 0 |#StackHeapBarrier|)) (.cse11 (<= 1 ~methaneLevelCritical~0)) (.cse12 (<= 0 |old(~methaneLevelCritical~0)|)) (.cse13 (<= ~pumpRunning~0 0)) (.cse14 (<= ~cleanupTimeShifts~0 4)) (.cse15 (<= 0 test_~splverifierCounter~0)) (.cse16 (<= 0 ~pumpRunning~0)) (.cse17 (<= ~head~0.offset 0)) (.cse18 (<= |#NULL.offset| 0)) (.cse19 (<= 1 |old(~waterLevel~0)|)) (.cse20 (<= ~head~0.base 0)) (.cse21 (<= 0 ~head~0.base)) (.cse22 (<= 0 |#NULL.offset|))) (or (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 (<= ~waterLevel~0 1) .cse7 .cse8 .cse9 .cse10 .cse11 .cse12 .cse13 .cse14 .cse15 .cse16 .cse17 (<= 1 ~waterLevel~0) .cse18 .cse19 (<= test_~tmp~1 0) .cse20 (<= 0 test_~tmp~1) .cse21 .cse22) (and .cse0 .cse1 .cse2 .cse3 (<= 2 ~waterLevel~0) .cse4 (<= ~waterLevel~0 2) .cse5 .cse6 .cse7 .cse8 .cse9 .cse10 .cse11 (<= test_~tmp~1 2147483647) .cse12 .cse13 .cse14 .cse15 .cse16 .cse17 .cse18 .cse19 (<= 0 (+ test_~tmp~1 2147483648)) .cse20 .cse21 .cse22)))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -437,7 +435,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void test02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_finddup_~j~1#1", "ULTIMATE.start_finddup_~n#1", "ULTIMATE.start_finddup_~i~1#1"),
 		};
 		final String formulaAsString = "(and (<= |ULTIMATE.start_finddup_~n#1| |ULTIMATE.start_finddup_~j~1#1|) (<= |ULTIMATE.start_finddup_~j~1#1| (+ |ULTIMATE.start_finddup_~i~1#1| 1)) (<= |ULTIMATE.start_finddup_~n#1| (+ |ULTIMATE.start_finddup_~i~1#1| 1)))";
@@ -451,7 +449,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void chioggiaBeet01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "a"),
 		};
 
@@ -462,7 +460,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void selfUpdateBug_4ca571b2_Size417() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_DerPreprocessor_3", "v_DerPreprocessor_2", "v_ArrVal_175"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
 			new FunDecl(SmtSortUtils::getIntSort, "v_prenex_6", "v_prenex_7", "v_prenex_4", "v_prenex_5", "v_ArrVal_167", "mutex_lock_ldv_list_add_~new#1.base", "v_prenex_2", "v_prenex_3", "__ldv_list_add_~next.base", "v_prenex_1", "__ldv_list_add_~next.offset", "mutex_lock_#in~m#1.base"),
@@ -474,7 +472,7 @@ public class QuantifierEliminationTodos {
 
 	@Test
 	public void derPreprocessorBug_orig() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "dim1arr"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
 				new FunDecl(SmtSortUtils::getIntSort, "base"),
@@ -491,7 +489,7 @@ public class QuantifierEliminationTodos {
 	 */
 	@Test
 	public void derPreprocessorBug() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "dim1arr"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
 				new FunDecl(SmtSortUtils::getIntSort, "base"),

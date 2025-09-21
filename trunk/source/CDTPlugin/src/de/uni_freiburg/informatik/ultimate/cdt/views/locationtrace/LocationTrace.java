@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CDTPlugin plug-in.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CDTPlugin plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.cdt.views.locationtrace;
 
@@ -72,11 +72,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
- * This is the LocationStack, where we try to list up all Locations which are in
- * the Failure-Path. It corresponds with the Selection of the FileView.
- * 
+ * This is the LocationStack, where we try to list up all Locations which are in the Failure-Path. It corresponds with
+ * the Selection of the FileView.
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class LocationTrace extends ViewPart implements ISelectionListener {
 
@@ -96,10 +96,9 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	private String actualAllowedInput = "";
 
 	/**
-	 * This list stores the current markers, which we use to highlight the
-	 * counterexample in the editor.
+	 * This list stores the current markers, which we use to highlight the counterexample in the editor.
 	 */
-	private final List<IMarker> displayedMarkerList = new ArrayList<IMarker>();
+	private final List<IMarker> displayedMarkerList = new ArrayList<>();
 
 	private LocationTraceContentProvider contProv;
 
@@ -109,15 +108,12 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets
-	 * .Composite)
+	 *
+	 * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets .Composite)
 	 */
 	@Override
 	public void createPartControl(final Composite parent) {
-		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
-				| SWT.V_SCROLL | SWT.FULL_SELECTION);
+		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		variableTree.setHeaderVisible(true);
 		viewer = new TreeViewer(variableTree);
 
@@ -150,7 +146,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.ui.part.WorkbenchPart#setFocus()
 	 */
 	@Override
@@ -167,36 +163,30 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 				actualAllowedInput = edPart.getTitle();
 				viewer.setInput(first);
 				clearMarkedLocationsInEditor();
-				markLocationsInEditor((IResult) first, edPart.getEditorInput(),
-						edPart);
+				markLocationsInEditor((IResult) first, edPart.getEditorInput(), edPart);
 			} else {
 				viewer.getTree().removeAll();
 				clearMarkedLocationsInEditor();
 			}
-		} else if (selection instanceof ITreeSelection
-				&& part instanceof LocationTrace) {
+		} else if (selection instanceof ITreeSelection && part instanceof LocationTrace) {
 			final Object first = ((ITreeSelection) selection).getFirstElement();
 			if (first instanceof TraceNode) {
 				final TraceNode tn = (TraceNode) first;
 				final ILocation loc = tn.getLocation();
 				final IEditorPart editorPart = getSite().getPage().getActiveEditor();
-				markLine(editorPart,
-						getLineInformation(editorPart, loc.getStartLine()));
+				markLine(editorPart, getLineInformation(editorPart, loc.getStartLine()));
 			}
-		} else if (selection instanceof ITextSelection
-				&& part instanceof EditorPart) {
+		} else if (selection instanceof ITextSelection && part instanceof EditorPart) {
 			final String text = ((EditorPart) part).getTitle();
 			if (!text.equals(actualAllowedInput)) {
 				viewer.getTree().removeAll();
 				clearMarkedLocationsInEditor();
 			}
-		} else if (selection instanceof ITreeSelection
-				&& part instanceof CommonNavigator) {
+		} else if (selection instanceof ITreeSelection && part instanceof CommonNavigator) {
 			final CommonNavigator navi = (CommonNavigator) part;
 			if (navi.isLinkingEnabled()) {
 				if (((ITreeSelection) selection).getFirstElement() != null) {
-					final String text = ((ITreeSelection) selection)
-							.getFirstElement().toString();
+					final String text = ((ITreeSelection) selection).getFirstElement().toString();
 					if (!text.equals(actualAllowedInput)) {
 						viewer.getTree().removeAll();
 						clearMarkedLocationsInEditor();
@@ -210,9 +200,8 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	}
 
 	/**
-	 * This method selects the given line, with the intern
-	 * selectAndReveal-method.
-	 * 
+	 * This method selects the given line, with the intern selectAndReveal-method.
+	 *
 	 * @param editorPart
 	 *            the active editor part
 	 * @param lineNumber
@@ -229,10 +218,9 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	}
 
 	/**
-	 * For each Location in the given Failure-Path we create a LocationMarker.
-	 * Each LocationMarker is reflected with an annotation, which has a certain
-	 * style, so for example highlighting or boxes.
-	 * 
+	 * For each Location in the given Failure-Path we create a LocationMarker. Each LocationMarker is reflected with an
+	 * annotation, which has a certain style, so for example highlighting or boxes.
+	 *
 	 * @param res
 	 *            the given result
 	 * @param input
@@ -240,25 +228,17 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * @param editorPart
 	 *            the active editor
 	 */
-	private void markLocationsInEditor(final IResult res, final IEditorInput input,
-			final IEditorPart editorPart) {
-		if (res instanceof CounterExampleResult
-				&& input instanceof IFileEditorInput) {
-			for (final ILocation loc : ((CounterExampleResult<?,?,?>) res).getFailurePath()) {
+	private void markLocationsInEditor(final IResult res, final IEditorInput input, final IEditorPart editorPart) {
+		if (res instanceof CounterExampleResult && input instanceof IFileEditorInput) {
+			for (final ILocation loc : ((CounterExampleResult<?, ?, ?>) res).getFailurePath()) {
 				if (loc instanceof LocationFactory) {
 					try {
-						final IRegion lineInfo = getLineInformation(editorPart,
-								loc.getStartLine());
-						final IMarker marker = ((IFileEditorInput) input)
-								.getFile()
-								.createMarker(
-										"de.uni_freiburg.informatik.ultimate.cdt.marker.locationmarker");
-						marker.setAttribute(IMarker.LINE_NUMBER,
-								loc.getStartLine());
-						marker.setAttribute(IMarker.CHAR_START,
-								lineInfo.getOffset());
-						marker.setAttribute(IMarker.CHAR_END,
-								lineInfo.getOffset() + lineInfo.getLength());
+						final IRegion lineInfo = getLineInformation(editorPart, loc.getStartLine());
+						final IMarker marker = ((IFileEditorInput) input).getFile()
+								.createMarker("de.uni_freiburg.informatik.ultimate.cdt.marker.locationmarker");
+						marker.setAttribute(IMarker.LINE_NUMBER, loc.getStartLine());
+						marker.setAttribute(IMarker.CHAR_START, lineInfo.getOffset());
+						marker.setAttribute(IMarker.CHAR_END, lineInfo.getOffset() + lineInfo.getLength());
 						displayedMarkerList.add(marker);
 					} catch (final CoreException e) {
 						e.printStackTrace();
@@ -271,8 +251,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	}
 
 	/**
-	 * This method clears the displayed markers, this happens if the selection
-	 * changes.
+	 * This method clears the displayed markers, this happens if the selection changes.
 	 */
 	private void clearMarkedLocationsInEditor() {
 		for (final IMarker marker : displayedMarkerList) {
@@ -285,9 +264,9 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	}
 
 	/**
-	 * This method returns us the line offset, which is used to display the
-	 * highlighting right. Basically this is done with the editor input.
-	 * 
+	 * This method returns us the line offset, which is used to display the highlighting right. Basically this is done
+	 * with the editor input.
+	 *
 	 * @param editorPart
 	 *            the active editor
 	 * @param lineNumber
@@ -299,8 +278,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 			return null;
 		}
 		final ITextEditor editor = (ITextEditor) editorPart;
-		final IDocument document = editor.getDocumentProvider().getDocument(
-				editor.getEditorInput());
+		final IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 		if (document != null) {
 			IRegion lineInfo = null;
 			try {
@@ -317,8 +295,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	}
 
 	/**
-	 * This method creates the Actions for the Forward and Backward Button in
-	 * the Toolbar Menu.
+	 * This method creates the Actions for the Forward and Backward Button in the Toolbar Menu.
 	 */
 	private void createActions() {
 		// Forward
@@ -340,10 +317,9 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	}
 
 	/**
-	 * This method moves the Selection, depending on the boolean flag back,
-	 * forward or backward, both is possible. Basically this method is called by
-	 * the Actions for our Toolbar-Buttons.
-	 * 
+	 * This method moves the Selection, depending on the boolean flag back, forward or backward, both is possible.
+	 * Basically this method is called by the Actions for our Toolbar-Buttons.
+	 *
 	 * @param back
 	 *            decides if we go back or for
 	 */
@@ -393,8 +369,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	private ImageDescriptor getImageDescriptor(final String relativePath) {
 		final String iconPath = "icons/";
 		final Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-		final URL url = FileLocator.find(bundle, new Path(iconPath + relativePath),
-				null);
+		final URL url = FileLocator.find(bundle, new Path(iconPath + relativePath), null);
 		return ImageDescriptor.createFromURL(url);
 	}
 

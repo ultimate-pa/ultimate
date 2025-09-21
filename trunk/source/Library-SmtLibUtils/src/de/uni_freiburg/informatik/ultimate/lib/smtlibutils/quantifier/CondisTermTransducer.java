@@ -32,8 +32,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO 2020025 Matthias: Revise and add documentation.
- * Because of the SMT-COMP deadline, I committed this without documentation or code review.
+ * TODO 2020025 Matthias: Revise and add documentation. Because of the SMT-COMP deadline, I committed this without
+ * documentation or code review.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *

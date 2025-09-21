@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * Use Pattern ResponseBoundL1 instead of this pattern!
- * 
+ *
  * {scope}, it is always the case that after "R" holds for at least "c1" time units, then "S" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

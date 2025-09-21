@@ -37,8 +37,7 @@ public class MemorySegment extends AddressStore {
 	private final PointerBase mPointerBase;
 
 	public MemorySegment(final PointerBase mAddressBase) {
-		super();
-		this.mPointerBase = mAddressBase;
+		mPointerBase = mAddressBase;
 	}
 
 	public PointerBase getPointerBase() {

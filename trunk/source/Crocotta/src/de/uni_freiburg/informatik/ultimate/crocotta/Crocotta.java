@@ -139,7 +139,7 @@ public class Crocotta implements ISource {
 		// not necessary
 	}
 
-	private class CrocottaQueryPrinter extends CrocottaAstVisitor {
+	private static class CrocottaQueryPrinter extends CrocottaAstVisitor {
 
 		private final StringBuilder mBuilder;
 

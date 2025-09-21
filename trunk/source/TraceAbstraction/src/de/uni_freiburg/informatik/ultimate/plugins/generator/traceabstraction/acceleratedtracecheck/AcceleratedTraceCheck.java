@@ -102,13 +102,15 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 	private TraceCheckReasonUnknown mReasonUnknown;
 	private boolean mTraceCheckFinishedNormally;
 	private final PredicateFactory mPredicateFactory;
+	private final TaskIdentifier mTaskIdentifier;
 
 	private final AcceleratedTraceCheckStatisticsGenerator mStatisticsGenerator;
 
 	public AcceleratedTraceCheck(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<L> prefs, final ManagedScript script,
 			final IPredicateUnifier predicateUnifier, final Counterexample<L> counterexample,
-			final IPredicate precondition, final IPredicate postcondition, final PredicateFactory predicateFactory) {
+			final IPredicate precondition, final IPredicate postcondition, final PredicateFactory predicateFactory,
+			final TaskIdentifier taskIdentifier) {
 		mLogger = logger;
 		mMgdScript = script;
 		mServices = services;
@@ -117,6 +119,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		mPostcondition = postcondition;
 		mPrefs = prefs;
 		mPredicateFactory = predicateFactory;
+		mTaskIdentifier = taskIdentifier;
 
 		// Daniel (2024-11-10): Control configurations are required in this class.
 		// (https://github.com/ultimate-pa/ultimate/pull/692#discussion_r1835721647)
@@ -229,25 +232,16 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 	private TraceCheckSpWp<L> checkTrace(final IPredicate precondition, final IPredicate postcondition,
 			final Counterexample<L> counterexample) {
-		final TraceCheckSpWp<L> tc =
-				new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<Integer, IPredicate>(), counterexample,
-						mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
-						mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
-						mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
-						SimplificationTechnique.SIMPLIFY_DDA, mPrefs.collectInterpolantStatistics());
+		final TraceCheckSpWp<L> tc = new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<>(), counterexample,
+				mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
+				mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
+				mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
+				SimplificationTechnique.SIMPLIFY_DDA, mPrefs.collectInterpolantStatistics());
 		return tc;
 	}
 
 	private ManagedScript constructManagedScript() {
-
-		final long timeout = 12_000;
-		final SolverSettings solverSettings = mPrefs.constructSolverSettings(new TaskIdentifier(null) {
-
-			@Override
-			protected String getSubtaskIdentifier() {
-				return "TODO";
-			}
-		});
+		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier);
 		return createExternalManagedScript(solverSettings);
 	}
 
@@ -338,13 +332,25 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			final TreeSet<Integer> positionsWithSimilarProgramPoint = loopPositions.getImage(i);
 			final Integer nextPosition = positionsWithSimilarProgramPoint.higher(i);
 			if (nextPosition != null) {
-				final NestedWord<L> subWord = counterexample.getWord().getSubWord(i, nextPosition);
+				final NestedWord<L> nestedWord = counterexample.getWord();
+				final NestedWord<L> subWord = nestedWord.getSubWord(i, nextPosition);
+				mLogger.info(
+						String.format("Found repeated program point %s. Trying to accelerate segment from %s to %s",
+								counterexample.getControlConfigurations().get(i), i, nextPosition));
 				final UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
 				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {
 					mStatisticsGenerator.reportSuccessfullAcceleration();
 					result.put(i, new AcceleratedSegment(i, nextPosition - 1, transitiveClosure));
+					mLogger.info(String.format(
+							"Found repeated program point %s. Successfully accelerated segment from %s to %s",
+							counterexample.getControlConfigurations().get(i), i, nextPosition));
 					i = nextPosition - 1;
+				} else {
+					mLogger.info(
+							String.format("Found repeated program point %s. Failed to accelerate segment from %s to %s",
+									counterexample.getControlConfigurations().get(i), i, nextPosition));
+
 				}
 			}
 		}
@@ -408,7 +414,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		final List<UnmodifiableTransFormula> transformulas =
 				subWord.asList().stream().map(L::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(logger, services,
-				mgdScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA, transformulas);
+				mgdScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA2, transformulas);
 		final JordanLoopAccelerationResult jla =
 				JordanLoopAcceleration.accelerateLoop(mServices, mMgdScript, sequentialComposition, true);
 		final JordanLoopAccelerationStatisticsGenerator stat = jla.getJordanLoopAccelerationStatistics();
@@ -517,7 +523,6 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 		public AcceleratedSegment(final int startPosition, final int endPosition,
 				final UnmodifiableTransFormula transitiveClosure) {
-			super();
 			mStartPosition = startPosition;
 			mEndPosition = endPosition;
 			mTransitiveClosure = transitiveClosure;

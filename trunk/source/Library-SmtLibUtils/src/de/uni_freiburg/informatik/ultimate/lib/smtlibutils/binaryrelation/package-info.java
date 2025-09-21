@@ -25,8 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * This package provides classes that allow us to handle binary relation of
- * several SMT-LIB theories more easily.
+ * This package provides classes that allow us to handle binary relation of several SMT-LIB theories more easily.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *

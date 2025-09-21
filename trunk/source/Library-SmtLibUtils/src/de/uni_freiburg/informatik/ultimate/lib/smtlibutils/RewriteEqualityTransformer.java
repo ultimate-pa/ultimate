@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  */
 public class RewriteEqualityTransformer extends TermTransformer {
 	private static final Set<String> SUPPORTED_SORTS =
-			new HashSet<>(Arrays.asList(new String[] { SmtSortUtils.INT_SORT, SmtSortUtils.REAL_SORT }));
+			new HashSet<>(Arrays.asList(SmtSortUtils.INT_SORT, SmtSortUtils.REAL_SORT));
 	private final Script mScript;
 
 	public RewriteEqualityTransformer(final Script script) {
@@ -48,13 +48,11 @@ public class RewriteEqualityTransformer extends TermTransformer {
 			final Term param1 = mScript.term("<=", appt.getParameters());
 			final Term param2 = mScript.term(">=", appt.getParameters());
 			setResult(mScript.term("and", param1, param2));
-			return;
 		} else if ("distinct".equals(funName)) {
 			assert appt.getParameters().length == 2 : "distinct with more than two parameters not yet supported";
 			final Term param1 = mScript.term("<", appt.getParameters());
 			final Term param2 = mScript.term(">", appt.getParameters());
 			setResult(mScript.term("or", param1, param2));
-			return;
 		}
 
 	}

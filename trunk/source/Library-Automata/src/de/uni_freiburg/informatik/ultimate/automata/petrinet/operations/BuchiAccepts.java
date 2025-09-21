@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Symbol. Type of the symbols used as alphabet.
  * @param <STATE>
  *            Content. Type of the labels ("the content") of the automata states.
- * 
+ *
  * @author Daniel Küchler (kuechlerdaniel33@gmail.com)
  */
 public final class BuchiAccepts<LETTER, PLACE> extends AcceptsInfiniteWords<LETTER, PLACE> {

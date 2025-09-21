@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PolyPacSimplificationTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -41,7 +42,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimp
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TreeSizeComperator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -56,17 +59,17 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public class QuantifierPushTermWalker extends TermWalker<Context> {
 
-	private static final boolean OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE = false;
+	private static final Repetition OPTION_APPLY_REPEATEDLY = Repetition.NO_REPETITION;
 	/**
-	 * Note that this is useless if
-	 * {@link QuantifierPushTermWalker#OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE} is
-	 * set.
+	 * Note that this is useless if {@link QuantifierPushTermWalker#OPTION_APPLY_REPEATEDLY} is set to
+	 * {@link Repetition.REPEAT_UNTIL_NO_CHANGE}
 	 */
 	private static final boolean OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS = true;
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = false;
-
+	private static final boolean DEBUG_ERROR_ON_FALSE_CC = false;
+	private static final boolean DEBUG_TREE_SIZE_ORDER = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
@@ -74,15 +77,12 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final boolean mApplyDistributivity;
 
-
 	/**
-	 * This class provides the new (2020) quantifier elimination and replaces the
-	 * now deprecated {@link QuantifierPusher}. The purpose of this class is to
-	 * traverse the formula and to call {@link DualJunctionQuantifierElimination}s
-	 * which to the explicit eliminations and to call simplifications. This class
-	 * does a stack-based traversal that uses
-	 * {@link TermContextTransformationEngine} instead of an explicit recursion
-	 * based on java methods.
+	 * This class provides the new (2020) quantifier elimination and replaces the now deprecated
+	 * {@link QuantifierPusher}. The purpose of this class is to traverse the formula and to call
+	 * {@link DualJunctionQuantifierElimination}s which to the explicit eliminations and to call simplifications. This
+	 * class does a stack-based traversal that uses {@link TermContextTransformationEngine} instead of an explicit
+	 * recursion based on java methods.
 	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 *
@@ -110,8 +110,10 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	}
 
 	@Override
-	protected
-	DescendResult convert(final Context context, final Term term) {
+	protected DescendResult convert(final Context context, final Term term) {
+		if (DEBUG_ERROR_ON_FALSE_CC && SmtUtils.isFalseLiteral(context.getCriticalConstraint())) {
+			throw new AssertionError("Critical constraint is false");
+		}
 		FormulaClassification classification = null;
 		// 20220502 Matthias: If you remove the PolyPac simplification here, it should
 		// be at least done for atoms (which are handled in one of the cases below)
@@ -120,8 +122,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		// element for the connective. If you remove this simplification here, you have
 		// to improve the {@link TermContextTransformationEngine} (probably by something
 		// similar than this PolyPac simplification).
-		Term currentTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
-				context.getCriticalConstraint(), term);
+		Term currentTerm =
+				PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context.getCriticalConstraint(), term);
 		int iterations = 0;
 		while (true) {
 			classification = QuantifierPusher.classify(currentTerm);
@@ -206,8 +208,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			iterations++;
 			if (iterations % 10 == 0) {
 				final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
-				logger.info(String.format(
-						"Run %s iterations without descend maybe there is a nontermination bug.",
+				logger.info(String.format("Run %s iterations without descend maybe there is a nontermination bug.",
 						iterations));
 			}
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -229,7 +230,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 						context.getCriticalConstraint(), tmp);
 			} else {
 				result = PolyPoNeUtils.and(mMgdScript.getScript(), context.getCriticalConstraint(),
-					Arrays.asList(resultParams));
+						Arrays.asList(resultParams));
 			}
 			return result;
 		}
@@ -241,7 +242,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 						context.getCriticalConstraint(), tmp);
 			} else {
 				result = PolyPoNeUtils.or(mMgdScript.getScript(), context.getCriticalConstraint(),
-					Arrays.asList(resultParams));
+						Arrays.asList(resultParams));
 			}
 			return result;
 		}
@@ -250,8 +251,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 		if (originalApplicationTerm.getFunction().getName().equals("=")) {
 			final Term eq = SmtUtils.equality(mMgdScript.getScript(), resultParams);
 			if (OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS) {
-				return PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript,
-						context.getCriticalConstraint(), eq);
+				return PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context.getCriticalConstraint(),
+						eq);
 			} else {
 				return eq;
 			}
@@ -268,13 +269,14 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	}
 
 	@Override
-	protected boolean applyRepeatedlyUntilNoChange() {
-		return OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE;
+	protected Repetition applyRepeatedly() {
+		return OPTION_APPLY_REPEATEDLY;
 	}
 
 	/**
 	 *
-	 * @param inputTerm Term from which quantifiers are eliminated. Has to be in NNF.
+	 * @param inputTerm
+	 *            Term from which quantifiers are eliminated. Has to be in NNF.
 	 */
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
@@ -286,14 +288,20 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	/**
 	 *
-	 * @param inputTerm Term from which quantifiers are eliminated. Has to be in NNF.
+	 * @param inputTerm
+	 *            Term from which quantifiers are eliminated. Has to be in NNF.
 	 */
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm) {
 		checkSimplificationPotential(services, script, "Quantifier elimination called on non-simplified input",
 				inputTerm);
-		final Comparator<Term> siblingOrder = null;
+		final Comparator<Term> siblingOrder;
+		if (DEBUG_TREE_SIZE_ORDER) {
+			siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
+		} else {
+			siblingOrder = null;
+		}
 		final Term result = TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services,
 				applyDistributivity, quantifierEliminationTechniques, simplificationTechnique, script), siblingOrder,
 				context, inputTerm);

@@ -34,10 +34,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public final class ConstraintSynthesisUtils {
-	
-	public enum Linearity { LINEAR, NONLINEAR };
-	
-	
+
+	public enum Linearity {
+		LINEAR, NONLINEAR
+	}
+
 	public static Logics getLogic(final Linearity linearity, final boolean useAlsoIntegers) {
 		Logics result;
 		switch (linearity) {
@@ -45,14 +46,14 @@ public final class ConstraintSynthesisUtils {
 			if (useAlsoIntegers) {
 				result = Logics.QF_LIRA;
 			} else {
-				result =  Logics.QF_LRA;
+				result = Logics.QF_LRA;
 			}
 			break;
 		case NONLINEAR:
 			if (useAlsoIntegers) {
 				result = Logics.QF_NIRA;
 			} else {
-				result =  Logics.QF_NRA;
+				result = Logics.QF_NRA;
 			}
 			break;
 		default:
@@ -60,6 +61,5 @@ public final class ConstraintSynthesisUtils {
 		}
 		return result;
 	}
-
 
 }

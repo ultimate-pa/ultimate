@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Betim Musa (musab@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AutomataScriptParser plug-in.
- * 
+ *
  * The ULTIMATE AutomataScriptParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AutomataScriptParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AutomataScriptParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptParser plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
@@ -65,32 +65,32 @@ public abstract class AbstractNestedwordAutomatonAST extends AutomatonAST {
 		if (callAlphabet != null) {
 			mCallAlphabet = callAlphabet;
 		} else {
-			mCallAlphabet = new ArrayList<String>();
+			mCallAlphabet = new ArrayList<>();
 		}
 		if (internalAlphabet != null) {
 			mInternalAlphabet = internalAlphabet;
 		} else {
-			mInternalAlphabet = new ArrayList<String>();
+			mInternalAlphabet = new ArrayList<>();
 		}
 		if (returnAlphabet != null) {
 			mReturnAlphabet = returnAlphabet;
 		} else {
-			mReturnAlphabet = new ArrayList<String>();
+			mReturnAlphabet = new ArrayList<>();
 		}
 		if (states != null) {
 			mStates = states;
 		} else {
-			mStates = new ArrayList<String>();
+			mStates = new ArrayList<>();
 		}
 		if (initStates != null) {
 			mInitialStates = initStates;
 		} else {
-			mInitialStates = new ArrayList<String>();
+			mInitialStates = new ArrayList<>();
 		}
 		if (finStates != null) {
 			mFinalStates = finStates;
 		} else {
-			mFinalStates = new ArrayList<String>();
+			mFinalStates = new ArrayList<>();
 		}
 		if (internalTransitions != null) {
 			mInternalTransitions = internalTransitions.getTransitions();

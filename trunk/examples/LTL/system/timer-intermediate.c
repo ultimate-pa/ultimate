@@ -1,8 +1,8 @@
 //#Safe
 //@ ltl invariant someinv: ([](AP(input_1 < 1000) ==> <>(AP(output_1 == 1))));
 
-extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume(int);
+extern int __VERIFIER_nondet_int();
 
 int timer_1;
 int timer_2;

@@ -56,6 +56,6 @@ public final class HcLocationVar implements IHcThreadSpecificVar {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return this == obj || obj instanceof final HcLocationVar other && mInstance.equals(other.mInstance);
+		return this == obj || (obj instanceof final HcLocationVar other && mInstance.equals(other.mInstance));
 	}
 }

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
 public class HeapLValue extends LRValue {
@@ -52,11 +52,11 @@ public class HeapLValue extends LRValue {
 	 *            In case this HeapLValue represents a bit-field this object contains additional information. In case
 	 *            this HeapLValue does not represent a bit-field we use null.
 	 */
-	public HeapLValue(final Expression address, final CType cType, final BitfieldInformation bi) {
+	public HeapLValue(final Expression address, final ICType cType, final BitfieldInformation bi) {
 		this(address, cType, false, bi);
 	}
 
-	public HeapLValue(final Expression address, final CType cType, final boolean isIntFromPtr,
+	public HeapLValue(final Expression address, final ICType cType, final boolean isIntFromPtr,
 			final BitfieldInformation bi) {
 		super(cType, false, isIntFromPtr);
 		this.address = address;

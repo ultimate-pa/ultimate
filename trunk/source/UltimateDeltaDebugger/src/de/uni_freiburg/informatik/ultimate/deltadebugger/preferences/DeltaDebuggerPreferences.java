@@ -65,8 +65,8 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 			"Specify the name of a type that represents an Ultimate result "
 					+ "(i.e., some class implementing IResult with this name). "
 					+ "The delta debugger searchs for the presence of this result.";
-	private static final Class<?>[] RESULT_TYPE_CLASSES = new Class<?>[] { ExceptionOrErrorResult.class,
-			SyntaxErrorResult.class, UnsupportedSyntaxResult.class, TypeErrorResult.class, CounterExampleResult.class,
+	private static final Class<?>[] RESULT_TYPE_CLASSES = { ExceptionOrErrorResult.class, SyntaxErrorResult.class,
+			UnsupportedSyntaxResult.class, TypeErrorResult.class, CounterExampleResult.class,
 			AllSpecificationsHoldResult.class, SyntaxCheckerSyntaxErrorResult.class };
 
 	private static final String[] VALUES_RESULT_TYPES = Arrays.stream(RESULT_TYPE_CLASSES).map(a -> a.getSimpleName())

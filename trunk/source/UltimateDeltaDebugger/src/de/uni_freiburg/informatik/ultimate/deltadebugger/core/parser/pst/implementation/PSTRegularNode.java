@@ -47,21 +47,21 @@ public class PSTRegularNode extends PSTNode implements IPSTRegularNode {
 	public PSTRegularNode(final ISourceDocument source, final ISourceRange location, final IASTNode astNode) {
 		super(source, location, astNode);
 	}
-	
+
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	@Override
 	public IPSTRegularNode findRegularChild(final IASTNode astNode) {
-		final PSTVisitorWithResult<IPSTRegularNode> action = new PSTVisitorWithResult<IPSTRegularNode>() {
+		final PSTVisitorWithResult<IPSTRegularNode> action = new PSTVisitorWithResult<>() {
 			@Override
 			public int visit(final IPSTRegularNode node) {
 				if (PSTRegularNode.this.equals(node)) {

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -161,9 +161,7 @@ class RunConstructor<LETTER, STATE> {
 				assert value instanceof SortedMap;
 				final SortedMap<Integer, TransitionWithObligation> linPredSerial2inTrans =
 						(SortedMap<Integer, TransitionWithObligation>) value;
-				for (final TransitionWithObligation ret : linPredSerial2inTrans.values()) {
-					result.add(ret);
-				}
+				result.addAll(linPredSerial2inTrans.values());
 			}
 		}
 		return result;
@@ -265,7 +263,7 @@ class RunConstructor<LETTER, STATE> {
 			if (mVisited.contains(predWithObligation)) {
 				continue;
 			}
-			final Integer predSerialNumber = Integer.valueOf(predSc.getSerialNumber());
+			final Integer predSerialNumber = predSc.getSerialNumber();
 			final Object previousEntry = number2transition.get(predSerialNumber);
 			if (previousEntry instanceof RunConstructor.TransitionWithObligation) {
 				// do nothing
@@ -307,12 +305,12 @@ class RunConstructor<LETTER, STATE> {
 
 	/**
 	 * Returns run whose first state is mGoal and whose last state is mStart.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
 	NestedRun<LETTER, STATE> constructRun() throws AutomataOperationCanceledException {
-		//TODO: Check if this timeout check is responsible for problems.
+		// TODO: Check if this timeout check is responsible for problems.
 		if (mServices.getProgressAwareTimer() != null && !mServices.getProgressAwareTimer().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
@@ -439,7 +437,7 @@ class RunConstructor<LETTER, STATE> {
 
 	/**
 	 * Wrapper for object together with a flag.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @param <E>
 	 *            object type
@@ -506,7 +504,7 @@ class RunConstructor<LETTER, STATE> {
 
 	/**
 	 * Wrapper for {@link ITransitionlet} together with a flag.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class TransitionWithObligation extends ObjectWithObligation<ITransitionlet<LETTER, STATE>> {
@@ -517,7 +515,7 @@ class RunConstructor<LETTER, STATE> {
 
 	/**
 	 * Wrapper for {@link StateContainer} together with a flag.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class StateContainerWithObligation extends ObjectWithObligation<StateContainer<LETTER, STATE>> {
@@ -530,7 +528,7 @@ class RunConstructor<LETTER, STATE> {
 	 * Wrapper for an object together with a flag and a {@link NestedRun}.
 	 * <p>
 	 * TODO Christian 2016-09-13: The {@link #equals(Object)} method should probably be overwritten.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class RunWithObligation extends StateContainerWithObligation {
@@ -553,7 +551,7 @@ class RunConstructor<LETTER, STATE> {
 
 	/**
 	 * Wrapper for {@link Summary} together with a flag.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class SummaryWithObligation extends ObjectWithObligation<Summary<LETTER, STATE>> {

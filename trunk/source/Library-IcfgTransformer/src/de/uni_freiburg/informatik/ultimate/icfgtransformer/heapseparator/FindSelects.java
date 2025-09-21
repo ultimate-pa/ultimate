@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class FindSelects {
 
-
 	// unclear if ArrayUpdate is the right choice here -- what about store chains?, also it uses MultiDimensionalStore..
 	private final HashRelation<EdgeInfo, ArrayUpdate> mEdgeToCellUpdates;
 
@@ -82,7 +81,7 @@ public class FindSelects {
 
 	private final List<IProgramVarOrConst> mHeapArrays;
 
-//	private final Map <IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
+	// private final Map <IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
 
 	private final ILogger mLogger;
 
@@ -90,7 +89,7 @@ public class FindSelects {
 
 	private final ComputeStoreInfosAndArrayGroups<?> mCsiag;
 
-//	private final NestedMap2<EdgeInfo, Term, ArrayGroup> mEdgeToTermToArrayGroup;
+	// private final NestedMap2<EdgeInfo, Term, ArrayGroup> mEdgeToTermToArrayGroup;
 
 	/**
 	 * See {@link FindSelects}.
@@ -102,9 +101,8 @@ public class FindSelects {
 	 * @param arrayToArrayGroup
 	 * @param equalityProvider
 	 */
-	public FindSelects(final ILogger logger, final ManagedScript mgdScript,
-			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
-			final ComputeStoreInfosAndArrayGroups<?> csiag) {
+	public FindSelects(final ILogger logger, final ManagedScript mgdScript, final List<IProgramVarOrConst> heapArrays,
+			final HeapSeparatorBenchmark statistics, final ComputeStoreInfosAndArrayGroups<?> csiag) {
 		mMgdScript = mgdScript;
 		mLogger = logger;
 		mStatistics = statistics;
@@ -112,8 +110,8 @@ public class FindSelects {
 		mEdgeToCellUpdates = new HashRelation<>();
 		mEdgeToArrayRelations = new HashRelation<>();
 		mSelectInfos = new HashSet<>();
-//		mArrayToArrayGroup = arrayToArrayGroup;
-//		mEdgeToTermToArrayGroup = edgeToTermToArrayGroup;
+		// mArrayToArrayGroup = arrayToArrayGroup;
+		// mEdgeToTermToArrayGroup = edgeToTermToArrayGroup;
 		mCsiag = csiag;
 	}
 
@@ -122,7 +120,7 @@ public class FindSelects {
 
 		final EdgeInfo edgeInfo = new EdgeInfo(edge);
 
-//		new ApplicationTermFinder("select", false);
+		// new ApplicationTermFinder("select", false);
 
 		final List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula());
 
@@ -161,27 +159,26 @@ public class FindSelects {
 	}
 
 	public void finish() {
-//		/*
-//		 * compute array read statistics
-//		 */
-//		final Map<ArrayGroup, Integer> heapArrayGroupToReadCount = new HashMap<>();
-//		for (final SelectInfo selectInfo : mSelectInfos) {
-//
-//			final ArrayGroup ag = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
-//
-//			Integer oldCount = heapArrayGroupToReadCount.get(ag);
-//			if (oldCount == null) {
-//				oldCount = 0;
-//				heapArrayGroupToReadCount.put(ag, oldCount);
-//			}
-//			heapArrayGroupToReadCount.put(ag, oldCount + 1);
-//		}
-//		for (final Entry<ArrayGroup, Integer> en : heapArrayGroupToReadCount.entrySet()) {
-//			mLogger.info("Number of read from array group " + en.getKey() + " : " + en.getValue());
-//			mStatistics.registerPerArrayInfo(en.getKey(), HeapSeparatorStatistics.COUNT_ARRAY_READS, en.getValue());
-//		}
+		// /*
+		// * compute array read statistics
+		// */
+		// final Map<ArrayGroup, Integer> heapArrayGroupToReadCount = new HashMap<>();
+		// for (final SelectInfo selectInfo : mSelectInfos) {
+		//
+		// final ArrayGroup ag = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
+		//
+		// Integer oldCount = heapArrayGroupToReadCount.get(ag);
+		// if (oldCount == null) {
+		// oldCount = 0;
+		// heapArrayGroupToReadCount.put(ag, oldCount);
+		// }
+		// heapArrayGroupToReadCount.put(ag, oldCount + 1);
+		// }
+		// for (final Entry<ArrayGroup, Integer> en : heapArrayGroupToReadCount.entrySet()) {
+		// mLogger.info("Number of read from array group " + en.getKey() + " : " + en.getValue());
+		// mStatistics.registerPerArrayInfo(en.getKey(), HeapSeparatorStatistics.COUNT_ARRAY_READS, en.getValue());
+		// }
 
 	}
-
 
 }

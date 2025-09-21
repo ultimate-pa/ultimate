@@ -25,11 +25,9 @@
  * to convey the resulting work.
  */
 /**
- * Package provides an implementation of CNF and DNF that is generic in the
- * sense that any kind of object can be an atom (not necessarily a formula). The
- * implementation stems from our invariant synthesis where atoms are typically
- * disjoint. No atom implies another atom.
- * The methods of this package are very naive and do not try to simplify
+ * Package provides an implementation of CNF and DNF that is generic in the sense that any kind of object can be an atom
+ * (not necessarily a formula). The implementation stems from our invariant synthesis where atoms are typically
+ * disjoint. No atom implies another atom. The methods of this package are very naive and do not try to simplify
  * intermediate results.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

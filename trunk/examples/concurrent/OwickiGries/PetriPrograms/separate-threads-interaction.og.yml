@@ -1,0 +1,17 @@
+#invalid
+# needs ghost variables to distinguish case where other thread has set g:=1 but not yet incremented its z_i
+omega:
+  "m.l0"  : true
+  "m.l1"  : (= g 0)
+  "t1.l0" : (and (= z1 1) (= g 0))
+  "t1.l1" : (and (= z1 2) (or (and (= g 0) (= z2 2)) (= g 1)))
+  "t1.l2" : (and (= z1 2) (= g 1) (= z2 2))
+  "t1.l3" : (and (= g 1)  (or (and (= z1 3) (= z2 2)) (and (= z1 2) (= z2 3))))
+  "t2.l0" : (and (= z2 1) (= g 0))
+  "t2.l1" : (and (= z2 2) (or (and (= g 0) (= z1 2)) (and (= g 1) (= z1 3))))
+  "t2.l2" : (and (= z2 2) (= g 1) (= z1 2))
+  "t2.l3" : (and (= g 1)  (or (and (= z1 2) (= z2 3)) (and (= z1 3) (= z2 2))))
+  "e"     : false
+ghost_variables:
+ghost_updates:
+

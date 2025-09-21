@@ -41,12 +41,12 @@ public class NumUtilTest {
 			}
 			final BigDecimal mod = AbsIntUtil.euclideanModulo(a, b);
 			if (a.compareTo(new BigDecimal(qi).multiply(b).add(mod)) != 0) {
-				String msg = "expected a = (a/b)*b + a%b but was ...\n";
-				msg += "a  : " + ai + "\n";
-				msg += "  b: " + bi + "\n";
-				msg += "a/b: " + qi + "\n";
-				msg += "a%b: " + mod;
-				Assert.fail(msg);
+				final StringBuilder msg = new StringBuilder("expected a = (a/b)*b + a%b but was ...\n");
+				msg.append("a  : ").append(ai).append("\n");
+				msg.append("  b: ").append(bi).append("\n");
+				msg.append("a/b: ").append(qi).append("\n");
+				msg.append("a%b: ").append(mod);
+				Assert.fail(msg.toString());
 			}
 		}
 	}

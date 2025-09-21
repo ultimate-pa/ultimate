@@ -130,14 +130,15 @@ public class CanonicalInterpolantAutomatonBuilder<LETTER> extends CoverageAnalys
 
 	@Override
 	protected void preprocess() {
-		String interpolantAutomatonType = "Constructing canonical interpolant automaton";
+		final StringBuilder interpolantAutomatonType =
+				new StringBuilder("Constructing canonical interpolant automaton");
 		if (mSelfloopAtInitial) {
-			interpolantAutomatonType += ", with selfloop in true state";
+			interpolantAutomatonType.append(", with selfloop in true state");
 		}
 		if (mSelfloopAtFinal) {
-			interpolantAutomatonType += ", with selfloop in false state";
+			interpolantAutomatonType.append(", with selfloop in false state");
 		}
-		mLogger.info(interpolantAutomatonType);
+		mLogger.info(interpolantAutomatonType.toString());
 
 		mIA.addState(true, false, mIpp.getPrecondition());
 		mIA.addState(false, true, mIpp.getPostcondition());
@@ -179,7 +180,6 @@ public class CanonicalInterpolantAutomatonBuilder<LETTER> extends CoverageAnalys
 	private void addAlternativeReturnTransitions(final IPredicate pred, final int callPos, final LETTER symbol,
 			final IPredicate succ) {
 		if (mAlternativeCallPredecessors.get(callPos) == null) {
-			return;
 		}
 		// 2016-05-18 Matthias: Do not add alternative returns, this seems to be expensive
 		// and I am too lazy to construct another IHoaretripleChecker for these few checks.

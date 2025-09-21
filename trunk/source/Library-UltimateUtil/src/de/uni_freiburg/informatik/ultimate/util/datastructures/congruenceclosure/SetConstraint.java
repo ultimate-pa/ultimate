@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosur
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -20,7 +21,7 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 	/**
 	 * the conjunction this constraint belongs to
 	 */
-//	private final SetConstraintConjunction<ELEM> mSurroundingScConjunction;
+	// private final SetConstraintConjunction<ELEM> mSurroundingScConjunction;
 
 	private final Set<ELEM> mLiterals;
 	private final Set<ELEM> mNonLiterals;
@@ -30,14 +31,13 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	private final boolean mIsInconsistent;
 
-
 	protected SetConstraint(final boolean inconsistent) {
 		assert inconsistent : "use other constructor for this case!";
-//		mSurroundingScConjunction = null;
+		// mSurroundingScConjunction = null;
 		mLiterals = null;
 		mNonLiterals = null;
 		mIsInconsistent = true;
-//		assert sanityCheck();
+		// assert sanityCheck();
 	}
 
 	public boolean isSingleton() {
@@ -55,9 +55,8 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param literals
 	 * @param nonLiterals
 	 */
-	protected SetConstraint(//final SetConstraintConjunction<ELEM> surroundingSetCc,
-			final Set<ELEM> literals,
-			final Set<ELEM> nonLiterals) {
+	protected SetConstraint(// final SetConstraintConjunction<ELEM> surroundingSetCc,
+			final Set<ELEM> literals, final Set<ELEM> nonLiterals) {
 		assert literals.stream().allMatch(ELEM::isLiteral);
 		assert !nonLiterals.stream().anyMatch(ELEM::isLiteral);
 
@@ -69,22 +68,22 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert sanityCheck();
 	}
 
-//	/**
-//	 * copy constructor that may change surrounding set constraints
-//	 *
-//	 * @param surroundingSetCc
-//	 * @param sc
-//	 */
-//	SetConstraint(final SetConstraintConjunction<ELEM> surroundingSetCc, final SetConstraint<ELEM> sc) {
-//		mSurroundingScConjunction = surroundingSetCc;
-//		mLiterals = new HashSet<>(sc.mLiterals);
-//		mNonLiterals = new HashSet<>(sc.mNonLiterals);
-//		mIsInconsistent = false;
-//		assert sanityCheck();
-//	}
+	// /**
+	// * copy constructor that may change surrounding set constraints
+	// *
+	// * @param surroundingSetCc
+	// * @param sc
+	// */
+	// SetConstraint(final SetConstraintConjunction<ELEM> surroundingSetCc, final SetConstraint<ELEM> sc) {
+	// mSurroundingScConjunction = surroundingSetCc;
+	// mLiterals = new HashSet<>(sc.mLiterals);
+	// mNonLiterals = new HashSet<>(sc.mNonLiterals);
+	// mIsInconsistent = false;
+	// assert sanityCheck();
+	// }
 
 	public Set<ELEM> getLiterals() {
-//		assert hasOnlyLiterals();
+		// assert hasOnlyLiterals();
 		return Collections.unmodifiableSet(mLiterals);
 	}
 
@@ -111,21 +110,20 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mIsInconsistent || (mLiterals.isEmpty() && mNonLiterals.isEmpty());
 	}
 
-
-
 	/**
 	 * all elements on the right hand side of this constraint (literals and non-literals)
+	 *
 	 * @return
 	 */
 	public Set<ELEM> getElementSet() {
 		return DataStructureUtils.union(mLiterals, mNonLiterals);
 	}
 
-//	public void filterWithDisequality(final ELEM elem) {
-//		assert mSurroundingScConjunction.getCongruenceClosure().isRepresentative(elem);
-//		mLiterals.remove(elem);
-//		mNonLiterals.remove(elem);
-//	}
+	// public void filterWithDisequality(final ELEM elem) {
+	// assert mSurroundingScConjunction.getCongruenceClosure().isRepresentative(elem);
+	// mLiterals.remove(elem);
+	// mNonLiterals.remove(elem);
+	// }
 
 	public boolean containsElement(final ELEM elem) {
 		if (elem.isLiteral()) {
@@ -134,8 +132,6 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return mNonLiterals != null && mNonLiterals.contains(elem);
 		}
 	}
-
-
 
 	@Override
 	public String toString() {
@@ -204,7 +200,6 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return true;
 		}
 
-
 		/*
 		 * all elements that his constraint talks about must be known to the surrounding CongruenceClosure instance.
 		 */
@@ -231,8 +226,8 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean
-			isTautological(final ELEM constrainedElement, final SetConstraint<ELEM> sc) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isTautological(final ELEM constrainedElement,
+			final SetConstraint<ELEM> sc) {
 		return sc.containsElement(constrainedElement);
 	}
 
@@ -240,19 +235,13 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return new SetConstraint<>(true);
 	}
 
-
 	public Set<ELEM> getNonLiterals() {
 		return Collections.unmodifiableSet(mNonLiterals);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mIsInconsistent ? 1231 : 1237);
-		result = prime * result + ((mLiterals == null) ? 0 : mLiterals.hashCode());
-		result = prime * result + ((mNonLiterals == null) ? 0 : mNonLiterals.hashCode());
-		return result;
+		return Objects.hash(mIsInconsistent, mLiterals, mNonLiterals);
 	}
 
 	@Override
@@ -286,6 +275,5 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 		return true;
 	}
-
 
 }

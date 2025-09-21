@@ -303,19 +303,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
-		if (mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
-			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization<>(mTcSmtManager, ssa,
-					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder,
-					mServices);
-		} else {
-			mAAA = new AnnotateAndAsserter<>(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
-					mTraceCheckBenchmarkGenerator, mServices);
-			// Report the asserted code blocks
-			// mTraceCheckBenchmarkGenerator.reportnewAssertedCodeBlocks(mTrace.length());
-		}
 		FeasibilityCheckResult result = null;
 		try {
-			mAAA.buildAnnotatedSsaAndAssertTerms();
+			mAAA = new AnnotateAndAsserter<>(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
+					mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder, mServices);
 			final LBool isSafe = mAAA.isInputSatisfiable();
 			TraceCheckReasonUnknown tcru;
 			if (isSafe == LBool.UNKNOWN) {
@@ -546,10 +537,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 		public FeasibilityCheckResult(final LBool lBool, final TraceCheckReasonUnknown reasonUnknown,
 				final boolean solverCrashed) {
-			assert lBool != LBool.UNKNOWN
-					|| reasonUnknown != null : "if result is unknown you have to specify a reason";
-			assert lBool == LBool.UNKNOWN
-					|| reasonUnknown == null : "if result sat/unsat you cannot specify reason for unknown";
+			assert lBool != LBool.UNKNOWN || reasonUnknown != null
+					: "if result is unknown you have to specify a reason";
+			assert lBool == LBool.UNKNOWN || reasonUnknown == null
+					: "if result sat/unsat you cannot specify reason for unknown";
 			mLBool = lBool;
 			mReasonUnknown = reasonUnknown;
 			mSolverCrashed = solverCrashed;

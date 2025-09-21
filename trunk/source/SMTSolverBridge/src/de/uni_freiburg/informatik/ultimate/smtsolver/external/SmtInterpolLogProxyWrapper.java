@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import java.io.IOException;
 import java.util.Formatter;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
@@ -207,10 +208,7 @@ public class SmtInterpolLogProxyWrapper implements LogProxy {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mLogger == null ? 0 : mLogger.hashCode());
-		return result;
+		return Objects.hash(mLogger);
 	}
 
 	@Override

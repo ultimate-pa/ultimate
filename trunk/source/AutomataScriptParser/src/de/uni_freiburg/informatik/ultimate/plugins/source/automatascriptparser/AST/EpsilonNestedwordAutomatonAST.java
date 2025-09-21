@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AutomataScriptParser plug-in.
- * 
+ *
  * The ULTIMATE AutomataScriptParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AutomataScriptParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AutomataScriptParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptParser plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
@@ -39,18 +39,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class EpsilonNestedwordAutomatonAST extends AbstractNestedwordAutomatonAST {
 
-	private final HashRelation<String,String> mEpsilonTransitions;
+	private final HashRelation<String, String> mEpsilonTransitions;
 
-	public EpsilonNestedwordAutomatonAST(final ILocation loc, final String name, final List<String> callAlphabet, final List<String> internalAlphabet,
-			final List<String> returnAlphabet, final List<String> states, final List<String> initStates, final List<String> finStates,
-			final TransitionListAST internalTransitions, final TransitionListAST callTransitions,
-			final TransitionListAST returnTransitions, final TransitionListAST epsilonTransitions) {
-		super(loc, name, callAlphabet, internalAlphabet, returnAlphabet, states, initStates, finStates, internalTransitions,
-				callTransitions, returnTransitions);
+	public EpsilonNestedwordAutomatonAST(final ILocation loc, final String name, final List<String> callAlphabet,
+			final List<String> internalAlphabet, final List<String> returnAlphabet, final List<String> states,
+			final List<String> initStates, final List<String> finStates, final TransitionListAST internalTransitions,
+			final TransitionListAST callTransitions, final TransitionListAST returnTransitions,
+			final TransitionListAST epsilonTransitions) {
+		super(loc, name, callAlphabet, internalAlphabet, returnAlphabet, states, initStates, finStates,
+				internalTransitions, callTransitions, returnTransitions);
 		mEpsilonTransitions = epsilonTransitions.convertToEpsilonTransitions();
 	}
-	
-	public HashRelation<String,String> getEpsilonTransitions() {
+
+	public HashRelation<String, String> getEpsilonTransitions() {
 		return mEpsilonTransitions;
 	}
 

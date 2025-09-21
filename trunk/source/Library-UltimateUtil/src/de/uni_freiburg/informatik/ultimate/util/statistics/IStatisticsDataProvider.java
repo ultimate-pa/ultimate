@@ -30,7 +30,7 @@ import java.util.Collection;
 
 /**
  * Classes that implement this interface can provide data to our benchmarks. Our benchmarks are key-value stores.
- * 
+ *
  * @author Matthias Heizmann
  *
  */

@@ -31,11 +31,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Common interface for {@link AffineRelation} and {@link BinaryRelation}
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public interface IBinaryRelation {
 
-	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject);
+	SolvedBinaryRelation solveForSubject(final Script script, final Term subject);
 
 }

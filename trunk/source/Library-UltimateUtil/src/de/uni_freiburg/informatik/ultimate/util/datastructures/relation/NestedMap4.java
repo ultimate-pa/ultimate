@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 /**
  * TODO: comment
- * 
+ *
  * @author Matthias Heizmann
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
@@ -49,16 +49,15 @@ import java.util.stream.Stream;
  */
 public class NestedMap4<K1, K2, K3, K4, V> {
 
-	private final Map<K1, NestedMap3<K2, K3, K4, V>> mK1ToK2ToK3ToK4V = new HashMap<K1, NestedMap3<K2, K3, K4, V>>();
+	private final Map<K1, NestedMap3<K2, K3, K4, V>> mK1ToK2ToK3ToK4V = new HashMap<>();
 
 	/**
-	 * Returns a stream to all values of the nested map. The values are backed by
-	 * the map.
-	 * 
+	 * Returns a stream to all values of the nested map. The values are backed by the map.
+	 *
 	 * @return A backed stream to all values of the nested map
 	 */
 	public Stream<V> values() {
-		return this.mK1ToK2ToK3ToK4V.values().stream().flatMap(NestedMap3::values);
+		return mK1ToK2ToK3ToK4V.values().stream().flatMap(NestedMap3::values);
 	}
 
 	public V put(final K1 key1, final K2 key2, final K3 key3, final K4 key4, final V value) {
@@ -111,12 +110,11 @@ public class NestedMap4<K1, K2, K3, K4, V> {
 
 	public Iterable<Quin<K1, K2, K3, K4, V>> entrySet() {
 		final Iterator<Entry<K1, NestedMap3<K2, K3, K4, V>>> innerIterator = mK1ToK2ToK3ToK4V.entrySet().iterator();
-		final Function<Entry<K1, NestedMap3<K2, K3, K4, V>>, Iterator<Quad<K2, K3, K4, V>>> nextOuterIteratorProvider = (x -> x
-				.getValue().entrySet().iterator());
-		final Function<Entry<K1, NestedMap3<K2, K3, K4, V>>, Function<Quad<K2, K3, K4, V>, Quin<K1, K2, K3, K4, V>>> resultProvider = (x -> (y -> new Quin<K1, K2, K3, K4, V>(
-				x.getKey(), y.getFirst(), y.getSecond(), y.getThird(), y.getFourth())));
-		return () -> new NestedIterator<Entry<K1, NestedMap3<K2, K3, K4, V>>, Quad<K2, K3, K4, V>, Quin<K1, K2, K3, K4, V>>(
-				innerIterator, nextOuterIteratorProvider, resultProvider);
+		final Function<Entry<K1, NestedMap3<K2, K3, K4, V>>, Iterator<Quad<K2, K3, K4, V>>> nextOuterIteratorProvider =
+				(x -> x.getValue().entrySet().iterator());
+		final Function<Entry<K1, NestedMap3<K2, K3, K4, V>>, Function<Quad<K2, K3, K4, V>, Quin<K1, K2, K3, K4, V>>> resultProvider =
+				(x -> (y -> new Quin<>(x.getKey(), y.getFirst(), y.getSecond(), y.getThird(), y.getFourth())));
+		return () -> new NestedIterator<>(innerIterator, nextOuterIteratorProvider, resultProvider);
 	}
 
 	/**
@@ -127,10 +125,9 @@ public class NestedMap4<K1, K2, K3, K4, V> {
 		if (k2tok3tok4toV == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Quad<K2, K3, K4, V>, Quin<K1, K2, K3, K4, V>> transformer = (x -> new Quin<K1, K2, K3, K4, V>(
-					k1, x.getFirst(), x.getSecond(), x.getThird(), x.getFourth()));
-			return () -> new TransformIterator<Quad<K2, K3, K4, V>, Quin<K1, K2, K3, K4, V>>(
-					k2tok3tok4toV.entrySet().iterator(), transformer);
+			final Function<Quad<K2, K3, K4, V>, Quin<K1, K2, K3, K4, V>> transformer =
+					(x -> new Quin<>(k1, x.getFirst(), x.getSecond(), x.getThird(), x.getFourth()));
+			return () -> new TransformIterator<>(k2tok3tok4toV.entrySet().iterator(), transformer);
 		}
 	}
 
@@ -142,10 +139,9 @@ public class NestedMap4<K1, K2, K3, K4, V> {
 		if (k3tok4toV == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Triple<K3, K4, V>, Quin<K1, K2, K3, K4, V>> transformer = (x -> new Quin<K1, K2, K3, K4, V>(
-					k1, k2, x.getFirst(), x.getSecond(), x.getThird()));
-			return () -> new TransformIterator<Triple<K3, K4, V>, Quin<K1, K2, K3, K4, V>>(
-					k3tok4toV.entrySet().iterator(), transformer);
+			final Function<Triple<K3, K4, V>, Quin<K1, K2, K3, K4, V>> transformer =
+					(x -> new Quin<>(k1, k2, x.getFirst(), x.getSecond(), x.getThird()));
+			return () -> new TransformIterator<>(k3tok4toV.entrySet().iterator(), transformer);
 		}
 	}
 

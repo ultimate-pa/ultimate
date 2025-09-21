@@ -276,9 +276,10 @@ public class StructExpander extends CachingBoogieTransformer implements IUnmanag
 			int i = 0;
 			for (final String id : input.getIdentifiers()) {
 				for (int j = 0; j < st.getFieldCount(); j++) {
-					newVarList[i++] = new VarList(input.getLocation(),
+					newVarList[i] = new VarList(input.getLocation(),
 							new String[] { id + StructExpanderUtil.DOT + st.getFieldIds()[j] },
 							st.getFieldType(j).toASTType(input.getLocation()));
+					i++;
 				}
 			}
 			return newVarList;

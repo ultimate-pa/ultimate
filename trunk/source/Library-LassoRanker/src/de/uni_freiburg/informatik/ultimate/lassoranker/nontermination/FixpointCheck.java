@@ -74,7 +74,6 @@ public class FixpointCheck {
 	public FixpointCheck(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final TransFormula stem, final TransFormula loop) {
-		super();
 		mServices = services;
 		mLogger = logger;
 		mManagedScript = managedScript;
@@ -219,7 +218,7 @@ public class FixpointCheck {
 
 	@FunctionalInterface
 	private interface IConstantMapper {
-		public Term getConstant(final IProgramVar key);
+		Term getConstant(final IProgramVar key);
 	}
 
 	/**

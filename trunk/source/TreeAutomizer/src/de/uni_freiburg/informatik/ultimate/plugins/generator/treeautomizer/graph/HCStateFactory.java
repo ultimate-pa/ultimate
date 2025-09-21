@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -149,10 +148,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		 * save the time
 		 */
 
-		final Set<HcPredicateSymbol> state1PredSymbols = new HashSet<>();
-		state1PredSymbols.addAll(((HCPredicate) state1).getHcPredicateSymbols());
-		// assert state1PredSymbols.size() == 1 : "what does this mean??";
-
+		final Set<HcPredicateSymbol> state1PredSymbols = new HashSet<>(((HCPredicate) state1).getHcPredicateSymbols());
 		// final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(
 		// SmtUtils.and(mBackendSmtSolverScript.getScript(), state1.getFormula(), state2.getFormula()));
 		final IPredicate conjoinedPred = mPredicateFactory.and(state1, state2);
@@ -171,8 +167,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		// ps.add(state2);
 
 		final Set<ApplicationTerm> appTerms = TermVarsFuns.findNonTheoryApplicationTerms(conjoinedFormula);
-		final List<FunctionSymbol> funs = appTerms.stream().map(ApplicationTerm::getFunction)
-				.collect(Collectors.toList());
+		final List<FunctionSymbol> funs =
+				appTerms.stream().map(ApplicationTerm::getFunction).collect(Collectors.toList());
 		return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedFormula,
 				Arrays.asList(state1.getFormula().getFreeVars()), funs);
 	}
@@ -217,8 +213,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 					Collections.emptyList());
 		} else {
 			final Set<ApplicationTerm> appTerms = TermVarsFuns.findNonTheoryApplicationTerms(mergedFormula);
-			final List<FunctionSymbol> funs = appTerms.stream().map(ApplicationTerm::getFunction)
-					.collect(Collectors.toList());
+			final List<FunctionSymbol> funs =
+					appTerms.stream().map(ApplicationTerm::getFunction).collect(Collectors.toList());
 			return mPredicateFactory.newPredicate(mergedLocations, mergedFormula,
 					Arrays.asList(mergedFormula.getFreeVars()), funs);
 		}
@@ -280,12 +276,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	public SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>>
 			getImplicationGraph(final Map<IPredicate, Set<IPredicate>> implication) {
 
-		final ISuccessorProvider<IPredicate> successors = new ISuccessorProvider<IPredicate>() {
-			@Override
-			public Iterator<IPredicate> getSuccessors(final IPredicate node) {
-				return implication.get(node).iterator();
-			}
-		};
+		final ISuccessorProvider<IPredicate> successors = node -> implication.get(node).iterator();
 
 		final SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer =
 				new SccComputation<>(mLogger, successors, new DefaultStronglyConnectedComponentFactory<>(),

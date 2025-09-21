@@ -35,8 +35,8 @@ public final class ReplaceFunctionDefByDeclPass {
 	public static final PassDescription INSTANCE = PassDescription.builder(ReplaceFunctionDefByDecl::analyze)
 			.name("Replace function definition by declaration")
 			.description("(Actually just replaces the body statement by \";\")").build();
-	
+
 	private ReplaceFunctionDefByDeclPass() {
-		
+
 	}
 }

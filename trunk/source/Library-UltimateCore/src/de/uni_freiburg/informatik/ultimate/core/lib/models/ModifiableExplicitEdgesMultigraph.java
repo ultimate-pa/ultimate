@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2012-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.models;
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 /***
  * This class is the reference implementation for {@link IModifiableExplicitEdgesMultigraph}. It works together with
  * {@link ModifiableMultigraphEdge}.
- * 
+ *
  * @author dietsch
  * @param <V>
  *            is the type of the nodes of the concrete model. This parameter should be used by sub-classes to specify a
@@ -76,12 +76,12 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	/***
 	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node without connections to any other node but
 	 * with a given payload.
-	 * 
+	 *
 	 * @param payload
 	 *            The payload for the current node or null.
 	 * @see IPayload
 	 */
-	protected ModifiableExplicitEdgesMultigraph(IPayload payload) {
+	protected ModifiableExplicitEdgesMultigraph(final IPayload payload) {
 		this(null, null, payload);
 
 	}
@@ -91,12 +91,12 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	 * IMultigraphEdge from the given predecessor to the new node and updates the predecessor's outgoing edges and the
 	 * new nodes' incoming edges accordingly. The new edge from the given node to the new node is not labeled, i.e. its
 	 * payload will be null.
-	 * 
+	 *
 	 * @param predecessor
 	 *            A node that should become the predecessor of this node or null.
 	 * @see IMultigraphEdge
 	 */
-	protected ModifiableExplicitEdgesMultigraph(V predecessor) {
+	protected ModifiableExplicitEdgesMultigraph(final V predecessor) {
 		this(predecessor, null, null);
 	}
 
@@ -104,15 +104,15 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node without a payload. It creates a new
 	 * IMultigraphEdge from the given predecessor to the new node and updates the predecessor's outgoing edges and the
 	 * new nodes' incoming edges accordingly. The given edge payload is then used for this new edge.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param predecessor
 	 *            A node that should become the predecessor of this node or null.
 	 * @param edgePayload
 	 *            A payload for the edge from the predecessor to the new node or null. If the predecessor is null, this
 	 *            payload will be ignored.
 	 */
-	protected ModifiableExplicitEdgesMultigraph(V predecessor, IPayload edgePayload) {
+	protected ModifiableExplicitEdgesMultigraph(final V predecessor, final IPayload edgePayload) {
 		this(predecessor, edgePayload, null);
 	}
 
@@ -121,7 +121,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	 * IMultigraphEdge from the given predecessor to the new node and updates the predecessor's outgoing edges and the
 	 * new nodes' incoming edges accordingly, and labels the edge from the predecessor to the new node with a given edge
 	 * payload.
-	 * 
+	 *
 	 * @param predecessor
 	 *            A node that should become the predecessor of this node or null.
 	 * @param edgePayload
@@ -131,14 +131,15 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	 *            A payload for the new node or null.
 	 * @see IPayload
 	 */
-	protected ModifiableExplicitEdgesMultigraph(V predecessor, IPayload edgePayload, IPayload payload) {
+	protected ModifiableExplicitEdgesMultigraph(final V predecessor, final IPayload edgePayload,
+			final IPayload payload) {
 		super(predecessor, edgePayload, payload);
 	}
 
 	/* ---------- IModifiableOutgoing<IMultigraphEdge> implementation ---------- */
 
 	@Override
-	public boolean addOutgoing(E outgoing) {
+	public boolean addOutgoing(final E outgoing) {
 		if (outgoing != null) {
 			assert outgoing.getSource() == this;
 			return mOutgoingEdges.add(outgoing);
@@ -147,14 +148,14 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	@Override
-	public boolean addOutgoing(int index, E outgoing) {
+	public boolean addOutgoing(final int index, final E outgoing) {
 		final int i = mOutgoingEdges.size();
 		mOutgoingEdges.add(index, outgoing);
 		return i != mOutgoingEdges.size();
 	}
 
 	@Override
-	public boolean addAllOutgoing(Collection<? extends E> c) {
+	public boolean addAllOutgoing(final Collection<? extends E> c) {
 		boolean rtr = false;
 		for (final E outgoing : c) {
 			rtr |= addOutgoing(outgoing);
@@ -163,7 +164,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	@Override
-	public boolean addAllOutgoing(int index, Collection<? extends E> c) {
+	public boolean addAllOutgoing(final int index, final Collection<? extends E> c) {
 		return mOutgoingEdges.addAll(index, c);
 	}
 
@@ -173,17 +174,17 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	@Override
-	public E removeOutgoing(int index) {
+	public E removeOutgoing(final int index) {
 		return mOutgoingEdges.remove(index);
 	}
 
 	@Override
-	public boolean removeOutgoing(E o) {
+	public boolean removeOutgoing(final E o) {
 		return mOutgoingEdges.remove(o);
 	}
 
 	@Override
-	public boolean removeAllOutgoing(Collection<? extends E> c) {
+	public boolean removeAllOutgoing(final Collection<? extends E> c) {
 		boolean rtr = false;
 		for (final E o : c) {
 			rtr |= removeOutgoing(o);
@@ -194,7 +195,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	/* ---------- IModifiableIncoming<IMultigraphEdge> implementation ---------- */
 
 	@Override
-	public boolean addIncoming(E incoming) {
+	public boolean addIncoming(final E incoming) {
 		if (incoming != null) {
 			assert incoming.getTarget() == this;
 			return mIncomingEdges.add(incoming);
@@ -203,14 +204,14 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	@Override
-	public boolean addIncoming(int index, E incoming) {
+	public boolean addIncoming(final int index, final E incoming) {
 		final int i = mIncomingEdges.size();
 		mIncomingEdges.add(index, incoming);
 		return i != mIncomingEdges.size();
 	}
 
 	@Override
-	public boolean addAllIncoming(Collection<? extends E> c) {
+	public boolean addAllIncoming(final Collection<? extends E> c) {
 		boolean rtr = false;
 		for (final E e : c) {
 			rtr |= addIncoming(e);
@@ -219,7 +220,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	@Override
-	public boolean addAllIncoming(int index, Collection<? extends E> c) {
+	public boolean addAllIncoming(final int index, final Collection<? extends E> c) {
 		return mIncomingEdges.addAll(index, c);
 	}
 
@@ -229,17 +230,17 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	@Override
-	public E removeIncoming(int index) {
+	public E removeIncoming(final int index) {
 		return mIncomingEdges.remove(index);
 	}
 
 	@Override
-	public boolean removeIncoming(E o) {
+	public boolean removeIncoming(final E o) {
 		return mIncomingEdges.remove(o);
 	}
 
 	@Override
-	public boolean removeAllIncoming(Collection<? extends E> c) {
+	public boolean removeAllIncoming(final Collection<? extends E> c) {
 		boolean rtr = false;
 		for (final E o : c) {
 			rtr |= removeIncoming(o);

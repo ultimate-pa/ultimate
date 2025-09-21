@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -119,9 +120,7 @@ public class GraphWriter {
 		gv.addLine(writeNodesToString(allNodes).toString());
 
 		final Set<AnnotatedProgramPoint> errorTraceAl = new HashSet<>();
-		for (int i = 0; i < errorTrace.length; i++) {
-			errorTraceAl.add(errorTrace[i]);
-		}
+		Collections.addAll(errorTraceAl, errorTrace);
 		gv.addLine(writeEdgesToString(allEdges, errorTraceAl).toString());
 
 		gv.addLine(GraphViz.END_GRAPH);
@@ -231,8 +230,7 @@ public class GraphWriter {
 
 		String label = "";
 
-		for (final Iterator<GraphEdge> it = allEdges.iterator(); it.hasNext();) {
-			final GraphEdge current = it.next();
+		for (final GraphEdge current : allEdges) {
 			if (errorTrace.contains(current.mSource) && errorTrace.contains(current.mTarget)
 					&& !current.mSource.equals(current.mTarget)) {
 				label = "[color=blue]";
@@ -248,10 +246,9 @@ public class GraphWriter {
 			final Map<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy) {
 		final StringBuilder graph = new StringBuilder();
 
-		for (final Iterator<GraphEdge> it = allEdges.iterator(); it.hasNext();) {
-			final GraphEdge edge = it.next();
-			graph.append(convertEdgeName(edge) + (nodeToCopy.values().contains(edge.mSource) ? " [style=dashed] " : "")
-					+ "\n");
+		for (final GraphEdge edge : allEdges) {
+			graph.append(
+					convertEdgeName(edge) + (nodeToCopy.containsValue(edge.mSource) ? " [style=dashed] " : "") + "\n");
 		}
 
 		return graph;

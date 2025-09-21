@@ -203,8 +203,8 @@ public class LiveVariableState<ACTION extends IAction> implements IAbstractState
 	}
 
 	public Set<IProgramVar> getLiveVariablesAsProgramVars() {
-		assert mLive.stream()
-				.allMatch(element -> element instanceof IProgramVar) : "Not all live variables are of type IProgramVar";
+		assert mLive.stream().allMatch(element -> element instanceof IProgramVar)
+				: "Not all live variables are of type IProgramVar";
 		return mLive.stream().map(element -> (IProgramVar) element).collect(Collectors.toSet());
 	}
 

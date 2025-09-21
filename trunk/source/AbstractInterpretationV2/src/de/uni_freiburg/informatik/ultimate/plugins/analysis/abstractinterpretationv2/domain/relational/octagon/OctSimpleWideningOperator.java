@@ -37,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctSimpleWideningOperator implements IAbstractStateBinaryOperator<OctDomainState> {
-	
+
 	@Override
 	public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
 		return first.widen(second, OctMatrix::widenSimple);
 	}
-	
+
 }

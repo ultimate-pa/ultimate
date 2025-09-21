@@ -265,8 +265,8 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = streamCoRelatedConditions(cond).collect(Collectors.toSet());
 		if (EXTENDED_ASSERTION_CHECKING) {
-			assert result
-					.equals(computeCoRelatatedConditionsInefficient(cond)) : "inconsistent co-relation information";
+			assert result.equals(computeCoRelatatedConditionsInefficient(cond))
+					: "inconsistent co-relation information";
 		}
 		return result;
 	}
@@ -292,8 +292,8 @@ public class EventEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER,
 	public int computeMaximalDegree() {
 		final Function<Condition<LETTER, PLACE>, Integer> computeDegree =
 				c -> streamCoRelatedEvents(c).map(e -> e.getSuccessorConditions().size()).reduce(0, Integer::sum);
-		final Integer max = mBranchingProcess.getConditions().stream().map(computeDegree).max(Integer::compare)
-				.orElse(Integer.valueOf(0));
+		final Integer max =
+				mBranchingProcess.getConditions().stream().map(computeDegree).max(Integer::compare).orElse(0);
 		return max;
 	}
 

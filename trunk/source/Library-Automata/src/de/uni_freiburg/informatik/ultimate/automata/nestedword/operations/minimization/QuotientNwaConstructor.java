@@ -279,7 +279,8 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			 */
 			assert (!(mOperand instanceof IDoubleDeckerAutomaton<?, ?>))
 					|| ((IDoubleDeckerAutomaton<LETTER, STATE>) mOperand).isDoubleDecker(inputState,
-							trans.getHierPred()) : "Unusable return transitions should not be present.";
+							trans.getHierPred())
+					: "Unusable return transitions should not be present.";
 
 			final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
 			final STATE resultHierPred = resStateConstructor.getOrConstructResultState(trans.getHierPred());
@@ -338,29 +339,26 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			mPartition = partition;
 			mOperandInner = operand;
 
-			final IValueConstruction<Set<STATE>, STATE> valueConstruction = new IValueConstruction<>() {
-				@Override
-				public STATE constructValue(final Set<STATE> block) {
-					final STATE resultState = mStateFactory.merge(block);
-					boolean isInitial = false;
-					boolean isFinal = false;
-					for (final STATE state : block) {
-						if (!isInitial && mOperandInner.isInitial(state)) {
-							isInitial = true;
-							if (isFinal) {
-								break;
-							}
-						}
-						if (!isFinal && mOperandInner.isFinal(state)) {
-							isFinal = true;
-							if (isInitial) {
-								break;
-							}
+			final IValueConstruction<Set<STATE>, STATE> valueConstruction = block -> {
+				final STATE resultState = mStateFactory.merge(block);
+				boolean isInitial = false;
+				boolean isFinal = false;
+				for (final STATE state : block) {
+					if (!isInitial && mOperandInner.isInitial(state)) {
+						isInitial = true;
+						if (isFinal) {
+							break;
 						}
 					}
-					mResult.addState(isInitial, isFinal, resultState);
-					return resultState;
+					if (!isFinal && mOperandInner.isFinal(state)) {
+						isFinal = true;
+						if (isInitial) {
+							break;
+						}
+					}
 				}
+				mResult.addState(isInitial, isFinal, resultState);
+				return resultState;
 			};
 			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
@@ -391,15 +389,12 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		public ResultStateConstructorFromAutomatonStatePartition(final IAutomatonStatePartition<STATE> partition) {
 			mPartition = partition;
 
-			final IValueConstruction<IBlock<STATE>, STATE> valueConstruction = new IValueConstruction<>() {
-				@Override
-				public STATE constructValue(final IBlock<STATE> block) {
-					final STATE resultState = block.minimize(mStateFactory);
-					final boolean isInitial = block.isInitial();
-					final boolean isFinal = block.isFinal();
-					mResult.addState(isInitial, isFinal, resultState);
-					return resultState;
-				}
+			final IValueConstruction<IBlock<STATE>, STATE> valueConstruction = block -> {
+				final STATE resultState = block.minimize(mStateFactory);
+				final boolean isInitial = block.isInitial();
+				final boolean isFinal = block.isFinal();
+				mResult.addState(isInitial, isFinal, resultState);
+				return resultState;
 			};
 			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
@@ -431,7 +426,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		private final IResultStateConstructor<STATE> mResStateConstructor;
 
 		public GetOnlyMap(final IResultStateConstructor<STATE> resCons) {
-			this.mResStateConstructor = resCons;
+			mResStateConstructor = resCons;
 		}
 
 		@Override

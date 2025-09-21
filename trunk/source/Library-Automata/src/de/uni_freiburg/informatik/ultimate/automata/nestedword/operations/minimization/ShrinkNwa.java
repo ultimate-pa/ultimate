@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -32,9 +32,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * equivalence classes are split until no more witness for a split is found.
  * <p>
  * For DFAs the algorithm just performs Hopcroft's algorithm.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -176,7 +176,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This constructor creates a copy of the operand.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -193,7 +193,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This constructor creates a copy of the operand with additional options.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -225,7 +225,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This constructor creates a copy of the operand with an initial partition.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -317,20 +317,20 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		mFirstReturnLin2Hiers = mFirstReturnSplit ? new HashMap<>(2) : null;
 
 		switch (firstReturnSplitAlternative) {
-			case 0:
-				mFirstReturnSplitAlternative = false;
-				mFirstReturnSplitHierAlternative = false;
-				break;
-			case 1:
-				mFirstReturnSplitAlternative = true;
-				mFirstReturnSplitHierAlternative = false;
-				break;
-			case 2:
-				mFirstReturnSplitAlternative = true;
-				mFirstReturnSplitHierAlternative = true;
-				break;
-			default:
-				throw new IllegalArgumentException("firstReturnSplitAlternative must be one of 0, 1, 2.");
+		case 0:
+			mFirstReturnSplitAlternative = false;
+			mFirstReturnSplitHierAlternative = false;
+			break;
+		case 1:
+			mFirstReturnSplitAlternative = true;
+			mFirstReturnSplitHierAlternative = false;
+			break;
+		case 2:
+			mFirstReturnSplitAlternative = true;
+			mFirstReturnSplitHierAlternative = true;
+			break;
+		default:
+			throw new IllegalArgumentException("firstReturnSplitAlternative must be one of 0, 1, 2.");
 		}
 		if (mFirstReturnSplitAlternative) {
 			mWorkListRetHier = new WorkListRetHier();
@@ -356,13 +356,11 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 			mLogger.info("positive splits: " + mSplitsWithChange);
 			mLogger.info("negative splits: " + mSplitsWithoutChange);
-			mLogger.info("quota (p/n): " + (mSplitsWithoutChange == 0
-					? "--"
+			mLogger.info("quota (p/n): " + (mSplitsWithoutChange == 0 ? "--"
 					: (((double) mSplitsWithChange) / ((double) mSplitsWithoutChange))));
 			mLogger.info("incoming transition checks : " + mIncomingTransitions);
 			mLogger.info("no incoming transitions found : " + mNoIncomingTransitions);
-			mLogger.info("quota (p/n): " + (mNoIncomingTransitions == 0
-					? "--"
+			mLogger.info("quota (p/n): " + (mNoIncomingTransitions == 0 ? "--"
 					: (((double) mIncomingTransitions) / ((double) mNoIncomingTransitions))));
 			mLogger.info("ignored return splits due to singletons: " + mIgnoredReturnSingletons1x1);
 			mLogger.info("time consumption (ms): return separation: " + mReturnSeparateTime + ", matrix time: "
@@ -408,7 +406,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This is the main method that merges states not distinguishable (based on Hopcroft's algorithm).
-	 * 
+	 *
 	 * @param isFiniteAutomaton
 	 *            true iff automaton is a finite automaton
 	 * @param modules
@@ -503,9 +501,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 					if (STAT_RETURN_SIZE) {
 						try {
 							final GregorianCalendar date = new GregorianCalendar();
-							mWriter1.append(
-									date.get(GregorianCalendar.MINUTE) + ":" + date.get(GregorianCalendar.SECOND) + ":"
-											+ date.get(GregorianCalendar.MILLISECOND) + " (min:sec:ms)\n");
+							mWriter1.append(date.get(Calendar.MINUTE) + ":" + date.get(Calendar.SECOND) + ":"
+									+ date.get(Calendar.MILLISECOND) + " (min:sec:ms)\n");
 							mWriter1.append(mPartition.mEquivalenceClasses.size() + " ECs before return split of "
 									+ mWorkListRet.mQueue.size() + " ECs\n");
 							final int[] sizes = new int[mWorkListRet.mQueue.size()];
@@ -513,7 +510,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 							int idx = -1;
 							for (final EquivalenceClass ec : mWorkListRet.mQueue) {
-								sizes[++idx] = ec.mStates.size();
+								idx++;
+								sizes[idx] = ec.mStates.size();
 							}
 							Arrays.sort(sizes);
 							for (idx = 0; idx < sizes.length; ++idx) {
@@ -549,9 +547,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 					if (STAT_RETURN_SIZE) {
 						try {
 							final GregorianCalendar date = new GregorianCalendar();
-							mWriter1.append(
-									date.get(GregorianCalendar.MINUTE) + ":" + date.get(GregorianCalendar.SECOND) + ":"
-											+ date.get(GregorianCalendar.MILLISECOND) + " (min:sec:ms)\n");
+							mWriter1.append(date.get(Calendar.MINUTE) + ":" + date.get(Calendar.SECOND) + ":"
+									+ date.get(Calendar.MILLISECOND) + " (min:sec:ms)\n");
 							mWriter1.append(mPartition.mEquivalenceClasses.size() + " ECs after return split\n");
 						} catch (final IOException e) {
 							throw new AssertionError(e);
@@ -618,7 +615,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * This method does a naive linear return split. All states that reach the splitter class with the same hierarchical
 	 * state and return letter are split from the rest. Additionally, the hierarchical states are considered. This seems
 	 * to be worse for the resulting size.
-	 * 
+	 *
 	 * @param a
 	 *            the splitter equivalence class
 	 */
@@ -626,10 +623,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashMap<EquivalenceClass, HashSet<STATE>>> letter2hierEc2lin = new HashMap<>();
 		for (final STATE state : a.mStates) {
-			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions =
-					mOperand.returnPredecessors(state).iterator();
-			while (transitions.hasNext()) {
-				final IncomingReturnTransition<LETTER, STATE> transition = transitions.next();
+			for (final IncomingReturnTransition<LETTER, STATE> transition : mOperand.returnPredecessors(state)) {
 				final LETTER letter = transition.getLetter();
 				HashMap<EquivalenceClass, HashSet<STATE>> hierEc2lin = letter2hierEc2lin.get(letter);
 				if (hierEc2lin == null) {
@@ -671,7 +665,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * This method does a naive linear return split. All states that reach the splitter class with the same hierarchical
 	 * state and return letter are split from the rest. Additionally, the hierarchical states are considered. This seems
 	 * to be worse for the resulting size.
-	 * 
+	 *
 	 * @param ec
 	 *            the splitter equivalence class
 	 */
@@ -679,10 +673,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> letter2hier2lin = new HashMap<>();
 		for (final STATE state : ec.mStates) {
-			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions =
-					mOperand.returnPredecessors(state).iterator();
-			while (transitions.hasNext()) {
-				final IncomingReturnTransition<LETTER, STATE> transition = transitions.next();
+			for (final IncomingReturnTransition<LETTER, STATE> transition : mOperand.returnPredecessors(state)) {
 				final LETTER letter = transition.getLetter();
 				HashMap<STATE, HashSet<STATE>> hier2lin = letter2hier2lin.get(letter);
 				if (hier2lin == null) {
@@ -723,7 +714,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method does a naive linear return split. All states that reach the splitter class with the same hierarchical
 	 * state and return letter are split from the rest. Hierarchical states are ignored.
-	 * 
+	 *
 	 * @param ec
 	 *            the splitter equivalence class
 	 */
@@ -731,10 +722,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashSet<STATE>> letter2states = new HashMap<>();
 		for (final STATE state : ec.mStates) {
-			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions =
-					mOperand.returnPredecessors(state).iterator();
-			while (transitions.hasNext()) {
-				final IncomingReturnTransition<LETTER, STATE> transition = transitions.next();
+			for (final IncomingReturnTransition<LETTER, STATE> transition : mOperand.returnPredecessors(state)) {
 				final LETTER letter = transition.getLetter();
 				HashSet<STATE> predecessorSet = letter2states.get(letter);
 				if (predecessorSet == null) {
@@ -768,7 +756,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * This method assures correctness for the naive return split.
 	 * <p>
 	 * Currently it just executes the old return split, which seems to be too expensive.
-	 * 
+	 *
 	 * @param linEc
 	 *            the linear equivalence class
 	 */
@@ -816,7 +804,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * <p>
 	 * Currently it just executes the old return split, which seems to be too expensive. Hierarchical states are not
 	 * analyzed.
-	 * 
+	 *
 	 * @param linEc
 	 *            the linear equivalence class
 	 */
@@ -852,7 +840,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method assures correctness for the naive return split. No matrix is constructed. Currently, the hierarchical
 	 * split is missing. The runtime indicates that this method is not reasonable.
-	 * 
+	 *
 	 * @param linEc
 	 *            the linear equivalence class
 	 */
@@ -924,7 +912,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * The partition object is initialized. Final states are separated from non-final states. For the passed modules
 	 * this is assumed.
-	 * 
+	 *
 	 * @param modulesWrapped
 	 *            modules that must be split
 	 */
@@ -1010,7 +998,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * <p>
 	 * First all predecessor sets (with respect to a single symbol) are found and then for each such set the states are
 	 * split from their equivalence classes.
-	 * 
+	 *
 	 * @param ec
 	 *            the splitter equivalence class
 	 * @param iterator
@@ -1101,7 +1089,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method finds all involved linear and hierarchical equivalence classes for all successor equivalence classes
 	 * currently in the work list for the return split.
-	 * 
+	 *
 	 * @return map linear state to hierarchical states
 	 */
 	private HashMap<STATE, HashSet<STATE>> splitReturnBackwardsAnalysis() {
@@ -1153,7 +1141,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method translates the mapping of linear to hierarchical states to a mapping of linear to hierarchical
 	 * equivalence classes.
-	 * 
+	 *
 	 * @param lin2hier
 	 *            map linear state to hierarchical states
 	 * @return map linear equivalence class to hierarchical equivalence classes
@@ -1188,7 +1176,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method triggers for each given pair of linear and hierarchical equivalence classes the linear and the
 	 * hierarchical return split.
-	 * 
+	 *
 	 * @param linEc2hierEc
 	 *            map linear EC to hierarchical EC
 	 * @param linearAnalysis
@@ -1284,7 +1272,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * no Set of EquivalenceClass)?
 	 * <p>
 	 * TODO(ignoreMarked) ignore already marked pairs
-	 * 
+	 *
 	 * @param hier2lin2letter2succ
 	 *            map hier. to lin. to letter to succ. state
 	 * @param linEc
@@ -1394,7 +1382,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * <p>
 	 * TODO(nondeterminism) at most one successor for deterministic automata, offer improved version (no Set of STATE,
 	 * no Set of EquivalenceClass)?
-	 * 
+	 *
 	 * @param hier2lin2letter2succ
 	 *            map hier. to lin. to letter to succ. state
 	 * @param hierEc
@@ -1527,9 +1515,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				assert (oldEc.mStates.contains(state)) && (separatedSet != null);
 
 				// find fitting color
-				for (int i = 0; i < colorSets.size(); ++i) {
-					// found a fitting color
-					final ColorSet colorSet = colorSets.get(i);
+				for (final ShrinkNwa<LETTER, STATE>.ColorSet colorSet : colorSets) {
 					if (!colorSet.mBlocked.contains(state)) {
 						colorSet.mContent.add(state);
 						colorSet.mBlocked.addAll(separatedSet);
@@ -1557,7 +1543,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			 * If there are no states without any group preference, keep the biggest set from splitting. Else keep the
 			 * smallest set from splitting, since those states will stay there. This is to reduce the size of the
 			 * equivalence classes.
-			 * 
+			 *
 			 * NOTE: This typically has nearly no practical influence.
 			 */
 			int remainingColor = 0;
@@ -1644,7 +1630,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method finds the transitions for the alternative linear return split.
-	 * 
+	 *
 	 * @param succEc
 	 *            successor equivalence class
 	 * @return map linear equivalence class to return transitions
@@ -1670,7 +1656,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method helps the alternative linear return split.
-	 * 
+	 *
 	 * @param linEc
 	 *            linear equivalence class
 	 * @param transitions
@@ -1841,7 +1827,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method finds the transitions for the alternative hierarchical return split.
-	 * 
+	 *
 	 * @param succEc
 	 *            successor equivalence class
 	 * @return map hierarchical equivalence class to linear equivalence class
@@ -1867,7 +1853,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method helps the alternative hierarchical return split.
-	 * 
+	 *
 	 * @param hierEc
 	 *            hierarchical equivalence class
 	 * @param linEcs
@@ -1964,10 +1950,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			mLogger.debug("\nNEW RETURN SPLITTING ROUND");
 		}
 
-		if (DEBUG3) {
-			if (mPartition.mEquivalenceClasses.size() == mWorkListRet.mQueue.size()) {
-				mLogger.debug("first return split, starting with " + mPartition.mEquivalenceClasses.size() + " ECs");
-			}
+		if (DEBUG3 && (mPartition.mEquivalenceClasses.size() == mWorkListRet.mQueue.size())) {
+			mLogger.debug("first return split, starting with " + mPartition.mEquivalenceClasses.size() + " ECs");
 		}
 
 		if (STATISTICS) {
@@ -2005,7 +1989,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			}
 
 			// analyse linear equivalence class
-			hiers = splitReturnPredecessorsFirstTimeRepeat(linEc, new HashSet<STATE>());
+			hiers = splitReturnPredecessorsFirstTimeRepeat(linEc, new HashSet<>());
 
 			while ((hiers != null) && (!hiers.isEmpty())) {
 				// new internal and call splits available, prefer them
@@ -2044,7 +2028,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method is repeated in the loop of the optional first return split.
-	 * 
+	 *
 	 * @param linEc
 	 *            the linear equivalence class
 	 * @param oldHiers
@@ -2076,7 +2060,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * <p>
 	 * This is a mixture of a full and a random split, since only a fixed number of hierarchical predecessor states is
 	 * considered at one time. If there are more of them, they are considered in a later iteration.
-	 * 
+	 *
 	 * @param linEc
 	 *            the linear equivalence class
 	 * @param oldHiers
@@ -2203,7 +2187,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 					// no color available, use a new one
 					if (blockedColors.size() == colors) {
-						state2color.put(state, colors++);
+						state2color.put(state, colors);
+						colors++;
 					} else {
 						// at least one color available
 						assert blockedColors.size() < colors;
@@ -2268,7 +2253,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * <p>
 	 * Otherwise (without any outgoing call transitions) it keeps states with no outgoing return transitions together,
 	 * since these states will never take part in any matrix and hence can be kept together.
-	 * 
+	 *
 	 * @param ec
 	 *            the equivalence class
 	 */
@@ -2282,7 +2267,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method randomly splits an equivalence class into equally sized blocks of states.
-	 * 
+	 *
 	 * @param ec
 	 *            the equivalence class
 	 */
@@ -2294,7 +2279,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			int index = mTreshold;
 			for (final STATE state : oldStates) {
 				newStates.add(state);
-				if (--index == 0) {
+				index--;
+				if (index == 0) {
 					mPartition.addEcReturn(newStates, ec);
 					break;
 				}
@@ -2305,7 +2291,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method randomly splits an equivalence class into equally sized blocks of states, with one exception: It
 	 * keeps states without any outgoing return transitions together.
-	 * 
+	 *
 	 * @param ec
 	 *            the equivalence class
 	 */
@@ -2346,7 +2332,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * For each remaining equivalence class create a new state. Also remove all other objects references.
-	 * 
+	 *
 	 * @param addMapping
 	 *            true iff mapping old to new state is needed
 	 */
@@ -2396,7 +2382,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method checks the assertion that a given list contains an element only once.
-	 * 
+	 *
 	 * @param <T>
 	 *            type parameter
 	 * @param list
@@ -2515,7 +2501,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		/**
 		 * The iterator is told to consider the next transition.
-		 * 
+		 *
 		 * @return the letter of the next transition
 		 */
 		LETTER nextAndLetter();
@@ -2598,7 +2584,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This interface is used for the outgoing split at the beginning to abstract from whether internal or call symbols
 	 * are considered.
-	 * 
+	 *
 	 * @param <LETTER>
 	 *            letter type
 	 * @param <STATE>
@@ -2614,7 +2600,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		/**
 		 * This method returns a set of outgoing letters for a given state.
-		 * 
+		 *
 		 * @param state
 		 *            state to consider
 		 * @return all outgoing letters
@@ -2920,7 +2906,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		/**
 		 * This method splits a state from its equivalence class during the internal and call split. The equivalence
 		 * class is remembered.
-		 * 
+		 *
 		 * @param state
 		 *            the state
 		 * @param splitEcs
@@ -2948,7 +2934,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		 * This method finally splits the marked equivalence classes into two (for the internal and call split). The
 		 * states have already been split in the equivalence class before. Only if there are states remaining the split
 		 * is executed, otherwise the old equivalence class is restored.
-		 * 
+		 *
 		 * @param states
 		 *            set of states to split
 		 * @return true iff a split occurred
@@ -3023,7 +3009,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		@Override
 		public Iterator<IBlock<STATE>> blocksIterator() {
-			return new Iterator<IBlock<STATE>>() {
+			return new Iterator<>() {
 				private final Iterator<EquivalenceClass> mIt = mEquivalenceClasses.iterator();
 
 				@Override
@@ -3040,7 +3026,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		@Override
 		public Iterator<Set<STATE>> iterator() {
-			return new Iterator<Set<STATE>>() {
+			return new Iterator<>() {
 				private final Iterator<EquivalenceClass> mIt = mEquivalenceClasses.iterator();
 
 				@Override
@@ -3083,7 +3069,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		/**
 		 * This is a partial constructor which is used for both initialization and splitting.
-		 * 
+		 *
 		 * @param states
 		 *            the set of states for the equivalence class
 		 * @param fromSplit
@@ -3108,7 +3094,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		/**
 		 * This constructor is used for the initialization.
-		 * 
+		 *
 		 * @param states
 		 *            the set of states for the equivalence class
 		 */
@@ -3128,7 +3114,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		/**
 		 * This constructor is used during a split.
-		 * 
+		 *
 		 * @param states
 		 *            the set of states for the equivalence class
 		 * @param parent
@@ -3138,58 +3124,58 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			this(states, true);
 
 			switch (parent.mIncomingInt) {
-				case UNKNOWN:
-				case IN_WORKLIST:
-					mIncomingInt = IncomingStatus.IN_WORKLIST;
-					mWorkListIntCall.add(this);
-					break;
-				case NONE:
-					mIncomingInt = IncomingStatus.NONE;
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case UNKNOWN:
+			case IN_WORKLIST:
+				mIncomingInt = IncomingStatus.IN_WORKLIST;
+				mWorkListIntCall.add(this);
+				break;
+			case NONE:
+				mIncomingInt = IncomingStatus.NONE;
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 
 			switch (parent.mIncomingCall) {
-				case UNKNOWN:
-				case IN_WORKLIST:
-					mIncomingCall = IncomingStatus.IN_WORKLIST;
-					if (mIncomingInt != IncomingStatus.IN_WORKLIST) {
-						mWorkListIntCall.add(this);
-					}
-					break;
-				case NONE:
-					mIncomingCall = IncomingStatus.NONE;
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case UNKNOWN:
+			case IN_WORKLIST:
+				mIncomingCall = IncomingStatus.IN_WORKLIST;
+				if (mIncomingInt != IncomingStatus.IN_WORKLIST) {
+					mWorkListIntCall.add(this);
+				}
+				break;
+			case NONE:
+				mIncomingCall = IncomingStatus.NONE;
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 
 			switch (parent.mIncomingRet) {
-				case UNKNOWN:
-				case IN_WORKLIST:
-					mIncomingRet = IncomingStatus.IN_WORKLIST;
-					mWorkListRet.add(this);
-					break;
-				case NONE:
-					mIncomingRet = IncomingStatus.NONE;
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case UNKNOWN:
+			case IN_WORKLIST:
+				mIncomingRet = IncomingStatus.IN_WORKLIST;
+				mWorkListRet.add(this);
+				break;
+			case NONE:
+				mIncomingRet = IncomingStatus.NONE;
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 
 			if (mFirstReturnSplitAlternative) {
 				switch (parent.mOutgoingRet) {
-					case UNKNOWN:
-					case IN_WORKLIST:
-						mOutgoingRet = IncomingStatus.IN_WORKLIST;
-						mWorkListRetHier.add(this);
-						break;
-					case NONE:
-						mOutgoingRet = IncomingStatus.NONE;
-						break;
-					default:
-						throw new IllegalArgumentException();
+				case UNKNOWN:
+				case IN_WORKLIST:
+					mOutgoingRet = IncomingStatus.IN_WORKLIST;
+					mWorkListRetHier.add(this);
+					break;
+				case NONE:
+					mOutgoingRet = IncomingStatus.NONE;
+					break;
+				default:
+					throw new IllegalArgumentException();
 				}
 			}
 
@@ -3263,7 +3249,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		/**
 		 * This method initializes the matrix. This is not done at the beginning to avoid creating a huge but sparse
 		 * matrix, since other splits can be executed first.
-		 * 
+		 *
 		 * @param hierEcs
 		 *            hierarchical predecessor equivalence classes
 		 */
@@ -3342,9 +3328,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 								mOperand.returnSuccessorsGivenHier(lin, hier).iterator();
 						if (edges.hasNext()) {
 							/*
-							 * TODO(nondeterminism) at most one successor for
-							 *     deterministic automata, offer improved
-							 *     version (no Set<STATE>, no "if" in loop)?
+							 * TODO(nondeterminism) at most one successor for deterministic automata, offer improved
+							 * version (no Set<STATE>, no "if" in loop)?
 							 */
 							final HashMap<LETTER, HashSet<STATE>> return2succ = new HashMap<>();
 							lin2letter2succ.put(lin, return2succ);
@@ -3389,7 +3374,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		/**
 		 * This method checks whether a parent equivalence class (after a split) had a matrix. If so, the split states
 		 * are shifted to the new child equivalence class.
-		 * 
+		 *
 		 * @param parent
 		 *            parent equivalenceClass class
 		 */
@@ -3486,8 +3471,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		 *            sets of states to be marked for split
 		 */
 		public void markSplit(final Collection<HashSet<STATE>> splitSets) {
-			assert splitSets.size() > 1 : "Splits with " + splitSets.size()
-					+ " set are not sensible and should be caught beforehand.";
+			assert splitSets.size() > 1
+					: "Splits with " + splitSets.size() + " set are not sensible and should be caught beforehand.";
 
 			if (mState2SeparatedSet == null) {
 				mState2SeparatedSet = new HashMap<>(computeHashCap(mStates.size()));
@@ -3650,12 +3635,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		protected final PriorityQueue<EquivalenceClass> mQueue;
 
 		public AWorkList() {
-			mQueue = new PriorityQueue<>(Math.max(mOperand.size(), 1), new Comparator<EquivalenceClass>() {
-				@Override
-				public int compare(final EquivalenceClass ec1, final EquivalenceClass ec2) {
-					return ec1.mStates.size() - ec2.mStates.size();
-				}
-			});
+			mQueue = new PriorityQueue<>(Math.max(mOperand.size(), 1),
+					(ec1, ec2) -> ec1.mStates.size() - ec2.mStates.size());
 		}
 
 		/**

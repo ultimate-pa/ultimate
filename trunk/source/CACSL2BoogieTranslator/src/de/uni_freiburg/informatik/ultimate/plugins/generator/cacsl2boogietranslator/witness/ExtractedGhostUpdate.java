@@ -160,13 +160,13 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
-		final ExpressionResult witness = instrument(loc, dispatcher);
 		final String functionName = getNameOfCalledFunction();
 		if (functionName == null) {
 			// TODO: Support other statements, also not only function calls
 			throw new UnsupportedOperationException(
 					"The following statement is not yet supported for ghost updates: " + loc);
 		}
+		final ExpressionResult witness = instrument(loc, dispatcher);
 		switch (functionName) {
 		case "__VERIFIER_atomic_begin":
 			// Insert the ghost update after the begin of the atomic block to ensure that it is executed atomically.

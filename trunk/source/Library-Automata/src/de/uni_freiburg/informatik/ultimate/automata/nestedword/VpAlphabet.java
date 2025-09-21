@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -73,14 +74,10 @@ public class VpAlphabet<LETTER> {
 	 *
 	 */
 	public VpAlphabet(final VpAlphabet<LETTER> vpAlphabet, final Map<LETTER, LETTER> mapping) {
-		mInternalAlphabet = vpAlphabet.getInternalAlphabet().stream().map(mapping::get)
-				.collect(Collectors.toSet());
-		mCallAlphabet = vpAlphabet.getCallAlphabet().stream().map(mapping::get)
-				.collect(Collectors.toSet());
-		mReturnAlphabet = vpAlphabet.getReturnAlphabet().stream().map(mapping::get)
-				.collect(Collectors.toSet());
+		mInternalAlphabet = vpAlphabet.getInternalAlphabet().stream().map(mapping::get).collect(Collectors.toSet());
+		mCallAlphabet = vpAlphabet.getCallAlphabet().stream().map(mapping::get).collect(Collectors.toSet());
+		mReturnAlphabet = vpAlphabet.getReturnAlphabet().stream().map(mapping::get).collect(Collectors.toSet());
 	}
-
 
 	/**
 	 * @return Set of all letters that can occur as label of an internal transition.
@@ -119,12 +116,7 @@ public class VpAlphabet<LETTER> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mCallAlphabet == null ? 0 : mCallAlphabet.hashCode());
-		result = prime * result + (mInternalAlphabet == null ? 0 : mInternalAlphabet.hashCode());
-		result = prime * result + (mReturnAlphabet == null ? 0 : mReturnAlphabet.hashCode());
-		return result;
+		return Objects.hash(mCallAlphabet, mInternalAlphabet, mReturnAlphabet);
 	}
 
 	@Override

@@ -31,8 +31,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.eclipse.core.runtime.IStatus;
 import org.xml.sax.SAXException;
 
@@ -49,13 +47,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import jakarta.xml.bind.JAXBException;
 
 /**
  *
  * This class wraps the Ultimate application and allows to start it without setting an IController <ToolchainListType>
  * object.
  *
- * Call runUltimate() to execute it and complete after processing the results (to release resources).
+ * Call {@code runUltimate()} to execute it and {@code complete()} after processing the results (to release resources).
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *

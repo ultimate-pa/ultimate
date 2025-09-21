@@ -56,6 +56,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	private final Map<String, LOC> mEntryNodes;
 	private final Map<String, LOC> mExitNodes;
 	private final Map<String, Set<LOC>> mErrorNodes;
+	private final Set<LOC> mLocationsOfInterest;
 	private final Set<LOC> mLoopLocations;
 	private CfgSmtToolkit mCfgSmtToolkit;
 	private final Set<LOC> mInitialNodes;
@@ -82,6 +83,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		mEntryNodes = new LinkedHashMap<>();
 		mExitNodes = new LinkedHashMap<>();
 		mErrorNodes = new LinkedHashMap<>();
+		mLocationsOfInterest = new LinkedHashSet<>();
 
 		// initialize all maps with the known procedures
 		for (final String proc : mCfgSmtToolkit.getProcedures()) {
@@ -117,15 +119,17 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 *            locations).
 	 * @param isLoopLocation
 	 *            true if it is a loop head.
+	 * @param isLocationOfInterest
+	 *            true if this is a location of interest (LOI)
 	 */
 	public void addLocation(final LOC loc, final boolean isInitial, final boolean isError, final boolean isProcEntry,
-			final boolean isProcExit, final boolean isLoopLocation) {
+			final boolean isProcExit, final boolean isLoopLocation, final boolean isLocationOfInterest) {
 		if (loc == null) {
 			throw new IllegalArgumentException("Cannot add null location");
 		}
-		assert getLocationClass()
-				.isAssignableFrom(loc.getClass()) : "Incompatible location types. Should be subclass of "
-						+ getLocationClass() + " but is " + loc.getClass();
+		assert getLocationClass().isAssignableFrom(loc.getClass())
+				: "Incompatible location types. Should be subclass of " + getLocationClass() + " but is "
+						+ loc.getClass();
 		final String proc = getProcedure(loc);
 		final Map<DebugIdentifier, LOC> name2Loc = mProgramPoints.get(proc);
 		assert name2Loc != null : "Unknown procedure";
@@ -146,16 +150,19 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		}
 		if (isProcEntry) {
 			final LOC oldEntry = mEntryNodes.put(proc, loc);
-			assert oldEntry == null || loc.equals(
-					oldEntry) : "Do not overwrite the procedure entry node by mistake! Remove the old one first";
+			assert oldEntry == null || loc.equals(oldEntry)
+					: "Do not overwrite the procedure entry node by mistake! Remove the old one first";
 		}
 		if (isProcExit) {
 			final LOC oldExit = mExitNodes.put(proc, loc);
-			assert oldExit == null || loc
-					.equals(oldExit) : "Do not overwrite the procedure exit node by mistake! Remove the old one first";
+			assert oldExit == null || loc.equals(oldExit)
+					: "Do not overwrite the procedure exit node by mistake! Remove the old one first";
 		}
 		if (isLoopLocation) {
 			mLoopLocations.add(loc);
+		}
+		if (isLocationOfInterest) {
+			mLocationsOfInterest.add(loc);
 		}
 	}
 
@@ -174,7 +181,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 *            The location to add.
 	 */
 	public void addOrdinaryLocation(final LOC loc) {
-		addLocation(loc, false, false, false, false, false);
+		addLocation(loc, false, false, false, false, false, false);
 	}
 
 	/**
@@ -246,6 +253,11 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	}
 
 	@Override
+	public Set<LOC> getLocationsOfInterest() {
+		return Collections.unmodifiableSet(mLocationsOfInterest);
+	}
+
+	@Override
 	public Set<LOC> getLoopLocations() {
 		return Collections.unmodifiableSet(mLoopLocations);
 	}
@@ -282,4 +294,5 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	public String toString() {
 		return graphStructureToString();
 	}
+
 }

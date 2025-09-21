@@ -153,10 +153,16 @@ public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 	}
 
 	/**
+	 * Computes the marking reached from this marking by firing the given transition.
+	 *
+	 * This method assumes that the transition is enabled (see {@link #isTransitionEnabled(Transition)}). Calling the
+	 * method for a non-enabled transition produces incorrect results.
+	 *
 	 * @param transition
 	 *            The transition.
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 * @throws PetriNetNot1SafeException
+	 *             if firing the transition puts multiple tokens in some place
 	 */
 	public <LETTER> Marking<PLACE> fireTransition(final Transition<LETTER, PLACE> transition)
 			throws PetriNetNot1SafeException {
@@ -183,7 +189,7 @@ public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 
 	@Override
 	public String toString() {
-		return this.mPlaces.toString();
+		return mPlaces.toString();
 	}
 
 	public Stream<PLACE> stream() {

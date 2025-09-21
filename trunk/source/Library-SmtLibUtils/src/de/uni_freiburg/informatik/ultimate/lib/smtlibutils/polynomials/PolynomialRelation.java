@@ -86,8 +86,7 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	protected final RelationSymbol mRelationSymbol;
 	protected final TrivialityStatus mTrivialityStatus;
 	/**
-	 * {@link PolynomialTerm}s or {@link AffineTerm}s ψ such that the relation ψ ▷ 0
-	 * is equivalent to the mOriginalTerm.
+	 * {@link PolynomialTerm}s or {@link AffineTerm}s ψ such that the relation ψ ▷ 0 is equivalent to the mOriginalTerm.
 	 */
 	protected final AbstractGeneralizedAffineTerm<?> mPolynomialTerm;
 
@@ -95,9 +94,8 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT;
 
 		/**
-		 * For the TIR quantifier elimination technique (see {@link DualJunctionTir}),
-		 * we prefer non-strict inequalities for the existential quantifier and we
-		 * prefer strict inequalities for the universal quantifier.
+		 * For the TIR quantifier elimination technique (see {@link DualJunctionTir}), we prefer non-strict inequalities
+		 * for the existential quantifier and we prefer strict inequalities for the universal quantifier.
 		 */
 		public static TransformInequality determineTransformationForTir(final int quantifier) {
 			TransformInequality result;
@@ -167,12 +165,12 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 						// Note that we always divide by a positive number and hence the relation symbol
 						// will not change.
 						final AbstractGeneralizedAffineTerm<?> withoutConstant = agat.add(agat.getConstant().negate());
-						final AbstractGeneralizedAffineTerm<?> withoutConstantDivided = withoutConstant
-								.divInvertible(gcd);
+						final AbstractGeneralizedAffineTerm<?> withoutConstantDivided =
+								withoutConstant.divInvertible(gcd);
 						assert withoutConstantDivided != null : "Division problem";
 						final Rational newConstantRational = agat.getConstant().div(gcd);
-						final Rational newConstantRounded = getEquivalencePreservingRoundingMethod(mRelationSymbol)
-								.apply(newConstantRational);
+						final Rational newConstantRounded =
+								getEquivalencePreservingRoundingMethod(mRelationSymbol).apply(newConstantRational);
 						mPolynomialTerm = withoutConstantDivided.add(newConstantRounded);
 						mTrivialityStatus = computeTrivialityStatus(mPolynomialTerm, mRelationSymbol);
 						break;
@@ -195,11 +193,11 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	}
 
 	/**
-	 * If we have a relation of the form `r ▷ 0`, where r is a rational, in which
-	 * direction can we round `r` (upwards, downwards) without changing the truth
-	 * value of the relation.
+	 * If we have a relation of the form `r ▷ 0`, where r is a rational, in which direction can we round `r` (upwards,
+	 * downwards) without changing the truth value of the relation.
 	 *
-	 * @param symb Convex inequality, i.e., one of the following \<=, \<, \>=, \>.
+	 * @param symb
+	 *            Convex inequality, i.e., one of the following \<=, \<, \>=, \>.
 	 */
 	private static Function<Rational, Rational> getEquivalencePreservingRoundingMethod(final RelationSymbol symb) {
 		switch (symb) {
@@ -265,8 +263,9 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 				(AbstractGeneralizedAffineTerm<?>) lhsPoly, (AbstractGeneralizedAffineTerm<?>) rhsPoly);
 	}
 
-	public static PolynomialRelation of(final TransformInequality transformInequality, final RelationSymbol relationSymbol,
-			final AbstractGeneralizedAffineTerm<?> polyLhs, final AbstractGeneralizedAffineTerm<?> polyRhs) {
+	public static PolynomialRelation of(final TransformInequality transformInequality,
+			final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> polyLhs,
+			final AbstractGeneralizedAffineTerm<?> polyRhs) {
 		if (polyLhs.getSort() != polyRhs.getSort()) {
 			throw new AssertionError("Inconsistent sorts");
 		}
@@ -276,8 +275,8 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		if (relationSymbol.isConvexInequality() && SmtSortUtils.isBitvecSort(polyLhs.getSort())) {
 			throw new AssertionError("Unsupported inequality/sort combination");
 		}
-		final AbstractGeneralizedAffineTerm<?> difference = PolynomialTerm.sum(polyLhs,
-				PolynomialTerm.mul(polyRhs, Rational.MONE));
+		final AbstractGeneralizedAffineTerm<?> difference =
+				PolynomialTerm.sum(polyLhs, PolynomialTerm.mul(polyRhs, Rational.MONE));
 		final AbstractGeneralizedAffineTerm<?> polyTerm;
 		final RelationSymbol relationSymbolAfterTransformation;
 
@@ -296,7 +295,8 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 			if (transformationOffset.equals(Rational.ZERO)) {
 				polyTerm = difference;
 			} else {
-				polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), transformationOffset));
+				polyTerm =
+						PolynomialTerm.sum(difference, constructConstant(difference.getSort(), transformationOffset));
 			}
 		} else {
 			polyTerm = difference;
@@ -314,31 +314,15 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		if (!term.isConstant()) {
 			return checkMinMaxValues(term, symbol);
 		}
-		switch (symbol) {
-		case DISTINCT:
-			return computeTrivialityStatus(term, a -> a != 0);
-		case EQ:
-			return computeTrivialityStatus(term, a -> a == 0);
-		case LESS:
-			return computeTrivialityStatus(term, a -> a < 0);
-		case GREATER:
-			return computeTrivialityStatus(term, a -> a > 0);
-		case GEQ:
-			return computeTrivialityStatus(term, a -> a >= 0);
-		case LEQ:
-			return computeTrivialityStatus(term, a -> a <= 0);
-		case BVULE:
-		case BVULT:
-		case BVUGE:
-		case BVUGT:
-		case BVSLE:
-		case BVSLT:
-		case BVSGE:
-		case BVSGT:
-			return TrivialityStatus.NONTRIVIAL;
-		default:
-			throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
-		}
+		return switch (symbol) {
+		case DISTINCT -> computeTrivialityStatus(term, a -> a != 0);
+		case EQ -> computeTrivialityStatus(term, a -> a == 0);
+		case LESS -> computeTrivialityStatus(term, a -> a < 0);
+		case GREATER -> computeTrivialityStatus(term, a -> a > 0);
+		case GEQ -> computeTrivialityStatus(term, a -> a >= 0);
+		case LEQ -> computeTrivialityStatus(term, a -> a <= 0);
+		case BVULE, BVULT, BVUGE, BVUGT, BVSLE, BVSLT, BVSGE, BVSGT -> TrivialityStatus.NONTRIVIAL;
+		};
 	}
 
 	private static TrivialityStatus checkMinMaxValues(final AbstractGeneralizedAffineTerm<?> term,
@@ -498,9 +482,8 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	}
 
 	/**
-	 * Interpret the value as an integer given by the two's complement
-	 * representation of the bitvector value. Return true iff this integer is
-	 * negative.
+	 * Interpret the value as an integer given by the two's complement representation of the bitvector value. Return
+	 * true iff this integer is negative.
 	 */
 	private static boolean isNegativeAsSignedInt(final Rational value, final Sort sort) {
 		if (!value.isIntegral()) {
@@ -535,8 +518,9 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 				final SolvedBinaryRelation result = new SolvedBinaryRelation(subject,
 						solvedElpr.getRhs().toTerm(script), solvedElpr.getRelationSymbol());
 				final Term relationToTerm = result.toTerm(script);
-				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(toTerm(script),
-						relationToTerm, script) != LBool.SAT : "solveForSubject unsound";
+				assert script instanceof INonSolverScript
+						|| SmtUtils.checkEquivalence(toTerm(script), relationToTerm, script) != LBool.SAT
+						: "solveForSubject unsound";
 				return result;
 			}
 		}
@@ -572,9 +556,12 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	}
 
 	public PolynomialRelation mul(final Script script, final Rational r) {
-		final RelationSymbol resultRelationSymbol = ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(r,
-				mPolynomialTerm.getSort()) ? mRelationSymbol.swapParameters() : mRelationSymbol;
-		return new PolynomialRelation((AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(mPolynomialTerm, r),
+		final RelationSymbol resultRelationSymbol =
+				ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(r, mPolynomialTerm.getSort())
+						? mRelationSymbol.swapParameters()
+						: mRelationSymbol;
+		return new PolynomialRelation(
+				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(mPolynomialTerm, r),
 				resultRelationSymbol);
 	}
 
@@ -589,20 +576,26 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final PolynomialRelation other = (PolynomialRelation) obj;
 		if (mPolynomialTerm == null) {
-			if (other.mPolynomialTerm != null)
+			if (other.mPolynomialTerm != null) {
 				return false;
-		} else if (!mPolynomialTerm.equals(other.mPolynomialTerm))
+			}
+		} else if (!mPolynomialTerm.equals(other.mPolynomialTerm)) {
 			return false;
-		if (mRelationSymbol != other.mRelationSymbol)
+		}
+		if (mRelationSymbol != other.mRelationSymbol) {
 			return false;
+		}
 		return true;
 	}
 
@@ -622,10 +615,9 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	}
 
 	/**
-	 * If this {@link PolynomialRelation} has the form `x=l`, where x is a variable
-	 * of the underlying (affine) polynomial relation and l is literal, the return
-	 * this equality as a {@link SolvedBinaryRelation} where `x` is the left-hand
-	 * side and `y` is the right-hand side.
+	 * If this {@link PolynomialRelation} has the form `x=l`, where x is a variable of the underlying (affine)
+	 * polynomial relation and l is literal, the return this equality as a {@link SolvedBinaryRelation} where `x` is the
+	 * left-hand side and `y` is the right-hand side.
 	 */
 	public SolvedBinaryRelation isSimpleEquality(final Script script) {
 		if (mRelationSymbol != RelationSymbol.EQ) {
@@ -663,12 +655,10 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	}
 
 	/**
-	 * Integer inequalities have two logically equivalent
-	 * {@link PolynomialRelation}, one that utilizes a strict relation, one that
-	 * utilizes a non-strict relation. E.g., `x>=1` and `x>0` are logically
-	 * equivalent for integers. This method returns the logically equivalent
-	 * non-strict relation for strict integer relations. Otherwise, this method
-	 * returns the input.
+	 * Integer inequalities have two logically equivalent {@link PolynomialRelation}, one that utilizes a strict
+	 * relation, one that utilizes a non-strict relation. E.g., `x>=1` and `x>0` are logically equivalent for integers.
+	 * This method returns the logically equivalent non-strict relation for strict integer relations. Otherwise, this
+	 * method returns the input.
 	 */
 	public PolynomialRelation tryToConvertToEquivalentNonStrictRelation() {
 		if (SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) && mRelationSymbol.isStrictRelation()) {

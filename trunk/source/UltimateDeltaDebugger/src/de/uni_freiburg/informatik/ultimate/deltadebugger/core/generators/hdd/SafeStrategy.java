@@ -45,7 +45,6 @@ import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
-import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
@@ -82,7 +81,7 @@ public class SafeStrategy implements IHddStrategy {
 		if (node instanceof IPSTConditionalBlock) {
 			collector.addDeleteConditionalDirectivesChange((IPSTConditionalBlock) node);
 		}
-		
+
 		// Add a change to delete the operator of unary expressions
 		final IASTNode astNode = node.getAstNode();
 		if (astNode instanceof IASTUnaryExpression) {
@@ -108,7 +107,7 @@ public class SafeStrategy implements IHddStrategy {
 			collector.addDeleteAllTokensChange(node);
 		}
 	}
-	
+
 	@Override
 	public void createChangeForNode(final IPSTNode node, final ChangeCollector collector) {
 		if (node instanceof IPSTRegularNode) {
@@ -136,7 +135,7 @@ public class SafeStrategy implements IHddStrategy {
 			collector.addDeleteChange(node);
 		}
 	}
-	
+
 	@Override
 	public boolean expandUnchangeableNodeImmediately(final IPSTNode node) {
 		return node instanceof IPSTConditionalBlock;
@@ -147,9 +146,9 @@ public class SafeStrategy implements IHddStrategy {
 	 */
 	static final class RegularNodeHandler implements IASTNodeConsumer {
 		private final IPSTRegularNode mCurrentNode;
-		
+
 		private final ChangeCollector mCollector;
-		
+
 		/**
 		 * @param node
 		 *            Node.
@@ -160,7 +159,7 @@ public class SafeStrategy implements IHddStrategy {
 			mCurrentNode = node;
 			mCollector = collector;
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
 			final IASTNode astNode = node.getAstNode();
@@ -178,57 +177,57 @@ public class SafeStrategy implements IHddStrategy {
 				collector.addDeleteWithCommaChange(node, false);
 				return;
 			}
-			
+
 			new ASTNodeConsumerDispatcher(new RegularNodeHandler(node, collector)).dispatch(astNode);
 		}
-		
+
 		@Override
 		public void on(final IASTArrayModifier arrayModifier) {
 			// Removing the brackets from an array declaration (that could not be removed itself)
 			// should have a very low probability to still type check, so better don't do this.
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTDeclaration declaration) {
-			
+
 			// The declaration is usually the same as the parent statement without the ";"
 			if (declaration.getPropertyInParent() == IASTDeclarationStatement.DECLARATION) {
 				return;
 			}
-			
+
 			IASTNodeConsumer.super.on(declaration);
 		}
-		
+
 		@Override
 		public void on(final IASTDeclarator declarator) {
 			// includes function/variable/whatever name and additional syntax that
 			// cannot be deleted alone
 		}
-		
+
 		@Override
 		public void on(final IASTDeclSpecifier declSpecifier) {
 			// Too many type checking errors if we change it.
 			// Of course, it should be possible to simplify it, replace macros and
 			// type qualifiers
 		}
-		
+
 		@Override
 		public void on(final IASTEqualsInitializer equalsInitializer) {
 			// We don't want to create uninitialized variables (and thus undefined behavior), so always keep equals
 			// initializer.
-			
+
 			// The only exception are variables with static storage, these are zero initialized implicitly.
 			// In such a case the initializer could be deleted.
 			// TODO: actually implement the idea above: need to get the corresponding IASTDeclaration and then check the
 			// storage class.
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTExpression expression) {
 			final ASTNodeProperty property = expression.getPropertyInParent();
-			
+
 			// delete the function name from function calls, leaving an expression
 			// list
 			// Note that this may cause subsequent compilation errors, because the
@@ -238,7 +237,7 @@ public class SafeStrategy implements IHddStrategy {
 				mCollector.addDeleteChange(mCurrentNode);
 				return;
 			}
-			
+
 			// Probably not a good idea to generate infinite loops, but these are
 			// one of the few expressions that can be deleted without causing syntax
 			// errors.
@@ -252,7 +251,7 @@ public class SafeStrategy implements IHddStrategy {
 
 			// Do not try multiple alternatives to not waste time
 			final List<String> replacements = allReplacements.subList(0, allReplacements.isEmpty() ? 0 : 1);
-			
+
 			// Binary expression operands are deleted or replaced
 			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
 				mCollector.addDeleteBinaryExpressionOperandChange(mCurrentNode, replacements);
@@ -264,12 +263,12 @@ public class SafeStrategy implements IHddStrategy {
 				mCollector.addDeleteWithCommaOrReplaceChange(mCurrentNode, true, replacements);
 				return;
 			}
-			
+
 			if (!replacements.isEmpty()) {
 				mCollector.addMultiReplaceChange(mCurrentNode, replacements);
 			}
 		}
-		
+
 		@Override
 		public void on(final IASTInitializerList initializerList) {
 			// An empty initializer list is not valid C syntax (see C grammar).
@@ -286,31 +285,31 @@ public class SafeStrategy implements IHddStrategy {
 			// variables anyways.
 			mCollector.addReplaceChange(mCurrentNode, "{}");
 		}
-		
+
 		@Override
 		public void on(final IASTName name) {
 			// no point in messing with names
 		}
-		
+
 		@Override
 		public void on(final IASTNode node) {
 			// Unless overridden regular nodes are simply deleted
 			mCollector.addDeleteChange(mCurrentNode);
 		}
-		
+
 		@Override
 		public void on(final IASTPointerOperator pointerOperator) {
 			// removing a pointer operator appears to be a bad idea, because of
 			// compilation errors.
 			// could try to remove specifiers, like const, restrict etc. though.
 		}
-		
+
 		@Override
 		public void on(final IASTStatement statement) {
 			// delete all statements (if required replace by ";")
 			mCollector.addReplaceChange(mCurrentNode, RewriteUtils.getReplacementStringForSafeDeletion(mCurrentNode));
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTTypeId typeId) {

@@ -28,14 +28,17 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
 import java.math.BigInteger;
+
 import org.junit.Test;
+
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
  * Test class for RationalMatrix.
+ *
  * @author Miriam Herzig
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class RationalMatrixTest {
 
@@ -45,85 +48,85 @@ public class RationalMatrixTest {
 	@Test
 	public void testInverse() {
 		// Identity matrix.
-		QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(4);
-		RationalMatrix E_rational = new RationalMatrix(BigInteger.valueOf(1), E);
-		RationalMatrix E_inverse_computed = RationalMatrix.computeInverse(E_rational);
+		final QuadraticMatrix E = QuadraticMatrix.constructIdentityMatrix(4);
+		final RationalMatrix E_rational = new RationalMatrix(BigInteger.valueOf(1), E);
+		final RationalMatrix E_inverse_computed = RationalMatrix.computeInverse(E_rational);
 		QuadraticMatrixTest.checkBigIntegerEquality(BigInteger.valueOf(1), E_inverse_computed.getDenominator());
 		QuadraticMatrixTest.checkMatrixEquality(E, E_inverse_computed.getIntMatrix());
-		
+
 		// Nontrivial matrix.
-		int[][] M1_entries = {{-1,0,3}, {-1,2,2}, {0,0,1}};
-		QuadraticMatrix M1 = QuadraticMatrixTest.intToBigInteger(M1_entries);
-		BigInteger denom1 = BigInteger.valueOf(2);
-		RationalMatrix R1 = new RationalMatrix(denom1, M1);
-		int[][] inverse1_entries = {{-2,0,6},{-1,1,1},{0,0,2}};
-		QuadraticMatrix M1_inverse = QuadraticMatrixTest.intToBigInteger(inverse1_entries);
-		RationalMatrix R1_inverse = new RationalMatrix(BigInteger.valueOf(1),M1_inverse);
-		RationalMatrix R1_inverse_computed = RationalMatrix.computeInverse(R1);
+		final int[][] M1_entries = { { -1, 0, 3 }, { -1, 2, 2 }, { 0, 0, 1 } };
+		final QuadraticMatrix M1 = QuadraticMatrixTest.intToBigInteger(M1_entries);
+		final BigInteger denom1 = BigInteger.valueOf(2);
+		final RationalMatrix R1 = new RationalMatrix(denom1, M1);
+		final int[][] inverse1_entries = { { -2, 0, 6 }, { -1, 1, 1 }, { 0, 0, 2 } };
+		final QuadraticMatrix M1_inverse = QuadraticMatrixTest.intToBigInteger(inverse1_entries);
+		final RationalMatrix R1_inverse = new RationalMatrix(BigInteger.valueOf(1), M1_inverse);
+		final RationalMatrix R1_inverse_computed = RationalMatrix.computeInverse(R1);
 		QuadraticMatrixTest.checkBigIntegerEquality(BigInteger.valueOf(1), R1_inverse_computed.getDenominator());
 		QuadraticMatrixTest.checkMatrixEquality(R1_inverse.getIntMatrix(), R1_inverse_computed.getIntMatrix());
 	}
-	
+
 	/**
 	 * Tests function {@link RationalMatrix#addColumnToMatrix(int, Rational[])}.
 	 */
 	@Test
 	public void testAddColumnToMatrix() {
 		// Tests the function addColumnToMatrix(int j, Rational[] p).
-		Rational[] p1 = new Rational[3];
-		Rational[] p2 = new Rational[3];
-		Rational[] p3 = new Rational[3];
-		for (int i=0; i<3; i++) {
+		final Rational[] p1 = new Rational[3];
+		final Rational[] p2 = new Rational[3];
+		final Rational[] p3 = new Rational[3];
+		for (int i = 0; i < 3; i++) {
 			p1[i] = Rational.valueOf(BigInteger.valueOf(1), BigInteger.valueOf(1));
 			p2[i] = Rational.valueOf(BigInteger.valueOf(i), BigInteger.valueOf(1));
-			p3[i] = Rational.valueOf(BigInteger.valueOf(1), BigInteger.valueOf(i+1));
+			p3[i] = Rational.valueOf(BigInteger.valueOf(1), BigInteger.valueOf(i + 1));
 		}
-		int[][] P1_entries = {{6,0,6},{6,6,3},{6,12,2}};
-		BigInteger denom1 = BigInteger.valueOf(6);
-		QuadraticMatrix P1 = QuadraticMatrixTest.intToBigInteger(P1_entries);
-		QuadraticMatrix P2_int = QuadraticMatrix.constructZeroMatrix(3);
-		RationalMatrix P2 = new RationalMatrix(BigInteger.valueOf(1), P2_int);
+		final int[][] P1_entries = { { 6, 0, 6 }, { 6, 6, 3 }, { 6, 12, 2 } };
+		final BigInteger denom1 = BigInteger.valueOf(6);
+		final QuadraticMatrix P1 = QuadraticMatrixTest.intToBigInteger(P1_entries);
+		final QuadraticMatrix P2_int = QuadraticMatrix.constructZeroMatrix(3);
+		final RationalMatrix P2 = new RationalMatrix(BigInteger.valueOf(1), P2_int);
 		P2.addColumnToMatrix(0, p1);
-		P2.addColumnToMatrix( 1, p2);
+		P2.addColumnToMatrix(1, p2);
 		P2.addColumnToMatrix(2, p3);
 		QuadraticMatrixTest.checkBigIntegerEquality(denom1, P2.getDenominator());
 		// assertEquals(denom, P2.mDenominator);
 		QuadraticMatrixTest.checkMatrixEquality(P1, P2.getIntMatrix());
-		
-		Rational[] p = new Rational[3];
+
+		final Rational[] p = new Rational[3];
 		p[0] = Rational.valueOf(BigInteger.valueOf(1), BigInteger.valueOf(1));
 		p[1] = Rational.valueOf(BigInteger.valueOf(0), BigInteger.valueOf(1));
 		p[2] = Rational.valueOf(BigInteger.valueOf(0), BigInteger.valueOf(1));
-		int[][] pEntriesOld = {{0,0,0},{0,0,0},{0,0,1}};
-		QuadraticMatrix pOldInt = QuadraticMatrixTest.intToBigInteger(pEntriesOld);
-		int[][] pEntriesNew = {{0,1,0},{0,0,0},{0,0,1}};
-		QuadraticMatrix pNewInt = QuadraticMatrixTest.intToBigInteger(pEntriesNew);
-		BigInteger denom = BigInteger.valueOf(1);
-		RationalMatrix pOld = new RationalMatrix(denom, pOldInt);
+		final int[][] pEntriesOld = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 1 } };
+		final QuadraticMatrix pOldInt = QuadraticMatrixTest.intToBigInteger(pEntriesOld);
+		final int[][] pEntriesNew = { { 0, 1, 0 }, { 0, 0, 0 }, { 0, 0, 1 } };
+		final QuadraticMatrix pNewInt = QuadraticMatrixTest.intToBigInteger(pEntriesNew);
+		final BigInteger denom = BigInteger.valueOf(1);
+		final RationalMatrix pOld = new RationalMatrix(denom, pOldInt);
 		pOld.addColumnToMatrix(1, p);
 		QuadraticMatrixTest.checkMatrixEquality(pOldInt, pNewInt);
 		QuadraticMatrixTest.checkBigIntegerEquality(denom, pOld.getDenominator());
 	}
-	
+
 	/**
 	 * Tests function {@link RationalMatrix#addRowToMatrix(int, Rational[])}.
 	 */
 	@Test
 	public void testAddRowToMatrix() {
 		// Tests the function addColumnToMatrix(int j, Rational[] p).
-		Rational[] p1 = new Rational[3];
-		Rational[] p2 = new Rational[3];
-		Rational[] p3 = new Rational[3];
-		for (int i=0; i<3; i++) {
+		final Rational[] p1 = new Rational[3];
+		final Rational[] p2 = new Rational[3];
+		final Rational[] p3 = new Rational[3];
+		for (int i = 0; i < 3; i++) {
 			p1[i] = Rational.valueOf(BigInteger.valueOf(1), BigInteger.valueOf(1));
 			p2[i] = Rational.valueOf(BigInteger.valueOf(i), BigInteger.valueOf(1));
-			p3[i] = Rational.valueOf(BigInteger.valueOf(1), BigInteger.valueOf(i+1));
+			p3[i] = Rational.valueOf(BigInteger.valueOf(1), BigInteger.valueOf(i + 1));
 		}
-		int[][] P1_entries = {{6,6,6},{0,6,12},{6,3,2}};
-		BigInteger denom = BigInteger.valueOf(6);
-		QuadraticMatrix P1 = QuadraticMatrixTest.intToBigInteger(P1_entries);
-		QuadraticMatrix P2_int = QuadraticMatrix.constructZeroMatrix(3);
-		RationalMatrix P2 = new RationalMatrix(BigInteger.valueOf(1), P2_int);
+		final int[][] P1_entries = { { 6, 6, 6 }, { 0, 6, 12 }, { 6, 3, 2 } };
+		final BigInteger denom = BigInteger.valueOf(6);
+		final QuadraticMatrix P1 = QuadraticMatrixTest.intToBigInteger(P1_entries);
+		final QuadraticMatrix P2_int = QuadraticMatrix.constructZeroMatrix(3);
+		final RationalMatrix P2 = new RationalMatrix(BigInteger.valueOf(1), P2_int);
 		P2.addRowToMatrix(0, p1);
 		P2.addRowToMatrix(1, p2);
 		P2.addRowToMatrix(2, p3);
@@ -132,4 +135,3 @@ public class RationalMatrixTest {
 		QuadraticMatrixTest.checkMatrixEquality(P1, P2.getIntMatrix());
 	}
 }
-

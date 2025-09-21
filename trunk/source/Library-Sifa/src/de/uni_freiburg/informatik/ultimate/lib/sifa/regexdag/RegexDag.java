@@ -35,12 +35,13 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
 
 /**
- * A DAG with exactly one source and exactly one sink representing a set of regexes.
- * Source and sink can be the same node.
+ * A DAG with exactly one source and exactly one sink representing a set of regexes. Source and sink can be the same
+ * node.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  *
  * @see RegexDagNode
  */
@@ -55,8 +56,7 @@ public class RegexDag<L> {
 	}
 
 	/**
-	 * Creates a DAG with a source node and a sink node.
-	 * Does <b>not</b> automatically connect both nodes.
+	 * Creates a DAG with a source node and a sink node. Does <b>not</b> automatically connect both nodes.
 	 */
 	public RegexDag(final RegexDagNode<L> source, final RegexDagNode<L> sink) {
 		mSource = source;
@@ -75,7 +75,9 @@ public class RegexDag<L> {
 
 	/**
 	 * Creates a DAG with a single node which acts as both, the source and the sink.
-	 * @param sourceSinkLabel Label of the only node
+	 *
+	 * @param sourceSinkLabel
+	 *            Label of the only node
 	 * @return DAG with only one newly created node
 	 */
 	public static <L> RegexDag<L> singleNodeDag(final IRegex<L> sourceSinkLabel) {
@@ -105,6 +107,7 @@ public class RegexDag<L> {
 
 	/**
 	 * Iterates over this dag and collects all nodes.
+	 *
 	 * @return Collection containing each node in this dag exactly once.
 	 */
 	public Collection<RegexDagNode<L>> collectNodes() {
@@ -119,6 +122,3 @@ public class RegexDag<L> {
 		}
 	}
 }
-
-
-

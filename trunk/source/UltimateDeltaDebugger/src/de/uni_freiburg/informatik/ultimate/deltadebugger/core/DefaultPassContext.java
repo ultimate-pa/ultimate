@@ -43,7 +43,7 @@ public class DefaultPassContext implements IPassContext {
 	private volatile IASTTranslationUnit mAst;
 	private volatile IPSTTranslationUnit mPst;
 	private final ILogger mLogger;
-	
+
 	/**
 	 * @param input
 	 *            Input.
@@ -53,7 +53,7 @@ public class DefaultPassContext implements IPassContext {
 	public DefaultPassContext(final ISourceDocument input, final ILogger logger) {
 		this(input, new DefaultParser(logger), logger);
 	}
-	
+
 	/**
 	 * @param input
 	 *            Input.
@@ -67,7 +67,7 @@ public class DefaultPassContext implements IPassContext {
 		mParser = parser;
 		mLogger = logger;
 	}
-	
+
 	/**
 	 * @param input
 	 *            Input string.
@@ -77,7 +77,7 @@ public class DefaultPassContext implements IPassContext {
 	public DefaultPassContext(final String input, final ILogger logger) {
 		this(new StringSourceDocument(input), logger);
 	}
-	
+
 	/**
 	 * @param input
 	 *            Input string.
@@ -89,17 +89,17 @@ public class DefaultPassContext implements IPassContext {
 	public DefaultPassContext(final String input, final IParser parser, final ILogger logger) {
 		this(new StringSourceDocument(input), parser, logger);
 	}
-	
+
 	@Override
 	public ISourceDocument getInput() {
 		return mInput;
 	}
-	
+
 	@Override
 	public IParser getParser() {
 		return mParser;
 	}
-	
+
 	@Override
 	public IASTTranslationUnit getSharedAst() {
 		if (mAst == null) {
@@ -111,7 +111,7 @@ public class DefaultPassContext implements IPassContext {
 		}
 		return mAst;
 	}
-	
+
 	@Override
 	public IPSTTranslationUnit getSharedPst() {
 		if (mPst == null) {

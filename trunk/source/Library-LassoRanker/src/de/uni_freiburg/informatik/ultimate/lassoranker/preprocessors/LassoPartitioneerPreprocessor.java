@@ -48,19 +48,16 @@ public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
 
 	private final ManagedScript mMgdScript;
 
-	public LassoPartitioneerPreprocessor(final ManagedScript script,
-			final IUltimateServiceProvider services) {
+	public LassoPartitioneerPreprocessor(final ManagedScript script, final IUltimateServiceProvider services) {
 		mServices = services;
 		mMgdScript = script;
 	}
 
 	@Override
-	public Collection<LassoUnderConstruction> process(
-			final LassoUnderConstruction lasso) throws TermException {
+	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
 		final LassoPartitioneer lp = new LassoPartitioneer(mServices, mMgdScript, lasso);
 		return lp.getNewLassos();
 	}
-
 
 	@Override
 	public String getDescription() {
@@ -71,6 +68,5 @@ public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
 	public String getName() {
 		return LassoPartitioneer.class.getSimpleName();
 	}
-
 
 }

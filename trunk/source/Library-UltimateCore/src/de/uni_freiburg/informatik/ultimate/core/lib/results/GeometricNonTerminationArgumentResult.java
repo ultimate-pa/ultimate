@@ -74,7 +74,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * @param <P>
  *            program position class
  */
-public class GeometricNonTerminationArgumentResult<P extends IElement, E> extends LassoShapedNonTerminationArgument<P, E> {
+public class GeometricNonTerminationArgumentResult<P extends IElement, E>
+		extends LassoShapedNonTerminationArgument<P, E> {
 	/**
 	 * How many steps the infinite execution should be schematically unwinded
 	 */

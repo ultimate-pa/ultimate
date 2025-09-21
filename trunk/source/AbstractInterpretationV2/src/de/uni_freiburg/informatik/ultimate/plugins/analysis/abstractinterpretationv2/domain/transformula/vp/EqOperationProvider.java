@@ -44,10 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class EqOperationProvider implements
- 		IDomainSpecificOperationProvider<
- 			EqDisjunctiveConstraint<EqNode>,
- 			EqPredicate,
- 			EqTransitionRelation> {
+		IDomainSpecificOperationProvider<EqDisjunctiveConstraint<EqNode>, EqPredicate, EqTransitionRelation> {
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 
@@ -66,27 +63,21 @@ public class EqOperationProvider implements
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<EqNode> getConstraintFromTransitionRelation(
-			final EqTransitionRelation transRel) {
+	public EqDisjunctiveConstraint<EqNode> getConstraintFromTransitionRelation(final EqTransitionRelation transRel) {
 		return transRel.getEqConstraint();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<EqNode> renameVariables(
-			final Map<Term, Term> substitutionMapping,
+	public EqDisjunctiveConstraint<EqNode> renameVariables(final Map<Term, Term> substitutionMapping,
 			final EqDisjunctiveConstraint<EqNode> constraint) {
-//		return constraint.renameVariables(substitutionMapping);
+		// return constraint.renameVariables(substitutionMapping);
 		return mEqConstraintFactory.renameVariables(constraint, substitutionMapping);
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<EqNode> constructConjunction(
-			final List<EqDisjunctiveConstraint<EqNode>> conjuncts) {
+	public EqDisjunctiveConstraint<EqNode> constructConjunction(final List<EqDisjunctiveConstraint<EqNode>> conjuncts) {
 		return mEqConstraintFactory.conjoinDisjunctiveConstraints(conjuncts);
 	}
-
-
-
 
 	@Override
 	public EqDisjunctiveConstraint<EqNode> projectExistentially(final Set<TermVariable> varsToProjectAway,
@@ -95,7 +86,6 @@ public class EqOperationProvider implements
 		return constraint.projectExistentially(castToSetOfTerm);
 	}
 
-
 	@Override
 	public boolean isConstraintValid(final EqDisjunctiveConstraint<EqNode> constraint) {
 		// TODO Auto-generated method stub
@@ -103,14 +93,12 @@ public class EqOperationProvider implements
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<EqNode> constructDisjunction(
-			final List<EqDisjunctiveConstraint<EqNode>> disjuncts) {
+	public EqDisjunctiveConstraint<EqNode> constructDisjunction(final List<EqDisjunctiveConstraint<EqNode>> disjuncts) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<EqNode> constructNegation(
-			final EqDisjunctiveConstraint<EqNode> operand) {
+	public EqDisjunctiveConstraint<EqNode> constructNegation(final EqDisjunctiveConstraint<EqNode> operand) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -119,6 +107,5 @@ public class EqOperationProvider implements
 			final EqDisjunctiveConstraint<EqNode> constraint) {
 		throw new UnsupportedOperationException();
 	}
-
 
 }

@@ -33,14 +33,16 @@ import java.util.Map.Entry;
 import java.util.function.BinaryOperator;
 
 /**
- * FIFO queue which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>.
- * Work entries can be in queue at most once. When adding an already queued work entry again (with a possible
- * different input) the old and the new input are merged using a user-specified merge function.
+ * FIFO queue which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>. Work
+ * entries can be in queue at most once. When adding an already queued work entry again (with a possible different
+ * input) the old and the new input are merged using a user-specified merge function.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <W> Type of the work entries
- * @param <I> Type of the input entries
+ * @param <W>
+ *            Type of the work entries
+ * @param <I>
+ *            Type of the input entries
  */
 public class FifoWorklist<W, I> implements IWorklistWithInputs<W, I> {
 
@@ -51,21 +53,23 @@ public class FifoWorklist<W, I> implements IWorklistWithInputs<W, I> {
 	/**
 	 * Creates a new queue.
 	 *
-	 * @param mergeFunction When an already enqueued work entry is added again this function is called to compute a
-	 *                      new input from the already enqueued input and the to be enqueued input.
-	 *                      The form is {@code (oldInput, newInput) -> mergedInput}.
+	 * @param mergeFunction
+	 *            When an already enqueued work entry is added again this function is called to compute a new input from
+	 *            the already enqueued input and the to be enqueued input. The form is
+	 *            {@code (oldInput, newInput) -> mergedInput}.
 	 */
 	public FifoWorklist(final BinaryOperator<I> mergeFunction) {
 		mMergeFunction = mergeFunction;
 	}
 
 	/**
-	 * Adds or updates an entry.
-	 * If {@code work} is already queued, its old and new input are merged and its position is kept.
-	 * If {@code work} is new to this queue, adds it to the tail.
+	 * Adds or updates an entry. If {@code work} is already queued, its old and new input are merged and its position is
+	 * kept. If {@code work} is new to this queue, adds it to the tail.
 	 *
-	 * @param work Work entry
-	 * @param addInput Input for work entry
+	 * @param work
+	 *            Work entry
+	 * @param addInput
+	 *            Input for work entry
 	 */
 	@Override
 	public void add(final W work, final I addInput) {
@@ -73,8 +77,8 @@ public class FifoWorklist<W, I> implements IWorklistWithInputs<W, I> {
 	}
 
 	/**
-	 * If this queue contains entries, removes the head (oldest entry) from this queue.
-	 * The removed entry can be queried with {@link #getWork()} and {@link #getInput()}.
+	 * If this queue contains entries, removes the head (oldest entry) from this queue. The removed entry can be queried
+	 * with {@link #getWork()} and {@link #getInput()}.
 	 * <p>
 	 * Calling advance on an empty worklist has no effect.
 	 *

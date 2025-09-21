@@ -25,6 +25,7 @@ public class OctMatrixTest {
 		assertIsEqualTo(m, OctMatrix.max(m, m));
 	}
 
+	// @formatter:off
 	// closure tests ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Test
@@ -185,12 +186,12 @@ public class OctMatrixTest {
 	@Test
 	public void testWidenStepwise() {
 		final WideningStepSupplier wss = createWideningStepSupplier("-9 -5 -3.2 4 8");
-		
+
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular(  "6 -4.2 1 0");
 		OctMatrix n = OctMatrix.parseBlockLowerTriangular(  "5 -4   2 9");
 		OctMatrix mWn = OctMatrix.parseBlockLowerTriangular("6 -3.2 4 inf");
 		assertIsEqualTo(mWn, m.widenStepwise(n, wss));
-		
+
 		m = OctMatrix.parseBlockLowerTriangular(  "4 -9    2 1");
 		n = OctMatrix.parseBlockLowerTriangular(  "4 -3.20 8 1");
 		mWn = OctMatrix.parseBlockLowerTriangular("4 -3.2  8 1");
@@ -201,7 +202,7 @@ public class OctMatrixTest {
 		mWn = OctMatrix.parseBlockLowerTriangular("inf inf 1   1");
 		assertIsEqualTo(mWn, m.widenStepwise(n, wss));
 	}
-	
+
 	private WideningStepSupplier createWideningStepSupplier(String steps) {
 		final TreeSet<OctValue> treeSet = new TreeSet<>();
 		steps = steps.trim();
@@ -210,15 +211,12 @@ public class OctMatrixTest {
 				treeSet.add(OctValue.parse(s));
 			}
 		}
-		return new WideningStepSupplier() {
-			@Override
-			public OctValue nextWideningStep(OctValue v) {
-				final OctValue ceil = treeSet.ceiling(v);
-				return (ceil == null) ? OctValue.INFINITY : ceil;
-			}
+		return v -> {
+			final OctValue ceil = treeSet.ceiling(v);
+			return (ceil == null) ? OctValue.INFINITY : ceil;
 		};
 	}
-	
+
 	// misc tests //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Test
@@ -280,7 +278,7 @@ public class OctMatrixTest {
 		assertIsEqualTo(r01, m.removeVariables(asSet(0, 1)));
 		assertIsEqualTo(r012, m.removeVariables(asSet(0, 1, 2)));
 	}
-	
+
 	@Test
 	public void testAppendSelection() {
 		final OctMatrix a = OctMatrix.parseBlockLowerTriangular(
@@ -443,7 +441,7 @@ public class OctMatrixTest {
 				+ " 0 18 15 16  0 18 "
 				+ "23  0 21 22 23  0 ");
 		assertIsEqualTo(expected, m);
-		
+
 		m = OctMatrix.parseBlockLowerTriangular(
 				  " 1  2 "
 				+ " 3  4 "
@@ -466,7 +464,7 @@ public class OctMatrixTest {
 		assertIsEqualTo(expected, m);
 
 	}
-	
+
 	@Test
 	public void testCopyVarBottom() {
 		final OctMatrix m = OctMatrix.parseBlockLowerTriangular(
@@ -476,7 +474,7 @@ public class OctMatrixTest {
 				+ " 9 10 11 12 "
 				+ "13 14 15 16 17 18 "
 				+ "19 20 21 22 23 24 ");
-		
+
 		m.assignVarCopy(2, 0);
 		final OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0  2 "
@@ -487,7 +485,7 @@ public class OctMatrixTest {
 				+ " 3 -3  9  5  3 -3 "); // ... was swapped with the first -3 (in this line).
 		assertIsEqualTo(expected, m);
 	}
-	
+
 	@Test
 	public void testCopyVarSelf() {
 		final OctMatrix m = OctMatrix.parseBlockLowerTriangular(
@@ -501,7 +499,7 @@ public class OctMatrixTest {
 		m.assignVarCopy(1, 1);
 		assertIsEqualTo(expected, m);
 	}
-	
+
 	@Test
 	public void testNegateVar() {
 		final OctMatrix m = OctMatrix.parseBlockLowerTriangular(
@@ -536,7 +534,7 @@ public class OctMatrixTest {
 				+ "  6 inf  .3   8 "
 				+ "inf   9  11   0 ");
 		assertIsEqualTo(expected, m);
-		
+
 		m.incrementVar(1, new OctValue(-2));
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  "  0   0 "
@@ -545,7 +543,7 @@ public class OctMatrixTest {
 				+ "inf   7   7   0 ");
 		assertIsEqualTo(expected, m);
 	}
-	
+
 	@Test
 	public void testAssignVarConstant() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
@@ -573,7 +571,7 @@ public class OctMatrixTest {
 				+ "inf inf  0  -4 "
 				+ "inf inf  4   0 ");
 		assertIsEqualTo(expected, m);
-		
+
 		try {
 			m.incrementVar(0, OctValue.INFINITY);
 			Assert.fail("Variable set to constant inf\n" + m); // actually, inf would be OK (but cannot be stored)
@@ -581,7 +579,7 @@ public class OctMatrixTest {
 			// test passed
 		}
 	}
-	
+
 
 	@Test
 	public void testAssignVarInterval() {
@@ -610,7 +608,7 @@ public class OctMatrixTest {
 				+ "inf inf   0   8 "
 				+ "inf inf  -2   0 ");
 		assertIsEqualTo(expected, m);
-		
+
 		m.assignVarInterval(0, OctValue.INFINITY, new OctValue(3));
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  "  0 inf "
@@ -618,7 +616,7 @@ public class OctMatrixTest {
 				+ "inf inf   0   8 "
 				+ "inf inf  -2   0 ");
 		assertIsEqualTo(expected, m);
-		
+
 		m.assignVarInterval(0, new OctValue(3), OctValue.INFINITY);
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  "  0  -6 "
@@ -626,7 +624,7 @@ public class OctMatrixTest {
 				+ "inf inf   0   8 "
 				+ "inf inf  -2   0 ");
 		assertIsEqualTo(expected, m);
-		
+
 	}
 
 	@Test
@@ -657,7 +655,7 @@ public class OctMatrixTest {
 				+ "inf inf inf   0 ");
 		assertIsEqualTo(expected, m);
 	}
-	
+
 	// relations ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Test
@@ -720,7 +718,7 @@ public class OctMatrixTest {
 		final int[] mapAVarIndexToBVarIndex = {1, 0};
 		Assert.assertTrue(a.isEqualTo(b, mapAVarIndexToBVarIndex));
 	}
-	
+
 	@Test
 	public void testBlockwiseRelation() {
 		final OctMatrix a = OctMatrix.parseBlockLowerTriangular(
@@ -740,18 +738,19 @@ public class OctMatrixTest {
 		Assert.assertFalse(a.blockwiseRelation(1, 0, b, 1, 0, OctMatrix.sRelationEqual));
 	}
 
+	// @formatter:on
 	// utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	private void assertIsEqualTo(OctMatrix expected, OctMatrix actual) {
+	private void assertIsEqualTo(final OctMatrix expected, final OctMatrix actual) {
 		final String msg = "expected:\n" + expected + "acutal:\n" + actual;
 		Assert.assertTrue(msg, expected.isEqualTo(actual));
 	}
 
-	private Set<Integer> asSet(Integer... elements) {
-		return new HashSet<Integer>(asList(elements));
+	private Set<Integer> asSet(final Integer... elements) {
+		return new HashSet<>(asList(elements));
 	}
 
-	private List<Integer> asList(Integer... elements) {
+	private List<Integer> asList(final Integer... elements) {
 		return Arrays.asList(elements);
 	}
 }

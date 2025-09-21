@@ -40,7 +40,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
@@ -80,7 +80,7 @@ public class NameHandler implements INameHandler {
 
 	@Override
 	public String getUniqueIdentifier(final IASTNode scope, String cId, final int compCnt, final boolean isOnHeap,
-			final CType cType, final DeclarationInformation decInfo) {
+			final ICType cType, final DeclarationInformation decInfo) {
 		if (cId.isEmpty()) {
 			cId = getGloballyUniqueIdentifier("unnamed");
 		}
@@ -137,7 +137,7 @@ public class NameHandler implements INameHandler {
 	}
 
 	@Override
-	public String getInParamIdentifier(final String cId, final CType cType, final DeclarationInformation decInfo) {
+	public String getInParamIdentifier(final String cId, final ICType cType, final DeclarationInformation decInfo) {
 		// (alex:) in case of several unnamed parameters we need uniqueness
 		// (still a little bit overkill, to make it precise we would need to
 		// check whether the current method has more than one unnamed parameter)
@@ -147,14 +147,14 @@ public class NameHandler implements INameHandler {
 	}
 
 	@Override
-	public String getTempVarUID(final SFO.AUXVAR purpose, final CType cType) {
+	public String getTempVarUID(final SFO.AUXVAR purpose, final ICType cType) {
 		final String boogieId = SFO.TEMP + purpose.getId() + mTmpUID++;
 		mBacktranslator.putTempVar(boogieId, purpose, cType);
 		return boogieId;
 	}
 
 	@Override
-	public String getTempVarUIDForBlockScope(final SFO.AUXVAR purpose, final CType cType) {
+	public String getTempVarUIDForBlockScope(final SFO.AUXVAR purpose, final ICType cType) {
 		final String boogieId = SFO.TEMP + purpose.getId() + mTmpUID++;
 		// do not add it as a temp var since it should not be havocced immediately (at C statement level)
 		// mBacktranslator.putTempVar(boogieId, purpose, cType);
@@ -172,7 +172,7 @@ public class NameHandler implements INameHandler {
 	}
 
 	@Override
-	public void addFunction(final String boogieId, final CType returnType) {
+	public void addFunction(final String boogieId, final ICType returnType) {
 		mBacktranslator.addFunction(boogieId, returnType);
 	}
 }

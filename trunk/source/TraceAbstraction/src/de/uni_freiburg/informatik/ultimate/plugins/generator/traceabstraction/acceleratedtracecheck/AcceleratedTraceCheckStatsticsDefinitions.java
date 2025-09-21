@@ -47,7 +47,8 @@ public enum AcceleratedTraceCheckStatsticsDefinitions implements IStatisticsElem
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
 
-	AcceleratedTraceCheckStatsticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
+	AcceleratedTraceCheckStatsticsDefinitions(final Class<?> clazz,
+			final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {
 		mClazz = Objects.requireNonNull(clazz);
 		mAggr = Objects.requireNonNull(aggr);

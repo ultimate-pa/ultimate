@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  * designated method accordingly.<br>
  * The architecture allows for very general testing features such as additional pre- and post-processing, but comes with
  * the price that this class must be implemented for each method anew.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -56,7 +56,7 @@ public abstract class AbstractTester<LETTER, STATE> {
 
 	/**
 	 * Tests whether an input still produces an error.
-	 * 
+	 *
 	 * @param automaton
 	 *            input automaton
 	 * @return true iff an error of the original error type (exact) occurred
@@ -77,7 +77,7 @@ public abstract class AbstractTester<LETTER, STATE> {
 
 	/**
 	 * Executes the method to be tested on the given automaton.
-	 * 
+	 *
 	 * @param automaton
 	 *            input automaton
 	 * @throws Throwable

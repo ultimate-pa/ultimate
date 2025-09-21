@@ -35,6 +35,7 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.Stack;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
@@ -144,7 +145,7 @@ public class UnstructureCode extends BaseObserver {
 		mReachable = true;
 		mBreakStack = new Stack<>();
 		// TODO: Add label as "do not backtranslate"?
-		addLabel(new Label(proc.getLocation(), generateLabel()));
+		addLabel(BoogieUtils.constuctAuxiliaryLabel(proc.getLocation(), generateLabel()));
 
 		/* Transform the procedure block */
 		unstructureBlock(body.getBlock());
@@ -210,7 +211,7 @@ public class UnstructureCode extends BaseObserver {
 				 * Create break label unless no break occurred or we reused existing label
 				 */
 				if (!reusedLabel && currentBI.destLabel != null) {
-					addLabel(new Label(s.getLocation(), currentBI.destLabel));
+					addLabel(BoogieUtils.constuctAuxiliaryLabel(s.getLocation(), currentBI.destLabel));
 					mReachable = true;
 				}
 				currentBI.clear();
@@ -267,9 +268,6 @@ public class UnstructureCode extends BaseObserver {
 			// The label before the condition of the while loop gets the
 			// location that represents the while loop.
 			final ILocation loopLocation = stmt.getLocation();
-//					new BoogieLocation(stmt.getLocation().getFileName(),
-//					stmt.getLocation().getStartLine(), stmt.getLocation().getEndLine(),
-//					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn());
 			final Label l = new Label(loopLocation, head);
 			new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(l);
 			addLabel(l);
@@ -283,7 +281,7 @@ public class UnstructureCode extends BaseObserver {
 
 			postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { body, done }),
 					false);
-			postCreateStatement(origStmt, new Label(origStmt.getLocation(), body), false);
+			postCreateStatement(origStmt, BoogieUtils.constuctAuxiliaryLabel(origStmt.getLocation(), body), false);
 			if (stmt.getCondition() instanceof WildcardExpression) {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
 						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.TYPE_BOOL, true));
@@ -302,7 +300,7 @@ public class UnstructureCode extends BaseObserver {
 			mReachable = false;
 
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				postCreateStatement(origStmt, new Label(origStmt.getLocation(), done), false);
+				postCreateStatement(origStmt, BoogieUtils.constuctAuxiliaryLabel(origStmt.getLocation(), done), false);
 				final AssumeStatement negatedCondStmt =
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
 								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition()));
@@ -325,7 +323,7 @@ public class UnstructureCode extends BaseObserver {
 			final String elseLabel = generateLabel();
 			postCreateStatement(origStmt, new GotoStatement(stmt.getLocation(), new String[] { thenLabel, elseLabel }),
 					true);
-			postCreateStatement(origStmt, new Label(origStmt.getLocation(), thenLabel), true);
+			postCreateStatement(origStmt, BoogieUtils.constuctAuxiliaryLabel(origStmt.getLocation(), thenLabel), true);
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				postCreateStatementFromCond(origStmt, new AssumeStatement(stmt.getLocation(), stmt.getCondition()),
 						false, true);
@@ -339,7 +337,7 @@ public class UnstructureCode extends BaseObserver {
 						new GotoStatement(origStmt.getLocation(), new String[] { outer.destLabel }), true);
 			}
 			mReachable = true;
-			postCreateStatement(origStmt, new Label(origStmt.getLocation(), elseLabel), true);
+			postCreateStatement(origStmt, BoogieUtils.constuctAuxiliaryLabel(origStmt.getLocation(), elseLabel), true);
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				postCreateStatementFromCond(origStmt,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),

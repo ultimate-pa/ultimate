@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -32,18 +32,16 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledEdge;
-
 public class GenericLabeledEdge<N, L> implements ILabeledEdge<N, L> {
 
 	private final N mSource;
 	private final L mLabel;
 	private final N mTarget;
 
-	public GenericLabeledEdge(N source, L label, N target) {
-		this.mSource = source;
-		this.mLabel = label;
-		this.mTarget = target;
+	public GenericLabeledEdge(final N source, final L label, final N target) {
+		mSource = source;
+		mLabel = label;
+		mTarget = target;
 	}
 
 	@Override
@@ -67,7 +65,7 @@ public class GenericLabeledEdge<N, L> implements ILabeledEdge<N, L> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj == null) {
@@ -76,8 +74,7 @@ public class GenericLabeledEdge<N, L> implements ILabeledEdge<N, L> {
 			return false;
 		}
 		final GenericLabeledEdge<?, ?> other = (GenericLabeledEdge<?, ?>) obj;
-		return Objects.equals(mSource, other.mSource)
-				&& Objects.equals(mLabel, other.mLabel)
+		return Objects.equals(mSource, other.mSource) && Objects.equals(mLabel, other.mLabel)
 				&& Objects.equals(mTarget, other.mTarget);
 	}
 

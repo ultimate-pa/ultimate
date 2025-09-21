@@ -40,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Class that stores information about an equality or disequality
- * of a given term.
+ * Class that stores information about an equality or disequality of a given term.
  *
  * @author Matthias Heizmann
  */
@@ -88,16 +87,12 @@ public class EqualityInformation {
 		return mRelationSymbol;
 	}
 
-
 	/**
-	 * Check all terms in the <code>context</code> if they are an equality of the
-	 * form <code>givenTerm == t</code> (resp. disequality of the form
-	 * <code>givenTerm == t</code>, such that t does not contain the subterm
-	 * <code>forbiddenTerm</code>. If this is the case return corresponding equality
-	 * information, otherwise return null. If forbiddenTerm is null all subterms in
-	 * t are allowed. If <code>quantifier</code> is the existential quantifier, we
-	 * check for equalities otherwise (universal quantifier) we check for
-	 * disequalities.
+	 * Check all terms in the <code>context</code> if they are an equality of the form <code>givenTerm == t</code>
+	 * (resp. disequality of the form <code>givenTerm == t</code>, such that t does not contain the subterm
+	 * <code>forbiddenTerm</code>. If this is the case return corresponding equality information, otherwise return null.
+	 * If forbiddenTerm is null all subterms in t are allowed. If <code>quantifier</code> is the existential quantifier,
+	 * we check for equalities otherwise (universal quantifier) we check for disequalities.
 	 */
 	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final Term[] context,
 			final Term forbiddenTerm, final int quantifier) {
@@ -155,8 +150,8 @@ public class EqualityInformation {
 		return null;
 	}
 
-	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final PolynomialRelation polyRel,
-			final Term forbiddenTerm, final int i) {
+	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm,
+			final PolynomialRelation polyRel, final Term forbiddenTerm, final int i) {
 		if (polyRel.isVariable(givenTerm)) {
 			Term equalTerm;
 			final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, givenTerm);
@@ -178,15 +173,13 @@ public class EqualityInformation {
 		final Term lhs = ber.getLhs();
 		final Term rhs = ber.getRhs();
 
-		if (lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs)) {
-			if (forbiddenTerm == null || !isSubterm(forbiddenTerm, rhs)) {
-				return new EqualityInformation(i, givenTerm, rhs, ber.getRelationSymbol());
-			}
+		if ((lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs))
+				&& (forbiddenTerm == null || !isSubterm(forbiddenTerm, rhs))) {
+			return new EqualityInformation(i, givenTerm, rhs, ber.getRelationSymbol());
 		}
-		if (rhs.equals(givenTerm) && !isSubterm(givenTerm, lhs)) {
-			if (forbiddenTerm == null || !isSubterm(forbiddenTerm, lhs)) {
-				return new EqualityInformation(i, givenTerm, lhs, ber.getRelationSymbol());
-			}
+		if ((rhs.equals(givenTerm) && !isSubterm(givenTerm, lhs))
+				&& (forbiddenTerm == null || !isSubterm(forbiddenTerm, lhs))) {
+			return new EqualityInformation(i, givenTerm, lhs, ber.getRelationSymbol());
 		}
 		return null;
 	}

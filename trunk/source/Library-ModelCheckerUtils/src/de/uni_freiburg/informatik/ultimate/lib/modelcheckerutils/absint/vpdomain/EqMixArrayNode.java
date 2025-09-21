@@ -40,13 +40,12 @@ public class EqMixArrayNode extends EqNode {
 	private final EqNode mArray2;
 	private final Set<EqNode> mSupportingNodes;
 
-	public EqMixArrayNode(final Term term,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqNode array1, final EqNode array2) {
+	public EqMixArrayNode(final Term term, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqNode array1,
+			final EqNode array2) {
 		super(term, eqNodeAndFunctionFactory, false);
 		mArray1 = array1;
 		mArray2 = array2;
-		mSupportingNodes = Collections.unmodifiableSet(
-				new HashSet<>(Arrays.asList(new EqNode[] { array1, array2 })));
+		mSupportingNodes = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(array1, array2)));
 	}
 
 	@Override
@@ -93,6 +92,5 @@ public class EqMixArrayNode extends EqNode {
 	public EqNode getAppliedFunction() {
 		throw new AssertionError();
 	}
-
 
 }

@@ -37,7 +37,7 @@ public interface IPSTACSLNode extends IPSTNode {
 	 * @return ACSL node.
 	 */
 	ACSLNode getAcslNode();
-	
+
 	@Override
 	default IASTNode getAstNode() {
 		return null;

@@ -35,25 +35,28 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
- * A TreeSet-based implementation of a priority queue. This queue can only be used if the Queue order is total.
- * The main advantage of this queue is that the time complexity of remove(o) is logarithmic
+ * A TreeSet-based implementation of a priority queue. This queue can only be used if the Queue order is total. The main
+ * advantage of this queue is that the time complexity of remove(o) is logarithmic
  *
  * @author Mehdi Naouar
  *
  */
 public class TreePriorityQueue<E> implements Queue<E> {
 	private final TreeSet<E> mQueue;
-	
+
 	public TreePriorityQueue() {
 		mQueue = new TreeSet<>();
 	}
-	public TreePriorityQueue(Comparator<E> comp) {
+
+	public TreePriorityQueue(final Comparator<E> comp) {
 		mQueue = new TreeSet<>(comp);
 	}
-	public TreePriorityQueue(Collection<E> col) {
+
+	public TreePriorityQueue(final Collection<E> col) {
 		mQueue = new TreeSet<>(col);
 	}
-	public TreePriorityQueue(SortedSet<E> s) {
+
+	public TreePriorityQueue(final SortedSet<E> s) {
 		mQueue = new TreeSet<>(s);
 	}
 

@@ -54,7 +54,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
-	private static final String DESCRIPTION = "Removes maps (arrays and UFs) by introducing new variables for each relevant argument";
+	private static final String DESCRIPTION =
+			"Removes maps (arrays and UFs) by introducing new variables for each relevant argument";
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -111,8 +112,8 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 		final ModifiableTransFormula newLoop =
 				elim.eliminateMaps(lasso.getLoop(), equalityAnalysisLoop, equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
-		assert RewriteArrays2.checkStemImplication(mServices, mLogger, lasso, newLasso, mSymbolTable,
-				mManagedScript) : "result of RewriteArrays too strong";
+		assert RewriteArrays2.checkStemImplication(mServices, mLogger, lasso, newLasso, mSymbolTable, mManagedScript)
+				: "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
 	}
 }

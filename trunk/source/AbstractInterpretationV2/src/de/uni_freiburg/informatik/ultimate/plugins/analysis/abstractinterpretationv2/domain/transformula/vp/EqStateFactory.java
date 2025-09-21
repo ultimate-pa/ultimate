@@ -63,9 +63,8 @@ public class EqStateFactory {
 	private TransFormulaConverterCache mTransformulaConverter;
 
 	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<EqNode> eqConstraintFactory,
-			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
-			final VPDomainSettings settings) {
+			final EqConstraintFactory<EqNode> eqConstraintFactory, final IIcfgSymbolTable symbolTable,
+			final ManagedScript mgdScript, final VPDomainSettings settings) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mSymbolTable = symbolTable;
@@ -75,19 +74,16 @@ public class EqStateFactory {
 	}
 
 	public EqState disjoinAll(final Set<EqState> statesForCurrentEc) {
-		final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint =
-				mEqConstraintFactory.getDisjunctiveConstraint(
-						statesForCurrentEc.stream()
-								.map(state -> state.getConstraint())
-								.collect(Collectors.toSet()));
+		final EqDisjunctiveConstraint<EqNode> disjunctiveConstraint = mEqConstraintFactory.getDisjunctiveConstraint(
+				statesForCurrentEc.stream().map(state -> state.getConstraint()).collect(Collectors.toSet()));
 		final EqConstraint<EqNode> flattenedConstraint = disjunctiveConstraint.flatten();
 		return getEqState(flattenedConstraint, flattenedConstraint.getPvocs(mSymbolTable));
 	}
 
 	public EqState getTopState() {
 		if (mTopStateWithEmptyPvocs == null) {
-			mTopStateWithEmptyPvocs = getEqState(mEqConstraintFactory.getEmptyConstraint(false),
-					Collections.emptySet());
+			mTopStateWithEmptyPvocs =
+					getEqState(mEqConstraintFactory.getEmptyConstraint(false), Collections.emptySet());
 		}
 		return mTopStateWithEmptyPvocs;
 	}
@@ -96,10 +92,9 @@ public class EqStateFactory {
 		return mEqNodeAndFunctionFactory;
 	}
 
-//	public <NODE extends IEqNodeIdentifier<NODE>> EqState getEqState(final EqConstraint<NODE> constraint,
-	public EqState getEqState(final EqConstraint<EqNode> constraint,
-				final Set<IProgramVarOrConst> variables) {
-//		constraint.freezeIfNecessary(mEqConstraintFactory.getWeqSettings().closeAllEqConstraints());
+	// public <NODE extends IEqNodeIdentifier<NODE>> EqState getEqState(final EqConstraint<NODE> constraint,
+	public EqState getEqState(final EqConstraint<EqNode> constraint, final Set<IProgramVarOrConst> variables) {
+		// constraint.freezeIfNecessary(mEqConstraintFactory.getWeqSettings().closeAllEqConstraints());
 		EqConstraint<EqNode> closed = constraint;
 		if (mEqConstraintFactory.getWeqSettings().closeAllEqConstraints()) {
 			closed = mEqConstraintFactory.closeIfNecessary(constraint);
@@ -132,7 +127,7 @@ public class EqStateFactory {
 	public EqPredicate statesToPredicate(final List<EqState> states) {
 
 		final Set<IProgramVar> variables = new HashSet<>();
-		final Set<EqConstraint<EqNode>>  constraints = new HashSet<>();
+		final Set<EqConstraint<EqNode>> constraints = new HashSet<>();
 		for (final EqState state : states) {
 			variables.addAll(state.getConstraint().getVariables(mSymbolTable));
 			constraints.add(state.getConstraint());
@@ -142,8 +137,7 @@ public class EqStateFactory {
 				ImmutableSet.of(variables), getSymbolTable(), getManagedScript(), mEqNodeAndFunctionFactory);
 	}
 
-	public EqPredicate termToPredicate(final Term spPrecise,
-			final IPredicate postConstraint) {
+	public EqPredicate termToPredicate(final Term spPrecise, final IPredicate postConstraint) {
 		return new EqPredicate(spPrecise, ImmutableSet.copyOf(postConstraint.getVars()),
 				ImmutableSet.copyOf(postConstraint.getFuns()), mSymbolTable, mMgdScript, mEqNodeAndFunctionFactory,
 				mEqConstraintFactory);

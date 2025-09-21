@@ -94,19 +94,17 @@ public class AutomataDefinitionInterpreter {
 	/**
 	 * Enable/disable unification of objects in the automata.
 	 * <p>
-	 * The parser creates fresh objects every time it reads a string, even if
-	 * two strings are identical. With unification activated we make sure that
-	 * there is only one object per string in the automaton (e.g., all
+	 * The parser creates fresh objects every time it reads a string, even if two strings are identical. With
+	 * unification activated we make sure that there is only one object per string in the automaton (e.g., all
 	 * transitions to some state {@code q} point to the same object).
 	 * <p>
-	 * TODO Christian 2017-03-19 Currently only nested word automata are
-	 * unified.
+	 * TODO Christian 2017-03-19 Currently only nested word automata are unified.
 	 */
 	private static final boolean UNIFY_OBJECTS = false;
 
 	/**
-	 * A map from automaton name to automaton object, which contains for each
-	 * automaton, that was defined in the automata definitions an entry.
+	 * A map from automaton name to automaton object, which contains for each automaton, that was defined in the
+	 * automata definitions an entry.
 	 */
 	private final Map<String, Object> mAutomata;
 	/**
@@ -189,16 +187,16 @@ public class AutomataDefinitionInterpreter {
 		// Transitions
 		for (final Entry<Pair<String, String>, Set<String>> entry : astNode.getTransitions().entrySet()) {
 			final String expression = entry.getValue().iterator().next();
-			final LinkedList<BooleanExpression> booleanExpressions = parseBooleanExpressions(alternatingAutomaton,
-					expression);
+			final LinkedList<BooleanExpression> booleanExpressions =
+					parseBooleanExpressions(alternatingAutomaton, expression);
 			for (final BooleanExpression booleanExpression : booleanExpressions) {
 				alternatingAutomaton.addTransition(entry.getKey().getSecond(), entry.getKey().getFirst(),
 						booleanExpression);
 			}
 		}
 		// Accepting Function
-		final LinkedList<BooleanExpression> acceptingBooleanExpressions = parseBooleanExpressions(alternatingAutomaton,
-				astNode.getAcceptingFunction());
+		final LinkedList<BooleanExpression> acceptingBooleanExpressions =
+				parseBooleanExpressions(alternatingAutomaton, astNode.getAcceptingFunction());
 		for (final BooleanExpression booleanExpression : acceptingBooleanExpressions) {
 			alternatingAutomaton.addAcceptingConjunction(booleanExpression);
 		}
@@ -238,8 +236,8 @@ public class AutomataDefinitionInterpreter {
 
 			// determine the rank of the letter according to the rule's source
 			// states
-			final StringRankedLetter letter = getOrConstructStringRankedLetter(trans.getSymbol(),
-					trans.getSourceStates().size());
+			final StringRankedLetter letter =
+					getOrConstructStringRankedLetter(trans.getSymbol(), trans.getSourceStates().size());
 
 			treeAutomaton.addRule(new TreeAutomatonRule<>(letter, trans.getSourceStates(), trans.getTargetState()));
 		}
@@ -342,17 +340,18 @@ public class AutomataDefinitionInterpreter {
 	private void interpret(final EpsilonNestedwordAutomatonAST nwa) {
 		mErrorLocation = nwa.getLocation();
 
-		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result = constructEpsilonNestedWordAutomaton(
-				nwa, mServices);
+		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result =
+				constructEpsilonNestedWordAutomaton(nwa, mServices);
 
 		mAutomata.put(nwa.getName(), result);
 	}
 
-	public static EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> constructEpsilonNestedWordAutomaton(
-			final EpsilonNestedwordAutomatonAST enwa, final IUltimateServiceProvider services) {
+	public static EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>>
+			constructEpsilonNestedWordAutomaton(final EpsilonNestedwordAutomatonAST enwa,
+					final IUltimateServiceProvider services) {
 		final NestedWordAutomaton<String, String> nwa = constructNestedWordAutomaton(enwa, services);
-		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result = new EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>>(
-				nwa, enwa.getEpsilonTransitions());
+		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result =
+				new EpsilonNestedWordAutomaton<>(nwa, enwa.getEpsilonTransitions());
 		return result;
 	}
 
@@ -376,7 +375,6 @@ public class AutomataDefinitionInterpreter {
 				throw new IllegalArgumentException("State " + duplicateState + " contained twice in final states.");
 			}
 		}
-
 
 		checkThatInitialAndFinalStatesExist(nwa);
 
@@ -417,7 +415,7 @@ public class AutomataDefinitionInterpreter {
 		}
 
 		final NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
-				new VpAlphabet<String>(internalAlphabet, callAlphabet, returnAlphabet), new StringFactory());
+				new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet), new StringFactory());
 
 		// add the states
 		for (final String state : nwa.getStates()) {
@@ -473,10 +471,10 @@ public class AutomataDefinitionInterpreter {
 	}
 
 	private void interpret(final CountingAutomatonAST caAst) throws InterpreterException {
-		final CountingAutomatonDataStructure<String, String> countingAutomatonDataStructure = CountingAutomataUtils
-				.constructCountingAutomaton(mServices, caAst);
-		final CountingAutomaton<String, String> ca = CountingAutomataUtils.translateDataStructureToAutomaton(mServices,
-				countingAutomatonDataStructure);
+		final CountingAutomatonDataStructure<String, String> countingAutomatonDataStructure =
+				CountingAutomataUtils.constructCountingAutomaton(mServices, caAst);
+		final CountingAutomaton<String, String> ca =
+				CountingAutomataUtils.translateDataStructureToAutomaton(mServices, countingAutomatonDataStructure);
 		Objects.nonNull(ca);
 		mAutomata.put(caAst.getName(), ca);
 	}
@@ -492,8 +490,7 @@ public class AutomataDefinitionInterpreter {
 
 	/**
 	 *
-	 * @return The first element that occurs twice in list, returns null if no such
-	 *         element exists.
+	 * @return The first element that occurs twice in list, returns null if no such element exists.
 	 */
 	public static <E> E checkForDuplicate(final List<E> list) {
 		final Set<E> listAsSet = new HashSet<>();
@@ -507,8 +504,8 @@ public class AutomataDefinitionInterpreter {
 	}
 
 	/**
-	 * Throw exception if initial state does not exists in set of states.
-	 * Throw exception if finalstate does not exists in set of states.
+	 * Throw exception if initial state does not exists in set of states. Throw exception if finalstate does not exists
+	 * in set of states.
 	 */
 	private static void checkThatInitialAndFinalStatesExist(final AbstractNestedwordAutomatonAST nwa) {
 		final Set<String> allStates = new HashSet<>(nwa.getStates());
@@ -532,17 +529,16 @@ public class AutomataDefinitionInterpreter {
 	 */
 	public void interpret(final PetriNetAutomatonAST pna) {
 		mErrorLocation = pna.getLocation();
-		final BoundedPetriNet<String, String> net = new BoundedPetriNet<>(new AutomataLibraryServices(mServices),
-				new HashSet<>(pna.getAlphabet()), false);
+		final BoundedPetriNet<String, String> net =
+				new BoundedPetriNet<>(new AutomataLibraryServices(mServices), new HashSet<>(pna.getAlphabet()), false);
 		final Map<String, String> name2places = new HashMap<>();
 
 		// add the places
 		for (final String p : pna.getPlaces()) {
-			final boolean newlyAdded = net.addPlace(p, pna.getInitialMarkings().containsPlace(p),
-					pna.getAcceptingPlaces().contains(p));
+			final boolean newlyAdded =
+					net.addPlace(p, pna.getInitialMarkings().containsPlace(p), pna.getAcceptingPlaces().contains(p));
 			if (!newlyAdded) {
-				throw new AssertionError(
-						"Petri net must not contain place twice: " + p);
+				throw new AssertionError("Petri net must not contain place twice: " + p);
 			}
 			name2places.put(p, p);
 		}
@@ -596,9 +592,9 @@ public class AutomataDefinitionInterpreter {
 						resultStates.add(stateExpression);
 					}
 				}
-				final BooleanExpression booleanExpression = alternatingAutomaton.generateCube(
-						resultStates.toArray(new String[resultStates.size()]),
-						negatedResultStates.toArray(new String[negatedResultStates.size()]));
+				final BooleanExpression booleanExpression =
+						alternatingAutomaton.generateCube(resultStates.toArray(new String[resultStates.size()]),
+								negatedResultStates.toArray(new String[negatedResultStates.size()]));
 				booleanExpressions.add(booleanExpression);
 			}
 		}

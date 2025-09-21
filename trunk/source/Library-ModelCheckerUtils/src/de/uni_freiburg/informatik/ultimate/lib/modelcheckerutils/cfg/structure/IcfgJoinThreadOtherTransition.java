@@ -50,8 +50,8 @@ public final class IcfgJoinThreadOtherTransition extends AbstractIcfgTransition
 			final IIcfgJoinTransitionThreadCurrent icfgJoinThreadCurrentTransition, final int id) {
 		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
-		mIcfgJoinThreadCurrentTransition = Objects.requireNonNull(icfgJoinThreadCurrentTransition,
-				"A JoinSmtArguments is missing");
+		mIcfgJoinThreadCurrentTransition =
+				Objects.requireNonNull(icfgJoinThreadCurrentTransition, "A JoinSmtArguments is missing");
 
 		assert TransFormulaUtils.hasInternalNormalForm(mTransFormula) : "Expected TF in internal normal form";
 	}

@@ -1,7 +1,7 @@
 /*
  * Author: Julian Löffler
- * 
- * 
+ *
+ *
  */
 package org.eclipse.jface.preference;
 
@@ -70,7 +70,7 @@ public class DoubleFieldEditor extends StringFieldEditor {
 	public void setValidRange(final double min, final double max) {
 		mMinValidValue = min;
 		mMaxValidValue = max;
-		final Object[] args = new Object[] { Double.valueOf(min), Double.valueOf(max) };
+		final Object[] args = { Double.valueOf(min), Double.valueOf(max) };
 		setErrorMessage(JFaceResources.format("IntegerFieldEditor.errorMessageRange", args));
 	}
 
@@ -126,8 +126,8 @@ public class DoubleFieldEditor extends StringFieldEditor {
 	protected void doStore() {
 		final Text text = getTextControl();
 		if (text != null) {
-			final Double i = Double.valueOf(text.getText());
-			getPreferenceStore().setValue(getPreferenceName(), i.doubleValue());
+			final double i = Double.parseDouble(text.getText());
+			getPreferenceStore().setValue(getPreferenceName(), i);
 		}
 	}
 
@@ -139,6 +139,6 @@ public class DoubleFieldEditor extends StringFieldEditor {
 	 *                if the <code>String</code> does not contain a parsable double
 	 */
 	public double getDoubleValue() throws NumberFormatException {
-		return Double.valueOf(getStringValue()).doubleValue();
+		return Double.valueOf(getStringValue());
 	}
 }

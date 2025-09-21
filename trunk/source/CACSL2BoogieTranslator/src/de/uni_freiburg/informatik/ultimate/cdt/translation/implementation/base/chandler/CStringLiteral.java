@@ -37,10 +37,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  *
  * <br />
  *
- * TODO 20211106 Matthias: Our handling of wchar_t, char16_t and char32_t is
- * probably incorrect (especially the mNumericalValues and mByteValues) the aim
- * of the current implementation is to umsoundly handle all multibyte characters
- * as chars.
+ * TODO 20211106 Matthias: Our handling of wchar_t, char16_t and char32_t is probably incorrect (especially the
+ * mNumericalValues and mByteValues) the aim of the current implementation is to umsoundly handle all multibyte
+ * characters as chars.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -48,7 +47,7 @@ public class CStringLiteral {
 
 	public enum CharacterType {
 		CHAR, WCHAR_T, CHAR16_T, CHAR32_T
-	};
+	}
 
 	/**
 	 * Type of this string's characters.
@@ -107,11 +106,10 @@ public class CStringLiteral {
 	}
 
 	private String stripQuotes(final char[] chars, final int offset) {
-		if (chars[offset] == '\"' && chars[chars.length-1] == '\"') {
-			return new String(chars, offset+1, chars.length-2-offset);
+		if (chars[offset] == '\"' && chars[chars.length - 1] == '\"') {
+			return new String(chars, offset + 1, chars.length - 2 - offset);
 		} else {
-			throw new UnsupportedOperationException(
-					"unsupported representation of string literal " + chars);
+			throw new UnsupportedOperationException("unsupported representation of string literal " + chars);
 		}
 	}
 

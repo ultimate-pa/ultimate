@@ -305,15 +305,16 @@ public final class CongruenceDomainValue
 		if (mIsConstant) {
 			return script.term("=", var, SmtUtils.constructIntValue(script, mValue));
 		}
-		final Term nonZeroTerm = script.term("not", script.term("=", var, SmtUtils.constructIntValue(script, BigInteger.ZERO)));
+		final Term nonZeroTerm =
+				script.term("not", script.term("=", var, SmtUtils.constructIntValue(script, BigInteger.ZERO)));
 		if (mValue.equals(BigInteger.ONE)) {
 			if (mNonZero) {
 				return nonZeroTerm;
 			}
 			return script.term("true");
 		}
-		final Term modTerm =
-				script.term("=", script.term("mod", var, SmtUtils.constructIntValue(script, mValue)), SmtUtils.constructIntValue(script, BigInteger.ZERO));
+		final Term modTerm = script.term("=", script.term("mod", var, SmtUtils.constructIntValue(script, mValue)),
+				SmtUtils.constructIntValue(script, BigInteger.ZERO));
 		if (mNonZero) {
 			return script.term("and", modTerm, nonZeroTerm);
 		}

@@ -28,7 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.a
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public final class AcceleratedTracecheckStatisticsType extends StatisticsType<AcceleratedTraceCheckStatsticsDefinitions> {
+public final class AcceleratedTracecheckStatisticsType
+		extends StatisticsType<AcceleratedTraceCheckStatsticsDefinitions> {
 
 	private static final AcceleratedTracecheckStatisticsType INSTANCE = new AcceleratedTracecheckStatisticsType();
 

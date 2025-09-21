@@ -42,11 +42,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
- * {@link IRefinementStrategy} that first tries either {@code MathSat} for
- * floating points or {@code CVC4} in bitvector mode, and then {@code Z3}.
+ * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
+ * mode, and then {@code Z3}.
  * <p>
- * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for
- * constructing the interpolant automaton.
+ * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
@@ -58,8 +57,8 @@ public class WarthogRefinementStrategy<L extends IIcfgTransition<?>> extends Bas
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[] createModules(
-			final StrategyFactory<L>.StrategyModuleFactory factory) {
+	private static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
+			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();

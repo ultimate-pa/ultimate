@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Minimization of NWA by reduction to MaxSAT.
- * 
+ *
  * @author Jens Stimpfle (stimpflj@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -54,7 +54,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory

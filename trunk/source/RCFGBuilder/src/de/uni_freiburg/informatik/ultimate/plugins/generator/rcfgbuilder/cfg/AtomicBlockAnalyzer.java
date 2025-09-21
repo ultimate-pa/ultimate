@@ -64,10 +64,10 @@ public class AtomicBlockAnalyzer {
 
 		// collect locations inside atomic blocks
 		mAtomicPoints = collectAtomicPoints();
-		assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp)
-				|| allPredecessorsAtomic(pp)) : "Atomic point with unexpected non-atomic predecessor!";
-		assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp)
-				|| allSuccessorsAtomic(pp)) : "Atomic point with unexpected non-atomic successor!";
+		assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp) || allPredecessorsAtomic(pp))
+				: "Atomic point with unexpected non-atomic predecessor!";
+		assert getAllLocations().allMatch(pp -> !mAtomicPoints.contains(pp) || allSuccessorsAtomic(pp))
+				: "Atomic point with unexpected non-atomic successor!";
 
 		// collect locations at boundaries of atomic blocks
 		mAtomicBegins =

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
  */
 public class StopOnFirstSuccessDecorator implements IMinimizer {
 	private final IMinimizer mDelegateMinimizer;
-	
+
 	/**
 	 * @param minimizer
 	 *            Delegate minimizer.
@@ -44,33 +44,32 @@ public class StopOnFirstSuccessDecorator implements IMinimizer {
 	public StopOnFirstSuccessDecorator(final IMinimizer minimizer) {
 		mDelegateMinimizer = minimizer;
 	}
-	
+
 	@Override
 	public <E> IMinimizerStep<E> create(final List<E> input) {
 		return new StepDecorator<>(mDelegateMinimizer.create(input));
 	}
-	
+
 	@Override
 	public boolean isEachVariantUnique() {
 		return mDelegateMinimizer.isEachVariantUnique();
 	}
-	
+
 	@Override
 	public boolean isResultMinimal() {
 		return mDelegateMinimizer.isResultMinimal();
 	}
-	
+
 	/**
 	 * @param minimizer
 	 *            Minimizer.
 	 * @return the minimizer wrapped in a {@link StopOnFirstSuccessDecorator} if not already of this type
 	 */
 	public static IMinimizer decorate(final IMinimizer minimizer) {
-		return minimizer instanceof StopOnFirstSuccessDecorator
-				? minimizer
+		return minimizer instanceof StopOnFirstSuccessDecorator ? minimizer
 				: new StopOnFirstSuccessDecorator(minimizer);
 	}
-	
+
 	/**
 	 * A step decorator.
 	 *
@@ -79,26 +78,26 @@ public class StopOnFirstSuccessDecorator implements IMinimizer {
 	 */
 	static final class StepDecorator<E> implements IMinimizerStep<E> {
 		private final IMinimizerStep<E> mDelegate;
-		
+
 		private StepDecorator(final IMinimizerStep<E> delegate) {
 			mDelegate = delegate;
 		}
-		
+
 		@Override
 		public List<E> getResult() {
 			return mDelegate.getResult();
 		}
-		
+
 		@Override
 		public List<E> getVariant() {
 			return mDelegate.getVariant();
 		}
-		
+
 		@Override
 		public boolean isDone() {
 			return mDelegate.isDone();
 		}
-		
+
 		@Override
 		public IMinimizerStep<E> next(final boolean keepVariant) {
 			final IMinimizerStep<E> nextSstep = mDelegate.next(keepVariant);

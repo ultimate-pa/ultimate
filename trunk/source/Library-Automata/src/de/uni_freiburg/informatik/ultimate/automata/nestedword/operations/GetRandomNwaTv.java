@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * Implementation details: See
  * {@link #addTransitionsGivenLetter(NestedWordAutomaton, Random, String[], boolean[][], String, int, int)
  * addTransitionsGivenLetter()}.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
@@ -87,7 +87,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 
 	/**
 	 * Constructor of a finite automaton for the {@code TestFileInterpreter}.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param numberOfStates
@@ -107,7 +107,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 
 	/**
 	 * Constructor of a finite automaton.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param numberOfStates
@@ -129,7 +129,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 
 	/**
 	 * Constructor of a nested word automaton for the {@code TestFileInterpreter}.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param numberOfStates
@@ -164,7 +164,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 
 	/**
 	 * Constructor of a nested word automaton.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param numberOfStates
@@ -258,23 +258,23 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 		final int numberOfTransitionsPerLetter;
 		final String letterPrefix;
 		switch (mode) {
-			case MODE_INTERNAL:
-				numberOfLetters = mNumberOfInternalLetters;
-				numberOfTransitionsPerLetter = densityToAbsolute(mInternalTransitionDensity, mNumberOfStates);
-				letterPrefix = LETTER_INTERNAL_PREFIX;
-				break;
-			case MODE_CALL:
-				numberOfLetters = mNumberOfCallLetters;
-				numberOfTransitionsPerLetter = densityToAbsolute(mCallTransitionDensity, mNumberOfStates);
-				letterPrefix = LETTER_CALL_PREFIX;
-				break;
-			case MODE_RETURN:
-				numberOfLetters = mNumberOfReturnLetters;
-				numberOfTransitionsPerLetter = densityToAbsolute(mReturnTransitionDensity, mNumberOfStates);
-				letterPrefix = LETTER_RETURN_PREFIX;
-				break;
-			default:
-				throw new IllegalArgumentException();
+		case MODE_INTERNAL:
+			numberOfLetters = mNumberOfInternalLetters;
+			numberOfTransitionsPerLetter = densityToAbsolute(mInternalTransitionDensity, mNumberOfStates);
+			letterPrefix = LETTER_INTERNAL_PREFIX;
+			break;
+		case MODE_CALL:
+			numberOfLetters = mNumberOfCallLetters;
+			numberOfTransitionsPerLetter = densityToAbsolute(mCallTransitionDensity, mNumberOfStates);
+			letterPrefix = LETTER_CALL_PREFIX;
+			break;
+		case MODE_RETURN:
+			numberOfLetters = mNumberOfReturnLetters;
+			numberOfTransitionsPerLetter = densityToAbsolute(mReturnTransitionDensity, mNumberOfStates);
+			letterPrefix = LETTER_RETURN_PREFIX;
+			break;
+		default:
+			throw new IllegalArgumentException();
 		}
 
 		// data structure
@@ -339,19 +339,19 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 	private void addTransitionToAutomaton(final NestedWordAutomaton<String, String> result, final String[] int2state,
 			final String letter, final int mode, final int pred, final int succ, final Random rand) {
 		switch (mode) {
-			case MODE_INTERNAL:
-				result.addInternalTransition(int2state[pred], letter, int2state[succ]);
-				break;
-			case MODE_CALL:
-				result.addCallTransition(int2state[pred], letter, int2state[succ]);
-				break;
-			case MODE_RETURN:
-				for (final int hier : getRandomHierarchicalPredecessors(rand)) {
-					result.addReturnTransition(int2state[pred], int2state[hier], letter, int2state[succ]);
-				}
-				break;
-			default:
-				throw new IllegalArgumentException();
+		case MODE_INTERNAL:
+			result.addInternalTransition(int2state[pred], letter, int2state[succ]);
+			break;
+		case MODE_CALL:
+			result.addCallTransition(int2state[pred], letter, int2state[succ]);
+			break;
+		case MODE_RETURN:
+			for (final int hier : getRandomHierarchicalPredecessors(rand)) {
+				result.addReturnTransition(int2state[pred], int2state[hier], letter, int2state[succ]);
+			}
+			break;
+		default:
+			throw new IllegalArgumentException();
 		}
 	}
 
@@ -394,8 +394,8 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 		final Set<String> returnAlphabet = new HashSet<>(mNumberOfInternalLetters);
 
 		// create raw automaton
-		final NestedWordAutomaton<String, String> result = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(internalAlphabet,
-				callAlphabet, returnAlphabet), new StringFactory());
+		final NestedWordAutomaton<String, String> result = new NestedWordAutomaton<>(mServices,
+				new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet), new StringFactory());
 
 		if (mNumberOfStates == 0) {
 			// empty automaton
@@ -421,7 +421,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 		final Set<Integer> result = new HashSet<>();
 		final int numberOfAcceptingStates = densityToAbsolute(mHierarchicalPredecessorDensity, mNumberOfStates);
 		while (result.size() < numberOfAcceptingStates) {
-			result.add(Integer.valueOf(rand.nextInt(mNumberOfStates)));
+			result.add(rand.nextInt(mNumberOfStates));
 		}
 		return result;
 	}

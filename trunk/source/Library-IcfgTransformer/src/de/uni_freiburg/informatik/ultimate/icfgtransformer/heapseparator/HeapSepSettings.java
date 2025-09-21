@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 public class HeapSepSettings {
 
-
 	private final boolean mDumpPrograms = true;
 
 	private final String mDumpProgramsPath = "C:\\Temp\\automata";
@@ -12,8 +11,8 @@ public class HeapSepSettings {
 	/**
 	 *
 	 * not clear:
-	 *  <li> how much of a slowdown this causes
-	 *  <li> if it is only necessary for assertions or not
+	 * <li>how much of a slowdown this causes
+	 * <li>if it is only necessary for assertions or not
 	 */
 	private final boolean mAssumeFreezeVarLitDisequalitiesAtInitEdges = false;
 
@@ -53,8 +52,8 @@ public class HeapSepSettings {
 	}
 
 	/**
-	 * Our technique does not handle assumes between arrays, if those arrays are supposed to be separated.
-	 * (Not yet used, not clear what else to do but crash..)
+	 * Our technique does not handle assumes between arrays, if those arrays are supposed to be separated. (Not yet
+	 * used, not clear what else to do but crash..)
 	 *
 	 * @return
 	 */

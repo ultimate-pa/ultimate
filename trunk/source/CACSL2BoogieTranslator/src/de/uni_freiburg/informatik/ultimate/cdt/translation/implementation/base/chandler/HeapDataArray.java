@@ -29,6 +29,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -108,12 +110,7 @@ public class HeapDataArray {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mContentASTType == null) ? 0 : mContentASTType.hashCode());
-		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
-		result = prime * result + mSize;
-		return result;
+		return Objects.hash(mContentASTType, mName, mSize);
 	}
 
 	@Override

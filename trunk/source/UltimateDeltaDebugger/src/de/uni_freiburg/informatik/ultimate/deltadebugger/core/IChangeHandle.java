@@ -42,7 +42,7 @@ public interface IChangeHandle extends IHasSequenceIndex {
 	 */
 	@Override
 	int getSequenceIndex();
-	
+
 	/**
 	 * @return Informative string representation for debugging purposes.
 	 */

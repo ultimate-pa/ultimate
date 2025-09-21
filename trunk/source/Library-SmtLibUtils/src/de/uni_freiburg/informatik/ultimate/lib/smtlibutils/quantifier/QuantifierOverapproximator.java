@@ -45,7 +45,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class QuantifierOverapproximator extends TermTransformer {
 
-	public enum Quantifier { EXISTS, FORALL };
+	public enum Quantifier {
+		EXISTS, FORALL
+	}
 
 	private final Script mScript;
 	private final Term mReplacement;

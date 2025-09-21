@@ -219,22 +219,21 @@ public class SemanticIndependenceConditionGeneratorTest {
 		final IPredicate actual = generator.generateCondition(axiomPredicate, tfA, tfB);
 		if (expected == null) {
 			if (actual != null) {
-				assert checkIndependence(axiomPredicate, actual, tfA,
-						tfB) == Dependence.DEPENDENT : "No commutativity condition expected, but found working condition "
-								+ actual.getFormula();
+				assert checkIndependence(axiomPredicate, actual, tfA, tfB) == Dependence.DEPENDENT
+						: "No commutativity condition expected, but found working condition " + actual.getFormula();
 			}
 			assert actual == null : "No commutativity condition expected, but found " + actual.getFormula();
 		} else {
 			assert actual != null : "Expected commutativity condition " + expected + ", but found none";
 			final LBool impl = SmtUtils.checkSatTerm(mScript,
 					SmtUtils.and(mScript, axioms, actual.getFormula(), SmtUtils.not(mScript, expected)));
-			assert impl == LBool.UNSAT : "Actual condition " + actual.getFormula()
-					+ " does not imply expected condition " + expected;
+			assert impl == LBool.UNSAT
+					: "Actual condition " + actual.getFormula() + " does not imply expected condition " + expected;
 
 			assert checkIndependence(axiomPredicate, mPredicateFactory.newPredicate(expected), tfA,
 					tfB) != Dependence.DEPENDENT : "expected condition insufficient: " + expected;
-			assert checkIndependence(axiomPredicate, actual, tfA,
-					tfB) != Dependence.DEPENDENT : "condition insufficient: " + actual.getFormula();
+			assert checkIndependence(axiomPredicate, actual, tfA, tfB) != Dependence.DEPENDENT
+					: "condition insufficient: " + actual.getFormula();
 		}
 	}
 

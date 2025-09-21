@@ -28,14 +28,15 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * {@link ITermProvider} for the (rather complex) select over store, where we
- * have multiple dimensions and nested stores.
+ * {@link ITermProvider} for the (rather complex) select over store, where we have multiple dimensions and nested
+ * stores.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -47,7 +48,6 @@ public class MultiDimensionalSelectOverNestedStore implements ITermProvider {
 
 	public MultiDimensionalSelectOverNestedStore(final ArrayIndex selectIndex,
 			final MultiDimensionalNestedStore nestedStore) {
-		super();
 		if (selectIndex.size() != nestedStore.getDimension()) {
 			throw new IllegalArgumentException("Incompatible dimensions");
 		}
@@ -84,9 +84,8 @@ public class MultiDimensionalSelectOverNestedStore implements ITermProvider {
 	}
 
 	/**
-	 * @return Term that is equivalent to this
-	 *         {@link MultiDimensionalSelectOverNestedStore} if the index of the
-	 *         select and the index of each store are distinct.
+	 * @return Term that is equivalent to this {@link MultiDimensionalSelectOverNestedStore} if the index of the select
+	 *         and the index of each store are distinct.
 	 */
 	public Term constructNotEqualsReplacement(final Script script) {
 		final MultiDimensionalSelect mds = new MultiDimensionalSelect(getNestedStore().getArray(), getSelectIndex());
@@ -95,11 +94,10 @@ public class MultiDimensionalSelectOverNestedStore implements ITermProvider {
 
 	/**
 	 *
-	 * @return List of all {@link MultiDimensionalSelectOverNestedStore} that occur
-	 *         in given term.
+	 * @return List of all {@link MultiDimensionalSelectOverNestedStore} that occur in given term.
 	 */
-	public static List<MultiDimensionalSelectOverNestedStore> extractMultiDimensionalSelectOverNestedStore(
-			final Term term, final boolean onlyOutermost) {
+	public static List<MultiDimensionalSelectOverNestedStore>
+			extractMultiDimensionalSelectOverNestedStore(final Term term, final boolean onlyOutermost) {
 		final List<MultiDimensionalSelectOverNestedStore> result = new ArrayList<>();
 		final List<MultiDimensionalSelect> mdss = MultiDimensionalSelect.extractSelectShallow(term);
 		for (final MultiDimensionalSelect mds : mdss) {
@@ -132,32 +130,35 @@ public class MultiDimensionalSelectOverNestedStore implements ITermProvider {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mNestedStore == null) ? 0 : mNestedStore.hashCode());
-		result = prime * result + ((mSelectIndex == null) ? 0 : mSelectIndex.hashCode());
-		return result;
+		return Objects.hash(mNestedStore, mSelectIndex);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final MultiDimensionalSelectOverNestedStore other = (MultiDimensionalSelectOverNestedStore) obj;
 		if (mNestedStore == null) {
-			if (other.mNestedStore != null)
+			if (other.mNestedStore != null) {
 				return false;
-		} else if (!mNestedStore.equals(other.mNestedStore))
+			}
+		} else if (!mNestedStore.equals(other.mNestedStore)) {
 			return false;
+		}
 		if (mSelectIndex == null) {
-			if (other.mSelectIndex != null)
+			if (other.mSelectIndex != null) {
 				return false;
-		} else if (!mSelectIndex.equals(other.mSelectIndex))
+			}
+		} else if (!mSelectIndex.equals(other.mSelectIndex)) {
 			return false;
+		}
 		return true;
 	}
 

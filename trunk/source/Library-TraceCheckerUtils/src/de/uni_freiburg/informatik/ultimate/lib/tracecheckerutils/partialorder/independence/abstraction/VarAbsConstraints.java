@@ -64,7 +64,7 @@ public class VarAbsConstraints<L extends IAction> {
 	 *
 	 * Use with care! The given maps as well as all sets stored within them are expected to never be modified! In many
 	 * cases, it is better to use the methods {@link Lattice#getBottom()}, {@link Lattice#getTop()} and
-	 * {{@link #withModifiedConstraints(IAction, Set, Set)} to create new constraints.
+	 * {@link #withModifiedConstraints(IAction, Set, Set)} to create new constraints.
 	 *
 	 * @param in
 	 *            maps letters to the set of constrained inVars

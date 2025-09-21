@@ -35,5 +35,5 @@ public class HybridTranslatorConstants {
 	public static final String CONFIG_INITIALLY_PROPERTY = "initially";
 	public static final String CONFIG_FORBIDDEN_PROPERTY = "forbidden";
 	public static final String CONFIG_SYSTEM_PROPERTY = "system";
-	
+
 }

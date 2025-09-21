@@ -138,16 +138,16 @@ public class SpaceExPreferenceManager {
 		mLogger.info("Parsing configfile: " + configfile);
 		final long startTime = System.nanoTime();
 		final Properties prop = new Properties();
-		final FileInputStream fis = new FileInputStream(configfile);
 		// load properties file
-		prop.load(fis);
+		try (final FileInputStream fis = new FileInputStream(configfile)) {
+			prop.load(fis);
+		}
 		// get properties
 		// system holds the hybridsystem which is regarded.
-		mSystem = prop.getProperty(HybridTranslatorConstants.CONFIG_SYSTEM_PROPERTY, "").replaceAll("\"", "");
+		mSystem = prop.getProperty(HybridTranslatorConstants.CONFIG_SYSTEM_PROPERTY, "").replace("\"", "");
 		// initially holds the initial variable assignment, as well as initial locations.
-		mInitially = prop.getProperty(HybridTranslatorConstants.CONFIG_INITIALLY_PROPERTY, "").replaceAll("\"", "");
-		mForbidden = prop.getProperty(HybridTranslatorConstants.CONFIG_FORBIDDEN_PROPERTY, "").replaceAll("\"", "");
-		fis.close();
+		mInitially = prop.getProperty(HybridTranslatorConstants.CONFIG_INITIALLY_PROPERTY, "").replace("\"", "");
+		mForbidden = prop.getProperty(HybridTranslatorConstants.CONFIG_FORBIDDEN_PROPERTY, "").replace("\"", "");
 		final long estimatedTime = System.nanoTime() - startTime;
 		mLogger.info("Parsing configfile done in " + estimatedTime / (float) 1000000 + " milliseconds");
 	}

@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Auxiliary class for doing some benchmarks.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -63,7 +63,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -116,13 +116,10 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 		for (final FkvOptimization fkvOptimization : FkvOptimization.values()) {
 			evaluateFkv(stateFactory, results, fkvOptimization);
 			/*
-			{
-				String name = "FKV_" + fkvOptimization + "_MaxRank3";
-			NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(mServices,
-					stateFactory, mOperand, fkvOptimization.toString(), 3)).getResult();
-				addToResultsWithSizeReduction(results, name, result);
-			}
-			*/
+			 * { String name = "FKV_" + fkvOptimization + "_MaxRank3"; NestedWordAutomatonReachableStates<LETTER, STATE>
+			 * result = (new BuchiComplementFKV<LETTER, STATE>(mServices, stateFactory, mOperand,
+			 * fkvOptimization.toString(), 3)).getResult(); addToResultsWithSizeReduction(results, name, result); }
+			 */
 		}
 		return prettyPrint(results);
 	}

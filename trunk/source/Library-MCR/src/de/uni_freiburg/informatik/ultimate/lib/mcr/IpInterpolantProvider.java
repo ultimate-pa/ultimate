@@ -242,7 +242,8 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		final Term substituted = Substitution.apply(mManagedScript, mapping, term);
 		final Term abstracted = McrUtils.abstractVariables(substituted, varsToKeep, QuantifiedFormula.EXISTS,
 				mManagedScript, mServices, mLogger, mSimplificationTechnique);
-		return PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, mSimplificationTechnique, abstracted);
+		return PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, mSimplificationTechnique,
+				abstracted);
 	}
 
 	private Term[] getInterpolantsForSsa(final List<Term> ssa) {
@@ -254,7 +255,8 @@ public class IpInterpolantProvider<LETTER extends IIcfgTransition<?>> implements
 		for (final Term t : ssa) {
 			final String name = "ssa_" + i;
 			mManagedScript.assertTerm(this, script.annotate(t, new Annotation(":named", name)));
-			partition[i++] = script.term(name);
+			partition[i] = script.term(name);
+			i++;
 		}
 		if (mManagedScript.checkSat(this) != LBool.UNSAT) {
 			throw new AssertionError("The SSA of the DAG is satisfiable!");

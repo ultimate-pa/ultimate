@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 /**
  * An IPSTNode represents a range of text in the source code and if possible the IASTNode that is generated from this
- * range of text. It serves as an intermediate data structure to compute potential changes to the source file.
- * The most important benefits over the original AST are:
+ * range of text. It serves as an intermediate data structure to compute potential changes to the source file. The most
+ * important benefits over the original AST are:
  * <ul>
  * <li>Only nodes that are in the source file and which can be safely rewritten are part of the PST, but access to all
  * remaining parts of the original AST is still possible (with getUnexpandedChildNodes()).
@@ -74,7 +74,7 @@ public interface IPSTNode extends ISourceRange {
 	 * @return {@code true} iff visitor accepts
 	 */
 	boolean accept(IPSTVisitor action);
-	
+
 	/**
 	 * @param index
 	 *            Index.
@@ -82,82 +82,82 @@ public interface IPSTNode extends ISourceRange {
 	 *            PST node
 	 */
 	void addChild(int index, IPSTNode node);
-	
+
 	/**
 	 * @param node
 	 *            PST node.
 	 */
 	void addChild(IPSTNode node);
-	
+
 	/**
 	 * @param location
 	 *            Source range.
 	 * @return PST node
 	 */
 	IPSTNode findDescendantByLocation(ISourceRange location);
-	
+
 	/**
 	 * @return AST node.
 	 */
 	IASTNode getAstNode();
-	
+
 	/**
 	 * @return List of PST node children.
 	 */
 	List<IPSTNode> getChildren();
-	
+
 	/**
 	 * @return Ending line number.
 	 */
 	int getEndingLineNumber();
-	
+
 	/**
 	 * @return Parent PST node.
 	 */
 	IPSTNode getParent();
-	
+
 	/**
 	 * @return Parent regular PST node.
 	 */
 	IPSTRegularNode getRegularParent();
-	
+
 	/**
 	 * @return Source document.
 	 */
 	ISourceDocument getSource();
-	
+
 	/**
 	 * @return Source text.
 	 */
 	String getSourceText();
-	
+
 	/**
 	 * @return Starting line number.
 	 */
 	int getStartingLineNumber();
-	
+
 	/**
 	 * @return Translation unit.
 	 */
 	IPSTTranslationUnit getTranslationUnit();
-	
+
 	/**
 	 * @return Unexpanded AST child nodes.
 	 */
 	List<IASTNode> getUnexpandedChildNodes();
-	
+
 	/**
 	 * @param index
 	 *            Index.
 	 */
 	void removeChild(int index);
-	
+
 	/**
 	 * @param node
 	 *            Parent PST node.
 	 */
 	void setParent(IPSTNode node);
-	
+
 	/**
 	 * @param astNodes
 	 *            List of AST child nodes.

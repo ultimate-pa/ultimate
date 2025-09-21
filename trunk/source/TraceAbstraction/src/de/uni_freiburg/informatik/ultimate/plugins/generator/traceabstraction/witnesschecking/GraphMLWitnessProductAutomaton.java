@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnota
 
 public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		implements INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> {
-	private static final Integer STUTTERING_STEPS_LIMIT = Integer.valueOf(10);
+	private static final Integer STUTTERING_STEPS_LIMIT = 10;
 
 	private final PredicateFactory mPredicateFactory;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mControlFlowAutomaton;
@@ -217,7 +217,7 @@ public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public boolean isFinal(final IPredicate state) {
-		assert mResult2Product.keySet().contains(state) : "unknown state";
+		assert mResult2Product.containsKey(state) : "unknown state";
 		return mFinalStates.contains(state);
 	}
 
@@ -486,8 +486,8 @@ public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	boolean isCompatible(final Statement st, final WitnessEdge we) {
-		if (st instanceof AssumeStatement) {
-			return isCompatible(((AssumeStatement) st).getFormula().getLocation(), we);
+		if (st instanceof final AssumeStatement assumeStmt) {
+			return isCompatible(assumeStmt.getFormula().getLocation(), we);
 		}
 		return isCompatible(st.getLocation(), we);
 	}

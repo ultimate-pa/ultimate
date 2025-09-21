@@ -3,9 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 public class TreeAutomizerSettings {
 
 	/**
-	 * Use the class Difference or LazyDifference?
-	 * Difference: naive difference algorithm
-	 * LazyDifference: smart totalization of right hand side automaton, take only reachable states into consideration.
+	 * Use the class Difference or LazyDifference? Difference: naive difference algorithm LazyDifference: smart
+	 * totalization of right hand side automaton, take only reachable states into consideration.
 	 */
 	public static final boolean USE_NAIVE_DIFFERENCE = false;
 
@@ -27,10 +26,10 @@ public class TreeAutomizerSettings {
 	public static final int ITERATIONS_BOUND = -1;
 
 	// moved to preferences:
-//	/**
-//	 * Apply minimization to current abstraction at the end of every CEGAR iteration?
-//	 */
-//	public static final TaMinimization MINIMIZATION = TaMinimization.NAIVE;
+	// /**
+	// * Apply minimization to current abstraction at the end of every CEGAR iteration?
+	// */
+	// public static final TaMinimization MINIMIZATION = TaMinimization.NAIVE;
 
 	/***
 	 * Use semantic reduction in lazy difference

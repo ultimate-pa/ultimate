@@ -48,17 +48,17 @@ public class PSTMacroExpansion extends PSTNode implements IPSTMacroExpansion {
 			final IASTPreprocessorMacroExpansion expansion) {
 		super(source, location, expansion);
 	}
-	
+
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-	
+
 	@Override
 	public IASTPreprocessorMacroExpansion getAstNode() {
 		return (IASTPreprocessorMacroExpansion) mAstNode;

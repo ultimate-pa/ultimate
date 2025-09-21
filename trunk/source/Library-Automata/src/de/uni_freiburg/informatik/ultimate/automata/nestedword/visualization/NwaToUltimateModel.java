@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -26,8 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Converts an {@link INwaOutgoingLetterAndTransitionProvider} to an Ultimate model.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -56,83 +57,91 @@ public class NwaToUltimateModel<LETTER, STATE> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
+	private final INestedWordAutomaton<LETTER, STATE> mNWA;
+
+	private final Map<STATE, AutomatonState> mConstructedStates = new HashMap<>();
+	private final Deque<STATE> mQueue = new ArrayDeque<>();
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
+	 * @param nwaSimple
+	 *            The nested word automaton that shall be transformed.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout is reached while collecting reachable states of the automaton
 	 */
-	public NwaToUltimateModel(final AutomataLibraryServices services) {
+	public NwaToUltimateModel(final AutomataLibraryServices services,
+			final INwaOutgoingTransitionProvider<LETTER, STATE> nwaSimple) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+
+		if (nwaSimple instanceof INestedWordAutomaton) {
+			mNWA = (INestedWordAutomaton<LETTER, STATE>) nwaSimple;
+		} else {
+			mNWA = new NestedWordAutomatonReachableStates<>(mServices, nwaSimple);
+		}
 	}
 
 	/**
-	 * @param nwaSimple
-	 *            A nested word automaton.
 	 * @return Ultimate model
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
 	 */
-	public IElement transformToUltimateModel(final INwaOutgoingTransitionProvider<LETTER, STATE> nwaSimple)
-			throws AutomataOperationCanceledException {
-		final INestedWordAutomaton<LETTER, STATE> nwa;
-		if (nwaSimple instanceof INestedWordAutomaton) {
-			nwa = (INestedWordAutomaton<LETTER, STATE>) nwaSimple;
-		} else {
-			nwa = new NestedWordAutomatonReachableStates<>(mServices, nwaSimple);
-		}
+	public IElement transformToUltimateModel() {
+		mConstructedStates.clear();
+		mQueue.clear();
+
 		final AutomatonState graphroot = new AutomatonState("Sucessors of this node are the initial states", false);
-		final Map<STATE, AutomatonState> constructed = new HashMap<>();
-		final LinkedList<STATE> queue = new LinkedList<>();
 
 		// add all initial states to model - all are successors of the graphroot
-		for (final STATE state : nwa.getInitialStates()) {
-			queue.add(state);
-			final AutomatonState vsn = new AutomatonState(state, nwa.isFinal(state));
-			constructed.put(state, vsn);
-			// TODO Christian 2016-09-18: Should it be 'INITIAL'?
-			new AutomatonTransition(graphroot, Transition.INTERNAL, "", null, vsn);
+		for (final STATE state : mNWA.getInitialStates()) {
+			final AutomatonState vsn = getOrConstructState(state);
+			new AutomatonTransition(graphroot, Transition.INITIAL, "", null, vsn);
 		}
 
-		while (!queue.isEmpty()) {
-			final STATE state = queue.removeFirst();
-			final AutomatonState vsn = constructed.get(state);
+		while (!mQueue.isEmpty()) {
+			final STATE state = mQueue.removeFirst();
+			final AutomatonState vsn = mConstructedStates.get(state);
 
 			// internal transitions
-			addTransitions(nwa, constructed, queue, vsn, Transition.INTERNAL, null, nwa.internalSuccessors(state));
+			addTransitions(vsn, Transition.INTERNAL, null, mNWA.internalSuccessors(state));
 
 			// call transitions
-			addTransitions(nwa, constructed, queue, vsn, Transition.CALL, null, nwa.callSuccessors(state));
+			addTransitions(vsn, Transition.CALL, null, mNWA.callSuccessors(state));
 
 			// return transitions
-			for (final STATE hierPredState : nwa.getStates()) {
-				addTransitions(nwa, constructed, queue, vsn, Transition.RETURN, hierPredState.toString(),
-						nwa.returnSuccessorsGivenHier(state, hierPredState));
+			for (final STATE hierPredState : mNWA.getStates()) {
+				addTransitions(vsn, Transition.RETURN, hierPredState.toString(),
+						mNWA.returnSuccessorsGivenHier(state, hierPredState));
 			}
 		}
 		return graphroot;
 	}
 
-	private void addTransitions(final INestedWordAutomaton<LETTER, STATE> nwa,
-			final Map<STATE, AutomatonState> constructed, final LinkedList<STATE> queue, final AutomatonState vsn,
-			final Transition transitionType, final String hierPred,
+	protected final AutomatonState getOrConstructState(final STATE state) {
+		return mConstructedStates.computeIfAbsent(state, this::createStateInternal);
+	}
+
+	private AutomatonState createStateInternal(final STATE state) {
+		final var vsn = createState(state);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(CREATING_NODE + vsn.toString());
+		}
+		mQueue.addLast(state);
+		return vsn;
+	}
+
+	protected AutomatonState createState(final STATE state) {
+		return new AutomatonState(state, mNWA.isFinal(state));
+	}
+
+	protected void addTransitions(final AutomatonState vsn, final Transition transitionType, final String hierPred,
 			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> transitions) {
 		for (final IOutgoingTransitionlet<LETTER, STATE> trans : transitions) {
 			final LETTER symbol = trans.getLetter();
 			final STATE succState = trans.getSucc();
-			AutomatonState succVsn;
-			if (constructed.containsKey(succState)) {
-				succVsn = constructed.get(succState);
-			} else {
-				succVsn = new AutomatonState(succState, nwa.isFinal(succState));
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(CREATING_NODE + succVsn.toString());
-				}
-				constructed.put(succState, succVsn);
-				queue.add(succState);
-			}
+			final AutomatonState succVsn = getOrConstructState(succState);
 			new AutomatonTransition(vsn, transitionType, symbol, hierPred, succVsn);
 		}
 	}

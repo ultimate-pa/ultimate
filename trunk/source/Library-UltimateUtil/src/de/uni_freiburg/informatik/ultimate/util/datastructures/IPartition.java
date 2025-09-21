@@ -33,7 +33,7 @@ import java.util.Set;
  * <p>
  * A partition is a collection of pairwise disjoint sets. Usually the union of all sets is considered the full set in a
  * given context, but this interface does not care about the union.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <T>
  *            element type

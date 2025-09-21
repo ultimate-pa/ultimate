@@ -15,9 +15,10 @@ import java.util.Comparator;
 public class DepthBasedOrder<LETTER, PLACE> extends ConfigurationOrder<LETTER, PLACE> {
 
 	final Comparator<Event<LETTER, PLACE>> mDepthIdComparator = new DepthIdComparator();
+
 	@Override
 	public int compare(final Configuration<LETTER, PLACE> c1, final Configuration<LETTER, PLACE> c2) {
-		int result = c1.compareTo(c2, mDepthIdComparator) ;
+		final int result = c1.compareTo(c2, mDepthIdComparator);
 		assert result != 0;
 		return result;
 	}
@@ -32,7 +33,7 @@ public class DepthBasedOrder<LETTER, PLACE> extends ConfigurationOrder<LETTER, P
 			if (result != 0) {
 				return result;
 			}
-			 return e1.getTotalOrderId() - e2.getTotalOrderId();
+			return e1.getTotalOrderId() - e2.getTotalOrderId();
 		}
 	}
 
@@ -41,4 +42,3 @@ public class DepthBasedOrder<LETTER, PLACE> extends ConfigurationOrder<LETTER, P
 		return true;
 	}
 }
-

@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -125,18 +126,14 @@ public class UltimatePreferencePageFactory {
 
 	private static IPreferenceNode findRootNode(final PreferenceManager pm, final String nodeID) {
 		final Queue<IPreferenceNode> toVisit = new LinkedList<>();
-		for (final IPreferenceNode node : pm.getRootSubNodes()) {
-			toVisit.add(node);
-		}
+		Collections.addAll(toVisit, pm.getRootSubNodes());
 
 		while (!toVisit.isEmpty()) {
 			final IPreferenceNode current = toVisit.poll();
 			if (current.getId().equals(nodeID)) {
 				return current;
 			}
-			for (final IPreferenceNode node : current.getSubNodes()) {
-				toVisit.add(node);
-			}
+			Collections.addAll(toVisit, current.getSubNodes());
 		}
 		return null;
 	}

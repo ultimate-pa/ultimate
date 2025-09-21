@@ -9,16 +9,16 @@ public class CachingSetConstraintComparator<ELEM extends ICongruenceClosureEleme
 
 	private final SetConstraintComparator<ELEM> mBaseScc;
 
-//	SymmetricHashRelation<SetConstraint<ELEM>> mEqualElements = new SymmetricHashRelation<>();
+	// SymmetricHashRelation<SetConstraint<ELEM>> mEqualElements = new SymmetricHashRelation<>();
 	SymmetricHashRelation<SetConstraint<ELEM>> mIncomparableElements = new SymmetricHashRelation<>();
 	HashRelation<SetConstraint<ELEM>, SetConstraint<ELEM>> mStrictlySmaller = new HashRelation<>();
 
 	// po cache is not a good idea here
-//	private final PartialOrderCache<SetConstraint<ELEM>> mPoCache;
+	// private final PartialOrderCache<SetConstraint<ELEM>> mPoCache;
 
 	public CachingSetConstraintComparator(final SetConstraintManager<ELEM> setConstraintManager) {
 		mBaseScc = new SetConstraintComparator<>(setConstraintManager);
-//		mPoCache = new PartialOrderCache<>(mBaseScc);
+		// mPoCache = new PartialOrderCache<>(mBaseScc);
 	}
 
 	@Override
@@ -47,20 +47,20 @@ public class CachingSetConstraintComparator<ELEM extends ICongruenceClosureEleme
 		}
 		return comparisonResult;
 
-//		mPoCache.addElement(o1);
-//		mPoCache.addElement(o2);
-//
-//		final boolean o1Stronger = mPoCache.lowerEqual(o2, o1);
-//		final boolean o2Stronger = mPoCache.lowerEqual(o1, o2);
-//		if (o1Stronger && o2Stronger) {
-//			return ComparisonResult.EQUAL;
-//		} else if (o1Stronger) {
-//			return ComparisonResult.STRICTLY_GREATER;
-//		} else if (o2Stronger) {
-//			return ComparisonResult.STRICTLY_SMALLER;
-//		} else {
-//			return ComparisonResult.INCOMPARABLE;
-//		}
+		// mPoCache.addElement(o1);
+		// mPoCache.addElement(o2);
+		//
+		// final boolean o1Stronger = mPoCache.lowerEqual(o2, o1);
+		// final boolean o2Stronger = mPoCache.lowerEqual(o1, o2);
+		// if (o1Stronger && o2Stronger) {
+		// return ComparisonResult.EQUAL;
+		// } else if (o1Stronger) {
+		// return ComparisonResult.STRICTLY_GREATER;
+		// } else if (o2Stronger) {
+		// return ComparisonResult.STRICTLY_SMALLER;
+		// } else {
+		// return ComparisonResult.INCOMPARABLE;
+		// }
 
 	}
 }

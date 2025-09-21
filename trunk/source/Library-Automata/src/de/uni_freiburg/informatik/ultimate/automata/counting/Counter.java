@@ -34,22 +34,22 @@ package de.uni_freiburg.informatik.ultimate.automata.counting;
  */
 
 public class Counter {
-	
+
 	private String mName;
-	
-	public Counter()
-	{}
-	
-	public Counter(String counterName) {
+
+	public Counter() {
+	}
+
+	public Counter(final String counterName) {
 		mName = counterName;
 	}
-	
+
 	public String getCounterName() {
 		return mName;
 	}
-	
+
 	public Counter copyCounter() {
-		Counter copy = new Counter(mName);
+		final Counter copy = new Counter(mName);
 		return copy;
 	}
 }

@@ -4,9 +4,9 @@
 #include <stdio.h> 
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
-extern void __VERIFIER_ltl_step() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume(int);
+extern int __VERIFIER_nondet_int();
+extern void __VERIFIER_ltl_step();
 
 int error, tempDisplay, warnLED, tempIn, chainBroken,
 warnLight, temp, otime = 0, time = 0, limit, init;

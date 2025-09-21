@@ -136,8 +136,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public boolean isFrozen() {
-		assert !mIsFrozen || !isInconsistent() : "an inconsistent constraint that is not EqBottomConstraint should "
-				+ "never be frozen.";
+		assert !mIsFrozen || !isInconsistent()
+				: "an inconsistent constraint that is not EqBottomConstraint should " + "never be frozen.";
 		return mIsFrozen;
 	}
 

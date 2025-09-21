@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdet
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -308,10 +307,7 @@ public class Loopdetector<LOC extends IcfgLocation, LETTER extends IIcfgTransiti
 		final Set<LOC> nestedCycles = new HashSet<>();
 		final Map<LOC, Set<LOC>> invalidNesting = new HashMap<>();
 
-		for (final Iterator<Map.Entry<LOC, List<Integer>>> cycles = cyclesWithNested.entrySet().iterator(); cycles
-				.hasNext();) {
-			final Map.Entry<LOC, List<Integer>> cycle = cycles.next();
-
+		for (final Entry<LOC, List<Integer>> cycle : cyclesWithNested.entrySet()) {
 			final LOC loopHead = cycle.getKey();
 			final List<Integer> cycleEntryPoints = cycle.getValue();
 
@@ -320,9 +316,7 @@ public class Loopdetector<LOC extends IcfgLocation, LETTER extends IIcfgTransiti
 			for (int i = 0; i < cycleEntryPoints.size() - 1; i++) {
 				final int currentIntervalFirst = cycleEntryPoints.get(i);
 				final int currentIntervalLast = cycleEntryPoints.get(i + 1);
-				for (final Iterator<Map.Entry<LOC, List<Integer>>> otherCycles =
-						cyclesWithNested.entrySet().iterator(); otherCycles.hasNext();) {
-					final Map.Entry<LOC, List<Integer>> otherCycle = otherCycles.next();
+				for (final Entry<LOC, List<Integer>> otherCycle : cyclesWithNested.entrySet()) {
 					final LOC loopHeadOther = otherCycle.getKey();
 					final List<Integer> othercycleEntryPoints = otherCycle.getValue();
 

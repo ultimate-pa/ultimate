@@ -3,7 +3,7 @@
  * separate package for visibility reasons. To create a the desired models, use the appropriate factory classes which
  * have public access modifiers. Visibility should restrict creating hybrid system instances from the classes
  * themselves.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */

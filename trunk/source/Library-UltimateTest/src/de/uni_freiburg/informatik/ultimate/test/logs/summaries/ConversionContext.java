@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.logs.summaries;
@@ -32,9 +32,9 @@ import java.math.RoundingMode;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public final class ConversionContext {
 	private enum ConversionType {
@@ -57,14 +57,14 @@ public final class ConversionContext {
 		return c;
 	}
 
-	public static ConversionContext Keep(String unit) {
+	public static ConversionContext Keep(final String unit) {
 		final ConversionContext c = new ConversionContext();
 		c.mType = ConversionType.KEEP;
 		c.mUnit = unit;
 		return c;
 	}
 
-	public static ConversionContext Percent(boolean escape, int precision) {
+	public static ConversionContext Percent(final boolean escape, final int precision) {
 		if (precision < 0) {
 			throw new IllegalArgumentException("precision has to be positive");
 		}
@@ -88,7 +88,7 @@ public final class ConversionContext {
 		return c;
 	}
 
-	public static ConversionContext Divide(int divisor, int precision, String unit) {
+	public static ConversionContext Divide(final int divisor, final int precision, final String unit) {
 		if (precision < 0) {
 			throw new IllegalArgumentException("precision has to be positive");
 		}
@@ -103,7 +103,7 @@ public final class ConversionContext {
 		return c;
 	}
 
-	public String makeHumanReadable(String input) {
+	public String makeHumanReadable(final String input) {
 		switch (mType) {
 		case PERCENT:
 			return makeHumanReadablePercent(input, mUnit, mPrecision);
@@ -118,7 +118,8 @@ public final class ConversionContext {
 		}
 	}
 
-	private String makeHumanReadableDivide(String input, String divisor, int precision, String unit) {
+	private String makeHumanReadableDivide(final String input, final String divisor, final int precision,
+			final String unit) {
 		final BigDecimal current = convert(input);
 		if (current == null) {
 			return "-";
@@ -131,7 +132,7 @@ public final class ConversionContext {
 		}
 	}
 
-	private String makeHumanReadablePercent(String input, String unit, int precision) {
+	private String makeHumanReadablePercent(final String input, final String unit, final int precision) {
 		final BigDecimal current = convert(input);
 		if (current == null) {
 			return "-";
@@ -144,7 +145,7 @@ public final class ConversionContext {
 		}
 	}
 
-	private String makeHumanReadableNumber(String input) {
+	private String makeHumanReadableNumber(final String input) {
 		final BigDecimal current = convert(input);
 		if (current == null) {
 			return "-";
@@ -157,7 +158,7 @@ public final class ConversionContext {
 		}
 	}
 
-	private BigDecimal convert(String input) {
+	private BigDecimal convert(final String input) {
 		try {
 			return new BigDecimal(input);
 		} catch (final Exception ex) {

@@ -44,8 +44,7 @@ public class NewUltimateEmit extends EmitAstWithVisitors {
 	private static final String TRANSFORMER_NAME = "GeneratedBoogieAstTransformer";
 	private static final String ROOT_NAME = "BoogieASTNode";
 
-	private static final Set<String> OTHERS =
-			new HashSet<>(Arrays.asList(new String[] { VISITOR_NAME, TRANSFORMER_NAME }));
+	private static final Set<String> OTHERS = new HashSet<>(Arrays.asList(VISITOR_NAME, TRANSFORMER_NAME));
 
 	@Override
 	public String getRootConstructorParam(final Node node) {

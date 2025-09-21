@@ -134,7 +134,7 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 		final Term trueTerm = mgdScript.getScript().term("true");
 		if (DEBUG_STORE_HISTORY) {
 			predicateProvider = x -> {
-				return predicateFactory.newPredicateWithHistory(x, trueTerm, new HashMap<Integer, Term>());
+				return predicateFactory.newPredicateWithHistory(x, trueTerm, new HashMap<>());
 			};
 		} else {
 			predicateProvider = x -> predicateFactory.newSPredicate(x, trueTerm);

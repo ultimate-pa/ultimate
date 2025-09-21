@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 public class IpTcStrategyModuleSmtInterpolCraig<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleCraig<LETTER> {
 
-	private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES = new InterpolationTechnique[] {
-			InterpolationTechnique.Craig_NestedInterpolation, InterpolationTechnique.Craig_TreeInterpolation, };
+	private static final InterpolationTechnique[] SUPPORTED_TECHNIQUES =
+			{ InterpolationTechnique.Craig_NestedInterpolation, InterpolationTechnique.Craig_TreeInterpolation, };
 
 	private final long mTimeoutInMillis;
 	private final InterpolationTechnique mInterpolationTechnique;
@@ -65,8 +65,8 @@ public class IpTcStrategyModuleSmtInterpolCraig<LETTER extends IIcfgTransition<?
 				predicateUnifier, predicateFactory);
 		mTimeoutInMillis = timeoutInMillis;
 		mInterpolationTechnique = interpolationTechnique;
-		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
-				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
+		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(a -> a == mInterpolationTechnique)
+				: "Unsupported interpolation technique " + mInterpolationTechnique;
 	}
 
 	@Override

@@ -98,54 +98,32 @@ public class IntervalTest {
 
 	@Test
 	public void testSatEqual() {
-		checkRelationPredefinedInputs(Interval::satisfyEqual,
-				"2,3", "2,3",
-				"2,3", "2,3",
-				"2,3", "2,3",
-				"2,3", "2,3",
-				"∅", "∅",
-				"∅", "∅");
+		checkRelationPredefinedInputs(Interval::satisfyEqual, "2,3", "2,3", "2,3", "2,3", "2,3", "2,3", "2,3", "2,3",
+				"∅", "∅", "∅", "∅");
 	}
 
 	@Test
 	public void testSatDistinct() {
-		checkRelationPredefinedInputs(Interval::satisfyDistinct,
-				"1,3", "2,4",
-				"2,4", "1,3",
-				"2,3", "1,4",
-				"1,4", "2,3",
-				"1,2", "3,4",
-				"3,4", "1,2");
+		checkRelationPredefinedInputs(Interval::satisfyDistinct, "1,3", "2,4", "2,4", "1,3", "2,3", "1,4", "1,4", "2,3",
+				"1,2", "3,4", "3,4", "1,2");
 	}
 
 	@Test
 	public void testSatLessOrEqual() {
-		checkRelationPredefinedInputs(Interval::satisfyLessOrEqual,
-				"1,3", "2,4",
-				"2,3", "2,3",
-				"2,3", "2,4",
-				"1,3", "2,3",
-				"1,2", "3,4",
-				"∅", "∅");
+		checkRelationPredefinedInputs(Interval::satisfyLessOrEqual, "1,3", "2,4", "2,3", "2,3", "2,3", "2,4", "1,3",
+				"2,3", "1,2", "3,4", "∅", "∅");
 	}
 
 	@Test
 	public void testSatGreaterOrEqual() {
-		checkRelationPredefinedInputs(Interval::satisfyGreaterOrEqual,
-				"2,3", "2,3",
-				"2,4", "1,3",
-				"2,3", "1,3",
-				"2,4", "2,3",
-				"∅", "∅",
-				"3,4", "1,2");
+		checkRelationPredefinedInputs(Interval::satisfyGreaterOrEqual, "2,3", "2,3", "2,4", "1,3", "2,3", "1,3", "2,4",
+				"2,3", "∅", "∅", "3,4", "1,2");
 	}
 
 	private void checkRelationPredefinedInputs(final BiFunction<Interval, Interval, SatisfyingInputs> relFun,
-			final String lhsOverlapLeft, final String rhsOverlapLeft,
-			final String lhsOverlapRight, final String rhsOverlapRight,
-			final String lhsSubset, final String rhsSubset,
-			final String lhsSuperset, final String rhsSuperset,
-			final String lhsDisjointLeft, final String rhsDisjointLeft,
+			final String lhsOverlapLeft, final String rhsOverlapLeft, final String lhsOverlapRight,
+			final String rhsOverlapRight, final String lhsSubset, final String rhsSubset, final String lhsSuperset,
+			final String rhsSuperset, final String lhsDisjointLeft, final String rhsDisjointLeft,
 			final String lhsDisjointRight, final String rhsDisjointRight) {
 
 		checkRelation("1,3", "2,4", relFun, lhsOverlapLeft, rhsOverlapLeft);
@@ -157,10 +135,9 @@ public class IntervalTest {
 	}
 
 	private static void checkRelation(final String lhsInput, final String rhsInput,
-			final BiFunction<Interval, Interval, SatisfyingInputs> relFun,
-			final String expectedLhs, final String expectedRhs) {
-		Assert.assertEquals(
-				new SatisfyingInputs(interval(expectedLhs), interval(expectedRhs)),
+			final BiFunction<Interval, Interval, SatisfyingInputs> relFun, final String expectedLhs,
+			final String expectedRhs) {
+		Assert.assertEquals(new SatisfyingInputs(interval(expectedLhs), interval(expectedRhs)),
 				relFun.apply(interval(lhsInput), interval(rhsInput)));
 	}
 

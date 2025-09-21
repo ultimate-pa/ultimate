@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -90,27 +89,23 @@ public class ReqPrinterObserver implements IUnmanagedObserver {
 
 	private void printPatternList(final IElement root, final List<PatternType> sortedPatterns) {
 		final PrintWriter writer = openTempFile(root);
-		sortedPatterns.sort(new Comparator<PatternType>() {
-
-			@Override
-			public int compare(final PatternType o1, final PatternType o2) {
-				if (o1 instanceof DeclarationPattern) {
-					if (o2 instanceof DeclarationPattern) {
-						final VariableCategory o1cat = ((DeclarationPattern) o1).getCategory();
-						final VariableCategory o2cat = ((DeclarationPattern) o2).getCategory();
-						if (o1cat == VariableCategory.CONST && o2cat != VariableCategory.CONST) {
-							return -1;
-						} else if (o2cat == VariableCategory.CONST && o1cat != VariableCategory.CONST) {
-							return 1;
-						}
-					} else {
+		sortedPatterns.sort((o1, o2) -> {
+			if (o1 instanceof DeclarationPattern) {
+				if (o2 instanceof DeclarationPattern) {
+					final VariableCategory o1cat = ((DeclarationPattern) o1).getCategory();
+					final VariableCategory o2cat = ((DeclarationPattern) o2).getCategory();
+					if (o1cat == VariableCategory.CONST && o2cat != VariableCategory.CONST) {
 						return -1;
+					} else if (o2cat == VariableCategory.CONST && o1cat != VariableCategory.CONST) {
+						return 1;
 					}
-				} else if (o2 instanceof DeclarationPattern) {
-					return 1;
+				} else {
+					return -1;
 				}
-				return o1.getId().compareToIgnoreCase(o2.getId());
+			} else if (o2 instanceof DeclarationPattern) {
+				return 1;
 			}
+			return o1.getId().compareToIgnoreCase(o2.getId());
 		});
 
 		for (final PatternType pattern : sortedPatterns) {

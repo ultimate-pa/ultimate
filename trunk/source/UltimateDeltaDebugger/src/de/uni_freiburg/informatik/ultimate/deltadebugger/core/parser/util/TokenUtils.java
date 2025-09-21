@@ -41,7 +41,7 @@ public final class TokenUtils {
 	private TokenUtils() {
 		// utility class
 	}
-	
+
 	/**
 	 * @param parentNode
 	 *            Parent PST node.
@@ -53,7 +53,7 @@ public final class TokenUtils {
 	public static Token[] getExpectedTokenArray(final IPSTNode parentNode, final int... expectedTokenTypes) {
 		return TokenUtils.getExpectedTokenArray(TokenCollector.collect(parentNode), expectedTokenTypes);
 	}
-	
+
 	/**
 	 * @param tokens
 	 *            List of tokens.
@@ -72,10 +72,10 @@ public final class TokenUtils {
 				nextExistingIndex = index + 1;
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * @param tokens
 	 *            List of tokens.
@@ -86,7 +86,7 @@ public final class TokenUtils {
 	public static int indexOfToken(final List<Token> tokens, final int tokenType) {
 		return indexOfToken(tokens, 0, tokenType);
 	}
-	
+
 	/**
 	 * @param tokens
 	 *            List of tokens.
@@ -104,7 +104,7 @@ public final class TokenUtils {
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * @param tokens
 	 *            List of tokens.

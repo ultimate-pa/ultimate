@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 
 /**
  * An {@link IIcfgTransformer} produces a new {@link IIcfg}.
- * 
+ *
  * @param <LOC>
  *            The type of location of the produced {@link IIcfg}.
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

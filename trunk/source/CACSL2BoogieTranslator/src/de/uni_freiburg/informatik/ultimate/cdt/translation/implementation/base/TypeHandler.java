@@ -35,12 +35,16 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
@@ -50,7 +54,6 @@ import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -90,7 +93,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -105,7 +108,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -161,6 +163,7 @@ public class TypeHandler implements ITypeHandler {
 	 * <code>typedef X Y</code>, then the pair (X,Y) is in this relation.
 	 */
 	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
+	private final Map<String, ICType> mLibraryTypes = new HashMap<>();
 
 	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
@@ -206,22 +209,6 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public Result visit(final IDispatcher main, final IASTNode node) {
-		final String msg = "TypeHandler: Not yet implemented: " + node.toString();
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		throw new UnsupportedSyntaxException(loc, msg);
-	}
-
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
-	@Override
-	public Result visit(final IDispatcher main, final ACSLNode node) {
-		throw new UnsupportedOperationException("Implementation Error: use ACSL handler for " + node.getClass());
-	}
-
-	@Override
 	public Result visit(final IDispatcher main, final IASTSimpleDeclSpecifier node) {
 		// we have model.boogie.ast.PrimitiveType, which should
 		// only contain BOOL, INT, REAL ...
@@ -263,14 +250,14 @@ public class TypeHandler implements ITypeHandler {
 			 */
 			final Result opRes = main.dispatch(node.getDeclTypeExpression());
 			if (opRes instanceof ExpressionResult) {
-				final CType cType = ((ExpressionResult) opRes).getLrValue().getCType();
+				final ICType cType = ((ExpressionResult) opRes).getLrValue().getCType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (opRes instanceof DeclaratorResult) {
 				final var declResult = (DeclaratorResult) opRes;
 				if (!declResult.hasNoSideEffects()) {
 					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
 				}
-				final CType cType = declResult.getDeclaration().getType();
+				final ICType cType = declResult.getDeclaration().getType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			}
 		}
@@ -291,51 +278,26 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public Result visit(final IDispatcher main, final IASTNamedTypeSpecifier node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (node instanceof CASTTypedefNameSpecifier) {
-			final String cId = node.getName().toString();
-			// quick solution --> TODO: maybe make this dependent on includes,
-			// maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
-			if (cId.equals("size_t")) {
-				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						mTypeSizes.getSizeT());
-			} else if (cId.equals("ssize_t")) {
-				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						mTypeSizes.getSsizeT());
-			} else if (cId.equals("__builtin_va_list")) {
-				return new TypesResult(constructPointerType(loc), node.isConst(), false,
-						new CPointer(new CPrimitive(CPrimitives.CHAR)));
-			} else if (cId.equals("__pthread_list_t")) {
-				return new TypesResult(constructPointerType(loc), node.isConst(), false,
-						new CPointer(new CPrimitive(CPrimitives.VOID)));
-			} else if (cId.equals("pthread_t")) {
-				final var cType = getThreadIdType();
-				return new TypesResult(cPrimitive2AstType(loc, cType), node.isConst(), false, cType);
-			} else if (cId.equals("__float128")) {
-				// DD 2020-12-02: Not entirely accurate, because it is actually architecture dependent.
-				// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
-				// https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
-				final CPrimitive cType = new CPrimitive(CPrimitives.LONGDOUBLE);
-				final ASTType astType = cType2AstType(loc, cType);
-				return new TypesResult(astType, node.isConst(), false, cType);
-			} else {
-				final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
-				final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
-				if (stv == null) {
-					final String msg = "Undefined type " + cId;
-					throw new UnsupportedSyntaxException(loc, msg);
-				}
-				final CType cType = stv.getCType();
-				final BoogieType boogieType = getBoogieTypeForCType(cType);
-				final String bId = stv.getBoogieName();
-				// TODO: replace constants "false, false"
-				final boolean isConstant = false;
-				final boolean isVoid = false;
-				return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), isConstant, isVoid,
-						new CNamed(bId, cType));
+		final String cId = node.getName().toString();
+		final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
+		final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
+		if (stv == null) {
+			final ICType libraryType = mLibraryTypes.get(cId);
+			if (libraryType != null) {
+				return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), libraryType.isVoidType(),
+						libraryType);
 			}
+			final String msg = "Undefined type " + cId;
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		final String msg = "Unknown or unsupported type! " + node.getClass();
-		throw new UnsupportedSyntaxException(loc, msg);
+		final ICType cType = stv.getCType();
+		final BoogieType boogieType = getBoogieTypeForCType(cType);
+		final String bId = stv.getBoogieName();
+		// TODO: replace constants "false, false"
+		final boolean isConstant = false;
+		final boolean isVoid = false;
+		return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), isConstant, isVoid,
+				new CNamed(bId, cType));
 	}
 
 	@Override
@@ -426,7 +388,7 @@ public class TypeHandler implements ITypeHandler {
 
 			mIncompleteType.add(incompleteTypeName);
 			// FIXME : not sure, if null is a good idea!
-			CType ctype;
+			ICType ctype;
 			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
 				ctype = new CStructOrUnion(StructOrUnion.STRUCT, type);
 				addIncompleteStructOrUnion(rslvName, (CStructOrUnion) ctype);
@@ -461,7 +423,7 @@ public class TypeHandler implements ITypeHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		// TODO : include inactives? what are inactives?
 		final ArrayList<String> fNames = new ArrayList<>();
-		final ArrayList<CType> fTypes = new ArrayList<>();
+		final ArrayList<ICType> fTypes = new ArrayList<>();
 		final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
 			final Result r = main.dispatch(dec);
@@ -534,14 +496,14 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private void redirectNamedType(final Set<String> names, final CStructOrUnion completeStruct, final IASTNode hook) {
-		final Map<String, CType> alreadyRedirected = new HashMap<>();
+		final Map<String, ICType> alreadyRedirected = new HashMap<>();
 		for (final String name : names) {
 			constructUpdatedCNamedAndAddToSymbolTable(name, completeStruct, alreadyRedirected, hook);
 		}
 	}
 
-	private CType constructUpdatedCNamedAndAddToSymbolTable(final String name, final CStructOrUnion completeStruct,
-			final Map<String, CType> alreadyRedirected, final IASTNode hook) {
+	private ICType constructUpdatedCNamedAndAddToSymbolTable(final String name, final CStructOrUnion completeStruct,
+			final Map<String, ICType> alreadyRedirected, final IASTNode hook) {
 		if (alreadyRedirected.containsKey(name)) {
 			return alreadyRedirected.get(name);
 		}
@@ -550,13 +512,13 @@ public class TypeHandler implements ITypeHandler {
 			throw new AssertionError("Unable to locate " + name + " in the symbol table");
 		}
 
-		CType newDefiningType;
+		ICType newDefiningType;
 		if (oldStv.getCType() instanceof CNamed) {
 			// end of chain not yet reached
 			final var boogieId = ((CNamed) oldStv.getCType()).getName();
 			final var cId = mSymboltable.getCIdForBoogieId(boogieId);
 
-			final CType definingTypeOfDefiningType =
+			final ICType definingTypeOfDefiningType =
 					constructUpdatedCNamedAndAddToSymbolTable(cId, completeStruct, alreadyRedirected, hook);
 			newDefiningType = new CNamed(name, definingTypeOfDefiningType);
 		} else {
@@ -594,25 +556,23 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public ASTType cType2AstType(final ILocation loc, final CType cType) {
-		if (cType instanceof CPrimitive) {
-			return cPrimitive2AstType(loc, (CPrimitive) cType);
+	public ASTType cType2AstType(final ILocation loc, final ICType cType) {
+		if (cType instanceof final CPrimitive primitive) {
+			return cPrimitive2AstType(loc, primitive);
 		} else if (cType instanceof CPointer) {
 			return constructPointerType(loc);
-		} else if (cType instanceof CArray) {
+		} else if (cType instanceof final CArray cArrayType) {
 			/*
 			 * note: we are using nested Boogie array types (thus the Boogie ArrayType we use will always have a
 			 * one-element array for the index types
 			 */
-			final CArray cArrayType = (CArray) cType;
 			final ASTType indexType = cType2AstType(loc, cArrayType.getBound().getCType());
 			final ASTType valueType = cType2AstType(loc, cArrayType.getValueType());
 			final BoogieArrayType boogieType =
 					BoogieType.createArrayType(0, new BoogieType[] { (BoogieType) indexType.getBoogieType() },
 							(BoogieType) valueType.getBoogieType());
 			return new ArrayType(loc, boogieType, new String[0], new ASTType[] { indexType }, valueType);
-		} else if (cType instanceof CStructOrUnion) {
-			final CStructOrUnion cstruct = (CStructOrUnion) cType;
+		} else if (cType instanceof final CStructOrUnion cstruct) {
 			// if (cstruct.isIncomplete()) {
 			// // TODO 2018-09-10: before I added this UnsupportedOperation
 			// // Exception we just returned null which is probably a bad
@@ -631,7 +591,7 @@ public class TypeHandler implements ITypeHandler {
 			}
 			final BoogieStructType boogieType = BoogieType.createStructType(fieldNames, fieldBoogieTypes);
 			return new StructType(loc, boogieType, fields);
-		} else if (cType instanceof CNamed) {
+		} else if (cType instanceof final CNamed cNamed) {
 			final BoogieType boogieType;
 			if (cType.getUnderlyingType().isIncomplete()) {
 				boogieType = null;
@@ -639,7 +599,7 @@ public class TypeHandler implements ITypeHandler {
 				boogieType = (BoogieType) cType2AstType(loc, cType.getUnderlyingType()).getBoogieType();
 			}
 			// should work as we save the unique typename we computed in CNamed, not the name from the source c file
-			return new NamedType(loc, boogieType, ((CNamed) cType).getName(), new ASTType[0]);
+			return new NamedType(loc, boogieType, cNamed.getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {
 			return constructPointerType(loc);
 		} else if (cType instanceof CEnum) {
@@ -651,27 +611,25 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public ASTType byteSize2AstType(final ILocation loc, final CPrimitiveCategory generalprimitive,
 			final int bytesize) {
-		switch (generalprimitive) {
+		return switch (generalprimitive) {
 		case VOID:
 			throw new UnsupportedOperationException();
 		case INTTYPE:
 			if (mTranslationSettings.isBitvectorTranslation()) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
-				return new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
+				yield new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
 			}
-			return new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
+			yield new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mTranslationSettings.isBitvectorTranslation()) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
-				return new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
+				yield new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
 			}
-			return new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
-		default:
-			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
-		}
+			yield new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
+		};
 	}
 
 	@Override
@@ -725,42 +683,6 @@ public class TypeHandler implements ITypeHandler {
 		return mFloatingTypesNeeded;
 	}
 
-	/**
-	 * Checks if two CTypes are equivalent. Replaces (some of) our uses of CType.equals(..).
-	 *
-	 * Avoids the potential endless recursion of the implementation of CType.equals(..) (which we should replace some
-	 * time (Nov 17).
-	 *
-	 * Applications: (unclear, collect here)
-	 *
-	 * @param type1
-	 * @param type2
-	 * @return
-	 */
-	public static boolean areMatchingTypes(final CType type1, final CType type2) {
-		return areMatchingTypes(type1, type2, new SymmetricHashRelation<>());
-	}
-
-	/**
-	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13 The initializer for a
-	 * structure or union object that has automatic storage duration shall be either an initializer list as described
-	 * below, or a single expression that has compatible structure or union type.
-	 *
-	 * @param type1
-	 * @param type2
-	 * @return
-	 */
-	public static boolean isCompatibleType(final CType type1, final CType type2) {
-		// TODO: check the notion of compatibility with the standard
-		if (isCharArray(type1) && isCharArray(type2)) {
-			return true;
-		}
-		if (type1 instanceof CStructOrUnion && type2 instanceof CStructOrUnion) {
-			return areMatchingTypes(type1, type2);
-		}
-		return false;
-	}
-
 	@Override
 	public BoogieType getBoogieTypeForBoogieASTType(final ASTType asttype) {
 		if (asttype == null) {
@@ -777,37 +699,31 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public BoogieType getBoogieTypeForCType(final CType cTypeRaw) {
-		final CType cType = cTypeRaw.getUnderlyingType();
+	public BoogieType getBoogieTypeForCType(final ICType cTypeRaw) {
+		final ICType cType = cTypeRaw.getUnderlyingType();
 
-		if (cType instanceof CPrimitive) {
+		if (cType instanceof final CPrimitive cPrimitive) {
 			if (mTranslationSettings.isBitvectorTranslation()) {
-				final Integer byteSize = mTypeSizes.getSize(((CPrimitive) cType).getType());
+				final Integer byteSize = mTypeSizes.getSize(cPrimitive.getType());
 				return BoogieType.createBitvectorType(byteSize * 8);
 			}
-			switch (((CPrimitive) cType).getGeneralType()) {
-			case FLOATTYPE:
-				return BoogieType.TYPE_REAL;
-			case INTTYPE:
-				return BoogieType.TYPE_INT;
-			case VOID:
-				return BoogieType.TYPE_ERROR;
-			default:
-				throw new AssertionError();
-			}
+			return switch (cPrimitive.getGeneralType()) {
+			case FLOATTYPE -> BoogieType.TYPE_REAL;
+			case INTTYPE -> BoogieType.TYPE_INT;
+			case VOID -> BoogieType.TYPE_ERROR;
+			};
 		} else if (cType instanceof CPointer) {
 			return getBoogiePointerType();
 		} else if (cType instanceof CEnum) {
 			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
-		} else if (cType instanceof CArray) {
+		} else if (cType instanceof final CArray cArrayType) {
 			final BoogieType[] indexTypes =
 					{ getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
-			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
+			final BoogieType valueType = getBoogieTypeForCType(cArrayType.getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
 			return getBoogiePointerType();
-		} else if (cType instanceof CStructOrUnion) {
-			final CStructOrUnion cStructType = (CStructOrUnion) cType;
+		} else if (cType instanceof final CStructOrUnion cStructType) {
 			final BoogieType[] boogieFieldTypes = new BoogieType[cStructType.getFieldCount()];
 			for (int i = 0; i < cStructType.getFieldCount(); i++) {
 				boogieFieldTypes[i] = getBoogieTypeForCType(cStructType.getFieldTypes()[i]);
@@ -826,23 +742,6 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public BoogieType getBoogieTypeForPointerComponents() {
 		return getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents());
-	}
-
-	private static boolean isCharArray(final CType cTypeRaw) {
-		final CType cType = cTypeRaw.getUnderlyingType();
-		if (!(cType instanceof CArray)) {
-			return false;
-		}
-		final CArray cArrayType = (CArray) cType;
-		if (!(cArrayType.getValueType().getUnderlyingType() instanceof CPrimitive)) {
-			return false;
-		}
-		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType().getUnderlyingType();
-		if (primitiveValueType.getType() != CPrimitives.CHAR && primitiveValueType.getType() != CPrimitives.UCHAR
-				&& primitiveValueType.getType() != CPrimitives.SCHAR) {
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -928,11 +827,11 @@ public class TypeHandler implements ITypeHandler {
 		if (i >= flat.length) {
 			return t;
 		}
-		if (t instanceof ArrayType) {
-			return traverseForType(loc, ((ArrayType) t).getValueType(), flat, i);
+		if (t instanceof final ArrayType array) {
+			return traverseForType(loc, array.getValueType(), flat, i);
 		}
-		if (t instanceof StructType) {
-			for (final VarList vl : ((StructType) t).getFields()) {
+		if (t instanceof final StructType struct) {
+			for (final VarList vl : struct.getFields()) {
 				assert vl.getIdentifiers().length == 1;
 				// should hold by construction!
 				if (vl.getIdentifiers()[0].equals(flat[i])) {
@@ -950,163 +849,22 @@ public class TypeHandler implements ITypeHandler {
 	private ASTType cPrimitive2AstType(final ILocation loc, final CPrimitive cPrimitive) {
 		final BoogieType boogieType = getBoogieTypeForCType(cPrimitive);
 
-		switch (cPrimitive.getGeneralType()) {
+		return switch (cPrimitive.getGeneralType()) {
 		case VOID:
 			// (alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
-			return null;
+			yield null;
 		case INTTYPE:
 			if (mTranslationSettings.isBitvectorTranslation()) {
-				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+				yield new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
-			return new PrimitiveType(loc, boogieType, SFO.INT);
+			yield new PrimitiveType(loc, boogieType, SFO.INT);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mTranslationSettings.isBitvectorTranslation()) {
-				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+				yield new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
-			return new PrimitiveType(loc, boogieType, SFO.REAL);
-		default:
-			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
-		}
-	}
-
-	private static boolean areMatchingTypes(final CType type1, final CType type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
-		if (type1 == type2) {
-			return true;
-		}
-
-		final CType ulType1 = type1.getUnderlyingType();
-		final CType ulType2 = type2.getUnderlyingType();
-
-		if (!ulType1.getClass().equals(ulType2.getClass())) {
-			return false;
-		}
-
-		if (visitedPairs.containsPair(type1, type2)) {
-			// found a cycle in the c type --> types match
-			return true;
-		}
-
-		if (ulType1.getClass().equals(CPrimitive.class)) {
-			return areMatchingTypes((CPrimitive) ulType1, (CPrimitive) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CEnum.class)) {
-			return areMatchingTypes((CEnum) ulType1, (CEnum) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CPointer.class)) {
-			return areMatchingTypes((CPointer) ulType1, (CPointer) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CStructOrUnion.class)) {
-			return areMatchingTypes((CStructOrUnion) ulType1, (CStructOrUnion) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CArray.class)) {
-			return areMatchingTypes((CArray) ulType1, (CArray) ulType2, visitedPairs);
-		} else if (ulType1.getClass().equals(CFunction.class)) {
-			return areMatchingTypes((CFunction) ulType1, (CFunction) ulType2, visitedPairs);
-		} else {
-			throw new UnsupportedOperationException("unknown CType");
-		}
-	}
-
-	private static boolean areMatchingTypes(final CPrimitive type1, final CPrimitive type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
-		return type1.getType() == type2.getType();
-	}
-
-	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
-
-		if (!type1.getName().equals(type2.getName())) {
-			return false;
-		}
-
-		if (type1.getFieldCount() != type2.getFieldCount()) {
-			return false;
-		}
-		for (int i = 0; i < type1.getFieldCount(); i++) {
-			if (!type1.getFieldIds()[i].equals(type2.getFieldIds()[i])) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static boolean areMatchingTypes(final CPointer type1, final CPointer type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
-		return areMatchingTypes(type1.getTargetType(), type2.getTargetType(), visitedPairs);
-	}
-
-	private static boolean areMatchingTypes(final CFunction type1, final CFunction type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
-
-		visitedPairs.addPair(type1, type2);
-
-		// function have different number of arguments
-		if (type1.getParameterTypes().length != type2.getParameterTypes().length) {
-			return false;
-		}
-
-		// one function takes varargs, the other does not
-		if (type1.hasVarArgs() != type2.hasVarArgs()) {
-			return false;
-		}
-
-		// function result types are different
-		if (!areMatchingTypes(type1.getResultType(), type2.getResultType(), visitedPairs)) {
-			return false;
-		}
-
-		// function parameter types are different
-		for (int i = 0; i < type1.getParameterTypes().length; i++) {
-			if (!areMatchingTypes(type1.getParameterTypes()[i].getType(), type2.getParameterTypes()[i].getType(),
-					visitedPairs)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static boolean areMatchingTypes(final CStructOrUnion type1, final CStructOrUnion type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
-
-		visitedPairs.addPair(type1, type2);
-
-		// different number of fields means structs dont match
-		if (type1.getFieldIds().length != type2.getFieldIds().length) {
-			return false;
-		}
-
-		// different number of field types mean structs dont match
-		// DD: this looks like it should be an invariant in CStruct, or is it possible to have unnamed fields? If yes,
-		// how are they matched to their type?
-		if (type1.getFieldTypes().length != type2.getFieldTypes().length) {
-			return false;
-		}
-
-		// TODO: DD: Do field names really impact type matching? I am not so sure that this is always the case
-		for (int i = 0; i < type1.getFieldIds().length - 1; i++) {
-			if (!type1.getFieldIds()[i].equals(type2.getFieldIds()[i])) {
-				return false;
-			}
-		}
-
-		// check if the types of the field match
-		for (int i = 0; i < type1.getFieldTypes().length; i++) {
-			if (!areMatchingTypes(type1.getFieldTypes()[i], type2.getFieldTypes()[i], visitedPairs)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static boolean areMatchingTypes(final CArray type1, final CArray type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
-		// if dimensions dont match, array dont match
-		if (!type1.getBound().toString().equals(type2.getBound().toString())) {
-			return false;
-		}
-		// compare value types
-		if (!areMatchingTypes(type1.getValueType(), type2.getValueType(), visitedPairs)) {
-			return false;
-		}
-		return true;
+			yield new PrimitiveType(loc, boogieType, SFO.REAL);
+		};
 	}
 
 	@Override
@@ -1117,5 +875,252 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public CPrimitive getThreadIdType() {
 		return new CPrimitive(CPrimitives.ULONG);
+	}
+
+	@Override
+	public void addLibraryTypes(final Map<String, ICType> libraryTypes) {
+		mLibraryTypes.putAll(libraryTypes);
+	}
+
+	/**
+	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13:
+	 *
+	 * <quote>The initializer for a structure or union object that has automatic storage duration shall be either an
+	 * initializer list as described below, or a single expression that has compatible structure or union type.</quote>
+	 */
+	public static boolean areCompatibleStructOrUnionTypes(final ICType type1, final ICType type2) {
+		return type1.getUnderlyingType() instanceof CStructOrUnion
+				&& type2.getUnderlyingType() instanceof CStructOrUnion && areCompatibleTypes(type1, type2);
+	}
+
+	/**
+	 * Checks if type1 and type2 are "compatible" as in C11 6.2.7.
+	 *
+	 * Note: The "compatible" relation is symmetric and reflexive, but not transitive (e.g. two different enum types are
+	 * both compatible with int but not with each other).
+	 */
+	public static boolean areCompatibleTypes(final ICType type1, final ICType type2) {
+		return areCompatibleTypes(type1, type2, new SymmetricHashRelation<>());
+	}
+
+	private static boolean areCompatibleTypes(final ICType type1, final ICType type2,
+			final SymmetricHashRelation<ICType> visitedPairs) {
+		// Implementation based on the summary at cppreference.com, as of September 18, 2025.
+		// <https://en.cppreference.com/w/c/language/compatible_type.html#Compatible_types>
+
+		if (type1 == type2) {
+			// C11 6.2.7 §1: Two types have compatible type if their types are the same.
+			// Note: The use of reference equality (==) above is intentional, as ICType::equals would (redundantly) have
+			// to do the same recursion we implement here.
+			return true;
+		}
+
+		if (visitedPairs.containsPair(type1, type2)) {
+			// We found a cycle in the C type (e.g. a linked list struct type containing a pointer to the same linked
+			// list struct type). As long as we do not find any other counterexample to compatibility, the types are
+			// indeed compatible. Thus, we return true here.
+			// (This probably means compatibility is formally defined as some kind of greatest fixpoint.)
+			return true;
+		}
+
+		// Resolve typedef names.
+		// C11 6.7.8 §3: A typedef declaration does not introduce a new type, only a synonym for the type so specified.
+		final ICType actualType1 = type1.getUnderlyingType();
+		final ICType actualType2 = type2.getUnderlyingType();
+
+		return switch (actualType1) {
+		case final CArray array1 ->
+				actualType2 instanceof final CArray array2 && areCompatibleArrayTypes(array1, array2, visitedPairs);
+
+		case final CEnum enum1 -> (actualType2 instanceof final CEnum enum2 && areCompatibleEnumTypes(enum1, enum2))
+				|| (actualType2 instanceof final CPrimitive primitive2
+						&& isCompatiblePrimitiveForEnum(enum1, primitive2));
+
+		case final CFunction function1 -> actualType2 instanceof final CFunction function2
+				&& areCompatibleFunctionTypes(function1, function2, visitedPairs);
+
+		case final CNamed named1 -> throw new AssertionError("getUnderlyingType() must not return CNamed");
+
+		// C11 6.7.6.1 §2: For two pointer types to be compatible, both shall be identically qualified and both shall be
+		// pointers to compatible types.
+		// (Note: We currently do not track type qualifiers.)
+		case final CPointer pointer1 -> actualType2 instanceof final CPointer pointer2
+				&& areCompatibleTypes(pointer1.getPointsToType(), pointer2.getPointsToType(), visitedPairs);
+
+		case final CPrimitive primitive1 -> (actualType2 instanceof final CPrimitive primitive2
+				&& primitive1.getType() == primitive2.getType())
+				|| (actualType2 instanceof final CEnum enum2 && isCompatiblePrimitiveForEnum(enum2, primitive1));
+
+		case final CStructOrUnion structOrUnion1 -> actualType2 instanceof final CStructOrUnion structOrUnion2
+				&& areCompatibleStructOrUnionTypes(structOrUnion1, structOrUnion2, visitedPairs);
+		};
+	}
+
+	private static boolean areCompatibleEnumTypes(final CEnum enum1, final CEnum enum2) {
+		// C 6.2.7 §1: If one is declared with a tag, the other shall be declared with the same tag.
+		// (Note: If neither is declared with a tag, we test for equality of two empty strings.)
+		if (!Objects.equals(enum1.getName(), enum2.getName())) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: If both are completed anywhere within their respective translation units, then the following
+		// additional requirements apply: [...]
+		if (enum1.isIncomplete() || enum2.isIncomplete()) {
+			return true;
+		}
+
+		// C11 6.2.7 §1: [...] there shall be a one-to-one correspondence between their members such that [...]
+		if (enum1.getFieldCount() != enum2.getFieldCount()) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: [...] For two enumerations, corresponding members shall have the same values.
+		// (Note: We do not track values in the type, and instead check if the enum constants are in the same order.)
+		for (int i = 0; i < enum1.getFieldCount(); i++) {
+			if (!enum1.getFieldIds()[i].equals(enum2.getFieldIds()[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean isCompatiblePrimitiveForEnum(final CEnum enum1, final CPrimitive primitive2) {
+		// C11 6.7.2.2 §4: Each enumerated type shall be compatible with char, a signed integer type, or an
+		// unsigned integer type. The choice of type is implementation-defined
+		// (Note: In Ultimate, enumeration types are always compatible with int.)
+		return primitive2.getType() == CPrimitives.INT;
+	}
+
+	private static boolean areCompatibleFunctionTypes(final CFunction function1, final CFunction function2,
+			final SymmetricHashRelation<ICType> visitedPairs) {
+		visitedPairs.addPair(function1, function2);
+
+		// C11 6.7.6.3 §15: For two function types to be compatible, both shall specify compatible return types. [...]
+		if (!areCompatibleTypes(function1.getResultType(), function2.getResultType(), visitedPairs)) {
+			return false;
+		}
+
+		// C11 6.7.6.3 §15: [...] Moreover, the parameter type lists, if both are present, shall agree in the number of
+		// parameters and in use of the ellipsis terminator; [...]
+		// (Note: CFunction does not track whether or not the parameter list is present.)
+		if (function1.getParameterTypes().length != function2.getParameterTypes().length
+				|| function1.hasVarArgs() != function2.hasVarArgs()) {
+			return false;
+		}
+
+		// C11 6.7.6.3 §15: [...] corresponding parameters shall have compatible types.
+		for (int i = 0; i < function1.getParameterTypes().length; i++) {
+			if (!areCompatibleTypes(function1.getParameterTypes()[i].getType(),
+					function2.getParameterTypes()[i].getType(), visitedPairs)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean areCompatibleStructOrUnionTypes(final CStructOrUnion structOrUnion1,
+			final CStructOrUnion structOrUnion2, final SymmetricHashRelation<ICType> visitedPairs) {
+		visitedPairs.addPair(structOrUnion1, structOrUnion2);
+
+		// A struct is not compatible to a union.
+		if (structOrUnion1.isStructOrUnion() != structOrUnion2.isStructOrUnion()) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: If one is declared with a tag, the other shall be declared with the same tag.
+		// (Note: If neither is declared with a tag, we test for equality of two empty strings.)
+		if (!Objects.equals(structOrUnion1.getName(), structOrUnion2.getName())) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: If both are completed anywhere within their respective translation units, then the following
+		// additional requirements apply: [...]
+		if (structOrUnion1.isIncomplete() || structOrUnion2.isIncomplete()) {
+			return true;
+		}
+
+		// C11 6.2.7 §1: [...] there shall be a one-to-one correspondence between their members such that [...]
+		if (structOrUnion1.getFieldCount() != structOrUnion2.getFieldCount()) {
+			return false;
+		}
+
+		// C11 6.2.7 §1: [...] if one member of the pair is declared with a name, the other is declared with the same
+		// name. For two structures, corresponding members shall be declared in the same order.
+		final var lookup =
+				structOrUnion1.isStructOrUnion() == StructOrUnion.STRUCT ? makeStructFieldLookup(structOrUnion2)
+						: makeUnionFieldLookup(structOrUnion2);
+
+		for (int index1 = 0; index1 < structOrUnion1.getFieldCount(); ++index1) {
+			final String id = structOrUnion1.getFieldIds()[index1];
+			final OptionalInt index2 = lookup.apply(index1, id);
+			if (index2.isEmpty()) {
+				// (no one-to-one corresponding member found)
+				return false;
+			}
+
+			// C11 6.2.7 §1: [...] each pair of corresponding members are declared with compatible types; [...]
+			if (!areCompatibleTypes(structOrUnion1.getFieldTypes()[index1],
+					structOrUnion2.getFieldTypes()[index2.getAsInt()], visitedPairs)) {
+				return false;
+			}
+			// C11 6.2.7 §1: [...] corresponding bit-fields shall have the same widths.
+			if (structOrUnion1.getBitfieldWidth(id) != structOrUnion2.getBitfieldWidth(id)) {
+				return false;
+			}
+		}
+
+		// all requirements satisfied
+		return true;
+	}
+
+	private static BiFunction<Integer, String, OptionalInt> makeStructFieldLookup(final CStructOrUnion structType) {
+		assert structType.isStructOrUnion() == StructOrUnion.STRUCT;
+		return (index, id) -> {
+			if (index >= structType.getFieldCount() || !Objects.equals(id, structType.getFieldIds()[index])) {
+				return OptionalInt.empty();
+			}
+			return OptionalInt.of(index);
+		};
+	}
+
+	private static BiFunction<Integer, String, OptionalInt> makeUnionFieldLookup(final CStructOrUnion unionType) {
+		assert unionType.isStructOrUnion() == StructOrUnion.UNION;
+		return (index, id) -> {
+			if (index >= unionType.getFieldCount()) {
+				return OptionalInt.empty();
+			}
+			if (Objects.equals(id, unionType.getFieldIds()[index])) {
+				// Shortcut for efficiency
+				return OptionalInt.of(index);
+			}
+			final int actualIndex = Arrays.asList(unionType.getFieldIds()).indexOf(id);
+			return actualIndex == -1 ? OptionalInt.empty() : OptionalInt.of(actualIndex);
+		};
+	}
+
+	private static boolean areCompatibleArrayTypes(final CArray array1, final CArray array2,
+			final SymmetricHashRelation<ICType> visitedPairs) {
+		// C11 6.7.6.2 §6: For two array types to be compatible, both shall have compatible element types, and if both
+		// size specifiers are present, and are integer constant expressions, then both size specifiers shall have the
+		// same constant value.
+
+		if (!areCompatibleTypes(array1.getValueType(), array2.getValueType(), visitedPairs)) {
+			return false;
+		}
+		if (array1.isIncomplete() || array2.isIncomplete()) {
+			return true;
+		}
+		final BigInteger bound1 = CTranslationUtil.extractIntegerValue(array1.getBound().getValue());
+		final BigInteger bound2 = CTranslationUtil.extractIntegerValue(array2.getBound().getValue());
+		return bound1 == null || bound2 == null || bound1.equals(bound2);
+	}
+
+	public static boolean isCharArray(final ICType cTypeRaw) {
+		return cTypeRaw.getUnderlyingType() instanceof final CArray cArrayType
+				&& cArrayType.getValueType().getUnderlyingType() instanceof final CPrimitive cPrimitive
+				&& (cPrimitive.getType() == CPrimitives.CHAR || cPrimitive.getType() == CPrimitives.UCHAR
+						|| cPrimitive.getType() == CPrimitives.SCHAR);
 	}
 }

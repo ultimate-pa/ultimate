@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -30,6 +30,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -43,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class HTMLSummary extends BaseCsvProviderSummary {
 
@@ -66,15 +67,12 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 
 		final List<Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>> partitions =
 				new ArrayList<>();
-		partitions.add(new AbstractMap.SimpleEntry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>(
-				"Success", results.Success));
-		partitions.add(new AbstractMap.SimpleEntry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>(
-				"Timeout", results.Timeout));
-		partitions.add(new AbstractMap.SimpleEntry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>(
-				"Error", results.Error));
+		partitions.add(new AbstractMap.SimpleEntry<>("Success", results.Success));
+		partitions.add(new AbstractMap.SimpleEntry<>("Timeout", results.Timeout));
+		partitions.add(new AbstractMap.SimpleEntry<>("Error", results.Error));
 
-		final ArrayList<ColumnDefinition> prefixedColumnDefinitions = new ArrayList<>();
-		prefixedColumnDefinitions.addAll(ColumnDefinitionUtil.getColumnDefinitionForPrefix());
+		final ArrayList<ColumnDefinition> prefixedColumnDefinitions =
+				new ArrayList<>(ColumnDefinitionUtil.getColumnDefinitionForPrefix());
 		prefixedColumnDefinitions.addAll(mColumnDefinitions);
 
 		for (final Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> entry : partitions) {
@@ -86,7 +84,8 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 			// sort by variant
 			final List<Entry<UltimateRunDefinition, ExtendedResult>> currentPartition =
 					new ArrayList<>(entry.getValue());
-			Collections.sort(currentPartition, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+			Collections.sort(currentPartition,
+					Comparator.comparing(Entry<UltimateRunDefinition, ExtendedResult>::getKey));
 
 			ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(currentPartition, mColumnDefinitions);
 			csvTotal = ColumnDefinitionUtil.makeHumanReadable(csvTotal, prefixedColumnDefinitions);

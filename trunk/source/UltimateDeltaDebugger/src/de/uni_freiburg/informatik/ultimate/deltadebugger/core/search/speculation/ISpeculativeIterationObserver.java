@@ -48,7 +48,7 @@ public interface ISpeculativeIterationObserver<T extends ISearchStep<?, T>> {
 	default void onCanceledStepComplete(final T step, final boolean keepVariant) {
 		// do nothing by default
 	}
-	
+
 	/**
 	 * Called when the non-speculative iteration is complete, i.e. step.isDone() is true.
 	 *
@@ -58,7 +58,7 @@ public interface ISpeculativeIterationObserver<T extends ISearchStep<?, T>> {
 	default void onSearchComplete(final T step) {
 		// do nothing by default
 	}
-	
+
 	/**
 	 * Called when the non-speculative iteration reaches the a new step. Always called before onStepComplete.
 	 *
@@ -68,7 +68,7 @@ public interface ISpeculativeIterationObserver<T extends ISearchStep<?, T>> {
 	default void onStepBegin(final T step) {
 		// do nothing by default
 	}
-	
+
 	/**
 	 * Called when the non-speculative iteration completes a step. Always called after onStepBegin.
 	 *
@@ -80,7 +80,7 @@ public interface ISpeculativeIterationObserver<T extends ISearchStep<?, T>> {
 	default void onStepComplete(final T step, final boolean keepVariant) {
 		// do nothing by default
 	}
-	
+
 	/**
 	 * Called when a number of pending speculative tasks have been canceled because they turned out to be invalid.
 	 *

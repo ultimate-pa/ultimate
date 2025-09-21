@@ -388,6 +388,7 @@ Statement ::=
 	   */
 	  Label }
 		name    : String
+	    attributes : ?NamedAttribute[]
 	| { /**
 	     * Assert that a boolean formula holds.  Program will terminate
 	     * with an error if it does not.

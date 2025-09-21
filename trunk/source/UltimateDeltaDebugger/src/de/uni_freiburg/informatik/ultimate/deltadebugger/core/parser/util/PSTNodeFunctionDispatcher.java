@@ -40,13 +40,13 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 
 /**
  * A PST node function dispatcher.
- * 
+ *
  * @param <T>
  *            element type
  */
 public final class PSTNodeFunctionDispatcher<T> {
 	private final IPSTNodeFunction<T> mFunc;
-	
+
 	/**
 	 * @param func
 	 *            PST node function.
@@ -54,7 +54,7 @@ public final class PSTNodeFunctionDispatcher<T> {
 	public PSTNodeFunctionDispatcher(final IPSTNodeFunction<T> func) {
 		mFunc = func;
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -65,7 +65,7 @@ public final class PSTNodeFunctionDispatcher<T> {
 		node.accept(action);
 		return action.getResult().orElseGet(() -> mFunc.on(node));
 	}
-	
+
 	/**
 	 * PST visitor with result for dispatching.
 	 */
@@ -75,55 +75,55 @@ public final class PSTNodeFunctionDispatcher<T> {
 			setResult(mFunc.on(comment));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTConditionalBlock conditionalBlock) {
 			setResult(mFunc.on(conditionalBlock));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTACSLComment acslComment) {
 			setResult(mFunc.on(acslComment));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTACSLNode acslNode) {
 			setResult(mFunc.on(acslNode));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTDirective directive) {
 			setResult(mFunc.on(directive));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTIncludeDirective include) {
 			setResult(mFunc.on(include));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTLiteralRegion literalRegion) {
 			setResult(mFunc.on(literalRegion));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTMacroExpansion expansion) {
 			setResult(mFunc.on(expansion));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTRegularNode node) {
 			setResult(mFunc.on(node));
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTTranslationUnit translationUnit) {
 			setResult(mFunc.on(translationUnit));

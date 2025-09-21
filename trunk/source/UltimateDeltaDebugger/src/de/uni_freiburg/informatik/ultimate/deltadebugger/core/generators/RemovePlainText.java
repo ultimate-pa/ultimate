@@ -73,8 +73,8 @@ public final class RemovePlainText implements IVariantGenerator {
 				continue;
 			}
 			if (mRemoveLines) {
-				final int endOffset = (i + 1 == mSource.getNumberOfLines()) ? mSource.getLength()
-						: mSource.getLineOffset(i + 2);
+				final int endOffset =
+						(i + 1 == mSource.getNumberOfLines()) ? mSource.getLength() : mSource.getLineOffset(i + 2);
 				sb.append(text, mSource.getLineOffset(i + 1), endOffset);
 			} else {
 				sb.append(text.charAt(i));
@@ -84,9 +84,9 @@ public final class RemovePlainText implements IVariantGenerator {
 		return sb.toString();
 	}
 
-	private static int getNumberOfRemovableLines(ISourceDocument source) {
+	private static int getNumberOfRemovableLines(final ISourceDocument source) {
 		// Don't count an empty final line
-		int numLines = source.getNumberOfLines();
+		final int numLines = source.getNumberOfLines();
 		if (source.getLineOffset(numLines) == source.getLength()) {
 			return numLines - 1;
 		}
@@ -100,8 +100,8 @@ public final class RemovePlainText implements IVariantGenerator {
 	 */
 	public static Optional<IVariantGenerator> analyzeLines(final IPassContext context) {
 		final int numLines = getNumberOfRemovableLines(context.getInput());
-		final List<PlainTextChange> changes = IntStream.range(0, numLines).mapToObj(PlainTextChange::new)
-				.collect(Collectors.toList());
+		final List<PlainTextChange> changes =
+				IntStream.range(0, numLines).mapToObj(PlainTextChange::new).collect(Collectors.toList());
 		return changes.isEmpty() ? Optional.empty()
 				: Optional.of(new RemovePlainText(context.getInput(), changes, true));
 	}

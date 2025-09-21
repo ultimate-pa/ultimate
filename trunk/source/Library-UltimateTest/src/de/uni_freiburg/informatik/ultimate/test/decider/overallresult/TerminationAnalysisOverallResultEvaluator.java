@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Evaluate the overall result of a termination analysis.
- * 
+ *
  * First, we iterate through all IResults returned by Ultimate and put them into categories (which IResult is a witness
  * for which overall result). Afterwards we iterate through all categories in the order of their significance. The first
  * non-empty category is our overall result.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
@@ -67,8 +67,7 @@ public class TerminationAnalysisOverallResultEvaluator
 			}
 		}
 		final TerminationAnalysisOverallResult[] categoriesOrderedBySignificance =
-				new TerminationAnalysisOverallResult[] { TerminationAnalysisOverallResult.EXCEPTION_OR_ERROR,
-						TerminationAnalysisOverallResult.SYNTAX_ERROR,
+				{ TerminationAnalysisOverallResult.EXCEPTION_OR_ERROR, TerminationAnalysisOverallResult.SYNTAX_ERROR,
 						TerminationAnalysisOverallResult.UNSUPPORTED_SYNTAX,
 						TerminationAnalysisOverallResult.NONTERMINATING, TerminationAnalysisOverallResult.UNKNOWN,
 						TerminationAnalysisOverallResult.TIMEOUT, TerminationAnalysisOverallResult.TERMINATING };
@@ -76,6 +75,7 @@ public class TerminationAnalysisOverallResultEvaluator
 		for (final TerminationAnalysisOverallResult category : categoriesOrderedBySignificance) {
 			if (mCategory2Results.getDomain().contains(category)) {
 				mOverallResult = category;
+				break;
 			}
 		}
 

@@ -113,7 +113,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 		final Set<IcfgEdge> toRemove = new HashSet<>();
 		final Set<IcfgLocation> openLocations = new HashSet<>();
-		final Set<EdgeConstructor> constructors = new HashSet<>();
+		final List<EdgeConstructor> constructors = new ArrayList<>();
 		int addE = 0;
 		for (final Pair<IcfgEdge, IcfgEdge> pair : pairs) {
 			final IcfgEdge first = pair.getFirst();

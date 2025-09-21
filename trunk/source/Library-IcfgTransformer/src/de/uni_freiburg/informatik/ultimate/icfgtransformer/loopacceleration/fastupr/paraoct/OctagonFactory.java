@@ -43,8 +43,8 @@ public final class OctagonFactory {
 	private OctagonFactory() {
 	}
 
-	public static OctTerm createOctTerm(Object value, TermVariable firstVar, boolean firstNegative,
-			TermVariable secondVar, boolean secondNegative) {
+	public static OctTerm createOctTerm(final Object value, final TermVariable firstVar, final boolean firstNegative,
+			final TermVariable secondVar, final boolean secondNegative) {
 		if (firstVar.equals(secondVar)) {
 			if (firstNegative != secondNegative) {
 				throw new IllegalArgumentException("Can't create a term of the form x - x <= c");
@@ -54,7 +54,8 @@ public final class OctagonFactory {
 		return createTwoVarOctTerm(value, firstVar, firstNegative, secondVar, secondNegative);
 	}
 
-	public static OctTerm createOneVarOctTerm(Object value, TermVariable firstVar, boolean firstNegative) {
+	public static OctTerm createOneVarOctTerm(final Object value, final TermVariable firstVar,
+			final boolean firstNegative) {
 		if (value instanceof ParametricOctValue) {
 			return new ParametricOctTerm((ParametricOctValue) value, firstVar, firstNegative);
 		} else if (value instanceof BigDecimal) {
@@ -63,8 +64,8 @@ public final class OctagonFactory {
 		return null;
 	}
 
-	public static OctTerm createTwoVarOctTerm(Object value, TermVariable firstVar, boolean firstNegative,
-			TermVariable secondVar, boolean secondNegative) {
+	public static OctTerm createTwoVarOctTerm(final Object value, final TermVariable firstVar,
+			final boolean firstNegative, final TermVariable secondVar, final boolean secondNegative) {
 		if (value instanceof ParametricOctValue) {
 			return new ParametricOctTerm((ParametricOctValue) value, firstVar, firstNegative, secondVar,
 					secondNegative);
@@ -74,7 +75,7 @@ public final class OctagonFactory {
 		return null;
 	}
 
-	public static OctConjunction createConjunction(Collection<OctTerm> terms) {
+	public static OctConjunction createConjunction(final Collection<OctTerm> terms) {
 		final OctConjunction result = new OctConjunction();
 		return result;
 

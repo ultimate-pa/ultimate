@@ -47,7 +47,8 @@ public class MemorySliceUtils {
 	public static final String MEMORY_INT = "#memory_int";
 	public static final String MEMORY_REAL = "#memory_real";
 
-	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER = "~initToZeroAtPointerBaseAddress~$Pointer$";
+	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_POINTER =
+			"~initToZeroAtPointerBaseAddress~$Pointer$";
 	public static final String INIT_TO_ZERO_AT_POINTER_BASE_ADDRESS_INT = "~initToZeroAtPointerBaseAddress~int";
 
 	public static final String WRITE_POINTER = "write~$Pointer$";
@@ -104,16 +105,16 @@ public class MemorySliceUtils {
 		if (lhs instanceof VariableLHS) {
 			final VariableLHS vlhs = (VariableLHS) lhs;
 			final String newId = oldIdToNewId.get(vlhs.getIdentifier());
-			final DeclarationInformation newDeclInfo = updateDeclarationInformation(vlhs.getDeclarationInformation(),
-					oldProcId, suffix);
+			final DeclarationInformation newDeclInfo =
+					updateDeclarationInformation(vlhs.getDeclarationInformation(), oldProcId, suffix);
 			if (newId != null) {
 				final VariableLHS result = new VariableLHS(lhs.getLoc(), lhs.getType(), newId, newDeclInfo);
 				ModelUtils.copyAnnotations(lhs, result);
 				return result;
 			} else if (newDeclInfo != vlhs.getDeclarationInformation()) {
 				// no ID update but update DeclarationInformation
-				final VariableLHS result = new VariableLHS(lhs.getLoc(), lhs.getType(), vlhs.getIdentifier(),
-						newDeclInfo);
+				final VariableLHS result =
+						new VariableLHS(lhs.getLoc(), lhs.getType(), vlhs.getIdentifier(), newDeclInfo);
 				ModelUtils.copyAnnotations(lhs, result);
 				return result;
 			}
@@ -129,17 +130,17 @@ public class MemorySliceUtils {
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = (IdentifierExpression) expr;
 			final String newId = oldIdToNewId.get(ie.getIdentifier());
-			final DeclarationInformation newDeclInfo = updateDeclarationInformation(ie.getDeclarationInformation(),
-					oldProcId, suffix);
+			final DeclarationInformation newDeclInfo =
+					updateDeclarationInformation(ie.getDeclarationInformation(), oldProcId, suffix);
 			if (newId != null) {
-				final IdentifierExpression result = new IdentifierExpression(ie.getLoc(), ie.getType(), newId,
-						newDeclInfo);
+				final IdentifierExpression result =
+						new IdentifierExpression(ie.getLoc(), ie.getType(), newId, newDeclInfo);
 				ModelUtils.copyAnnotations(expr, result);
 				return result;
 			} else if (newDeclInfo != ie.getDeclarationInformation()) {
 				// no ID update but update DeclarationInformation
-				final IdentifierExpression result = new IdentifierExpression(ie.getLoc(), ie.getType(),
-						ie.getIdentifier(), newDeclInfo);
+				final IdentifierExpression result =
+						new IdentifierExpression(ie.getLoc(), ie.getType(), ie.getIdentifier(), newDeclInfo);
 				ModelUtils.copyAnnotations(expr, result);
 				return result;
 			}

@@ -35,17 +35,17 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * TestResultDecider that uses SV-COMP YAML files to decide correctness of
- * SV-COMP benchmarks whose property is unreach-call.prp
+ * TestResultDecider that uses SV-COMP YAML files to decide correctness of SV-COMP benchmarks whose property is
+ * unreach-call.prp
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class SvcompTestResultDeciderTermination extends TerminationAnalysisTestResultDecider {
 
 	/**
-	 * @param unknownIsJUnitSuccess if true the TestResult UNKNOWN is a success for
-	 *                              JUnit, if false, the TestResult UNKNOWN is a
-	 *                              failure for JUnit.
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
 	 */
 	public SvcompTestResultDeciderTermination(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
@@ -54,9 +54,9 @@ public class SvcompTestResultDeciderTermination extends TerminationAnalysisTestR
 
 	@Override
 	public IExpectedResultFinder<TerminationAnalysisOverallResult> constructExpectedResultFinder() {
-		final NestedMap2<String, String, TerminationAnalysisOverallResult> map = TestUtil
-				.constructPropertyMapSvcompTermination(TestUtil.SVCOMP_PROP_TERMINATION);
-		return new YamlBasedExpectedResultFinder<TerminationAnalysisOverallResult>(map);
+		final NestedMap2<String, String, TerminationAnalysisOverallResult> map =
+				TestUtil.constructPropertyMapSvcompTermination(TestUtil.SVCOMP_PROP_TERMINATION);
+		return new YamlBasedExpectedResultFinder<>(map);
 	}
 
 }

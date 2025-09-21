@@ -32,9 +32,9 @@ import java.util.BitSet;
 import java.util.Iterator;
 
 public class IntSetBits implements IntSet {
-	
+
 	private BitSet mSet;
-	
+
 	public IntSetBits() {
 		mSet = new BitSet();
 	}
@@ -46,56 +46,47 @@ public class IntSetBits implements IntSet {
 
 	@Override
 	public IntSet clone() {
-		IntSetBits bits = new IntSetBits();
+		final IntSetBits bits = new IntSetBits();
 		bits.mSet = (BitSet) mSet.clone();
 		return bits;
 	}
 
 	@Override
-	public void andNot(IntSet set) {
-		if(! (set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
-		BitSet bits = (BitSet) set.get();
-		this.mSet.andNot(bits);
+	public void andNot(final IntSet set) {
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
+		final BitSet bits = (BitSet) set.get();
+		mSet.andNot(bits);
 	}
 
 	@Override
-	public void and(IntSet set) {
-		if(! (set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
-		BitSet bits = (BitSet) set.get();
-		this.mSet.and(bits);
+	public void and(final IntSet set) {
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
+		final BitSet bits = (BitSet) set.get();
+		mSet.and(bits);
 	}
 
 	@Override
-	public void or(IntSet set) {
-		if(! (set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
-		BitSet bits = (BitSet) set.get();
-		this.mSet.or(bits);		
+	public void or(final IntSet set) {
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
+		final BitSet bits = (BitSet) set.get();
+		mSet.or(bits);
 	}
 
 	@Override
-	public boolean get(int value) {
+	public boolean get(final int value) {
 		return mSet.get(value);
 	}
-	
+
 	@Override
-	public void set(int value) {
+	public void set(final int value) {
 		mSet.set(value);
 	}
 
 	@Override
-	public void clear(int value) {
+	public void clear(final int value) {
 		mSet.clear(value);
 	}
-	
+
 	@Override
 	public void clear() {
 		mSet.clear();
@@ -110,84 +101,82 @@ public class IntSetBits implements IntSet {
 	public int cardinality() {
 		return mSet.cardinality();
 	}
-	
-	@Override
-	public boolean overlap(IntSet set) {
-		if(! (set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
-		IntSetBits temp = (IntSetBits) set;
-		return temp.mSet.intersects(this.mSet);
-	}
-	
 
 	@Override
-	public boolean subsetOf(IntSet set) {
-		if(! (set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
-		BitSet temp = (BitSet) this.mSet.clone();
-		BitSet bits = (BitSet) set.get();
+	public boolean overlap(final IntSet set) {
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
+		final IntSetBits temp = (IntSetBits) set;
+		return temp.mSet.intersects(mSet);
+	}
+
+	@Override
+	public boolean subsetOf(final IntSet set) {
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
+		final BitSet temp = (BitSet) mSet.clone();
+		final BitSet bits = (BitSet) set.get();
 		temp.andNot(bits);
 		return temp.isEmpty();
 	}
 
 	@Override
-	public boolean contentEq(IntSet set) {
-		if(! (set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
-		BitSet bits = (BitSet) set.get();
-		return this.mSet.equals(bits);
+	public boolean contentEq(final IntSet set) {
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
+		final BitSet bits = (BitSet) set.get();
+		return mSet.equals(bits);
 	}
 
 	@Override
 	public Object get() {
 		return mSet;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mSet.toString();
 	}
-	
-	public boolean equals(Object obj) {
-		if(! (obj instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
 		}
-		IntSetBits bits = (IntSetBits)obj;
-		return this.contentEq(bits);
+		final IntSetBits bits = (IntSetBits) obj;
+		return contentEq(bits);
 	}
-	
+
+	@Override
+	public int hashCode() {
+		return mSet.hashCode();
+	}
+
 	public static class SparseBitsIterator implements IntIterator {
 
-		private BitSet mBits;
+		private final BitSet mBits;
 		private int mIndex;
-		
-		public SparseBitsIterator(IntSetBits set) {
-			this.mBits = set.mSet;
+
+		public SparseBitsIterator(final IntSetBits set) {
+			mBits = set.mSet;
 			mIndex = mBits.nextSetBit(0);
 		}
-		
+
+		@Override
 		public boolean hasNext() {
 			return (mIndex >= 0);
 		}
-		
+
+		@Override
 		public int next() {
-			int rv = mIndex;
+			final int rv = mIndex;
 			mIndex = mBits.nextSetBit(mIndex + 1);
 			return rv;
 		}
 	}
-	
+
 	@Override
 	public Iterable<Integer> iterable() {
-		return () -> new Iterator<Integer>() {
+		return () -> new Iterator<>() {
 			IntIterator iter = iterator();
+
 			@Override
 			public boolean hasNext() {
 				return iter.hasNext();
@@ -197,7 +186,7 @@ public class IntSetBits implements IntSet {
 			public Integer next() {
 				return iter.next();
 			}
-			
+
 		};
 	}
 

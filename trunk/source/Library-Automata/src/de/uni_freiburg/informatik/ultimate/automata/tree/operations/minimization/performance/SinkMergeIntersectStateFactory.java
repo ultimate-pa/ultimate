@@ -33,9 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
- * State factory which is able to create sink states, merge and intersect
- * states.
- * 
+ * State factory which is able to create sink states, merge and intersect states.
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <STATE>
@@ -57,9 +56,8 @@ public final class SinkMergeIntersectStateFactory<STATE>
 	private final ISinkStateFactory<STATE> mSinkFactory;
 
 	/**
-	 * Creates a new sink, merge and intersect factory which delegates operations to
-	 * the given factories.
-	 * 
+	 * Creates a new sink, merge and intersect factory which delegates operations to the given factories.
+	 *
 	 * @param sinkFactory
 	 *            The sink factory to use
 	 * @param mergeFactory
@@ -69,48 +67,43 @@ public final class SinkMergeIntersectStateFactory<STATE>
 	 */
 	public SinkMergeIntersectStateFactory(final ISinkStateFactory<STATE> sinkFactory,
 			final IMergeStateFactory<STATE> mergeFactory, final IIntersectionStateFactory<STATE> intersectFactory) {
-		this.mMergeFactory = mergeFactory;
-		this.mSinkFactory = sinkFactory;
-		this.mIntersectFactory = intersectFactory;
+		mMergeFactory = mergeFactory;
+		mSinkFactory = sinkFactory;
+		mIntersectFactory = intersectFactory;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.statefactory.
-	 * IEmptyStackStateFactory#createEmptyStackState()
+	 *
+	 * @see de.uni_freiburg.informatik.ultimate.automata.statefactory. IEmptyStackStateFactory#createEmptyStackState()
 	 */
 	@Override
 	public STATE createEmptyStackState() {
-		return this.mMergeFactory.createEmptyStackState();
+		return mMergeFactory.createEmptyStackState();
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory#
-	 * createSinkStateContent()
+	 *
+	 * @see de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory# createSinkStateContent()
 	 */
 	@Override
 	public STATE createSinkStateContent() {
-		return this.mSinkFactory.createSinkStateContent();
+		return mSinkFactory.createSinkStateContent();
 	}
 
 	@Override
 	public STATE intersection(final STATE state1, final STATE state2) {
-		return this.mIntersectFactory.intersection(state1, state2);
+		return mIntersectFactory.intersection(state1, state2);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory#
-	 * merge(java.util.Collection)
+	 *
+	 * @see de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory# merge(java.util.Collection)
 	 */
 	@Override
 	public STATE merge(final Collection<STATE> states) {
-		return this.mMergeFactory.merge(states);
+		return mMergeFactory.merge(states);
 	}
 }

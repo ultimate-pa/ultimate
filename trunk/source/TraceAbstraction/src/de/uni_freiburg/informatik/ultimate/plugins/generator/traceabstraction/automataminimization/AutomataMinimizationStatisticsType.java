@@ -29,15 +29,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.a
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public class AutomataMinimizationStatisticsType extends StatisticsType<AutomataMinimizationStatisticsDefinitions> {
-	
+
 	public AutomataMinimizationStatisticsType() {
 		super(AutomataMinimizationStatisticsDefinitions.class);
 	}
 
 	private static AutomataMinimizationStatisticsType s_Instance = new AutomataMinimizationStatisticsType();
-	
+
 	public static AutomataMinimizationStatisticsType getInstance() {
 		return s_Instance;
 	}
-	
+
 }

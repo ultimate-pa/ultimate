@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Waypoint;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 
 public class WitnessUtils {
@@ -88,11 +90,19 @@ public class WitnessUtils {
 					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 					final Witness witness, final PredicateFactory predicateFactory, final ILogger logger,
 					final Property property) throws AutomataOperationCanceledException {
-		final var result = new YamlWitnessProductAutomaton<>(abstraction, witness, predicateFactory);
+		final var product = new YamlWitnessProductAutomaton<>(abstraction, witness, predicateFactory);
 		logger.info(
 				"Constructing product of automaton with %d states and violation witness of the following lengths: %s",
 				abstraction.size(), witness.getEntries().stream().map(x -> ((ViolationSequence) x).getSegments().size())
 						.collect(Collectors.toList()));
-		return reduce(result, property, new AutomataLibraryServices(services));
+		final var result = reduce(product, property, new AutomataLibraryServices(services));
+		final List<Waypoint> unmatchedWaypoints = product.getUnmatchedFollowWaypoints();
+		if (!unmatchedWaypoints.isEmpty()) {
+			logger.warn("Unmatched follow waypoints:");
+			for (final var wp : unmatchedWaypoints) {
+				logger.warn(wp);
+			}
+		}
+		return result;
 	}
 }

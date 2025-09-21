@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelp
  *
  */
 public class HybridSystem {
-	
+
 	private final ILogger mLogger;
 	private final String mName;
 	SpaceExPreferenceContainer mPreferenceContainer;
@@ -61,12 +61,12 @@ public class HybridSystem {
 	private final Set<String> mGlobalConstants;
 	private final Set<String> mLabels;
 	private Map<String, Map<String, String>> mBinds;
-	
+
 	protected HybridSystem(final String parentSystemName, final ComponentType system,
 			final Map<String, ComponentType> automata, final Map<String, ComponentType> systems, final ILogger logger,
 			final SpaceExPreferenceContainer preferenceContainer) {
 		assert !system.getBind().isEmpty() : "System must contain binds";
-		
+
 		mLogger = logger;
 		mName = (parentSystemName.isEmpty()) ? system.getId() : parentSystemName;
 		mPreferenceContainer = preferenceContainer;
@@ -79,10 +79,10 @@ public class HybridSystem {
 		mGlobalConstants = new HashSet<>();
 		mLabels = new HashSet<>();
 		mBinds = new HashMap<>();
-		
+
 		system.getParam().forEach(p -> HybridSystemHelper.addParameter(p, mLocalParameters, mGlobalParameters,
 				mLocalConstants, mGlobalConstants, mLabels, mLogger));
-		
+
 		final List<BindType> sysBinds = system.getBind();
 		for (final BindType bind : sysBinds) {
 			final String comp = bind.getComponent();
@@ -109,7 +109,7 @@ public class HybridSystem {
 			mLogger.debug("BINDS " + mBinds);
 		}
 	}
-	
+
 	protected HybridSystem(final String name, final Set<String> globalVariables, final Set<String> localVariables,
 			final Set<String> globalConstants, final Set<String> localConstants, final Set<String> labels,
 			final Map<String, HybridAutomaton> automata, final Map<String, HybridSystem> subsystems,
@@ -126,23 +126,23 @@ public class HybridSystem {
 		mLabels = labels;
 		mBinds = binds;
 	}
-	
+
 	public Map<String, HybridAutomaton> getAutomata() {
 		return mAutomata;
 	}
-	
+
 	public Map<String, HybridSystem> getSubSystems() {
 		return mSubSystems;
 	}
-	
+
 	public String getName() {
 		return mName;
 	}
-	
+
 	public Map<String, Map<String, String>> getBinds() {
 		return mBinds;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -169,9 +169,9 @@ public class HybridSystem {
 		});
 		return sb.toString();
 	}
-	
+
 	public void setBinds(final Map<String, Map<String, String>> newBinds) {
 		mBinds = newBinds;
 	}
-	
+
 }

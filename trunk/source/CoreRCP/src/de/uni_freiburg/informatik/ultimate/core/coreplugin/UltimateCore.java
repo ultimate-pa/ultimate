@@ -39,8 +39,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -72,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import jakarta.xml.bind.JAXBException;
 
 /**
  * This class controls all aspects of the application's execution.

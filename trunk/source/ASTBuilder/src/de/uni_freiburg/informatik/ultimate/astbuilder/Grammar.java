@@ -7,7 +7,7 @@ import java.util.HashMap;
 /**
  * Represents a grammar.
  */
-public class Grammar {
+public final class Grammar {
     /**
      * The package name of this grammar.
      */

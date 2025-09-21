@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * Factory for {@link INestedWordAutomaton} objects.
  * <p>
  * NOTE: The automaton field is not updated during the shrinking process. Use it with caution.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -64,7 +64,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Create new automaton using alphabets of old automaton.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton to use the alphabet of
 	 * @return new {@link INestedWordAutomaton} object
@@ -76,7 +76,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Create new automaton using given alphabets or those of old automaton if {@code null}.
-	 * 
+	 *
 	 * @param internalAlphabet
 	 *            internal alphabet, null uses original one
 	 * @param callAlphabet
@@ -99,7 +99,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Create new automaton using given alphabets.
-	 * 
+	 *
 	 * @param internalAlphabet
 	 *            internal alphabet
 	 * @param callAlphabet
@@ -113,7 +113,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * This method assumes that the passed state is present of the original automaton.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param state
@@ -125,7 +125,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Adds a state with the initial and final status of the old automaton.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param state
@@ -140,7 +140,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Adds an internal transition.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param pred
@@ -155,7 +155,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Adds call transition.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param pred
@@ -170,7 +170,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Adds a return transition.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param pred
@@ -189,7 +189,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * Adds a collection of states.
 	 * <p>
 	 * A convenient loop which calls {@link #addState(INestedWordAutomaton, Object)} in the background.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param states
@@ -206,7 +206,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * <p>
 	 * A convenient loop which calls {@link #addInternalTransition(INestedWordAutomaton, Object, Object, Object)} in the
 	 * background.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param transitions
@@ -225,7 +225,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * <p>
 	 * A convenient loop which calls {@link #addCallTransition(INestedWordAutomaton, Object, Object, Object)} in the
 	 * background.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param transitions
@@ -244,7 +244,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * <p>
 	 * A convenient loop which calls {@link #addReturnTransition(INestedWordAutomaton, Object, Object, Object, Object)}
 	 * in the background.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param transitions
@@ -311,7 +311,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Adds original internal transitions filtered by current states.
-	 * 
+	 *
 	 * @param automatonTo
 	 *            automaton to add the transitions to
 	 * @param automatonFrom
@@ -332,7 +332,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Adds original call transitions filtered by current states.
-	 * 
+	 *
 	 * @param automatonTo
 	 *            automaton to add the transitions to
 	 * @param automatonFrom
@@ -353,7 +353,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Adds original return transitions filtered by current states.
-	 * 
+	 *
 	 * @param automatonTo
 	 *            automaton to add the transitions to
 	 * @param automatonFrom
@@ -375,7 +375,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	/**
 	 * Adds original transitions filtered by current states.
-	 * 
+	 *
 	 * @param automatonTo
 	 *            automaton to add the transitions to
 	 * @param automatonFrom
@@ -398,7 +398,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * <p>
 	 * USE WITH CAUTION!<br>
 	 * This might mess up all internal logic. Should only be used by {@link BridgeShrinker}s.
-	 * 
+	 *
 	 * @param automaton
 	 *            new automaton
 	 */

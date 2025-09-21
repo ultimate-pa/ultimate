@@ -35,45 +35,45 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Matrix to store vectors for {@link LoopAccelerationMatrix}
- * 
+ *
  * @author Ben Biesenbach (Ben.Biesenbach@gmx.de)
  */
 public class MatrixBB {
-	
-	private Map<Integer, Map<Term, Term>> mMatrix = new HashMap<>();
-	private Map<Integer, Map<Term, Term>> mLGS = new HashMap<>();
-	private Map<IProgramVar, TermVariable> mInVars;
-	private ILogger mLogger;
-	
+
+	private final Map<Integer, Map<Term, Term>> mMatrix = new HashMap<>();
+	private final Map<Integer, Map<Term, Term>> mLGS = new HashMap<>();
+	private final Map<IProgramVar, TermVariable> mInVars;
+	private final ILogger mLogger;
+
 	/**
 	 * Matrix to store vectors for {@link LoopAccelerationMatrix}
-	 * 
+	 *
 	 * @param inVars
 	 * @param logger
 	 */
-	public MatrixBB(Map<IProgramVar, TermVariable> inVars, ILogger logger){
+	public MatrixBB(final Map<IProgramVar, TermVariable> inVars, final ILogger logger) {
 		mLogger = logger;
 		mInVars = inVars;
 	}
-	
-	public void print(){
-		mMatrix.entrySet().forEach(vector 
-				-> mLogger.info("#" + vector.getKey() + ": " + vector.getValue() + " -> " + mLGS.get(vector.getKey())));
+
+	public void print() {
+		mMatrix.entrySet().forEach(vector -> mLogger
+				.info("#" + vector.getKey() + ": " + vector.getValue() + " -> " + mLGS.get(vector.getKey())));
 	}
-	
-	public void setVector(Map<Term,Term> vector, int index){
+
+	public void setVector(final Map<Term, Term> vector, final int index) {
 		mMatrix.put(index, vector);
 	}
-	
-	public void setSolution(Map<Term,Term> vectorSolution, int index){
+
+	public void setSolution(final Map<Term, Term> vectorSolution, final int index) {
 		mLGS.put(index, vectorSolution);
 	}
-	
-	public Map<Integer, Map<Term, Term>> getLGS(){
+
+	public Map<Integer, Map<Term, Term>> getLGS() {
 		return mLGS;
 	}
-	
-	public Map<Integer, Map<Term, Term>> getMatrix(){
+
+	public Map<Integer, Map<Term, Term>> getMatrix() {
 		return mMatrix;
 	}
 }

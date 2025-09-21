@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 /**
  * Container for vertex values. Holds relevant fields of
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex vertices}.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class VertexValueContainer {
@@ -65,7 +65,7 @@ public final class VertexValueContainer {
 
 	/**
 	 * Creates a new vertex value container with given values.
-	 * 
+	 *
 	 * @param progressMeasure
 	 *            The progress measure
 	 * @param bestNeighborMeasure
@@ -81,7 +81,7 @@ public final class VertexValueContainer {
 
 	/**
 	 * Returns if the given value is valid or not.
-	 * 
+	 *
 	 * @param value
 	 *            The value of interest
 	 * @return True if the value is valid, false if not
@@ -92,7 +92,7 @@ public final class VertexValueContainer {
 
 	/**
 	 * Ensures that a given value is valid by comparing it to the internal field {@link #NO_VALUE}.
-	 * 
+	 *
 	 * @param value
 	 *            Value to ensure that it is valid
 	 * @throws IllegalArgumentException

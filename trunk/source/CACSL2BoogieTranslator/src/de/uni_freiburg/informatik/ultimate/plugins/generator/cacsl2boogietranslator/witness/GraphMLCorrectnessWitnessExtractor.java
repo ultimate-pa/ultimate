@@ -79,10 +79,10 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 
 	public GraphMLCorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		super(service);
-		mLoopTypes = Arrays.asList(new Class[] { IASTGotoStatement.class, IASTDoStatement.class,
-				IASTWhileStatement.class, IASTForStatement.class });
-		mConditionalTypes = Arrays.asList(new Class[] { IASTDoStatement.class, IASTWhileStatement.class,
-				IASTForStatement.class, IASTIfStatement.class });
+		mLoopTypes = Arrays.asList(IASTGotoStatement.class, IASTDoStatement.class, IASTWhileStatement.class,
+				IASTForStatement.class);
+		mConditionalTypes = Arrays.asList(IASTDoStatement.class, IASTWhileStatement.class, IASTForStatement.class,
+				IASTIfStatement.class);
 		mCheckOnlyLoopInvariants = mPrefs.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
 	}
 
@@ -217,8 +217,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	}
 
 	private Map<IASTNode, LabeledInvariant> matchWitnessToAstNode(final WitnessNode wnode) {
-		final Set<DecoratedWitnessEdge> edges = new HashSet<>();
-		edges.addAll(convertAndFilterEdges(wnode.getIncomingEdges(), true));
+		final Set<DecoratedWitnessEdge> edges = new HashSet<>(convertAndFilterEdges(wnode.getIncomingEdges(), true));
 		edges.addAll(convertAndFilterEdges(wnode.getOutgoingEdges(), false));
 
 		if (edges.isEmpty()) {
@@ -349,7 +348,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		// check if the common parent or a parent of the common parent is a loop
 		IASTNode currentParent = commonParent;
 		Set<IASTStatement> loopStatements = Collections.emptySet();
-		while (currentParent != null && currentParent instanceof IASTStatement) {
+		while (currentParent instanceof IASTStatement) {
 			loopStatements = CdtASTUtils.findDesiredType(currentParent, mLoopTypes);
 			if (!loopStatements.isEmpty()) {
 				break;
@@ -509,22 +508,14 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		}
 
 		private Predicate<IASTNode> determineMatcher(final DecoratedWitnessEdge edge) {
-			switch (edge.getConditional()) {
-			case NONE:
-				return this::matchNonConditional;
-			case CONDITION_EVAL_FALSE:
-				return a -> matchConditional(false, a);
-			case CONDITION_EVAL_TRUE:
-				return a -> matchConditional(true, a);
-			case ARG_EVAL:
-			case EXPR_EVAL:
-			case FUNC_CALL:
-			case PROC_CALL:
-			case PROC_RETURN:
-			default:
-				throw new UnsupportedOperationException(
-						"This conditional case was not yet considered: " + edge.getConditional());
-			}
+			return switch (edge.getConditional()) {
+			case NONE -> this::matchNonConditional;
+			case CONDITION_EVAL_FALSE -> (a -> matchConditional(false, a));
+			case CONDITION_EVAL_TRUE -> (a -> matchConditional(true, a));
+			case ARG_EVAL, EXPR_EVAL, FUNC_CALL, PROC_CALL, PROC_RETURN, FORK, JOIN ->
+					throw new UnsupportedOperationException(
+							"This conditional case was not yet considered: " + edge.getConditional());
+			};
 		}
 
 		public void run(final IASTTranslationUnit translationUnit) {
@@ -595,8 +586,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 				return false;
 			}
 
-			return mEdge.getLineNumber() == loc.getEndingLineNumber() && mEdge.isIncoming()
-					|| mEdge.getLineNumber() == loc.getStartingLineNumber() && !mEdge.isIncoming();
+			return (mEdge.getLineNumber() == loc.getEndingLineNumber() && mEdge.isIncoming())
+					|| (mEdge.getLineNumber() == loc.getStartingLineNumber() && !mEdge.isIncoming());
 		}
 	}
 
@@ -733,7 +724,6 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		private final ImmutableSet<String> mLabels;
 
 		public LabeledInvariant(final ExtractedWitnessInvariant invariant, final ImmutableSet<String> labels) {
-			super();
 			mInvariant = invariant;
 			mLabels = labels;
 		}

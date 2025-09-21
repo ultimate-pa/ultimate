@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
- * Partial Max-SAT based minimization of NWA using {@link MergeDoubleton} as variable type.
- * Minimization is done using direct simulation.
+ * Partial Max-SAT based minimization of NWA using {@link MergeDoubleton} as variable type. Minimization is done using
+ * direct simulation.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -64,15 +64,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  * @see MinimizeNwaMaxSat2
  */
 
-
-public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSat<LETTER, STATE>{
+public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSat<LETTER, STATE> {
 
 	private final Iterable<Set<STATE>> mInitialPartition;
 	private final int mLargestBlockInitialPartition;
 	private final int mInitialPartitionSize;
 	private final long mNumberOfInitialPairs;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
-
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -90,7 +88,9 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 	public MinimizeNwaPmaxSatDirectBi(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-				this(services, stateFactory, operand, new NwaApproximateBisimulation<>(services, operand, SimulationType.DIRECT).getResult(), new Settings<STATE>().setLibraryMode(false));
+		this(services, stateFactory, operand,
+				new NwaApproximateBisimulation<>(services, operand, SimulationType.DIRECT).getResult(),
+				new Settings<STATE>().setLibraryMode(false));
 	}
 
 	/**
@@ -118,32 +118,32 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-			super(services, stateFactory, operand, settings, null);
+		super(services, stateFactory, operand, settings, null);
 
-			printStartMessage();
+		printStartMessage();
 
-			mInitialPartition = initialPartition.getRelation();
-			mState2EquivalenceClass = new HashMap<>();
-			int largestBlockInitialPartition = 0;
-			int initialPartitionSize = 0;
-			long initialPairsSize = 0;
-			for (final Set<STATE> block : mInitialPartition) {
-				for (final STATE state : block) {
-					mState2EquivalenceClass.put(state, block);
-				}
-				largestBlockInitialPartition = Math.max(largestBlockInitialPartition, block.size());
-				initialPairsSize += ((long) block.size()) * ((long) block.size()) - block.size();
-				++initialPartitionSize;
+		mInitialPartition = initialPartition.getRelation();
+		mState2EquivalenceClass = new HashMap<>();
+		int largestBlockInitialPartition = 0;
+		int initialPartitionSize = 0;
+		long initialPairsSize = 0;
+		for (final Set<STATE> block : mInitialPartition) {
+			for (final STATE state : block) {
+				mState2EquivalenceClass.put(state, block);
 			}
-			mLargestBlockInitialPartition = largestBlockInitialPartition;
-			mInitialPartitionSize = initialPartitionSize;
-			mNumberOfInitialPairs = initialPairsSize;
-			mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
-					+ largestBlockInitialPartition + " states");
+			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, block.size());
+			initialPairsSize += ((long) block.size()) * ((long) block.size()) - block.size();
+			++initialPartitionSize;
+		}
+		mLargestBlockInitialPartition = largestBlockInitialPartition;
+		mInitialPartitionSize = initialPartitionSize;
+		mNumberOfInitialPairs = initialPairsSize;
+		mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
+				+ largestBlockInitialPartition + " states");
 
-			run();
+		run();
 
-			printExitMessage();
+		printExitMessage();
 
 	}
 
@@ -158,19 +158,12 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 		super.addStatistics(statistics);
 
 		if (mLargestBlockInitialPartition != 0) {
-			statistics.addKeyValuePair(mSettings.getLibraryMode()
-					? StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT
+			statistics.addKeyValuePair(mSettings.getLibraryMode() ? StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT
 					: StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, mLargestBlockInitialPartition);
-			statistics.addKeyValuePair(
-					mSettings.getLibraryMode()
-							? StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT
-							: StatisticsType.SIZE_INITIAL_PARTITION,
-					mInitialPartitionSize);
-			statistics.addKeyValuePair(
-					mSettings.getLibraryMode()
-							? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT
-							: StatisticsType.NUMBER_INITIAL_PAIRS,
-					mNumberOfInitialPairs);
+			statistics.addKeyValuePair(mSettings.getLibraryMode() ? StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT
+					: StatisticsType.SIZE_INITIAL_PARTITION, mInitialPartitionSize);
+			statistics.addKeyValuePair(mSettings.getLibraryMode() ? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT
+					: StatisticsType.NUMBER_INITIAL_PAIRS, mNumberOfInitialPairs);
 		}
 	}
 

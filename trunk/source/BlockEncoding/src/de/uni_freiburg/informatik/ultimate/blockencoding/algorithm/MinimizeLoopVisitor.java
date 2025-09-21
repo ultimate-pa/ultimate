@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
@@ -49,14 +49,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
- * This class is responsible for minimizing nodes with one incoming and more
- * than one outgoing edges. They are remain, while minimizing loops and goto's.
- * 
+ * This class is responsible for minimizing nodes with one incoming and more than one outgoing edges. They are remain,
+ * while minimizing loops and goto's.
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
-
 
 	private final IUltimateServiceProvider mServices;
 
@@ -77,12 +76,11 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 		if (notReachableNodes.contains(node)) {
 			return new MinimizedNode[0];
 		}
-		final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<MinimizedNode>();
+		final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<>();
 		if (checkForSequentialMerge(node)) {
 			reVisitNodes.addAll(recursiveLoopMerge(node));
 		} else {
-			reVisitNodes.addAll(Arrays.asList(super
-					.applyMinimizationRules(node)));
+			reVisitNodes.addAll(Arrays.asList(super.applyMinimizationRules(node)));
 		}
 		return reVisitNodes.toArray(new MinimizedNode[reVisitNodes.size()]);
 	}
@@ -96,35 +94,30 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 			throw new ToolchainCanceledException(this.getClass());
 		}
 		if (checkForSequentialMerge(node)) {
-			final IMinimizedEdge incoming = node.getIncomingEdges()
-					.get(0);
-			final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<MinimizedNode>();
+			final IMinimizedEdge incoming = node.getIncomingEdges().get(0);
+			final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<>();
 			for (final IMinimizedEdge outgoing : node.getMinimalOutgoingEdgeLevel()) {
 				// We check first, if it is possible to merge deep nodes first!
 				recursiveLoopMerge(outgoing.getTarget());
 			}
 			// Now maybe we are now able do some merging
 			for (final IMinimizedEdge outgoing : node.getMinimalOutgoingEdgeLevel()) {
-				reVisitNodes.addAll(Arrays.asList(super
-						.applyMinimizationRules(outgoing.getTarget())));
+				reVisitNodes.addAll(Arrays.asList(super.applyMinimizationRules(outgoing.getTarget())));
 			}
-			mLogger.debug("Sequential Composition of one incoming with multiple outgoing edges for: "
-					+ node);
-			final ArrayList<MinimizedNode> checkForParallelMerge = new ArrayList<MinimizedNode>();
+			mLogger.debug("Sequential Composition of one incoming with multiple outgoing edges for: " + node);
+			final ArrayList<MinimizedNode> checkForParallelMerge = new ArrayList<>();
 
 			if (checkForSequentialMerge(node)) {
 				mLogger.debug("Merging Sequential Node : " + node);
-				checkForParallelMerge.addAll(mergeSequential(incoming,
-						node.getMinimalOutgoingEdgeLevel()));
+				checkForParallelMerge.addAll(mergeSequential(incoming, node.getMinimalOutgoingEdgeLevel()));
 				reVisitNodes.addAll(checkForParallelMerge);
 				for (final MinimizedNode target : checkForParallelMerge) {
-					reVisitNodes.addAll(Arrays.asList(super
-							.applyMinimizationRules(target)));
+					reVisitNodes.addAll(Arrays.asList(super.applyMinimizationRules(target)));
 				}
 			}
 			return reVisitNodes;
 		} else {
-			return new ArrayList<MinimizedNode>();
+			return new ArrayList<>();
 		}
 	}
 
@@ -133,15 +126,13 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 	 * @param outgoing
 	 * @return
 	 */
-	private List<MinimizedNode> mergeSequential(final IMinimizedEdge incoming,
-			final List<IMinimizedEdge> outgoing) {
+	private List<MinimizedNode> mergeSequential(final IMinimizedEdge incoming, final List<IMinimizedEdge> outgoing) {
 		// We have to compute the new outgoing edge level list
-		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
-		final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<MinimizedNode>();
+		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<>();
+		final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<>();
 		for (final IMinimizedEdge outgoingEdge : outgoing) {
 			ConjunctionEdge conjunction;
-			if (incoming instanceof ShortcutErrEdge
-					|| outgoingEdge instanceof ShortcutErrEdge) {
+			if (incoming instanceof ShortcutErrEdge || outgoingEdge instanceof ShortcutErrEdge) {
 				conjunction = new ShortcutErrEdge(incoming, outgoingEdge);
 			} else {
 				conjunction = new ConjunctionEdge(incoming, outgoingEdge);
@@ -149,10 +140,9 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 			outgoingList.add(conjunction);
 			// We have to compute a new incoming list, for the target node of
 			// this conjunction
-			final ArrayList<IMinimizedEdge> incomingList = new ArrayList<IMinimizedEdge>();
+			final ArrayList<IMinimizedEdge> incomingList = new ArrayList<>();
 			incomingList.add(conjunction);
-			for (final IMinimizedEdge edge : conjunction.getTarget()
-					.getMinimalIncomingEdgeLevel()) {
+			for (final IMinimizedEdge edge : conjunction.getTarget().getMinimalIncomingEdgeLevel()) {
 				// All edges except of the outgoingEdge, stay in the List!
 				if (edge != outgoingEdge) {
 					incomingList.add(edge);
@@ -162,8 +152,7 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 			reVisitNodes.add(conjunction.getTarget());
 		}
 		// Now we have to compute the new outgoing list
-		for (final IMinimizedEdge edge : incoming.getSource()
-				.getMinimalOutgoingEdgeLevel()) {
+		for (final IMinimizedEdge edge : incoming.getSource().getMinimalOutgoingEdgeLevel()) {
 			// Except of the actual incoming-Edge, the rest stays in the list
 			if (edge != incoming) {
 				outgoingList.add(edge);
@@ -184,15 +173,14 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 	private boolean checkForSequentialMerge(final MinimizedNode node) {
 		// In this run there can be nodes with one incoming and two outgoing
 		// edges, which we also want to merge
-		if (node.getIncomingEdges().size() == 1
-				&& node.getOutgoingEdges().size() >= 2) {
+		if (node.getIncomingEdges().size() == 1 && node.getOutgoingEdges().size() >= 2) {
 			// Maybe we have an incoming RootEdge, then we want not to minimize
 			for (final IcfgEdge edge : node.getOriginalNode().getIncomingEdges()) {
 				if (edge instanceof RootEdge) {
 					return false;
 				}
 			}
-			final HashSet<MinimizedNode> targetNodes = new HashSet<MinimizedNode>();
+			final HashSet<MinimizedNode> targetNodes = new HashSet<>();
 			for (final IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
 				// We do not include self-loops
 				if (edge.getTarget() == node) {
@@ -208,15 +196,14 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 
 			// Second condition: edges are of type CodeBlock
 			// In order to do this for many edges we use a list here
-			final ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();
+			final ArrayList<IMinimizedEdge> listToCheck = new ArrayList<>();
 			listToCheck.add(node.getIncomingEdges().get(0));
 			listToCheck.addAll(node.getMinimalOutgoingEdgeLevel());
 
 			for (final IMinimizedEdge edgeToCheck : listToCheck) {
 				if (edgeToCheck.isBasicEdge()) {
 					final IBasicEdge basic = (IBasicEdge) edgeToCheck;
-					if (basic.getOriginalEdge() instanceof Call
-							|| basic.getOriginalEdge() instanceof Return
+					if (basic.getOriginalEdge() instanceof Call || basic.getOriginalEdge() instanceof Return
 							|| basic.getOriginalEdge() instanceof Summary) {
 						return false;
 					}

@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>caching letters and only considering respective successors</li>
  * <li>caching successors and only considering unmarked ones</li>
  * </ul>
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -84,7 +84,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 	private final ISetOfPairs<STATE, ?> mDuplicatorEventuallyAccepting;
 	private final ISetOfPairs<STATE, ?> mSpoilerWinningStates;
 	private final BiPredicate<STATE, STATE> mAreStatesMerged;
-	private Map<STATE, NormalNode<STATE>> mMergeStatus = new HashMap<>();
+	private final Map<STATE, NormalNode<STATE>> mMergeStatus = new HashMap<>();
 
 	/**
 	 * @param services
@@ -112,7 +112,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 		mSpoilerWinningStates = computeSpoilerWinning(mDuplicatorEventuallyAccepting);
 		mLogger.info("mSpoilerWinningStates: \n" + mSpoilerWinningStates);
 	}
-	
+
 	public ISetOfPairs<STATE, ?> getDuplicatorEventuallyAcceptingStates() {
 		return mDuplicatorEventuallyAccepting;
 	}
@@ -138,13 +138,15 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 
 		// propagate until fixpoint is reached
 		pair: while (!visit.isEmpty()) {
-			final Pair<STATE, STATE> pair = visit.iterator().next();  
+			final Pair<STATE, STATE> pair = visit.iterator().next();
 			visit.remove(pair);
-			
+
 			letter: for (final Pair<STATE, LETTER> gameLetter : getOutgoingGameLetters(pair)) {
 				for (final Pair<STATE, STATE> succPair : getSuccessors(pair, gameLetter, ordinarySimulation)) {
-					//Either pair is marked and letter not a return symbol or letter is marked and states can be merged
-					if (isMarked(succPair, marked) && (!(mOperand.getVpAlphabet().getReturnAlphabet().contains(gameLetter.getSecond())) || (mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond())))) {
+					// Either pair is marked and letter not a return symbol or letter is marked and states can be merged
+					if (isMarked(succPair, marked)
+							&& (!(mOperand.getVpAlphabet().getReturnAlphabet().contains(gameLetter.getSecond()))
+									|| (mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond())))) {
 						// marked successor found, try next letter
 						continue letter;
 					}
@@ -185,8 +187,9 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 				final Collection<Pair<STATE, STATE>> successors = getSuccessors(pair, gameLetter, null);
 				assert (!successors.isEmpty());
 				for (final Pair<STATE, STATE> succPair : successors) {
-					//either pair isn't marked or states can't be merged
-					if (!isMarked(succPair, marked) || !(mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond()))) {
+					// either pair isn't marked or states can't be merged
+					if (!isMarked(succPair, marked)
+							|| !(mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond()))) {
 						// unmarked successor found, try next letter
 						continue letter;
 					}
@@ -252,9 +255,8 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 				continue;
 			}
 			for (final IncomingCallTransition<LETTER, STATE> lhsPred : mOperand.callPredecessors(lhs, letter)) {
-				for (final IncomingCallTransition<LETTER, STATE> rhsPred : mOperand.callPredecessors(rhs,
-						letter)) {
-					
+				for (final IncomingCallTransition<LETTER, STATE> rhsPred : mOperand.callPredecessors(rhs, letter)) {
+
 					result.add(new Pair<>(lhsPred.getPred(), rhsPred.getPred()));
 				}
 			}
@@ -264,9 +266,8 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 				continue;
 			}
 			for (final IncomingReturnTransition<LETTER, STATE> lhsPred : mOperand.returnPredecessors(lhs, letter)) {
-				for (final IncomingReturnTransition<LETTER, STATE> rhsPred : mOperand.returnPredecessors(rhs,
-						letter)) {
-					//LinPred or HierPred or both?
+				for (final IncomingReturnTransition<LETTER, STATE> rhsPred : mOperand.returnPredecessors(rhs, letter)) {
+					// LinPred or HierPred or both?
 					result.add(new Pair<>(lhsPred.getLinPred(), rhsPred.getLinPred()));
 				}
 			}
@@ -274,8 +275,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 		return result;
 	}
 
-
-	//FIXME: uses deprecated method
+	// FIXME: uses deprecated method
 	private Collection<Pair<STATE, LETTER>> getOutgoingGameLetters(final Pair<STATE, STATE> pair) {
 		final Set<Pair<STATE, LETTER>> result = new HashSet<>();
 		final STATE lhs = pair.getFirst();
@@ -283,29 +283,34 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 		final Set<LETTER> rhsOutgoingInternal = mOperand.lettersInternal(rhs);
 		final Set<LETTER> rhsOutgoingCall = mOperand.lettersCall(rhs);
 		final Set<LETTER> rhsOutgoingReturn = mOperand.lettersReturn(rhs);
-		
-		//TODO: is this actually faster/smarter than using Iterable? 
-		//Also the for loop can be avoided by mapping l to another Stream... but maybe not very readable.
-		Stream<LETTER> stream = Stream.concat(rhsOutgoingInternal.parallelStream(), Stream.concat(rhsOutgoingCall.parallelStream(), rhsOutgoingReturn.parallelStream()));
-		stream.filter(l -> rhsOutgoingInternal.contains(l) || rhsOutgoingCall.contains(l) || rhsOutgoingReturn.contains(l)).forEach((letter) -> {
-			for (final OutgoingInternalTransition<LETTER, STATE> lhsSucc : mOperand.internalSuccessors(lhs, letter)) {
-				result.add(new Pair<>(lhsSucc.getSucc(), letter));
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> lhsSucc : mOperand.callSuccessors(lhs, letter)) {
-				result.add(new Pair<>(lhsSucc.getSucc(), letter));
-			}
-			for (final OutgoingReturnTransition<LETTER, STATE> lhsSucc : mOperand.returnSuccessors(lhs, letter)) {
-				result.add(new Pair<>(lhsSucc.getSucc(), letter));
-			}
-		});
-		
+
+		// TODO: is this actually faster/smarter than using Iterable?
+		// Also the for loop can be avoided by mapping l to another Stream... but maybe not very readable.
+		final Stream<LETTER> stream = Stream.concat(rhsOutgoingInternal.parallelStream(),
+				Stream.concat(rhsOutgoingCall.parallelStream(), rhsOutgoingReturn.parallelStream()));
+		stream.filter(
+				l -> rhsOutgoingInternal.contains(l) || rhsOutgoingCall.contains(l) || rhsOutgoingReturn.contains(l))
+				.forEach((letter) -> {
+					for (final OutgoingInternalTransition<LETTER, STATE> lhsSucc : mOperand.internalSuccessors(lhs,
+							letter)) {
+						result.add(new Pair<>(lhsSucc.getSucc(), letter));
+					}
+					for (final OutgoingCallTransition<LETTER, STATE> lhsSucc : mOperand.callSuccessors(lhs, letter)) {
+						result.add(new Pair<>(lhsSucc.getSucc(), letter));
+					}
+					for (final OutgoingReturnTransition<LETTER, STATE> lhsSucc : mOperand.returnSuccessors(lhs,
+							letter)) {
+						result.add(new Pair<>(lhsSucc.getSucc(), letter));
+					}
+				});
+
 		return result;
 	}
-	
+
 	private Collection<Pair<STATE, STATE>> getSuccessors(final Pair<STATE, STATE> pair,
 			final Pair<STATE, LETTER> gameLetter, final ISetOfPairs<STATE, ?> allowedPairsFilter) {
 		final Set<Pair<STATE, STATE>> result = new HashSet<>();
-		
+
 		for (final OutgoingInternalTransition<LETTER, STATE> rhsSucc : mOperand.internalSuccessors(pair.getSecond(),
 				gameLetter.getSecond())) {
 			final STATE lhs = gameLetter.getFirst();

@@ -64,8 +64,7 @@ public class TranslationConstrainer {
 		 */
 		NONE
 		/**
-		 * Overapproximation of all bit-wise functions by uninterpreted function
-		 * symbol
+		 * Overapproximation of all bit-wise functions by uninterpreted function symbol
 		 */
 	}
 
@@ -78,11 +77,9 @@ public class TranslationConstrainer {
 														// bvand for congruence
 														// based translation
 	/*
-	 * This Class contains of the methods to create constraints for the
-	 * translation of bit-wise-AND and variables. The constraints for
-	 * uninterpreted constants and bit-wise-AND can be accessed via
-	 * getConstraints(). The constraints for TermVariables can be accessed via
-	 * getTvConstraints().
+	 * This Class contains of the methods to create constraints for the translation of bit-wise-AND and variables. The
+	 * constraints for uninterpreted constants and bit-wise-AND can be accessed via getConstraints(). The constraints
+	 * for TermVariables can be accessed via getTvConstraints().
 	 */
 
 	public TranslationConstrainer(final ManagedScript mgdscript, final ConstraintsForBitwiseOperations mode) {
@@ -90,9 +87,9 @@ public class TranslationConstrainer {
 		mScript = mgdscript.getScript();
 		mMode = mode;
 
-		mConstraintSet = new HashSet<Term>();
-		mBvandConstraintSet = new HashSet<Term>();
-		mTvConstraintSet = new HashSet<Term>();
+		mConstraintSet = new HashSet<>();
+		mBvandConstraintSet = new HashSet<>();
+		mTvConstraintSet = new HashSet<>();
 		// mTranslatedTerms = new HashMap<>();
 		// mReversedTranslationMap = new HashMap<>();
 
@@ -172,8 +169,7 @@ public class TranslationConstrainer {
 
 	/**
 	 *
-	 * @return true iff the constraints define only an overapproximation of
-	 *         bvand.
+	 * @return true iff the constraints define only an overapproximation of bvand.
 	 */
 	public boolean bvandConstraint(final Term intTerm, final int width) {
 		if (mMode.equals(ConstraintsForBitwiseOperations.NONE)) {

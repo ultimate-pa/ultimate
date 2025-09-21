@@ -50,7 +50,6 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 	private final ManagedScript mScript;
 
 	public IteRemover(final ManagedScript script) {
-		super();
 		mScript = script;
 	}
 
@@ -91,9 +90,9 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 			final Map<Term, Term> substitutionMapping = Collections.singletonMap((Term) iteTerm, elseTerm);
 			replacedWithElse = Substitution.apply(mScript, substitutionMapping, term);
 		}
-		final Term withoutThisIte =
-				SmtUtils.or(mScript.getScript(), SmtUtils.and(mScript.getScript(), condition, replacedWithIf),
-						SmtUtils.and(mScript.getScript(), SmtUtils.not(mScript.getScript(), condition), replacedWithElse));
+		final Term withoutThisIte = SmtUtils.or(mScript.getScript(),
+				SmtUtils.and(mScript.getScript(), condition, replacedWithIf),
+				SmtUtils.and(mScript.getScript(), SmtUtils.not(mScript.getScript(), condition), replacedWithElse));
 		return withoutThisIte;
 	}
 

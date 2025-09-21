@@ -133,14 +133,14 @@ public abstract class RankingTemplate extends InstanceCounting {
 	/**
 	 * Returns the degree of the template, i.e, the number of Motzkin coefficients occurring in non-linear operation in
 	 * the generated constraints
-	 * 
+	 *
 	 * @return degree of the template
 	 */
 	public abstract int getDegree();
 
 	/**
 	 * Extract the ranking function from a model
-	 * 
+	 *
 	 * @return ranking function
 	 * @throws SMTLIBException
 	 */
@@ -148,7 +148,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 
 	/**
 	 * Create a new positive variable (as a nullary function symbol)
-	 * 
+	 *
 	 * @param name
 	 *            the new variable's name
 	 * @return the new variable as a term

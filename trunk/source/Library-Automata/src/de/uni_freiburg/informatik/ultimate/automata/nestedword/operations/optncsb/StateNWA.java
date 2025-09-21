@@ -26,7 +26,6 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.StateNwa;
@@ -35,61 +34,58 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 /**
  * @author Yong Li (liyong@ios.ac.cn)
- * */
+ */
 
 public class StateNWA<LETTER, STATE> extends StateNwa {
 
-	private NwaToBuchiWrapper<LETTER, STATE> mBuchi;
-	
-	public StateNWA(NwaToBuchiWrapper<LETTER, STATE> buchi, int id) {
+	private final NwaToBuchiWrapper<LETTER, STATE> mBuchi;
+
+	public StateNWA(final NwaToBuchiWrapper<LETTER, STATE> buchi, final int id) {
 		super(buchi, id);
-		this.mBuchi = buchi;
+		mBuchi = buchi;
 	}
-	
+
 	// support on-the-fly exploration
 	@Override
-	public IntSet getSuccessorsInternal(int letter) {
-		if(super.getEnabledLettersInternal().contains(letter)) {
+	public IntSet getSuccessorsInternal(final int letter) {
+		if (super.getEnabledLettersInternal().contains(letter)) {
 			return super.getSuccessorsInternal(letter);
-		}else {
-			IntSet succs = mBuchi.computeSuccessorsInternal(getId(), letter);
-			IntIterator iter = succs.iterator();
-			while(iter.hasNext()) {
+		} else {
+			final IntSet succs = mBuchi.computeSuccessorsInternal(getId(), letter);
+			final IntIterator iter = succs.iterator();
+			while (iter.hasNext()) {
 				super.addSuccessorInternal(letter, iter.next());
 			}
 			return succs;
 		}
 	}
-	
+
 	@Override
-	public IntSet getSuccessorsCall(int letter) {
-		if(super.getEnabledLettersCall().contains(letter)) {
+	public IntSet getSuccessorsCall(final int letter) {
+		if (super.getEnabledLettersCall().contains(letter)) {
 			return super.getSuccessorsCall(letter);
-		}else {
-			IntSet succs = mBuchi.computeSuccessorsCall(getId(), letter);
-			IntIterator iter = succs.iterator();
-			while(iter.hasNext()) {
+		} else {
+			final IntSet succs = mBuchi.computeSuccessorsCall(getId(), letter);
+			final IntIterator iter = succs.iterator();
+			while (iter.hasNext()) {
 				super.addSuccessorCall(letter, iter.next());
 			}
 			return succs;
 		}
 	}
-	
+
 	@Override
-	public IntSet getSuccessorsReturn(int hier, int letter) {
-		if(super.getEnabledLettersReturn().contains(letter)
-		&& super.getEnabledHiersReturn(letter).contains(hier)) {
+	public IntSet getSuccessorsReturn(final int hier, final int letter) {
+		if (super.getEnabledLettersReturn().contains(letter) && super.getEnabledHiersReturn(letter).contains(hier)) {
 			return super.getSuccessorsReturn(hier, letter);
-		}else {
-			IntSet succs = mBuchi.computeSuccessorsReturn(getId(), hier, letter);
-			IntIterator iter = succs.iterator();
-			while(iter.hasNext()) {
+		} else {
+			final IntSet succs = mBuchi.computeSuccessorsReturn(getId(), hier, letter);
+			final IntIterator iter = succs.iterator();
+			while (iter.hasNext()) {
 				super.addSuccessorReturn(hier, letter, iter.next());
 			}
 			return succs;
 		}
 	}
-	
-	
 
 }

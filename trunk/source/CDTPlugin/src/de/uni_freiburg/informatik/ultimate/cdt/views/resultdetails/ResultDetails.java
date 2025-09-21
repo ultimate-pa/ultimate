@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CDTPlugin plug-in.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CDTPlugin plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.cdt.views.resultdetails;
 
@@ -42,9 +42,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
-import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 
@@ -53,11 +51,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 
 /**
- * This new View is basically a replacement for the not really handy
- * ProblemDetails-View, provided by Codan itself.
- * 
+ * This new View is basically a replacement for the not really handy ProblemDetails-View, provided by Codan itself.
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class ResultDetails extends ViewPart {
 
@@ -70,10 +67,8 @@ public class ResultDetails extends ViewPart {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets
-	 * .Composite)
+	 *
+	 * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets .Composite)
 	 */
 	@Override
 	public void createPartControl(final Composite parent) {
@@ -81,12 +76,9 @@ public class ResultDetails extends ViewPart {
 		viewer = new TextViewer(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		viewer.setEditable(false);
 		final ISelectionService ser = getSite().getService(ISelectionService.class);
-		ser.addSelectionListener(new ISelectionListener() {
-			@Override
-			public void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
-				if (part.getSite().getId().equals(problemsViewId)) {
-					processSelection(selection);
-				}
+		ser.addSelectionListener((part, selection) -> {
+			if (part.getSite().getId().equals(problemsViewId)) {
+				processSelection(selection);
 			}
 		});
 		final ISelection selection = ser.getSelection(problemsViewId);
@@ -126,21 +118,21 @@ public class ResultDetails extends ViewPart {
 	}
 
 	private String breakLines(final String s, final String breaker, final int maxLength) {
-//		String[] parts = s.split(" ");
-//		StringBuilder sb = new StringBuilder();
-//
-//		int actualLength = 0;
-//		for (String part : parts) {
-//			actualLength = actualLength + part.length();
-//			if (actualLength > maxLength) {
-//				sb.append(breaker);
-//				actualLength = part.length();
-//			}
-//			sb.append(part);
-//			sb.append(" ");
-//		}
-//
-//		return sb.toString();
+		// String[] parts = s.split(" ");
+		// StringBuilder sb = new StringBuilder();
+		//
+		// int actualLength = 0;
+		// for (String part : parts) {
+		// actualLength = actualLength + part.length();
+		// if (actualLength > maxLength) {
+		// sb.append(breaker);
+		// actualLength = part.length();
+		// }
+		// sb.append(part);
+		// sb.append(" ");
+		// }
+		//
+		// return sb.toString();
 		return s;
 	}
 
@@ -148,7 +140,7 @@ public class ResultDetails extends ViewPart {
 		final IResult result = extractResultFromMarker(marker);
 		if (result != null) {
 			final int length = viewer.getControl().getBounds().width;
-			
+
 			final StringBuilder sb = makeResultViewString(result, length);
 			final Document doc = new Document(sb.toString());
 			viewer.setDocument(doc);
@@ -168,11 +160,10 @@ public class ResultDetails extends ViewPart {
 		for (final IResult ires : results) {
 			if (ires instanceof IResultWithLocation) {
 				final IResultWithLocation res = (IResultWithLocation) ires;
-				if (res.getLocation().getStartLine() == lineNumber) {
-					if (resName.equals(res.getClass().getSimpleName())) {
-						foundRes = res;
-						break;
-					}
+				if ((res.getLocation().getStartLine() == lineNumber)
+						&& resName.equals(res.getClass().getSimpleName())) {
+					foundRes = res;
+					break;
 				}
 			} else {
 
@@ -224,7 +215,7 @@ public class ResultDetails extends ViewPart {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.ui.part.WorkbenchPart#setFocus()
 	 */
 	@Override

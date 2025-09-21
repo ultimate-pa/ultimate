@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -78,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public final class OctDomainState implements IAbstractState<OctDomainState> {
 
 	private final static Comparator<IProgramVarOrConst> LEXICAL_VAR_COMPARATOR =
-			(varA, varB) -> varA.getGloballyUniqueId().compareTo(varB.getGloballyUniqueId());
+			Comparator.comparing(IProgramVarOrConst::getGloballyUniqueId);
 
 	/** Counter for created objects. Used to set {@link #mId}. */
 	private static int sId;
@@ -742,8 +741,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			return script.term("false");
 		}
 
-		final List<Term> terms = new ArrayList<>();
-		terms.addAll(getTermNumericAbstraction(script));
+		final List<Term> terms = new ArrayList<>(getTermNumericAbstraction(script));
 		terms.addAll(getTermBooleanAbstraction(script));
 		return SmtUtils.and(script, terms);
 	}
@@ -783,7 +781,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		} else if (var instanceof ProgramConst) {
 			return ((ProgramConst) var).getDefaultConstant();
 		}
-		return null;
+		throw new AssertionError("Unexpected type " + var.getClass().getSimpleName());
 	}
 
 	/**
@@ -812,11 +810,9 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			if (SmtSortUtils.isNumericSort(newBoogieVar.getSort())) {
 				final int sourceVar = dominator.mMapNumericVarToIndex.get(newBoogieVar);
 				mapNumVarsToDominatorIndices.put(newBoogieVar, sourceVar);
-				if (varIsNew) {
-					if (SmtSortUtils.isRealSort(newBoogieVar.getSort())) {
-						unrefOtherNumericNonIntVars(patchedState);
-						patchedState.mNumericNonIntVars.add(newBoogieVar);
-					}
+				if (varIsNew && SmtSortUtils.isRealSort(newBoogieVar.getSort())) {
+					unrefOtherNumericNonIntVars(patchedState);
+					patchedState.mNumericNonIntVars.add(newBoogieVar);
 				}
 			} else if (SmtSortUtils.isBoolSort(newBoogieVar.getSort())) {
 				unrefOtherBooleanAbstraction(patchedState);
@@ -826,12 +822,9 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		}
 		final int[] mapNumVarsToOldIndices = new int[mapNumVarsToDominatorIndices.size()];
 		final Map<Integer, Integer> mapNumVarIndicesToDominatorIndices = new HashMap<>();
-		final Iterator<Map.Entry<IProgramVarOrConst, Integer>> iter =
-				mapNumVarsToDominatorIndices.entrySet().iterator();
 		patchedState.mMapNumericVarToIndex = new HashMap<>();
 		int index = 0;
-		while (iter.hasNext()) {
-			final Map.Entry<IProgramVarOrConst, Integer> entry = iter.next();
+		for (final Entry<IProgramVarOrConst, Integer> entry : mapNumVarsToDominatorIndices.entrySet()) {
 			final IProgramVarOrConst var = entry.getKey();
 			final Integer indexInDominator = entry.getValue();
 			if (indexInDominator == null) {
@@ -1168,7 +1161,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		final OctagonRelation octRel;
 		final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
 		if (polyRel == null || !polyRel.isAffine()) {
-			//term is not an affine relation
+			// term is not an affine relation
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver
 			// TODO (optional) special treatment for boolean variables
 		}
@@ -1242,8 +1235,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 					usedClosure = true;
 				}
 				final Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
-				assert sourceIndex != null : "Incompatible types: " + sourceVar + " (" + sourceVar.getSort()
-						+ ") has no matching target";
+				assert sourceIndex != null
+						: "Incompatible types: " + sourceVar + " (" + sourceVar.getSort() + ") has no matching target";
 				mNumericAbstraction.assignVarCopy(targetIndex, sourceIndex);
 
 			} else if (mBooleanAbstraction.containsKey(targetVar)) {
@@ -1253,8 +1246,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 
 			}
 			// else: variables of unsupported types are assumed to be \top all the time
-			assert mVariables.contains(targetVar) && mVariables.contains(sourceVar) : "unknown variable in assignment: "
-					+ targetVar + " := " + sourceVar;
+			assert mVariables.contains(targetVar) && mVariables.contains(sourceVar)
+					: "unknown variable in assignment: " + targetVar + " := " + sourceVar;
 		}
 	}
 

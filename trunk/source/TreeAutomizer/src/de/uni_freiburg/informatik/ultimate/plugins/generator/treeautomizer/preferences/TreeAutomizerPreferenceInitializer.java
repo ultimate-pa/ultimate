@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TaMinimization;
 
@@ -64,7 +64,7 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 	public static final String LABEL_AutomataDumpPath = "Dump automata to";
 	public static final String LABEL_MinimizationAlgorithm = "Type of minimization to use";
 
-	//defaults
+	// defaults
 	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
 	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
 	public static final String DEF_ExtSolverLogic = "ALL";
@@ -72,21 +72,19 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 	public static final String DEF_AutomataDumpPath = "";
 	public static final TaMinimization DEF_MinimizationAlgorithm = TaMinimization.NAIVE;
 
-
 	public TreeAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
+
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<SolverMode>(LABEL_Solver, DEF_Solver, PreferenceType.Combo,
-						SolverMode.values()),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_SmtDumpPath, DEF_SmtDumpPath, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_AutomataDumpPath, DEF_AutomataDumpPath, PreferenceType.String),
-				new UltimatePreferenceItem<TaMinimization>(LABEL_MinimizationAlgorithm, DEF_MinimizationAlgorithm,
-						PreferenceType.Combo, TaMinimization.values()),
-				};
+				new UltimatePreferenceItem<>(LABEL_Solver, DEF_Solver, PreferenceType.Combo, SolverMode.values()),
+				new UltimatePreferenceItem<>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_SmtDumpPath, DEF_SmtDumpPath, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_AutomataDumpPath, DEF_AutomataDumpPath, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_MinimizationAlgorithm, DEF_MinimizationAlgorithm,
+						PreferenceType.Combo, TaMinimization.values()), };
 	}
 }

@@ -26,8 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class AbsIntPredicateUnifier<STATE extends IAbstractState<STATE>> extends PredicateUnifier {
 	public AbsIntPredicateUnifier(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
-			final IIcfgSymbolTable symbolTable, 
-			final IPredicate... initialPredicates) {
+			final IIcfgSymbolTable symbolTable, final IPredicate... initialPredicates) {
 		super(logger, services, mgdScript, predicateFactory, symbolTable, SimplificationTechnique.NONE,
 				initialPredicates);
 	}
@@ -57,8 +56,9 @@ public class AbsIntPredicateUnifier<STATE extends IAbstractState<STATE>> extends
 						.map(a -> DisjunctiveAbstractState.createDisjunction(a)).collect(Collectors.toSet());
 		final Set<DisjunctiveAbstractState<STATE>> synchronizedMultiStates =
 				AbsIntUtil.synchronizeVariables(multistates);
-		assert sameVars(synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream())
-				.collect(Collectors.toSet())) : "Synchronize failed";
+		assert sameVars(
+				synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream()).collect(Collectors.toSet()))
+				: "Synchronize failed";
 		final DisjunctiveAbstractState<STATE> conjunction = synchronizedMultiStates.stream()
 				.reduce((a, b) -> a.intersect(b)).orElseThrow(() -> new AssertionError("No predicates given"));
 		final AbsIntPredicate<?> rtr = new AbsIntPredicate<>(unified, conjunction);

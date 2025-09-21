@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016-2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * the data structure supports scoping and making scopes persistent.
  * <p>
  * TODO Get rid of the stack class, it has only one element to encapsulate (do not forget to make methods private!).
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <T>
  *            type of the content wrapper in pairs (controlled by subclass)
@@ -64,7 +64,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param compressPaths
 	 *            true iff paths should be compressed
 	 */
@@ -101,7 +101,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * <p>
 	 * NOTE: A content must be added before its first occurrence in any assertion.<br>
 	 * It is, however, possible to add it after other unrelated assertions have been made.
-	 * 
+	 *
 	 * @param content
 	 *            new content
 	 */
@@ -114,7 +114,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * <p>
 	 * NOTE: A content must be added before its first occurrence in any assertion.<br>
 	 * It is, however, possible to add it after other unrelated assertions have been made.
-	 * 
+	 *
 	 * @param content
 	 *            new content
 	 */
@@ -132,7 +132,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Makes the given contents equal and reports all inferred transitivity information in order to be consistent.
-	 * 
+	 *
 	 * @param pair
 	 *            the two contents which are equal
 	 * @return all transitive pairs of contents which also need to be equal
@@ -148,11 +148,9 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 		}
 
 		/*
-		 * Set equality by adding a bridge between the roots of the trees containing the elements.
-		 * <p>
-		 * Arbitrarily make the first root the new root of both trees.
-		 * <p>
-		 * TODO optimize: attach smaller to bigger tree (maybe not worth the extra effort)
+		 * Set equality by adding a bridge between the roots of the trees containing the elements. <p> Arbitrarily make
+		 * the first root the new root of both trees. <p> TODO optimize: attach smaller to bigger tree (maybe not worth
+		 * the extra effort)
 		 */
 		final BridgeNode<C> newBridgeNode = mStack.bridgeTrees(root1, root2);
 
@@ -239,7 +237,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Creates all pairs of contents which are also equal as a consequence of melding two trees.
-	 * 
+	 *
 	 * @param root1
 	 *            root of first tree
 	 * @param root2
@@ -262,7 +260,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * While this needs more time and space initially, iteration afterward should be very fast.
 	 * <p>
 	 * TODO this is a proof-of-concept implementation, replace with more efficient one after everything else works
-	 * 
+	 *
 	 * @param root1
 	 *            root of first tree
 	 * @param root2
@@ -273,8 +271,8 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 *            information which should not occur in the result
 	 * @return all transitive information
 	 */
-	private Iterable<Pair<T, Boolean>> getTransitiveInformationArrays(final NormalNode<C> root1, final NormalNode<C> root2,
-			final BridgeNode<C> newBridgeNode, final T inputPair) {
+	private Iterable<Pair<T, Boolean>> getTransitiveInformationArrays(final NormalNode<C> root1,
+			final NormalNode<C> root2, final BridgeNode<C> newBridgeNode, final T inputPair) {
 		// transform trees to arrays
 		final ArrayList<C> asList1 = toArrayList(root1, newBridgeNode);
 		final ArrayList<C> asList2 = toArrayList(root2, null);
@@ -319,7 +317,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 	 * Stack of scopes objects which controls the different scopes of reversible information.
 	 * <p>
 	 * One scope is a list of {@link T}.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 * @param <T>
 	 *            stack content type
@@ -358,7 +356,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 		 * If the stack is empty afterward, we automatically add a fresh scope.
 		 * <p>
 		 * TODO see (INIT_SCOPE)
-		 * 
+		 *
 		 * @return stack content of the old top of the stack
 		 */
 		private List<BridgeNode<T>> removeScope() {
@@ -400,7 +398,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 		/**
 		 * Creates a temporary bridge between the roots such that the first root becomes the parent and the second root
 		 * becomes the child of the bridge.
-		 * 
+		 *
 		 * @param newRoot
 		 *            first root, becomes parent of the bridge
 		 * @param newChild
@@ -430,7 +428,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 		/**
 		 * Action executed on a {@link BridgeNode}.
-		 * 
+		 *
 		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 		 * @param <T>
 		 *            node type
@@ -442,7 +440,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 		/**
 		 * Disconnects a temporary bridge between two trees.
-		 * 
+		 *
 		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 		 * @param <T>
 		 *            node type
@@ -462,7 +460,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 		/**
 		 * Removes a temporary bridge between two trees and instead melds the trees persistently.
-		 * 
+		 *
 		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 		 * @param <T>
 		 *            node type
@@ -486,7 +484,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Predicate on an {@link INode}.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	@FunctionalInterface
@@ -496,7 +494,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Returns true iff the node is a root.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public static final class TemporaryRootPredicate implements INodePredicate {
@@ -513,7 +511,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Returns true iff the node is either a root or a bridge node.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public static final class PersistentRootPredicate implements INodePredicate {
@@ -530,7 +528,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Doubly-linked tree's node interface.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 * @param <T>
 	 *            node type
@@ -547,7 +545,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Normal tree node.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 * @param <T>
 	 *            node type
@@ -657,7 +655,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 		/**
 		 * Iterable over a node's children.
-		 * 
+		 *
 		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 		 * @param <T>
 		 *            node type
@@ -680,7 +678,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 		/**
 		 * Iterator over a node's children.
-		 * 
+		 *
 		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 		 * @param <T>
 		 *            node type
@@ -722,7 +720,7 @@ public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCh
 
 	/**
 	 * Node which acts as a temporary bridge between two trees.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 * @param <T>
 	 *            node type

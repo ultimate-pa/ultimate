@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Symmetri
  *
  *
  *
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- TODO do not always rebuild relation, but store relation on stack and make copy for modifications
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de) TODO do not always rebuild relation, but store
+ *         relation on stack and make copy for modifications
  *
  */
 public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>>> {
@@ -65,9 +65,9 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	private final ThreeValuedEquivalenceRelation<E> mEqualityInformation;
 	private final IExternalOracle<E> mExternalOracle;
 
-	public EquivalenceRelationIterator(final IUltimateServiceProvider services,
-			final Collection<E> indices, final ThreeValuedEquivalenceRelation<E> equalityInformation, final IExternalOracle<E> externalOracle, final List<Doubleton<E>> relevant) {
-		super();
+	public EquivalenceRelationIterator(final IUltimateServiceProvider services, final Collection<E> indices,
+			final ThreeValuedEquivalenceRelation<E> equalityInformation, final IExternalOracle<E> externalOracle,
+			final List<Doubleton<E>> relevant) {
 		mServices = services;
 		mNonDisjointDoubletons = relevant;
 		mEqualityInformation = equalityInformation;
@@ -86,13 +86,14 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 				break;
 			}
 		}
-//		assert checkResultWithOldCombinationIterator(indices,
-//				equalityInformation) : "result of CombinationIterator and CombinationIterator2 is different";
+		// assert checkResultWithOldCombinationIterator(indices,
+		// equalityInformation) : "result of CombinationIterator and CombinationIterator2 is different";
 	}
-	
-	public EquivalenceRelationIterator(final IUltimateServiceProvider services,
-			final Collection<E> indices, final ThreeValuedEquivalenceRelation<E> equalityInformation, final IExternalOracle<E> externalOracle) {
-		this(services, indices, equalityInformation, externalOracle, buildListOfNonDisjointDoubletons(indices, equalityInformation));
+
+	public EquivalenceRelationIterator(final IUltimateServiceProvider services, final Collection<E> indices,
+			final ThreeValuedEquivalenceRelation<E> equalityInformation, final IExternalOracle<E> externalOracle) {
+		this(services, indices, equalityInformation, externalOracle,
+				buildListOfNonDisjointDoubletons(indices, equalityInformation));
 
 	}
 
@@ -125,13 +126,13 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	}
 
 	/**
-	 * Try to push 'false' on the stack. If the relation becomes inconsistent,
-	 * backtrack to the last 'true' (i.e., remove elements until we reached the
-	 * last 'true', including the last 'true') and push 'false'. Continue until
-	 * we reached a consistent stack. Note that there has is at least one
-	 * consistent stack, namely the one that contains only 'false' elements.
-	 * @return true iff we removed false and obtained an empty stack (which
-	 * means we are done because we tried all combinations).
+	 * Try to push 'false' on the stack. If the relation becomes inconsistent, backtrack to the last 'true' (i.e.,
+	 * remove elements until we reached the last 'true', including the last 'true') and push 'false'. Continue until we
+	 * reached a consistent stack. Note that there has is at least one consistent stack, namely the one that contains
+	 * only 'false' elements.
+	 *
+	 * @return true iff we removed false and obtained an empty stack (which means we are done because we tried all
+	 *         combinations).
 	 */
 	private boolean tryToPush1False() {
 		final Doubleton<E> d = mNonDisjointDoubletons.get(mStack.size());
@@ -167,15 +168,17 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	}
 
 	/**
-	 * Push 'true' on the stack. If the relation becomes inconsistent remove the
-	 * 'true' and call the {@link EquivalenceRelationIterator#tryToPush1False()}
-	 * method which iterates until it was able to push 'false' to the stack.
-	 * @return true iff we removed false and obtained an empty stack (which
-	 * means we are done because we tried all combinations).
+	 * Push 'true' on the stack. If the relation becomes inconsistent remove the 'true' and call the
+	 * {@link EquivalenceRelationIterator#tryToPush1False()} method which iterates until it was able to push 'false' to
+	 * the stack.
+	 *
+	 * @return true iff we removed false and obtained an empty stack (which means we are done because we tried all
+	 *         combinations).
 	 */
 	private boolean tryToPush1True() {
 		final Doubleton<E> d = mNonDisjointDoubletons.get(mStack.size());
-		if (mEqualityInformation.getEqualityStatus(d.getOneElement(), d.getOtherElement()) == EqualityStatus.NOT_EQUAL) {
+		if (mEqualityInformation.getEqualityStatus(d.getOneElement(),
+				d.getOtherElement()) == EqualityStatus.NOT_EQUAL) {
 			// we cannot add true
 			return false;
 		} else {
@@ -222,8 +225,9 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 
 	/**
 	 * Remove elements from the stack until one 'true' element was removed.
-	 * @return true iff we removed false and obtained an empty stack (which
-	 * means we are done because we tried all combinations).
+	 *
+	 * @return true iff we removed false and obtained an empty stack (which means we are done because we tried all
+	 *         combinations).
 	 */
 	private boolean remove1true() {
 		while (!mStack.peekLast()) {
@@ -248,11 +252,6 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	public Iterator<Set<Doubleton<E>>> iterator() {
 		return mResult.iterator();
 	}
-	
-	
-	
-	
-	
 
 	static <E> List<Doubleton<E>> buildListOfNonDisjointDoubletons(final Collection<E> indices,
 			final ThreeValuedEquivalenceRelation<E> equalityInformation) {
@@ -266,7 +265,8 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 				if (!equalityInformation.isRepresentative(indexList.get(j))) {
 					continue;
 				}
-				if (equalityInformation.getEqualityStatus(indexList.get(i), indexList.get(j)) == EqualityStatus.NOT_EQUAL) {
+				if (equalityInformation.getEqualityStatus(indexList.get(i),
+						indexList.get(j)) == EqualityStatus.NOT_EQUAL) {
 					// do nothing
 				} else {
 					doubeltons.add(new Doubleton<>(indexList.get(i), indexList.get(j)));
@@ -275,15 +275,13 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 		}
 		return doubeltons;
 	}
-	
-	
+
 	private class EquivalenceRelationIterator2 implements Iterable<Set<Doubleton<E>>> {
 
 		private final List<Set<Doubleton<E>>> mResult = new ArrayList<>();
 
 		public EquivalenceRelationIterator2(final Collection<E> indices,
 				final ThreeValuedEquivalenceRelation<E> equalityInformation) {
-			super();
 			final List<Doubleton<E>> doubeltons = buildListOfNonDisjointDoubletons(indices, equalityInformation);
 
 			final int[] numberOfValues = new int[doubeltons.size()];
@@ -327,7 +325,7 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 		}
 
 	}
-	
+
 	public static <E> boolean isClosedUnderTransitivity(final HashRelation<E, E> relation) {
 		for (final Entry<E, E> entry : relation.getSetOfPairs()) {
 			for (final E image : relation.getImage(entry.getValue())) {
@@ -341,21 +339,17 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 
 	public interface IExternalOracle<E> {
 
-		public abstract boolean isConsistent(LinkedList<Boolean> stack, List<Doubleton<E>> nonDisjointDoubletons);
+		boolean isConsistent(LinkedList<Boolean> stack, List<Doubleton<E>> nonDisjointDoubletons);
 
 	}
 
 	public static class DefaultExternalOracle<E> implements IExternalOracle<E> {
 
 		@Override
-		public boolean isConsistent(final LinkedList<Boolean> stack,
-				final List<Doubleton<E>> nonDisjointDoubletons) {
+		public boolean isConsistent(final LinkedList<Boolean> stack, final List<Doubleton<E>> nonDisjointDoubletons) {
 			return true;
 		}
 
 	}
-	
-	
-
 
 }

@@ -25,8 +25,8 @@
  * to convey the resulting work.
  */
 /**
- * Large block encoding (LBE) for concurrent programs. Algorithms in this
- * package require that the concurrent progra is given as a Petri net.
+ * Large block encoding (LBE) for concurrent programs. Algorithms in this package require that the concurrent progra is
+ * given as a Petri net.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)

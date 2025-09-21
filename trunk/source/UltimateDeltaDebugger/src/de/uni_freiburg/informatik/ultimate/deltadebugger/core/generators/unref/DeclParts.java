@@ -26,9 +26,9 @@ class DeclParts {
 	private final List<Token> mTypeSpecifierTokens;
 	private final List<IPSTMacroExpansion> mLeadingMacroExpansions;
 
-	public DeclParts(IPSTNode declaration, List<CommaSeparatedChild> allDeclarators,
-			List<IPSTNode> unreferencedDeclarators, IASTDeclSpecifier referencedTypeSpecifier,
-			List<Token> typeSpecifierTokens, List<IPSTMacroExpansion> leadingMacroExpansions) {
+	public DeclParts(final IPSTNode declaration, final List<CommaSeparatedChild> allDeclarators,
+			final List<IPSTNode> unreferencedDeclarators, final IASTDeclSpecifier referencedTypeSpecifier,
+			final List<Token> typeSpecifierTokens, final List<IPSTMacroExpansion> leadingMacroExpansions) {
 		mDeclaration = declaration;
 		mAllDeclarators = allDeclarators;
 		mUnreferencedDeclarators = unreferencedDeclarators;
@@ -93,8 +93,8 @@ class DeclParts {
 	}
 
 	public List<String> getReferencedDeclaratorNames() {
-		final Set<IASTNode> unreferencedNodes = mUnreferencedDeclarators.stream().map(IPSTNode::getAstNode)
-				.collect(Collectors.toSet());
+		final Set<IASTNode> unreferencedNodes =
+				mUnreferencedDeclarators.stream().map(IPSTNode::getAstNode).collect(Collectors.toSet());
 		return getDeclaratorNames(mAllDeclarators.stream().filter(n -> !unreferencedNodes.contains(n.astNode()))
 				.map(CommaSeparatedChild::astNode));
 	}
@@ -103,7 +103,7 @@ class DeclParts {
 		return getDeclaratorNames(mUnreferencedDeclarators.stream().map(IPSTNode::getAstNode));
 	}
 
-	private static List<String> getDeclaratorNames(Stream<IASTNode> s) {
+	private static List<String> getDeclaratorNames(final Stream<IASTNode> s) {
 		return s.map(n -> ASTNodeUtils.getNestedDeclaratorName((IASTDeclarator) n).toString())
 				.collect(Collectors.toList());
 	}

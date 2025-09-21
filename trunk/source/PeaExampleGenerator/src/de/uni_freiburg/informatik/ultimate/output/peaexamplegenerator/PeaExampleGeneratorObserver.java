@@ -183,7 +183,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 			}
 
 			try {
-				final String[] command = new String[] { "python", mScriptFile.getPath(), "-o",
+				final String[] command = { "python", mScriptFile.getPath(), "-o",
 						mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + j + mOutputFileExtension };
 
 				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
@@ -227,19 +227,19 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 			final int waitTime, final Map<String, String> observables) {
 
 		final String values = observables.computeIfAbsent(identifier, e -> new String());
-		String value = "";
+		final StringBuilder value = new StringBuilder();
 		String waitForValue = "x";
 
 		for (int i = 0; i < waitTime; i++) {
-			value += ".";
+			value.append(".");
 		}
 		if (expression != null) {
 			assert (expression.size() == 1);
 			waitForValue = ((BooleanLiteral) expression.iterator().next()).getValue() ? "h" : "l";
 		}
-		value += waitForValue;
+		value.append(waitForValue);
 
-		observables.put(identifier, values + value);
+		observables.put(identifier, values + value.toString());
 	}
 
 	private static String jsonString(final String name, final Map<String, String> signals) {

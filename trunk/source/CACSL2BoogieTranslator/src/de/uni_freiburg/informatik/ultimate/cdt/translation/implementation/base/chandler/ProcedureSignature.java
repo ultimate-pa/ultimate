@@ -6,10 +6,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
@@ -30,8 +29,7 @@ public class ProcedureSignature {
 			final ASTType type = typehandler.cType2AstType(LocationFactory.createIgnoreCLocation(), ip.getType());
 			mInParams.add(type);
 		}
-		if (cf.getResultType() instanceof CPrimitive
-				&& ((CPrimitive) cf.getResultType()).getType() == CPrimitives.VOID) {
+		if (cf.getResultType().isVoidType()) {
 			mReturnType = null;
 		} else {
 			mReturnType = typehandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
@@ -53,9 +51,8 @@ public class ProcedureSignature {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
-		for (int i = 0; i < mInParams.size(); i++) {
+		for (final ASTType inParam : mInParams) {
 			sb.append(times);
-			final ASTType inParam = mInParams.get(i);
 			flattenASTTypeName(inParam, sb);
 			times = "~X~";
 		}
@@ -86,15 +83,28 @@ public class ProcedureSignature {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		// TODO 2018-11-04 Matthias:
-		// Equality check based on String representation is a very bad idea and was
-		// responsible for at least one bug
-		return toString().equals(o.toString());
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final ProcedureSignature other = (ProcedureSignature) obj;
+		final boolean result =
+				mTakesVarArgs == other.mTakesVarArgs && TypeManager.isEquivalent(mReturnType, other.mReturnType)
+						&& TypeManager.areEquivalent(mInParams, other.mInParams);
+		assert result == toString().equals(obj.toString()) : "disagreement between string repr and data";
+		return result;
 	}
 
 	@Override
 	public int hashCode() {
+		// Slight hack, needed because ASTType::hashCode (for mInParams, mReturnType) does not match notion of type
+		// equivalence used in #equals(). However, equivalent types have the same string representation.
 		return mStringRepresentation.hashCode();
 	}
 }

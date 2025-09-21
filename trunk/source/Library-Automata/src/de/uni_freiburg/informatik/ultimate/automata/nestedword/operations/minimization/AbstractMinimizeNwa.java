@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <p>
  * All subclasses must implement the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation} interface in order
  * to be found by the <code>AutomataScriptInterpreter</code>.
- * 
+ *
  * @author Christian Schilling
  * @param <LETTER>
  *            letter type
@@ -91,7 +91,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This constructor should be called by all subclasses and only by them.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -234,7 +234,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * <p>
 	 * NOTE: The map must be robust against queries for states which did not exist in the input automaton. The expected
 	 * value is 'null', but not, e.g., a NullPointerException.
-	 * 
+	 *
 	 * @return map from input automaton states to output automaton states
 	 */
 	public Map<STATE, STATE> getOldState2newState() {
@@ -252,7 +252,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Passes the result directly.
-	 * 
+	 *
 	 * @param result
 	 *            result automaton
 	 */
@@ -267,7 +267,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Constructs the result from a partition.
-	 * 
+	 *
 	 * @param partition
 	 *            partition data structure
 	 * @param addMapping
@@ -282,7 +282,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * Passes the result directly from a
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.QuotientNwaConstructor}.
-	 * 
+	 *
 	 * @param constructor
 	 *            quotient constructor
 	 */
@@ -306,7 +306,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Adds a state.
-	 * 
+	 *
 	 * @param isInitial
 	 *            is the state initial?
 	 * @param isFinal
@@ -320,7 +320,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Adds a state from a collection of states.
-	 * 
+	 *
 	 * @param isInitial
 	 *            is the state initial?
 	 * @param isFinal
@@ -338,7 +338,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Adds an internal transition.
-	 * 
+	 *
 	 * @param pred
 	 *            predecessor
 	 * @param letter
@@ -352,7 +352,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Adds a call transition.
-	 * 
+	 *
 	 * @param pred
 	 *            predecessor
 	 * @param letter
@@ -366,7 +366,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Adds a return transition.
-	 * 
+	 *
 	 * @param pred
 	 *            predecessor
 	 * @param hier
@@ -383,7 +383,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Finishes construction of result (must be called last).
-	 * 
+	 *
 	 * @param oldState2newState
 	 *            map 'old state -> new state'
 	 */
@@ -452,7 +452,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Setter for map 'old state -> new state'.
-	 * 
+	 *
 	 * @param oldState2newState
 	 *            map 'old state -> new state'
 	 */
@@ -471,7 +471,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * This method checks whether the input automaton is a DFA.
 	 * <p>
 	 * That means the automaton must be deterministic and must not contain any call and return transitions.
-	 * 
+	 *
 	 * @return true iff input automaton is a DFA
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
@@ -482,7 +482,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method checks whether the input automaton is deterministic.
-	 * 
+	 *
 	 * @return true iff automaton is deterministic
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
@@ -499,7 +499,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * nevertheless.
 	 * <p>
 	 * NOTE: The method checks something stronger, namely that the respective alphabets are empty.
-	 * 
+	 *
 	 * @return true iff automaton contains no call and return letters
 	 */
 	protected final boolean isFiniteAutomaton() {
@@ -508,7 +508,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * This method throws an exception iff the operation should be terminated.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             thrown to enforce termination.
 	 */
@@ -523,7 +523,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * <p>
 	 * Subclasses can override this method for more specific result checks, e.g.,
 	 * {@link #checkLanguageEquivalence(INwaInclusionStateFactory)}
-	 * 
+	 *
 	 * @param stateFactory
 	 *            state factory
 	 * @return pair <tt>(b, m)</tt> where <tt>b = true</tt> iff result check succeeded, otherwise <tt>m</tt> contains an
@@ -536,7 +536,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Checks finite-word language equivalence between operand and result.
-	 * 
+	 *
 	 * @param stateFactory
 	 *            state factory
 	 * @return pair <tt>(b, m)</tt> where <tt>b = true</tt> iff result check succeeded, otherwise <tt>m</tt> contains an
@@ -553,7 +553,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	/**
 	 * Checks Buchi language equivalence between operand and result.
-	 * 
+	 *
 	 * @param stateFactory
 	 *            state factory
 	 * @return pair <tt>(b, m)</tt> where <tt>b = true</tt> iff result check succeeded, otherwise <tt>m</tt> contains an
@@ -571,7 +571,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method computes the capacity size for hash sets and hash maps given the expected number of elements to avoid
 	 * resizing.
-	 * 
+	 *
 	 * @param size
 	 *            expected number of elements before resizing
 	 * @return the parameter for initializing the hash structure

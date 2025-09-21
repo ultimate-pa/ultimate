@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * answer was positive, all pairs of states that were tested are equivalent. If the answer was negative, some pairs of
  * states were not equivalent. All those pairs are stored and the information is then propagated to avoid checking these
  * states later.
- * 
+ *
  * @author Christian
  * @param <LETTER>
  *            letter type
@@ -125,7 +125,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 	/**
 	 * GUI Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -143,7 +143,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -185,11 +185,9 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			mUnionFind = new int[mSize];
 
 			/*
-			 * The maximum number of pairs of states without considering the
-			 * order is (n^2 - n)/2.
-			 * 
-			 * This can easily be more than the maximum integer number.
-			 * In that case the constant is set to this bound.
+			 * The maximum number of pairs of states without considering the order is (n^2 - n)/2.
+			 *
+			 * This can easily be more than the maximum integer number. In that case the constant is set to this bound.
 			 */
 			int possibleOverflow = (mSize * (mSize - 1)) / 2;
 			if (possibleOverflow > 0) {
@@ -215,7 +213,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 	/**
 	 * This method invokes the minimization process.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             thrown when execution is cancelled
 	 */
@@ -239,11 +237,12 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			mInt2state.add(state);
 
 			assert mState2int.get(state) == null : "The state is already in the map.";
-			mState2int.put(state, ++stateId);
+			stateId++;
+			mState2int.put(state, stateId);
 		}
 
-		assert (mState2int.size() == mInt2state.size())
-				&& (mState2int.size() == mSize) : "The mappings do not have the same size as the input automaton";
+		assert (mState2int.size() == mInt2state.size()) && (mState2int.size() == mSize)
+				: "The mappings do not have the same size as the input automaton";
 	}
 
 	/**
@@ -253,7 +252,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * It terminates automatically, but can also be halted at any time.
 	 * <p>
 	 * pseudocode name: MIN-INCR
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             when execution is cancelled
 	 */
@@ -315,7 +314,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * The certain candidates are pairs where exactly one state is final.
 	 * <p>
 	 * There is a global option for separating states with different outgoing transitions.
-	 * 
+	 *
 	 * @return set of pairs of states not equivalent to each other
 	 */
 	private void intializeTupleSet() {
@@ -331,8 +330,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 					mNeq.add(new Tuple(i, j));
 				} else if (OPTION_NEQ_TRANS) {
 					/*
-					 * optional separation of states with different outgoing
-					 * transitions
+					 * optional separation of states with different outgoing transitions
 					 */
 					final HashSet<LETTER> letters = new HashSet<>();
 					for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(state1)) {
@@ -361,7 +359,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * The recursion was transformed to an explicit form using a stack.
 	 * <p>
 	 * pseudocode name: EQUIV-P
-	 * 
+	 *
 	 * @param origTuple
 	 *            tuple to check equivalence of
 	 * @return true iff the pair of states is equivalent
@@ -397,8 +395,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			}
 
 			/*
-			 * tuple was already visited on the path, so the states are
-			 * equivalent
+			 * tuple was already visited on the path, so the states are equivalent
 			 */
 			if (mPath.contains(eTuple)) {
 				continue;
@@ -425,7 +422,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * <p>
 	 * If the states have not been separated wrt. different outgoing transitions at the beginning, this is checked here
 	 * and then possibly a reason for non-equivalence is found.
-	 * 
+	 *
 	 * @param tuple
 	 *            pair of states
 	 * @return true iff no reason for non-equivalence was found
@@ -443,9 +440,8 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 			int succQ;
 			if (OPTION_NEQ_TRANS) {
-				assert mOperand.internalSuccessors(secondState, letter).iterator()
-						.hasNext() : "States with different outgoing transitions "
-								+ "should have been marked as not equivalent.";
+				assert mOperand.internalSuccessors(secondState, letter).iterator().hasNext()
+						: "States with different outgoing transitions " + "should have been marked as not equivalent.";
 
 				succQ = find(
 						mState2int.get(mOperand.internalSuccessors(secondState, letter).iterator().next().getSucc()));
@@ -514,7 +510,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 		/*
 		 * add transitions
-		 * 
+		 *
 		 * NOTE: This exploits the fact that the input is deterministic.
 		 */
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
@@ -529,7 +525,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 	/**
 	 * This method computes a mapping from old states to new representatives.
-	 * 
+	 *
 	 * @return map old state -> new state
 	 */
 	private HashMap<Integer, ? extends Collection<STATE>> computeMapState2Equiv() {
@@ -568,7 +564,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * updated accordingly for faster future find operations.
 	 * <p>
 	 * pseudocode name: FIND
-	 * 
+	 *
 	 * @param oldRepresentative
 	 *            state
 	 * @return representative of the given state
@@ -602,7 +598,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * certainly the true representatives.
 	 * <p>
 	 * pseudocode name: UNION
-	 * 
+	 *
 	 * @param tuple
 	 *            pair of states that shall be united
 	 */
@@ -615,7 +611,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	/**
 	 * A tuple class for integers.
 	 */
-	private final class Tuple {
+	private static final class Tuple {
 		/**
 		 * The first integer.
 		 */
@@ -627,7 +623,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param first
 		 *            first state
 		 * @param second
@@ -652,7 +648,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 				return false;
 			}
 			final Tuple o = (Tuple) other;
-			return (o.mFirst == this.mFirst) && (o.mSecond == this.mSecond);
+			return (o.mFirst == mFirst) && (o.mSecond == mSecond);
 		}
 
 		@Override
@@ -709,7 +705,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		 * avoided by this implementation.
 		 * <p>
 		 * pseudocode name: SET-INSERT
-		 * 
+		 *
 		 * @param tuple
 		 *            pair of states
 		 */
@@ -727,7 +723,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		 * implementation.
 		 * <p>
 		 * pseudocode name: SET-REMOVE
-		 * 
+		 *
 		 * @param tuple
 		 *            pair of states
 		 */
@@ -742,7 +738,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		 * This method checks containment of a pair of states.
 		 * <p>
 		 * pseudocode name: SET-SEARCH
-		 * 
+		 *
 		 * @param tuple
 		 *            pair of states
 		 * @return true iff pair of states is contained
@@ -755,7 +751,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		 * This method returns an iterator of all contained elements.
 		 * <p>
 		 * pseudocode name: SET-ELEMENTS
-		 * 
+		 *
 		 * @return iterator
 		 */
 		Iterator<Tuple> iterator() {
@@ -816,7 +812,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 			/**
 			 * Constructor.
-			 * 
+			 *
 			 * @param tuple
 			 *            pair of states
 			 */
@@ -856,7 +852,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 			/**
 			 * This method adds a new pair of states to the end of the list in {@code O(1)}.
-			 * 
+			 *
 			 * @param tuple
 			 *            pair of states
 			 * @return the new list node
@@ -888,7 +884,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 			/**
 			 * This method removes a given list node in {@code O(1)}.
-			 * 
+			 *
 			 * @param listNode
 			 *            list node
 			 */
@@ -920,13 +916,13 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			 * This method returns an iterator of the list elements.
 			 * <p>
 			 * NOTE: It is assumed that the list is not modified during iteration.
-			 * 
+			 *
 			 * @param size
 			 *            the size of the list (known by the set)
 			 * @return iterator of list elements
 			 */
 			Iterator<Tuple> iterator(final int size) {
-				return new Iterator<Tuple>() {
+				return new Iterator<>() {
 					/**
 					 * Number of elements.
 					 */
@@ -982,7 +978,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * flag indicating whether this pair has already been investigated or not. The stack is used is to give an explicit
 	 * version of the recursive procedure in the equivalence checking algorithm.
 	 */
-	private class StackElem {
+	private static class StackElem {
 		/**
 		 * Pair of states.
 		 */
@@ -994,7 +990,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param tuple
 		 *            pair of states
 		 */

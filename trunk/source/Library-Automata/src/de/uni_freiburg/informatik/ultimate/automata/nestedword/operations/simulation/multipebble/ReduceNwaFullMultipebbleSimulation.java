@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * TODO: documentation.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -71,8 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>>
 		extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private enum Metrie {
-		SYM,
-		ASYM
+		SYM, ASYM
 	}
 
 	private static final boolean OMIT_MAX_SAT_FOR_FINITE_AUTOMATA = true;
@@ -106,21 +105,21 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		long timer = System.currentTimeMillis();
 		final ISetOfPairs<STATE, ?> initialPairs;
 		switch (mMetriePreprocessing) {
-			case SYM:
-				final PartitionAndMapBackedSetOfPairs<STATE> partition =
-						new PartitionAndMapBackedSetOfPairs<>(new NwaApproximateBisimulation<>(services, operand,
-								allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT,
-								USE_FULL_PREPROCESSING).getResult().getRelation());
-				mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
-				initialPairs = partition;
-				break;
-			case ASYM:
-				initialPairs = new NwaApproximateSimulation<>(services, operand,
-						allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT,
-						USE_FULL_PREPROCESSING).getResult();
-				break;
-			default:
-				throw new AssertionError("illegal value " + mMetriePreprocessing);
+		case SYM:
+			final PartitionAndMapBackedSetOfPairs<STATE> partition =
+					new PartitionAndMapBackedSetOfPairs<>(new NwaApproximateBisimulation<>(services, operand,
+							allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT,
+							USE_FULL_PREPROCESSING).getResult().getRelation());
+			mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
+			initialPairs = partition;
+			break;
+		case ASYM:
+			initialPairs = new NwaApproximateSimulation<>(services, operand,
+					allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT,
+					USE_FULL_PREPROCESSING).getResult();
+			break;
+		default:
+			throw new AssertionError("illegal value " + mMetriePreprocessing);
 		}
 		final long timePreprocessing = System.currentTimeMillis() - timer;
 
@@ -160,20 +159,19 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 						.setAddMapOldState2NewState(addMapOldState2NewState);
 
 				switch (mMetriePostprocessing) {
-					case ASYM:
-						maxSatMinimizer = new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory, mOperand,
-								readoutExactSimulationRelation(initialPairs, gsm, simRes.getFirst(), gameFactory)
-										.getRelation(),
-								settings);
-						break;
-					case SYM:
-						maxSatMinimizer = new MinimizeNwaPmaxSatDirectBi<>(mServices, stateFactory, mOperand,
-								readoutSymmetricCoreOfSimulationRelation(initialPairs, gsm, simRes.getFirst(),
-										gameFactory),
-								settings);
-						break;
-					default:
-						throw new AssertionError("illegal value " + mMetriePostprocessing);
+				case ASYM:
+					maxSatMinimizer = new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory, mOperand,
+							readoutExactSimulationRelation(initialPairs, gsm, simRes.getFirst(), gameFactory)
+									.getRelation(),
+							settings);
+					break;
+				case SYM:
+					maxSatMinimizer = new MinimizeNwaPmaxSatDirectBi<>(mServices, stateFactory, mOperand,
+							readoutSymmetricCoreOfSimulationRelation(initialPairs, gsm, simRes.getFirst(), gameFactory),
+							settings);
+					break;
+				default:
+					throw new AssertionError("illegal value " + mMetriePostprocessing);
 				}
 				if (addMapOldState2NewState) {
 					super.setOld2NewStateMap(maxSatMinimizer.getOldState2newState());

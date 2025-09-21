@@ -41,15 +41,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Transforms a {@link Term} which is "affine" into our {@link AffineTerm} data
- * structure. The result is an auxiliary error term if the input was not affine.
+ * Transforms a {@link Term} which is "affine" into our {@link AffineTerm} data structure. The result is an auxiliary
+ * error term if the input was not affine.
  *
- * The transformation is done by an recursive algorithm. However, in order to
- * circumvent the problem that the performance of Java virtual machines is
- * rather poor for recursive methods calls we implement the algorithm by using
- * our {@link TermTransformer}. The {@link TermTransformer} allows us to
- * implement recursive algorithms for {@link Term}s without recursive methods
- * calls by explicitly using a stack.
+ * The transformation is done by an recursive algorithm. However, in order to circumvent the problem that the
+ * performance of Java virtual machines is rather poor for recursive methods calls we implement the algorithm by using
+ * our {@link TermTransformer}. The {@link TermTransformer} allows us to implement recursive algorithms for
+ * {@link Term}s without recursive methods calls by explicitly using a stack.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -57,14 +55,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class AffineTermTransformer extends TermTransformer {
 	private final Script mScript;
 	/**
-	 * Predicate that defines which Terms might be variables of the
-	 * {@link AffineTerm}. Currently, every {@link TermVariable} and every
-	 * {@link ApplicationTerm} can be a variable of the result. In
-	 * the future this may become a parameter in order to allow users
-	 * of this class to be more restrictive.
+	 * Predicate that defines which Terms might be variables of the {@link AffineTerm}. Currently, every
+	 * {@link TermVariable} and every {@link ApplicationTerm} can be a variable of the result. In the future this may
+	 * become a parameter in order to allow users of this class to be more restrictive.
 	 */
-	private final Predicate<Term> mIsAffineVariable = (x -> ((x instanceof TermVariable)
-			|| (x instanceof ApplicationTerm)));
+	private final Predicate<Term> mIsAffineVariable =
+			(x -> ((x instanceof TermVariable) || (x instanceof ApplicationTerm)));
 
 	public AffineTermTransformer(final Script script) {
 		mScript = script;
@@ -106,7 +102,6 @@ public class AffineTermTransformer extends TermTransformer {
 		}
 		// Otherwise, the input cannot be converted to an AffineTerm.
 		inputIsNotAffine();
-		return;
 	}
 
 	/**
@@ -117,17 +112,15 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Currently, we support the SMT {@link Sort}s Int and Real (called numeric
-	 * sorts) and the bitvector sorts.
+	 * Currently, we support the SMT {@link Sort}s Int and Real (called numeric sorts) and the bitvector sorts.
 	 */
 	private static boolean hasSupportedSort(final Term term) {
 		return SmtSortUtils.isNumericSort(term.getSort()) || SmtSortUtils.isBitvecSort(term.getSort());
 	}
 
 	/**
-	 * Check if term is an {@link ApplicationTerm} whose {@link FunctionSymbol}
-	 * represents an "affine function". We call a function an "affine function" if
-	 * it implements an addition, subtraction, multiplication, or real number
+	 * Check if term is an {@link ApplicationTerm} whose {@link FunctionSymbol} represents an "affine function". We call
+	 * a function an "affine function" if it implements an addition, subtraction, multiplication, or real number
 	 * division.
 	 */
 	private static boolean isAffineFunction(final Term term) {
@@ -156,8 +149,8 @@ public class AffineTermTransformer extends TermTransformer {
 		final AffineTerm[] affineArgs = castAndCheckForNonAffineArguments(newArgs);
 		if (affineArgs == null) {
 			throw new AssertionError();
-//			inputIsNotAffine();
-//			return;
+			// inputIsNotAffine();
+			// return;
 		}
 		final String funName = appTerm.getFunction().getName();
 		if (funName.equals("*") || funName.equals("bvmul")) {
@@ -170,11 +163,9 @@ public class AffineTermTransformer extends TermTransformer {
 				return;
 			}
 			setResult(result);
-			return;
 		} else if (funName.equals("+") || funName.equals("bvadd")) {
 			final AffineTerm result = add(affineArgs);
 			setResult(result);
-			return;
 		} else if (funName.equals("-") || funName.equals("bvsub")) {
 			final AffineTerm result;
 			if (affineArgs.length == 1) {
@@ -184,7 +175,6 @@ public class AffineTermTransformer extends TermTransformer {
 				result = subtract(affineArgs);
 			}
 			setResult(result);
-			return;
 		} else if (funName.equals("/")) {
 			final Sort sort = appTerm.getSort();
 			final AffineTerm result = divide(sort, affineArgs);
@@ -195,16 +185,14 @@ public class AffineTermTransformer extends TermTransformer {
 				return;
 			}
 			setResult(result);
-			return;
 		} else {
 			throw new UnsupportedOperationException("unsupported symbol " + funName);
 		}
 	}
 
 	/**
-	 * Convert an array of {@link Term}s into an an array of {@link AffineTerm}s by
-	 * casting every single element. In case an element of the input is our
-	 * auxiliary error term we return null instead.
+	 * Convert an array of {@link Term}s into an an array of {@link AffineTerm}s by casting every single element. In
+	 * case an element of the input is our auxiliary error term we return null instead.
 	 */
 	private static AffineTerm[] castAndCheckForNonAffineArguments(final Term[] terms) {
 		final AffineTerm[] affineTerms = new AffineTerm[terms.length];
@@ -237,9 +225,8 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Given {@link AffineTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link AffineTerm} that represents the difference <code>t1-t2-...-tn</code>,
-	 * i.e., the {@link AffineTerm} that is equivalent to
+	 * Given {@link AffineTerm}s <code>t1,t2,...,tn</code> construct an {@link AffineTerm} that represents the
+	 * difference <code>t1-t2-...-tn</code>, i.e., the {@link AffineTerm} that is equivalent to
 	 * <code>t1-(t2+...+tn)</code>
 	 */
 	private static AffineTerm subtract(final AffineTerm[] input) {
@@ -255,8 +242,8 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Multiply an array of AffineTerms. If more that one argument is not a literal
-	 * the result is not affine and we return null.
+	 * Multiply an array of AffineTerms. If more that one argument is not a literal the result is not affine and we
+	 * return null.
 	 */
 	private static AffineTerm tryToMultiply(final Sort sort, final AffineTerm[] affineTerms) {
 		AffineTerm result;
@@ -283,12 +270,10 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Given {@link AffineTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link AffineTerm} that represents the quotient <code>t1/t2/.../tn</code>,
-	 * i.e., the {@link AffineTerm} that is equivalent to
-	 * <code>t1*((1/t2)+...+(1/tn))</code>. Note that the function "/" is only
-	 * defined the sort of reals. For integer division we have the function "div"
-	 * which is currently not supported by our affine terms.
+	 * Given {@link AffineTerm}s <code>t1,t2,...,tn</code> construct an {@link AffineTerm} that represents the quotient
+	 * <code>t1/t2/.../tn</code>, i.e., the {@link AffineTerm} that is equivalent to
+	 * <code>t1*((1/t2)+...+(1/tn))</code>. Note that the function "/" is only defined the sort of reals. For integer
+	 * division we have the function "div" which is currently not supported by our affine terms.
 	 */
 	private static AffineTerm divide(final Sort sort, final AffineTerm[] affineArgs) {
 		assert SmtSortUtils.isRealSort(sort);
@@ -320,9 +305,6 @@ public class AffineTermTransformer extends TermTransformer {
 		return result;
 	}
 
-
-
-
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Unused auxiliary methods that we may use in the future.
 
@@ -337,9 +319,8 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Convert input term of the form "to_real(param)" to affine term. If the input
-	 * term is an integer literal we convert it to a real literal, otherwise we
-	 * consider the "to_real" term as a variable of an affine term.
+	 * Convert input term of the form "to_real(param)" to affine term. If the input term is an integer literal we
+	 * convert it to a real literal, otherwise we consider the "to_real" term as a variable of an affine term.
 	 */
 	private static AffineTerm convertToReal(final ApplicationTerm term) {
 		if (!term.getFunction().getName().equals("to_real")) {

@@ -34,7 +34,6 @@ import java.util.Collection;
  */
 public class Dnf<E> extends Xnf<E> {
 	public Dnf() {
-		super();
 	}
 
 	public Dnf(final int initialCapacity) {

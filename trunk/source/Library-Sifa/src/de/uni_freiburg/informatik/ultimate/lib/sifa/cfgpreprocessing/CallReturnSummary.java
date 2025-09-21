@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 /**
  * Represents in one transition the following sequence.
  * <ul>
- * <li> Entering a called procedure. This includes assigning arguments to its parameters.
- * <li> Executing its body without errors and with guaranteed termination
- * <li> Returning from the procedure. This includes assigning its return values to local variables of the caller.
+ * <li>Entering a called procedure. This includes assigning arguments to its parameters.
+ * <li>Executing its body without errors and with guaranteed termination
+ * <li>Returning from the procedure. This includes assigning its return values to local variables of the caller.
  * </ul>
  *
  * @author schaetzc@tf.uni-freiburg.de
@@ -48,8 +48,7 @@ public class CallReturnSummary implements IIcfgInternalTransition<IcfgLocation> 
 	private static final long serialVersionUID = 1L;
 	private final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> mReturn;
 
-	public CallReturnSummary(
-			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTrans) {
+	public CallReturnSummary(final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTrans) {
 		mReturn = returnTrans;
 	}
 

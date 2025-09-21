@@ -27,7 +27,7 @@
 
 /**
  * Base package of the delta debugger with core Ultimate plugin classes.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger;

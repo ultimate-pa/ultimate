@@ -31,9 +31,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Default implementation of a global program variable that represent a copy of
- * the variable that refers to the value of the global variable at the beginning
- * of a procedure.
+ * Default implementation of a global program variable that represent a copy of the variable that refers to the value of
+ * the global variable at the beginning of a procedure.
  *
  * @see {@link IProgramVar}.
  *

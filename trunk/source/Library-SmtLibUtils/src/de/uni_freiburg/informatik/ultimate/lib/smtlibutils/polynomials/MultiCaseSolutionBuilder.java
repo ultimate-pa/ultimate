@@ -56,17 +56,15 @@ public class MultiCaseSolutionBuilder {
 	private boolean mConstructionFinished = false;
 
 	public MultiCaseSolutionBuilder(final Term subject, final Xnf xnf) {
-		super();
 		mXnf = xnf;
 		mSubject = subject;
-		mCases = new ArrayList<Case>();
+		mCases = new ArrayList<>();
 		mAdditionalAuxiliaryVariables = new HashSet<>();
-		mAdditionalIntricateOperations = new HashSet<IntricateOperation>();
+		mAdditionalIntricateOperations = new HashSet<>();
 	}
 
 	/**
-	 * Add new atoms to each case. If there is not yet a case, a new case will take
-	 * the atoms is constructed.
+	 * Add new atoms to each case. If there is not yet a case, a new case will take the atoms is constructed.
 	 */
 	public void addAtoms(final Object... newAtoms) {
 		if (mConstructionFinished) {
@@ -79,16 +77,15 @@ public class MultiCaseSolutionBuilder {
 	}
 
 	/**
-	 * Take the cases that we already have and split them furthermore according to
-	 * the new cases. This means that if there are n new cases, each old case will
-	 * be split n times. For DNFs this corresponds to taking the conjunction of two
-	 * DNFs.
+	 * Take the cases that we already have and split them furthermore according to the new cases. This means that if
+	 * there are n new cases, each old case will be split n times. For DNFs this corresponds to taking the conjunction
+	 * of two DNFs.
 	 */
 	public void splitCases(final Collection<Case> newCases) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("construction already finished");
 		}
-		final List<Case> resultCases = new ArrayList<Case>();
+		final List<Case> resultCases = new ArrayList<>();
 		for (final Case newCase : newCases) {
 			if (mCases.isEmpty()) {
 				resultCases.add(newCase);
@@ -105,7 +102,7 @@ public class MultiCaseSolutionBuilder {
 		final List<List<?>> result = new ArrayList<>();
 		do {
 			final List<Object> inner = new ArrayList<>();
-			for (int i=0; i< dnf.size(); i++) {
+			for (int i = 0; i < dnf.size(); i++) {
 				final Object atom = dnf.get(i).get(lc.getCurrentValue()[i]);
 				inner.add(atom);
 			}
@@ -144,7 +141,7 @@ public class MultiCaseSolutionBuilder {
 	}
 
 	private List<Case> buildSingletonCases(final Object... newElems) throws AssertionError {
-		final List<Case> result = new ArrayList<Case>();
+		final List<Case> result = new ArrayList<>();
 		for (final Object newElem : newElems) {
 			if (newElem instanceof SolvedBinaryRelation) {
 				final Case newCase = new Case((SolvedBinaryRelation) newElem, Collections.emptySet(), mXnf);
@@ -160,8 +157,7 @@ public class MultiCaseSolutionBuilder {
 	}
 
 	/**
-	 * Return a copy of the list of cases, where we added the elements of
-	 * distributionCase to each case.
+	 * Return a copy of the list of cases, where we added the elements of distributionCase to each case.
 	 */
 	private List<Case> buildCopyAndAddToEachCase(final List<Case> cases, final Case distributionCase) {
 		final List<Case> newCases = new ArrayList<>();
@@ -169,14 +165,14 @@ public class MultiCaseSolutionBuilder {
 			SolvedBinaryRelation solvedBinaryRelation = null;
 			final Set<SupportingTerm> supportingTerms = new HashSet<>(c.getSupportingTerms());
 			solvedBinaryRelation = c.getSolvedBinaryRelation();
-				if (distributionCase.getSolvedBinaryRelation() != null) {
-					if (solvedBinaryRelation == null) {
-						solvedBinaryRelation = distributionCase.getSolvedBinaryRelation();
-					} else {
-						throw new AssertionError("already have a solvedBinayRelation");
-					}
+			if (distributionCase.getSolvedBinaryRelation() != null) {
+				if (solvedBinaryRelation == null) {
+					solvedBinaryRelation = distributionCase.getSolvedBinaryRelation();
+				} else {
+					throw new AssertionError("already have a solvedBinayRelation");
 				}
-				supportingTerms.addAll(distributionCase.getSupportingTerms());
+			}
+			supportingTerms.addAll(distributionCase.getSupportingTerms());
 			final Case newCase = new Case(solvedBinaryRelation, supportingTerms, mXnf);
 			newCases.add(newCase);
 		}
@@ -184,9 +180,8 @@ public class MultiCaseSolutionBuilder {
 	}
 
 	/**
-	 * Return a list of cases that contains for each case in the List cases and
-	 * each element elem in newElem a copy of the case that contain additionally
-	 * elem.
+	 * Return a list of cases that contains for each case in the List cases and each element elem in newElem a copy of
+	 * the case that contain additionally elem.
 	 */
 	private List<Case> buildProduct(final List<Case> cases, final Object... newElems) {
 		final List<Case> newCases = new ArrayList<>();

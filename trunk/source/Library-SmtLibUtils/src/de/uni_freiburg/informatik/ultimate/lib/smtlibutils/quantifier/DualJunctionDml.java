@@ -435,7 +435,6 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 
 		private CoeffcientEliminateeOffset(final BigInteger coefficient, final TermVariable eliminatee,
 				final Term offset) {
-			super();
 			mCoefficient = coefficient;
 			mEliminatee = eliminatee;
 			mOffset = offset;

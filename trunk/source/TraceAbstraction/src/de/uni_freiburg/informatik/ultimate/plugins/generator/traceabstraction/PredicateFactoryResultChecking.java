@@ -48,10 +48,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @author Matthias Heizmann
  *
  */
-public class PredicateFactoryResultChecking
-		implements ISenwaStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate>,
-		IMinimizationStateFactory<IPredicate>, IMinimizationCheckResultStateFactory<IPredicate>,
-		IPetriNetAndAutomataInclusionStateFactory<IPredicate> {
+public class PredicateFactoryResultChecking implements ISenwaStateFactory<IPredicate>,
+		IConcurrentProductStateFactory<IPredicate>, IMinimizationStateFactory<IPredicate>,
+		IMinimizationCheckResultStateFactory<IPredicate>, IPetriNetAndAutomataInclusionStateFactory<IPredicate> {
 
 	protected final SmtFreePredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =

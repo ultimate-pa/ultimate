@@ -142,9 +142,6 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 				try {
 					storable.destroy();
 				} catch (final Throwable t) {
-					if (coreLogger == null) {
-						continue;
-					}
 					coreLogger.fatal("There was an exception during clearing of toolchain storage while destroying "
 							+ storable.getClass().toString() + ": " + t.getMessage());
 				}

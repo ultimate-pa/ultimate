@@ -38,12 +38,7 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 	final ISetOfPairs<STATE, ?> mDuplicatorFollowing;
 	final ISetOfPairs<STATE, ?> mSimulation;
 
-	final BiPredicate<STATE, STATE> nothingMergedYet = new BiPredicate<STATE, STATE>() {
-		@Override
-		public boolean test(final STATE t, final STATE u) {
-			return false;
-		}
-	};
+	final BiPredicate<STATE, STATE> nothingMergedYet = (t, u) -> false;
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.

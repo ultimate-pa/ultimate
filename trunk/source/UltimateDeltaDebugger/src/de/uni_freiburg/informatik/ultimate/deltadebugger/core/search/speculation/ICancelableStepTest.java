@@ -32,15 +32,17 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep
 
 /**
  * Search step that can be canceled.
- * 
+ *
  * @param <T>
  *            search step type
  */
 @FunctionalInterface
 public interface ICancelableStepTest<T extends ISearchStep<?, T>> {
 	/**
-	 * @param step Search step.
-	 * @param marks a search step as canceled
+	 * @param step
+	 *            Search step.
+	 * @param marks
+	 *            a search step as canceled
 	 * @return
 	 */
 	Optional<Boolean> test(T step, BooleanSupplier isCanceled);

@@ -119,9 +119,16 @@ function get_user_session_settings() {
  */
 function set_user_frontend_settings(frontend_settings) {
 	frontend_settings.forEach(function (setting) {
-		// Todo: implement range, int, ...
+		// Todo: implement range, real, ...
 		if (setting.type === 'bool') {
 			$('#' + setting.id).prop('checked', setting.value);
+		} else if (setting.type == 'string') {
+			$('#' + setting.id).prop('value', setting.value);
+		} else if (setting.type == 'int') {
+			$('#' + setting.id).prop('value', setting.value);
+		} else {
+			console.warn("skipping setting: " + setting.id + " (unsupported settings type " + setting.type + ")");
+			console.debug(setting);
 		}
 	});
 }

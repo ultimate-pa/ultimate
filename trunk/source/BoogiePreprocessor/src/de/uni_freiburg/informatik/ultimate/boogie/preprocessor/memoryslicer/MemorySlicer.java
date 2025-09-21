@@ -125,28 +125,28 @@ public class MemorySlicer implements IUnmanagedObserver {
 			memorySliceSuffixes.add(memorySliceSuffix);
 		}
 
-		final HashRelation<String, Integer> procedureToDirectlyModifiedMemorySlices = computeProcedureToDirectlyModifiedSlices(
-				aa, ma, repToArray);
+		final HashRelation<String, Integer> procedureToDirectlyModifiedMemorySlices =
+				computeProcedureToDirectlyModifiedSlices(aa, ma, repToArray);
 
-		final HashRelation<String, Integer> procedureToModifiedMemorySlices = computeProcedureToModifiedSlices(aa,
-				procedureToDirectlyModifiedMemorySlices);
+		final HashRelation<String, Integer> procedureToModifiedMemorySlices =
+				computeProcedureToModifiedSlices(aa, procedureToDirectlyModifiedMemorySlices);
 
 		final ArrayDeque<Declaration> newDecls = new ArrayDeque<>();
-		final MemoryArrayReplacer har = new MemoryArrayReplacer(mAsfac, ma, repToArray,
-				procedureToModifiedMemorySlices);
+		final MemoryArrayReplacer har =
+				new MemoryArrayReplacer(mAsfac, ma, repToArray, procedureToModifiedMemorySlices);
 		for (final Declaration d : unit.getDeclarations()) {
-			final List<String> memoryArrays = Arrays.asList(new String[] { MemorySliceUtils.MEMORY_POINTER,
-					MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL });
-			final List<VariableDeclaration> newMemoryVarDecls = duplicateMemoryArrayVarDecl(memoryArrays,
-					memorySliceSuffixes, d);
+			final List<String> memoryArrays = Arrays.asList(MemorySliceUtils.MEMORY_POINTER,
+					MemorySliceUtils.MEMORY_INT, MemorySliceUtils.MEMORY_REAL);
+			final List<VariableDeclaration> newMemoryVarDecls =
+					duplicateMemoryArrayVarDecl(memoryArrays, memorySliceSuffixes, d);
 			if (newMemoryVarDecls != null) {
 				newDecls.addAll(newMemoryVarDecls);
 			} else if (d instanceof Procedure) {
 				final Procedure proc = (Procedure) d;
 				if (isUltimateBasicMemoryReadWriteProcedure(proc)
 						|| isUltimateMemoryReadWriteProcedureWithImplementation(proc)) {
-					final List<Procedure> duplicates = duplicateProcedure(memoryArrays, memorySliceSuffixes,
-							(Procedure) d);
+					final List<Procedure> duplicates =
+							duplicateProcedure(memoryArrays, memorySliceSuffixes, (Procedure) d);
 					newDecls.addAll(duplicates);
 				} else if (isUltimateMemoryAllocationProcedure(proc)) {
 					// nothing has to be changed here
@@ -178,10 +178,9 @@ public class MemorySlicer implements IUnmanagedObserver {
 
 	public HashRelation<String, Integer> computeProcedureToModifiedSlices(final AliasAnalysis aa,
 			final HashRelation<String, Integer> procedureToDirectlyModifiedMemorySlices) {
-		final HashRelation<String, Integer> procedureToModifiedMemorySlices = new HashRelation<>(
-				procedureToDirectlyModifiedMemorySlices);
-		final LinkedHashSet<String> worklist = new LinkedHashSet<>();
-		worklist.addAll(procedureToDirectlyModifiedMemorySlices.getDomain());
+		final HashRelation<String, Integer> procedureToModifiedMemorySlices =
+				new HashRelation<>(procedureToDirectlyModifiedMemorySlices);
+		final LinkedHashSet<String> worklist = new LinkedHashSet<>(procedureToDirectlyModifiedMemorySlices.getDomain());
 		while (!worklist.isEmpty()) {
 			final String proc = worklist.iterator().next();
 			worklist.remove(proc);
@@ -225,10 +224,8 @@ public class MemorySlicer implements IUnmanagedObserver {
 		{
 			final UnionFind<AddressStore> uf = ma.getAddressStores();
 			for (final AddressStore elem : uf.getAllElements()) {
-				if (elem instanceof PointerBase) {
-					if (AliasAnalysis.isNullPointer((PointerBase) elem)) {
-						assert uf.find(elem) == elem && uf.getEquivalenceClassMembers(elem).size() == 1;
-					}
+				if ((elem instanceof PointerBase) && AliasAnalysis.isNullPointer((PointerBase) elem)) {
+					assert uf.find(elem) == elem && uf.getEquivalenceClassMembers(elem).size() == 1;
 				}
 			}
 			int ctr = 0;
@@ -344,8 +341,8 @@ public class MemorySlicer implements IUnmanagedObserver {
 			final Collection<String> memorySliceSuffixes, final Procedure p) {
 		final List<Procedure> res = new ArrayList<>(memorySliceSuffixes.size());
 		for (final String memorySliceSuffix : memorySliceSuffixes) {
-			final Map<String, String> oldIdToNewId = memoryArrays.stream()
-					.collect(Collectors.toMap(Function.identity(), x -> x + memorySliceSuffix));
+			final Map<String, String> oldIdToNewId =
+					memoryArrays.stream().collect(Collectors.toMap(Function.identity(), x -> x + memorySliceSuffix));
 			res.add(renameSpecification(oldIdToNewId, memorySliceSuffix, p));
 		}
 		return res;
@@ -419,15 +416,15 @@ public class MemorySlicer implements IUnmanagedObserver {
 		final VarList[] variables = new VarList[oldVarDecl.getVariables().length];
 		for (int i = 0; i < oldVarDecl.getVariables().length; i++) {
 			final VarList varList = oldVarDecl.getVariables()[i];
-			final VarList newVarList = new VarList(varList.getLoc(),
-					new String[] { memoryArrayIds[i] + memorySliceSuffix }, varList.getType(),
-					varList.getWhereClause());
+			final VarList newVarList =
+					new VarList(varList.getLoc(), new String[] { memoryArrayIds[i] + memorySliceSuffix },
+							varList.getType(), varList.getWhereClause());
 			ModelUtils.copyAnnotations(varList, newVarList);
 			variables[i] = newVarList;
 
 		}
-		final VariableDeclaration newVarDecl = new VariableDeclaration(oldVarDecl.getLoc(), oldVarDecl.getAttributes(),
-				variables);
+		final VariableDeclaration newVarDecl =
+				new VariableDeclaration(oldVarDecl.getLoc(), oldVarDecl.getAttributes(), variables);
 		ModelUtils.copyAnnotations(oldVarDecl, newVarDecl);
 		return newVarDecl;
 	}

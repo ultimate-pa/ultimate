@@ -82,8 +82,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 *             if operation was canceled
 	 */
 	public LoopComplexity(final AutomataLibraryServices services,
-			final IEmptyStackStateFactory<STATE> emptyStackFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand)
+			final IEmptyStackStateFactory<STATE> emptyStackFactory, final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
 
@@ -108,18 +107,18 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 	/**
 	 * Construct an automaton that represents the graph structure of the operand.
+	 *
 	 * @param emptyStackFactory
 	 *
 	 * @return The Result is a copy of the operand where each edge has the same label. As label we us some letter form
 	 *         the alphabet.
 	 */
-	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph(final IEmptyStackStateFactory<STATE> emptyStackFactory)
-			throws AutomataOperationCanceledException {
+	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph(
+			final IEmptyStackStateFactory<STATE> emptyStackFactory) throws AutomataOperationCanceledException {
 		final LETTER letter = mOperand.getVpAlphabet().getInternalAlphabet().iterator().next();
 		final Set<LETTER> singletonAlphabet = Collections.singleton(letter);
 		final NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<>(mServices,
-				new VpAlphabet<>(singletonAlphabet, singletonAlphabet, singletonAlphabet),
-				emptyStackFactory);
+				new VpAlphabet<>(singletonAlphabet, singletonAlphabet, singletonAlphabet), emptyStackFactory);
 
 		for (final STATE state : mOperand.getStates()) {
 			graph.addState(true, true, state);

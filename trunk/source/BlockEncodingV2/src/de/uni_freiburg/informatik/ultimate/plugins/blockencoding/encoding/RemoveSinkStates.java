@@ -78,8 +78,7 @@ public final class RemoveSinkStates extends BaseBlockEncoder<IcfgLocation> {
 	}
 
 	private void disconnectSinks(final IIcfg<?> icfg, final List<IcfgLocation> initialSinks) {
-		final Deque<IcfgLocation> sinks = new ArrayDeque<>();
-		sinks.addAll(initialSinks);
+		final Deque<IcfgLocation> sinks = new ArrayDeque<>(initialSinks);
 		while (!sinks.isEmpty()) {
 			final IcfgLocation current = sinks.removeFirst();
 			assert isSink(icfg, current);

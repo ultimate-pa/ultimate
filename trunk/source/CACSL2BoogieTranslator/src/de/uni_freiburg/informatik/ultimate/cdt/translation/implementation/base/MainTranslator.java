@@ -170,7 +170,7 @@ public class MainTranslator {
 					executePreRun(new FunctionPointerVisitor(flatSymbolTable, functionTable), nodes).getResult();
 
 			final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
-					functionPointers, translationSettings.getEntryMethod());
+					functionPointers, translationSettings.getEntryFunction());
 
 			mLogger.info("Built tables and reachable declarations");
 			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
@@ -257,7 +257,7 @@ public class MainTranslator {
 	}
 
 	private Set<IASTDeclaration> initReachableDeclarations(final List<DecoratedUnit> nodes,
-			final Map<String, IASTNode> functionTable, final Set<String> functions, final String checkedMethod) {
+			final Map<String, IASTNode> functionTable, final Set<String> functions, final String entryFunction) {
 		if (!DETERMINIZE_NECESSARY_DECLARATIONS) {
 			return null;
 		}
@@ -284,7 +284,7 @@ public class MainTranslator {
 			}
 		}
 		for (final DecoratedUnit du : nodes) {
-			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(checkedMethod,
+			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(entryFunction,
 					new CTranslationResultReporter(mServices, mLogger), functionTable, functions);
 			du.getRootNode().getCNode().accept(dnd);
 			final Set<IASTDeclaration> decl = dnd.getReachableDeclarationsOrDeclarators();

@@ -28,9 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
 /**
- * Our Jordan-based loop acceleration works with closed forms of the variables
- * updates that are done in the loop. This class provides (static) methods that
- * construct these closed forms.
+ * Our Jordan-based loop acceleration works with closed forms of the variables updates that are done in the loop. This
+ * class provides (static) methods that construct these closed forms.
  *
  * @author Miriam Herzig
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

@@ -128,8 +128,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 				computeIsConsolidatedInterpolantsPerfectSequence(mConsolidatedInterpolants);
 	}
 
-	private final boolean computeInterpolants()
-			throws AutomataOperationCanceledException {
+	private final boolean computeInterpolants() throws AutomataOperationCanceledException {
 		// Start the stopwatch to measure the time we need for interpolant consolidation
 		mInterpolantConsolidationBenchmarkGenerator.start(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 

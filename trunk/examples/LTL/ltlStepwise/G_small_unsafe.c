@@ -7,7 +7,7 @@
 
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER_ltl_step() __attribute__ ((__noreturn__));
+extern void __VERIFIER_ltl_step();
 
 int a = 5;
 int b = 3;

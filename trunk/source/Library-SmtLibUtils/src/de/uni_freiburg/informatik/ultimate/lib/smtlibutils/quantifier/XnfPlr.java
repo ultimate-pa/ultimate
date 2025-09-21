@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,24 +83,19 @@ public class XnfPlr extends XjunctPartialQuantifierElimination {
 			}
 		}
 
-		final Iterator<TermVariable> iter = booleanQuantVars.iterator();
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		final Term trueTerm = mScript.term("true");
 		final Term falseTerm = mScript.term("false");
-		while (iter.hasNext()) {
-			final TermVariable var = iter.next();
-			for (int i = 0; i < dualJuncts.length; ++i) {
-				final Term atom = dualJuncts[i];
+		for (final TermVariable var : booleanQuantVars) {
+			for (final Term atom : dualJuncts) {
 				if (atom instanceof ApplicationTerm) {
 					final ApplicationTerm aatom = ((ApplicationTerm) atom);
-					if (aatom.getFunction().getName().equals("not")) {
-						if (aatom.getParameters()[0].equals(var)) {
-							if (mLogger.isDebugEnabled()) {
-								mLogger.debug(String.format("eliminated quantifier via %s for %s", getAcronym(), var));
-							}
-							substitutionMapping.put(var, falseTerm);
-							break;
+					if (aatom.getFunction().getName().equals("not") && aatom.getParameters()[0].equals(var)) {
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug(String.format("eliminated quantifier via %s for %s", getAcronym(), var));
 						}
+						substitutionMapping.put(var, falseTerm);
+						break;
 					}
 				} else if (atom.equals(var)) {
 					substitutionMapping.put(var, trueTerm);

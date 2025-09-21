@@ -54,7 +54,7 @@ public class VariableAssignmentContentProvider implements ITreeContentProvider {
 	private final List<VarAssNode> mInternalList;
 
 	public VariableAssignmentContentProvider() {
-		mInternalList = new ArrayList<VarAssNode>();
+		mInternalList = new ArrayList<>();
 	}
 
 	@Override
@@ -74,12 +74,12 @@ public class VariableAssignmentContentProvider implements ITreeContentProvider {
 		if (mValuation == null || index == null) {
 			return;
 		}
-		final Set<Entry<String, Entry<IBoogieType, List<String>>>> entrySet = mValuation
-		        .getValuesForFailurePathIndex(index).getMap().entrySet();
+		final Set<Entry<String, Entry<IBoogieType, List<String>>>> entrySet =
+				mValuation.getValuesForFailurePathIndex(index).getMap().entrySet();
 		for (final Entry<String, Entry<IBoogieType, List<String>>> entry : entrySet) {
 			if (entry.getValue().getKey() instanceof BoogieArrayType) {
 				final VarAssNode parent = new VarAssNode(entry.getKey(), "");
-				final ArrayList<VarAssNode> children = new ArrayList<VarAssNode>();
+				final ArrayList<VarAssNode> children = new ArrayList<>();
 				for (int i = 0; i < entry.getValue().getValue().size(); i++) {
 					final VarAssNode child = new VarAssNode(Integer.toString(i), entry.getValue().getValue().get(i));
 					child.setParent(parent);

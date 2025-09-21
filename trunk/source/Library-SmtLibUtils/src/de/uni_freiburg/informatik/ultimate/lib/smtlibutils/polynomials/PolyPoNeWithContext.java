@@ -81,8 +81,8 @@ public class PolyPoNeWithContext extends PolyPoNe {
 
 	private boolean addContext(final Collection<Term> contextParams) {
 		for (final Term param : contextParams) {
-			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, param,
-					TransformInequality.STRICT2NONSTRICT);
+			final PolynomialRelation polyRel =
+					PolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
 			if (polyRel != null) {
 				final boolean isInconsistent = mContext.addPolyRel(mScript, polyRel, true);
 				if (isInconsistent) {
@@ -119,9 +119,8 @@ public class PolyPoNeWithContext extends PolyPoNe {
 	}
 
 	/**
-	 * If we can fuse this {@link PolynomialRelation} with a
-	 * {@link PolynomialRelation} from the context we return the result of the
-	 * fusion. Otherwise, we return the input.
+	 * If we can fuse this {@link PolynomialRelation} with a {@link PolynomialRelation} from the context we return the
+	 * result of the fusion. Otherwise, we return the input.
 	 */
 	public PolynomialRelation tryToFuseWithContext(final PolynomialRelation polyRel) {
 		if (!polyRel.getRelationSymbol().isConvexInequality()) {
@@ -142,8 +141,8 @@ public class PolyPoNeWithContext extends PolyPoNe {
 			originalNonstrictInput = polyRel;
 		}
 		// Since context is a conjunction we always have to use Junction.AND
-		final PolynomialRelation fusionPartner = mContext.isFusibleWithExistingRelations(mScript, Junction.AND,
-				originalNonstrictInput);
+		final PolynomialRelation fusionPartner =
+				mContext.isFusibleWithExistingRelations(mScript, Junction.AND, originalNonstrictInput);
 		final PolynomialRelation result;
 		if (fusionPartner == null) {
 			// no fusion possible

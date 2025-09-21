@@ -46,7 +46,7 @@ public class FastUPRUtils {
 	 * @param detailed
 	 *            Detailed output on or off
 	 */
-	public FastUPRUtils(ILogger logger, boolean detailed) {
+	public FastUPRUtils(final ILogger logger, final boolean detailed) {
 		mLogger = logger;
 		mDetailed = detailed;
 	}
@@ -56,7 +56,7 @@ public class FastUPRUtils {
 	 *
 	 * @param msg
 	 */
-	public void output(Object msg) {
+	public void output(final Object msg) {
 		mLogger.debug(msg);
 	}
 
@@ -65,13 +65,13 @@ public class FastUPRUtils {
 	 *
 	 * @param msg
 	 */
-	public void debug(Object msg) {
+	public void debug(final Object msg) {
 		if (mDetailed) {
 			mLogger.debug(msg);
 		}
 	}
 
-	public void setDetailed(boolean detailed) {
+	public void setDetailed(final boolean detailed) {
 		mDetailed = detailed;
 	}
 

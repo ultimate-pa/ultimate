@@ -30,9 +30,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Objects of this class represent binary equals relations (i.e. terms of the
- * form (= a b)) and their negations (i.e. terms of the form (not (= a b)) resp.
- * (distinct a b)).
+ * Objects of this class represent binary equals relations (i.e. terms of the form (= a b)) and their negations (i.e.
+ * terms of the form (not (= a b)) resp. (distinct a b)).
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -44,8 +43,8 @@ public class BinaryEqualityRelation extends BinaryRelation {
 	}
 
 	/**
-	 * Return a representation of a given {@link Term} as a
-	 * {@link BinaryEqualityRelation}, return null if no such representation exists.
+	 * Return a representation of a given {@link Term} as a {@link BinaryEqualityRelation}, return null if no such
+	 * representation exists.
 	 */
 	public static BinaryEqualityRelation convert(final Term term) {
 		if (!(term instanceof ApplicationTerm)) {

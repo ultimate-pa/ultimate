@@ -60,14 +60,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslator
  *
  */
 public class HybridModel {
-	
+
 	private final ILogger mLogger;
 	private final HybridSystemFactory mHybridSystemFactory;
 	private final HybridAutomatonFactory mHybridAutomatonFactory;
 	private final ParallelCompositionGenerator mParallelCompositionGenerator;
 	private Map<String, HybridSystem> mSystems;
 	private SpaceExPreferenceContainer mPreferenceContainer;
-	
+
 	/*
 	 * This constructor is just for tests.
 	 */
@@ -83,19 +83,19 @@ public class HybridModel {
 							+ " already exists. Overwriting with new one.");
 					return newEntry;
 				}));
-		
+
 		final Map<String, ComponentType> systems = root.getComponent().stream().filter(c -> !c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
 					mLogger.warn("A hybrid system with name " + oldEntry.getId()
 							+ " already exists. Overwriting with new one.");
 					return newEntry;
 				}));
-		
+
 		if (systems.isEmpty() && automata.size() > 1) {
 			throw new UnsupportedOperationException(
 					"If no hybrid system is specified, only one automaton is allowed to exist in the model.");
 		}
-		
+
 		if (systems.isEmpty()) {
 			final HybridSystem hybsys = createDefaultSystem("system", automata);
 			mLogger.debug("hybridsystem created:\n" + hybsys.toString());
@@ -111,7 +111,7 @@ public class HybridModel {
 			});
 		}
 	}
-	
+
 	/**
 	 * v2
 	 *
@@ -134,19 +134,19 @@ public class HybridModel {
 							+ " already exists. Overwriting with new one.");
 					return newEntry;
 				}));
-		
+
 		final Map<String, ComponentType> systems = root.getComponent().stream().filter(c -> !c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
 					mLogger.warn("A hybrid system with name " + oldEntry.getId()
 							+ " already exists. Overwriting with new one.");
 					return newEntry;
 				}));
-		
+
 		if (systems.isEmpty() && automata.size() > 1) {
 			throw new UnsupportedOperationException(
 					"If no hybrid system is specified, only one automaton is allowed to exist in the model.");
 		}
-		
+
 		if (systems.isEmpty()) {
 			final HybridSystem hybsys = createDefaultSystem("system", automata);
 			mLogger.debug("hybridsystem created:\n" + hybsys.toString());
@@ -162,7 +162,7 @@ public class HybridModel {
 			});
 		}
 	}
-	
+
 	private HybridSystem createDefaultSystem(final String as, final Map<String, ComponentType> automata) {
 		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
 		final ComponentType automatonComponent = automata.entrySet().iterator().next().getValue();
@@ -187,49 +187,49 @@ public class HybridModel {
 		globalConstants.forEach(c -> automatonBind.put(c, c));
 		labels.forEach(l -> automatonBind.put(l, l));
 		bindsMap.put(automaton.getName(), automatonBind);
-		return mHybridSystemFactory.createHybridSystem(as, globalParams, new HashSet<String>(), globalConstants,
-				new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), bindsMap, mLogger);
+		return mHybridSystemFactory.createHybridSystem(as, globalParams, new HashSet<>(), globalConstants,
+				new HashSet<>(), labels, autMap, new HashMap<>(), bindsMap, mLogger);
 	}
-	
+
 	// function that creates possible parallel compositions for preference groups for the system specified.
 	public Map<Integer, HybridAutomaton> calculateParallelCompositionsForGroups(final HybridSystem configSystem) {
-		
+
 		final Map<Integer, HybridAutomaton> groupIdtoMergedAutomaton = new HashMap<>();
-		
+
 		// get preference groups
 		final Collection<SpaceExPreferenceGroup> groups = mPreferenceContainer.getPreferenceGroups().values();
-		
+
 		// for each group create the parallel composition starting in the groups initial locations.
 		for (final SpaceExPreferenceGroup group : groups) {
 			final HybridAutomaton merge = mergeAutomata(configSystem, group);
 			groupIdtoMergedAutomaton.put(group.getId(), merge);
 		}
-		
+
 		return groupIdtoMergedAutomaton;
 	}
-	
+
 	public HybridAutomaton mergeAutomata(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
 		final List<HybridAutomaton> automata = new ArrayList<>(configSystem.getAutomata().values());
-		
+
 		// if there are subsystems, retrieve all of them recursive
 		if (!configSystem.getSubSystems().isEmpty()) {
 			final List<HybridAutomaton> subsys = getSubSystemAutomata(configSystem);
 			automata.addAll(subsys);
 		}
-		
+
 		// if there is only one automaton, there is nothing to merge.
 		if (automata.size() == 1) {
 			return automata.iterator().next();
 		}
-		
+
 		final Map<HybridAutomaton, Location> automataAndInitial = new HashMap<>();
 		for (final HybridAutomaton aut : automata) {
 			automataAndInitial.put(aut, aut.getInitialLocationForGroup(group != null ? group.getId() : null));
 		}
-		
+
 		return mParallelCompositionGenerator.computeParallelCompositionNWay(automataAndInitial);
 	}
-	
+
 	private List<HybridAutomaton> getSubSystemAutomata(final HybridSystem configSystem) {
 		final List<HybridAutomaton> automata = new ArrayList<>();
 		for (final HybridSystem sys : configSystem.getSubSystems().values()) {
@@ -241,10 +241,10 @@ public class HybridModel {
 		}
 		return automata;
 	}
-	
+
 	/**
 	 * Returns a @HybridSystem with the given name, if it exists.
-	 * 
+	 *
 	 * @param systemName
 	 * @return
 	 */
@@ -267,7 +267,7 @@ public class HybridModel {
 		}
 		return hybsys;
 	}
-	
+
 	private void renameVariables(final HybridSystem hybsys) {
 		hybsys.getAutomata().forEach((id, aut) -> {
 			if (mLogger.isDebugEnabled()) {
@@ -288,12 +288,12 @@ public class HybridModel {
 				mLogger.debug("LOC PARAM: " + aut.getLocalParameters());
 			}
 		});
-		
+
 		hybsys.getSubSystems().forEach((id, sys) -> {
 			renameVariables(sys);
 		});
 	}
-	
+
 	private void renameSystemAccordingToBinds(final HybridSystem hybsys) {
 		hybsys.getAutomata().forEach((id, aut) -> {
 			if (mLogger.isDebugEnabled()) {
@@ -314,26 +314,26 @@ public class HybridModel {
 				mLogger.debug("LOC PARAM: " + aut.getLocalParameters());
 			}
 		});
-		
+
 		hybsys.getSubSystems().forEach((id, sys) -> {
 			changeSubsystemBinds(sys, hybsys.getBinds());
 			renameSystemAccordingToBinds(sys);
 		});
 	}
-	
+
 	private void changeSubsystemBinds(final HybridSystem hybsys, final Map<String, Map<String, String>> parentBinds) {
 		// copy binds
 		final Map<String, Map<String, String>> localbinds = hybsys.getBinds().entrySet().stream()
 				.collect(Collectors.toMap(e -> e.getKey(), e -> new HashMap<>(e.getValue())));
-		
+
 		// parent binds for the current hybrid system.
 		final Map<String, String> globalbinds =
 				parentBinds.containsKey(hybsys.getName()) ? parentBinds.get(hybsys.getName()) : null;
-		
+
 		mLogger.debug("################ START #################");
 		mLogger.debug("LOCALBINDS: " + localbinds);
 		mLogger.debug("GLOBALBINDS: " + globalbinds);
-		
+
 		if (globalbinds != null && localbinds != null) {
 			localbinds.forEach((id, binds) -> {
 				mLogger.debug("ID " + id);
@@ -348,12 +348,12 @@ public class HybridModel {
 				});
 			});
 		}
-		
+
 		mLogger.debug("LOCALBINDS: " + hybsys.getBinds());
 		mLogger.debug("GLOBALBINDS: " + globalbinds);
 		mLogger.debug("################ END #################");
 	}
-	
+
 	private void collectAndPrintBinds(final HybridSystem sys) {
 		mLogger.debug("################# SYSTEM BINDS ###################");
 		final Map<String, Map<String, String>> binds = sys.getBinds();
@@ -368,7 +368,7 @@ public class HybridModel {
 			}
 		});
 	}
-	
+
 	public Map<String, HybridSystem> getSystems() {
 		return mSystems;
 	}

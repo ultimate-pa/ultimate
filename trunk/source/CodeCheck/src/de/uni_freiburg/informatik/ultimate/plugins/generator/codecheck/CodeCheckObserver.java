@@ -557,9 +557,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		case Craig_NestedInterpolation:
 			try {
 				final InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>> tc = new InterpolatingTraceCheckCraig<>(
-						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), counterexample, mServices, mCsToolkit, mgdScriptTracechecks,
-						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, true,
+						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(), new TreeMap<>(),
+						counterexample, mServices, mCsToolkit, mgdScriptTracechecks, mPredicateFactory,
+						mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, true,
 						mGlobalSettings.getInterpolationMode(), true, SIMPLIFICATION_TECHNIQUE, false);
 				if (tc.getInterpolantComputationStatus().wasComputationSuccessful()) {
 					return tc;
@@ -577,10 +577,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			 * The fallback interpolation mode is hardcoded for now
 			 */
 			return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-					new TreeMap<Integer, IPredicate>(), counterexample, mCsToolkit,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
-					mPredicateFactory, mPredicateUnifier, InterpolationTechnique.ForwardPredicates,
-					mCsToolkit.getManagedScript(), SIMPLIFICATION_TECHNIQUE, true);
+					new TreeMap<>(), counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateFactory, mPredicateUnifier,
+					InterpolationTechnique.ForwardPredicates, mCsToolkit.getManagedScript(), SIMPLIFICATION_TECHNIQUE,
+					true);
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
@@ -588,20 +588,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			// return LBool.UNSAT if trace is infeasible
 			try {
 				return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), counterexample, mCsToolkit,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, mGlobalSettings.getUseUnsatCores(),
-						mGlobalSettings.isUseLiveVariables(), mServices, true, mPredicateFactory, mPredicateUnifier,
-						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, SIMPLIFICATION_TECHNIQUE, true);
+						new TreeMap<>(), counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+						mGlobalSettings.getUseUnsatCores(), mGlobalSettings.isUseLiveVariables(), mServices, true,
+						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(),
+						mgdScriptTracechecks, SIMPLIFICATION_TECHNIQUE, true);
 			} catch (final Exception e) {
 				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
 					throw e;
 				}
 
 				return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), counterexample, mCsToolkit,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
-						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(),
-						mCsToolkit.getManagedScript(), SIMPLIFICATION_TECHNIQUE, true);
+						new TreeMap<>(), counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+						UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateFactory, mPredicateUnifier,
+						mGlobalSettings.getInterpolationMode(), mCsToolkit.getManagedScript(), SIMPLIFICATION_TECHNIQUE,
+						true);
 			}
 		default:
 			throw new UnsupportedOperationException(

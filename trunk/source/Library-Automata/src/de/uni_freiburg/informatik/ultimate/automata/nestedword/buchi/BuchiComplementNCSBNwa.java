@@ -50,18 +50,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Implements the following paper.
- * 2017TACAS - Blahoudek,Heizmann,Schewe,Strejček,Tsai - Complementing Semi-deterministic Büchi Automata
+ * Implements the following paper. 2017TACAS - Blahoudek,Heizmann,Schewe,Strejček,Tsai - Complementing
+ * Semi-deterministic Büchi Automata
  *
  * If we mention line numbers, we refer to numbers used in the orginal publication.
  * https://link.springer.com/chapter/10.1007/978-3-662-49674-9_49
-
- * TODO: More documentation.
- * Ranks and inO information translate to the NCSB quadruple as follows.
- * state has rank 3 == state is in N
- * state has rank 2 == state is in C
- * state has rank 1 == state is in S
- * state is in O == state is in B
+ *
+ * TODO: More documentation. Ranks and inO information translate to the NCSB quadruple as follows. state has rank 3 ==
+ * state is in N state has rank 2 == state is in C state has rank 1 == state is in S state is in O == state is in B
  *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -73,8 +69,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccessorStateProvider<LETTER, STATE> {
 	private static final int MAGIC_RANK = 7777;
 	private static final int BARELY_COVERED_MAX_RANK = 3;
-	private static final Integer RANK_FINAL = Integer.valueOf(2);
-	private static final Integer RANK_NONFINAL = Integer.valueOf(3);
+	private static final Integer RANK_FINAL = 2;
+	private static final Integer RANK_NONFINAL = 3;
 
 	/**
 	 * Heuristic where we move to accepting sink already from states with nonempty difference C\F. Warning: yet this is
@@ -104,7 +100,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 
 	private final BarelyCoveredLevelRankingsGenerator<LETTER, STATE> mBclrg;
 	private final boolean mLazySOptimization;
-	final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
+	private final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
 
 	/**
 	 * Constructor.
@@ -120,19 +116,20 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 	 */
 	public BuchiComplementNCSBNwa(final AutomataLibraryServices services,
 			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final boolean lazySOptimization) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean lazySOptimization)
+			throws AutomataOperationCanceledException {
 		mServices = services;
 		mOperand = operand;
 		mStateFactory = stateFactory;
 		mLazySOptimization = lazySOptimization;
 		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
 		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
-		if(lazySOptimization) {
-			mVoluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING, VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O);
+		if (lazySOptimization) {
+			mVoluntaryRankDecrease =
+					EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING,
+							VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O);
 		} else {
-			mVoluntaryRankDecrease = EnumSet
-				.of(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING);
+			mVoluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING);
 		}
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
 				false, mVoluntaryRankDecrease);
@@ -198,24 +195,24 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		return mSetOfStates.getEmptyStackState();
 	}
 
-
 	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Internal(final STATE state,
 			final LETTER letter) {
 		final LevelRankingState<LETTER, STATE> lvlrkState = mRes2det.get(state);
 		if (lvlrkState.isNonAcceptingSink()) {
 			return new LevelRankingConstraintDrdCheck<>();
 		}
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				new LevelRankingConstraintDrdCheck<>(mOperand, lvlrkState.isOempty(), MAGIC_RANK, true, false, lvlrkState);
+		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = new LevelRankingConstraintDrdCheck<>(mOperand,
+				lvlrkState.isOempty(), MAGIC_RANK, true, false, lvlrkState);
 		for (final StateWithRankInfo<STATE> downState : lvlrkState.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : lvlrkState.getUpStates(downState)) {
 				boolean hasSuccessor = false;
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand
 						.internalSuccessors(upState.getState(), letter)) {
 					hasSuccessor = true;
-					constraint.addConstraint(downState, trans.getSucc(), new DoubleDecker<StateWithRankInfo<STATE>>(downState, upState));
+					constraint.addConstraint(downState, trans.getSucc(), new DoubleDecker<>(downState, upState));
 				}
-				if ((!mLazySOptimization || upState.isInO()) && transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
+				if ((!mLazySOptimization || upState.isInO())
+						&& transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
 					return new LevelRankingConstraintDrdCheck<>();
 				}
 			}
@@ -224,14 +221,11 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 	}
 
 	/**
-	 * This method is used to check the condition of the fifth bullet in the
-	 * construction of the transition relation of the complement automaton
-	 * (lines 12 and 13 on page 7 of the paper).
-	 * If a state (here upState) is in the set C (i.e. has an even rank in our
-	 * encoding), is not final (which would have enforced membership in C),
-	 * and does not have a successor an outgoing transition would be
-	 * superficial. This is because in our construction we already track
-	 * a run in which we moved the state to the set S earlier.
+	 * This method is used to check the condition of the fifth bullet in the construction of the transition relation of
+	 * the complement automaton (lines 12 and 13 on page 7 of the paper). If a state (here upState) is in the set C
+	 * (i.e. has an even rank in our encoding), is not final (which would have enforced membership in C), and does not
+	 * have a successor an outgoing transition would be superficial. This is because in our construction we already
+	 * track a run in which we moved the state to the set S earlier.
 	 */
 	private boolean transitionWouldAnnihilateEvenRank(final StateWithRankInfo<STATE> upState,
 			final boolean hasSuccessor) {
@@ -244,8 +238,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		if (lvlrkState.isNonAcceptingSink()) {
 			return new LevelRankingConstraintDrdCheck<>();
 		}
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				new LevelRankingConstraintDrdCheck<>(mOperand, lvlrkState.isOempty(), MAGIC_RANK, true, false, lvlrkState);
+		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = new LevelRankingConstraintDrdCheck<>(mOperand,
+				lvlrkState.isOempty(), MAGIC_RANK, true, false, lvlrkState);
 		for (final StateWithRankInfo<STATE> downState : lvlrkState.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : lvlrkState.getUpStates(downState)) {
 				boolean hasSuccessor = false;
@@ -254,7 +248,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 					hasSuccessor = true;
 					constraint.addConstraint(upState, trans.getSucc(), new DoubleDecker<>(downState, upState));
 				}
-				if ((!mLazySOptimization || upState.isInO()) && transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
+				if ((!mLazySOptimization || upState.isInO())
+						&& transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
 					return new LevelRankingConstraintDrdCheck<>();
 				}
 			}
@@ -269,8 +264,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 			return new LevelRankingConstraintDrdCheck<>();
 		}
 		final LevelRankingState<LETTER, STATE> lvlrkHier = mRes2det.get(hier);
-		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-				new LevelRankingConstraintDrdCheck<>(mOperand, lvlrkState.isOempty(), MAGIC_RANK, true, false, lvlrkState);
+		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = new LevelRankingConstraintDrdCheck<>(mOperand,
+				lvlrkState.isOempty(), MAGIC_RANK, true, false, lvlrkState);
 		for (final StateWithRankInfo<STATE> downHier : lvlrkHier.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upHier : lvlrkHier.getUpStates(downHier)) {
 				if (!lvlrkState.getDownStates().contains(upHier)) {
@@ -306,17 +301,13 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 
 	private Collection<STATE> computeStates(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint) {
 		/*
-		 * This check reflects the fourth bullet in the
-		 * construction of the transition relation of the complement automaton
-		 * (lines 10 and 11 on page 7 of the paper).
+		 * This check reflects the fourth bullet in the construction of the transition relation of the complement
+		 * automaton (lines 10 and 11 on page 7 of the paper).
 		 *
-		 * If we have a state that has predecessors in the set C and
-		 * predecessors in the set S, the state needs to be in S
-		 * (because we must not go back from S to C).
-		 * However, if one predecessor in C is not an accepting state, we
-		 * already track a run in which this state was already moved to S
-		 * (at some point in time where this run left an accepting state).
-		 * Hence these transitions are superficial.
+		 * If we have a state that has predecessors in the set C and predecessors in the set S, the state needs to be in
+		 * S (because we must not go back from S to C). However, if one predecessor in C is not an accepting state, we
+		 * already track a run in which this state was already moved to S (at some point in time where this run left an
+		 * accepting state). Hence these transitions are superficial.
 		 */
 		if (constraint.isTargetOfConfluenceForcedDelayedRankDecrease(mVoluntaryRankDecrease)) {
 			// in this case we do not want to have successor states
@@ -331,13 +322,10 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		return computedSuccs;
 	}
 
-
-
 	@Override
 	public int size() {
 		return mSetOfStates.getStates().size();
 	}
-
 
 	@Override
 	public String sizeInformation() {

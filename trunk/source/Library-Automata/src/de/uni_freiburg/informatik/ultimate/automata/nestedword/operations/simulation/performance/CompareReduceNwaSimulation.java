@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 /**
  * Operation that compares the different types of simulation methods for nwa reduction.<br/>
  * The resulting automaton is the input automaton.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of nwa automaton
@@ -71,7 +71,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 
 	/**
 	 * Compares the different types of simulation methods for nwa reduction. Resulting automaton is the input automaton.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -83,7 +83,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 */
 	public CompareReduceNwaSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 	}
 
@@ -228,11 +229,11 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 			final IMinimizationStateFactory<STATE> stateFactory,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct nwa simulation without SCC
-//		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,
-//				stateFactory, reachableOperand);
+		// measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,
+		// stateFactory, reachableOperand);
 		// Delayed nwa simulation without SCC
-//		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
-//				stateFactory, reachableOperand);
+		// measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
+		// stateFactory, reachableOperand);
 
 		// Full multi-pebble simulation
 		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT_FULL_MULTIPEBBLE, false,
@@ -241,11 +242,12 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				getServices(), timeOutMillis, stateFactory, reachableOperand);
 
 		// Other minimization methods
-//		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, false, mServices, timeOutMillis,
-//				stateFactory, reachableOperand);
-//		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, false, mServices, timeOutMillis,
-//				stateFactory, reachableOperand);
-//		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, false, mServices, timeOutMillis,
-//				stateFactory, reachableOperand);
+		// measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, false, mServices, timeOutMillis,
+		// stateFactory, reachableOperand);
+		// measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, false, mServices, timeOutMillis,
+		// stateFactory, reachableOperand);
+		// measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, false, mServices,
+		// timeOutMillis,
+		// stateFactory, reachableOperand);
 	}
 }

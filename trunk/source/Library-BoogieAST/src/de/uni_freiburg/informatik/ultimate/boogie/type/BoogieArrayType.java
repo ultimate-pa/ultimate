@@ -25,6 +25,7 @@
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.type;
+
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -41,14 +42,13 @@ public class BoogieArrayType extends BoogieType {
 	private final BoogieType realType;
 	private final boolean isFinite;
 
-	BoogieArrayType(final int numPlaceholders, final BoogieType[] indexTypes,
-			final BoogieType valueType) {
+	BoogieArrayType(final int numPlaceholders, final BoogieType[] indexTypes, final BoogieType valueType) {
 		this.numPlaceholders = numPlaceholders;
 		this.indexTypes = indexTypes;
 		this.valueType = valueType;
 
 		boolean changed = false;
-		final BoogieType   realValueType = valueType.getUnderlyingType();
+		final BoogieType realValueType = valueType.getUnderlyingType();
 		if (realValueType != valueType) {
 			changed = true;
 		}
@@ -71,8 +71,7 @@ public class BoogieArrayType extends BoogieType {
 		isFinite = finite;
 	}
 
-
-	//@Override
+	// @Override
 	@Override
 	protected BoogieType substitutePlaceholders(int depth, final BoogieType[] substType) {
 		depth += numPlaceholders;
@@ -94,7 +93,7 @@ public class BoogieArrayType extends BoogieType {
 		return this;
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected BoogieType incrementPlaceholders(int depth, final int incDepth) {
 		depth += numPlaceholders;
@@ -116,15 +115,15 @@ public class BoogieArrayType extends BoogieType {
 		return this;
 	}
 
-	//@Override
+	// @Override
 	@Override
 	public BoogieType getUnderlyingType() {
 		return realType;
 	}
 
-
 	/**
 	 * Get the number of placeholder (type variables) used in this array type.
+	 *
 	 * @return the number of placeholder.
 	 */
 	public int getNumPlaceholders() {
@@ -133,6 +132,7 @@ public class BoogieArrayType extends BoogieType {
 
 	/**
 	 * Get the number of indices, i.e. the dimension of the array.
+	 *
 	 * @return the number of indices.
 	 */
 	public int getIndexCount() {
@@ -140,9 +140,10 @@ public class BoogieArrayType extends BoogieType {
 	}
 
 	/**
-	 * Returns the index type, i.e. the type of the index
-	 * arguments at the given dimension.
-	 * @param dim the dimension. We must have 0 <= dim < getIndexCount().
+	 * Returns the index type, i.e. the type of the index arguments at the given dimension.
+	 *
+	 * @param dim
+	 *            the dimension. We must have 0 <= dim < getIndexCount().
 	 * @return the index type.
 	 */
 	public BoogieType getIndexType(final int dim) {
@@ -150,16 +151,15 @@ public class BoogieArrayType extends BoogieType {
 	}
 
 	/**
-	 * Returns the value type of the array, i.e. the type of the elements stored
-	 * in the arrray.
+	 * Returns the value type of the array, i.e. the type of the elements stored in the arrray.
+	 *
 	 * @return the value type.
 	 */
 	public BoogieType getValueType() {
 		return valueType;
 	}
 
-
-	//@Override
+	// @Override
 	@Override
 	protected boolean unify(int depth, final BoogieType other, final BoogieType[] substitution) {
 		if (other == TYPE_ERROR) {
@@ -169,8 +169,7 @@ public class BoogieArrayType extends BoogieType {
 			return false;
 		}
 		final BoogieArrayType type = (BoogieArrayType) other;
-		if (type.numPlaceholders != numPlaceholders
-			|| type.indexTypes.length != indexTypes.length) {
+		if (type.numPlaceholders != numPlaceholders || type.indexTypes.length != indexTypes.length) {
 			return false;
 		}
 		depth += numPlaceholders;
@@ -194,7 +193,7 @@ public class BoogieArrayType extends BoogieType {
 		return valueType.hasPlaceholder(minDepth, maxDepth);
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected boolean isUnifiableTo(int depth, final BoogieType other, final ArrayList<BoogieType> subst) {
 		if (this == other || other == TYPE_ERROR) {
@@ -207,8 +206,7 @@ public class BoogieArrayType extends BoogieType {
 			return false;
 		}
 		final BoogieArrayType type = (BoogieArrayType) other;
-		if (type.numPlaceholders != numPlaceholders
-			|| type.indexTypes.length != indexTypes.length) {
+		if (type.numPlaceholders != numPlaceholders || type.indexTypes.length != indexTypes.length) {
 			return false;
 		}
 		depth += numPlaceholders;
@@ -221,10 +219,12 @@ public class BoogieArrayType extends BoogieType {
 	}
 
 	/**
-	 * Computes a string representation.  It uses depth to compute artificial
-	 * names for the placeholders.
-	 * @param depth the number of placeholders outside this expression.
-	 * @param needParentheses true if parentheses should be set for constructed types
+	 * Computes a string representation. It uses depth to compute artificial names for the placeholders.
+	 *
+	 * @param depth
+	 *            the number of placeholders outside this expression.
+	 * @param needParentheses
+	 *            true if parentheses should be set for constructed types
 	 * @return a string representation of this array type.
 	 */
 	@Override
@@ -236,9 +236,9 @@ public class BoogieArrayType extends BoogieType {
 		}
 		if (numPlaceholders > 0) {
 			sb.append("<");
-			delim ="";
+			delim = "";
 			for (int i = 0; i < numPlaceholders; i++) {
-				sb.append(delim).append("$"+(depth+i));
+				sb.append(delim).append("$" + (depth + i));
 				delim = ",";
 			}
 			sb.append(">");
@@ -246,11 +246,11 @@ public class BoogieArrayType extends BoogieType {
 		sb.append("[");
 		delim = "";
 		for (final BoogieType iType : indexTypes) {
-			sb.append(delim).append(iType.toString(depth+numPlaceholders, false));
+			sb.append(delim).append(iType.toString(depth + numPlaceholders, false));
 			delim = ",";
 		}
 		sb.append("]");
-		sb.append(valueType.toString(depth+numPlaceholders, false));
+		sb.append(valueType.toString(depth + numPlaceholders, false));
 		if (needParentheses) {
 			sb.append(")");
 		}
@@ -261,18 +261,18 @@ public class BoogieArrayType extends BoogieType {
 	protected ASTType toASTType(final ILocation loc, final int depth) {
 		final String[] typeParams = new String[numPlaceholders];
 		for (int i = 0; i < numPlaceholders; i++) {
-			typeParams[i] = "$"+(depth+i);
+			typeParams[i] = "$" + (depth + i);
 		}
 		final ASTType[] astIndexTypes = new ASTType[indexTypes.length];
 		for (int i = 0; i < indexTypes.length; i++) {
 			astIndexTypes[i] = indexTypes[i].toASTType(loc, depth + numPlaceholders);
 		}
 		final ASTType astValueType = valueType.toASTType(loc, depth + numPlaceholders);
-		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
-			ArrayType(loc, this, typeParams, astIndexTypes, astValueType);
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType(loc, this, typeParams, astIndexTypes,
+				astValueType);
 	}
 
-	//@Override
+	// @Override
 	@Override
 	public boolean isFinite() {
 		return isFinite;

@@ -14,10 +14,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.xnf.Dnf;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-
 /**
- * This strategy constructs invariant patterns using those program variables which have been previously in the unsatisfiable core.
- * If it is the first iteration, then either all program variables or only the live variables are used for the pattern.
+ * This strategy constructs invariant patterns using those program variables which have been previously in the
+ * unsatisfiable core. If it is the first iteration, then either all program variables or only the live variables are
+ * used for the pattern.
+ *
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  *
  */
@@ -29,8 +30,8 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 			final int maxRounds, final Set<IProgramVar> allProgramVariables,
 			final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, final boolean alwaysStrictAndNonStrictCopies,
 			final boolean useStrictInequalitiesAlternatingly) {
-		super(dimensionsStrat, maxRounds, allProgramVariables,
-				locs2LiveVariables, alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
+		super(dimensionsStrat, maxRounds, allProgramVariables, locs2LiveVariables, alwaysStrictAndNonStrictCopies,
+				useStrictInequalitiesAlternatingly);
 		mLocations2PatternVariables = new HashMap<>();
 	}
 
@@ -49,22 +50,19 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 		// Build invariant pattern
 		final Dnf<AbstractLinearInvariantPattern> disjunction = new Dnf<>(dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
-			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
-					dimensions[1]);
+			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
-				boolean[] invariantPatternCopies = new boolean[] { false };
-				if (super.mUseStrictInequalitiesAlternatingly) {
-					// if it is an odd conjunct, then construct a strict inequality
-					if (j % 2 == 1) {
-						invariantPatternCopies = new boolean[] { true };
-					}
+				boolean[] invariantPatternCopies = { false };
+				// if it is an odd conjunct, then construct a strict inequality
+				if (super.mUseStrictInequalitiesAlternatingly && (j % 2 == 1)) {
+					invariantPatternCopies = new boolean[] { true };
 				}
 				if (mAlwaysStrictAndNonStrictCopies) {
 					invariantPatternCopies = new boolean[] { false, true };
 				}
 				for (final boolean strict : invariantPatternCopies) {
-					final LinearPatternBase inequality = new LinearPatternBase (
-							solver, varsForThisPattern, prefix + "_" + newPrefix(), strict);
+					final LinearPatternBase inequality =
+							new LinearPatternBase(solver, varsForThisPattern, prefix + "_" + newPrefix(), strict);
 					conjunction.add(inequality);
 					// Add the coefficients of the inequality to our set of pattern coefficients
 					patternCoefficients.addAll(inequality.getCoefficients());

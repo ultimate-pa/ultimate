@@ -70,8 +70,8 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		mTrace = trace;
 		mPartialProgramStateMapping = partialProgramStateMapping;
 		mIsConcurrent = isConcurrent;
-		assert !isConcurrent || mTrace.stream()
-				.allMatch(a -> a.hasThreadId()) : "Is concurrent but has trace element without thread id";
+		assert !isConcurrent || mTrace.stream().allMatch(a -> a.hasThreadId())
+				: "Is concurrent but has trace element without thread id";
 	}
 
 	@Override

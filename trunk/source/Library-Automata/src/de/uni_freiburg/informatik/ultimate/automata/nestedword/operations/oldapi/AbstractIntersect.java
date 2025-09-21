@@ -82,7 +82,8 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public AbstractIntersect(final AutomataLibraryServices services, final IEmptyStackStateFactory<STATE> emptyStateFactory,
+	public AbstractIntersect(final AutomataLibraryServices services,
+			final IEmptyStackStateFactory<STATE> emptyStateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstNwa,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {
@@ -100,17 +101,15 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 			mLogger.info(startMessage());
 		}
 
-		final Set<LETTER> newInternals = new HashSet<>();
-		newInternals.addAll(mFstNwa.getVpAlphabet().getInternalAlphabet());
+		final Set<LETTER> newInternals = new HashSet<>(mFstNwa.getVpAlphabet().getInternalAlphabet());
 		newInternals.retainAll(mSndNwa.getVpAlphabet().getInternalAlphabet());
-		final Set<LETTER> newCalls = new HashSet<>();
-		newCalls.addAll(mFstNwa.getVpAlphabet().getCallAlphabet());
+		final Set<LETTER> newCalls = new HashSet<>(mFstNwa.getVpAlphabet().getCallAlphabet());
 		newCalls.retainAll(mSndNwa.getVpAlphabet().getCallAlphabet());
-		final Set<LETTER> newReturns = new HashSet<>();
-		newReturns.addAll(mFstNwa.getVpAlphabet().getReturnAlphabet());
+		final Set<LETTER> newReturns = new HashSet<>(mFstNwa.getVpAlphabet().getReturnAlphabet());
 		newReturns.retainAll(mSndNwa.getVpAlphabet().getReturnAlphabet());
 
-		mResultNwa = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(newInternals, newCalls, newReturns), emptyStateFactory);
+		mResultNwa = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(newInternals, newCalls, newReturns),
+				emptyStateFactory);
 	}
 
 	@Override

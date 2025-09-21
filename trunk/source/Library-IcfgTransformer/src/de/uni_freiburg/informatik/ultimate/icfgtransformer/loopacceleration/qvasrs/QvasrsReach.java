@@ -257,7 +257,7 @@ public final class QvasrsReach {
 			final Term iLeqP = SmtUtils.leq(script.getScript(), p, iTv);
 			final List<Term> rhsConjuncts = new ArrayList<>();
 			for (int j = 1; j < i; j++) {
-				final List<Term> transitionConjunction = new ArrayList<Term>();
+				final List<Term> transitionConjunction = new ArrayList<>();
 				for (final Triple<Term, Pair<Rational[], Rational[]>, Term> transition : transitions) {
 					/*
 					 * TODO this a is wrong we need the corresponding coded a.

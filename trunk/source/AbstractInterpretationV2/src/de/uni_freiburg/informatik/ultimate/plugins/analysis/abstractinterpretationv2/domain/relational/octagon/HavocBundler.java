@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * Utility for grouping multiple subsequent havoc statements into a single havoc statement. Transformations are cached.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class HavocBundler {
@@ -103,7 +104,7 @@ public class HavocBundler {
 
 	/**
 	 * Creates a single havoc statement, that has the same effect as a list of subsequent havoc statements.
-	 * 
+	 *
 	 * @param successiveHavocs
 	 *            List of successive havoc statements.
 	 * @return Single havoc statement
@@ -114,9 +115,7 @@ public class HavocBundler {
 		}
 		final List<VariableLHS> vars = new ArrayList<>();
 		for (final HavocStatement havocStmt : successiveHavocs) {
-			for (final VariableLHS var : havocStmt.getIdentifiers()) {
-				vars.add(var);
-			}
+			Collections.addAll(vars, havocStmt.getIdentifiers());
 		}
 		final VariableLHS[] joinedVariables = vars.toArray(new VariableLHS[vars.size()]);
 		final ILocation location = successiveHavocs.isEmpty() ? null : successiveHavocs.get(0).getLocation();

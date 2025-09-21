@@ -35,17 +35,17 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * TestResultDecider that uses SV-COMP YAML files to decide correctness of
- * SV-COMP benchmarks whose property is valid-memcleanup.prp
+ * TestResultDecider that uses SV-COMP YAML files to decide correctness of SV-COMP benchmarks whose property is
+ * valid-memcleanup.prp
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class SvcompTestResultDeciderMemcleanup extends SafetyCheckTestResultDecider {
 
 	/**
-	 * @param unknownIsJUnitSuccess if true the TestResult UNKNOWN is a success for
-	 *                              JUnit, if false, the TestResult UNKNOWN is a
-	 *                              failure for JUnit.
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
 	 */
 	public SvcompTestResultDeciderMemcleanup(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
@@ -54,9 +54,9 @@ public class SvcompTestResultDeciderMemcleanup extends SafetyCheckTestResultDeci
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		final NestedMap2<String, String, SafetyCheckerOverallResult> map = TestUtil
-				.constructPropertyMapSvcompSafety(TestUtil.SVCOMP_PROP_VALIDMEMCLEANUP);
-		return new YamlBasedExpectedResultFinder<SafetyCheckerOverallResult>(map);
+		final NestedMap2<String, String, SafetyCheckerOverallResult> map =
+				TestUtil.constructPropertyMapSvcompSafety(TestUtil.SVCOMP_PROP_VALIDMEMCLEANUP);
+		return new YamlBasedExpectedResultFinder<>(map);
 	}
 
 }

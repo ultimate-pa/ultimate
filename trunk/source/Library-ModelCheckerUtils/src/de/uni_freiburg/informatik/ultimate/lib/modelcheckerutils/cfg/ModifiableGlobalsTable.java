@@ -102,10 +102,8 @@ public class ModifiableGlobalsTable {
 		return SmtUtils.binaryEquality(script, oldConstant, nonOldConstant);
 	}
 
-
 	/**
-	 * @return
-	 * 		the contents of this ModifiedGlobalsTable as a hash relation
+	 * @return the contents of this ModifiedGlobalsTable as a hash relation
 	 */
 	public HashRelation<String, IProgramNonOldVar> getProcToGlobals() {
 		// if we have an unmodifiableHashRelation some day, use that

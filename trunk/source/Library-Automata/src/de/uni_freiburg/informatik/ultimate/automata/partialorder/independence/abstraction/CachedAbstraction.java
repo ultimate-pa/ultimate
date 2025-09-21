@@ -75,8 +75,8 @@ public class CachedAbstraction<H, L> implements IAbstraction<H, L> {
 
 		// Restrict to a lower level, for which the result is still the same as for the given level.
 		final H restricted = restrict(input, level);
-		assert getHierarchy().compare(restricted, level)
-				.isLessOrEqual() : "restrict must return smaller or equal abstraction level";
+		assert getHierarchy().compare(restricted, level).isLessOrEqual()
+				: "restrict must return smaller or equal abstraction level";
 
 		// Try cache lookup at restricted level.
 		if (mCache.containsKey(input, restricted)) {

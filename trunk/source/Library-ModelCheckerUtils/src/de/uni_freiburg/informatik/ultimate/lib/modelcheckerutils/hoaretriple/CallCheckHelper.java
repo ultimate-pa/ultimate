@@ -142,7 +142,6 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 			return null;
 		}
 
-
 		mStatistics.getSDsCounter().incCa();
 		return Validity.INVALID;
 	}
@@ -162,10 +161,8 @@ class CallCheckHelper extends SdHoareTripleCheckHelper<ICallAction> {
 			if (bv.isGlobal()) {
 				continue;
 			}
-			if (locVarAssignTf.getOutVars().keySet().contains(bv)) {
-				if (argumentsRestrictedByPre) {
-					continue;
-				}
+			if (locVarAssignTf.getOutVars().containsKey(bv) && argumentsRestrictedByPre) {
+				continue;
 			}
 			mStatistics.getSdLazyCounter().incCa();
 			return Validity.INVALID;

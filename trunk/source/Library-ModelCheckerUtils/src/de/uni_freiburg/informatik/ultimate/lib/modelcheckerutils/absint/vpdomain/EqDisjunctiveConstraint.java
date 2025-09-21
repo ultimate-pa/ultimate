@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @param <NODE>
  * @param <FUNCTION>
  */
-public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
+public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final Set<EqConstraint<NODE>> mConstraints;
 
@@ -58,9 +59,9 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	public EqDisjunctiveConstraint(final Collection<EqConstraint<NODE>> constraintList,
 			final EqConstraintFactory<NODE> factory) {
 		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent()
-		  : "we filter out EqBottomConstraints up front, right? (could also do it here..)";
-//		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent()
-//		  : "all the constraints inside a disjunctive constraint should be frozen";
+				: "we filter out EqBottomConstraints up front, right? (could also do it here..)";
+		// assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent()
+		// : "all the constraints inside a disjunctive constraint should be frozen";
 		mConstraints = new HashSet<>(constraintList);
 		mFactory = factory;
 		mNodeAndFunctionFactory = factory.getEqNodeAndFunctionFactory();
@@ -97,7 +98,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		}
 		return mConstraints.stream().reduce((c1, c2) -> c1.join(c2)).get();
 		// this caused a loop as disjoin uses flatten..
-//		return mConstraints.stream().reduce((c1, c2) -> mFactory.disjoin(c1, c2)).get();
+		// return mConstraints.stream().reduce((c1, c2) -> mFactory.disjoin(c1, c2)).get();
 	}
 
 	public boolean isEmpty() {
@@ -105,14 +106,15 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	}
 
 	public Term getTerm(final Script script) {
-		final List<Term> disjuncts = mConstraints.stream()
-				.map(cons -> cons.getTerm(script)).collect(Collectors.toList());
+		final List<Term> disjuncts =
+				mConstraints.stream().map(cons -> cons.getTerm(script)).collect(Collectors.toList());
 		return SmtUtils.or(script, disjuncts);
 	}
 
 	public boolean areEqual(final NODE node1, final NODE node2) {
-		return mConstraints.stream().map(cons -> cons.areEqual(node1, node2,
-				mFactory.getWeqSettings().isAddNodesBeforeAnsweringQuery())).reduce((a, b) -> (a || b)).get();
+		return mConstraints.stream()
+				.map(cons -> cons.areEqual(node1, node2, mFactory.getWeqSettings().isAddNodesBeforeAnsweringQuery()))
+				.reduce((a, b) -> (a || b)).get();
 	}
 
 	public boolean areEqual(final Term node1, final Term node2) {
@@ -128,8 +130,9 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	}
 
 	public boolean areUnequal(final NODE node1, final NODE node2) {
-		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2,
-				mFactory.getWeqSettings().isAddNodesBeforeAnsweringQuery())).reduce((a, b) -> (a || b)).get();
+		return mConstraints.stream()
+				.map(cons -> cons.areUnequal(node1, node2, mFactory.getWeqSettings().isAddNodesBeforeAnsweringQuery()))
+				.reduce((a, b) -> (a || b)).get();
 	}
 
 	public boolean areUnequal(final Term node1, final Term node2) {
@@ -206,7 +209,6 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		return "\\/ " + sb.toString();
 	}
 
-
 	public String getDebugInfo() {
 
 		final Map<VPStatistics, Integer> statistics = new HashMap<>();
@@ -217,8 +219,8 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		final StringBuilder sb = new StringBuilder();
 		for (final EqConstraint<NODE> c : mConstraints) {
 			for (final VPStatistics stat : VPStatistics.values()) {
-				statistics.put(stat, VPStatistics.getAggregator(stat)
-						.apply(statistics.get(stat), c.getStatistics(stat)));
+				statistics.put(stat,
+						VPStatistics.getAggregator(stat).apply(statistics.get(stat), c.getStatistics(stat)));
 			}
 		}
 
@@ -229,10 +231,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mConstraints == null) ? 0 : mConstraints.hashCode());
-		return result;
+		return Objects.hash(mConstraints);
 	}
 
 	@Override
@@ -281,7 +280,6 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		}
 		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
-
 
 	public void freezeDisjunctsIfNecessary() {
 		for (final EqConstraint<NODE> disjunct : mConstraints) {

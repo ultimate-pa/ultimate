@@ -113,8 +113,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	 * @throws Exception
 	 */
 	public UltimateCChecker() throws Throwable {
-		super();
-		mToolchainFiles = new HashMap<String, File>();
+		mToolchainFiles = new HashMap<>();
 		mController = new CDTController(this);
 	}
 
@@ -168,26 +167,23 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		// After finishing the Ultimate run we update the FileView
 		// We have to do this in this asynch manner, because otherwise we would
 		// get a NullPointerException, because we are not in the UI Thread
-		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-			@Override
-			public void run() {
-				// Present results of the actual run!
-				final IViewPart vpart =
-						PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(ResultList.ID);
-				if (vpart instanceof ResultList) {
-					((ResultList) vpart).setViewerInput(completePath);
-				}
-				// open the file on which the actual run happened!
-				final File fileToOpen = new File(completePath);
-				if (fileToOpen.exists() && fileToOpen.isFile()) {
-					final IFileStore fileStore = EFS.getLocalFileSystem().getStore(fileToOpen.toURI());
-					final IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		PlatformUI.getWorkbench().getDisplay().asyncExec(() -> {
+			// Present results of the actual run!
+			final IViewPart vpart =
+					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(ResultList.ID);
+			if (vpart instanceof ResultList) {
+				((ResultList) vpart).setViewerInput(completePath);
+			}
+			// open the file on which the actual run happened!
+			final File fileToOpen = new File(completePath);
+			if (fileToOpen.exists() && fileToOpen.isFile()) {
+				final IFileStore fileStore = EFS.getLocalFileSystem().getStore(fileToOpen.toURI());
+				final IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
-					try {
-						IDE.openEditorOnFileStore(page, fileStore);
-					} catch (final PartInitException e) {
-						// Put your exception handler here if you wish to
-					}
+				try {
+					IDE.openEditorOnFileStore(page, fileStore);
+				} catch (final PartInitException e) {
+					// Put your exception handler here if you wish to
 				}
 			}
 		});

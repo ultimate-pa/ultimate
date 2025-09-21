@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -37,44 +37,43 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.ScopeUtils;
 
-
 /**
- * A scoped hash map is useful for symbol tables. With beginScope() a new
- * scope is started.  All modifications to the table are reversed when
- * the scope is ended with endScope().
- * 
- * You can also get a key, entry, or value collection of the currently
- * active scope.  This will only iterate the keys/values set since the last
- * beginScope() call.  Removing an entry will restore the value that was
- * previously set on the outer scope.
- * 
+ * A scoped hash map is useful for symbol tables. With beginScope() a new scope is started. All modifications to the
+ * table are reversed when the scope is ended with endScope().
+ *
+ * You can also get a key, entry, or value collection of the currently active scope. This will only iterate the
+ * keys/values set since the last beginScope() call. Removing an entry will restore the value that was previously set on
+ * the outer scope.
+ *
  * Note that it is forbidden to store null values into a scoped hash map.
- * 
+ *
  * @author Jochen Hoenicke
  *
- * @param <K> Key type
- * @param <V> Value type
+ * @param <K>
+ *            Key type
+ * @param <V>
+ *            Value type
  */
 public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap<K, V> {
 
 	private final LinkedHashMap<K, V> mMap;
 	private LinkedHashMap<K, V>[] mHistory;
 	private int mCurScope = -1;
-	
+
 	@SuppressWarnings("unchecked")
 	public LinkedScopedHashMap() {
 		mMap = new LinkedHashMap<>();
 		mHistory = new LinkedHashMap[ScopeUtils.NUM_INITIAL_SCOPES];
 	}
-	
+
 	HashMap<K, V> getMap() {
 		return mMap;
 	}
-	
+
 	LinkedHashMap<K, V> undoMap() {
 		return mHistory[mCurScope];
 	}
-	
+
 	void recordUndo(final K key, final V value) {
 		if (mCurScope != -1) {
 			final Map<K, V> old = undoMap();
@@ -84,14 +83,14 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 		}
 	}
 
-	void undoEntry(final Entry<K,V> old) {
+	void undoEntry(final Entry<K, V> old) {
 		if (old.getValue() != null) {
 			mMap.put(old.getKey(), old.getValue());
 		} else {
 			mMap.remove(old.getKey());
 		}
 	}
-	
+
 	@Override
 	public void beginScope() {
 		if (mCurScope == mHistory.length - 1) {
@@ -99,7 +98,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 		}
 		mHistory[++mCurScope] = new LinkedHashMap<>();
 	}
-	
+
 	@Override
 	public void endScope() {
 		for (final Entry<K, V> old : undoMap().entrySet()) {
@@ -110,18 +109,18 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 			mHistory = ScopeUtils.shrink(mHistory);
 		}
 	}
-	
+
 	public Iterable<Map.Entry<K, V>> currentScopeEntries() {
 		if (mCurScope == -1) {
 			return entrySet();
 		}
-		return new AbstractSet<Map.Entry<K, V>>() {
+		return new AbstractSet<>() {
 			@Override
 			public Iterator<Map.Entry<K, V>> iterator() {
-				return new Iterator<Map.Entry<K, V>>() {
+				return new Iterator<>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
-					
+
 					@Override
 					public boolean hasNext() {
 						return mBacking.hasNext();
@@ -130,7 +129,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 					@Override
 					public Map.Entry<K, V> next() {
 						final K key = (mLast = mBacking.next()).getKey();
-						return new Entry<K, V>() {
+						return new Entry<>() {
 							@Override
 							public K getKey() {
 								return key;
@@ -162,19 +161,19 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 			}
 		};
 	}
-	
+
 	@Override
 	public Iterable<K> currentScopeKeys() {
 		if (mCurScope == -1) {
 			return keySet();
 		}
-		return new AbstractSet<K>() {
+		return new AbstractSet<>() {
 			@Override
 			public Iterator<K> iterator() {
-				return new Iterator<K>() {
+				return new Iterator<>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
-					
+
 					@Override
 					public boolean hasNext() {
 						return mBacking.hasNext();
@@ -199,18 +198,18 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 			}
 		};
 	}
-	
+
 	public Iterable<V> currentScopeValues() {
 		if (mCurScope == -1) {
 			return values();
 		}
-		return new AbstractSet<V>() {
+		return new AbstractSet<>() {
 			@Override
 			public Iterator<V> iterator() {
-				return new Iterator<V>() {
+				return new Iterator<>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
-					
+
 					@Override
 					public boolean hasNext() {
 						return mBacking.hasNext();
@@ -235,7 +234,7 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 			}
 		};
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public void clear() {
@@ -262,29 +261,29 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 	public boolean isEmpty() {
 		return mMap.isEmpty();
 	}
-	
+
 	@Override
 	public boolean isEmptyScope() {
 		return mCurScope == -1;
 	}
 
 	@Override
-	public Set<Entry<K,V>> entrySet() {
-		return new AbstractSet<Entry<K,V>>() {
+	public Set<Entry<K, V>> entrySet() {
+		return new AbstractSet<>() {
 
 			@Override
-			public Iterator<Entry<K,V>> iterator() {
-				return new Iterator<Entry<K,V>>() {
-					private final Iterator<Entry<K,V>> mBacking = getMap().entrySet().iterator();
-					private Entry<K,V> mLast;
-					
+			public Iterator<Entry<K, V>> iterator() {
+				return new Iterator<>() {
+					private final Iterator<Entry<K, V>> mBacking = getMap().entrySet().iterator();
+					private Entry<K, V> mLast;
+
 					@Override
 					public boolean hasNext() {
 						return mBacking.hasNext();
 					}
 
 					@Override
-					public Entry<K,V> next() {
+					public Entry<K, V> next() {
 						return mLast = mBacking.next();
 					}
 
@@ -325,19 +324,22 @@ public class LinkedScopedHashMap<K, V> extends AbstractMap<K, V> implements ISco
 	public int size() {
 		return mMap.size();
 	}
-	
+
 	public int getActiveScopeNum() {
 		return mCurScope + 1;
 	}
 
 	/**
 	 * Checks if the key was overwritten in the given scope.
-	 * @param key   the key to check for.
-	 * @param scope the scope number; must not be 0 for the outer most scope.
+	 *
+	 * @param key
+	 *            the key to check for.
+	 * @param scope
+	 *            the scope number; must not be 0 for the outer most scope.
 	 * @return true if the key was overwritten in the given scope.
 	 */
 	public boolean overwritesKeyInScope(final Object key, final int scope) {
 		assert scope != 0;
-		return mHistory[scope-1].containsKey(key);
+		return mHistory[scope - 1].containsKey(key);
 	}
 }

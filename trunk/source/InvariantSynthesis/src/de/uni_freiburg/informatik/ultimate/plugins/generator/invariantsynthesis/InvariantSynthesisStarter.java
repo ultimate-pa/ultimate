@@ -208,8 +208,8 @@ public class InvariantSynthesisStarter<L extends IIcfgTransition<?>> {
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (mOverallResult == Result.SAFE) {
 			assert floydHoare != null;
-			assert new IcfgFloydHoareValidityCheck<>(services, icfg, floydHoare, true)
-					.getResult() : "incorrect Hoare annotation";
+			assert new IcfgFloydHoareValidityCheck<>(services, icfg, floydHoare, true).getResult()
+					: "incorrect Hoare annotation";
 
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,

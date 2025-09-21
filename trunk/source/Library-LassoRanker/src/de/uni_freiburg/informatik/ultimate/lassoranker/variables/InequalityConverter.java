@@ -171,21 +171,11 @@ public class InequalityConverter {
 			converted = convertAtom(appt);
 		} catch (final TermIsNotAffineException tinae) {
 			if (tinae.getMessage().equals(TermIsNotAffineException.s_MultipleNonConstantFactors)) {
-				switch (nlaHandling) {
-				case EXCEPTION: {
-					throw tinae;
-				}
-				case OVERAPPROXIMATE: {
-					converted = new LinearInequality();
-					break;
-				}
-				case UNDERAPPROXIMATE: {
-					converted = LinearInequality.constructFalse();
-					break;
-				}
-				default:
-					throw new AssertionError("unknown case");
-				}
+				converted = switch (nlaHandling) {
+				case EXCEPTION -> throw tinae;
+				case OVERAPPROXIMATE -> new LinearInequality();
+				case UNDERAPPROXIMATE -> LinearInequality.constructFalse();
+				};
 
 			} else {
 				throw tinae;

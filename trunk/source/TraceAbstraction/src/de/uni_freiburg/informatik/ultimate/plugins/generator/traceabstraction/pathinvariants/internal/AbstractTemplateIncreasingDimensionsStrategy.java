@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * 
+ *
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  *
  */
@@ -12,26 +12,23 @@ public abstract class AbstractTemplateIncreasingDimensionsStrategy {
 	protected final int mDisjunctsPerRound;
 	protected final int mInitialConjuncts;
 	protected final int mConjunctsPerRound;
-	
-	public AbstractTemplateIncreasingDimensionsStrategy (final int initialDisjuncts, final int initialConjuncts,
+
+	public AbstractTemplateIncreasingDimensionsStrategy(final int initialDisjuncts, final int initialConjuncts,
 			final int disjunctsPerRound, final int conjunctsPerRound) {
 		mInitialDisjuncts = initialDisjuncts;
 		mDisjunctsPerRound = disjunctsPerRound;
 		mInitialConjuncts = initialConjuncts;
 		mConjunctsPerRound = conjunctsPerRound;
-		
+
 	}
-	
-	
 
-	public abstract int[] getDimensions(IcfgLocation location, int round); 
+	public abstract int[] getDimensions(IcfgLocation location, int round);
 
-	
 	public int getInitialDisjuncts() {
 		return mInitialDisjuncts;
 	}
-	
-	public int getInitialConjuncts () {
+
+	public int getInitialConjuncts() {
 		return mInitialConjuncts;
 	}
 

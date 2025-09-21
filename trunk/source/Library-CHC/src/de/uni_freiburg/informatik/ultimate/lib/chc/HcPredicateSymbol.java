@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.chc;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -50,7 +51,8 @@ public class HcPredicateSymbol {
 	 * Create this only via {@link HcSymbolTable}!
 	 *
 	 * @param symbolTable
-	 * @param fsym  -- must be from solver (not parser) theory!
+	 * @param fsym
+	 *            -- must be from solver (not parser) theory!
 	 * @param functionParameters
 	 */
 	HcPredicateSymbol(final HcSymbolTable symbolTable, final FunctionSymbol fsym) {
@@ -160,10 +162,7 @@ public class HcPredicateSymbol {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mFunctionSymbol == null) ? 0 : mFunctionSymbol.hashCode());
-		return result;
+		return Objects.hash(mFunctionSymbol);
 	}
 
 	@Override

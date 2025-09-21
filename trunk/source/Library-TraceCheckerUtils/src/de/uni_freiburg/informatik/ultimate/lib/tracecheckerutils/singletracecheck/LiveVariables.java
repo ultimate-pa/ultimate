@@ -222,10 +222,8 @@ public class LiveVariables<L extends IAction> {
 	private void addLocals(final String proc, final HashSet<Term> writeSet, final Collection<Term> readCollection) {
 		for (final Term term : readCollection) {
 			final IProgramVar bv = mConstants2BoogieVar.get(term);
-			if (!bv.isGlobal()) {
-				if (bv.getProcedure().equals(proc)) {
-					writeSet.add(term);
-				}
+			if (!bv.isGlobal() && bv.getProcedure().equals(proc)) {
+				writeSet.add(term);
 			}
 		}
 	}

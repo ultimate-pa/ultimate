@@ -35,8 +35,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
@@ -60,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvi
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.AnalysisChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ModelChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
+import jakarta.xml.bind.JAXBException;
 
 /**
  * GUIController is the IController<RunDefinition> implementation of the UltimateDebug GUI

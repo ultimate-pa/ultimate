@@ -26,7 +26,7 @@
 	<target name="generate-parser" depends="generate-lexer">
 		<!-- Generate Requirements parser with the parser generator JavaCup -->
 		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" dir="${srparseCodeDir}" fork="true" failonerror="true">
-			<arg line="-expect 2" />
+			<arg line="-expect 3" />
 			<arg value="Requirements.cup" />
 		</java>
 	</target>

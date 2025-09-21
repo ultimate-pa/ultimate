@@ -862,16 +862,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 
 		private TraceCheckResult translateSatisfiabilityToFeasibility(final LBool lBool) {
-			switch (lBool) {
-			case SAT:
-				return TraceCheckResult.FEASIBLE;
-			case UNKNOWN:
-				return TraceCheckResult.UNKNOWN;
-			case UNSAT:
-				return TraceCheckResult.INFEASIBLE;
-			default:
-				throw new AssertionError("unknown case");
-			}
+			return switch (lBool) {
+			case SAT -> TraceCheckResult.FEASIBLE;
+			case UNKNOWN -> TraceCheckResult.UNKNOWN;
+			case UNSAT -> TraceCheckResult.INFEASIBLE;
+			};
 		}
 
 		private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(

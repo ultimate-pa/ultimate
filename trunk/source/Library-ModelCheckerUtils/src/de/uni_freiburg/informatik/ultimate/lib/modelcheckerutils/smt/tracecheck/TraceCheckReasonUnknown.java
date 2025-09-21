@@ -189,7 +189,6 @@ public class TraceCheckReasonUnknown {
 
 	public TraceCheckReasonUnknown(final Reason reason, final Exception exception,
 			final ExceptionHandlingCategory category) {
-		super();
 		mReason = reason;
 		mException = exception;
 		mExceptionHandlingCategory = category;

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -25,11 +25,12 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
@@ -44,22 +45,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
- * This class is a Visitor on the RCFG, so while calling the visitNode method we
- * traverse the whole tree. While doing this we try to minimize it according to
- * the following rules. <br>
+ * This class is a Visitor on the RCFG, so while calling the visitNode method we traverse the whole tree. While doing
+ * this we try to minimize it according to the following rules. <br>
  * <b>Sequential:</b> ---> node ---> <br>
  * All nodes with exactly one incoming and one outgoing edge <br>
  * <b>Parallel:</b> <br>
- * All parallel edges will be merges, as late as possible, this keeps the
- * formulas as small as possible
- * 
+ * All parallel edges will be merges, as late as possible, this keeps the formulas as small as possible
+ *
  * @author Stefan Wissert
  */
 public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 
 	/**
 	 * Constructor for the MinimizeBranchVisitor
-	 * 
+	 *
 	 */
 	public MinimizeBranchVisitor(final ILogger logger) {
 		super(logger);
@@ -73,12 +72,11 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		if (notReachableNodes.contains(node)) {
 			return new MinimizedNode[0];
 		}
-		final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<MinimizedNode>();
+		final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<>();
 		// First check is for parallel edges, we want to merge
 		final IMinimizedEdge[] parallelEdges = checkForParallelMerge(node);
 		if (parallelEdges.length == 2) {
-			mLogger.debug("Parallel Merge: " + parallelEdges[0] + " v "
-					+ parallelEdges[1]);
+			mLogger.debug("Parallel Merge: " + parallelEdges[0] + " v " + parallelEdges[1]);
 			reVisitNodes.add(mergeParallel(parallelEdges[0], parallelEdges[1]));
 		}
 		// Sequential-Merge of two edges:
@@ -94,29 +92,26 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 			// In every case we revisit the merged node
 			mVisitedEdges.add(out);
 			mVisitedEdges.add(in);
-			for (final MinimizedNode succ : succNodes) {
-				reVisitNodes.add(succ);
-			}
+			Collections.addAll(reVisitNodes, succNodes);
 		}
 		return reVisitNodes.toArray(new MinimizedNode[reVisitNodes.size()]);
 	}
 
 	/**
-	 * This method checks the incoming edges of a node, if they have parallel
-	 * edges, if so it return an array which contains exactly those two edges
-	 * 
+	 * This method checks the incoming edges of a node, if they have parallel edges, if so it return an array which
+	 * contains exactly those two edges
+	 *
 	 * @param node
 	 *            the node to inspect
 	 * @return an array with exactly two or zero entries
 	 */
 	private IMinimizedEdge[] checkForParallelMerge(final MinimizedNode node) {
 		// In this implementation we check for incoming edges of the same source
-		if (node.getIncomingEdges() == null
-				|| node.getIncomingEdges().size() <= 1) {
+		if (node.getIncomingEdges() == null || node.getIncomingEdges().size() <= 1) {
 			return new IMinimizedEdge[0];
 		}
-		final HashMap<MinimizedNode, IMinimizedEdge> pointingMap = new HashMap<MinimizedNode, IMinimizedEdge>();
-		final ArrayList<IMinimizedEdge> parallelEdges = new ArrayList<IMinimizedEdge>();
+		final HashMap<MinimizedNode, IMinimizedEdge> pointingMap = new HashMap<>();
+		final ArrayList<IMinimizedEdge> parallelEdges = new ArrayList<>();
 		for (final IMinimizedEdge incomingEdge : node.getMinimalIncomingEdgeLevel()) {
 			if (!pointingMap.containsKey(incomingEdge.getSource())) {
 				pointingMap.put(incomingEdge.getSource(), incomingEdge);
@@ -125,29 +120,23 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				// TODO: can there exist more than two parallel edges?
 				parallelEdges.add(incomingEdge);
 				parallelEdges.add(pointingMap.get(incomingEdge.getSource()));
-				final IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
-						.getSource());
+				final IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge.getSource());
 				// ParallelEdges maybe Return-Edges, we do not merge them
-				if (incomingEdge.isBasicEdge()
-						&& ((IBasicEdge) incomingEdge).getOriginalEdge() instanceof Return) {
+				if (incomingEdge.isBasicEdge() && ((IBasicEdge) incomingEdge).getOriginalEdge() instanceof Return) {
 					return new IMinimizedEdge[0];
 				}
-				if (parallelEdge.isBasicEdge()
-						&& ((IBasicEdge) parallelEdge).getOriginalEdge() instanceof Return) {
+				if (parallelEdge.isBasicEdge() && ((IBasicEdge) parallelEdge).getOriginalEdge() instanceof Return) {
 					throw new IllegalArgumentException("");
 				}
 				// Check for Duplication in Formulas, TODO: This may be
 				// algorithmic fixed
 				if (!incomingEdge.isBasicEdge()) {
-					if (((ICompositeEdge) incomingEdge)
-							.duplicationOfFormula(parallelEdge)) {
+					if (((ICompositeEdge) incomingEdge).duplicationOfFormula(parallelEdge)) {
 						return new IMinimizedEdge[0];
 					}
-				} else if (!parallelEdge.isBasicEdge()) {
-					if (((ICompositeEdge) parallelEdge)
-							.duplicationOfFormula(incomingEdge)) {
-						return new IMinimizedEdge[0];
-					}
+				} else if (!parallelEdge.isBasicEdge()
+						&& ((ICompositeEdge) parallelEdge).duplicationOfFormula(incomingEdge)) {
+					return new IMinimizedEdge[0];
 				}
 				return parallelEdges.toArray(new IMinimizedEdge[parallelEdges.size()]);
 			}
@@ -157,19 +146,16 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 
 	/**
 	 * This method check if it is allowed to merge sequentially
-	 * 
+	 *
 	 * @param node
 	 *            the node to check
 	 * @return true if we can merge sequentially
 	 */
 	private boolean checkForSequentialMerge(final MinimizedNode node) {
 		// First condition: --->(node)--->
-		if (node.getIncomingEdges().size() == 1
-				&& node.getOutgoingEdges().size() == 1) {
-			final IMinimizedEdge incoming = node.getIncomingEdges()
-					.get(0);
-			final IMinimizedEdge outgoing = node.getOutgoingEdges()
-					.get(0);
+		if (node.getIncomingEdges().size() == 1 && node.getOutgoingEdges().size() == 1) {
+			final IMinimizedEdge incoming = node.getIncomingEdges().get(0);
+			final IMinimizedEdge outgoing = node.getOutgoingEdges().get(0);
 
 			// If they are basic edges, we do not want to have Call, Return,
 			// Summary
@@ -181,11 +167,11 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				if (((IBasicEdge) incoming).getOriginalEdge() instanceof Return) {
 					return false;
 				}
-// Following three lines were commented by Matthias at 2014-10-08 because
-// he thought that it is ok to merge summary edges with other edges.
-//				if (((IBasicEdge) incoming).getOriginalEdge() instanceof Summary) {
-//					return false;
-//				}
+				// Following three lines were commented by Matthias at 2014-10-08 because
+				// he thought that it is ok to merge summary edges with other edges.
+				// if (((IBasicEdge) incoming).getOriginalEdge() instanceof Summary) {
+				// return false;
+				// }
 			}
 			if (outgoing.isBasicEdge()) {
 				if (((IBasicEdge) outgoing).getOriginalEdge() instanceof Call) {
@@ -194,11 +180,11 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				if (((IBasicEdge) outgoing).getOriginalEdge() instanceof Return) {
 					return false;
 				}
-// Following three lines were commented by Matthias at 2014-10-08 because
-// he thought that it is ok to merge summary edges with other edges.
-//				if (((IBasicEdge) outgoing).getOriginalEdge() instanceof Summary) {
-//					return false;
-//				}
+				// Following three lines were commented by Matthias at 2014-10-08 because
+				// he thought that it is ok to merge summary edges with other edges.
+				// if (((IBasicEdge) outgoing).getOriginalEdge() instanceof Summary) {
+				// return false;
+				// }
 			}
 			return true;
 		}
@@ -207,26 +193,23 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 
 	/**
 	 * This method merges two parallel edges into one edge
-	 * 
+	 *
 	 * @param edge1
 	 *            first parallel edge
 	 * @param edge2
 	 *            second parallel edge
-	 * @return the next node to visit, in our algorithm the predecessor of the
-	 *         merged parallel edges
+	 * @return the next node to visit, in our algorithm the predecessor of the merged parallel edges
 	 */
-	private MinimizedNode mergeParallel(final IMinimizedEdge edge1,
-			final IMinimizedEdge edge2) {
+	private MinimizedNode mergeParallel(final IMinimizedEdge edge1, final IMinimizedEdge edge2) {
 		final DisjunctionEdge disjunction = new DisjunctionEdge(edge1, edge2);
-		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<>();
 		outgoingList.add(disjunction);
 		// the outgoing edges of disjunction.getSource() maybe not initialized
 		if (disjunction.getSource().getOutgoingEdges() == null) {
 			initializeOutgoingEdges(disjunction.getSource());
 		}
 
-		for (final IMinimizedEdge edge : disjunction.getSource()
-				.getMinimalOutgoingEdgeLevel()) {
+		for (final IMinimizedEdge edge : disjunction.getSource().getMinimalOutgoingEdgeLevel()) {
 			if (edge != edge1 && edge != edge2) {
 				outgoingList.add(edge);
 			}
@@ -236,10 +219,9 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		if (disjunction.getTarget().getIncomingEdges() == null) {
 			initializeIncomingEdges(disjunction.getTarget());
 		}
-		final ArrayList<IMinimizedEdge> incomingList = new ArrayList<IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> incomingList = new ArrayList<>();
 		incomingList.add(disjunction);
-		for (final IMinimizedEdge edge : disjunction.getTarget()
-				.getMinimalIncomingEdgeLevel()) {
+		for (final IMinimizedEdge edge : disjunction.getTarget().getMinimalIncomingEdgeLevel()) {
 			if (edge != edge1 && edge != edge2) {
 				incomingList.add(edge);
 			}
@@ -256,16 +238,14 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 
 	/**
 	 * This method merges two sequential edges into one edge
-	 * 
+	 *
 	 * @param edge1
 	 *            first sequential edge
 	 * @param edge2
 	 *            second sequential edge
-	 * @return the next node to visit, in our algorithm this is the target of
-	 *         edge 2
+	 * @return the next node to visit, in our algorithm this is the target of edge 2
 	 */
-	protected MinimizedNode[] mergeSequential(final IMinimizedEdge edge1,
-			final IMinimizedEdge edge2) {
+	protected MinimizedNode[] mergeSequential(final IMinimizedEdge edge1, final IMinimizedEdge edge2) {
 		ConjunctionEdge conjunction;
 		if (edge1 instanceof ShortcutErrEdge || edge2 instanceof ShortcutErrEdge) {
 			conjunction = new ShortcutErrEdge(edge1, edge2);
@@ -273,14 +253,13 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 			conjunction = new ConjunctionEdge(edge1, edge2);
 		}
 		// We have to compute the new outgoing edge level list
-		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<>();
 		outgoingList.add(conjunction);
 		// the outgoing edges of conjunction.getSource() maybe not initialized
 		if (conjunction.getSource().getOutgoingEdges() == null) {
 			initializeOutgoingEdges(conjunction.getSource());
 		}
-		for (final IMinimizedEdge edge : conjunction.getSource()
-				.getMinimalOutgoingEdgeLevel()) {
+		for (final IMinimizedEdge edge : conjunction.getSource().getMinimalOutgoingEdgeLevel()) {
 			if (edge != edge1 && edge != edge2) {
 				outgoingList.add(edge);
 			}
@@ -290,10 +269,9 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		if (conjunction.getTarget().getIncomingEdges() == null) {
 			initializeIncomingEdges(conjunction.getTarget());
 		}
-		final ArrayList<IMinimizedEdge> incomingList = new ArrayList<IMinimizedEdge>();
+		final ArrayList<IMinimizedEdge> incomingList = new ArrayList<>();
 		incomingList.add(conjunction);
-		for (final IMinimizedEdge edge : conjunction.getTarget()
-				.getMinimalIncomingEdgeLevel()) {
+		for (final IMinimizedEdge edge : conjunction.getTarget().getMinimalIncomingEdgeLevel()) {
 			if (edge != edge1 && edge != edge2) {
 				incomingList.add(edge);
 			}

@@ -109,10 +109,10 @@ public class LoopAcceleratorLite {
 			}
 		}
 
-		for (int i = 0; i < mPathCounter.size(); i++) {
+		for (final TermVariable element : mPathCounter) {
 			final TermVariable newBackbonePathCounter =
 					mScript.constructFreshTermVariable("tau", mScript.getScript().sort(SmtSortUtils.INT_SORT));
-			mNewPathCounter.put(mPathCounter.get(i), newBackbonePathCounter);
+			mNewPathCounter.put(element, newBackbonePathCounter);
 		}
 		loop.addVar(mPathCounter);
 		final List<TermVariable> newPathCounterVals = new ArrayList<>(mNewPathCounter.values());
@@ -181,8 +181,8 @@ public class LoopAcceleratorLite {
 		final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mServices, tf, mOldSymbolTable);
 		symbolicMemory.updateVars(update.getDeterministicAssignment());
 
-		final UnmodifiableTransFormula condition = symbolicMemory.updateCondition(
-				TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices));
+		final UnmodifiableTransFormula condition = symbolicMemory
+				.updateCondition(TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices));
 
 		final TermVariable backbonePathCounter =
 				mScript.constructFreshTermVariable("kappa", mScript.getScript().sort(SmtSortUtils.INT_SORT));

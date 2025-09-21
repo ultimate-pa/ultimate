@@ -23,8 +23,8 @@ WORKER_SETTINGS = {
     "boogieLassoRanker": "webinterface/LassoRanker.epf",
     "cLassoRanker": "webinterface/LassoRanker.epf",
     "automataScript": "AutomataScript/default.epf",
-    "boogieReferee": "webinterface/Referee.epf",
-    "cReferee": "webinterface/Referee.epf",
+    "boogieReferee": "default/referee/svcomp-Reach-32bit-Referee_Default.epf",
+    "cReferee": "default/referee/svcomp-Reach-32bit-Referee_Default.epf",
     "smtEliminator": "webinterface/Eliminator.epf",
 }
 

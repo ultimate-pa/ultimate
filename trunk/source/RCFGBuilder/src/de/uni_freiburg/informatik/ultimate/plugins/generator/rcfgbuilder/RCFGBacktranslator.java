@@ -112,7 +112,8 @@ public class RCFGBacktranslator extends
 		final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<>();
 		for (final IIcfgTransition<IcfgLocation> elem : cbTrace) {
 			if (!(elem instanceof CodeBlock)) {
-				throw new AssertionError("unknown rcfg element");
+				throw new AssertionError(
+						"Transition is not a CodeBlock: " + elem.getClass().getSimpleName() + " " + elem);
 			}
 			addCodeBlock(elem, null, null, null, null, atomicTeList, null);
 		}
@@ -258,8 +259,8 @@ public class RCFGBacktranslator extends
 			throw new IllegalArgumentException();
 		}
 		final IcfgProgramExecution rcfgProgramExecution = (IcfgProgramExecution) programExecution;
-		assert checkCallStackSourceProgramExecution(mLogger,
-				programExecution) : "callstack of initial program execution already broken";
+		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
+				: "callstack of initial program execution already broken";
 
 		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
 		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();
@@ -402,4 +403,8 @@ public class RCFGBacktranslator extends
 		return mTerm2Expression.translate(term);
 	}
 
+	@Override
+	public String targetExpressionToString(final Expression expression) {
+		return BoogiePrettyPrinter.print(expression);
+	}
 }

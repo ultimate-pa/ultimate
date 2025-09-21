@@ -48,10 +48,8 @@ public class BvToIntTest {
 	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	/**
-	 * If DEFAULT_SOLVER_COMMAND is not null we ignore the solver specified
-	 * for each test and use only the solver
-	 * specified here. This can be useful to check if there is a suitable
-	 * solver for all tests and this can be useful
+	 * If DEFAULT_SOLVER_COMMAND is not null we ignore the solver specified for each test and use only the solver
+	 * specified here. This can be useful to check if there is a suitable solver for all tests and this can be useful
 	 * for generating difficult SMT-LIB benchmarks.
 	 */
 	private static final String DEFAULT_SOLVER_COMMAND = null;
@@ -117,8 +115,6 @@ public class BvToIntTest {
 
 	}
 
-
-
 	private void setUpScript(final String solverCommand, final FunDecl... funDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
@@ -156,7 +152,7 @@ public class BvToIntTest {
 	@Test
 	public void arrayEliminationFourSeasonsTotalLandscaping() {
 		final FunDecl[] funDecls =
-				new FunDecl[] { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "nonMain_~src~0.offset"),
+				{ new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "nonMain_~src~0.offset"),
 						new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"), };
 		final String inputSTR =
 				"(forall ((|#length| (Array (_ BitVec 32) (_ BitVec 32))) (|nonMain_~src~0.base| (_ BitVec 32))) (or (not (bvule (bvadd nonMain_~src~0.offset (_ bv2 32)) (select |#length| nonMain_~src~0.base))) (bvule nonMain_~src~0.offset (bvadd nonMain_~src~0.offset (_ bv2 32)))))";
@@ -164,8 +160,6 @@ public class BvToIntTest {
 		final Term qelim = translateQelimBacktranslate(parse(inputSTR));
 		testQelim(parse(inputSTR), qelim);
 	}
-
-
 
 	@Test
 	public void derBitvectorFail01() {
@@ -176,10 +170,6 @@ public class BvToIntTest {
 		final Term qelim = translateQelimBacktranslate(parse(inputSTR));
 		testQelim(parse(inputSTR), qelim);
 	}
-
-
-
-
 
 	@Test
 	public void bvuleTIR() {
@@ -516,17 +506,13 @@ public class BvToIntTest {
 		testQelim(parse(inputSTR), qelim);
 	}
 
-
-
-
-
 	/**
 	 * Regression test for bug in array PQE. Should maybe be moved to different file.
 	 */
 	@Test
 	public void heap_data_calendar() {
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~ev1~0", "main_~ev2~0"), };
+		final FunDecl[] funDecls =
+				{ new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~ev1~0", "main_~ev2~0"), };
 		final String inputSTR =
 				"(forall ((|#memory_int| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (v_main_~p~0.offset_6 (_ BitVec 32)) (v_main_~l~0.base_13 (_ BitVec 32)) (|v_main_#t~malloc5.offset_6| (_ BitVec 32)) (|v_#memory_int_19| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (v_main_~p~0.base_6 (_ BitVec 32)) (v_main_~l~0.offset_13 (_ BitVec 32))) (or (not (and (= v_main_~p~0.base_6 v_main_~l~0.base_13) (= |v_#memory_int_19| (store |#memory_int| v_main_~p~0.base_6 (store (store (store (select |#memory_int| v_main_~p~0.base_6) (bvadd v_main_~p~0.offset_6 (_ bv4 32)) main_~ev1~0) (bvadd v_main_~p~0.offset_6 (_ bv8 32)) main_~ev2~0) v_main_~p~0.offset_6 (select (select |v_#memory_int_19| v_main_~p~0.base_6) v_main_~p~0.offset_6)))) (= v_main_~l~0.offset_13 v_main_~p~0.offset_6) (or (not (= (_ bv3 32) main_~ev2~0)) (not (= (_ bv1 32) main_~ev1~0))) (= (_ bv0 32) |v_main_#t~malloc5.offset_6|) (= v_main_~p~0.offset_6 |v_main_#t~malloc5.offset_6|))) (forall ((x (_ BitVec 32)) (y (_ BitVec 32)) (v_DerPreprocessor_2 (_ BitVec 32)) (v_main_~p~0.base_5 (_ BitVec 32))) (or (not (= (bvadd (select (select (store |v_#memory_int_19| v_main_~p~0.base_5 (store (store (store (select |v_#memory_int_19| v_main_~p~0.base_5) (_ bv4 32) x) (_ bv8 32) y) (_ bv0 32) v_DerPreprocessor_2)) v_main_~l~0.base_13) (bvadd v_main_~l~0.offset_13 (_ bv8 32))) (_ bv4294967293 32)) (_ bv0 32))) (bvsgt x (_ bv3 32)) (= (_ bv3 32) y) (not (= (_ bv1 32) (select (store (store (store (select |v_#memory_int_19| v_main_~p~0.base_5) (_ bv4 32) x) (_ bv8 32) y) (_ bv0 32) v_DerPreprocessor_2) (_ bv4 32)))) (bvslt x (_ bv0 32)) (not (= (_ bv0 32) (bvadd (select (select (store |v_#memory_int_19| v_main_~p~0.base_5 (store (store (store (select |v_#memory_int_19| v_main_~p~0.base_5) (_ bv4 32) x) (_ bv8 32) y) (_ bv0 32) v_DerPreprocessor_2)) v_main_~l~0.base_13) (bvadd v_main_~l~0.offset_13 (_ bv4 32))) (_ bv4294967295 32))))))))";
 		setUpScript(SOLVER_COMMAND_Z3, funDecls);
@@ -536,7 +522,7 @@ public class BvToIntTest {
 
 	@Test
 	public void forester_heap_dll_optional() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~head~0.offset", "main_~head~0.base"),
 				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"), };
 		final String inputSTR =

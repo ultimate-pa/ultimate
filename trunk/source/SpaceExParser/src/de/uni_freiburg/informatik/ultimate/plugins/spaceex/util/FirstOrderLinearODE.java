@@ -37,31 +37,31 @@ public class FirstOrderLinearODE {
 	String mSolution;
 	String mTimeVar;
 	Term mSolutionTerm;
-	
+
 	public FirstOrderLinearODE(final String ode, final String timevarName) {
 		mODE = ode;
 		mTimeVar = timevarName;
 		mSolution = solveODE(ode);
 	}
-	
+
 	private String solveODE(final String ode) {
-		String result = "";
+		final StringBuilder result = new StringBuilder();
 		final List<String> evaluationList = new ArrayList<>();
 		final List<String> equationArray = SpaceExMathHelper.expressionToArray(ode);
 		for (int i = 0; i < equationArray.size(); i++) {
 			final String element = equationArray.get(i);
 			if (i == 0) {
-				result += element + "==" + element;
+				result.append(element).append("==").append(element);
 			} else if ("==".equals(element) || "=".equals(element)) {
 				continue;
 			} else {
 				evaluationList.add(element);
 			}
 		}
-		result += integrateWrtToT(evaluationList);
-		return result;
+		result.append(integrateWrtToT(evaluationList));
+		return result.toString();
 	}
-	
+
 	private String integrateWrtToT(final List<String> evaluationList) {
 		String integral = "";
 		for (final String el : evaluationList) {
@@ -76,11 +76,11 @@ public class FirstOrderLinearODE {
 		}
 		return integral;
 	}
-	
+
 	public String getmSolution() {
 		return mSolution;
 	}
-	
+
 	public Term getmSolutionTerm() {
 		return mSolutionTerm;
 	}

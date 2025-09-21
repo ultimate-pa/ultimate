@@ -158,7 +158,6 @@ PolyIdentifier ::=
  /**
  * This node represents an expression.
  * This base class is almost empty, the sub classes contain the possible types.
- * TODO: These are all Boogie Expressions, need to finish this for ACSL
  */
 Expression ::=
 	    /** The type of this expression.  This is set by the type-checker */
@@ -177,18 +176,7 @@ Expression ::=
 		expr     : Expression
 	| { ArrayAccessExpression }
 		array   : Expression
-		indices : Expression[]
-	| { ArrayStoreExpression }
-		array   : Expression 
-		indices : Expression[]
-		value   : Expression
-	| { BitVectorAccessExpression }
-		/** The sub expression representing the bit-vector. */
-		bitvec  : Expression
-		/** The end index of this bit-vector access */
-		end     : int
-		/** The start index of this bit-vector access */
-		start   : int
+		index : Expression
 	| { CastExpression }
 		castedType   : ACSLType 
 		expression : Expression
@@ -204,13 +192,6 @@ Expression ::=
 	        arbitrarily large numbers.  We do not need to compute with them but
 	        give them 1-1 to the decision procedure. */
 		value   : String
-	| { BitvecLiteral }
-	    /** The value given as String.  This representation is used to support 
-	        arbitrarily large numbers.  We do not need to compute with them but
-	        give them 1-1 to the decision procedure. */
-		value   : String
-		/** The number of bits in this bitvector */ 
-		length  : int
 	| { /** Represents a string literal.  
 	        This is only used as attribute value, since strings are not otherwise 
 	        supported in Boogie.  A string literal never has a type. */
@@ -220,15 +201,15 @@ Expression ::=
 	| { ValidExpression }
 		/** is used to check if a pointer location is safe, so the formula should be a
 			Pointer (UnaryExpression with star) or this makes no sense */
-		formula : Expression
+		expression : Expression
     | { FreeableExpression }
         /** is used to check if a pointer location is safe, so the formula should be a
             Pointer (UnaryExpression with star) or this makes no sense */
-        formula : Expression
+        expression : Expression
     | { MallocableExpression }
         /** is used to check if a pointer location is safe, so the formula should be a
             Pointer (UnaryExpression with star) or this makes no sense */
-        formula : Expression
+        expression : Expression
 	| { /** represents the result value, which is used in contracts */ 
 		ACSLResultExpression }
 	| { FieldAccessExpression }
@@ -236,27 +217,27 @@ Expression ::=
 		struct : Expression
 		field : String
 	| { SizeOfExpression }
-		/** checks the size of differnent things, like in C */
-		formula : ?&Expression
+		/** checks the size of different things, like in C */
+		expression : ?&Expression
 		logicType : ?&ACSLType
 	| { OldValueExpression }
 		/** refers to the old value of a certain expression */
-		formula : Expression
+		expression : Expression
 	| { AtLabelExpression }
 		/** refers to the value at a certain position, determined
 			by the given label */
-		formula : Expression
+		expression : Expression
 		label : String
 	| { BaseAddrExpression }
 		/** gets the base addr of a certain pointer */
-		formula : Expression
+		expression : Expression
 	| { BlockLengthExpression }
 		/** gets the memory block length of a certain pointer */
-		formula : Expression
+		expression : Expression
 	| { SyntacticNamingExpression }
-		/** special contruct is used in assumes clauses */
+		/** special construct is used in assumes clauses */
 		identifier : String
-		formula : Expression										
+		expression : Expression										
 	| { IdentifierExpression }
 		identifier : String
 	| { FunctionApplication }
@@ -269,15 +250,17 @@ Expression ::=
 	| { QuantifierExpression }
 		/** This is true for universal and false for existential quantifier */
 		isUniversal : boolean
-		typeParams  : String[]
+		variables : Declaration[]
 		subformula  : Expression
-		parameters  : String[] 
-		attributes  : String[]
-	| { /** This can be used as call forall parameter, or as if or 
-	     * while condition.  In all other places it is forbidden. */ 
-		WildcardExpression }
 	);
  
 ACSLType ::= 
 	typeName : String;
 
+
+Declaration ::=
+	type : ACSLType
+	name : String;
+
+ACSLProblemNode ::=
+	errorMessage : String;

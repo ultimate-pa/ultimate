@@ -35,7 +35,7 @@ public final class GapVisitor {
 	private GapVisitor() {
 		// utility class
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.

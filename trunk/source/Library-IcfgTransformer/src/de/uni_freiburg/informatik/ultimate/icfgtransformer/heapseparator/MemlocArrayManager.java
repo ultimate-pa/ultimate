@@ -232,7 +232,7 @@ public class MemlocArrayManager {
 	}
 
 	private String sanitizeVarName(final String string) {
-		final String result = string.replaceAll("\\|", "").replaceAll("\\ ", "-");
+		final String result = string.replace("|", "").replaceAll("\\ ", "-");
 		if (result.isEmpty()) {
 			throw new AssertionError();
 		}
@@ -299,7 +299,7 @@ public class MemlocArrayManager {
 
 	public boolean isInitLocPvoc(final HeapSepProgramConst hspc) {
 		final boolean result = mInitLocPvocToNoStoreInfo.containsKey(hspc);
-		assert result == mInitLocLitTermToPvoc.values().contains(hspc);
+		assert result == mInitLocLitTermToPvoc.containsValue(hspc);
 		return result;
 	}
 

@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
  */
 public interface IEqNodeIdentifier<NODE extends IEqNodeIdentifier<NODE>> extends ICongruenceClosureElement<NODE> {
 
-
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
 
 	Term getTerm();

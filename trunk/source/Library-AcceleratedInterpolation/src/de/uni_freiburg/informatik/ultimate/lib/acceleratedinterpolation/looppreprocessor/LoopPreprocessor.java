@@ -104,9 +104,9 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 			boolean noSplit = false;
 			final List<UnmodifiableTransFormula> disjuncts = new ArrayList<>();
 			for (final List<L> loopActions : loopSet.getValue()) {
-				UnmodifiableTransFormula interprocedualTransformula = SequentialComposition
-						.getInterproceduralTransFormula(mCsToolkit, false, false, false, false, mLogger, mServices,
-								loopActions, SimplificationTechnique.SIMPLIFY_DDA);
+				UnmodifiableTransFormula interprocedualTransformula =
+						SequentialComposition.getInterproceduralTransFormula(mCsToolkit, false, false, false, false,
+								mLogger, mServices, loopActions, SimplificationTechnique.SIMPLIFY_DDA);
 				for (final String option : mOptions) {
 					if (!SmtUtils.extractApplicationTerms(option, interprocedualTransformula.getFormula(), false)
 							.isEmpty()) {
@@ -129,8 +129,8 @@ public class LoopPreprocessor<L extends IIcfgTransition<?>>
 			if (noSplit) {
 				final UnmodifiableTransFormula[] tfs =
 						disjuncts.toArray(new UnmodifiableTransFormula[disjuncts.size()]);
-				final UnmodifiableTransFormula disjunct = TransFormulaUtils.parallelComposition(mLogger, mServices,
-						mScript, null, false, false, tfs);
+				final UnmodifiableTransFormula disjunct =
+						TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false, false, tfs);
 				final ArrayList<UnmodifiableTransFormula> dj = new ArrayList<>();
 				dj.add(disjunct);
 				result.put(loophead, dj);

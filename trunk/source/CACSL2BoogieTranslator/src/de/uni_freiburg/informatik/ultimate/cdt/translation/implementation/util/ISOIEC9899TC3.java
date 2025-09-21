@@ -75,6 +75,14 @@ public final class ISOIEC9899TC3 {
 	 */
 	private static final String HEX_L0X = "0x";
 	/**
+	 * Binary lower case prefix.
+	 */
+	private static final String BIN_U0X = "0B";
+	/**
+	 * Binary upper case prefix.
+	 */
+	private static final String BIN_L0X = "0b";
+	/**
 	 * Float suffixes.
 	 */
 	private static final String[] SUFFIXES_FLOAT = { "f", "F", "l", "L" };
@@ -85,7 +93,7 @@ public final class ISOIEC9899TC3 {
 			"Ul", "UL", "lu", "lU", "Lu", "LU", "ll", "LL", "u", "U", "l", "L" };
 
 	public enum IntegerConstantType {
-		OCTAL(8), DECIMAL(10), HEXADECIMAL(16);
+		OCTAL(8), DECIMAL(10), HEXADECIMAL(16), BINARY(2);
 
 		private final int mBase;
 
@@ -296,22 +304,15 @@ public final class ISOIEC9899TC3 {
 	 */
 	public static BigInteger convertNumericalValueToByteValue(final Signedness signednessOfChar,
 			final BigInteger numericalValue) throws AssertionError {
-		BigInteger byteValue;
-		switch (signednessOfChar) {
+		return switch (signednessOfChar) {
 		case SIGNED:
 			if (numericalValue.compareTo(BigInteger.valueOf(127)) <= 0) {
-				byteValue = numericalValue;
-			} else {
-				byteValue = numericalValue.subtract(BigInteger.valueOf(256));
+				yield numericalValue;
 			}
-			break;
+			yield numericalValue.subtract(BigInteger.valueOf(256));
 		case UNSIGNED:
-			byteValue = numericalValue;
-			break;
-		default:
-			throw new AssertionError("unknown value " + signednessOfChar);
-		}
-		return byteValue;
+			yield numericalValue;
+		};
 	}
 
 	/**
@@ -500,6 +501,10 @@ public final class ISOIEC9899TC3 {
 				// val is a hexadecimal-constant
 				valueAsString = valueWithPrefix.substring(2);
 				mIntegerConstantType = IntegerConstantType.HEXADECIMAL;
+			} else if (valueWithPrefix.startsWith(BIN_L0X) || valueWithPrefix.startsWith(BIN_U0X)) {
+				// val is a binary constant
+				valueAsString = valueWithPrefix.substring(2);
+				mIntegerConstantType = IntegerConstantType.BINARY;
 			} else if (valueWithPrefix.startsWith(OCT_0)) {
 				valueAsString = valueWithPrefix;
 				mIntegerConstantType = IntegerConstantType.OCTAL;

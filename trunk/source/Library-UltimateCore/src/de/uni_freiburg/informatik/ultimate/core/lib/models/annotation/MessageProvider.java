@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
 /**
  * Generic message provider for {@link Spec} specifications that are checked.
- * 
+ *
  * @author Manuel Bentele
  */
 public abstract class MessageProvider implements IMessageProvider {
@@ -68,17 +68,17 @@ public abstract class MessageProvider implements IMessageProvider {
 	 * Creates a generic message provider for {@link Spec.Group} labeled specifications that are checked.
 	 */
 	public MessageProvider(final Set<Spec.Group> groups) {
-		mPosMsgProviderOverrideFuncs = new HashMap<Spec, Supplier<String>>();
-		mNegMsgProviderOverrideFuncs = new HashMap<Spec, Supplier<String>>();
+		mPosMsgProviderOverrideFuncs = new HashMap<>();
+		mNegMsgProviderOverrideFuncs = new HashMap<>();
 		mSpecGroups = groups;
 	}
 
 	/**
 	 * Checks if messages for given specification type are supported by this message provider.
-	 * 
+	 *
 	 * @param spec
 	 *            specification type whose group should be checked.
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             exception is thrown if specification group of specification type does not match the groups supported
 	 *             by this message provider.

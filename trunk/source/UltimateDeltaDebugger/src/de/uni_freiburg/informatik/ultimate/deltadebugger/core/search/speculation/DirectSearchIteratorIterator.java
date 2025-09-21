@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep
 public class DirectSearchIteratorIterator<T extends ISearchStep<?, T>> {
 	private final SpeculativeSearchIterator<T> mSearchIterator;
 	private final ICancelableStepTest<T> mCancelableTest;
-	
+
 	/**
 	 * Constructs a new instance that can be used for one iteration.
 	 *
@@ -54,11 +54,11 @@ public class DirectSearchIteratorIterator<T extends ISearchStep<?, T>> {
 		mSearchIterator = searchIterator;
 		mCancelableTest = cancelableTest;
 	}
-	
+
 	public T getCurrentStep() {
 		return mSearchIterator.getCurrentStep();
 	}
-	
+
 	/**
 	 * Iterates for a certain time limit.
 	 *
@@ -77,10 +77,10 @@ public class DirectSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			}
 			runTestAndCompleteTask(task);
 		} while (System.currentTimeMillis() < deadline);
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * @return The step reached at the end of iteration.
 	 */
@@ -93,7 +93,7 @@ public class DirectSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			runTestAndCompleteTask(task);
 		}
 	}
-	
+
 	private void runTestAndCompleteTask(final ISpeculativeTask<T> task) {
 		final Optional<Boolean> result = mCancelableTest.test(task.getStep(), task::isCanceled);
 		if (!result.isPresent()) {
@@ -108,7 +108,7 @@ public class DirectSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			}
 			return;
 		}
-		
+
 		task.complete(result.get());
 	}
 }

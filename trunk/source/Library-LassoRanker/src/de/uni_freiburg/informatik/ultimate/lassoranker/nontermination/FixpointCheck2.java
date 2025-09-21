@@ -52,9 +52,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Additional fixpoint check also shows values. <br>
- * Work in progress. This is a workaround that encodes the loop in a predicate
- * and utilizes the {@link TraceCheck} for the stem. Hence this calls cannot yet
- * provide values for the loop. I think if we want to provide values for the loop
+ * Work in progress. This is a workaround that encodes the loop in a predicate and utilizes the {@link TraceCheck} for
+ * the stem. Hence this calls cannot yet provide values for the loop. I think if we want to provide values for the loop
  * we have to extend the {@link TraceCheck}.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -83,8 +82,8 @@ public class FixpointCheck2<L extends IIcfgTransition<?>> {
 		// that we do in many places that that only is only problematic if the Boogie
 		// program uses the `old` operator.
 		final IPredicate precondition = pf.newPredicate(csToolkit.getManagedScript().getScript().term("true"));
-		final IPredicate postcondition = constructNegatedLoopPredicate(services, csToolkit.getManagedScript(), pf,
-				mLoop);
+		final IPredicate postcondition =
+				constructNegatedLoopPredicate(services, csToolkit.getManagedScript(), pf, mLoop);
 		final SortedMap<Integer, IPredicate> pendingContexts = Collections.emptySortedMap();
 		final TraceCheck<L> tc = new TraceCheck<>(precondition, postcondition, pendingContexts,
 				new Counterexample<>(mStem), services, csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false);
@@ -112,8 +111,8 @@ public class FixpointCheck2<L extends IIcfgTransition<?>> {
 			final ManagedScript mgdScript, final BasicPredicateFactory pf, final TransFormula loop) {
 		final Term inVarsRenamed = TransFormulaUtils.renameInvarsToDefaultVars(loop, mgdScript, loop.getFormula());
 		final Term allRenamed = TransFormulaUtils.renameOutvarsToDefaultVars(loop, mgdScript, inVarsRenamed);
-		final Term withoutAuxVars = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS,
-				loop.getAuxVars(), allRenamed);
+		final Term withoutAuxVars =
+				SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, loop.getAuxVars(), allRenamed);
 		final Term elim = PartialQuantifierElimination.eliminate(services, mgdScript, withoutAuxVars,
 				SimplificationTechnique.SIMPLIFY_DDA);
 		return pf.newPredicate(SmtUtils.not(mgdScript.getScript(), elim));

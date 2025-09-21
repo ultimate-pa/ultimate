@@ -87,7 +87,7 @@ public class OctIntervalTest {
 		testEval(EvalResult.TRUE, "-9734736690234", "-9734736690234", RelationSymbol.LEQ, "-9734736690234");
 		testEval(EvalResult.FALSE, "-9734736690233", "-9734736690233", RelationSymbol.LEQ, "-9734736690234");
 	}
-	
+
 	@Test
 	public void testEvaluateLess() {
 		testEval(EvalResult.TRUE, "2", "2.099", RelationSymbol.LESS, "21/10");
@@ -103,7 +103,7 @@ public class OctIntervalTest {
 		testEval(EvalResult.FALSE, "-9734736690234", "-9734736690234", RelationSymbol.LESS, "-9734736690234");
 		testEval(EvalResult.FALSE, "-9734736690233", "-9734736690233", RelationSymbol.LESS, "-9734736690234");
 	}
-	
+
 	// TODO test Geq und Greater
 
 	private void testEval(final EvalResult expected, final String octIvlMin, final String octIvlMax,
@@ -111,7 +111,7 @@ public class OctIntervalTest {
 		final OctInterval octIvl = new OctInterval(OctValue.parse(octIvlMin), OctValue.parse(octIvlMax));
 		testEval(expected, octIvl, relSymb, parseFraction(fraction));
 	}
-	
+
 	private Rational parseFraction(final String fraction) {
 		final int fractionLine = fraction.indexOf('/');
 		if (fractionLine < 0) {
@@ -122,8 +122,8 @@ public class OctIntervalTest {
 		}
 	}
 
-	private void testEval(final EvalResult expected, final OctInterval octIvl,
-			final RelationSymbol relSymb, final Rational constant) {
+	private void testEval(final EvalResult expected, final OctInterval octIvl, final RelationSymbol relSymb,
+			final Rational constant) {
 		Assert.assertEquals(expected, octIvl.evaluate(relSymb, constant));
 	}
 }

@@ -48,6 +48,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -67,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
@@ -192,7 +194,6 @@ public class CfgBuilder {
 
 	private final CodeBlockFactory mCbf;
 
-	private Stack<BoogieIcfgLocation> mWhileExits;
 	private Stack<BoogieIcfgLocation> mConditionalStarts;
 	private int mRemovedAssumeTrueStatements = 0;
 
@@ -618,6 +619,15 @@ public class CfgBuilder {
 		Map<Integer, Integer> mNameCache;
 
 		/**
+		 * We maintain a stack. Whose topmost element is the node after the current while loop. This node will be the
+		 * target of break statement inside the loop. For loops without a break statement we may omit to put something
+		 * on the stack.
+		 */
+		private Stack<BoogieIcfgLocation> mWhileExits;
+
+		private Map<String, Integer> mGotoTargetCounter;
+
+		/**
 		 * Builds the control flow graph of a single procedure according to a given implementation.
 		 *
 		 * @param Identifier
@@ -637,6 +647,7 @@ public class CfgBuilder {
 			if (statements.length == 0) {
 				mEdges = new HashSet<>();
 			}
+			mGotoTargetCounter = BoogieUtils.countGotoTargets(statements);
 
 			mLabel2LocNodes = new HashMap<>();
 
@@ -737,16 +748,28 @@ public class CfgBuilder {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
-				if (currentLocation instanceof StatementSequence
-						&& !(st instanceof CallStatement || isAssuAssiHavoc(st) || st instanceof Label)) {
+				if (st instanceof final Label laSt) {
+					final int gotoTarget = mGotoTargetCounter.getOrDefault(laSt.getName(), 0);
+					if (gotoTarget == 0) {
+						// not target of a goto
+						continue;
+					} else if (gotoTarget == 1 && i > 0 && codeblock[i - 1] instanceof final GotoStatement goSt
+							&& goSt.getLabels().length == 1 && goSt.getLabels()[0].equals(laSt.getName())) {
+						// only target of a got in the line before. Skip both, goto and label
+						i--;
+						continue;
+					}
+				}
+				if (currentLocation instanceof StatementSequence && !(st instanceof CallStatement || isAssuAssiHavoc(st)
+						|| st instanceof Label || st instanceof AssertStatement || st instanceof WhileStatement)) {
 					currentLocation = endStatementSequence((StatementSequence) currentLocation);
 				}
 				if (st instanceof WhileStatement) {
-					currentLocation = buildWhile((BoogieIcfgLocation) currentLocation, (WhileStatement) st);
+					currentLocation = buildWhile(currentLocation, (WhileStatement) st);
 				} else if (st instanceof IfStatement) {
 					currentLocation = buildIf((BoogieIcfgLocation) currentLocation, (IfStatement) st);
 				} else if (st instanceof AssertStatement) {
-					currentLocation = buildAssert((BoogieIcfgLocation) currentLocation, (AssertStatement) st);
+					currentLocation = buildAssert(currentLocation, (AssertStatement) st);
 				} else if (isAssuAssiHavoc(st)) {
 					currentLocation = buildAssuAssiHavoc(currentLocation, st);
 				} else if (st instanceof ReturnStatement) {
@@ -817,7 +840,7 @@ public class CfgBuilder {
 				mEdges.add(newStatementSequence);
 				mProcLocNodes.remove(endLoc.getDebugIdentifier());
 				ModelUtils.copyAnnotations(edgeBefore, newStatementSequence);
-				ModelUtils.copyAnnotations(edgeAfter, newStatementSequence);
+				ModelUtils.copyAnnotationsExcept(edgeAfter, newStatementSequence, ILocation.class);
 				edgeAfter.disconnectTarget();
 				edgeBefore.disconnectSource();
 				mEdges.remove(edgeAfter);
@@ -827,7 +850,8 @@ public class CfgBuilder {
 		}
 
 		private boolean canIfBeCombined(final BoogieIcfgLocation loc) {
-			// remove end node for LoopFreeBlock and SequenceOfStatements, if it only has one incoming edge and one
+			// remove end node for LoopFreeBlock and SequenceOfStatements, if it only has
+			// one incoming edge and one
 			// outgoing edge
 			if ((mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mCodeBlockSize == CodeBlockSize.SequenceOfStatements)
 					&& loc.getIncomingEdges().size() == 1 && loc.getOutgoingEdges().size() == 1
@@ -841,7 +865,17 @@ public class CfgBuilder {
 			return false;
 		}
 
-		private BoogieIcfgLocation buildWhile(final BoogieIcfgLocation targetLoc, final WhileStatement st) {
+		private BoogieIcfgLocation buildWhile(final IIcfgElement inputElement, final WhileStatement st) {
+			final boolean containOuterBreak = BoogieUtils.containsOuterBreak(st.getBody());
+			final IIcfgElement elementAfterLoop;
+			if (containOuterBreak && inputElement instanceof StatementSequence) {
+				// If the loop contains a break that can end this loop, we need a node directly
+				// after the loop to which the break can jump. If we currently have a
+				// StatementSequence, we have to end this StatementSequence
+				elementAfterLoop = endStatementSequence((StatementSequence) inputElement);
+			} else {
+				elementAfterLoop = inputElement;
+			}
 			final BoogieIcfgLocation loopEntryLoc =
 					new BoogieIcfgLocation(constructLocDebugIdentifier(st), mCurrentProcedureName, false, st);
 			final BoogieIcfgLocation afterInvariants;
@@ -866,8 +900,7 @@ public class CfgBuilder {
 						if (currentElement instanceof StatementSequence) {
 							currentElement = endStatementSequence((StatementSequence) currentElement);
 						}
-						currentElement = buildBranchingToNewErrorLocation((BoogieIcfgLocation) currentElement,
-								spec.getFormula(), spec);
+						currentElement = buildBranchingToNewErrorLocation(currentElement, spec.getFormula(), spec);
 					}
 				}
 				if (currentElement instanceof StatementSequence) {
@@ -876,9 +909,15 @@ public class CfgBuilder {
 				mergeLocNodes((BoogieIcfgLocation) currentElement, loopEntryLoc, false);
 			}
 
+			new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(loopEntryLoc);
 			mProcLocNodes.put(loopEntryLoc.getDebugIdentifier(), loopEntryLoc);
 			mIcfg.getLoopLocations().add(loopEntryLoc);
-			mWhileExits.add(targetLoc);
+
+			if (containOuterBreak) {
+				// If the loop contains a break that can leave this loop we have to put the node
+				// after the loop on the stack.
+				mWhileExits.add((BoogieIcfgLocation) elementAfterLoop);
+			}
 			mConditionalStarts.add(afterInvariants);
 			final AssumeStatement condTrue;
 			final AssumeStatement condFalse;
@@ -896,10 +935,20 @@ public class CfgBuilder {
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
 			ModelUtils.copyAnnotations(st, condTrue);
 			ModelUtils.copyAnnotations(st, condFalse);
-			buildBranching(condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, targetLoc,
-					afterInvariants);
-			final BoogieIcfgLocation exit = mWhileExits.pop();
-			assert exit == targetLoc;
+			final IIcfgElement condTrueCodeBlock = buildCodeBlock(st.getBody(), loopEntryLoc, false);
+			if ((condTrueCodeBlock instanceof final BoogieIcfgLocation)
+					&& (isPlainAssumeTrueStatement(condTrue) && condTrueCodeBlock != loopEntryLoc)) {
+				// If condTrue is a "PlainAssumeTrueStatement" and the codeBlock that enters the loop is non-empty
+				// then we do not introduce a separate edge for the `assume true` statement.
+				buildBranchingWithoutTrueCond(condTrueCodeBlock, condFalse, elementAfterLoop, afterInvariants);
+			} else {
+				buildBranching(condTrue, condTrueCodeBlock, condFalse, elementAfterLoop, afterInvariants);
+			}
+			if (containOuterBreak) {
+				// We pushed to the stack, we have to pop from the stack.
+				final BoogieIcfgLocation exit = mWhileExits.pop();
+				assert exit == elementAfterLoop;
+			}
 			mConditionalStarts.pop();
 			return loopEntryLoc;
 		}
@@ -953,11 +1002,11 @@ public class CfgBuilder {
 			}
 		}
 
-		private BoogieIcfgLocation buildAssert(final BoogieIcfgLocation currentLocation, final AssertStatement st) {
-			return buildBranchingToNewErrorLocation(currentLocation, st.getFormula(), st);
+		private BoogieIcfgLocation buildAssert(final IIcfgElement currentElement, final AssertStatement st) {
+			return buildBranchingToNewErrorLocation(currentElement, st.getFormula(), st);
 		}
 
-		private BoogieIcfgLocation buildBranchingToNewErrorLocation(final BoogieIcfgLocation currentLocation,
+		private BoogieIcfgLocation buildBranchingToNewErrorLocation(final IIcfgElement currentElement,
 				final Expression formula, final BoogieASTNode origin) {
 			final BoogieIcfgLocation error = addErrorNode(mCurrentProcedureName, origin, mProcLocNodes);
 			mProcLocNodes.put(error.getDebugIdentifier(), error);
@@ -977,7 +1026,7 @@ public class CfgBuilder {
 			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(origin);
 			ModelUtils.copyAnnotations(origin, condNotError);
 			ModelUtils.copyAnnotations(origin, condError);
-			buildBranching(condNotError, currentLocation, condError, error, srcLoc);
+			buildBranching(condNotError, currentElement, condError, error, srcLoc);
 			return srcLoc;
 		}
 
@@ -998,9 +1047,18 @@ public class CfgBuilder {
 		 */
 		private void buildBranching(final AssumeStatement cond1, final IIcfgElement part1, final AssumeStatement cond2,
 				final IIcfgElement part2, final BoogieIcfgLocation srcLoc) {
-
 			final StatementSequence branch1 = prependStatement(cond1, part1);
 			endStatementSequence(branch1, srcLoc);
+			final StatementSequence branch2 = prependStatement(cond2, part2);
+			endStatementSequence(branch2, srcLoc);
+		}
+
+		/**
+		 * TODO: Documentation
+		 */
+		private void buildBranchingWithoutTrueCond(final IIcfgElement part1, final AssumeStatement cond2,
+				final IIcfgElement part2, final BoogieIcfgLocation srcLoc) {
+			mergeLocNodes((BoogieIcfgLocation) part1, srcLoc, true);
 			final StatementSequence branch2 = prependStatement(cond2, part2);
 			endStatementSequence(branch2, srcLoc);
 		}
@@ -1016,17 +1074,42 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation buildLabel(final IIcfgElement currentElement, final Label st) {
-			final BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
-			// TODO Matthias 2024-09-23: This is one of several auxiliary statements that we
-			// add while constructing an ICFG. If we want to support the next step operator
-			// of LTL we have to define the semantics of a step in Boogie. For this we have
-			// to find out what auxiliry statements we add.
-			final AssumeStatement assume = new AssumeStatement(st.getLocation(),
-					ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
-			mIcfgBacktranslator.putAux(assume, new BoogieASTNode[] { st });
-			final StatementSequence stseq = prependStatement(assume, currentElement);
-			endStatementSequence(stseq, newLocation);
-			return newLocation;
+			final BoogieIcfgLocation newLoc = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
+			final BoogieIcfgLocation resultLoc;
+			if (currentElement instanceof BoogieIcfgLocation) {
+				// We do not want to introduce a new program point for this label but
+				// merge the just constructed BoogieIcfgLocation with currentElement.
+				// A merge in the other direction is not possible, because currentElement
+				// might be a the successor of an if-then-else. If we replace currentElement
+				// here, we also would have to replace it for the other branches.
+				mergeLocNodes(newLoc, (BoogieIcfgLocation) currentElement, true);
+				resultLoc = (BoogieIcfgLocation) currentElement;
+			} else {
+				endStatementSequence((StatementSequence) currentElement, newLoc);
+				resultLoc = newLoc;
+			}
+			if (!isAuxiliaryLabel(st)) {
+				mIcfg.getLocationsOfInterest().add(resultLoc);
+			}
+			return resultLoc;
+		}
+
+		/**
+		 * Auxiliary labels identified by an {@link NamedAttribute}.
+		 */
+		private boolean isAuxiliaryLabel(final Label st) {
+			if (st.getAttributes() == null) {
+				return false;
+			}
+			for (final NamedAttribute attr : st.getAttributes()) {
+				if (attr.getName().equals(BoogieUtils.AUXILIARY_LABEL)) {
+					if (attr.getValues().length != 0) {
+						throw new AssertionError("Attribut must not have values");
+					}
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private BoogieIcfgLocation buildGoto(final BoogieIcfgLocation currentLocation, final GotoStatement st) {
@@ -1357,8 +1440,12 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
-				final boolean childIsLoopEntry = LoopEntryAnnotation.getAnnotation(mother) != null;
-				if (childIsLoopEntry) {
+				final boolean childMustBePreserved = isLoopLocationOrLoi(child);
+				if (childMustBePreserved) {
+					final boolean motherMustBePreserved = isLoopLocationOrLoi(mother);
+					if (motherMustBePreserved) {
+						throw new AssertionError(String.format("Can neither remove %s nor %s.", child, mother));
+					}
 					mergeLocNodes(mother, child, false);
 					mLogger.debug(mother + " gets absorbed by " + child);
 				} else {
@@ -1394,6 +1481,10 @@ public class CfgBuilder {
 				return true;
 			}
 			return false;
+		}
+
+		private boolean isLoopLocationOrLoi(final BoogieIcfgLocation loc) {
+			return mIcfg.getLoopLocations().contains(loc) || mIcfg.getLocationsOfInterest().contains(loc);
 		}
 
 		/**
@@ -1488,11 +1579,11 @@ public class CfgBuilder {
 				value = value + 1;
 			}
 			mNameCache.put(startLine, value);
-			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(astNode);
-			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
+			if (astNode instanceof WhileStatement) {
 				return new LoopEntryDebugIdentifier(startLine, value);
+			} else {
+				return new OrdinaryDebugIdentifier(startLine, value);
 			}
-			return new OrdinaryDebugIdentifier(startLine, value);
 		}
 
 		/**
@@ -1511,11 +1602,6 @@ public class CfgBuilder {
 			final ILocation loc = st.getLocation();
 			BoogieIcfgLocation locNode = mLabel2LocNodes.get(labelId);
 			if (locNode != null) {
-				// The locNode to which labelId points may have been replaced
-				// by another locNode. Lets follow this map transitively.
-				while (locNode != mLabel2LocNodes.get(locNode.getDebugIdentifier())) {
-					locNode = mLabel2LocNodes.get(locNode.getDebugIdentifier());
-				}
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("LocNode for " + labelId + " already" + " constructed, namely: " + locNode);
 				}
@@ -1608,8 +1694,12 @@ public class CfgBuilder {
 				mIcfg.getProcedureEntryNodes().put(mCurrentProcedureName, newLocNode);
 			}
 			if (mIcfg.getLoopLocations().remove(oldLocNode)) {
-				// if the old location was a loop location, the new one is also
+				// if the old location was a loop location, the new one is also a loop location
 				mIcfg.getLoopLocations().add(newLocNode);
+			}
+			if (mIcfg.getLocationsOfInterest().remove(oldLocNode)) {
+				// if the old location was a LOI, the new one is also a LOI
+				mIcfg.getLocationsOfInterest().add(newLocNode);
 			}
 			if (copyAllAnnotations) {
 				ModelUtils.copyAnnotations(oldLocNode, newLocNode);
@@ -1618,4 +1708,5 @@ public class CfgBuilder {
 			}
 		}
 	}
+
 }

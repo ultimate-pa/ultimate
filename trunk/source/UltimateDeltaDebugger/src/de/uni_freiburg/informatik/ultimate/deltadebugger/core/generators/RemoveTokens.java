@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
 import org.eclipse.cdt.internal.formatter.scanner.Scanner;
 import org.eclipse.cdt.internal.formatter.scanner.Token;
 
@@ -73,7 +74,7 @@ public final class RemoveTokens implements IVariantGenerator {
 	}
 
 	private static List<TokenChange> getTokenChanges(final ISourceDocument source) {
-		Scanner scanner = new Scanner();
+		final Scanner scanner = new Scanner();
 		scanner.setSource(source.getText().toCharArray());
 
 		final List<TokenChange> changes = new ArrayList<>();

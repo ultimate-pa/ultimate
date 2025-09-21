@@ -85,7 +85,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			final IPetriNetSuccessorProvider<LETTER, PLACE> minued,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahend,
 			final Set<LETTER> universalLoopers) {
-		super();
 		mServices = services;
 		mMinuend = minued;
 		mSubtrahend = subtrahend;
@@ -240,7 +239,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		public DifferenceSuccessorTransitionProvider(
 				final ISuccessorTransitionProvider<LETTER, PLACE> petriNetPredecessors,
 				final PLACE automatonPredecessor) {
-			super();
 			mPetriNetPredecessors = petriNetPredecessors;
 			mAutomatonPredecessor = automatonPredecessor;
 			final Set<PLACE> predecessors = new LinkedHashSet<>(petriNetPredecessors.getPredecessorPlaces());

@@ -14,9 +14,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * Stores a set of constrained Horn clauses and provides various meta information about. Like:
  * <ul>
- *  <li> all Horn clauses with some given head predicate symbol
- *  <li> all head or body vars of reachable Horn clauses
- *  <li>
+ * <li>all Horn clauses with some given head predicate symbol
+ * <li>all head or body vars of reachable Horn clauses
+ * <li>
  * </ul>
  *
  *
@@ -88,10 +88,8 @@ public class ChcPreMetaInfoProvider {
 		mAllBodyHcVarsAsList.addAll(mAllBodyHcVars);
 	}
 
-	private HashRelation<HcPredicateSymbol, HornClause> sortHornClausesByHeads(
-			final List<HornClause> hornClausesRaw) {
-		final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
-				new HashRelation<>();
+	private HashRelation<HcPredicateSymbol, HornClause> sortHornClausesByHeads(final List<HornClause> hornClausesRaw) {
+		final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses = new HashRelation<>();
 
 		for (final HornClause hc : hornClausesRaw) {
 			if (hc.isHeadFalse()) {

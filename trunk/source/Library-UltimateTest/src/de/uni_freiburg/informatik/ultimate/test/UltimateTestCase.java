@@ -50,11 +50,8 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  */
 public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 
-	private static final AfterTest NOOP = new AfterTest() {
-		@Override
-		public void afterTest() {
-			// do nothing
-		}
+	private static final AfterTest NOOP = () -> {
+		// do nothing
 	};
 
 	private final String mName;
@@ -289,6 +286,6 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 	@FunctionalInterface
 	public interface AfterTest {
 
-		public void afterTest();
+		void afterTest();
 	}
 }

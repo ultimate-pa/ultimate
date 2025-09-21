@@ -264,10 +264,8 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 			return false;
 		}
 
-		if (one.getClass().equals(other.getClass())) {
-			if (one instanceof BooleanLiteral) {
-				return ((BooleanLiteral) one).getValue() == ((BooleanLiteral) other).getValue();
-			}
+		if (one.getClass().equals(other.getClass()) && (one instanceof BooleanLiteral)) {
+			return ((BooleanLiteral) one).getValue() == ((BooleanLiteral) other).getValue();
 		}
 
 		return one.equals(other);
@@ -298,8 +296,7 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 	public Expression negatePred(final Expression atom) {
 		if (atom instanceof BinaryExpression) {
 			final BinaryExpression binexp = (BinaryExpression) atom;
-			final Operator negatedOp;
-			switch (binexp.getOperator()) {
+			final Operator negatedOp = switch (binexp.getOperator()) {
 			case ARITHDIV:
 			case ARITHMINUS:
 			case ARITHMOD:
@@ -317,26 +314,18 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 			case COMPPO:
 				throw new UnsupportedOperationException("Dont know how to negate partial order");
 			case COMPEQ:
-				negatedOp = Operator.COMPNEQ;
-				break;
+				yield Operator.COMPNEQ;
 			case COMPGEQ:
-				negatedOp = Operator.COMPLT;
-				break;
+				yield Operator.COMPLT;
 			case COMPGT:
-				negatedOp = Operator.COMPLEQ;
-				break;
+				yield Operator.COMPLEQ;
 			case COMPLEQ:
-				negatedOp = Operator.COMPGT;
-				break;
+				yield Operator.COMPGT;
 			case COMPLT:
-				negatedOp = Operator.COMPGEQ;
-				break;
+				yield Operator.COMPGEQ;
 			case COMPNEQ:
-				negatedOp = Operator.COMPEQ;
-				break;
-			default:
-				throw new UnsupportedOperationException("Unknown operator");
-			}
+				yield Operator.COMPEQ;
+			};
 			return new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, negatedOp, binexp.getLeft(),
 					binexp.getRight());
 		} else if (atom instanceof BooleanLiteral) {
@@ -344,16 +333,14 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 			return new BooleanLiteral(lit.getLocation(), BoogieType.TYPE_BOOL, !lit.getValue());
 		} else if (atom instanceof UnaryExpression) {
 			final UnaryExpression uexp = (UnaryExpression) atom;
-			switch (uexp.getOperator()) {
+			return switch (uexp.getOperator()) {
 			case ARITHNEGATIVE:
 				throw new UnsupportedOperationException("Cannot negate non-boolean terms");
 			case LOGICNEG:
-				return uexp.getExpr();
+				yield uexp.getExpr();
 			case OLD:
 				throw new UnsupportedOperationException(BoogiePrettyPrinter.print(atom) + " is no predicate");
-			default:
-				throw new UnsupportedOperationException("Unknown operator");
-			}
+			};
 		}
 		// cannot negate anything else
 		throw new UnsupportedOperationException("Cannot negate " + BoogiePrettyPrinter.print(atom));

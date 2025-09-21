@@ -69,13 +69,13 @@ public class BoogieRequirementsParserTestAllPatterns {
 	public static Collection<Object[]> data() {
 		final Collection<Object[]> data = new ArrayList<>();
 		// definition of all patterns
-		final String[] scope = new String[] { "Globally,", "Before \" x > 0 \", ", "After \" x > 0\", ",
-				"Between \"x > 0\" and \" x < 0\", " };
+		final String[] scope =
+				{ "Globally,", "Before \" x > 0 \", ", "After \" x > 0\", ", "Between \"x > 0\" and \" x < 0\", " };
 		// TODO?:"After <Q> before <R>"
-		final Class<?>[] scopezz = new Class<?>[] { SrParseScopeGlobally.class, SrParseScopeBefore.class,
-				SrParseScopeAfter.class, SrParseScopeBetween.class };
+		final Class<?>[] scopezz = { SrParseScopeGlobally.class, SrParseScopeBefore.class, SrParseScopeAfter.class,
+				SrParseScopeBetween.class };
 
-		final String[] pattern = new String[] {
+		final String[] pattern = {
 				"it is always the case that if \"A\" holds then \"!C\" holds for at least 2 time units",
 				"it is never the case that \"y >= 5\" holds", "it is always the case that \"y >= 5\" holds",
 				"transitions to states in which \"y >= 5\" holds occur at most twice",
@@ -88,10 +88,10 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds for at least 2000 time units",
 				"it is always the case that after \"y >= 5\" holds for at least 2000 time units, then \"y <= 5\" holds",
 				"it is always the case that if \"y <= 5\" holds then \"y >= 5\" holds as well" };
-		final String[] patternNames = new String[] { "InvarianceBoundL2Pattern", "AbsencePattern", "UniversalityPattern",
+		final String[] patternNames = { "InvarianceBoundL2Pattern", "AbsencePattern", "UniversalityPattern",
 				"ExistenceBoundUPattern", "PrecedencePattern", "DurationBoundLPattern", "DurationBoundUPattern",
-				"ReccurrenceBoundLPattern", "ResponseDelayPattern", "InvarianceBoundL2Pattern", "BndEntryConditionPattern",
-				"InvariancePattern" };
+				"ReccurrenceBoundLPattern", "ResponseDelayPattern", "InvarianceBoundL2Pattern",
+				"BndEntryConditionPattern", "InvariancePattern" };
 
 		for (int i = 0; i < scope.length; i++) {
 			for (int j = 0; j < pattern.length; j++) {

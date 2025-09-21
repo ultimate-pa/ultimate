@@ -50,7 +50,7 @@ public class ProcedureErrorWithCheckDebugIdentifier extends ProcedureErrorDebugI
 
 	@Override
 	public String toString() {
-		return super.toString() + mCheck.toString().replaceAll(" ", "").replaceAll(",", "_");
+		return super.toString() + mCheck.toString().replace(" ", "").replace(',', '_');
 	}
 
 	@Override

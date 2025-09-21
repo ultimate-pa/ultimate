@@ -47,10 +47,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Provides static methods that are utilized by the
- * {@link QuantifierPushTermWalker}. Methods in this class are focused on "local
- * eliminatees". We call an eliminatee "local for a dualFiniteJunction" if it
- * occurs only in a single dualFiniteJunct.
+ * Provides static methods that are utilized by the {@link QuantifierPushTermWalker}. Methods in this class are focused
+ * on "local eliminatees". We call an eliminatee "local for a dualFiniteJunction" if it occurs only in a single
+ * dualFiniteJunct.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -58,9 +57,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class QuantifierPushUtilsForLocalEliminatees {
 
 	/**
-	 * We call an eliminatee "local for a dualFiniteJunction" if it occurs only in a
-	 * single dualFiniteJunct. This method takes a dualFiniteJunction and
-	 * iteratively pushes sets of local eliminatees over dualFiniteJuncts that are
+	 * We call an eliminatee "local for a dualFiniteJunction" if it occurs only in a single dualFiniteJunct. This method
+	 * takes a dualFiniteJunction and iteratively pushes sets of local eliminatees over dualFiniteJuncts that are
 	 * correspondingFiniteJunctions.
 	 */
 	public static Term pushLocalEliminateesOverCorrespondingFiniteJunction(final IUltimateServiceProvider services,
@@ -106,11 +104,9 @@ public class QuantifierPushUtilsForLocalEliminatees {
 	}
 
 	/**
-	 * We call an eliminatee "local for a dualFiniteJunction" if it occurs only in a
-	 * single dualFiniteJunct. This method takes a dualFiniteJunction and one
-	 * dualFinitJunct that is a correspondingFiniteJunction together with a set of
-	 * local eliminatees and pushes the local eliminatees over the
-	 * correspondingFiniteJunct.
+	 * We call an eliminatee "local for a dualFiniteJunction" if it occurs only in a single dualFiniteJunct. This method
+	 * takes a dualFiniteJunction and one dualFinitJunct that is a correspondingFiniteJunction together with a set of
+	 * local eliminatees and pushes the local eliminatees over the correspondingFiniteJunct.
 	 */
 	private static Term pushLocalEliminateeSetToDualJunct(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
@@ -134,11 +130,10 @@ public class QuantifierPushUtilsForLocalEliminatees {
 	}
 
 	/**
-	 * We call an eliminatee "local for a dualFiniteJunction" if it occurs only in a
-	 * single dualFiniteJunct. This method takes an {@link EliminationTask} over a
-	 * dualFiniteJunction and returns some dualFiniteJunct that is a
-	 * correspondingFiniteJunction and all its local eliminatees. The method returns
-	 * null if no dualFiniteJunct has local eliminatees.
+	 * We call an eliminatee "local for a dualFiniteJunction" if it occurs only in a single dualFiniteJunct. This method
+	 * takes an {@link EliminationTask} over a dualFiniteJunction and returns some dualFiniteJunct that is a
+	 * correspondingFiniteJunction and all its local eliminatees. The method returns null if no dualFiniteJunct has
+	 * local eliminatees.
 	 */
 	static Pair<Term, Set<TermVariable>> findSomePushableLocalEliminateeSet(final EliminationTask et) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());

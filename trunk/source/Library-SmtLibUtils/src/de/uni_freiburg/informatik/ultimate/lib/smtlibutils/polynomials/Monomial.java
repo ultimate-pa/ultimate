@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
@@ -34,7 +35,7 @@ public class Monomial {
 	 */
 	public enum Occurrence {
 		NOT, AS_EXCLUSIVE_VARIABlE, NON_EXCLUSIVE_OR_SUBTERM
-	};
+	}
 
 	/**
 	 * Map from Variables to their exponent. Exponent Zero is forbidden. Roots are not prohibited but we cannot handle
@@ -64,8 +65,8 @@ public class Monomial {
 		mVariable2Exponent = new HashMap<>();
 		for (final Monomial monomial : monomials) {
 			for (final Map.Entry<Term, Rational> factor : monomial.getVariable2Exponent().entrySet()) {
-				assert factor.getKey().getSort() == mSort : "Sort mismatch: " + factor.getKey().getSort() + " vs. "
-						+ mSort;
+				assert factor.getKey().getSort() == mSort
+						: "Sort mismatch: " + factor.getKey().getSort() + " vs. " + mSort;
 				assert !(factor.getValue().signum() == -1);
 				final Rational exp = mVariable2Exponent.get(factor.getKey());
 				if (exp == null) {
@@ -102,13 +103,14 @@ public class Monomial {
 	 * @return
 	 */
 	public boolean isLinear() {
-//		return getVariable2Exponent().entrySet().size() == 1 && getVariable2Exponent().values().contains(Rational.ONE);
+		// return getVariable2Exponent().entrySet().size() == 1 &&
+		// getVariable2Exponent().values().contains(Rational.ONE);
 		return getSingleVariable() != null;
 	}
 
 	/**
-	 * @return The variable x if this monomial consists of a single variable whose
-	 *         exponent is one, return null otherwise.
+	 * @return The variable x if this monomial consists of a single variable whose exponent is one, return null
+	 *         otherwise.
 	 */
 	public Term getSingleVariable() {
 		final Iterator<Entry<Term, Rational>> it = getVariable2Exponent().entrySet().iterator();
@@ -133,17 +135,15 @@ public class Monomial {
 	}
 
 	/**
-	 * @return true iff var is a variable of this {@link Monomial}. Note that for
-	 *         returning true it is especially NOT sufficient if var occurs only as
-	 *         a subterm of some variable.
+	 * @return true iff var is a variable of this {@link Monomial}. Note that for returning true it is especially NOT
+	 *         sufficient if var occurs only as a subterm of some variable.
 	 */
 	public boolean isVariable(final Term var) {
-		return getVariable2Exponent().keySet().contains(var);
+		return getVariable2Exponent().containsKey(var);
 	}
 
 	/**
-	 * Find out if var occurs as a proper subterm of some variable or otherwise as a
-	 * variable or does not occur at all.
+	 * Find out if var occurs as a proper subterm of some variable or otherwise as a variable or does not occur at all.
 	 *
 	 */
 	public Occurrence isExclusiveVariable(final Term var) {
@@ -156,8 +156,8 @@ public class Monomial {
 					varOccurred = true;
 				}
 			} else {
-				final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == var)
-						.isSatisfiedBySomeSubterm(var2exp.getKey());
+				final boolean subjectOccursAsSubterm =
+						new SubtermPropertyChecker(x -> x == var).isSatisfiedBySomeSubterm(var2exp.getKey());
 				if (subjectOccursAsSubterm) {
 					return Occurrence.NON_EXCLUSIVE_OR_SUBTERM;
 				}
@@ -194,7 +194,7 @@ public class Monomial {
 		if (coeff.equals(Rational.ONE)) {
 			factors = new Term[size];
 			i = 0;
-		}else {
+		} else {
 			factors = new Term[size + 1];
 			factors[0] = SmtUtils.rational2Term(script, coeff, mSort);
 			i = 1;
@@ -238,11 +238,7 @@ public class Monomial {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mSort == null ? 0 : mSort.hashCode());
-		result = prime * result + (mVariable2Exponent == null ? 0 : mVariable2Exponent.hashCode());
-		return result;
+		return Objects.hash(mSort, mVariable2Exponent);
 	}
 
 	@Override
@@ -253,7 +249,7 @@ public class Monomial {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof Monomial)) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		final Monomial other = (Monomial) obj;

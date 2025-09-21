@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -97,7 +98,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 
 	private Set<Integer> mCallPositions;
 
-	private SortedMap<Integer, LETTER> mPendingReturns;
+	private TreeMap<Integer, LETTER> mPendingReturns;
 
 	/**
 	 * Constructor for a nested word from two arrays.
@@ -223,8 +224,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		return mPendingReturns;
 	}
 
-	private SortedMap<Integer, LETTER> computePendingReturnPositions() {
-		final SortedMap<Integer, LETTER> result = new TreeMap<>();
+	private TreeMap<Integer, LETTER> computePendingReturnPositions() {
+		final TreeMap<Integer, LETTER> result = new TreeMap<>();
 		for (int i = 0; i < mNestingRelation.length; i++) {
 			if (isPendingReturn(i)) {
 				result.put(i, mWord[i]);
@@ -576,10 +577,10 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 
 	private static boolean assertValidNestedWord(final Object[] word, final int[] nestingRelation) {
-		assert word.length == nestingRelation.length : "The nesting relation must contain one entry for each letter "
-				+ "in the word.";
-		assert nestingRelationValuesInRange(nestingRelation) : "The nesting relation may only contain -2, plus "
-				+ "infinity, minus infinity, or natural numbers.";
+		assert word.length == nestingRelation.length
+				: "The nesting relation must contain one entry for each letter " + "in the word.";
+		assert nestingRelationValuesInRange(nestingRelation)
+				: "The nesting relation may only contain -2, plus " + "infinity, minus infinity, or natural numbers.";
 		assert nestingRelationSymmetricNestingEdges(nestingRelation) : "If nestingRelation[i]=k, then "
 				+ "nestingRelation[k]=i or nestingRelation[i] is either -2, plus infinity, or minus infinity.";
 		assert nestingEdgesDoNotCross(nestingRelation) : "Nesting edges must not cross.";
@@ -606,8 +607,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 
 	/**
-	 * Check whether the nesting relation is empty, i.e., check whether there are
-	 * only internal positions.
+	 * Check whether the nesting relation is empty, i.e., check whether there are only internal positions.
 	 */
 	public boolean hasEmptyNestingRelation() {
 		for (int i = 0; i < mWord.length; i++) {
@@ -617,4 +617,31 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return true;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(mNestingRelation);
+		result = prime * result + Objects.hash(mCallPositions, mPendingReturns);
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final NestedWord<?> other = (NestedWord<?>) obj;
+		return Objects.equals(mCallPositions, other.mCallPositions)
+				&& Arrays.equals(mNestingRelation, other.mNestingRelation)
+				&& Objects.equals(mPendingReturns, other.mPendingReturns);
+	}
+
 }

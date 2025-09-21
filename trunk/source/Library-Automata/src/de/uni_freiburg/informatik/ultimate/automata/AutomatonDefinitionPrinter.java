@@ -200,14 +200,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final IFormat format, final String atsHeaderMessage, final String atsCommands,
 			final NamedAutomaton<?, ?>... nas) {
 		final File file = new File(fileName + '.' + format.getFileEnding());
-		final FileWriter fileWriter;
-		try {
-			fileWriter = new FileWriter(file);
-		} catch (final IOException e) {
-			throw new AssertionError("Unable to create file writer for " + fileName);
-		}
-
-		try (final PrintWriter printWriter = new PrintWriter(fileWriter)) {
+		try (final PrintWriter printWriter = new PrintWriter(new FileWriter(file))) {
 			format.printHeader(printWriter, atsHeaderMessage);
 			printWriter.println();
 			printWriter.println(atsCommands);
@@ -215,12 +208,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			for (final NamedAutomaton<?, ?> na : nas) {
 				printAutomaton(services, na, format, printWriter);
 			}
-		} finally {
-			try {
-				fileWriter.close();
-			} catch (final IOException e) {
-				throw new AssertionError("failed to close file writer");
-			}
+		} catch (final IOException e) {
+			throw new AssertionError("Unable to create file writer for " + fileName, e);
 		}
 	}
 
@@ -380,7 +369,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		private final IAutomaton<LETTER, STATE> mAutomaton;
 
 		public NamedAutomaton(final String name, final IAutomaton<LETTER, STATE> automaton) {
-			super();
 			Objects.requireNonNull(name);
 			Objects.requireNonNull(automaton);
 			mName = name;

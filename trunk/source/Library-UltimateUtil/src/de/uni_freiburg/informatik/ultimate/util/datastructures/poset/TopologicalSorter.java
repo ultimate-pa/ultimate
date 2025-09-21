@@ -40,7 +40,8 @@ import java.util.function.Function;
 /**
  * Utility class for topological sorting of DAGs.
  *
- * @param <V> Type of the graph's nodes.
+ * @param <V>
+ *            Type of the graph's nodes.
  *
  * @author schaetzc@tf.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -54,10 +55,11 @@ public class TopologicalSorter<V> {
 	private final Function<V, Collection<V>> mSuccesorsOf;
 
 	/**
-	 * Creates re-usable sorter.
-	 * Instead of the actual successor function one can pass an altered version that ignores some edges.
-	 * This can be used to sort graphs with cycles if the cycle building edges are ignored.
-	 * @param funSuccesor A deterministic function that provides all successors for a vertex.
+	 * Creates re-usable sorter. Instead of the actual successor function one can pass an altered version that ignores
+	 * some edges. This can be used to sort graphs with cycles if the cycle building edges are ignored.
+	 *
+	 * @param funSuccesor
+	 *            A deterministic function that provides all successors for a vertex.
 	 */
 	public TopologicalSorter(final Function<V, Collection<V>> funSuccesor) {
 		mSuccesorsOf = funSuccesor;
@@ -71,9 +73,11 @@ public class TopologicalSorter<V> {
 	}
 
 	/**
-	 * Creates a reversed topological ordering of an acyclic directed graph (DAG) given as a set of nodes.
-	 * The given set of nodes must be closed under the successor function specified in {@link #TopologicalSorter(Function)}.
-	 * @param graphNodes Closed set of nodes to be sorted. Duplicates will be ignored.
+	 * Creates a reversed topological ordering of an acyclic directed graph (DAG) given as a set of nodes. The given set
+	 * of nodes must be closed under the successor function specified in {@link #TopologicalSorter(Function)}.
+	 *
+	 * @param graphNodes
+	 *            Closed set of nodes to be sorted. Duplicates will be ignored.
 	 * @return Reversed topological ordering of the nodes iff such an ordering exists
 	 */
 	public Optional<List<V>> reversedTopologicalOrdering(final Collection<V> graphNodes) {
@@ -86,9 +90,12 @@ public class TopologicalSorter<V> {
 
 	/**
 	 * Tries to sort a set of nodes topologically.
-	 * @param graphNodes Nodes to be sorted, must be closed under {@link #mSuccesorsOf}. Duplicates will be ignored.
+	 *
+	 * @param graphNodes
+	 *            Nodes to be sorted, must be closed under {@link #mSuccesorsOf}. Duplicates will be ignored.
 	 * @return Reversed topological ordering of the nodes
-	 * @throws GraphCycleException The set of nodes contained a cycle under {@link #mSuccesorsOf}
+	 * @throws GraphCycleException
+	 *             The set of nodes contained a cycle under {@link #mSuccesorsOf}
 	 */
 	private List<V> tryRevTopSort(final Collection<V> graphNodes) throws GraphCycleException {
 		mUnmarkedNodes = new LinkedHashSet<>(graphNodes);

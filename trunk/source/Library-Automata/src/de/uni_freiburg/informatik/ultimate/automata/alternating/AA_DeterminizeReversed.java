@@ -48,8 +48,8 @@ public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, Bit
 			final IEmptyStackStateFactory<BitSet> emtpyStackStateFactory,
 			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
 		super(services);
-		final VpAlphabet<LETTER> vpAlphabet = new VpAlphabet<LETTER>(alternatingAutomaton.getAlphabet(),
-				Collections.emptySet(), Collections.emptySet());
+		final VpAlphabet<LETTER> vpAlphabet =
+				new VpAlphabet<>(alternatingAutomaton.getAlphabet(), Collections.emptySet(), Collections.emptySet());
 		mResultAutomaton = new NestedWordAutomaton<>(services, vpAlphabet, emtpyStackStateFactory);
 		final LinkedList<BitSet> newStates = new LinkedList<>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
@@ -75,8 +75,8 @@ public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, Bit
 				}
 				/*
 				 * Christian 2016-08-19: fixed a bug: If the state is not in the automaton, adding transitions will
-				 *     fail. That is why I added this list of transitions to add later in the hope that this should fix
-				 *     the problem.
+				 * fail. That is why I added this list of transitions to add later in the hope that this should fix the
+				 * problem.
 				 */
 				if (addTransitionDirectly) {
 					mResultAutomaton.addInternalTransition(state, letter, nextState);

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a node/subtree position in a ranked Tree.
@@ -42,10 +43,7 @@ public class SubtreePosition {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mPosition == null) ? 0 : mPosition.hashCode());
-		return result;
+		return Objects.hash(mPosition);
 	}
 
 	@Override
@@ -75,4 +73,3 @@ public class SubtreePosition {
 		return "SubtreePosition " + mPosition;
 	}
 }
-

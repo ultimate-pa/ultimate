@@ -31,23 +31,18 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 
-
 /**
- * Represents a set of program states.
- * Generic version that does not rely on Terms
- * TOOD: Find good name, This about parameterization with constraint
+ * Represents a set of program states. Generic version that does not rely on Terms TOOD: Find good name, This about
+ * parameterization with constraint
  *
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
 public interface IAbstractPredicate {
 	/**
-	 * Returns a superset of the all {@link IProgramVar} that are constraint
-	 * by this predicate (informally: whose corresponding TermVariable "occurs"
-	 * in this IPredicate)
-	 * It is sound to return the set of variables but a better approximation
-	 * increases the speed of some operations and increases the precision
-	 * of data flow-based analysis
+	 * Returns a superset of the all {@link IProgramVar} that are constraint by this predicate (informally: whose
+	 * corresponding TermVariable "occurs" in this IPredicate) It is sound to return the set of variables but a better
+	 * approximation increases the speed of some operations and increases the precision of data flow-based analysis
 	 */
 	Set<IProgramVar> getVars();
 

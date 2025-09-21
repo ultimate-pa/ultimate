@@ -21,7 +21,6 @@
 		<plugin id="com.google.guava"/>
 		<plugin id="com.google.guava.failureaccess"/>
 		<plugin id="com.ibm.icu" version="75.1"/>
-		<plugin id="com.lmax.disruptor"/>
 		<plugin id="com.sun.jna.platform" version="5.14.0"/>
 		<plugin id="com.sun.jna" version="5.14.0.v20231211-1200"/>
 		<plugin id="com.sun.xml.bind.jaxb-impl" version="4.0.5"/>

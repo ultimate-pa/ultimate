@@ -40,7 +40,6 @@ public class PointerBaseVariable extends PointerBase {
 	private final DeclarationInformation mDeclarationInformation;
 
 	public PointerBaseVariable(final String identifier, final DeclarationInformation declarationInformation) {
-		super();
 		mIdentifier = identifier;
 		mDeclarationInformation = declarationInformation;
 	}

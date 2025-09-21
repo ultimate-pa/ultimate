@@ -72,7 +72,7 @@ public final class PatternUtil {
 		// first, create some observables and durartions
 		final int count = 10;
 		int duration = 5;
-		int maxPatternObs = 2;
+		final int maxPatternObs = 2;
 		final CDD[] patternObs = new CDD[count];
 		final Rational[] durations = new Rational[count];
 

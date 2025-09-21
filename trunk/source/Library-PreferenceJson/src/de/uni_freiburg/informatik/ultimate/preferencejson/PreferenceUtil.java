@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2022 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2022 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -228,7 +228,7 @@ public final class PreferenceUtil {
 	/**
 	 * Generates a list of settings, where each setting is represented as a map. This java data structure can then be
 	 * converted to JSON to obtain the <tt>frontend_settings</tt> value in <tt>config.js</tt>.
-	 * 
+	 *
 	 * Each map has the following entries.
 	 * <p>
 	 * <ul>
@@ -246,11 +246,12 @@ public final class PreferenceUtil {
 	 * <li>Optional: <tt>range</tt>: A list of integers representing a minimal and a maximal value, e.g.
 	 * <tt>[1,12]</tt>. If the type is int or real, this allows the frontend to generate a slider control.</li>
 	 * <li>Optional: <tt>options</tt>: A list of strings representing values to choose from. If the type is string, this
-	 * allows the frontend to generate a selection box.</li>
+	 * allows the frontend to generate a selection box.</li> *
+	 * <li>Optional: <tt>description</tt>: A description that documents this setting.</li>
 	 * </ul>
 	 *
 	 * @param item
-	 * 
+	 *
 	 */
 	private static Map<String, Object> createFrontendSetting(final String pluginId, final String key,
 			final Object value, final UltimatePreferenceItem<?> item) {
@@ -270,6 +271,10 @@ public final class PreferenceUtil {
 
 		// TODO: Perhaps handle ranges via item.getPreferenceValidator() as well
 		// TODO: Deal with keyvalue types
+
+		if (item.getDescription() != null) {
+			rtr.put("description", item.getDescription());
+		}
 
 		return rtr;
 	}

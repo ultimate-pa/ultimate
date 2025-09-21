@@ -39,7 +39,6 @@ public class AcceleratedTraceCheckStatisticsGenerator implements IStatisticsData
 	private LBool mSatisfiability;
 
 	public AcceleratedTraceCheckStatisticsGenerator() {
-		super();
 		mSuccessfullAccelerations = 0;
 		mAccelerationAttempts = 0;
 		mSatisfiability = null;
@@ -47,18 +46,13 @@ public class AcceleratedTraceCheckStatisticsGenerator implements IStatisticsData
 
 	@Override
 	public Object getValue(final String key) {
-		final AcceleratedTraceCheckStatsticsDefinitions keyEnum = Enum
-				.valueOf(AcceleratedTraceCheckStatsticsDefinitions.class, key);
-		switch (keyEnum) {
-		case SuccessfullAccelerations:
-			return mSuccessfullAccelerations;
-		case AccelerationAttempts:
-			return mAccelerationAttempts;
-		case Satisfiability:
-			return mSatisfiability;
-		default:
-			throw new AssertionError("unknown data");
-		}
+		final AcceleratedTraceCheckStatsticsDefinitions keyEnum =
+				AcceleratedTraceCheckStatsticsDefinitions.valueOf(key);
+		return switch (keyEnum) {
+		case SuccessfullAccelerations -> mSuccessfullAccelerations;
+		case AccelerationAttempts -> mAccelerationAttempts;
+		case Satisfiability -> mSatisfiability;
+		};
 	}
 
 	@Override

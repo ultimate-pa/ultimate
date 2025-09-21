@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public final class ConsoleLogger implements ILogger {
 
 	private LogLevel mLevel;
-	private ILogFunction[] mLevelToFunction = new ILogFunction[LogLevel.values().length];
+	private final ILogFunction[] mLevelToFunction = new ILogFunction[LogLevel.values().length];
 
 	public ConsoleLogger() {
 		setLevel(LogLevel.DEBUG);
@@ -69,9 +69,9 @@ public final class ConsoleLogger implements ILogger {
 	public void setLevel(final LogLevel level) {
 		mLevel = level;
 		final ILogFunction noLog = new NoLog();
-		for (LogLevel levelIter : LogLevel.values()) {
-			mLevelToFunction[levelIter.ordinal()] = isLogLevelEnabled(levelIter) ?
-					new Log("[" + levelIter + "]: ") : noLog;
+		for (final LogLevel levelIter : LogLevel.values()) {
+			mLevelToFunction[levelIter.ordinal()] =
+					isLogLevelEnabled(levelIter) ? new Log("[" + levelIter + "]: ") : noLog;
 		}
 	}
 
@@ -81,7 +81,7 @@ public final class ConsoleLogger implements ILogger {
 		return queryLevel.compareTo(mLevel) >= 0;
 	}
 
-	private static interface ILogFunction {
+	private interface ILogFunction {
 
 		void log(final Object msg);
 

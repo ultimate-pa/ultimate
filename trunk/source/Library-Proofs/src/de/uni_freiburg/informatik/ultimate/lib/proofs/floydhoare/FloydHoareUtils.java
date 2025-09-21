@@ -108,31 +108,30 @@ public final class FloydHoareUtils {
 			final Consumer<InvariantResult<IIcfgElement, ?>> reporter) {
 		final var checks = getCheckedSpecifications(icfg, annotation);
 
-		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
-		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-		locsForLoopLocations.addAll(icfg.getLoopLocations());
+		// IcfgLocations for which we report loop invariants if available
+		final Set<IcfgLocation> invariantLocations = new HashSet<>(icfg.getLoopLocations());
+		invariantLocations.addAll(icfg.getLocationsOfInterest());
 
-		for (final IcfgLocation locNode : locsForLoopLocations) {
+		for (final IcfgLocation locNode : invariantLocations) {
 			final IPredicate hoare = annotation.getAnnotation(locNode);
 			if (hoare == null) {
 				continue;
 			}
 
 			final Term invariant = hoare.getFormula();
-
 			final ILocation context = ILocation.getAnnotation(locNode);
 			final var translatedInvariant =
 					backTranslatorService.translateExpressionWithContext(invariant, context, Term.class);
-
-			if (translatedInvariant == null || translatedInvariant.toString().equals("1")) {
+			final String invariantString =
+					translatedInvariant == null ? null : backTranslatorService.targetExpressionToString(translatedInvariant);
+			if (translatedInvariant == null || invariantString.equals("1") || invariantString.equals("true")) {
 				continue;
 			}
 
-			final var invResult =
-					new InvariantResult<IIcfgElement, Object>(pluginName, locNode, translatedInvariant, checks);
+			final var invResult = new InvariantResult<IIcfgElement, Object>(pluginName, locNode, translatedInvariant,
+					invariantString, checks);
 			reporter.accept(invResult);
-			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
+			new WitnessInvariant<>(invResult.getInvariant()).annotate(locNode);
 		}
 	}
 
@@ -189,7 +188,7 @@ public final class FloydHoareUtils {
 			}
 
 			final var result = new ProcedureContractResult<IIcfgElement, Object>(pluginName, exit, procName,
-					translatedContract, checks);
+					translatedContract, backTranslatorService.targetProcedureContractToString(translatedContract), checks);
 			reporter.accept(result);
 			new WitnessProcedureContract(translatedContract).annotate(exit);
 		}

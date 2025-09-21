@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Abstract superclass for our partial quantifier elimination for Xjuncts of a XNF.
+ *
  * @author Matthias Heizmann
  */
 
@@ -47,45 +48,39 @@ public abstract class XjunctPartialQuantifierElimination {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 
-
-	public XjunctPartialQuantifierElimination(final ManagedScript script,
-			final IUltimateServiceProvider services) {
-		super();
+	public XjunctPartialQuantifierElimination(final ManagedScript script, final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		mMgdScript = script;
 		mScript = script.getScript();
 	}
+
 	public abstract String getName();
+
 	public abstract String getAcronym();
+
 	/**
-	 * Returns true if the returned result is again an Xjunction (conjunction
-	 * for existential quantifier, disjunction for universal quantifier).
-	 * E.g., if we apply TIR for existential quantification to a conjunction,
-	 * we may obtain a (large) disjunction of conjunction.
+	 * Returns true if the returned result is again an Xjunction (conjunction for existential quantifier, disjunction
+	 * for universal quantifier). E.g., if we apply TIR for existential quantification to a conjunction, we may obtain a
+	 * (large) disjunction of conjunction.
 	 */
 	public abstract boolean resultIsXjunction();
 
 	/**
-	 * Try to remove {@link TermVariable}s from the set <code>eliminatees</code>
-	 * such that the following holds.
+	 * Try to remove {@link TermVariable}s from the set <code>eliminatees</code> such that the following holds.
 	 * <p>
-	 * If the quantifier is an existential (resp. universal) quantifier this method
-	 * returns an array of {@link Term}s <code>result</code> such that
-	 * <code>∃ eliminatees. ⋀ dualJuncts</code> is equivalent to
-	 * <code>∃ eliminatees'. ⋀ result</code> (resp.
-	 * <code>∀ eliminatees. ⋁ dualJuncts</code> is equivalent to
-	 * <code>∀ eliminatees'. ⋁ result</code>) where eliminatees' refers to the
-	 * content of the set after this method was executed.
+	 * If the quantifier is an existential (resp. universal) quantifier this method returns an array of {@link Term}s
+	 * <code>result</code> such that <code>∃ eliminatees. ⋀ dualJuncts</code> is equivalent to
+	 * <code>∃ eliminatees'. ⋀ result</code> (resp. <code>∀ eliminatees. ⋁ dualJuncts</code> is equivalent to
+	 * <code>∀ eliminatees'. ⋁ result</code>) where eliminatees' refers to the content of the set after this method was
+	 * executed.
 	 * <p>
-	 * Which and how many variables from the set <code>eliminatees</code> can be
-	 * removed depends on the quantifier elimination algorithm that implements this
-	 * method.
+	 * Which and how many variables from the set <code>eliminatees</code> can be removed depends on the quantifier
+	 * elimination algorithm that implements this method.
 	 * <p>
-	 * Every variable that was successfully eliminated is removed from the set.
-	 * However, due to formula simplifications some variables might get removed
-	 * accidentally. Hence, there might be variables that are not removed from
-	 * the eliminatees set but do not occur in the resulting terms.
+	 * Every variable that was successfully eliminated is removed from the set. However, due to formula simplifications
+	 * some variables might get removed accidentally. Hence, there might be variables that are not removed from the
+	 * eliminatees set but do not occur in the resulting terms.
 	 */
 	public abstract Term[] tryToEliminate(int quantifier, Term[] dualJuncts, Set<TermVariable> eliminatees);
 

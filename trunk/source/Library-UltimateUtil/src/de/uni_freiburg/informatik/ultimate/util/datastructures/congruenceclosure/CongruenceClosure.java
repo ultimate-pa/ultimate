@@ -108,7 +108,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 */
 	CongruenceClosure(final CcManager<ELEM> manager) {
 		mElementTVER = new ThreeValuedEquivalenceRelation<>(CongruenceClosure::literalComparator);
-		mAuxData = new CcAuxData<ELEM>(this);
+		mAuxData = new CcAuxData<>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
 		mAllLiterals = new HashSet<>();
 		mManager = manager;
@@ -374,8 +374,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 */
 		if (e1OldRep.isLiteral() || e2OldRep.isLiteral()) {
 			final ELEM newRep = getRepresentativeElement(elem1);
-			assert newRep.isLiteral() : "if one element of an equivalence class is a literal, then it must be the "
-					+ "representative";
+			assert newRep.isLiteral()
+					: "if one element of an equivalence class is a literal, then it must be the " + "representative";
 			for (final ELEM unequalToMerged : mElementTVER.getRepresentativesUnequalTo(newRep)) {
 				if (unequalToMerged.isLiteral()) {
 					mElementTVER.removeDisequality(newRep, unequalToMerged);
@@ -423,8 +423,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		}
 
-		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || result.stream().allMatch(el -> el
-				.hasSameTypeAs(rep)) : "don't track disequalities between different sorts -- they are always implicit";
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || result.stream().allMatch(el -> el.hasSameTypeAs(rep))
+				: "don't track disequalities between different sorts -- they are always implicit";
 		return result;
 	}
 
@@ -537,8 +537,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
-			assert mElementTVER.getRepresentative(elem) != null : "this method assumes that elem has been added "
-					+ "already";
+			assert mElementTVER.getRepresentative(elem) != null
+					: "this method assumes that elem has been added " + "already";
 			return;
 		}
 
@@ -741,10 +741,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	public Set<ELEM> collectElementsToRemove(final ELEM elem) {
-		final Set<ELEM> result = new HashSet<>();
+		final Set<ELEM> result = new HashSet<>(mFaAuxData.getDependentsOf(elem));
 
-		// collect transitive parents of dependent elements
-		result.addAll(mFaAuxData.getDependentsOf(elem));
 		for (final ELEM dep : mFaAuxData.getDependentsOf(elem)) {
 			result.addAll(collectTransitiveParents(dep));
 		}
@@ -1336,12 +1334,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 
 		if (this.isInconsistent()) {
-			if (mElementTVER != null) {
-				// transitory CClosure instance which will later be replaced by the "bottom" variant
-				if (!mElementTVER.isInconsistent() && !mLiteralSetConstraints.isInconsistent()) {
-					assert false : "cc reports as inconsistent, but why?..";
-					return false;
-				}
+			// transitory CClosure instance which will later be replaced by the "bottom" variant
+			if ((mElementTVER != null)
+					&& (!mElementTVER.isInconsistent() && !mLiteralSetConstraints.isInconsistent())) {
+				assert false : "cc reports as inconsistent, but why?..";
+				return false;
 			}
 			return true;
 		}
@@ -1853,8 +1850,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		// TVER does not know about parent/child relationship of nodes, so it is safe
 		final ThreeValuedEquivalenceRelation<ELEM> newTver =
 				copy.mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsInConstraintsToKeep);
-		assert assertNoNewElementsIntroduced(this.getAllElements(), newTver.getAllElements(),
-				elemsToKeep) : "no elements may have been introduced that were not present before this operation";
+		assert assertNoNewElementsIntroduced(this.getAllElements(), newTver.getAllElements(), elemsToKeep)
+				: "no elements may have been introduced that were not present before this operation";
 
 		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
 				copy.mLiteralSetConstraints.filterAndKeepOnlyConstraintsThatIntersectWith(elemsInConstraintsToKeep);
@@ -1874,8 +1871,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 */
 		final CongruenceClosure<ELEM> result =
 				mManager.getCongruenceClosureFromTver(newTver, removeElementInfo, newLiteralSetConstraints, true);
-		assert assertNoNewElementsIntroduced(this.getAllElements(), result.getAllElements(),
-				elemsToKeep) : "no elements may have been introduced that were not present before this operation";
+		assert assertNoNewElementsIntroduced(this.getAllElements(), result.getAllElements(), elemsToKeep)
+				: "no elements may have been introduced that were not present before this operation";
 		assert !result.isInconsistent() : "cannot go from a consistent input to an inconsisten output during projectTo";
 		return result;
 	}
@@ -1920,10 +1917,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return true;
 		}
 
-		if (elem.isDependentNonFunctionApplication()) {
-			if (DataStructureUtils.haveNonEmptyIntersection(elem.getSupportingNodes(), sub)) {
-				return true;
-			}
+		if (elem.isDependentNonFunctionApplication()
+				&& DataStructureUtils.haveNonEmptyIntersection(elem.getSupportingNodes(), sub)) {
+			return true;
 		}
 		if (elem.isFunctionApplication()) {
 			return dependsOnAny(elem.getAppliedFunction(), sub) || dependsOnAny(elem.getArgument(), sub);

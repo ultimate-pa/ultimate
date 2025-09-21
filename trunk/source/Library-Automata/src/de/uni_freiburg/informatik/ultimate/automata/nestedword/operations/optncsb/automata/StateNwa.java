@@ -38,91 +38,89 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
-
-
 /**
  * State class for Buchi Nested Word Automata
- * */
+ */
 public class StateNwa implements IStateNwa, Comparable<StateNwa> {
-	
+
 	private final IBuchiNwa mBuchi;
 	private final int mId;
-	
+
 	private final Map<Integer, IntSet> mSuccessorsInternal;
 	private final Map<Integer, IntSet> mSuccessorsCall;
 	// letter * hier -> succ
-	private final Map<Integer, Map<Integer, IntSet>> mSuccessorsReturn; 
-	
-	public StateNwa(IBuchiNwa buchi, int id) {
-		this.mBuchi = buchi;
-		this.mId = id;
-		this.mSuccessorsCall = new HashMap<>();
-		this.mSuccessorsInternal = new HashMap<>();
-		this.mSuccessorsReturn = new HashMap<>();
+	private final Map<Integer, Map<Integer, IntSet>> mSuccessorsReturn;
+
+	public StateNwa(final IBuchiNwa buchi, final int id) {
+		mBuchi = buchi;
+		mId = id;
+		mSuccessorsCall = new HashMap<>();
+		mSuccessorsInternal = new HashMap<>();
+		mSuccessorsReturn = new HashMap<>();
 	}
 
 	@Override
 	public int getId() {
 		return mId;
 	}
-	
-	private void addSuccessors(Map<Integer, IntSet> succMap, int letterOrHier, int state) {
+
+	private void addSuccessors(final Map<Integer, IntSet> succMap, final int letterOrHier, final int state) {
 		IntSet succs = succMap.get(letterOrHier);
-		if(succs == null) {
-			succs =  UtilIntSet.newIntSet();
+		if (succs == null) {
+			succs = UtilIntSet.newIntSet();
 		}
 		succs.set(state);
-		succMap.put(letterOrHier, succs);	
+		succMap.put(letterOrHier, succs);
 	}
 
 	@Override
-	public void addSuccessorInternal(int letter, int state) {
+	public void addSuccessorInternal(final int letter, final int state) {
 		assert mBuchi.getAlphabetInternal().get(letter);
 		addSuccessors(mSuccessorsInternal, letter, state);
 	}
 
 	@Override
-	public void addSuccessorCall(int letter, int state) {
+	public void addSuccessorCall(final int letter, final int state) {
 		assert mBuchi.getAlphabetCall().get(letter);
-		addSuccessors(mSuccessorsCall, letter, state);		
+		addSuccessors(mSuccessorsCall, letter, state);
 	}
 
 	@Override
-	public void addSuccessorReturn(int hier, int letter, int state) {
+	public void addSuccessorReturn(final int hier, final int letter, final int state) {
 		assert mBuchi.getAlphabetReturn().get(letter);
 		Map<Integer, IntSet> succMap = mSuccessorsReturn.get(letter);
-		if(succMap == null) {
+		if (succMap == null) {
 			succMap = new HashMap<>();
 		}
 		addSuccessors(succMap, hier, state);
 		mSuccessorsReturn.put(letter, succMap);
 	}
 
-	private IntSet getSuccessors(Map<Integer, IntSet> succMap, int letter) {
-		IntSet succs = succMap.get(letter);
-		if(succs == null) { // transition function may not be complete
+	private IntSet getSuccessors(final Map<Integer, IntSet> succMap, final int letter) {
+		final IntSet succs = succMap.get(letter);
+		if (succs == null) { // transition function may not be complete
 			return UtilIntSet.newIntSet();
 		}
 		return succs.clone();
 	}
-	
+
 	@Override
-	public IntSet getSuccessorsInternal(int letter) {
+	public IntSet getSuccessorsInternal(final int letter) {
 		assert mBuchi.getAlphabetInternal().get(letter);
 		return getSuccessors(mSuccessorsInternal, letter);
 	}
 
 	@Override
-	public IntSet getSuccessorsCall(int letter) {
+	public IntSet getSuccessorsCall(final int letter) {
 		assert mBuchi.getAlphabetCall().get(letter);
 		return getSuccessors(mSuccessorsCall, letter);
 	}
 
 	@Override
-	public IntSet getSuccessorsReturn(int hier, int letter) {
+	public IntSet getSuccessorsReturn(final int hier, final int letter) {
 		assert mBuchi.getAlphabetReturn().get(letter);
-		Map<Integer, IntSet> succMap = mSuccessorsReturn.get(letter);
-		if(succMap == null) {
+		final Map<Integer, IntSet> succMap = mSuccessorsReturn.get(letter);
+		if (succMap == null) {
 			return UtilIntSet.newIntSet();
 		}
 		return getSuccessors(succMap, hier);
@@ -144,68 +142,70 @@ public class StateNwa implements IStateNwa, Comparable<StateNwa> {
 	}
 
 	@Override
-	public Set<Integer> getEnabledHiersReturn(int letter) {
-		Map<Integer, IntSet> succMap = mSuccessorsReturn.get(letter);
-		if(succMap ==null) {
+	public Set<Integer> getEnabledHiersReturn(final int letter) {
+		final Map<Integer, IntSet> succMap = mSuccessorsReturn.get(letter);
+		if (succMap == null) {
 			return Collections.emptySet();
 		}
 		return succMap.keySet();
 	}
-	
+
 	@Override
-	public int compareTo(StateNwa other) {
+	public int compareTo(final StateNwa other) {
 		return mId - other.mId;
 	}
-	
+
 	@Override
-	public boolean equals(Object other) {
-		if(this == other) return true;
-		if(!(other instanceof StateNwa)) {
+	public boolean equals(final Object other) {
+		if (this == other) {
+			return true;
+		}
+		if (other == null || getClass() != other.getClass()) {
 			return false;
 		}
-		
-		StateNwa otherState = (StateNwa)other;
-		return otherState.mId == this.mId;
+
+		final StateNwa otherState = (StateNwa) other;
+		return otherState.mId == mId;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mId;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "s" + mId;
 	}
-	
 
 	@Override
-	public void toDot(PrintStream printer, List<String> alphabet) {
-		Set<Integer> callLetters = this.getEnabledLettersCall();
-		for(Integer letter : callLetters) {
-        	IntSet succs = this.getSuccessorsCall(letter);
-    		transToDot(printer, alphabet, succs, alphabet.get(letter) + "<");
-        }
-		
-		Set<Integer> internalLetters = this.getEnabledLettersInternal();
-		for(Integer letter : internalLetters) {
-        	IntSet succs = this.getSuccessorsInternal(letter);
-    		transToDot(printer, alphabet, succs, alphabet.get(letter).toString());
-        }
-		
-		Set<Integer> returnLetters = this.getEnabledLettersReturn();
-		for(Integer letter : returnLetters) {
-			Set<Integer> predHiers = this.getEnabledHiersReturn(letter);
-			for(Integer predHier : predHiers) {
-	        	IntSet succs = this.getSuccessorsReturn(predHier, letter);
-	    		transToDot(printer, alphabet, succs, predHier + ",>" + alphabet.get(letter));
+	public void toDot(final PrintStream printer, final List<String> alphabet) {
+		final Set<Integer> callLetters = getEnabledLettersCall();
+		for (final Integer letter : callLetters) {
+			final IntSet succs = getSuccessorsCall(letter);
+			transToDot(printer, alphabet, succs, alphabet.get(letter) + "<");
+		}
+
+		final Set<Integer> internalLetters = getEnabledLettersInternal();
+		for (final Integer letter : internalLetters) {
+			final IntSet succs = getSuccessorsInternal(letter);
+			transToDot(printer, alphabet, succs, alphabet.get(letter).toString());
+		}
+
+		final Set<Integer> returnLetters = getEnabledLettersReturn();
+		for (final Integer letter : returnLetters) {
+			final Set<Integer> predHiers = getEnabledHiersReturn(letter);
+			for (final Integer predHier : predHiers) {
+				final IntSet succs = getSuccessorsReturn(predHier, letter);
+				transToDot(printer, alphabet, succs, predHier + ",>" + alphabet.get(letter));
 			}
-        }
+		}
 	}
-	
-	private void transToDot(PrintStream printer, List<String> alphabet, IntSet succs, String letter) {
-		for(final Integer succ : succs.iterable()) {
-			printer.print("  " + this.getId() + " -> " + succ + " [label=\"" + letter.replaceAll("\"", "") + "\"];\n");
+
+	private void transToDot(final PrintStream printer, final List<String> alphabet, final IntSet succs,
+			final String letter) {
+		for (final Integer succ : succs.iterable()) {
+			printer.print("  " + getId() + " -> " + succ + " [label=\"" + letter.replace("\"", "") + "\"];\n");
 		}
 	}
 

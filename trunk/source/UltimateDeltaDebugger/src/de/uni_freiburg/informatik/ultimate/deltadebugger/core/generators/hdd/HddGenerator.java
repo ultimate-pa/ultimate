@@ -61,7 +61,7 @@ class HddGenerator implements IVariantGenerator {
 	private final List<IPSTNode> mNodes;
 	private final List<List<HddChange>> mChangeGroups;
 	private final List<HddChange> mPersistentChanges;
-	
+
 	HddGenerator(final HddGeneratorFactory factory, final IPassContext context, final int level,
 			final ISourceDocument source, final List<IPSTNode> nodes, final List<List<HddChange>> changeGroups,
 			final List<HddChange> persistentChanges) {
@@ -73,7 +73,7 @@ class HddGenerator implements IVariantGenerator {
 		mChangeGroups = Collections.unmodifiableList(changeGroups);
 		mPersistentChanges = Collections.unmodifiableList(persistentChanges);
 	}
-	
+
 	@Override
 	public String apply(final List<IChangeHandle> activeChanges) {
 		final SourceRewriter rewriter = new SourceRewriter(mSource);
@@ -89,20 +89,21 @@ class HddGenerator implements IVariantGenerator {
 		deferredChangeMap.values().stream().flatMap(m -> m.values().stream()).forEach(change -> change.apply(rewriter));
 		return rewriter.apply();
 	}
-	
+
 	@Override
 	public List<IChangeHandle> getChanges() {
 		return Collections.unmodifiableList(mChangeGroups.get(0));
 	}
-	
-	private List<HddChange> createAlternativeChanges(final List<IChangeHandle> activeChanges, final List<HddChange> allChanges) {
+
+	private List<HddChange> createAlternativeChanges(final List<IChangeHandle> activeChanges,
+			final List<HddChange> allChanges) {
 		final List<HddChange> alternativeChanges = ListUtils.complementOfSubsequence(activeChanges, allChanges).stream()
 				.map(c -> ((HddChange) c).createAlternativeChange()).filter(Optional::isPresent).map(Optional::get)
 				.collect(Collectors.toList());
 		IntStream.range(0, alternativeChanges.size()).forEach(i -> alternativeChanges.get(i).setSequenceIndex(i));
 		return Collections.unmodifiableList(alternativeChanges);
 	}
-	
+
 	private List<List<HddChange>> getNextChangeGroups(final List<IChangeHandle> activeChanges) {
 		// Check for alternative changes for the inactive changes of the current group
 		final List<HddChange> alternativeChanges = createAlternativeChanges(activeChanges, mChangeGroups.get(0));
@@ -113,7 +114,7 @@ class HddGenerator implements IVariantGenerator {
 		}
 		return mChangeGroups.subList(1, mChangeGroups.size());
 	}
-	
+
 	private List<HddChange> getMergedPersistentChanges(final List<IChangeHandle> activeChanges) {
 		if (activeChanges.isEmpty()) {
 			return mPersistentChanges;
@@ -123,7 +124,7 @@ class HddGenerator implements IVariantGenerator {
 		merged.sort(Comparator.comparingInt(c -> c.getNode().offset()));
 		return merged;
 	}
-	
+
 	private List<IPSTNode> getRemainingNodes(final List<IChangeHandle> activeChanges) {
 		if (activeChanges.isEmpty()) {
 			return mNodes;
@@ -134,11 +135,11 @@ class HddGenerator implements IVariantGenerator {
 		activeChanges.stream().map(c -> ((HddChange) c).getNode()).forEach(removedNodes::add);
 		return mNodes.stream().filter(n -> !removedNodes.contains(n)).collect(Collectors.toList());
 	}
-	
+
 	private Stream<HddChange> getStreamOfAllChanges(final List<IChangeHandle> activeChanges) {
 		return Stream.concat(mPersistentChanges.stream(), activeChanges.stream().map(c -> (HddChange) c));
 	}
-	
+
 	@Override
 	public Optional<IVariantGenerator> next(final List<IChangeHandle> activeChanges) {
 		// Advance to the next group of changes on this level
@@ -153,12 +154,12 @@ class HddGenerator implements IVariantGenerator {
 			return mFactory.createGeneratorForNextLevel(mContext, mLevel, mSource, getRemainingNodes(activeChanges),
 					getMergedPersistentChanges(activeChanges));
 		}
-		
+
 		// Skip reparsing if no changes could be applied
 		if (activeChanges.isEmpty() && mPersistentChanges.isEmpty()) {
 			return mFactory.createGeneratorForNextLevel(mContext, mLevel, mSource, mNodes, mPersistentChanges);
 		}
-		
+
 		// Unparse, parse, and collect nodes on the current level
 		final ISourceDocument newSource = new StringSourceDocument(apply(activeChanges));
 		final IASTTranslationUnit ast = mContext.getParser().parse(newSource.getText());
@@ -167,13 +168,13 @@ class HddGenerator implements IVariantGenerator {
 		return mFactory.createGeneratorForNextLevel(mContext, mLevel, newSource, remainingNodes,
 				Collections.emptyList());
 	}
-	
+
 	private List<IPSTNode> collectNodesOnLevel(final IPSTTranslationUnit translationUnit, final int level) {
 		final NodeCollector collector = new NodeCollector(level);
 		translationUnit.accept(collector);
 		return collector.getResult();
 	}
-	
+
 	/**
 	 * Collector of PST nodes.
 	 */
@@ -181,17 +182,17 @@ class HddGenerator implements IVariantGenerator {
 		private final List<IPSTNode> mResult = new ArrayList<>();
 		private final int mTargetLevel;
 		private int mCurrentLevel;
-		
+
 		NodeCollector(final int targetLevel) {
 			mTargetLevel = targetLevel;
 		}
-		
+
 		@Override
 		public int defaultLeave(final IPSTNode node) {
 			--mCurrentLevel;
 			return PROCESS_CONTINUE;
 		}
-		
+
 		@Override
 		public int defaultVisit(final IPSTNode node) {
 			if (mFactory.getStrategy().skipSubTree(node)) {
@@ -204,7 +205,7 @@ class HddGenerator implements IVariantGenerator {
 			++mCurrentLevel;
 			return PROCESS_CONTINUE;
 		}
-		
+
 		public List<IPSTNode> getResult() {
 			return mResult;
 		}

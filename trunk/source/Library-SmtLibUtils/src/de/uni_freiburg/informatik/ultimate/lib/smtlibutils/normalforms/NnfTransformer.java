@@ -64,11 +64,9 @@ public class NnfTransformer {
 
 	private static final String FRESH_VARIABLE_PREFIX = "nnf";
 	/**
-	 * Check whether input and output are logically equivalent. Sometimes we need to
-	 * omit the soundness check which does a checksat on mManagedScript. For
-	 * example, this is the case when mManagedScript.getScript is
-	 * HornClauseParserScript (in which case the soundness check would lead to
-	 * nontermination)
+	 * Check whether input and output are logically equivalent. Sometimes we need to omit the soundness check which does
+	 * a checksat on mManagedScript. For example, this is the case when mManagedScript.getScript is
+	 * HornClauseParserScript (in which case the soundness check would lead to nontermination)
 	 */
 	private static final boolean DEBUG_CHECK_SOUNDNESS = false;
 	protected final Script mScript;
@@ -141,8 +139,8 @@ public class NnfTransformer {
 			}
 			mQuantifiedVariables = null;
 		}
-		assert !DEBUG_CHECK_SOUNDNESS || Util.checkSat(mScript,
-				mScript.term("distinct", term, result)) != LBool.SAT : "Nnf transformation unsound";
+		assert !DEBUG_CHECK_SOUNDNESS || Util.checkSat(mScript, mScript.term("distinct", term, result)) != LBool.SAT
+				: "Nnf transformation unsound";
 		return result;
 	}
 
@@ -169,7 +167,6 @@ public class NnfTransformer {
 						// symbol changed, call convert again
 						convert(flattened);
 					}
-					return;
 				} else if (functionName.equals("or")) {
 					final Term flattened = SmtUtils.or(mScript, appTerm.getParameters());
 					if (SmtUtils.isFunctionApplication(flattened, "or")) {
@@ -179,19 +176,16 @@ public class NnfTransformer {
 						// symbol changed, call convert again
 						convert(flattened);
 					}
-					return;
 				} else if (functionName.equals("not")) {
 					assert appTerm.getParameters().length == 1;
 					final Term notParam = appTerm.getParameters()[0];
 					convertNot(notParam, term);
-					return;
 				} else if (functionName.equals("=>")) {
 					final Term[] params = appTerm.getParameters();
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
 					convert(SmtUtils.or(mScript, negateAllButLast(mScript, params)));
-					return;
 				} else if (functionName.equals("=") && SmtUtils.firstParamIsBool(appTerm)) {
 					final Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
@@ -233,11 +227,9 @@ public class NnfTransformer {
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
 					convert(result);
-					return;
 				} else {
 					// consider term as atom
 					setResult(term);
-					return;
 				}
 			} else if (term instanceof TermVariable) {
 				// consider term as atom
@@ -302,7 +294,6 @@ public class NnfTransformer {
 				// to a term whose function symbol is neither "and" nor "or"
 				convert(pushed);
 			}
-			return;
 		}
 
 		@Override

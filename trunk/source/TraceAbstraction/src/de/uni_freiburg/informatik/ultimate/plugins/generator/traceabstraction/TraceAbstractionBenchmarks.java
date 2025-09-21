@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -39,6 +40,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 	private final StatisticsData mCegarLoopBenchmarkData;
 	private final int mProcedures;
 	private final int mLocations;
+	private final int mEdges;
 	private final int mErrorLocations;
 	private int mCegarLoopsRun = 0;
 
@@ -46,6 +48,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 		mProcedures = rootAnnot.getProcedureEntryNodes().size();
 		mLocations = (int) rootAnnot.getProgramPoints().entrySet().stream()
 				.flatMap(a -> a.getValue().entrySet().stream()).count();
+		mEdges = IcfgUtils.countNumberOfEdges(rootAnnot);
 		mErrorLocations = (int) rootAnnot.getProcedureErrorNodes().entrySet().stream()
 				.flatMap(a -> a.getValue().stream()).count();
 		mCegarLoopBenchmarkData = new StatisticsData();
@@ -70,6 +73,8 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 		sb.append(" procedures, ");
 		sb.append(mLocations);
 		sb.append(" locations, ");
+		sb.append(mEdges);
+		sb.append(" edges, ");
 		sb.append(mErrorLocations);
 		sb.append(" error locations. ");
 		sb.append("Started ");

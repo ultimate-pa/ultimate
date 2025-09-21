@@ -132,7 +132,8 @@ public class InclusionInPreChecker implements IHoareTripleChecker {
 		Term result = mPt.weakestPrecondition(mPf.not(succ), act.getTransformula());
 		if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
 			final Term term = result;
-			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
+			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(),
+					SimplificationTechnique.SIMPLIFY_DDA, term);
 		}
 		return result;
 	}
@@ -148,7 +149,8 @@ public class InclusionInPreChecker implements IHoareTripleChecker {
 				oldVarAssignments, modifiableGlobals);
 		if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
 			final Term term = result;
-			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
+			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(),
+					SimplificationTechnique.SIMPLIFY_DDA, term);
 		}
 		return result;
 	}
@@ -165,7 +167,8 @@ public class InclusionInPreChecker implements IHoareTripleChecker {
 				modifiableGlobals);
 		if (EXPENSIVE_PQE_FOR_WP_RESULTS) {
 			final Term term = result;
-			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
+			result = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(),
+					SimplificationTechnique.SIMPLIFY_DDA, term);
 		}
 		return result;
 	}

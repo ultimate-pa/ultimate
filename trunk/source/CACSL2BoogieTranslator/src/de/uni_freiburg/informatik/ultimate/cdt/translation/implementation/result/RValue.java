@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 public class RValue extends LRValue {
@@ -44,7 +44,7 @@ public class RValue extends LRValue {
 	 *
 	 * @param value
 	 */
-	public RValue(final Expression value, final CType cType) {
+	public RValue(final Expression value, final ICType cType) {
 		this(value, cType, false);
 	}
 
@@ -54,7 +54,7 @@ public class RValue extends LRValue {
 	 *
 	 * @param value
 	 */
-	public RValue(final Expression value, final CType cType, final boolean boogieBool) {
+	public RValue(final Expression value, final ICType cType, final boolean boogieBool) {
 		this(value, cType, boogieBool, false);
 	}
 
@@ -62,7 +62,7 @@ public class RValue extends LRValue {
 		this(rval.mValue, rval.getCType(), rval.isBoogieBool(), rval.isIntFromPointer());
 	}
 
-	public RValue(final Expression value, final CType cType, final boolean isBoogieBool,
+	public RValue(final Expression value, final ICType cType, final boolean isBoogieBool,
 			final boolean isIntFromPointer) {
 		super(cType, isBoogieBool, isIntFromPointer);
 		mValue = value;
@@ -74,7 +74,7 @@ public class RValue extends LRValue {
 		return mValue;
 	}
 
-	public void checkType(final CType type) {
+	public void checkType(final ICType type) {
 		if (type instanceof CFunction) {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
@@ -85,7 +85,7 @@ public class RValue extends LRValue {
 		}
 	}
 
-	private static boolean areBoogieAndCTypeCompatible(final CType cType, final IBoogieType bType) {
+	private static boolean areBoogieAndCTypeCompatible(final ICType cType, final IBoogieType bType) {
 		if (cType instanceof CPointer) {
 			if (bType instanceof BoogieArrayType) {
 				return true;

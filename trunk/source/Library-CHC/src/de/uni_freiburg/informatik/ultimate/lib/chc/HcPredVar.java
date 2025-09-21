@@ -5,7 +5,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 public abstract class HcPredVar extends HcVar {
-
 	private final int mIndex;
 
 	/**
@@ -31,5 +30,4 @@ public abstract class HcPredVar extends HcVar {
 	public int getIndex() {
 		return mIndex;
 	}
-
 }

@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -265,9 +264,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE>> implement
 			vars.add(globalNonOld);
 			vars.add(globalNonOld.getOldVar());
 		}
-		for (final IProgramConst pc : mSymbolTable.getConstants()) {
-			vars.add(pc);
-		}
+		vars.addAll(mSymbolTable.getConstants());
 		return vars;
 	}
 

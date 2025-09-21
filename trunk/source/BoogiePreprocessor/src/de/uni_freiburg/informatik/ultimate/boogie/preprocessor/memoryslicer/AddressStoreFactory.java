@@ -53,8 +53,8 @@ public class AddressStoreFactory {
 	}
 
 	public PointerBaseVariable getPointerBase(final String id, final DeclarationInformation delcInfo) {
-		final Function<String, Function<? super DeclarationInformation, ? extends PointerBaseVariable>> func = (x -> (y -> new PointerBaseVariable(
-				x, y)));
+		final Function<String, Function<? super DeclarationInformation, ? extends PointerBaseVariable>> func =
+				(x -> (y -> new PointerBaseVariable(x, y)));
 		return mVariable.computeIfAbsent(id, delcInfo, func);
 	}
 

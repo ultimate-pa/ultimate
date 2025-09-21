@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  * @param <LOC>
  */
 public interface IEncoder<LOC extends IcfgLocation> {
-	
+
 	/**
 	 * Used to decide whether the optimization should continue or not. If all encoders say false, the optimization
 	 * stops.
@@ -46,6 +46,6 @@ public interface IEncoder<LOC extends IcfgLocation> {
 	 * @return true iff there are more/less edges or nodes in the graph
 	 */
 	boolean isGraphStructureChanged();
-	
+
 	BasicIcfg<LOC> getResult(final BasicIcfg<LOC> boogieIcfgContainer);
 }

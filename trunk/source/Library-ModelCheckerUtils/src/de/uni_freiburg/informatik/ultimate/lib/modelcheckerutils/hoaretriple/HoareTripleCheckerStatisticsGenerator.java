@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -132,6 +133,15 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 
 	public InCaReCounter getSdLazyCounter() {
 		return mSdLazyCounter;
+	}
+
+	public InCaReCounter getSolverCounter(final Validity result) {
+		return switch (result) {
+		case INVALID -> getSolverCounterSat();
+		case UNKNOWN -> getSolverCounterUnknown();
+		case VALID -> getSolverCounterUnsat();
+		case NOT_CHECKED -> throw new AssertionError("unexpected result: " + result);
+		};
 	}
 
 	public InCaReCounter getSolverCounterSat() {

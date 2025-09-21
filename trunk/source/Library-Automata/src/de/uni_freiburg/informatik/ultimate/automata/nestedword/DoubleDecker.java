@@ -46,7 +46,7 @@ public class DoubleDecker<STATE> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param downState
 	 *            down state (current hierarchical state)
 	 * @param upState

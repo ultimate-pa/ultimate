@@ -78,11 +78,11 @@ final class Hist {
 	 *         means "bottom-of-stack" state.
 	 */
 	static boolean checkConsistency(final NwaWithArrays nwa, final ArrayList<Hist> hist) {
-		for (int i = 0; i < hist.size(); i++) {
-			if (hist.get(i).mLin < 0 || hist.get(i).mLin >= nwa.mNumStates) {
+		for (final Hist element : hist) {
+			if (element.mLin < 0 || element.mLin >= nwa.mNumStates) {
 				return false;
 			}
-			if (hist.get(i).mHier < -1 || hist.get(i).mHier >= nwa.mNumStates) {
+			if (element.mHier < -1 || element.mHier >= nwa.mNumStates) {
 				return false;
 			}
 		}

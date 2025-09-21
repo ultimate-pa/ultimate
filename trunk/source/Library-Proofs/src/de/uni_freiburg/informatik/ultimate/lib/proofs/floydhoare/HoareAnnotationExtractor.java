@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class HoareAnnotationExtractor<LETTER extends IAction> extends DoubleDeckerVisitor<LETTER, IPredicate> {
+class HoareAnnotationExtractor<LETTER extends IAction> extends DoubleDeckerVisitor<LETTER, IPredicate> {
 
 	Set<DoubleDecker<IPredicate>> mReportedDoubleDeckers = new HashSet<>();
 

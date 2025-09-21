@@ -50,7 +50,7 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 		implements IStatisticsDataProvider {
 
 	private static final String[] STOPWATCHES =
-			new String[] { AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE.toString(),
+			{ AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE.toString(),
 					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL.toString(),
 					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR.toString(),
 					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR.toString() };
@@ -63,36 +63,16 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 	@Override
 	public Object getValue(final String key) {
 		final AcceleratedInterpolationStatisticsDefinitions keyEnum =
-				Enum.valueOf(AcceleratedInterpolationStatisticsDefinitions.class, key);
+				AcceleratedInterpolationStatisticsDefinitions.valueOf(key);
 		final String errorMsg = "clock still running: ";
-		switch (keyEnum) {
-		case ACCELINTERPOL_CORE:
+		return switch (keyEnum) {
+		case ACCELINTERPOL_CORE, ACCELINTERPOL_OVERALL, ACCELINTERPOL_LOOPDETECTOR, ACCELINTERPOL_LOOPACCELERATOR:
 			try {
-				return getElapsedTime(key);
+				yield getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError(errorMsg + key);
 			}
-		case ACCELINTERPOL_OVERALL:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		case ACCELINTERPOL_LOOPDETECTOR:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		case ACCELINTERPOL_LOOPACCELERATOR:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		default:
-			throw new AssertionError("unknown data: " + keyEnum);
-		}
+		};
 	}
 
 	@Override

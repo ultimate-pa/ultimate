@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
@@ -45,19 +45,16 @@ public class SMTTheoryOperationProvider extends TermDomainOperationProvider {
 	private final ILogger mLogger;
 	private final CfgSmtToolkit mCsToolkit;
 
-	public SMTTheoryOperationProvider(IUltimateServiceProvider services, CfgSmtToolkit csToolkit) {
+	public SMTTheoryOperationProvider(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
 		super(services, csToolkit.getManagedScript());
 		mCsToolkit = csToolkit;
 		mLogger = services.getLoggingService().getLogger(getClass());
 	}
 
 	@Override
-	public Term projectExistentially(Set<TermVariable> varsToProjectAway, Term constraint) {
-		
+	public Term projectExistentially(final Set<TermVariable> varsToProjectAway, final Term constraint) {
+
 		return super.projectExistentially(varsToProjectAway, constraint);
 	}
-	
-	
-
 
 }

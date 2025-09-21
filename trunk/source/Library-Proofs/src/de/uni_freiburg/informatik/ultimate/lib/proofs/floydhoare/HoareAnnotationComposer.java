@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class HoareAnnotationComposer {
+class HoareAnnotationComposer {
 
 	private static final boolean AVOID_IMPLICATIONS = true;
 	/**

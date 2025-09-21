@@ -23,24 +23,25 @@ public class InputDetSuccConstruction {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final GuardGraph mGuardGraph;
-	private Set<GuardGraph> mSeenNodes;
-	private LinkedList<GuardGraph> mQueue;
+	private final Set<GuardGraph> mSeenNodes;
+	private final LinkedList<GuardGraph> mQueue;
 	private final Set<Term> mMonomials;
 	private final Set<Term> mOutputVars;
 	private final Sort mSort;
-	private Set<GuardGraph> mAutStates;
+	private final Set<GuardGraph> mAutStates;
 	private Term mTrue;
 	private Term mFalse;
-	private SearchGraphTable mSGTable;
-	
-	public InputDetSuccConstruction(ManagedScript managedScript, IUltimateServiceProvider services,
-			ILogger logger, GuardGraph powersetAuto, Script script, Req2TestReqSymbolTable symboltable) {
+	private final SearchGraphTable mSGTable;
+
+	public InputDetSuccConstruction(final ManagedScript managedScript, final IUltimateServiceProvider services,
+			final ILogger logger, final GuardGraph powersetAuto, final Script script,
+			final Req2TestReqSymbolTable symboltable) {
 		mManagedScript = managedScript;
 		mServices = services;
 		mLogger = logger;
 		mScript = script;
-		mSeenNodes = new HashSet<GuardGraph>();
-		mQueue = new LinkedList<GuardGraph>();
+		mSeenNodes = new HashSet<>();
+		mQueue = new LinkedList<>();
 		mAutStates = new HashSet<>();
 		mSort = mScript.sort("Bool");
 		mMonomials = createMonomials(symboltable);
@@ -56,66 +57,64 @@ public class InputDetSuccConstruction {
 	}
 
 	private void makeTrueAndFalse() {
-		for (Term t : mMonomials) {
-			Term nt = SmtUtils.not(mScript, t);
+		for (final Term t : mMonomials) {
+			final Term nt = SmtUtils.not(mScript, t);
 			mFalse = SmtUtils.and(mScript, t, nt);
 			mTrue = SmtUtils.or(mScript, t, nt);
 			break;
 		}
 	}
-	
-	private Set<Term> getOutputVariables(Set<String> inputVars) {
-		Set<Term> result = new HashSet<>();
-		for (String varname : inputVars) {
-			Term a = mScript.variable(varname, mSort);
-			Term na = SmtUtils.not(mScript, a);
+
+	private Set<Term> getOutputVariables(final Set<String> inputVars) {
+		final Set<Term> result = new HashSet<>();
+		for (final String varname : inputVars) {
+			final Term a = mScript.variable(varname, mSort);
+			final Term na = SmtUtils.not(mScript, a);
 			result.add(a);
 			result.add(na);
 		}
 		return result;
 	}
-	
+
 	// inputvar I : {Term I, Term notI}
-	private HashMap<String, Set<Term>> inVarToTermMap(Set<String> inVars) {
-		HashMap<String, Set<Term>> result = new HashMap<String, Set<Term>>();
-		for (String varname : inVars) {
-			Term a = mScript.variable(varname, mSort);
-			Term na = SmtUtils.not(mScript, a);
-			Set<Term> values = new HashSet<Term>();
+	private HashMap<String, Set<Term>> inVarToTermMap(final Set<String> inVars) {
+		final HashMap<String, Set<Term>> result = new HashMap<>();
+		for (final String varname : inVars) {
+			final Term a = mScript.variable(varname, mSort);
+			final Term na = SmtUtils.not(mScript, a);
+			final Set<Term> values = new HashSet<>();
 			values.add(a);
 			values.add(na);
 			result.put(varname, values);
 		}
 		return result;
 	}
-	
+
 	// mon1 : I and J and ....
-	private Set<Term> createMonomials(Req2TestReqSymbolTable sbt) {
-		HashMap<String, Set<Term>> inVarToTerms = inVarToTermMap(sbt.getInputVars());
+	private Set<Term> createMonomials(final Req2TestReqSymbolTable sbt) {
+		final HashMap<String, Set<Term>> inVarToTerms = inVarToTermMap(sbt.getInputVars());
 		Set<Term> result = new HashSet<>();
 		Set<Term> oldRes = new HashSet<>();
-		
+
 		// get one key as first element to create the first monomials (length 1)
 		// e.g. mon0 will be I and mon1 will be not I
-		for (String key : inVarToTerms.keySet()) {
-			for (Term boolInputVal : inVarToTerms.get(key)) {
-				result.add(boolInputVal);
-			}
+		for (final String key : inVarToTerms.keySet()) {
+			result.addAll(inVarToTerms.get(key));
 			inVarToTerms.remove(key);
 			oldRes = new HashSet<>(result);
 			break;
 		}
-		
+
 		// now for the rest of the input Terms
 		if (!inVarToTerms.isEmpty()) {
-			for (String key : inVarToTerms.keySet()) {
+			for (final String key : inVarToTerms.keySet()) {
 				result = new HashSet<>();
-				for (Term boolInputVal : inVarToTerms.get(key)) {
-					for (Term oldMonKey : oldRes) {
+				for (final Term boolInputVal : inVarToTerms.get(key)) {
+					for (final Term oldMonKey : oldRes) {
 						result.add(SmtUtils.and(mScript, boolInputVal, oldMonKey));
 					}
 				}
-				oldRes = new HashSet<>(result); 
+				oldRes = new HashSet<>(result);
 			}
 		}
 		return result;
@@ -126,119 +125,121 @@ public class InputDetSuccConstruction {
 	}
 
 	// calculate the successors here
-	private Set<GuardGraph> findSuccessors(GuardGraph givenNode, Term givenMonomial) {
-		Set<GuardGraph> result = new HashSet<>();
-		
-		for (GuardGraph neighbour : givenNode.getOutgoingNodes()) {
-			if (!(givenNode.getOutgoingEdgeLabel(neighbour) == null)) {
-				if (!SmtUtils.isFalseLiteral(SmtUtils.and(mScript, givenNode.getOutgoingEdgeLabel(neighbour), givenMonomial))) {
-					result.add(neighbour);
-				} 
+	private Set<GuardGraph> findSuccessors(final GuardGraph givenNode, final Term givenMonomial) {
+		final Set<GuardGraph> result = new HashSet<>();
+
+		for (final GuardGraph neighbour : givenNode.getOutgoingNodes()) {
+			if (!(givenNode.getOutgoingEdgeLabel(neighbour) == null) && !SmtUtils
+					.isFalseLiteral(SmtUtils.and(mScript, givenNode.getOutgoingEdgeLabel(neighbour), givenMonomial))) {
+				result.add(neighbour);
 			}
 		}
 		return result;
 	}
-	
-	private GuardGraph collectionContains(Collection<GuardGraph> collection, GuardGraph thisInpDetANode) {
-		for(GuardGraph gg: collection) {
-			if(gg.isSameNode(thisInpDetANode)) {
+
+	private GuardGraph collectionContains(final Collection<GuardGraph> collection, final GuardGraph thisInpDetANode) {
+		for (final GuardGraph gg : collection) {
+			if (gg.isSameNode(thisInpDetANode)) {
 				return gg;
 			}
 		}
 		return null;
 	}
-	
-	private GuardGraph constructInputDetSuccAutomaton(GuardGraph productAutomaton) {
-		Set<GuardGraph> initialIndex = new HashSet<>();
+
+	private GuardGraph constructInputDetSuccAutomaton(final GuardGraph productAutomaton) {
+		final Set<GuardGraph> initialIndex = new HashSet<>();
 		initialIndex.add(productAutomaton);
-		GuardGraph initialPowerNode = new GuardGraph(0, new HashSet<GuardGraph>(initialIndex));
+		final GuardGraph initialPowerNode = new GuardGraph(0, new HashSet<>(initialIndex));
 		mAutStates.add(initialPowerNode);
 		int newlabel = 1;
 		// add it to queue
 		mQueue.add(initialPowerNode);
-		
+
 		// now go over the queue
 		while (mQueue.size() > 0) {
-		
-			GuardGraph thisInpDetANode = mQueue.pop();
+
+			final GuardGraph thisInpDetANode = mQueue.pop();
 			mSeenNodes.add(thisInpDetANode);
 
-			for (Term mon : mMonomials) {
-				Set<GuardGraph> succsrs = getAllSuccessors(thisInpDetANode.getBuildingNodes(), mon);
+			for (final Term mon : mMonomials) {
+				final Set<GuardGraph> succsrs = getAllSuccessors(thisInpDetANode.getBuildingNodes(), mon);
 
 				GuardGraph targetNode = new GuardGraph(newlabel, succsrs);
-				//TODO: refactor! take HashMap<set<GuardGraph>, GuardGraph> which stores the internal nodes i.e. succsrs and indexes nodes 
+				// TODO: refactor! take HashMap<set<GuardGraph>, GuardGraph> which stores the internal nodes i.e.
+				// succsrs and indexes nodes
 				// accordingly.
-				if(collectionContains(mAutStates, targetNode) == null) {
+				if (collectionContains(mAutStates, targetNode) == null) {
 					mAutStates.add(targetNode);
 				} else {
 					targetNode = collectionContains(mAutStates, targetNode);
 				}
-				
-				Term edgelabel = getNewEdgeLabel(thisInpDetANode.getBuildingNodes(), succsrs, mon);
-				
-				if(collectionContains(mQueue, targetNode) == null && collectionContains(mSeenNodes, targetNode) == null) {
+
+				final Term edgelabel = getNewEdgeLabel(thisInpDetANode.getBuildingNodes(), succsrs, mon);
+
+				if (collectionContains(mQueue, targetNode) == null
+						&& collectionContains(mSeenNodes, targetNode) == null) {
 					mQueue.add(targetNode);
 					newlabel++;
 				}
-				
+
 				if (thisInpDetANode.getOutgoingNodes().contains(targetNode)) {
-					Term newLabel = SmtUtils.or(mScript, thisInpDetANode.getOutgoingEdgeLabel(targetNode), edgelabel);
+					final Term newLabel =
+							SmtUtils.or(mScript, thisInpDetANode.getOutgoingEdgeLabel(targetNode), edgelabel);
 					thisInpDetANode.disconnectOutgoing(targetNode);
 					thisInpDetANode.connectOutgoing(targetNode, newLabel);
 					initialPowerNode.incEdges();
-					
+
 				} else {
 					thisInpDetANode.connectOutgoing(targetNode, edgelabel);
 					initialPowerNode.incEdges();
 				}
-				
+
 			}
 		}
 		return initialPowerNode;
 	}
-	
-	private Set<GuardGraph> getAllSuccessors(Set<GuardGraph> buildingNodes, Term monomial) {
-		Set<GuardGraph> result = new HashSet<>();
-		for (GuardGraph buildingNode : buildingNodes) {
+
+	private Set<GuardGraph> getAllSuccessors(final Set<GuardGraph> buildingNodes, final Term monomial) {
+		final Set<GuardGraph> result = new HashSet<>();
+		for (final GuardGraph buildingNode : buildingNodes) {
 			result.addAll(findSuccessors(buildingNode, monomial));
 		}
 		return result;
 	}
-	
-	private Term getNewEdgeLabel(Set<GuardGraph> buildingNodes, Set<GuardGraph> successors, Term monomial) {
+
+	private Term getNewEdgeLabel(final Set<GuardGraph> buildingNodes, final Set<GuardGraph> successors,
+			final Term monomial) {
 		// hack to create a false term for the later disjunction
-		LinkedList<Term> termsOfDisjunction = new LinkedList<>();
-		for (GuardGraph fromNode : buildingNodes) {
-			for (GuardGraph toNode : successors) {
-				if(fromNode.getSuccessors().contains(toNode)) {
-					Term oldLabelToSuccessor =  fromNode.getOutgoingEdgeLabel(toNode);
-					Term newLabelToSuccessor = SmtUtils.and(mScript, oldLabelToSuccessor, monomial);
+		final LinkedList<Term> termsOfDisjunction = new LinkedList<>();
+		for (final GuardGraph fromNode : buildingNodes) {
+			for (final GuardGraph toNode : successors) {
+				if (fromNode.getSuccessors().contains(toNode)) {
+					final Term oldLabelToSuccessor = fromNode.getOutgoingEdgeLabel(toNode);
+					final Term newLabelToSuccessor = SmtUtils.and(mScript, oldLabelToSuccessor, monomial);
 					termsOfDisjunction.add(newLabelToSuccessor);
 				}
 			}
 		}
 		return makeDisj(outputTester(termsOfDisjunction));
 	}
-	
+
 	/***
-	 * Method test if any one output variable is present in each disjunction term
-	 * Method removes output variables from disjunction terms if said output variable is not present in all the disjunction terms
-	 * 
+	 * Method test if any one output variable is present in each disjunction term Method removes output variables from
+	 * disjunction terms if said output variable is not present in all the disjunction terms
+	 *
 	 * @param disjTermToBeTested
-	 * Term may or may not contain Output variables
-	 * @return testedTerm
-	 * Term contains the same output variable in all its disjuncs or none at all 
+	 *            Term may or may not contain Output variables
+	 * @return testedTerm Term contains the same output variable in all its disjuncs or none at all
 	 */
-	private LinkedList<Term> outputTester(LinkedList<Term> termsToTest) {
+	private LinkedList<Term> outputTester(final LinkedList<Term> termsToTest) {
 		LinkedList<Term> localList = new LinkedList<>(termsToTest);
-		Set<Term> oVarHelper = findOutputVars(termsToTest);
-		
-		if ( oVarHelper.size() == 0 ) {
+		final Set<Term> oVarHelper = findOutputVars(termsToTest);
+
+		if (oVarHelper.size() == 0) {
 			return termsToTest;
 		} else {
-			for ( Term ov : oVarHelper ) {
-				if ( testTermsContainOVar(localList, ov) ) {
+			for (final Term ov : oVarHelper) {
+				if (testTermsContainOVar(localList, ov)) {
 					continue;
 				} else {
 					localList = removeOVar(localList, ov);
@@ -248,18 +249,18 @@ public class InputDetSuccConstruction {
 		}
 	}
 
-	private LinkedList<Term> removeOVar(LinkedList<Term> localList, Term ov) {
-		LinkedList<Term> helperList = new LinkedList<>();
-		for ( Term t : localList ) {
+	private LinkedList<Term> removeOVar(final LinkedList<Term> localList, final Term ov) {
+		final LinkedList<Term> helperList = new LinkedList<>();
+		for (final Term t : localList) {
 			helperList.add(remakeTerm(t, ov));
 		}
 		return helperList;
 	}
 
-	private boolean testTermsContainOVar(List<Term> disjTerms, Term ov) {
-		for (Term disjTerm : disjTerms) {
+	private boolean testTermsContainOVar(final List<Term> disjTerms, final Term ov) {
+		for (final Term disjTerm : disjTerms) {
 			boolean disjTermFlag = false;
-			for (Term element : SmtUtils.getConjuncts(disjTerm)) {
+			for (final Term element : SmtUtils.getConjuncts(disjTerm)) {
 				if (element.equals(ov)) {
 					disjTermFlag = true;
 				}
@@ -273,11 +274,11 @@ public class InputDetSuccConstruction {
 
 	// TODO this will not work if termToRemake is not a conjunction, I think
 	// or a conjunction of conjunctions...
-	private Term remakeTerm(Term termToRemake, Term oVar) {
+	private Term remakeTerm(final Term termToRemake, final Term oVar) {
 		Term result = mTrue;
-		Term dnf = SmtUtils.toDnf(mServices, mManagedScript, termToRemake);
-		for (Term disjTerm : SmtUtils.getDisjuncts(dnf)) {
-			for (Term element : SmtUtils.getConjuncts(disjTerm)) {
+		final Term dnf = SmtUtils.toDnf(mServices, mManagedScript, termToRemake);
+		for (final Term disjTerm : SmtUtils.getDisjuncts(dnf)) {
+			for (final Term element : SmtUtils.getConjuncts(disjTerm)) {
 				if (!element.equals(oVar)) {
 					result = SmtUtils.and(mScript, result, element);
 				}
@@ -286,13 +287,13 @@ public class InputDetSuccConstruction {
 		return result;
 	}
 
-	private Set<Term> findOutputVars(LinkedList<Term> termsToTest) {
-		Set<Term> result = new HashSet<>();
-		for (Term element : termsToTest) {
+	private Set<Term> findOutputVars(final LinkedList<Term> termsToTest) {
+		final Set<Term> result = new HashSet<>();
+		for (final Term element : termsToTest) {
 			// find terms which are output variables
-			for (Term x : element.getFreeVars()) {
-				for (Term o : mOutputVars) {
-					if(x.equals(o)) {
+			for (final Term x : element.getFreeVars()) {
+				for (final Term o : mOutputVars) {
+					if (x.equals(o)) {
 						result.add(x);
 					}
 				}
@@ -301,43 +302,41 @@ public class InputDetSuccConstruction {
 		return result;
 	}
 
-	private Term makeDisj(LinkedList<Term> terms) {
+	private Term makeDisj(final LinkedList<Term> terms) {
 		Term result = mFalse;
-		for ( Term t : terms ) {
+		for (final Term t : terms) {
 			result = SmtUtils.or(mScript, result, t);
 		}
 		return result;
 	}
-	
+
 	public void populateSearchGraph() {
-		LinkedList<GuardGraph> open = new LinkedList<>();
-		Set<GuardGraph> seen = new HashSet<>();
-		
-		
+		final LinkedList<GuardGraph> open = new LinkedList<>();
+		final Set<GuardGraph> seen = new HashSet<>();
+
 		mSGTable.add(mGuardGraph, 0, null, false);
 		open.add(mGuardGraph);
-		
+
 		while (open.size() > 0) {
-			GuardGraph workingNode = open.pop();
+			final GuardGraph workingNode = open.pop();
 			seen.add(workingNode);
-			
-			for ( GuardGraph successor : workingNode.getOutgoingNodes()) {
+
+			for (final GuardGraph successor : workingNode.getOutgoingNodes()) {
 				mSGTable.add(successor, mSGTable.getDistOfElement(workingNode) + 1, workingNode, isEndNode(successor));
-				if ( !seen.contains(successor) && !open.contains(successor) ) {
+				if (!seen.contains(successor) && !open.contains(successor)) {
 					open.add(successor);
 				}
 			}
 		}
 	}
-	
-	private boolean isEndNode(GuardGraph node) {
+
+	private boolean isEndNode(final GuardGraph node) {
 		boolean localFlag = false;
-		for ( Term oVar : mOutputVars ) {
-			for ( GuardGraph succ : node.getOutgoingNodes() ) {
-				Term[] disjs = SmtUtils.getDisjuncts(
-						SmtUtils.toDnf(
-								mServices, mManagedScript, node.getOutgoingEdgeLabel(succ)));
-				
+		for (final Term oVar : mOutputVars) {
+			for (final GuardGraph succ : node.getOutgoingNodes()) {
+				final Term[] disjs = SmtUtils
+						.getDisjuncts(SmtUtils.toDnf(mServices, mManagedScript, node.getOutgoingEdgeLabel(succ)));
+
 				localFlag = localFlag || testTermsContainOVar(Arrays.asList(disjs), oVar);
 			}
 		}

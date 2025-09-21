@@ -37,7 +37,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 
-
 /**
  * A run of a tree automaton.
  *
@@ -46,8 +45,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReduce
  *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
- * @param <LETTER> Symbols of the automaton
- * @param <STATE> States of the automaton.
+ * @param <LETTER>
+ *            Symbols of the automaton
+ * @param <STATE>
+ *            States of the automaton.
  */
 public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LETTER, STATE> {
 
@@ -66,6 +67,7 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 
 	/**
 	 * Constructs a run that consists of one state, and no transitions.
+	 *
 	 * @param state
 	 */
 	public TreeRun(final STATE state) {
@@ -73,20 +75,23 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 	}
 
 	/**
-	 * Constructs a run, by the final state, transition symbol, transition children.
-	 * Run := letter(childrenRuns) ~> state
-	 * @param state: final state of the computation.
-	 * @param letter: the letter taken by the final transition.
-	 * @param children: The children runs.
+	 * Constructs a run, by the final state, transition symbol, transition children. Run := letter(childrenRuns) ~>
+	 * state
+	 *
+	 * @param state:
+	 *            final state of the computation.
+	 * @param letter:
+	 *            the letter taken by the final transition.
+	 * @param children:
+	 *            The children runs.
 	 */
 	public TreeRun(final STATE state, final LETTER letter, final List<TreeRun<LETTER, STATE>> children) {
-		this.mState = state;
-		this.mLetter = letter;
-		this.mChildren = children;
+		mState = state;
+		mLetter = letter;
+		mChildren = children;
 
 		/*
-		 * compute all rules and all states from this and children
-		 * TODO: perhaps do this lazy
+		 * compute all rules and all states from this and children TODO: perhaps do this lazy
 		 */
 		final Set<STATE> allStates = new HashSet<>();
 		final Set<TreeAutomatonRule<LETTER, STATE>> allRules = new HashSet<>();
@@ -97,7 +102,7 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 			allRules.addAll(child.getRules());
 		}
 		if (mLetter != null) {
-			allRules.add(new TreeAutomatonRule<LETTER, STATE>(mLetter, childStates, state));
+			allRules.add(new TreeAutomatonRule<>(mLetter, childStates, state));
 		}
 		allStates.add(mState);
 
@@ -108,9 +113,10 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 	}
 
 	/***
-	 * Rebuild the tree run with new states.
-	 * <ST> Type of the terminal state.
-	 * @param stMap map of the old states to the new states.
+	 * Rebuild the tree run with new states. <ST> Type of the terminal state.
+	 *
+	 * @param stMap
+	 *            map of the old states to the new states.
 	 * @return
 	 */
 
@@ -124,9 +130,10 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 	}
 
 	/***
-	 * Rebuild the tree run with new states.
-	 * <ST> Type of the terminal state.
-	 * @param stMap map of the old states to the new states.
+	 * Rebuild the tree run with new states. <ST> Type of the terminal state.
+	 *
+	 * @param stMap
+	 *            map of the old states to the new states.
 	 * @return
 	 */
 
@@ -142,7 +149,6 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 		}
 	}
 
-
 	public List<TreeRun<LETTER, STATE>> getChildren() {
 		return mChildren;
 	}
@@ -150,13 +156,14 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 	private Collection<TreeAutomatonRule<LETTER, STATE>> getRules() {
 		return mAllRules;
 	}
+
 	private Collection<STATE> getStates() {
 		return mAllStates;
 	}
 
 	@Override
-	public <SF extends ISemanticReducerFactory<STATE, LETTER>> InterpolantTreeAutomatonBU<LETTER, STATE> getInterpolantAutomaton(
-			final SF factory) {
+	public <SF extends ISemanticReducerFactory<STATE, LETTER>> InterpolantTreeAutomatonBU<LETTER, STATE>
+			getInterpolantAutomaton(final SF factory) {
 		final InterpolantTreeAutomatonBU<LETTER, STATE> treeAutomaton = new InterpolantTreeAutomatonBU<>(factory);
 
 		for (final STATE st : getStates()) {
@@ -190,7 +197,7 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 	@Override
 	public Tree<LETTER> getTree() {
 		final List<Tree<LETTER>> treeChildren = new ArrayList<>();
-		for (final TreeRun<LETTER, STATE> run : this.mChildren) {
+		for (final TreeRun<LETTER, STATE> run : mChildren) {
 			treeChildren.add(run.getTree());
 		}
 		return new Tree<>(mLetter, treeChildren);

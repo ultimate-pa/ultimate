@@ -36,15 +36,14 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
 
 /**
- * Converts a regex into a regex dag.
- * A regex dag is a directed acyclic graph with exactly one source and one sink representing a regex.
- * Concatenation is represented by a linear sequence of nodes.
- * Union is represented by a fork/branch (and later by a join/merge).
- * Stars are treated like literals and are represented by a single node.
+ * Converts a regex into a regex dag. A regex dag is a directed acyclic graph with exactly one source and one sink
+ * representing a regex. Concatenation is represented by a linear sequence of nodes. Union is represented by a
+ * fork/branch (and later by a join/merge). Stars are treated like literals and are represented by a single node.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDagNode<L>> {
 
@@ -59,10 +58,10 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 	}
 
 	/**
-	 * Incorporates a given regex into the current DAG.
-	 * Use {@link #getDagAndReset()} to query the resulting DAG.
+	 * Incorporates a given regex into the current DAG. Use {@link #getDagAndReset()} to query the resulting DAG.
 	 *
-	 * @param regex Regex to be converted into a DAG
+	 * @param regex
+	 *            Regex to be converted into a DAG
 	 * @return Reference to the last RegexDagNode created for the given regex.<br>
 	 *         For (a·b) this is a node containing the regex literal b.<br>
 	 *         For (a∪b) this is a join node containing the regex ε.<br>

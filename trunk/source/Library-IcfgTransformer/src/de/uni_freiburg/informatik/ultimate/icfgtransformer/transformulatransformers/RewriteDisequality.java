@@ -118,7 +118,6 @@ public class RewriteDisequality extends TransformerPreprocessor {
 			final Term param1 = mScript.term("<", params);
 			final Term param2 = mScript.term(">", params);
 			setResult(mScript.term("or", param1, param2));
-			return;
 
 		}
 

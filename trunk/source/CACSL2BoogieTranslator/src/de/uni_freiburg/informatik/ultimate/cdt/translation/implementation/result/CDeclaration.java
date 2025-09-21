@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 
 /**
  * Represents a declaration in a C program.
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  *
  */
 public class CDeclaration {
-	private final CType mType;
+	private final ICType mType;
 	private final String mName;
 	private InitializerResult mInitializer;
 	private final IASTInitializer mCAstInitializer;
@@ -61,7 +61,7 @@ public class CDeclaration {
 	 * @param onHeap
 	 * @param bitfieldSize
 	 */
-	public CDeclaration(final CType type, final String name, final IASTInitializer cAstInitializer,
+	public CDeclaration(final ICType type, final String name, final IASTInitializer cAstInitializer,
 			final InitializerResult initializer, final boolean onHeap, final CStorageClass storageClass,
 			final int bitfieldSize) {
 		mType = type;
@@ -76,15 +76,15 @@ public class CDeclaration {
 		mBitfieldSize = bitfieldSize;
 	}
 
-	public CDeclaration(final CType type, final String name, final CStorageClass storageClass) {
+	public CDeclaration(final ICType type, final String name, final CStorageClass storageClass) {
 		this(type, name, null, null, false, storageClass, -1);
 	}
 
-	public CDeclaration(final CType type, final String name) {
+	public CDeclaration(final ICType type, final String name) {
 		this(type, name, (IASTInitializer) null, null, false, CStorageClass.UNSPECIFIED, -1);
 	}
 
-	public CType getType() {
+	public ICType getType() {
 		return mType;
 	}
 

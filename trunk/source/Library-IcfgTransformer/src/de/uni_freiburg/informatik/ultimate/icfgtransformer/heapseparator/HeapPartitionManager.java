@@ -32,15 +32,15 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.ArrayGroup;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.NoStoreInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreLocationBlock;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.NoStoreInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.SelectInfo;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures.StoreInfo;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -52,8 +52,7 @@ public class HeapPartitionManager {
 	// output
 	private final NestedMap2<SelectInfo, Integer, StoreLocationBlock> mSelectInfoToDimensionToLocationBlock;
 
-	private final NestedMap2<ArrayGroup, Integer, UnionFind<StoreInfo>>
-		mArrayGroupToDimensionToStoreIndexInfoPartition;
+	private final NestedMap2<ArrayGroup, Integer, UnionFind<StoreInfo>> mArrayGroupToDimensionToStoreIndexInfoPartition;
 
 	/**
 	 * maps a selectInfo to any one of the StoreIndexInfos that may be equal to the selectInfo
@@ -69,8 +68,7 @@ public class HeapPartitionManager {
 	/**
 	 * map for caching/unifying LocationBlocks
 	 */
-	private final NestedMap3<Set<StoreInfo>, ArrayGroup, Integer, StoreLocationBlock>
-		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock;
+	private final NestedMap3<Set<StoreInfo>, ArrayGroup, Integer, StoreLocationBlock> mStoreIndexInfosToArrayGroupToDimensionToLocationBlock;
 
 	private final HeapSeparatorBenchmark mStatistics;
 
@@ -78,10 +76,11 @@ public class HeapPartitionManager {
 
 	private final MemlocArrayManager mMemLocArrayManager;
 
-private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
+	private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 
 	/**
 	 * for memloc style
+	 *
 	 * @param logger
 	 * @param arrayToArrayGroup
 	 * @param storeIndexInfos
@@ -92,8 +91,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 	 */
 	public HeapPartitionManager(final ILogger logger, final ManagedScript mgdScript,
 			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
-			final MemlocArrayManager memlocArrayManager,
-			final ComputeStoreInfosAndArrayGroups<?> csiaag) {
+			final MemlocArrayManager memlocArrayManager, final ComputeStoreInfosAndArrayGroups<?> csiaag) {
 		mMgdScript = mgdScript;
 
 		mLogger = logger;
@@ -111,9 +109,9 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 
 	/**
 	 * Merge all LocationBlocks (sets of StoreIndexInfos) that
-	 *  <li> may write to the same array as the given SelectInfo reads from
-	 *  <li> whose freezeVar may equal the SelectInfo's index at the SelectInfo's location (according to our equality
-	 * 		 analysis)
+	 * <li>may write to the same array as the given SelectInfo reads from
+	 * <li>whose freezeVar may equal the SelectInfo's index at the SelectInfo's location (according to our equality
+	 * analysis)
 	 *
 	 * @param selectInfo
 	 * @param eps
@@ -122,8 +120,8 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingIntermediateState eps) {
 
 		if (eps.isBottom()) {
-			mLogger.warn("equality analysis on preprocessed graph computed array read to be unreachable: "
-					+ selectInfo);
+			mLogger.warn(
+					"equality analysis on preprocessed graph computed array read to be unreachable: " + selectInfo);
 		}
 
 		final ArrayIndex selectIndex = selectInfo.getIndex();
@@ -146,18 +144,18 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 			final Set<Term> setConstraint = eps.getSetConstraintForExpression(locArraySelect);
 
 			if (setConstraint == null) {
-				/* analysis found no constraint --> having to merge all (this may be ok, in the sense that there still
+				/*
+				 * analysis found no constraint --> having to merge all (this may be ok, in the sense that there still
 				 * may be separation, in particular if it happens in a dimension > 1)
 				 */
 				mLogger.warn("No literal set constraint found for loc-array access " + locArraySelect + " at "
 						+ locArray.getEdge());
-				final List<StoreInfo> allStoreInfos = mCsiaag.getStoreInfosForDimensionAndArrayGroup(dim,
-						selectInfo.getArrayGroup());
+				final List<StoreInfo> allStoreInfos =
+						mCsiaag.getStoreInfosForDimensionAndArrayGroup(dim, selectInfo.getArrayGroup());
 				mergeBlocks(selectInfo, dim, allStoreInfos);
 			} else {
-				final List<StoreInfo> setConstraintAsStoreInfos =
-						setConstraint.stream().map(t -> mCsiaag.getStoreInfoForLocLitTerm(t))
-							.collect(Collectors.toList());
+				final List<StoreInfo> setConstraintAsStoreInfos = setConstraint.stream()
+						.map(t -> mCsiaag.getStoreInfoForLocLitTerm(t)).collect(Collectors.toList());
 				mergeBlocks(selectInfo, dim, setConstraintAsStoreInfos);
 			}
 		}
@@ -189,8 +187,9 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		}
 	}
 
-	private void createPartitionAndBlockIfNecessary(final SelectInfo selectInfo, final int dim, final StoreInfo sample) {
-		final ArrayGroup arrayGroup = selectInfo.getArrayGroup();//mArrayToArrayGroup.get(array);
+	private void createPartitionAndBlockIfNecessary(final SelectInfo selectInfo, final int dim,
+			final StoreInfo sample) {
+		final ArrayGroup arrayGroup = selectInfo.getArrayGroup();// mArrayToArrayGroup.get(array);
 		assert selectInfo.getArrayGroup().equals(sample.getArrayGroup()) || sample instanceof NoStoreInfo;
 
 		UnionFind<StoreInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
@@ -206,8 +205,8 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		/*
 		 * rewrite the collected information into our output format
 		 */
-		for (final Triple<SelectInfo, Integer, StoreInfo> en :
-				mSelectInfoToDimensionToToSampleStoreIndexInfo.entrySet()) {
+		for (final Triple<SelectInfo, Integer, StoreInfo> en : mSelectInfoToDimensionToToSampleStoreIndexInfo
+				.entrySet()) {
 
 			final StoreInfo sampleSii = en.getThird();
 
@@ -216,8 +215,7 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 
 			final ArrayGroup arrayGroup = selectInfo.getArrayGroup();
 
-			final UnionFind<StoreInfo> partition =
-					mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
+			final UnionFind<StoreInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 			final Set<StoreInfo> eqc = partition.getEquivalenceClassMembers(sampleSii);
 
 			final StoreLocationBlock locationBlock = getOrConstructLocationBlock(eqc, arrayGroup, dim);
@@ -227,7 +225,6 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 			mLogger.debug("\t write locations: " + locationBlock.getLocations());
 
 		}
-
 
 		mLogger.info("partitioning result:");
 		for (final ArrayGroup arrayGroup : mCsiaag.getArrayGroups()) {
@@ -249,8 +246,8 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 
 				mStatistics.registerPerArrayAndDimensionInfo(arrayGroup, dim,
 						HeapSeparatorStatistics.COUNT_ARRAY_WRITES, noWrites);
-				mStatistics.registerPerArrayAndDimensionInfo(arrayGroup, dim,
-						HeapSeparatorStatistics.COUNT_BLOCKS, noBlocks);
+				mStatistics.registerPerArrayAndDimensionInfo(arrayGroup, dim, HeapSeparatorStatistics.COUNT_BLOCKS,
+						noBlocks);
 
 				mLogger.debug("\t location block contents:");
 				if (mLogger.isDebugEnabled() && partition != null) {
@@ -278,7 +275,6 @@ private final ComputeStoreInfosAndArrayGroups<?> mCsiaag;
 		}
 		return result;
 	}
-
 
 	private boolean sanityCheck() {
 		// nothing here, yet

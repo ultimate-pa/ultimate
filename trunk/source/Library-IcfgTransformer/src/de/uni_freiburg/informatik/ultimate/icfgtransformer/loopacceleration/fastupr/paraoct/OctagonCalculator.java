@@ -733,7 +733,7 @@ public class OctagonCalculator extends NonRecursive {
 			}
 		}
 
-		final Comparator<TermVariable> compare = (one, other) -> one.toString().compareTo(other.toString());
+		final Comparator<TermVariable> compare = Comparator.comparing(TermVariable::toString);
 
 		final List<TermVariable> inVarList = new ArrayList<>(inVars);
 		final List<TermVariable> outVarList = new ArrayList<>(outVars);
@@ -746,9 +746,7 @@ public class OctagonCalculator extends NonRecursive {
 		inVarList.addAll(mixedVarList);
 		inVarList.addAll(outVarList);
 
-		final ArrayList<TermVariable> sorted = new ArrayList<>();
-		sorted.addAll(inVarList);
-
+		final ArrayList<TermVariable> sorted = new ArrayList<>(inVarList);
 		return sorted;
 	}
 

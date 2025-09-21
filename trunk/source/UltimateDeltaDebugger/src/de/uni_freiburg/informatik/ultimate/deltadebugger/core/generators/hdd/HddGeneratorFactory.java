@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 public class HddGeneratorFactory implements IVariantGeneratorFactory {
 	private final IHddStrategy mStrategy;
 	private final boolean mReparseBetweenLevels;
-	
+
 	/**
 	 * Constructor with strategy.
-	 * 
+	 *
 	 * @param strategy
 	 *            strategy
 	 * @param reparseBetweenLevels
@@ -56,20 +56,20 @@ public class HddGeneratorFactory implements IVariantGeneratorFactory {
 		mStrategy = strategy;
 		mReparseBetweenLevels = reparseBetweenLevels;
 	}
-	
+
 	@Override
 	public Optional<IVariantGenerator> analyze(final IPassContext context) {
 		return createGeneratorForFirstLevel(context);
 	}
-	
+
 	public IHddStrategy getStrategy() {
 		return mStrategy;
 	}
-	
+
 	public boolean isReparseBetweenLevelsEnabled() {
 		return mReparseBetweenLevels;
 	}
-	
+
 	/**
 	 * @param context
 	 *            Context.
@@ -79,7 +79,7 @@ public class HddGeneratorFactory implements IVariantGeneratorFactory {
 		return createGeneratorForNextLevel(context, 0, context.getInput(), Arrays.asList(context.getSharedPst()),
 				Collections.emptyList());
 	}
-	
+
 	/**
 	 * @param context
 	 *            Context.

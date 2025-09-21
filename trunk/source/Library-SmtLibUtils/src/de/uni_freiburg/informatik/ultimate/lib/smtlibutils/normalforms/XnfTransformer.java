@@ -453,7 +453,7 @@ public abstract class XnfTransformer extends NnfTransformer {
 
 	}
 
-	public class AbortBeforeBlowup extends RuntimeException {
+	public static class AbortBeforeBlowup extends RuntimeException {
 
 		private static final long serialVersionUID = 1L;
 

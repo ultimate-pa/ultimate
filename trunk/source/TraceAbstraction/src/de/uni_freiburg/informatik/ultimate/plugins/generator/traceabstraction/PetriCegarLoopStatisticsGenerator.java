@@ -40,7 +40,6 @@ public class PetriCegarLoopStatisticsGenerator extends StatisticsGeneratorWithSt
 	private final CegarLoopStatisticsGenerator mCegarLoopStatisticsGenerator;
 
 	public PetriCegarLoopStatisticsGenerator(final CegarLoopStatisticsGenerator cegarLoopStatisticsGenerator) {
-		super();
 		mCegarLoopStatisticsGenerator = cegarLoopStatisticsGenerator;
 	}
 
@@ -55,28 +54,25 @@ public class PetriCegarLoopStatisticsGenerator extends StatisticsGeneratorWithSt
 
 	@Override
 	public Object getValue(final String key) {
-		final PetriCegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(PetriCegarLoopStatisticsDefinitions.class,
-				key);
-		switch (keyEnum) {
+		final PetriCegarLoopStatisticsDefinitions keyEnum = PetriCegarLoopStatisticsDefinitions.valueOf(key);
+		return switch (keyEnum) {
 		case BackfoldingTime:
 		case BackfoldingUnfoldingTime:
 		case EmptinessCheckTime:
 		case RemoveRedundantFlowTime:
 		case RemoveRedundantFlowUnfoldingTime:
 			try {
-				return getElapsedTime(key);
+				yield getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
 		case FlowIncreaseByBackfolding:
-			return mFlowIncreaseByBackfolding;
+			yield mFlowIncreaseByBackfolding;
 		case BasicCegarLoop:
 			final StatisticsData result = new StatisticsData();
 			result.aggregateBenchmarkData(mCegarLoopStatisticsGenerator);
-			return result;
-		default:
-			throw new AssertionError("unknown data");
-		}
+			yield result;
+		};
 	}
 
 	@Override

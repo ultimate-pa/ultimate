@@ -587,14 +587,14 @@ public class BoogieOutput {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("type ");
 		appendAttributes(sb, decl.getAttributes());
-		if (decl.isFinite()) {
+		final ASTType synonym = decl.getSynonym();
+		if (synonym == null && decl.isFinite()) {
 			sb.append("finite ");
 		}
 		sb.append(decl.getIdentifier());
 		for (final String args : decl.getTypeParams()) {
 			sb.append(" ").append(args);
 		}
-		final ASTType synonym = decl.getSynonym();
 		if (synonym != null) {
 			sb.append(" = ");
 			appendType(sb, synonym, 0);
@@ -768,10 +768,15 @@ public class BoogieOutput {
 	public void appendBlock(final StringBuilder sb, final Statement[] block, final String indent) {
 		final String nextIndent = indent + "    ";
 		for (final Statement s : block) {
-			if (s instanceof Label) {
+			if (s instanceof final Label l) {
 				// SF: Labels aren't on the first column anymore, they are
 				// treated as pragmas if they are. Added " "
-				sb.append(indent + "  " + ((Label) s).getName() + ":" + LINEBREAK);
+				sb.append(indent + "  " + l.getName());
+				if (l.getAttributes() != null && l.getAttributes().length > 0) {
+					sb.append(' ');
+					appendAttributes(sb, l.getAttributes());
+				}
+				sb.append(":" + LINEBREAK);
 			} else {
 				appendStatement(sb, s, nextIndent);
 			}

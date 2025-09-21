@@ -234,7 +234,7 @@ public class XJunction {
 	 * @author Matthias Heizmann
 	 *
 	 */
-	public class AtomAndNegationException extends Exception {
+	public static class AtomAndNegationException extends Exception {
 		private static final long serialVersionUID = -5506932837927008768L;
 	}
 

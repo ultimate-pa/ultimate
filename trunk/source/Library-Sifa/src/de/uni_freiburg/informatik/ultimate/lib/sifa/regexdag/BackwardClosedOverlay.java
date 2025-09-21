@@ -35,12 +35,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Overlay whose {@link #predecessorsOf()} always returns all predecessors.
- * Overlaid graphs always have exactly one source but can have multiple sinks.
+ * Overlay whose {@link #predecessorsOf()} always returns all predecessors. Overlaid graphs always have exactly one
+ * source but can have multiple sinks.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals inside RegexDagNodes
+ * @param <L>
+ *            Type of letters that are used inside regex literals inside RegexDagNodes
  */
 public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 
@@ -49,19 +50,23 @@ public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 	private final Set<RegexDagNode<L>> mSinks = new HashSet<>();
 
 	/**
-	 * Adds all backward edges to this overlay starting from the predecessors of the given node.
-	 * As a result, all paths from the DAG's source to the predecessors of the given node will be part of this overlay.
-	 * Paths to the given node itself will <i>not</i> be added.
-	 * @param targetNodeExclusive Node whose predecessors will be added
+	 * Adds all backward edges to this overlay starting from the predecessors of the given node. As a result, all paths
+	 * from the DAG's source to the predecessors of the given node will be part of this overlay. Paths to the given node
+	 * itself will <i>not</i> be added.
+	 *
+	 * @param targetNodeExclusive
+	 *            Node whose predecessors will be added
 	 */
 	public void addExclusive(final RegexDagNode<L> targetNodeExclusive) {
 		targetNodeExclusive.getIncomingNodes().forEach(this::addInclusive);
 	}
 
 	/**
-	 * Adds all backward edges to this overlay starting from the given node.
-	 * As a result, all paths from the DAG's source to the given node will be part of this overlay.
-	 * @param targetNodeInclusive Node to be added
+	 * Adds all backward edges to this overlay starting from the given node. As a result, all paths from the DAG's
+	 * source to the given node will be part of this overlay.
+	 *
+	 * @param targetNodeInclusive
+	 *            Node to be added
 	 */
 	public void addInclusive(final RegexDagNode<L> targetNodeInclusive) {
 		if (mSuccessorRelation.hasEmptyImage(targetNodeInclusive)) {
@@ -99,10 +104,10 @@ public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 	public Collection<RegexDagNode<L>> sinks(final RegexDag<L> dag) {
 		return mSinks;
 	}
-	
+
 	@Override
 	public String toString() {
-		return new GraphToTgf<RegexDagNode<L>>(mSuccessorRelation::getImage, mPredecessorRelation::getImage,
-				RegexDagNode::toString).includeComponentsOf(mSinks).getTgf();
+		return new GraphToTgf<>(mSuccessorRelation::getImage, mPredecessorRelation::getImage, RegexDagNode::toString)
+				.includeComponentsOf(mSinks).getTgf();
 	}
 }

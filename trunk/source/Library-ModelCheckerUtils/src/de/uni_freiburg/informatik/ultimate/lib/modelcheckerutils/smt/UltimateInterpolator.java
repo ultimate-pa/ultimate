@@ -50,7 +50,4 @@ public class UltimateInterpolator extends WrapperScript {
 		mMgdScript = new ManagedScript(services, mScript);
 	}
 
-
-
-
 }

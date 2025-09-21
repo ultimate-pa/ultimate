@@ -32,8 +32,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
- * Objects of this class provide all information of declaring a list of
- * functions that have the same sort.
+ * Objects of this class provide all information of declaring a list of functions that have the same sort.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -44,14 +43,12 @@ public class FunDecl {
 	private final String[] mIdentifiers;
 
 	public FunDecl(final SortConstructor[] paramSorts, final SortConstructor returnSort, final String... identifiers) {
-		super();
 		mParamSorts = paramSorts;
 		mReturnSort = returnSort;
 		mIdentifiers = identifiers;
 	}
 
 	public FunDecl(final SortConstructor returnSort, final String... identifiers) {
-		super();
 		mParamSorts = new SortConstructor[0];
 		mReturnSort = returnSort;
 		mIdentifiers = identifiers;
@@ -67,6 +64,6 @@ public class FunDecl {
 
 	@FunctionalInterface
 	public interface SortConstructor {
-		public Sort constructSort(Script script);
+		Sort constructSort(Script script);
 	}
 }

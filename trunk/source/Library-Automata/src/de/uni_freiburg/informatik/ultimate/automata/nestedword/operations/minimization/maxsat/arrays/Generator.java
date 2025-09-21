@@ -91,10 +91,8 @@ final class Generator {
 
 		// "assert" that there are no transitions which are never taken
 		{
-			final HashSet<Hist> hs = new HashSet<Hist>();
-			for (final Hist h : history) {
-				hs.add(h);
-			}
+			final HashSet<Hist> hs = new HashSet<>();
+			hs.addAll(history);
 			for (final RTrans x : inNwa.mRTrans) {
 				assert hs.contains(new Hist(x.mSrc, x.mTop));
 			}
@@ -102,10 +100,10 @@ final class Generator {
 
 		// some "namespace imports"
 		final int numStates = inNwa.mNumStates;
-		//@SuppressWarnings("unused") int numISyms = inNWA.numISyms;
-		//@SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
-		//@SuppressWarnings("unused") int numRSyms = inNWA.numRSyms;
-		//@SuppressWarnings("unused") boolean[] isInitial = inNWA.isInitial;
+		// @SuppressWarnings("unused") int numISyms = inNWA.numISyms;
+		// @SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
+		// @SuppressWarnings("unused") int numRSyms = inNWA.numRSyms;
+		// @SuppressWarnings("unused") boolean[] isInitial = inNWA.isInitial;
 		final boolean[] isFinal = inNwa.mIsFinal;
 		final int numITrans = inNwa.mITrans.length;
 		final int numCTrans = inNwa.mCTrans.length;
@@ -115,7 +113,7 @@ final class Generator {
 		final RTrans[] rTrans = inNwa.mRTrans.clone();
 		final RTrans[] rTransTop = inNwa.mRTrans.clone();
 
-		history = new ArrayList<Hist>(history);
+		history = new ArrayList<>(history);
 
 		// IMPORTANT. Sort inputs
 		Arrays.sort(iTrans, ITrans::compareSrcSymDst);
@@ -126,18 +124,18 @@ final class Generator {
 		history.sort(Hist::compareLinHier);
 
 		// All "outgoing" transitions, grouped by src, then sorted by (top), sym, dst
-		final ArrayList<ArrayList<ITrans>> iTransOut = new ArrayList<ArrayList<ITrans>>();
-		final ArrayList<ArrayList<CTrans>> cTransOut = new ArrayList<ArrayList<CTrans>>();
-		final ArrayList<ArrayList<RTrans>> rTransOut = new ArrayList<ArrayList<RTrans>>();
+		final ArrayList<ArrayList<ITrans>> iTransOut = new ArrayList<>();
+		final ArrayList<ArrayList<CTrans>> cTransOut = new ArrayList<>();
+		final ArrayList<ArrayList<RTrans>> rTransOut = new ArrayList<>();
 
 		for (int i = 0; i < numStates; i++) {
-			iTransOut.add(new ArrayList<ITrans>());
+			iTransOut.add(new ArrayList<>());
 		}
 		for (int i = 0; i < numStates; i++) {
-			cTransOut.add(new ArrayList<CTrans>());
+			cTransOut.add(new ArrayList<>());
 		}
 		for (int i = 0; i < numStates; i++) {
-			rTransOut.add(new ArrayList<RTrans>());
+			rTransOut.add(new ArrayList<>());
 		}
 
 		for (int i = 0; i < numITrans; i++) {
@@ -240,13 +238,13 @@ final class Generator {
 		}
 
 		// group rTrans by src and sym
-		final HashMap<SrcSym, ArrayList<RTrans>> bySrcSym = new HashMap<SrcSym, ArrayList<RTrans>>();
+		final HashMap<SrcSym, ArrayList<RTrans>> bySrcSym = new HashMap<>();
 
 		for (final RTrans x : rTrans) {
 			final SrcSym srcsym = new SrcSym(x.mSrc, x.mSym);
 			ArrayList<RTrans> a = bySrcSym.get(srcsym);
 			if (a == null) {
-				a = new ArrayList<RTrans>();
+				a = new ArrayList<>();
 				bySrcSym.put(srcsym, a);
 			}
 			a.add(x);
@@ -352,12 +350,10 @@ final class Generator {
 		/*
 		 * Transitivity clauses
 		 *
-		 * The naive way is visiting all or almost all clauses. This needs
-		 * O(n^3) time.
+		 * The naive way is visiting all or almost all clauses. This needs O(n^3) time.
 		 *
-		 * Instead we precompute an index of the state pairings that are not
-		 * (yet) known to be unmergeable. The other pairings need not be
-		 * visited.
+		 * Instead we precompute an index of the state pairings that are not (yet) known to be unmergeable. The other
+		 * pairings need not be visited.
 		 */
 
 		final IntArray[] possible = new IntArray[numStates];

@@ -31,12 +31,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-
 /**
- * We call two {@link Transition}s similar if they have the same letter, the
- * same predecessors and the same successors. It seems wasteful to have similar
- * transitions in a Petri net. Objects of this class can detect similar
- * transitions.
+ * We call two {@link Transition}s similar if they have the same letter, the same predecessors and the same successors.
+ * It seems wasteful to have similar transitions in a Petri net. Objects of this class can detect similar transitions.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -48,8 +45,8 @@ public class TransitionUnifier<LETTER, PLACE> {
 	final HashRelation<Integer, Transition<LETTER, PLACE>> mHash2Transitions = new HashRelation<>();
 
 	/**
-	 * @return A transition that is similar to tNew if such a transition has been
-	 *         registered in the past and null otherwise.
+	 * @return A transition that is similar to tNew if such a transition has been registered in the past and null
+	 *         otherwise.
 	 */
 	public Transition<LETTER, PLACE> findOrRegister(final Transition<LETTER, PLACE> tNew) {
 		final int hash = computeHash(tNew);
@@ -63,12 +60,10 @@ public class TransitionUnifier<LETTER, PLACE> {
 		return null;
 	}
 
-
 	private boolean areSimilar(final Transition<LETTER, PLACE> t1, final Transition<LETTER, PLACE> t2) {
 		return t1.getSymbol().equals(t2.getSymbol()) && t1.getPredecessors().equals(t2.getPredecessors())
 				&& t1.getSuccessors().equals(t2.getSuccessors());
 	}
-
 
 	private int computeHash(final Transition<LETTER, PLACE> t) {
 		final int prime = 31;

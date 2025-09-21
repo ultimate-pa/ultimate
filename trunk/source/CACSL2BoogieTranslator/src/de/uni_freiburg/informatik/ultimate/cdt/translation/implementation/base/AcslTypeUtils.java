@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 
 /**
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class AcslTypeUtils {
-	public static CType translateAcslTypeToCType(final ACSLType t) {
+	public static ICType translateAcslTypeToCType(final ACSLType t) {
 		// TODO: Handle non-primitive types as well
 		return new CPrimitive(translatePrimitiveAcslTypeToCType(t));
 	}
@@ -102,12 +102,12 @@ public class AcslTypeUtils {
 		}
 	}
 
-	public static ACSLType translateCTypeToAcslType(final CType type) {
-		if (!(type instanceof CPrimitive)) {
+	public static ACSLType translateCTypeToAcslType(final ICType type) {
+		if (!(type instanceof final CPrimitive cPrimitive)) {
 			// TODO: Implement this for other types
 			throw new UnsupportedOperationException(
 					"Currently only primitive types are supported, got " + type.getClass().getSimpleName());
 		}
-		return new ACSLType(((CPrimitive) type).getType().getTypeName());
+		return new ACSLType(cPrimitive.getType().getTypeName());
 	}
 }

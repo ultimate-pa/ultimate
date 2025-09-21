@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  *
  * @author Jan Leike
  */
-class SupportingInvariantSimplifier {
+class SupportingInvariantSimplifier implements AutoCloseable {
 	private final boolean mAnnotateTerms;
 
 	/**
@@ -83,12 +83,11 @@ class SupportingInvariantSimplifier {
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
+	public void close() {
 		if (mScript != null) {
 			mScript.exit();
 			mScript = null;
 		}
-		super.finalize();
 	}
 
 	/**

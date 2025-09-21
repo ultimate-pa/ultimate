@@ -87,7 +87,6 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 	}
 
 	public BoogieASTNode(final ILocation location) {
-		super();
 		if (location == null) {
 			return;
 		}
@@ -118,9 +117,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 	@Override
 	public List<IWalkable> getSuccessors() {
 		final ArrayList<IWalkable> rtr = new ArrayList<>();
-		for (final BoogieASTNode node : getOutgoingNodes()) {
-			rtr.add(node);
-		}
+		rtr.addAll(getOutgoingNodes());
 		return rtr;
 	}
 
@@ -189,7 +186,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 			return mResult;
 		}
 
-		private static final <T> boolean hasNullElement(final T[] array) {
+		private static <T> boolean hasNullElement(final T[] array) {
 			if (array == null || array.length == 0) {
 				return false;
 			}

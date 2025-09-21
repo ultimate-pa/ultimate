@@ -43,7 +43,7 @@ import java.util.Map;
 public class CsvUtils {
 
 	public interface IExplicitConverter<T, K> {
-		public K convert(T something);
+		K convert(T something);
 	}
 
 	/**
@@ -355,7 +355,7 @@ public class CsvUtils {
 	 * iterative application of {@link #concatenateRows(ICsvProvider, ICsvProvider)}.
 	 */
 	public static <T, K extends ICsvProvider<T>> ICsvProvider<T> concatenateRows(final List<K> csvProviders) {
-		ICsvProvider<T> result = new SimpleCsvProvider<>(new ArrayList<String>());
+		ICsvProvider<T> result = new SimpleCsvProvider<>(new ArrayList<>());
 		for (final ICsvProvider<T> csvProvider : csvProviders) {
 			result = concatenateRows(result, csvProvider);
 		}
@@ -397,14 +397,11 @@ public class CsvUtils {
 		}
 
 		if (cellDecorator == null) {
-			cellDecorator = new IExplicitConverter<T, String>() {
-				@Override
-				public String convert(final T something) {
-					if (something == null) {
-						return "-";
-					}
-					return something.toString();
+			cellDecorator = something -> {
+				if (something == null) {
+					return "-";
 				}
+				return something.toString();
 			};
 		}
 
@@ -444,9 +441,9 @@ public class CsvUtils {
 			currentBuilder.append("</tr>").append(linebreak);
 
 			final List<List<T>> rows = provider.getTable();
-			for (int i = 0; i < rows.size(); ++i) {
+			for (final List<T> row : rows) {
 				currentBuilder.append("<tr>");
-				for (final T cell : rows.get(i)) {
+				for (final T cell : row) {
 					currentBuilder.append("<td>").append(cellDecorator.convert(cell)).append("</td>");
 				}
 				currentBuilder.append("</tr>").append(linebreak);

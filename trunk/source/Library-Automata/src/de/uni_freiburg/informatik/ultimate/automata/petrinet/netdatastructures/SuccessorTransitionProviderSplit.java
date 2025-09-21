@@ -43,7 +43,6 @@ public class SuccessorTransitionProviderSplit<LETTER, PLACE> {
 
 	public SuccessorTransitionProviderSplit(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider,
 			final Set<LETTER> letterSet) {
-		super();
 		final List<Transition<LETTER, PLACE>> transWithLetterInSet = new ArrayList<>();
 		final List<Transition<LETTER, PLACE>> transWithLetterNotInSet = new ArrayList<>();
 		for (final Transition<LETTER, PLACE> trans : succTransProvider.getTransitions()) {

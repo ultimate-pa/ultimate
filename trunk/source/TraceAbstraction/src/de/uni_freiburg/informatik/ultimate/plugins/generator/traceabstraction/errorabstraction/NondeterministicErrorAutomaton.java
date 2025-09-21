@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 
 /**
  * Error automaton with on-demand enhancement.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type

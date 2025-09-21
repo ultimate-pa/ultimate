@@ -63,14 +63,12 @@ public class FunctionDeclarations {
 	public static final String OVERAPPROX_IDENTIFIER = "overapproximation";
 	public static final String INDEX_IDENTIFIER = "indices";
 
-
 	/**
 	 * See {@link #finish()}.
 	 */
 	private boolean mIsFinished;
 
 	public FunctionDeclarations(final ITypeHandler typeHandler, final TypeSizes typeSizeConstants) {
-		super();
 		mTypeHandler = typeHandler;
 		mTypeSizeConstants = typeSizeConstants;
 	}
@@ -119,7 +117,7 @@ public class FunctionDeclarations {
 
 	/**
 	 * (This class ({@link FunctionDeclarations}) does the naming of function parameters internally. This method exposes
-	 *  the naming scheme to the outside.)
+	 * the naming scheme to the outside.)
 	 *
 	 * @return the name that is used for the out parameter of all {@link FunctionDeclaration}s created by this class
 	 */
@@ -129,7 +127,7 @@ public class FunctionDeclarations {
 
 	/**
 	 * (This class ({@link FunctionDeclarations}) does the naming of function parameters internally. This method exposes
-	 *  the naming scheme to the outside.)
+	 * the naming scheme to the outside.)
 	 *
 	 * @return the name that is used for the i-th in parameter of all {@link FunctionDeclaration}s created by this class
 	 */
@@ -139,8 +137,8 @@ public class FunctionDeclarations {
 
 	public LinkedHashMap<String, FunctionDeclaration> getDeclaredFunctions() {
 		if (mIsFinished) {
-			throw new AssertionError("since the map is modifiable we do not allow this query once this class is "
-					+ "finished");
+			throw new AssertionError(
+					"since the map is modifiable we do not allow this query once this class is " + "finished");
 		}
 		return mDeclaredFunctions;
 	}

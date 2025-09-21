@@ -39,7 +39,6 @@ public class DataRaceRegressionTestSuite extends AbstractRegressionTestSuite {
 	private static final String FILE_ENDING = ".c";
 
 	public DataRaceRegressionTestSuite() {
-		super();
 		mTimeout = TIMEOUT;
 		mRootFolder = ROOT_DIR;
 		mFiletypesToConsider = new String[] { FILE_ENDING };

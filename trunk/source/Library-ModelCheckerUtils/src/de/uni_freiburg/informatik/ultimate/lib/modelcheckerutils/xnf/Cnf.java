@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public class Cnf<E> extends Xnf<E> {
 	public Cnf() {
-		super();
 	}
 
 	public Cnf(final int initialCapacity) {

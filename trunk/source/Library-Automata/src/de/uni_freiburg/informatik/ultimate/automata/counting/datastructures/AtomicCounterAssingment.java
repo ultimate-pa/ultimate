@@ -51,7 +51,6 @@ public class AtomicCounterAssingment {
 	 */
 	public AtomicCounterAssingment(final String lhsCounter, final String rhsCounter,
 			final BigInteger rhsNaturalNumber) {
-		super();
 		Objects.nonNull(lhsCounter);
 		if (rhsNaturalNumber.compareTo(BigInteger.ZERO) < 0) {
 			throw new IllegalArgumentException("Literal in counter assignment mus be non-negative");
@@ -67,8 +66,8 @@ public class AtomicCounterAssingment {
 
 	/**
 	 *
-	 * @return The counter that is on the right-hand side of the assignment and null
-	 *         if there is no counter on the right-hand side.
+	 * @return The counter that is on the right-hand side of the assignment and null if there is no counter on the
+	 *         right-hand side.
 	 */
 	public String getRhsCounter() {
 		return mRhsCounter;

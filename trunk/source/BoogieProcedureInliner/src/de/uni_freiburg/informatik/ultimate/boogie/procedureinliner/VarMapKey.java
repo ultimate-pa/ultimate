@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 
@@ -42,8 +44,11 @@ public class VarMapKey {
 
 	/**
 	 * Convenience constructor for variables, which didn't appear in (inlined) old() expressions.
-	 * @param varId Original identifier of the variable.
-	 * @param declInfo Original DeclarationInformation of the variable.
+	 *
+	 * @param varId
+	 *            Original identifier of the variable.
+	 * @param declInfo
+	 *            Original DeclarationInformation of the variable.
 	 */
 	public VarMapKey(final String varId, final DeclarationInformation declInfo) {
 		this(varId, declInfo, null);
@@ -52,12 +57,13 @@ public class VarMapKey {
 	/**
 	 * Creates a new key.
 	 *
-	 * @param varId                 Original identifier of the variable.
-	 * @param declInfo              Original DeclarationInformation of the variable.
-	 * @param globalInOldExprOfProc The variable is global and appeared inside an
-	 *                              (inlined) old() expression, inside the Procedure
-	 *                              with the given identifier. {@code null}, iff the
-	 *                              variable wasn't inside an old() expression.
+	 * @param varId
+	 *            Original identifier of the variable.
+	 * @param declInfo
+	 *            Original DeclarationInformation of the variable.
+	 * @param globalInOldExprOfProc
+	 *            The variable is global and appeared inside an (inlined) old() expression, inside the Procedure with
+	 *            the given identifier. {@code null}, iff the variable wasn't inside an old() expression.
 	 */
 	public VarMapKey(final String varId, final DeclarationInformation declInfo, final String globalInOldExprOfProc) {
 		mVarId = varId;
@@ -77,9 +83,8 @@ public class VarMapKey {
 	}
 
 	/**
-	 * @return Identifier of the procedure, in which the global variable appeared
-	 *         inside an (inlined) old() expression. {@code null}, iff the variable
-	 *         didn't appear in an (inlined) old() expression or is not global.
+	 * @return Identifier of the procedure, in which the global variable appeared inside an (inlined) old() expression.
+	 *         {@code null}, iff the variable didn't appear in an (inlined) old() expression or is not global.
 	 */
 	public String getGlobalInOldExprOfProc() {
 		return mGlobalInOldExprOfProc;
@@ -87,12 +92,7 @@ public class VarMapKey {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mDeclInfo == null) ? 0 : mDeclInfo.hashCode());
-		result = prime * result + ((mGlobalInOldExprOfProc == null) ? 0 : mGlobalInOldExprOfProc.hashCode());
-		result = prime * result + ((mVarId == null) ? 0 : mVarId.hashCode());
-		return result;
+		return Objects.hash(mDeclInfo, mGlobalInOldExprOfProc, mVarId);
 	}
 
 	@Override

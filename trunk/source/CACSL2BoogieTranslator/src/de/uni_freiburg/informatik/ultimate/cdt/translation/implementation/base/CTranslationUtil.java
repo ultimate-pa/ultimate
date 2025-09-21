@@ -38,7 +38,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTCompoundStatementExpression;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -102,7 +102,7 @@ public class CTranslationUtil {
 			index[i] = typeSizes.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.get(i).toString()));
 
-			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
 				currentArrayType = (CArray) valueType;
 			} else {
@@ -126,7 +126,7 @@ public class CTranslationUtil {
 		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLhs(),
 				new Expression[] { index });
 
-		final CType cellType = cArrayType.getValueType();
+		final ICType cellType = cArrayType.getValueType();
 
 		return new LocalLValue(alhs, cellType, null);
 	}
@@ -138,7 +138,7 @@ public class CTranslationUtil {
 				// found a variable length bound
 				return true;
 			}
-			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
 				currentArrayType = (CArray) valueType;
 			} else {
@@ -160,10 +160,9 @@ public class CTranslationUtil {
 
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
-			result.add(Integer
-					.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound()).toString()));
+			result.add(Integer.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound()).toString()));
 
-			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
 				currentArrayType = (CArray) valueType;
 			} else {
@@ -176,22 +175,21 @@ public class CTranslationUtil {
 	 * According to 6.2.5.21 of C11 the structure types and the array types (but not the union types) are called
 	 * aggregate types.
 	 */
-	public static boolean isAggregateType(final CType valueTypeRaw) {
-		final CType valueType = valueTypeRaw.getUnderlyingType();
-		return (valueType instanceof CStructOrUnion
-				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.STRUCT)
-				|| valueType instanceof CArray);
+	public static boolean isAggregateType(final ICType valueTypeRaw) {
+		final ICType valueType = valueTypeRaw.getUnderlyingType();
+		return (valueType instanceof final CStructOrUnion structOrUnion
+				&& structOrUnion.isStructOrUnion() == StructOrUnion.STRUCT) || valueType instanceof CArray;
 	}
 
-	public static boolean isAggregateOrUnionType(final CType valueTypeRaw) {
-		final CType valueType = valueTypeRaw.getUnderlyingType();
+	public static boolean isAggregateOrUnionType(final ICType valueTypeRaw) {
+		final ICType valueType = valueTypeRaw.getUnderlyingType();
 		return isAggregateType(valueType) || isUnionType(valueType);
 	}
 
-	private static boolean isUnionType(final CType valueTypeRaw) {
-		final CType valueType = valueTypeRaw.getUnderlyingType();
-		return valueType instanceof CStructOrUnion
-				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.UNION);
+	private static boolean isUnionType(final ICType valueTypeRaw) {
+		final ICType valueType = valueTypeRaw.getUnderlyingType();
+		return valueType instanceof final CStructOrUnion structOrUnion
+				&& structOrUnion.isStructOrUnion() == StructOrUnion.UNION;
 	}
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
@@ -250,7 +248,8 @@ public class CTranslationUtil {
 				return i;
 			}
 		}
-		throw new AssertionError("designator does not occur in struct type");
+		throw new AssertionError(
+				"designator '" + rootDesignator + "' does not occur in struct type '" + targetCType.getName() + "'");
 	}
 
 	public static LocalLValue constructOffHeapStructAccessLhs(final ILocation loc,
@@ -326,8 +325,8 @@ public class CTranslationUtil {
 			assert rExprdecl instanceof VariableDeclaration;
 			final VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
 
-			assert varDecl
-					.getVariables().length == 1 : "there are never two auxvars declared in one declaration, right??";
+			assert varDecl.getVariables().length == 1
+					: "there are never two auxvars declared in one declaration, right??";
 			final VarList vl = varDecl.getVariables()[0];
 			assert vl.getIdentifiers().length == 1 : "there are never two auxvars declared in one declaration, right??";
 			final String id = vl.getIdentifiers()[0];
@@ -380,30 +379,25 @@ public class CTranslationUtil {
 	public static BigInteger computeConstantValue(final Expression value) {
 		if (value instanceof IntegerLiteral) {
 			return new BigInteger(((IntegerLiteral) value).getValue());
-		} else if (value instanceof UnaryExpression) {
-			switch (((UnaryExpression) value).getOperator()) {
+		} else if (value instanceof final UnaryExpression unaryExp) {
+			switch (unaryExp.getOperator()) {
 			case ARITHNEGATIVE:
-				return computeConstantValue(((UnaryExpression) value).getExpr()).negate();
+				return computeConstantValue(unaryExp.getExpr()).negate();
 			default:
 				throw new UnsupportedOperationException("could not compute constant value");
 			}
-		} else if (value instanceof BinaryExpression) {
-			switch (((BinaryExpression) value).getOperator()) {
+		} else if (value instanceof final BinaryExpression binExp) {
+			switch (binExp.getOperator()) {
 			case ARITHDIV:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.divide(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).divide(computeConstantValue(binExp.getRight()));
 			case ARITHMINUS:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.subtract(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).subtract(computeConstantValue(binExp.getRight()));
 			case ARITHMOD:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.mod(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).mod(computeConstantValue(binExp.getRight()));
 			case ARITHMUL:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.multiply(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).multiply(computeConstantValue(binExp.getRight()));
 			case ARITHPLUS:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.add(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).add(computeConstantValue(binExp.getRight()));
 			default:
 				throw new UnsupportedOperationException("could not compute constant value");
 			}
@@ -417,7 +411,7 @@ public class CTranslationUtil {
 	 * </p>
 	 * Warning: This method is not suitable for obtaining the value of C expressions. If you also want to get integer
 	 * values of constants (in the sense of variables that got statically some value assigned) then use
-	 * {@link TypeSizes#extractIntegerValue(Expression, CType)}
+	 * {@link TypeSizes#extractIntegerValue(Expression, ICType)}
 	 *
 	 */
 	public static BigInteger extractIntegerValue(final Expression expr) {
@@ -432,8 +426,8 @@ public class CTranslationUtil {
 		return result;
 	}
 
-	public static CType getValueTypeOfNestedArray(final CArray arrayType) {
-		CType result = arrayType.getValueType().getUnderlyingType();
+	public static ICType getValueTypeOfNestedArray(final CArray arrayType) {
+		ICType result = arrayType.getValueType().getUnderlyingType();
 		while (result instanceof CArray) {
 			result = ((CArray) result).getValueType().getUnderlyingType();
 		}
@@ -446,19 +440,19 @@ public class CTranslationUtil {
 	 * @param aggregateOrUnionCType
 	 * @return
 	 */
-	public static Set<CType> extractNonAggregateNonUnionTypes(final CType aggregateOrUnionCType) {
+	public static Set<ICType> extractNonAggregateNonUnionTypes(final ICType aggregateOrUnionCType) {
 		assert isAggregateOrUnionType(aggregateOrUnionCType) : "not an aggregate or union type";
-		final CType underlyingType = aggregateOrUnionCType.getUnderlyingType();
-		if (underlyingType instanceof CArray) {
-			final CType valueType = getValueTypeOfNestedArray((CArray) underlyingType).getUnderlyingType();
+		final ICType underlyingType = aggregateOrUnionCType.getUnderlyingType();
+		if (underlyingType instanceof final CArray array) {
+			final ICType valueType = getValueTypeOfNestedArray(array).getUnderlyingType();
 			if (isAggregateOrUnionType(valueType)) {
 				return extractNonAggregateNonUnionTypes(valueType);
 			} else {
 				return Collections.singleton(valueType.getUnderlyingType());
 			}
-		} else if (underlyingType instanceof CStructOrUnion) {
-			final Set<CType> result = new HashSet<>();
-			for (final CType fieldType : ((CStructOrUnion) underlyingType).getFieldTypes()) {
+		} else if (underlyingType instanceof final CStructOrUnion structOrUnion) {
+			final Set<ICType> result = new HashSet<>();
+			for (final ICType fieldType : structOrUnion.getFieldTypes()) {
 				if (isAggregateOrUnionType(fieldType)) {
 					result.addAll(extractNonAggregateNonUnionTypes(fieldType.getUnderlyingType()));
 				} else {
@@ -524,8 +518,8 @@ public class CTranslationUtil {
 	 * @return
 	 */
 	public static IASTNode findExpressionHook(final IASTNode hook) {
-		if (hook instanceof CASTCompoundStatementExpression) {
-			final IASTCompoundStatement cs = ((CASTCompoundStatementExpression) hook).getCompoundStatement();
+		if (hook instanceof IGNUASTCompoundStatementExpression) {
+			final IASTCompoundStatement cs = ((IGNUASTCompoundStatementExpression) hook).getCompoundStatement();
 			final IASTStatement lastStatement = cs.getStatements()[cs.getStatements().length - 1];
 			return findExpressionHook(lastStatement);
 		}

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates.ReachProp;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * </ul>
  * <p>
  * TODO Christian 2016-09-10: A class which overrides hashCode() should also override equals()!
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -59,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 public abstract class StateContainer<LETTER, STATE> {
 	/**
 	 * Properties of a down state.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	enum DownStateProp {
@@ -72,8 +73,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		 * There is a (not necessarily initial) run starting in DoubleDecker (up, down) that visits a final state at
 		 * infinitely often.
 		 */
-		REACH_FINAL_INFTY(2),
-		REACHABLE_FROM_FINAL_WITHOUT_CALL(4),
+		REACH_FINAL_INFTY(2), REACHABLE_FROM_FINAL_WITHOUT_CALL(4),
 		/**
 		 * The DoubleDecker (up,down) cannot reach a final state (REACH_FINAL_ONCE does not hold), but is still
 		 * reachable, if dead ends have been removed.
@@ -88,7 +88,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		private final int mBitcode;
 
 		DownStateProp(final int bitcode) {
-			this.mBitcode = bitcode;
+			mBitcode = bitcode;
 		}
 
 		public int getBitCode() {
@@ -105,7 +105,7 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param serialNumber
@@ -127,37 +127,19 @@ public abstract class StateContainer<LETTER, STATE> {
 	@Override
 	public String toString() {
 		/*
-		StringBuilder sb = new StringBuilder();
-		sb.append(mState.toString());
-		sb.append(System.getProperty("line.separator"));
-		for (OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (IncomingInternalTransition<LETTER, STATE> trans : internalPredecessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (OutgoingCallTransition<LETTER, STATE> trans : callSuccessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (IncomingReturnTransition<LETTER, STATE> trans : returnPredecessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		sb.append(mDownStates.toString());
-		sb.append(System.getProperty("line.separator"));
-		return sb.toString();
-		*/
+		 * StringBuilder sb = new StringBuilder(); sb.append(mState.toString());
+		 * sb.append(System.getProperty("line.separator")); for (OutgoingInternalTransition<LETTER, STATE> trans :
+		 * internalSuccessors()) { sb.append(trans).append("  "); } sb.append(System.getProperty("line.separator")); for
+		 * (IncomingInternalTransition<LETTER, STATE> trans : internalPredecessors()) { sb.append(trans).append("  "); }
+		 * sb.append(System.getProperty("line.separator")); for (OutgoingCallTransition<LETTER, STATE> trans :
+		 * callSuccessors()) { sb.append(trans).append("  "); } sb.append(System.getProperty("line.separator")); for
+		 * (IncomingCallTransition<LETTER, STATE> trans : callPredecessors()) { sb.append(trans).append("  "); }
+		 * sb.append(System.getProperty("line.separator")); for (OutgoingReturnTransition<LETTER, STATE> trans :
+		 * returnSuccessors()) { sb.append(trans).append("  "); } sb.append(System.getProperty("line.separator")); for
+		 * (IncomingReturnTransition<LETTER, STATE> trans : returnPredecessors()) { sb.append(trans).append("  "); }
+		 * sb.append(System.getProperty("line.separator")); sb.append(mDownStates.toString());
+		 * sb.append(System.getProperty("line.separator")); return sb.toString();
+		 */
 		return mState.toString();
 	}
 
@@ -175,6 +157,24 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	protected Map<STATE, Integer> getDownStates() {
 		return mDownStates;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final var other = (StateContainer<?, ?>) obj;
+		return mCanHaveOutgoingReturn == other.mCanHaveOutgoingReturn && Objects.equals(mDownStates, other.mDownStates)
+				&& mReachProp == other.mReachProp && mSerialNumber == other.mSerialNumber
+				&& Objects.equals(mState, other.mState)
+				&& Objects.equals(mUnpropagatedDownStates, other.mUnpropagatedDownStates);
 	}
 
 	@Override
@@ -282,7 +282,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	 * @return Incoming call letters of this state.
 	 */
 	public abstract Set<LETTER> lettersCallIncoming();
-	
+
 	/**
 	 * @return Outgoing return letters of this state for hierarchical predecessor hier.
 	 */
@@ -517,8 +517,8 @@ public abstract class StateContainer<LETTER, STATE> {
 				return fst;
 			}
 			// equality intended here
-			assert fst.getSerialNumber() != snd.getSerialNumber()
-					|| fst == snd : "two state container with similar serial number";
+			assert fst.getSerialNumber() != snd.getSerialNumber() || fst == snd
+					: "two state container with similar serial number";
 			return snd;
 		}
 	}

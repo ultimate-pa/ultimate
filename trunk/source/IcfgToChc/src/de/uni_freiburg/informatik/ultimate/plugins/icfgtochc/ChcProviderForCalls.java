@@ -194,7 +194,7 @@ public class ChcProviderForCalls {
 
 			updateLogicWrtConstraint(constraintFinal);
 
-			if (!assertNoFreeVars(headVars, Collections.emptySet(), constraintFinal)) {
+			if (!checkNoFreeVars(headVars, Collections.emptySet(), constraintFinal)) {
 				throw new UnsupportedOperationException("implement this");
 			}
 
@@ -239,7 +239,7 @@ public class ChcProviderForCalls {
 
 			updateLogicWrtConstraint(constraint);
 
-			if (!assertNoFreeVars(Collections.emptyList(), bodyVars, constraint)) {
+			if (!checkNoFreeVars(Collections.emptyList(), bodyVars, constraint)) {
 				throw new UnsupportedOperationException("implement this");
 			}
 
@@ -483,7 +483,7 @@ public class ChcProviderForCalls {
 				PureSubstitution.apply(mMgdScript, substitutionForOldVarsAssignment, oldVarsAssignment.getFormula()),
 				updateAssertionViolatedVar);
 
-		if (!assertNoFreeVars(headVars, bodyVars, constraint)) {
+		if (!checkNoFreeVars(headVars, bodyVars, constraint)) {
 			throw new UnsupportedOperationException("implement this");
 		}
 
@@ -503,11 +503,9 @@ public class ChcProviderForCalls {
 		// mTermClassifier.checkTerm(term);
 	}
 
-	private boolean assertNoFreeVars(final List<HcHeadVar> headVars, final Set<HcVar> bodyVars, final Term constraint) {
+	private boolean checkNoFreeVars(final List<HcHeadVar> headVars, final Set<HcVar> bodyVars, final Term constraint) {
 		// compute all variables that only occur in the
-		final Set<TermVariable> auxVars = new LinkedHashSet<>();
-		auxVars.addAll(Arrays.asList(constraint.getFreeVars()));
-
+		final Set<TermVariable> auxVars = new LinkedHashSet<>(Arrays.asList(constraint.getFreeVars()));
 		if (headVars != null) {
 			auxVars.removeAll(headVars.stream().map(hv -> hv.getTermVariable()).collect(Collectors.toList()));
 		}
@@ -516,11 +514,7 @@ public class ChcProviderForCalls {
 
 		auxVars.remove(mAssertionViolatedVar);
 
-		if (!auxVars.isEmpty()) {
-			assert false;
-			return false;
-		}
-		return true;
+		return auxVars.isEmpty();
 	}
 
 	/**
@@ -619,8 +613,8 @@ public class ChcProviderForCalls {
 					} else {
 						// "assign" case --> other var for body, substitute that "unprimed" version, primed
 						// version is already in substitution
-						assert substitutionMapping.containsKey(outTv) : "subs should have been added during head "
-								+ "processing";
+						assert substitutionMapping.containsKey(outTv)
+								: "subs should have been added during head " + "processing";
 						firstPredArgs.add(bodyVar.getTermVariable());
 						substitutionMapping.put(inTv, bodyVar.getTermVariable());
 					}
@@ -640,7 +634,7 @@ public class ChcProviderForCalls {
 
 		final Term constraintFinal = constraintAndAssertionViolated;
 
-		assert assertNoFreeVars(headVars, bodyVars, constraintFinal);
+		assert checkNoFreeVars(headVars, bodyVars, constraintFinal);
 
 		updateLogicWrtConstraint(constraintFinal);
 
@@ -750,8 +744,8 @@ public class ChcProviderForCalls {
 					} else {
 						// "assign" case --> other var for body, substitute that "unprimed" version, primed
 						// version is already in substitution
-						assert substitutionMapping.containsKey(outTv) : "subs should have been added during head "
-								+ "processing";
+						assert substitutionMapping.containsKey(outTv)
+								: "subs should have been added during head " + "processing";
 						firstPredArgs.add(bodyVar.getTermVariable());
 						substitutionMapping.put(inTv, bodyVar.getTermVariable());
 					}
@@ -772,7 +766,7 @@ public class ChcProviderForCalls {
 					SmtUtils.or(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable(), constraint);
 		}
 
-		assert assertNoFreeVars(headVars, bodyVars, constraintOrAssertionViolated);
+		assert checkNoFreeVars(headVars, bodyVars, constraintOrAssertionViolated);
 
 		final Term constraintFinal = constraintOrAssertionViolated;
 

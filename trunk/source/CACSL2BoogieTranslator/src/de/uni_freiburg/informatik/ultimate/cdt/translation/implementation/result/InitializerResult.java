@@ -33,15 +33,13 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 
 /**
- * A Result for the C to Boogie translation.
- * Stores the result of translating an initializer.
- * An initializer essentially is a nested structure of ExpressionResults.
+ * A Result for the C to Boogie translation. Stores the result of translating an initializer. An initializer essentially
+ * is a nested structure of ExpressionResults.
  *
  * As a special case an initializer may contain only one ExpressionResult, for example for initializing simple type
  * variables, like ints.
  *
- * This may also represent the translation of a struct initializer or of an initializer for a (multidimensional)
- * array.
+ * This may also represent the translation of a struct initializer or of an initializer for a (multidimensional) array.
  *
  * This implementation tries to follow section 6.7.9 of the C11 standard.
  *
@@ -52,21 +50,20 @@ public class InitializerResult extends Result {
 	/**
 	 * Stores all the code that is needed for evaluating the initializer.
 	 *
-	 * The values we store as RValues.
-	 * So, if a switchToRValue introduced some Boogie code, it is saved in this top-level ExpressionResult.
-	 * EDIT: because conversions work on ExpressionResults, we need to store ExpressionResults in the nodes (those can
-	 *  can always hold RValues, though). We will need some flattening or so to get all Boogie code from all the nodes.
+	 * The values we store as RValues. So, if a switchToRValue introduced some Boogie code, it is saved in this
+	 * top-level ExpressionResult. EDIT: because conversions work on ExpressionResults, we need to store
+	 * ExpressionResults in the nodes (those can can always hold RValues, though). We will need some flattening or so to
+	 * get all Boogie code from all the nodes.
 	 *
 	 * The RValue at the root of the tree is the RValue of this ExpressionResult.
 	 *
-	 * (We can/could also use this class for
-	 *  initializers of non-aggregate type)
+	 * (We can/could also use this class for initializers of non-aggregate type)
 	 */
 	private final ExpressionResult mRootExpressionResult;
 
 	/**
-	 * The RValue in mExpressionResult may have a designator. This field stores it.
-	 * (Can happen only if we are inside a nested initializer.)
+	 * The RValue in mExpressionResult may have a designator. This field stores it. (Can happen only if we are inside a
+	 * nested initializer.)
 	 */
 	private final Designator mRootDesignator;
 
@@ -74,7 +71,8 @@ public class InitializerResult extends Result {
 
 	/**
 	 *
-	 * @param node just for handing through to super class, can be null
+	 * @param node
+	 *            just for handing through to super class, can be null
 	 * @param expressionResult
 	 * @param treeNodeIds
 	 * @param treeNodeIdToRValue
@@ -146,9 +144,10 @@ public class InitializerResult extends Result {
 		throw new AssertionError("found no value in initializer");
 	}
 
-	public static abstract class Designator { }
+	public static sealed abstract class Designator permits ArrayDesignator, StructDesignator {
+	}
 
-	public static class StructDesignator extends Designator {
+	public static final class StructDesignator extends Designator {
 		final String mStructFieldId;
 
 		public StructDesignator(final String structFieldId) {
@@ -165,7 +164,7 @@ public class InitializerResult extends Result {
 		}
 	}
 
-	public static class ArrayDesignator extends Designator {
+	public static final class ArrayDesignator extends Designator {
 		final Integer mArrayCellId;
 
 		public ArrayDesignator(final Integer arrayCellId) {
@@ -182,4 +181,3 @@ public class InitializerResult extends Result {
 		}
 	}
 }
-

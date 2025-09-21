@@ -102,9 +102,8 @@ public class ExpressionResultBuilder {
 	}
 
 	/**
-	 * Transfer {@link Overapprox} from this object to the statements that is added.
-	 * Note that the {@link Overapprox} are intentionally deleted because they
-	 * should be only added to the translation of the overapproximated code and
+	 * Transfer {@link Overapprox} from this object to the statements that is added. Note that the {@link Overapprox}
+	 * are intentionally deleted because they should be only added to the translation of the overapproximated code and
 	 * should not be passed downwards in the AST.
 	 */
 	public ExpressionResultBuilder addStatementAndAnnotateOverapprox(final Statement stm) {

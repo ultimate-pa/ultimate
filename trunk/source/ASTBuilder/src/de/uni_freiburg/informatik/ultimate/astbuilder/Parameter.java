@@ -5,7 +5,7 @@ package de.uni_freiburg.informatik.ultimate.astbuilder;
 /**
  * Represents a parameter.
  */
-public class Parameter {
+public final class Parameter {
     /**
      * The name of this parameter.
      */

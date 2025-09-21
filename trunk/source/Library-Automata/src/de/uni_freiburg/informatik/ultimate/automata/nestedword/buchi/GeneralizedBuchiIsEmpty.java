@@ -3,22 +3,22 @@
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * Copyright (C) 2010-2015 wuxio
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Class that provides the Buchi emptiness check for nested word automata.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Yong Li
  * @version 2010-12-18
@@ -50,14 +50,15 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            Content. Type of the labels (the content) of the automata states.
  */
-public final class GeneralizedBuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public final class GeneralizedBuchiIsEmpty<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> mReach;
 	private final Boolean mResult;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -65,7 +66,8 @@ public final class GeneralizedBuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperat
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public GeneralizedBuchiIsEmpty(final AutomataLibraryServices services, final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+	public GeneralizedBuchiIsEmpty(final AutomataLibraryServices services,
+			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -75,9 +77,9 @@ public final class GeneralizedBuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperat
 		}
 		try {
 			if (mOperand instanceof GeneralizedNestedWordAutomatonReachableStates
-			|| mOperand instanceof GeneralizedNestedWordAutomatonReachableStatesAntichain) {
+					|| mOperand instanceof GeneralizedNestedWordAutomatonReachableStatesAntichain) {
 				mReach = (AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>) mOperand;
-			} else{
+			} else {
 				mReach = new GeneralizedNestedWordAutomatonReachableStates<>(mServices, mOperand);
 			}
 			mResult = mReach.isEmpty();

@@ -25,10 +25,10 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a primitive variable given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
+
+import java.util.List;
+import java.util.Objects;
 
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
@@ -36,10 +36,12 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 
 /**
+ * Primitive types (e.g., int, double, void) (see C11 6.2.5.2-19)
+ *
  * @author Markus Lindenmann
  * @date 13.07.2012
  */
-public class CPrimitive extends CType {
+public final class CPrimitive implements ICType {
 	/**
 	 * @author Markus Lindenmann
 	 * @date 18.09.2012 Describing primitive C types. (updated 10.12.2013 by nutz)
@@ -142,16 +144,25 @@ public class CPrimitive extends CType {
 	 */
 	private final CPrimitives mType;
 
+	private final boolean mIsAtomic;
+
 	/**
 	 * more general type, i.e. inttype, floattype, void -- is derived from type
 	 */
 	private final CPrimitiveCategory mGeneralType;
 
-	public CPrimitive(final CPrimitives type) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, false);
+	private CPrimitive(final CPrimitives type, final boolean isAtomic) {
 		mType = type;
 		mGeneralType = getGeneralType(type);
+		mIsAtomic = isAtomic;
+	}
+
+	public CPrimitive(final CPrimitives type) {
+		this(type, false);
+	}
+
+	public static CPrimitive constructAtomicType(final CPrimitives type) {
+		return new CPrimitive(type, true);
 	}
 
 	/**
@@ -161,13 +172,12 @@ public class CPrimitive extends CType {
 	 *            the C declaration specifier.
 	 */
 	public CPrimitive(final IASTDeclSpecifier cDeclSpec) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, CTranslationUtil.hasAttribute(cDeclSpec, "atomic"));
 		if (!(cDeclSpec instanceof IASTSimpleDeclSpecifier)) {
 			throw new IllegalArgumentException("Unknown C Declaration!");
 		}
 		mType = getType(cDeclSpec);
 		mGeneralType = getGeneralType(mType);
+		mIsAtomic = CTranslationUtil.hasAttribute(cDeclSpec, "atomic");
 	}
 
 	private static CPrimitives getType(final IASTDeclSpecifier cDeclSpec) {
@@ -248,8 +258,7 @@ public class CPrimitive extends CType {
 	}
 
 	private static CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
-		final CPrimitiveCategory generalType;
-		switch (type) {
+		return switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
 		case COMPLEX_LONGDOUBLE:
@@ -257,10 +266,7 @@ public class CPrimitive extends CType {
 		case DOUBLE:
 		case LONGDOUBLE:
 		case FLOAT128:
-			generalType = CPrimitiveCategory.FLOATTYPE;
-			// throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support
-			// floats");
-			break;
+			yield CPrimitiveCategory.FLOATTYPE;
 		case BOOL:
 		case UCHAR:
 		case UINT:
@@ -278,15 +284,10 @@ public class CPrimitive extends CType {
 		case SCHAR:
 		case SHORT:
 			// case WCHAR:
-			generalType = CPrimitiveCategory.INTTYPE;
-			break;
+			yield CPrimitiveCategory.INTTYPE;
 		case VOID:
-			generalType = CPrimitiveCategory.VOID;
-			break;
-		default:
-			throw new AssertionError("case missing");
-		}
-		return generalType;
+			yield CPrimitiveCategory.VOID;
+		};
 	}
 
 	public CPrimitives getType() {
@@ -309,22 +310,49 @@ public class CPrimitive extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + (mGeneralType == null ? 0 : mGeneralType.hashCode());
-		result = prime * result + (mType == null ? 0 : mType.hashCode());
-		return result;
+		return Objects.hash(mGeneralType, mIsAtomic, mType);
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (oType instanceof CPrimitive) {
-			return mType == ((CPrimitive) oType).mType;
-		}
-		return false;
+		final CPrimitive other = (CPrimitive) obj;
+		return mGeneralType == other.mGeneralType && mIsAtomic == other.mIsAtomic && mType == other.mType;
+	}
+
+	@Override
+	public boolean isAtomic() {
+		return mIsAtomic;
+	}
+
+	@Override
+	public boolean isIntegerType() {
+		return mGeneralType == CPrimitiveCategory.INTTYPE;
+	}
+
+	@Override
+	public boolean isRealFloatingType() {
+		return List.of(CPrimitives.FLOAT, CPrimitives.DOUBLE, CPrimitives.LONGDOUBLE).contains(mType);
+	}
+
+	@Override
+	public boolean isComplexType() {
+		return List.of(CPrimitives.COMPLEX_FLOAT, CPrimitives.COMPLEX_DOUBLE, CPrimitives.COMPLEX_LONGDOUBLE)
+				.contains(mType);
+	}
+
+	@Override
+	public boolean isFloatingType() {
+		return mGeneralType == CPrimitiveCategory.FLOATTYPE;
+	}
+
+	@Override
+	public boolean isVoidType() {
+		return mType == CPrimitives.VOID;
 	}
 }

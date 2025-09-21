@@ -68,7 +68,7 @@ public class ChangeCollector {
 	private final ILogger mLogger;
 	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> mParentToCommaPositionMap;
 	private final List<HddChange> mChanges = new ArrayList<>();
-	
+
 	/**
 	 * @param logger
 	 *            Logger.
@@ -80,7 +80,7 @@ public class ChangeCollector {
 		mLogger = logger;
 		mParentToCommaPositionMap = parentToCommaPositionMap;
 	}
-	
+
 	private static int getInsertionPoint(final Token rparenToken, final IPSTRegularNode expecteRightSibling) {
 		if (rparenToken != null) {
 			return rparenToken.endOffset();
@@ -90,7 +90,7 @@ public class ChangeCollector {
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * @param newChange
 	 *            New change.
@@ -101,7 +101,7 @@ public class ChangeCollector {
 		mChanges.add(newChange);
 		return true;
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -112,7 +112,7 @@ public class ChangeCollector {
 		if (tokens.isEmpty()) {
 			return false;
 		}
-		
+
 		// Tokens are not validated, we just want to delete them all.
 		// However, at least ensure that parenthesis are always deleted in
 		// pairs.
@@ -120,10 +120,10 @@ public class ChangeCollector {
 			mLogger.debug("DeleteTokensChange skipped because of unbalanced parenthesis in " + node);
 			return false;
 		}
-		
+
 		return addChange(new DeleteTokensChange(node, tokens));
 	}
-	
+
 	/**
 	 * Add a change to delete one binary expression operand together with the operator. If both operands are deleted the
 	 * binary expression is replaced by the given string (deleting both operands and the operator would not be an
@@ -143,7 +143,7 @@ public class ChangeCollector {
 					+ " with property " + property);
 			return false;
 		}
-		
+
 		// Get the tokens between child nodes and just assume that if there is
 		// exactly one token it is the operator.
 		final IPSTRegularNode binaryExpressionNode = operandNode.getRegularParent();
@@ -153,11 +153,11 @@ public class ChangeCollector {
 					"DeleteBinaryExpressionOperand not supported because of missing operator token: " + operandNode);
 			return addMultiReplaceChange(operandNode, altOperandReplacements);
 		}
-		
+
 		return addChange(new DeleteBinaryExpressionOperandChange(operandNode, binaryExpressionNode, tokens.get(0),
 				RewriteUtils.removeEquivalentReplacements(operandNode, altOperandReplacements)));
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -165,7 +165,7 @@ public class ChangeCollector {
 	public void addDeleteChange(final IPSTNode node) {
 		addChange(new DeleteChange(node));
 	}
-	
+
 	/**
 	 * @param block
 	 *            PST block.
@@ -173,7 +173,7 @@ public class ChangeCollector {
 	public void addDeleteConditionalDirectivesChange(final IPSTConditionalBlock block) {
 		addChange(new DeleteConditionalDirectivesChange(block));
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -194,12 +194,12 @@ public class ChangeCollector {
 			mLogger.debug("DeleteConditionalExpression not supported because of invalid property: " + property);
 			return false;
 		}
-		
+
 		// Do not replace something by itself...
 		if (RewriteUtils.skipEquivalentReplacement(node, replacement)) {
 			return false;
 		}
-		
+
 		final IPSTRegularNode conditionalExpressionNode = node.getRegularParent();
 		final Token[] tokens =
 				TokenUtils.getExpectedTokenArray(conditionalExpressionNode, IToken.tQUESTION, IToken.tCOLON);
@@ -208,16 +208,13 @@ public class ChangeCollector {
 					+ conditionalExpressionNode);
 			return false;
 		}
-		
+
 		return addChange(new DeleteConditionalExpressionChange(node, conditionalExpressionNode, tokens[0], tokens[1],
 				position, replacement));
 	}
-	
+
 	/**
-	 * Replaces
-	 * {@code do body while (condition);}
-	 * by
-	 * {@code body condition;}.
+	 * Replaces {@code do body while (condition);} by {@code body condition;}.
 	 *
 	 * @param node
 	 *            statement node
@@ -228,14 +225,14 @@ public class ChangeCollector {
 				TokenUtils.getExpectedTokenArray(node, IToken.t_do, IToken.t_while, IToken.tLPAREN, IToken.tRPAREN);
 		final Token tokDo = tokens[0];
 		final Token tokWhile = tokens[1];
-		
+
 		if (tokDo == null || tokWhile == null) {
 			return false;
 		}
-		
+
 		final Token tokLparen = tokens[2];
 		final Token tokRparen = tokens[3];
-		
+
 		return addChange(new HddChange(node) {
 			@Override
 			public void apply(final SourceRewriter rewriter) {
@@ -247,18 +244,16 @@ public class ChangeCollector {
 					RewriteUtils.replaceByWhitespace(rewriter, tokRparen);
 				}
 			}
-			
+
 			@Override
 			public String toString() {
 				return "Delete do-while statement tokens from " + getNode();
 			}
 		});
 	}
-	
+
 	/**
-	 * Replaces
-	 * {@code for (declaration; condition; iteration) body}
-	 * by
+	 * Replaces {@code for (declaration; condition; iteration) body} by
 	 * {@code declaration; condition; iteration; body;}.
 	 *
 	 * @param node
@@ -273,22 +268,22 @@ public class ChangeCollector {
 		final Token tokFor = tokens[0];
 		final Token tokLparen = tokens[1];
 		final Token tokRparen = tokens[3];
-		
+
 		// In contrast to if and while, the parenthesis has to be removed,
 		// because otherwise the contained statements are not valid syntax
 		if (tokFor == null || tokLparen == null || tokRparen == null) {
 			return false;
 		}
-		
+
 		// Insert a semicolon after the right parenthesis or before the body
 		// statement
 		final int insertionOffset = getInsertionPoint(tokRparen, node.findRegularChild(forStatement.getBody()));
 		if (insertionOffset == -1) {
 			return false;
 		}
-		
+
 		return addChange(new HddChange(node) {
-			
+
 			@Override
 			public void apply(final SourceRewriter rewriter) {
 				RewriteUtils.replaceByWhitespace(rewriter, tokFor);
@@ -296,20 +291,17 @@ public class ChangeCollector {
 				RewriteUtils.replaceByWhitespace(rewriter, tokRparen);
 				rewriter.insert(insertionOffset, ";");
 			}
-			
+
 			@Override
 			public String toString() {
 				return "Delete for statement tokens from " + getNode();
 			}
-			
+
 		});
 	}
-	
+
 	/**
-	 * Try to convert
-	 * {@code if (expression) statement1 else statement2}
-	 * into
-	 * {@code expression; statement1 statement2}.
+	 * Try to convert {@code if (expression) statement1 else statement2} into {@code expression; statement1 statement2}.
 	 * If tokens are missing because they are part of macro expansions or other preprocessor code, and the if-statement
 	 * cannot be converted as whole an else-token is removed alone.
 	 *
@@ -323,21 +315,21 @@ public class ChangeCollector {
 		final Token[] tokens =
 				TokenUtils.getExpectedTokenArray(node, IToken.t_if, IToken.tLPAREN, IToken.tRPAREN, IToken.t_else);
 		final Token tokElse = tokens[3];
-		
+
 		// If there is an else clause but we don't have the else-token, we
 		// cannot delete the if-token
 		if (ifStatement.getElseClause() != null && tokElse == null) {
 			return false;
 		}
-		
+
 		final Token tokIf = tokens[0];
 		final Token tokRparen = tokens[2];
-		
+
 		// Find an insertion point for the semicolon so the condition
 		// expression can be converted into a statement. It can be inserted
 		// after the right parenthesis or before the then-clause.
 		final int insertionOffset = getInsertionPoint(tokRparen, node.findRegularChild(ifStatement.getThenClause()));
-		
+
 		// If the if-token is missing or no insertion point for the semicolon
 		// has been found, try to delete the else-token instead
 		if (tokIf == null || insertionOffset == -1) {
@@ -347,7 +339,7 @@ public class ChangeCollector {
 					public void apply(final SourceRewriter rewriter) {
 						RewriteUtils.replaceByWhitespace(rewriter, tokElse);
 					}
-					
+
 					@Override
 					public String toString() {
 						return "Delete else token from " + getNode();
@@ -356,9 +348,9 @@ public class ChangeCollector {
 			}
 			return false;
 		}
-		
+
 		final Token tokLparen = tokens[1];
-		
+
 		return addChange(new HddChange(node) {
 			@Override
 			public void apply(final SourceRewriter rewriter) {
@@ -373,14 +365,14 @@ public class ChangeCollector {
 				}
 				rewriter.insert(insertionOffset, ";");
 			}
-			
+
 			@Override
 			public String toString() {
 				return "Delete if statement tokens from " + getNode();
 			}
 		});
 	}
-	
+
 	/**
 	 * @param typeIdNode
 	 *            PST node.
@@ -391,32 +383,29 @@ public class ChangeCollector {
 				TokenUtils.getExpectedTokenArray(typeIdNode.getRegularParent(), IToken.tLPAREN, IToken.tRPAREN);
 		final Token tokLparen = tokens[0];
 		final Token tokRparen = tokens[1];
-		
+
 		if (tokLparen == null || tokRparen == null) {
 			return false;
 		}
-		
+
 		return addChange(new HddChange(typeIdNode) {
-			
+
 			@Override
 			public void apply(final SourceRewriter rewriter) {
 				RewriteUtils.replaceByWhitespace(rewriter, tokLparen);
 				RewriteUtils.replaceByWhitespace(rewriter, tokRparen);
 				RewriteUtils.replaceByWhitespace(rewriter, getNode());
 			}
-			
+
 			@Override
 			public String toString() {
 				return "Delete typeid from cast expression " + getNode();
 			}
 		});
 	}
-	
+
 	/**
-	 * Replaces
-	 * {@code while (condition) body}
-	 * by
-	 * {@code condition; body}.
+	 * Replaces {@code while (condition) body} by {@code condition; body}.
 	 *
 	 * @param node
 	 *            statement node
@@ -428,22 +417,22 @@ public class ChangeCollector {
 			final IASTWhileStatement whileStatement) {
 		final Token[] tokens = TokenUtils.getExpectedTokenArray(node, IToken.t_while, IToken.tLPAREN, IToken.tRPAREN);
 		final Token tokWhile = tokens[0];
-		
+
 		if (tokWhile == null) {
 			return false;
 		}
-		
+
 		final Token tokRparen = tokens[2];
-		
+
 		// Insert a semicolon after the right parenthesis or before the body
 		// statement
 		final int insertionOffset = getInsertionPoint(tokRparen, node.findRegularChild(whileStatement.getBody()));
 		if (insertionOffset == -1) {
 			return false;
 		}
-		
+
 		final Token tokLparen = tokens[1];
-		
+
 		return addChange(new HddChange(node) {
 			@Override
 			public void apply(final SourceRewriter rewriter) {
@@ -455,14 +444,14 @@ public class ChangeCollector {
 				}
 				rewriter.insert(insertionOffset, ";");
 			}
-			
+
 			@Override
 			public String toString() {
 				return "Delete while statement tokens from " + getNode();
 			}
 		});
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -489,14 +478,14 @@ public class ChangeCollector {
 			mLogger.debug("DeleteWithCommaChange not supported because of missing comma: " + node);
 			return false;
 		}
-		
+
 		return addChange(new DeleteWithCommaChange(node, parent, commaPositions, keepOne));
 	}
-	
+
 	/**
 	 * Add a change to delete the varargs placeholder token "..." like a regular parameter declaration including the
 	 * leading comma.
-	 * 
+	 *
 	 * @param parent
 	 *            PST node of the standard function declarator ast node.
 	 * @param astNode
@@ -506,7 +495,7 @@ public class ChangeCollector {
 	 * @return {@code true} iff a change was added
 	 */
 	public boolean addDeleteVarArgsChange(final IPSTRegularNode parent, final IASTStandardFunctionDeclarator astNode,
-			boolean keepOne) {
+			final boolean keepOne) {
 		if (!astNode.takesVarArgs()) {
 			return false;
 		}
@@ -517,9 +506,9 @@ public class ChangeCollector {
 			return false;
 		}
 
-		final List<CommaSeparatedChild> commaPositions = mParentToCommaPositionMap.computeIfAbsent(parent,
-				n -> CommaSeparatedChildFinder.runWithVarArgsSupport(n,
-						IASTStandardFunctionDeclarator.FUNCTION_PARAMETER));
+		final List<CommaSeparatedChild> commaPositions =
+				mParentToCommaPositionMap.computeIfAbsent(parent, n -> CommaSeparatedChildFinder
+						.runWithVarArgsSupport(n, IASTStandardFunctionDeclarator.FUNCTION_PARAMETER));
 		if (keepOne && commaPositions.size() <= 1) {
 			return false;
 		}
@@ -531,7 +520,6 @@ public class ChangeCollector {
 
 		return addChange(new DeleteWithCommaChange(parent, commaPositions, keepOne, token));
 	}
-	
 
 	/**
 	 * Delete an element with comma or replace it alternatively.
@@ -582,23 +570,22 @@ public class ChangeCollector {
 		});
 	}
 
-
 	/**
 	 * Split initialization expression from a declaration by replacing the equals character by a semicolon. This may
 	 * allow a deletion of the declaration statement in following HDD applications, while keeping the expression
 	 * side-effects.
-	 * 
+	 *
 	 * Currently only done for declaration statements with a single declarator and where the initializer is an
 	 * expression (and not an initializer list).
-	 * 
+	 *
 	 * @param node
 	 *            The equals initializer node.
 	 * @param astNode
-	 *           The AST node, cast done by caller.
+	 *            The AST node, cast done by caller.
 	 * @return {@code true} iff a change has been added
 	 */
 	public boolean addChangeToSplitInitializerExpressionFromDeclaration(final IPSTNode node,
-			IASTEqualsInitializer astNode) {
+			final IASTEqualsInitializer astNode) {
 		// Is the initializer clause an expression?
 		final IASTInitializerClause clause = astNode.getInitializerClause();
 		if (!(clause instanceof IASTExpression)) {
@@ -627,7 +614,7 @@ public class ChangeCollector {
 		}
 		return addChange(new HddChange(node) {
 			@Override
-			public void apply(SourceRewriter rewriter) {
+			public void apply(final SourceRewriter rewriter) {
 				rewriter.replace(tokens[0], ";");
 			}
 
@@ -636,8 +623,7 @@ public class ChangeCollector {
 				return "Split initializer expression from declaration statement " + getNode();
 			}
 		});
-	}	
-	
+	}
 
 	/**
 	 * Deletes an array subscript expression{@literal <array>[<subscript>]}. Can try alternative replacements if
@@ -679,7 +665,6 @@ public class ChangeCollector {
 		});
 	}
 
-
 	/**
 	 * @param node
 	 *            PST node.
@@ -691,7 +676,7 @@ public class ChangeCollector {
 			addChange(new ReplaceChange(node, replacementString));
 		}
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node to be replacement.
@@ -706,7 +691,7 @@ public class ChangeCollector {
 		}
 		return false;
 	}
-	
+
 	public List<HddChange> getChanges() {
 		return mChanges;
 	}

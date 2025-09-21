@@ -47,12 +47,11 @@ public class IntervalDomainPreferences {
 	public static final String VALUE_WIDENING_OPERATOR_SIMPLE = IntervalSimpleWideningOperator.class.getSimpleName();
 	public static final String VALUE_WIDENING_OPERATOR_LITERALS = IntervalLiteralWideningOperator.class.getSimpleName();
 	public static final String[] VALUES_WIDENING_OPERATOR =
-			new String[] { VALUE_WIDENING_OPERATOR_SIMPLE, VALUE_WIDENING_OPERATOR_LITERALS };
+			{ VALUE_WIDENING_OPERATOR_SIMPLE, VALUE_WIDENING_OPERATOR_LITERALS };
 
 	public static final String VALUE_EVALUATOR_DEFAULT = "Interval Default Evaluator";
 	public static final String VALUE_EVALUATOR_OPTIMIZATION = "Interval Optimizer Evaluator";
-	public static final String[] VALUES_EVALUATOR_TYPE =
-			new String[] { VALUE_EVALUATOR_DEFAULT, VALUE_EVALUATOR_OPTIMIZATION };
+	public static final String[] VALUES_EVALUATOR_TYPE = { VALUE_EVALUATOR_DEFAULT, VALUE_EVALUATOR_OPTIMIZATION };
 
 	public static final String LABEL_INTERVAL_WIDENING_OPERATOR = "Interval Widening operator";
 

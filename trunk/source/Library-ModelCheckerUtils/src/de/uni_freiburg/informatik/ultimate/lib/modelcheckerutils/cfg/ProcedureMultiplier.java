@@ -347,7 +347,8 @@ public class ProcedureMultiplier {
 		final boolean isProcEntry = mIcfg.getProcedureEntryNodes().get(originalProc).equals(originalLocation);
 		final boolean isProcExit = mIcfg.getProcedureExitNodes().get(originalProc).equals(originalLocation);
 		final boolean isLoopLocation = mIcfg.getLoopLocations().contains(originalLocation);
-		mIcfg.addLocation(newLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+		final boolean isLocationOfInterest = mIcfg.getLocationsOfInterest().contains(originalLocation);
+		mIcfg.addLocation(newLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation, isLocationOfInterest);
 
 		return newLoc;
 	}
@@ -385,9 +386,9 @@ public class ProcedureMultiplier {
 	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,
 			final Map<Term, Term> defaultVariableMapping) {
 		final UnaryOperator<Term> subst = (x -> Substitution.apply(mMgdScript, defaultVariableMapping, x));
-		final Term[] terms = Arrays.stream(oldProcedureArguments.getTerms()).map(subst).toArray(Term[]::new);
-		final Collection<TermVariable> auxiliaryVars = oldProcedureArguments.getAuxiliaryVars();
-		final Map<String, ILocation> overapproximations = oldProcedureArguments.getOverappoximations();
+		final Term[] terms = Arrays.stream(oldProcedureArguments.terms()).map(subst).toArray(Term[]::new);
+		final Collection<TermVariable> auxiliaryVars = oldProcedureArguments.auxiliaryVars();
+		final Map<String, ILocation> overapproximations = oldProcedureArguments.overapproximations();
 		final MultiTermResult copy = new MultiTermResult(overapproximations, auxiliaryVars, terms);
 		return copy;
 	}

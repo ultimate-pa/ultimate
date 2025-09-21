@@ -51,6 +51,9 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/generated/**/*.bpl
 trunk/examples/concurrent/bpl/weaver-benchmarks/generated/**/*.yml
 trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 trunk/examples/concurrent/bpl/parameterized/*/CHC*.smt2
+trunk/examples/witness-generation-validation/regression/*.graphml
+trunk/examples/witness-generation-validation/regression/*.yaml
+trunk/examples/witness-generation-validation/regression/*.yml
 **/.metadata/*
 **/.settings/*
 **/target/*
@@ -63,6 +66,7 @@ trunk/examples/concurrent/bpl/parameterized/*/CHC*.smt2
 /trunk/source/.sonarlint/*
 /trunk/source/*.log
 
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLProblemNode.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLResultExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLTransformer.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLType.java
@@ -93,6 +97,7 @@ trunk/examples/concurrent/bpl/parameterized/*/CHC*.smt2
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Completeness.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Contract.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ContractStatement.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Declaration.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Decreases.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Ensures.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Expression.java
@@ -314,13 +319,19 @@ trunk/examples/concurrent/bpl/parameterized/*/CHC*.smt2
 /trunk/runtime-Debug-E4.product
 /trunk/runtime-WebBackend.product
 
+# Local copies of these files for custom configuration, not checked in.
+# Corresponding checked-in files have '.dist' suffix.
+/trunk/source/WebBackend/web.config.properties
+/trunk/source/WebBackend/settings_whitelist.json
+/trunk/source/WebsiteStatic/js/webinterface/config.js
+
 trunk/source/WebsiteStatic/_site
 trunk/source/WebsiteStatic/.jekyll-cache
 trunk/source/WebsiteStatic/bootstrap_dev/node_modules/
 trunk/source/WebsiteStatic/bootstrap_dev/*.css
 trunk/source/WebsiteStatic/bootstrap_dev/*.css.map
-trunk/source/WebsiteStatic/js/webinterface/config.js
 trunk/source/WebsiteStatic/webinterface/code_examples/
 trunk/source/WebsiteStatic/webinterface/workers/*.json
 !trunk/source/WebsiteStatic/webinterface/workers/*.override.json
+
 releaseScripts/default/sv-benchmarks

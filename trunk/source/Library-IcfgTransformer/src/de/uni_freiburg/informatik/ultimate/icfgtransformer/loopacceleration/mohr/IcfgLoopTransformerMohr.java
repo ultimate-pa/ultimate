@@ -131,8 +131,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				for (final Pair<List<UnmodifiableTransFormula>, INLOC> exitPath : loop.getLoopExits()) {
 					final UnmodifiableTransFormula exitUtf =
 							TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false,
-									false, SimplificationTechnique.SIMPLIFY_DDA,
-									exitPath.getFirst());
+									false, SimplificationTechnique.SIMPLIFY_DDA, exitPath.getFirst());
 					mLogger.info("Found exit path: " + exitUtf);
 					loopExits.get(loop.getHead()).add(new Pair<>(exitUtf, exitPath.getSecond()));
 				}
@@ -161,8 +160,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				if (loopHeads.contains(node)) {
 					final UnmodifiableTransFormula loopSummary = loopSummaries.get(node);
 					final UnmodifiableTransFormula utf = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-							mManagedScript, false, false, false,
-							SimplificationTechnique.SIMPLIFY_DDA,
+							mManagedScript, false, false, false, SimplificationTechnique.SIMPLIFY_DDA,
 							Arrays.asList(loopSummary, edge.getTransformula()));
 					mLogger.info("Loop Summary Transformula: " + utf);
 					final IcfgEdge e =
@@ -171,8 +169,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 					for (final Pair<UnmodifiableTransFormula, INLOC> exit : loopExits.get(node)) {
 						final OUTLOC exitTarget = mTib.createNewLocation(exit.getSecond());
 						final UnmodifiableTransFormula exitSummary = TransFormulaUtils.sequentialComposition(mLogger,
-								mServices, mManagedScript, false, false, false,
-								SimplificationTechnique.SIMPLIFY_DDA,
+								mServices, mManagedScript, false, false, false, SimplificationTechnique.SIMPLIFY_DDA,
 								Arrays.asList(loopSummary, exit.getFirst()));
 						final IcfgEdge o = mTib.createNewInternalTransition(newSource, exitTarget, exitSummary,
 								mOverApproximation.get(node));
@@ -182,7 +179,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				} else {
 					if (edge instanceof IIcfgReturnTransition<?, ?>) {
 						mLogger.info("Return: " + newSource + " - " + edge + " -> " + newTarget);
-						rtrTransitions.add(new Triple<OUTLOC, OUTLOC, IcfgEdge>(newSource, newTarget, edge));
+						rtrTransitions.add(new Triple<>(newSource, newTarget, edge));
 					} else {
 						if (edge instanceof IIcfgCallTransition<?>) {
 							mLogger.info("Call: " + newSource + " - " + edge + " -> " + newTarget);
@@ -264,8 +261,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				} else if (newValue.getValue() instanceof ApplicationTerm
 						&& ("+".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName())
 								|| "-".equals(((ApplicationTerm) newValue.getValue()).getFunction().getName()))) {
-					final Set<TermVariable> freeVars =
-							new HashSet<>(Arrays.asList(newValue.getValue().getFreeVars()));
+					final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(newValue.getValue().getFreeVars()));
 					if (freeVars.contains(newValue.getKey().getTermVariable())) {
 						symbolicMemory.updateInc(newValue.getKey(), newValue.getValue(), mSymbolTable);
 					} else {
@@ -296,7 +292,8 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
 		final Set<TermVariable> aux = symbolicMemory.getKappas();
 		aux.addAll(symbolicMemory.getTaus());
-		final Term quantFreeFormula = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, SimplificationTechnique.SIMPLIFY_DDA, loopSummary);
+		final Term quantFreeFormula = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript,
+				SimplificationTechnique.SIMPLIFY_DDA, loopSummary);
 		tfb.setFormula(quantFreeFormula);
 		tfb.addAuxVarsButRenameToFreshCopies(aux, mManagedScript);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);

@@ -32,61 +32,60 @@ public class ClosureBenchmark {
 		cb.printShortStatistics(8);
 		cb.printResults();
 	}
-	
+
 	////////////////////////////////////////////////////////////////
 
 	/** Candidate to attend the benchmark. */
 	private static class Candidate {
-		
+
 		/** Human-readable name of the closure variant. */
 		String name;
 
 		/** Function which calculates the shortest path closure (in-place). */
 		Consumer<OctMatrix> closureAlgorithm;
-		
+
 		/** Measured time in ns from last scenario. */
 		long measuredNanoSeconds;
 	}
-	
+
 	private static class MatrixStatistic {
-		
+
 		/** Number of variables in this matrix. */
 		int variables;
-		
+
 		/** Infinity values / total number of values in block lower matrix. */
 		double infinityPercentageInBlockLowerHalf;
-		
+
 		boolean isBottom;
 		boolean isBottomInt;
 	}
-	
+
 	////////////////////////////////////////////////////////////////
-	
-	
+
 	private final Path mBenchmarkDirectory;
 	private final List<Candidate> mCandidates;
 	private final List<MatrixStatistic> mMatrixStatistics;
 	private static final long PROGRESS_INFO_INTERVAL_IN_NANO_SECONDS = 30_000_000_000L; // 30 seconds
-	
+
 	public ClosureBenchmark(final String benchmarkDirectory) {
 		mBenchmarkDirectory = Paths.get(benchmarkDirectory);
 		mCandidates = new ArrayList<>();
 		mMatrixStatistics = new ArrayList<>();
 	}
-	
+
 	public void addCandidate(final String name, final Consumer<OctMatrix> closureAlgorithm) {
 		final Candidate c = new Candidate();
 		c.name = name;
 		c.closureAlgorithm = closureAlgorithm;
 		mCandidates.add(c);
 	}
-	
+
 	public void run(final int cyclesPerFile) {
 
 		logInfo("Resetting ...");
 		mCandidates.forEach(c -> c.measuredNanoSeconds = 0);
 		mMatrixStatistics.clear();
-		
+
 		logInfo("Searching files in \'" + mBenchmarkDirectory + "\' ...");
 		final List<Path> files = filesInBenchmark();
 		logInfo("Found " + files.size() + " files.");
@@ -97,7 +96,7 @@ public class ClosureBenchmark {
 		tStart = tLastProgressInfo = System.nanoTime();
 		int filesRun = 0;
 		for (final Path file : files) {
-			
+
 			final String fileContent = readFile(file);
 			OctMatrix mOrig = null;
 			try {
@@ -137,7 +136,7 @@ public class ClosureBenchmark {
 		final double timeInSeconds = (System.nanoTime() - tStart) * 1e-9;
 		logInfo(String.format("Finished benchmark after %.2f seconds.", timeInSeconds));
 	}
-	
+
 	private void addStatistic(final OctMatrix m) {
 		final MatrixStatistic ms = new MatrixStatistic();
 		ms.variables = m.variables();
@@ -148,25 +147,22 @@ public class ClosureBenchmark {
 	}
 
 	private List<Path> filesInBenchmark() {
-		try {
+		try (var filesStream = Files.walk(mBenchmarkDirectory)) {
 			// does not follow symbolic links
-			return Files.walk(mBenchmarkDirectory)
-				.filter(Files::isRegularFile)
-				.filter(path -> {
-					if (Files.isReadable(path)) {
-						return true;
-					}
-					logWarning("Ignore unreadable file: " + path);
-					return false;
-				})
-				.collect(Collectors.toList());
+			return filesStream.filter(Files::isRegularFile).filter(path -> {
+				if (Files.isReadable(path)) {
+					return true;
+				}
+				logWarning("Ignore unreadable file: " + path);
+				return false;
+			}).collect(Collectors.toList());
 		} catch (final IOException e) {
 			logWarning("Error while reading benchmark directory: " + mBenchmarkDirectory);
 			logWarning(e.toString());
-			return null;
+			return List.of();
 		}
 	}
-	
+
 	private String readFile(final Path file) {
 		BufferedReader br;
 		final StringBuilder sb = new StringBuilder();
@@ -196,7 +192,6 @@ public class ClosureBenchmark {
 		}
 		return copies;
 	}
-	
 
 	public void printResults() {
 		System.out.println();
@@ -206,27 +201,22 @@ public class ClosureBenchmark {
 
 		List<Candidate> sortedResults = mCandidates;
 		sortedResults = new ArrayList<>(mCandidates);
-		Collections.sort(sortedResults, new Comparator<Candidate>() {
-			@Override
-			public int compare(final Candidate ca, final Candidate cb) {
-				return Long.compare(ca.measuredNanoSeconds, cb.measuredNanoSeconds);
-			}
-		});
+		Collections.sort(sortedResults, Comparator.comparing(ca -> ca.measuredNanoSeconds));
 		final int nameWidth = longestCandidateName();
 		final String format = "%" + nameWidth + "s %8.2f seconds%n";
 		sortedResults.forEach(c -> System.out.format(format, c.name, c.measuredNanoSeconds * 1e-9));
 	}
-	
+
 	public void printFullStatistics() {
 		System.out.println();
 		System.out.println("Full Statistics");
 		System.out.println("---------------");
 		System.out.println();
-		
+
 		System.out.println("#variables\t" + "infPercentage\t" + "isBottom\t" + "isBottomInt");
 		for (final MatrixStatistic ms : mMatrixStatistics) {
-			System.out.format("%d\t%f\t%b\t%b%n",
-					ms.variables, ms.infinityPercentageInBlockLowerHalf, ms.isBottom, ms.isBottomInt);
+			System.out.format("%d\t%f\t%b\t%b%n", ms.variables, ms.infinityPercentageInBlockLowerHalf, ms.isBottom,
+					ms.isBottomInt);
 		}
 		System.out.println();
 	}
@@ -243,7 +233,7 @@ public class ClosureBenchmark {
 		System.out.format("bottom matrices          %8d%n", bottoms);
 		System.out.format("integer bottom matrices  %8d%n", bottomInts);
 		System.out.println();
-		
+
 		System.out.println("Histogram: infinity percentage in block lower matrices (" + bins + " bins)");
 		System.out.println(">=percentage #matrices");
 		final int[] histInfPercentage = histInfPercentagePerMatrix(bins);
@@ -251,7 +241,7 @@ public class ClosureBenchmark {
 			System.out.format("%12.2f %9d%n", (bin * 100.0 / bins), histInfPercentage[bin]);
 		}
 		System.out.println();
-		
+
 		System.out.println("Histogram: variables per matrix");
 		System.out.println("variables #matrices ");
 		final int[] histVars = histVariablesPerMatrix();
@@ -281,17 +271,18 @@ public class ClosureBenchmark {
 		if (mMatrixStatistics.isEmpty()) {
 			return new int[0];
 		}
-		final double[] infPercentages = mMatrixStatistics.stream()
-				.mapToDouble(ms -> ms.infinityPercentageInBlockLowerHalf).toArray();
+		final double[] infPercentages =
+				mMatrixStatistics.stream().mapToDouble(ms -> ms.infinityPercentageInBlockLowerHalf).toArray();
 		Arrays.sort(infPercentages);
-		final int[] mapInfPercentageToAbsFreq = new int[bins + 1]; // last bin contains only matrices with 100% inf percentage
+		final int[] mapInfPercentageToAbsFreq = new int[bins + 1]; // last bin contains only matrices with 100% inf
+																	// percentage
 		for (final double ip : infPercentages) {
 			final int bin = (int) (ip * bins);
 			++mapInfPercentageToAbsFreq[bin];
 		}
 		return mapInfPercentageToAbsFreq;
 	}
-	
+
 	private int longestCandidateName() {
 		int max = 0;
 		for (final Candidate c : mCandidates) {
@@ -299,7 +290,7 @@ public class ClosureBenchmark {
 		}
 		return max;
 	}
-	
+
 	private static void logInfo(final String msg) {
 		System.out.println(msg);
 	}

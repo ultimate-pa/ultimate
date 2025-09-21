@@ -64,8 +64,8 @@ class IndependenceProviderWithAbstraction<L extends IIcfgTransition<?>, H>
 	@Override
 	public void refine(final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinement) {
 		final H newLevel = mRefinableAbstraction.refine(mAbstractionLevel, refinement);
-		assert mRefinableAbstraction.getHierarchy().compare(newLevel, mAbstractionLevel)
-				.isLessOrEqual() : "Refinement must yield a lower abstraction level";
+		assert mRefinableAbstraction.getHierarchy().compare(newLevel, mAbstractionLevel).isLessOrEqual()
+				: "Refinement must yield a lower abstraction level";
 		mAbstractionLevel = newLevel;
 	}
 

@@ -31,11 +31,12 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Returns an Iterator that is the sequential composition of a list of
- * Iterators.
+ * Returns an Iterator that is the sequential composition of a list of Iterators.
+ *
  * @author heizmann@informatik.uni-freiburg.de
  *
- * @param <E> Type of elements over which we iterate.
+ * @param <E>
+ *            Type of elements over which we iterate.
  *
  */
 public class IteratorConcatenation<E> implements Iterator<E> {
@@ -44,7 +45,6 @@ public class IteratorConcatenation<E> implements Iterator<E> {
 	private E mNext;
 
 	public IteratorConcatenation(final List<Iterator<E>> iterators) {
-		super();
 		mIterators = iterators;
 		mCurrent = 0;
 		if (mIterators.isEmpty()) {
@@ -54,12 +54,10 @@ public class IteratorConcatenation<E> implements Iterator<E> {
 		}
 	}
 
-
 	@SafeVarargs
 	public IteratorConcatenation(final Iterator<E>... iterators) {
 		this(Arrays.asList(iterators));
 	}
-
 
 	private E getNext() {
 		Iterator<E> currentIterator = mIterators.get(mCurrent);
@@ -74,12 +72,10 @@ public class IteratorConcatenation<E> implements Iterator<E> {
 		}
 	}
 
-
 	@Override
 	public boolean hasNext() {
 		return mNext != null;
 	}
-
 
 	@Override
 	public E next() {
@@ -88,12 +84,9 @@ public class IteratorConcatenation<E> implements Iterator<E> {
 		return result;
 	}
 
-
 	@Override
 	public void remove() {
-		throw new UnsupportedOperationException(
-				"IteratorConcatenation is not modifiable");
+		throw new UnsupportedOperationException("IteratorConcatenation is not modifiable");
 	}
-
 
 }

@@ -43,13 +43,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.LoggingScriptForMainTrackBenchmarks;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl.SortConstructor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
-
 
 /**
  *
@@ -62,20 +62,23 @@ public class QuantifierEliminationRegressionTest {
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
+	private static final boolean WRITE_SMT_BENCHMARK = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
-//	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
-//	private static final String SOLVER_COMMAND = "smtinterpol -q";
+	// private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt --tlimit-per=1000";
+	// private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt --tlimit-per=1000";
+	// private static final String SOLVER_COMMAND = "smtinterpol -q";
+	// private static final String SOLVER_COMMAND = "INTERNAL_SMTINTERPOL:10000";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
 	private static QuantifierEliminationTestCsvWriter mCsvWriter;
-
+	private static int CTR = 0;
 
 	@BeforeClass
 	public static void beforeAllTests() {
@@ -99,13 +102,14 @@ public class QuantifierEliminationRegressionTest {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
-		if (WRITE_SMT_SCRIPTS_TO_FILE) {
-			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
-		} else {
-			mScript = solverInstance;
+		Script script = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
+		if (WRITE_SMT_BENCHMARK) {
+			script = new LoggingScriptForMainTrackBenchmarks(script, "QuantifierEliminationTest" + CTR++, ".");
 		}
-		mScript = new StatisticsScript(mScript);
+		if (WRITE_SMT_SCRIPTS_TO_FILE) {
+			script = new LoggingScript(script, "QuantifierEliminationTest" + CTR++ + ".smt2", true);
+		}
+		mScript = new StatisticsScript(script);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
@@ -121,7 +125,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void otherArrayBug() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			new FunDecl(SmtSortUtils::getIntSort, "i"),
 		};
@@ -132,7 +136,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest07ExistsPositive() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p")
 			};
 		final String formulaAsString = "(exists ((x Bool)) (and (p x) x))";
@@ -142,7 +146,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest08ExistsNegative() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p")
 		};
 		final String formulaAsString = "(exists ((x Bool)) (and (p x) (not x)))";
@@ -152,7 +156,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest09ForallPositive() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p")
 		};
 		final String formulaAsString = "(forall ((x Bool)) (or (p x) x))";
@@ -162,7 +166,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest1() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 		};
 		final String formulaAsString = "(exists ((A Int) (B Bool) (C Bool) (D Bool) (E Bool) (F Bool) (G Bool)) (and (<= 0 A) (or (and (not B) (not C)) (and C B)) (or (and (not D) (not E)) (and E D)) (or (and F G) (and (not G) (not F)))))";
 		final String expextedResultAsString = "true";
@@ -171,7 +175,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest10ForallNegative() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p")
 		};
 		final String formulaAsString = "(forall ((x Bool)) (or (p x) (not x)))";
@@ -181,7 +185,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest11Multinegation() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p")
 			};
 		final String formulaAsString = "(exists ((x Bool)) (and (p x) (not (not (not (not x))))))";
@@ -200,7 +204,7 @@ public class QuantifierEliminationRegressionTest {
 		 *   so they might make interesting benchmarks
 		 *
 		 */
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "clock"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "clock"), };
 		final String formulaAsString = "(exists"
 				+ "  ((A Bool) (B Bool) (C Bool) (D Bool) (E Bool) (F Int) (G Bool) (H Bool) (I Bool) (J Bool) "
 				+ "(K Bool) (L Bool) (M Bool) (N Bool))" + "  (and "
@@ -218,7 +222,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest2() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getRealSort, "T1", "T2"),
 		};
 		final String formulaAsString = "(exists ((A Int) (B Int) (C Bool) (D Int) (E Int) (F Bool) (G Bool) (H Int)) (or (<= 50.0 T2) (and (not F) (or (and (< T1 50.0) (or (and (not (< B 5)) (not (= H E))) (and (not (= H E)) (or (not F) (not G) (not (= A E)) (not C))))) (and (= H E) (or (not F) (= H E) (not (< B 5)) (not G) (not (= A E)) (not C))) (and (< T1 50.0) (= A E) (< B 5) C (not (= H E)) F G)) (not (= E D))) (< T2 50.0)))";
@@ -228,7 +232,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest4() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getRealSort, "T1"),
 		};
 		final String formulaAsString = "(exists ((A Bool) (B Bool) (C Bool) (D Bool) (E Bool) (F Bool) (G Bool) (H Bool) (I Bool) (J Bool) (K Bool) (L Bool) (M Bool) (N Bool) (O Bool) (P Bool) (Q Bool) (R Bool) (S Bool) (T Bool) (U Bool) (V Bool) (W Bool) (X Bool) (Y Bool) (Z Bool) (AA Bool) (AB Int) (AC Int) (AD Bool) (AE Bool) (AF Bool) (AG Bool)) (or (< T1 50.0) (and (not E) (or (and (not S) (not AE) W) (and (not S) B (not AE)) (and (not S) (not AE) AF) (and (not S) (not AE) J) (and (not S) (not AE) Z) (and (not S) (not AE) F) (and (not S) (not AE) C) (and (not S) (not AE) AG) (and (< T1 50.0) (or (and (not U) (or (and (not J) (or (and (or (and (not O) (or (and (or (and (or (and (not AF) (or (and (not B) (or (and (or (and (not C) (or (and (not Y) (or (and (not F) (or (and (or (and (or (and (not S) (not AA)) (and (not S) AE)) (not G)) (and (not S) AE)) (not Z)) (and (not S) AE))) (and (not S) AE))) (and (not S) AE))) (and (not S) AE)) (not W)) (and (not S) AE))) (and (not S) AE))) (and (not S) AE)) (not M)) (and (not S) AE)) (not AG)) (and (not S) AE))) (and (not S) AE)) (not AD)) (and (not S) AE))) (and (not S) AE))) (and (not S) AE))) (and (not S) (not AE) AA) (and (not S) (not AE) M) (and (not S) (not AE) U) (and (or (and (not U) (or (and (or (and (not AD) (or (and (not O) (or (and (not AG) (or AE (and (not M) (or (and (not AF) (or (and (not B) (or (and (not W) (or (and (or (and (or (and (not F) (or (and (or (and (or (not AA) AE) (not G)) AE) (not Z)) AE)) AE) (not Y)) AE) (not C)) AE)) AE)) AE)) AE)))) AE)) AE)) AE) (not J)) AE)) AE) (<= 50.0 T1)) (and (not S) (not AE) G) (and (not S) (not AE) AD) (and (not S) (not AE) O) (and (not S) (not AE) Y)) (or (and Q R A T V D X H I K L AE N P) (not (= AC AB))) (not (= AC AB)) (or (not R) (not P) (not AE) (not T) (not D) (not X) (not Q) (not I) (not V) (not L) (not H) (not A) (not K) (not N))) (<= 50.0 T1)))";
@@ -238,7 +242,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void plrTest5() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getRealSort, "T1"),
 		};
 		final String formulaAsString = "(exists ((A Int) (B Int) (C Bool) (D Bool) (E Bool) (F Bool) (G Bool) (H Bool) (I Bool) (J Bool) (K Bool) (L Bool) (M Bool) (N Int) (O Bool) (P Bool) (Q Bool) (R Bool) (S Bool) (T Bool) (U Bool) (V Bool) (W Bool) (X Bool) (Y Bool) (Z Int) (AA Int) (AB Bool) (AC Real) (AD Bool) (AE Int) (AF Bool) (AG Bool) (AH Bool) (AI Real) (AJ Bool) (AK Int) (AL Bool) (AM Bool) (AN Bool) (AO Bool) (AP Bool) (AQ Bool) (AR Bool) (AS Bool) (AT Bool) (AU Bool) (AV Int) (AW Bool) (AX Int) (AY Bool) (AZ Bool) (BA Bool) (BB Bool) (BC Bool) (BD Bool) (BE Int) (BF Bool) (BG Bool) (BH Bool) (BI Bool) (BJ Bool) (BK Bool) (BL Int) (BM Bool) (BN Int) (BO Bool) (BP Bool) (BQ Bool) (BR Bool) (BS Int) (BT Bool) (BU Bool) (BV Bool) (BW Bool) (BX Bool) (BY Bool) (BZ Bool) (CA Bool) (CB Int) (CC Int) (CD Int) (CE Bool) (CF Bool) (CG Int) (CH Bool) (CI Bool) (CJ Bool) (CK Bool) (CL Real) (CM Int) (CN Real) (CO Bool) (CP Bool) (CQ Bool) (CR Bool) (CS Bool) (CT Real) (CU Bool) (CV Bool) (CW Int) (CX Bool) (CY Int) (CZ Bool) (DA Bool) (DB Int) (DC Int) (DD Bool) (DE Bool) (DF Bool) (DG Bool) (DH Bool) (DI Bool) (DJ Bool) (DK Int) (DL Bool) (DM Real) (DN Int) (DO Int) (DP Bool) (DQ Bool) (DR Bool) (DS Bool) (DT Int) (DU Int) (DV Int) (DW Bool) (DX Bool) (DY Bool) (DZ Bool) (EA Bool) (EB Int) (EC Bool) (ED Real) (EE Int) (EF Bool) (EG Bool) (EH Int) (EI Bool) (EJ Bool) (EK Bool) (EL Int) (EM Bool) (EN Bool) (EO Bool) (EP Bool) (EQ Bool) (ER Bool) (ES Bool) (ET Bool) (EU Int) (EV Bool) (EW Bool) (EX Bool) (EY Bool) (EZ Bool) (FA Real) (FB Int) (FC Bool) (FD Int) (FE Bool) (FF Bool) (FG Bool) (FH Bool) (FI Int) (FJ Bool) (FK Bool) (FL Bool) (FM Bool) (FN Bool) (FO Real) (FP Bool) (FQ Bool) (FR Bool) (FS Bool) (FT Bool) (FU Int) (FV Bool) (FW Bool) (FX Bool) (FY Bool) (FZ Int) (GA Bool) (GB Real) (GC Bool) (GD Bool) (GE Bool) (GF Bool) (GG Bool) (GH Int) (GI Int) (GJ Bool) (GK Bool) (GL Int) (GM Int) (GN Bool) (GO Bool) (GP Int) (GQ Real) (GR Bool) (GS Bool) (GT Int) (GU Bool) (GV Bool) (GW Bool) (GX Bool) (GY Int) (GZ Int) (HA Int) (HB Bool) (HC Int) (HD Bool) (HE Bool) (HF Bool) (HG Bool) (HH Bool) (HI Bool) (HJ Bool) (HK Bool) (HL Bool) (HM Bool) (HN Bool) (HO Bool) (HP Bool) (HQ Bool) (HR Int) (HS Bool) (HT Bool) (HU Bool) (HV Int) (HW Bool) (HX Bool) (HY Bool) (HZ Bool) (IA Bool) (IB Bool) (IC Int) (ID Bool) (IE Bool) (IF Int) (IG Bool) (IH Bool) (II Bool) (IJ Real) (IK Bool) (IL Bool) (IM Bool) (IN Bool) (IO Bool) (IP Bool) (IQ Bool) (IR Bool) (IS Bool) (IT Bool) (IU Bool) (IV Int) (IW Bool) (IX Bool) (IY Bool) (IZ Bool) (JA Bool) (JB Real) (JC Bool)) (and (<= 0 DO) (= BC IL) (= GI BN) (or (not BY) DR) (<= 0 B) (= HO FP) (or GJ (not AN)) (= IX AZ) (<= 0 EE) (<= AX 7) (= EO BD) (= AD CK) (= FY HW) (or (not GV) HN) (or (not BV) DJ) (<= DC 255) (or (not GD) IZ) (= AJ IE) (or (not (< 0 DV)) (= EH 1)) (= AC (/ 3.0 2.0)) (= 2 AA) (= AV 19) (= HP W) (= O HS) (= AQ EK) (or AF (not FJ)) (= GZ 3) (<= 0 FB) (= DP AH) (or AL (not BG)) (= HX Q) (<= FI 3) (<= EB 3) (or (not FE) JC) (<= 0 EL) (= HA DK) (= Y HM) (<= 0 DK) (<= B 15) (= GQ 800.0) (= CZ FH) (= HT EZ) (<= 0 CC) (or IB (not GN)) (= BO EA) (or (not CX) CO) (or (= 15 HC) (= 14 HC) (and (<= 0 HC) (<= HC 10))) (= FZ IF) (<= IV 2) (or (= 14 FD) (and (<= FD 10) (<= 0 FD)) (= 15 FD)) (<= CD 3) (or (not FC) IM) (or (and HL IP FR T V G EF HD DS AW CF BT FF GC) (not (= CY GL))) (= GS EC) (= BR DZ) (= CE P) (<= 0 FI) (= IU BH) (= DG ER) (or BP (not FN)) (or (= CY GL) (and HL IP FR T V G EF HD DS AW CF BT FF (not (= CY GL)) GC) (and (not (= CY GL)) (or (not IP) (not GC) (not BT) (not T) (not G) (not EF) (not HL) (not DS) (not V) (not CF) (not HD) (not FR) (not AW) (not FF)))) (= FO 4000.0) (or (not HG) K) (= BS 19) (<= 0 CM) (or (not CS) AP) (<= EE 6) (or DL (not GO)) (<= 0 BE) (= 2 GP) (= 50.0 GB) (= ES HF) (<= BE 2) (= EP GK) (= HE BI) (or (not AO) IY) (= IH AT) (= R CR) (<= DK 255) (or (not (= 0 DV)) (= EH 0)) (or I (not E)) (= ID AU) (<= A 9) (<= 0 CB) (<= DU 9) (or (= AE 126) (= AE 127) (and (<= AE 100) (<= 0 AE))) (= FX EQ) (= EM FG) (<= 0 IV) (<= 0 HV) (<= 0 EB) (= AM CA) (= JB (/ 3.0 2.0)) (or IG (not FQ)) (= S CP) (<= 0 GM) (= L BW) (or IQ (not HU)) (<= 0 N) (or CJ (not EN)) (<= GH 255) (= BB IR) (<= CB 7) (= AY DE) (= FL CH) (<= GM 658) (= Z IC) (<= 0 AK) (= ED (/ 3.0 2.0)) (<= HV 1023) (<= 0 GH) (or (not EJ) IW) (or (= 15 DT) (and (<= 0 DT) (<= DT 10)) (= 14 DT)) (<= FB 9) (= DD AR) (= E HK) (<= DB 15) (= IA GA) (= CT 500.0) (= HQ X) (= 2 IF) (= GX C) (<= AK 3) (= 2 BL) (<= EU 3) (= CU M) (<= DO 7) (<= CC 63) (= FV GU) (<= EL 63) (<= 0 DC) (= 50.0 AI) (<= CW 9) (or DW (not FW)) (= 4000.0 FA) (= EY HB) (= 20.0 CL) (= IN GE) (<= 0 CD) (= BU F) (= FM CI) (= DX BM) (= EI BF) (<= 0 GT) (<= GT 255) (= DQ DA) (or U (not AB)) (= DM 50.0) (or (not DH) IS) (or BX (not D)) (= 800.0 IJ) (= IK FS) (or AG (not GW)) (or HY (not (= CY GL))) (<= 0 AX) (= CG FU) (= EV HJ) (<= 0 DU) (<= N 1023) (<= 0 EU) (<= 0 HR) (<= CM 2) (<= 0 A) (= CN 20.0) (or (not EX) (= CY GL)) (<= DN 3) (<= 0 DB) (= FT DY) (= IT BK) (or (not HH) IO) (or DI (not ET)) (or (and (not GF) (not BT) FK) (and (not GF) EW (not BT)) (and (not GF) (not BT) JA) (and (not GF) (not BT) J) (and (not GF) (not BT) CQ) (and (not GF) (not BT) BZ) (and (not GF) (not BT) DF) (and (not GF) (not BT) HZ) (and (< T1 50.0) (or (and (not GG) (or (and (not J) (or (and (or (and (not BA) (or (and (or (and (or (and (not JA) (or (and (not EW) (or (and (or (and (not DF) (or (and (not EG) (or (and (not BZ) (or (and (or (and (or (and (not GF) (not BJ)) (and (not GF) BT)) (not AS)) (and (not GF) BT)) (not CQ)) (and (not GF) BT))) (and (not GF) BT))) (and (not GF) BT))) (and (not GF) BT)) (not FK)) (and (not GF) BT))) (and (not GF) BT))) (and (not GF) BT)) (not HI)) (and (not GF) BT)) (not HZ)) (and (not GF) BT))) (and (not GF) BT)) (not BQ)) (and (not GF) BT))) (and (not GF) BT))) (and (not GF) BT))) (and (not GF) (not BT) BJ) (and (not GF) (not BT) HI) (and (not GF) (not BT) GG) (and (or (and (not GG) (or (and (or (and (not BQ) (or (and (not BA) (or (and (not HZ) (or BT (and (not HI) (or (and (not JA) (or (and (not EW) (or (and (not FK) (or (and (or (and (or (and (not BZ) (or (and (or (and (or (not BJ) BT) (not AS)) BT) (not CQ)) BT)) BT) (not EG)) BT) (not DF)) BT)) BT)) BT)) BT)))) BT)) BT)) BT) (not J)) BT)) BT) (<= 50.0 T1)) (and (not GF) (not BT) AS) (and (not GF) (not BT) BQ) (and (not GF) (not BT) BA) (and (not GF) (not BT) EG)) (<= HR 3) (= II GR) (<= 0 DN) (= 1 GY) (<= 0 CW) (or CV (not H))))";
@@ -251,7 +255,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void plrTest6() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "B", "F", "oldB"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "A", "C", "D", "E", "oldC", "oldA"),
 		};
@@ -267,7 +271,7 @@ public class QuantifierEliminationRegressionTest {
 		 *
 		 * Notes: Happens already in quantifier pusher
 		 */
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getBoolSort, "c"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getBoolSort, "c"), };
 		final String formulaAsString = "(forall ((g Int)) (or (not (or (and c (= g 1)) (and (not c) (= g 0)) )) (= 0 (mod g 256)) ) ) ";
 		final String expextedResultAsString = "(not c)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -275,7 +279,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void moduloUnsoundExists() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getBoolSort, "c"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getBoolSort, "c"), };
 		final String formulaAsString = "(exists ((g Int)) (and (or (and c (= g 1)) (and (not c) (= g 0)) ) (not (= 0 (mod g 256))) ) ) ";
 		final String expextedResultAsString = "c";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -283,7 +287,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void endless() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_memset_impl_~sp~0#1.base", "ULTIMATE.start_memset_impl_~sp~0#1.offset", "v_prenex_72"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_arrayElimArr_13", "v_arrayElimArr_12"),
 			};
@@ -294,7 +298,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void negativeModulusBugNotReproducible() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "add_history_type_~ini_bool~0", "~gate1Failed_History_0~0"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "add_history_type_~ini_bool~0", "~gate1Failed_History_0~0"), };
 		final String formulaAsString = "(forall ((~gate3Failed_History_0~0 Int)) (let ((.cse0 (mod ~gate3Failed_History_0~0 256))) (or (< 0 (mod ~gate1Failed_History_0~0 256)) (= .cse0 0) (not (= (mod add_history_type_~ini_bool~0 256) .cse0)))))";
 		final String expectedResultAsString = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -302,7 +306,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void divByZero() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "BK"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "BK"), };
 		final String formulaAsString = "(exists ((C Real) (A Real) (BD Real) (AK Int) (AP Int) (BH Int) (BC Int) (J Real) (M Real) (AN Int) (AW Int) (AT Int) (AF Int) (AD Real) (U Real) (S Real) (D Real) (O Int) (BG Int) (AA Real) (I Int) (AL Int) (V Real) (AJ Int) (AS Int) (L Real) (W Real) (AI Int) (AX Int) (AM Int) (AC Real) (K Real) (BJ Int) (T Int) (Z Real) (P Real) (Y Real) (AR Real) (B Real) (AG Int) (BE Int) (AZ Int) (E Bool) (AB Bool) (BB Int) (H Int) (AV Int) (AO Real) (BI Int) (N Real) (BA Int) (AQ Int) (R Real) (Q Real) (AY Int) (AH Int) (G Int) (F Real) (BF Int) (X Real) (AE Int) (AU Int)) (and (<= 0.0 P) (<= BI 255) (or (and (or AB (not E)) (= AO V)) (not (< AA (* 5.0 C))) (not E) (and (or (and (not AB) E) (and (not (= AO V)) E)) (< AA (* 5.0 C)))) (<= 0.0 N) (<= L 5100.0) (<= AK 15) (<= N 5100.0) (<= G 2) (<= Z 255.0) (<= C 255.0) (<= 0.0 Q) (<= 0 AK) (<= AU 253) (<= AL 255) (<= M 5100.0) (<= BJ 255) (<= 0.0 X) (<= 0.0 AA) (<= 0 AL) (<= AI 1023) (<= K 5100.0) (<= F 255.0) (<= AW 254) (<= 0 BI) (<= 0.0 Z) (or (and (<= 0 AN) (<= AN 240)) (= AN 254) (= AN 255)) (or (= AG 1023) (and (<= AG 1000) (or (<= 1 AG) (= AG 0)))) (<= V 65535.0) (or (= BC 14) (= BC 1) (= BC 2) (= BC 0)) (<= Y 255.0) (<= R 1310700.0) (<= B 255.0) (<= S 5100.0) (<= H 3) (<= 0 BJ) (<= D 255.0) (<= AT 1000) (or (and (or (not (< U AC)) (not (= I H)) (and (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U))) (= AO U))) (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U))) (= AO U)) (and (< BK 50.0) (or (and (or (not (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U)))) (not (= AO U))) (not (= I H))) (and (not (< U AC)) (or (not (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U)))) (not (= AO U)))))) (and (= I H) (< BK 50.0) (or (not (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U)))) (not (= AO U))) (< U AC))) (<= 0.0 M) (<= AC 5000.0) (or (and (or (<= 1 AF) (= AF 0)) (<= AF 1000)) (= AF 1023)) (<= 0.0 C) (or (and (<= AS 201) (<= 1 AS)) (= AS 0)) (<= 0.0 J) (<= 0.0 AC) (<= Q 255.0) (<= A 255.0) (<= AA 5.0) (<= 0.0 R) (<= 0.0 S) (<= 0.0 U) (<= 0 AJ) (or (and (<= AH 254) (<= 1 AH)) (= 255 AH) (= 0 AH)) (<= 0.0 V) (<= AJ 255) (<= 0 G) (<= 0 T) (or (and (<= AV 1000) (<= 1 AV)) (= 0 AV)) (or (<= 1 AU) (= 0 AU)) (<= U 65535.0) (<= 0.0 B) (<= 0.0 F) (<= P 5100.0) (or (= BB 254) (and (<= 0 BB) (<= BB 100))) (<= J 5100.0) (<= 0 O) (<= 0.0 K) (<= 0.0 AD) (or (= 0 AZ) (= 1 AZ) (= 14 AZ)) (<= T 3) (<= BG 1023) (<= O 65535) (or (= 1022 AP) (= 1023 AP) (and (<= AP 1021) (<= 0 AP))) (<= X 255.0) (<= 0.0 L) (<= 0.0 D) (or (and (<= AM 240) (<= 0 AM)) (= 254 AM) (= 255 AM)) (or (and (<= AE 254) (<= 1 AE)) (= 0 AE) (= 255 AE)) (or (= BE 65535) (= BE 254) (= BE 65534) (and (<= BE 240) (<= 0 BE)) (= BE 255)) (or (and (<= BD 250.0) (<= 0.0 BD)) (= BD 254.0)) (or (and (<= 0 AX) (<= AX 1021)) (= 1022 AX)) (<= 0.0 A) (<= 0.0 W) (or (= 14 AY) (= 1 AY) (= 0 AY)) (<= W 255.0) (<= 0 AI) (<= 0 H) (or (and (<= 0 BF) (<= BF 240)) (= BF 65534) (= BF 254) (= BF 65535) (= BF 255)) (or (= 14 BA) (= 1 BA) (= 0 BA)) (or (= BH 1022) (= BH 1023) (and (<= BH 1021) (<= 0 BH))) (or (= 254 AQ) (= 255 AQ) (and (<= 0 AQ) (<= AQ 253))) (or (= 0 AT) (<= 1 AT)) (<= 0.0 Y) (<= AD 5000.0) (<= 0 AW) (<= 0 BG)))";
 		final String expectedResultAsString = "true";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -311,7 +315,7 @@ public class QuantifierEliminationRegressionTest {
 	@Test
 	public void divByZero2() {
 		// it is the same formula as in divByZero but with other variable names
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "SysRS_ADLSw_360_0_Glob_BndResponseUT_117_X2"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "SysRS_ADLSw_360_0_Glob_BndResponseUT_117_X2"), };
 		final String formulaAsString = "(exists ((|adp_diag_ks_masse'| Real) (|adp_count_fast'| Real) (|s_mvb_Smartlightsensor_Sensorspannung'| Real) (|si_RLSs_01__RLS_Zaehler_LIN1'| Int) (|s_LS_Helligkeit_FW'| Int) (|so_RLS_01__LS_Helligkeit_FW_SCAN'| Int) (|s_mvb_Smartlightsensor_Licht'| Int) (|adp_lx_dawn_to_day'| Real) (|adp_lx_LHO_CHO_Schwelle'| Real) (|si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'| Int) (|s_mvb_Helligkeit_Infrarot'| Int) (|s_mvb_Feuchtesensorik_Scheibentemperatur'| Int) (|si_FSs_01__FS_Taupunkt_LIN1'| Int) (|s_helligkeit_uin_mM_roh'| Real) (|adp_s_outmax'| Real) (|adp_s_inpmin'| Real) (|adp_diag_ks_versorgung'| Real) (|adp_lx_off_kombi'| Int) (|so_RLS_01__LS_Helligkeit_FW_KCAN'| Int) (|ai_helligkeit_uin'| Real) (|adp_Lichtsensor_Typ_SMART_LS'| Int) (|si_Sensorik_Dimmung_01__KBI_Phototransistor_KCAN'| Int) (|adp_s_outmin'| Real) (|si_RLSs_01__LS_Helligkeit_IR_LIN1'| Int) (|s_mvb_Feuchtesensorik_relative_Luftfeuchte'| Int) (|adp_lx_fastcount'| Real) (|adp_step_fast'| Real) (|si_RLSs_01__LS_Helligkeit_FW_LIN1'| Int) (|s_mvb_Helligkeit_Sichtbar'| Int) (|si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'| Int) (|s_helligkeit_uin_mM'| Real) (|adp_lx_day_to_dawn'| Real) (|so_RLS_01__LS_Helligkeit_IR_SCAN'| Int) (|adp_sonnensensor_Typ'| Int) (|adp_t_ls_countmax'| Real) (|adp_lx_on'| Real) (|adp_t_ls_calc'| Real) (|s_ls_in'| Real) (|adp_count_slow'| Real) (|si_FSs_01__FS_Temp_Scheibe_LIN1'| Int) (|s_mvb_Sonnensensor_Sonnenintensitaet_links'| Int) (|s_mvb_Licht_ein_bei_Regen'| Int) (|adp_diag_qualifizierung_notlauf'| Bool) (|s_afl_error'| Bool) (|s_mvb_Smartlightsensor_Helligkeit'| Int) (|adp_Lichtsensor_Typ'| Int) (|s_mvb_Feuchtesensorik_Taupunkt'| Int) (|s_ls_anaout'| Real) (|so_RLS_01__LS_Helligkeit_IR_KCAN'| Int) (|adp_lx_off'| Real) (|s_mvb_RLS_Status'| Int) (|s_LS_Helligkeit_IR'| Int) (|adp_s_inpmax'| Real) (|adp_lx_tunnel'| Real) (|s_mvb_Licht_ein_bei_Autobahn'| Int) (|si_FSs_01__FS_Temp_Sensor_LIN1'| Int) (|adp_Feuchtesensor_Typ'| Int) (|adp_diag_unplausibel'| Real) (|s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| Int) (|adp_step_slow'| Real) (|si_FSs_01__FS_Luftfeuchte_rel_LIN1'| Int) (|s_mvb_Feuchtesensorik_Sensortemperatur'| Int)) (and (<= 0.0 |adp_lx_on'|) (<= |so_RLS_01__LS_Helligkeit_IR_KCAN'| 255) (or (and (or |s_afl_error'| (not |adp_diag_qualifizierung_notlauf'|)) (= |s_ls_anaout'| |adp_s_outmin'|)) (not (< |ai_helligkeit_uin'| (* 5.0 |adp_diag_ks_masse'|))) (not |adp_diag_qualifizierung_notlauf'|) (and (or (and (not |s_afl_error'|) |adp_diag_qualifizierung_notlauf'|) (and (not (= |s_ls_anaout'| |adp_s_outmin'|)) |adp_diag_qualifizierung_notlauf'|)) (< |ai_helligkeit_uin'| (* 5.0 |adp_diag_ks_masse'|)))) (<= 0.0 |adp_lx_off'|) (<= |adp_lx_fastcount'| 5100.0) (<= |si_RLSs_01__RLS_Zaehler_LIN1'| 15) (<= |adp_lx_off'| 5100.0) (<= |adp_Feuchtesensor_Typ'| 2) (<= |adp_t_ls_countmax'| 255.0) (<= |adp_diag_ks_masse'| 255.0) (<= 0.0 |adp_lx_tunnel'|) (<= 0 |si_RLSs_01__RLS_Zaehler_LIN1'|) (<= |s_mvb_Feuchtesensorik_Sensortemperatur'| 253) (<= |si_Sensorik_Dimmung_01__KBI_Phototransistor_KCAN'| 255) (<= |adp_lx_LHO_CHO_Schwelle'| 5100.0) (<= |so_RLS_01__LS_Helligkeit_IR_SCAN'| 255) (<= 0.0 |adp_step_slow'|) (<= 0.0 |ai_helligkeit_uin'|) (<= 0 |si_Sensorik_Dimmung_01__KBI_Phototransistor_KCAN'|) (<= |si_RLSs_01__LS_Helligkeit_FW_LIN1'| 1023) (<= |adp_lx_day_to_dawn'| 5100.0) (<= |adp_diag_unplausibel'| 255.0) (<= |s_mvb_Helligkeit_Infrarot'| 254) (<= 0 |so_RLS_01__LS_Helligkeit_IR_KCAN'|) (<= 0.0 |adp_t_ls_countmax'|) (or (and (<= 0 |si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'|) (<= |si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'| 240)) (= |si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'| 254) (= |si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'| 255)) (or (= |si_FSs_01__FS_Temp_Scheibe_LIN1'| 1023) (and (<= |si_FSs_01__FS_Temp_Scheibe_LIN1'| 1000) (or (<= 1 |si_FSs_01__FS_Temp_Scheibe_LIN1'|) (= |si_FSs_01__FS_Temp_Scheibe_LIN1'| 0)))) (<= |adp_s_outmin'| 65535.0) (or (= |s_mvb_Smartlightsensor_Licht'| 14) (= |s_mvb_Smartlightsensor_Licht'| 1) (= |s_mvb_Smartlightsensor_Licht'| 2) (= |s_mvb_Smartlightsensor_Licht'| 0)) (<= |adp_t_ls_calc'| 255.0) (<= |adp_s_inpmax'| 1310700.0) (<= |adp_count_slow'| 255.0) (<= |adp_s_inpmin'| 5100.0) (<= |adp_Lichtsensor_Typ'| 3) (<= 0 |so_RLS_01__LS_Helligkeit_IR_SCAN'|) (<= |adp_diag_ks_versorgung'| 255.0) (<= |s_mvb_Feuchtesensorik_Scheibentemperatur'| 1000) (or (and (or (not (< |adp_s_outmax'| |s_helligkeit_uin_mM'|)) (not (= |adp_Lichtsensor_Typ_SMART_LS'| |adp_Lichtsensor_Typ'|)) (and (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|))) (= |s_ls_anaout'| |adp_s_outmax'|))) (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|))) (= |s_ls_anaout'| |adp_s_outmax'|)) (and (< SysRS_ADLSw_360_0_Glob_BndResponseUT_117_X2 50.0) (or (and (or (not (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|)))) (not (= |s_ls_anaout'| |adp_s_outmax'|))) (not (= |adp_Lichtsensor_Typ_SMART_LS'| |adp_Lichtsensor_Typ'|))) (and (not (< |adp_s_outmax'| |s_helligkeit_uin_mM'|)) (or (not (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|)))) (not (= |s_ls_anaout'| |adp_s_outmax'|)))))) (and (= |adp_Lichtsensor_Typ_SMART_LS'| |adp_Lichtsensor_Typ'|) (< SysRS_ADLSw_360_0_Glob_BndResponseUT_117_X2 50.0) (or (not (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|)))) (not (= |s_ls_anaout'| |adp_s_outmax'|))) (< |adp_s_outmax'| |s_helligkeit_uin_mM'|))) (<= 0.0 |adp_lx_LHO_CHO_Schwelle'|) (<= |s_helligkeit_uin_mM'| 5000.0) (or (and (or (<= 1 |si_FSs_01__FS_Taupunkt_LIN1'|) (= |si_FSs_01__FS_Taupunkt_LIN1'| 0)) (<= |si_FSs_01__FS_Taupunkt_LIN1'| 1000)) (= |si_FSs_01__FS_Taupunkt_LIN1'| 1023)) (<= 0.0 |adp_diag_ks_masse'|) (or (and (<= |s_mvb_Feuchtesensorik_relative_Luftfeuchte'| 201) (<= 1 |s_mvb_Feuchtesensorik_relative_Luftfeuchte'|)) (= |s_mvb_Feuchtesensorik_relative_Luftfeuchte'| 0)) (<= 0.0 |adp_lx_dawn_to_day'|) (<= 0.0 |s_helligkeit_uin_mM'|) (<= |adp_lx_tunnel'| 255.0) (<= |adp_count_fast'| 255.0) (<= |ai_helligkeit_uin'| 5.0) (<= 0.0 |adp_s_inpmax'|) (<= 0.0 |adp_s_inpmin'|) (<= 0.0 |adp_s_outmax'|) (<= 0 |si_RLSs_01__LS_Helligkeit_IR_LIN1'|) (or (and (<= |si_FSs_01__FS_Temp_Sensor_LIN1'| 254) (<= 1 |si_FSs_01__FS_Temp_Sensor_LIN1'|)) (= 255 |si_FSs_01__FS_Temp_Sensor_LIN1'|) (= 0 |si_FSs_01__FS_Temp_Sensor_LIN1'|)) (<= 0.0 |adp_s_outmin'|) (<= |si_RLSs_01__LS_Helligkeit_IR_LIN1'| 255) (<= 0 |adp_Feuchtesensor_Typ'|) (<= 0 |adp_sonnensensor_Typ'|) (or (and (<= |s_mvb_Feuchtesensorik_Taupunkt'| 1000) (<= 1 |s_mvb_Feuchtesensorik_Taupunkt'|)) (= 0 |s_mvb_Feuchtesensorik_Taupunkt'|)) (or (<= 1 |s_mvb_Feuchtesensorik_Sensortemperatur'|) (= 0 |s_mvb_Feuchtesensorik_Sensortemperatur'|)) (<= |adp_s_outmax'| 65535.0) (<= 0.0 |adp_count_slow'|) (<= 0.0 |adp_diag_unplausibel'|) (<= |adp_lx_on'| 5100.0) (or (= |s_mvb_Smartlightsensor_Helligkeit'| 254) (and (<= 0 |s_mvb_Smartlightsensor_Helligkeit'|) (<= |s_mvb_Smartlightsensor_Helligkeit'| 100))) (<= |adp_lx_dawn_to_day'| 5100.0) (<= 0 |adp_lx_off_kombi'|) (<= 0.0 |adp_lx_day_to_dawn'|) (<= 0.0 |s_helligkeit_uin_mM_roh'|) (or (= 0 |s_mvb_Licht_ein_bei_Regen'|) (= 1 |s_mvb_Licht_ein_bei_Regen'|) (= 14 |s_mvb_Licht_ein_bei_Regen'|)) (<= |adp_sonnensensor_Typ'| 3) (<= |so_RLS_01__LS_Helligkeit_FW_KCAN'| 1023) (<= |adp_lx_off_kombi'| 65535) (or (= 1022 |s_LS_Helligkeit_FW'|) (= 1023 |s_LS_Helligkeit_FW'|) (and (<= |s_LS_Helligkeit_FW'| 1021) (<= 0 |s_LS_Helligkeit_FW'|))) (<= |adp_step_slow'| 255.0) (<= 0.0 |adp_lx_fastcount'|) (<= 0.0 |adp_diag_ks_versorgung'|) (or (and (<= |si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'| 240) (<= 0 |si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'|)) (= 254 |si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'|) (= 255 |si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'|)) (or (and (<= |si_FSs_01__FS_Luftfeuchte_rel_LIN1'| 254) (<= 1 |si_FSs_01__FS_Luftfeuchte_rel_LIN1'|)) (= 0 |si_FSs_01__FS_Luftfeuchte_rel_LIN1'|) (= 255 |si_FSs_01__FS_Luftfeuchte_rel_LIN1'|)) (or (= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 65535) (= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 254) (= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 65534) (and (<= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 240) (<= 0 |s_mvb_Sonnensensor_Sonnenintensitaet_links'|)) (= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 255)) (or (and (<= |s_mvb_Smartlightsensor_Sensorspannung'| 250.0) (<= 0.0 |s_mvb_Smartlightsensor_Sensorspannung'|)) (= |s_mvb_Smartlightsensor_Sensorspannung'| 254.0)) (or (and (<= 0 |s_mvb_Helligkeit_Sichtbar'|) (<= |s_mvb_Helligkeit_Sichtbar'| 1021)) (= 1022 |s_mvb_Helligkeit_Sichtbar'|)) (<= 0.0 |adp_count_fast'|) (<= 0.0 |adp_step_fast'|) (or (= 14 |s_mvb_Licht_ein_bei_Autobahn'|) (= 1 |s_mvb_Licht_ein_bei_Autobahn'|) (= 0 |s_mvb_Licht_ein_bei_Autobahn'|)) (<= |adp_step_fast'| 255.0) (<= 0 |si_RLSs_01__LS_Helligkeit_FW_LIN1'|) (<= 0 |adp_Lichtsensor_Typ'|) (or (and (<= 0 |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'|) (<= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 240)) (= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 65534) (= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 254) (= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 65535) (= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 255)) (or (= 14 |s_mvb_RLS_Status'|) (= 1 |s_mvb_RLS_Status'|) (= 0 |s_mvb_RLS_Status'|)) (or (= |so_RLS_01__LS_Helligkeit_FW_SCAN'| 1022) (= |so_RLS_01__LS_Helligkeit_FW_SCAN'| 1023) (and (<= |so_RLS_01__LS_Helligkeit_FW_SCAN'| 1021) (<= 0 |so_RLS_01__LS_Helligkeit_FW_SCAN'|))) (or (= 254 |s_LS_Helligkeit_IR'|) (= 255 |s_LS_Helligkeit_IR'|) (and (<= 0 |s_LS_Helligkeit_IR'|) (<= |s_LS_Helligkeit_IR'| 253))) (or (= 0 |s_mvb_Feuchtesensorik_Scheibentemperatur'|) (<= 1 |s_mvb_Feuchtesensorik_Scheibentemperatur'|)) (<= 0.0 |adp_t_ls_calc'|) (<= |s_helligkeit_uin_mM_roh'| 5000.0) (<= 0 |s_mvb_Helligkeit_Infrarot'|) (<= 0 |so_RLS_01__LS_Helligkeit_FW_KCAN'|)))";
 		final String expectedResultAsString = "true";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -320,7 +324,7 @@ public class QuantifierEliminationRegressionTest {
 	@Test
 	public void divByZero3() {
 		// Problem: by applying DER we get a division whose second argument is zero.
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getRealSort, "c"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "c"), };
 		final String formulaAsString = " (exists ((x Real)) (and (= x c) (< 2.0 (/ 1.0 (- c x)))))";
 		final String expectedResultAsString = "(< 2.0 (/ 1.0 0.0))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -331,7 +335,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void derTest1() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "b"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "b"), };
 		final String formulaAsString = "(exists ((x Int)) (or (and (= x a) (= x 1)) (and (= x b) (= x 2))))";
 		final String expectedResultAsString = "(or (= a 1) (= b 2))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -339,7 +343,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void derIntAffine1Exists() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(exists ((x Int)) (and (= (* x 2) t) (= (* x x x) 8)))";
 		final String expectedResultAsString = "(and (= 8 (* (div t 2) (div t 2) (div t 2))) (= (mod t 2) 0))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -347,7 +351,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void derIntAffine1Forall() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(forall ((x Int)) (or (distinct (* x 2) t) (distinct (* x x x) 8)))";
 		final String expectedResultAsString = "(or (not (= 8 (* (div t 2) (div t 2) (div t 2)))) (not (= (mod t 2) 0)))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -355,7 +359,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void derIntPoly1Exists() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(exists ((x Int)) (and (= (* x a a a 2) t) (= (* x x x) 8)))";
 		final String expectedResultAsString = "(let ((.cse2 (div t 2)) (.cse1 (= (mod t 2) 0)) (.cse0 (= a 0))) (or (and .cse0 .cse1 (= .cse2 0)) (let ((.cse4 (* a a a))) (and (= (let ((.cse3 (div .cse2 .cse4))) (* .cse3 .cse3 .cse3)) 8) (= (mod .cse2 .cse4) 0) .cse1 (not .cse0)))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -363,7 +367,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void critConsReform01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "p2", "b", "p1", "a", "v_DerPreprocessor_1", "v_DerPreprocessor_3"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "memPtr"),
 			};
@@ -376,7 +380,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void selectOverStoreTest01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
@@ -388,7 +392,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void selectOverStoreTest02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
@@ -399,7 +403,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void selectOverStoreTest03() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
@@ -411,7 +415,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void selectOverStoreTest04HiddenValueInformation() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getBoolSort, "B"),
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k", "v"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
@@ -441,7 +445,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void antiDerPreprocessing() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k", "v"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
@@ -452,7 +456,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void antiDerPreprocessing02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "v"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
@@ -473,7 +477,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void hiddenWeakArrayEquality01Simple() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
 			};
@@ -487,7 +491,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void hiddenWeakArrayEquality02ObservableEffect() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k", "i"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
 			};
@@ -498,7 +502,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void hiddenWeakArrayEquality03ThreeArrays() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "k3"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2", "b3"),
 			};
@@ -509,7 +513,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void hiddenWeakArrayEquality04NestedStore() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "k3"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
 			};
@@ -520,7 +524,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void hiddenWeakArrayEquality05Multidimensional() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "base1", "base2", "offset1", "offset2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "b1", "b2"),
 			};
@@ -532,7 +536,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void hiddenWeakArrayEquality_06Tilia() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "valid", "oldValid"),
 			};
 		final String formulaAsString = "(forall ((a (Array Int Int))) (or (distinct oldValid (store a 1000 1001)) (distinct (store (store a 1000 1001) 23 42) valid) (distinct (select a 23) 42)))";
@@ -542,7 +546,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void hiddenWeakArrayEquality07ArrayInIndex() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b1", "b2"),
 			};
@@ -553,7 +557,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void hiddenWeakArrayEquality08SomeBug() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
 			};
@@ -577,7 +581,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void nestedStoresTest() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "j", "k", "vi", "vj", "vk"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 			};
@@ -590,7 +594,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void varStillThere02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "nonMain_~dstPlusTwo~0.base", "nonMain_~dstPlusTwo~0.offset"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 			};
@@ -615,7 +619,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationRushingMountaineer01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
@@ -626,7 +630,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationRushingMountaineer01Reduced() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "a"),
 		};
 		final String formulaAsString = "(exists ((ax (Array (_ BitVec 32) (_ BitVec 1))) (kx (_ BitVec 32))) (= (store (store ax (_ bv0 32) (_ bv0 1)) kx (_ bv1 1)) a))";
@@ -636,7 +640,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationRushingMountaineer03() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~x0~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
@@ -647,7 +651,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationFourSeasonsTotalLandscaping() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "nonMain_~src~0.offset"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
@@ -658,7 +662,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationBugBolivia() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x"), };
 		final String formulaAsString = "(forall ((a1 (Array Int (Array Int Int))) (a2 (Array Int Int)) (a3 (Array Int Int)) (b Int)) (or (= x 0) (forall ((a4 (Array Int Int)) (c Int) (a5 (Array Int Int)) (a6 (Array Int (Array Int Int))) (d Int)) (or (not (= (store a2 c 4) a5)) (not (= d 0)) (not (= (select a3 c) 0)) (not (= (store a3 c 1) a4)) (not (= a6 (store a1 c (store (select a1 c) d 2)))) (= c 0) (not (< b c))))))";
 		final String expectedResult = "(= x 0)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -666,7 +670,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void innerQuantifierBecomesRootAfterSimplification() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~head~0#1.base", "ULTIMATE.start_main_~head~0#1.offset"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
 			};
@@ -677,7 +681,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayTirCaretakersOfHonor() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "end", "i"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "end", "i"), };
 		final String formulaAsString = "(and (exists ((a (Array Int Int)) (v_i_9 Int)) (and (<= i (+ v_i_9 1)) (= 42 (select a end)) (<= v_i_9 0) (not (= 42 (select a v_i_9))))) (<= 0 end))";
 		final String expectedResult = "(and (<= i 1) (< i (+ end 1)) (<= 0 end))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -742,7 +746,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void derPreprocessingBug() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "main_~#p~0.offset", "main_#t~mem1.base", "main_~#p~0.base"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
@@ -756,7 +760,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayInnerDerPossibilityNotRepruducible() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "main_a", "v_arrayElimArr_1"),
 				new FunDecl(SmtSortUtils::getIntSort, "main_y", "main_x", "i", "end"), };
 		final String formulaAsString = "(exists ((v_arrayElimArr_2 (Array Int Int))) (and (or (and (= main_a v_arrayElimArr_2) (not (= main_y main_x))) (and (= main_y main_x) (= main_a v_arrayElimArr_1))) (or (= main_y main_x) (= (select v_arrayElimArr_2 main_x) 1)) (= (select v_arrayElimArr_1 main_y) 0) (or (not (= main_y main_x)) (= (+ (select v_arrayElimArr_2 main_y) 1) 0)) (< main_y main_x) (= (select v_arrayElimArr_2 main_y) 999) (or (= (select v_arrayElimArr_1 main_x) 0) (not (= main_y main_x))) (or (= (select v_arrayElimArr_2 main_y) (select v_arrayElimArr_2 main_x)) (not (= main_y main_x))) (or (= (select v_arrayElimArr_1 main_x) 1) (= main_y main_x))))";
@@ -766,7 +770,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayCongruenceForall() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "i", "k"), };
 		final String formulaAsString = "(forall ((a (Array Int Int)))  (or (not (= 23 (select a i))) (= (select a k) 23)))";
 		final String expectedResult = "(= i k)";
@@ -775,7 +779,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void selectInSelect() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "v", "k", "i"),
 			};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= 5 (select a k)) (= v (select a (select a i)))))";
@@ -785,7 +789,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void saaPrenexPreprocessingBug() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_aws_array_list_is_valid_~list.base", "ULTIMATE.start_aws_array_list_is_valid_~list.offset", "ULTIMATE.start_aws_array_list_init_static_harness_~#list~0.base"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 			};
@@ -796,7 +800,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void substitutionProblem01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "offset", "base", "#funAddr~vfio_devnode.base", "#funAddr~vfio_devnode.offset"),
 			};
 		final String formulaAsString = "(exists ((i Int) (a (Array Int (Array Int Int))) (j Int) (b (Array Int (Array Int Int))) (k Int)) (let ((.cse2 (select b i)) (.cse5 (select a i))) (let ((.cse0 (select .cse5 0)) (.cse1 (+ (select .cse2 0) 48)) (.cse3 ((as const (Array Int Int)) 0)) (.cse4 (+ 8 k))) (and (= (select (select b .cse0) .cse1) |#funAddr~vfio_devnode.offset|) (= |#funAddr~vfio_devnode.base| (select (select a .cse0) .cse1)) (<= (+ 192 j) (select .cse2 8)) (= (store (store (store (store .cse3 k k) .cse4 k) 8 8) 16 8) .cse2) (<= 172 k) (= (store (store (store (store .cse3 k i) .cse4 i) 8 i) 16 i) .cse5) (= (let ((.cse6 (select .cse5 8))) (select (select b (select (select a .cse6) j)) (+ 48 (select (select b .cse6) j)))) |offset|)))))";
@@ -806,7 +810,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void someNonSelfUpdateCasesButNoTopLevelDerRelation() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort,  "ULTIMATE.start_aws_byte_buf_advance_~output#1.base", "ULTIMATE.start_aws_byte_buf_advance_~buffer#1.base", "ULTIMATE.start_aws_byte_buf_advance_~buffer#1.offset"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.offset", "#memory_$Pointer$.base"),
 			};
@@ -817,7 +821,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void eliminateeIsStoredValue() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k", "i1", "i2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 			};
@@ -828,7 +832,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void substitutionProblem02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "v"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
 			};
@@ -839,7 +843,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayQuantifierAlternation() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "i", "x"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "x"), };
 		final String formulaAsString = "(exists ((a (Array Int Int))) (forall ((k Int)) (and (= (select a k) x) (= (select a i) 23))))";
 		final String expectedResult = formulaAsString;
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -847,7 +851,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void alegedAlternation() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "min"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "A"),
 			};
@@ -859,7 +863,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void varStilThereBug() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_#valid_207", "#valid", "old(#valid)"),
 		};
 		final String formulaAsString = "(forall ((|v_old(#valid)_88| (Array Int Int)) (|v_old(#valid)_88| (Array Int Int)) (|v_old(#valid)_88| (Array Int Int))) (or (not (and (forall ((v_probe3_6_~p~9.base_40 Int) (v_probe3_6_~p~9.base_40 Int)) (or (= |v_old(#valid)_88| (store |v_#valid_207| v_probe3_6_~p~9.base_40 0)) (= v_probe3_6_~p~9.base_40 0) (not (= (select |v_#valid_207| v_probe3_6_~p~9.base_40) 0)))) (= |old(#valid)| |v_#valid_207|))) (= |#valid| |v_old(#valid)_88|)))";
@@ -869,7 +873,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void applyDistributivity() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p") };
 		final String formulaAsString =
 				"(forall ((x Int)) (or (and (p x) (p (+ x 1))) (and (not (= x 7)) (not (= x 8)))))";
@@ -887,7 +891,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void derIntegerDivisibilityExists() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p"),
 				new FunDecl(SmtSortUtils::getIntSort, "y"), };
 		final String formulaAsString = "(exists ((x Int)) (and (p x) (= (* 2 x) y)))";
@@ -897,7 +901,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void derIntegerDivisibilityForall() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p"),
 				new FunDecl(SmtSortUtils::getIntSort, "y"), };
 		final String formulaAsString = "(forall ((x Int)) (or (p x) (not (= (* 2 x) y))))";
@@ -1449,7 +1453,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void ironModulo() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p"),
 				new FunDecl(SmtSortUtils::getIntSort, "y"),
 		};
@@ -1480,7 +1484,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	 @Test
 	public void lraSchollSmt08Model6_53() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getBoolSort, "bool.b8", "bool.b6", "bool.b7", "bool.b10", "bool.b23", "bool.b12", "bool.b22", "bool.b14", "bool.b5"),
 			new FunDecl(SmtSortUtils::getRealSort, "x3", "x4", "x5"),
 		};
@@ -1532,7 +1536,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void oppenau() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getIntSort, "square"),
 			new FunDecl(SmtSortUtils::getIntSort, "x", "y"),
 		};
@@ -1557,7 +1561,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void mod02Uneliminatable() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p"),
 			new FunDecl(SmtSortUtils::getIntSort, "c"),
 		};
@@ -1568,7 +1572,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void mod03Nutz01() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "y"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "y"), };
 		final String formulaAsString = "(exists ((x Int)) (and (<= (mod x 4294967296) 0) (= y (mod x 4294967296))))";
 		final String expectedResult = "(let ((.cse0 (* y (- 1)))) (and (<= (div y (- 4294967296)) (div .cse0 4294967296)) (<= 0 y) (< y 4294967296) (<= (div y (- 4294967296)) (div (+ .cse0 4294967295) 4294967296))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -1576,7 +1580,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void sandmanForward() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "c"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "c"), };
 		final String formulaAsString = "(exists ((x Int)) (and (<= (mod x 256) (+ c 256)) (not (<= (mod x 256) 127))))";
 		final String expectedResult = "(and (<= 0 (div (+ c 256) 256)) (<= 0 (+ c 256)) (<= 0 (div (+ c 128) 256)))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -1584,7 +1588,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void sandmanForwardStep() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "c"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "c"), };
 		final String formulaAsString = "(exists ((x Int)) (and (< x 256) (not (<= (mod x 256) 127)) (<= x (+ c 256)) (<= 0 x)))";
 		final String expectedResult = "(and (<= 0 (div (+ c 256) 256)) (<= 0 (+ c 256)) (<= 0 (div (+ c 128) 256)))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -1592,7 +1596,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void PointerInBooleanExpression() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_~a~0"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "main_~a~0"), };
 		final String formulaAsString = "(exists ((main_~p~0.offset Int) (|main_#t~malloc0.base| Int)) (and (not (= 0 |main_#t~malloc0.base|)) (or (and (= 0 main_~p~0.offset) (= 0 |main_#t~malloc0.base|) (= 1 main_~a~0)) (and (= 0 main_~a~0) (or (not (= 0 main_~p~0.offset)) (not (= 0 |main_#t~malloc0.base|)))))))";
 		final String expectedResult = "(= 0 main_~a~0)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -1601,7 +1605,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void choirNightTrezor02WhiteRussia() {
-		final FunDecl[] funDecls = new FunDecl[] {};
+		final FunDecl[] funDecls = {};
 		final String formulaAsString = "(exists ((main_~a~0 Int) (main_~b~0 Int)) (and (<= 1 (mod (+ (* main_~b~0 4294967295) main_~a~0) 4294967296)) (= 0 main_~b~0) (not (< (mod main_~b~0 4294967296) (mod main_~a~0 4294967296))) (<= (mod main_~a~0 4294967296) 1)))";
 		final String expectedResult = "false";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -1609,7 +1613,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void choirNightTrezor03Gearshiftnut() {
-		final FunDecl[] funDecls = new FunDecl[] {};
+		final FunDecl[] funDecls = {};
 		final String formulaAsString = "(forall ((v_main_~i~0_6 Int) (v_main_~b~0_8 Int)) (or (< (div (+ (* (mod v_main_~i~0_6 4294967296) (- 1)) (* v_main_~b~0_8 (- 4294967295))) (- 4294967296)) (+ (div (+ (* v_main_~b~0_8 4294967295) (- 4294967296)) 4294967296) 2)) (not (and (= 0 v_main_~i~0_6) (= 0 v_main_~b~0_8)))))";
 		final String expectedResult = "true";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -1617,7 +1621,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void choirNightTrezor01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "b", "i"),
 		};
 		final String formulaAsString = "(and (forall ((v_prenex_1 Int)) (or (not (< i v_prenex_1)) (< b v_prenex_1) (< (mod (+ (* b 4294967295) v_prenex_1) 4294967296) 1))) (forall ((a Int)) (or (< (mod (+ b 1) 4294967296) a) (< (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) a) 4294967296) 1) (not (< i a)))))";
@@ -1628,7 +1632,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void choirNightTrezor01simpler() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "b", "i"),
 		};
 		final String formulaAsString = "(forall ((a Int)) (or (not (< i a)) (< (mod (+ b 1) 4294967296) a) (< (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) a) 4294967296) 1)))";
@@ -1639,7 +1643,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void choirNightTrezor01simplermore() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "b", "i"),
 		};
 		final String formulaAsString = "(exists ((a Int)) (and (>= (mod (+ b 1) 4294967296) a) (>= (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) a) 4294967296) 1)))";
@@ -1649,7 +1653,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void choirNightTrezor02OilInMuseeum() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "b", "i"),
 		};
 		final String formulaAsString = "(forall ((aux_div_aux_mod_v_main_~i~0_16_31_42 Int) (aux_div_v_main_~c~0_6_30 Int) (aux_div_v_main_~i~0_16_31 Int) (aux_div_main_~a~0_26 Int)) (let ((.cse3 (* 4294967296 aux_div_aux_mod_v_main_~i~0_16_31_42)) (.cse2 (* 4294967296 aux_div_v_main_~c~0_6_30)) (.cse1 (* 4294967296 aux_div_main_~a~0_26)) (.cse0 (* 4294967296 aux_div_v_main_~i~0_16_31))) (or (< 0 .cse0) (< .cse1 (+ .cse2 .cse0)) (< .cse1 (+ .cse3 .cse2 .cse0 1)) (<= (+ .cse1 4294967295) .cse2) (<= (+ .cse3 .cse0 4294967296) 0) (< 0 (+ .cse3 .cse0)) (<= (+ .cse1 4294967296) .cse2) (<= (+ .cse2 4294967296) .cse1) (<= (+ .cse0 4294967296) 0))))";
@@ -1660,7 +1664,7 @@ public class QuantifierEliminationRegressionTest {
 	@Test
 	public void scholl_smt08_model_model_6_62() {
 
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getBoolSort, "bool.b8", "bool.b6", "bool.b7", "bool.b10", "bool.b23", "bool.b12", "bool.b22", "bool.b14", "bool.b5"),
 			new FunDecl(SmtSortUtils::getRealSort, "x3", "x4", "x5"),
 		};
@@ -1672,7 +1676,7 @@ public class QuantifierEliminationRegressionTest {
 	@Test
 	public void scholl_smt08_model_model_6_63() {
 
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getBoolSort, "bool.b8", "bool.b6", "bool.b7", "bool.b10", "bool.b23", "bool.b12", "bool.b22", "bool.b14", "bool.b5"),
 			new FunDecl(SmtSortUtils::getRealSort, "x3", "x4", "x5"),
 		};
@@ -1686,7 +1690,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void mcrPthreadWmm01 () {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "x0", "x1"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x0", "x1"), };
 		final String formulaAsString = "(exists ((v_x1_32 Int) (v_x2_42 Int) (v_x1_28 Int) (v_x2_38 Int) (v_x2_60 Int) (v_x2_54 Int) (v_x1_41 Int) (v_x1_56 Int) (v_x0_46 Int) (v_x0_59 Int) (v_x3_53 Int)) (let ((.cse47 (+ v_x1_56 1)) (.cse4 (<= 0 v_x1_56)) (.cse2 (<= v_x1_56 0)) (.cse5 (<= 0 x1)) (.cse1 (<= x1 0))) (or (let ((.cse0 (<= v_x1_56 x1)) (.cse3 (<= x1 v_x1_56))) (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 (let ((.cse23 (<= v_x2_42 v_x2_54)) (.cse52 (+ v_x2_38 1)) (.cse53 (+ v_x2_54 1)) (.cse29 (<= v_x2_42 0))) (let ((.cse22 (<= 0 v_x2_38)) (.cse7 (<= 0 v_x2_54)) (.cse49 (not .cse29)) (.cse48 (<= .cse53 v_x2_42)) (.cse50 (<= .cse52 v_x2_42)) (.cse51 (or (<= v_x2_42 v_x2_38) .cse23)) (.cse6 (<= v_x2_38 0)) (.cse32 (<= v_x2_54 0)) (.cse26 (<= 0 v_x2_42))) (or (let ((.cse8 (<= v_x2_38 v_x2_60)) (.cse9 (ite .cse48 (=> .cse49 (or .cse29 (ite (not .cse50) .cse6 .cse51))) .cse32)) (.cse10 (<= v_x2_60 0)) (.cse36 (<= v_x2_60 v_x2_38))) (and .cse6 .cse7 .cse8 .cse9 .cse1 .cse10 (let ((.cse11 (<= v_x1_41 v_x1_56))) (or (let ((.cse13 (<= v_x1_41 x1)) (.cse14 (<= v_x1_41 0)) (.cse15 (<= 0 v_x1_41)) (.cse12 (<= x1 v_x1_41)) (.cse16 (<= v_x1_56 v_x1_41))) (and .cse11 .cse0 .cse1 .cse3 .cse12 .cse5 (or (and .cse12 .cse13) (ite .cse14 (and (<= (+ v_x1_41 1) 0) .cse15) .cse14)) .cse16 .cse13 (let ((.cse17 (<= 0 v_x0_46))) (or (and (<= (+ v_x0_46 1) 0) .cse17) (let ((.cse33 (<= v_x0_46 0))) (and (let ((.cse44 (<= (+ x0 1) 0))) (let ((.cse18 (not .cse44)) (.cse40 (<= 0 x0))) (ite .cse18 (let ((.cse20 (<= x0 0))) (let ((.cse19 (not .cse20))) (or (ite .cse19 .cse20 (<= 1 x0)) (let ((.cse34 (<= 0 v_x0_59))) (let ((.cse37 (<= v_x0_46 x0)) (.cse42 (<= x0 v_x0_46)) (.cse45 (<= v_x0_46 v_x0_59)) (.cse46 (<= v_x0_59 v_x0_46)) (.cse38 (and (<= (+ v_x0_59 1) 0) .cse34))) (let ((.cse21 (or (and .cse45 .cse46 .cse17 .cse33) .cse38)) (.cse43 (ite .cse19 (or .cse42 .cse20) .cse17)) (.cse41 (ite .cse44 (or .cse37 .cse40) .cse33))) (and .cse21 (or (let ((.cse39 (<= v_x0_59 0))) (and (or (and (let ((.cse30 (+ v_x1_28 1)) (.cse35 (<= 0 v_x1_28))) (or (let ((.cse25 (<= v_x1_32 v_x2_42)) (.cse31 (and (<= (+ v_x1_32 1) 0) (<= 0 v_x1_32)))) (let ((.cse24 (or .cse25 .cse31)) (.cse28 (<= v_x1_28 v_x2_42)) (.cse27 (<= x1 v_x2_42))) (and (<= v_x2_42 v_x1_28) .cse8 .cse22 .cse23 .cse1 (<= 0 v_x2_60) .cse5 .cse24 .cse13 (<= v_x1_28 0) .cse6 .cse11 .cse7 (<= v_x2_42 x1) (or (and .cse25 .cse26 .cse1 .cse27 .cse5 .cse28) (and .cse1 .cse24 .cse5)) .cse27 .cse29 .cse14 .cse9 .cse15 (or (and (<= .cse30 v_x1_32) (<= v_x1_32 v_x1_28)) (and .cse1 .cse5 (<= x1 v_x1_32) (<= v_x1_32 x1)) .cse31) .cse10 .cse12 .cse28 (<= v_x2_54 v_x2_42) (<= v_x0_46 v_x2_54) .cse32 .cse17 .cse33 .cse34 (<= v_x2_42 v_x1_32) .cse26 .cse0 (<= v_x1_41 v_x2_54) .cse2 (<= v_x1_41 v_x2_42) .cse3 .cse4 (<= v_x2_42 v_x1_41) .cse35 .cse36 (or (and .cse1 .cse5) .cse27) .cse16 (<= v_x2_42 v_x1_56)))) (and (<= .cse30 0) .cse35))) .cse37 .cse20 (or .cse38 (and .cse21 .cse34 (or (ite .cse18 (and .cse21 .cse34 .cse39 .cse17) .cse40) .cse38) .cse17)) (<= v_x3_53 0) .cse32 .cse33 .cse17 .cse41 (<= 0 v_x3_53) .cse11 .cse42 .cse7 .cse34 .cse26 .cse39 .cse29 .cse16 .cse40 .cse43 (<= v_x3_53 v_x2_54)) .cse44) .cse34 .cse39 .cse45 .cse46 .cse17 .cse33)) .cse38) (or .cse44 (and .cse42 .cse37 .cse33 .cse17)) .cse43 .cse41 .cse33 .cse17)))) .cse44))) .cse40))) .cse33 .cse17)))))) (and (<= .cse47 v_x1_41) .cse11))) .cse5 .cse36 .cse29 .cse32)) (and (<= .cse52 0) .cse22) (and (<= .cse53 0) .cse7) (ite .cse49 (ite .cse48 (ite .cse50 .cse51 .cse6) .cse32) (and (<= (+ v_x2_42 1) 0) .cse26))))))) (ite .cse2 (and (<= .cse47 0) .cse4) .cse2) (ite .cse1 (and (<= (+ x1 1) 0) .cse5) .cse1))))";
 		final String expectedResultAsString = "(and (<= x0 0) (<= x1 0) (<= 0 x1) (<= 0 x0))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -1694,7 +1698,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void mcrPthreadWmm02 () {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "~x~0", "~x$r_buff0_thd2~0", "~x$w_buff0_used~0", "~x$w_buff1_used~0", "~x$w_buff0~0", "~x$w_buff1~0", "~x$r_buff1_thd0~0"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "~x~0", "~x$r_buff0_thd2~0", "~x$w_buff0_used~0", "~x$w_buff1_used~0", "~x$w_buff0~0", "~x$w_buff1~0", "~x$r_buff1_thd0~0"), };
 		final String formulaAsString = "(forall ((~x$r_buff1_thd2~0 Int) (|P1Thread1of1ForFork0_#t~nondet35| Int)) (let ((.cse11 (= (mod ~x$r_buff0_thd2~0 256) 0)) (.cse19 (= (mod ~x$w_buff1_used~0 256) 0)) (.cse20 (= (mod ~x$r_buff1_thd2~0 256) 0))) (let ((.cse2 (= (mod ~x$w_buff0_used~0 256) 0)) (.cse21 (not .cse20)) (.cse18 (not .cse19)) (.cse13 (not .cse11))) (let ((.cse22 (or .cse18 .cse13)) (.cse14 (or .cse13 .cse21)) (.cse15 (not .cse2)) (.cse8 (= (mod |P1Thread1of1ForFork0_#t~nondet35| 256) 0))) (let ((.cse7 (not .cse8)) (.cse3 (and .cse11 .cse19)) (.cse4 (and .cse13 .cse15)) (.cse6 (and .cse11 .cse20)) (.cse1 (and .cse22 .cse14 .cse15))) (or (let ((.cse5 (or .cse2 .cse11))) (let ((.cse0 (let ((.cse16 (and .cse5 .cse13 .cse15))) (let ((.cse9 (let ((.cse17 (and .cse8 (or .cse7 (and (or .cse2 .cse16 .cse3 .cse6) .cse22 .cse14 .cse15))))) (and (or .cse7 (and (or (and (or .cse17 .cse4) (or .cse2 .cse11 (and (or .cse7 (and .cse18 (or .cse2 .cse19 .cse20) .cse21 .cse15)) .cse8))) .cse2 .cse3 .cse6) (or .cse17 .cse1))) (or .cse17 .cse8))))) (and (or .cse8 .cse9) (or .cse7 (and (or .cse2 .cse3 (let ((.cse10 (let ((.cse12 (and (or .cse7 (and (or .cse2 .cse16 .cse11 .cse6) .cse13 .cse14 .cse15)) .cse8))) (and (or .cse12 .cse8) (or .cse7 (and (or (and .cse5 (or .cse4 .cse12)) .cse2 .cse11 .cse6) (or .cse12 (and .cse13 .cse14 .cse15)))))))) (and (or .cse10 .cse4) (or .cse2 .cse11 .cse10))) .cse6) (or .cse1 .cse9)))))))) (and (or (and (or .cse0 .cse1) (or .cse2 .cse3 (and (or .cse4 .cse0) .cse5) .cse6)) .cse7) (or .cse0 .cse8)))) (let ((.cse25 (<= ~x$w_buff0~0 0)) (.cse26 (= 0 ~x$w_buff1~0)) (.cse27 (= ~x$r_buff1_thd0~0 0))) (let ((.cse31 (let ((.cse32 (let ((.cse33 (and (= ~x~0 1) .cse25 .cse26 .cse27))) (and (or .cse7 (and (or .cse2 .cse3 (and (or .cse33 .cse4) (or .cse2 .cse11 .cse33)) .cse6) (or .cse33 .cse1))) (or .cse33 .cse8))))) (and (or .cse7 (and (or .cse32 .cse1) (or .cse2 .cse3 (and (or .cse2 .cse11 .cse32) (or .cse4 .cse32)) .cse6))) (or .cse32 .cse8))))) (let ((.cse28 (or .cse31 .cse8))) (and (or .cse2 .cse3 (and (or .cse4 (and (or .cse7 (let ((.cse23 (let ((.cse24 (and .cse25 .cse26 (= ~x$w_buff1~0 1) .cse27))) (and (or .cse24 .cse8) (or (and (or .cse24 .cse1) (or .cse2 .cse3 (and (or .cse4 .cse24) (or .cse2 .cse11 .cse24)) .cse6)) .cse7))))) (and (or (and (or .cse1 .cse23) (or .cse2 .cse3 (and (or .cse2 .cse11 .cse23) (or .cse4 .cse23)) .cse6)) .cse7) (or .cse8 .cse23)))) .cse28)) (or .cse2 .cse11 (and (or .cse7 (let ((.cse29 (let ((.cse30 (and (= ~x$w_buff0~0 1) .cse25 .cse26 .cse27))) (and (or .cse7 (and (or .cse2 .cse3 .cse6 (and (or .cse2 .cse11 .cse30) (or .cse4 .cse30))) (or .cse30 .cse1))) (or .cse30 .cse8))))) (and (or .cse29 .cse8) (or .cse7 (and (or .cse2 .cse3 (and (or .cse2 .cse11 .cse29) (or .cse4 .cse29)) .cse6) (or .cse29 .cse1)))))) .cse28))) .cse6) (or (and (or .cse7 .cse31) .cse28) .cse1)))))))))))";
 		final String expectedResultAsString = "(and (= ~x~0 1) (= ~x$w_buff1~0 0) (= ~x$r_buff1_thd0~0 0) (or (and (= (mod ~x$r_buff0_thd2~0 256) 0) (= (mod ~x$w_buff1_used~0 256) 0)) (= (mod ~x$w_buff0_used~0 256) 0)) (<= ~x$w_buff0~0 0))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -1705,7 +1709,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void heap_data_calendar() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~ev1~0", "main_~ev2~0"),
 		};
 		final String formulaAsString = "(forall ((|#memory_int| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (v_main_~p~0.offset_6 (_ BitVec 32)) (v_main_~l~0.base_13 (_ BitVec 32)) (|v_main_#t~malloc5.offset_6| (_ BitVec 32)) (|v_#memory_int_19| (Array (_ BitVec 32) (Array (_ BitVec 32) (_ BitVec 32)))) (v_main_~p~0.base_6 (_ BitVec 32)) (v_main_~l~0.offset_13 (_ BitVec 32))) (or (not (and (= v_main_~p~0.base_6 v_main_~l~0.base_13) (= |v_#memory_int_19| (store |#memory_int| v_main_~p~0.base_6 (store (store (store (select |#memory_int| v_main_~p~0.base_6) (bvadd v_main_~p~0.offset_6 (_ bv4 32)) main_~ev1~0) (bvadd v_main_~p~0.offset_6 (_ bv8 32)) main_~ev2~0) v_main_~p~0.offset_6 (select (select |v_#memory_int_19| v_main_~p~0.base_6) v_main_~p~0.offset_6)))) (= v_main_~l~0.offset_13 v_main_~p~0.offset_6) (or (not (= (_ bv3 32) main_~ev2~0)) (not (= (_ bv1 32) main_~ev1~0))) (= (_ bv0 32) |v_main_#t~malloc5.offset_6|) (= v_main_~p~0.offset_6 |v_main_#t~malloc5.offset_6|))) (forall ((x (_ BitVec 32)) (y (_ BitVec 32)) (v_DerPreprocessor_2 (_ BitVec 32)) (v_main_~p~0.base_5 (_ BitVec 32))) (or (not (= (bvadd (select (select (store |v_#memory_int_19| v_main_~p~0.base_5 (store (store (store (select |v_#memory_int_19| v_main_~p~0.base_5) (_ bv4 32) x) (_ bv8 32) y) (_ bv0 32) v_DerPreprocessor_2)) v_main_~l~0.base_13) (bvadd v_main_~l~0.offset_13 (_ bv8 32))) (_ bv4294967293 32)) (_ bv0 32))) (bvsgt x (_ bv3 32)) (= (_ bv3 32) y) (not (= (_ bv1 32) (select (store (store (store (select |v_#memory_int_19| v_main_~p~0.base_5) (_ bv4 32) x) (_ bv8 32) y) (_ bv0 32) v_DerPreprocessor_2) (_ bv4 32)))) (bvslt x (_ bv0 32)) (not (= (_ bv0 32) (bvadd (select (select (store |v_#memory_int_19| v_main_~p~0.base_5 (store (store (store (select |v_#memory_int_19| v_main_~p~0.base_5) (_ bv4 32) x) (_ bv8 32) y) (_ bv0 32) v_DerPreprocessor_2)) v_main_~l~0.base_13) (bvadd v_main_~l~0.offset_13 (_ bv4 32))) (_ bv4294967295 32))))))))";
@@ -1718,7 +1722,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void heap_data_cart() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idxDim1", "idxDim2"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Bv32Sort, "arr"),
 		};
@@ -1732,7 +1736,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void dll_01_2small() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "main_#t~mem25.offset", "main_#t~mem25.base"),
 		};
 		final String formulaAsString = "(exists ((main_~end~0.base Int) (|#memory_$Pointer$.base| (Array Int (Array Int Int))) (|#memory_$Pointer$.offset| (Array Int (Array Int Int))) (main_~end~0.offset Int)) (and (= (select (select |#memory_$Pointer$.offset| main_~end~0.base) (+ main_~end~0.offset 16)) |main_#t~mem25.offset|) (exists ((main_~list~0.base Int)) (and (= (select (select |#memory_$Pointer$.offset| main_~list~0.base) 16) main_~end~0.offset) (= (select (select |#memory_$Pointer$.base| main_~list~0.base) 16) main_~end~0.base) (= (select (select |#memory_$Pointer$.offset| (select (select |#memory_$Pointer$.base| main_~list~0.base) 16)) (+ (select (select |#memory_$Pointer$.offset| main_~list~0.base) 16) 16)) 0) (= (select (select |#memory_$Pointer$.base| (select (select |#memory_$Pointer$.base| main_~list~0.base) 16)) (+ (select (select |#memory_$Pointer$.offset| main_~list~0.base) 16) 16)) 0))) (= (select (select |#memory_$Pointer$.base| main_~end~0.base) (+ main_~end~0.offset 16)) |main_#t~mem25.base|)))";
@@ -1745,7 +1749,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void list_simple_dll2cupdateall() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~s~0.base", "main_~s~0.offset", "main_~new_data~0", "main_~len~0"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Bv32Sort, "#memory_$Pointer$.base"),
 		};
@@ -1759,7 +1763,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void forester_heap_dll_optional() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~head~0.offset", "main_~head~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
@@ -1773,7 +1777,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void sll_circular_traversal_2() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "sll_circular_create_~new_head~0.base", "sll_circular_create_~new_head~0.offset", "sll_circular_create_~head~0.offset", "sll_circular_create_~head~0.base", "sll_circular_create_~last~0.base", "sll_circular_create_~last~0.offset"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#length"),
 		};
@@ -1784,7 +1788,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void bugNotReproducibleButProbablyGoodTest() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_aws_byte_cursor_eq_harness_~#rhs~0#1.offset", "ULTIMATE.start_aws_byte_cursor_eq_harness_~#rhs~0#1.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_arrayElimCell_45", "v_ArrVal_2315", "v_ArrVal_2316"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "v_#memory_$Pointer$.base_BEFORE_CALL_13", "#memory_$Pointer$.base"),
@@ -1800,7 +1804,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void memleaks_test1_3() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid", "old(#valid)"),
 		};
 		final String formulaAsString =
@@ -1813,7 +1817,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void memleaks_test4_2() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid", "old(#valid)"),
 		};
 		final String formulaAsString =
@@ -1824,7 +1828,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationRushingMountaineer02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#a~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
@@ -1836,7 +1840,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void minionEliminateesNonterminationBugNotReproducible() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "n1", "n2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "arrIntInt"),
 			};
@@ -1851,7 +1855,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void flattenPartitionProblem01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b", "c"),
 			};
 		final String formulaAsString = "(exists ((x Int) (y Int) (z Int)) (and (= (select a (+ x z)) 23) (= (select b (+ y z)) 1048) (= (select c z) 42)))";
@@ -1861,7 +1865,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void riwne01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "i"),
 			};
 		final String formulaAsString = "(forall ((a (Array Int Int)) (v_a_9 (Array Int Int)) (v_i_9 Int)) (or (= (select v_a_9 1048) 0) (< v_i_9 1000000) (let ((.cse0 (not (= a v_a_9)))) (and (or (not (< v_i_9 1000001)) .cse0 (not (< i v_i_9)) (exists ((v_idx_1 Int)) (and (<= i (+ v_idx_1 1)) (<= (+ 2 v_idx_1) v_i_9) (not (= (select v_a_9 v_idx_1) 0))))) (or .cse0 (not (<= 1000000 i)) (not (= i v_i_9)))))))";
@@ -1871,7 +1875,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void riwne02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "i"),
 			};
 		final String formulaAsString = "(forall ((a (Array Int Int))) (or (= (select a 1048) 0) (and (forall ((k Int)) (or (not (< k 1000001)) (exists ((idx Int)) (and (<= i (+ idx 1)) (<= (+ 2 idx) k) (not (= (select a idx) 0)))) (< k 1000000))) (not (<= 1000000 i)))))";
@@ -1881,7 +1885,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void riwne03() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "i"),
 			};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (distinct (select a 1048) 0) (or (exists ((k Int)) (and (< k 1000001) (forall ((idx Int)) (or (> i (+ idx 1)) (> (+ 2 idx) k) (= (select a idx) 0))) (>= k 1000000))) (<= 1000000 i))))";
@@ -1891,7 +1895,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void suse01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "s"),
 			};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (forall ((k Int)) (= (select a k) k)) (= (select a s) 5)))";
@@ -1901,7 +1905,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void suse02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "s"),
 			};
 		final String formulaAsString = "(exists ((a (Array Int Int))) (and (forall ((k Int)) (=> (>= k 0) (= (select a k) k))) (= (select a s) 5)))";
@@ -1911,7 +1915,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void feldberg() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "v_idx_2", "v_i_3", "v_itFin_1"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "v_a_1", "v_a_2"),
 
@@ -1926,7 +1930,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void bestInAll() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "a", "b"),
 			};
 		final String formulaAsString = "(exists ((x Int) (y Int)) (and (or (= x 2) (= x 3)) (or (<= a (+ x y)) (<= b (+ x y))) (<= (+ x y) 99)))";
@@ -1941,7 +1945,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void exactShadows01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "a", "b"),
 			};
 		final String formulaAsString = "(exists ((x Int) (y Int)) (and (<= (+ 52 a) (+ y (* x 2))) (<= (+ y 1) b) (<= (+ x 4) (* 2 y))))";
@@ -1955,7 +1959,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void shouldHaveBeenEliminatedByDer() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_cstrstr_~s#1.base", "ULTIMATE.start_cstrstr_~find#1.base", "ULTIMATE.start_cstrstr_~s#1.offset"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#length"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
@@ -1999,7 +2003,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void constantFolding01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "a", "b"),
 			};
 		final String formulaAsString = "(exists ((x Int)) (and (= a 1) (= (* x a a) 1) (= (* x b) 5)))";
@@ -2012,7 +2016,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void ird02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "a"),
 			};
 		final String formulaAsString = "(exists ((x Int)) (< a (mod x 133)))";
@@ -2022,7 +2026,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void alignedArrayAccess01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
 			};
 		final String formulaAsString = "(exists ((x Int)) (and (= (mod x 4) 0) (= (select a x) 1337)))";
@@ -2032,7 +2036,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void uneliminableInfiniteLoopRisk01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2", "a3"),
 			};
 		final String formulaAsString = "(exists ((x1 Int) (x2 Int) (x3 Int)) (and (= (+ (* 2 x1) (* 3 x2) (* 5 x3)) 0) (= (select a1 x1) 1337) (= (select a2 x2) 1337) (= (select a3 x3) 1337)))";
@@ -2042,7 +2046,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void uneliminableInfiniteLoopRisk02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2", "a3"),
 			};
 		final String formulaAsString = "(exists ((x1 Int) (x2 Int) (x3 Int)) (and (= (+ (mod x1 2) (* 3 x2) (* 5 x3)) 0) (= (select a1 x1) 1337) (= (select a2 x2) 1337) (= (select a3 x3) 1337)))";
@@ -2056,7 +2060,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void negativeCoefficientBug() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start___VERIFIER_assert_~cond#1"),
 		};
 		final String formulaAsString = "(exists ((|aux_div_ULTIMATE.start_main_~x~0#1_47| Int) (|aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| Int) (|aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48| Int)) (and (<= 0 |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59|) (<= 0 (+ 46 |aux_div_ULTIMATE.start_main_~x~0#1_47| |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48|)) (<= 0 (+ |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48|)) (<= (+ 46 |aux_div_ULTIMATE.start_main_~x~0#1_47|) 0) (< |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| 1) (or (and (= (mod (+ (* |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| 2147483637) (* |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48| 2147483637) (* |aux_div_ULTIMATE.start_main_~x~0#1_47| 2147483637)) 2147483648) 15) (= |ULTIMATE.start___VERIFIER_assert_~cond#1| 0)) (and (= |ULTIMATE.start___VERIFIER_assert_~cond#1| 1) (not (= (mod (+ (* |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| 2147483637) (* |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48| 2147483637) (* |aux_div_ULTIMATE.start_main_~x~0#1_47| 2147483637)) 2147483648) 15)))) (< (+ |aux_div_aux_mod_aux_mod_ULTIMATE.start_main_~x~0#1_47_48_59| |aux_div_aux_mod_ULTIMATE.start_main_~x~0#1_47_48|) 1)))";
@@ -2066,7 +2070,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void fusibleInequalities01() {
-		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_result", "main_m", "main_n"), };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "main_result", "main_m", "main_n"), };
 		final String formulaAsString = "(exists ((main_n_tmp Int)) (and (= (+ main_result (* main_m main_n_tmp)) (* main_n main_m)) (<= 0 main_n_tmp) (not (<= 1 main_n_tmp))))";
 		final String expectedResultAsString = "(= main_result (* main_m main_n))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -2074,7 +2078,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void avt01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
 		};
@@ -2085,7 +2089,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void avt02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
 		};
@@ -2096,7 +2100,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void avt03() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "b"),
@@ -2108,7 +2112,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void avt04TwoNondetValues() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "a1", "a2"),
 		};
@@ -2119,7 +2123,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void avt05() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k", "i", "y"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
 		};
@@ -2130,7 +2134,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void avt06CaseDistinctionExists() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k", "j"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "b"),
@@ -2142,7 +2146,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void avt07CaseDistinctionForall() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k", "j"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a1", "a2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntBoolSort, "b"),
@@ -2154,7 +2158,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void saaDowngrade01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "k3", "j1"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "b"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntIntSort, "c"),
@@ -2166,7 +2170,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void saaDowngrade02() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "k3", "j1", "j2"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "b"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntIntSort, "c"),
@@ -2178,7 +2182,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationDowngradeBug_7fb185b6_Size44_reduced() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "mem"),
 			new FunDecl(SmtSortUtils::getIntSort, "base1", "offset2", "base2", "offset1"),
 		};
@@ -2192,7 +2196,7 @@ public class QuantifierEliminationRegressionTest {
 	 */
 	@Test
 	public void arrayEliminationDowngradeBug_1507847c_Size140() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base", "arr", "#memory_$Pointer$.offset", "v_arrayElimArr_3"),
 			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_gl_insert_~node~1#1.base"),
 		};
@@ -2203,7 +2207,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationDowngradeBug_26c6c183_Size61() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "aCell"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.offset"),
 			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_gl_insert_~node~1#1.base"),
@@ -2215,7 +2219,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationDowngradeBug_7fb185b6_Size44() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~a~0#1.base", "ULTIMATE.start_mkdup_~i~0#1", "v_ULTIMATE.start_mkdup_~a#1.base_BEFORE_CALL_7", "ULTIMATE.start_mkdup_~j~0#1"),
 		};
@@ -2226,7 +2230,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationDowngradeBug_a213feb1_Size75() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "ULTIMATE.start_main_~a0~0#1.base", "downsweep_~left"),
 		};
@@ -2237,7 +2241,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationDowngradeBug_c5b8b83c_Size53() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "arr"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
 			new FunDecl(SmtSortUtils::getIntSort, "__ldv_list_add_#in~next.base", "__ldv_list_add_#in~new.base", "__ldv_list_add_#in~prev.base", "__ldv_list_add_~next.offset", "__ldv_list_add_#in~new.offset", "__ldv_list_add_#in~prev.offset"),
@@ -2249,7 +2253,7 @@ public class QuantifierEliminationRegressionTest {
 
 	@Test
 	public void arrayEliminationDowngradeBug_ef7616e1_Size86() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 			new FunDecl(SmtSortUtils::getIntSort, "v_ULTIMATE.start_upsweep_~left~0#1_19", "ULTIMATE.start_main_~a~0#1.offset", "ULTIMATE.start_main_~a~0#1.base", "ULTIMATE.start_main_~a0~0#1.base", "ULTIMATE.start_upsweep_~a#1.offset", "ULTIMATE.start_main_~a0~0#1.offset"),
 		};

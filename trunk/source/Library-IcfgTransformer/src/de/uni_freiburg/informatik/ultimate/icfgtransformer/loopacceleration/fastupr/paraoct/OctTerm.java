@@ -42,8 +42,8 @@ public abstract class OctTerm {
 	protected final boolean mSecondNegative;
 	protected final Object mValue;
 
-	public OctTerm(final Object value, final TermVariable firstVar, final boolean firstNegative, final TermVariable secondVar,
-			final boolean secondNegative) {
+	public OctTerm(final Object value, final TermVariable firstVar, final boolean firstNegative,
+			final TermVariable secondVar, final boolean secondNegative) {
 		mValue = value;
 		mFirstVar = firstVar;
 		mFirstNegative = firstNegative;

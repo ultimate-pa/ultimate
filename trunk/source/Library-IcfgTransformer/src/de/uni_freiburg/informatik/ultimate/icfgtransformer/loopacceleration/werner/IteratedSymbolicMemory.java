@@ -382,7 +382,8 @@ public class IteratedSymbolicMemory {
 			 */
 			final Term necessaryCondition = mScript.getScript().quantifier(QuantifiedFormula.FORALL, vars, tFirstPart);
 
-			mTerms.add(PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, necessaryCondition));
+			mTerms.add(PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+					SimplificationTechnique.SIMPLIFY_DDA, necessaryCondition));
 		}
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(mInVars, mOutVars, true, null, true, null, false);
@@ -452,9 +453,7 @@ public class IteratedSymbolicMemory {
 			t = ((QuantifiedFormula) t).getSubformula();
 		}
 
-		final Deque<Term> stack = new ArrayDeque<>();
-		stack.addAll(Arrays.asList(((ApplicationTerm) t).getParameters()));
-
+		final Deque<Term> stack = new ArrayDeque<>(Arrays.asList(((ApplicationTerm) t).getParameters()));
 		while (!stack.isEmpty()) {
 			Term subTerm = stack.pop();
 			if (subTerm instanceof ConstantTerm || subTerm instanceof TermVariable) {

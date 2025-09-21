@@ -33,19 +33,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 class PositionAwareTermTransformer extends NonRecursive {
 
 	/**
-	 * The converted terms.  This is used for example to store the
-	 * arguments of an application term, before the application term is
-	 * evaluated.
+	 * The converted terms. This is used for example to store the arguments of an application term, before the
+	 * application term is evaluated.
 	 */
-	private final ArrayDeque<Term> mConverted = new ArrayDeque<Term>();
+	private final ArrayDeque<Term> mConverted = new ArrayDeque<>();
 
 	/**
-	 * This class represents one item of work.  It consists of a term and
-	 * some task that still needs to be performed on the term.
+	 * This class represents one item of work. It consists of a term and some task that still needs to be performed on
+	 * the term.
 	 */
 	private static class Convert implements Walker {
 		private final Term mTerm;
 		private final SubtreePosition mPos;
+
 		public Convert(final Term term, final SubtreePosition pos) {
 			mTerm = term;
 			mPos = pos;
@@ -66,9 +66,10 @@ class PositionAwareTermTransformer extends NonRecursive {
 	 * Push all terms in the array on the todo stack as CONVERT work item.
 	 *
 	 * NB: give this method the position of the base term and it will call pushterm with appropriate positions for the
-	 *  arguments
+	 * arguments
 	 *
-	 * @param terms the array of terms.
+	 * @param terms
+	 *            the array of terms.
 	 */
 	protected final void pushTerms(final Term[] terms, final SubtreePosition pos) {
 		for (int i = terms.length - 1; i >= 0; i--) {
@@ -81,7 +82,8 @@ class PositionAwareTermTransformer extends NonRecursive {
 	 *
 	 * NB: pos must already be updated, if a subterm is pushed
 	 *
-	 * @param term the term to convert.
+	 * @param term
+	 *            the term to convert.
 	 */
 	protected final void pushTerm(final Term term, final SubtreePosition pos) {
 		enqueueWalker(new Convert(term, pos));
@@ -89,28 +91,27 @@ class PositionAwareTermTransformer extends NonRecursive {
 
 	/**
 	 * Set the conversion result to term.
-	 * @param term the converted term.
+	 *
+	 * @param term
+	 *            the converted term.
 	 */
 	protected final void setResult(final Term term) {
 		mConverted.addLast(term);
 	}
 
-
 	/**
-	 * The function that does the transformation.   Override this function
-	 * if you build your own term transformer.  It does not return the result
-	 * but instead it puts it on the converted stack using setResult().
-	 * Instead it can also enqueue some Builders that will in the end put the
-	 * result on the converted stack.
+	 * The function that does the transformation. Override this function if you build your own term transformer. It does
+	 * not return the result but instead it puts it on the converted stack using setResult(). Instead it can also
+	 * enqueue some Builders that will in the end put the result on the converted stack.
 	 *
-	 * You can always call super.convert() if you do not need to convert
-	 * the term.  It will still convert the sub-terms. If you do not want to
-	 * convert the sub terms, call setResult(term) instead.
-	 * @param term  The term to convert.
+	 * You can always call super.convert() if you do not need to convert the term. It will still convert the sub-terms.
+	 * If you do not want to convert the sub terms, call setResult(term) instead.
+	 *
+	 * @param term
+	 *            The term to convert.
 	 */
 	protected void convert(final Term term, final SubtreePosition pos) {
-		if (term instanceof ConstantTerm
-			|| term instanceof TermVariable) {
+		if (term instanceof ConstantTerm || term instanceof TermVariable) {
 			mConverted.addLast(term);
 		} else if (term instanceof ApplicationTerm) {
 			enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term, pos));
@@ -135,23 +136,20 @@ class PositionAwareTermTransformer extends NonRecursive {
 				}
 			}
 			pushTerm(annterm.getSubterm(), pos.append(annots.length));
-			return;
 		} else {
 			throw new AssertionError("Unknown Term: " + term.toStringDirect());
 		}
 	}
 
-	public void convertApplicationTerm(
-			final ApplicationTerm appTerm, final Term[] newArgs, final SubtreePosition pos) {
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs, final SubtreePosition pos) {
 		Term newTerm = appTerm;
 		if (newArgs != appTerm.getParameters()) {
 			final FunctionSymbol fun = appTerm.getFunction();
 			final Theory theory = fun.getTheory();
 
 			/*
-			 * Difference to {@link Substitution}:
-			 *  PositionAwareSubstition may replace Terms with Terms of different type.
-			 *  Thus the type of an instance of a polymorphic function symbol has to be recomputed.
+			 * Difference to {@link Substitution}: PositionAwareSubstition may replace Terms with Terms of different
+			 * type. Thus the type of an instance of a polymorphic function symbol has to be recomputed.
 			 */
 			final Sort[] paramTypes = new Sort[newArgs.length];
 			for (int i = 0; i < newArgs.length; i++) {
@@ -174,10 +172,8 @@ class PositionAwareTermTransformer extends NonRecursive {
 
 	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
 		Term result = oldLet;
-		if (oldLet.getValues() != newValues
-			|| oldLet.getSubTerm() != newBody) {
-			result = oldLet.getTheory().let(
-					oldLet.getVariables(), newValues, newBody);
+		if (oldLet.getValues() != newValues || oldLet.getSubTerm() != newBody) {
+			result = oldLet.getTheory().let(oldLet.getVariables(), newValues, newBody);
 		}
 		setResult(result);
 	}
@@ -187,33 +183,34 @@ class PositionAwareTermTransformer extends NonRecursive {
 		if (newBody != old.getSubformula()) {
 			final Theory theory = old.getTheory();
 			final TermVariable[] vars = old.getVariables();
-			newFormula = old.getQuantifier() == QuantifiedFormula.EXISTS
-				? theory.exists(vars, newBody) : theory.forall(vars,newBody);
+			newFormula = old.getQuantifier() == QuantifiedFormula.EXISTS ? theory.exists(vars, newBody)
+					: theory.forall(vars, newBody);
 		}
 		setResult(newFormula);
 	}
 
-	public void postConvertAnnotation(final AnnotatedTerm old,
-			final Annotation[] newAnnots, final Term newBody) {
+	public void postConvertAnnotation(final AnnotatedTerm old, final Annotation[] newAnnots, final Term newBody) {
 		final Annotation[] annots = old.getAnnotations();
 		Term result = old;
-		if (newBody != old.getSubterm()	|| newAnnots != annots) {
+		if (newBody != old.getSubterm() || newAnnots != annots) {
 			result = old.getTheory().annotatedTerm(newAnnots, newBody);
 		}
 		setResult(result);
 	}
 
 	protected void beginScope() {
-//		mCache.addLast(new HashMap<Term, Term>());
+		// mCache.addLast(new HashMap<Term, Term>());
 	}
 
 	protected void endScope() {
-//		mCache.removeLast();
+		// mCache.removeLast();
 	}
 
 	/**
 	 * Transform a term.
-	 * @param term the term to transform.
+	 *
+	 * @param term
+	 *            the term to transform.
 	 * @return the resulting transformed term.
 	 */
 	public final Term transform(final Term term) {
@@ -224,9 +221,9 @@ class PositionAwareTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Get a single converted term from the converted stack.  This is the
-	 * dual of pushTerm() that is called after the term were removed
-	 * from the todo stack and pushed to the converted stack.
+	 * Get a single converted term from the converted stack. This is the dual of pushTerm() that is called after the
+	 * term were removed from the todo stack and pushed to the converted stack.
+	 *
 	 * @return the new converted term.
 	 */
 	protected final Term getConverted() {
@@ -234,13 +231,13 @@ class PositionAwareTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Get the converted terms from the converted stack.  This is the
-	 * dual of pushTerms() that is called after the term were removed
-	 * from the todo stack and pushed to the converted stack.  It takes
-	 * the old terms as argument and checks for changes.
-	 * @param oldArgs the original arguments.
-	 * @return the new converted arguments.  It will return the same array
-	 * oldArgs if there were no changes.
+	 * Get the converted terms from the converted stack. This is the dual of pushTerms() that is called after the term
+	 * were removed from the todo stack and pushed to the converted stack. It takes the old terms as argument and checks
+	 * for changes.
+	 *
+	 * @param oldArgs
+	 *            the original arguments.
+	 * @return the new converted arguments. It will return the same array oldArgs if there were no changes.
 	 */
 	protected final Term[] getConverted(final Term[] oldArgs) {
 		Term[] newArgs = oldArgs;
@@ -257,10 +254,9 @@ class PositionAwareTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Collect the arguments of an application term from the converted stack
-	 * and finish the conversion of appTerm.  This is called after the arguments
-	 * of appTerm have been converted.  It will put the converted term on
-	 * the converted stack and store it in the cache.
+	 * Collect the arguments of an application term from the converted stack and finish the conversion of appTerm. This
+	 * is called after the arguments of appTerm have been converted. It will put the converted term on the converted
+	 * stack and store it in the cache.
 	 */
 	protected static class BuildApplicationTerm implements Walker {
 		/** the application term to convert. */
@@ -288,8 +284,7 @@ class PositionAwareTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Walker that is called after the variable values are transformed
-	 * and before the let body starts.
+	 * Walker that is called after the variable values are transformed and before the let body starts.
 	 */
 	protected static class StartLetTerm implements Walker {
 		/** the let term to convert. */
@@ -315,8 +310,7 @@ class PositionAwareTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Collect the sub term and the values of a let term from the
-	 * converted stack and finish the conversion of let term.
+	 * Collect the sub term and the values of a let term from the converted stack and finish the conversion of let term.
 	 */
 	protected static class BuildLetTerm implements Walker {
 		/** the let term to convert. */
@@ -346,10 +340,8 @@ class PositionAwareTermTransformer extends NonRecursive {
 	}
 
 	/**
-	 * Collect the sub term of a quantified formula and build the converted
-	 * formula.  The converted sub formula is expected to be on the
-	 * converted stack.
-	 * It stores the converted quantifier on the converted stack and in the
+	 * Collect the sub term of a quantified formula and build the converted formula. The converted sub formula is
+	 * expected to be on the converted stack. It stores the converted quantifier on the converted stack and in the
 	 * cache.
 	 */
 	protected static class BuildQuantifier implements Walker {
@@ -372,17 +364,14 @@ class PositionAwareTermTransformer extends NonRecursive {
 
 		@Override
 		public String toString() {
-			return mQuant.getQuantifier() == QuantifiedFormula.EXISTS
-					? "exists" : "forall";
+			return mQuant.getQuantifier() == QuantifiedFormula.EXISTS ? "exists" : "forall";
 		}
 	}
 
 	/**
-	 * Collect the sub term and annotations of an annotated formula from
-	 * the converted stack.  It converts the annotation and stores the
-	 * result in the cache and on the converted stack.
-	 * Note that only Annotations that are of type Term or Term[] are
-	 * converted.
+	 * Collect the sub term and annotations of an annotated formula from the converted stack. It converts the annotation
+	 * and stores the result in the cache and on the converted stack. Note that only Annotations that are of type Term
+	 * or Term[] are converted.
 	 */
 	protected static class BuildAnnotation implements Walker {
 		/** the annotated term. */
@@ -430,7 +419,7 @@ class PositionAwareTermTransformer extends NonRecursive {
 	public void reset() {
 		super.reset();
 		mConverted.clear();
-//		mCache.clear();
+		// mCache.clear();
 	}
 
 }

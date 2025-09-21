@@ -221,21 +221,16 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		}
 
-		switch (mPrefs.getFloydHoareAutomataReuse()) {
-		case EAGER:
-			return new EagerReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
-					stateFactoryForRefinement);
-		case LAZY_IN_ORDER:
-			return new LazyReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
-					stateFactoryForRefinement);
-		case NONE:
-			return new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
-		default:
-			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
-		}
+		return switch (mPrefs.getFloydHoareAutomataReuse()) {
+		case EAGER -> new EagerReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+				proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
+				stateFactoryForRefinement);
+		case LAZY_IN_ORDER -> new LazyReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
+				errorLocs, proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
+				mTransitionClazz, stateFactoryForRefinement);
+		case NONE -> new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+				proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+		};
 	}
 
 	private void requireNoReuse(final String analysis) {

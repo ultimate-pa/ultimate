@@ -36,16 +36,16 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class RegexDagNode<L> extends ModifiableDirectedGraph<RegexDagNode<L>> {
 
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Content of this node, usually a regex which is either a literal, epsilon, empty set,
-	 * or a regex whose outermost operator is a star.
-	 * Concatenation and union can be represented by the DAG.
+	 * Content of this node, usually a regex which is either a literal, epsilon, empty set, or a regex whose outermost
+	 * operator is a star. Concatenation and union can be represented by the DAG.
 	 */
 	private final IRegex<L> mContent;
 
@@ -54,8 +54,8 @@ public class RegexDagNode<L> extends ModifiableDirectedGraph<RegexDagNode<L>> {
 	}
 
 	/**
-	 * Create a DAG node whose content is the empty word ε.
-	 * ε-nodes are often used as forks and joins since ε is the neutral argument of concatenation.
+	 * Create a DAG node whose content is the empty word ε. ε-nodes are often used as forks and joins since ε is the
+	 * neutral argument of concatenation.
 	 */
 	public static <L> RegexDagNode<L> makeEpsilon() {
 		return new RegexDagNode<>(Regex.epsilon());

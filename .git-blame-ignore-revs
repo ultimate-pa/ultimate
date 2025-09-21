@@ -3,8 +3,25 @@
 # Or better, set this config option to automatically use this file when blaming:
 #    git config blame.ignoreRevsFile .git-blame-ignore-revs
 
+# To get the full hashes of commits that contain <MSG>, you can use:
+# git log -i --grep=<MSG> --pretty=format:"%H" -n 10
+# (adapt or remove -n 10 to get more than 10 commits)
+
 # CC Fixes
-# git log -i --grep='cc fixes' --pretty=format:"%H" > .git-blame-ignore-revs
+d28f9ee8def3736acce900c1dd19b4a7f1e82d19
+c1972fcbb07b89b37af7cfed6d0eccc0bbf54021
+cdb3e27d1f25440d07bad18a9df9e79e775eea59
+4e9634e7eb61d0d456e2f74c4c74ac25b8e46cd3
+fe7de74289b6635d131aa49ac1dbd3cc0f653fc0
+30580a0b48d2e2d5c18b330f23f0a4448d724c8d
+bc491e5128af541e38e898524dfe3949796cd79a
+64289da17d561fc71913e48ba5d21e527438982b
+2697b6c2ff92d547e28d2d457ce00be7cd9d4b58
+a7b9a9bb93781a6a2f471c830e8928fa1e70cb83
+ebd41074f8e8de134564562c4c945d0e512c2ffe
+58e62334af9b128864500a212e727855a7291743
+ce683432bdc0b03b0498ec4bed6804e4dce50ee3
+b6637e3ca7cc1efb5247d934f71a0185afdff7a8
 9db51f0da25927e7dd8a6f227e32248a67e00cad
 de6907db633bbe9e8420c3b9125d8f3b9cd46b25
 61ba2ee7b47f5d54fb9af8e5f1f059fa2432d335

@@ -40,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 /**
- * This class provides static auxiliary methods that are useful for several loop
- * acceleration techniques.
+ * This class provides static auxiliary methods that are useful for several loop acceleration techniques.
  *
  * @author Miriam Herzig
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -54,19 +53,16 @@ public class LoopAccelerationUtils {
 	}
 
 	/**
-	 * Method that checks some properties that the result of a loop acceleration
-	 * should have and writes logging output if something unexpected happens (e.g.,
-	 * SMT solver was unable to perform check). This methods should be used as
-	 * argument to an assert statement (in order to perform these costly checks only
-	 * if assertions are enabled) and returns always true.
+	 * Method that checks some properties that the result of a loop acceleration should have and writes logging output
+	 * if something unexpected happens (e.g., SMT solver was unable to perform check). This methods should be used as
+	 * argument to an assert statement (in order to perform these costly checks only if assertions are enabled) and
+	 * returns always true.
 	 *
-	 * TODO 20220724 Matthias: Use echo of script consistently in order to ease
-	 * debugging.
+	 * TODO 20220724 Matthias: Use echo of script consistently in order to ease debugging.
 	 *
-	 * @param isAlsoReflexive If set to false, we expect that the accelerationResult
-	 *                        is only the transitive closure of the loop. If set to
-	 *                        true we expect that the accelerationResult is the
-	 *                        reflexive transitive closure of the loop.
+	 * @param isAlsoReflexive
+	 *            If set to false, we expect that the accelerationResult is only the transitive closure of the loop. If
+	 *            set to true we expect that the accelerationResult is the reflexive transitive closure of the loop.
 	 */
 	public static boolean checkSomePropertiesOfLoopAccelerationFormula(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final UnmodifiableTransFormula loopTransFormula,
@@ -107,8 +103,7 @@ public class LoopAccelerationUtils {
 			// result. In order to implement this check, we determine if R(x,x')⚬R(x,x') ∧
 			// ¬res(x,x') is satisfiable.
 			final UnmodifiableTransFormula loop2 = TransFormulaUtils.sequentialComposition(logger, services, mgdScript,
-					true, true, false, SimplificationTechnique.NONE,
-					Arrays.asList(new UnmodifiableTransFormula[] { loopTransFormula, loopTransFormula }));
+					true, true, false, SimplificationTechnique.NONE, Arrays.asList(loopTransFormula, loopTransFormula));
 			final UnmodifiableTransFormula and = TransFormulaUtils.intersect(mgdScript, loop2, neg);
 			final LBool lbool = Util.checkSat(mgdScript.getScript(), and.getClosedFormula());
 			if (lbool == LBool.SAT) {
@@ -123,14 +118,13 @@ public class LoopAccelerationUtils {
 			// Check whether result is a subset of the havoced input relation.
 			// In order to implement this check, we determine if res(x,x') ∧
 			// ¬havoced(R)(x,x') is satisfiable.
-			final UnmodifiableTransFormula guardedHavoc = TransFormulaUtils.computeGuardedHavoc(loopTransFormula,
-					mgdScript, services, false);
+			final UnmodifiableTransFormula guardedHavoc =
+					TransFormulaUtils.computeGuardedHavoc(loopTransFormula, mgdScript, services, false);
 			final UnmodifiableTransFormula negated;
 			if (isAlsoReflexive) {
 				final UnmodifiableTransFormula reflexiveClosure = TransFormulaBuilder.getTrivialTransFormula(mgdScript);
 				final UnmodifiableTransFormula guardedHavocOrReflexiveClosure = TransFormulaUtils.parallelComposition(
-						logger, services, mgdScript, null, false,
-						false, guardedHavoc, reflexiveClosure);
+						logger, services, mgdScript, null, false, false, guardedHavoc, reflexiveClosure);
 				negated = TransFormulaUtils.negate(guardedHavocOrReflexiveClosure, mgdScript, services);
 			} else {
 				negated = TransFormulaUtils.negate(guardedHavoc, mgdScript, services);

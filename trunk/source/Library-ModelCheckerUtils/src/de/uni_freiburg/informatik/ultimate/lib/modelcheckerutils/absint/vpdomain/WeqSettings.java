@@ -4,7 +4,6 @@ public class WeqSettings {
 
 	private final boolean mReportEqDeqInplace = true;
 
-
 	private final boolean mRemoveElementInplace = false;
 	private final boolean mAddNodeInplace = false;
 	private final boolean mProjectToElementsInplace = false;
@@ -27,7 +26,6 @@ public class WeqSettings {
 	private final int mMaxNoElementsForVerboseToString = 20;
 	private final int mMaxNoEdgeLabelDisjunctsForVerboseToString = 3;
 	private final int mMaxNoWeqEdgesForVerboseToString = 4;
-
 
 	/* flags to switch sanity checks on/off */
 
@@ -54,8 +52,8 @@ public class WeqSettings {
 
 	/**
 	 * if weq labels are compared via an SMT query (right now: the standard solver, probably doing it via SMTInterpol
-	 * would be better) or via our imprecise disjunct-by-disjunct check
-	 * (performance on regressions: slightly worse for "true", ~5-10%)
+	 * would be better) or via our imprecise disjunct-by-disjunct check (performance on regressions: slightly worse for
+	 * "true", ~5-10%)
 	 */
 	private boolean mPreciseWeqLabelComparison = false;
 
@@ -69,7 +67,6 @@ public class WeqSettings {
 	 * See {@link WeqSettings#closeAllEqConstraints()}.
 	 */
 	private final boolean mCloseAllEqConstraints = false;
-
 
 	/**
 	 * See {@link #closeAfterInplaceMeet()}.
@@ -155,8 +152,8 @@ public class WeqSettings {
 	}
 
 	/**
-	 * Makes an exception to {@link WeqSettings#closeAllEqConstraints()} = false, if set to true.
-	 * Makes a difference in performance and precision.
+	 * Makes an exception to {@link WeqSettings#closeAllEqConstraints()} = false, if set to true. Makes a difference in
+	 * performance and precision.
 	 *
 	 * @return
 	 */
@@ -166,8 +163,8 @@ public class WeqSettings {
 
 	/**
 	 * WeqCcs in EqConstraints need to be frozen, but they do not always need to be closed. If this returns true, then
-	 * all WeqCcs that are kept in EqConstraint are always also closed.
-	 * (Historically, a freeze meant a close, by this setting, these concerns are separated.)
+	 * all WeqCcs that are kept in EqConstraint are always also closed. (Historically, a freeze meant a close, by this
+	 * setting, these concerns are separated.)
 	 *
 	 * @return
 	 */
@@ -177,8 +174,8 @@ public class WeqSettings {
 
 	/**
 	 * By our paradigm, we must close before lossy operations an query operations.
-	 * {@link WeqCongruenceClosure#isInconsistent()} is a query operation, so we should close.
-	 * However, this might be expensive, so we have this setting.
+	 * {@link WeqCongruenceClosure#isInconsistent()} is a query operation, so we should close. However, this might be
+	 * expensive, so we have this setting.
 	 *
 	 * @return
 	 */

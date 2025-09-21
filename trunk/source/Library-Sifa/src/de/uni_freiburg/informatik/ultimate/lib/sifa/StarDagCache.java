@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.RegexStatUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
 /**
- * Stores compressed {@link RegexDag}s for the content of star expressions.
- * Inside a RegexDag the very same star expression may appear multiple times, therefore, we can save a lot
- * of work by caching the result of converting the star expression into a DAG and then compressing that DAG.
+ * Stores compressed {@link RegexDag}s for the content of star expressions. Inside a RegexDag the very same star
+ * expression may appear multiple times, therefore, we can save a lot of work by caching the result of converting the
+ * star expression into a DAG and then compressing that DAG.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */

@@ -1211,10 +1211,8 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	public IntervalDomainValue divideInteger(final IntervalDomainValue other) {
 		IntervalDomainValue result;
 
-		if (other.containsZero()) {
-			if (other.isPointInterval()) {
-				return new IntervalDomainValue(true);
-			}
+		if (other.containsZero() && other.isPointInterval()) {
+			return new IntervalDomainValue(true);
 		}
 
 		// final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
@@ -1314,11 +1312,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		// Compute a / c
 		if (a.isInfinity()) {
-			if (!c.isInfinity()) {
-				// -\infty / val = -\infty, if val > 0
-				if (c.getValue().signum() > 0) {
-					return new IntervalValue();
-				}
+			// -\infty / val = -\infty, if val > 0
+			if (!c.isInfinity() && (c.getValue().signum() > 0)) {
+				return new IntervalValue();
 			}
 		} else {
 			// 0 / anything = 0.
@@ -1397,11 +1393,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		// Compute b / d
 		if (b.isInfinity()) {
-			if (!d.isInfinity()) {
-				// \infty / val = -\infty, if val < 0
-				if (d.getValue().signum() < 0) {
-					return new IntervalValue();
-				}
+			// \infty / val = -\infty, if val < 0
+			if (!d.isInfinity() && (d.getValue().signum() < 0)) {
+				return new IntervalValue();
 			}
 		} else {
 			if (d.isInfinity()) {
@@ -1493,11 +1487,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		// Compute a / d
 		if (a.isInfinity()) {
-			if (!d.isInfinity()) {
-				// -\infty / val = \infty, if val < 0
-				if (d.getValue().signum() < 0) {
-					return new IntervalValue();
-				}
+			// -\infty / val = \infty, if val < 0
+			if (!d.isInfinity() && (d.getValue().signum() < 0)) {
+				return new IntervalValue();
 			}
 		} else {
 			if (d.isInfinity()) {
@@ -1519,11 +1511,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		// Compute b / c
 		if (b.isInfinity()) {
-			if (!c.isInfinity()) {
-				// \infty / val = \infty, if val > 0
-				if (c.getValue().signum() > 0) {
-					return new IntervalValue();
-				}
+			// \infty / val = \infty, if val > 0
+			if (!c.isInfinity() && (c.getValue().signum() > 0)) {
+				return new IntervalValue();
 			}
 		} else {
 			if (c.isInfinity()) {

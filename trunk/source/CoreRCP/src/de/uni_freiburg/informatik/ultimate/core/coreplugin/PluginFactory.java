@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -162,8 +163,7 @@ public final class PluginFactory implements IServiceFactoryFactory {
 		if (mToolchainPluginCache == null) {
 			mToolchainPluginCache = loadAdmissiblePlugins();
 		}
-		final List<IToolchainPlugin> rtr = new ArrayList<>();
-		rtr.addAll(mToolchainPluginCache);
+		final List<IToolchainPlugin> rtr = new ArrayList<>(mToolchainPluginCache);
 		return rtr;
 	}
 
@@ -258,13 +258,13 @@ public final class PluginFactory implements IServiceFactoryFactory {
 						.collect(Collectors.toList());
 
 		final Optional<Pair<IConfigurationElement, Integer>> preferredElemOptional =
-				elemsWithPreference.stream().min((a, b) -> a.getSecond().compareTo(b.getSecond()));
+				elemsWithPreference.stream().min(Comparator.comparing(Pair<IConfigurationElement, Integer>::getSecond));
 		if (!preferredElemOptional.isPresent()) {
 			throw new AssertionError("Java8 is broken");
 		}
 		final Pair<IConfigurationElement, Integer> preferredElem = preferredElemOptional.get();
 		final int minValue = preferredElem.getSecond();
- 
+
 		// check if the minimum is unambiguous
 		final List<Pair<IConfigurationElement, Integer>> preferredElements =
 				elemsWithPreference.stream().filter(a -> a.getSecond().equals(minValue)).collect(Collectors.toList());

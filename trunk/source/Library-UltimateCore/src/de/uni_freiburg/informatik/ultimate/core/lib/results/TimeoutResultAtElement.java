@@ -40,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  *
  * @param <E>
  */
-public class TimeoutResultAtElement<E extends IElement> extends AbstractResultAtElement<E>
-		implements ITimeoutResult {
+public class TimeoutResultAtElement<E extends IElement> extends AbstractResultAtElement<E> implements ITimeoutResult {
 
 	private final String mLongDescription;
 

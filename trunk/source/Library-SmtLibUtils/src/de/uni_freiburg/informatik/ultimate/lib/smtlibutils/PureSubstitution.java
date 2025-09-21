@@ -45,18 +45,15 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
- * Substitution that replaces subterms by terms. Takes care the quantified
- * variables are renamed to fresh variables such that - no variable in
- * substituted term is "captured" by an existing quantifier - no subterm that
- * contains a bound variable is substituted.
+ * Substitution that replaces subterms by terms. Takes care the quantified variables are renamed to fresh variables such
+ * that - no variable in substituted term is "captured" by an existing quantifier - no subterm that contains a bound
+ * variable is substituted.
  *
- * Idea of this implementation. Replace quantified variables by fresh variables
- * whenever a variable interferes with a variable in the substitution mapping.
- * TODO: If quantified variable occurs in key of substitution mapping, do not
+ * Idea of this implementation. Replace quantified variables by fresh variables whenever a variable interferes with a
+ * variable in the substitution mapping. TODO: If quantified variable occurs in key of substitution mapping, do not
  * rename quantified variable but remove substitution in the current scope.
  *
- * Does not ensure that the result satisfies the UltimateNormalForm or the
- * CommuHashNormalForm.
+ * Does not ensure that the result satisfies the UltimateNormalForm or the CommuHashNormalForm.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -67,7 +64,6 @@ public class PureSubstitution extends TermTransformer {
 	private final ScopedHashMap<Term, Term> mScopedSubstitutionMapping;
 
 	private PureSubstitution(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping) {
-		super();
 		mMgdScript = null;
 		mScript = script;
 		mScopedSubstitutionMapping = new ScopedHashMap<>();
@@ -76,15 +72,14 @@ public class PureSubstitution extends TermTransformer {
 
 	protected PureSubstitution(final ManagedScript mgdScript,
 			final Map<? extends Term, ? extends Term> substitutionMapping) {
-		super();
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();
 		mScopedSubstitutionMapping = new ScopedHashMap<>();
 		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 
-	public static Term apply(final Script script,
-			final Map<? extends Term, ? extends Term> substitutionMapping, final Term term) {
+	public static Term apply(final Script script, final Map<? extends Term, ? extends Term> substitutionMapping,
+			final Term term) {
 		return new PureSubstitution(script, substitutionMapping).transform(term);
 	}
 

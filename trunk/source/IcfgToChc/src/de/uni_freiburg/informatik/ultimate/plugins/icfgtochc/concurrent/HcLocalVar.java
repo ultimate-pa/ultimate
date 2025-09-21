@@ -59,10 +59,7 @@ public final class HcLocalVar implements IHcThreadSpecificVar {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		return obj instanceof final HcLocalVar other && mInstance.equals(other.mInstance)
-				&& mVariable.equals(other.mVariable);
+		return this == obj || (obj instanceof final HcLocalVar other && mInstance.equals(other.mInstance)
+				&& mVariable.equals(other.mVariable));
 	}
 }

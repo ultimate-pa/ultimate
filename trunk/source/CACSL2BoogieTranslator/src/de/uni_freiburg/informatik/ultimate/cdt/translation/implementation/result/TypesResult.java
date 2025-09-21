@@ -31,15 +31,13 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 
 /**
  * Result that is returned whenever we dispatch a type specifier.
  *
- * TODO 2018-10-22 Matthias: It seems that this kind of result is
- * (sometimes) also returned when we dispatch a type declaration.
- * I think this is not desired any more and happens only for
- * historical reasons.
+ * TODO 2018-10-22 Matthias: It seems that this kind of result is (sometimes) also returned when we dispatch a type
+ * declaration. I think this is not desired any more and happens only for historical reasons.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Markus Lindenmann
@@ -51,9 +49,9 @@ public class TypesResult extends Result {
 
 	private final boolean mIsConst;
 	private final boolean mIsVoid;
-	private final CType mCType;
+	private final ICType mCType;
 
-	public TypesResult(final ASTType node, final boolean isConst, final boolean isVoid, final CType cvar) {
+	public TypesResult(final ASTType node, final boolean isConst, final boolean isVoid, final ICType cvar) {
 		super(node);
 		mIsConst = isConst;
 		mIsVoid = isVoid;
@@ -72,7 +70,7 @@ public class TypesResult extends Result {
 		return mIsVoid;
 	}
 
-	public CType getCType() {
+	public ICType getCType() {
 		return mCType;
 	}
 
@@ -81,7 +79,7 @@ public class TypesResult extends Result {
 		return "ResultTypes: " + mCType;
 	}
 
-	public static TypesResult create(final TypesResult resType, final CType cType) {
+	public static TypesResult create(final TypesResult resType, final ICType cType) {
 		return new TypesResult(resType.getAstType(), resType.isConst(), resType.isVoid(), cType);
 	}
 

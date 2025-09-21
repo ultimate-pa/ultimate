@@ -99,20 +99,14 @@ public class ChcSolverObserver extends BaseObserver {
 	}
 
 	private IChcScript getBackend(final HornAnnot annotation) {
-		switch (mPrefs.getBackend()) {
-		case ELDARICA:
-			// return new EldaricaChcScript(mServices, annotation.getScript().getScript());
-			return new EldaricaCliChcScript(mServices, annotation.getScript(), getHintsFile());
-		case Z3:
-			return createZ3Backend();
-		case TREEAUTOMIZER:
-			// NOTE: TAPreferences (last parameter) currently unused by TreeAutomizer
-			return new TreeAutomizerChcScript(mServices, annotation.getScript(), null);
-		case GOLEM:
-			return new GolemChcScript(mServices, annotation.getScript());
-		default:
-			throw new UnsupportedOperationException("Unsupported CHC backend: " + mPrefs.getBackend());
-		}
+		return switch (mPrefs.getBackend()) {
+		case ELDARICA -> new EldaricaCliChcScript(mServices, annotation.getScript(), getHintsFile());
+		case GOLEM -> new GolemChcScript(mServices, annotation.getScript());
+		case Z3 -> createZ3Backend();
+
+		// NOTE: TAPreferences (last parameter) currently unused by TreeAutomizer
+		case TREEAUTOMIZER -> new TreeAutomizerChcScript(mServices, annotation.getScript(), null);
+		};
 	}
 
 	private Path getHintsFile() {
@@ -171,17 +165,14 @@ public class ChcSolverObserver extends BaseObserver {
 	}
 
 	private IResult createResult(final IChcScript chcScript, final LBool satisfiability) {
-		switch (satisfiability) {
-		case SAT:
-			return createSatResult(chcScript);
-		case UNSAT:
-			return createUnSatResult(chcScript);
-		case UNKNOWN:
+		return switch (satisfiability) {
+		case SAT -> createSatResult(chcScript);
+		case UNSAT -> createUnSatResult(chcScript);
+		case UNKNOWN -> {
 			mSolution = ChcSolution.unknown();
-			return new ChcUnknownResult(Activator.PLUGIN_ID, "CHC solver returned UNKNOWN.");
-		default:
-			throw new AssertionError("Unknown CHC result: " + satisfiability);
+			yield new ChcUnknownResult(Activator.PLUGIN_ID, "CHC solver returned UNKNOWN.");
 		}
+		};
 	}
 
 	private ChcSatResult createSatResult(final IChcScript chcScript) {

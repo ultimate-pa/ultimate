@@ -155,8 +155,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		if (currentState.isBottom()) {
 			return currentState;
 		}
-		final CodeBlock codeBlock =
-				mCodeBlockFactory.constructStatementSequence(null, null, statement);
+		final CodeBlock codeBlock = mCodeBlockFactory.constructStatementSequence(null, null, statement);
 		final Collection<STATE> newStates = mSubDomain.getPostOperator().apply(currentState, codeBlock);
 		if (newStates.isEmpty()) {
 			return mSubDomain.createBottomState();
@@ -182,7 +181,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 
 	public Term getTerm(final Expression expression) {
 		return mBoogie2Smt.getExpression2Term()
-				.translateToTerm(new IIdentifierTranslator[] { new IdentifierTranslator() }, expression).getTerm();
+				.translateToTerm(new IIdentifierTranslator[] { new IdentifierTranslator() }, expression).term();
 	}
 
 	private IProgramVarOrConst getBoogieVar(final String id, final DeclarationInformation declInfo,
@@ -245,6 +244,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public Term eliminateQuantifier(final Term term) {
-		return PartialQuantifierElimination.eliminateCompat(mServices, getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
+		return PartialQuantifierElimination.eliminateCompat(mServices, getManagedScript(),
+				SimplificationTechnique.SIMPLIFY_DDA, term);
 	}
 }

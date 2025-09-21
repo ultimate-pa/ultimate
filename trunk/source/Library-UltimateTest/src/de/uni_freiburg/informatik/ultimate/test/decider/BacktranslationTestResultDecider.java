@@ -239,8 +239,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	public TestResult getTestResult(final IUltimateServiceProvider services, final Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
-		TestUtil.logResults(BacktranslationTestResultDecider.class, mInputFilePath, true, new ArrayList<String>(),
-				services);
+		TestUtil.logResults(BacktranslationTestResultDecider.class, mInputFilePath, true, new ArrayList<>(), services);
 		return TestResult.FAIL;
 	}
 

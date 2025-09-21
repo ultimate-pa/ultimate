@@ -74,7 +74,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class IntBlastingWrapper extends WrapperScript {
 
-	public enum IntBlastingMode { RangeBased, CongruenceBased };
+	public enum IntBlastingMode {
+		RangeBased, CongruenceBased
+	}
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -86,8 +88,8 @@ public class IntBlastingWrapper extends WrapperScript {
 	private final TranslationManager mTm;
 
 	/**
-	 * When we use this wrapper for processing SMT files, and want to write
-	 * evaluation results, we store the name of the SMT file here.
+	 * When we use this wrapper for processing SMT files, and want to write evaluation results, we store the name of the
+	 * SMT file here.
 	 */
 	private final String mBenchmarkFilename;
 	private final IntBlastingMode mIntBlastingMode;
@@ -224,13 +226,13 @@ public class IntBlastingWrapper extends WrapperScript {
 		final Term definitionWithoutLet = new FormulaUnLet().unlet(definition);
 		final Triple<Term, Set<Term>, Boolean> triple;
 		try {
-			triple = mTm.translateBvtoIntTransferrer(definitionWithoutLet,
-				new HistoryRecordingScript(mBvScript), new HistoryRecordingScript(mIntScript));
+			triple = mTm.translateBvtoIntTransferrer(definitionWithoutLet, new HistoryRecordingScript(mBvScript),
+					new HistoryRecordingScript(mIntScript));
 		} catch (final Throwable th) {
 			throw new AssertionError(th);
 		}
-		final Term newDefinition = SmtUtils.simplify(mMgdIntScript, triple.getFirst(), mServices,
-				SimplificationTechnique.POLY_PAC);
+		final Term newDefinition =
+				SmtUtils.simplify(mMgdIntScript, triple.getFirst(), mServices, SimplificationTechnique.POLY_PAC);
 		if (triple.getThird()) {
 			// there was an overapproximation
 			throw new UnsupportedOperationException("We cannot overapproximate in definition of defineFun");
@@ -258,9 +260,8 @@ public class IntBlastingWrapper extends WrapperScript {
 	}
 
 	/**
-	 * Translates a bitvector sort to sort Int. Translates parameterized sorts
-	 * recursively. E.g., `(Array (_ BitVec 3) Bool)` is translated to `(Array Int
-	 * Bool)`.
+	 * Translates a bitvector sort to sort Int. Translates parameterized sorts recursively. E.g., `(Array (_ BitVec 3)
+	 * Bool)` is translated to `(Array Int Bool)`.
 	 */
 	public static Sort translateSort(final Script intScript, final Sort sort) {
 		final Sort result;
@@ -300,8 +301,7 @@ public class IntBlastingWrapper extends WrapperScript {
 	public LBool assertTerm(final Term bvTerm) throws SMTLIBException {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			writeEvalRow(0, "Timeout at beginning of assertTerm");
-			throw new ToolchainCanceledException(IntBlastingWrapper.class,
-					String.format("assertTerm"));
+			throw new ToolchainCanceledException(IntBlastingWrapper.class, String.format("assertTerm"));
 		}
 		final Term bvTermWithoutLet = new FormulaUnLet().unlet(bvTerm);
 		final Triple<Term, Set<Term>, Boolean> translationResult;
@@ -319,8 +319,8 @@ public class IntBlastingWrapper extends WrapperScript {
 			mOverapproximationTrackingStack.add(true);
 		}
 		try {
-			final Term simplifiedIntTerm = SmtUtils.simplify(mMgdIntScript, intTerm, mServices,
-					SimplificationTechnique.POLY_PAC);
+			final Term simplifiedIntTerm =
+					SmtUtils.simplify(mMgdIntScript, intTerm, mServices, SimplificationTechnique.POLY_PAC);
 			return mIntScript.assertTerm(simplifiedIntTerm);
 		} catch (final Throwable th) {
 			writeEvalRow(0, th.toString());

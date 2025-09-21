@@ -465,8 +465,8 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 	protected boolean checkCallStackSourceLassoProgramExecution(final ILogger logger,
 			final Lasso<IProgramExecution<STE, SE>> sourceProgramExecution) {
 		final List<AtomicTraceElement<STE>> rtr = new ArrayList<>();
-		sourceProgramExecution.getStem().iterator().forEachRemaining(rtr::add);
-		sourceProgramExecution.getLoop().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.stem().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.loop().iterator().forEachRemaining(rtr::add);
 		return checkCallStackSource(logger, rtr);
 	}
 
@@ -484,8 +484,8 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 	protected boolean checkCallStackTargetLassoProgramExecution(final ILogger logger,
 			final Lasso<IProgramExecution<TTE, TE>> sourceProgramExecution) {
 		final List<AtomicTraceElement<TTE>> rtr = new ArrayList<>();
-		sourceProgramExecution.getStem().iterator().forEachRemaining(rtr::add);
-		sourceProgramExecution.getLoop().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.stem().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.loop().iterator().forEachRemaining(rtr::add);
 		return checkCallStackTarget(logger, rtr);
 	}
 

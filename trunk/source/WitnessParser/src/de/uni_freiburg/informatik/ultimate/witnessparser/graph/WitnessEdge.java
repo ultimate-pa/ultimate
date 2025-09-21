@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -76,12 +78,23 @@ public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEd
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mLocation == null) ? 0 : mLocation.hashCode());
-		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
-		result = prime * result + ((mSourceCode == null) ? 0 : mSourceCode.hashCode());
-		return result;
+		return Objects.hash(mLocation, mName, mSourceCode);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final WitnessEdge other = (WitnessEdge) obj;
+		return Objects.equals(mLocation, other.mLocation) && Objects.equals(mName, other.mName)
+				&& Objects.equals(mSourceCode, other.mSourceCode);
 	}
 
 	@Override

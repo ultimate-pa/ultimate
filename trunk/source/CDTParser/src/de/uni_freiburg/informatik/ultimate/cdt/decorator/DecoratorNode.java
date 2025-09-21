@@ -73,7 +73,7 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 	 */
 	public DecoratorNode(final DecoratorNode parent, final ACSLNode acslNode) {
 		this(parent);
-		this.mAcslNode = acslNode;
+		mAcslNode = acslNode;
 	}
 
 	/**
@@ -86,7 +86,7 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 	 */
 	public DecoratorNode(final DecoratorNode parent, final IASTNode cNode) {
 		this(parent);
-		this.mCNode = cNode;
+		mCNode = cNode;
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 	 */
 	public DecoratorNode(final DecoratorNode parent) {
 		mChildren = new ArrayList<>();
-		this.mParent = parent;
+		mParent = parent;
 	}
 
 	/**
@@ -199,7 +199,7 @@ public class DecoratorNode implements Iterable<DecoratorNode> {
 		if (mAcslNode != null) {
 			throw new IllegalArgumentException("DecoratorNode with ACSL can not have children!");
 		} else if (mCNode != null) {
-			this.mChildren.addAll(children);
+			mChildren.addAll(children);
 		} else {
 			throw new IllegalArgumentException("Node has neither ACSL nor C!");
 		}

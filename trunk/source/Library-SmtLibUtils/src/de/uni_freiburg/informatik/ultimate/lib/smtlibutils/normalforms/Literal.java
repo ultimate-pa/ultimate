@@ -55,7 +55,6 @@ public class Literal {
 	 * negation symbols.
 	 */
 	public Literal(Term input) {
-		super();
 		if (!SmtSortUtils.isBoolSort(input.getSort())) {
 			throw new IllegalArgumentException("only applicable to sort Bool");
 		}

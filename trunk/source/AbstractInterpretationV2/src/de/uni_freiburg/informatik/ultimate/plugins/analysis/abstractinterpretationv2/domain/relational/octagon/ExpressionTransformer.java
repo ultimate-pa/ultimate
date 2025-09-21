@@ -153,8 +153,8 @@ public class ExpressionTransformer {
 
 	/** Internal, non-cached version of {@link #affineExprCached(Expression)}. */
 	private AffineExpression toAffineExpr(final Expression expr) {
-		assert TypeUtils.isNumeric(expr.getType()) : "Cannot transform non-numeric expression to affine expression: "
-				+ expr;
+		assert TypeUtils.isNumeric(expr.getType())
+				: "Cannot transform non-numeric expression to affine expression: " + expr;
 		if (expr instanceof IntegerLiteral) {
 			final String value = ((IntegerLiteral) expr).getValue();
 			return new AffineExpression(AbsIntUtil.sanitizeBigDecimalValue(value));

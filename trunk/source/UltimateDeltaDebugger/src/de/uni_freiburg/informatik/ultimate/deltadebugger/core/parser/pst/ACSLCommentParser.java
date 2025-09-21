@@ -57,7 +57,7 @@ class ACSLCommentParser {
 
 	/**
 	 * Create instance to handle a particular ACSL comment.
-	 * 
+	 *
 	 * @param acslComment
 	 *            the ACSL comment
 	 * @param inGlobalScope
@@ -74,7 +74,7 @@ class ACSLCommentParser {
 
 	/**
 	 * Parse the ACSL comment and create a tree of IPSTACSLNodes.
-	 * 
+	 *
 	 * @return the tree of IPSTACSLNodes or null of parsing or a source location consistency check failed.
 	 */
 	public IPSTACSLNode parseAndCreatePst() {
@@ -95,7 +95,7 @@ class ACSLCommentParser {
 	 * that have an exact source location attached. I'm not sure if the order of children actually corresponds to that
 	 * of the source text, even if location information is available, so all potential children are sorted and validated
 	 * to be in inside the parent node's range before creating a PST node.
-	 * 
+	 *
 	 * @param acslRootNode
 	 *            root ACSL node created by the parser
 	 * @return IPSTACSLNode corresponding to the given root node, or null if not within comment bounds

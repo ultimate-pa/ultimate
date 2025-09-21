@@ -36,8 +36,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.xml.bind.JAXBElement;
-import jakarta.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -50,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
 
 /**
  * The {@link BenchexecRundefinitionGeneratorPreLog} generates a benchexec rundefinition from a test suite s.t. the
@@ -191,6 +191,6 @@ public final class BenchexecRundefinitionGeneratorPreLog extends BaseTestLogfile
 	}
 
 	private static String getPath(final File file) {
-		return file.getAbsolutePath().replaceAll("\\\\", "/");
+		return file.getAbsolutePath().replace('\\', '/');
 	}
 }

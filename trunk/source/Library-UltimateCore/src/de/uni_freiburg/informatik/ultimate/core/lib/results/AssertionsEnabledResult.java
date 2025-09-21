@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 /**
  * Result that states that -ea was set for this VM.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */

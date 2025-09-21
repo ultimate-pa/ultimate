@@ -79,8 +79,7 @@ public class UltimateEliminator extends WrapperScript {
 	private LBool mExpectedResult;
 	private long mTreeSizeOfAssertedTerms = 0;
 	/**
-	 * Number of terms that were ever asserted (some might have been already popped
-	 * from the assertion stack).
+	 * Number of terms that were ever asserted (some might have been already popped from the assertion stack).
 	 */
 	private int mNumberOfAssertedTerms = 0;
 
@@ -200,13 +199,11 @@ public class UltimateEliminator extends WrapperScript {
 	}
 
 	/**
-	 * Workaround, does not guarantee that identifier is unique. Techniques for that
-	 * are difficult because we do not yet know which symbols will be declared in
-	 * the future. Rationale
+	 * Workaround, does not guarantee that identifier is unique. Techniques for that are difficult because we do not yet
+	 * know which symbols will be declared in the future. Rationale
 	 * <ul>
 	 * <li>UltimateSkolemizationId should occur seldomly.
-	 * <li>Add mNumberOfAssertedTerms because similar variables may be used in
-	 * different assert commands.
+	 * <li>Add mNumberOfAssertedTerms because similar variables may be used in different assert commands.
 	 * <li>The original variable name can be helpful for debugging.
 	 * </ul>
 	 */
@@ -233,7 +230,7 @@ public class UltimateEliminator extends WrapperScript {
 		}
 		mLogger.info("Computed result: " + result);
 		final IResult ultimateOutput = constructResult("check-sat", String.valueOf(result));
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultimateOutput );
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultimateOutput);
 		return result;
 
 	}
@@ -244,11 +241,10 @@ public class UltimateEliminator extends WrapperScript {
 			final QuantifierOverapproximatingSolver qos = (QuantifierOverapproximatingSolver) mScript;
 			assert qos.isInUsatCoreMode();
 			final Term[] uc = mScript.getUnsatCore();
-			final Set<Term> result = new HashSet<>();
-			result.addAll(qos.getAdditionalUnsatCoreContent());
+			final Set<Term> result = new HashSet<>(qos.getAdditionalUnsatCoreContent());
 			result.addAll(Arrays.asList(uc));
 			final IResult ultimateOutput = constructResult("get-unsat-core", String.valueOf(result));
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultimateOutput );
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultimateOutput);
 			return result.toArray(new Term[result.size()]);
 		}
 		throw new AssertionError("Unsat-core only available in combination with QuantifierOverapproximatingSolver");
@@ -276,7 +272,7 @@ public class UltimateEliminator extends WrapperScript {
 		final Term lessQuantifier = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript,
 				SimplificationTechnique.SIMPLIFY_DDA2, unf);
 		final IResult result = constructResult("simplify", String.valueOf(lessQuantifier));
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result );
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		return lessQuantifier;
 	}
 
@@ -284,10 +280,9 @@ public class UltimateEliminator extends WrapperScript {
 		final String shortDescription = "Response to " + command + " command";
 		final String longDescription = "Response to " + command + " command is: " + response;
 		final Severity severity = Severity.INFO;
-		final IResult ultimateOutput = new GenericResult(Activator.PLUGIN_ID, shortDescription, longDescription,
-				severity);
+		final IResult ultimateOutput =
+				new GenericResult(Activator.PLUGIN_ID, shortDescription, longDescription, severity);
 		return ultimateOutput;
 	}
-
 
 }

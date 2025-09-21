@@ -108,8 +108,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class SmtUtils {
 
-	private static final String[] EMPTY_INDICES = new String[0];
-	private static final BigInteger[] EMPTY_INDICES_BI = new BigInteger[0];
+	private static final String[] EMPTY_INDICES = {};
+	private static final BigInteger[] EMPTY_INDICES_BI = {};
 
 	private static final String ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT = "unknown enum constant ";
 	private static final String ERROR_MSG_UNKNOWN_SORT = "unknown sort ";
@@ -469,8 +469,8 @@ public final class SmtUtils {
 	public static Term multiDimensionalSelect(final Script script, final Term a, final ArrayIndex index) {
 		assert a.getSort().isArraySort();
 		Term result = a;
-		for (int i = 0; i < index.size(); i++) {
-			result = SmtUtils.select(script, result, index.get(i));
+		for (final Term element : index) {
+			result = SmtUtils.select(script, result, element);
 		}
 		return result;
 	}
@@ -882,7 +882,7 @@ public final class SmtUtils {
 	 * bars must not be nested.
 	 */
 	public static String removeSmtQuoteCharacters(final String string) {
-		return string.replaceAll("\\|", "");
+		return string.replace("|", "");
 	}
 
 	public static Map<TermVariable, Term> termVariables2Constants(final Script script,
@@ -1578,8 +1578,8 @@ public final class SmtUtils {
 			result = script.term(funcname, indices, resultSort, params);
 			break;
 		}
-		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
-				|| UltimateNormalFormUtils.respectsUltimateNormalForm(result) : "Term not in UltimateNormalForm";
+		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM || UltimateNormalFormUtils.respectsUltimateNormalForm(result)
+				: "Term not in UltimateNormalForm";
 
 		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION || Util.checkSat(script,
 				script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
@@ -1615,19 +1615,11 @@ public final class SmtUtils {
 				result = script.term("select", as.getTerm(), index);
 			} else {
 				final Equivalence comparison = selectIndex.compare(storeIndex);
-				switch (comparison) {
-				case DISTINCT:
-					result = select(script, as.getArray(), index);
-					break;
-				case EQUALS:
-					result = as.getValue();
-					break;
-				case INCOMPARABLE:
-					result = script.term("select", as.getTerm(), index);
-					break;
-				default:
-					throw new AssertionError("unknown value " + comparison);
-				}
+				result = switch (comparison) {
+				case DISTINCT -> select(script, as.getArray(), index);
+				case EQUALS -> as.getValue();
+				case INCOMPARABLE -> script.term("select", as.getTerm(), index);
+				};
 			}
 		}
 		return result;
@@ -1734,7 +1726,7 @@ public final class SmtUtils {
 	}
 
 	public static String sanitizeStringAsSmtIdentifier(final String name) {
-		return name.replaceAll("\\|", "BAR").replaceAll(" ", "_");
+		return name.replace("|", "BAR").replace(' ', '_');
 	}
 
 	public static Term abs(final Script script, final Term operand) {
@@ -2392,24 +2384,14 @@ public final class SmtUtils {
 		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
 		script.echo(new QuotedObject(
 				String.format("Finished correctness check for %s. Result: " + lbool, checkedClass.getSimpleName())));
-		final String errorMessage;
-		switch (lbool) {
-		case SAT:
-			errorMessage = String.format("%s: Not equivalent to expected result: %s Input: %s",
-					checkedClass.getSimpleName(), result, input);
-			break;
-		case UNKNOWN:
-			errorMessage = String.format(
-					"%s: Insufficient ressources for checking equivalence to expected result: %s Input: %s",
-					checkedClass.getSimpleName(), result, input);
-			break;
-		case UNSAT:
-			errorMessage = null;
-			break;
-		default:
-			throw new AssertionError("unknown value " + lbool);
-		}
-		if (lbool == LBool.SAT || !tolerateUnknown && lbool == LBool.UNKNOWN) {
+		final String errorMessage = switch (lbool) {
+		case SAT -> "%s: Not equivalent to expected result: %s Input: %s".formatted(checkedClass.getSimpleName(),
+				result, input);
+		case UNKNOWN -> "%s: Insufficient ressources for checking equivalence to expected result: %s Input: %s"
+				.formatted(checkedClass.getSimpleName(), result, input);
+		case UNSAT -> null;
+		};
+		if (lbool == LBool.SAT || (!tolerateUnknown && lbool == LBool.UNKNOWN)) {
 			throw new AssertionError(errorMessage);
 		}
 	}
@@ -2450,16 +2432,15 @@ public final class SmtUtils {
 			final Term fPart = annotateAndAssert(script, first, "first");
 			final Term sPart = annotateAndAssert(script, second, "second");
 			final LBool checkSatResult = script.checkSat();
-			switch (checkSatResult) {
+			return switch (checkSatResult) {
 			case UNSAT:
 				final Term[] interpolants = script.getInterpolants(new Term[] { fPart, sPart });
 				assert interpolants != null && interpolants.length == 1;
-				return new Pair<>(checkSatResult, interpolants[0]);
+				yield new Pair<>(checkSatResult, interpolants[0]);
 			case SAT:
 			case UNKNOWN:
-			default:
-				return new Pair<>(checkSatResult, null);
-			}
+				yield new Pair<>(checkSatResult, null);
+			};
 		} finally {
 			script.pop(1);
 		}

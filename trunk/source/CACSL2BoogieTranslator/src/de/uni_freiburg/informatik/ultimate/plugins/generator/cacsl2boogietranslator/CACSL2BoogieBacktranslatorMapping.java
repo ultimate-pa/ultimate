@@ -32,7 +32,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -47,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 
 public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktranslatorMapping {
-	private final Map<Pair<String, DeclarationInformation>, Pair<String, CType>> mInVar2CVar;
-	private final Map<Pair<String, DeclarationInformation>, Triple<String, CType, Boolean>> mVar2CVar;
+	private final Map<Pair<String, DeclarationInformation>, Pair<String, ICType>> mInVar2CVar;
+	private final Map<Pair<String, DeclarationInformation>, Triple<String, ICType, Boolean>> mVar2CVar;
 	private final Map<String, SFO.AUXVAR> mTempVar2Obj;
-	private final Map<String, CType> mFunctions;
+	private final Map<String, ICType> mFunctions;
 
 	public CACSL2BoogieBacktranslatorMapping() {
 		mInVar2CVar = new HashMap<>();
@@ -60,19 +60,19 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 	}
 
 	@Override
-	public void putVar(final String boogieId, final String cId, final CType cType, final DeclarationInformation decInfo,
+	public void putVar(final String boogieId, final String cId, final ICType cType, final DeclarationInformation decInfo,
 			final boolean isOnHeap) {
 		mVar2CVar.put(new Pair<>(boogieId, normalize(decInfo)), new Triple<>(cId, cType, isOnHeap));
 	}
 
 	@Override
-	public void putInVar(final String boogieId, final String cId, final CType cType,
+	public void putInVar(final String boogieId, final String cId, final ICType cType,
 			final DeclarationInformation decInfo) {
 		mInVar2CVar.put(new Pair<>(boogieId, normalize(decInfo)), new Pair<>(cId, cType));
 	}
 
 	@Override
-	public void putTempVar(final String boogieId, final SFO.AUXVAR purpose, final CType cType) {
+	public void putTempVar(final String boogieId, final SFO.AUXVAR purpose, final ICType cType) {
 		mTempVar2Obj.put(boogieId, purpose);
 	}
 
@@ -85,7 +85,7 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 		return mInVar2CVar.containsKey(new Pair<>(boogieId, normalize(decInfo)));
 	}
 
-	Pair<String, CType> getInVar(final String boogieId, final DeclarationInformation decInfo) {
+	Pair<String, ICType> getInVar(final String boogieId, final DeclarationInformation decInfo) {
 		return mInVar2CVar.get(new Pair<>(boogieId, normalize(decInfo)));
 	}
 
@@ -93,7 +93,7 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 		return mVar2CVar.containsKey(new Pair<>(boogieId, normalize(decInfo)));
 	}
 
-	Triple<String, CType, Boolean> getVar(final String boogieId, final DeclarationInformation decInfo) {
+	Triple<String, ICType, Boolean> getVar(final String boogieId, final DeclarationInformation decInfo) {
 		return mVar2CVar.get(new Pair<>(boogieId, normalize(decInfo)));
 	}
 
@@ -102,11 +102,11 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 	}
 
 	@Override
-	public void addFunction(final String boogieId, final CType returnType) {
+	public void addFunction(final String boogieId, final ICType returnType) {
 		mFunctions.put(boogieId, returnType);
 	}
 
-	CType getReturnTypeOfFunction(final String boogieId) {
+	ICType getReturnTypeOfFunction(final String boogieId) {
 		return mFunctions.get(boogieId);
 	}
 

@@ -31,14 +31,14 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
 
 public class UtilIntSet {
-	
+
 	private UtilIntSet() {
-		
+
 	}
-	
+
 	public static String getSetType() {
 		String setType = null;
-		switch(Options.setChoice) {
+		switch (Options.setChoice) {
 		case 1:
 			setType = "SparseBitSet";
 			break;
@@ -57,12 +57,12 @@ public class UtilIntSet {
 		}
 		return setType;
 	}
-	
+
 	public static IntSet newIntSet() {
 		IntSet set = null;
-		switch(Options.setChoice) {
+		switch (Options.setChoice) {
 		case 1:
-//			set = new IntSetSparseBits();
+			// set = new IntSetSparseBits();
 		case 2:
 			set = new IntSetTIntSet();
 			break;

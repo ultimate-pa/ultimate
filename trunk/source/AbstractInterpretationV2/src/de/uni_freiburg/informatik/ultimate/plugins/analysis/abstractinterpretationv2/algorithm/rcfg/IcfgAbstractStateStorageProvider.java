@@ -189,7 +189,7 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 			return Collections.singleton(new Pair<>(callStack, symbol));
 		}
 
-		final Comparator<ACTION> comparator = (o1, o2) -> Integer.compare(o1.hashCode(), o2.hashCode());
+		final Comparator<ACTION> comparator = Comparator.comparing(IAction::hashCode);
 
 		final Pair<Map<ACTION, List<ACTION>>, Integer> callReplacementRulesPair =
 				getReplacementRules(callsToReplace, comparator, summarySourcesCall);

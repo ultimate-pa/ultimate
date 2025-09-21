@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQua
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -172,7 +172,7 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 		Term withoutLet = new FormulaUnLet().transform(term);
 		if (!QuantifierUtils.isQuantifierFree(withoutLet)) {
 			// there is an overapproxiamtion on the current level
-			if (mOverapproxiamtionStack.peek() == false) {
+			if (!mOverapproxiamtionStack.peek()) {
 				mOverapproxiamtionStack.pop();
 				mOverapproxiamtionStack.push(true);
 			}
@@ -186,7 +186,7 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 	}
 
 	private boolean wasSomeAssertedTermOverapproximated() {
-		return mOverapproxiamtionStack.stream().anyMatch(x -> x == true);
+		return mOverapproxiamtionStack.stream().anyMatch(x -> x);
 	}
 
 	@Override

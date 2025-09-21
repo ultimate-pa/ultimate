@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -28,10 +28,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
  * Ultimate model of an automaton transition.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public final class AutomatonTransition
@@ -40,7 +41,7 @@ public final class AutomatonTransition
 
 	/**
 	 * Transition type.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum Transition {
@@ -62,11 +63,12 @@ public final class AutomatonTransition
 		INITIAL
 	}
 
+	@Visualizable
 	private String mName;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param type
@@ -83,22 +85,12 @@ public final class AutomatonTransition
 		super(state, succState);
 		assert type == Transition.RETURN || hierPred == null;
 		assert type != Transition.RETURN || hierPred != null;
-		switch (type) {
-			case CALL:
-				mName = "Call";
-				break;
-			case INTERNAL:
-				mName = "Internal";
-				break;
-			case RETURN:
-				mName = "Return";
-				break;
-			case INITIAL:
-				mName = "";
-				break;
-			default:
-				throw new IllegalArgumentException();
-		}
+		mName = switch (type) {
+		case CALL -> "Call";
+		case INTERNAL -> "Internal";
+		case RETURN -> "Return";
+		case INITIAL -> "";
+		};
 		mName = mName + ": " + transitionLabel;
 		if (type == Transition.RETURN) {
 			mName = mName + " " + hierPred;

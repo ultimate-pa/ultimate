@@ -95,16 +95,16 @@ public class QvasrAbstractor {
 	 *            A transition formula from which an overapproximative qvasr-abstraction is computed.
 	 * @return A {@link QvasrAbstraction} that overapproximates the changes to variables of the transition formula.
 	 */
-	public static QvasrAbstraction computeAbstraction(final IUltimateServiceProvider services, final ManagedScript script,
-			final UnmodifiableTransFormula transitionFormula) {
+	public static QvasrAbstraction computeAbstraction(final IUltimateServiceProvider services,
+			final ManagedScript script, final UnmodifiableTransFormula transitionFormula) {
 		if (!SmtUtils.isArrayFree(transitionFormula.getFormula())
 				|| !SmtUtils.containsArrayVariables(transitionFormula.getFormula())) {
 			throw new UnsupportedOperationException("Cannot deal with arrays.");
 		}
 		final Map<TermVariable, Term> updatesInFormulaAdditions =
 				getUpdates(services, script, transitionFormula, BaseType.ADDITIONS);
-		final Map<TermVariable, Term> updatesInFormulaResets = getUpdates(services, script, transitionFormula,
-				BaseType.RESETS);
+		final Map<TermVariable, Term> updatesInFormulaResets =
+				getUpdates(services, script, transitionFormula, BaseType.RESETS);
 		final Term[][] newUpdatesMatrixResets = constructBaseMatrix(script, updatesInFormulaResets, transitionFormula);
 		final Term[][] newUpdatesMatrixAdditions =
 				constructBaseMatrix(script, updatesInFormulaAdditions, transitionFormula);
@@ -303,9 +303,7 @@ public class QvasrAbstractor {
 						}
 					}
 				}
-				for (final Integer m : trueDuplicates) {
-					toBeEliminated.add(m);
-				}
+				toBeEliminated.addAll(trueDuplicates);
 			}
 		}
 		final int prunedLength = matrix.length - toBeEliminated.size();
@@ -806,8 +804,7 @@ public class QvasrAbstractor {
 				final Deque<Term> minuendTemp = new ArrayDeque<>();
 				minuendQueue.addAll(minuendParams);
 				minuendTemp.addAll(minuendParams);
-				final Deque<Term> subtrahendQueue = new ArrayDeque<>();
-				subtrahendQueue.addAll(subtrahendParams);
+				final Deque<Term> subtrahendQueue = new ArrayDeque<>(subtrahendParams);
 				while (!minuendQueue.isEmpty()) {
 					final Term factor = minuendQueue.pop();
 					for (final Term factorTwo : subtrahendQueue) {

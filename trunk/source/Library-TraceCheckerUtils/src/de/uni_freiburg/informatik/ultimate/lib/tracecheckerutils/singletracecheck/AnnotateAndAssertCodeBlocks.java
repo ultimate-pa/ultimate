@@ -196,9 +196,8 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 	}
 
 	/**
-	 * Represents one conjunct in an annotated SSA. The annotated term is the term
-	 * submitted to the solver (we have to use these named terms in order to obtain
-	 * an unsatisfiable core).
+	 * Represents one conjunct in an annotated SSA. The annotated term is the term submitted to the solver (we have to
+	 * use these named terms in order to obtain an unsatisfiable core).
 	 *
 	 */
 	public static class AnnotatedSsaConjunct {
@@ -206,7 +205,6 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 		private final Term mOriginalTerm;
 
 		public AnnotatedSsaConjunct(final Term annotedTerm, final Term originalTerm) {
-			super();
 			mAnnotedTerm = annotedTerm;
 			mOriginalTerm = originalTerm;
 		}

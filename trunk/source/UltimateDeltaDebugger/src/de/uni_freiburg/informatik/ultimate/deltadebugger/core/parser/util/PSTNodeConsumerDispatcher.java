@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
  * A PST node consumer dispatcher.
  */
 public final class PSTNodeConsumerDispatcher {
-	
+
 	private final IPSTNodeConsumer mConsumer;
-	
+
 	/**
 	 * @param consumer
 	 *            PST node consumer.
@@ -52,7 +52,7 @@ public final class PSTNodeConsumerDispatcher {
 	public PSTNodeConsumerDispatcher(final IPSTNodeConsumer consumer) {
 		mConsumer = consumer;
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -60,7 +60,7 @@ public final class PSTNodeConsumerDispatcher {
 	public void dispatch(final IPSTNode node) {
 		node.accept(new DispatchVisitor());
 	}
-	
+
 	/**
 	 * The visitor for dispatching.
 	 */
@@ -68,67 +68,67 @@ public final class PSTNodeConsumerDispatcher {
 		public DispatchVisitor() {
 			// empty constructor
 		}
-		
+
 		@Override
 		public int defaultVisit(final IPSTNode node) {
 			mConsumer.on(node);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTComment comment) {
 			mConsumer.on(comment);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTACSLComment acslComment) {
 			mConsumer.on(acslComment);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTACSLNode acslNode) {
 			mConsumer.on(acslNode);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTConditionalBlock conditionalBlock) {
 			mConsumer.on(conditionalBlock);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTDirective directive) {
 			mConsumer.on(directive);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTIncludeDirective include) {
 			mConsumer.on(include);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTLiteralRegion literalRegion) {
 			mConsumer.on(literalRegion);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTMacroExpansion expansion) {
 			mConsumer.on(expansion);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTRegularNode node) {
 			mConsumer.on(node);
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IPSTTranslationUnit translationUnit) {
 			mConsumer.on(translationUnit);

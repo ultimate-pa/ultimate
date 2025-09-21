@@ -42,6 +42,6 @@ public final class HcGlobalVar implements IHcReplacementVar {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return this == obj || obj instanceof final HcGlobalVar other && mVariable.equals(other.mVariable);
+		return this == obj || (obj instanceof final HcGlobalVar other && mVariable.equals(other.mVariable));
 	}
 }

@@ -87,7 +87,8 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	 *             if operation was canceled
 	 */
 	public DeterminizeDD(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory));
 	}
 
@@ -103,8 +104,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public DeterminizeDD(final AutomataLibraryServices services,
-			final IEmptyStackStateFactory<STATE> emptyStackFactory,
+	public DeterminizeDD(final AutomataLibraryServices services, final IEmptyStackStateFactory<STATE> emptyStackFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services);

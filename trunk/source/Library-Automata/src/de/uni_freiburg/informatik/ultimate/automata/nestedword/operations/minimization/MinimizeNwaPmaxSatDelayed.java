@@ -41,12 +41,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 		NONE
 	}
 
-	final BiPredicate<STATE, STATE> nothingMergedYet = new BiPredicate<STATE, STATE>() {
-		@Override
-		public boolean test(final STATE t, final STATE u) {
-			return false;
-		}
-	};
+	final BiPredicate<STATE, STATE> nothingMergedYet = (t, u) -> false;
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -116,7 +111,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 	private static final boolean USE_FULL_PREPROCESSING = false;
 
 	@SuppressWarnings("rawtypes")
-	private static final Pair[] EMPTY_LITERALS = new Pair[0];
+	private static final Pair[] EMPTY_LITERALS = {};
 	private STATE mEmptyStackState;
 	private ScopedConsistencyGeneratorDelayedSimulationPair<STATE, LETTER, STATE> mConsistencyGenerator;
 
@@ -128,36 +123,30 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		switch (PREPROCESSING_STANDALONE) {
-			//FIXME: The partition part should probably look different
-			case PARTITION:
-				return createPairs(operand.getStates());
-			case PAIRS:
-				return createPairs(operand.getStates());
-			case NONE:
-				return createPairs(operand.getStates());
-			default:
-				throw new IllegalArgumentException("Unknown mode: " + PREPROCESSING_STANDALONE);
+		// FIXME: The partition part should probably look different
+		case PARTITION:
+			return createPairs(operand.getStates());
+		case PAIRS:
+			return createPairs(operand.getStates());
+		case NONE:
+			return createPairs(operand.getStates());
+		default:
+			throw new IllegalArgumentException("Unknown mode: " + PREPROCESSING_STANDALONE);
 		}
 
 	}
 
-	//FIXME: This should be used for pair creation, but the static reference to mSpoilerWinnings is an issue
-/*
-	private static <STATE, LETTER> Iterable<Pair<STATE, STATE>> createPairsWithSpoilerWinning(final AutomataLibraryServices services, IDoubleDeckerAutomaton<LETTER, STATE> operand) {
-		Set<STATE> states = operand.getStates();
-		final List<Pair<STATE, STATE>> result = new ArrayList<>(states.size() * states.size());
-
-		for (final STATE state1 : states) {
-			for (final STATE state2 : states) {
-				if(mSpoilerWinnings.containsPair(state1, state2)) {
-					result.add(new Pair<>(state1, state2));
-				}
-			}
-		}
-
-		return result;
-	}
-*/
+	// FIXME: This should be used for pair creation, but the static reference to mSpoilerWinnings is an issue
+	/*
+	 * private static <STATE, LETTER> Iterable<Pair<STATE, STATE>> createPairsWithSpoilerWinning(final
+	 * AutomataLibraryServices services, IDoubleDeckerAutomaton<LETTER, STATE> operand) { Set<STATE> states =
+	 * operand.getStates(); final List<Pair<STATE, STATE>> result = new ArrayList<>(states.size() * states.size());
+	 *
+	 * for (final STATE state1 : states) { for (final STATE state2 : states) { if(mSpoilerWinnings.containsPair(state1,
+	 * state2)) { result.add(new Pair<>(state1, state2)); } } }
+	 *
+	 * return result; }
+	 */
 
 	@Override
 	protected AbstractMaxSatSolver<Pair<STATE, STATE>> createTransitivitySolver() {
@@ -246,7 +235,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 		return rhsStates.containsKey(state2);
 	}
 
-	//TODO: All methods below are identical in MinimizeNwaPmaxSatDirect, so there could be a common superclass
+	// TODO: All methods below are identical in MinimizeNwaPmaxSatDirect, so there could be a common superclass
 
 	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
 			createNestedMapWithInitialPairs(final Iterable<Pair<STATE, STATE>> initialPairs) {

@@ -59,7 +59,7 @@ public class FastUPRTermTransformer extends NonRecursive {
 		mScript = script;
 	}
 
-	private class RealToIntWalker implements NonRecursive.Walker {
+	private static class RealToIntWalker implements NonRecursive.Walker {
 
 		private final Term mTerm;
 

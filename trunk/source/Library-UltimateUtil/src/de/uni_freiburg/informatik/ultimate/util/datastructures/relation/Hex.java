@@ -1,34 +1,36 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Objects;
+
 /**
  * Generic Hextuple that stores 6 different values.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <E1>
@@ -75,7 +77,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/**
 	 * Creates a new Hextuple with given elements.
-	 * 
+	 *
 	 * @param first
 	 *            First element of the tuple
 	 * @param second
@@ -100,11 +102,11 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -162,7 +164,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/**
 	 * Gets the fifth element of the tuple.
-	 * 
+	 *
 	 * @return Fifth element of the tuple.
 	 */
 	public E5 getFifth() {
@@ -171,7 +173,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/**
 	 * Gets the first element of the tuple.
-	 * 
+	 *
 	 * @return First element of the tuple.
 	 */
 	public E1 getFirst() {
@@ -180,7 +182,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/**
 	 * Gets the fourth element of the tuple.
-	 * 
+	 *
 	 * @return Fourth element of the tuple.
 	 */
 	public E4 getFourth() {
@@ -189,7 +191,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/**
 	 * Gets the second element of the tuple.
-	 * 
+	 *
 	 * @return Second element of the tuple.
 	 */
 	public E2 getSecond() {
@@ -198,7 +200,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/**
 	 * Gets the sixth element of the tuple.
-	 * 
+	 *
 	 * @return Sixth element of the tuple.
 	 */
 	public E6 getSixth() {
@@ -207,7 +209,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/**
 	 * Gets the third element of the tuple.
-	 * 
+	 *
 	 * @return Third element of the tuple.
 	 */
 	public E3 getThird() {
@@ -216,31 +218,22 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mFifth == null) ? 0 : mFifth.hashCode());
-		result = prime * result + ((mFirst == null) ? 0 : mFirst.hashCode());
-		result = prime * result + ((mFourth == null) ? 0 : mFourth.hashCode());
-		result = prime * result + ((mSecond == null) ? 0 : mSecond.hashCode());
-		result = prime * result + ((mSixth == null) ? 0 : mSixth.hashCode());
-		result = prime * result + ((mThird == null) ? 0 : mThird.hashCode());
-		return result;
+		return Objects.hash(mFifth, mFirst, mFourth, mSecond, mSixth, mThird);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "[" + mFirst + ", " + mSecond + ", " + mThird + ", " + mFourth + ", " + mFifth + ", " + mSixth
-				+ "]";
+		return "[" + mFirst + ", " + mSecond + ", " + mThird + ", " + mFourth + ", " + mFifth + ", " + mSixth + "]";
 	}
 
 }

@@ -40,7 +40,6 @@ public class SvcompFolderSubset {
 
 	public SvcompFolderSubset(final String directory, final String property, final Boolean expectedResult,
 			final int offset, final int limit) {
-		super();
 		mDirectory = directory;
 		mProperty = property;
 		mExpectedResult = expectedResult;

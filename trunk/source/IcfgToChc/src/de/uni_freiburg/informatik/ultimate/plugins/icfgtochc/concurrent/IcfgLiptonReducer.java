@@ -145,7 +145,7 @@ public class IcfgLiptonReducer {
 		final var isProcEntry = Objects.equals(mPetrifiedIcfg.getProcedureEntryNodes().get(loc.getProcedure()), loc);
 		final var isProcExit = Objects.equals(mPetrifiedIcfg.getProcedureExitNodes().get(loc.getProcedure()), loc);
 		mNewIcfg.addLocation(loc, mInitialLocs.contains(loc), mErrorLocs.contains(loc), isProcEntry, isProcExit,
-				mPetrifiedIcfg.getLoopLocations().contains(loc));
+				mPetrifiedIcfg.getLoopLocations().contains(loc), mPetrifiedIcfg.getLocationsOfInterest().contains(loc));
 	}
 
 	private static List<IcfgLocation> getLocations(final Collection<IPredicate> places) {

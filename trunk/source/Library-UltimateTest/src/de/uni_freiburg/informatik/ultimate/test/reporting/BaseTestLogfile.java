@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test.reporting;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */

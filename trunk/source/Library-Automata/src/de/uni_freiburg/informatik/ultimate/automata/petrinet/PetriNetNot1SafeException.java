@@ -30,7 +30,6 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 
-
 public class PetriNetNot1SafeException extends AutomataLibraryException {
 
 	private static final long serialVersionUID = -8776962353437660445L;
@@ -62,8 +61,5 @@ public class PetriNetNot1SafeException extends AutomataLibraryException {
 	public Collection<?> getUnsafePlaces() {
 		return mUnsafePlaces;
 	}
-
-
-
 
 }

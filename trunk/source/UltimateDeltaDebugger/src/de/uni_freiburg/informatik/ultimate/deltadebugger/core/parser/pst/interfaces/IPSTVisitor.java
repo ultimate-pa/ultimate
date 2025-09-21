@@ -34,7 +34,7 @@ public interface IPSTVisitor {
 	int PROCESS_SKIP = ASTVisitor.PROCESS_SKIP;
 	int PROCESS_ABORT = ASTVisitor.PROCESS_ABORT;
 	int PROCESS_CONTINUE = ASTVisitor.PROCESS_CONTINUE;
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -43,7 +43,7 @@ public interface IPSTVisitor {
 	default int defaultLeave(final IPSTNode node) {
 		return PROCESS_CONTINUE;
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -52,7 +52,7 @@ public interface IPSTVisitor {
 	default int defaultVisit(final IPSTNode node) {
 		return PROCESS_CONTINUE;
 	}
-	
+
 	/**
 	 * @param comment
 	 *            PST comment.
@@ -61,7 +61,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTComment comment) {
 		return defaultLeave(comment);
 	}
-	
+
 	/**
 	 * @param acslComment
 	 *            PST ACSL comment.
@@ -70,7 +70,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTACSLComment acslComment) {
 		return defaultLeave(acslComment);
 	}
-	
+
 	/**
 	 * @param acslNode
 	 *            PST ACSL node.
@@ -79,7 +79,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTACSLNode acslNode) {
 		return defaultLeave(acslNode);
 	}
-	
+
 	/**
 	 * @param conditionalBlock
 	 *            PST conditional block.
@@ -88,7 +88,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTConditionalBlock conditionalBlock) {
 		return defaultLeave(conditionalBlock);
 	}
-	
+
 	/**
 	 * @param directive
 	 *            PST directive.
@@ -97,7 +97,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTDirective directive) {
 		return defaultLeave(directive);
 	}
-	
+
 	/**
 	 * @param include
 	 *            PST include directive.
@@ -106,7 +106,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTIncludeDirective include) {
 		return defaultLeave(include);
 	}
-	
+
 	/**
 	 * @param literalRegion
 	 *            PST literal region.
@@ -115,7 +115,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTLiteralRegion literalRegion) {
 		return PROCESS_SKIP;
 	}
-	
+
 	/**
 	 * @param expansion
 	 *            PST macro expansion.
@@ -124,7 +124,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTMacroExpansion expansion) {
 		return defaultLeave(expansion);
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST regular node.
@@ -133,7 +133,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTRegularNode node) {
 		return defaultLeave(node);
 	}
-	
+
 	/**
 	 * @param translationUnit
 	 *            PST translation unit.
@@ -142,7 +142,7 @@ public interface IPSTVisitor {
 	default int leave(final IPSTTranslationUnit translationUnit) {
 		return defaultLeave(translationUnit);
 	}
-	
+
 	/**
 	 * @param comment
 	 *            PST comment.
@@ -151,7 +151,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTComment comment) {
 		return defaultVisit(comment);
 	}
-	
+
 	/**
 	 * @param acslComment
 	 *            PST ACSL comment.
@@ -160,7 +160,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTACSLComment acslComment) {
 		return defaultVisit(acslComment);
 	}
-	
+
 	/**
 	 * @param acslNode
 	 *            PST ACSL node.
@@ -169,7 +169,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTACSLNode acslNode) {
 		return defaultVisit(acslNode);
 	}
-	
+
 	/**
 	 * @param conditionalBlock
 	 *            PST conditional block.
@@ -178,7 +178,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTConditionalBlock conditionalBlock) {
 		return defaultVisit(conditionalBlock);
 	}
-	
+
 	/**
 	 * @param directive
 	 *            PST directive.
@@ -187,7 +187,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTDirective directive) {
 		return defaultVisit(directive);
 	}
-	
+
 	/**
 	 * @param include
 	 *            PST include directive.
@@ -196,7 +196,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTIncludeDirective include) {
 		return defaultVisit(include);
 	}
-	
+
 	/**
 	 * @param literalRegion
 	 *            PST literal region.
@@ -205,7 +205,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTLiteralRegion literalRegion) {
 		return PROCESS_SKIP;
 	}
-	
+
 	/**
 	 * @param expansion
 	 *            PST expansion.
@@ -214,7 +214,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTMacroExpansion expansion) {
 		return defaultVisit(expansion);
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST regular node.
@@ -223,7 +223,7 @@ public interface IPSTVisitor {
 	default int visit(final IPSTRegularNode node) {
 		return defaultVisit(node);
 	}
-	
+
 	/**
 	 * @param translationUnit
 	 *            PST translation unit.

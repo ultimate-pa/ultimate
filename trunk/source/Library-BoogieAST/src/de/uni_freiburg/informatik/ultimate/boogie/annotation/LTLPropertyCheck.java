@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * should run in LTL mode and which property should be checked.
  *
  * TODO: Using a check for translation is ugly. This should change.
- * 
+ *
  * TODO: Overwrite equals and hashcode if you want to keep using this class
  *
  * @author dietsch@informatik.uni-freiburg.de
@@ -69,9 +69,10 @@ public class LTLPropertyCheck extends Check {
 			final List<VariableDeclaration> globalDeclarations) {
 		super(Spec.LTL);
 		assert ltlPropertyAsString != null : "There is no property";
-		assert checkableAtomicPropositions != null : "There is a property the map between APs and Boogie expressions is not there";
-		assert !checkableAtomicPropositions
-				.isEmpty() : "The map between APs and Boogie expressions is empty (remember, even true and false are Boogie expressions)";
+		assert checkableAtomicPropositions != null
+				: "There is a property the map between APs and Boogie expressions is not there";
+		assert !checkableAtomicPropositions.isEmpty()
+				: "The map between APs and Boogie expressions is empty (remember, even true and false are Boogie expressions)";
 		mUltimateLTLProptery = prettyPrintProperty(checkableAtomicPropositions, ltlPropertyAsString);
 		mLTL2BALTLProptery = getLTL2BAProperty(ltlPropertyAsString);
 		mCheckableAtomicPropositions = checkableAtomicPropositions;
@@ -124,8 +125,8 @@ public class LTLPropertyCheck extends Check {
 		rtr = rtr.replaceAll("\\bx\\b", " X ");
 		rtr = rtr.replaceAll("\\bu\\b", " U ");
 		rtr = rtr.replaceAll("\\br\\b", " V ");
-		rtr = rtr.replaceAll("<==>", "<->");
-		rtr = rtr.replaceAll("==>", "->");
+		rtr = rtr.replace("<==>", "<->");
+		rtr = rtr.replace("==>", "->");
 		rtr = rtr.replaceAll("\\s+", " ");
 		return rtr;
 	}

@@ -9,13 +9,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.ee8.nested.ContextHandler;
 import org.eclipse.jetty.ee8.nested.ResourceHandler;
 import org.eclipse.jetty.ee8.servlet.FilterHolder;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.util.resource.PathResourceFactory;
 import org.eclipse.jetty.util.resource.Resource;
 
@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.web.backend.util.CrossOriginFilter;
 public class WebBackend implements IApplication {
 
 	private static final Logger LOGGER = LogManager.getLogger();
-	
+
 	private Server mJettyServer;
 
 	public WebBackend() {
@@ -92,11 +92,12 @@ public class WebBackend implements IApplication {
 	 */
 	private static void addStaticPathToContext(final ContextHandlerCollection contextCollection, final Path folderPath,
 			final String routePath) {
-		final ResourceHandler frontendResourceHandler = new ResourceHandler();
-		frontendResourceHandler.setDirAllowed(true);
-
 		final PathResourceFactory resourceFactory = new PathResourceFactory();
 		final Resource folderPathRes = resourceFactory.newResource(folderPath.toUri());
+
+		final ResourceHandler frontendResourceHandler = new ResourceHandler();
+		frontendResourceHandler.setDirAllowed(true);
+		frontendResourceHandler.setBaseResource(folderPathRes);
 
 		final ContextHandler frontendContextHandler = new ContextHandler();
 		frontendContextHandler.setContextPath(routePath);

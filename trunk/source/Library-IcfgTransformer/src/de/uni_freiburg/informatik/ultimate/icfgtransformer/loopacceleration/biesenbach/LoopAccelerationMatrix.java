@@ -56,7 +56,8 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 	private final ILogger mLogger;
 	private List<Integer> mOpenV = new ArrayList<>();
 
-	public LoopAccelerationMatrix(final ILogger logger, final UnmodifiableTransFormula loopTransFormula, final ManagedScript script) {
+	public LoopAccelerationMatrix(final ILogger logger, final UnmodifiableTransFormula loopTransFormula,
+			final ManagedScript script) {
 		mLogger = logger;
 		mMgScript = script;
 
@@ -82,7 +83,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		for (int i = 0; i < matrixSize; i++) {
 			mOpenV.add(i);
 		}
-		if(!findInitVector()){
+		if (!findInitVector()) {
 			accelerationFailed();
 		}
 		while (newVectorFound && !mOpenV.isEmpty()) {
@@ -91,22 +92,22 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 			for (final int vNumberOpen : mOpenV) {
 				final Map<Integer, Map<Term, Term>> matrix = new HashMap<>(mMatrix.getMatrix());
 				for (final Map<Term, Term> closedVector : matrix.values()) {
-					if(findVector(closedVector, vNumberOpen)){
+					if (findVector(closedVector, vNumberOpen)) {
 						newVectorFound = true;
 						break;
-					}else{
+					} else {
 						open.add(vNumberOpen);
 					}
 				}
 			}
 			mOpenV = open;
 		}
-		if(!find2nVector()){
+		if (!find2nVector()) {
 			accelerationFailed();
 		}
 	}
 
-	private void findSolution(final int index){
+	private void findSolution(final int index) {
 		final Script script = mMgScript.getScript();
 		final Map<Term, Term> vector = new HashMap<>(mMatrix.getMatrix().get(index));
 		final Term transformedTerm = Substitution.apply(mMgScript, vector, mOriginalTransFormula.getFormula());
@@ -119,12 +120,13 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 			final LBool result = checkSat(script, closedFormula);
 			if (result == LBool.SAT) {
 				final Collection<Term> terms = new ArrayList<>();
-				mOriginalTransFormula.getOutVars().entrySet().forEach(outvar -> terms.add(outvar.getKey().getPrimedConstant()));
+				mOriginalTransFormula.getOutVars().entrySet()
+						.forEach(outvar -> terms.add(outvar.getKey().getPrimedConstant()));
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(script, terms);
 
 				final Map<Term, Term> m = new HashMap<>();
-				mOriginalTransFormula.getOutVars().entrySet().forEach(outvar
-						-> m.put(outvar.getValue() , termvar2value.get(outvar.getKey().getPrimedConstant())));
+				mOriginalTransFormula.getOutVars().entrySet().forEach(
+						outvar -> m.put(outvar.getValue(), termvar2value.get(outvar.getKey().getPrimedConstant())));
 				mMatrix.setSolution(m, index);
 			}
 		} finally {
@@ -132,7 +134,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		}
 	}
 
-	private boolean find2nVector(){
+	private boolean find2nVector() {
 
 		final Script script = mMgScript.getScript();
 
@@ -140,15 +142,14 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		mOriginalTransFormula.getAuxVars();
 
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
-		mOriginalTransFormula.getOutVars().entrySet().forEach(outvar
-				-> newOutVars.put(outvar.getKey(), script.variable(outvar.getValue().toString() + "_n"
-						, outvar.getValue().getSort())));
+		mOriginalTransFormula.getOutVars().entrySet().forEach(outvar -> newOutVars.put(outvar.getKey(),
+				script.variable(outvar.getValue().toString() + "_n", outvar.getValue().getSort())));
 
 		final Map<Term, Term> vector = new HashMap<>();
-		mOriginalTransFormula.getOutVars().entrySet().forEach(outvar
-				-> vector.put(outvar.getValue(), newOutVars.get(outvar.getKey())));
-		mOriginalTransFormula.getInVars().entrySet().forEach(invar
-				-> vector.put(invar.getValue(), mOriginalTransFormula.getOutVars().get(invar.getKey())));
+		mOriginalTransFormula.getOutVars().entrySet()
+				.forEach(outvar -> vector.put(outvar.getValue(), newOutVars.get(outvar.getKey())));
+		mOriginalTransFormula.getInVars().entrySet()
+				.forEach(invar -> vector.put(invar.getValue(), mOriginalTransFormula.getOutVars().get(invar.getKey())));
 
 		final Term newTerm = Substitution.apply(mMgScript, vector, mOriginalTransFormula.getFormula());
 
@@ -162,7 +163,8 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		try {
 			if (result == LBool.SAT) {
 				final Collection<Term> terms = new ArrayList<>();
-				mOriginalTransFormula.getInVars().entrySet().forEach(invar -> terms.add(invar.getKey().getDefaultConstant()));
+				mOriginalTransFormula.getInVars().entrySet()
+						.forEach(invar -> terms.add(invar.getKey().getDefaultConstant()));
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(script, terms);
 				mMatrix.setVector(termver2valueTrasformer(termvar2value), mMatrixSize + 1);
 			}
@@ -170,9 +172,9 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 			script.pop(1);
 		}
 
-		//find2nSolution
-		final Term transformedFullTerm = Substitution.apply(mMgScript, mMatrix.getMatrix().get(mMatrixSize + 1),
-				fullTerm);
+		// find2nSolution
+		final Term transformedFullTerm =
+				Substitution.apply(mMgScript, mMatrix.getMatrix().get(mMatrixSize + 1), fullTerm);
 		final Term closedFullTerm = UnmodifiableTransFormula.computeClosedFormula(transformedFullTerm,
 				mOriginalTransFormula.getInVars(), newOutVars, new HashSet<>(), mMgScript);
 		script.push(1);
@@ -184,8 +186,8 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 				final Map<Term, Term> termvar2value = SmtUtils.getValues(script, terms);
 
 				final Map<Term, Term> m = new HashMap<>();
-				mOriginalTransFormula.getOutVars().entrySet().forEach(outvar
-						-> m.put(outvar.getValue() , termvar2value.get(outvar.getKey().getPrimedConstant())));
+				mOriginalTransFormula.getOutVars().entrySet().forEach(
+						outvar -> m.put(outvar.getValue(), termvar2value.get(outvar.getKey().getPrimedConstant())));
 				mMatrix.setSolution(m, mMatrixSize + 1);
 			}
 		} finally {
@@ -198,8 +200,8 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		final Map<Term, Term> vector = new HashMap<>(closedVector);
 		final Script script = mMgScript.getScript();
 
-		final Entry<IProgramVar, TermVariable> openVar = mOriginalTransFormula.getInVars().entrySet().stream().
-				collect(Collectors.toList()).get(vectorNumber);
+		final Entry<IProgramVar, TermVariable> openVar =
+				mOriginalTransFormula.getInVars().entrySet().stream().collect(Collectors.toList()).get(vectorNumber);
 
 		vector.put(openVar.getValue(), openVar.getKey().getDefaultConstant());
 		Term transformedTerm = Substitution.apply(mMgScript, vector, mOriginalTransFormula.getFormula());
@@ -223,10 +225,10 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		return result == LBool.SAT;
 	}
 
-	private Map<Term, Term> termver2valueTrasformer(final Map<Term, Term> termvar2value){
+	private Map<Term, Term> termver2valueTrasformer(final Map<Term, Term> termvar2value) {
 		final Map<Term, Term> m = new HashMap<>();
 		mOriginalTransFormula.getInVars().entrySet()
-		.forEach(invar -> m.put(invar.getValue() , termvar2value.get(invar.getKey().getDefaultConstant())));
+				.forEach(invar -> m.put(invar.getValue(), termvar2value.get(invar.getKey().getDefaultConstant())));
 		return m;
 	}
 
@@ -237,9 +239,9 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		try {
 			if (result == LBool.SAT) {
 				final Collection<Term> terms = new ArrayList<>();
-				mOriginalTransFormula.getInVars().entrySet().forEach(invar -> terms.add(invar.getKey().getDefaultConstant()));
-				final Map<Term, Term> termvar2value =
-						SmtUtils.getValues(script, terms);
+				mOriginalTransFormula.getInVars().entrySet()
+						.forEach(invar -> terms.add(invar.getKey().getDefaultConstant()));
+				final Map<Term, Term> termvar2value = SmtUtils.getValues(script, terms);
 				mMatrix.setVector(termver2valueTrasformer(termvar2value), mMatrixSize);
 				findSolution(mMatrixSize);
 			}
@@ -269,11 +271,11 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		return script.term(name);
 	}
 
-	private void accelerationFailed(){
+	private void accelerationFailed() {
 		mLogger.info("No acceleration found!");
 	}
 
-	public MatrixBB getResult(){
+	public MatrixBB getResult() {
 		return mMatrix;
 	}
 }

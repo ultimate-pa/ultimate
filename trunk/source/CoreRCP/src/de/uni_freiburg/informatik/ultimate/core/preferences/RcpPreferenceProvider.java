@@ -301,15 +301,11 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 			throws CoreException, BackingStoreException {
 
 		final Set<String> paths = new HashSet<>();
-		final IPreferenceNodeVisitor collectingVisitor = new IPreferenceNodeVisitor() {
-
-			@Override
-			public boolean visit(final IEclipsePreferences node) throws BackingStoreException {
-				for (final String k : node.keys()) {
-					paths.add(node.name() + "." + k);
-				}
-				return true;
+		final IPreferenceNodeVisitor collectingVisitor = node -> {
+			for (final String k : node.keys()) {
+				paths.add(node.name() + "." + k);
 			}
+			return true;
 		};
 
 		for (final String key : core.getRegisteredUltimatePluginIDs()) {
@@ -317,17 +313,14 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		}
 
 		final Set<String> invalidPaths = new LinkedHashSet<>();
-		final IPreferenceNodeVisitor comparingVisitor = new IPreferenceNodeVisitor() {
-			@Override
-			public boolean visit(final IEclipsePreferences node) throws BackingStoreException {
-				for (final String k : node.keys()) {
-					final String prefKey = node.name() + "." + k;
-					if (!paths.contains(prefKey)) {
-						invalidPaths.add(prefKey);
-					}
+		final IPreferenceNodeVisitor comparingVisitor = node -> {
+			for (final String k : node.keys()) {
+				final String prefKey = node.name() + "." + k;
+				if (!paths.contains(prefKey)) {
+					invalidPaths.add(prefKey);
 				}
-				return true;
 			}
+			return true;
 		};
 
 		final IPreferencesService ps = Platform.getPreferencesService();

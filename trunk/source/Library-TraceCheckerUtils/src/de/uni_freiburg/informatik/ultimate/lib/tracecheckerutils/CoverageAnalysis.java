@@ -183,7 +183,6 @@ public class CoverageAnalysis<CL> {
 
 		public BackwardCoveringInformation(final int potentialBackwardCoverings,
 				final int successfullBackwardCoverings) {
-			super();
 			mPotentialBackwardCoverings = potentialBackwardCoverings;
 			mSuccessfullBackwardCoverings = successfullBackwardCoverings;
 		}

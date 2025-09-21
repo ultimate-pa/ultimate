@@ -4,8 +4,8 @@ import java.util.Set;
 
 /**
  * Currently two purposes:
- * <li> constraints can be reported to an icc
- * <li> elements can be removed from an icc
+ * <li>constraints can be reported to an icc
+ * <li>elements can be removed from an icc
  *
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -14,61 +14,64 @@ import java.util.Set;
  */
 public interface IEqualityReportingTarget<ELEM extends ICongruenceClosureElement<ELEM>> {
 
-//	IRemovalInfo<ELEM> getElementCurrentlyBeingRemoved();
-//
+	// IRemovalInfo<ELEM> getElementCurrentlyBeingRemoved();
+	//
 	boolean isInconsistent();
-//
+
+	//
 	boolean isInconsistent(boolean close);
-//
-//	boolean isTautological();
-//
-//	boolean isFrozen();
-//
-//	boolean isConstrained(ELEM elem);
-//
-//	boolean isConstrainedDirectly(ELEM elem);
-//
-//	void transformElementsAndFunctions(Function<ELEM, ELEM> transformer);
-//
-//	Collection<ELEM> getAllElements();
-//
-////	void freezeAndClose();
-//
-////	void freezeIfNecessary();
-//
+
+	//
+	// boolean isTautological();
+	//
+	// boolean isFrozen();
+	//
+	// boolean isConstrained(ELEM elem);
+	//
+	// boolean isConstrainedDirectly(ELEM elem);
+	//
+	// void transformElementsAndFunctions(Function<ELEM, ELEM> transformer);
+	//
+	// Collection<ELEM> getAllElements();
+	//
+	//// void freezeAndClose();
+	//
+	//// void freezeIfNecessary();
+	//
 	String toLogString();
 
-//	// methods used in assertions
-//
-//	boolean assertSingleElementIsFullyRemoved(ELEM elem);
-//
-//	boolean sanityCheckOnlyCc();
-//
-//	boolean sanityCheckOnlyCc(IRemovalInfo<ELEM> remInfo);
-//
+	// // methods used in assertions
+	//
+	// boolean assertSingleElementIsFullyRemoved(ELEM elem);
+	//
+	// boolean sanityCheckOnlyCc();
+	//
+	// boolean sanityCheckOnlyCc(IRemovalInfo<ELEM> remInfo);
+	//
 	boolean reportEqualityRec(ELEM key, ELEM value);
 
 	boolean reportDisequalityRec(ELEM key, ELEM value);
 
 	void reportContainsConstraint(ELEM elem, Set<ELEM> literals);
-//
-////	SetConstraintConjunction<ELEM> getContainsConstraintForElement(ELEM elem);
-//	Set<SetConstraint<ELEM>> getContainsConstraintForElement(ELEM elem);
-//
-////	void reportContainsConstraint(ELEM elem, SetConstraintConjunction<ELEM> literalSet);
-//	void reportContainsConstraint(ELEM elem, Collection<SetConstraint<ELEM>> literalSet);
-//
-//	Set<ELEM> getNodesToIntroduceBeforeRemoval(ELEM elemToRemove, Set<ELEM> elementsToRemove,
-//			Map<ELEM, ELEM> nodeToReplacementNode);
-//
-//	boolean hasElement(ELEM n);
-//
-//	boolean sanityCheck();
-//
-//	boolean isDebugMode();
-//
-//	ILogger getLogger();
-//
+
+	//
+	//// SetConstraintConjunction<ELEM> getContainsConstraintForElement(ELEM elem);
+	// Set<SetConstraint<ELEM>> getContainsConstraintForElement(ELEM elem);
+	//
+	//// void reportContainsConstraint(ELEM elem, SetConstraintConjunction<ELEM> literalSet);
+	// void reportContainsConstraint(ELEM elem, Collection<SetConstraint<ELEM>> literalSet);
+	//
+	// Set<ELEM> getNodesToIntroduceBeforeRemoval(ELEM elemToRemove, Set<ELEM> elementsToRemove,
+	// Map<ELEM, ELEM> nodeToReplacementNode);
+	//
+	// boolean hasElement(ELEM n);
+	//
+	// boolean sanityCheck();
+	//
+	// boolean isDebugMode();
+	//
+	// ILogger getLogger();
+	//
 	boolean addElement(ELEM proxyElem, boolean omitSanityCheck);
 
 	boolean isConstrainedDirectly(ELEM elem);

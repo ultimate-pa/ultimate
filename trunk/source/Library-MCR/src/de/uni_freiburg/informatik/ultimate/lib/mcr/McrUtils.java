@@ -34,7 +34,8 @@ public class McrUtils {
 	public static Term abstractVariables(final Term term, final Set<TermVariable> varsToKeep, final int quantifier,
 			final ManagedScript managedScript, final IUltimateServiceProvider services, final ILogger logger,
 			final SimplificationTechnique simplificationTechnique) {
-		final Term eliminated = PartialQuantifierElimination.eliminateCompat(services, managedScript, simplificationTechnique, term);
+		final Term eliminated =
+				PartialQuantifierElimination.eliminateCompat(services, managedScript, simplificationTechnique, term);
 		final Term normalForm;
 		switch (quantifier) {
 		case QuantifiedFormula.EXISTS:
@@ -49,7 +50,8 @@ public class McrUtils {
 		final List<TermVariable> quantifiedVars = Arrays.stream(normalForm.getFreeVars())
 				.filter(x -> !varsToKeep.contains(x)).collect(Collectors.toList());
 		final Term quantified = SmtUtils.quantifier(managedScript.getScript(), quantifier, quantifiedVars, normalForm);
-		return PartialQuantifierElimination.eliminateCompat(services, managedScript, simplificationTechnique, quantified);
+		return PartialQuantifierElimination.eliminateCompat(services, managedScript, simplificationTechnique,
+				quantified);
 	}
 
 	public static <STATE> List<STATE> reversedTopologicalOrdering(final INestedWordAutomaton<?, STATE> automaton,

@@ -40,7 +40,6 @@ public class LineDirectiveMapping {
 	private final TreeMap<Integer, Pair<Integer, String>> mMapping;
 
 	public LineDirectiveMapping(final String file) {
-		super();
 		mMapping = constructLineDirectiveMapping(file);
 	}
 

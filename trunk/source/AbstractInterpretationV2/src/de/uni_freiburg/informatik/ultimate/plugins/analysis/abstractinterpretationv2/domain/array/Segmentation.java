@@ -89,7 +89,7 @@ public class Segmentation {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null || !(obj instanceof Segmentation)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final Segmentation other = (Segmentation) obj;

@@ -48,17 +48,17 @@ public class PSTTranslationUnit extends PSTRegularNode implements IPSTTranslatio
 			final IASTTranslationUnit translationUnit) {
 		super(source, location, translationUnit);
 	}
-	
+
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-	
+
 	@Override
 	public IASTTranslationUnit getAstNode() {
 		return (IASTTranslationUnit) mAstNode;

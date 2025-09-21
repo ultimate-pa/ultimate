@@ -50,34 +50,26 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
- * Computes an estimation of a formula's size if we apply our algorithm for the
- * elimination of quantifiers.<br>
- * Our algorithm (see {@link QuantifierPushTermWalker}) handles existentially
- * quantified disjunctions by pushing ∃ over ∨ and it handles existentially
- * quantified conjunctions by applying our "elimination techniques" (see
- * {@link DualJunctionQuantifierElimination}) to these kinds of terms. If the
- * elimination techniques fail and some conjunct is a disjunction we rewrite
- * according to the and-or distributivity rule, push ∃ over ∨ and recurse on the
+ * Computes an estimation of a formula's size if we apply our algorithm for the elimination of quantifiers.<br>
+ * Our algorithm (see {@link QuantifierPushTermWalker}) handles existentially quantified disjunctions by pushing ∃ over
+ * ∨ and it handles existentially quantified conjunctions by applying our "elimination techniques" (see
+ * {@link DualJunctionQuantifierElimination}) to these kinds of terms. If the elimination techniques fail and some
+ * conjunct is a disjunction we rewrite according to the and-or distributivity rule, push ∃ over ∨ and recurse on the
  * disjuncts.<br>
  * Here an interesting questions are
  * <li>with which eliminatee(s) should we start with
- * <li>which conjunct should we pick for the application of the distributivity
- * rule. The algorithms implemented in this class try to explore (hence the name
- * scout) the effect of these choices in advance. The measure that we use is the
- * expected size of the formula. For the size we count the the number of
- * existentially quantified disjuncts and we count separately whether the
- * quantifier can be eliminated.<br>
- * Usually we get a very coarse overapproximation, since eliminations typically
- * allow simplifications that reduce the size of the formula significantly.
- * However, this is not always an overapproximation. Some eliminations (e.g.,
- * TIR for ≠) introduce new disjunctions themselves. <br>
+ * <li>which conjunct should we pick for the application of the distributivity rule. The algorithms implemented in this
+ * class try to explore (hence the name scout) the effect of these choices in advance. The measure that we use is the
+ * expected size of the formula. For the size we count the the number of existentially quantified disjuncts and we count
+ * separately whether the quantifier can be eliminated.<br>
+ * Usually we get a very coarse overapproximation, since eliminations typically allow simplifications that reduce the
+ * size of the formula significantly. However, this is not always an overapproximation. Some eliminations (e.g., TIR for
+ * ≠) introduce new disjunctions themselves. <br>
  * TODO 20220706 Matthias:
- * <li>Add support for {@link MultiCaseSolvedBinaryRelation}s but make sure that
- * variables quantified in ancestors are considered as blockers for divisiblity
- * constraints.
- * <li>Improve array heuristic. We incorrectly assume that all arrays have to
- * occur below the root level (quantifier). This may however compensate the huge
- * blowup that the array elimination sometimes brings.
+ * <li>Add support for {@link MultiCaseSolvedBinaryRelation}s but make sure that variables quantified in ancestors are
+ * considered as blockers for divisiblity constraints.
+ * <li>Improve array heuristic. We incorrectly assume that all arrays have to occur below the root level (quantifier).
+ * This may however compensate the huge blowup that the array elimination sometimes brings.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -90,13 +82,13 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 
 	public enum Occurrence {
 		/**
-		 * Eliminatee occurs DER eliminable in conjunction. This is great because it is
-		 * still eliminable if we add more conjunct.
+		 * Eliminatee occurs DER eliminable in conjunction. This is great because it is still eliminable if we add more
+		 * conjunct.
 		 */
 		DER,
 		/**
-		 * Eliminatee is not DER eliminable in conjunction but occurs eliminable in
-		 * every conjunct (e.g. eliminable via TIR).
+		 * Eliminatee is not DER eliminable in conjunction but occurs eliminable in every conjunct (e.g. eliminable via
+		 * TIR).
 		 */
 		ELIMINABLE,
 		/**
@@ -110,20 +102,15 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	}
 
 	/**
-	 * Yet probably not fully matured optimization based on the following
-	 * observation: If we have a term of the form `∃x.F[x] ∧ (x=t V G[x])` our
-	 * algorithm presumes that we have to bring F into DNF. This is typically only
-	 * true for the combination of F and G, for the combination of `x=t` and F we
-	 * can avoid to bring F in DNF since we can apply DER directly. This
-	 * optimization is however only a workaround: The idea is that we combine a DER
-	 * term only with the original terms (before DNF conversion) of the other
-	 * conjunct. If the other conjunct however also contains DER disjuncts it is
-	 * difficult to count the number of the DER-applicable disjuncts since we don't
-	 * know how DER-applicable disjuncts after DNF and the original disjuncts are
-	 * related. (The result probably depends on the order in which we descend into
-	 * the conjuncts.) Nonetheless, I think this optimization is a good idea.
-	 * However an quick evaluation on 20220710 did not show that the optimization
-	 * helps.
+	 * Yet probably not fully matured optimization based on the following observation: If we have a term of the form
+	 * `∃x.F[x] ∧ (x=t V G[x])` our algorithm presumes that we have to bring F into DNF. This is typically only true for
+	 * the combination of F and G, for the combination of `x=t` and F we can avoid to bring F in DNF since we can apply
+	 * DER directly. This optimization is however only a workaround: The idea is that we combine a DER term only with
+	 * the original terms (before DNF conversion) of the other conjunct. If the other conjunct however also contains DER
+	 * disjuncts it is difficult to count the number of the DER-applicable disjuncts since we don't know how
+	 * DER-applicable disjuncts after DNF and the original disjuncts are related. (The result probably depends on the
+	 * order in which we descend into the conjuncts.) Nonetheless, I think this optimization is a good idea. However an
+	 * quick evaluation on 20220710 did not show that the optimization helps.
 	 */
 	private static final boolean OPTION_OMIT_DESCED_FOR_DER = false;
 
@@ -134,7 +121,6 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 
 	public XnfScout(final Script script, final int quantifier, final TermVariable eliminatee,
 			final Set<TermVariable> quantifiedInAncestors) {
-		super();
 		mScript = script;
 		mQuantifier = quantifier;
 		mEliminatee = eliminatee;
@@ -263,13 +249,13 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 
 	private Result transduceDual(final ApplicationTerm originalTerm, final Adk adk,
 			final List<Result> transducedArguments) {
-		double originalCorrespondingJuncts = QuantifierUtils.getCorrespondingFiniteJuncts(mQuantifier,
-				originalTerm.getParameters()[0]).length;
+		double originalCorrespondingJuncts =
+				QuantifierUtils.getCorrespondingFiniteJuncts(mQuantifier, originalTerm.getParameters()[0]).length;
 		double derCorrespondingJuncts = transducedArguments.get(0).getDerCorrespondingJuncts();
 		double eliminableCorrespondingJuncts = transducedArguments.get(0).getEliminableCorrespondingJuncts();
 		double occurringCorrespondingJuncts = transducedArguments.get(0).getOccurringCorrespondingJuncts();
-		boolean atLeastOneNonInvolvedCorrespondingJunct = transducedArguments.get(0)
-				.isAtLeastOneNonInvolvedCorrespondingJunct();
+		boolean atLeastOneNonInvolvedCorrespondingJunct =
+				transducedArguments.get(0).isAtLeastOneNonInvolvedCorrespondingJunct();
 		for (int i = 1; i < transducedArguments.size(); i++) {
 			if (transducedArguments.get(i).getAdk() == adk) {
 				throw new AssertionError("Expected alternation between conjunction and disjunction");
@@ -280,16 +266,15 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			final double oldEccurringCorrespondingJuncts = occurringCorrespondingJuncts;
 			final double oldNonInvolved = (atLeastOneNonInvolvedCorrespondingJunct ? 1 : 0);
 
-			final double operandOriginalCorrespondingJuncts = QuantifierUtils
-					.getCorrespondingFiniteJuncts(mQuantifier, originalTerm.getParameters()[i]).length;
+			final double operandOriginalCorrespondingJuncts =
+					QuantifierUtils.getCorrespondingFiniteJuncts(mQuantifier, originalTerm.getParameters()[i]).length;
 			final double operandDerCorrespondingJuncts = transducedArguments.get(i).getDerCorrespondingJuncts();
-			final double operandEliminableCorrespondingJuncts = transducedArguments.get(i)
-					.getEliminableCorrespondingJuncts();
-			final double operandOccurringCorrespondingJuncts = transducedArguments.get(i)
-					.getOccurringCorrespondingJuncts();
-			final double operandNonInvolved = (transducedArguments.get(i).isAtLeastOneNonInvolvedCorrespondingJunct()
-					? 1
-					: 0);
+			final double operandEliminableCorrespondingJuncts =
+					transducedArguments.get(i).getEliminableCorrespondingJuncts();
+			final double operandOccurringCorrespondingJuncts =
+					transducedArguments.get(i).getOccurringCorrespondingJuncts();
+			final double operandNonInvolved =
+					(transducedArguments.get(i).isAtLeastOneNonInvolvedCorrespondingJunct() ? 1 : 0);
 			originalCorrespondingJuncts = oldOriginalCorrespondingJuncts * operandOriginalCorrespondingJuncts;
 			if (OPTION_OMIT_DESCED_FOR_DER) {
 				derCorrespondingJuncts = oldDerCorrespondingJuncts * operandOriginalCorrespondingJuncts
@@ -312,8 +297,8 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			eliminableCorrespondingJuncts = oldEliminableCorrespondingJuncts * operandEliminableCorrespondingJuncts
 					+ oldEliminableCorrespondingJuncts * operandNonInvolved
 					+ oldNonInvolved * operandEliminableCorrespondingJuncts;
-			atLeastOneNonInvolvedCorrespondingJunct &= transducedArguments.get(i)
-					.isAtLeastOneNonInvolvedCorrespondingJunct();
+			atLeastOneNonInvolvedCorrespondingJunct &=
+					transducedArguments.get(i).isAtLeastOneNonInvolvedCorrespondingJunct();
 		}
 		return new Result(adk, derCorrespondingJuncts, eliminableCorrespondingJuncts, occurringCorrespondingJuncts,
 				atLeastOneNonInvolvedCorrespondingJunct);
@@ -334,8 +319,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	}
 
 	/**
-	 * Estimate on the eliminability of an eliminatee. See
-	 * {@link XnfScout#Occurrence}.
+	 * Estimate on the eliminability of an eliminatee. See {@link XnfScout#Occurrence}.
 	 */
 	public static class Result implements Comparable<Result> {
 		private final Adk mAdk;
@@ -346,7 +330,6 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 
 		public Result(final Adk adk, final double derCorrespondingJuncts, final double eliminableCorrespondingJuncts,
 				final double occurringCorrespondingJuncts, final boolean atLeastOneNonInvolvedCorrespondingJunct) {
-			super();
 			mAdk = adk;
 			mAtLeastOneNonInvolvedCorrespondingJunct = atLeastOneNonInvolvedCorrespondingJunct;
 			mDerCorrespondingJuncts = derCorrespondingJuncts;
@@ -384,29 +367,28 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 		@Override
 		public int compareTo(final Result other) {
 			{
-				final int step1 = Double.valueOf(getOccurringCorrespondingJuncts())
-						.compareTo(Double.valueOf(other.getOccurringCorrespondingJuncts()));
+				final int step1 =
+						Double.compare(getOccurringCorrespondingJuncts(), other.getOccurringCorrespondingJuncts());
 				if (step1 != 0) {
 					return step1;
 				}
 			}
 			{
-				final int step2 = Double.valueOf(getEliminableCorrespondingJuncts())
-						.compareTo(Double.valueOf(other.getEliminableCorrespondingJuncts()));
+				final int step2 =
+						Double.compare(getEliminableCorrespondingJuncts(), other.getEliminableCorrespondingJuncts());
 				if (step2 != 0) {
 					return step2;
 				}
 			}
 			{
-				final int step3 = Double.valueOf(getDerCorrespondingJuncts())
-						.compareTo(Double.valueOf(other.getDerCorrespondingJuncts()));
+				final int step3 = Double.compare(getDerCorrespondingJuncts(), other.getDerCorrespondingJuncts());
 				if (step3 != 0) {
 					return step3;
 				}
 			}
 			{
-				final int step4 = Boolean.valueOf(isAtLeastOneNonInvolvedCorrespondingJunct())
-						.compareTo(Boolean.valueOf(other.isAtLeastOneNonInvolvedCorrespondingJunct()));
+				final int step4 = Boolean.compare(isAtLeastOneNonInvolvedCorrespondingJunct(),
+						other.isAtLeastOneNonInvolvedCorrespondingJunct());
 				if (step4 != 0) {
 					return step4;
 				}
@@ -415,31 +397,31 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 		}
 
 		public Double computeDerRatio() {
-			final Double all = (getDerCorrespondingJuncts() + getEliminableCorrespondingJuncts()
+			final double all = (getDerCorrespondingJuncts() + getEliminableCorrespondingJuncts()
 					+ getOccurringCorrespondingJuncts() + (isAtLeastOneNonInvolvedCorrespondingJunct() ? 1 : 0));
-			final Double derRatio = (getDerCorrespondingJuncts()) / all;
+			final double derRatio = (getDerCorrespondingJuncts()) / all;
 			return derRatio;
 		}
 
 		public Double computeEliminableRatio() {
-			final Double all = (getDerCorrespondingJuncts() + getEliminableCorrespondingJuncts()
+			final double all = (getDerCorrespondingJuncts() + getEliminableCorrespondingJuncts()
 					+ getOccurringCorrespondingJuncts() + (isAtLeastOneNonInvolvedCorrespondingJunct() ? 1 : 0));
-			final Double eliminableRatio = (getEliminableCorrespondingJuncts()) / all;
+			final double eliminableRatio = (getEliminableCorrespondingJuncts()) / all;
 			return eliminableRatio;
 		}
 	}
 
 	/**
-	 * Heuristic for selecting an eliminatee that preferably can be eliminated and
-	 * that can be eliminated with a preferably small blowup of the formula's size.
+	 * Heuristic for selecting an eliminatee that preferably can be eliminated and that can be eliminated with a
+	 * preferably small blowup of the formula's size.
 	 */
 	public static TermVariable selectBestEliminatee(final Script script, final int quantifier,
 			final List<TermVariable> eliminatees, final List<Term> dualFiniteParams) {
 		if (eliminatees.size() == 1) {
 			return eliminatees.iterator().next();
 		}
-		final Map<TermVariable, XnfScout.Result> score = computeApplicabilityScore(script, quantifier, eliminatees,
-				dualFiniteParams);
+		final Map<TermVariable, XnfScout.Result> score =
+				computeApplicabilityScore(script, quantifier, eliminatees, dualFiniteParams);
 		final TreeHashRelation<XnfScout.Result, TermVariable> tr = new TreeHashRelation<>();
 		tr.reverseAddAll(score);
 		final Map.Entry<XnfScout.Result, HashSet<TermVariable>> best = tr.entrySet().iterator().next();
@@ -448,20 +430,20 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 
 	private static Map<TermVariable, XnfScout.Result> computeApplicabilityScore(final Script script,
 			final int quantifier, final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
-		final Term correspondingFiniteJunction = QuantifierUtils.applyDualFiniteConnective(script, quantifier,
-				currentDualFiniteParams);
+		final Term correspondingFiniteJunction =
+				QuantifierUtils.applyDualFiniteConnective(script, quantifier, currentDualFiniteParams);
 		final Map<TermVariable, XnfScout.Result> result = new HashMap<>();
 		for (final TermVariable eliminatee : eliminatees) {
-			final XnfScout.Result score = new XnfScout(script, quantifier, eliminatee, null)
-					.transduce(correspondingFiniteJunction);
+			final XnfScout.Result score =
+					new XnfScout(script, quantifier, eliminatee, null).transduce(correspondingFiniteJunction);
 			result.put(eliminatee, score);
 		}
 		return result;
 	}
 
 	/**
-	 * Recommend the conjunct (resp. disjunct for universal quantification) that we
-	 * should pick for applying the and-or distributivity rule.
+	 * Recommend the conjunct (resp. disjunct for universal quantification) that we should pick for applying the and-or
+	 * distributivity rule.
 	 *
 	 */
 	public static int computeRecommendation(final Script script, final Set<TermVariable> eliminatees,
@@ -480,7 +462,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 			scores.add(null);
 			final Term param = dualFiniteParams[i];
 			if (QuantifierUtils.isCorrespondingFiniteJunction(quantifier, param)) {
-				scores.set(i, Double.valueOf(0));
+				scores.set(i, (double) 0);
 				for (final TermVariable eliminatee : eliminatees) {
 					final Result res = new XnfScout(script, quantifier, eliminatee, null).transduce(param);
 					final double ratio = ratioProvider.apply(res);
@@ -510,14 +492,13 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 	}
 
 	/**
-	 * Alternative recommendation (see {@link XnfScout#computeRecommendation} where
-	 * we first select the "best" eliminatee and utilize only this eliminatee to
-	 * recommend a parameter.
+	 * Alternative recommendation (see {@link XnfScout#computeRecommendation} where we first select the "best"
+	 * eliminatee and utilize only this eliminatee to recommend a parameter.
 	 */
 	public static int computeRecommendation2(final Script script, final Set<TermVariable> eliminatees,
 			final Term[] dualFiniteParams, final int quantifier) {
-		final TermVariable bestEliminatee = selectBestEliminatee(script, quantifier, new ArrayList<>(eliminatees),
-				Arrays.asList(dualFiniteParams));
+		final TermVariable bestEliminatee =
+				selectBestEliminatee(script, quantifier, new ArrayList<>(eliminatees), Arrays.asList(dualFiniteParams));
 		int res = computeRecommendationDer(script, Collections.singleton(bestEliminatee), dualFiniteParams, quantifier);
 		if (res == -1) {
 			res = computeRecommendationEliminable(script, Collections.singleton(bestEliminatee), dualFiniteParams,

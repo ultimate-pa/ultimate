@@ -89,22 +89,19 @@ public class HCPredicate extends BasicPredicate {
 		mVariables = variables;
 	}
 
-
-	//here
+	// here
 	/*
-	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
-		this(programPoints, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoints, term, variables), term, vars,
-				closedFormula, variables);
-	}
-	*/
+	 * protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final Term term, final Set<IProgramVar>
+	 * vars, final Term closedFormula, final List<TermVariable> variables) { this(programPoints,
+	 * HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoints, term, variables), term, vars, closedFormula, variables); }
+	 */
 
 	@Override
 	public String toString() {
-		String result = "#";
-		result += mHcPredicateSymbols;
-		result += "@(" +  mFormula.toString() + ")";
-		return result;
+		final StringBuilder result = new StringBuilder("#");
+		result.append(mHcPredicateSymbols);
+		result.append("@(").append(mFormula.toString()).append(")");
+		return result.toString();
 	}
 
 	public Set<HcPredicateSymbol> getHcPredicateSymbols() {
