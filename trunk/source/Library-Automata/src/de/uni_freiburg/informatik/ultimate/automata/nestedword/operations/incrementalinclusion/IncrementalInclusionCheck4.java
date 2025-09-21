@@ -176,7 +176,6 @@ public class IncrementalInclusionCheck4<LETTER, STATE> extends AbstractIncrement
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void run() throws AutomataLibraryException {
 		result = null;
 		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> B : local_mB) {

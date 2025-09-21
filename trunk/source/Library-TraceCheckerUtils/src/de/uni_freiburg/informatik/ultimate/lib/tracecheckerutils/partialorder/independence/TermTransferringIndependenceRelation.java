@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of letters
  */
 public class TermTransferringIndependenceRelation<L extends IAction> implements IIndependenceRelation<IPredicate, L> {
-	private static final boolean ABSTRACT_TF_WITH_BRANCH_ENCODERS = false;
+	private static final boolean TRANSFER_TF_WITH_BRANCH_ENCODERS = false;
 
 	private final IIndependenceRelation<IPredicate, L> mUnderlying;
 	private final TransferrerWithVariableCache mTransferrer;
@@ -105,8 +105,8 @@ public class TermTransferringIndependenceRelation<L extends IAction> implements 
 
 		final var tf = mTransferrer.transferTransFormula(letter.getTransformula());
 		UnmodifiableTransFormula tfWithBE;
-		if (ABSTRACT_TF_WITH_BRANCH_ENCODERS && letter instanceof IActionWithBranchEncoders) {
-			final var originalTfWithBE = ((IActionWithBranchEncoders) letter).getTransitionFormulaWithBranchEncoders();
+		if (TRANSFER_TF_WITH_BRANCH_ENCODERS && letter instanceof final IActionWithBranchEncoders letterBE) {
+			final var originalTfWithBE = letterBE.getTransitionFormulaWithBranchEncoders();
 			if (originalTfWithBE != null) {
 				tfWithBE = mTransferrer.transferTransFormula(originalTfWithBE);
 			} else {

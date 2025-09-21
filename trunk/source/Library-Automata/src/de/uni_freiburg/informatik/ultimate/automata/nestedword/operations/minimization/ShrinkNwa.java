@@ -3253,7 +3253,6 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		 * @param hierEcs
 		 *            hierarchical predecessor equivalence classes
 		 */
-		@SuppressWarnings("unchecked")
 		public void initializeMatrix(final HashSet<EquivalenceClass> hierEcs) {
 			if (STATISTICS) {
 				mMatrixTime -= new GregorianCalendar().getTimeInMillis();

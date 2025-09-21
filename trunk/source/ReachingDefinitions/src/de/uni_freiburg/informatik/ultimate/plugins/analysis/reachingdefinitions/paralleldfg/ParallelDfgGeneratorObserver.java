@@ -189,7 +189,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			}
 			for (final IcfgLocation pp : entry.getValue()) {
 				// get the RD
-				final DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
+				final DataflowState<IcfgEdge> dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
 				if (pp.toString().contains("ENTRY")) {
 					initInRDProc = true;
 					continue;
@@ -246,7 +246,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			}
 			for (final IcfgLocation pp : entry.getValue()) {
 				if (!pp.toString().contains("ENTRY")) {
-					final DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
+					final DataflowState<IcfgEdge> dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
 					final Set<IcfgLocation> nwls = dfs.getNowriteLocations(var);
 					L.addAll(nwls);
 				} else {

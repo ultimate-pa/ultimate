@@ -80,6 +80,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
+/**
+ * Creates data race checking instrumentation code for read and write accesses to global variables and heap memory.
+ *
+ * Our data race instrumentation is described in the SV-COMP'23 paper "Ultimate Taipan and Race Detection in Ultimate"
+ * <https://doi.org/10.1007/978-3-031-30820-8_40>.
+ *
+ * In short, for every memory location, our instrumentation introduces an auxiliary boolean variable (called a "race
+ * indicator") which is modified whenever the location is written to or read from. The instrumentation furthermore
+ * introduces assert statements that can be violated if (and only if) there is a concurrent racing access to the same
+ * memory location.
+ */
 public final class DataRaceChecker {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
@@ -109,6 +120,7 @@ public final class DataRaceChecker {
 	 * @param erb
 	 *            An {@link ExpressionResultBuilder} to which the data race check statements are added
 	 * @param loc
+	 *            the location of the read
 	 * @param lrVal
 	 *            The value being read
 	 */
@@ -136,6 +148,7 @@ public final class DataRaceChecker {
 	 * @param erb
 	 *            An {@link ExpressionResultBuilder} to which the data race check statements and declarations are added
 	 * @param loc
+	 *            the location of the write
 	 * @param lrVal
 	 *            The value being written
 	 */
@@ -341,6 +354,13 @@ public final class DataRaceChecker {
 		throw new UnsupportedOperationException("Cannot detect races for values of type " + type);
 	}
 
+	/**
+	 * Returns the declarations of auxiliary variables required by the data race checking instrumentation code.
+	 *
+	 * @param loc
+	 *            The location to use for the declarations.
+	 * @return the declarations of race indicator variables
+	 */
 	public Collection<Declaration> declareRaceCheckingInfrastructure(final ILocation loc) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		decl.add(constructMemoryRaceArrayDeclaration(loc));

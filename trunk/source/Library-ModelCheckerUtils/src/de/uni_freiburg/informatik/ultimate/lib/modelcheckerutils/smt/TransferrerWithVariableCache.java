@@ -95,6 +95,7 @@ public class TransferrerWithVariableCache {
 		return TransFormulaBuilder.transferTransformula(this, mTargetScript, tf, true);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T extends Term> T transferTerm(final T term) {
 		return (T) mTransferrer.transform(term);
 	}
@@ -122,6 +123,7 @@ public class TransferrerWithVariableCache {
 		return mTransferrer;
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T extends Term> T backTransferTerm(final T term) {
 		return (T) mBackTransferrer.transform(term);
 	}

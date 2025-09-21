@@ -3274,7 +3274,7 @@ public class CHandler {
 		return result;
 	}
 
-	private Result skipOrSideEffects(final ResultWithSideEffects result) {
+	private static Result skipOrSideEffects(final ResultWithSideEffects result) {
 		if (result.hasNoSideEffects()) {
 			return new SkipResult();
 		}

@@ -163,7 +163,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		return path;
 	}
 
-	private void updateFileView(final String completePath) {
+	private static void updateFileView(final String completePath) {
 		// After finishing the Ultimate run we update the FileView
 		// We have to do this in this asynch manner, because otherwise we would
 		// get a NullPointerException, because we are not in the UI Thread
@@ -290,7 +290,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 				CDTResultStore.addHackyResult(result));
 	}
 
-	private String severityToCheckerDescriptor(final Severity severity) {
+	private static String severityToCheckerDescriptor(final Severity severity) {
 		if (severity.equals(Severity.INFO)) {
 			return CCheckerDescriptor.GENERIC_INFO_RESULT_ID;
 		} else if (severity.equals(Severity.WARNING)) {

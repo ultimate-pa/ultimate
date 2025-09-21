@@ -123,7 +123,7 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	private boolean isImplementation(final Procedure decl) {
+	private static boolean isImplementation(final Procedure decl) {
 		return decl.getSpecification() == null;
 	}
 

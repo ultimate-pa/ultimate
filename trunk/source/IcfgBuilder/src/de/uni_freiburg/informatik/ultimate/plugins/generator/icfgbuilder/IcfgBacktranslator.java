@@ -317,8 +317,7 @@ public class IcfgBacktranslator extends
 	 *
 	 * @param cache
 	 */
-	@SuppressWarnings("unchecked")
-	private <TVL> Multigraph<String, BoogieASTNode> translateCFGEdge(
+	private Multigraph<String, BoogieASTNode> translateCFGEdge(
 			final Map<IExplicitEdgesMultigraph<?, ?, IcfgLocation, ? extends IIcfgTransition<IcfgLocation>, ?>, Multigraph<String, BoogieASTNode>> cache,
 			final IIcfgTransition<IcfgLocation> oldEdge, final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final IcfgLocation oldTarget = oldEdge.getTarget();
@@ -422,11 +421,10 @@ public class IcfgBacktranslator extends
 		// and the condition of the mapped conditional to determine if the
 		// condition
 		// evaluated to true or to false
-		if (!(input instanceof UnaryExpression)) {
+		if (!(input instanceof final UnaryExpression inputCond)) {
 			// it is not even an unary expression, it surely evaluates to true
 			return StepInfo.CONDITION_EVAL_TRUE;
 		}
-		final UnaryExpression inputCond = (UnaryExpression) input;
 		if (inputCond.getOperator() != Operator.LOGICNEG) {
 			// it is an unaryCond, but its no negation, so it must be true
 			return StepInfo.CONDITION_EVAL_TRUE;
@@ -434,11 +432,10 @@ public class IcfgBacktranslator extends
 		// now it gets interesting: it is a negation, but is the real
 		// condition also a negation?
 
-		if (!(output instanceof UnaryExpression)) {
+		if (!(output instanceof final UnaryExpression outputCond)) {
 			// nope, so that means it is false
 			return StepInfo.CONDITION_EVAL_FALSE;
 		}
-		final UnaryExpression outputCond = (UnaryExpression) output;
 		if (inputCond.getOperator() != Operator.LOGICNEG) {
 			// it is an unaryCond, but its no negation, so it must be
 			// false

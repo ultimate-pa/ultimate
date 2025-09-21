@@ -42,25 +42,14 @@ public class BinaryOperator extends AstNode {
 
 	@Override
 	public String toString() {
-		String op = " ?? ";
-		if (type == BinaryType.and) {
-			op = " && ";
-		}
-		if (type == BinaryType.or) {
-			op = " || ";
-		}
-		if (type == BinaryType.minus) {
-			op = " - ";
-		}
-		if (type == BinaryType.plus) {
-			op = " + ";
-		}
-		if (type == BinaryType.times) {
-			op = " * ";
-		}
-		if (type == BinaryType.divide) {
-			op = " / ";
-		}
+		final String op = switch (type) {
+		case and -> " && ";
+		case or -> " || ";
+		case minus -> " - ";
+		case plus -> " + ";
+		case times -> " * ";
+		case divide -> " / ";
+		};
 
 		final StringBuilder result = new StringBuilder("( ");
 		int i = 0;

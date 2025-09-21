@@ -255,7 +255,7 @@ public class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final SetConstraint<ELEM> other = (SetConstraint<ELEM>) obj;
+		final SetConstraint<?> other = (SetConstraint<?>) obj;
 		if (mIsInconsistent != other.mIsInconsistent) {
 			return false;
 		}
