@@ -130,20 +130,20 @@ public class EldaricaCliChcScript implements IChcScript {
 	}
 
 	private String getCommand(final File file) {
-		var command = "eld";
+		StringBuilder command = new StringBuilder("eld");
 		if (USE_PORTFOLIO) {
-			command += " -portfolio";
+			command.append(" -portfolio");
 		}
 		if (USE_DISJUNCTIVE_INTERP) {
-			command += " -disj";
+			command.append(" -disj");
 		}
 		if (mProduceModels) {
-			command += " -ssol";
+			command.append(" -ssol");
 		}
 		if (mPredicates != null) {
-			command += " -hints:" + mPredicates;
+			command.append(" -hints:").append(mPredicates);
 		}
-		return command + " " + file.getAbsolutePath();
+		return command.append(" ").append(file.getAbsolutePath()).toString();
 	}
 
 	@Override

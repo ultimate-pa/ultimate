@@ -91,12 +91,12 @@ public class HornClauseBuilder {
 
 	public HcHeadVar getHeadVar(final IHcReplacementVar variable) {
 		assert mHeadPredicate != null : "Clause does not have head predicate";
-		assert mHeadPredicate.hasParameter(variable) : "Predicate " + mHeadPredicate.getPredicate()
-				+ " does not have parameter " + variable;
+		assert mHeadPredicate.hasParameter(variable)
+				: "Predicate " + mHeadPredicate.getPredicate() + " does not have parameter " + variable;
 
 		final int index = mHeadPredicate.getParameters().indexOf(variable);
-		assert index >= 0 && index < mHeadPredicate.getParamCount() : "Invalid parameter index for " + variable
-				+ " in predicate " + mHeadPredicate.getPredicate();
+		assert index >= 0 && index < mHeadPredicate.getParamCount()
+				: "Invalid parameter index for " + variable + " in predicate " + mHeadPredicate.getPredicate();
 
 		return mSymbolTable.getOrConstructHeadVar(mHeadPredicate.getPredicate(), index, variable.getSort(), variable);
 	}

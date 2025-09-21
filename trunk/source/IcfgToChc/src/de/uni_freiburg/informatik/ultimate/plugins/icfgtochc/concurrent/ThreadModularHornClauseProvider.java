@@ -721,8 +721,8 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 
 		for (final var entry : permutation.entrySet()) {
 			assert !entry.getKey().equals(entry.getValue()) : "Identity permutations should be omitted";
-			assert entry.getKey().getTemplateName()
-					.equals(entry.getValue().getTemplateName()) : "Must not permute threads with different templates";
+			assert entry.getKey().getTemplateName().equals(entry.getValue().getTemplateName())
+					: "Must not permute threads with different templates";
 			assert permutation.containsKey(entry.getValue()) : "Not a permutation: " + permutation;
 			replaceThreadVariables(bodyArgs, entry.getValue(), mThreadSpecificVars.get(entry.getKey()));
 		}
