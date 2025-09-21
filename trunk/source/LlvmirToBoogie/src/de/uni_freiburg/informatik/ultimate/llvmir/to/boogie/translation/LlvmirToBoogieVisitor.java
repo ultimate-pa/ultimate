@@ -1585,6 +1585,23 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 						expr, bitLength, true, identifier, location);
 				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
 				result.addFuncBlock(operationWithOverflowPair.getSecond());
+			} else if (callIdentifier.startsWith("@llvm.uadd.with.overflow")) {
+				final LLVMIRParser.ArgContext arg0 = instructionType.callInst().args().arg(0);
+				final LLVMIRParser.ArgContext arg1 = instructionType.callInst().args().arg(1);
+				final LLVMIRParser.ConcreteTypeContext arg0Type = arg0.concreteType();
+				final LLVMIRParser.ValueContext arg0Value = arg0.value();
+				final LLVMIRParser.ValueContext arg1Value = arg1.value();
+				final int bitLength = getBitLengthFromType(arg0Type);
+				final BinaryExpression expr = new BinaryExpression(location, Operator.ARITHPLUS,
+						constructExpressionFromValue(arg0Value, arg0Type, location, false),
+						constructExpressionFromValue(arg1Value, arg0Type, location, false));
+				if (!bitLengthPairExists(bitLength, mDeclarations)) {
+					mDeclarations.add(constructBitLengthPairTypeDeclaration(bitLength, location));
+				}
+				final Pair<VariableDeclaration, AssignmentStatement> operationWithOverflowPair = constructLlvmOperationWithOverflow(
+						expr, bitLength, false, identifier, location);
+				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
+				result.addFuncBlock(operationWithOverflowPair.getSecond());
 			} else {
 				final Procedure proc = getProcedureFromDeclarations(unifyIdentifier(callIdentifier), mDeclarations);
 				for (final Specification spec : proc.getSpecification()) {
