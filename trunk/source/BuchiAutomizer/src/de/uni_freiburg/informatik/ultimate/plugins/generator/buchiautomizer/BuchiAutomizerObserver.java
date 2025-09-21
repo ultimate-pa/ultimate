@@ -148,7 +148,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private BuchiCegarLoopResult<IcfgEdge> runCegarLoops(final IIcfg<?> icfg,
 			final BuchiCegarLoopFactory<IcfgEdge> factory) throws IOException {
 		if (!IcfgUtils.isConcurrent(icfg)) {
-			runSingleCegarLoop(icfg, factory);
+			return runSingleCegarLoop(icfg, factory);
 		}
 
 		if (mWitnessTransformer != null) {
