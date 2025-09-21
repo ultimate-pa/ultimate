@@ -75,10 +75,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadOther;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadOther;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -181,18 +179,10 @@ public class IcfgBacktranslator extends
 			final Statement st = ((Return) cb).getCallStatement();
 			ateBuilder.setStepAndElement(st);
 			ateBuilder.setStepInfo(StepInfo.PROC_RETURN);
-		} else if (cb instanceof ForkThreadOther) {
-			final Statement st = ((ForkThreadOther) cb).getForkStatement();
-			ateBuilder.setStepAndElement(st);
-			ateBuilder.setStepInfo(StepInfo.FORK);
 		} else if (cb instanceof ForkThreadCurrent) {
 			final Statement st = ((ForkThreadCurrent) cb).getForkStatement();
 			ateBuilder.setStepAndElement(st);
 			ateBuilder.setStepInfo(StepInfo.FORK);
-		} else if (cb instanceof JoinThreadOther) {
-			final Statement st = ((JoinThreadOther) cb).getJoinStatement();
-			ateBuilder.setStepAndElement(st);
-			ateBuilder.setStepInfo(StepInfo.JOIN);
 		} else if (cb instanceof JoinThreadCurrent) {
 			final Statement st = ((JoinThreadCurrent) cb).getJoinStatement();
 			ateBuilder.setStepAndElement(st);
