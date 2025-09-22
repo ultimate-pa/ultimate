@@ -1915,4 +1915,69 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		}
 		return result;
 	}
+
+	/**
+	 * Handles the visit event for a switch terminator in the LLVM IR parse tree.
+	 *
+	 * This method processes the switch terminator and constructs an IfStatement for each case, along with a
+	 * GotoStatement for the default case.
+	 *
+	 * @param ctx The parse tree context for the switch terminator.
+	 * @return A Result object containing the IfStatements and GotoStatement.
+	 */
+	@Override
+	public Result visitSwitchTerm(final LLVMIRParser.SwitchTermContext ctx) {
+		final Result result = new Result();
+		final LlvmirLocation location = constructLocation(ctx);
+
+		final LLVMIRParser.BasicBlockContext basicBlockContext = getEnclosingBasicBlock(ctx);
+		final IntegerLiteral currentLabelLiteral = new IntegerLiteral(location,
+				String.valueOf(getLabelIndexFromFuncBody(ctx, basicBlockContext.LabelIdent().getText())));
+		final VariableLHS varLhs = new VariableLHS(location, mLabelIdentifier);
+
+		final AssignmentStatement assignCurrentLabel = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+				new Expression[] { currentLabelLiteral });
+		result.addFuncBlock(assignCurrentLabel);
+
+		final LLVMIRParser.ConcreteTypeContext conditionTypeContext = ctx.typeValue().firstClassType().concreteType();
+		final List<LLVMIRParser.CaseContext> caseContexts = ctx.case_();
+		for (final LLVMIRParser.CaseContext caseContext : caseContexts) {
+			final LLVMIRParser.ConcreteTypeContext caseTypeContext = caseContext.typeConst().firstClassType()
+					.concreteType();
+			final BinaryExpression conditionExpr = new BinaryExpression(location, Operator.COMPEQ,
+					constructExpressionFromValue(ctx.typeValue().value(), conditionTypeContext, location, false),
+					constructExpressionFromConstant(caseContext.typeConst().constant(), caseTypeContext, location,
+							false));
+			final String caseLabelIdentifier = unifyIdentifier(caseContext.label().LocalIdent().getText());
+			final GotoStatement thenGoto = new GotoStatement(location, new String[] { caseLabelIdentifier });
+			final IfStatement ifStmt = new IfStatement(location, conditionExpr, new Statement[] { thenGoto },
+					new Statement[] {});
+			result.addFuncBlock(ifStmt);
+		}
+		final String defaultLabelIdentifier = unifyIdentifier(ctx.label().LocalIdent().getText());
+		final GotoStatement defaultGoto = new GotoStatement(location, new String[] { defaultLabelIdentifier });
+		result.addFuncBlock(defaultGoto);
+		return result;
+	}
+
+	/**
+	 * Retrieves the enclosing basic block context for a given parser rule context.
+	 *
+	 * This method traverses the parse tree upwards from the provided context until it finds a BasicBlockContext. If no
+	 * such context is found, an AssertionError is thrown.
+	 *
+	 * @param ctx The parser rule context from which to start the search.
+	 * @return The enclosing BasicBlockContext.
+	 * @throws AssertionError if the provided context is not enclosed in a basic block.
+	 */
+	private static LLVMIRParser.BasicBlockContext getEnclosingBasicBlock(final ParserRuleContext ctx) {
+		ParserRuleContext current = ctx;
+		while (current != null && !(current instanceof LLVMIRParser.BasicBlockContext)) {
+			current = current.getParent();
+		}
+		if (current == null) {
+			throw new AssertionError("The provided context is not enclosed in a basic block.");
+		}
+		return (LLVMIRParser.BasicBlockContext) current;
+	}
 }
