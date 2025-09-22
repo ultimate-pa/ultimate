@@ -1931,8 +1931,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final LlvmirLocation location = constructLocation(ctx);
 
 		final LLVMIRParser.BasicBlockContext basicBlockContext = getEnclosingBasicBlock(ctx);
-		final IntegerLiteral currentLabelLiteral = new IntegerLiteral(location,
-				String.valueOf(getLabelIndexFromFuncBody(ctx, basicBlockContext.LabelIdent().getText())));
+		final IntegerLiteral currentLabelLiteral = new IntegerLiteral(location, String
+				.valueOf(getLabelIndexFromFuncBody(ctx, unifyIdentifier(basicBlockContext.LabelIdent().getText()))));
 		final VariableLHS varLhs = new VariableLHS(location, mLabelIdentifier);
 
 		final AssignmentStatement assignCurrentLabel = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
@@ -1941,18 +1941,30 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 
 		final LLVMIRParser.ConcreteTypeContext conditionTypeContext = ctx.typeValue().firstClassType().concreteType();
 		final List<LLVMIRParser.CaseContext> caseContexts = ctx.case_();
-		for (final LLVMIRParser.CaseContext caseContext : caseContexts) {
-			final LLVMIRParser.ConcreteTypeContext caseTypeContext = caseContext.typeConst().firstClassType()
-					.concreteType();
-			final BinaryExpression conditionExpr = new BinaryExpression(location, Operator.COMPEQ,
-					constructExpressionFromValue(ctx.typeValue().value(), conditionTypeContext, location, false),
-					constructExpressionFromConstant(caseContext.typeConst().constant(), caseTypeContext, location,
-							false));
-			final String caseLabelIdentifier = unifyIdentifier(caseContext.label().LocalIdent().getText());
-			final GotoStatement thenGoto = new GotoStatement(location, new String[] { caseLabelIdentifier });
-			final IfStatement ifStmt = new IfStatement(location, conditionExpr, new Statement[] { thenGoto },
-					new Statement[] {});
+		if (caseContexts.size() == 2) {
+			final String case0LabelIdentifier = unifyIdentifier(caseContexts.get(0).label().LocalIdent().getText());
+			final String case1LabelIdentifier = unifyIdentifier(caseContexts.get(1).label().LocalIdent().getText());
+			final GotoStatement thenGoto = new GotoStatement(location, new String[] { case0LabelIdentifier });
+			final GotoStatement elseGoto = new GotoStatement(location, new String[] { case1LabelIdentifier });
+			final IfStatement ifStmt = new IfStatement(location,
+					new UnaryExpression(location, UnaryExpression.Operator.LOGICNEG, constructExpressionFromValue(
+							ctx.typeValue().value(), conditionTypeContext, location, false)),
+					new Statement[] { thenGoto }, new Statement[] { elseGoto });
 			result.addFuncBlock(ifStmt);
+		} else {
+			for (final LLVMIRParser.CaseContext caseContext : caseContexts) {
+				final LLVMIRParser.ConcreteTypeContext caseTypeContext = caseContext.typeConst().firstClassType()
+						.concreteType();
+				final BinaryExpression conditionExpr = new BinaryExpression(location, Operator.COMPEQ,
+						constructExpressionFromValue(ctx.typeValue().value(), conditionTypeContext, location, false),
+						constructExpressionFromConstant(caseContext.typeConst().constant(), caseTypeContext, location,
+								false));
+				final String caseLabelIdentifier = unifyIdentifier(caseContext.label().LocalIdent().getText());
+				final GotoStatement thenGoto = new GotoStatement(location, new String[] { caseLabelIdentifier });
+				final IfStatement ifStmt = new IfStatement(location, conditionExpr, new Statement[] { thenGoto },
+						new Statement[] {});
+				result.addFuncBlock(ifStmt);
+			}
 		}
 		final String defaultLabelIdentifier = unifyIdentifier(ctx.label().LocalIdent().getText());
 		final GotoStatement defaultGoto = new GotoStatement(location, new String[] { defaultLabelIdentifier });
