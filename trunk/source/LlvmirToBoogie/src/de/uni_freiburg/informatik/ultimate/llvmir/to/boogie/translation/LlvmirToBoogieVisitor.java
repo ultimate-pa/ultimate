@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
@@ -1747,6 +1748,25 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 						new Expression[] { binaryExpr });
 				result.addFuncBlock(assignment);
 			}
+		} else if (instructionType.extractValueInst() != null) {
+			if (instructionType.extractValueInst().typeValue().firstClassType().concreteType().structType() == null) {
+				throw new AssertionError(
+						"The support for extractValue instructions without a struct type is not implemented yet.");
+			}
+			final int indexNumber = Integer.parseInt(instructionType.extractValueInst().IntLit(0).toString());
+			final LLVMIRParser.TypeContext typeContext = instructionType.extractValueInst().typeValue().firstClassType()
+					.concreteType().structType().type(indexNumber);
+			final VariableDeclaration varDecl = (constructVarDecFromTypeContext(typeContext, identifier, location));
+			result.addFuncLocalVar(varDecl);
+			final StructAccessExpression structAccessExpr = new StructAccessExpression(location,
+					constructExpressionFromValue(instructionType.extractValueInst().typeValue().value(),
+							instructionType.extractValueInst().typeValue().firstClassType().concreteType(), location,
+							false),
+					String.valueOf(indexNumber));
+			final VariableLHS varLhs = new VariableLHS(location, identifier);
+			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+					new Expression[] { structAccessExpr });
+			result.addFuncBlock(assignment);
 		} else if (instructionType.andInst() != null) {
 			constructHavocStatementFromTypeValue(result, instructionType.andInst().typeValue(), location, identifier,
 					"andInst");
