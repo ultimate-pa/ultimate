@@ -1554,11 +1554,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 						constructSignedExpression(constructExpressionFromValue(argValue, argType, location, false),
 								bitLength, location),
 						intLiteral0);
-				final UnaryExpression unaryExpr = new UnaryExpression(location, UnaryExpression.Operator.LOGICNEG,
+				final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
+				final BinaryExpression nagationExpr = new BinaryExpression(location, Operator.ARITHMINUS, zeroLiteral,
 						constructSignedExpression(constructExpressionFromValue(argValue, argType, location, false),
 								bitLength, location));
 				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
-				final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMOD, unaryExpr,
+				final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMOD, nagationExpr,
 						bitLengthLiteral);
 				final Expression elseExpr = constructExpressionFromValue(argValue, argType, location, false);
 				final IfThenElseExpression ifThenElseExpr = new IfThenElseExpression(location, binaryExpr, thenExpr,
