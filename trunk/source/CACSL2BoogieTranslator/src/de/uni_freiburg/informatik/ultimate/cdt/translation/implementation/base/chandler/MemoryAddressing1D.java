@@ -10,18 +10,14 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
@@ -40,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * The one dimensional memory addressing.
  */
 public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
+	private final MemoryMetadataDefault1D mMemoryMetadata;
+
 	public MemoryAddressing1D(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TranslationSettings settings,
@@ -57,80 +55,20 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
 		};
 
+		mMemoryMetadata = new MemoryMetadataDefault1D(typeHandler, exprTranslation, booleanArrayHelper);
+
 		mMemoryManagementStrategy = new SimpleIncreasingStrategy<>(typeSizes, exprTranslation, typeHandler,
-				typeSizeAndOffsetComputer, settings.isBitvectorTranslation(), this);
+				typeSizeAndOffsetComputer, settings.isBitvectorTranslation(), this, mMemoryMetadata);
 	}
 
 	@Override
 	public List<Declaration> constructMetaData(final RequiredMemoryModelFeatures requiredFeatures) {
-		final var metaDataDeclarations = new ArrayList<Declaration>();
-
-		if (requiredFeatures.getRequiredMemoryStructureDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_INITIAL_ALLOCATIONS)) {
-			metaDataDeclarations.add(constructInitialAllocationsConstant());
-		}
-
-		if (requiredFeatures.getRequiredMemoryStructureDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_STACK_ALLOCATIONS)) {
-			metaDataDeclarations.add(constructStackAllocationsVariable());
-		}
-
-		if (requiredFeatures.getRequiredMemoryStructureDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_HEAP_ALLOCATIONS)) {
-			metaDataDeclarations.add(constructHeapAllocationsVariable());
-		}
-
-		if (requiredFeatures.getRequiredMemoryStructureDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER)) {
-			metaDataDeclarations.add(constructStackHeapBarrierConstant());
-		}
-
-		return metaDataDeclarations;
-	}
-
-	/**
-	 * Constructs the declaration of the constant that holds the count of all initial allocations.
-	 *
-	 * @return The declaration.
-	 */
-	private VariableDeclaration constructInitialAllocationsConstant() {
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		return new VariableDeclaration(ignoreLoc, new Attribute[0],
-				new VarList[] { new VarList(ignoreLoc,
-						new String[] { MemoryModelDeclarations.ULTIMATE_INITIAL_ALLOCATIONS.getName() },
-						mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())) });
-	}
-
-	/**
-	 * Constructs the declaration of the variable holding the count of stack allocations.
-	 *
-	 * @return The declaration.
-	 */
-	private VariableDeclaration constructStackAllocationsVariable() {
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		return new VariableDeclaration(ignoreLoc, new Attribute[0],
-				new VarList[] { new VarList(ignoreLoc,
-						new String[] { MemoryModelDeclarations.ULTIMATE_STACK_ALLOCATIONS.getName() },
-						mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())) });
-	}
-
-	/**
-	 * Constructs the declaration of the variable holding the count of heap allocations.
-	 *
-	 * @return The declaration.
-	 */
-	private VariableDeclaration constructHeapAllocationsVariable() {
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		return new VariableDeclaration(ignoreLoc, new Attribute[0],
-				new VarList[] { new VarList(ignoreLoc,
-						new String[] { MemoryModelDeclarations.ULTIMATE_HEAP_ALLOCATIONS.getName() },
-						mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())) });
+		return mMemoryMetadata.constructMetaData(requiredFeatures);
 	}
 
 	@Override
 	public List<MemoryModelDeclarations> metaDataDeclarations() {
-		return List.of(MemoryModelDeclarations.ULTIMATE_INITIAL_ALLOCATIONS,
-				MemoryModelDeclarations.ULTIMATE_STACK_ALLOCATIONS, MemoryModelDeclarations.ULTIMATE_HEAP_ALLOCATIONS);
+		return mMemoryMetadata.metaDataDeclarations();
 	}
 
 	@Override
@@ -215,7 +153,9 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 
 	@Override
 	public AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
-			final Expression argSPtr, final Expression nullPtrExpr, final Expression lengthArray) {
+			final Expression argSPtr, final Expression nullPtrExpr,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		// TODO check if this is valid, we cannot check for in range in the one dimensional model
 		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
@@ -261,5 +201,21 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 		stmts.add(call);
 
 		return stmts;
+	}
+
+	@Override
+	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		throw new UnsupportedOperationException("The pointer validity check is not available with the 1D Addressing");
+
+	}
+
+	@Override
+	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		throw new UnsupportedOperationException(
+				"The valid array is not part of the metadata values from the 1D Addressing");
+
 	}
 }

@@ -191,7 +191,8 @@ public interface IMemoryAdressing {
 	 * @return The statement.
 	 */
 	AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr, final Expression argSPtr,
-			final Expression nullPtrExpr, final Expression lengthArray);
+			final Expression nullPtrExpr, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
 	 * Constructs assert / assume statements for ptr memsafety checks.
@@ -243,5 +244,8 @@ public interface IMemoryAdressing {
 			final IdentifierExpression ptrIdExprImpl, final VariableLHS resultLhsImpl,
 			final IdentifierExpression resultExprImpl, final IdentifierExpression sizeIdExprImpl,
 			final RequiredMemoryModelFeatures requiredFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 }

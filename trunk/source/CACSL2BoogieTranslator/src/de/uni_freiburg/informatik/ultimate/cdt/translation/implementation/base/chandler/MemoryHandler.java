@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -514,41 +513,10 @@ public class MemoryHandler {
 	/**
 	 * @param loc
 	 *            location of translation unit
-	 * @return new IdentifierExpression that represents the <em>#length array</em>
-	 */
-	public Expression getLengthArray(final ILocation loc) {
-		return MemoryModelExpressionHelper.getLengthArray(loc, mRequiredMemoryModelFeatures,
-				mMemoryModelDeclarationsHandler);
-	}
-
-	/**
-	 * @param loc
-	 *            location of translation unit
-	 * @return new IdentifierExpression that represents the <em>#length array</em>
-	 */
-	public VariableLHS getLengthArrayLhs(final ILocation loc) {
-		return MemoryModelExpressionHelper.getMemoryModelFeatureLhs(loc, MemoryModelDeclarations.ULTIMATE_LENGTH,
-				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
-	}
-
-	/**
-	 * @param loc
-	 *            location of translation unit
 	 * @return new IdentifierExpression that represents the <em>#valid array</em>
 	 */
 	public Expression getValidArray(final ILocation loc) {
-		return MemoryModelExpressionHelper.getValidArray(loc, mRequiredMemoryModelFeatures,
-				mMemoryModelDeclarationsHandler);
-	}
-
-	public VariableLHS getValidArrayLhs(final ILocation loc) {
-		return MemoryModelExpressionHelper.getValidArrayLhs(loc, mRequiredMemoryModelFeatures,
-				mMemoryModelDeclarationsHandler);
-	}
-
-	public Expression getStackHeapBarrier(final ILocation loc) {
-		return MemoryModelExpressionHelper.getStackHeapBarrier(loc, mRequiredMemoryModelFeatures,
-				mMemoryModelDeclarationsHandler);
+		return mMemoryModel.getValidArray(loc, mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
 	}
 
 	public Expression getMemoryRaceArray(final ILocation loc) {
@@ -1918,69 +1886,6 @@ public class MemoryHandler {
 		mProcedureManager.addSpecificationsToCurrentProcedure(mallocSpecifications);
 
 		final ArrayList<Declaration> result = new ArrayList<>();
-		if (ADD_IMPLEMENTATIONS) {
-
-			final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(tuLoc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			final Expression valid = getValidArray(tuLoc);
-
-			final Expression length = getLengthArray(tuLoc);
-			final Expression bLTrue = mBooleanArrayHelper.constructTrue();
-			// ~size
-			final IdentifierExpression size = // new IdentifierExpression(tuLoc, SIZE);
-					ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(),
-							SFO.SIZE, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, alloc.getName()));
-
-			final Expression addr =
-					ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(),
-							SFO.ADDR, new DeclarationInformation(StorageClass.LOCAL, alloc.getName()));
-			final Expression addrOffset =
-					ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
-			final Expression addrBase =
-					ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
-			// procedure ~malloc(~size:int) returns (#res:pointer) {
-			// var ~addr : pointer;
-			//
-			// assume ~addr!offset = 0;
-			// assume ~addr!base != 0;
-			// assume !#valid[~addr!base];
-			// // #valid setzen
-			// #valid = #valid[~addr!base := true];
-			// #length = #length[~addr!base := size];
-			// // return pointer
-			// #res := ~addr;
-			// }
-			final Expression[] idcAddrBase = { addrBase };
-			final VariableDeclaration[] localVars = { new VariableDeclaration(tuLoc, new Attribute[0], new VarList[] {
-					new VarList(tuLoc, new String[] { SFO.ADDR }, typeHandler.constructPointerType(tuLoc)) }) };
-
-			final VariableLHS resLhs =
-					ExpressionFactory.constructVariableLHS(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.RES,
-							new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, alloc.getName()));
-			final Statement[] block = new Statement[6];
-			block[0] = new AssumeStatement(tuLoc,
-					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrOffset, nr0));
-			block[1] = new AssumeStatement(tuLoc,
-					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ, addrBase, nr0));
-			block[2] = new AssumeStatement(tuLoc,
-					ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.LOGICNEG,
-							ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, valid, idcAddrBase)));
-			block[3] =
-					StatementFactory.constructAssignmentStatement(tuLoc, new LeftHandSide[] { getValidArrayLhs(tuLoc) },
-							new Expression[] { new ArrayStoreExpression(tuLoc, valid, idcAddrBase, bLTrue) });
-			block[4] = StatementFactory.constructAssignmentStatement(tuLoc,
-					new LeftHandSide[] { getLengthArrayLhs(tuLoc) },
-					new Expression[] { new ArrayStoreExpression(tuLoc, length, idcAddrBase, size) });
-			block[5] = StatementFactory.constructAssignmentStatement(tuLoc, new LeftHandSide[] { resLhs },
-					new Expression[] { addr });
-
-			final Body bodyMalloc = mProcedureManager.constructBody(tuLoc, localVars, block, alloc.getName());
-			result.add(new Procedure(tuLoc, new Attribute[0], alloc.getName(), new String[0],
-					new VarList[] { new VarList(tuLoc, new String[] { SFO.SIZE }, intType) },
-					new VarList[] {
-							new VarList(tuLoc, new String[] { SFO.RES }, typeHandler.constructPointerType(tuLoc)) },
-					null, bodyMalloc));
-		}
 		mProcedureManager.endCustomProcedure(main, alloc.getName());
 		return result;
 	}
@@ -2753,8 +2658,8 @@ public class MemoryHandler {
 
 	public final AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
 			final Expression argSPtr, final Expression nullPtrExpr) {
-		final var lengthArray = getLengthArray(loc);
-		return mMemoryModel.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, lengthArray);
+		return mMemoryModel.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
 	}
 
 	public Collection<HeapDataArray> getDataHeapArrays(final RequiredMemoryModelFeatures requiredFeatures) {

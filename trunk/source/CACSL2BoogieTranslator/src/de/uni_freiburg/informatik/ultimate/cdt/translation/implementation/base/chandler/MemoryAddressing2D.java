@@ -12,11 +12,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -25,11 +23,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -50,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * The two dimensional memory addressing.
  */
 public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
+	private final MemoryMetadataDefault2D mMemoryMetadata;
+
 	public MemoryAddressing2D(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
@@ -67,74 +64,20 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
 		};
 
+		mMemoryMetadata = new MemoryMetadataDefault2D(typeHandler, exprTranslation, booleanArrayHelper);
+
 		mMemoryManagementStrategy = new NonDetStrategy2D<>(typeSizes, exprTranslation, typeHandler,
-				typeSizeAndOffsetComputer, booleanArrayHelper, this);
+				typeSizeAndOffsetComputer, booleanArrayHelper, this, mMemoryMetadata);
 	}
 
 	@Override
 	public List<Declaration> constructMetaData(final RequiredMemoryModelFeatures requiredFeatures) {
-		final var metaDataDeclarations = new ArrayList<Declaration>();
-		if (requiredFeatures.getRequiredMemoryStructureDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_LENGTH)) {
-			metaDataDeclarations.add(constructLengthArrayDeclaration());
-		}
-
-		if (requiredFeatures.getRequiredMemoryStructureDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_VALID)) {
-			metaDataDeclarations.add(constructValidArrayDeclaration());
-		}
-
-		if (requiredFeatures.getRequiredMemoryStructureDeclarations()
-				.contains(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER)) {
-			metaDataDeclarations.add(constructStackHeapBarrierConstant());
-		}
-
-		return metaDataDeclarations;
-	}
-
-	/**
-	 * Constructs the declaration of the length array, tracking the length of each memory block.
-	 *
-	 * @return The declaration.
-	 */
-	private VariableDeclaration constructLengthArrayDeclaration() {
-		// var #length : [int]int;
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final ASTType pointerComponentType =
-				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
-		final BoogieType boogieType =
-				BoogieType.createArrayType(0, new BoogieType[] { (BoogieType) pointerComponentType.getBoogieType() },
-						(BoogieType) pointerComponentType.getBoogieType());
-		final ASTType lengthType = new ArrayType(ignoreLoc, boogieType, new String[0],
-				new ASTType[] { pointerComponentType }, pointerComponentType);
-		final VarList vlL =
-				new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.ULTIMATE_LENGTH.getName() }, lengthType);
-		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlL });
-	}
-
-	/**
-	 * Constructs the declaration of the valid array, tracking if a memory block is allocated.
-	 *
-	 * @return The declaration.
-	 */
-	private VariableDeclaration constructValidArrayDeclaration() {
-		// var #valid : [int]bool;
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final ASTType pointerComponentType =
-				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
-		final BoogieType boogieType =
-				BoogieType.createArrayType(0, new BoogieType[] { (BoogieType) pointerComponentType.getBoogieType() },
-						(BoogieType) mBooleanArrayHelper.constructBoolReplacementType().getBoogieType());
-		final ASTType validType = new ArrayType(ignoreLoc, boogieType, new String[0],
-				new ASTType[] { pointerComponentType }, mBooleanArrayHelper.constructBoolReplacementType());
-		final VarList vlV =
-				new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.ULTIMATE_VALID.getName() }, validType);
-		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlV });
+		return mMemoryMetadata.constructMetaData(requiredFeatures);
 	}
 
 	@Override
 	public List<MemoryModelDeclarations> metaDataDeclarations() {
-		return List.of(MemoryModelDeclarations.ULTIMATE_VALID, MemoryModelDeclarations.ULTIMATE_LENGTH);
+		return mMemoryMetadata.metaDataDeclarations();
 	}
 
 	@Override
@@ -227,8 +170,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		final Expression ptrOffset = mMemoryPointer.pointerOffset(ptrExpr, loc);
 		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
-		final Expression lengthArray = MemoryModelExpressionHelper.getLengthArray(loc, requiredMemoryModelFeatures,
-				memoryModelDeclarationsHandler);
+		final Expression lengthArray =
+				mMemoryMetadata.getLengthArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 		final Expression aae =
 				ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray, new Expression[] { ptrBase });
 		final Expression sum =
@@ -306,10 +249,10 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		final Expression zeroNumericExpr =
 				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 
-		final Expression valid = MemoryModelExpressionHelper.getValidArray(loc, requiredMemoryModelFeatures,
+		final Expression valid =
+				mMemoryMetadata.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final Expression stackHeapBarrier = MemoryMetadataBase.getStackHeapBarrier(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
-		final Expression stackHeapBarrier = MemoryModelExpressionHelper.getStackHeapBarrier(loc,
-				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 
 		final Expression addrOffset = mMemoryPointer.pointerOffset(pointerToBeFreed.getValue(), loc);
 		final Expression addrBase = mMemoryPointer.pointerAddress(pointerToBeFreed.getValue(), loc);
@@ -398,7 +341,12 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 
 	@Override
 	public AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
-			final Expression argSPtr, final Expression nullPtrExpr, final Expression lengthArray) {
+			final Expression argSPtr, final Expression nullPtrExpr,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+
+		final var lengthArray =
+				mMemoryMetadata.getLengthArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 
 		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
@@ -468,8 +416,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 			final Expression ptrOffset = mMemoryPointer.pointerOffset(ptr, loc);
 			final Expression ptrBase = mMemoryPointer.pointerAddress(ptr, loc);
 
-			final Expression lengthArray = MemoryModelExpressionHelper.getLengthArray(loc, requiredMemoryModelFeatures,
-					memoryModelDeclarationsHandler);
+			final Expression lengthArray =
+					mMemoryMetadata.getLengthArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 
 			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray,
 					new Expression[] { ptrBase });
@@ -560,5 +508,22 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		}
 
 		return stmts;
+	}
+
+	@Override
+	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		final Expression ptrBase = mMemoryPointer.pointerAddress(ptr, loc);
+		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				mMemoryMetadata.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler),
+				new Expression[] { ptrBase });
+		return mBooleanArrayHelper.compareWithTrue(aae);
+	}
+
+	@Override
+	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryMetadata.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
 }

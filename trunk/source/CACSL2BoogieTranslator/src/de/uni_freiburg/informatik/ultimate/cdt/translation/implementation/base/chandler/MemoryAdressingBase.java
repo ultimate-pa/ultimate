@@ -8,16 +8,11 @@ import java.util.Set;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IPointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -39,7 +34,6 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	IPointerIntegerConversion mPointerIntegerConversion;
 	T mMemoryPointer;
-	IMemoryMetadata mMemoryMetadata;
 	IMemoryManagementStrategy mMemoryManagementStrategy;
 
 	BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
@@ -53,14 +47,6 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 		mTypeSizes = typeSizes;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 		mMemoryPointer = pointer;
-	}
-
-	protected VariableDeclaration constructStackHeapBarrierConstant() {
-		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		return new VariableDeclaration(ignoreLoc, new Attribute[0],
-				new VarList[] { new VarList(ignoreLoc,
-						new String[] { MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER.getName() },
-						mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())) });
 	}
 
 	/**
@@ -113,18 +99,6 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return mMemoryManagementStrategy.constructAllocInitSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
-	}
-
-	@Override
-	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		final Expression ptrBase = mMemoryPointer.pointerAddress(ptr, loc);
-		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				MemoryModelExpressionHelper.getValidArray(loc, requiredMemoryModelFeatures,
-						memoryModelDeclarationsHandler),
-				new Expression[] { ptrBase });
-		return mBooleanArrayHelper.compareWithTrue(aae);
 	}
 
 	@Override

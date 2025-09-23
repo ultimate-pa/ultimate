@@ -30,16 +30,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * this strategy is only instanciated within the 1D addressing class because it is not compatible with other modes.
  * Memory addresses are increased with every allocation.
  */
-public class SimpleIncreasingStrategy<T extends MemoryAddressing1D> extends BaseMemoryManagementStrategy {
+public class SimpleIncreasingStrategy<T extends MemoryAddressing1D, T1 extends MemoryMetadataDefault1D>
+		extends BaseMemoryManagementStrategy {
 	T mMemoryAddressing;
 	private final Boolean mIsBitVectorTranslation;
+	T1 mMemoryMetadata;
 
 	public SimpleIncreasingStrategy(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final Boolean isBitVectorTranslation, final T addressing) {
+			final Boolean isBitVectorTranslation, final T addressing, final T1 metadata) {
 		super(typeSizes, expressionTranslation, typeHandler, typeSizeAndOffsetComputer);
 		mMemoryAddressing = addressing;
 		mIsBitVectorTranslation = isBitVectorTranslation;
+		mMemoryMetadata = metadata;
 	}
 
 	@Override
@@ -60,15 +63,15 @@ public class SimpleIncreasingStrategy<T extends MemoryAddressing1D> extends Base
 		final var resBaseExpr = ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE);
 
 		final var counterExpression = memoryArea == MemoryArea.STACK
-				? MemoryModelExpressionHelper.getStackAllocCounter(tuLoc, requiredMemoryModelFeatures,
+				? MemoryMetadataDefault1D.getStackAllocCounter(tuLoc, requiredMemoryModelFeatures,
 						memoryModelDeclarationsHandler)
-				: MemoryModelExpressionHelper.getHeapAllocCounter(tuLoc, requiredMemoryModelFeatures,
+				: MemoryMetadataDefault1D.getHeapAllocCounter(tuLoc, requiredMemoryModelFeatures,
 						memoryModelDeclarationsHandler);
 
-		final var stackHeapBarrierExpr = MemoryModelExpressionHelper.getStackHeapBarrier(tuLoc,
-				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final var stackHeapBarrierExpr = MemoryMetadataBase.getStackHeapBarrier(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 
-		final var initialAllocCounterExpr = MemoryModelExpressionHelper.getInitialAllocCounter(tuLoc,
+		final var initialAllocCounterExpr = MemoryMetadataDefault1D.getInitialAllocCounter(tuLoc,
 				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 
 		final var sizeExpr =
@@ -165,7 +168,7 @@ public class SimpleIncreasingStrategy<T extends MemoryAddressing1D> extends Base
 
 		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
-		final var initialAllocationsExpr = MemoryModelExpressionHelper.getInitialAllocCounter(loc,
+		final var initialAllocationsExpr = MemoryMetadataDefault1D.getInitialAllocCounter(loc,
 				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 
 		// Add assume(fixedAddressCounter == #InitialAllocations)
@@ -180,8 +183,8 @@ public class SimpleIncreasingStrategy<T extends MemoryAddressing1D> extends Base
 		stmts.add(new AssumeStatement(loc, initialAllocCounterEqualsFixedAddressCounterExpr));
 
 		// Add assume(#StackHeapBarrier > #InitialAllocations)
-		final var stackHeapBarrierExpr = MemoryModelExpressionHelper.getStackHeapBarrier(loc,
-				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final var stackHeapBarrierExpr = MemoryMetadataBase.getStackHeapBarrier(loc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 
 		final Expression barrierGreaterThanInitialAllocationsExpr = mExpressionTranslation
 				.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_greaterThan,

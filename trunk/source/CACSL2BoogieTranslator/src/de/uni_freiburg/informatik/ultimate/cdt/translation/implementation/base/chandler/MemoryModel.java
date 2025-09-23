@@ -442,8 +442,11 @@ public class MemoryModel {
 	 * @return The statement.
 	 */
 	public final AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
-			final Expression argSPtr, final Expression nullPtrExpr, final Expression lengthArray) {
-		return mMemoryAddressing.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, lengthArray);
+			final Expression argSPtr, final Expression nullPtrExpr,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 	}
 
 	/**
@@ -504,4 +507,10 @@ public class MemoryModel {
 				ptrIdExprImpl, resultLhsImpl, resultExprImpl, sizeIdExprImpl, requiredFeatures,
 				memoryModelDeclarationsHandler);
 	}
+
+	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+	}
+
 }
