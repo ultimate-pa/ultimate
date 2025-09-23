@@ -251,7 +251,7 @@ public class MainTranslator {
 		mServices.getStorage().putStorable(IdentifierMapping.getStorageKey(),
 				new IdentifierMapping<>(result.getIdentifierMapping()));
 		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mServices, typeSizes,
-				backtranslatorMapping, locationFactory, flatSymbolTable);
+				backtranslatorMapping, locationFactory, flatSymbolTable, memoryPointer);
 		mServices.getBacktranslationService().addTranslator(backtranslator);
 
 		return result;
