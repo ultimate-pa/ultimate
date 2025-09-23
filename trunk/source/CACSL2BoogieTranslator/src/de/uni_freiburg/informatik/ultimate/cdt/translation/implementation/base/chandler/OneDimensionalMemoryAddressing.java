@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMappingOneDimensional;
@@ -34,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
 /**
  * The one dimensional memory addressing.
@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimensionalPointer> {
 	public OneDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations,
-			final OneDimensionalPointer pointer) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TranslationSettings settings,
+			final FunctionDeclarations functionDeclarations, final OneDimensionalPointer pointer) {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer);
 
+		final var pointerIntegerMode = settings.getPointerIntegerCastMode();
 		mPointerIntegerConversion = switch (pointerIntegerMode) {
 		case NonBijectiveMapping:
 			yield new NonBijectiveMappingOneDimensional(exprTranslation, pointer);
@@ -58,7 +58,7 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 		};
 
 		mMemoryManagementStrategy = new SimpleIncreasingStrategy<>(typeSizes, exprTranslation, typeHandler,
-				typeSizeAndOffsetComputer, this);
+				typeSizeAndOffsetComputer, settings.isBitvectorTranslation(), this);
 	}
 
 	@Override

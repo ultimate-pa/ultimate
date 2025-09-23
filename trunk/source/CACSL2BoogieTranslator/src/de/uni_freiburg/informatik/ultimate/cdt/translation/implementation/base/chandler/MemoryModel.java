@@ -106,7 +106,7 @@ public class MemoryModel {
 
 		if (pointer instanceof final OneDimensionalPointer p) {
 			return new OneDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations, p);
+					typeSizeAndOffsetComputer, settings, functionDeclarations, p);
 		} else if (pointer instanceof final TwoDimensionalPointer p) {
 			return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
 					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations, p);

@@ -32,12 +32,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class SimpleIncreasingStrategy<T extends OneDimensionalMemoryAddressing> extends BaseMemoryManagementStrategy {
 	T mMemoryAddressing;
+	private final Boolean mIsBitVectorTranslation;
 
 	public SimpleIncreasingStrategy(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final T addressing) {
+			final Boolean isBitVectorTranslation, final T addressing) {
 		super(typeSizes, expressionTranslation, typeHandler, typeSizeAndOffsetComputer);
 		mMemoryAddressing = addressing;
+		mIsBitVectorTranslation = isBitVectorTranslation;
 	}
 
 	@Override
@@ -78,10 +80,6 @@ public class SimpleIncreasingStrategy<T extends OneDimensionalMemoryAddressing> 
 				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression));
 		expressions.add(new Pair<>(baseEqualCounterExpr, Collections.emptySet()));
 
-		// #res!base != 0;
-		final var baseNotEqualZeroExpr = baseNotEqualZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
-		expressions.add(new Pair<>(baseNotEqualZeroExpr, Collections.emptySet()));
-
 		// #res!base > 0;
 		final var baseGreaterZeroExpr = mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
 				IASTBinaryExpression.op_greaterThan,
@@ -100,6 +98,23 @@ public class SimpleIncreasingStrategy<T extends OneDimensionalMemoryAddressing> 
 					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_greaterThan,
 							counterExpression, cTypeOfPointerComponent, stackHeapBarrierExpr, cTypeOfPointerComponent);
 			expressions.add(new Pair<>(stackAllocationsGreaterThanBarrier, Collections.emptySet()));
+
+			// #StackAllocations < #32-bit max / 64-bit max
+			if (mIsBitVectorTranslation) {
+				final var pointerSize = mTypeSizes.getSizeOfPointer();
+				final int bits = pointerSize * 8;
+
+				// max signed = 2^(bits - 1) - 1
+				final var max = BigInteger.valueOf(2).pow(bits - 1).subtract(BigInteger.ONE);
+				final var maxExpr =
+						mExpressionTranslation.constructLiteralForIntegerType(tuLoc, cTypeOfPointerComponent, max);
+
+				final var stackAllocationsSmallerThanMax = mExpressionTranslation
+						.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_lessThan,
+								counterExpression, cTypeOfPointerComponent, maxExpr, cTypeOfPointerComponent);
+
+				expressions.add(new Pair<>(stackAllocationsSmallerThanMax, Collections.emptySet()));
+			}
 
 		} else if (memoryArea == MemoryArea.HEAP) {
 			// res!base < #StackHeapBarrier

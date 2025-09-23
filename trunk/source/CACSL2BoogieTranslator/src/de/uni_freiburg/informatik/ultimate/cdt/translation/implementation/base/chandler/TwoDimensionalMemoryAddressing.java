@@ -67,7 +67,7 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimen
 					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
 		};
 
-		mMemoryManagementStrategy = new NonDetStrategy<>(typeSizes, exprTranslation, typeHandler,
+		mMemoryManagementStrategy = new NonDetStrategy2D<>(typeSizes, exprTranslation, typeHandler,
 				typeSizeAndOffsetComputer, booleanArrayHelper, this);
 	}
 
