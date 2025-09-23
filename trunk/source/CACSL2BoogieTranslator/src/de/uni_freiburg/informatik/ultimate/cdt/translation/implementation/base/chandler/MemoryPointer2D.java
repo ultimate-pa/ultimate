@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
-public class TwoDimensionalPointer extends BaseMemoryPointer {
+public class MemoryPointer2D extends MemoryPointerBase {
 	final BoogieType mComponentType;
 
 	/**
@@ -29,12 +29,12 @@ public class TwoDimensionalPointer extends BaseMemoryPointer {
 	 *
 	 * @return The instance.
 	 */
-	public static TwoDimensionalPointer create(final TranslationSettings settings, final BoogieType boogieType,
+	public static MemoryPointer2D create(final TranslationSettings settings, final BoogieType boogieType,
 			final TypeSizes typeSizes) {
-		return new TwoDimensionalPointer(boogieType, typeSizes);
+		return new MemoryPointer2D(boogieType, typeSizes);
 	}
 
-	private TwoDimensionalPointer(final BoogieType componentType, final TypeSizes typeSizes) {
+	private MemoryPointer2D(final BoogieType componentType, final TypeSizes typeSizes) {
 		super(typeSizes);
 		mComponentType = componentType;
 		mBoogieType = BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },

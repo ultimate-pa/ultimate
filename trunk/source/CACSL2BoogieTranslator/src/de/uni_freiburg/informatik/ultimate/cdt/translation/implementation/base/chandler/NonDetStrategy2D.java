@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * Memory addresses get a nondet value, which is not used yet.
  */
 @SuppressWarnings("unused")
-public class NonDetStrategy2D<T extends TwoDimensionalMemoryAddressing> extends BaseMemoryManagementStrategy {
+public class NonDetStrategy2D<T extends MemoryAddressing2D> extends BaseMemoryManagementStrategy {
 	IBooleanArrayHelper mBooleanArrayHelper;
 	T mMemoryAddressing;
 

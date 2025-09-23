@@ -49,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 /**
  * The two dimensional memory addressing.
  */
-public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimensionalPointer> {
-	public TwoDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
+public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
+	public MemoryAddressing2D(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations,
-			final TwoDimensionalPointer pointer) {
+			final MemoryPointer2D pointer) {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer);
 
 		mPointerIntegerConversion = switch (pointerIntegerMode) {

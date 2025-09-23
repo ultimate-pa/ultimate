@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * this strategy is only instanciated within the 1D addressing class because it is not compatible with other modes.
  * Memory addresses are increased with every allocation.
  */
-public class SimpleIncreasingStrategy<T extends OneDimensionalMemoryAddressing> extends BaseMemoryManagementStrategy {
+public class SimpleIncreasingStrategy<T extends MemoryAddressing1D> extends BaseMemoryManagementStrategy {
 	T mMemoryAddressing;
 	private final Boolean mIsBitVectorTranslation;
 

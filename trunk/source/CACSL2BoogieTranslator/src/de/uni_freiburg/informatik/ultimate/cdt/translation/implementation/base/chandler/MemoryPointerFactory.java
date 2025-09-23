@@ -18,9 +18,9 @@ public abstract class MemoryPointerFactory {
 
 		switch (memoryAddressingPreference) {
 		case One_Dimensional:
-			return OneDimensionalPointer.create(settings, boogieType, typeSizes);
+			return MemoryPointer1D.create(settings, boogieType, typeSizes);
 		case Two_Dimensional:
-			return TwoDimensionalPointer.create(settings, boogieType, typeSizes);
+			return MemoryPointer2D.create(settings, boogieType, typeSizes);
 		default:
 			throw new UnsupportedOperationException(
 					"MemoryAddressing: " + memoryAddressingPreference + " not implemented yet.");

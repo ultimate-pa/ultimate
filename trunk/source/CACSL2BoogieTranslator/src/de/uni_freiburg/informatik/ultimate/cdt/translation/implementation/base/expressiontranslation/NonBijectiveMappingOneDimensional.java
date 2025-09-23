@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.OneDimensionalPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer1D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -44,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class NonBijectiveMappingOneDimensional implements IPointerIntegerConversion {
 
 	private final ExpressionTranslation mExpressionTranslation;
-	private final OneDimensionalPointer mMemoryPointer;
+	private final MemoryPointer1D mMemoryPointer;
 
 	public NonBijectiveMappingOneDimensional(final ExpressionTranslation expressionTranslation,
-			final OneDimensionalPointer pointer) {
+			final MemoryPointer1D pointer) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryPointer = pointer;
 	}

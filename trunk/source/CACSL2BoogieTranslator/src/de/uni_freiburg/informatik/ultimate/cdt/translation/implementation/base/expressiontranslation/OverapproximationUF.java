@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TwoDimensionalPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer2D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -51,7 +51,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final ITypeHandler mTypeHandler;
 	private final TypeSizes mTypeSizes;
-	private final TwoDimensionalPointer mMemoryPointer;
+	private final MemoryPointer2D mMemoryPointer;
 
 	/**
 	 * Defines the following conversion between pointers and integers. An integer n is converted to the pointer with
@@ -64,7 +64,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 
 	public OverapproximationUF(final ExpressionTranslation expressionTranslation,
 			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler, final TypeSizes typeSizes,
-			final TwoDimensionalPointer pointer) {
+			final MemoryPointer2D pointer) {
 		mExpressionTranslation = expressionTranslation;
 		mFunctionDeclarations = functionDeclarations;
 		mTypeHandler = typeHandler;

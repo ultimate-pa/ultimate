@@ -74,8 +74,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocat
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.OneDimensionalPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TwoDimensionalPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer1D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer2D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
@@ -136,9 +136,9 @@ public class CACSL2BoogieBacktranslator extends
 		mBacktranslationWarned = false;
 		mLocationFactory = locationFactory;
 
-		if (pointer instanceof OneDimensionalPointer) {
+		if (pointer instanceof MemoryPointer1D) {
 			mBacktranslationPointer = new BacktranslationPointer1D(this);
-		} else if (pointer instanceof TwoDimensionalPointer) {
+		} else if (pointer instanceof MemoryPointer2D) {
 			mBacktranslationPointer = new BacktranslationPointer2D(this);
 		} else {
 			throw new UnsupportedOperationException("Unknown pointer type: " + pointer.getClass());

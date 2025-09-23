@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
-public class OneDimensionalPointer extends BaseMemoryPointer {
+public class MemoryPointer1D extends MemoryPointerBase {
 	final BoogieType mComponentType;
 
 	/**
@@ -32,7 +32,7 @@ public class OneDimensionalPointer extends BaseMemoryPointer {
 	 *
 	 * @return The instance.
 	 */
-	public static OneDimensionalPointer create(final TranslationSettings settings, final BoogieType boogieType,
+	public static MemoryPointer1D create(final TranslationSettings settings, final BoogieType boogieType,
 			final TypeSizes typeSizes) {
 		final List<SimpleEntry<String, Boolean>> incompatibleOptions = List.of(
 				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_DEREF_VALIDITY,
@@ -56,10 +56,10 @@ public class OneDimensionalPointer extends BaseMemoryPointer {
 							+ String.join(", ", incompatibleActiveOptions));
 		}
 
-		return new OneDimensionalPointer(boogieType, typeSizes);
+		return new MemoryPointer1D(boogieType, typeSizes);
 	}
 
-	private OneDimensionalPointer(final BoogieType componentType, final TypeSizes typeSizes) {
+	private MemoryPointer1D(final BoogieType componentType, final TypeSizes typeSizes) {
 		super(typeSizes);
 		mComponentType = componentType;
 		mBoogieType =

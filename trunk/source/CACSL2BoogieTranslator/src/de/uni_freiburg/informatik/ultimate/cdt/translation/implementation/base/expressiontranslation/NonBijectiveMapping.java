@@ -31,7 +31,7 @@ import java.math.BigInteger;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TwoDimensionalPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer2D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -50,10 +50,10 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 
 	protected final ExpressionTranslation mExpressionTranslation;
 	private final TypeSizes mTypeSizes;
-	private final TwoDimensionalPointer mMemoryPointer;
+	private final MemoryPointer2D mMemoryPointer;
 
 	public NonBijectiveMapping(final ExpressionTranslation expressionTranslation, final TypeSizes typeSizes,
-			final TwoDimensionalPointer pointer) {
+			final MemoryPointer2D pointer) {
 		mExpressionTranslation = expressionTranslation;
 		mTypeSizes = typeSizes;
 		mMemoryPointer = pointer;

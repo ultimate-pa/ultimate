@@ -41,12 +41,12 @@ public class MemoryModel {
 	 * This enum represents the valid combinations of memory structure and memory adressing.
 	 */
 	private enum Combinations {
-		ONE_Dimensional_SingleBitPrecise(OneDimensionalMemoryAddressing.class, MemoryStructure_SingleBitprecise.class),
-		ONE_Dimensional_MultiBitPrecise(OneDimensionalMemoryAddressing.class, MemoryStructure_MultiBitprecise.class),
-		ONE_Dimensional_Unbounded(OneDimensionalMemoryAddressing.class, MemoryStructure_Unbounded.class),
-		TWO_Dimensional_MultiBitPrecise(TwoDimensionalMemoryAddressing.class, MemoryStructure_MultiBitprecise.class),
-		TWO_Dimensional_SingleBitPrecise(TwoDimensionalMemoryAddressing.class, MemoryStructure_SingleBitprecise.class),
-		TWO_Dimensional_Unbounded(TwoDimensionalMemoryAddressing.class, MemoryStructure_Unbounded.class);
+		ONE_Dimensional_SingleBitPrecise(MemoryAddressing1D.class, MemoryStructure_SingleBitprecise.class),
+		ONE_Dimensional_MultiBitPrecise(MemoryAddressing1D.class, MemoryStructure_MultiBitprecise.class),
+		ONE_Dimensional_Unbounded(MemoryAddressing1D.class, MemoryStructure_Unbounded.class),
+		TWO_Dimensional_MultiBitPrecise(MemoryAddressing2D.class, MemoryStructure_MultiBitprecise.class),
+		TWO_Dimensional_SingleBitPrecise(MemoryAddressing2D.class, MemoryStructure_SingleBitprecise.class),
+		TWO_Dimensional_Unbounded(MemoryAddressing2D.class, MemoryStructure_Unbounded.class);
 
 		private final Class<? extends IMemoryAdressing> mAddressingType;
 		private final Class<? extends IMemoryStructure> mStructureType;
@@ -104,11 +104,11 @@ public class MemoryModel {
 			final TypeSizes typeSizes, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final FunctionDeclarations functionDeclarations, final IMemoryPointer pointer) {
 
-		if (pointer instanceof final OneDimensionalPointer p) {
-			return new OneDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
+		if (pointer instanceof final MemoryPointer1D p) {
+			return new MemoryAddressing1D(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
 					typeSizeAndOffsetComputer, settings, functionDeclarations, p);
-		} else if (pointer instanceof final TwoDimensionalPointer p) {
-			return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
+		} else if (pointer instanceof final MemoryPointer2D p) {
+			return new MemoryAddressing2D(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
 					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations, p);
 		}
 

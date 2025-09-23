@@ -11,11 +11,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public abstract class BaseMemoryPointer implements IMemoryPointer {
+public abstract class MemoryPointerBase implements IMemoryPointer {
 	TypeSizes mTypeSizes;
 	BoogieType mBoogieType;
 
-	public BaseMemoryPointer(final TypeSizes typeSizes) {
+	public MemoryPointerBase(final TypeSizes typeSizes) {
 		mTypeSizes = typeSizes;
 	}
 

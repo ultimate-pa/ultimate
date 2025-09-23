@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
-public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements IMemoryAdressing {
+public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements IMemoryAdressing {
 	ITypeHandler mTypeHandler;
 	ExpressionTranslation mExpressionTranslation;
 	IBooleanArrayHelper mBooleanArrayHelper;
@@ -39,11 +39,12 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	IPointerIntegerConversion mPointerIntegerConversion;
 	T mMemoryPointer;
+	IMemoryMetadata mMemoryMetadata;
 	IMemoryManagementStrategy mMemoryManagementStrategy;
 
 	BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 
-	public BaseMemoryAdressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
+	public MemoryAdressingBase(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final T pointer) {
 		mTypeHandler = typeHandler;

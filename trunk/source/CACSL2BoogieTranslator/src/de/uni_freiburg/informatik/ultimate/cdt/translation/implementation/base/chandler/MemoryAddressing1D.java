@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * The one dimensional memory addressing.
  */
-public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimensionalPointer> {
-	public OneDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
+public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
+	public MemoryAddressing1D(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TranslationSettings settings,
-			final FunctionDeclarations functionDeclarations, final OneDimensionalPointer pointer) {
+			final FunctionDeclarations functionDeclarations, final MemoryPointer1D pointer) {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer);
 
 		final var pointerIntegerMode = settings.getPointerIntegerCastMode();
