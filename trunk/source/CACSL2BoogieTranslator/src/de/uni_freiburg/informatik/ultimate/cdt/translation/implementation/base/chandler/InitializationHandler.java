@@ -339,9 +339,9 @@ public class InitializationHandler {
 			// unions are handled along with structs here
 			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap,
 					usingOnHeapInitializationViaConstArray, hook);
-		} else if (targetCType instanceof CArray) {
-			return initCArray(loc, lhsIfAny, (CArray) targetCType, initInfoIfAny, onHeap,
-					usingOnHeapInitializationViaConstArray, outermostNestedArray, hook);
+		} else if (targetCType instanceof final CArray array) {
+			return initCArray(loc, lhsIfAny, array, initInfoIfAny, onHeap, usingOnHeapInitializationViaConstArray,
+					outermostNestedArray, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case for CType");
 		}
@@ -833,8 +833,8 @@ public class InitializationHandler {
 		final LocalLValue arrayLhsToInitialize = lhsToInit;
 
 		ICType innerMostValueType = cArrayType.getValueType().getUnderlyingType();
-		while (innerMostValueType instanceof CArray) {
-			innerMostValueType = ((CArray) innerMostValueType).getValueType().getUnderlyingType();
+		while (innerMostValueType instanceof final CArray array) {
+			innerMostValueType = array.getValueType().getUnderlyingType();
 		}
 
 		final List<List<Integer>> allIndicesToInitialize = CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
@@ -973,8 +973,7 @@ public class InitializationHandler {
 
 	private Expression getDefaultValueForSimpleType(final ILocation loc, final ICType cTypeRaw) {
 		final ICType cType = cTypeRaw.getUnderlyingType();
-		if (cType instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) cType;
+		if (cType instanceof final CPrimitive cPrimitive) {
 			return switch (cPrimitive.getGeneralType()) {
 			case INTTYPE -> mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
 			case FLOATTYPE -> mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
@@ -1043,12 +1042,11 @@ public class InitializationHandler {
 			return Arrays.stream(((CStructOrUnion) cType).getFieldTypes())
 					.map(t -> countNumberOfPrimitiveElementInType(t, hook)).reduce(BigInteger.ZERO, BigInteger::add);
 		}
-		if (cType instanceof CArray) {
+		if (cType instanceof final CArray cArray) {
 			if (cType.isIncomplete()) {
 				// An incomplete array can be the last member of a struct. It is not copied, so we return 0 here.
 				return BigInteger.ZERO;
 			}
-			final CArray cArray = (CArray) cType;
 			final BigInteger innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
 			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound());
 			return innerCount.multiply(bound);
@@ -1253,11 +1251,11 @@ public class InitializationHandler {
 
 		final int bound;
 		ICType cellType = null;
-		if (targetCType instanceof CArray) {
-			cellType = ((CArray) targetCType).getValueType();
-			bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType, mTypeSizes);
-			if (CTranslationUtil.isToplevelVarlengthArray((CArray) targetCType, mTypeSizes)) {
-				throw new UnsupportedOperationException("varlenght not yet supported here");
+		if (targetCType instanceof final CArray array) {
+			cellType = array.getValueType();
+			bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
+			if (CTranslationUtil.isToplevelVarlengthArray(array, mTypeSizes)) {
+				throw new UnsupportedOperationException("varlength not yet supported here");
 			}
 		} else {
 			bound = ((CStructOrUnion) targetCType).getFieldCount();
@@ -1273,25 +1271,13 @@ public class InitializationHandler {
 		while (!rest.isEmpty() && (currentCellIndex < bound - 1 || rest.peekFirst().hasRootDesignator())) {
 			final InitializerResult firstOfRest = rest.peekFirst();
 			if (firstOfRest.hasRootDesignator()) {
-				final Designator designator = firstOfRest.getRootDesignator();
-				currentCellIndex = switch (designator) {
-				case final ArrayDesignator ad -> {
-					assert targetCType instanceof CArray : "Expected CArray, but got "
-							+ targetCType.getClass().getSimpleName() + " (" + targetCType + ")";
-					yield ad.getArrayCellId();
-				}
-				case final StructDesignator sd -> {
-					assert targetCType instanceof CStructOrUnion : "Expected CStructOrUnion, but got "
-							+ targetCType.getClass().getSimpleName() + " (" + targetCType + ")";
-					yield CTranslationUtil.findIndexOfStructField((CStructOrUnion) targetCType, sd.getStructFieldId());
-				}
-				};
+				currentCellIndex = getCellIndex(targetCType, firstOfRest.getRootDesignator());
 			} else {
 				currentCellIndex++;
 			}
 
-			if (targetCType instanceof CStructOrUnion) {
-				cellType = ((CStructOrUnion) targetCType).getFieldTypes()[currentCellIndex];
+			if (targetCType instanceof final CStructOrUnion structOrUnion) {
+				cellType = structOrUnion.getFieldTypes()[currentCellIndex];
 			}
 
 			/*
@@ -1336,6 +1322,21 @@ public class InitializationHandler {
 			}
 		}
 		return new InitializerInfo(indexInitInfos, new ArrayList<>(rest));
+	}
+
+	private static int getCellIndex(final ICType cType, final Designator designator) {
+		return switch (designator) {
+		case final ArrayDesignator ad -> {
+			assert cType instanceof CArray
+					: "Expected CArray, but got " + cType.getClass().getSimpleName() + " (" + cType + ")";
+			yield ad.getArrayCellId();
+		}
+		case final StructDesignator sd -> {
+			assert cType instanceof CStructOrUnion
+					: "Expected CStructOrUnion, but got " + cType.getClass().getSimpleName() + " (" + cType + ")";
+			yield CTranslationUtil.findIndexOfStructField((CStructOrUnion) cType, sd.getStructFieldId());
+		}
+		};
 	}
 
 	/**
@@ -1389,9 +1390,7 @@ public class InitializationHandler {
 
 			final List<Attribute> attributeList = new ArrayList<>();
 
-			if (ft instanceof BoogieStructType) {
-				final BoogieStructType bst = (BoogieStructType) ft;
-
+			if (ft instanceof final BoogieStructType bst) {
 				for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
 
 					// add expand attribute
@@ -1431,8 +1430,8 @@ public class InitializationHandler {
 
 		private String getSmtConstantArrayStringForBoogieType(final BoogieArrayType boogieArrayType) {
 			String currentArray;
-			if (boogieArrayType.getValueType() instanceof BoogieArrayType) {
-				currentArray = getSmtConstantArrayStringForBoogieType((BoogieArrayType) boogieArrayType.getValueType());
+			if (boogieArrayType.getValueType() instanceof final BoogieArrayType arrayValueType) {
+				currentArray = getSmtConstantArrayStringForBoogieType(arrayValueType);
 			} else {
 				currentArray = CTranslationUtil.getSmtZeroStringForBoogieType(boogieArrayType.getValueType());
 			}
@@ -1620,45 +1619,41 @@ public class InitializationHandler {
 	public Result handleDesignatedInitializer(final IDispatcher main, final LocationFactory locationFactory,
 			final ICASTDesignatedInitializer node) {
 		final ILocation loc = locationFactory.createCLocation(node);
-		if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof ICASTFieldDesignator)) {
+		if (node.getDesignators().length == 1
+				&& (node.getDesignators()[0] instanceof final ICASTFieldDesignator fieldDesignator)) {
 			// a field designator, as in "struct field"
-			final ICASTFieldDesignator fieldDesignator = (ICASTFieldDesignator) node.getDesignators()[0];
 			final String fieldDesignatorName = fieldDesignator.getName().toString();
 			final Result innerInitializerResult = main.dispatch(node.getOperand());
-			if (innerInitializerResult instanceof InitializerResult) {
-
-				final InitializerResult initializerResult = (InitializerResult) innerInitializerResult;
+			if (innerInitializerResult instanceof final InitializerResult initializerResult) {
 				assert !initializerResult.hasRootDesignator();
 
 				final InitializerResultBuilder irBuilder = new InitializerResultBuilder(initializerResult);
 				irBuilder.setRootDesignator(fieldDesignatorName);
 
 				return irBuilder.build();
-			} else if (innerInitializerResult instanceof ExpressionResult) {
-				return new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) innerInitializerResult)
+			} else if (innerInitializerResult instanceof final ExpressionResult exprResult) {
+				return new InitializerResultBuilder().setRootExpressionResult(exprResult)
 						.setRootDesignator(fieldDesignatorName).build();
 			} else {
 				throw new UnsupportedSyntaxException(loc, "Unexpected result");
 			}
-		} else if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof ICASTArrayDesignator)) {
+		} else if (node.getDesignators().length == 1
+				&& (node.getDesignators()[0] instanceof final ICASTArrayDesignator arrayDesignator)) {
 			// designator denotes some field in an array;
 			// one designator means a one-dimensional array "access" (I think)
-			final ICASTArrayDesignator arrayDesignator = (ICASTArrayDesignator) node.getDesignators()[0];
 			final int arrayCellNr = getArrayCellNrFromArrayDesignator(main, loc, arrayDesignator, node);
 
 			final Result innerInitializerResult = main.dispatch(node.getOperand());
-			if (innerInitializerResult instanceof InitializerResult) {
-
-				final InitializerResult initializerResult = (InitializerResult) innerInitializerResult;
+			if (innerInitializerResult instanceof final InitializerResult initializerResult) {
 				assert !initializerResult.hasRootDesignator();
 
 				final InitializerResultBuilder irBuilder = new InitializerResultBuilder(initializerResult);
 				irBuilder.setRootDesignator(arrayCellNr);
 
 				return irBuilder.build();
-			} else if (innerInitializerResult instanceof ExpressionResult) {
-				return new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) innerInitializerResult)
-						.setRootDesignator(arrayCellNr).build();
+			} else if (innerInitializerResult instanceof final ExpressionResult exprResult) {
+				return new InitializerResultBuilder().setRootExpressionResult(exprResult).setRootDesignator(arrayCellNr)
+						.build();
 			} else {
 				throw new UnsupportedSyntaxException(loc, "Unexpected result");
 			}
@@ -1671,14 +1666,11 @@ public class InitializationHandler {
 	private int getArrayCellNrFromArrayDesignator(final IDispatcher main, final ILocation loc,
 			final ICASTArrayDesignator arrayDesignator, final ICASTDesignatedInitializer hook) {
 		final Result subscriptExpressionResult = main.dispatch(arrayDesignator.getSubscriptExpression());
-		if (!(subscriptExpressionResult instanceof ExpressionResult)) {
+		if (!(subscriptExpressionResult instanceof final ExpressionResult exprResult)) {
 			throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple "
 					+ "designators are currently unsupported: " + hook.getRawSignature());
 		}
-		final ExpressionResult expressionResultSwitched =
-				mExprResultTransformer.switchToRValue((ExpressionResult) subscriptExpressionResult, loc, hook);
-
+		final ExpressionResult expressionResultSwitched = mExprResultTransformer.switchToRValue(exprResult, loc, hook);
 		return mTypeSizes.extractIntegerValue((RValue) expressionResultSwitched.getLrValue()).intValueExact();
 	}
-
 }
