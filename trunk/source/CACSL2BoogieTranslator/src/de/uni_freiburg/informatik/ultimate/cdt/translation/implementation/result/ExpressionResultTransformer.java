@@ -49,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CompatibleTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
@@ -663,7 +663,7 @@ public class ExpressionResultTransformer {
 		final BoogieType oldBoogieType = (BoogieType) expr.getLrValue().getValue().getType();
 		final BoogieType newBoogieType = mTypeHandler.getBoogieTypeForCType(targetCType);
 
-		if (TypeHandler.areCompatibleTypes(newType, oldType) && !newType.equals(new CPrimitive(CPrimitives.BOOL))
+		if (CompatibleTypes.areCompatible(newType, oldType) && !newType.equals(new CPrimitive(CPrimitives.BOOL))
 				&& oldBoogieType.equals(newBoogieType)) {
 			// types are already identical -- nothing to do
 			// For _Bool we always do the conversion to ensure that the resulting value is 0 or 1

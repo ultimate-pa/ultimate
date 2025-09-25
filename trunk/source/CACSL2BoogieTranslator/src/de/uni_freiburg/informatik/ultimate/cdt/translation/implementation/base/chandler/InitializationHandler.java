@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CompatibleTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
@@ -1287,7 +1288,7 @@ public class InitializationHandler {
 			 * the expression.
 			 */
 			if (firstOfRest.isInitializerList()
-					|| (firstOfRest.hasRootExpressionResult() && TypeHandler.areCompatibleStructOrUnionTypes(cellType,
+					|| (firstOfRest.hasRootExpressionResult() && areCompatibleStructOrUnionTypes(cellType,
 							firstOfRest.getRootExpressionResult().getLrValue().getCType()))
 					|| (firstOfRest.getRootExpressionResult() instanceof StringLiteralResult
 							&& TypeHandler.isCharArray(cellType))) {
@@ -1337,6 +1338,17 @@ public class InitializationHandler {
 			yield CTranslationUtil.findIndexOfStructField((CStructOrUnion) cType, sd.getStructFieldId());
 		}
 		};
+	}
+
+	/**
+	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13:
+	 *
+	 * <quote>The initializer for a structure or union object that has automatic storage duration shall be either an
+	 * initializer list as described below, or a single expression that has compatible structure or union type.</quote>
+	 */
+	private static boolean areCompatibleStructOrUnionTypes(final ICType type1, final ICType type2) {
+		return type1.getUnderlyingType() instanceof CStructOrUnion
+				&& type2.getUnderlyingType() instanceof CStructOrUnion && CompatibleTypes.areCompatible(type1, type2);
 	}
 
 	/**
