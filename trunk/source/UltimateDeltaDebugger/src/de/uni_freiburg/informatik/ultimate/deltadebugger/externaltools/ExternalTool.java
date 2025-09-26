@@ -68,26 +68,24 @@ public abstract class ExternalTool implements IExternalTool {
 
 		mLogger.info(String.format("Preparing to run command %s in directory %s with exit command %s",
 				Arrays.toString(cmd), workingDir, exitCommand));
-		MonitoredProcess extProcess;
-		try {
-			extProcess = MonitoredProcess.exec(cmd, workingDir, exitCommand, mServices);
+		try (final MonitoredProcess extProcess = MonitoredProcess.exec(cmd, workingDir, exitCommand, mServices)) {
+			final BufferedInputStream errorStream = new BufferedInputStream(extProcess.getErrorStream());
+			final BufferedInputStream outputStream = new BufferedInputStream(extProcess.getInputStream());
+			final String error = CoreUtil.convertStreamToString(errorStream);
+			final String output = CoreUtil.convertStreamToString(outputStream);
+
+			final long hardTimeout = getHardTimeout();
+			mLogger.info("Waiting for " + hardTimeout + "ms for external tool...");
+			final MonitoredProcessState extProcState = extProcess.impatientWaitUntilTime(hardTimeout);
+			final int returnCode = extProcState.getReturnCode();
+			mLogger.info("Return code of external tool was " + extProcState.getReturnCode());
+
+			final ExternalToolResult result = interpretResult(output, error, returnCode, extProcState.isKilled());
+			return result;
 		} catch (final IOException e) {
 			mLogger.fatal("External tool could not be run. Reason:", e);
 			return ExternalToolResult.INVALID;
 		}
-		final BufferedInputStream errorStream = new BufferedInputStream(extProcess.getErrorStream());
-		final BufferedInputStream outputStream = new BufferedInputStream(extProcess.getInputStream());
-		final String error = CoreUtil.convertStreamToString(errorStream);
-		final String output = CoreUtil.convertStreamToString(outputStream);
-
-		final long hardTimeout = getHardTimeout();
-		mLogger.info("Waiting for " + hardTimeout + "ms for external tool...");
-		final MonitoredProcessState extProcState = extProcess.impatientWaitUntilTime(hardTimeout);
-		final int returnCode = extProcState.getReturnCode();
-		mLogger.info("Return code of external tool was " + extProcState.getReturnCode());
-
-		final ExternalToolResult result = interpretResult(output, error, returnCode, extProcState.isKilled());
-		return result;
 	}
 
 	protected abstract ExternalToolResult interpretResult(final String output, final String error, final int returnCode,
