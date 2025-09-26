@@ -111,7 +111,7 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_SLEEP_SET_REDUCTION = "Enable sleep set reduction";
 	private static final String DESC_SLEEP_SET_REDUCTION = "If enabled, symbolic sleep set reduction is applied to the "
 			+ "program. This allows for more programs to be proven correct.";
-	private static final boolean DEF_SLEEP_SET_REDUCTION = true;
+	private static final boolean DEF_SLEEP_SET_REDUCTION = false;
 
 	public static final String LABEL_BREAK_PREFORDER_SYMMETRY = "Break symmetry of preference order";
 	private static final String DESC_BREAK_PREFORDER_SYMMETRY = "A straightforward encoding forces proofs to consider "
