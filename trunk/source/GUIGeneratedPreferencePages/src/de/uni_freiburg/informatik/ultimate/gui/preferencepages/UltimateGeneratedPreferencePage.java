@@ -57,6 +57,7 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.Level;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.KeyValueGridEditor;
@@ -126,20 +127,19 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 
 	private FieldEditor createFieldEditor(final UltimatePreferenceItem<?> item) {
 		return switch (item.getType()) {
-		case Label -> createLabel(item.getLabel(), item.isExperimental());
-		case Integer -> createIntegerFieldEditor(item.getLabel(), item.isExperimental());
-		case Double -> createDoubleFieldEditor(item.getLabel(), item.isExperimental());
-		case Boolean -> createBooleanFieldEditor(item.getLabel(), item.isExperimental());
-		case Directory -> createDirectoryEditor(item.getLabel(), item.isExperimental());
-		case String -> createStringEditor(item.getLabel(), item.isExperimental());
-		case Combo -> createComboEditor(item, item.isExperimental());
-		case Radio -> createRadioGroupFieldEditor(item, item.isExperimental());
-		case Path -> createPathFieldEditor(item, item.isExperimental());
-		case File -> createFileFieldEditor(item, item.isExperimental());
-		case MultilineString -> createMultilineFieldEditor(item.getLabel(), item.isExperimental());
-		case Color -> createColorEditor(item.getLabel(), item.isExperimental());
-		case KeyValue -> createKeyValueEditor(item.getLabel(), item.isExperimental());
-
+		case Label -> createLabel(item.getLabel(), item.getLevel());
+		case Integer -> createIntegerFieldEditor(item.getLabel(), item.getLevel());
+		case Double -> createDoubleFieldEditor(item.getLabel(), item.getLevel());
+		case Boolean -> createBooleanFieldEditor(item.getLabel(), item.getLevel());
+		case Directory -> createDirectoryEditor(item.getLabel(), item.getLevel());
+		case String -> createStringEditor(item.getLabel(), item.getLevel());
+		case Combo -> createComboEditor(item, item.getLevel());
+		case Radio -> createRadioGroupFieldEditor(item, item.getLevel());
+		case Path -> createPathFieldEditor(item, item.getLevel());
+		case File -> createFileFieldEditor(item, item.getLevel());
+		case MultilineString -> createMultilineFieldEditor(item.getLabel(), item.getLevel());
+		case Color -> createColorEditor(item.getLabel(), item.getLevel());
+		case KeyValue -> createKeyValueEditor(item.getLabel(), item.getLevel());
 		case Group, SubItemContainer -> throw new AssertionError(item.getType() + " should be handled somewhere else");
 		};
 	}
@@ -257,77 +257,75 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		}
 	}
 
-	private static String markLabel(final String label, final boolean experimental) {
-		if (experimental) {
+	private String markLabel(final String label, final Level level) {
+		if (level == Level.EXPERIMENTAL) {
 			return label + " ☢️";
 		}
 		return label;
 	}
 
-	private FieldEditor createColorEditor(final String label, final boolean experimental) {
-		return new ColorFieldEditor(label, markLabel(label, experimental), getFieldEditorParent());
+	private FieldEditor createColorEditor(final String label, final Level level) {
+		return new ColorFieldEditor(label, markLabel(label, level), getFieldEditorParent());
 	}
 
-	private FileFieldEditor createFileFieldEditor(final UltimatePreferenceItem<?> item, final boolean experimental) {
+	private FileFieldEditor createFileFieldEditor(final UltimatePreferenceItem<?> item, final Level level) {
 		final var label = item.getLabel();
-		return new FileFieldEditor(label, markLabel(label, experimental), getFieldEditorParent());
+		return new FileFieldEditor(label, markLabel(label, level), getFieldEditorParent());
 	}
 
-	private MultiLineTextFieldEditor createMultilineFieldEditor(final String label, final boolean experimental) {
-		return new MultiLineTextFieldEditor(label, markLabel(label, experimental), getFieldEditorParent());
+	private MultiLineTextFieldEditor createMultilineFieldEditor(final String label, final Level level) {
+		return new MultiLineTextFieldEditor(label, markLabel(label, level), getFieldEditorParent());
 	}
 
-	private PathEditor createPathFieldEditor(final UltimatePreferenceItem<?> item, final boolean experimental) {
+	private PathEditor createPathFieldEditor(final UltimatePreferenceItem<?> item, final Level level) {
 		final var label = item.getLabel();
-		return new PathEditor(label, markLabel(label, experimental), item.getLabel(), getFieldEditorParent());
+		return new PathEditor(label, markLabel(label, level), item.getLabel(), getFieldEditorParent());
 	}
 
-	private RadioGroupFieldEditor createRadioGroupFieldEditor(final UltimatePreferenceItem<?> item,
-			final boolean experimental) {
+	private RadioGroupFieldEditor createRadioGroupFieldEditor(final UltimatePreferenceItem<?> item, final Level level) {
 		final var label = item.getLabel();
-		final RadioGroupFieldEditor editor = new RadioGroupFieldEditor(label, markLabel(label, experimental), 1,
+		final RadioGroupFieldEditor editor = new RadioGroupFieldEditor(label, markLabel(label, level), 1,
 				item.getComboFieldEntries(), getFieldEditorParent());
 		editor.loadDefault();
 		return editor;
 	}
 
-	private ComboFieldEditor createComboEditor(final UltimatePreferenceItem<?> item, final boolean experimental) {
+	private ComboFieldEditor createComboEditor(final UltimatePreferenceItem<?> item, final Level level) {
 		final var label = item.getLabel();
-		return new ComboFieldEditor(label, markLabel(label, experimental), item.getComboFieldEntries(),
+		return new ComboFieldEditor(label, markLabel(label, level), item.getComboFieldEntries(),
 				getFieldEditorParent());
 	}
 
-	private IntegerFieldEditor createIntegerFieldEditor(final String label, final boolean experimental) {
+	private IntegerFieldEditor createIntegerFieldEditor(final String label, final Level level) {
 		final IntegerFieldEditor editor =
-				new IntegerFieldEditor(label, markLabel(label, experimental), getFieldEditorParent());
+				new IntegerFieldEditor(label, markLabel(label, level), getFieldEditorParent());
 		editor.setValidRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
 		return editor;
 	}
 
-	private DoubleFieldEditor createDoubleFieldEditor(final String label, final boolean experimental) {
-		final DoubleFieldEditor editor =
-				new DoubleFieldEditor(label, markLabel(label, experimental), getFieldEditorParent());
+	private DoubleFieldEditor createDoubleFieldEditor(final String label, final Level level) {
+		final DoubleFieldEditor editor = new DoubleFieldEditor(label, markLabel(label, level), getFieldEditorParent());
 		editor.setValidRange(Double.MIN_VALUE, Double.MAX_VALUE);
 		return editor;
 	}
 
-	private BooleanFieldEditor createBooleanFieldEditor(final String label, final boolean experimental) {
-		return new BooleanFieldEditor(label, markLabel(label, experimental), getFieldEditorParent());
+	private BooleanFieldEditor createBooleanFieldEditor(final String label, final Level level) {
+		return new BooleanFieldEditor(label, markLabel(label, level), getFieldEditorParent());
 	}
 
-	private UltimateLabelFieldEditor createLabel(final String label, final boolean experimental) {
-		return new UltimateLabelFieldEditor(markLabel(label, experimental), getFieldEditorParent());
+	private UltimateLabelFieldEditor createLabel(final String label, final Level level) {
+		return new UltimateLabelFieldEditor(markLabel(label, level), getFieldEditorParent());
 	}
 
-	private DirectoryFieldEditor createDirectoryEditor(final String label, final boolean experimental) {
-		return new DirectoryFieldEditor(label, markLabel(label, experimental), getFieldEditorParent());
+	private DirectoryFieldEditor createDirectoryEditor(final String label, final Level level) {
+		return new DirectoryFieldEditor(label, markLabel(label, level), getFieldEditorParent());
 	}
 
-	private StringFieldEditor createStringEditor(final String label, final boolean experimental) {
-		return new StringFieldEditor(label, markLabel(label, experimental), getFieldEditorParent());
+	private StringFieldEditor createStringEditor(final String label, final Level level) {
+		return new StringFieldEditor(label, markLabel(label, level), getFieldEditorParent());
 	}
 
-	private FieldEditor createKeyValueEditor(final String label, final boolean experimental) {
-		return new KeyValueGridEditor(label, markLabel(label, experimental), getFieldEditorParent());
+	private FieldEditor createKeyValueEditor(final String label, final Level level) {
+		return new KeyValueGridEditor(label, markLabel(label, level), getFieldEditorParent());
 	}
 }

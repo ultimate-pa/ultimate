@@ -268,9 +268,10 @@ public final class PreferenceUtil {
 		if (item.getType() == PreferenceType.Radio || item.getType() == PreferenceType.Combo) {
 			rtr.put("options", Arrays.asList(item.getChoices()));
 		}
-
 		// TODO: Perhaps handle ranges via item.getPreferenceValidator() as well
 		// TODO: Deal with keyvalue types
+
+		rtr.put("level", item.getLevel());
 
 		if (item.getDescription() != null) {
 			rtr.put("description", item.getDescription());
