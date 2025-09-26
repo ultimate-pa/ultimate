@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -185,6 +186,24 @@ public class BidirectionalMap<K, V> extends HashMap<K, V> {
 		for (final Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
 			put(e.getKey(), e.getValue());
 		}
+	}
+
+	@Override
+	public V merge(final K key, final V value, final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+		final var old = get(key);
+		final var result = mergeAsymmetric(key, value, remappingFunction);
+		if (old != null) {
+			mInverse.removeAsymmetric(old);
+		}
+		if (result != null) {
+			mInverse.putAsymmetric(result, key);
+		}
+		return result;
+	}
+
+	private V mergeAsymmetric(final K key, final V value,
+			final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+		return super.merge(key, value, remappingFunction);
 	}
 
 	@Override

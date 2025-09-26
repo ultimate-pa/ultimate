@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="22GB" timelimit="7200" hardtimelimit="7220" cpuCores="2">
+  <resultfiles>${taskdef_path}/CHC_*.smt2</resultfiles>
+
+  <option name="--force-no-wrapper" />
+
+  <rundefinition name="SleepExplicit.Eldarica">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.Z3">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.Golem">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+  </rundefinition>
+
+  <?ignore
+  <rundefinition name="SleepExplicit.TreeAutomizer">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--chcsolver.chc.solver.backend">TREEAUTOMIZER</option>
+    <option name="--rcfgbuilder.smt.solver">Internal_SMTInterpol</option>
+  </rundefinition>
+  ?>
+
+  <rundefinition name="SleepExplicit.NondetSleep.Eldarica">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.Z3">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.Golem">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.NecSufComm.Eldarica">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+    <option name="--icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="--icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.NecSufComm.Z3">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="--icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.NecSufComm.Golem">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="--icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NecSufComm.Eldarica">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NecSufComm.Z3">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+    <option name="--icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NecSufComm.Golem">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+  </rundefinition>
+
+  <rundefinition name="SleepSymbolic.Eldarica">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+  </rundefinition>
+
+  <rundefinition name="SleepSymbolic.Z3">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+  </rundefinition>
+
+  <rundefinition name="SleepSymbolic.Golem">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+  </rundefinition>
+
+  <?ignore
+  <rundefinition name="SleepSymbolic.TreeAutomizer">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--chcsolver.chc.solver.backend">TREEAUTOMIZER</option>
+    <option name="--rcfgbuilder.smt.solver">Internal_SMTInterpol</option>
+  </rundefinition>
+  ?>
+
+  <rundefinition name="SleepSymbolic-Symmetry.Eldarica">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+  </rundefinition>
+
+  <rundefinition name="SleepSymbolic-Symmetry.Z3">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+  </rundefinition>
+
+  <rundefinition name="SleepSymbolic-Symmetry.Golem">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+  </rundefinition>
+
+  <?ignore
+  <rundefinition name="SleepSymbolic-Symmetry.TreeAutomizer">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">TREEAUTOMIZER</option>
+    <option name="--rcfgbuilder.smt.solver">Internal_SMTInterpol</option>
+  </rundefinition>
+  ?>
+
+  <rundefinition name="NoSleep.Eldarica">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">false</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+  </rundefinition>
+
+  <rundefinition name="NoSleep.Z3">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">false</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+  </rundefinition>
+
+  <rundefinition name="NoSleep.Golem">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">false</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+  </rundefinition>
+
+  <?ignore
+  <rundefinition name="NoSleep.TreeAutomizer">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">false</option>
+    <option name="--chcsolver.chc.solver.backend">TREEAUTOMIZER</option>
+    <option name="--rcfgbuilder.smt.solver">Internal_SMTInterpol</option>
+  </rundefinition>
+  ?>
+
+  <rundefinition name="NoSleep-Symmetry.Eldarica">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+  </rundefinition>
+
+  <rundefinition name="NoSleep-Symmetry.Z3">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
+  </rundefinition>
+
+  <rundefinition name="NoSleep-Symmetry.Golem">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">false</option>
+    <option name="--icfgtochc.use.symmetry.clauses">true</option>
+    <option name="--chcsolver.chc.solver.backend">GOLEM</option>
+  </rundefinition>
+
+  <?ignore
+  <rundefinition name="UniHorn">
+    <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularUniHorn.xml</option>
+  </rundefinition>
+  ?>
+
+  <tasks name="threadmodular-examples">
+    <include>../../../trunk/examples/concurrent/bpl/parameterized/*/*.yml</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+
+    <option name="-s">${taskdef_path}/${taskdef_name}-settings.epf</option>
+  </tasks>
+
+  <tasks name="threadmodular-unsolved">
+    <includesfile>../../../trunk/examples/concurrent/bpl/parameterized/unsolved.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+
+    <option name="-s">${taskdef_path}/${taskdef_name}-settings.epf</option>
+  </tasks>
+</benchmark>

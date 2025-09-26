@@ -50,8 +50,8 @@ public class HcHeadVar extends HcPredVar {
 	 * @param defaultConstant
 	 * @param primedConstant
 	 */
-	HcHeadVar(final String globallyUniqueId, final HcPredicateSymbol headPredSym, final int index, final Sort sort,
+	HcHeadVar(final String globallyUniqueId, final String predName, final int index, final Sort sort,
 			final ManagedScript mgdScript, final Object lockOwner) {
-		super(globallyUniqueId, true, headPredSym, index, sort, mgdScript, lockOwner);
+		super(globallyUniqueId, true, predName, index, sort, mgdScript, lockOwner);
 	}
 }

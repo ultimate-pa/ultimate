@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferenceInitializer.SolverBackend;
 
@@ -51,5 +54,17 @@ public class ChcSolverPreferences {
 
 	public boolean produceUnsatCore() {
 		return mPrefs.getBoolean(ChcSolverPreferenceInitializer.LABEL_PRODUCE_UNSAT_CORES);
+	}
+
+	public long getTimeout() {
+		return mPrefs.getInt(ChcSolverPreferenceInitializer.LABEL_SOLVER_TIMEOUT);
+	}
+
+	public Path getEldaricaHints() {
+		final String value = mPrefs.getString(ChcSolverPreferenceInitializer.LABEL_ELDARICA_HINTS_FILE);
+		if (value == null || value.isEmpty()) {
+			return null;
+		}
+		return Paths.get(value);
 	}
 }

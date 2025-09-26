@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -34,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.chc.ChcCategoryInfo;
+import de.uni_freiburg.informatik.ultimate.lib.chc.ChcCategorizer;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
@@ -45,11 +46,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProviderConcurrentWithLbe;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgLiptonReducer;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadModularHornClauseProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ApproximateLockstepPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.IThreadModularPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.SequentialCompositionPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.SleepSetThreadModularHornClauseProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 
 /**
  *
@@ -60,15 +65,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ChcProvi
 public class IcfgToChcObserver extends BaseObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final IcfgToChcPreferences mPrefs;
 
 	private IElement mResult;
 
-	// TODO: Make this a setting
-	private static final boolean USE_LBE_FOR_CONCURRENT_PROGRAMS = true;
-
-	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services) {
+	public IcfgToChcObserver(final ILogger logger, final IUltimateServiceProvider services,
+			final IcfgToChcPreferences prefs) {
 		mLogger = logger;
 		mServices = services;
+		mPrefs = prefs;
 	}
 
 	public IElement getModel() {
@@ -88,14 +93,14 @@ public class IcfgToChcObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final HcSymbolTable hcSymbolTable = new HcSymbolTable(mgdScript);
-		final Collection<HornClause> resultChcs = getChcProvider(icfg, mgdScript, hcSymbolTable).getHornClauses(icfg);
+		final Collection<HornClause> resultChcs = getHornClauses(icfg, mgdScript, hcSymbolTable);
 
-		final boolean isReturnReachable = isReturnReachable(icfg);
-		final boolean hasNonLinearClauses = isReturnReachable || !IcfgUtils.getForksInLoop(icfg).isEmpty();
-		final ChcCategoryInfo chcCategoryInfo =
-				new ChcCategoryInfo(getLogics(resultChcs, mgdScript), hasNonLinearClauses);
+		final var chcCategoryInfo = ChcCategorizer.categorize(resultChcs, mgdScript);
+		assert !chcCategoryInfo.containsNonLinearHornClauses() || isReturnReachable(icfg)
+				|| !IcfgUtils.getForksInLoop(icfg).isEmpty() || mPrefs.concurrencyMode() == ConcurrencyMode.PARAMETRIC
+				: "Unexpected non-linear clauses";
 
-		assert resultChcs.stream().allMatch(chc -> chc.constructFormula(mgdScript, false).getFreeVars().length == 0);
+		assert checkFreeVariables(resultChcs, mgdScript) : "Some clauses have free variables";
 
 		final HornAnnot annot = new HornAnnot(icfg.getIdentifier(), mgdScript, hcSymbolTable,
 				new ArrayList<>(resultChcs), true, chcCategoryInfo);
@@ -104,66 +109,58 @@ public class IcfgToChcObserver extends BaseObserver {
 		ModelUtils.copyAnnotations(icfg, mResult);
 	}
 
-	private Logics getLogics(final Collection<HornClause> resultChcs, final ManagedScript mgdScript) {
-		final TermClassifier termClassifierChcs = new TermClassifier();
-		resultChcs.forEach(chc -> termClassifierChcs.checkTerm(chc.constructFormula(mgdScript, false)));
-		final TermClassifier termClassifierConstraints = new TermClassifier();
-		resultChcs.forEach(chc -> termClassifierConstraints.checkTerm(chc.getConstraintFormula()));
-
-		boolean hasArrays = false;
-		boolean hasReals = false;
-		boolean hasInts = false;
-		for (final String osn : termClassifierChcs.getOccuringSortNames()) {
-			hasArrays |= osn.contains(SmtSortUtils.ARRAY_SORT);
-			hasReals |= osn.contains(SmtSortUtils.REAL_SORT);
-			hasInts |= osn.contains(SmtSortUtils.INT_SORT);
+	private static boolean checkFreeVariables(final Collection<HornClause> system, final ManagedScript mgdScript) {
+		for (final var clause : system) {
+			final var formula = clause.constructFormula(mgdScript, false);
+			final var freevars = formula.getFreeVars();
+			if (freevars.length > 0) {
+				assert false : "free variables " + Arrays.toString(freevars) + " in clause " + clause;
+				return false;
+			}
 		}
-
-		boolean hasArraysInConstraints = false;
-		boolean hasRealsInConstraints = false;
-		boolean hasIntsInConstraints = false;
-		for (final String osn : termClassifierConstraints.getOccuringSortNames()) {
-			hasArraysInConstraints |= osn.contains(SmtSortUtils.ARRAY_SORT);
-			hasRealsInConstraints |= osn.contains(SmtSortUtils.REAL_SORT);
-			hasIntsInConstraints |= osn.contains(SmtSortUtils.INT_SORT);
-		}
-		assert hasArrays == hasArraysInConstraints;
-		assert hasReals == hasRealsInConstraints;
-		assert hasInts == hasIntsInConstraints;
-
-		final boolean hasQuantifiersInConstraints = !termClassifierConstraints.getOccuringQuantifiers().isEmpty();
-
-		if (!hasArrays && hasInts && !hasReals && !hasQuantifiersInConstraints) {
-			return Logics.QF_LIA;
-		}
-		if (!hasArrays && !hasInts && hasReals && !hasQuantifiersInConstraints) {
-			return Logics.QF_LRA;
-		}
-		if (hasArrays && hasInts && !hasReals && !hasQuantifiersInConstraints) {
-			return Logics.QF_ALIA;
-		}
-		// not a CHC-comp 2019 logic -- we don't care for more details right now
-		return Logics.ALL;
+		return true;
 	}
 
 	private static boolean isReturnReachable(final IIcfg<IcfgLocation> icfg) {
 		return new IcfgEdgeIterator(icfg).asStream().anyMatch(IIcfgSummaryTransition.class::isInstance);
 	}
 
-	private IChcProvider getChcProvider(final IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
+	private Collection<HornClause> getHornClauses(IIcfg<IcfgLocation> icfg, final ManagedScript mgdScript,
 			final HcSymbolTable hcSymbolTable) {
-		if (IcfgUtils.isConcurrent(icfg)) {
+		if (mPrefs.concurrencyMode() == ConcurrencyMode.PARAMETRIC || IcfgUtils.isConcurrent(icfg)) {
 			assert !isReturnReachable(icfg);
-			if (USE_LBE_FOR_CONCURRENT_PROGRAMS) {
-				return new ChcProviderConcurrentWithLbe(mgdScript, hcSymbolTable, mServices);
-			} else {
-				return new ChcProviderConcurrent(mgdScript, hcSymbolTable);
+			if (mPrefs.useLiptonReduction()) {
+				// TODO support LBE for parametric programs
+				assert mPrefs.concurrencyMode() == ConcurrencyMode.SINGLE_MAIN_THREAD;
+
+				// TODO support combination of LBE and sleep sets
+				assert !mPrefs.useSleepSets();
+
+				// Create 2 instances of every thread, to ensure the reduction checks mover properties of each thread
+				// template against another copy of the same template.
+				final int instanceCount = 2;
+
+				icfg = new IcfgLiptonReducer(mServices, icfg, instanceCount).getResult();
 			}
+
+			if (mPrefs.useSleepSets()) {
+				final var preforder = getPreferenceOrder(mgdScript.getScript(), icfg);
+				return new SleepSetThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable, preforder,
+						mPrefs).getClauses();
+			}
+			return new ThreadModularHornClauseProvider(mServices, mgdScript, icfg, hcSymbolTable, mPrefs).getClauses();
 		}
-		return new ChcProviderForCalls(mgdScript, hcSymbolTable);
+		return new ChcProviderForCalls(mgdScript, hcSymbolTable).getHornClauses(icfg);
 	}
 
-	public interface IChcProvider {
-		Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg);
+	private IThreadModularPreferenceOrder getPreferenceOrder(final Script script, final IIcfg<?> icfg) {
+		switch (mPrefs.preferenceOrder()) {
+		case SEQ_COMP:
+			return new SequentialCompositionPreferenceOrder(script);
+		case LOCKSTEP:
+			return ApproximateLockstepPreferenceOrder.create(script, icfg);
+		}
+
+		throw new AssertionError("Unknown preference order setting: " + mPrefs.preferenceOrder());
 	}
 }

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences;
 
 /**
@@ -72,7 +73,8 @@ public class IcfgToChc implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<>();
-		mObserver = new IcfgToChcObserver(mLogger, mServices);
+		final var prefs = new IcfgToChcPreferences(IcfgToChcPreferenceInitializer.getPreferenceProvider(mServices));
+		mObserver = new IcfgToChcObserver(mLogger, mServices, prefs);
 		observers.add(mObserver);
 		return observers;
 	}
@@ -104,7 +106,7 @@ public class IcfgToChc implements IGenerator {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return new IcfgToChcPreferences();
+		return new IcfgToChcPreferenceInitializer();
 	}
 
 	@Override

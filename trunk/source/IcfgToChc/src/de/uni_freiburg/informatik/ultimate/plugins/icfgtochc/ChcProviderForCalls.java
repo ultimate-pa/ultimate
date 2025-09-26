@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.IChcProvider;
 
 /**
  *
@@ -49,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.IcfgToChcObserver.I
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class ChcProviderForCalls implements IChcProvider {
+public class ChcProviderForCalls {
 	private final ManagedScript mMgdScript;
 	private final HcSymbolTable mHcSymbolTable;
 	private IIcfg<IcfgLocation> mIcfg;
@@ -71,7 +70,6 @@ public class ChcProviderForCalls implements IChcProvider {
 				mMgdScript.constructFreshTermVariable(ASSERTIONVIOLATEDVARNAME, SmtSortUtils.getBoolSort(mMgdScript));
 	}
 
-	@Override
 	@SuppressWarnings("unchecked")
 	public Collection<HornClause> getHornClauses(final IIcfg<IcfgLocation> icfg) {
 		/* add chcs for the icfg's edges */
@@ -200,7 +198,7 @@ public class ChcProviderForCalls implements IChcProvider {
 				throw new UnsupportedOperationException("implement this");
 			}
 
-			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars,
+			final HornClause chc = new HornClause(mHcSymbolTable, constraintFinal, headPred, headVars,
 					Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
 			chc.setComment("Type: (not V) -> procEntry");
 			resultChcs.add(chc);
@@ -245,8 +243,8 @@ public class ChcProviderForCalls implements IChcProvider {
 				throw new UnsupportedOperationException("implement this");
 			}
 
-			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable, constraint,
-					Collections.singletonList(bodyPred), Collections.singletonList(firstPredArgs), bodyVars);
+			final HornClause chc = new HornClause(mHcSymbolTable, constraint, Collections.singletonList(bodyPred),
+					Collections.singletonList(firstPredArgs), bodyVars);
 
 			chc.setComment("Type: entryProcExit(..., V) /\\ V -> false");
 			resultChcs.add(chc);
@@ -495,8 +493,8 @@ public class ChcProviderForCalls implements IChcProvider {
 
 		/* construct the horn clause and add it to the resulting chc set */
 		final Collection<HornClause> chcs = new ArrayList<>();
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
-				bodyPredToArguments, bodyVars));
+		chcs.add(new HornClause(mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds, bodyPredToArguments,
+				bodyVars));
 		return chcs;
 	}
 
@@ -641,8 +639,8 @@ public class ChcProviderForCalls implements IChcProvider {
 		updateLogicWrtConstraint(constraintFinal);
 
 		final Collection<HornClause> chcs = new ArrayList<>();
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
-				bodyPredToArguments, bodyVars));
+		chcs.add(new HornClause(mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds, bodyPredToArguments,
+				bodyVars));
 
 		return chcs;
 	}
@@ -778,8 +776,8 @@ public class ChcProviderForCalls implements IChcProvider {
 		 */
 		updateLogicWrtConstraint(constraintFinal);
 		final Collection<HornClause> chcs = new ArrayList<>(2);
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
-				bodyPredToArguments, bodyVars));
+		chcs.add(new HornClause(mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds, bodyPredToArguments,
+				bodyVars));
 		return chcs;
 	}
 

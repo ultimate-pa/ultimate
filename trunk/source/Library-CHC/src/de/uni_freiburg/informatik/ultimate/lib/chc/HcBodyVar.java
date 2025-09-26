@@ -51,9 +51,9 @@ public class HcBodyVar extends HcPredVar implements ILocalProgramVar {
 	 * @param defaultConstant
 	 * @param primedConstant
 	 */
-	public HcBodyVar(final String globallyUniqueId, final HcPredicateSymbol headPredSym, final int index,
-			final Sort sort, final ManagedScript script, final Object lockOwner) {
-		super(globallyUniqueId, false, headPredSym, index, sort, script, lockOwner);
+	public HcBodyVar(final String globallyUniqueId, final String procName, final int index, final Sort sort,
+			final ManagedScript script, final Object lockOwner) {
+		super(globallyUniqueId, false, procName, index, sort, script, lockOwner);
 	}
 
 	@Override

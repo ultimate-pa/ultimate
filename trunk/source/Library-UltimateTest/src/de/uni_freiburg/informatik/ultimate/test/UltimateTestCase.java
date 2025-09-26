@@ -48,13 +48,12 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class UltimateTestCase implements Comparable<UltimateTestCase> {
+public class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 	private static final AfterTest NOOP = () -> {
 		// do nothing
 	};
 
-	private final String mName;
 	private final UltimateRunDefinition mUltimateRunDefinition;
 	private final ConsoleLogger mTestLogger;
 
@@ -72,7 +71,6 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		mDecider = decider;
 		mLogs = logs;
 
-		mName = urd.toString();
 		mUltimateRunDefinition = urd;
 		mTestLogger = new ConsoleLogger();
 		mHasStarted = false;
@@ -233,7 +231,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 						resultMessage, services, mTestLogger);
 			}
 			if (log instanceof ITestSummary) {
-				((ITestSummary) log).addResult(mUltimateRunDefinition, result, resultCategory, resultMessage, mName,
+				((ITestSummary) log).addResult(mUltimateRunDefinition, result, resultCategory, resultMessage, getName(),
 						rservice);
 			}
 		}
@@ -243,9 +241,13 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		return mUltimateRunDefinition;
 	}
 
+	public String getName() {
+		return mUltimateRunDefinition.toString();
+	}
+
 	@Override
 	public String toString() {
-		return mName;
+		return getName();
 	}
 
 	private static void failTest(final String message) throws UltimateTestFailureException {

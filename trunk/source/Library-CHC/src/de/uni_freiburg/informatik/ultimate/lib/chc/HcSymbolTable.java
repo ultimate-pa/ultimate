@@ -46,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2ExpressionSymbolTable {
 
+	private static final String DUMMY_PRED_NAME = "DUMMY";
+	private static final int DUMMY_PRED_INDEX = 0;
+
 	private final ManagedScript mManagedScript;
 
 	private final NestedMap2<String, List<Sort>, HcPredicateSymbol> mNameToSortsToHornClausePredicateSymbol;
@@ -56,6 +59,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 	final Map<TermVariable, Integer> mVersionsMap;
 
+	private final Map<Object, HcBodyVar> mBodyVars = new HashMap<>();
 	private final NestedMap3<HcPredicateSymbol, Integer, Sort, HcHeadVar> mPredSymNameToIndexToSortToHcHeadVar;
 	private final NestedMap3<HcPredicateSymbol, Integer, Sort, HcBodyVar> mPredSymNameToIndexToSortToHcBodyVar;
 	private final Map<TermVariable, HcBodyAuxVar> mTermVariableToHcBodyAuxVar;
@@ -273,7 +277,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 					predSym, index, identfier.toString());
 
 			mManagedScript.lock(this);
-			result = new HcHeadVar(globallyUniqueId, predSym, index, transferredSort, mManagedScript, this);
+			result = new HcHeadVar(globallyUniqueId, predSym.getName(), index, transferredSort, mManagedScript, this);
 			mManagedScript.unlock(this);
 			mPredSymNameToIndexToSortToHcHeadVar.put(predSym, index, transferredSort, result);
 			mTermVarToProgramVar.put(result.getTermVariable(), result);
@@ -297,7 +301,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 					predSym, index, identfier.toString());
 
 			mManagedScript.lock(this);
-			result = new HcBodyVar(globallyUniqueId, predSym, index, transferredSort, mManagedScript, this);
+			result = new HcBodyVar(globallyUniqueId, predSym.getName(), index, transferredSort, mManagedScript, this);
 			mManagedScript.unlock(this);
 			mPredSymNameToIndexToSortToHcBodyVar.put(predSym, index, transferredSort, result);
 			mTermVarToProgramVar.put(result.getTermVariable(), result);
@@ -308,6 +312,21 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	public HcBodyVar getOrConstructBodyVar(final HcPredicateSymbol predSym, final int index,
 			final IProgramVarOrConst pv) {
 		return getOrConstructBodyVar(predSym, index, pv.getSort(), pv);
+	}
+
+	@Deprecated
+	public HcBodyVar getOrConstructBodyVar(final Object identifier, final Sort sort) {
+		return mBodyVars.computeIfAbsent(identifier, id -> {
+			final Sort transferredSort = transferSort(sort);
+			final String globallyUniqueId =
+					HornUtilConstants.computeNameForHcVar(HornUtilConstants.BODYVARPREFIX, id.toString());
+			mManagedScript.lock(this);
+			final var result = new HcBodyVar(globallyUniqueId, DUMMY_PRED_NAME, DUMMY_PRED_INDEX, transferredSort,
+					mManagedScript, this);
+			mManagedScript.unlock(this);
+			mTermVarToProgramVar.put(result.getTermVariable(), result);
+			return result;
+		});
 	}
 
 	public HcBodyAuxVar getOrConstructBodyAuxVar(final TermVariable tv, final Object lockOwner) {
@@ -361,7 +380,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	@Override
 	public IProgramVar getProgramVar(final TermVariable tv) {
 		final IProgramVar result = mTermVarToProgramVar.get(tv);
-		assert result != null;
+		assert result != null : "No IProgramVar found for term variable: " + tv;
 		return result;
 	}
 
@@ -388,7 +407,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	}
 
 	public String getMethodNameForPredSymbol(final HcPredicateSymbol predSym) {
-		return HornUtilConstants.sanitzePredName(predSym.getName());
+		return HornUtilConstants.sanitizePredName(predSym.getName());
 	}
 
 	public List<HcHeadVar> getHcHeadVarsForPredSym(final HcPredicateSymbol bodySymbol,

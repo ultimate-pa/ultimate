@@ -1,0 +1,20 @@
+format_version: '2.0'
+
+input_files: '../mutex-3.bpl'
+
+properties:
+  - property_file: ../../../../../svcomp/properties/unreach-call.prp
+    expected_verdict: unsat
+
+options:
+  language: Boogie
+
+  settings_file: ../mutex-3.Level2.yml-settings.epf
+  timeout: 20 #seconds
+
+  de.uni_freiburg.informatik.ultimate.plugins.icfgtochc:
+    Enable sleep set reduction: false
+
+  de.uni_freiburg.informatik.ultimate.plugins.chcsolver:
+    CHC solver backend: Z3
+

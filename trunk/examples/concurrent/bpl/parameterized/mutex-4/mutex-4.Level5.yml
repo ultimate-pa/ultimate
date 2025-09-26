@@ -1,0 +1,12 @@
+format_version: '2.0'
+
+input_files: 'mutex-4.bpl'
+
+properties:
+  - property_file: ../../../../svcomp/properties/unreach-call.prp
+    expected_verdict: true
+
+options:
+  language: Boogie
+  # settings_file: mutex-4.Level5.yml-settings.epf
+

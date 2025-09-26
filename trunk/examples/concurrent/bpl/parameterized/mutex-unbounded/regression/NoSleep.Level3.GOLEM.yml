@@ -1,0 +1,21 @@
+format_version: '2.0'
+
+input_files: '../mutex-unbounded.bpl'
+
+properties:
+  - property_file: ../../../../../svcomp/properties/unreach-call.prp
+    expected_verdict: unsat
+
+options:
+  language: Boogie
+
+  settings_file: ../mutex-unbounded.yml-settings.epf
+  timeout: 10 #seconds
+
+  de.uni_freiburg.informatik.ultimate.plugins.icfgtochc:
+    Thread-Modular Proof Level: 3
+    Enable sleep set reduction: false
+
+  de.uni_freiburg.informatik.ultimate.plugins.chcsolver:
+    CHC solver backend: GOLEM
+

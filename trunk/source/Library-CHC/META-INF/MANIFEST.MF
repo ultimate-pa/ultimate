@@ -17,6 +17,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  wrapped.io.github.uuverifiers.princess_2.12,
  org.scala-lang.scala-library
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.chc,
- de.uni_freiburg.informatik.ultimate.lib.chc.eldarica,
  de.uni_freiburg.informatik.ultimate.lib.chc.results
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.chc

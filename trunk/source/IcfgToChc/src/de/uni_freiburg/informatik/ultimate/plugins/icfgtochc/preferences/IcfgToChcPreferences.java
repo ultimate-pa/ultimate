@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2023 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 University of Freiburg
  *
  * This file is part of the ULTIMATE IcfgToChc plug-in.
  *
@@ -26,41 +26,102 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferenceInitializer.PreferenceOrder;
 
-/**
- *
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- */
-public class IcfgToChcPreferences extends UltimatePreferenceInitializer {
+public class IcfgToChcPreferences {
+	private final IPreferenceProvider mPrefs;
 
-	// public static final String LABEL_TRANSFORMATION_TYPE = "TransformationType";
-	// private static final String DESC_TRANSFORMATION_TYPE = "";
-
-	/**
-	 * Default constructor.
-	 */
-	public IcfgToChcPreferences() {
-		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	public enum SpecMode {
+		ASSERT_VIOLATIONS, POSTCONDITION
 	}
 
-	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-
-				// new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE,
-				// TransformationTestType.LOOP_ACCELERATION_EXAMPLE, DESC_TRANSFORMATION_TYPE,
-				// PreferenceType.Combo, TransformationTestType.values()),
-
-		};
+	public IcfgToChcPreferences(final IPreferenceProvider prefs) {
+		mPrefs = prefs;
 	}
 
-	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
-		return services.getPreferenceProvider(Activator.PLUGIN_ID);
+	public ConcurrencyMode concurrencyMode() {
+		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_CONCURRENCY_MODE, ConcurrencyMode.class);
+	}
+
+	public boolean hasPreconditions() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_HAS_PRECONDITION);
+	}
+
+	public SpecMode specMode() {
+		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_SPEC_MODE, SpecMode.class);
+	}
+
+	public int getThreadModularProofLevel() {
+		return mPrefs.getInt(IcfgToChcPreferenceInitializer.LABEL_THREADMODULAR_LEVEL);
+	}
+
+	public boolean useSymmetryClauses() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SYMMETRY_CLAUSES);
+	}
+
+	// TODO Currently unused
+	public boolean explicitLocations() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_LOCATIONS);
+	}
+
+	public boolean useLiptonReduction() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_LIPTON_REDUCTION);
+	}
+
+	public boolean skipAssertEdges() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SKIP_ASSERT_EDGES);
+	}
+
+	public boolean useSleepSets() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SLEEP_SET_REDUCTION);
+	}
+
+	public boolean breakPreferenceOrderSymmetry() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_BREAK_PREFORDER_SYMMETRY);
+	}
+
+	public boolean useNondetSleepUpdates() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_NONDET_SLEEP_UPDATES);
+	}
+
+	// TODO Currently unused
+	public boolean explicitSleep() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_SLEEP);
+	}
+
+	public PreferenceOrder preferenceOrder() {
+		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_PREFERENCE_ORDER, PreferenceOrder.class);
+	}
+
+	public IndependenceConditions conditionalIndependence() {
+		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_CONDITIONAL_INDEPENDENCE,
+				IndependenceConditions.class);
+	}
+
+	public boolean useSemicommutativity() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_SEMICOMMUTATIVITY);
+	}
+
+	public List<String> getParametricTemplates() {
+		return getList(IcfgToChcPreferenceInitializer.LABEL_PARAMETRIC_TEMPLATES);
+	}
+
+	public List<String> getParametricSingleThreads() {
+		return getList(IcfgToChcPreferenceInitializer.LABEL_PARAMETRIC_SINGLE_THREADS);
+	}
+
+	private List<String> getList(final String key) {
+		final var value = mPrefs.getString(key);
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+		return Arrays.stream(value.split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
 	}
 }

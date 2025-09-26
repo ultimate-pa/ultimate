@@ -2,23 +2,26 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgToChcConcurrent.IHcReplacementVar;
 
 /**
+ * Represents a global variable of a program.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- *
  */
-public class HcGlobalVar implements IHcReplacementVar {
-	private final IProgramVar mVariable;
+public final class HcGlobalVar implements IHcReplacementVar {
+	// Hash codes are multiplied by this number to reduce likelihood of collisions with other IHcReplacementVar
+	// implementations. Each implementation uses a different value.
+	private static final int HASH_PRIME = 59;
 
-	public HcGlobalVar(final IProgramVar variable) {
-		mVariable = variable;
+	private final IProgramNonOldVar mVariable;
+
+	public HcGlobalVar(final IProgramNonOldVar variable) {
+		mVariable = Objects.requireNonNull(variable);
 	}
 
-	public IProgramVar getVariable() {
+	public IProgramNonOldVar getVariable() {
 		return mVariable;
 	}
 
@@ -34,18 +37,11 @@ public class HcGlobalVar implements IHcReplacementVar {
 
 	@Override
 	public int hashCode() {
-		return mVariable.hashCode();
+		return HASH_PRIME * mVariable.hashCode();
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcGlobalVar other = (HcGlobalVar) obj;
-		return Objects.equals(mVariable, other.mVariable);
+		return this == obj || (obj instanceof final HcGlobalVar other && mVariable.equals(other.mVariable));
 	}
 }

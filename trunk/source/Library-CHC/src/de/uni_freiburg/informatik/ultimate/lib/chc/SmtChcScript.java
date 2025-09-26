@@ -31,13 +31,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ModelDescription;
 
 /**
  * Used to access a constraint Horn solver via the {@link Script} interface. This can e.g. be used to access Z3's CHC
@@ -54,9 +57,10 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 	private static final boolean DECLARE_FUNCTIONS = false;
 
 	private final ManagedScript mMgdScript;
+	private boolean mProduceModels;
 	private boolean mProduceUnsatCores;
 
-	private boolean mIsPushed;
+	private ChcTransferrer mTransferrer;
 	private Map<String, HornClause> mName2Clause;
 
 	public SmtChcScript(final ManagedScript mgdScript) {
@@ -72,13 +76,19 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 	@Override
 	public LBool solve(final HcSymbolTable symbolTable, final List<HornClause> system) {
 		reset();
-		mMgdScript.push(this, 1);
-		mIsPushed = true;
-
 		mMgdScript.unlock(this);
+
+		final List<HornClause> assertedSystem;
+		if (mMgdScript == symbolTable.getManagedScript()) {
+			assertedSystem = system;
+		} else {
+			mTransferrer = new ChcTransferrer(symbolTable.getManagedScript().getScript(), mMgdScript, symbolTable);
+			assertedSystem = system.stream().map(mTransferrer::transfer).collect(Collectors.toList());
+		}
+
 		final var asserter =
 				new ChcAsserter(mMgdScript, getScript(), mProduceUnsatCores, ADD_COMMENTS, DECLARE_FUNCTIONS);
-		asserter.assertClauses(symbolTable, system);
+		asserter.assertClauses(symbolTable, assertedSystem);
 		mMgdScript.lock(this);
 
 		mName2Clause = asserter.getName2Clause();
@@ -109,12 +119,31 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 
 	@Override
 	public void produceModels(final boolean enable) {
-		getScript().setOption(SMTLIBConstants.PRODUCE_MODELS, enable);
+		mProduceModels = enable;
 	}
 
 	@Override
 	public Optional<Model> getModel() {
-		return Optional.ofNullable(getScript().getModel());
+		final var model = getScript().getModel();
+		if (model == null) {
+			return Optional.empty();
+		}
+
+		// back-transfer model if necessary
+		final Model transferredModel;
+		final Script outputScript;
+		if (mTransferrer == null) {
+			transferredModel = model;
+			outputScript = getScript();
+		} else {
+			transferredModel = mTransferrer.transferBack(model);
+			outputScript = mTransferrer.getSourceScript();
+		}
+
+		// ensure Ultimate normal form
+		final var normalizedModel =
+				new ChcSolutionNormalizer(outputScript).normalize((ModelDescription) transferredModel);
+		return Optional.of(normalizedModel);
 	}
 
 	@Override
@@ -139,7 +168,6 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 
 	@Override
 	public void produceUnsatCores(final boolean enable) {
-		getScript().setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, enable);
 		mProduceUnsatCores = enable;
 	}
 
@@ -150,16 +178,22 @@ public class SmtChcScript implements IChcScript, AutoCloseable {
 		for (final var term : core) {
 			assert term instanceof ApplicationTerm : "Expected only term names in UNSAT core, but got " + term;
 			final var name = ((ApplicationTerm) term).getFunction().getName();
-			result.add(mName2Clause.get(name));
+			final var assertedClause = mName2Clause.get(name);
+			final var originalClause =
+					mTransferrer == null ? assertedClause : mTransferrer.transferBack(assertedClause);
+			result.add(originalClause);
 		}
 		return Optional.of(result);
 	}
 
 	private void reset() {
 		mName2Clause = null;
-		if (mIsPushed) {
-			mMgdScript.pop(this, 1);
-		}
+		mTransferrer = null;
+
+		getScript().reset();
+		getScript().setLogic(Logics.HORN);
+		getScript().setOption(SMTLIBConstants.PRODUCE_MODELS, mProduceModels);
+		getScript().setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, mProduceUnsatCores);
 	}
 
 	@Override
