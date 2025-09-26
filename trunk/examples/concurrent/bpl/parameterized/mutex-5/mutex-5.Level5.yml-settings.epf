@@ -1,0 +1,49 @@
+#Thu May 25 14:24:13 CEST 2023
+
+
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc=
+
+# Program model and specification
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Concurrency\ mode=PARAMETRIC
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Assume\ program\ has\ a\ precondition=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Specification\ mode=ASSERT_VIOLATIONS
+
+# Thread modularity level
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Thread-Modular\ Proof\ Level=5
+
+# Program-specific settings for sleep set reduction
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Conditional\ Independence=NONE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Preference\ order\ used\ for\ reduction=SEQ_COMP
+
+@de.uni_freiburg.informatik.ultimate.plugins.icfgtochc=0.2.3
+file_export_version=3.0
+
+
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ CHC\ model\ if\ query\ is\ SAT=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ UNSAT\ core\ if\ query\ is\ UNSAT=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ derivation\ if\ query\ is\ UNSAT=false
+@de.uni_freiburg.informatik.ultimate.plugins.chcsolver=0.2.3
+file_export_version=3.0
+
+
+\!/instance/de.uni_freiburg.informatik.ultimate.chcprinter=
+/instance/de.uni_freiburg.informatik.ultimate.chcprinter/File\ name=CHC
+/instance/de.uni_freiburg.informatik.ultimate.chcprinter/Use\ automatic\ naming=true
+/instance/de.uni_freiburg.informatik.ultimate.chcprinter/Save\ file\ in\ source\ directory=true
+@de.uni_freiburg.informatik.ultimate.chcprinter=0.2.3
+file_export_version=3.0
+
+
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.2.3
+file_export_version=3.0
+
+
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Add\ additional\ assume\ for\ each\ assert=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=OneNontrivialStatement
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.2.3
+file_export_version=3.0

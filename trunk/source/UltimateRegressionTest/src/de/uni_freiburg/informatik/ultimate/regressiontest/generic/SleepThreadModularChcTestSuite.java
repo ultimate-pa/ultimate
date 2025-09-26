@@ -29,9 +29,11 @@ package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -46,33 +48,45 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.ChcOverallResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 public class SleepThreadModularChcTestSuite extends UltimateTestSuite {
-	private static final String SETTINGS = "examples/concurrent/bpl/parameterized/ThreadModularVerifier.Settings.epf";
 	private static final String TOOLCHAIN = "examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml";
 	private static final String DIRECTORY = "examples/concurrent/bpl/parameterized/";
-	private static final String TASKDEF_REGEX = ".*\\.yml";
+	private static final String TASKDEF_REGEX = ".*/regression/.*\\.yml";
 	private static final int DEFAULT_TIMEOUT = 600;
 
 	@Override
 	protected Collection<UltimateTestCase> createTestCases() {
 		final File toolchainFile = UltimateRunDefinitionGenerator.getFileFromTrunkDir(TOOLCHAIN);
+
 		final Collection<File> selectedYamlFiles = TestUtil.getFilesRegex(
 				UltimateRunDefinitionGenerator.getFileFromTrunkDir(DIRECTORY), new String[] { TASKDEF_REGEX });
 
 		final List<UltimateTestCase> result = new ArrayList<>();
 		for (final var taskDefFile : selectedYamlFiles) {
-			final File settingsFile = UltimateRunDefinitionGenerator.getFileFromTrunkDir(SETTINGS);
 			final var taskDefinition = parseTaskDefinition(taskDefFile);
+
 			final String bplFilename = (String) taskDefinition.get("input_files");
 			final Path bplPath = taskDefFile.toPath().getParent().resolve(bplFilename);
-			final var urd = new UltimateRunDefinition(bplPath.toFile(), settingsFile, toolchainFile,
-					getTimeout(taskDefinition), applySettings(taskDefFile, taskDefinition));
-			result.add(new UltimateTestCase(constructITestResultDecider(urd, taskDefinition), urd, List.of()));
+
+			final Path settingsFile = getSettingsFile(taskDefinition, taskDefFile.toPath().getParent());
+
+			long timeout = getTimeout(taskDefinition);
+			if (timeout > 10_000L) { // TODO remove
+				timeout = 10_000L;
+			}
+
+			final var urd = new UltimateRunDefinition(bplPath.toFile(), settingsFile.toFile(), toolchainFile, timeout,
+					applySettings(taskDefFile, taskDefinition));
+
+			final String name = taskDefFile.getParentFile().getParentFile().getName() + "__" + taskDefFile.getName();
+			result.add(new TestCase(constructITestResultDecider(urd, taskDefinition), urd, List.of(), name));
 		}
+		result.sort(Comparator.comparing(UltimateTestCase::getName));
 
 		return result;
 	}
@@ -100,6 +114,7 @@ public class SleepThreadModularChcTestSuite extends UltimateTestSuite {
 		private final ChcOverallResult mExpected;
 
 		public ExpectedResultFinder(final Map<String, Object> taskDefinition) {
+			@SuppressWarnings("unchecked")
 			final var propertyDef = ((Collection<Map<String, Object>>) taskDefinition.get("properties")).stream()
 					.filter(propEntry -> ((String) propEntry.get("property_file")).endsWith("unreach-call.prp"))
 					.findFirst();
@@ -160,6 +175,23 @@ public class SleepThreadModularChcTestSuite extends UltimateTestSuite {
 		return new IIncrementalLog[0];
 	}
 
+	@SuppressWarnings("unchecked")
+	private static Path getSettingsFile(final Map<String, Object> taskDefinition, final Path currentDirectory) {
+		if (taskDefinition.containsKey("options")) {
+			final var options = (Map<String, Object>) taskDefinition.get("options");
+			if (options.containsKey("settings_file")) {
+				final String epfFilename = (String) options.get("settings_file");
+				final Path settingsFile = currentDirectory.resolve(epfFilename);
+				if (!Files.exists(settingsFile)) {
+					throw new IllegalStateException("Settings file does not exist: " + settingsFile);
+				}
+				return settingsFile;
+			}
+		}
+		throw new IllegalStateException("No settings file specified");
+	}
+
+	@SuppressWarnings("unchecked")
 	private static long getTimeout(final Map<String, Object> taskDefinition) {
 		if (taskDefinition.containsKey("options")) {
 			final var options = (Map<String, Object>) taskDefinition.get("options");
@@ -170,6 +202,7 @@ public class SleepThreadModularChcTestSuite extends UltimateTestSuite {
 		return DEFAULT_TIMEOUT * 1000L;
 	}
 
+	@SuppressWarnings("unchecked")
 	private NamedServiceCallback applySettings(final File taskDefFile, final Map<String, Object> taskDefinition) {
 		final var options = (Map<String, Object>) taskDefinition.get("options");
 		if (options == null) {
@@ -193,5 +226,20 @@ public class SleepThreadModularChcTestSuite extends UltimateTestSuite {
 			}
 			return layer;
 		});
+	}
+
+	private static final class TestCase extends UltimateTestCase {
+		private final String mName;
+
+		public TestCase(final ITestResultDecider decider, final UltimateRunDefinition urd,
+				final List<ITestLogfile> logs, final String name) {
+			super(decider, urd, logs);
+			mName = name;
+		}
+
+		@Override
+		public String getName() {
+			return mName;
+		}
 	}
 }

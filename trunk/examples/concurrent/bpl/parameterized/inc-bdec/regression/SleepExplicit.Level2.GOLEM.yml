@@ -1,0 +1,21 @@
+format_version: '2.0'
+
+input_files: '../inc-bdec.bpl'
+
+properties:
+  - property_file: ../../../../svcomp/properties/unreach-call.prp
+    expected_verdict: sat
+
+options:
+  language: Boogie
+
+  settings_file: ../inc-bdec.yml-settings.epf
+  timeout: 90 #seconds
+
+  de.uni_freiburg.informatik.ultimate.plugins.icfgtochc:
+    Enable sleep set reduction: true
+    Break symmetry of preference order: true
+
+  de.uni_freiburg.informatik.ultimate.plugins.chcsolver:
+    CHC solver backend: GOLEM
+
