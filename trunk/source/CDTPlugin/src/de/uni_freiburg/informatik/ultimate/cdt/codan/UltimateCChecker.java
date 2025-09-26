@@ -90,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author Stefan Wissert
  * @date 31.01.2012
  */
-public class UltimateCChecker extends AbstractFullAstChecker {
+public class UltimateCChecker extends AbstractFullAstChecker implements AutoCloseable {
 	/**
 	 * The identifier.
 	 */
@@ -118,9 +118,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
+	public void close() {
 		mController.close();
-		super.finalize();
 	}
 
 	@Override
