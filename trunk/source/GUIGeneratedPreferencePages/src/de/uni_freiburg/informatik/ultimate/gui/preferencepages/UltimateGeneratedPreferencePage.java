@@ -104,53 +104,8 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 
 	protected void createFieldEditors(final List<BaseUltimatePreferenceItem> items) {
 		for (final BaseUltimatePreferenceItem prefItem : items) {
-			if (prefItem instanceof UltimatePreferenceItem) {
-				final UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
-				final FieldEditor editor;
-				switch (item.getType()) {
-				case Label:
-					editor = createLabel(item.getLabel(), item.isExperimental());
-					break;
-				case Integer:
-					editor = createIntegerFieldEditor(item.getLabel(), item.isExperimental());
-					break;
-				case Double:
-					editor = createDoubleFieldEditor(item.getLabel(), item.isExperimental());
-					break;
-				case Boolean:
-					editor = createBooleanFieldEditor(item.getLabel(), item.isExperimental());
-					break;
-				case Directory:
-					editor = createDirectoryEditor(item.getLabel(), item.isExperimental());
-					break;
-				case String:
-					editor = createStringEditor(item.getLabel(), item.isExperimental());
-					break;
-				case Combo:
-					editor = createComboEditor(item, item.isExperimental());
-					break;
-				case Radio:
-					editor = createRadioGroupFieldEditor(item, item.isExperimental());
-					break;
-				case Path:
-					editor = createPathFieldEditor(item, item.isExperimental());
-					break;
-				case File:
-					editor = createFileFieldEditor(item, item.isExperimental());
-					break;
-				case MultilineString:
-					editor = createMultilineFieldEditor(item.getLabel(), item.isExperimental());
-					break;
-				case Color:
-					editor = createColorEditor(item.getLabel(), item.isExperimental());
-					break;
-				case KeyValue:
-					editor = createKeyValueEditor(item.getLabel(), item.isExperimental());
-					break;
-				default:
-					throw new UnsupportedOperationException(
-							"You need to implement the new enum type \"" + item.getType() + "\" here");
-				}
+			if (prefItem instanceof final UltimatePreferenceItem<?> item) {
+				final FieldEditor editor = createFieldEditor(item);
 
 				mMinColumns = Integer.max(mMinColumns, editor.getNumberOfControls());
 				final String tooltip = item.getDescription();
@@ -161,13 +116,32 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				if (item.getPreferenceValidator() != null) {
 					mCheckedFields.put(editor, item);
 				}
-			} else if (prefItem instanceof UltimatePreferenceItemGroup) {
-				final var group = (UltimatePreferenceItemGroup) prefItem;
+			} else if (prefItem instanceof final UltimatePreferenceItemGroup group) {
 				beginGroupBox(group.getLabel(), group.getDescription(), 2);
 				createFieldEditors(group.getItems());
 				endGroupBox();
 			}
 		}
+	}
+
+	private FieldEditor createFieldEditor(final UltimatePreferenceItem<?> item) {
+		return switch (item.getType()) {
+		case Label -> createLabel(item.getLabel(), item.isExperimental());
+		case Integer -> createIntegerFieldEditor(item.getLabel(), item.isExperimental());
+		case Double -> createDoubleFieldEditor(item.getLabel(), item.isExperimental());
+		case Boolean -> createBooleanFieldEditor(item.getLabel(), item.isExperimental());
+		case Directory -> createDirectoryEditor(item.getLabel(), item.isExperimental());
+		case String -> createStringEditor(item.getLabel(), item.isExperimental());
+		case Combo -> createComboEditor(item, item.isExperimental());
+		case Radio -> createRadioGroupFieldEditor(item, item.isExperimental());
+		case Path -> createPathFieldEditor(item, item.isExperimental());
+		case File -> createFileFieldEditor(item, item.isExperimental());
+		case MultilineString -> createMultilineFieldEditor(item.getLabel(), item.isExperimental());
+		case Color -> createColorEditor(item.getLabel(), item.isExperimental());
+		case KeyValue -> createKeyValueEditor(item.getLabel(), item.isExperimental());
+
+		case Group, SubItemContainer -> throw new AssertionError(item.getType() + " should be handled somewhere else");
+		};
 	}
 
 	protected void adjustGroupGrids() {
@@ -243,46 +217,32 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 			if (preferenceDescriptor == null) {
 				return;
 			}
+
 			final IUltimatePreferenceItemValidator<?> validator = preferenceDescriptor.getPreferenceValidator();
 			switch (preferenceDescriptor.getType()) {
-			case Boolean:
-				validateField((IUltimatePreferenceItemValidator<Boolean>) validator,
-						((BooleanFieldEditor) editor).getBooleanValue());
-				break;
-			case Integer:
-				validateField((IUltimatePreferenceItemValidator<Integer>) validator,
-						((IntegerFieldEditor) editor).getIntValue());
-				break;
-			case Double:
-				validateField((IUltimatePreferenceItemValidator<Double>) validator,
-						((DoubleFieldEditor) editor).getDoubleValue());
-				break;
-			case Directory:
-			case Path:
-			case String:
-			case File:
-			case Color:
-				validateField((IUltimatePreferenceItemValidator<String>) validator,
-						((StringFieldEditor) editor).getStringValue());
-				break;
-			case MultilineString:
-				validateField((IUltimatePreferenceItemValidator<String>) validator,
-						((MultiLineTextFieldEditor) editor).getStringValue());
-				break;
-			case KeyValue:
-				validateField((IUltimatePreferenceItemValidator<Map<String, String>>) validator,
-						((KeyValueGridEditor) editor).getValue());
-				break;
-			case Label:
-			case Combo:
-			case Radio:
-				// Label cannot be invalid
-				// Combo cannot be invalid
-				// Radio cannot be invalid
-				break;
-			default:
-				throw new UnsupportedOperationException(
-						"You need to implement the new enum type \"" + preferenceDescriptor.getType() + "\" here");
+			case Boolean -> validateField((IUltimatePreferenceItemValidator<Boolean>) validator,
+					((BooleanFieldEditor) editor).getBooleanValue());
+			case Integer -> validateField((IUltimatePreferenceItemValidator<Integer>) validator,
+					((IntegerFieldEditor) editor).getIntValue());
+			case Double -> validateField((IUltimatePreferenceItemValidator<Double>) validator,
+					((DoubleFieldEditor) editor).getDoubleValue());
+
+			case Directory, Path, String, File, Color ->
+					validateField((IUltimatePreferenceItemValidator<String>) validator,
+							((StringFieldEditor) editor).getStringValue());
+
+			case MultilineString -> validateField((IUltimatePreferenceItemValidator<String>) validator,
+					((MultiLineTextFieldEditor) editor).getStringValue());
+			case KeyValue -> validateField((IUltimatePreferenceItemValidator<Map<String, String>>) validator,
+					((KeyValueGridEditor) editor).getValue());
+
+			case Label, Combo, Radio -> {
+				// Label, Combo or Radio cannot be invalid
+			}
+
+			case Group, SubItemContainer -> throw new AssertionError("there can be no editor for group or container");
+			default -> throw new UnsupportedOperationException(
+					"You need to implement the new enum type \"" + preferenceDescriptor.getType() + "\" here");
 			}
 		}
 	}
@@ -297,7 +257,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		}
 	}
 
-	private String markLabel(final String label, final boolean experimental) {
+	private static String markLabel(final String label, final boolean experimental) {
 		if (experimental) {
 			return label + " ☢️";
 		}
