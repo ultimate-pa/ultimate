@@ -737,7 +737,6 @@ public class CHandler {
 		mDeclarations.addAll(mTypeSizeComputer.getConstants());
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
 		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, mDataRaceChecker));
-		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure());
 		if (mDataRaceChecker != null) {
 			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
 		}

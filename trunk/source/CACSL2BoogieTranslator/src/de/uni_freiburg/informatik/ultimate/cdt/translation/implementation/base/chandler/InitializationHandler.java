@@ -35,11 +35,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -51,25 +49,18 @@ import org.eclipse.cdt.core.dom.ast.c.ICASTFieldDesignator;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.StructExpanderUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CompatibleTypes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ConstantArrayUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
@@ -163,8 +154,6 @@ public class InitializationHandler {
 
 	private final ExpressionResultTransformer mExprResultTransformer;
 
-	private final RequiredInitializationFeatures mRequiredInitializationFeatures;
-
 	private final boolean mUseConstantArrays;
 
 	public InitializationHandler(final TranslationSettings settings, final MemoryHandler memoryHandler,
@@ -182,7 +171,6 @@ public class InitializationHandler {
 		mExprResultTransformer = exprResultTransformer;
 		mUseConstantArrays = settings.useConstantArrays();
 		mUseSelectForArrayCellInitIfPossible = !settings.useStoreChains();
-		mRequiredInitializationFeatures = new RequiredInitializationFeatures();
 	}
 
 	/**
@@ -860,13 +848,10 @@ public class InitializationHandler {
 
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
-		final BoogieType boogieArrayType = mTypeHandler.getBoogieTypeForCType(cArrayType);
+		final BoogieArrayType boogieArrayType = (BoogieArrayType) mTypeHandler.getBoogieTypeForCType(cArrayType);
+		final Expression constantArray =
+				ConstantArrayUtil.getZeroArray(mExpressionTranslation.getFunctionDeclarations(), loc, boogieArrayType);
 
-		mRequiredInitializationFeatures.reportRequiresConstantArray((BoogieArrayType) boogieArrayType);
-
-		final Expression constantArray = ExpressionFactory.constructFunctionApplication(loc,
-				mRequiredInitializationFeatures.getNameOfConstantArrayFunction(boogieArrayType), new Expression[] {},
-				boogieArrayType);
 		final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
 				new LeftHandSide[] { lhsToInit.getLhs() }, new Expression[] { constantArray });
 
@@ -938,12 +923,6 @@ public class InitializationHandler {
 		for (final Overapprox overapprItem : overappr) {
 			new OverapproxVariable(overapprItem.getOverapproximatedLocations()).annotate(stm);
 		}
-	}
-
-	public List<Declaration> declareInitializationInfrastructure() {
-		// declarations are stored in FunctionDeclarations, their creation is triggered by the below method call
-		mRequiredInitializationFeatures.constructAndRegisterDeclarations();
-		return Collections.emptyList();
 	}
 
 	/**
@@ -1382,102 +1361,6 @@ public class InitializationHandler {
 		}
 		final InitializerResult initializerResult = stringInitResBuilder.build();
 		return constructInitializerInfo(loc, initializerResult, cType, hook);
-	}
-
-	// TODO (Dominik 2021-11-10) Once ConstantArrayUtil is stable, use that class and remove most of the class below.
-	private class RequiredInitializationFeatures {
-
-		private boolean mIsFinished;
-		private final Set<BoogieArrayType> mTypesForWhichConstantArraysAreRequired = new HashSet<>();
-
-		public void reportRequiresConstantArray(final BoogieArrayType boogieType) {
-			assert !mIsFinished;
-			mTypesForWhichConstantArraysAreRequired.add(boogieType);
-		}
-
-		private void constructAndRegisterDeclaration(final BoogieArrayType boogieType) {
-			final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-
-			final BoogieType ft = StructExpanderUtil.flattenType(boogieType, new HashMap<>(), new HashMap<>());
-
-			final List<Attribute> attributeList = new ArrayList<>();
-
-			if (ft instanceof final BoogieStructType bst) {
-				for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
-
-					// add expand attribute
-					final NamedAttribute expandAttribute =
-							new NamedAttribute(ignoreLoc, StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT, new Expression[] {
-									ExpressionFactory.createStringLiteral(ignoreLoc, bst.getFieldIds()[fieldNr]) });
-					attributeList.add(expandAttribute);
-
-					// add smtdefined attribute
-					final String smtDefinition =
-							getSmtConstantArrayStringForBoogieType((BoogieArrayType) bst.getFieldType(fieldNr));
-
-					final NamedAttribute smtdefinedAttribute = new NamedAttribute(ignoreLoc,
-							FunctionDeclarations.SMTDEFINED_IDENTIFIER,
-							new Expression[] { ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition) });
-					attributeList.add(smtdefinedAttribute);
-				}
-			} else {
-				// build something like "((as const (Array (Array Int Int))) ((as const (Array Int Int)) 0))";
-				final String smtDefinition = getSmtConstantArrayStringForBoogieType(boogieType);
-
-				final NamedAttribute namedAttribute =
-						new NamedAttribute(ignoreLoc, FunctionDeclarations.SMTDEFINED_IDENTIFIER,
-								new Expression[] { ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition) });
-				attributeList.add(namedAttribute);
-			}
-
-			final Attribute[] attributes = attributeList.toArray(new Attribute[attributeList.size()]);
-
-			// register the FunctionDeclaration so it will be added at the end of translation
-			mExpressionTranslation.getFunctionDeclarations().declareFunction(ignoreLoc,
-					getNameOfConstantArrayFunction(boogieType),
-					// new Attribute[] { namedAttribute},
-					attributes, boogieType.toASTType(ignoreLoc));
-
-		}
-
-		private String getSmtConstantArrayStringForBoogieType(final BoogieArrayType boogieArrayType) {
-			String currentArray;
-			if (boogieArrayType.getValueType() instanceof final BoogieArrayType arrayValueType) {
-				currentArray = getSmtConstantArrayStringForBoogieType(arrayValueType);
-			} else {
-				currentArray = CTranslationUtil.getSmtZeroStringForBoogieType(boogieArrayType.getValueType());
-			}
-			String currentTypeString = CTranslationUtil.getSmtSortStringForBoogieType(boogieArrayType.getValueType());
-			for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
-				currentTypeString = String.format("(Array %s %s)",
-						CTranslationUtil.getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
-						currentTypeString);
-				currentArray = String.format("((as const %s) %s)", currentTypeString, currentArray);
-			}
-			return currentArray;
-		}
-
-		public void constructAndRegisterDeclarations() {
-			mIsFinished = true;
-			for (final BoogieArrayType boogieType : mTypesForWhichConstantArraysAreRequired) {
-				constructAndRegisterDeclaration(boogieType);
-			}
-		}
-
-		public String getNameOfConstantArrayFunction(final BoogieType boogieArrayType) {
-			if (!mTypesForWhichConstantArraysAreRequired.contains(boogieArrayType)) {
-				throw new AssertionError("type should have been reported as required first");
-			}
-			/*
-			 * "~RB~" stands for "right bracket", "~RC~" stands for "right curly brace", "~COM~" stands for "comma",
-			 * "~COL~" stands for "colon", if there is a nicer naming that still avoids name clashes, that naming should
-			 * be used.
-			 */
-			final String sanitizedTypeName = boogieArrayType.toString().replace(":", "~COL~").replace(", ", "~COM~")
-					.replace("{ ", "~LC~").replace(" }", "~RC~").replace("]", "~RB~").replace("[", "~LB~");
-			return SFO.AUXILIARY_FUNCTION_PREFIX + "const~array~" + sanitizedTypeName;
-		}
-
 	}
 
 	/**
