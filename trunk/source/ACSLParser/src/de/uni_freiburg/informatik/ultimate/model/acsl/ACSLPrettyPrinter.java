@@ -70,6 +70,11 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class ACSLPrettyPrinter {
+	private static final String STRING_AND = "&";
+	private static final String STRING_MINUS = "-";
+	private static final String STRING_TIMES = "*";
+	private static final String STRING_PLUS = "+";
+
 	public static String print(final ACSLNode node) {
 		switch (node) {
 		case final CodeAnnotStmt codeAnnot:
@@ -151,28 +156,39 @@ public class ACSLPrettyPrinter {
 	}
 
 	private static String printUnaryExpression(final UnaryExpression expression) {
-		final String op = switch (expression.getOperator()) {
-		case ADDROF -> "&";
-		case LOGICCOMPLEMENT -> "~";
-		case LOGICNEG -> "!";
-		case MINUS -> "-";
-		case PLUS -> "+";
-		case POINTER -> "*";
-		case LTLFINALLY, LTLGLOBALLY, LTLNEXT ->
-				throw new AssertionError("Unhandled operator " + expression.getOperator());
-		};
-		return op + printExpression(expression.getExpr());
+		return unaryOperatorToString(expression.getOperator()) + printExpression(expression.getExpr());
 	}
 
 	// TODO: Check the operator precedence to avoid unnecessary parentheses
 	private static String printBinaryExpression(final BinaryExpression expression) {
-		final String op = switch (expression.getOperator()) {
+		final String op = binaryOperatorToString(expression.getOperator());
+		final String left = printExpression(expression.getLeft());
+		final String right = printExpression(expression.getRight());
+		return String.format("(%s %s %s)", left, op, right);
+	}
+
+	public static String unaryOperatorToString(final UnaryExpression.Operator operator) {
+		return switch (operator) {
+		case ADDROF -> STRING_AND;
+		case LOGICNEG -> "!";
+		case LTLFINALLY -> "F";
+		case LTLGLOBALLY -> "G";
+		case LTLNEXT -> "X";
+		case MINUS -> STRING_MINUS;
+		case PLUS -> STRING_PLUS;
+		case POINTER -> STRING_TIMES;
+		case LOGICCOMPLEMENT -> "~";
+		};
+	}
+
+	public static String binaryOperatorToString(final BinaryExpression.Operator operator) {
+		return switch (operator) {
 		case ARITHDIV -> "/";
-		case ARITHMINUS -> "-";
+		case ARITHMINUS -> STRING_MINUS;
 		case ARITHMOD -> "%";
-		case ARITHMUL -> "*";
-		case ARITHPLUS -> "+";
-		case BITAND -> "&";
+		case ARITHMUL -> STRING_TIMES;
+		case ARITHPLUS -> STRING_PLUS;
+		case BITAND -> STRING_AND;
 		case BITIFF -> "<-->";
 		case BITIMPLIES -> "-->";
 		case BITOR -> "|";
@@ -190,11 +206,10 @@ public class ACSLPrettyPrinter {
 		case LOGICXOR -> "^^";
 		case BITSHIFTLEFT -> "<<";
 		case BITSHIFTRIGHT -> ">>";
-		case BITVECCONCAT, COMPPO, LTLRELEASE, LTLUNTIL, LTLWEAKUNTIL ->
-				throw new AssertionError("Unhandled operator " + expression.getOperator());
+		case LTLUNTIL -> "U";
+		case LTLRELEASE -> "R";
+		case LTLWEAKUNTIL -> "WU";
+		case COMPPO, BITVECCONCAT -> throw new AssertionError("Unhandled operator " + operator);
 		};
-		final String left = printExpression(expression.getLeft());
-		final String right = printExpression(expression.getRight());
-		return String.format("(%s %s %s)", left, op, right);
 	}
 }
