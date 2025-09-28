@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -50,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.AutomatonType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TransferToWorkerUtils.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -112,9 +115,11 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	// Globals for Difference (Interpolant Automaton Enhancement)
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
+	INestedWordAutomaton<L, IPredicate> mAbstraction;
 
 	StrategyFactory<L> mStrategyFactory;
 	private final WorkerGeneralizationMode mGeneralize;
+	TransferToWorkerUtils<L, IPredicate> mNwaCexTransferrer;
 
 	public CegarNwaContinuesWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
 			final CegarLoopResultBuilder resultBuilder, final CegarLoopStatisticsGenerator statistcs,
@@ -150,6 +155,10 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		mBlockingQueueForResults = blockingQueueForResults;
 		mWorkerTaskQueue = workerTaskQueue;
 
+		mNwaCexTransferrer =
+				new TransferToWorkerUtils<>(new AutomataLibraryServices(mServices), mLogger,
+						mainThread.getManagedScript(), mCsToolkit.getManagedScript());
+		mAbstraction = getAbstraction();
 		final Thread workerThread = new Thread(() -> {
 			try {
 				executeThread();
@@ -176,11 +185,19 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		workerThread.start();
 	}
 
-	public void executeThread() throws InterruptedException {
+	private void executeThread() throws InterruptedException {
+
+
+
 		while (true) {
 			mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
 			mIteration += 1;
-			mCounterexample = mWorkerTaskQueue.take();
+			for (final Map.Entry<Thread, StackTraceElement[]> e : Thread.getAllStackTraces().entrySet()) {
+				final Thread t = e.getKey();
+				System.out.println("Thread: " + t.getName() + " | State: " + t.getState());
+			}
+			mNwaCexTransferrer.setMode(Mode.MAIN2WORKER);
+			mCounterexample = mNwaCexTransferrer.transferRun((NestedRun) mWorkerTaskQueue.take());
 			final List<L> trace = mCounterexample.getWord().asList();
 			mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 			final int traceHash = trace.hashCode();
@@ -242,17 +259,27 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 
 		final ITARefinementStrategy<L> strategy;
 		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7 && false) {
-			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
+			strategy =
+					mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
 					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
 					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 					RefinementStrategy.ACCELERATED_TRACE_CHECK);
 		} else {
-			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
+			strategy =
+					mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
 					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
 					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 					mPref.getRefinementStrategy());
 		}
 		return strategy;
+	}
+
+	private INestedWordAutomaton<L, IPredicate> getAbstraction() {
+		mNwaCexTransferrer.setMode(Mode.MAIN2WORKER);
+		final INestedWordAutomaton<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
+		final INestedWordAutomaton<L, IPredicate> workerAbstraction =
+				mNwaCexTransferrer.transferAutomaton(mainAbstraction, mPredicateFactoryInterpolantAutomata);
+		return workerAbstraction;
 	}
 
 	private IPreconditionProvider getPreconditionProvider() {
@@ -360,7 +387,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
 				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
-				mMainThread.getAbstraction(), mIteration);
+				mAbstraction, mIteration);
 		mInterpolAutomaton = null;
 
 		// for (final Object testGoal : mCounterexample.getStateSequence()) {
@@ -473,12 +500,22 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 
 		if (generalize()) {
 			mLogger.info("Difference in Worker for Generalization");
-			computeAutomataDifference(mMainThread.getAbstraction(), subtrahend, subtrahendBeforeEnhancement,
+			computeAutomataDifference(mAbstraction, subtrahend, subtrahendBeforeEnhancement,
 					predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 		}
-		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
+
+		mNwaCexTransferrer.setMode(Mode.WORKER2MAIN);
+
+		final WorkerThreadResult<L, A> workerResult =
+				new WorkerThreadResult<>(
+						mNwaCexTransferrer.transferAutomaton((INestedWordAutomaton<L, IPredicate>) subtrahend,
+								mPredicateFactoryInterpolantAutomata),
+						mNwaCexTransferrer.transferAutomaton(subtrahendBeforeEnhancement,
+								mPredicateFactoryInterpolantAutomata),
 				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
-				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
+						mCsToolkit.getManagedScript(),
+						mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mCounterexample),
+						mPredicateFactory,
 				mRefinementResult.somePerfectSequenceFound(), false, false);
 
 		// TODO missing a lot of stuff from NwaCegarLoop

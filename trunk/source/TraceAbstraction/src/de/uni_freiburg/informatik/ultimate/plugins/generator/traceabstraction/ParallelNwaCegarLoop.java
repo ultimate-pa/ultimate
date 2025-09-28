@@ -243,6 +243,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
 					mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue);
 		}
+
+
 		// start worker
 		return new CegarNwaContinuesWorkerThread<>(mLogger, mPref, id, mResultBuilder, mCegarLoopBenchmark,
 				iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
@@ -1145,6 +1147,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public ManagedScript getManagedScript() {
+		return mCsToolkit.getManagedScript();
 	}
 }
 
