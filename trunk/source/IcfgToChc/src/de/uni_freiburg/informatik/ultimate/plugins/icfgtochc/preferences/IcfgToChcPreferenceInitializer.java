@@ -123,7 +123,7 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			If enabled, sleep set updates are encoded such that non-deterministically, \
 			non-commuting edges may or may not be added to the sleep set. \
 			This does not affect CHC satisfiability but may sometimes be simpler for the CHC solver. \
-			It is particularly recommended in connection with necessary-and-complete conditional independence.""";
+			It is particularly recommended in connection with necessary-and-sufficient conditional independence.""";
 	private static final boolean DEF_NONDET_SLEEP_UPDATES = false;
 
 	// TODO Currently unused
