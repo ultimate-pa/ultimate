@@ -37,6 +37,9 @@
 
   <rundefinition name="SleepExplicit.NondetSleep.Eldarica">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
+    <option name="--icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
     <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
   </rundefinition>
 
@@ -58,9 +61,11 @@
 
   <rundefinition name="SleepExplicit.NondetSleep.NecSufComm.Eldarica">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
-    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
     <option name="--icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
     <option name="--icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="--chcsolver.chc.solver.backend">ELDARICA</option>
   </rundefinition>
 
   <rundefinition name="SleepExplicit.NondetSleep.NecSufComm.Z3">
@@ -91,8 +96,10 @@
 
   <rundefinition name="SleepExplicit.NecSufComm.Z3">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
-    <option name="--chcsolver.chc.solver.backend">Z3</option>
+    <option name="--icfgtochc.enable.sleep.set.reduction">true</option>
+    <option name="--icfgtochc.break.symmetry.of.preference.order">true</option>
     <option name="--icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="--chcsolver.chc.solver.backend">Z3</option>
   </rundefinition>
 
   <rundefinition name="SleepExplicit.NecSufComm.Golem">
