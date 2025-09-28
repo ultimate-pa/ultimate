@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -697,7 +698,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	protected List<HornClauseBuilder> buildSymmetryClauses() {
 		final var result = new ArrayList<HornClauseBuilder>();
 
-		final var groups = mInstances.stream().collect(Collectors.groupingBy(ThreadInstance::getTemplateName));
+		// Note: use LinkedHashMap for deterministic iteration order over groups
+		final var groups = mInstances.stream().collect(
+				Collectors.groupingBy(ThreadInstance::getTemplateName, LinkedHashMap::new, Collectors.toList()));
 		for (final var group : groups.values()) {
 			// skip trivial groups
 			if (group.size() <= 1) {
@@ -716,17 +719,30 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 	}
 
 	protected HornClauseBuilder buildSymmetryClause(final Map<ThreadInstance, ThreadInstance> permutation) {
-		final var clause = createBuilder(mInvariantPredicate, "symmetry clause");
-		final var bodyArgs = new ArrayList<>(mInvariantPredicate.getParameters());
-
+		// Construct substitution map on variables.
+		// (Note: we cannot simply call replaceThreadVariables() repeatedly as later calls would overwrite earlier ones)
+		final var substitution = new HashMap<IHcReplacementVar, IHcReplacementVar>();
 		for (final var entry : permutation.entrySet()) {
 			assert !entry.getKey().equals(entry.getValue()) : "Identity permutations should be omitted";
 			assert entry.getKey().getTemplateName().equals(entry.getValue().getTemplateName())
 					: "Must not permute threads with different templates";
 			assert permutation.containsKey(entry.getValue()) : "Not a permutation: " + permutation;
-			replaceThreadVariables(bodyArgs, entry.getValue(), mThreadSpecificVars.get(entry.getKey()));
+
+			final var newVariables = mThreadSpecificVars.get(entry.getKey());
+			final var oldVariables = mThreadSpecificVars.get(entry.getValue());
+			assert oldVariables.size() == newVariables.size();
+
+			for (int i = 0; i < newVariables.size(); ++i) {
+				assert !substitution.containsKey(oldVariables.get(i));
+				substitution.put(oldVariables.get(i), newVariables.get(i));
+			}
 		}
 
+		// apply the substitution
+		final var bodyArgs =
+				mInvariantPredicate.getParameters().stream().map(v -> substitution.getOrDefault(v, v)).toList();
+
+		final var clause = createBuilder(mInvariantPredicate, "symmetry clause");
 		final var bodyTerms = bodyArgs.stream().map(v -> clause.getBodyVar(v).getTerm()).collect(Collectors.toList());
 		clause.addBodyPredicate(mInvariantPredicate, bodyTerms);
 
