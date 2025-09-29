@@ -67,4 +67,12 @@ public class ChcSolverPreferences {
 		}
 		return Paths.get(value);
 	}
+
+	public Path getEldaricaHintsDumpFile() {
+		final String value = mPrefs.getString(ChcSolverPreferenceInitializer.LABEL_ELDARICA_HINTS_DUMP_FILE);
+		if (value == null || value.isEmpty()) {
+			return null;
+		}
+		return Paths.get(value);
+	}
 }

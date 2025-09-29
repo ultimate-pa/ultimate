@@ -61,6 +61,7 @@ public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitialize
 	private static final boolean DEF_PRODUCE_UNSAT_CORES = false;
 
 	public static final String LABEL_ELDARICA_HINTS_FILE = "Hints for eldarica";
+	public static final String LABEL_ELDARICA_HINTS_DUMP_FILE = "Dump CHC model as eldarica hints file";
 
 	public ChcSolverPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -77,7 +78,8 @@ public class ChcSolverPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<>(LABEL_PRODUCE_DERIVATION, DEF_PRODUCE_DERIVATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PRODUCE_UNSAT_CORES, DEF_PRODUCE_UNSAT_CORES,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ELDARICA_HINTS_FILE, "", PreferenceType.File) };
+				new UltimatePreferenceItem<>(LABEL_ELDARICA_HINTS_FILE, "", PreferenceType.File),
+				new UltimatePreferenceItem<>(LABEL_ELDARICA_HINTS_DUMP_FILE, "", PreferenceType.File) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

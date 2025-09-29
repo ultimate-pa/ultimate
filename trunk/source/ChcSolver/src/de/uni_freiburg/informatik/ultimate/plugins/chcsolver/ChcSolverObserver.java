@@ -26,8 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.chcsolver;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -54,6 +58,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.chcsolver.preferences.ChcSolverPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TreeAutomizerChcScript;
 
@@ -78,24 +85,32 @@ public class ChcSolverObserver extends BaseObserver {
 		}
 
 		final HornAnnot annot = HornAnnot.getAnnotation(root);
-		final IChcScript chcScript = getBackend(annot);
-		configureBackend(chcScript);
+		IChcScript chcScript = null;
+		try {
+			chcScript = getBackend(annot);
+			configureBackend(chcScript);
 
-		final LBool satisfiability;
-		if (mPrefs.getTimeout() > 0) {
-			satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses(), mPrefs.getTimeout());
-		} else {
-			satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
+			final LBool satisfiability;
+			if (mPrefs.getTimeout() > 0) {
+				satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses(), mPrefs.getTimeout());
+			} else {
+				satisfiability = chcScript.solve(annot.getSymbolTable(), annot.getHornClauses());
+			}
+
+			final IResult result = createResult(chcScript, satisfiability);
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+
+			if (mPrefs.produceModels() && mPrefs.getEldaricaHintsDumpFile() instanceof final Path dumpPath
+					&& result instanceof final ChcSatResult satResult) {
+				dumpModelAsEldaricaHints(satResult.getModel(), annot, dumpPath);
+			}
+
+			return false;
+		} finally {
+			if (chcScript instanceof final AutoCloseable closeableScript) {
+				closeableScript.close();
+			}
 		}
-
-		final IResult result = createResult(chcScript, satisfiability);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-
-		if (chcScript instanceof AutoCloseable) {
-			((AutoCloseable) chcScript).close();
-		}
-
-		return false;
 	}
 
 	private IChcScript getBackend(final HornAnnot annotation) {
@@ -186,6 +201,35 @@ public class ChcSolverObserver extends BaseObserver {
 		}
 		mSolution = ChcSolution.sat(model);
 		return new ChcSatResult(Activator.PLUGIN_ID, "The given horn clause set is SAT", model);
+	}
+
+	private void dumpModelAsEldaricaHints(final Model model, final HornAnnot chcSystem, final Path dumpPath)
+			throws FileNotFoundException {
+		if (model == null) {
+			mLogger.info("No CHC model available. Skipping writing of eldarica hints file.");
+			return;
+		}
+
+		mLogger.info("Writing CHC model as eldarica hints to %s", dumpPath);
+		final var symbolTable = chcSystem.getSymbolTable();
+
+		try (var writer = new PrintWriter(dumpPath.toFile())) {
+			for (final var predSymbol : symbolTable.getHcPredicateSymbols()) {
+				final TermVariable[] arguments = new TermVariable[predSymbol.getArity()];
+				final List<String> argDecls = new ArrayList<>(predSymbol.getArity());
+				final String prefix = "hhv_" + predSymbol.getName() + "_";
+				for (int i = 0; i < predSymbol.getArity(); ++i) {
+					final Sort sort = predSymbol.getParameterSorts().get(i);
+					final String rawName = symbolTable.getHeadVar(predSymbol, i, sort).getGloballyUniqueId();
+					final String name = rawName.startsWith(prefix) ? rawName.substring(prefix.length()) : rawName;
+					arguments[i] = chcSystem.getScript().variable(name, sort);
+					argDecls.add("(%s %s)".formatted(name, sort));
+				}
+				final Term definition = model.getFunctionDefinition(predSymbol.getName(), arguments);
+				writer.append("(initial-predicates %s\n  (%s)\n  %s\n)\n".formatted(predSymbol.getName(),
+						String.join(" ", argDecls), definition.toStringDirect()));
+			}
+		}
 	}
 
 	private ChcUnsatResult createUnSatResult(final IChcScript chcScript) {
