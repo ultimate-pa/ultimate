@@ -95,7 +95,8 @@ public class RTInconsistencyPreCheck {
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
 			final ILogger logger, final Script script, final CddToSmt cddToSmt, final IUltimateServiceProvider services,
-			final ManagedScript managedScript, final int range, final boolean preCheckFullSet, boolean onlyPreCheck) {
+			final ManagedScript managedScript, final int range, final boolean preCheckFullSet,
+			final boolean onlyPreCheck) {
 		mScript = script;
 		mManagedScript = managedScript;
 		mLogger = logger;
@@ -130,7 +131,6 @@ public class RTInconsistencyPreCheck {
 		rtiCheckSingles();
 		rtiCheckChainLinkReqs();
 
-		
 		printResults();
 		if (mRTIPreCheckOnly) {
 			mLogger.warn("RTI PreCheck only, stopping here. Note that the results are not verified! ");
@@ -166,10 +166,10 @@ public class RTInconsistencyPreCheck {
 	}
 
 	private boolean checkMaxPhaseDisjoint(final ReqsWithAttributes req, final ReqsWithAttributes other) {
-		 if (req.mMaxPhase == null || other.mMaxPhase == null) {
-		        mLogger.warn("checkMaxPhaseDisjoint: missing max phase");
-		        return true;
-		    }
+		if (req.mMaxPhase == null || other.mMaxPhase == null) {
+			mLogger.warn("checkMaxPhaseDisjoint: missing max phase");
+			return true;
+		}
 		final Term conj = SmtUtils.and(mScript, req.mMaxPhase.mInvariant, other.mMaxPhase.mInvariant);
 		final LBool sat = SmtUtils.checkSatTerm(mScript, conj);
 		if (sat != LBool.UNSAT) {
@@ -207,8 +207,7 @@ public class RTInconsistencyPreCheck {
 	/**
 	 * checks for each chain-link requirement potential singles. This reduces checking later.
 	 *
-	 * @param gets
-	 *            the list mListChainLinkReqs and mChainLinkSingles
+	 * @param gets the list mListChainLinkReqs and mChainLinkSingles
 	 */
 	private void findSinglesForChains() {
 		mLogger.info("Finding potential singles for chain-link requirements, this might take a while...");
@@ -247,8 +246,8 @@ public class RTInconsistencyPreCheck {
 				&& req1.mPenultimatePhase.mBound.equals(req2.mPenultimatePhase.mBound))
 				&& (req1.mPenultimatePhase.mBound == req2.mPenultimatePhase.mBound)) {
 
-			final Term conjunction =
-					SmtUtils.and(mScript, req1.mBeforeMaxPhase.mInvariant, req2.mBeforeMaxPhase.mInvariant);
+			final Term conjunction = SmtUtils.and(mScript, req1.mBeforeMaxPhase.mInvariant,
+					req2.mBeforeMaxPhase.mInvariant);
 			final LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
 			if (result == LBool.UNSAT) {
 
@@ -741,8 +740,8 @@ public class RTInconsistencyPreCheck {
 					nextChain.add(candidate);
 
 					// Remove the two exit conditions we just paired (identity-based removal preserved intentionally)
-					final List<Term> nextExit =
-							new ArrayList<>(exitConditions.size() + candidate.mExitConditions.size() - 2);
+					final List<Term> nextExit = new ArrayList<>(
+							exitConditions.size() + candidate.mExitConditions.size() - 2);
 
 					for (final Term ec : exitConditions) {
 						if (ec != exitA) {
@@ -758,8 +757,8 @@ public class RTInconsistencyPreCheck {
 					// Remaining candidates to the right of i
 					final int nextIndex = i + 1;
 					if (nextIndex < remainingChainLinks.size()) {
-						final List<ReqsWithAttributes> tail =
-								new ArrayList<>(remainingChainLinks.subList(nextIndex, remainingChainLinks.size()));
+						final List<ReqsWithAttributes> tail = new ArrayList<>(
+								remainingChainLinks.subList(nextIndex, remainingChainLinks.size()));
 						addChainLinkRecursive(nextChain, depth, nextExit, tail);
 					}
 				}
@@ -861,8 +860,8 @@ public class RTInconsistencyPreCheck {
 				chainLinkRtiFoundCheck(chainLinkRes, newUsedSingles);
 			} else {
 
-				final List<ReqsWithAttributes> tail =
-						new ArrayList<>(potentialSingles.subList(i + 1, potentialSingles.size()));
+				final List<ReqsWithAttributes> tail = new ArrayList<>(
+						potentialSingles.subList(i + 1, potentialSingles.size()));
 
 				fillWithSinglesRecursive(tail, chainLinkRes, reducedExitConditions, newUsedSingles);
 			}
@@ -964,8 +963,8 @@ public class RTInconsistencyPreCheck {
 				final String k1 = a.getName();
 				final String k2 = b.getName();
 
-				final List<ReqsWithAttributes> canonicalPair =
-						(k1.compareTo(k2) <= 0) ? java.util.List.of(a, b) : java.util.List.of(b, a);
+				final List<ReqsWithAttributes> canonicalPair = (k1.compareTo(k2) <= 0) ? java.util.List.of(a, b)
+						: java.util.List.of(b, a);
 
 				if (mRTICombinations.contains(canonicalPair)) {
 					continue; // already checked/recorded this combination
@@ -1000,15 +999,15 @@ public class RTInconsistencyPreCheck {
 		}
 
 		// 2) before max phase check
-		if (r1.mBeforeMaxPhase != null && r2.mBeforeMaxPhase != null
-				&& safeEquals(r1.mPenultimatePhase.mBound, r2.mPenultimatePhase.mBound)) {
-
-			conj = SmtUtils.and(mScript, r1.mBeforeMaxPhase.mInvariant, r2.mBeforeMaxPhase.mInvariant);
-			res = SmtUtils.checkSatTerm(mScript, conj);
-			if (res == LBool.UNSAT) {
-				return failReason(3, "beforeMax invariants incompatible (UNSAT)");
-			}
-		}
+		// TODO: ???
+		/*
+		 * if (r1.mBeforeMaxPhase != null && r2.mBeforeMaxPhase != null && safeEquals(r1.mPenultimatePhase.mBound,
+		 * r2.mPenultimatePhase.mBound)) {
+		 * 
+		 * conj = SmtUtils.and(mScript, r1.mBeforeMaxPhase.mInvariant, r2.mBeforeMaxPhase.mInvariant); res =
+		 * SmtUtils.checkSatTerm(mScript, conj); if (res == LBool.UNSAT) { return failReason(3,
+		 * "beforeMax invariants incompatible (UNSAT)"); } }
+		 */
 
 		// 3) Max-Phases have to be compatible
 		if (r1.mMaxPhase == null || r2.mMaxPhase == null) {
@@ -1069,6 +1068,7 @@ public class RTInconsistencyPreCheck {
 				final int n = phases.length;
 
 				// We need at least 2 phases to have a "penultimate"
+				// TODO: Is this correct if the first phase contains a time bound?
 				if (n < 2) {
 					mLogger.warn("CounterTrace too short ({} phases) for {}", n, pea.getName());
 					continue;
