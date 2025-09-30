@@ -53,6 +53,7 @@ public class UltimateLlvmirParser implements ISource {
 	protected ILogger mLogger;
 	protected List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
+	private final boolean optimize = true;
 
 	public UltimateLlvmirParser() {
 		mFileTypes = new String[] { ".ll" };
@@ -123,7 +124,7 @@ public class UltimateLlvmirParser implements ISource {
 	private ParseTree parseFile(final File file) throws IOException, InterruptedException {
 		mLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
 		mFileNames.add(file.getAbsolutePath());
-		final LLVMIRParser parser = getParser(getOptFile(file));
+		final LLVMIRParser parser = optimize ? getParser(getOptFile(file)) : getParser(file);
 
 		final ParseTree tree = parser.compilationUnit();
 		mLogger.debug("ParseTree (as String): " + tree.toStringTree(parser));
