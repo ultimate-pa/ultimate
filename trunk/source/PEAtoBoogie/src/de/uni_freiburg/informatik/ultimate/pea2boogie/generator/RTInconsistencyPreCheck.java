@@ -13,6 +13,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -73,11 +74,24 @@ public class RTInconsistencyPreCheck {
 			mChainLinkReq = false;
 		}
 
+		public ReqsWithAttributes(final ReqsWithAttributes other) {
+			mTimed = other.mTimed;
+			mName = other.mName;
+			mPenultimatePhase = other.mPenultimatePhase;
+			mMaxPhase = other.mMaxPhase;
+			mBeforeMaxPhase = other.mBeforeMaxPhase;
+			mOriginalPea = other.mOriginalPea;
+			mOriginalPeaEventAutomata = other.mOriginalPeaEventAutomata;
+			mFullExitCondition = other.mFullExitCondition;
+			mExitConditions = other.mExitConditions;
+			mChainLinkReq = other.mChainLinkReq;
+			mCounterTrace = other.mCounterTrace;
+		}
+
 		public String getName() {
 			return mName;
 
 		}
-
 	}
 
 	public class Phase {
@@ -1003,7 +1017,7 @@ public class RTInconsistencyPreCheck {
 		/*
 		 * if (r1.mBeforeMaxPhase != null && r2.mBeforeMaxPhase != null && safeEquals(r1.mPenultimatePhase.mBound,
 		 * r2.mPenultimatePhase.mBound)) {
-		 * 
+		 *
 		 * conj = SmtUtils.and(mScript, r1.mBeforeMaxPhase.mInvariant, r2.mBeforeMaxPhase.mInvariant); res =
 		 * SmtUtils.checkSatTerm(mScript, conj); if (res == LBool.UNSAT) { return failReason(3,
 		 * "beforeMax invariants incompatible (UNSAT)"); } }
@@ -1106,7 +1120,7 @@ public class RTInconsistencyPreCheck {
 				// otherwise the max is one step earlier (n-3).
 				final boolean penultHasBound = penultDC.getBoundType() != 0;
 				final int maxIdxFromEnd = penultHasBound ? 2 : 3; // n-2 or n-3
-				final int beforeIdxFromEnd = penultHasBound ? 3 : 4; // n-3 or n-4
+				// final int beforeIdxFromEnd = penultHasBound ? 3 : 4; // n-3 or n-4
 
 				if (req.mExitConditions.size() > 1) {
 					// multiple disjuncts → chain-link candidate
@@ -1132,19 +1146,62 @@ public class RTInconsistencyPreCheck {
 				req.mMaxPhase.mInvariantVar = req.mMaxPhase.mInvariant.getFreeVars();
 				req.mMaxPhase.mBound = boundToSmt(req.mMaxPhase);
 
-				if (n - beforeIdxFromEnd >= 0) {
-					req.mBeforeMaxPhase = new Phase(phases[n - beforeIdxFromEnd]);
-					req.mBeforeMaxPhase.mInvariant = mCddToSmt.toSmt(req.mBeforeMaxPhase.mDCPhase.getInvariant());
-					req.mBeforeMaxPhase.mInvariantVar = req.mBeforeMaxPhase.mInvariant.getFreeVars();
-					req.mBeforeMaxPhase.mBound = boundToSmt(req.mBeforeMaxPhase);
-				} else {
-					req.mBeforeMaxPhase = null;
-				}
+				/*
+				 * if (n - beforeIdxFromEnd >= 0) { req.mBeforeMaxPhase = new Phase(phases[n - beforeIdxFromEnd]);
+				 * req.mBeforeMaxPhase.mInvariant = mCddToSmt.toSmt(req.mBeforeMaxPhase.mDCPhase.getInvariant());
+				 * req.mBeforeMaxPhase.mInvariantVar = req.mBeforeMaxPhase.mInvariant.getFreeVars();
+				 * req.mBeforeMaxPhase.mBound = boundToSmt(req.mBeforeMaxPhase); } else { req.mBeforeMaxPhase = null; }
+				 */
 
 				// --------------------------
 				// Chain-link classification and variable index
 				// --------------------------
 
+				final List<Term> seepInvariants = new ArrayList<>();
+				seepInvariants.add(mCddToSmt.toSmt(phases[n - 2].getInvariant()));
+
+				for (int i = n - 3; i >= 0; i--) {
+					final DCPhase phase = phases[i];
+					final Term term = mCddToSmt.toSmt(phases[i].getInvariant());
+					final Term seepInvariant = SmtUtils.and(mScript, seepInvariants.getLast(), term);
+
+					// Stop if i is phase 0 and the invariant is true
+					if (i == 0 && phase.getInvariant() == CDD.TRUE) {
+						break;
+					}
+
+					// Stop if time related seeping is not possible
+					if (phase.getBoundType() == CounterTrace.BOUND_GREATER
+							|| phase.getBoundType() == CounterTrace.BOUND_GREATEREQUAL) {
+						break;
+					}
+
+					// Stop if observable related seeping is not possible
+					if (SmtUtils.checkSatTerm(mScript, seepInvariant) == LBool.UNSAT) {
+						break;
+					}
+
+					// Seeping is possible
+					// Add seep invariant to list if it is unique
+					if (SmtUtils.checkEquivalence(seepInvariant, seepInvariants.getLast(), mScript) != LBool.UNSAT) {
+						seepInvariants.add(seepInvariant);
+					}
+				}
+
+				// Compute a list of exit conditions related to seeping
+				for (int i = 1; i < seepInvariants.size(); i++) {
+					final Term negation = SmtUtils.not(mScript, seepInvariants.get(i));
+					final Term fullExitCondition = SmtUtils.toDnf(mServices, mManagedScript, negation);
+
+					final ReqsWithAttributes seepReq = new ReqsWithAttributes(req);
+					seepReq.mName = seepReq.mName + "_SEEPING_" + i;
+					seepReq.mFullExitCondition = fullExitCondition;
+					seepReq.mExitConditions = new ArrayList<>(
+							Arrays.asList(SmtUtils.getDisjuncts(seepReq.mFullExitCondition)));
+
+					seepReq.mChainLinkReq = true;
+					mListChainLinkReqs.add(seepReq);
+				}
 			}
 		}
 	}
