@@ -5,9 +5,9 @@ define i32 @main() {
 entry:
   %0 = load i32, ptr @i, align 4
   %cmp = icmp eq i32 %0, 1
-  switch i32 %cmp, label %entry.unreachabledefault [
-    i32 0, label %while.cond
-    i32 1, label %while.cond4
+  switch i1 %cmp, label %entry.unreachabledefault [
+    i1 0, label %while.cond
+    i1 1, label %while.cond4
   ]
 
 while.cond:                                          ; preds = %entry
