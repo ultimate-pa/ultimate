@@ -42,17 +42,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  */
 public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
 	private final E mInvariant;
+	private final String mInvariantString;
 	private final boolean mIsLoopLocation;
 	private final Set<Check> mChecks;
 
-	@SuppressWarnings("unchecked")
-
-	public InvariantResult(final String plugin, final ELEM element, final E invariant, final Set<Check> checks) {
+	public InvariantResult(final String plugin, final ELEM element, final E invariant, final String invariantString,
+			final Set<Check> checks) {
 		super(element, plugin);
+
 		// TODO: Another class instead of this boolean flag?
 		final LoopEntryAnnotation loopAnnot = LoopEntryAnnotation.getAnnotation(element);
 		mIsLoopLocation = loopAnnot != null && loopAnnot.getLoopEntryType() == LoopEntryType.WHILE;
+
 		mInvariant = invariant;
+		mInvariantString = invariantString;
 		mChecks = checks;
 	}
 
@@ -67,7 +70,7 @@ public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtE
 
 	@Override
 	public String getLongDescription() {
-		return (mIsLoopLocation ? "Derived loop invariant: " : "Derived location invariant: ") + mInvariant;
+		return (mIsLoopLocation ? "Derived loop invariant: " : "Derived location invariant: ") + mInvariantString;
 	}
 
 	/**

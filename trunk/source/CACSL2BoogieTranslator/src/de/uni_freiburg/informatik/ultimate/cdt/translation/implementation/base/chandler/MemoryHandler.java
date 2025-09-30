@@ -111,6 +111,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -820,8 +821,7 @@ public class MemoryHandler {
 
 	private String determineReadProcedure(final ICType resultType, final ILocation loc) throws AssertionError {
 		final ICType ut = resultType.getUnderlyingType();
-		if (ut instanceof CPrimitive) {
-			final CPrimitive cp = (CPrimitive) ut;
+		if (ut instanceof final CPrimitive cp) {
 			checkFloatOnHeapSupport(loc, cp);
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
 			return determineReadProcedureForPrimitive(cp.getType());
@@ -886,19 +886,16 @@ public class MemoryHandler {
 			final ICType valueType, final HeapWriteMode writeMode) {
 		final ICType realValueType = valueType.getUnderlyingType();
 
-		if (realValueType instanceof CPrimitive) {
-			return getWriteCallPrimitive(loc, hlv, value, (CPrimitive) realValueType, writeMode);
-		} else if (realValueType instanceof CEnum) {
-			return getWriteCallEnum(loc, hlv, value, writeMode);
-		} else if (realValueType instanceof CPointer) {
-			return getWriteCallPointer(loc, hlv, value, writeMode);
-		} else if (realValueType instanceof CStructOrUnion) {
-			return getWriteCallStruct(loc, hlv, value, (CStructOrUnion) realValueType, writeMode);
-		} else if (realValueType instanceof CArray) {
-			return getWriteCallArray(loc, hlv, value, (CArray) realValueType, writeMode);
-		} else {
-			throw new UnsupportedSyntaxException(loc, "we don't recognize this type: " + realValueType);
-		}
+		return switch (realValueType) {
+		case final CPrimitive primitive -> getWriteCallPrimitive(loc, hlv, value, primitive, writeMode);
+		case final CEnum enumType -> getWriteCallEnum(loc, hlv, value, writeMode);
+		case final CPointer pointer -> getWriteCallPointer(loc, hlv, value, writeMode);
+		case final CStructOrUnion structOrUnion -> getWriteCallStruct(loc, hlv, value, structOrUnion, writeMode);
+		case final CArray array -> getWriteCallArray(loc, hlv, value, array, writeMode);
+		case final CNamed named -> throw new AssertionError("getUnderlyingType() must not return CNamed");
+		case final CFunction function ->
+				throw new UnsupportedSyntaxException(loc, "Write calls for function types unsupported: " + function);
+		};
 	}
 
 	/**
@@ -3013,8 +3010,8 @@ public class MemoryHandler {
 				final HeapDataArray hda = mMemoryModel.getPointerHeapArray();
 				mRequiredMemoryModelFeatures.reportPointerOnHeapInitFunctionRequired();
 				relevantHeapArrays.add(hda);
-			} else if (baseType instanceof CPrimitive) {
-				final CPrimitives primitive = ((CPrimitive) baseType).getType();
+			} else if (baseType instanceof final CPrimitive cPrimitive) {
+				final CPrimitives primitive = cPrimitive.getType();
 				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
 				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
 				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);

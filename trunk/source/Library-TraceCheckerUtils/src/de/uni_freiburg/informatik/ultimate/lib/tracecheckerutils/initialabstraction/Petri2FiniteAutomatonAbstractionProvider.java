@@ -157,8 +157,8 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 		}
 
 		@Override
-		public INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
-				final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
+		public <LOC extends IcfgLocation> INestedWordAutomaton<L, IPredicate>
+				getInitialAbstraction(final IIcfg<LOC> icfg, final Set<LOC> errorLocs) throws AutomataLibraryException {
 			mCsToolkit = icfg.getCfgSmtToolkit();
 
 			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
@@ -214,9 +214,8 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 		}
 
 		@Override
-		public LazyPetriNet2FiniteAutomaton<L, IPredicate> getInitialAbstraction(
-				final IIcfg<? extends IcfgLocation> icfg, final Set<? extends IcfgLocation> errorLocs)
-				throws AutomataLibraryException {
+		public <LOC extends IcfgLocation> LazyPetriNet2FiniteAutomaton<L, IPredicate>
+				getInitialAbstraction(final IIcfg<LOC> icfg, final Set<LOC> errorLocs) throws AutomataLibraryException {
 			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 			final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
 			return new LazyPetriNet2FiniteAutomaton<>(mAutomataServices, mStateFactory, net,

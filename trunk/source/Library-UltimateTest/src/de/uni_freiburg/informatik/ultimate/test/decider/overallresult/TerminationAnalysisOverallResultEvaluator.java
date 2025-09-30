@@ -75,6 +75,7 @@ public class TerminationAnalysisOverallResultEvaluator
 		for (final TerminationAnalysisOverallResult category : categoriesOrderedBySignificance) {
 			if (mCategory2Results.getDomain().contains(category)) {
 				mOverallResult = category;
+				break;
 			}
 		}
 

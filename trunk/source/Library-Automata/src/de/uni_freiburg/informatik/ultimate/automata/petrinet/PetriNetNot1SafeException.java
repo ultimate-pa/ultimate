@@ -52,14 +52,12 @@ public class PetriNetNot1SafeException extends AutomataLibraryException {
 	public String getMessage() {
 		if (mUnsafePlaces == null) {
 			return super.getMessage();
-		} else {
-			return super.getMessage() + " The following places may contain more than one token."
-					+ mUnsafePlaces.toString();
 		}
+		return super.getMessage() + " The following places may contain more than one token: "
+				+ mUnsafePlaces.toString();
 	}
 
 	public Collection<?> getUnsafePlaces() {
 		return mUnsafePlaces;
 	}
-
 }

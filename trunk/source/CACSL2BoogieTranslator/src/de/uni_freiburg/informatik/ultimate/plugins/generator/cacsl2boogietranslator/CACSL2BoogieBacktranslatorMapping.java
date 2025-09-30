@@ -112,21 +112,13 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 
 	// Normalizes DeclarationInformation so that parameters of procedure implementations are identified with the
 	// corresponding parameters in the procedure's declaration.
-	private DeclarationInformation normalize(final DeclarationInformation decInfo) {
-		switch (decInfo.getStorageClass()) {
-		case IMPLEMENTATION_INPARAM:
-			return new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, decInfo.getProcedure());
-		case IMPLEMENTATION_OUTPARAM:
-			return new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, decInfo.getProcedure());
-		case GLOBAL:
-		case IMPLEMENTATION:
-		case LOCAL:
-		case PROC_FUNC:
-		case PROC_FUNC_INPARAM:
-		case PROC_FUNC_OUTPARAM:
-		case QUANTIFIED:
-			return decInfo;
-		}
-		throw new IllegalArgumentException("unknown storage class: " + decInfo.getStorageClass());
+	private static DeclarationInformation normalize(final DeclarationInformation decInfo) {
+		return switch (decInfo.getStorageClass()) {
+		case IMPLEMENTATION_INPARAM ->
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, decInfo.getProcedure());
+		case IMPLEMENTATION_OUTPARAM ->
+				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, decInfo.getProcedure());
+		case GLOBAL, IMPLEMENTATION, LOCAL, PROC_FUNC, PROC_FUNC_INPARAM, PROC_FUNC_OUTPARAM, QUANTIFIED -> decInfo;
+		};
 	}
 }

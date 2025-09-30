@@ -135,8 +135,8 @@ pipeline {
         withMaven(mavenOpts: '-Xmx4g -Xss4m', publisherStrategy: 'EXPLICIT') {
             sh 'cd releaseScripts/default && ./makeFresh.sh'
         }
-        sshagent(credentials: ['jenkins-deploy']) {
-          sh(label: 'deploy nightly to struebli', script: 'releaseScripts/default/deploy_nightly_to_struebli.sh')
+        sshagent(credentials: ['ultimate-nightly']) {
+          sh(label: 'deploy nightly', script: 'releaseScripts/default/deploy_nightly_build.sh')
         }
       }
     }

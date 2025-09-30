@@ -182,9 +182,9 @@ public class BigInterval {
 	 */
 	public BigInterval intersect(final BigInterval other) {
 		final var minValue = mMinValue == null ? other.mMinValue
-				: other.mMinValue == null ? mMinValue : mMinValue.max(other.mMinValue);
+				: (other.mMinValue == null ? mMinValue : mMinValue.max(other.mMinValue));
 		final var maxValue = mMaxValue == null ? other.mMaxValue
-				: other.mMaxValue == null ? mMaxValue : mMaxValue.min(other.mMaxValue);
+				: (other.mMaxValue == null ? mMaxValue : mMaxValue.min(other.mMaxValue));
 		if (maxValue.compareTo(minValue) < 0) {
 			// empty interval not supported
 			return null;
@@ -222,8 +222,8 @@ public class BigInterval {
 		}
 
 		assert contains(BigInteger.ZERO);
-		final var maxValue = mMinValue == null || mMaxValue == null ? null
-				: mMinValue.abs().compareTo(mMaxValue) >= 1 ? mMinValue.abs() : mMaxValue;
+		final var maxValue = (mMinValue == null || mMaxValue == null) ? null
+				: (mMinValue.abs().compareTo(mMaxValue) >= 1 ? mMinValue.abs() : mMaxValue);
 		return new BigInterval(BigInteger.ZERO, maxValue);
 	}
 

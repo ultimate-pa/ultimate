@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.Level;
 import de.uni_freiburg.informatik.ultimate.preferencejson.PreferenceUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -150,7 +151,7 @@ public class OptionBuilder {
 		if (triple == null) {
 			return false;
 		}
-		return triple.getThird().isExperimental();
+		return triple.getThird().getLevel() == Level.EXPERIMENTAL;
 	}
 
 	private static Options createCliOptions(final boolean requireToolchain, final boolean requireInputFiles) {

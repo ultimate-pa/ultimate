@@ -42,7 +42,7 @@ public class LTLStepAnnotator extends BaseObserver {
 	 * @param unit
 	 *            The root of the abstract syntax tree
 	 */
-	private void processUnit(final Unit unit) {
+	private static void processUnit(final Unit unit) {
 		final BoogieLTLStepAnnotator ltlAnnotator = new BoogieLTLStepAnnotator();
 		unit.accept(ltlAnnotator);
 	}
@@ -54,7 +54,7 @@ public class LTLStepAnnotator extends BaseObserver {
 	 * @author Martin Neuhäußer
 	 */
 	private static final class BoogieLTLStepAnnotator extends GeneratedBoogieAstTransformer {
-		private Statement attachLTLSpecification(final Statement stmt, final NamedAttribute[] attrs) {
+		private static Statement attachLTLSpecification(final Statement stmt, final NamedAttribute[] attrs) {
 			if (attrs != null) {
 				for (final NamedAttribute attr : attrs) {
 					if (attr.getName() == "ltl_step") {
@@ -80,6 +80,5 @@ public class LTLStepAnnotator extends BaseObserver {
 		public Statement transform(final CallStatement node) {
 			return attachLTLSpecification(node, node.getAttributes());
 		}
-
 	}
 }

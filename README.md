@@ -8,7 +8,7 @@ The [official website](https://ultimate-pa.org/) includes a web interface which 
 
 The available documentation can be found in [our wiki](https://github.com/ultimate-pa/ultimate/wiki).
 
-You can download the [latest release from GitHub's release page](https://github.com/ultimate-pa/ultimate/releases/latest) or try our [nightly builds](https://struebli.informatik.uni-freiburg.de/ultimate-nightly/).
+You can download the [latest release from GitHub's release page](https://github.com/ultimate-pa/ultimate/releases/latest) or try our [nightly builds](https://ultimate-pa.org/nightly/).
 
 ## Developers
 

@@ -37,6 +37,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.WeqCcManager.WeqCcBmNames;
+import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
@@ -294,7 +295,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		WeqCongruenceClosure<NODE> originalCopy = null;
-		if (WeqCcManager.areAssertsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
+		if (VMUtils.areAssertionsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
 			originalCopy = mManager.copyWeqCc(this, true);
 		}
 
@@ -1082,7 +1083,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mManager.bmStart(WeqCcBmNames.EXT_AND_TRIANGLE_CLOSURE);
 
 		WeqCongruenceClosure<NODE> originalCopy = null;
-		if (WeqCcManager.areAssertsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
+		if (VMUtils.areAssertionsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
 			originalCopy = mManager.copyWeqCc(this, true);
 		}
 

@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
@@ -54,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
@@ -111,13 +113,13 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 		}
 
 		annot.addAnnotation(edge);
-
 	}
 
 	private UseDefSet processStatement(final Statement stmt) {
 		UseDefSet uds = new UseDefSet();
-		if (stmt instanceof AssignmentStatement) {
-			final AssignmentStatement assign = (AssignmentStatement) stmt;
+
+		switch (stmt) {
+		case final AssignmentStatement assign:
 			for (final LeftHandSide lhs : assign.getLhs()) {
 				uds = uds.merge(processLeftHandSide(lhs));
 			}
@@ -126,16 +128,10 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			}
 			return uds;
 
-		} else if (stmt instanceof AssertStatement) {
+		case final AssumeStatement assume:
+			return processExpression(assume.getFormula());
 
-		} else if (stmt instanceof AssumeStatement) {
-			return processExpression(((AssumeStatement) stmt).getFormula());
-
-		} else if (stmt instanceof BreakStatement) {
-			return uds;
-
-		} else if (stmt instanceof CallStatement) {
-			final CallStatement call = (CallStatement) stmt;
+		case final CallStatement call:
 			for (final VariableLHS id : call.getLhs()) {
 				uds.Def.add(id.toString());
 			}
@@ -144,122 +140,125 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			}
 			return uds;
 
-		} else if (stmt instanceof GotoStatement) {
-			return uds;
-
-		} else if (stmt instanceof HavocStatement) {
-			for (final VariableLHS id : ((HavocStatement) stmt).getIdentifiers()) {
+		case final HavocStatement havocStmt:
+			for (final VariableLHS id : havocStmt.getIdentifiers()) {
 				uds.Def.add(id.toString());
 			}
 			return uds;
 
-		} else if (stmt instanceof IfStatement) {
-
-			final IfStatement ifstmt = (IfStatement) stmt;
+		case final IfStatement ifStmt:
 			mLogger.debug("IfStatement in edge?");
-
-			uds = processExpression(ifstmt.getCondition());
-			for (final Statement s : ifstmt.getThenPart()) {
+			uds = processExpression(ifStmt.getCondition());
+			for (final Statement s : ifStmt.getThenPart()) {
 				uds = uds.merge(processStatement(s));
 			}
-			for (final Statement s : ifstmt.getElsePart()) {
+			for (final Statement s : ifStmt.getElsePart()) {
 				uds = uds.merge(processStatement(s));
 			}
-
 			return uds;
 
-		} else if (stmt instanceof Label) {
-			return uds;
-		} else if (stmt instanceof ReturnStatement) {
-			return uds;
-		} else if (stmt instanceof WhileStatement) {
-			final WhileStatement wstmt = (WhileStatement) stmt;
+		case final WhileStatement whileStmt:
 			mLogger.debug("WhileStatement in edge?");
-			uds = processExpression(wstmt.getCondition());
-			for (final Statement s : wstmt.getBody()) {
+			uds = processExpression(whileStmt.getCondition());
+			for (final Statement s : whileStmt.getBody()) {
 				uds = uds.merge(processStatement(s));
 			}
+			return uds;
 
+		case final BreakStatement breakStmt:
+			return uds;
+		case final GotoStatement gotoStmt:
+			return uds;
+		case final Label label:
+			return uds;
+		case final ReturnStatement returnStmt:
+			return uds;
+
+		case final ForkStatement forkStmt:
+			mLogger.debug("Unsupported statement type: " + stmt.getClass().getCanonicalName() + " " + stmt);
+			return uds;
+		case final JoinStatement joinStmt:
+			mLogger.debug("Unsupported statement type: " + stmt.getClass().getCanonicalName() + " " + stmt);
+			return uds;
+		case final AssertStatement assertStmt:
+			mLogger.debug("Unsupported statement type: " + stmt.getClass().getCanonicalName() + " " + stmt);
+			return uds;
+		case final AtomicStatement atomicStmt:
+			mLogger.debug("Unsupported statement type: " + stmt.getClass().getCanonicalName() + " " + stmt);
 			return uds;
 		}
-		mLogger.debug("Unknown statement type: " + stmt.getClass().getCanonicalName() + " " + stmt);
-		return uds;
 	}
 
 	private UseDefSet processExpression(final Expression exp) {
 		UseDefSet uds = new UseDefSet();
-		if (exp instanceof ArrayAccessExpression) {
-			final ArrayAccessExpression aaexp = (ArrayAccessExpression) exp;
+
+		switch (exp) {
+		case final ArrayAccessExpression aaexp:
 			uds = uds.merge(processExpression(aaexp.getArray()));
 			for (final Expression e : aaexp.getIndices()) {
 				uds = uds.merge(processExpression(e));
 			}
 			return uds;
-		} else if (exp instanceof ArrayStoreExpression) {
 
-		} else if (exp instanceof BinaryExpression) {
-			final BinaryExpression bexp = (BinaryExpression) exp;
+		case final BinaryExpression bexp:
 			return processExpression(bexp.getLeft()).merge(processExpression(bexp.getRight()));
 
-		} else if (exp instanceof BitvecLiteral) {
-			return uds;
-
-		} else if (exp instanceof BitVectorAccessExpression) {
-
-		} else if (exp instanceof BooleanLiteral) {
-			return uds;
-
-		} else if (exp instanceof FunctionApplication) {
-			for (final Expression argument : ((FunctionApplication) exp).getArguments()) {
+		case final FunctionApplication app:
+			for (final Expression argument : app.getArguments()) {
 				uds = uds.merge(processExpression(argument));
 			}
 			return uds;
 
-		} else if (exp instanceof IdentifierExpression) {
-			uds.Use.add(((IdentifierExpression) exp).getIdentifier());
+		case final IdentifierExpression id:
+			uds.Use.add(id.getIdentifier());
 			return uds;
 
-		} else if (exp instanceof IfThenElseExpression) {
-			final IfThenElseExpression ifexp = (IfThenElseExpression) exp;
-			uds = uds.merge(processExpression(ifexp.getCondition()));
-			uds = uds.merge(processExpression(ifexp.getThenPart()));
-			uds = uds.merge(processExpression(ifexp.getElsePart()));
+		case final IfThenElseExpression ite:
+			uds = uds.merge(processExpression(ite.getCondition()));
+			uds = uds.merge(processExpression(ite.getThenPart()));
+			uds = uds.merge(processExpression(ite.getElsePart()));
 			return uds;
 
-		} else if (exp instanceof IntegerLiteral) {
+		case final UnaryExpression uexp:
+			return processExpression(uexp.getExpr());
+
+		case final BitvecLiteral bvLit:
+			return uds;
+		case final BooleanLiteral boolLit:
+			return uds;
+		case final IntegerLiteral intLit:
+			return uds;
+		case final RealLiteral realLit:
+			return uds;
+		case final StringLiteral stringLit:
+			return uds;
+		case final WildcardExpression wild:
 			return uds;
 
-		} else if (exp instanceof QuantifierExpression) {
+		case final QuantifierExpression quant:
 			mLogger.warn("Ignoring quantifier expression");
 			return uds;
 
-		} else if (exp instanceof RealLiteral) {
+		case final StructAccessExpression sae:
+			mLogger.debug("Unsupported expression type: " + exp.getClass().getCanonicalName() + " " + exp);
 			return uds;
-
-		} else if (exp instanceof StringLiteral) {
+		case final ArrayStoreExpression ase:
+			mLogger.debug("Unsupported expression type: " + exp.getClass().getCanonicalName() + " " + exp);
 			return uds;
-
-		} else if (exp instanceof StructAccessExpression) {
-
-		} else if (exp instanceof UnaryExpression) {
-			return processExpression(((UnaryExpression) exp).getExpr());
-
-		} else if (exp instanceof WildcardExpression) {
+		case final StructConstructor scon:
+			mLogger.debug("Unsupported expression type: " + exp.getClass().getCanonicalName() + " " + exp);
+			return uds;
+		case final BitVectorAccessExpression bvae:
+			mLogger.debug("Unsupported expression type: " + exp.getClass().getCanonicalName() + " " + exp);
 			return uds;
 		}
-
-		mLogger.debug("Unknown expression type: " + exp.getClass().getCanonicalName() + " " + exp);
-		return uds;
 	}
 
 	private UseDefSet processLeftHandSide(final LeftHandSide lhs) {
 		final UseDefSet uds = new UseDefSet();
-		if (lhs instanceof ArrayLHS) {
 
-		} else if (lhs instanceof StructLHS) {
-
-		} else if (lhs instanceof VariableLHS) {
-			uds.Def.add(((VariableLHS) lhs).getIdentifier());
+		if (lhs instanceof final VariableLHS variable) {
+			uds.Def.add(variable.getIdentifier());
 			return uds;
 		}
 
@@ -284,5 +283,4 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
 }

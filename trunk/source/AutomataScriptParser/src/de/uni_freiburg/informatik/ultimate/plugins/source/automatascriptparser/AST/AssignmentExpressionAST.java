@@ -64,23 +64,15 @@ public class AssignmentExpressionAST extends AtsASTNode {
 		return "AssignmentExpression [AssignmentOperator: " + operatorToString(moperator) + "]";
 	}
 
-	private String operatorToString(final AssignmentOperatorAST o) {
-		switch (o) {
-		case ASSIGN:
-			return " := ";
-		case PLUSASSIGN:
-			return " += ";
-		case MINUSASSIGN:
-			return " -= ";
-		case MODASSIGN:
-			return " %= ";
-		case MULTASSIGN:
-			return " *= ";
-		case DIVASSIGN:
-			return " /= ";
-		default:
-			return "";
-		}
+	private static String operatorToString(final AssignmentOperatorAST o) {
+		return switch (o) {
+		case ASSIGN -> " := ";
+		case PLUSASSIGN -> " += ";
+		case MINUSASSIGN -> " -= ";
+		case MODASSIGN -> " %= ";
+		case MULTASSIGN -> " *= ";
+		case DIVASSIGN -> " /= ";
+		};
 	}
 
 	@Override

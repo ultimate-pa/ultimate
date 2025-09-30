@@ -1,7 +1,7 @@
 //#Safe
 //@ ltl invariant positive: <>AP(istemp == 1 && A!= 1) || <>[]AP(A == 1);
 
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int();
 
 void StrategyInvalidateBuffer() {}
 void WaitIO() {}

@@ -588,9 +588,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
-		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
+		if (type1 instanceof final CPrimitive primitive1 && type2 instanceof final CPrimitive primitive2) {
 			final Pair<Expression, Expression> wrapped =
-					applyWraparoundsIfNecessary(loc, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
+					applyWraparoundsIfNecessary(loc, exp1, primitive1, exp2, primitive2);
 			leftExpr = wrapped.getFirst();
 			rightExpr = wrapped.getSecond();
 		}

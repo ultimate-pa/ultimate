@@ -289,7 +289,7 @@ public class InvariantChecker {
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
 			final ProgramPointType startType = classify(tpsd.getStartLocation());
 			final ProgramPointType endType = classify(tpsd.getEndLocation());
-			hr.addPair(new Pair(startType, endType), tpsd);
+			hr.addPair(new Pair<>(startType, endType), tpsd);
 		}
 		boolean isFirst = true;
 		final StringBuilder sb = new StringBuilder();

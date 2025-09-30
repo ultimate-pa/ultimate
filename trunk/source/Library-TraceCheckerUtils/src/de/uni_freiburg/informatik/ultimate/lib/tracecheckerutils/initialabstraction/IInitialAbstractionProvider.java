@@ -71,7 +71,7 @@ public interface IInitialAbstractionProvider<L extends IIcfgTransition<?>, A ext
 	 *             The computation of the initial abstraction typically involves automata operations and may throw
 	 *             {@link AutomataLibraryException}s.
 	 */
-	A getInitialAbstraction(IIcfg<? extends IcfgLocation> icfg, Set<? extends IcfgLocation> errorLocs)
+	<LOC extends IcfgLocation> A getInitialAbstraction(IIcfg<LOC> icfg, Set<LOC> errorLocs)
 			throws AutomataLibraryException;
 
 	default IStatisticsDataProvider getStatistics() {

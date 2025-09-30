@@ -132,6 +132,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  *
+ * @param <L>
+ *            the type of transitions in the analysed program
  * @param <A>
  *            The type of abstraction refined by the CEGAR loop
  */

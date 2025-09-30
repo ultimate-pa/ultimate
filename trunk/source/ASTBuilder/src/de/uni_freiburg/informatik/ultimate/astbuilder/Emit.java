@@ -229,7 +229,7 @@ public class Emit {
 		final String abstractModifier = node.isAbstract() ? "abstract " : EMPTY_STRING;
 		final String extendsClause = getBaseClass(node).map(name -> " extends " + name).orElse(EMPTY_STRING);
 		final String implementsClause =
-				node.getInterfaces() != null ? " implements " + node.getInterfaces() : EMPTY_STRING;
+				node.getInterfaces() != null ? (" implements " + node.getInterfaces()) : EMPTY_STRING;
 
 		final String sealedModifier;
 		final String permitsClause;

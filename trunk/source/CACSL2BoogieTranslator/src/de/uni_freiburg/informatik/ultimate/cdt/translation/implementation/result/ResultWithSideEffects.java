@@ -91,9 +91,9 @@ public abstract class ResultWithSideEffects extends Result {
 	}
 
 	/**
-	 * Returns true if this result has no actual side effects
+	 * Checks if the result actually has any side effects.
 	 *
-	 * @return
+	 * @return <code>true</code> if this result has no actual side effects
 	 */
 	public boolean hasNoSideEffects() {
 		if (!mStmt.isEmpty()) {

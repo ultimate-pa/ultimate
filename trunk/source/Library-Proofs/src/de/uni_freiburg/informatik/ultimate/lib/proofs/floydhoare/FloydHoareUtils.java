@@ -122,13 +122,14 @@ public final class FloydHoareUtils {
 			final ILocation context = ILocation.getAnnotation(locNode);
 			final var translatedInvariant =
 					backTranslatorService.translateExpressionWithContext(invariant, context, Term.class);
-
-			if (translatedInvariant == null || translatedInvariant.toString().equals("1")) {
+			final String invariantString =
+					translatedInvariant == null ? null : backTranslatorService.targetExpressionToString(translatedInvariant);
+			if (translatedInvariant == null || invariantString.equals("1") || invariantString.equals("true")) {
 				continue;
 			}
 
-			final var invResult =
-					new InvariantResult<IIcfgElement, Object>(pluginName, locNode, translatedInvariant, checks);
+			final var invResult = new InvariantResult<IIcfgElement, Object>(pluginName, locNode, translatedInvariant,
+					invariantString, checks);
 			reporter.accept(invResult);
 			new WitnessInvariant<>(invResult.getInvariant()).annotate(locNode);
 		}
@@ -187,7 +188,7 @@ public final class FloydHoareUtils {
 			}
 
 			final var result = new ProcedureContractResult<IIcfgElement, Object>(pluginName, exit, procName,
-					translatedContract, checks);
+					translatedContract, backTranslatorService.targetProcedureContractToString(translatedContract), checks);
 			reporter.accept(result);
 			new WitnessProcedureContract(translatedContract).annotate(exit);
 		}

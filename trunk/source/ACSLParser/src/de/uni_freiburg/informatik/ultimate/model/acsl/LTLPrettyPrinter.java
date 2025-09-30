@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.model.acsl;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
@@ -41,14 +40,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
  * @author dietsch@informatik.uni-freiburg.de
  */
 public class LTLPrettyPrinter extends ACSLVisitor {
-	private static final String GET_STRING = "getString(";
-	private static final String NOT_IMPLEMENTED = ") not implemented";
-
-	private static final String STRING_AND = "&";
-	private static final String STRING_MINUS = "-";
-	private static final String STRING_TIMES = "*";
-	private static final String STRING_PLUS = "+";
-
 	private static final char BLANK = ' ';
 	private static final char PARENTHESIS_CLOSE = ')';
 	private static final char PARENTHESIS_OPEN = '(';
@@ -70,7 +61,7 @@ public class LTLPrettyPrinter extends ACSLVisitor {
 	public boolean visit(final BinaryExpression node) {
 		mBuilder.append(PARENTHESIS_OPEN);
 		node.getLeft().accept(this);
-		mBuilder.append(BLANK).append(getString(node.getOperator())).append(BLANK);
+		mBuilder.append(BLANK).append(ACSLPrettyPrinter.binaryOperatorToString(node.getOperator())).append(BLANK);
 		node.getRight().accept(this);
 		mBuilder.append(PARENTHESIS_CLOSE);
 		return false;
@@ -78,7 +69,7 @@ public class LTLPrettyPrinter extends ACSLVisitor {
 
 	@Override
 	public boolean visit(final UnaryExpression node) {
-		mBuilder.append(getString(node.getOperator())).append('(');
+		mBuilder.append(ACSLPrettyPrinter.unaryOperatorToString(node.getOperator())).append('(');
 		node.getExpr().accept(this);
 		mBuilder.append(')');
 		return false;
@@ -106,48 +97,5 @@ public class LTLPrettyPrinter extends ACSLVisitor {
 	public boolean visit(final RealLiteral node) {
 		mBuilder.append(node.getValue());
 		return super.visit(node);
-	}
-
-	private static String getString(final UnaryExpression.Operator operator) {
-		return switch (operator) {
-		case ADDROF -> STRING_AND;
-		case LOGICNEG -> "!";
-		case LTLFINALLY -> "F";
-		case LTLGLOBALLY -> "G";
-		case LTLNEXT -> "X";
-		case MINUS -> STRING_MINUS;
-		case PLUS -> STRING_PLUS;
-		case POINTER -> STRING_TIMES;
-		case LOGICCOMPLEMENT -> throw new UnsupportedOperationException(GET_STRING + operator + NOT_IMPLEMENTED);
-		};
-	}
-
-	private static String getString(final Operator operator) {
-		return switch (operator) {
-		case ARITHDIV -> "/";
-		case ARITHMINUS -> STRING_MINUS;
-		case ARITHMOD -> "%";
-		case ARITHMUL -> STRING_TIMES;
-		case ARITHPLUS -> STRING_PLUS;
-		case BITAND -> STRING_AND;
-		case BITIFF -> "<-->";
-		case BITIMPLIES -> "-->";
-		case BITOR -> "|";
-		case COMPEQ -> "==";
-		case COMPGEQ -> ">=";
-		case COMPGT -> ">";
-		case COMPLEQ -> "<=";
-		case COMPLT -> "<";
-		case COMPNEQ -> "!=";
-		case LOGICAND -> "&&";
-		case LOGICIFF -> "<==>";
-		case LOGICIMPLIES -> "==>";
-		case LOGICOR -> "||";
-		case LTLUNTIL -> "U";
-		case LTLRELEASE -> "R";
-		case LTLWEAKUNTIL -> "WU";
-		case LOGICXOR, COMPPO, BITXOR, BITVECCONCAT, BITSHIFTLEFT, BITSHIFTRIGHT ->
-				throw new UnsupportedOperationException(GET_STRING + operator + NOT_IMPLEMENTED);
-		};
 	}
 }

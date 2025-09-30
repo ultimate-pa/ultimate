@@ -327,10 +327,9 @@ public abstract class ExpressionTranslation {
 		if (underlyingType instanceof CPointer) {
 			isZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
 					expr.getLrValue().getValue(), zeroInputType);
-		} else if (underlyingType instanceof CPrimitive) {
+		} else if (underlyingType instanceof final CPrimitive cPrimitive) {
 			isZero = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-					expr.getLrValue().getValue(), (CPrimitive) underlyingType, zeroInputType,
-					(CPrimitive) underlyingType);
+					expr.getLrValue().getValue(), cPrimitive, zeroInputType, cPrimitive);
 		} else {
 			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
 		}
@@ -374,12 +373,12 @@ public abstract class ExpressionTranslation {
 	}
 
 	public Expression constructZero(final ILocation loc, final ICType cType) {
-		if (cType instanceof CPrimitive) {
-			return switch (((CPrimitive) cType).getGeneralType()) {
+		if (cType instanceof final CPrimitive cPrimitive) {
+			return switch (cPrimitive.getGeneralType()) {
 			case FLOATTYPE:
-				yield constructLiteralForFloatingType(loc, (CPrimitive) cType, BigDecimal.ZERO);
+				yield constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
 			case INTTYPE:
-				yield mTypeSizes.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO);
+				yield mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
 			case VOID:
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
 			};

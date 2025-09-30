@@ -641,14 +641,9 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			return mFirst + 17 * mSecond;
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public boolean equals(final Object other) {
-			if (!(other instanceof MinimizeDfaIncremental.Tuple)) {
-				return false;
-			}
-			final Tuple o = (Tuple) other;
-			return (o.mFirst == mFirst) && (o.mSecond == mSecond);
+			return this == other || (other instanceof final Tuple o && o.mFirst == mFirst && o.mSecond == mSecond);
 		}
 
 		@Override
