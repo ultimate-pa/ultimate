@@ -8,3 +8,12 @@ Copyright Notice, License, and Disclaimer
 -----------------------------------------
 
 See Antlr_license.txt
+
+Contents
+-----------------------------------------
+
+`LLVMIR.g4`: The grammar file for the LLVMIR Parser. As explained avove.
+
+`LlvmirLocation.java`: A simple class to represent a location in an LLVMIR file.
+
+`ParseTreeElementWrapper.java`: A simple wrapper class for ParseTree objects to be used in Ultimate, wrapped as an IElement. It also contains the filename.
