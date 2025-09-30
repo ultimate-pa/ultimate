@@ -51,6 +51,7 @@ public class LlvmirToBoogieTest extends AbstractTraceAbstractionTestSuite {
 
 	};
 
+	// When testing optimized files, the optimize flag in UltimateLlvmirParser.java should be set to false.
 	private static final String[] mUltimateRepository = {
 			"examples/programs/regression/ll/relevant_opt_ll",
 	};
