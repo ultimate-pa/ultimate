@@ -1941,8 +1941,9 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		result.addFuncBlock(assignCurrentLabel);
 
 		final LLVMIRParser.ConcreteTypeContext conditionTypeContext = ctx.typeValue().firstClassType().concreteType();
+		final String typeIdentifier = conditionTypeContext.intType().getText().equals("i1") ? "bool" : "int";
 		final List<LLVMIRParser.CaseContext> caseContexts = ctx.case_();
-		if (caseContexts.size() == 2) {
+		if (typeIdentifier.equals("bool")) {
 			final String case0LabelIdentifier = unifyIdentifier(caseContexts.get(0).label().LocalIdent().getText());
 			final String case1LabelIdentifier = unifyIdentifier(caseContexts.get(1).label().LocalIdent().getText());
 			final GotoStatement thenGoto = new GotoStatement(location, new String[] { case0LabelIdentifier });
