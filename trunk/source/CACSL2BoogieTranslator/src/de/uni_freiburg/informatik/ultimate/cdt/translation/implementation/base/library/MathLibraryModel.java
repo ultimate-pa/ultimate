@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation.IFloatingPointHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -114,6 +115,7 @@ public class MathLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final ExpressionTranslation mExpressionTranslation;
+	private final IFloatingPointHandler mFloatHandler;
 	private final CExpressionTranslator mCEpressionTranslator;
 	private final INameHandler mNameHandler;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
@@ -124,6 +126,7 @@ public class MathLibraryModel implements ILibraryModel {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mExpressionTranslation = expressionTranslation;
+		mFloatHandler = expressionTranslation.getFloatingPointHandler();
 		mCEpressionTranslator = cEpressionTranslator;
 		mNameHandler = nameHandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -441,12 +444,12 @@ public class MathLibraryModel implements ILibraryModel {
 	}
 
 	private ExpressionResult handleNan(final ILocation loc, final CPrimitive type) {
-		return new ExpressionResult(new RValue(mExpressionTranslation.createNan(loc, type), type));
+		return new ExpressionResult(new RValue(mFloatHandler.createNan(loc, type), type));
 	}
 
 	private ExpressionResult handleInf(final ILocation loc) {
 		final CPrimitive type = new CPrimitive(CPrimitives.DOUBLE);
-		return new ExpressionResult(new RValue(mExpressionTranslation.createInfinity(loc, type), type));
+		return new ExpressionResult(new RValue(mFloatHandler.createInfinity(loc, type), type));
 	}
 
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -537,9 +540,9 @@ public class MathLibraryModel implements ILibraryModel {
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final ExpressionResult rightRvaluedResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
-		final Expression leftExpr = mExpressionTranslation.isNan(loc, leftRvaluedResult.getLrValue().getValue(),
+		final Expression leftExpr = mFloatHandler.isNan(loc, leftRvaluedResult.getLrValue().getValue(),
 				(CPrimitive) leftRvaluedResult.getCType());
-		final Expression rightExpr = mExpressionTranslation.isNan(loc, rightRvaluedResult.getLrValue().getValue(),
+		final Expression rightExpr = mFloatHandler.isNan(loc, rightRvaluedResult.getLrValue().getValue(),
 				(CPrimitive) rightRvaluedResult.getCType());
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
@@ -596,17 +599,20 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleSqrt(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
-		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult).setLrValue(
-				new RValue(mExpressionTranslation.sqrt(loc, argumentResult.getLrValue().getValue(), type), type))
+		return new ExpressionResultBuilder()
+				.addAllExceptLrValue(argumentResult).setLrValue(new RValue(mExpressionTranslation
+						.getFloatingPointHandler().sqrt(loc, argumentResult.getLrValue().getValue(), type), type))
 				.build();
 	}
 
 	private ExpressionResult handleRound(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type, final Expression roundingMode) {
 		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
-		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult).setLrValue(new RValue(
-				mExpressionTranslation.roundToIntegral(loc, argumentResult.getLrValue().getValue(), type, roundingMode),
-				type)).build();
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
+				.setLrValue(new RValue(
+						mFloatHandler.roundToIntegral(loc, argumentResult.getLrValue().getValue(), type, roundingMode),
+						type))
+				.build();
 	}
 
 	private ExpressionResult handleRoundWithIntConversion(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -619,9 +625,9 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleFabs(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
-		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
-				.setLrValue(
-						new RValue(mExpressionTranslation.abs(loc, argumentResult.getLrValue().getValue(), type), type))
+		return new ExpressionResultBuilder()
+				.addAllExceptLrValue(argumentResult).setLrValue(new RValue(mExpressionTranslation
+						.getFloatingPointHandler().abs(loc, argumentResult.getLrValue().getValue(), type), type))
 				.build();
 	}
 
@@ -632,7 +638,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final ExpressionResult argumentResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
-				.setLrValue(new RValue(mExpressionTranslation.isNan(loc, argumentResult.getLrValue().getValue(),
+				.setLrValue(new RValue(mFloatHandler.isNan(loc, argumentResult.getLrValue().getValue(),
 						(CPrimitive) argumentResult.getCType()), new CPrimitive(CPrimitives.INT), true))
 				.build();
 	}
@@ -644,7 +650,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final ExpressionResult argumentResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
-				.setLrValue(new RValue(mExpressionTranslation.isInfinite(loc, argumentResult.getLrValue().getValue(),
+				.setLrValue(new RValue(mFloatHandler.isInfinite(loc, argumentResult.getLrValue().getValue(),
 						(CPrimitive) argumentResult.getCType()), new CPrimitive(CPrimitives.INT), true))
 				.build();
 	}
@@ -658,8 +664,8 @@ public class MathLibraryModel implements ILibraryModel {
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final Expression argument = argumentResult.getLrValue().getValue();
 		final CPrimitive type = (CPrimitive) argumentResult.getCType();
-		final Expression isInfinite = mExpressionTranslation.isInfinite(loc, argument, type);
-		final Expression isPositive = mExpressionTranslation.isPositive(loc, argument, type);
+		final Expression isInfinite = mFloatHandler.isInfinite(loc, argument, type);
+		final Expression isPositive = mFloatHandler.isPositive(loc, argument, type);
 		final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
 				ExpressionFactory.constructIfThenElseExpression(loc, isPositive,
 						mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.ONE),
@@ -677,9 +683,8 @@ public class MathLibraryModel implements ILibraryModel {
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final Expression argument = argumentResult.getLrValue().getValue();
 		final CPrimitive type = (CPrimitive) argumentResult.getCType();
-		final Expression resultExpr = ExpressionFactory.or(loc, mExpressionTranslation.isNormal(loc, argument, type),
-				mExpressionTranslation.isSubnormal(loc, argument, type),
-				mExpressionTranslation.isZero(loc, argument, type));
+		final Expression resultExpr = ExpressionFactory.or(loc, mFloatHandler.isNormal(loc, argument, type),
+				mFloatHandler.isSubnormal(loc, argument, type), mFloatHandler.isZero(loc, argument, type));
 		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
 				.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitives.INT), true)).build();
 	}
@@ -692,10 +697,10 @@ public class MathLibraryModel implements ILibraryModel {
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final Expression argument = argumentResult.getLrValue().getValue();
 		final CPrimitive type = (CPrimitive) argumentResult.getCType();
-		final Expression isInfinite = mExpressionTranslation.isInfinite(loc, argument, type);
-		final Expression isNan = mExpressionTranslation.isNan(loc, argument, type);
-		final Expression isNormal = mExpressionTranslation.isNormal(loc, argument, type);
-		final Expression isSubnormal = mExpressionTranslation.isSubnormal(loc, argument, type);
+		final Expression isInfinite = mFloatHandler.isInfinite(loc, argument, type);
+		final Expression isNan = mFloatHandler.isNan(loc, argument, type);
+		final Expression isNormal = mFloatHandler.isNormal(loc, argument, type);
+		final Expression isSubnormal = mFloatHandler.isSubnormal(loc, argument, type);
 		// if (isinf(x)) return FP_INFINITE;
 		// else if (isnan(x)) return FP_NAN;
 		// else if (isnormal(x)) return FP_NORMAL;
@@ -721,7 +726,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final ExpressionResult argumentResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
-				.setLrValue(new RValue(mExpressionTranslation.isNormal(loc, argumentResult.getLrValue().getValue(),
+				.setLrValue(new RValue(mFloatHandler.isNormal(loc, argumentResult.getLrValue().getValue(),
 						(CPrimitive) argumentResult.getCType()), new CPrimitive(CPrimitives.INT), true))
 				.build();
 	}
@@ -729,7 +734,7 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleCos(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
-		final Expression nan = mExpressionTranslation.createNan(loc, type);
+		final Expression nan = mFloatHandler.createNan(loc, type);
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
 		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
 		final Expression minusOne =
@@ -749,7 +754,7 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleSin(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
-		final Expression nan = mExpressionTranslation.createNan(loc, type);
+		final Expression nan = mFloatHandler.createNan(loc, type);
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
 		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
 		final Expression minusOne =
@@ -772,7 +777,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression argument = argumentResult.getLrValue().getValue();
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
 		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
-		final Expression positive = mExpressionTranslation.isPositive(loc, auxVar.getExp(), type);
+		final Expression positive = mFloatHandler.isPositive(loc, auxVar.getExp(), type);
 		final Expression smallerOneForNegativeValues = ExpressionFactory.or(loc,
 				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_greaterEqual,
 						argument, type,
@@ -790,7 +795,7 @@ public class MathLibraryModel implements ILibraryModel {
 		// x < 0 ==> exp(x) < 1
 		// exp(x) >= x+1
 		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar,
-				mExpressionTranslation.createPlusZero(loc, type), argument, one,
+				mFloatHandler.createPlusZero(loc, type), argument, one,
 				List.of(positive, smallerOneForNegativeValues, overLinear));
 	}
 
@@ -848,14 +853,13 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression argument = argumentResult.getLrValue().getValue();
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
 		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
-		final Expression nanForNegative =
-				ExpressionFactory.or(loc, mExpressionTranslation.isPositive(loc, argument, type),
-						mExpressionTranslation.isNan(loc, auxVar.getExp(), type));
+		final Expression nanForNegative = ExpressionFactory.or(loc, mFloatHandler.isPositive(loc, argument, type),
+				mFloatHandler.isNan(loc, auxVar.getExp(), type));
 		final Expression zeroForOne = ExpressionFactory.or(loc,
 				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_notequals,
 						argument, type, one, type),
 				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-						auxVar.getExp(), type, mExpressionTranslation.createPlusZero(loc, type), type));
+						auxVar.getExp(), type, mFloatHandler.createPlusZero(loc, type), type));
 		final Expression positiveForGreaterOne = ExpressionFactory.or(loc,
 				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
 						argument, type, one, type),
@@ -863,7 +867,7 @@ public class MathLibraryModel implements ILibraryModel {
 						auxVar.getExp(), type,
 						mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ZERO), type));
 		final Expression sublinear = ExpressionFactory.or(loc,
-				ExpressionFactory.not(loc, mExpressionTranslation.isPositive(loc, argument, type)),
+				ExpressionFactory.not(loc, mFloatHandler.isPositive(loc, argument, type)),
 				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
 						auxVar.getExp(), type, mExpressionTranslation.constructArithmeticExpression(loc,
 								IASTBinaryExpression.op_minus, argument, type, one, type),
@@ -875,9 +879,8 @@ public class MathLibraryModel implements ILibraryModel {
 		// x = 1 ==> log(x) = 0
 		// x > 1 ==> log(x) > 0
 		// x >= 0 ==> log(x) < x-1
-		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar,
-				mExpressionTranslation.createNan(loc, type), argument,
-				mExpressionTranslation.createMinusInfinity(loc, type),
+		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, mFloatHandler.createNan(loc, type),
+				argument, mFloatHandler.createMinusInfinity(loc, type),
 				List.of(nanForNegative, zeroForOne, positiveForGreaterOne, sublinear));
 	}
 
@@ -897,10 +900,10 @@ public class MathLibraryModel implements ILibraryModel {
 				new AssumeStatement(loc, ExpressionFactory.and(loc, assumptionsForOverapproximation));
 		final Statement overapproxSt = new AtomicStatement(loc, new Statement[] { havoc, assume });
 		new OverapproxVariable(functionName, loc).annotate(overapproxSt);
-		final Expression isZero = mExpressionTranslation.isZero(loc, argument, resultType);
-		final Expression isNan = mExpressionTranslation.isNan(loc, argument, resultType);
-		final Expression isInfinite = mExpressionTranslation.isInfinite(loc, argument, resultType);
-		final Expression isPositive = mExpressionTranslation.isPositive(loc, argument, resultType);
+		final Expression isZero = mFloatHandler.isZero(loc, argument, resultType);
+		final Expression isNan = mFloatHandler.isNan(loc, argument, resultType);
+		final Expression isInfinite = mFloatHandler.isInfinite(loc, argument, resultType);
+		final Expression isPositive = mFloatHandler.isPositive(loc, argument, resultType);
 		final Statement resultStatement =
 				StatementFactory.constructIfStatement(loc, isZero,
 						List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, zeroValue)),
@@ -921,9 +924,8 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleFmin(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
-		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
-				.setLrValue(new RValue(mExpressionTranslation.min(loc, arguments.get(0).getLrValue().getValue(),
-						arguments.get(1).getLrValue().getValue(), type), type))
+		return new ExpressionResultBuilder().addAllExceptLrValue(arguments).setLrValue(new RValue(mFloatHandler.min(loc,
+				arguments.get(0).getLrValue().getValue(), arguments.get(1).getLrValue().getValue(), type), type))
 				.build();
 	}
 
@@ -932,9 +934,8 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleFmax(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
-		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
-				.setLrValue(new RValue(mExpressionTranslation.max(loc, arguments.get(0).getLrValue().getValue(),
-						arguments.get(1).getLrValue().getValue(), type), type))
+		return new ExpressionResultBuilder().addAllExceptLrValue(arguments).setLrValue(new RValue(mFloatHandler.max(loc,
+				arguments.get(0).getLrValue().getValue(), arguments.get(1).getLrValue().getValue(), type), type))
 				.build();
 	}
 
@@ -951,9 +952,9 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression resultExprFdim =
 				ExpressionFactory.constructIfThenElseExpression(loc, comparison, subtraction, zero);
 		final Expression secondNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc,
-				mExpressionTranslation.isNan(loc, second, type), second, resultExprFdim);
+				mFloatHandler.isNan(loc, second, type), second, resultExprFdim);
 		final Expression firstNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc,
-				mExpressionTranslation.isNan(loc, first, type), first, secondNaNExpr);
+				mFloatHandler.isNan(loc, first, type), first, secondNaNExpr);
 		return new ExpressionResultBuilder().addAllExceptLrValue(arguments).setLrValue(new RValue(firstNaNExpr, type))
 				.build();
 	}
@@ -975,10 +976,9 @@ public class MathLibraryModel implements ILibraryModel {
 		// signbit(x) := isNegative(x) ? 1 : 0;
 		new OverapproxVariable("sign of NaN", loc).annotate(nondet);
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.ZERO);
-		builder.addStatement(StatementFactory.constructIfStatement(loc,
-				mExpressionTranslation.isNan(loc, argument, type), List.of(nondet),
-				List.of(StatementFactory.constructIfStatement(loc,
-						mExpressionTranslation.isPositive(loc, argument, type),
+		builder.addStatement(StatementFactory.constructIfStatement(loc, mFloatHandler.isNan(loc, argument, type),
+				List.of(nondet),
+				List.of(StatementFactory.constructIfStatement(loc, mFloatHandler.isPositive(loc, argument, type),
 						List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), zero)),
 						List.of(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ,
 								auxVar.getExp(), zero)))))));
@@ -999,7 +999,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
 		builder.addAuxVarWithDeclaration(auxVar);
-		final Expression abs = mExpressionTranslation.abs(loc, first, type);
+		final Expression abs = mFloatHandler.abs(loc, first, type);
 		final Statement nondet = new AssumeStatement(loc,
 				ExpressionFactory.or(loc,
 						mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
@@ -1010,16 +1010,16 @@ public class MathLibraryModel implements ILibraryModel {
 								type)));
 		// TODO: Overapproximate if second is NaN
 		new OverapproxVariable("sign of NaN", loc).annotate(nondet);
-		builder.addStatement(StatementFactory.constructIfStatement(loc, mExpressionTranslation.isNan(loc, first, type),
+		builder.addStatement(StatementFactory.constructIfStatement(loc, mFloatHandler.isNan(loc, first, type),
 				// If the first argument is NaN, just return it. This works for now, as we cannot handle negative NaN
 				// anyway.
 				// TODO: If we can handle negative NaN, this has to be changed!
 				List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), first)),
-				List.of(StatementFactory.constructIfStatement(loc, mExpressionTranslation.isNan(loc, second, type),
+				List.of(StatementFactory.constructIfStatement(loc, mFloatHandler.isNan(loc, second, type),
 						List.of(nondet),
 						List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
 								ExpressionFactory.constructIfThenElseExpression(loc,
-										mExpressionTranslation.isPositive(loc, second, type), abs,
+										mFloatHandler.isPositive(loc, second, type), abs,
 										mExpressionTranslation.constructUnaryExpression(loc,
 												IASTUnaryExpression.op_minus, abs, type))))))));
 		return builder.setLrValue(new RValue(auxVar.getExp(), type)).build();
@@ -1031,7 +1031,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression first = arguments.get(0).getLrValue().getValue();
 		final Expression second = arguments.get(1).getLrValue().getValue();
 		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
-				.setLrValue(new RValue(mExpressionTranslation.remainder(loc, first, second, type), type)).build();
+				.setLrValue(new RValue(mFloatHandler.remainder(loc, first, second, type), type)).build();
 	}
 
 	private ExpressionResult handleFmod(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1044,12 +1044,12 @@ public class MathLibraryModel implements ILibraryModel {
 		// pr = isPositive(r) ? r : r + fabs(y);
 		// return copysign(pr, x)
 		// }
-		final Expression remainder = mExpressionTranslation.remainder(loc, mExpressionTranslation.abs(loc, first, type),
-				mExpressionTranslation.abs(loc, second, type), type);
+		final Expression remainder = mFloatHandler.remainder(loc, mFloatHandler.abs(loc, first, type),
+				mFloatHandler.abs(loc, second, type), type);
 		final Expression positiveRemainder = ExpressionFactory.constructIfThenElseExpression(loc,
-				mExpressionTranslation.isPositive(loc, remainder, type), remainder,
+				mFloatHandler.isPositive(loc, remainder, type), remainder,
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, remainder, type,
-						mExpressionTranslation.abs(loc, second, type), type));
+						mFloatHandler.abs(loc, second, type), type));
 		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
 				.addAllIncludingLrValue(handleCopysign(positiveRemainder, first, loc, type)).build();
 	}

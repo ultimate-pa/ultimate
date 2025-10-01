@@ -543,45 +543,47 @@ public abstract class ExpressionTranslation {
 	 */
 	public abstract Expression convertInfinitePrecisionExpression(ILocation loc, Expression exp, CPrimitive type);
 
-	public abstract Expression roundToIntegral(ILocation loc, Expression argument, CPrimitive type,
-			Expression roundingMode);
-
-	public abstract Expression sqrt(ILocation loc, Expression argument, CPrimitive type);
-
-	public abstract Expression abs(ILocation loc, Expression argument, CPrimitive type);
-
-	public abstract Expression isNan(ILocation loc, Expression argument, CPrimitive type);
-
-	public abstract Expression isInfinite(ILocation loc, Expression argument, CPrimitive type);
-
-	public abstract Expression isNormal(ILocation loc, Expression argument, CPrimitive type);
-
-	public abstract Expression isZero(ILocation loc, Expression argument, CPrimitive type);
-
-	public abstract Expression isSubnormal(ILocation loc, Expression argument, CPrimitive type);
-
-	public abstract Expression isPositive(ILocation loc, Expression argument, CPrimitive type);
-
-	public abstract Expression createNan(ILocation loc, CPrimitive type);
-
-	public abstract Expression createInfinity(ILocation loc, CPrimitive type);
-
-	public abstract Expression createMinusInfinity(ILocation loc, CPrimitive type);
-
-	public abstract Expression createPlusZero(ILocation loc, CPrimitive type);
-
-	public abstract Expression min(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
-
-	public abstract Expression max(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
-
-	public abstract Expression remainder(ILocation loc, Expression firstArgument, Expression secondArgument,
-			CPrimitive type);
-
 	public static Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
 		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox(reason, loc).annotate(assertFalse);
 		new Check(Spec.UNSUPPORTED_FEATURE).annotate(assertFalse);
 		return new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
 				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
+	}
+
+	public abstract IFloatingPointHandler getFloatingPointHandler();
+
+	public interface IFloatingPointHandler {
+		Expression roundToIntegral(ILocation loc, Expression argument, CPrimitive type, Expression roundingMode);
+
+		Expression sqrt(ILocation loc, Expression argument, CPrimitive type);
+
+		Expression abs(ILocation loc, Expression argument, CPrimitive type);
+
+		Expression isNan(ILocation loc, Expression argument, CPrimitive type);
+
+		Expression isInfinite(ILocation loc, Expression argument, CPrimitive type);
+
+		Expression isNormal(ILocation loc, Expression argument, CPrimitive type);
+
+		Expression isZero(ILocation loc, Expression argument, CPrimitive type);
+
+		Expression isSubnormal(ILocation loc, Expression argument, CPrimitive type);
+
+		Expression isPositive(ILocation loc, Expression argument, CPrimitive type);
+
+		Expression createNan(ILocation loc, CPrimitive type);
+
+		Expression createInfinity(ILocation loc, CPrimitive type);
+
+		Expression createMinusInfinity(ILocation loc, CPrimitive type);
+
+		Expression createPlusZero(ILocation loc, CPrimitive type);
+
+		Expression min(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
+
+		Expression max(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
+
+		Expression remainder(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
 	}
 }

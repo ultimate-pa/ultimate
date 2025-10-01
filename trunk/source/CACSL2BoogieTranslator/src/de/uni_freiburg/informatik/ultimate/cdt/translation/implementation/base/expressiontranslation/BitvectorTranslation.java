@@ -235,9 +235,13 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression realValue = ExpressionFactory.createRealLiteral(loc, value.toString());
 			arguments = new Expression[] { getCurrentRoundingMode(), realValue };
 		}
-		final String functionName = getBoogieFunctionName(smtFunctionName, type);
-		return ExpressionFactory.constructFunctionApplication(loc, functionName, arguments,
-				mTypeHandler.getBoogieTypeForCType(type));
+		return constructCallToSmtFunction(loc, smtFunctionName, type, type, arguments);
+	}
+
+	protected Expression constructCallToSmtFunction(final ILocation loc, final String smtFunctionName,
+			final CPrimitive argumentType, final CPrimitive resultType, final Expression[] arguments) {
+		return ExpressionFactory.constructFunctionApplication(loc, getBoogieFunctionName(smtFunctionName, argumentType),
+				arguments, mTypeHandler.getBoogieTypeForCType(resultType));
 	}
 
 	private String getBoogieFunctionName(final String smtFunctionName, final CPrimitive type) {
@@ -551,7 +555,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return new PrimitiveType(loc, "bv" + bitlength);
 	}
 
-	private void declareFloatingPointFunction(final ILocation loc, final String smtFunctionName,
+	protected void declareFloatingPointFunction(final ILocation loc, final String smtFunctionName,
 			final boolean boogieResultTypeBool, final boolean isRounded, final CPrimitive resultCType,
 			final CPrimitive... paramCType) {
 		declareFloatingPointFunction(loc, smtFunctionName, boogieResultTypeBool, isRounded, resultCType, null,
@@ -824,9 +828,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 
 		declareFloatingPointFunction(loc, smtFunctionName, true, false, new CPrimitive(CPrimitives.BOOL), type1, type2);
-		final String fullFunctionName = getBoogieFunctionName(smtFunctionName, type1);
-		Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
+		Expression result = constructCallToSmtFunction(loc, smtFunctionName, type1, new CPrimitive(CPrimitives.BOOL),
+				new Expression[] { exp1, exp2 });
 
 		if (isNegated) {
 			result = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
@@ -846,9 +849,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported unary expression");
 		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, false, type, type);
-		final String fullFunctionName = getBoogieFunctionName(smtFunctionName, type);
-		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] { exp },
-				mTypeHandler.getBoogieTypeForCType(type));
+		return constructCallToSmtFunction(loc, smtFunctionName, type, type, new Expression[] { exp });
 	}
 
 	@Override
@@ -884,17 +885,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		default:
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported arithmetic expression");
 		}
-		if (isRounded) {
-			declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
-			final String fullFunctionName = getBoogieFunctionName(smtFunctionName, type1);
-			return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-					new Expression[] { getCurrentRoundingMode(), exp1, exp2 },
-					mTypeHandler.getBoogieTypeForCType(type1));
-		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
-		final String fullFunctionName = getBoogieFunctionName(smtFunctionName, type1);
-		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] { exp1, exp2 },
-				mTypeHandler.getBoogieTypeForCType(type1));
+		final Expression[] arguments =
+				isRounded ? new Expression[] { getCurrentRoundingMode(), exp1, exp2 } : new Expression[] { exp1, exp2 };
+		return constructCallToSmtFunction(loc, smtFunctionName, type1, type1, arguments);
 	}
 
 	@Override
@@ -960,33 +954,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression createNan(final ILocation loc, final CPrimitive type) {
-		return createConstant(loc, SMT_LIB_NAN, type);
-	}
-
-	@Override
-	public Expression createInfinity(final ILocation loc, final CPrimitive type) {
-		return createConstant(loc, SMT_LIB_PLUS_INF, type);
-	}
-
-	@Override
-	public Expression createMinusInfinity(final ILocation loc, final CPrimitive type) {
-		return createConstant(loc, SMT_LIB_MINUS_INF, type);
-	}
-
-	@Override
-	public Expression createPlusZero(final ILocation loc, final CPrimitive type) {
-		return createConstant(loc, SMT_LIB_PLUS_ZERO, type);
-	}
-
-	private Expression createConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
-		declareFloatConstant(loc, smtFunctionName, type);
-		final String fullFunctionName = getBoogieFunctionName(smtFunctionName, type);
-		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] {},
-				mTypeHandler.getBoogieTypeForCType(type));
-	}
-
-	@Override
 	public void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final Attribute[] attributes = generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(),
@@ -1017,12 +984,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final Expression signBit = extractBits(loc, bitvector,
 				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent() + 1,
 				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent());
-		final String smtFunctionName = "fp";
-		final String fullFunctionName = getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType));
-		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { signBit, exponentBits, significantBits },
-				mTypeHandler.getBoogieTypeForCType(new CPrimitive(floatType)));
-
+		return constructCallToSmtFunction(loc, "fp", new CPrimitive(floatType), new CPrimitive(floatType),
+				new Expression[] { signBit, exponentBits, significantBits });
 	}
 
 	@Override
@@ -1275,99 +1238,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression roundToIntegral(final ILocation loc, final Expression argument, final CPrimitive type,
-			final Expression roundingMode) {
-		final String smtFunctionName = "fp.roundToIntegral";
-		declareFloatingPointFunction(loc, smtFunctionName, false, true, type, type);
-		final String boogieFunctionName = getBoogieFunctionName(smtFunctionName, type);
-		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { roundingMode, argument }, mTypeHandler.getBoogieTypeForCType(type));
-	}
-
-	@Override
-	public Expression sqrt(final ILocation loc, final Expression argument, final CPrimitive type) {
-		final String smtFunctionName = "fp.sqrt";
-		declareFloatingPointFunction(loc, smtFunctionName, false, true, type, type);
-		final String boogieFunctionName = getBoogieFunctionName(smtFunctionName, type);
-		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { getCurrentRoundingMode(), argument }, mTypeHandler.getBoogieTypeForCType(type));
-	}
-
-	@Override
-	public Expression abs(final ILocation loc, final Expression argument, final CPrimitive type) {
-		final String smtFunctionName = "fp.abs";
-		declareFloatingPointFunction(loc, smtFunctionName, false, false, type, type);
-		final String boogieFunctionName = getBoogieFunctionName(smtFunctionName, type);
-		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName, new Expression[] { argument },
-				mTypeHandler.getBoogieTypeForCType(type));
-	}
-
-	private Expression constructSmtFloatClassificationFunction(final ILocation loc, final String smtFunctionName,
-			final Expression argument, final CPrimitive argumentCType) {
-		final String boogieFunctionName = getBoogieFunctionName(smtFunctionName, argumentCType);
-		final ASTType resultBoogieType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
-		final Attribute[] attributes =
-				generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(), smtFunctionName, null);
-		final ASTType paramBoogieType = mTypeHandler.cType2AstType(loc, argumentCType);
-		getFunctionDeclarations().declareFunction(loc, boogieFunctionName, attributes, resultBoogieType,
-				paramBoogieType);
-		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName, new Expression[] { argument },
-				BoogieType.TYPE_BOOL);
-	}
-
-	@Override
-	public Expression isNan(final ILocation loc, final Expression argument, final CPrimitive type) {
-		return constructSmtFloatClassificationFunction(loc, "fp.isNaN", argument, type);
-	}
-
-	@Override
-	public Expression isInfinite(final ILocation loc, final Expression argument, final CPrimitive type) {
-		return constructSmtFloatClassificationFunction(loc, "fp.isInfinite", argument, type);
-	}
-
-	@Override
-	public Expression isNormal(final ILocation loc, final Expression argument, final CPrimitive type) {
-		return constructSmtFloatClassificationFunction(loc, "fp.isNormal", argument, type);
-	}
-
-	@Override
-	public Expression isZero(final ILocation loc, final Expression argument, final CPrimitive type) {
-		return constructSmtFloatClassificationFunction(loc, "fp.isZero", argument, type);
-	}
-
-	@Override
-	public Expression isSubnormal(final ILocation loc, final Expression argument, final CPrimitive type) {
-		return constructSmtFloatClassificationFunction(loc, "fp.isSubnormal", argument, type);
-	}
-
-	@Override
-	public Expression isPositive(final ILocation loc, final Expression argument, final CPrimitive type) {
-		return constructSmtFloatClassificationFunction(loc, "fp.isPositive", argument, type);
-	}
-
-	private Expression delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final Expression first,
-			final Expression second, final String smtFunctionName, final CPrimitive type) {
-		declareFloatingPointFunction(loc, smtFunctionName, false, false, type, type, type);
-		final String boogieFunctionName = getBoogieFunctionName(smtFunctionName, type);
-		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { first, second }, mTypeHandler.getBoogieTypeForCType(type));
-	}
-
-	@Override
-	public Expression min(final ILocation loc, final Expression firstArgument, final Expression secondArgument,
-			final CPrimitive type) {
-		return delegateOtherBinaryFloatOperationToSmt(loc, firstArgument, secondArgument, "fp.min", type);
-	}
-
-	@Override
-	public Expression max(final ILocation loc, final Expression firstArgument, final Expression secondArgument,
-			final CPrimitive type) {
-		return delegateOtherBinaryFloatOperationToSmt(loc, firstArgument, secondArgument, "fp.max", type);
-	}
-
-	@Override
-	public Expression remainder(final ILocation loc, final Expression firstArgument, final Expression secondArgument,
-			final CPrimitive type) {
-		return delegateOtherBinaryFloatOperationToSmt(loc, firstArgument, secondArgument, "fp.rem", type);
+	public IFloatingPointHandler getFloatingPointHandler() {
+		return new BitvectorFloatingPointHandler(this);
 	}
 }
