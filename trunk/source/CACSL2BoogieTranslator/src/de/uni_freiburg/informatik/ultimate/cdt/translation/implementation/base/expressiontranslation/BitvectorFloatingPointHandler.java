@@ -18,7 +18,7 @@ public class BitvectorFloatingPointHandler implements IFloatingPointHandler {
 			final Expression roundingMode) {
 		final String smtFunctionName = "fp.roundToIntegral";
 		mTranslation.declareFloatingPointFunction(loc, smtFunctionName, false, true, type, type);
-		return mTranslation.constructCallToSmtFunction(loc, smtFunctionName, type, type,
+		return mTranslation.constructCallToSmtOperation(loc, smtFunctionName, type,
 				new Expression[] { roundingMode, argument });
 	}
 
@@ -26,7 +26,7 @@ public class BitvectorFloatingPointHandler implements IFloatingPointHandler {
 	public Expression sqrt(final ILocation loc, final Expression argument, final CPrimitive type) {
 		final String smtFunctionName = "fp.sqrt";
 		mTranslation.declareFloatingPointFunction(loc, smtFunctionName, false, true, type, type);
-		return mTranslation.constructCallToSmtFunction(loc, smtFunctionName, type, type,
+		return mTranslation.constructCallToSmtOperation(loc, smtFunctionName, type,
 				new Expression[] { mTranslation.getCurrentRoundingMode(), argument });
 	}
 
@@ -34,15 +34,15 @@ public class BitvectorFloatingPointHandler implements IFloatingPointHandler {
 	public Expression abs(final ILocation loc, final Expression argument, final CPrimitive type) {
 		final String smtFunctionName = "fp.abs";
 		mTranslation.declareFloatingPointFunction(loc, smtFunctionName, false, false, type, type);
-		return mTranslation.constructCallToSmtFunction(loc, smtFunctionName, type, type, new Expression[] { argument });
+		return mTranslation.constructCallToSmtOperation(loc, smtFunctionName, type, new Expression[] { argument });
 	}
 
 	private Expression constructSmtFloatClassificationFunction(final ILocation loc, final String smtFunctionName,
 			final Expression argument, final CPrimitive argumentCType) {
 		mTranslation.declareFloatingPointFunction(loc, smtFunctionName, true, false, argumentCType,
 				new CPrimitive(CPrimitives.BOOL));
-		return mTranslation.constructCallToSmtFunction(loc, smtFunctionName, argumentCType,
-				new CPrimitive(CPrimitives.BOOL), new Expression[] { argument });
+		return mTranslation.constructCallToSmtPredicate(loc, smtFunctionName, argumentCType,
+				new Expression[] { argument });
 	}
 
 	@Override
@@ -78,8 +78,7 @@ public class BitvectorFloatingPointHandler implements IFloatingPointHandler {
 	private Expression delegateBinaryFloatOperationToSmt(final ILocation loc, final Expression first,
 			final Expression second, final String smtFunctionName, final CPrimitive type) {
 		mTranslation.declareFloatingPointFunction(loc, smtFunctionName, false, false, type, type, type);
-		return mTranslation.constructCallToSmtFunction(loc, smtFunctionName, type, type,
-				new Expression[] { first, second });
+		return mTranslation.constructCallToSmtOperation(loc, smtFunctionName, type, new Expression[] { first, second });
 	}
 
 	@Override
@@ -122,6 +121,6 @@ public class BitvectorFloatingPointHandler implements IFloatingPointHandler {
 
 	private Expression createConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
 		mTranslation.declareFloatConstant(loc, smtFunctionName, type);
-		return mTranslation.constructCallToSmtFunction(loc, smtFunctionName, type, type, new Expression[] {});
+		return mTranslation.constructCallToSmtOperation(loc, smtFunctionName, type, new Expression[] {});
 	}
 }

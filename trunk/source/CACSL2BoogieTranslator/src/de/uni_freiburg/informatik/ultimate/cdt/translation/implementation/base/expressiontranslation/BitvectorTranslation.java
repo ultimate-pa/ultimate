@@ -235,13 +235,19 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression realValue = ExpressionFactory.createRealLiteral(loc, value.toString());
 			arguments = new Expression[] { getCurrentRoundingMode(), realValue };
 		}
-		return constructCallToSmtFunction(loc, smtFunctionName, type, type, arguments);
+		return constructCallToSmtOperation(loc, smtFunctionName, type, arguments);
 	}
 
-	protected Expression constructCallToSmtFunction(final ILocation loc, final String smtFunctionName,
-			final CPrimitive argumentType, final CPrimitive resultType, final Expression[] arguments) {
-		return ExpressionFactory.constructFunctionApplication(loc, getBoogieFunctionName(smtFunctionName, argumentType),
-				arguments, mTypeHandler.getBoogieTypeForCType(resultType));
+	protected Expression constructCallToSmtOperation(final ILocation loc, final String smtFunctionName,
+			final CPrimitive type, final Expression[] arguments) {
+		return ExpressionFactory.constructFunctionApplication(loc, getBoogieFunctionName(smtFunctionName, type),
+				arguments, mTypeHandler.getBoogieTypeForCType(type));
+	}
+
+	protected Expression constructCallToSmtPredicate(final ILocation loc, final String smtFunctionName,
+			final CPrimitive type, final Expression[] arguments) {
+		return ExpressionFactory.constructFunctionApplication(loc, getBoogieFunctionName(smtFunctionName, type),
+				arguments, BoogieType.TYPE_BOOL);
 	}
 
 	private String getBoogieFunctionName(final String smtFunctionName, final CPrimitive type) {
@@ -828,8 +834,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 
 		declareFloatingPointFunction(loc, smtFunctionName, true, false, new CPrimitive(CPrimitives.BOOL), type1, type2);
-		Expression result = constructCallToSmtFunction(loc, smtFunctionName, type1, new CPrimitive(CPrimitives.BOOL),
-				new Expression[] { exp1, exp2 });
+		Expression result = constructCallToSmtPredicate(loc, smtFunctionName, type1, new Expression[] { exp1, exp2 });
 
 		if (isNegated) {
 			result = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
@@ -849,7 +854,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, "Unknown or unsupported unary expression");
 		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, false, type, type);
-		return constructCallToSmtFunction(loc, smtFunctionName, type, type, new Expression[] { exp });
+		return constructCallToSmtOperation(loc, smtFunctionName, type, new Expression[] { exp });
 	}
 
 	@Override
@@ -888,7 +893,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
 		final Expression[] arguments =
 				isRounded ? new Expression[] { getCurrentRoundingMode(), exp1, exp2 } : new Expression[] { exp1, exp2 };
-		return constructCallToSmtFunction(loc, smtFunctionName, type1, type1, arguments);
+		return constructCallToSmtOperation(loc, smtFunctionName, type1, arguments);
 	}
 
 	@Override
@@ -984,7 +989,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final Expression signBit = extractBits(loc, bitvector,
 				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent() + 1,
 				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent());
-		return constructCallToSmtFunction(loc, "fp", new CPrimitive(floatType), new CPrimitive(floatType),
+		return constructCallToSmtOperation(loc, "fp", new CPrimitive(floatType),
 				new Expression[] { signBit, exponentBits, significantBits });
 	}
 
