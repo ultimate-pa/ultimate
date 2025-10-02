@@ -552,38 +552,4 @@ public abstract class ExpressionTranslation {
 	}
 
 	public abstract IFloatingPointHandler getFloatingPointHandler();
-
-	public interface IFloatingPointHandler {
-		Expression roundToIntegral(ILocation loc, Expression argument, CPrimitive type, Expression roundingMode);
-
-		Expression sqrt(ILocation loc, Expression argument, CPrimitive type);
-
-		Expression abs(ILocation loc, Expression argument, CPrimitive type);
-
-		Expression isNan(ILocation loc, Expression argument, CPrimitive type);
-
-		Expression isInfinite(ILocation loc, Expression argument, CPrimitive type);
-
-		Expression isNormal(ILocation loc, Expression argument, CPrimitive type);
-
-		Expression isZero(ILocation loc, Expression argument, CPrimitive type);
-
-		Expression isSubnormal(ILocation loc, Expression argument, CPrimitive type);
-
-		Expression isPositive(ILocation loc, Expression argument, CPrimitive type);
-
-		Expression createNan(ILocation loc, CPrimitive type);
-
-		Expression createInfinity(ILocation loc, CPrimitive type);
-
-		Expression createMinusInfinity(ILocation loc, CPrimitive type);
-
-		Expression createPlusZero(ILocation loc, CPrimitive type);
-
-		Expression min(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
-
-		Expression max(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
-
-		Expression remainder(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
-	}
 }

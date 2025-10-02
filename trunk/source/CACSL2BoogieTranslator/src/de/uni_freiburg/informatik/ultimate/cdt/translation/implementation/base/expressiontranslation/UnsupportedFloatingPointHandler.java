@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation.IFloatingPointHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
