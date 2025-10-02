@@ -178,6 +178,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	private final Expression mCurrentRoundingModeMacroValue;
 	// holds the current rounding mode ONLY when fesetround is disabled
 	private final IdentifierExpression mCurrentRoundingMode;
+	private final BitvectorFloatingPointHandler mFloatingPointHandler;
 
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
 			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
@@ -200,6 +201,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			mCurrentRoundingModeMacroValue =
 					mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3));
 		}
+		mFloatingPointHandler = new BitvectorFloatingPointHandler(this);
 	}
 
 	private int computeBitsize(final CPrimitive cType) {
@@ -1244,6 +1246,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public IFloatingPointHandler getFloatingPointHandler() {
-		return new BitvectorFloatingPointHandler(this);
+		return mFloatingPointHandler;
 	}
 }

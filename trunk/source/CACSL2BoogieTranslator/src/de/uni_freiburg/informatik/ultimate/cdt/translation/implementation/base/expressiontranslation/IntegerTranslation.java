@@ -75,6 +75,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private static final String NOT_IMPLEMENTED = "Operation is not yet implemented in non-bitprecise translation.";
 
 	private final BitabsTranslation mBitabsTranslation;
+	private final IFloatingPointHandler mFloatingPointHandler = new UnsupportedFloatingPointHandler();
 
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
 			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
@@ -786,6 +787,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public IFloatingPointHandler getFloatingPointHandler() {
-		return new UnsupportedFloatingPointHandler();
+		return mFloatingPointHandler;
 	}
 }
