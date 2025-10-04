@@ -70,8 +70,17 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Check if the annotations in ACSL (assert, loop invariant, function contracts) are valid. "
 					+ "In addition, ghost code is also considered.";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
-	public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
-			"Check for the main procedure if all allocated memory was freed";
+	// public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
+	// "Check for the main procedure if all allocated memory was freed";
+	public static final String LABEL_CHECK_MEMORY_NEUTRALITY = "Check memory neutrality";
+	public static final String DESC_CHECK_MEMORY_NEUTRALITY =
+			"Specify a comma-separated list of functions to be checked for memory neutrality. A function is memory "
+					+ "neutral if all dynamically allocated memory is freed before it returns. Note that a violation "
+					+ "of memory neutrality does not necessarily indicate a memory leak, as the caller may still "
+					+ "deallocate the memory. For the main function, achieving memory neutrality is generally "
+					+ "considered good practice but is not required by the C standard. The mem-cleanup property in the "
+					+ "Software Verification Competition (SV-COMP) corresponds to checking memory neutrality of main. "
+					+ "Warning: this check is computationally expensive and may often lead to timeouts.";
 	public static final String LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE = "SV-COMP memtrack compatibility mode";
 	public static final String DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE = "Report UNKNOWN instead of UNSAFE if not all "
 			+ "allocated memory was freed at the end of the main procedure. Rationale: at the SV-COMP we have to check "
@@ -129,7 +138,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR16 = "sizeof char16";
 	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR32 = "sizeof char32";
 	public static final String LABEL_SIGNEDNESS_CHAR = "signedness of char";
-	public static final String LABEL_CHECK_ALLOCATION_PURITY = "Check allocation purity";
+	// public static final String LABEL_CHECK_ALLOCATION_PURITY = "Check allocation purity";
 	public static final String LABEL_USE_CONSTANT_ARRAYS = "Use constant arrays";
 	private static final String DESC_USE_CONSTANT_ARRAYS =
 			"Use SMT constant arrays for default initialization of variables.";
@@ -287,10 +296,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								DESC_CHECK_POINTER_DEREF_VALIDITY, Level.BASIC, PreferenceType.Combo,
 								CheckMode.values()),
 						new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_NEUTRALITY, "main",
+								DESC_CHECK_MEMORY_NEUTRALITY, Level.EXPERT, PreferenceType.String),
 						new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
 								DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CHECK_ALLOCATION_PURITY, false, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
 								CheckMode.CHECK, PreferenceType.Combo, CheckMode.values()),
 						new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.CHECK,
