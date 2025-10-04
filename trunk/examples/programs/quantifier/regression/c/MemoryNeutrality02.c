@@ -1,7 +1,7 @@
-//#Safe
+//#Unsafe
 /*
- * Safe, but the function doAlloc is not allocation pure.
- * Date: 2017-10-17
+ * Unsafe. The main function is not memory-neutral.
+ * Date: 2025-10-04
  * Author: heizmann@informatik.uni-freiburg.de
  * 
  */
@@ -15,6 +15,5 @@ int *doAlloc() {
 
 int main() {
     int *p = doAlloc();
-    free(p);
     return 0;
 }

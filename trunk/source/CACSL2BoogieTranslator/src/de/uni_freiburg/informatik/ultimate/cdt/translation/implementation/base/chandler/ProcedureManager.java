@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.l
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -214,15 +213,17 @@ public class ProcedureManager {
 
 			final Specification[] newSpecWithExtraEnsuresClauses;
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
-					&& (mSettings.checkAllocationPurity() || (mSettings.getEntryFunction().equals(SFO.EMPTY)
-							|| mSettings.getEntryFunction().equals(procedureName))
-							&& mSettings.checkMemoryLeakInMain())) {
-				// add a specification to check for memory leaks
+					&& mSettings.getCheckMemoryNeutrality().contains(procedureName)) {
+				// add a specification to check for memory neutrality (i.e., if all dynamically allocated memory is
+				// freed)
+				// TODO Matthias 2025-10-03: It might be confusing for users to check the property only of the memory
+				// model is required. Maybe we can require the memory model if the list of functions for which we
+				// check memory neutrality is not empty.
 
 				final Expression vIe = memoryHandler.getValidArray(loc);
 
 				final int nrSpec = newSpec.length;
-				final Check check = new Check(Spec.MEMORY_LEAK);
+				final Check check = new Check(Spec.MEMORY_NEUTRAL);
 				final ILocation ensLoc = LocationFactory.createLocation(loc);
 				newSpecWithExtraEnsuresClauses = Arrays.copyOf(newSpec, nrSpec + 1);
 				newSpecWithExtraEnsuresClauses[nrSpec] = new EnsuresSpecification(ensLoc, false,
