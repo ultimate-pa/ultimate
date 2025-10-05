@@ -1,68 +1,87 @@
 /**
- * Fetches the backend "ultimate" version and displays it in the settings menu.
+ * Fetches the backend "ultimate" version and displays it in the footer.
+ * Retries until it succeeds
  */
-function load_backend_version() {
-    $.get(_CONFIG.backend.web_bridge_url + "/version", function (response) {
+function loadBackendVersion() {
+  const url = _CONFIG.backend.web_bridge_url + '/version';
+  const $el = $('#version_info_text');
+
+  function tryFetch() {
+    const delay = 10_000
+
+    $el.html(`Connecting to backend...`).removeClass('text-danger').addClass('text-warning');
+
+    $.get(url)
+      .done(function(response) {
         try {
-            $('#version_info_text').html(
-                "Ultimate version " + response.ultimate_version
-            );
+          $el.removeClass('text-warning text-danger').html('Ultimate version ' + response.ultimate_version);
         } catch (e) {
-            console.log("Could not read backend ultimate version.");
-            console.log(e);
+          $el.removeClass('text-warning').addClass('text-danger').html('Malformed backend response!');
+          console.error(e);
+          setTimeout(tryFetch, delay);
         }
-    });
+      })
+      .fail(function(jqXHR, textStatus, errorThrown) {
+        $el.removeClass('text-warning').addClass('text-danger').html(`No connection to backend. Retrying in ${Math.round(delay / 1000)}s...`);
+        console.error('Backend request failed:', textStatus, errorThrown);
+        setTimeout(tryFetch, delay);
+      });
+  }
+
+  tryFetch();
 }
 
 
 /**
  * Render the header/navigation-bar.
  */
-function render_navbar() {
-  const navbar_template = Handlebars.compile($("#navbar-template").html());
-  $('#navbar_content').append(navbar_template(_CONTEXT));
-  
-  const navbar_breadcrumb_entry = $("#navbar_breadcrumb li a");
-  navbar_breadcrumb_entry.text(_CONTEXT.tool.name);
-  navbar_breadcrumb_entry.attr('href', _CONTEXT.tool.url);
-}
+function renderNavbar() {
+  const navbarTemplate = Handlebars.compile($('#navbar_template').html());
+  $('#navbar_content').append(navbarTemplate(_CONTEXT));
+  $('#navbar_toggler').removeClass('d-none');
 
+  $('#brand_title_text').text(_CONTEXT.tool.name);
+  $('#brand_title').attr('href', _CONTEXT.tool.url);
+
+  if (_CONTEXT.tool.name && _CONTEXT.tool.name.trim() !== '') {
+    $('#brand_divider').removeClass('d-none');
+  } else {
+    $('#brand_divider').addClass('d-none');
+  }
+}
 
 /**
  * Load the interactive tool interface.
- * @param tool_id
  */
-function load_tool_interface(tool_id) {
-  load_tool_interface_template();
-  init_editor();
-  init_interface_controls();
-  refresh_navbar();
-  load_backend_version();
-  set_message_orientation(_CONTEXT.msg_orientation);
+function loadToolInterface() {
+  loadToolInterfaceTemplate();
+  initEditor();
+  initInterfaceControls();
+  refreshNavbar();
+  loadBackendVersion();
+  setMessagesOrientation(_CONTEXT.msg_orientation);
   if (_CONTEXT.url.lang !== null) {
-    choose_language(_CONTEXT.url.lang)
-    .then(refresh_navbar);
+    chooseLanguage(_CONTEXT.url.lang).then(refreshNavbar);
   }
   if (_CONTEXT.url.sample !== null) {
-    load_sample(_CONTEXT.url.sample);
+    loadSample(_CONTEXT.url.sample);
   }
   if (_CONTEXT.url.session !== null) {
-    load_user_provided_session(_CONTEXT.url.session);
+    loadUserProvidedSession(_CONTEXT.url.session);
   }
 }
 
-function get_home_url() {
+function getHomeUrl() {
   let url = new URL(window.location);
   let path = url.pathname;
-  let last_slash = path.lastIndexOf('/');
-  let prefix = path.substring(0, path.lastIndexOf('/', last_slash-1)+1);
-  url.pathname = prefix;
-  url.search = "";
+  let leftSlash = path.lastIndexOf('/');
+  url.pathname = path.substring(0, path.lastIndexOf('/', leftSlash - 1) + 1);
+  url.search = '';
   return url;
 }
 
 /**
- * Inject current context to _CONTEXT s.t:
+ * Inject the current context to _CONTEXT s.t:
  *
  * _CONTEXT = {
  *     url: {
@@ -72,61 +91,62 @@ function get_home_url() {
  *     msg_orientation: _CONFIG.editor.default_msg_orientation
  * }
  */
-var _CONTEXT;
-function set_context() {
-  const url_params = get_url_params();
+let _CONTEXT;
+
+function setContext() {
+  const params = getUrlParams();
   let tool = {};
 
   // Load session if provided.
-  if (url_params.session !== null){
+  if (params.session !== null) {
     try {
-      url_params.session = URIDecompressArray(url_params.session);
-      url_params.tool = url_params.session.tool;
+      params.session = URIDecompressArray(params.session);
+      params.tool = params.session.tool;
     } catch (e) {
       alert('could not load Session provided. Malformed Link.');
       console.log(e);
     }
   }
 
-  // Redirect non existing tools to home page.
-  if (!(url_params.tool in _TOOLS)) {
-    window.location.replace(get_home_url());
+  // Redirect non-existing tools to the home page.
+  if (!(params.tool in _TOOLS)) {
+    window.location.replace(getHomeUrl());
     return false;
   }
 
-  // Set current tool if active.
-  tool = _TOOLS[url_params.tool];
+  // Set the current tool if active.
+  tool = _TOOLS[params.tool];
 
   _CONTEXT = {
-    "url": url_params,
-    "tool": tool,
-    "msg_orientation": _CONFIG.editor.default_msg_orientation,
-    "sample_source": ''
-  }
+    'url': params,
+    'tool': tool,
+    'msg_orientation': _CONFIG.editor.default_msg_orientation,
+    'sample_source': '',
+  };
   return true;
 }
 
 
-function load_available_code_examples() {
-  return $.getJSON("./code_examples/code_examples.json");
+function loadAvailableCodeSamples() {
+  return $.getJSON('./code_examples/code_examples.json');
 }
 
 
 function bootstrap() {
-  let proceed = set_context();
+  let proceed = setContext();
   if (!proceed) {
     return;
   }
-  render_navbar();
+  renderNavbar();
 
   // load the interactive mode for the active tool.
-  load_available_code_examples().always(function (json) {
+  loadAvailableCodeSamples().always(function(json) {
     _CONFIG.code_examples = json;
-    load_tool_interface(_CONTEXT.tool.id);
+    loadToolInterface();
   });
 }
 
 
-$(function () {
+$(function() {
   bootstrap();
 });

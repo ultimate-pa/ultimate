@@ -4,72 +4,182 @@ permalink: /webinterface/
 
 js: [
   'vendor/handlebars.min-35d3fdb.js',
-  'vendor/ace-min/ace.js',
   'vendor/interact.min.js',
   'vendor/lz-string.min.js',
   'webinterface/config.js',
   'webinterface/toolinfo.js',
   'webinterface/helpers.js',
   'webinterface/handlebars-custom.js',
+  'webinterface/monarch/boogie.js',
+  'webinterface/monarch/smt.js',
+  'webinterface/monarch/automata_script.js',
   'webinterface/tool_interface.js',
   'webinterface/main.js',
 ]
 ---
 
+<!-- Load Monaco Editor loader -->
+<script src="{{ 'js/vendor/monaco/vs/loader.js' | relative_url }}"></script>
+<script>
+  require.config({
+    paths: {
+      vs: "{{ 'js/vendor/monaco/vs' | relative_url }}"
+    }
+  });
+</script>
+
 <div id="editor" class="flex-grow-1 flex-shrink-1"></div>
+
 <div id="messages" class="bg-light border-top top-shaddow p-1">
   <div class="text-end">
-    <span id="move-messages" class="oi oi-collapse-right pr-1 float-right messages-actions close"></span>
+    <span id="move_messages" class="oi oi-collapse-right pr-1 float-right messages-actions close"></span>
   </div>
-  <div id="messages-toasts"></div>
+  <div id="messages_toasts"></div>
 </div>
+
 <div id="persistence_link_modal" class="modal fade" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-xl" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Persistent shareable link for current session.</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content shadow-lg rounded-3">
+      <div class="modal-header bg-primary text-white d-flex justify-content-between">
+        <h5 class="modal-title">
+          <span class="oi oi-link-intact align-middle me-2" style="margin-top: -0.125em"></span>
+          Persistent Shareable Link
+        </h5>
+        <button type="button" class="btn-close ml-auto btn-close-white" data-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <h4>Only tool and code sample.</h4>
-        <div class="input-group mb-3">
-            <input id="persistence_link_small_input" type="text" class="form-control"  aria-label="Session link" readonly>
-          <div class="input-group-append">
-            <button id="copy_persistence_link_small_to_clipboard"
-                    class="btn btn-outline-secondary" type="button"
-                    data-toggle="tooltip" data-placement="top" title="Click to copy link to clipboard.">
-              Copy
-            </button>
+        <div class="container-fluid">
+          <h6>Only tool and code sample</h6>
+          <div class="input-group mb-3">
+            <input id="persistence_link_small_input" type="text" class="form-control" aria-label="Session link" readonly>
+            <div class="input-group-append">
+              <button id="copy_persistence_link_small_to_clipboard" class="btn btn-primary rounded-right" type="button" data-toggle="tooltip" data-placement="top" title="Click to copy link to clipboard.">
+                Copy
+              </button>
+            </div>
           </div>
-        </div>
-        <p>This link is short and includes the tool and the used code example. Changes to the code will be
-          lost. Default settings will be used.</p>
-        <h4>All settings and code.</h4>
-        <div class="input-group mb-3">
-            <input id="persistence_link_input" type="text" class="form-control"  aria-label="Session link" readonly>
-          <div class="input-group-append">
-            <button id="copy_persistence_link_to_clipboard"
-                    class="btn btn-outline-secondary" type="button"
-                    data-toggle="tooltip" data-placement="top" title="Click to copy link to clipboard.">
-              Copy
-            </button>
+
+          <p class="text-muted">
+            Short link which includes selected tool and used code sample. Changes to code are lost. Default settings will be used.
+          </p>
+
+          <h6>All settings and code</h6>
+          <div class="input-group mb-3">
+            <input id="persistence_link_input" type="text" class="form-control" aria-label="Session link" readonly>
+            <div class="input-group-append">
+              <button id="copy_persistence_link_to_clipboard" class="btn btn-primary rounded-right" type="button" data-toggle="tooltip" data-placement="top" title="Click to copy link to clipboard.">
+                Copy
+              </button>
+            </div>
           </div>
+          <p class="text-muted">
+            Link which includes the current tool, modified code and used settings.
+          </p>
         </div>
-        <p>Use this link if you want to preserve all your code and changes to settings. Use this link to share a
-          hand crafted example.</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
 </div>
 
+<div id="settings_modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content shadow-lg rounded-3">
+      <div class="modal-header bg-primary text-white d-flex justify-content-between">
+        <h5 class="modal-title"><span class="oi oi-cog align-middle me-2" style="margin-top: -0.125em"></span>Settings</h5>
+        <button type="button" class="btn-close ml-auto btn-close-white" data-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div id="settings_search_wrapper" class="border-bottom p-2">
+          <input type="text" id="settings_search" class="form-control" placeholder="Search settings...">
+        </div>
+
+        <div class="p-3" style="max-height: 60vh; overflow-y: auto;">
+          <div id="settings_modal_body" class="container-fluid">
+            <!-- Settings will be dynamically injected -->
+          </div>
+          <div id="settings_empty_message" class="text-center text-muted py-5 d-none">
+            <em>No settings available</em>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="toggle_expert_settings">
+          <label class="form-check-label" for="toggle_expert_settings">Show expert settings</label>
+        </div>
+        <button type="button" class="btn btn-primary" id="save_settings_btn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% raw %}
+<script id="settings_template" type="text/x-handlebars-template">
+  {{#each settings}}
+    {{#ifCond level '!=' "EXPERIMENTAL"}}
+      <div class="setting-entry mb-3 {{#ifCond visible '===' false}}d-none{{/ifCond}}{{#ifCond level '===' 'EXPERT'}} d-none{{/ifCond}}" data-level="{{level}}" data-visible="{{visible}}">
+
+        {{#ifCond type '===' "bool"}}
+          <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" id="{{id}}" {{#if default}}checked{{/if}}>
+            <label class="form-check-label" for="{{id}}"><span class="setting-label-text">{{name}}</span>
+              {{#ifCond level '===' "EXPERT"}}<span class="badge bg-danger ms-1">Expert</span>{{/ifCond}}
+            </label>
+          </div>
+        {{/ifCond}}
+
+        {{#ifCond type '===' "int"}}
+          <div class="form-group mb-3">
+            <label for="{{id}}"><span class="setting-label-text">{{name}}</span>
+              {{#ifCond level '===' "EXPERT"}}<span class="badge bg-danger ms-1">Expert</span>{{/ifCond}}
+            </label>
+            <input type="number" class="form-control" id="{{id}}" value="{{default}}">
+          </div>
+        {{/ifCond}}
+
+        {{#ifCond type '===' "real"}}
+          <div class="form-group mb-3">
+            <label for="{{id}}"><span class="setting-label-text">{{name}}</span>
+              {{#ifCond level '===' "EXPERT"}}<span class="badge bg-danger ms-1">Expert</span>{{/ifCond}}
+            </label>
+            <input type="number" step="0.01" class="form-control" id="{{id}}" value="{{default}}">
+          </div>
+        {{/ifCond}}
+
+        {{#ifCond type '===' "string"}}
+          {{#if options}}
+            <div class="form-group mb-3">
+              <label for="{{id}}"><span class="setting-label-text">{{name}}</span>
+                {{#ifCond level '===' "EXPERT"}}<span class="badge bg-danger ms-1">Expert</span>{{/ifCond}}
+              </label>
+              <select class="form-control" id="{{id}}">
+                {{#each options}}
+                  <option {{#ifCond this '===' ../default}}selected{{/ifCond}}>{{this}}</option>
+                {{/each}}
+              </select>
+            </div>
+          {{else}}
+            <div class="form-group mb-3">
+              <label for="{{id}}"><span class="setting-label-text">{{name}}</span>
+                {{#ifCond level '===' "EXPERT"}}<span class="badge bg-danger ms-1">Expert</span>{{/ifCond}}
+              </label>
+              <input type="text" class="form-control" id="{{id}}" value="{{default}}">
+            </div>
+          {{/if}}
+        {{/ifCond}}
+
+      </div>
+    {{/ifCond}}
+  {{/each}}
+</script>
+{% endraw %}
+
 {% comment %} "raw" tag is needed because handlebar syntax is similar to liquid. {% endcomment %}
 {% raw %}
-<script id="editor-message" type="text/x-handlebars-template">
+<script id="editor_message" type="text/x-handlebars-template">
   <div class="toast  {{toast_classes}}" data-type="{{logLvl}}" data-start-line="{{startLNr}}"
        data-end-line="{{endLNr}}" data-start-col="{{startCol}}" data-end-col="{{endCol}}"
        role="alert" aria-live="assertive" aria-atomic="true" data-autohide="false">
@@ -94,7 +204,7 @@ js: [
       <div class="row">
         <div class="number">
           <span>
-  			{{#ifCond startLNr '!==' -1}}{{startLNr}}{{/ifCond}}
+  			    {{#ifCond startLNr '!==' -1}}{{startLNr}}{{/ifCond}}
             {{#ifCond startLNr '===' -1}}-{{/ifCond}}
   		  </span>
         </div>
@@ -116,15 +226,15 @@ js: [
 
 {% comment %} "raw" tag is needed because handlebar syntax is similar to liquid. {% endcomment %}
 {% raw %}
-<script id="navbar-template" type="text/x-handlebars-template">
-  <ul class="navbar-nav">
+<script id="navbar_template" type="text/x-handlebars-template">
+  <ul class="navbar-nav pt-2">
     <li class="nav-item dropdown" style="margin-right: 10px;">
       <a class="nav-link dropdown-toggle" href="#" id="navbar_language_select_dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Choose Language
+        Select Language
       </a>
       <div class="dropdown-menu">
         {{#each tool.languages}}
-          <a class="dropdown-item language-selection" href="#"  id="{{this.worker}}" data-language="{{this.language}}">{{this.language}}</a>
+          <a class="dropdown-item language-selection" href="#"  id="{{this.worker}}" data-language="{{this.language}}">{{this.display}}</a>
         {{~/each}}
       </div>
     </li>
@@ -135,35 +245,26 @@ js: [
       <div id="code_sample_dropdown_menu" class="dropdown-menu dropdown-menu-right">
       </div>
     </li>
-    <li class="nav-item dropdown" style="margin-right: 10px;">
-      <a class="nav-link dropdown-toggle" href="#" id="navbar_settings_select_dropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Settings
-		<span class="oi oi-cog"></span>
+    <li class="nav-item" style="margin-right: 10px;">
+      <a class="nav-link" href="#" id="navbar_settings_button" data-toggle="modal" data-target="#settings_modal">
+        <span class="oi oi-cog align-middle" style="margin-top: -0.125em"></span> Settings
       </a>
-      <div class="dropdown-menu dropdown-menu-right">
-        <h6 id="settings_header" class="dropdown-header">Settings</h6>
-        <div id="settings_dropdown_menu" class="px-4 pt-3">
-      </div>
     </li>
-	<li class="nav-item" style="margin-right: 10px;">
+	  <li class="nav-item" style="margin-right: 10px;">
       <a class="nav-link" href="#" id="navbar_execute_interface">
-		Execute
-        <span class="oi oi-play-circle"></span>
+        <span class="oi oi-play-circle align-middle" style="margin-top: -0.125em"></span> Execute
       </a>
     </li>
+      <li class="nav-item me-2 d-none" id="navbar_cancel_item">
+        <a class="nav-link" href="#" id="navbar_cancel_interface">
+          Cancel Execute
+        </a>
+      </li>
     <li class="nav-item" style="margin-right: 8px;">
-      <a class="nav-link hidden" href="#" id="navbar_cancel_interface">
-        Cancel Execute
-		<span class="oi oi-circle-x"></span>
+      <a id="create_persistence_link" class="nav-link" href="#">
+        <span class="oi oi-share align-middle" style="margin-top: -0.125em"></span> Share
       </a>
     </li>
-	<li class="nav-item" style="margin-right: 8px;">
-    	<a id="create_persistence_link" class="nav-link" href="#">
-			Share
-			<span class="oi oi-share"></span>
-		</a>
-		
-	</li>
   </ul>
 </script>
 {% endraw %}

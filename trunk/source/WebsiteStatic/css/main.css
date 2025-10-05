@@ -31,7 +31,6 @@ body {
  *
  * Customize the background color to match your design.
  */
-
 ::-moz-selection {
   background: #b3d4fc;
   text-shadow: none;
@@ -45,7 +44,6 @@ body {
 /*
  * A better looking default horizontal rule
  */
-
 hr {
   display: block;
   height: 1px;
@@ -60,7 +58,6 @@ hr {
  * images, videos and the bottom of their containers:
  * https://github.com/h5bp/html5-boilerplate/issues/440
  */
-
 audio,
 canvas,
 iframe,
@@ -73,7 +70,6 @@ video {
 /*
  * Remove default fieldset styles.
  */
-
 fieldset {
   border: 0;
   margin: 0;
@@ -83,20 +79,51 @@ fieldset {
 /*
  * Allow only vertical resizing of textareas.
  */
-
 textarea {
   resize: vertical;
 }
 
+.btn {
+  border-radius: 0.25rem;
+}
+
+.rounded-right {
+  border-top-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
 /* ==========================================================================
-   Browser Upgrade Prompt
+   Programming language brand colors
    ========================================================================== */
 
-.browserupgrade {
-  margin: 0.2em 0;
-  background: #ccc;
-  color: #000;
-  padding: 0.2em 0;
+/* fallback for unknown language */
+.badge {
+  background-color: #6e787d;
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 0.4em 0.65em;
+}
+
+.badge-c {
+  background-color: #6496c8;
+  color: #fff;
+}
+
+.badge-boogie {
+  background-color: #c80fa0;
+  color: #fff;
+}
+
+.badge-automata-script {
+  background-color: #e6503c;
+  color: #fff;
+}
+
+.badge-smt {
+  background-color: #28a046;
+  color: #fff;
 }
 
 /* ==========================================================================
@@ -105,10 +132,15 @@ textarea {
 
 .navbar {
   z-index: 5;
-  display: flex;
-  flex-wrap: wrap;
-  padding: 4px;     /* erlaubt Zeilenumbruch */
-  justify-content: flex-start; /* linke Ausrichtung */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  vertical-align: middle;
+  margin-right: 0.4rem;
 }
 
 .nav-link,
@@ -116,10 +148,17 @@ textarea {
   text-transform: capitalize;
 }
 
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 20rem); /* 5 cards per row, can be adjusted if tools get added/removed */
+  max-width: calc(20rem * 6);
+  gap: 1rem;
+}
+
 .tool-card {
-  min-width: 18rem;
-  max-width: 18rem;
-  margin-right: 3rem;
+  min-width: 20rem;
+  max-width: 20rem;
+  min-height: 16rem;
 }
 
 [data-toggle][aria-expanded=false] .text-expanded {
@@ -130,44 +169,62 @@ textarea {
 }
 
 /* ==========================================================================
+   Editor classes
+   ========================================================================== */
+
+#content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#editor {
+  flex: 1 1 auto;
+  min-height: 50px;
+  min-width: 50px;
+  overflow: hidden;
+}
+
+#editor.disable {
+  position: relative;
+}
+
+#editor.disable::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.05) 0px,
+    rgba(0, 0, 0, 0.05) 40px,
+    rgba(255, 255, 255, 0.05) 40px,
+    rgba(255, 255, 255, 0.05) 80px
+  );
+}
+
+/* ==========================================================================
    Helper classes
    ========================================================================== */
 
 /*
  * Hide visually and from screen readers
  */
-
 .disable {
-	pointer-events: none;
-	opacity: 0.5;
-	cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.hidden {
-	display: none !important;
+.setting-unsaved {
+  font-style: italic;
+  color: red;
 }
 
-.text-bg-info-light {
-   background-color: #73c9eb !important; /* Helleres Bootstrap-Info-Blau */
-   color: #070808 !important; /* Dunklerer Text für Kontrast */
- }
- 
- .text-bg-success-light {
-    background-color: #76f250 !important; /* Helleres Bootstrap grün */
-    color: #070808 !important; /* Dunklerer Text für Kontrast */
-  }
- .text-bg-warning-light {
-     background-color: #f5aa5f !important; /* Helleres Bootstrap orange*/
-     color: #070808 !important; /* Dunklerer Text für Kontrast */
-   }
- .text-bg-danger-light {
-      background-color: #f5776e !important; /* Helleres Bootstrap rot */
-      color: #070808 !important; /* Dunklerer Text für Kontrast */
-    }
- .text-bg-secondary-light {
-	   background-color: #73c9eb !important; /* Helleres Bootstrap grau*/
-	   color: #070808 !important; /* Dunklerer Text für Kontrast */
-	 }
+.setting-highlight {
+  background-color: yellow;
+  font-weight: bold;
+}
+
 /*
  * Break text into multilines.
  */
