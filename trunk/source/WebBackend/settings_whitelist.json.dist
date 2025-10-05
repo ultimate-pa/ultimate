@@ -40,7 +40,7 @@
 		"Use constant arrays",
 		"Check division by zero",
 		"Overapproximate operations on floating types",
-		"Check for the main procedure if all allocated memory was freed",
+		"Check memory neutrality",
 		"Check absence of signed integer overflows",
 		"Use bitvectors instead of ints",
 		"Memory model",
