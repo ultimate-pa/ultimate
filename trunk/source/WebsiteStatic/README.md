@@ -66,12 +66,12 @@ WebsiteStatic/
 
 We use [bootstrap](https://getbootstrap.com/) as frontend toolkit (i.e., for styling etc).
 
-In order to modify bootstrap styling, download a node package manager (for Windows, use <https://github.com/coreybutler/nvm-windows/releases>) and run `npm install` in `bootstrap_dev/`.
+To modify bootstrap styling, download a node package manager (for Windows, use <https://github.com/coreybutler/nvm-windows/releases>) and run `npm install` in `bootstrap_dev/`.
 
 Edit [bootstrap_dev/scss/main.scss](bootstrap_dev/scss/main.scss) and then run `npm run css` to apply changes.
 
 ### 1.3 JavaScript Dependencies
-* [ace-editor](https://ace.c9.io/)
+* [Monaco v0.52.2](https://microsoft.github.io/monaco-editor/)
 * [jquery](https://jquery.com/)
 * [handlebars](https://handlebarsjs.com/)
 * [bootstrap](https://getbootstrap.com/)
@@ -86,7 +86,7 @@ To add a new tool to the website, follow these steps:
   After recompilation (since you edited `_config.yml`, you must restart `jekyll`) the tool should now show up on the website.
 
 ### 2.1 Adding your tool to the Web Interface
-- In order to have support for your tool in the web interface, you must declare at least one entry in the `languages` array of the tool page's YAML frontmatter.
+- To have support for your tool in the web interface, you must declare at least one entry in the `languages` array of the tool page's YAML frontmatter.
   Specify the supported input language, and a unique name for the worker (see `Web Interface > Glossary`), typically by combining language and tool name.
 - For each worker, add a toolchain XML (with the same name as the worker) in `webinterface/workers/`.
 - In `scripts/webinterface/build_all_settings.py`, enter your worker into the `WORKER_SETTINGS` dictionary, and specify the base settings file that should be used.
@@ -103,16 +103,16 @@ To add a new tool to the website, follow these steps:
 - **Tool**: An Ultimate tool, for example "Ultimate Automizer".
   * Defined by a description and metadata in `_tools/<toolname>.html`
   * Assigned to a unique `tool_id`.
-  * May be runnable via the web interface.
+  * Runnable via the web interface.
 - **Worker**: Consists of a selected tool and a selected language.
   * Each tool can have multiple workers. They are listed in the `languages` array of the tool definition.
-  * Each worker needs a toolchain XML in [ultimate_toolchain_xmls](config/ultimate_toolchain_xmls) named `<id>.xml`
+  * Each worker needs a toolchain XML in [webinterface/workers](webinterface/workers) named `<id>.xml`
   * You must specify a settings file for each worker in the `WORKER_SETTINGS` dictionary in `scripts/webinterface/build_all_settings.py`.
 
 ### 3.2 Configuration and Setup
-All configuration is set in `config/config.js`.
-- Copy [config/config.dist.js](config/config.dist.js) to `config/config.js`.
-- Edit `config/config.js` to your needs. The `config/config.dist.js` file is commented to guide the configuration.
+All configuration is set in `js/webinterface/config.js`.
+- Copy [js/webinterface/config.dist.js](js/webinterface/config.js) to `js/webinterface/config.js`.
+- Edit `js/webinterface/config.js` to your needs. The `js/webinterface/config.dist.js` file is commented to guide the configuration.
 
 ### 3.3 Code examples
 The code examples for a specific worker are defined in the `tool_examples_map` dictionary of `./scripts/webinterface/copy_examples.py`.

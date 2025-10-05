@@ -14,91 +14,75 @@ js: [ "redirect_legacy_urls.js" ]
 
 
 <div class="row" id="tools">
-  <h3>Tools</h3>
-  <div class="col-12 mb-4">
-    <div class="card-group">
-      {% for tool in site.tools %}
-      <div class="card border-secondary shadow mb-3 tool-card border-start">
+  <h2>Tools</h2>
+  <div class="tools-grid mb-4">
+    {% for tool in site.tools %}
+      <div class="card border-secondary shadow-sm tool-card border-start">
         <div class="card-header">
-          <a class="link-primary" style="color: black !important;" href="{{ tool.url | relative_url }}">{{tool.title}}</a>
+          <a class="link-primary fw-semibold" style="font-size:1.1rem;"  href="{{ tool.url | relative_url }}">{{tool.title}}</a>
           <span class="float-end">
-          {% for lang in tool.languages %}
-		  <span class="badge rounded-pill
-		    {% if lang.language == 'C' %} text-bg-danger-light
-		    {% elsif lang.language == 'Boogie' %} text-bg-warning-light
-			{% elsif lang.language == 'Smt' %} text-bg-success-light
-			{% elsif lang.language == 'automata_script' %} text-bg-info-light
-		    {% else %} text-bg-secondary
-		    {% endif %}
-		  ">{{lang.language}}</span>
-          {% endfor %}</span></div>
-        <div class="card-body text-black-80">
+            {% for lang in tool.languages %}
+              <span class="badge badge-{{ lang.language | downcase | replace: '_', '-' }}">
+                {{ lang.display }}
+              </span>
+            {% endfor %}
+          </span>
+        </div>
+        <div class="card-body text-body">
           <p class="card-text text-justify">{{tool.description}}</p>
         </div>
-        <div class="card-footer text-right">
-          <a href="{{ tool.url | relative_url }}" class="btn btn-secondary rounded" style="border-radius: 6px !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); filter: brightness(110%);">Read more</a>
-          <a href="{{ 'webinterface/?tool=' | append: tool.tool_id | relative_url }}" class="btn btn-secondary rounded" style="border-radius: 6px !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); filter: brightness(110%);">Try online</a>
+        <div class="card-footer">
+          <a role="button" href="{{ tool.url | relative_url }}" class="btn btn-dark text-white me-2">Read more</a>
+          <a role="button" href="{{ 'webinterface/?tool=' | append: tool.tool_id | relative_url }}" class="btn btn-dark text-white">Try online</a>
         </div>
       </div>
-      {% endfor %}
-    </div>
+    {% endfor %}
   </div>
 </div>
 
 
 <div class="row" id="awards">
-  <h3><a href="{{ 'awards/' | relative_url }}">Awards</a></h3>
+  <h2><a href="{{ 'awards/' | relative_url }}">Awards</a></h2>
   <p class="col-12 mb-4">
-    ULTIMATE tools have won many prizes at competitions
-    like the <a href="https://sv-comp.sosy-lab.org/">International  Competition on Software Verification (SV-COMP)</a>
+    <span style="font-variant:small-caps">Ultimate</span> tools have won many prizes at competitions
+    like the <a href="https://sv-comp.sosy-lab.org/">International Competition on Software Verification (SV-COMP)</a>
     or the <a href="https://termination-portal.org/wiki/Termination_Portal">Termination Competition</a>.
-    ULTIMATE Automizer has won the <em>Overall</em> ranking of SV-COMP four times (2016, 2017, 2023 and 2024).
+    <span style="font-variant:small-caps">Ultimate</span> Automizer has won the <em>Overall</em> ranking of SV-COMP four times (2016, 2017, 2023 and 2024).
     Find more information <a href="{{ 'awards/' | relative_url }}">here</a>.
   </p>
 </div>
 
 
 <div class="row" id="development">
-  <h3>Development</h3>
-  <div class="col-12">
-    <p>
-      The <span style="font-variant:small-caps">Ultimate</span> <a href="https://github.com/ultimate-pa/ultimate">source code and some documentation</a> is available at GitHub.
-      <br />
-      The core of <span style="font-variant:small-caps">Ultimate</span> and many plugins are subject to the LGPLv3 license with a linking exception to Eclipse RCP and Eclipse CDT.
-    </p>
-  </div>
+  <h2>Development</h2>
+  <p class="col-12 mb-4">
+    The <span style="font-variant:small-caps">Ultimate</span> <a href="https://github.com/ultimate-pa/ultimate">source code and some documentation</a> is available at GitHub.
+    <br />
+    The core of <span style="font-variant:small-caps">Ultimate</span> and many plugins are subject to the LGPLv3 license with a linking exception to Eclipse RCP and Eclipse CDT.
+  </p>
 </div>
 
 
 <div class="row" id="developers">
-  <h3><a href="{{ 'developers/' | relative_url }}">Developers</a></h3>
-  <div class="col-12">
-    <p>
+  <h2><a href="{{ 'developers/' | relative_url }}">Developers</a></h2>
+  <div class="col-12 mb-4">
+
+    <p class="mb-2">
       The current main developers of <span style="font-variant:small-caps">Ultimate</span> are:
-
-      <br />
-      <br /> <a href="https://swt.informatik.uni-freiburg.de/staff/dietsch">Daniel Dietsch</a>
-      <br /> <a href="https://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a>
-      <br /> <a href="https://swt.informatik.uni-freiburg.de/staff/schuessele">Frank Schüssele</a>
-      <br /> <a href="https://swt.informatik.uni-freiburg.de/staff/heizmann">Matthias Heizmann</a>
-      <br />
-      <br />
-
-      <a name="developers"></a>Most <span style="font-variant:small-caps">Ultimate</span> developers are students and researchers in the <a href="https://swt.informatik.uni-freiburg.de/">software engineering group of Andreas Podelski</a> at the <a href="https://www.uni-freiburg.de/">University of Freiburg</a>.
-      Current and former developers of <span style="font-variant:small-caps">Ultimate</span> can be found <a href="{{ 'developers/' | relative_url }}">here</a>.
     </p>
-  </div>
-</div>
 
+    <ul class="list-unstyled mb-3">
+      <li><a href="https://swt.informatik.uni-freiburg.de/staff/dietsch">Daniel Dietsch</a></li>
+      <li><a href="https://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a></li>
+      <li><a href="https://swt.informatik.uni-freiburg.de/staff/schuessele">Frank Schüssele</a></li>
+      <li><a href="https://swt.informatik.uni-freiburg.de/staff/heizmann">Matthias Heizmann</a></li>
+    </ul>
 
-<div class="row" id="dependencies">
-  <h3>Development</h3>
-  <div class="col-12">
     <p>
-      The <span style="font-variant:small-caps">Ultimate</span> <a href="https://github.com/ultimate-pa/ultimate">source code and some documentation</a> is available at GitHub.
-
-      <br />
-      The core of <span style="font-variant:small-caps">Ultimate</span> and many plugins are subject to the LGPLv3 license with a linking exception to Eclipse RCP and Eclipse CDT.
+      Most <span style="font-variant:small-caps">Ultimate</span> developers are students and researchers in the
+      <a href="https://swt.informatik.uni-freiburg.de/">Software Engineering group of Andreas Podelski</a>
+      at the <a href="https://www.uni-freiburg.de/">University of Freiburg</a>.
+      Current and former developers can be found <a href="{{ 'developers/' | relative_url }}">here</a>.
     </p>
   </div>
 </div>
