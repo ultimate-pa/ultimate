@@ -65,8 +65,8 @@ public class BitvectorFloatingPointHandler implements IFloatingPointHandler {
 
 	private Expression constructSmtFloatClassificationFunction(final ILocation loc, final String smtFunctionName,
 			final Expression argument, final CPrimitive argumentCType) {
-		mTranslation.declareFloatingPointFunction(loc, smtFunctionName, true, false, argumentCType,
-				new CPrimitive(CPrimitives.BOOL));
+		mTranslation.declareFloatingPointFunction(loc, smtFunctionName, true, false, new CPrimitive(CPrimitives.BOOL),
+				argumentCType);
 		return mTranslation.constructCallToSmtPredicate(loc, smtFunctionName, argumentCType,
 				new Expression[] { argument });
 	}
