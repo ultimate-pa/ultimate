@@ -32,6 +32,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Implementation of {@link IFloatingPointHandler} that constructs calls to SMT-defined Boogie functions, which refer to
+ * built-in functions in the SMT theory of floating-point bitvectors (and therefore is coupled to
+ * {@link BitvectorTranslation}).
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class BitvectorFloatingPointHandler implements IFloatingPointHandler {
 	private final BitvectorTranslation mTranslation;
 

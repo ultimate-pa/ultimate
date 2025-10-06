@@ -31,6 +31,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Implementation of {@link IFloatingPointHandler} that crashes whenever any method is invoked, which can be used when
+ * floating-point operations are not supported (e.g., in {@link IntegerTranslation}).
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class UnsupportedFloatingPointHandler implements IFloatingPointHandler {
 	private static final String NOT_IMPLEMENTED = "Operation is not yet implemented in non-bitprecise translation.";
 
