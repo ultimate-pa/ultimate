@@ -611,7 +611,7 @@ public class CHandler {
 
 	private List<ILibraryModel> getLibraryModels() {
 		final FunctionModelHelper helper = new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation,
-				mMemoryHandler, mTypeSizes, mTypeHandler, mSettings.getCheckMemoryNeutrality().contains("main"),
+				mMemoryHandler, mTypeSizes, mTypeHandler, mSettings.getFunctionsCheckedForMemoryNeutrality().contains("main"),
 				mSettings.isSvcompMemtrackCompatibilityMode());
 		return List.of(new AssertLibraryModel(helper, mExprResultTransformer, mSettings.checkAssertions()),
 				new AtomicLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
