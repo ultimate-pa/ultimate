@@ -75,8 +75,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Specify a comma-separated list of functions to be checked for memory neutrality. A function is memory "
 					+ "neutral if all dynamically allocated memory is freed before it returns. Note that a violation "
 					+ "of memory neutrality does not necessarily indicate a memory leak, as the caller may still "
-					+ "deallocate the memory. For the main function, achieving memory neutrality is generally "
-					+ "considered good practice but is not required by the C standard. The mem-cleanup property in the "
+					+ "deallocate the memory. Even for the main function a violation of memory neutrality is not "
+					+ "considered undefined behavior according to the C standard. The mem-cleanup property at the "
 					+ "Software Verification Competition (SV-COMP) corresponds to checking memory neutrality of main. "
 					+ "Warning: this check is computationally expensive and may often lead to timeouts.";
 	public static final String LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE = "SV-COMP memtrack compatibility mode";
