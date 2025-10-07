@@ -213,7 +213,7 @@ public class ProcedureManager {
 
 			final Specification[] newSpecWithExtraEnsuresClauses;
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
-					&& mSettings.getCheckMemoryNeutrality().contains(procedureName)) {
+					&& mSettings.getFunctionsCheckedForMemoryNeutrality().contains(procedureName)) {
 				// add a specification to check for memory neutrality (i.e., if all dynamically allocated memory is
 				// freed)
 				// TODO Matthias 2025-10-03: It might be confusing for users to check the property only of the memory

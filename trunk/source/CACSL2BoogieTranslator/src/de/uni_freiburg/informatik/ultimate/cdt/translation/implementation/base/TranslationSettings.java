@@ -67,7 +67,7 @@ public final class TranslationSettings {
 	/**
 	 * List of functions for which we check memory-neutrality.
 	 */
-	private final Set<String> mCheckMemoryNeutrality;
+	private final Set<String> mFunctionsCheckedForMemoryNeutrality;
 	private final MemoryModel mMemoryModelPreference;
 	private final boolean mFpToIeeeBvExtension;
 	private final boolean mSmtBoolArraysWorkaround;
@@ -109,7 +109,7 @@ public final class TranslationSettings {
 					ups.getString(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_NEUTRALITY);
 			// Replace each sequence of whitespaces by the empty string
 			final String withoutWhitespaces = commaSeparatedSequence.replaceAll("\\s+", "");
-			mCheckMemoryNeutrality = Set.of(withoutWhitespaces.split(","));
+			mFunctionsCheckedForMemoryNeutrality = Set.of(withoutWhitespaces.split(","));
 		}
 		mMemoryModelPreference = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MemoryModel.class);
 		mFpToIeeeBvExtension = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_TO_IEEE_BV_EXTENSION);
@@ -148,7 +148,7 @@ public final class TranslationSettings {
 			final CheckMode checkPointerSubtractionAndComparisonValidity, final MemoryModel memoryModelPreference,
 			final boolean fpToIeeeBvExtension, final boolean smtBoolArraysWorkaround, final String entryFunction,
 			final boolean checkErrorFunction, final boolean checkAssertions, final boolean checkAcsl,
-			final boolean isSvcompMemtrackCompatibilityMode, final Set<String> checkMemoryNeutrality,
+			final boolean isSvcompMemtrackCompatibilityMode, final Set<String> functionsCheckedForMemoryNeutrality,
 			final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
 			final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
@@ -172,7 +172,7 @@ public final class TranslationSettings {
 		mCheckAssertions = checkAssertions;
 		mCheckAcsl = checkAcsl;
 		mIsSvcompMemtrackCompatibilityMode = isSvcompMemtrackCompatibilityMode;
-		mCheckMemoryNeutrality = checkMemoryNeutrality;
+		mFunctionsCheckedForMemoryNeutrality = functionsCheckedForMemoryNeutrality;
 		mCheckSignedIntegerBounds = checkSignedIntegerBounds;
 		mCheckDataRaces = checkDataRaces;
 		mUseConstantArrays = useConstantArrays;
@@ -265,8 +265,8 @@ public final class TranslationSettings {
 		return mIsSvcompMemtrackCompatibilityMode;
 	}
 
-	public Set<String> getCheckMemoryNeutrality() {
-		return mCheckMemoryNeutrality;
+	public Set<String> getFunctionsCheckedForMemoryNeutrality() {
+		return mFunctionsCheckedForMemoryNeutrality;
 	}
 
 	public CheckMode checkSignedIntegerBounds() {
@@ -319,7 +319,7 @@ public final class TranslationSettings {
 				mPointerIntegerConversion, mCheckIfFreedPointerIsValid, mCheckPointerDerefValidity,
 				mCheckPointerSubtractionAndComparisonValidity, memoryModel, mFpToIeeeBvExtension,
 				mSmtBoolArraysWorkaround, mEntryFunction, mCheckErrorFunction, mCheckAssertions, mCheckAcsl,
-				mIsSvcompMemtrackCompatibilityMode, mCheckMemoryNeutrality, mCheckSignedIntegerBounds, mCheckDataRaces,
+				mIsSvcompMemtrackCompatibilityMode, mFunctionsCheckedForMemoryNeutrality, mCheckSignedIntegerBounds, mCheckDataRaces,
 				mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional);
