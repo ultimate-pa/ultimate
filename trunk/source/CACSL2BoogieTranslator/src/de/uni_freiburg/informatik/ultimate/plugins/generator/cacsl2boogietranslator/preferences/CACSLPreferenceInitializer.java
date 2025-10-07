@@ -70,8 +70,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Check if the annotations in ACSL (assert, loop invariant, function contracts) are valid. "
 					+ "In addition, ghost code is also considered.";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
-	// public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
-	// "Check for the main procedure if all allocated memory was freed";
 	public static final String LABEL_CHECK_MEMORY_NEUTRALITY = "Check memory neutrality";
 	public static final String DESC_CHECK_MEMORY_NEUTRALITY =
 			"Specify a comma-separated list of functions to be checked for memory neutrality. A function is memory "
@@ -138,7 +136,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR16 = "sizeof char16";
 	// public static final String LABEL_EXPLICIT_TYPESIZE_CHAR32 = "sizeof char32";
 	public static final String LABEL_SIGNEDNESS_CHAR = "signedness of char";
-	// public static final String LABEL_CHECK_ALLOCATION_PURITY = "Check allocation purity";
 	public static final String LABEL_USE_CONSTANT_ARRAYS = "Use constant arrays";
 	private static final String DESC_USE_CONSTANT_ARRAYS =
 			"Use SMT constant arrays for default initialization of variables.";
