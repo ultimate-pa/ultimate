@@ -560,8 +560,7 @@ function getExecuteSettings() {
   };
 
   const userSettings = getUserFrontendSettings();
-  settings.user_settings = JSON.stringify({ userSettings });
-
+  settings.user_settings = JSON.stringify({ user_settings: userSettings });
   return settings;
 }
 
