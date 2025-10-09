@@ -191,10 +191,10 @@ js: [
     <div class="toast-body">
       <div class="row">
         <div class="number">
-          <span>Line</span>
+          <span>Start</span>
         </div>
         <div class="number">
-          <span>Col</span>
+          <span>End</span>
         </div>
         <div class="col">
           <span>Description</span>
@@ -203,16 +203,10 @@ js: [
       <hr>
       <div class="row">
         <div class="number">
-          <span>
-  			    {{#ifCond startLNr '!==' -1}}{{startLNr}}{{/ifCond}}
-            {{#ifCond startLNr '===' -1}}-{{/ifCond}}
-  		  </span>
+          <span>{{~#ifCond startLNr '!==' -1~}}{{startLNr}}{{~#ifCond startCol '!==' -1~}}:{{startCol}}{{~/ifCond}}{{~/ifCond}}{{~#ifCond startLNr '===' -1~}}-{{~/ifCond}}</span>
         </div>
         <div class="number">
-          <span>
-            {{#ifCond startCol '!==' -1}}{{startCol}}{{/ifCond}}
-            {{#ifCond startCol '===' -1}}-{{/ifCond}}
-          </span>
+          <span>{{~#ifCond endLNr '!==' -1~}}{{endLNr}}{{~#ifCond endCol '!==' -1~}}:{{endCol}}{{~/ifCond}}{{~/ifCond}}{{~#ifCond endLNr '===' -1~}}-{{~/ifCond}}</span>
         </div>
         <div class="col">
           <pre><code class="text-break break-spaces">{{longDesc}}</code></pre>
