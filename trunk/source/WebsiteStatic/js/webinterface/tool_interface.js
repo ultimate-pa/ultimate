@@ -27,7 +27,7 @@ function initEditor() {
       automaticLayout: true,
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
-      glyphMargin: false,
+      glyphMargin: true,
     });
   });
 }
@@ -424,12 +424,24 @@ function addResultsToEditor(result) {
   }
 
   const markers = [];
+  const decorations = [];
 
   for (let key in result.results) {
     const message = result.results[key];
 
-    // Create marker for underlining
-    markers.push(getMarkerFromMessage(message));
+    // glyph decorations for info level results
+    if (message.logLvl === 'info') {
+      decorations.push({
+        range: new monaco.Range(message.startLNr, 1, message.startLNr, 1),
+        options: {
+          isWholeLine: true,
+          glyphMarginClassName: 'oi oi-info text-info',
+          glyphMarginHoverMessage: { value: message.shortDesc },
+        },
+      });
+    } else { // warnings and errors get underlined instead
+      markers.push(getMarkerFromMessage(message));
+    }
 
     switch (message.logLvl) {
       case 'error':
@@ -449,8 +461,9 @@ function addResultsToEditor(result) {
     messagesContainer.append(editorMessageTemplate(message));
   }
 
-  // Set all markers
+  // Set markers and decorations
   monaco.editor.setModelMarkers(_EDITOR.getModel(), 'owner', markers);
+  _DECORATIONS = _EDITOR.deltaDecorations(_DECORATIONS, decorations);
 
   // Fade in results
   $('#messages').fadeIn(500);
