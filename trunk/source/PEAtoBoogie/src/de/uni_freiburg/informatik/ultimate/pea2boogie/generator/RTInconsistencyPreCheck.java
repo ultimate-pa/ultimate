@@ -221,7 +221,8 @@ public class RTInconsistencyPreCheck {
 	/**
 	 * checks for each chain-link requirement potential singles. This reduces checking later.
 	 *
-	 * @param gets the list mListChainLinkReqs and mChainLinkSingles
+	 * @param gets
+	 *            the list mListChainLinkReqs and mChainLinkSingles
 	 */
 	private void findSinglesForChains() {
 		mLogger.info("Finding potential singles for chain-link requirements, this might take a while...");
@@ -260,8 +261,8 @@ public class RTInconsistencyPreCheck {
 				&& req1.mPenultimatePhase.mBound.equals(req2.mPenultimatePhase.mBound))
 				&& (req1.mPenultimatePhase.mBound == req2.mPenultimatePhase.mBound)) {
 
-			final Term conjunction = SmtUtils.and(mScript, req1.mBeforeMaxPhase.mInvariant,
-					req2.mBeforeMaxPhase.mInvariant);
+			final Term conjunction =
+					SmtUtils.and(mScript, req1.mBeforeMaxPhase.mInvariant, req2.mBeforeMaxPhase.mInvariant);
 			final LBool result = SmtUtils.checkSatTerm(mScript, conjunction);
 			if (result == LBool.UNSAT) {
 
@@ -754,8 +755,8 @@ public class RTInconsistencyPreCheck {
 					nextChain.add(candidate);
 
 					// Remove the two exit conditions we just paired (identity-based removal preserved intentionally)
-					final List<Term> nextExit = new ArrayList<>(
-							exitConditions.size() + candidate.mExitConditions.size() - 2);
+					final List<Term> nextExit =
+							new ArrayList<>(exitConditions.size() + candidate.mExitConditions.size() - 2);
 
 					for (final Term ec : exitConditions) {
 						if (ec != exitA) {
@@ -771,8 +772,8 @@ public class RTInconsistencyPreCheck {
 					// Remaining candidates to the right of i
 					final int nextIndex = i + 1;
 					if (nextIndex < remainingChainLinks.size()) {
-						final List<ReqsWithAttributes> tail = new ArrayList<>(
-								remainingChainLinks.subList(nextIndex, remainingChainLinks.size()));
+						final List<ReqsWithAttributes> tail =
+								new ArrayList<>(remainingChainLinks.subList(nextIndex, remainingChainLinks.size()));
 						addChainLinkRecursive(nextChain, depth, nextExit, tail);
 					}
 				}
@@ -874,8 +875,8 @@ public class RTInconsistencyPreCheck {
 				chainLinkRtiFoundCheck(chainLinkRes, newUsedSingles);
 			} else {
 
-				final List<ReqsWithAttributes> tail = new ArrayList<>(
-						potentialSingles.subList(i + 1, potentialSingles.size()));
+				final List<ReqsWithAttributes> tail =
+						new ArrayList<>(potentialSingles.subList(i + 1, potentialSingles.size()));
 
 				fillWithSinglesRecursive(tail, chainLinkRes, reducedExitConditions, newUsedSingles);
 			}
@@ -977,8 +978,8 @@ public class RTInconsistencyPreCheck {
 				final String k1 = a.getName();
 				final String k2 = b.getName();
 
-				final List<ReqsWithAttributes> canonicalPair = (k1.compareTo(k2) <= 0) ? java.util.List.of(a, b)
-						: java.util.List.of(b, a);
+				final List<ReqsWithAttributes> canonicalPair =
+						(k1.compareTo(k2) <= 0) ? java.util.List.of(a, b) : java.util.List.of(b, a);
 
 				if (mRTICombinations.contains(canonicalPair)) {
 					continue; // already checked/recorded this combination
@@ -1157,13 +1158,18 @@ public class RTInconsistencyPreCheck {
 				// Chain-link classification and variable index
 				// --------------------------
 
-				final List<Term> seepInvariants = new ArrayList<>();
-				seepInvariants.add(mCddToSmt.toSmt(phases[n - 2].getInvariant()));
+				// final List<Term> seepInvariants = new ArrayList<>();
+				// seepInvariants.add(mCddToSmt.toSmt(phases[n-2].getInvariant()));
+				final record SeepInvariant(DCPhase maxPhase, Term invariant) {
+				}
+				final List<SeepInvariant> seepInvariants = new ArrayList<>();
+				seepInvariants.add(new SeepInvariant(n - 3 >= 0 ? phases[n - 3] : null,
+						mCddToSmt.toSmt(phases[n - 2].getInvariant())));
 
 				for (int i = n - 3; i >= 0; i--) {
 					final DCPhase phase = phases[i];
 					final Term term = mCddToSmt.toSmt(phases[i].getInvariant());
-					final Term seepInvariant = SmtUtils.and(mScript, seepInvariants.getLast(), term);
+					final Term seepInvariant = SmtUtils.and(mScript, seepInvariants.getLast().invariant, term);
 
 					// Stop if i is phase 0 and the invariant is true
 					if (i == 0 && phase.getInvariant() == CDD.TRUE) {
@@ -1183,21 +1189,32 @@ public class RTInconsistencyPreCheck {
 
 					// Seeping is possible
 					// Add seep invariant to list if it is unique
-					if (SmtUtils.checkEquivalence(seepInvariant, seepInvariants.getLast(), mScript) != LBool.UNSAT) {
-						seepInvariants.add(seepInvariant);
-					}
+					// if (SmtUtils.checkEquivalence(seepInvariant, seepInvariants.getLast().invariant, mScript) !=
+					// LBool.UNSAT) {
+					// seepInvariants.add(seepInvariant);
+					seepInvariants.add(new SeepInvariant(n - 1 >= 0 ? phases[n - 1] : null, seepInvariant));
+					// }
 				}
 
 				// Compute a list of exit conditions related to seeping
 				for (int i = 1; i < seepInvariants.size(); i++) {
-					final Term negation = SmtUtils.not(mScript, seepInvariants.get(i));
+					final Term negation = SmtUtils.not(mScript, seepInvariants.get(i).invariant);
 					final Term fullExitCondition = SmtUtils.toDnf(mServices, mManagedScript, negation);
 
 					final ReqsWithAttributes seepReq = new ReqsWithAttributes(req);
 					seepReq.mName = seepReq.mName + "_SEEPING_" + i;
 					seepReq.mFullExitCondition = fullExitCondition;
-					seepReq.mExitConditions = new ArrayList<>(
-							Arrays.asList(SmtUtils.getDisjuncts(seepReq.mFullExitCondition)));
+					seepReq.mExitConditions =
+							new ArrayList<>(Arrays.asList(SmtUtils.getDisjuncts(seepReq.mFullExitCondition)));
+
+					if (seepInvariants.get(i).maxPhase != null) {
+						seepReq.mMaxPhase = new Phase(seepInvariants.get(i).maxPhase);
+						seepReq.mMaxPhase.mInvariant = mCddToSmt.toSmt(seepReq.mMaxPhase.mDCPhase.getInvariant());
+						seepReq.mMaxPhase.mInvariantVar = seepReq.mMaxPhase.mInvariant.getFreeVars();
+						seepReq.mMaxPhase.mBound = boundToSmt(seepReq.mMaxPhase);
+					} else {
+						seepReq.mMaxPhase = null;
+					}
 
 					seepReq.mChainLinkReq = true;
 					mListChainLinkReqs.add(seepReq);
