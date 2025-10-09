@@ -1,6 +1,9 @@
 let _EDITOR;
 let _DECORATIONS = [];
 
+let _HIGHLIGHT_DECORATION = []; // temporary highlighting when the user clicks a result message
+let _HIGHLIGHT_TIMEOUT = null;
+
 /**
  * Load and add the editor template to the DOM.
  */
@@ -204,7 +207,7 @@ function initInterfaceControls() {
   $(document).on({
     click: function() {
       let data = $(this).data();
-      jumpToLine(data.startLine);
+      jumpToMessage(data);
     },
   }, '.toast');
 
@@ -623,14 +626,42 @@ function toMonacoLanguage(language) {
 }
 
 /**
- * Jump to a line in the editor.
- * @param line
+ * Jump to a message in the editor and highlight the region.
+ * @param message
  */
-function jumpToLine(line) {
-  if (!_EDITOR || line < 0) return;
+function jumpToMessage(message) {
+  if (!_EDITOR || message.startLine < 0) return;
 
   // Scroll into view
-  _EDITOR.revealLineInCenter(line);
+  _EDITOR.revealLineInCenter(message.startLine);
+
+  if (_HIGHLIGHT_TIMEOUT !== null) {
+    clearTimeout(_HIGHLIGHT_TIMEOUT);
+    _HIGHLIGHT_TIMEOUT = null;
+  }
+
+  // Remove old highlight
+  _HIGHLIGHT_DECORATION = _EDITOR.deltaDecorations(_HIGHLIGHT_DECORATION, []);
+
+  // Hacky fix: 10ms delay after removing the old decoration to force update the css. The highlight animation will not work otherwise.
+  setTimeout(() => {
+    // Add new highlight decoration
+    _HIGHLIGHT_DECORATION = _EDITOR.deltaDecorations(_HIGHLIGHT_DECORATION, [
+      {
+        range: new monaco.Range(message.startLine, message.startCol, message.endLine, message.endCol),
+        options: {
+          isWholeLine: false,
+          className: 'line-highlight ' + message.type,
+        }
+      }
+    ]);
+
+    // Remove highlighting after completion
+    _HIGHLIGHT_TIMEOUT = setTimeout(() => {
+      _HIGHLIGHT_DECORATION = _EDITOR.deltaDecorations(_HIGHLIGHT_DECORATION, []);
+      _HIGHLIGHT_TIMEOUT = null;
+    }, 2000);
+  }, 10);
 }
 
 /**
