@@ -1168,6 +1168,7 @@ public class RTInconsistencyPreCheck {
 
 				for (int i = n - 3; i >= 0; i--) {
 					final DCPhase phase = phases[i];
+					final DCPhase maxPhase = i - 1 >= 0 ? phases[i - 1] : null;
 					final Term term = mCddToSmt.toSmt(phases[i].getInvariant());
 					final Term seepInvariant = SmtUtils.and(mScript, seepInvariants.getLast().invariant, term);
 
@@ -1189,11 +1190,14 @@ public class RTInconsistencyPreCheck {
 
 					// Seeping is possible
 					// Add seep invariant to list if it is unique
-					// if (SmtUtils.checkEquivalence(seepInvariant, seepInvariants.getLast().invariant, mScript) !=
-					// LBool.UNSAT) {
-					// seepInvariants.add(seepInvariant);
-					seepInvariants.add(new SeepInvariant(n - 1 >= 0 ? phases[n - 1] : null, seepInvariant));
-					// }
+					if (SmtUtils.checkEquivalence(seepInvariant, seepInvariants.getLast().invariant,
+							mScript) != LBool.UNSAT
+							|| maxPhase != null && SmtUtils.checkEquivalence(mCddToSmt.toSmt(maxPhase.getInvariant()),
+									mCddToSmt.toSmt(seepInvariants.getLast().maxPhase.getInvariant()),
+									mScript) != LBool.UNSAT) {
+						// seepInvariants.add(seepInvariant);
+						seepInvariants.add(new SeepInvariant(maxPhase, seepInvariant));
+					}
 				}
 
 				// Compute a list of exit conditions related to seeping
