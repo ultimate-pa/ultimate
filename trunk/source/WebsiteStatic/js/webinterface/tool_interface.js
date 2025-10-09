@@ -400,9 +400,9 @@ function getMarkerFromMessage(message) {
 
   return {
     startLineNumber: message.startLNr,
-    startColumn: message.startCol + 1,
+    startColumn: message.startCol,
     endLineNumber: message.endLNr,
-    endColumn: message.endCol + 1,
+    endColumn: message.endCol,
     message: message.shortDesc,
     severity: severity,
   };
@@ -439,7 +439,7 @@ function addResultsToEditor(result) {
           glyphMarginHoverMessage: { value: message.shortDesc },
         },
       });
-    } else { // warnings and errors get underlined instead
+    } else if(message.startLNr !== -1) { // warnings and errors get underlined instead
       markers.push(getMarkerFromMessage(message));
     }
 
