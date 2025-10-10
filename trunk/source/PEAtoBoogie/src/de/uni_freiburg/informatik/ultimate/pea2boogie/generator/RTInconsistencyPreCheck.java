@@ -132,7 +132,7 @@ public class RTInconsistencyPreCheck {
 		getAttributes(reqPeas);
 		mLogger.info("Number of chain link requirements: " + mListChainLinkReqs.size()); // Print out found sets
 		for (final ReqsWithAttributes r : mListChainLinkReqs) { // prints names of chain-link requirements (for debug
-																// reasons)
+			// reasons)
 			mLogger.info("   " + r.mName);
 		}
 		findSinglesForChains();
@@ -170,6 +170,9 @@ public class RTInconsistencyPreCheck {
 					continue;
 				}
 				if (!checkMaxPhaseDisjoint(a, b)) {
+					continue;
+				}
+				if (a.mOriginalPeaEventAutomata.getName() == b.mOriginalPeaEventAutomata.getName()) {
 					continue;
 				}
 
@@ -236,7 +239,8 @@ public class RTInconsistencyPreCheck {
 
 			for (final TermVariable var : req.mFullExitCondition.getFreeVars()) {
 				for (final ReqsWithAttributes other : mDictVar.getOrDefault(var, java.util.List.of())) {
-					if (other != req && ChainLinkTest(req, other) && seen.add(other)) {
+					if (other != req && ChainLinkTest(req, other) && seen.add(other)
+							&& (req.mOriginalPeaEventAutomata.getName() != other.mOriginalPeaEventAutomata.getName())) {
 						singles.add(other);
 					}
 				}
@@ -425,7 +429,7 @@ public class RTInconsistencyPreCheck {
 			final List<ReqsWithAttributes> combination, final List<ReqsWithAttributes> potentialSingles) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("   Check New Chain: ").append(combinationsHelper.indexOf(combination)).append(" out of ")
-				.append(combinationsHelper.size()).append(" | Chain: [");
+		.append(combinationsHelper.size()).append(" | Chain: [");
 
 		for (final ReqsWithAttributes req : combination) {
 			sb.append(req.mName).append(", ");
