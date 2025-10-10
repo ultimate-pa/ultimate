@@ -20,5 +20,6 @@ int main(void)
 
   x = copysign(NAN, -2.0);
   __VERIFIER_assert(isnan(x));
-  //__VERIFIER_assert(signbit(x));
+  // Due to our overapproximation of signbit for NaN, we currently cannot prove this assertion.
+  // __VERIFIER_assert(signbit(x));
 }

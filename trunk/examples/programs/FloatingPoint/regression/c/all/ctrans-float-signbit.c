@@ -32,6 +32,7 @@ int main(void)
     x = -0.0;
     rtr = signbit(x);
     __VERIFIER_assert(rtr != 0);
+	// Due to our overapproximation of signbit for NaN, we currently cannot prove these assertions.
     // x = NAN;
     // rtr = signbit(x);
     // __VERIFIER_assert(rtr == 0);
