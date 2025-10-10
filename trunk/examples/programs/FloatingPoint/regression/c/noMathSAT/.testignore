@@ -5,3 +5,15 @@ TIMEOUT:
 - task: ctrans-float-rounding.c
   settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
   toolchain: AutomizerC.xml
+- task: ctrans-float-fmod-1.c
+  settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
+  toolchain: AutomizerC.xml
+- task: ctrans-float-fmod-3.c
+  settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
+  toolchain: AutomizerC.xml
+- task: ctrans-float-fmod-4.c
+  settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
+  toolchain: AutomizerC.xml
+- task: ctrans-float-fmod-inf.c
+  settings: AutomizerC-Reach-32bit-WOLF-Float.epf
+  toolchain: AutomizerC.xml
