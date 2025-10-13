@@ -39,6 +39,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -70,7 +71,7 @@ public class PetriFloydHoare<L, P> {
 	private final boolean mCoveringSimplification;
 
 	private final IPetriNet<L, P> mOriginalProgram;
-	private final IPetriNet<L, P> mRefinedNet;
+	private final IPetriNetSuccessorProvider<L, P> mRefinedNet;
 
 	private final Set<P> mOriginalPlaces;
 
@@ -78,7 +79,7 @@ public class PetriFloydHoare<L, P> {
 	private final FloydHoareMapping<Marking<P>> mFloydHoareAnnotation;
 
 	public PetriFloydHoare(final BasicPredicateFactory predicateFactory, final IPetriNet<L, P> program,
-			final IPetriNet<L, P> refinedNet, final Function<P, IPredicate> assertionPlaceAnnotation,
+			final IPetriNetSuccessorProvider<L, P> refinedNet, final Function<P, IPredicate> assertionPlaceAnnotation,
 			final List<IPredicateCoverageChecker> coverageRelations, final boolean coveringSimplification)
 			throws PetriNetNot1SafeException {
 		mFactory = predicateFactory;
@@ -122,7 +123,7 @@ public class PetriFloydHoare<L, P> {
 
 	// a depth-first search of the reachability graph
 	// TODO move this utility method to a more suitable place
-	public static <L, P> Collection<Marking<P>> computeReachableMarkings(final IPetriNet<L, P> net)
+	public static <L, P> Collection<Marking<P>> computeReachableMarkings(final IPetriNetSuccessorProvider<L, P> net)
 			throws PetriNetNot1SafeException {
 		final var result = new LinkedHashSet<Marking<P>>();
 		final var worklist = new ArrayDeque<Marking<P>>();

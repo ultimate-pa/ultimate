@@ -30,6 +30,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -43,5 +44,5 @@ public interface IPetriNetProofProducer<L extends IAction, P>
 	void refine(final IPredicateUnifier unifier, INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation);
 
-	void finalize(IPetriNet<L, P> refinedNet, BranchingProcess<L, P> refinedNetUnfolding);
+	void finalize(IPetriNetSuccessorProvider<L, P> refinedNet, BranchingProcess<L, P> refinedNetUnfolding);
 }

@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -113,7 +114,8 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 	}
 
 	@Override
-	public void finalize(final IPetriNet<L, P> refinedNet, final BranchingProcess<L, P> refinedNetUnfolding) {
+	public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet,
+			final BranchingProcess<L, P> refinedNetUnfolding) {
 		mRefinedUnfolding = refinedNetUnfolding;
 		final var conditions = getConditions(refinedNetUnfolding);
 		mOriginalConditions = getOriginalConditions(conditions);

@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -200,7 +201,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 	protected abstract void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
-			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
+			final IPetriNetSuccessorProvider<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding,
 			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences)
 			throws AutomataLibraryException, IOException;
@@ -297,14 +298,14 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 					: "Specified possible interferences deviate from actual";
 		}
 
-		final BoundedPetriNet<SimpleAction, IPredicate> constructedDifference;
+		final IPetriNetSuccessorProvider<SimpleAction, IPredicate> constructedDifference;
 		final BranchingProcess<SimpleAction, IPredicate> bp;
 		if (requiresUnfoldingAndDifference()) {
 			bp = getOrConstructFinPrefixOfDifference(difference).getResult();
 			constructedDifference = difference.getYetConstructedPetriNet();
 		} else {
 			bp = null;
-			constructedDifference = null;
+			constructedDifference = difference;
 		}
 
 		final long setupTime = System.nanoTime() - mStartTime;

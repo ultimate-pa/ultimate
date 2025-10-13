@@ -34,6 +34,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -177,7 +178,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		private final Function<P, IPredicate> mAssertionPlaceToAssertion;
 
 		private final List<IPredicateCoverageChecker> mCoverageRelations = new ArrayList<>();
-		private IPetriNet<L, P> mFinalAbstraction;
+		private IPetriNetSuccessorProvider<L, P> mFinalAbstraction;
 
 		private Producer(final Function<P, IPredicate> assertionPlaceToAssertion) {
 			mAssertionPlaceToAssertion = assertionPlaceToAssertion;
@@ -193,7 +194,8 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		}
 
 		@Override
-		public void finalize(final IPetriNet<L, P> refinedNet, final BranchingProcess<L, P> refinedNetUnfolding) {
+		public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet,
+				final BranchingProcess<L, P> refinedNetUnfolding) {
 			mFinalAbstraction = refinedNet;
 		}
 
