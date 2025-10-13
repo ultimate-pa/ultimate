@@ -158,7 +158,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		mNwaCexTransferrer =
 				new TransferToWorkerUtils<>(new AutomataLibraryServices(mServices), mLogger,
 						mainThread.getManagedScript(), mCsToolkit.getManagedScript());
-		mAbstraction = getAbstraction();
+		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 		final Thread workerThread = new Thread(() -> {
 			try {
 				executeThread();
@@ -192,10 +192,6 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		while (true) {
 			mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
 			mIteration += 1;
-			for (final Map.Entry<Thread, StackTraceElement[]> e : Thread.getAllStackTraces().entrySet()) {
-				final Thread t = e.getKey();
-				System.out.println("Thread: " + t.getName() + " | State: " + t.getState());
-			}
 			mNwaCexTransferrer.setMode(Mode.MAIN2WORKER);
 			mCounterexample = mNwaCexTransferrer.transferRun((NestedRun) mWorkerTaskQueue.take());
 			final List<L> trace = mCounterexample.getWord().asList();
@@ -274,10 +270,10 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		return strategy;
 	}
 
-	private INestedWordAutomaton<L, IPredicate> getAbstraction() {
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getAbstraction() {
 		mNwaCexTransferrer.setMode(Mode.MAIN2WORKER);
-		final INestedWordAutomaton<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
-		final INestedWordAutomaton<L, IPredicate> workerAbstraction =
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> workerAbstraction =
 				mNwaCexTransferrer.transferAutomaton(mainAbstraction, mPredicateFactoryInterpolantAutomata);
 		return workerAbstraction;
 	}
@@ -508,7 +504,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 
 		final WorkerThreadResult<L, A> workerResult =
 				new WorkerThreadResult<>(
-						mNwaCexTransferrer.transferAutomaton((INestedWordAutomaton<L, IPredicate>) subtrahend,
+						mNwaCexTransferrer.transferAutomaton(subtrahend,
 								mPredicateFactoryInterpolantAutomata),
 						mNwaCexTransferrer.transferAutomaton(subtrahendBeforeEnhancement,
 								mPredicateFactoryInterpolantAutomata),
@@ -540,15 +536,15 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	 * WARNING The real difference has to be computed in the Main Thrad / CEGAR loop This is only used to enhance the
 	 * interpolant automaton
 	 */
-	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
+	private IOpWithDelayedDeadEndRemoval<L, IPredicate> computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
 			final boolean useErrorAutomaton, final AutomatonType automatonType)
 			throws AutomataLibraryException, AssertionError {
-		if (automatonType.equals(AutomatonType.ERROR) || enhanceMode == InterpolantAutomatonEnhancement.NONE) {
-			return;
+		if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+			return null;
 		}
 		try {
 			mLogger.debug("WORKER: Start constructing difference for enhancing interpolant automaton in worker");
@@ -588,7 +584,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				}
 				diff.removeDeadEnds();
 			}
-
+			return diff;
 		} finally {
 			mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 			mLogger.info(htc.getStatistics());
@@ -598,6 +594,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 			// mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			// mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		}
+		
 	}
 
 	private RunningTaskInfo executeDifferenceTimeoutActions(final INestedWordAutomaton<L, IPredicate> minuend,

@@ -455,9 +455,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			}
 
 			boolean firstIteration = true;
-			if (!mWorkerTaskQueue.isEmpty()) {
-				assert mWorkerTaskQueue.isEmpty();
-			}
+
 			while (mRunningThreads < mThreadLimit && !didntFindCexLastIteration) {
 
 				assert mRunningThreads >= 0;

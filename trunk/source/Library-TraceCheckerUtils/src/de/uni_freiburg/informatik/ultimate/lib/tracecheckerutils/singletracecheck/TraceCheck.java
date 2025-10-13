@@ -451,20 +451,31 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			if ((mTrace.asList().get(i) instanceof final StatementSequence stmt)
 					&& stmt.getPrettyPrintedStatements().contains("nondet") && i > indexOfFirstSeenSameNondet + 2) {
 				indexOfFirstSeenSameNondet = i;
+				
 				/*
 				 * read payload line by line filter nondet lines there are two statements right
 				 * after each otehr with same nondet
 				 * 
 				 */
-				if (lastSeenPayloadWithNondets.equals(extractNondetLines(stmt.getPayload().toString()))) {
+				String payload = stmt.getPayload().toString();
+				if (lastSeenPayloadWithNondets.equals(extractNondetLines(payload))) {
 					countFoundNondets += 1;
 				} else {
-					lastSeenPayloadWithNondets = extractNondetLines(stmt.getPayload().toString());
+					lastSeenPayloadWithNondets = extractNondetLines(payload);
 					countFoundNondets = 0;
 				}
-				assert !lastSeenPayloadWithNondets.isEmpty();
+				if (lastSeenPayloadWithNondets.isEmpty()) {
+					// Next statement might contain the payload with nondets, lets check
+					payload = stmt.getTarget().getPayload().toString();
+					if (lastSeenPayloadWithNondets.equals(extractNondetLines(payload))) {
+						countFoundNondets += 1;
+					} else {
+						lastSeenPayloadWithNondets = extractNondetLines(payload);
+						countFoundNondets = 0;
+					}
+				}
 				final String type;
-				final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(stmt.getPayload().toString());
+				final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(payload);
 				final List<String> types = new ArrayList<>();
 				while (m.find()) {
 					types.add(m.group(1));
@@ -530,6 +541,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 		return testV;
 	}
+
 
 	public static List<String> extractNondetLines(final String code) {
 		return Arrays.stream(code.split("\\R")) // split by line breaks
