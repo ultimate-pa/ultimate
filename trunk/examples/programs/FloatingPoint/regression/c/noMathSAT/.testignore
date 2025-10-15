@@ -8,6 +8,9 @@ TIMEOUT:
 - task: ctrans-float-fmod-1.c
   settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
   toolchain: AutomizerC.xml
+- task: ctrans-float-fmod-2.c
+  settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
+  toolchain: AutomizerC.xml
 - task: ctrans-float-fmod-3.c
   settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
   toolchain: AutomizerC.xml
