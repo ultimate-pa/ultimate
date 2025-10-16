@@ -52,13 +52,9 @@ public class RTInconsistencyPreCheck {
 	public List<List<ReqsWithAttributes>> mRTICombinations;
 	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mChainLinkSingles;
 	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mChainLinkFriends;
-	public Map<ReqsWithAttributes, List<ReqsWithAttributes>> mEnemies;
-	
 	public List<List<ReqsWithAttributes>> combinationsHelper;
 	public List<List<Term>> LeftOverExitConditionsHelper;
 	public int helperCounter;
-	
-
 
 	public class ReqsWithAttributes {
 		public boolean mTimed;
@@ -134,27 +130,11 @@ public class RTInconsistencyPreCheck {
 
 		// --------START OF RTI CHECK----------------
 		getAttributes(reqPeas);
-		// Do not change string of logger!!!
 		mLogger.info("Number of chain link requirements: " + mListChainLinkReqs.size()); // Print out found sets
 		for (final ReqsWithAttributes r : mListChainLinkReqs) { // prints names of chain-link requirements (for debug
 			// reasons)
 			mLogger.info("   " + r.mName);
 		}
-		
-		for (ReqsWithAttributes r : mListChainLinkReqs) {
-	
-				mLogger.info(r.mFullExitCondition);
-			
-		}
-
-			for (Map.Entry<TermVariable, List<ReqsWithAttributes>> e1 : mDictVar.entrySet()) {
-			    for (ReqsWithAttributes r : e1.getValue()) {
-			        mLogger.info(r.mFullExitCondition); // prefer parameterized logging
-			    }
-			}
-
-		countNumberOfVariables();
-
 		findSinglesForChains();
 		findFriendsForChains();
 
@@ -174,174 +154,59 @@ public class RTInconsistencyPreCheck {
 
 	}
 
-	private void countNumberOfVariables() {
-		// TODO Auto-generated method stub
-		mLogger.info("Number of important variables: " + mDictVar.size()); // Do not change string of logger!!!
-		int counter = mDictVar.size();
-		 List<String> varList = new ArrayList<>();
-		for (Map.Entry<TermVariable, List<ReqsWithAttributes>> e1 : mDictVar.entrySet()) {
-			for (ReqsWithAttributes r : e1.getValue()) {
-			    CounterTrace ct = r.mCounterTrace;
-			    for(DCPhase p : ct.getPhases()) {
-                    Term cdd = mCddToSmt.toSmt(p.getInvariant());
-                    TermVariable[] vars = cdd.getFreeVars();
-                    for (TermVariable v : vars) {
-                        String varName = v.getName();
-                        if (!varList.contains(varName)) {
-                            varList.add(varName);
-                        }
-                    }
-                }
+	private void findFriendsForChains() {
+		mLogger.info("Finding friends for chain-link requirements, this might take a while...");
+		for (final ReqsWithAttributes req : mListChainLinkReqs) {
+			mChainLinkFriends.put(req, new ArrayList<>());
+		}
+
+		for (int i = 0; i < mListChainLinkReqs.size(); i++) {
+			final ReqsWithAttributes a = mListChainLinkReqs.get(i);
+
+			for (int j = i + 1; j < mListChainLinkReqs.size(); j++) {
+				final ReqsWithAttributes b = mListChainLinkReqs.get(j);
+
+				if (!checkExitOptionsDisjoint(a, b)) {
+					continue;
+				}
+				if (!checkMaxPhaseDisjoint(a, b)) {
+					continue;
+				}
+				if (a.mOriginalPeaEventAutomata.getName() == b.mOriginalPeaEventAutomata.getName()) {
+					continue;
+				}
+
+				mChainLinkFriends.get(a).add(b);
+				mChainLinkFriends.get(b).add(a);
 			}
 		}
-			
-        for(ReqsWithAttributes r: mListChainLinkReqs) {
-        	            CounterTrace ct = r.mCounterTrace;
-            for(DCPhase p : ct.getPhases()) {
-                Term cdd = mCddToSmt.toSmt(p.getInvariant());
-                TermVariable[] vars = cdd.getFreeVars();
-                for (TermVariable v : vars) {
-                    String varName = v.getName();
-                    if (!varList.contains(varName)) {
-                        varList.add(varName);
-                    }
-                }
-            }
-        }
-			
-
-		mLogger.info("Number of variables: " + varList.size()); // Do not change string of logger!!!
-			
 	}
 
-	// Helper key: symmetric (A,B) == (B,A), so we (almost) solve each check only once
-	static final class TermPairKey {
-	    final Term a, b;
-	    final int ha, hb;
-
-	    TermPairKey(Term x, Term y) {
-	        // Canonically order by identity/hash so that (x,y) == (y,x)
-	        int hx = System.identityHashCode(x);
-	        int hy = System.identityHashCode(y);
-	        if (hx < hy || (hx == hy && System.identityHashCode(x) <= System.identityHashCode(y))) {
-	            this.a = x; this.b = y; this.ha = hx; this.hb = hy;
-	        } else {
-	            this.a = y; this.b = x; this.ha = hy; this.hb = hx;
-	        }
-	    }
-	    @Override public int hashCode() { return ha * 31 + hb; }
-	    @Override public boolean equals(Object o) {
-	        if (this == o) return true;
-	        if (!(o instanceof TermPairKey k)) return false;
-	        return a == k.a && b == k.b; // Identity comparison: Terms are typically immutable
-	    }
+	private boolean checkMaxPhaseDisjoint(final ReqsWithAttributes req, final ReqsWithAttributes other) {
+		if (req.mMaxPhase == null || other.mMaxPhase == null) {
+			mLogger.warn("checkMaxPhaseDisjoint: missing max phase");
+			return true;
+		}
+		final Term conj = SmtUtils.and(mScript, req.mMaxPhase.mInvariant, other.mMaxPhase.mInvariant);
+		final LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+		if (sat != LBool.UNSAT) {
+			return true;
+		}
+		return false;
 	}
 
-	private final java.util.concurrent.ConcurrentMap<TermPairKey, LBool> SAT_CACHE =
-	        new java.util.concurrent.ConcurrentHashMap<>();
-	// (Optional) if you also want to reuse the conjunction:
-	// private final java.util.concurrent.ConcurrentMap<TermPairKey, Term> CONJ_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
-
-	// bump counters inside satOfAndCached(...)
-	private LBool satOfAndCached(final Term t1, final Term t2) {
-	    if (t1 == null || t2 == null) return LBool.UNKNOWN;
-
-
-	    final TermPairKey key = new TermPairKey(t1, t2);
-	    final LBool cached = SAT_CACHE.get(key);
-	    if (cached != null) {
-	        
-	        return cached;
-	    }
-
-	    final Term conj = SmtUtils.and(mScript, key.a, key.b);
-	    final LBool sat = SmtUtils.checkSatTerm(mScript, conj);
-	    SAT_CACHE.putIfAbsent(key, sat);
-
-	    return sat;
+	private boolean checkExitOptionsDisjoint(final ReqsWithAttributes req, final ReqsWithAttributes other) {
+		for (final Term exitA : req.mExitConditions) {
+			for (final Term exitB : other.mExitConditions) {
+				final Term conj = SmtUtils.and(mScript, exitA, exitB);
+				final LBool sat = SmtUtils.checkSatTerm(mScript, conj);
+				if (sat != LBool.SAT) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
-
-
-	/** DISJOINT if NO pair (exitA, exitB) is SAT. (Bugfix + early exit) */
-	private boolean checkExitOptionsDisjointFast(final List<Term> exitsA, final List<Term> exitsB) {
-	    if (exitsA == null || exitsB == null || exitsA.isEmpty() || exitsB.isEmpty()) {
-	        // conservative: treat as disjoint if no exit conditions
-	        return true;
-	    }
-	    for (final Term exitA : exitsA) {
-	        for (final Term exitB : exitsB) {
-	            final LBool sat = satOfAndCached(exitA, exitB);
-	            if (sat == LBool.SAT) {
-	                return false; // not disjoint -> short-circuit
-	            }
-	        }
-	    }
-	    return true; // no SAT pair found
-	}
-
-	/** DISJOINT when invariants do NOT overlap => AND is UNSAT. */
-	private boolean checkMaxPhaseDisjointFast(final Term invA, final Term invB) {
-	    if (invA == null || invB == null) {
-	        mLogger.warn("checkMaxPhaseDisjoint: missing max phase");
-	        return true; // conservative, as before
-	    }
-	    return satOfAndCached(invA, invB) == LBool.UNSAT;
-	}
-
-	public void findFriendsForChains() {
-	    mLogger.info("Finding friends for chain-link requirements (optimized) ...");
-	    mLogger.info("Finding friends for chain-link requirements (optimized) ...");
-
-	    // reset counters for this run
-
-	    final int n = mListChainLinkReqs.size();
-	    if (n <= 1) return;
-
-	    // Pre-create friend lists & roughly pre-size
-	    for (final ReqsWithAttributes req : mListChainLinkReqs) {
-	        mChainLinkFriends.put(req, new ArrayList<>(16));
-	    }
-
-	    // Hot path: prefetch everything once
-	    final ReqsWithAttributes[] arr = mListChainLinkReqs.toArray(new ReqsWithAttributes[0]);
-	    final String[] names = new String[n];
-	    @SuppressWarnings("unchecked")
-	    final List<Term>[] exits = new List[n];
-	    final Term[] maxInv = new Term[n];
-
-	    for (int i = 0; i < n; i++) {
-	        final ReqsWithAttributes r = arr[i];
-	        names[i] = (r.mOriginalPeaEventAutomata != null) ? r.mOriginalPeaEventAutomata.getName() : null;
-	        exits[i] = r.mExitConditions != null ? r.mExitConditions : java.util.Collections.emptyList();
-	        maxInv[i] = (r.mMaxPhase != null) ? r.mMaxPhase.mInvariant : null;
-	    }
-
-	    // Double loop with quick pre-checks (name) and cached SMT checks
-	    for (int i = 0; i < n; i++) {
-	        final ReqsWithAttributes a = arr[i];
-	        final String nameA = names[i];
-	        final List<Term> exitsA = exits[i];
-	        final Term invA = maxInv[i];
-
-	        for (int j = i + 1; j < n; j++) {
-	            // same automaton name -> skip
-	            if (java.util.Objects.equals(nameA, names[j])) continue;
-
-	            // Exit disjointness (with bugfix + cache)
-	            if (!checkExitOptionsDisjointFast(exitsA, exits[j])) continue;
-
-	            // Phase disjointness (UNSAT check, cached)
-	            if (!checkMaxPhaseDisjointFast(invA, maxInv[j])) continue;
-
-	            // add symmetrically to both sides
-	            mChainLinkFriends.get(a).add(arr[j]);
-	            mChainLinkFriends.get(arr[j]).add(a);
-	        }
-	    }
-
-	}
-
-
 
 	private void printResults() {
 		mLogger.info("-------------------RTI PreCheck found " + mRTIReturnSet.size() + " sets----------------------");
