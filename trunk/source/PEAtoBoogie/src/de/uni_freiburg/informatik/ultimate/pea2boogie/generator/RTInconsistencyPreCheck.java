@@ -1014,7 +1014,8 @@ public class RTInconsistencyPreCheck {
 		Term conj = SmtUtils.and(mScript, r1.mFullExitCondition, r2.mFullExitCondition);
 		LBool res = SmtUtils.checkSatTerm(mScript, conj);
 		if (res != LBool.UNSAT) {
-			return failReason(0, "Exit conditions overlap or UNKNOWN");
+			return false;
+			// return failReason(0, "Exit conditions overlap or UNKNOWN");
 		}
 
 		// 2) before max phase check
@@ -1030,26 +1031,26 @@ public class RTInconsistencyPreCheck {
 
 		// 3) Max-Phases have to be compatible
 		if (r1.mMaxPhase == null || r2.mMaxPhase == null) {
-			return failReason(4, "missing max phase");
+			return false;
+			// return failReason(4, "missing max phase");
 		}
 		conj = SmtUtils.and(mScript, r1.mMaxPhase.mInvariant, r2.mMaxPhase.mInvariant);
 		res = SmtUtils.checkSatTerm(mScript, conj);
 		if (res == LBool.UNSAT) {
-			return failReason(1, "max invariants incompatible (UNSAT)");
+			return false;
+			// return failReason(1, "max invariants incompatible (UNSAT)");
 		}
 
 		// if 1-3 do not fail return true -> requirements are rt-inconsistent
 		return true;
 	}
 
-	private boolean failReason(final int idx, final String msg) {
-		if (mDebugReasonCOunter) {
-			reasonCounter[idx]++;
-			mLogger.debug("rtiCheckFor2Reqs: {}", msg);
-
-		}
-		return false;
-	}
+	/*
+	 * private boolean failReason(final int idx, final String msg) { if (mDebugReasonCOunter) { reasonCounter[idx]++;
+	 * mLogger.debug("rtiCheckFor2Reqs: {}", msg);
+	 * 
+	 * } return false; }
+	 */
 
 	private static boolean safeEquals(final Object a, final Object b) {
 		return (a == b) || (a != null && a.equals(b));
