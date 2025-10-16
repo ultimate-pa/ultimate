@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.AutomatonType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TransferToWorkerUtils.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -198,23 +199,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final int id, final boolean quickCheck) throws InterruptedException {
 		// mCsToolkit needs to give new mgdScript for each thread
 
-		final CfgSmtToolkit freshToolKit =
-				mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices, getSolverSettings(iterationServices,
-						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"));
-		// Set the Main Script
-		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
-				.setMainScript(mCsToolkit.getManagedScript());
-
-		// Fill the map from worker tv to main tv so we can obtain boogievars later
-		final Map<TermVariable, IProgramVar> varMap =
-				((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable()).getSmtVar2ProgramVarMap();
-
-		for (final TermVariable tv : varMap.keySet()) {
-			((HistoryRecordingScript) freshToolKit.getManagedScript().getScript()).addTermVariableToMap(
-					(TermVariable) ((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
-							.transferTermToWorker(tv),
-					tv);
-		}
+		TransferToWorkerUtils transferUtils = new TransferToWorkerUtils<>(new AutomataLibraryServices(mServices), mLogger,
+				mCsToolkit.getManagedScript(),
+				iterationServices, getSolverSettings(iterationServices,
+						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),mCsToolkit);
+		
+		final CfgSmtToolkit freshToolKit = transferUtils.constructNewCfgSmtToolkit();
+	
 
 		// Create predicateFactory with worker script
 		final PredicateFactory predicateFactory =
@@ -244,12 +235,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue);
 		}
 
-
+	
 		// start worker
 		return new CegarNwaContinuesWorkerThread<>(mLogger, mPref, id, mResultBuilder, mCegarLoopBenchmark,
 				iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
 				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, this,
-				WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue);
+				WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue,transferUtils);
 	}
 
 	/*

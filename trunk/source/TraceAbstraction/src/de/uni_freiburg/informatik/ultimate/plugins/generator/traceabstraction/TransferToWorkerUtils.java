@@ -2,10 +2,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -13,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -20,17 +24,40 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.BvToIntTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class TransferToWorkerUtils<LETTER, STATE> {
 
@@ -38,12 +65,15 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 	private final ManagedScript mMainScript;
 	private final ManagedScript mWorkerScript;
 	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>();
+	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>();
 	private final AutomataLibraryServices mServices;
-	TermTransferrer mWorker2main;
-	TermTransferrer mMain2worker;
-	VpAlphabet<LETTER> mMainVpAlphabet;
-	VpAlphabet<LETTER> mWorkerVpAlphabet;
-
+	private final TermTransferrer mWorker2main;
+	private final TermTransferrer mMain2worker;
+	private VpAlphabet<LETTER> mMainVpAlphabet;
+	private VpAlphabet<LETTER> mWorkerVpAlphabet;
+	private final CfgSmtToolkit mCsToolkit;
+private VariableTranslation mVarTransfer;
+	
 	enum Mode {
 		NONE, MAIN2WORKER, WORKER2MAIN
 	}
@@ -56,16 +86,20 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 	 *
 	 * @param main
 	 * @param worker
+	 * @param csToolKit
 	 */
 	public TransferToWorkerUtils(final AutomataLibraryServices services, final ILogger logger, final ManagedScript main,
-			final ManagedScript worker) {
+			final IUltimateServiceProvider solverServices,
+			final SolverSettings solverSettings , CfgSmtToolkit csToolKit) {
 		mLogger = logger;
 		mMainScript = main;
-		mWorkerScript = worker;
+		mWorkerScript = csToolKit.createFreshManagedScript(solverServices, solverSettings);
 		mServices = services;
-
-		mWorker2main = new TermTransferrer(worker.getScript(), main.getScript());
-		mMain2worker = new TermTransferrer(main.getScript(), worker.getScript());
+		mCsToolkit = csToolKit;
+		
+		mWorker2main = new TermTransferrer(mWorkerScript.getScript(), mMainScript.getScript());
+		mMain2worker = new TermTransferrer(mMainScript.getScript(), mWorkerScript.getScript());
+		mVarTransfer = new VariableTranslation(mMain2worker,mWorkerScript);
 	}
 
 	public void setMode(final Mode mode) {
@@ -133,7 +167,7 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 
 	private Return getTransferReturn(final Return re) {
 		final Return newReturn = new Return(re.getSerialNumber(), (BoogieIcfgLocation) re.getSource(),
-				(BoogieIcfgLocation) re.getTarget(), re.getCorrespondingCall(), mLogger);
+				(BoogieIcfgLocation) re.getTarget(), getTransferCall(re.getCorrespondingCall()), mLogger);
 		newReturn.setTransitionFormula(transferTransFormulaWithMode(re.getTransformula()));
 		return newReturn;
 
@@ -155,11 +189,12 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 
 	private UnmodifiableTransFormula transferTransformula(final UnmodifiableTransFormula inTF,
 			final TermTransferrer transferrer, final ManagedScript targetScript) {
+
 		final TransFormulaBuilder transferredTF = new TransFormulaBuilder(transferMap(transferrer, inTF.getInVars()),
 				transferMap(transferrer, inTF.getOutVars()), inTF.getNonTheoryConsts().isEmpty(),
 				inTF.getNonTheoryConsts(), inTF.getBranchEncoders().isEmpty(),
 				transferSet(transferrer, inTF.getBranchEncoders()), inTF.getAuxVars().isEmpty());
-
+		assert inTF.getNonTheoryConsts().isEmpty();
 		transferredTF.setFormula(transferrer.transform(inTF.getFormula()));
 
 		transferredTF.addAuxVarsButRenameToFreshCopies(transferSet(transferrer, inTF.getAuxVars()), targetScript);
@@ -169,11 +204,30 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 
 	}
 
-	private static Map<IProgramVar, TermVariable> transferMap(final TermTransferrer transferrer,
+	private Map<IProgramVar, TermVariable> transferMap(final TermTransferrer transferrer,
 			final Map<IProgramVar, TermVariable> map) {
 		final Map<IProgramVar, TermVariable> transferredMap = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : map.entrySet()) {
-			transferredMap.put(entry.getKey(), (TermVariable) transferrer.transform(entry.getValue()));
+			IProgramVar transferredProgramVar;
+			if (!mProgramVarBackTranslationCache.containsKey(entry.getKey())) {
+				assert mMode.equals(Mode.MAIN2WORKER);
+				switch (entry.getKey()) {				
+				case ProgramNonOldVar var -> {
+					transferredProgramVar = mVarTransfer.translateProgramVar(var);
+					break;
+				}
+				case LocalProgramVar var -> {
+					transferredProgramVar = mVarTransfer.translateProgramVar(var);
+					break;
+				}
+				default -> throw new AssertionError("Unexpected type of BoogieVar: " + entry.getKey().getClass());
+				}
+				mProgramVarBackTranslationCache.put(transferredProgramVar,entry.getKey());
+			} else {
+				transferredProgramVar = mProgramVarBackTranslationCache.get(entry.getKey());
+			} 
+			assert transferredProgramVar != null;
+			transferredMap.put(transferredProgramVar, (TermVariable) transferrer.transform(entry.getValue()));
 		}
 		return transferredMap;
 	}
@@ -194,7 +248,7 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 		Set<LETTER> internalAlphabet;
 		Set<LETTER> callAlphabet;
 		Set<LETTER> returnAlphabet;
-
+		// NestedWordAutomataUtils.getVpAlphabet(abstraction)
 		switch (mMode) {
 		case MAIN2WORKER: {
 			internalAlphabet = new HashSet<>();
@@ -208,7 +262,7 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 			internalAlphabet = mMainVpAlphabet.getInternalAlphabet();
 			callAlphabet = mMainVpAlphabet.getCallAlphabet();
 			returnAlphabet = mMainVpAlphabet.getReturnAlphabet();
-			alphabet = mMainVpAlphabet;
+			alphabet = new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet);
 			break;
 		}
 		default: {
@@ -219,17 +273,13 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 		final NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(mServices, alphabet,
 				emptyStateFactory);
 
-		
 		final Set<STATE> hierPredStates = new HashSet<STATE>();
 		hierPredStates.add(automaton.getEmptyStackState());
 		final Set<STATE> allStates = new HashSet<STATE>();
-		
+
 		final Set<STATE> initialStates = new HashSet<STATE>();
 		automaton.getInitialStates().forEach(initialStates::add);
 		final ArrayDeque<STATE> dequeue = new ArrayDeque<>(initialStates);
-		
-	
-		
 
 		final Set<STATE> visited = new HashSet<>();
 		while (!dequeue.isEmpty()) {
@@ -246,6 +296,7 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 			for (final OutgoingCallTransition<LETTER, STATE> transition : automaton.callSuccessors(state)) {
 				final STATE succesor = transition.getSucc();
 				if (!result.contains(succesor)) {
+					allStates.add(succesor);
 					result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
 				}
 				final LETTER transferredLetter = transferEdge(transition.getLetter());
@@ -257,6 +308,7 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 			for (final OutgoingInternalTransition<LETTER, STATE> transition : automaton.internalSuccessors(state)) {
 				final STATE succesor = transition.getSucc();
 				if (!result.contains(succesor)) {
+					allStates.add(succesor);
 					result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
 				}
 				final LETTER transferredLetter = transferEdge(transition.getLetter());
@@ -264,32 +316,186 @@ public class TransferToWorkerUtils<LETTER, STATE> {
 				result.addInternalTransition(state, transferredLetter, succesor);
 				dequeue.add(succesor);
 			}
+			Set<STATE> copyAllStates = new HashSet<>();
+			copyAllStates.addAll(allStates);
+			for (final STATE potentialhier : copyAllStates) {
+				for (final STATE hierPred : hierPredStates) {
+					for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : automaton
+							.returnSuccessorsGivenHier(potentialhier, hierPred)) {
 
-		}
-
-		for (final STATE state : allStates) {
-			for (final STATE hierPred : hierPredStates) {
-				for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : automaton
-						.returnSuccessorsGivenHier(state, hierPred)) {
-
-					STATE succesor = returnTransition.getSucc();
-					STATE hier = returnTransition.getHierPred();
-					if (!result.contains(succesor)) {
-						result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
+						STATE succesor = returnTransition.getSucc();
+						STATE hier = returnTransition.getHierPred();
+						if (!result.contains(succesor)) {
+							allStates.add(succesor);
+							result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
+						}
+						if (!result.contains(hier)) {
+							allStates.add(hier);
+							result.addState(automaton.isInitial(hier), automaton.isFinal(hier), hier);
+						}
+						final LETTER transferredLetter = transferEdge(returnTransition.getLetter());
+						returnAlphabet.add(transferredLetter);
+						result.addReturnTransition(potentialhier, hier, transferredLetter, succesor);
+						dequeue.add(succesor);
 					}
-					if (!result.contains(hier)) {
-						result.addState(automaton.isInitial(hier), automaton.isFinal(hier), hier);
-					}
-					final LETTER transferredLetter = transferEdge(returnTransition.getLetter());
-					returnAlphabet.add(transferredLetter);
-					result.addReturnTransition(state, hier, transferredLetter, succesor);
 				}
 			}
 		}
 
-		
+		assert result.size() == automaton.size();
+		// assert result.getAlphabet().size() == automaton.getAlphabet().size();
+		assert result.getVpAlphabet().getCallAlphabet().size() == automaton.getVpAlphabet().getCallAlphabet().size();
+		// assert result.getVpAlphabet().getInternalAlphabet().size() ==
+		// automaton.getVpAlphabet().getInternalAlphabet().size();
+		assert result.getVpAlphabet().getReturnAlphabet().size() == automaton.getVpAlphabet().getReturnAlphabet()
+				.size();
 		return result;
 
+	}
+
+	public CfgSmtToolkit constructNewCfgSmtToolkit() {
+
+		final HashRelation<String, IProgramNonOldVar> proc2globals = constructNewProc2Globals(
+				mCsToolkit.getModifiableGlobalsTable().getProcToGlobals(), mMainScript, mWorkerScript, mVarTransfer);
+		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
+		final IIcfgSymbolTable symbolTable = constructNewSymbolTable(mCsToolkit.getSymbolTable(),
+				mCsToolkit.getProcedures(), mVarTransfer);
+		final Map<String, List<ILocalProgramVar>> inParams = constructNewParams(mCsToolkit.getInParams(), mVarTransfer);
+		final Map<String, List<ILocalProgramVar>> outParams = constructNewParams(mCsToolkit.getOutParams(), mVarTransfer);
+		final SmtFunctionsAndAxioms smtFunctionsAndAxioms = null;
+		return new CfgSmtToolkit(modifiableGlobalsTable, mWorkerScript, symbolTable, mCsToolkit.getProcedures(),
+				inParams, outParams, mCsToolkit.getIcfgEdgeFactory(), mCsToolkit.getConcurrencyInformation(),
+				smtFunctionsAndAxioms);
+	}
+
+	private static Map<String, List<ILocalProgramVar>> constructNewParams(
+			final Map<String, List<ILocalProgramVar>> inParams, final VariableTranslation variableTranslation) {
+		final Map<String, List<ILocalProgramVar>> result = new HashMap<>();
+		for (final Entry<String, List<ILocalProgramVar>> entry : inParams.entrySet()) {
+			final List<ILocalProgramVar> newList = entry.getValue().stream()
+					.map(x -> variableTranslation.getOrConstruct(x)).collect(Collectors.toList());
+			result.put(entry.getKey(), newList);
+		}
+		return result;
+	}
+
+	private static IIcfgSymbolTable constructNewSymbolTable(final IIcfgSymbolTable symbolTable,
+			final Set<String> procedures, final VariableTranslation varTrans) {
+		final DefaultIcfgSymbolTable result = new DefaultIcfgSymbolTable();
+		for (final IProgramConst c : symbolTable.getConstants()) {
+			result.add(varTrans.getOrConstruct(c));
+		}
+		for (final IProgramNonOldVar g : symbolTable.getGlobals()) {
+			result.add(varTrans.getOrConstruct(g));
+		}
+		for (final String proc : procedures) {
+			for (final ILocalProgramVar l : symbolTable.getLocals(proc)) {
+				result.add(varTrans.getOrConstruct(l));
+			}
+		}
+		return result;
+	}
+
+	private static HashRelation<String, IProgramNonOldVar> constructNewProc2Globals(
+			final HashRelation<String, IProgramNonOldVar> procToGlobals, final ManagedScript oldMgdScript,
+			final ManagedScript newMgdScript, final VariableTranslation variableTranslation) {
+		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
+		for (final Entry<String, HashSet<IProgramNonOldVar>> entry : procToGlobals.entrySet()) {
+			for (final IProgramNonOldVar old : entry.getValue()) {
+				final IProgramNonOldVar newVar = variableTranslation.getOrConstruct(old);
+				result.addPair(entry.getKey(), newVar);
+			}
+
+		}
+		return result;
+	}
+
+}
+
+class VariableTranslation {
+	private final ConstructionCache<ILocalProgramVar, ILocalProgramVar> mILocalProgramVarCC;
+	private final ConstructionCache<IProgramNonOldVar, IProgramNonOldVar> mIProgramNonOldVarCC;
+	private final ConstructionCache<IProgramConst, IProgramConst> mIProgramConstCC;
+
+	public VariableTranslation(TermTransferrer transferrer, ManagedScript targetScript	) {
+		mILocalProgramVarCC = new ConstructionCache<>(new IValueConstruction<ILocalProgramVar, ILocalProgramVar>() {
+			
+			@Override
+			public ILocalProgramVar constructValue(final ILocalProgramVar oldPv) {
+				targetScript.lock(this);
+				final ILocalProgramVar newPv = (ILocalProgramVar) ProgramVarUtils.transferProgramVar(transferrer,oldPv);
+				targetScript.unlock(this);
+				return newPv;
+			}
+		});
+		mIProgramNonOldVarCC =
+				new ConstructionCache<>(new IValueConstruction<IProgramNonOldVar, IProgramNonOldVar>() {
+
+					@Override
+					public IProgramNonOldVar constructValue(final IProgramNonOldVar oldPv) {
+						targetScript.lock(this);
+						final IProgramNonOldVar newPv = (IProgramNonOldVar) ProgramVarUtils.transferProgramVar(transferrer,oldPv);
+						targetScript.unlock(this);
+						return newPv;
+					}
+
+				});
+		mIProgramConstCC = new ConstructionCache<>(oldPv -> {
+			final String newIdentifier = oldPv.getIdentifier();
+			ApplicationTerm newSmtConstant = (ApplicationTerm) transferrer.transform(oldPv.getDefaultConstant());
+			return new ProgramConst(newIdentifier, newSmtConstant, false);
+		});
+	}
+
+	public ILocalProgramVar getOrConstruct(final ILocalProgramVar key) {
+		return mILocalProgramVarCC.getOrConstruct(key);
+	}
+
+	public IProgramNonOldVar getOrConstruct(final IProgramNonOldVar key) {
+		return mIProgramNonOldVarCC.getOrConstruct(key);
+	}
+
+	public IProgramOldVar getOrConstruct(final IProgramOldVar key) {
+		return mIProgramNonOldVarCC.getOrConstruct(key.getNonOldVar()).getOldVar();
+	}
+
+	public IProgramConst getOrConstruct(final IProgramConst key) {
+		return mIProgramConstCC.getOrConstruct(key);
+	}
+
+	public Map<ILocalProgramVar, ILocalProgramVar> getILocalProgramVarMap() {
+		return Collections.unmodifiableMap(mILocalProgramVarCC);
+	}
+
+	public Map<IProgramNonOldVar, IProgramNonOldVar> getIProgramNonOldVarMap() {
+		return Collections.unmodifiableMap(mIProgramNonOldVarCC);
+	}
+
+	public Map<IProgramConst, IProgramConst> getIProgramConstMap() {
+		return Collections.unmodifiableMap(mIProgramConstCC);
+	}
+
+	public Map<Term, Term> getIProgramConstTermMap() {
+		return getIProgramConstMap().entrySet().stream().collect(
+				Collectors.toMap(x -> x.getKey().getDefaultConstant(), x -> x.getValue().getDefaultConstant()));
+	}
+
+	public IProgramVar translateProgramVar(final IProgramVar pv) {
+		IProgramVar result;
+		if (pv instanceof ILocalProgramVar) {
+			result = getILocalProgramVarMap().get(pv);
+		} else if (pv instanceof IProgramNonOldVar) {
+			result = getIProgramNonOldVarMap().get(pv);
+		} else if (pv instanceof IProgramOldVar) {
+			result = getIProgramNonOldVarMap().get(((IProgramOldVar) pv).getNonOldVar()).getOldVar();
+		} else {
+			throw new UnsupportedOperationException(pv.getClass().getSimpleName());
+		}
+		return result;
+	}
+
+	public IProgramConst translateProgramConst(final IProgramConst pc) {
+		return getIProgramConstMap().get(pc);
 	}
 
 }
