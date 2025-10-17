@@ -37,8 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -95,15 +93,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks<L extends IAction> extends A
 	 *            Term that describes this transition in single static assignment form.
 	 * @return conjunction of annotated terms
 	 */
-	protected Term annotateAndAssertConjuncts(final String name, final Term originalMainScript, final Term indexed) {
-		Term original = originalMainScript;
-		final Script workerScript = mCsToolkitPredicates.getScript();
-		if (((HistoryRecordingScript) workerScript).getMainScript() != null) {
-			final TermTransferrer termTransferrer = new TermTransferrer(
-					((HistoryRecordingScript) workerScript).getMainScript().getScript(), workerScript);
-			original = termTransferrer.transform(original);
-		}
-
+	private Term annotateAndAssertConjuncts(final String name, final Term original, final Term indexed) {
 		final Term[] originalConjuncts = SmtUtils.getConjuncts(original);
 		final Term[] indexedConjuncts = SmtUtils.getConjuncts(indexed);
 		assert originalConjuncts.length == indexedConjuncts.length : "number of original and indexed conjuncts differ";
@@ -158,7 +148,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks<L extends IAction> extends A
 	/**
 	 * Do the same as annotateAndAssertConjuncts() but do not split the term into conjuncts.
 	 */
-	protected Term annotateAndAssertConjunction(final String name, final Term original, final Term indexed) {
+	private Term annotateAndAssertConjunction(final String name, final Term original, final Term indexed) {
 		final Term annotated = super.annotateAndAssertTerm(indexed, name);
 		mAnnotated2Original.put(annotated, original);
 		return annotated;

@@ -43,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.CallReturnPyramideInstanceProvider.Instance;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -84,10 +82,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 	 * quantified.
 	 */
 	public C strongestPostcondition(final P p, final R transRel) {
-		if (((HistoryRecordingScript) mMgdScript.getScript()).getMainScript() != null) {
-			return transferredStrongestPostcondition(p, transRel);
-		}
-
 		final C constraint = mOperationProvider.getConstraint(p);
 		if (mOperationProvider.isConstraintUnsatisfiable(constraint)) {
 			return constraint;
@@ -135,103 +129,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		// Add aux vars to varsToQuantify
 		varsToProject.addAll(transRel.getAuxVars());
 		return mOperationProvider.projectExistentially(varsToProject, conjunction);
-	}
-
-	private C transferredStrongestPostcondition(final P p, final R transRel) {
-
-		/*
-		 * Parallel only supports TermDomainOperationProvider
-		 */
-		assert mOperationProvider instanceof TermDomainOperationProvider;
-
-		final TermDomainOperationProvider termOperationProvider = (TermDomainOperationProvider) mOperationProvider;
-
-		// TODO is this unchecked cast a Problem?
-		final C constraint = (C) ((HistoryRecordingScript) mMgdScript.getScript())
-				.transferTermToWorker(termOperationProvider.getConstraint((IPredicate) p));
-
-		if (termOperationProvider.isConstraintUnsatisfiable((Term) constraint)) {
-			return constraint;
-		}
-		final Set<TermVariable> varsToProject = new HashSet<>();
-		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = pv -> {
-			final TermVariable result = constructFreshTermVariableTransferred(mMgdScript, pv);
-			varsToProject.add(result);
-			return result;
-		};
-		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor =
-				new ConstructionCache<>(substituentConstruction);
-
-		final Map<Term, Term> substitutionForTransFormula = new HashMap<>();
-		final Map<Term, Term> substitutionForPredecessor = new HashMap<>();
-
-		for (final Entry<IProgramVar, TermVariable> entry : transRel.getInVars().entrySet()) {
-
-			final IProgramVar pv = entry.getKey();
-			final TermVariable tv = (TermVariable) ((HistoryRecordingScript) mMgdScript.getScript())
-					.transferTermToWorker(entry.getValue());
-			boolean specialCase = false;
-			if (transRel.getOutVars().get(pv) != null) {
-				if (tv == ((HistoryRecordingScript) mMgdScript.getScript())
-						.transferTermToWorker(transRel.getOutVars().get(pv))) {
-					// special case, variable unchanged will be renamed when
-					// considering outVars
-					specialCase = true;
-				}
-			}
-
-			if (!specialCase) {
-				final TermVariable substituent = (TermVariable) ((HistoryRecordingScript) mMgdScript.getScript())
-						.transferTermToWorker(termVariablesForPredecessor.getOrConstruct(pv));
-				assert tv.getTheory().equals(substituent.getTheory());
-				substitutionForTransFormula.put(tv, substituent);
-				if (p.getVars().contains(pv)) {
-					substitutionForPredecessor.put(((HistoryRecordingScript) mMgdScript.getScript())
-							.transferTermToWorker(pv.getTermVariable()), substituent);
-				}
-			}
-		}
-
-		for (final Entry<IProgramVar, TermVariable> entry : transRel.getOutVars().entrySet()) {
-
-			final IProgramVar pv = entry.getKey();
-			final TermVariable tv = (TermVariable) ((HistoryRecordingScript) mMgdScript.getScript())
-					.transferTermToWorker(entry.getValue());
-			substitutionForTransFormula.put(tv,
-					((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(pv.getTermVariable()));
-
-			if (!transRel.getInVars().containsKey(pv) && p.getVars().contains(pv)) {
-				final TermVariable substituent = (TermVariable) ((HistoryRecordingScript) mMgdScript.getScript())
-						.transferTermToWorker(termVariablesForPredecessor.getOrConstruct(pv));
-				assert ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(pv.getTermVariable())
-						.getTheory().equals(substituent.getTheory());
-				substitutionForPredecessor.put(
-						((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(pv.getTermVariable()),
-						substituent);
-			}
-		}
-
-		final C transRelation = mOperationProvider.getConstraintFromTransitionRelation(transRel);
-
-		final C renamedRelationConstraint =
-				mOperationProvider.renameVariables(substitutionForTransFormula, transRelation);
-
-		assert ((Term) transRelation).getTheory().equals(mMgdScript.getScript().getTheory());
-
-		final C renamedPredecessor = mOperationProvider.renameVariables(substitutionForPredecessor, constraint);
-
-		final C conjunction =
-				mOperationProvider.constructConjunction(toList(renamedRelationConstraint, renamedPredecessor));
-
-		// Add aux vars to varsToQuantify
-
-		for (final TermVariable aux : transRel.getAuxVars()) {
-			varsToProject
-					.add((TermVariable) ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(aux));
-		}
-		assert ((Term) conjunction).getTheory().equals(mMgdScript.getScript().getTheory());
-		return mOperationProvider.projectExistentially(varsToProject, conjunction);
-
 	}
 
 	public C strongestPostconditionCall(final P callPred, final R localVarAssignments, final R globalVarAssignments,
@@ -306,11 +203,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 	}
 
 	public C weakestPrecondition(final P p, final R tf) {
-
-		if (((HistoryRecordingScript) mMgdScript.getScript()).getMainScript() != null) {
-			return transferredWeakestPrecondition(p, tf);
-		}
-
 		final C constraint = mOperationProvider.getConstraint(p);
 		if (mOperationProvider.isConstraintValid(constraint)) {
 			return constraint;
@@ -320,38 +212,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 		final C renamedRelationConstraint = mOperationProvider.renameVariables(pRename.getSubstitutionForRelation(),
 				mOperationProvider.getConstraintFromTransitionRelation(tf));
-		final C renamedPredecessor =
-				mOperationProvider.renameVariables(pRename.getSubstitutionForSuccessor(), constraint);
-
-		final C disjunction = mOperationProvider.constructDisjunction(
-				toList(mOperationProvider.constructNegation(renamedRelationConstraint), renamedPredecessor));
-
-		return mOperationProvider.projectUniversally(pRename.getVarsToProject(), disjunction);
-	}
-
-	private C transferredWeakestPrecondition(final P p, final R tf) {
-		/*
-		 * Parallel only supports TermDomainOperationProvider
-		 */
-		assert mOperationProvider instanceof TermDomainOperationProvider;
-
-		final TermDomainOperationProvider termOperationProvider = (TermDomainOperationProvider) mOperationProvider;
-
-		final TermTransferrer termTF = new TermTransferrer(
-				((HistoryRecordingScript) mMgdScript.getScript()).getMainScript().getScript(), mMgdScript.getScript());
-
-		// TODO is this unchecked cast a Problem?
-
-		final C constraint = (C) termTF.transform(termOperationProvider.getConstraint((IPredicate) p));
-		if (mOperationProvider.isConstraintValid(constraint)) {
-			return constraint;
-		}
-
-		final PreRenaming pRename = new PreRenaming(p, tf);
-
-		final C renamedRelationConstraint = mOperationProvider.renameVariables(pRename.getSubstitutionForRelation(),
-				mOperationProvider.getConstraintFromTransitionRelation(tf));
-
 		final C renamedPredecessor =
 				mOperationProvider.renameVariables(pRename.getSubstitutionForSuccessor(), constraint);
 
@@ -483,12 +343,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 			final CallReturnPyramideInstanceProvider crpip) {
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final IProgramVar pv : p.getVars()) {
-
-			substitution.put(
-					((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(pv.getTermVariable()),
-					((HistoryRecordingScript) mMgdScript.getScript())
-							.transferTermToWorker(crpip.getInstance(pv, instance)));
-			// substitution.put(pv.getTermVariable(), crpip.getInstance(pv, instance));
+			substitution.put(pv.getTermVariable(), crpip.getInstance(pv, instance));
 		}
 		final C result = mOperationProvider.renameVariables(substitution, mOperationProvider.getConstraint(p));
 		return result;
@@ -525,15 +380,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		return Arrays.asList(elems);
 	}
 
-	private TermVariable constructFreshTermVariableTransferred(final ManagedScript freshVarConstructor,
-			final IProgramVar pv) {
-		final TermTransferrer tf = new TermTransferrer(
-				((HistoryRecordingScript) mMgdScript.getScript()).getMainScript().getScript(), mMgdScript.getScript());
-
-		return freshVarConstructor.constructFreshTermVariable(pv.getGloballyUniqueId(),
-				tf.transferSort(pv.getTermVariable().getSort()));
-	}
-
 	private static TermVariable constructFreshTermVariable(final ManagedScript freshVarConstructor,
 			final IProgramVar pv) {
 		return freshVarConstructor.constructFreshTermVariable(pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
@@ -552,18 +398,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 		private PreRenaming(final P p, final R tf) {
 			mVarsToProject = new HashSet<>();
-			mSubstitutionForRelation = new HashMap<>();
-			mSubstitutionForSuccessor = new HashMap<>();
-
-			if (((HistoryRecordingScript) mMgdScript.getScript()).getMainScript() != null) {
-				transferredRename(p, tf);
-			} else {
-				rename(p, tf);
-			}
-
-		}
-
-		private void rename(final P p, final R tf) {
 			final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = pv -> {
 				final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
 				mVarsToProject.add(result);
@@ -572,6 +406,9 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 			final ConstructionCache<IProgramVar, TermVariable> termVariablesForSuccessor =
 					new ConstructionCache<>(substituentConstruction);
+
+			mSubstitutionForRelation = new HashMap<>();
+			mSubstitutionForSuccessor = new HashMap<>();
 
 			for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 				final IProgramVar pv = entry.getKey();
@@ -595,59 +432,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 				}
 			}
 			mVarsToProject.addAll(tf.getAuxVars());
-		}
-
-		private void transferredRename(final P p, final R tf) {
-			final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = pv -> {
-				final TermVariable result = constructFreshTermVariableTransferred(mMgdScript, pv);
-				mVarsToProject.add(result);
-				return result;
-			};
-
-			final ConstructionCache<IProgramVar, TermVariable> termVariablesForSuccessor =
-					new ConstructionCache<>(substituentConstruction);
-
-			final TermTransferrer termTF =
-					new TermTransferrer(((HistoryRecordingScript) mMgdScript.getScript()).getMainScript().getScript(),
-							mMgdScript.getScript());
-
-			for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-
-				final IProgramVar pv = entry.getKey();
-				final TermVariable tv = (TermVariable) termTF.transform(entry.getValue());
-				// if tf.getInVars().get(pv) == null, then nullPointer since we cant tranfrom null term
-				boolean specialCase = false;
-				if (tf.getInVars().get(pv) != null) {
-					if (entry.getValue() == termTF.transform(tf.getInVars().get(pv))) {
-						// special case, variable unchanged will be renamed when
-						// considering outVars
-						specialCase = true;
-					}
-				}
-				if (!specialCase) {
-					final TermVariable substituent =
-							(TermVariable) termTF.transform(termVariablesForSuccessor.getOrConstruct(pv));
-					mSubstitutionForRelation.put(tv, substituent);
-					if (p.getVars().contains(pv)) {
-						mSubstitutionForSuccessor.put(termTF.transform(pv.getTermVariable()), substituent);
-					}
-				}
-			}
-
-			for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-				final IProgramVar pv = entry.getKey();
-				final TermVariable tv = (TermVariable) termTF.transform(entry.getValue());
-				mSubstitutionForRelation.put(tv, termTF.transform(pv.getTermVariable()));
-
-				if (!tf.getOutVars().containsKey(pv) && p.getVars().contains(pv)) {
-					final TermVariable substituent =
-							(TermVariable) termTF.transform(termVariablesForSuccessor.getOrConstruct(pv));
-					mSubstitutionForSuccessor.put(termTF.transform(pv.getTermVariable()), substituent);
-				}
-			}
-			for (final TermVariable aux : tf.getAuxVars()) {
-				mVarsToProject.add((TermVariable) termTF.transform(aux));
-			}
 		}
 
 		public Set<TermVariable> getVarsToProject() {

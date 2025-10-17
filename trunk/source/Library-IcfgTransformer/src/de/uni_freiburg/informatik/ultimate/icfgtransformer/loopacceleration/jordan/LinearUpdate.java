@@ -37,7 +37,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
@@ -79,12 +78,10 @@ public class LinearUpdate {
 			final SimultaneousUpdate su) {
 		final Set<TermVariable> termVariablesOfModified = new HashSet<>();
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
-			termVariablesOfModified.add((TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
-					.transferTermToWorker(update.getKey().getTermVariable()));
+			termVariablesOfModified.add(update.getKey().getTermVariable());
 		}
 		for (final IProgramVar pv : su.getHavocedVars()) {
-			termVariablesOfModified.add((TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
-					.transferTermToWorker(pv.getTermVariable()));
+			termVariablesOfModified.add(pv.getTermVariable());
 		}
 		final Set<Term> readonlyVariables = new HashSet<>();
 		final Map<TermVariable, AffineTerm> updateMap = new HashMap<>();
@@ -110,9 +107,7 @@ public class LinearUpdate {
 				}
 				if (!problems.isEmpty()) {
 					final StringBuilder sb = new StringBuilder();
-					if (Arrays.asList(update.getValue().getFreeVars())
-							.contains(((HistoryRecordingScript) mgdScript.getScript())
-									.transferTermToWorker(update.getKey().getTermVariable()))) {
+					if (Arrays.asList(update.getValue().getFreeVars()).contains(update.getKey().getTermVariable())) {
 						sb.append("Forever unsupported. ");
 						sb.append(String.format(
 								"Update of scalar variable %s contains this variable and %s array reads whose index is modified. ",
@@ -129,8 +124,7 @@ public class LinearUpdate {
 					throw new AssertionError(errorMessage);
 				}
 
-				updateMap.put((TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
-						.transferTermToWorker(update.getKey().getTermVariable()), ue.getmAffineTerm());
+				updateMap.put(update.getKey().getTermVariable(), ue.getmAffineTerm());
 				readonlyVariables.addAll(ue.getmReadonlyVariables());
 				arrayReads.addAll(ue.getmArrayReads());
 			}
@@ -198,8 +192,7 @@ public class LinearUpdate {
 			}
 
 			for (final MultiDimensionalSelect mds : arrayReads) {
-				if (mds.getArray().equals(((HistoryRecordingScript) mgdScript.getScript())
-						.transferTermToWorker(entry.getKey().getTermVariable()))) {
+				if (mds.getArray().equals(entry.getKey().getTermVariable())) {
 					final String errorMessage = String.format(
 							"Acceleration would only be sound under the assumption that index %s is different each index in %s",
 							mds.getIndex(), entry.getValue().getIndices());
@@ -234,8 +227,7 @@ public class LinearUpdate {
 				for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
 						.entrySet()) {
 					for (final MultiDimensionalSelect mds : arrayReadsWithFixedIndex1) {
-						if (mds.getArray().equals(((HistoryRecordingScript) mgdScript.getScript())
-								.transferTermToWorker(entry.getKey().getTermVariable()))) {
+						if (mds.getArray().equals(entry.getKey().getTermVariable())) {
 							final String errorMessage = String.format(
 									"Fixed index update would only be sound under the assumption that index %s and index %s are different. We have %s reads in this update and %s writes in the loop.",
 									entry.getValue().getIndices(), mds.getIndex(), arrayReads.size(),

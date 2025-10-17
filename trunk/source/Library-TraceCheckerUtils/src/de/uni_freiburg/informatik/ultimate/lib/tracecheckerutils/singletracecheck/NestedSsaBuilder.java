@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
@@ -96,6 +95,7 @@ public class NestedSsaBuilder<L extends IAction> {
 	private final ILogger mLogger;
 
 	private final Script mTcScript;
+
 	/**
 	 * Map global BoogieVar bv to the constant bv_j that represents bv at the moment.
 	 */
@@ -463,9 +463,7 @@ public class NestedSsaBuilder<L extends IAction> {
 		if (bv instanceof IProgramConst) {
 			constant = transferToCurrentScriptIfNecessary(bv.getDefaultConstant());
 		} else {
-			// Need the sort from the worker script
-			final Sort sort = ((HistoryRecordingScript) mTcScript)
-					.transferTermToWorker(transferToCurrentScriptIfNecessary(bv.getTermVariable())).getSort();
+			final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
 			constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(), sort, index, mIndexedConstants,
 					mTcScript);
 		}
@@ -603,13 +601,7 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public Term getVersioneeredTerm() {
-			final HashMap<Term, Term> transferredSubsitutionMap = new HashMap<>();
-			for (final Term entry : mSubstitutionMapping.keySet()) {
-				transferredSubsitutionMap.put(((HistoryRecordingScript) mTcScript).transferTermToWorker(entry),
-						((HistoryRecordingScript) mTcScript).transferTermToWorker(mSubstitutionMapping.get(entry)));
-			}
-			final Term result = PureSubstitution.apply(mTcScript, transferredSubsitutionMap,
-					((HistoryRecordingScript) mTcScript).transferTermToWorker(mFormula));
+			final Term result = PureSubstitution.apply(mTcScript, mSubstitutionMapping, mFormula);
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term: "
 					+ Arrays.stream(result.getFreeVars()).map(a -> a.toString()).collect(Collectors.joining(","));
 			return result;

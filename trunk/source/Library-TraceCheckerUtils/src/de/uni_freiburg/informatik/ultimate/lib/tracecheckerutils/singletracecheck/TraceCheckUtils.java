@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -352,12 +351,8 @@ public final class TraceCheckUtils {
 			vars.add(bv);
 			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
-
-			final TermVariable tv = (TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
-					.transferTermToWorker(bv.getTermVariable());
-			final TermVariable tvOld = (TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
-					.transferTermToWorker(bvOld.getTermVariable());
-
+			final TermVariable tv = bv.getTermVariable();
+			final TermVariable tvOld = bvOld.getTermVariable();
 			final Term equality = SmtUtils.binaryEquality(mgdScript.getScript(), tv, tvOld);
 			term = SmtUtils.and(mgdScript.getScript(), term, equality);
 		}

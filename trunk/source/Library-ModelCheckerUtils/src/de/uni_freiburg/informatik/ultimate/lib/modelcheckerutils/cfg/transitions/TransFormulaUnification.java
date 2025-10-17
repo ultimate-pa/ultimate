@@ -36,11 +36,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -59,7 +57,7 @@ public class TransFormulaUnification {
 	private final Map<IProgramVar, TermVariable> mInVars = new HashMap<>();
 	private final Map<IProgramVar, TermVariable> mOutVars = new HashMap<>();
 	private final Set<IProgramVar> mAssignedVars = new HashSet<>();
-	private final List<Map<Term, Term>> mSubstitutions = new ArrayList<>();
+	private final List<Map<TermVariable, TermVariable>> mSubstitutions = new ArrayList<>();
 	private final Set<TermVariable> mAuxVars = new HashSet<>();
 	private final Set<IProgramConst> mNonTheoryConsts = new HashSet<>();
 
@@ -141,16 +139,15 @@ public class TransFormulaUnification {
 					addFreshTermVariable(mInVars, pv, "In");
 				}
 
-				final boolean isAssignedVar = entry.getValue() != tf.getInVars().get(pv);
-				if (isAssignedVar) {
-					mAssignedVars.add(pv);
-				}
 				// Auxiliary step: Add all inVars as outVars. Some will be overwritten below.
 				mOutVars.put(pv, mInVars.get(pv));
 			}
+
+			// Collect variables assigned in at least one branch.
+			mAssignedVars.addAll(tf.getAssignedVars());
 		}
 
-		// See comment above: Overwrite the outVars, if assigned in at least one branch.
+		// Overwrite the outVars (making them different from the inVars), if assigned in at least one branch.
 		for (final IProgramVar pv : mAssignedVars) {
 			addFreshTermVariable(mOutVars, pv, "Out");
 		}
@@ -165,9 +162,7 @@ public class TransFormulaUnification {
 	private void addFreshTermVariable(final Map<IProgramVar, TermVariable> varMap, final IProgramVar variable,
 			final String suffix) {
 		final String baseName = variable.getGloballyUniqueId() + "_" + suffix;
-		final Sort transferredSort =
-				((HistoryRecordingScript) mMgdScript.getScript()).transferSortToWorker(variable.getSort());
-		final TermVariable termVar = mMgdScript.constructFreshTermVariable(baseName, transferredSort);
+		final TermVariable termVar = mMgdScript.constructFreshTermVariable(baseName, variable.getSort());
 		varMap.put(variable, termVar);
 	}
 
@@ -186,45 +181,38 @@ public class TransFormulaUnification {
 	 *            The transition formula whose substitution is computed
 	 * @return The substitution mapping for term variables belonging to input, output or auxiliary variables.
 	 */
-	private Map<Term, Term> computeSubstitution(final UnmodifiableTransFormula tf) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
+	private Map<TermVariable, TermVariable> computeSubstitution(final UnmodifiableTransFormula tf) {
+		final Map<TermVariable, TermVariable> substitutionMapping = new HashMap<>();
 
 		// input variables
 		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			substitutionMapping.put(entry.getValue(), ((HistoryRecordingScript) mMgdScript.getScript())
-					.transferTermToWorker(mInVars.get(entry.getKey())));
+			final TermVariable previous = substitutionMapping.put(entry.getValue(), mInVars.get(entry.getKey()));
+			assert previous == null : "duplicate in-variable substitution: " + entry.getValue();
 		}
 
 		// output variables
 		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			final IProgramVar pv = entry.getKey();
-			TermVariable outVar = entry.getValue();
-			outVar = (TermVariable) ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(outVar);
-			final boolean isAssignedVar;
-			if (tf.getInVars().get(pv) != null) {
-				isAssignedVar = ((HistoryRecordingScript) mMgdScript.getScript())
-						.transferTermToWorker(tf.getInVars().get(pv)) != outVar;
-			} else {
-				isAssignedVar = tf.getInVars().get(pv) != outVar;
-			}
+			final TermVariable outVar = entry.getValue();
 
+			final boolean isAssignedVar = tf.getInVars().get(pv) != outVar;
 			if (isAssignedVar) {
-				substitutionMapping.put(outVar,
-						((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(mOutVars.get(pv)));
+				final TermVariable previous = substitutionMapping.put(outVar, mOutVars.get(pv));
+				assert previous == null : "duplicate in/out-variable substitution: " + outVar;
 			} else {
-				assert mInVars.get(pv).getTheory().equals(mMgdScript.getScript().getTheory());
-				assert substitutionMapping.get(outVar).getTheory().equals(mMgdScript.getScript().getTheory());
+				// For variables that have an out-variable but are not assigned, there are two options: either they are
+				// not assigned by any of our transition formulas, and hence the new in- and out-vars are equal. Or,
+				// they are assigned by some other transition formula. In the latter case, we here prefer to substitute
+				// the old out-variable by the new in-variable rather than the new out-variable (we generate an explicit
+				// equality between the two new variables below).
 				assert substitutionMapping.get(outVar) == mInVars.get(pv);
 			}
 		}
 
 		// auxiliary variables
 		for (final TermVariable oldAuxVar : tf.getAuxVars()) {
-
-			final TermVariable newAuxVar = mMgdScript.constructFreshCopy(
-					(TermVariable) ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(oldAuxVar));
-			substitutionMapping.put(((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(oldAuxVar),
-					newAuxVar);
+			final TermVariable newAuxVar = mMgdScript.constructFreshCopy(oldAuxVar);
+			substitutionMapping.put(oldAuxVar, newAuxVar);
 			mAuxVars.add(newAuxVar);
 		}
 
@@ -246,7 +234,8 @@ public class TransFormulaUnification {
 	 *            The substitution that must be applied
 	 * @return A term for the unified transition formula.
 	 */
-	private Term computeUnifiedFormula(final UnmodifiableTransFormula tf, final Map<Term, Term> substitution) {
+	private Term computeUnifiedFormula(final UnmodifiableTransFormula tf,
+			final Map<TermVariable, TermVariable> substitution) {
 		final Term renamedFormula = Substitution.apply(mMgdScript, substitution, tf.getFormula());
 		final Term equalities = generateExplicitEqualities(tf);
 		return SmtUtils.and(mMgdScript.getScript(), renamedFormula, equalities);
@@ -261,19 +250,18 @@ public class TransFormulaUnification {
 	 * @return A conjunction of equalities
 	 */
 	private Term generateExplicitEqualities(final UnmodifiableTransFormula tf) {
+		final var assignedVars = tf.getAssignedVars();
 		final List<Term> equalities = new ArrayList<>();
 		for (final IProgramVar pv : mAssignedVars) {
-			final TermVariable inVar = tf.getInVars().get(pv);
-			final TermVariable outVar = tf.getOutVars().get(pv);
-
-			// If pv does not occur in tf, or pv is not modified in tf, add explicit equality
-			if ((inVar == null && outVar == null) || inVar == outVar) {
+			// If pv is not modified in tf (but in one of the other transition formulas), add explicit equality
+			if (!assignedVars.contains(pv)) {
 				final TermVariable termInVar = mInVars.get(pv);
 				assert termInVar != null;
 
 				final TermVariable termOutVar = mOutVars.get(pv);
 				assert termOutVar != null;
 
+				assert termInVar != termOutVar : "assigned variable needs different in/out-vars";
 				equalities.add(SmtUtils.binaryEquality(mMgdScript.getScript(), termInVar, termOutVar));
 			}
 		}

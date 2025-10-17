@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -133,18 +132,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 
 		mInstantiateArrayExt = instantiateArrayExt;
 		final HashMap<Term, Term> const2RepTv = new HashMap<>();
-		// Used in mConst2RepTvSubst thus needs to be a worker term variable
-		if (((HistoryRecordingScript) mMgdScriptCfg.getScript()).getMainScript() != null) {
-			final TermTransferrer tf = new TermTransferrer(
-					((HistoryRecordingScript) mMgdScriptCfg.getScript()).getMainScript().getScript(),
-					mMgdScriptCfg.getScript());
-			for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
-				const2RepTv.put(entry.getKey(), tf.transform(entry.getValue().getTermVariable()));
-			}
-		} else {
-			for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
-				const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
-			}
+		for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
+			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mgdScriptTc != mgdScriptCfg) {
 			mConst2RepTvSubst =

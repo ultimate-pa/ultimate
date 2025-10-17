@@ -80,13 +80,6 @@ public class CfgSmtToolkit {
 		return mManagedScript;
 	}
 
-	public CfgSmtToolkit getCfgSmtToolkitWithFreshScript(final IUltimateServiceProvider services,
-			final SolverSettings solverSettings) {
-		return new CfgSmtToolkit(mModifiableGlobalsTable, createFreshManagedScript(services, solverSettings),
-				mSymbolTable, mProcedures, mInParams, mInParams, mIcfgEdgeFactory, mConcurrencyInformation,
-				mSmtFunctionsAndAxioms);
-	}
-
 	/**
 	 * Similar to {@link CfgSmtToolkit#createFreshManagedScript(SolverSettings, String)}, but use a default solver id as
 	 * defined in {@link SolverSettings}.

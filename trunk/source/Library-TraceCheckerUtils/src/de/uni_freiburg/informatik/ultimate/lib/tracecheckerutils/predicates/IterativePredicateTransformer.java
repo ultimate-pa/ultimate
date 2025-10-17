@@ -387,7 +387,6 @@ public class IterativePredicateTransformer<L extends IAction> {
 				postprocessed = callerPredicatesComputed.get(i);
 			} else {
 				final IPredicate backwardPredicate;
-				assert backwardTerm.getTheory().equals(mMgdScript.getScript().getTheory());
 				if (bs == BackwardSequence.WP) {
 					backwardPredicate = constructPredicate(backwardTerm);
 				} else {

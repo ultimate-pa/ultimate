@@ -30,8 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck.TraceCheckLock;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -68,10 +66,6 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 	protected static final String PENDINGCONTEXT = "_PendingContext";
 	protected static final String LOCVARASSIGN_PENDINGCONTEXT = "_LocVarAssignPendingContext";
 	protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
-	Object mReuseLock;
-	boolean mCfgMgdScriptTcLockedBySbElse = false;
-
-	TermTransferrer mTf = null;
 
 	public AnnotateAndAssertCodeBlocks(final ManagedScript csToolkit, final TraceCheckLock scriptLockOwner,
 			final NestedFormulas<L, Term, Term> nestedSSA, final ILogger logger) {
@@ -81,23 +75,12 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 		mScript = csToolkit.getScript();
 		mTrace = nestedSSA.getTrace();
 		mSSA = nestedSSA;
-
-		if (((HistoryRecordingScript) mMgdScript.getScript()).getMainScript() != null) {
-			mTf = new TermTransferrer(((HistoryRecordingScript) mMgdScript.getScript()).getMainScript().getScript(),
-					mMgdScript.getScript());
-		}
 	}
 
 	protected Term annotateAndAssertPrecondition() {
 		final String name = precondAnnotation();
-		if (mTf != null) {
-			final Term annotated = annotateAndAssertTerm(mTf.transform(mSSA.getPrecondition()), name);
-			return annotated;
-		} else {
-			final Term annotated = annotateAndAssertTerm(mSSA.getPrecondition(), name);
-			return annotated;
-		}
-
+		final Term annotated = annotateAndAssertTerm(mSSA.getPrecondition(), name);
+		return annotated;
 	}
 
 	protected String precondAnnotation() {
@@ -106,12 +89,7 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 
 	protected Term annotateAndAssertPostcondition() {
 		final String name = postcondAnnotation();
-		final Term negatedPostcondition;
-		if (mTf != null) {
-			negatedPostcondition = mScript.term("not", mTf.transform(mSSA.getPostcondition()));
-		} else {
-			negatedPostcondition = mScript.term("not", mSSA.getPostcondition());
-		}
+		final Term negatedPostcondition = mScript.term("not", mSSA.getPostcondition());
 		final Term annotated = annotateAndAssertTerm(negatedPostcondition, name);
 		return annotated;
 	}
@@ -127,12 +105,7 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 		} else {
 			name = internalAnnotation(position);
 		}
-		Term original;
-		if (mTf != null) {
-			original = mTf.transform(mSSA.getFormulaFromNonCallPos(position));
-		} else {
-			original = mSSA.getFormulaFromNonCallPos(position);
-		}
+		final Term original = mSSA.getFormulaFromNonCallPos(position);
 		final Term annotated = annotateAndAssertTerm(original, name);
 		return annotated;
 	}
@@ -147,12 +120,7 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 
 	protected Term annotateAndAssertLocalVarAssignemntCall(final int position) {
 		final String name = localVarAssignemntCallAnnotation(position);
-		final Term indexed;
-		if (mTf != null) {
-			indexed = mTf.transform(mSSA.getLocalVarAssignment(position));
-		} else {
-			indexed = mSSA.getLocalVarAssignment(position);
-		}
+		final Term indexed = mSSA.getLocalVarAssignment(position);
 		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
@@ -163,12 +131,7 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 
 	protected Term annotateAndAssertGlobalVarAssignemntCall(final int position) {
 		final String name = globalVarAssignemntAnnotation(position);
-		final Term indexed;
-		if (mTf != null) {
-			indexed = mTf.transform(mSSA.getGlobalVarAssignment(position));
-		} else {
-			indexed = mSSA.getGlobalVarAssignment(position);
-		}
+		final Term indexed = mSSA.getGlobalVarAssignment(position);
 		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
@@ -179,12 +142,7 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 
 	protected Term annotateAndAssertOldVarAssignemntCall(final int position) {
 		final String name = oldVarAssignemntCallAnnotation(position);
-		final Term indexed;
-		if (mTf != null) {
-			indexed = mTf.transform(mSSA.getOldVarAssignment(position));
-		} else {
-			indexed = mSSA.getOldVarAssignment(position);
-		}
+		final Term indexed = mSSA.getOldVarAssignment(position);
 		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
@@ -195,12 +153,7 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 
 	protected Term annotateAndAssertPendingContext(final int positionOfPendingContext, final int pendingContextCode) {
 		final String name = pendingContextAnnotation(pendingContextCode);
-		final Term indexed;
-		if (mTf != null) {
-			indexed = mTf.transform(mSSA.getPendingContext(positionOfPendingContext));
-		} else {
-			indexed = mSSA.getPendingContext(positionOfPendingContext);
-		}
+		final Term indexed = mSSA.getPendingContext(positionOfPendingContext);
 		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
@@ -212,12 +165,7 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 	protected Term annotateAndAssertLocalVarAssignemntPendingContext(final int positionOfPendingReturn,
 			final int pendingContextCode) {
 		final String name = localVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		final Term indexed;
-		if (mTf != null) {
-			indexed = mTf.transform(mSSA.getLocalVarAssignment(positionOfPendingReturn));
-		} else {
-			indexed = mSSA.getLocalVarAssignment(positionOfPendingReturn);
-		}
+		final Term indexed = mSSA.getLocalVarAssignment(positionOfPendingReturn);
 		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
@@ -229,12 +177,7 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 	protected Term annotateAndAssertOldVarAssignemntPendingContext(final int positionOfPendingReturn,
 			final int pendingContextCode) {
 		final String name = oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		final Term indexed;
-		if (mTf != null) {
-			indexed = mTf.transform(mSSA.getOldVarAssignment(positionOfPendingReturn));
-		} else {
-			indexed = mSSA.getOldVarAssignment(positionOfPendingReturn);
-		}
+		final Term indexed = mSSA.getOldVarAssignment(positionOfPendingReturn);
 		final Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}

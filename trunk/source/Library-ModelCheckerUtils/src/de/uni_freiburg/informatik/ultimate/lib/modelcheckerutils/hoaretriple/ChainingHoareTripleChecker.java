@@ -100,9 +100,6 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-		if (Thread.currentThread().isInterrupted()) {
-			throw new RuntimeException("Worker Interrupted");
-		}
 		for (final IWrappedHoareTripleChecker htc : mHtcs) {
 			final Validity val = htc.checkInternal(pre, act, succ);
 			htc.getUnderlying().reportLongChecks(pre, act, succ, val);
@@ -115,9 +112,6 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-		if (Thread.currentThread().isInterrupted()) {
-			throw new RuntimeException("Worker Interrupted");
-		}
 		for (final IWrappedHoareTripleChecker htc : mHtcs) {
 			final Validity val = htc.checkCall(pre, act, succ);
 			htc.getUnderlying().reportLongChecks(pre, act, succ, val);
@@ -131,9 +125,6 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate succ) {
-		if (Thread.currentThread().isInterrupted()) {
-			throw new RuntimeException("Worker Interrupted");
-		}
 		for (final IWrappedHoareTripleChecker htc : mHtcs) {
 			final Validity val = htc.checkReturn(preLin, preHier, act, succ);
 			htc.getUnderlying().reportLongChecks(preLin, preHier, act, succ, val);

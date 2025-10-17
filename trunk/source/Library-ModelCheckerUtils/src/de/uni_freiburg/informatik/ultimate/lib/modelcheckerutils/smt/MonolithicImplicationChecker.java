@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -67,26 +65,15 @@ public class MonolithicImplicationChecker {
 	/**
 	 * Check if implication antecedent ==> succedent is valid.
 	 */
-	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormulaMain,
-			final boolean affirmAntecedentNeitherValidNorUnsat, final Term succedent,
-			final Term succedentClosedFormulaMain, final boolean affirmSuccedentNeitherValidNorUnsat) {
+	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormula,
+			final boolean affirmAntecedentNeitherValidNorUnsat, final Term succedent, final Term succedentClosedFormula,
+			final boolean affirmSuccedentNeitherValidNorUnsat) {
 		if (affirmAntecedentNeitherValidNorUnsat && affirmSuccedentNeitherValidNorUnsat) {
 			final Validity dataflowAnalysisResult = dataflowBasedImplicationCheck(antecedent, succedent);
 			if (dataflowAnalysisResult == Validity.INVALID) {
 				return dataflowAnalysisResult;
 			}
 		}
-		Term succedentClosedFormula = succedentClosedFormulaMain;
-		Term antecedentClosedFormula = antecedentClosedFormulaMain;
-		// succedentClosedFormula comes from PredicateUnifier thus is from main script but we do a worker checksat here
-		if (((HistoryRecordingScript) mManagedScript.getScript()).getMainScript() != null) {
-			final TermTransferrer tf = new TermTransferrer(
-					((HistoryRecordingScript) mManagedScript.getScript()).getMainScript().getScript(),
-					mManagedScript.getScript());
-			succedentClosedFormula = tf.transform(succedentClosedFormula);
-			antecedentClosedFormula = tf.transform(antecedentClosedFormula);
-		}
-
 		if (mManagedScript.isLocked()) {
 			mManagedScript.requestLockRelease();
 		}

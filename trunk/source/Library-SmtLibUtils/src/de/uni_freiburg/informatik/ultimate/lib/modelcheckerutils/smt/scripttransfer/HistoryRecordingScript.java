@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttran
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable.IllegalSmtDeclarableUsageException;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -58,67 +56,12 @@ public class HistoryRecordingScript extends WrapperScript {
 	private final Deque<ISmtDeclarable> mHistory;
 	private final Map<String, ISmtDeclarable> mSymbolTable;
 	private int mCurrentStackLevel;
-	private ManagedScript mMainScript = null;
-
-	public HashMap<TermVariable, TermVariable> workerTermVariableToMainTermVariable;
-
-	private TermTransferrer mTf = null;
 
 	public HistoryRecordingScript(final Script script) {
 		super(script);
 		mHistory = new ArrayDeque<>();
 		mSymbolTable = new Hashtable<>();
-		workerTermVariableToMainTermVariable = new HashMap<>();
 		mCurrentStackLevel = 0;
-	}
-
-	public void setMainScript(final ManagedScript mainScript) {
-		mMainScript = mainScript;
-		mTf = new TermTransferrer(mMainScript.getScript(), this);
-	}
-
-	public Term transferTermToWorker(final Term mainTerm) {
-
-		if (mTf == null) {
-			return mainTerm;
-		}
-		final Term workerTerm = mTf.transform(mainTerm);
-		if (workerTerm.equals(mainTerm)) {
-			return workerTerm;
-		}
-		if (mainTerm instanceof TermVariable) {
-			addTermVariableToMap((TermVariable) workerTerm, (TermVariable) mainTerm);
-		}
-		return workerTerm;
-	}
-
-	public Sort transferSortToWorker(final Sort mainSort) {
-		if (mTf == null) {
-			return mainSort;
-		}
-		return mTf.transferSort(mainSort);
-	}
-
-	public ManagedScript getMainScript() {
-		return mMainScript;
-	}
-
-	/*
-	 * maps for the termvariables for boogievars
-	 */
-	public void addTermVariableToMap(final TermVariable workerTv, final TermVariable mainTv) {
-		if (mMainScript == null) {
-			return;
-		}
-		assert !workerTv.equals(mainTv);
-		workerTermVariableToMainTermVariable.put(workerTv, mainTv);
-	}
-
-	public TermVariable getMainTv(final TermVariable workerTv) {
-		if (workerTermVariableToMainTermVariable.containsKey(workerTv)) {
-			return workerTermVariableToMainTermVariable.get(workerTv);
-		}
-		return (TermVariable) mTf.getTransferMapping().get(workerTv);
 	}
 
 	@Override
@@ -137,7 +80,6 @@ public class HistoryRecordingScript extends WrapperScript {
 	@Override
 	public void reset() {
 		super.reset();
-
 		mHistory.clear();
 		mSymbolTable.clear();
 	}
@@ -145,15 +87,12 @@ public class HistoryRecordingScript extends WrapperScript {
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) {
 		super.defineSort(sort, sortParams, definition);
-
 		insert(DeclarableSortSymbol.createFromScriptDefineSort(sort, sortParams, definition));
 	}
 
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) {
-
 		super.declareFun(fun, paramSorts, resultSort);
-
 		insert(DeclarableFunctionSymbol.createFromScriptDeclareFun(fun, paramSorts, resultSort));
 	}
 
@@ -166,7 +105,6 @@ public class HistoryRecordingScript extends WrapperScript {
 	@Override
 	public void push(final int levels) {
 		super.push(levels);
-
 		assert levels > 0;
 		for (int i = 0; i < levels; ++i) {
 			mHistory.push(StackMarker.INSTANCE);
@@ -177,7 +115,6 @@ public class HistoryRecordingScript extends WrapperScript {
 	@Override
 	public void pop(final int levels) {
 		super.pop(levels);
-
 		removeStackLevelsFromHistory(levels);
 	}
 
@@ -232,7 +169,6 @@ public class HistoryRecordingScript extends WrapperScript {
 				continue;
 			}
 			elem.defineOrDeclare(script);
-
 		}
 	}
 

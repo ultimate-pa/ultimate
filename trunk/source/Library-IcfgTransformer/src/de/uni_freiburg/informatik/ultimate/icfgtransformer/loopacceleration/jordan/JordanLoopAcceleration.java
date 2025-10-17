@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -148,14 +147,8 @@ public class JordanLoopAcceleration {
 		}
 
 		{
-			final Set<TermVariable> tvOfHavocedMain =
+			final Set<TermVariable> tvOfHavoced =
 					su.getHavocedVars().stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-			final Set<TermVariable> tvOfHavoced = new HashSet<>();
-			for (final TermVariable var : tvOfHavocedMain) {
-				tvOfHavoced
-						.add((TermVariable) ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(var));
-			}
-
 			for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
 				if (!DataStructureUtils.haveEmptyIntersection(
 						new HashSet<>(Arrays.asList(entry.getValue().getFreeVars())), tvOfHavoced)) {
@@ -302,8 +295,7 @@ public class JordanLoopAcceleration {
 			closedFormWithInvarsMap = new HashMap<>();
 			final HashMap<Term, Term> defaultTv2inVar = new HashMap<>();
 			for (final Entry<IProgramVar, TermVariable> entry : inVars.entrySet()) {
-				defaultTv2inVar.put(((HistoryRecordingScript) mgdScript.getScript())
-						.transferTermToWorker(entry.getKey().getTermVariable()), entry.getValue());
+				defaultTv2inVar.put(entry.getKey().getTermVariable(), entry.getValue());
 			}
 			for (final Entry<TermVariable, Term> entry : closedFormMap.entrySet()) {
 				closedFormWithInvarsMap.put(entry.getKey(),
@@ -312,17 +304,14 @@ public class JordanLoopAcceleration {
 		}
 		final HashMap<IProgramVar, Term> closedFormForProgramVar = new HashMap<>();
 		for (final IProgramVar pv : su.getDeterministicAssignment().keySet()) {
-			closedFormForProgramVar.put(pv, closedFormWithInvarsMap
-					.get(((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(pv.getTermVariable())));
+			closedFormForProgramVar.put(pv, closedFormWithInvarsMap.get(pv.getTermVariable()));
 		}
 		// Mapping in which that maps default TermVariables to their closed form (where
 		// variables are represented by inVars). Since array indices may also contain
 		// read-only variables we have to add from the inVars mapping.
 		final HashMap<TermVariable, Term> substitutionMapping = new HashMap<>(closedFormWithInvarsMap);
 		for (final IProgramVar pv : su.getReadonlyVars()) {
-			final Term oldValue =
-					substitutionMapping.put((TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
-							.transferTermToWorker(pv.getTermVariable()), inVars.get(pv));
+			final Term oldValue = substitutionMapping.put(pv.getTermVariable(), inVars.get(pv));
 			if (oldValue != null) {
 				throw new AssertionError(String.format("Contradiction: %s is readonly and modified", pv));
 			}
@@ -827,8 +816,7 @@ public class JordanLoopAcceleration {
 		final HashMap<IProgramVar, TermVariable> havocReplacements = new HashMap<>();
 		for (final IProgramVar pv : havocedVars) {
 			final String varName = pv.getTermVariable().getName() + "_havocIntermIteration";
-			havocReplacements.put(pv, mgdScript.variable(varName,
-					((HistoryRecordingScript) mgdScript.getScript()).transferSortToWorker(pv.getSort())));
+			havocReplacements.put(pv, mgdScript.variable(varName, pv.getSort()));
 		}
 		return havocReplacements;
 	}
@@ -1041,8 +1029,7 @@ public class JordanLoopAcceleration {
 		for (final IProgramVar outVar : outVars.keySet()) {
 			if (!modifiableInVars.containsKey(outVar)) {
 				final TermVariable inVar = mgdScript.constructFreshTermVariable(outVar.getGloballyUniqueId(),
-						((HistoryRecordingScript) mgdScript.getScript())
-								.transferSortToWorker(outVar.getTermVariable().getSort()));
+						outVar.getTermVariable().getSort());
 				modifiableInVars.put(outVar, inVar);
 			}
 			xPrimeEqualsXArray[k] = mgdScript.term(null, "=", outVars.get(outVar), modifiableInVars.get(outVar));

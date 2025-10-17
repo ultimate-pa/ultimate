@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
@@ -163,15 +162,15 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			} catch (final ToolchainCanceledException ex) {
 				throw ex;
 			} catch (final Throwable ex) {
-				actualInterpolationComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH,
-						ex);
+				actualInterpolationComputationStatus =
+						new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH, ex);
 			}
 			mInterpolantComputationStatus = actualInterpolationComputationStatus;
 		} else if (result == LBool.SAT) {
 			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
 		} else {
-			mInterpolantComputationStatus = new InterpolantComputationStatus(
-					ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
+			mInterpolantComputationStatus =
+					new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
 		}
 		mTcSmtManager.getScript().exit();
 	}
@@ -323,9 +322,9 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
-				mInterpolantsBp = spt
-						.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
-						.getPredicates();
+				mInterpolantsBp =
+						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
+								.getPredicates();
 
 				assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger, mCfgManagedScript)
@@ -381,15 +380,15 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	/**
 	 * Construct representation of the trace formula that contains only the conjuncts that occur in the unsat core.
 	 */
-	private NestedFormulas<L, UnmodifiableTransFormula, IPredicate> constructRelevantTransFormulas(
-			final Set<Term> unsatCore) {
+	private NestedFormulas<L, UnmodifiableTransFormula, IPredicate>
+			constructRelevantTransFormulas(final Set<Term> unsatCore) {
 		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf;
 		return switch (mUnsatCores) {
 		case IGNORE -> new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
 				mPendingContexts, mCsToolkit.getOldVarsAssignmentCache(), false);
 		case CONJUNCT_LEVEL ->
-			new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
-					mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
+				new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
+						mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
 		case STATEMENT_LEVEL -> {
 			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
@@ -507,8 +506,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mCfgManagedScript.getScript(), QuantifiedFormula.EXISTS,
-					transferSet(nonLiveVars),
-					((HistoryRecordingScript) mCfgManagedScript.getScript()).transferTermToWorker(pred.getFormula()));
+					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
 			final Term pushed = PartialQuantifierElimination.eliminateLight(mServices, mCfgManagedScript, projectedT);
@@ -531,8 +529,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mCfgManagedScript.getScript(), QuantifiedFormula.FORALL,
-					transferSet(nonLiveVars),
-					((HistoryRecordingScript) mCfgManagedScript.getScript()).transferTermToWorker(pred.getFormula()));
+					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
 			final Term pushed = PartialQuantifierElimination.eliminateLight(mServices, mCfgManagedScript, projectedT);
@@ -574,17 +571,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		return result;
 	}
 
-	private Set<TermVariable> transferSet(final Set<TermVariable> inSet) {
-		final Set<TermVariable> result = new HashSet<>();
-		for (final TermVariable tv : inSet) {
-			final HistoryRecordingScript script = ((HistoryRecordingScript) mCfgManagedScript.getScript());
-			final TermVariable transferredTV = (TermVariable) script.transferTermToWorker(tv);
-			script.addTermVariableToMap(transferredTV, tv);
-			result.add(transferredTV);
-		}
-		return result;
-	}
-
 	/***
 	 * Check for each predicate computed via the strongest post-condition, whether it implies the predicate computed via
 	 * weakest precondition. This check is desired, when predicates are computed twice (once via strongest post, and
@@ -604,15 +590,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	@Override
 	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {
 		if (mAnnotateAndAsserterConjuncts == null) {
-			if (mCfgManagedScript.equals(mTcSmtManager)
-					&& ((HistoryRecordingScript) mCfgManagedScript.getScript()).getMainScript() != null) {
-				mAnnotateAndAsserterConjuncts = new AnnotateAndAssertToWorker<>(mTcSmtManager, mTraceCheckLock, ssa,
-						mNestedFormulas, mLogger, mCfgManagedScript);
-			} else {
-				mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks<>(mTcSmtManager,
-						mTraceCheckLock, ssa, mNestedFormulas, mLogger, mCfgManagedScript);
-			}
-
+			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks<>(mTcSmtManager, mTraceCheckLock,
+					ssa, mNestedFormulas, mLogger, mCfgManagedScript);
 		}
 		return mAnnotateAndAsserterConjuncts;
 	}

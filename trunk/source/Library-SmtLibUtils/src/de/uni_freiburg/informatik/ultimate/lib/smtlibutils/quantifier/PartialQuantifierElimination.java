@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
@@ -52,8 +51,7 @@ public class PartialQuantifierElimination {
 	private static final boolean DEBUG_EXPECT_REMOVAL_OF_ALL_QUANTIFIERS = false;
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final Term termMain, final SimplificationTechnique simplificationTechnique) {
-		final Term term = ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(termMain);
+			final Term term, final SimplificationTechnique simplificationTechnique) {
 		final Term tmp = eliminateLight(services, mgdScript, term);
 		final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL,
 				simplificationTechnique, tmp);
@@ -65,8 +63,7 @@ public class PartialQuantifierElimination {
 	}
 
 	public static Term eliminateLight(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final Term termMain) {
-		final Term term = ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(termMain);
+			final Term term) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		// FIXME 20230601 Matthias: The following line seems useless. The input should
@@ -84,8 +81,7 @@ public class PartialQuantifierElimination {
 	 */
 	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
-			final SimplificationTechnique simplificationTechnique, final Term termMain) {
-		final Term term = ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(termMain);
+			final SimplificationTechnique simplificationTechnique, final Term term) {
 		final Term tmp = eliminateLight(services, mgdScript, term);
 		return QuantifierPushTermWalker.eliminate(services, mgdScript, applyDistributivity,
 				quantifierEliminationTechniques, simplificationTechnique, tmp);

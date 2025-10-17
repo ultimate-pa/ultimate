@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -201,22 +199,6 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 			final Supplier<Term> funGetNeutralElement) {
 		if (terms.stream().anyMatch(this::isDontCare)) {
 			return mDontCareTerm;
-		}
-		if (((HistoryRecordingScript) mScript).getMainScript() != null) {
-			if (terms.isEmpty()) {
-				return ((HistoryRecordingScript) mScript).transferTermToWorker(funGetNeutralElement.get());
-			}
-
-			final List<Term> newTerms = new ArrayList<>();
-			for (final Term t : terms) {
-				newTerms.add(((HistoryRecordingScript) mScript).transferTermToWorker(t));
-			}
-			final Term xJunct = funCreateXJunct.apply(mScript, newTerms);
-			if (st != SimplificationTechnique.NONE) {
-				return SmtUtils.simplify(mMgdScript, xJunct, mServices, st);
-			}
-			return xJunct;
-
 		}
 		if (terms.isEmpty()) {
 			return funGetNeutralElement.get();

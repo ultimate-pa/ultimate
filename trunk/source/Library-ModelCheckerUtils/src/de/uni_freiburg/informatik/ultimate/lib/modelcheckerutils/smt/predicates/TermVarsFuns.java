@@ -35,7 +35,6 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -92,13 +91,7 @@ public class TermVarsFuns {
 			final Function<FunctionSymbol, IProgramFunction> funcSymb2ProgFunc) {
 		final HashSet<IProgramVar> vars = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			IProgramVar bv = null;
-			if (((HistoryRecordingScript) mgdScript.getScript()).getMainScript() != null) {
-				bv = funTermVar2ProgVar.apply(((HistoryRecordingScript) mgdScript.getScript()).getMainTv(tv));
-			}
-			if (bv == null) {
-				bv = funTermVar2ProgVar.apply(tv);
-			}
+			final IProgramVar bv = funTermVar2ProgVar.apply(tv);
 			if (bv == null) {
 				throw new AssertionError("No corresponding IProgramVar for " + tv);
 			}

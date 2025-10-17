@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -55,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNorm
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -68,11 +66,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class TransFormulaBuilder {
-	private Map<IProgramVar, TermVariable> mInVars;
-	private Map<IProgramVar, TermVariable> mOutVars;
-	private Set<IProgramConst> mNonTheoryConsts;
-	private Set<TermVariable> mAuxVars;
-	private Set<TermVariable> mBranchEncoders;
+	private final Map<IProgramVar, TermVariable> mInVars;
+	private final Map<IProgramVar, TermVariable> mOutVars;
+	private final Set<IProgramConst> mNonTheoryConsts;
+	private final Set<TermVariable> mAuxVars;
+	private final Set<TermVariable> mBranchEncoders;
 	private Infeasibility mInfeasibility = null;
 	private Term mFormula = null;
 	private boolean mConstructionFinished = false;
@@ -313,35 +311,6 @@ public class TransFormulaBuilder {
 		}
 	}
 
-	private void transferEverythingToWorker(final ManagedScript script) {
-		if (((HistoryRecordingScript) script.getScript()).getMainScript() != null) {
-			mFormula = ((HistoryRecordingScript) script.getScript()).transferTermToWorker(mFormula);
-			mInVars = transferMap(script.getScript(), mInVars);
-			mOutVars = transferMap(script.getScript(), mOutVars);
-			mAuxVars = transferSet(script.getScript(), mAuxVars);
-			mBranchEncoders = transferSet(script.getScript(), mBranchEncoders);
-		}
-	}
-
-	private Map<IProgramVar, TermVariable> transferMap(final Script script,
-			final Map<IProgramVar, TermVariable> inputMap) {
-		final HashMap<IProgramVar, TermVariable> outMap = new HashMap<>();
-		for (final Entry<IProgramVar, TermVariable> entry : inputMap.entrySet()) {
-
-			outMap.put(entry.getKey(),
-					(TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(entry.getValue()));
-		}
-		return outMap;
-	}
-
-	private Set<TermVariable> transferSet(final Script script, final Set<TermVariable> inputSet) {
-		final Set<TermVariable> outSet = new HashSet<>();
-		for (final TermVariable var : inputSet) {
-			outSet.add((TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(var));
-		}
-		return outSet;
-	}
-
 	public UnmodifiableTransFormula finishConstruction(final ManagedScript script) {
 		if (mFormula == null) {
 			throw new IllegalStateException("cannot finish without formula");
@@ -350,15 +319,10 @@ public class TransFormulaBuilder {
 			throw new IllegalStateException("cannot finish without feasibility status");
 		}
 		mConstructionFinished = true;
-
-		transferEverythingToWorker(script);
-
 		removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
-
 		return new UnmodifiableTransFormula(mFormula, Collections.unmodifiableMap(mInVars),
 				Collections.unmodifiableMap(mOutVars), ImmutableSet.of(mNonTheoryConsts), ImmutableSet.of(mAuxVars),
 				ImmutableSet.of(mBranchEncoders), mInfeasibility, script);
-
 	}
 
 	/**
