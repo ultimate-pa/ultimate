@@ -52,7 +52,7 @@ public class Call extends CodeBlock implements IIcfgCallTransition<IcfgLocation>
 	protected CallStatement mCallStatement;
 	protected String mPrettyPrintedStatements;
 
-	Call(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+	public Call(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CallStatement st, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;
