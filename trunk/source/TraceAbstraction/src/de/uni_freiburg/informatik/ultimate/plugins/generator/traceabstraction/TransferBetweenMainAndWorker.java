@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,11 +11,10 @@ import java.util.stream.Collectors;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -25,7 +23,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.BvToIntTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -41,14 +38,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -59,20 +53,19 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class TransferToWorkerUtils<LETTER, STATE> {
+public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	private final ILogger mLogger;
 	private final ManagedScript mMainScript;
 	private final ManagedScript mWorkerScript;
-	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>();
-	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>();
+	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>(); //Bidirectional
+	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>(); //Maps worker -> main
 	private final AutomataLibraryServices mServices;
 	private final TermTransferrer mWorker2main;
 	private final TermTransferrer mMain2worker;
 	private VpAlphabet<LETTER> mMainVpAlphabet;
-	private VpAlphabet<LETTER> mWorkerVpAlphabet;
-	private final CfgSmtToolkit mCsToolkit;
-private VariableTranslation mVarTransfer;
+	private final CfgSmtToolkit mMainCsToolkit;
+private VariableTransferrer mVarTransfer;
 	
 	enum Mode {
 		NONE, MAIN2WORKER, WORKER2MAIN
@@ -81,36 +74,38 @@ private VariableTranslation mVarTransfer;
 	private Mode mMode = Mode.NONE;
 
 	/**
-	 * Utils class for transferring formulas, terms and things that contain terms to
-	 * the worker script
+	 * A class used to transfer runs and automata between worker and main scripts.
+	 * Also used to create the worker CfgToolKit.
+	 * Every creation of worker IProgramVars should run through this classes @VariableTransferrer
+	 *
+	 * On initialization this classes creates the workers ManagedScript 
 	 *
 	 * @param main
 	 * @param worker
-	 * @param csToolKit
+	 * @param mainCfgToolKit
 	 */
-	public TransferToWorkerUtils(final AutomataLibraryServices services, final ILogger logger, final ManagedScript main,
+	public TransferBetweenMainAndWorker(final AutomataLibraryServices services, final ILogger logger, final ManagedScript main,
 			final IUltimateServiceProvider solverServices,
-			final SolverSettings solverSettings , CfgSmtToolkit csToolKit) {
+			final SolverSettings solverSettings , CfgSmtToolkit mainCfgToolKit) {
 		mLogger = logger;
 		mMainScript = main;
-		mWorkerScript = csToolKit.createFreshManagedScript(solverServices, solverSettings);
+		mWorkerScript = mainCfgToolKit.createFreshManagedScript(solverServices, solverSettings);
 		mServices = services;
-		mCsToolkit = csToolKit;
+		mMainCsToolkit = mainCfgToolKit;
 		
 		mWorker2main = new TermTransferrer(mWorkerScript.getScript(), mMainScript.getScript());
 		mMain2worker = new TermTransferrer(mMainScript.getScript(), mWorkerScript.getScript());
-		mVarTransfer = new VariableTranslation(mMain2worker,mWorkerScript);
+		mVarTransfer = new VariableTransferrer(mMain2worker,mWorkerScript);
 	}
 
-	public void setMode(final Mode mode) {
-		mMode = mode;
-	}
-
-	// TODO put this and anything for worker setup in an extrac class then alter
-	// call it in the worker not in main
-	public NestedRun<LETTER, ?> transferRun(final NestedRun<LETTER, ?> counterexample) {
+	/*
+	 * Gets a run / counterexample with Letters whose transformula comes from one script.
+	 * Returns a new run with new letters, whose transformula comes from target script.
+	 * The semantics of both runs are equal
+	 */
+	public IRun<LETTER, ?> transferRun(final NestedRun<LETTER, ?> counterexample, Mode mode) {
 		final NestedRun<LETTER, ?> oldCounterexample = counterexample;
-
+		mMode = mode;
 		NestedWord<LETTER> currentWord = new NestedWord<>();
 		for (int i = 0; i < oldCounterexample.getWord().length(); i++) {
 			final LETTER letter = oldCounterexample.getWord().asList().get(i);
@@ -240,15 +235,23 @@ private VariableTranslation mVarTransfer;
 		return outSet;
 	}
 
+	/**
+	 * This method gets an @INwaOutgoingLetterAndTransitionProvider and returns an @INwaOutgoingLetterAndTransitionProvider
+	 * 
+	 * Thereby, it explores the input automaton and creates the output automaton.
+	 * States remain the same, Letters are transferred from one script to another depending on the @mode.
+	 * The new automaton has a new Alphabet, and can have less transitions than the input automaton.
+	 * TODO check if this can really be sound
+	 */
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> transferAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
-			final IEmptyStackStateFactory<STATE> emptyStateFactory) {
+			final IEmptyStackStateFactory<STATE> emptyStateFactory, Mode mode) {
 
 		VpAlphabet<LETTER> alphabet;
 		Set<LETTER> internalAlphabet;
 		Set<LETTER> callAlphabet;
 		Set<LETTER> returnAlphabet;
-		// NestedWordAutomataUtils.getVpAlphabet(abstraction)
+		mMode  = mode;
 		switch (mMode) {
 		case MAIN2WORKER: {
 			internalAlphabet = new HashSet<>();
@@ -343,33 +346,27 @@ private VariableTranslation mVarTransfer;
 		}
 
 		assert result.size() == automaton.size();
-		// assert result.getAlphabet().size() == automaton.getAlphabet().size();
-		assert result.getVpAlphabet().getCallAlphabet().size() == automaton.getVpAlphabet().getCallAlphabet().size();
-		// assert result.getVpAlphabet().getInternalAlphabet().size() ==
-		// automaton.getVpAlphabet().getInternalAlphabet().size();
-		assert result.getVpAlphabet().getReturnAlphabet().size() == automaton.getVpAlphabet().getReturnAlphabet()
-				.size();
 		return result;
 
 	}
 
-	public CfgSmtToolkit constructNewCfgSmtToolkit() {
+	public CfgSmtToolkit constructWorkerCfgSmtToolkit() {
 
 		final HashRelation<String, IProgramNonOldVar> proc2globals = constructNewProc2Globals(
-				mCsToolkit.getModifiableGlobalsTable().getProcToGlobals(), mMainScript, mWorkerScript, mVarTransfer);
+				mMainCsToolkit.getModifiableGlobalsTable().getProcToGlobals(), mMainScript, mWorkerScript, mVarTransfer);
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
-		final IIcfgSymbolTable symbolTable = constructNewSymbolTable(mCsToolkit.getSymbolTable(),
-				mCsToolkit.getProcedures(), mVarTransfer);
-		final Map<String, List<ILocalProgramVar>> inParams = constructNewParams(mCsToolkit.getInParams(), mVarTransfer);
-		final Map<String, List<ILocalProgramVar>> outParams = constructNewParams(mCsToolkit.getOutParams(), mVarTransfer);
+		final IIcfgSymbolTable symbolTable = constructNewSymbolTable(mMainCsToolkit.getSymbolTable(),
+				mMainCsToolkit.getProcedures(), mVarTransfer);
+		final Map<String, List<ILocalProgramVar>> inParams = constructNewParams(mMainCsToolkit.getInParams(), mVarTransfer);
+		final Map<String, List<ILocalProgramVar>> outParams = constructNewParams(mMainCsToolkit.getOutParams(), mVarTransfer);
 		final SmtFunctionsAndAxioms smtFunctionsAndAxioms = null;
-		return new CfgSmtToolkit(modifiableGlobalsTable, mWorkerScript, symbolTable, mCsToolkit.getProcedures(),
-				inParams, outParams, mCsToolkit.getIcfgEdgeFactory(), mCsToolkit.getConcurrencyInformation(),
+		return new CfgSmtToolkit(modifiableGlobalsTable, mWorkerScript, symbolTable, mMainCsToolkit.getProcedures(),
+				inParams, outParams, mMainCsToolkit.getIcfgEdgeFactory(), mMainCsToolkit.getConcurrencyInformation(),
 				smtFunctionsAndAxioms);
 	}
 
 	private static Map<String, List<ILocalProgramVar>> constructNewParams(
-			final Map<String, List<ILocalProgramVar>> inParams, final VariableTranslation variableTranslation) {
+			final Map<String, List<ILocalProgramVar>> inParams, final VariableTransferrer variableTranslation) {
 		final Map<String, List<ILocalProgramVar>> result = new HashMap<>();
 		for (final Entry<String, List<ILocalProgramVar>> entry : inParams.entrySet()) {
 			final List<ILocalProgramVar> newList = entry.getValue().stream()
@@ -380,7 +377,7 @@ private VariableTranslation mVarTransfer;
 	}
 
 	private static IIcfgSymbolTable constructNewSymbolTable(final IIcfgSymbolTable symbolTable,
-			final Set<String> procedures, final VariableTranslation varTrans) {
+			final Set<String> procedures, final VariableTransferrer varTrans) {
 		final DefaultIcfgSymbolTable result = new DefaultIcfgSymbolTable();
 		for (final IProgramConst c : symbolTable.getConstants()) {
 			result.add(varTrans.getOrConstruct(c));
@@ -398,7 +395,7 @@ private VariableTranslation mVarTransfer;
 
 	private static HashRelation<String, IProgramNonOldVar> constructNewProc2Globals(
 			final HashRelation<String, IProgramNonOldVar> procToGlobals, final ManagedScript oldMgdScript,
-			final ManagedScript newMgdScript, final VariableTranslation variableTranslation) {
+			final ManagedScript newMgdScript, final VariableTransferrer variableTranslation) {
 		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		for (final Entry<String, HashSet<IProgramNonOldVar>> entry : procToGlobals.entrySet()) {
 			for (final IProgramNonOldVar old : entry.getValue()) {
@@ -412,12 +409,12 @@ private VariableTranslation mVarTransfer;
 
 }
 
-class VariableTranslation {
+class VariableTransferrer {
 	private final ConstructionCache<ILocalProgramVar, ILocalProgramVar> mILocalProgramVarCC;
 	private final ConstructionCache<IProgramNonOldVar, IProgramNonOldVar> mIProgramNonOldVarCC;
 	private final ConstructionCache<IProgramConst, IProgramConst> mIProgramConstCC;
 
-	public VariableTranslation(TermTransferrer transferrer, ManagedScript targetScript	) {
+	public VariableTransferrer(TermTransferrer transferrer, ManagedScript targetScript	) {
 		mILocalProgramVarCC = new ConstructionCache<>(new IValueConstruction<ILocalProgramVar, ILocalProgramVar>() {
 			
 			@Override

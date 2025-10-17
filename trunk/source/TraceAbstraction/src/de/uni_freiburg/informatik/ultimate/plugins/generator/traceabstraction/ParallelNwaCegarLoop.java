@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.AutomatonType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TransferToWorkerUtils.Mode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TransferBetweenMainAndWorker.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -196,15 +196,15 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * sets up the worker with its own cfg script and its own RefinementStrategy
 	 */
 	private ICegarNwaWorkerThread<L, A> setUpContinuesWorker(final IUltimateServiceProvider iterationServices,
-			final int id, final boolean quickCheck) throws InterruptedException {
+			final int id, final boolean smybolicExecutionWorker) throws InterruptedException {
 		// mCsToolkit needs to give new mgdScript for each thread
 
-		TransferToWorkerUtils transferUtils = new TransferToWorkerUtils<>(new AutomataLibraryServices(mServices), mLogger,
+		TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(new AutomataLibraryServices(mServices), mLogger,
 				mCsToolkit.getManagedScript(),
 				iterationServices, getSolverSettings(iterationServices,
 						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),mCsToolkit);
 		
-		final CfgSmtToolkit freshToolKit = transferUtils.constructNewCfgSmtToolkit();
+		final CfgSmtToolkit freshToolKit = transferUtils.constructWorkerCfgSmtToolkit();
 	
 
 		// Create predicateFactory with worker script
@@ -228,7 +228,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
-		if (quickCheck) {
+		if (smybolicExecutionWorker) {
 			return new CegarNWAContiuesIndependentWorkerThread<>(mLogger, mPref, id, mResultBuilder,
 					mCegarLoopBenchmark, iterationServices, freshToolKit, mIcfg, predicateFactory,
 					taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
@@ -237,7 +237,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	
 		// start worker
-		return new CegarNwaContinuesWorkerThread<>(mLogger, mPref, id, mResultBuilder, mCegarLoopBenchmark,
+		return new CegarNwaContinuesWorkerThread<L,A>(mLogger, mPref, id, mResultBuilder,
 				iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
 				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, this,
 				WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue,transferUtils);
