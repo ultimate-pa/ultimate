@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothNoAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.McrRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.PenguinRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.RubberTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.SifaTaipanRefinementStrategy;
@@ -189,43 +188,14 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
-			final RefinementStrategy strategyType, final PathProgramCache<L> mainCache) {
+			final RefinementStrategy strategyType) {
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
 		// Since we copy the cache, we need to add the cex to the main here and the copy in construct strategy
 		// However, not sure if we really need the copy but i think it thread safer this way
-		mainCache.addRun(counterexample.getWord());
 		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
 				predicateUnifier, precondition, postcondition, strategyType);
-	}
-
-	/**
-	 * Construct Strategy with given type For Parallel Strategy, meaning we get the module from
-	 * ParallelRefinementStrategy
-	 */
-	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
-			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
-			final RefinementStrategy strategyType, final PathProgramCache<L> mainCache,
-			final ParallelRefinementStrategy<L> prs) {
-		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
-		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
-		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
-		// Since we copy the cache, we need to add the cex to the main here and the copy in construct strategy
-		// However, not sure if we really need the copy but i think it thread safer this way
-		// if (prs.getRunningThreadsOfPP() == 0) {
-			mainCache.addRun(counterexample.getWord());
-			mPathProgramCache.addRun(counterexample.getWord());
-			// }
-
-		final StrategyModuleFactory strategyModuleFactory = new StrategyModuleFactory(taskIdentifier, services,
-				counterexample, precondition, postcondition, predicateUnifier, abstraction, emptyStackFactory);
-		final RefinementStrategyExceptionBlacklist exceptionBlacklist = mPrefs.getExceptionBlacklist();
-		assert prs != null;
-		return new BasicRefinementStrategy<>(strategyModuleFactory, prs.getModule(strategyModuleFactory),
-				strategyModuleFactory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	/**
@@ -306,7 +276,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 	private IPredicateUnifier constructPredicateUnifier(final IUltimateServiceProvider services) {
 		final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
-		final IIcfgSymbolTable symbolTable = mInitialIcfg.getCfgSmtToolkit().getSymbolTable();
+		final IIcfgSymbolTable symbolTable = mPrefs.getCfgSmtToolkit().getSymbolTable();
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {
 			return new BPredicateUnifier(services, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}
