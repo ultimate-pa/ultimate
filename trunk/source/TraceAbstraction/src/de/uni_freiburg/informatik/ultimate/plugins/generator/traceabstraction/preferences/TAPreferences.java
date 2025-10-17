@@ -98,13 +98,13 @@ public final class TAPreferences {
 
 	// Parallel Trace Abstraction Settings
 	private final int mThreadLimit;
-	private final int mThreadLimitPerCex;
 	private final boolean mParallelCegarLoop;
-	public boolean useGoalSetForIsEmpty;
 	public boolean parallelSearchSrategy;
 	public boolean considerOnlyActiveCounterexamplesInIsEmptyParallel;
 	public boolean minimizeAbstractionPerWorker;
-	public boolean mVisitLoopsOnlyOnce;
+	public boolean mUseQuickCheckWorker;
+	public int mQuickCheckLoopBound;
+	public int mSearchLoopBound;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -211,13 +211,13 @@ public final class TAPreferences {
 
 		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
 		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
-		mThreadLimitPerCex = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREAD_LIMIT_PER_CEX);
-		useGoalSetForIsEmpty = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_GOALSET);
 		considerOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		minimizeAbstractionPerWorker =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
-		mVisitLoopsOnlyOnce = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_VISIT_LOOPS_ONLY_ONCE);
+		mQuickCheckLoopBound = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_QUICK_CHECK_LOOP_BOUND);
+		mSearchLoopBound = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEARCH_LOOP_BOUND);
+		mUseQuickCheckWorker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_QUICK_CHECK);
 	}
 
 	/**
@@ -591,15 +591,7 @@ public final class TAPreferences {
 		return mThreadLimit;
 	}
 
-	public int getThreadLimitPerCex() {
-		return mThreadLimitPerCex;
-	}
-
 	public boolean isParallelCegarLoop() {
 		return mParallelCegarLoop;
-	}
-
-	public boolean visitLoopsOnlyOnce() {
-		return mVisitLoopsOnlyOnce;
 	}
 }

@@ -135,11 +135,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
-			final boolean noLoopMode)
-			throws AutomataOperationCanceledException {
+			final boolean noLoopMode) throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
 				heuristic, wayPoints, noLoopMode);
 	}
+
 
 	/**
 	 * Constructor that is not restricted to emptiness checks. The set of startStates defines where the run that we
@@ -154,12 +154,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 	}
 
-	private IsEmptyHeuristic(final AutomataLibraryServices services,
+	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Predicate<STATE> funIsForbiddenState, final Predicate<STATE> funIsGoalState,
 			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
-			final boolean noLoopMode)
-			throws AutomataOperationCanceledException {
+			final boolean noLoopMode) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mIsGoalState = funIsGoalState;
@@ -221,6 +220,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		final Map<CallTransition, Map<ReturnTransition, SummaryItem>> summaries = new HashMap<>();
 		final Map<CallTransition, Map<ReturnTransition, Set<Item>>> usedSummaries = new HashMap<>();
 
+		int lengthOfPrefixThatWeFollow =  mWayPoints.size();
+
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -237,7 +238,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Current: %s", current));
 			}
-			if (mIsGoalState.test(current.mTargetState)) {
+			if (mIsGoalState.test(current.mTargetState) && !stillFollowingWayPoint) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("  Is target");
 					printDebugStats(lowestCall, lowestOther, summaries);
@@ -269,6 +270,12 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			for (final Item succ : successors) {
+				if (lengthOfPrefixThatWeFollow >= 0) {
+					// consider all successors, even the once seen before by prefix check
+					worklist.add(succ);
+					lengthOfPrefixThatWeFollow -= 1;
+					continue;
+				}
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("  Succ: %s", succ));
 				}
@@ -491,6 +498,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				.internalSuccessors(current.mTargetState)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
+
 			if (mIsForbiddenState.test(succ) || visited.contains(new Pair<>(current.mTargetState, symbol))
 					|| !followingWayPoint(succ, symbol)) {
 				continue;
@@ -1214,12 +1222,12 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			return new IHeuristic<>() {
 				@Override
 				public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
-					return 50.0;
+					return 0.0;
 				}
 
 				@Override
 				public final double getConcreteCost(final LETTER e) {
-					return 100.0;
+					return 1.0;
 				}
 			};
 		}

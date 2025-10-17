@@ -519,20 +519,20 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_THREADLIMIT = "Threadlimit for Parallel CEGAR";
 	public static final Integer DEF_THREADLIMIT = 1;
 
-	public static final String LABEL_THREAD_LIMIT_PER_CEX =
-			"Amount of Threads we use to analyse the same Counterexample";
-	public static final Integer DEF_THREAD_LIMIT_PER_CEX = 1;
-	// Parallel CEGAR counterexample search stragies
-	// ========================================================================
-	public static final String LABEL_GOALSET = "IsEmpty with Goal Set ";
-	public static final boolean DEF_GOALSET = false;
-	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
-	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
 			"Minimize Abstraction every time a worker is done";
-	public static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = false;
-	public static final String LABEL_VISIT_LOOPS_ONLY_ONCE = "Initially visit loops only once";
-	public static final boolean DEF_VISIT_LOOPS_ONLY_ONCE = false;
+	public static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = true;
+	public static final String LABEL_QUICK_CHECK = "use quick check";
+	public static final boolean DEF_QUICK_CHECK = false;
+	// Parallel CEGAR counterexample search stragies
+	// ========================================================================
+	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
+	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
+	public static final String LABEL_QUICK_CHECK_LOOP_BOUND = "Quick check loop bound";
+	public static final int DEF_QUICK_CHECK_LOOP_BOUND = 1;
+	public static final String LABEL_SEARCH_LOOP_BOUND = "search loop bound";
+	public static final int DEF_SEARCH_LOOP_BOUND = -1;
+
 
 	/**
 	 * Constructor.
@@ -820,10 +820,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_THREAD_LIMIT_PER_CEX, DEF_THREAD_LIMIT_PER_CEX,
-						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_VISIT_LOOPS_ONLY_ONCE, DEF_VISIT_LOOPS_ONLY_ONCE,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_QUICK_CHECK_LOOP_BOUND, DEF_QUICK_CHECK_LOOP_BOUND,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_QUICK_CHECK, DEF_QUICK_CHECK, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
