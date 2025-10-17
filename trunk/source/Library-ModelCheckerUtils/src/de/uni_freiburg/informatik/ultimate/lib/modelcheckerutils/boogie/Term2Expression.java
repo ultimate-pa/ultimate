@@ -731,4 +731,8 @@ public final class Term2Expression implements Serializable {
 		}
 
 	}
+
+	public TypeSortTranslator getTypeSortTranslator() {
+		return mTypeSortTranslator;
+	}
 }

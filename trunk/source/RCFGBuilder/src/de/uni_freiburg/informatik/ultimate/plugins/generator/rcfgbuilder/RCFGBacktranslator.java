@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgram
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -259,6 +260,9 @@ public class RCFGBacktranslator extends
 			throw new IllegalArgumentException();
 		}
 		final IcfgProgramExecution rcfgProgramExecution = (IcfgProgramExecution) programExecution;
+		
+		mTerm2Expression.getTypeSortTranslator().setCfgScriptFromWorker(rcfgProgramExecution.getOriginCfgScript());
+		
 		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
 				: "callstack of initial program execution already broken";
 

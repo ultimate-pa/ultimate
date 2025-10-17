@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -63,6 +65,7 @@ public class TypeSortTranslator {
 	private final Map<Sort, IBoogieType> mSort2Type = new HashMap<>();
 	private final Map<String, Map<String, Expression[]>> mType2Attributes;
 	private final IUltimateServiceProvider mServices;
+	private ManagedScript mCfgScriptFromWorker;
 
 	public TypeSortTranslator(final Collection<TypeDeclaration> declarations, final Script script,
 			final IUltimateServiceProvider services) {
@@ -123,7 +126,10 @@ public class TypeSortTranslator {
 	}
 
 	public IBoogieType getType(Sort sort) {
-		sort = ((HistoryRecordingScript) mScript).transferSortToWorker(sort);
+		if(mCfgScriptFromWorker != null) {
+			TermTransferrer tf = new TermTransferrer(mCfgScriptFromWorker.getScript(), mScript);
+			sort = tf.transferSort(sort);			
+		}
 		IBoogieType type = mSort2Type.get(sort);
 		if (type == null) {
 			// TODO Matthias: The following special treatment of arrays is only
@@ -273,6 +279,10 @@ public class TypeSortTranslator {
 	private void cacheSort(final IBoogieType boogieType, final Sort result) {
 		mType2Sort.put(boogieType, result);
 		mSort2Type.put(result, boogieType);
+	}
+
+	public void setCfgScriptFromWorker(ManagedScript cfgScriptFromWorker) {
+		mCfgScriptFromWorker = cfgScriptFromWorker;
 	}
 
 }

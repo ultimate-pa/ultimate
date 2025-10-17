@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy.WorkerGeneralizationMode;
 
 /**
  * A CEGAR loop based on the NWA CEGAR loop. It executes each tracecheck in a
@@ -77,13 +76,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		extends NwaCegarLoop<L> {
 
 	boolean mComputeHoareAnnotation;
-	private final IIcfg<?> mRootNode;
 	final String mDestroyEverything = "destroyEverything";
 
 	// Parallel Setup
 	private final ExecutorService mExec;
 	private int mThreadLimit;
-	private int mThreadsPerCex = 1;
 	private int mRunningThreads = 0;
 
 	// private final CompletionService<WorkerThreadResult<L, A>> mECS;
@@ -154,16 +151,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer,
 				services, transitionClazz, stateFactoryForRefinement);
-
-		mRootNode = rootNode;
-
 		// Start thread pool
 		mThreadLimit = mPref.getThreadLimit();
 		if (mThreadLimit == 0) { // maximum of available cores
 			mThreadLimit = Runtime.getRuntime().availableProcessors();
 			mThreadLimit -= 1; // one for main thread
 		}
-		mThreadsPerCex = mPref.getThreadLimitPerCex();
+		
 		mExec = Executors.newFixedThreadPool(mThreadLimit);
 		Thread.currentThread().setName("Main Cegar Thread");
 		getServices().getStorage().pushMarker(mDestroyEverything);
@@ -209,13 +203,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			return new CegarNWAContiuesIndependentWorkerThread<>(mLogger, mPref, id, mResultBuilder,
 					mCegarLoopBenchmark, iterationServices, freshToolKit, mIcfg, predicateFactory,
 					taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
-					mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue);
+					mComputeHoareAnnotation, this,  mWorkerResultQueue, mWorkerTaskQueue);
 		}
 
 		// start worker
 		return new CegarNwaContinuesWorkerThread<L, A>(mLogger, mPref, id, mResultBuilder, iterationServices,
 				freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
-				stateFactoryForRefinement, mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES,
+				stateFactoryForRefinement, mComputeHoareAnnotation, this, 
 				mWorkerResultQueue, mWorkerTaskQueue, transferUtils);
 	}
 
