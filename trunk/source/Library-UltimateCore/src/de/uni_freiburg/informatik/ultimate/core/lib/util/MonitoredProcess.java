@@ -160,15 +160,8 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		}
 
 		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).orElseThrow(AssertionError::new);
-
-		final ProcessBuilder pb = new ProcessBuilder();
-		pb.command(oneLineCmd.split(" "));
-		pb.directory(workingDirFile);
-
-		final Process process = pb.start();
-
-		final MonitoredProcess newMonitoredProcess =
-				new MonitoredProcess(process, oneLineCmd, exitCommand, services, logger);
+		final MonitoredProcess newMonitoredProcess = new MonitoredProcess(
+				Runtime.getRuntime().exec(command, null, workingDirFile), oneLineCmd, exitCommand, services, logger);
 		newMonitoredProcess.start(workingDir, services.getStorage(), oneLineCmd);
 		return newMonitoredProcess;
 	}
@@ -232,12 +225,10 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		}
 
 		final ProcessRunner pr = new ProcessRunner(this);
-
 		mProcessRunner = new Thread(pr, String.format("MonitoredProcess %s %s", mID, oneLineCmd));
 		mLogger.info("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID, mCommand,
 				mExitCommand, workingDir);
 		mProcessRunner.start();
-
 		pr.mEndOfSetup.acquireUninterruptibly();
 	}
 
