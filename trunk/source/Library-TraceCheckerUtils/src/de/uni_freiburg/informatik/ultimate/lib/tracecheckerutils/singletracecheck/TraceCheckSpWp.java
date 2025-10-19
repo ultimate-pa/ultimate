@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
@@ -382,7 +382,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	 */
 	private NestedFormulas<L, UnmodifiableTransFormula, IPredicate>
 			constructRelevantTransFormulas(final Set<Term> unsatCore) {
-		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf;
 		return switch (mUnsatCores) {
 		case IGNORE -> new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
 				mPendingContexts, mCsToolkit.getOldVarsAssignmentCache(), false);
@@ -412,14 +411,12 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		assert mInterpolantsFp.size() == mInterpolantsBp.size();
 		mInterpolants = new IPredicate[mInterpolantsBp.size()];
 		int i = 0; // position of predicate computed by strongest post-condition
-		int j = mInterpolantsBp.size(); // position of predicate computed by
-		// weakest precondition
-		final ContainsQuantifier containsQuantifier = new ContainsQuantifier();
+		int j = mInterpolantsBp.size(); // position of predicate computed by weakest precondition
 		while (i != j) {
-			if (!containsQuantifier.containsQuantifier(mInterpolantsBp.get(j - 1).getFormula())) {
+			if (QuantifierUtils.isQuantifierFree(mInterpolantsBp.get(j - 1).getFormula())) {
 				mInterpolants[j - 1] = mInterpolantsBp.get(j - 1);
 				j--;
-			} else if (!containsQuantifier.containsQuantifier(mInterpolantsFp.get(i).getFormula())) {
+			} else if (QuantifierUtils.isQuantifierFree(mInterpolantsFp.get(i).getFormula())) {
 				mInterpolants[i] = mInterpolantsFp.get(i);
 				i++;
 			} else {

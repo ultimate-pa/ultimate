@@ -865,7 +865,6 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce(
 			final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
@@ -911,7 +910,6 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		mLogger.info(exitMessage());
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce(
 			final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
@@ -1053,11 +1051,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 
 	@Override
 	public Boolean getResult() {
-		if (workingAutomata.errorNodes.peekFirst() == null) {
-			return true;
-		} else {
-			return false;
-		}
+		return workingAutomata.errorNodes.peekFirst() == null;
 	}
 
 	@Override

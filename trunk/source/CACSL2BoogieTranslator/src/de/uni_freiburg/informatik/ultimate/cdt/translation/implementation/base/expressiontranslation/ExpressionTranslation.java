@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -97,12 +96,8 @@ public abstract class ExpressionTranslation {
 		mFunctionDeclarations = new FunctionDeclarations(mTypeHandler, mTypeSizes);
 
 		mPointerIntegerConversion = switch (mSettings.getPointerIntegerCastMode()) {
-		case IdentityAxiom:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
 		case NonBijectiveMapping:
 			yield new NonBijectiveMapping(this, mTypeSizes);
-		case NutzBijection:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
 		case Overapproximate:
 			yield new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
 		};
@@ -332,10 +327,9 @@ public abstract class ExpressionTranslation {
 		if (underlyingType instanceof CPointer) {
 			isZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
 					expr.getLrValue().getValue(), zeroInputType);
-		} else if (underlyingType instanceof CPrimitive) {
+		} else if (underlyingType instanceof final CPrimitive cPrimitive) {
 			isZero = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-					expr.getLrValue().getValue(), (CPrimitive) underlyingType, zeroInputType,
-					(CPrimitive) underlyingType);
+					expr.getLrValue().getValue(), cPrimitive, zeroInputType, cPrimitive);
 		} else {
 			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
 		}
@@ -379,12 +373,12 @@ public abstract class ExpressionTranslation {
 	}
 
 	public Expression constructZero(final ILocation loc, final ICType cType) {
-		if (cType instanceof CPrimitive) {
-			return switch (((CPrimitive) cType).getGeneralType()) {
+		if (cType instanceof final CPrimitive cPrimitive) {
+			return switch (cPrimitive.getGeneralType()) {
 			case FLOATTYPE:
-				yield constructLiteralForFloatingType(loc, (CPrimitive) cType, BigDecimal.ZERO);
+				yield constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
 			case INTTYPE:
-				yield mTypeSizes.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO);
+				yield mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
 			case VOID:
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
 			};

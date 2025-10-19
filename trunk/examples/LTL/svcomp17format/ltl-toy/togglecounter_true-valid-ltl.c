@@ -1,5 +1,5 @@
 
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int();
 
 unsigned int i,t;
 

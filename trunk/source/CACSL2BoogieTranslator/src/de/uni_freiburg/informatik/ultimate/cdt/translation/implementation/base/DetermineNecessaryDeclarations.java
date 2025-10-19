@@ -89,12 +89,12 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 	private final LinkedHashSet<IASTDeclaration> mReachableDeclarations;
 
-	private final String mCheckedMethod;
+	private final String mEntryFunction;
 	private IASTTranslationUnit mTranslationUnit;
 	private final Set<String> mFunctions;
 	private final CTranslationResultReporter mReporter;
 
-	public DetermineNecessaryDeclarations(final String checkedMethod, final CTranslationResultReporter reporter,
+	public DetermineNecessaryDeclarations(final String entryFunction, final CTranslationResultReporter reporter,
 			final Map<String, IASTNode> fT, final Set<String> functions) {
 		mReporter = reporter;
 		shouldVisitParameterDeclarations = true;
@@ -112,7 +112,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		mDependencyGraphPreliminaryInverse = new LinkedHashMap<>();
 		mReachableDeclarations = new LinkedHashSet<>();
 		mCurrentDeclarationStack = new Stack<>();
-		mCheckedMethod = checkedMethod;
+		mEntryFunction = entryFunction;
 		mFunctions = functions;
 	}
 
@@ -648,11 +648,11 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 
 	void computeReachableSetAndUpdateMMRequirements() {
 		final LinkedHashSet<String> entryPoints = new LinkedHashSet<>();// TODO: replace with input from settings
-		if (!mCheckedMethod.equals(SFO.EMPTY) && mFunctionTable.containsKey(mCheckedMethod)) {
-			entryPoints.add(mCheckedMethod);
+		if (!mEntryFunction.equals(SFO.EMPTY) && mFunctionTable.containsKey(mEntryFunction)) {
+			entryPoints.add(mEntryFunction);
 		} else {
-			if (!mCheckedMethod.equals(SFO.EMPTY) && !mFunctionTable.containsKey(mCheckedMethod)) {
-				final String msg = "You specified the starting procedure: " + mCheckedMethod
+			if (!mEntryFunction.equals(SFO.EMPTY) && !mFunctionTable.containsKey(mEntryFunction)) {
+				final String msg = "You specified the starting procedure: " + mEntryFunction
 						+ "\n The program does not have this method. ULTIMATE will continue in "
 						+ "library mode (i.e., each procedure can be starting procedure and global "
 						+ "variables are not initialized).";

@@ -176,7 +176,6 @@ public class IncrementalInclusionCheck3<LETTER, STATE> extends AbstractIncrement
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void run() throws AutomataLibraryException {
 		result = null;
 		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> B : local_mB) {
@@ -215,7 +214,6 @@ public class IncrementalInclusionCheck3<LETTER, STATE> extends AbstractIncrement
 		} while (true);
 	}
 
-	@SuppressWarnings("unchecked")
 	private ArrayList<Leaf<LETTER, STATE>> expand(final LETTER alphabet) {
 		final ArrayList<Leaf<LETTER, STATE>> nextTerminal = new ArrayList<>();
 		Leaf<LETTER, STATE> newLeaf = null;

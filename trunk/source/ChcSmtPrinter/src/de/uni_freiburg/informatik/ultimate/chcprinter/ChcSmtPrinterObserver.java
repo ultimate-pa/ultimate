@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.chcprinter.preferences.ChcSmtPrinterP
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ChcAsserter;
@@ -71,15 +72,16 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final IPreferenceProvider mPref;
 
 	public ChcSmtPrinterObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public boolean process(final IElement root) throws IOException {
-
 		if (!(root instanceof HornClauseAST)) {
 			return true;
 		}
@@ -95,6 +97,7 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		final ManagedScript mgdScript = annot.getScript();
 
 		final File file = openTempFile(root);
+		mLogger.info("Writing to file " + file.getAbsolutePath());
 		final LoggingScript loggingScript = new LoggingScript(new NoopScript(), file.getAbsolutePath(), true, USE_CSE);
 
 		/*
@@ -105,12 +108,10 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		loggingScript.setLogic(Logics.HORN);
 
 		// add info
-		{
-			loggingScript.setInfo(":source",
-					new QuotedObject("CHC Constraint Logic: " + annot.getChcCategoryInfo().getConstraintLogic() + "\n"
-							+ "                   " + "Contains non-linear Horn clauses: "
-							+ annot.getChcCategoryInfo().containsNonLinearHornClauses()));
-		}
+		loggingScript.setInfo(":source",
+				new QuotedObject("CHC Constraint Logic: " + annot.getChcCategoryInfo().getConstraintLogic() + "\n"
+						+ "                   Contains non-linear Horn clauses: "
+						+ annot.getChcCategoryInfo().containsNonLinearHornClauses()));
 
 		if (PRODUCE_UNSAT_CORES) {
 			loggingScript.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
@@ -134,19 +135,9 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		return true;
 	}
 
-	/**
-	 * modified from BoogiePrinter
-	 *
-	 * @param root
-	 * @return
-	 */
 	private File openTempFile(final IElement root) {
 		String path;
-		String filename;
-		File file;
-
-		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(ChcSmtPrinterPreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
+		if (mPref.getBoolean(ChcSmtPrinterPreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
 			final ILocation loc = ILocation.getAnnotation(root);
 			final File inputFile = new File(loc.getFileName());
 			if (inputFile.isDirectory()) {
@@ -156,40 +147,37 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 			}
 			if (path == null) {
 				mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
-				path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-						.getString(ChcSmtPrinterPreferenceInitializer.DUMP_PATH_LABEL);
+				path = mPref.getString(ChcSmtPrinterPreferenceInitializer.DUMP_PATH_LABEL);
 			}
 		} else {
-			path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getString(ChcSmtPrinterPreferenceInitializer.DUMP_PATH_LABEL);
+			path = mPref.getString(ChcSmtPrinterPreferenceInitializer.DUMP_PATH_LABEL);
 		}
 
-		try {
-			if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(ChcSmtPrinterPreferenceInitializer.UNIQUE_NAME_LABEL)) {
-				file = File.createTempFile(
+		if (mPref.getBoolean(ChcSmtPrinterPreferenceInitializer.UNIQUE_NAME_LABEL)) {
+			try {
+				return File.createTempFile(
 						"ChcSmtPrinter_" + new File(ILocation.getAnnotation(root).getFileName()).getName() + "_UID",
 						".smt2", new File(path));
-			} else {
-				filename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-						.getString(ChcSmtPrinterPreferenceInitializer.FILE_NAME_LABEL);
-				file = new File(path + File.separatorChar + filename);
-				if ((!file.isFile() || !file.canWrite()) && file.exists()) {
-					mLogger.warn("Cannot write to: " + file.getAbsolutePath());
-					return null;
-				}
-
-				if (file.exists()) {
-					mLogger.info("File already exists and will be overwritten: " + file.getAbsolutePath());
-				}
-				file.createNewFile();
+			} catch (final IOException e) {
+				throw new IllegalStateException("Could not create temporary file", e);
 			}
-			mLogger.info("Writing to file " + file.getAbsolutePath());
-			return file;
-
-		} catch (final IOException e) {
-			mLogger.fatal("Cannot open file", e);
-			return null;
 		}
+
+		final String filename = mPref.getString(ChcSmtPrinterPreferenceInitializer.FILE_NAME_LABEL);
+		final File file = new File(path + File.separatorChar + filename);
+
+		if (file.exists()) {
+			if (!file.isFile() || !file.canWrite()) {
+				throw new IllegalStateException("Cannot write to " + file.getAbsolutePath());
+			}
+			mLogger.info("File already exists and will be overwritten: " + file.getAbsolutePath());
+		} else {
+			try {
+				file.createNewFile();
+			} catch (final IOException e) {
+				throw new IllegalStateException("Could not create file: " + file.toString(), e);
+			}
+		}
+		return file;
 	}
 }

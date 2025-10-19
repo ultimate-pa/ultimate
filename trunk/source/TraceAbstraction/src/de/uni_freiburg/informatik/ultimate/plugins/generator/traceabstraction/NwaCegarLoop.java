@@ -107,32 +107,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 /**
- * Subclass of BasicCegarLoop for safety checking based on nested-word automata.
+ * CEGAR loop for safety checking, based on abstractions represented as nested-word automata.
+ *
+ * This is the main CEGAR loop used by Ultimate Automizer.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            the type of transitions in the analysed program
  */
 public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
 
 	private enum AutomatonType {
-		FLOYD_HOARE("FloydHoare", "Fh"), ERROR("Error", "Err");
-
-		private final String mLongString;
-		private final String mShortString;
-
-		AutomatonType(final String longString, final String shortString) {
-			mLongString = longString;
-			mShortString = shortString;
-		}
-
-		public String getLongString() {
-			return mLongString;
-		}
-
-		public String getShortString() {
-			return mShortString;
-		}
+		FLOYD_HOARE, ERROR;
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;

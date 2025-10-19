@@ -19,8 +19,8 @@
 //@ ltl invariant positive: []((<>AP(lr>0) || <>AP(status!=7)) || AP(do_ACCEPT!=1));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER___VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume(int);
+extern int __VERIFIER_nondet_int();
 
 int do_ACCEPT; 
 

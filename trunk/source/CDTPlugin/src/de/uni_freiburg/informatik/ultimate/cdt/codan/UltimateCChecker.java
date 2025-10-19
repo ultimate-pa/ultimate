@@ -90,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author Stefan Wissert
  * @date 31.01.2012
  */
-public class UltimateCChecker extends AbstractFullAstChecker {
+public class UltimateCChecker extends AbstractFullAstChecker implements AutoCloseable {
 	/**
 	 * The identifier.
 	 */
@@ -118,9 +118,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
+	public void close() {
 		mController.close();
-		super.finalize();
 	}
 
 	@Override
@@ -163,7 +162,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		return path;
 	}
 
-	private void updateFileView(final String completePath) {
+	private static void updateFileView(final String completePath) {
 		// After finishing the Ultimate run we update the FileView
 		// We have to do this in this asynch manner, because otherwise we would
 		// get a NullPointerException, because we are not in the UI Thread
@@ -290,7 +289,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 				CDTResultStore.addHackyResult(result));
 	}
 
-	private String severityToCheckerDescriptor(final Severity severity) {
+	private static String severityToCheckerDescriptor(final Severity severity) {
 		if (severity.equals(Severity.INFO)) {
 			return CCheckerDescriptor.GENERIC_INFO_RESULT_ID;
 		} else if (severity.equals(Severity.WARNING)) {

@@ -273,12 +273,12 @@ public class FunctionModelHelper {
 			msgProvider.registerSpecificationErrorMessage(spec, errorMsg);
 
 			if (checkMemoryleakInMain) {
-				check = new Check(EnumSet.of(spec, Spec.MEMORY_LEAK), msgProvider);
+				check = new Check(EnumSet.of(spec, Spec.MEMORY_NEUTRAL), msgProvider);
 			} else {
 				check = new Check(spec, msgProvider);
 			}
 		} else {
-			check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
+			check = new Check(EnumSet.of(Spec.MEMORY_NEUTRAL));
 		}
 		final Statement st = new AssertStatement(loc, new NamedAttribute[] { new NamedAttribute(loc, "reach",
 				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },

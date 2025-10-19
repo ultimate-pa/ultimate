@@ -102,7 +102,7 @@ public class RandomDfsOrder<L, S> implements IDfsOrder<L, S> {
 		return mPositional;
 	}
 
-	private static class RandomComparator<L> implements Comparator<L> {
+	private static final class RandomComparator<L> implements Comparator<L> {
 		private final long mSeed;
 
 		public RandomComparator(final long seed) {
@@ -128,17 +128,7 @@ public class RandomDfsOrder<L, S> implements IDfsOrder<L, S> {
 
 		@Override
 		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final RandomComparator<L> other = (RandomComparator<L>) obj;
-			return mSeed == other.mSeed;
+			return this == obj || (obj instanceof final RandomComparator<?> other && mSeed == other.mSeed);
 		}
 	}
 }

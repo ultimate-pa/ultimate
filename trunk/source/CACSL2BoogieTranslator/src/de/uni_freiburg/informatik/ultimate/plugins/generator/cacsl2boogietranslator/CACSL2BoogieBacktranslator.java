@@ -717,7 +717,7 @@ public class CACSL2BoogieBacktranslator extends
 
 		final BacktranslatedExpression offset = translateExpression(pointer.offset());
 		if (!offset.range().isSingleton()) {
-			reportUnfinishedBacktranslation("Pointer with non-unique base value");
+			reportUnfinishedBacktranslation("Pointer with non-unique offset value");
 			return null;
 		}
 		final BigInteger offsetValue = offset.range().getMinValue();

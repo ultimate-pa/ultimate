@@ -151,18 +151,19 @@ public class PeaToDotTestSuite {
 		final File file = new File(PEA_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_" + numPea + ".svg");
 
 		final String[] command = { "dot", "-Tsvg", "-o", file.toString() };
-		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider);
-		final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+		try (final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider)) {
+			final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 
-		writer.write(dot.toString());
-		writer.close();
+			writer.write(dot.toString());
+			writer.close();
 
-		final int returnCode = process.waitfor().getReturnCode();
-		if (returnCode != 0) {
-			throw new RuntimeException(String.format("%s did return %s. Stdout: %s Stderr: %s",
-					Arrays.stream(command).collect(Collectors.joining(" ")), returnCode,
-					CoreUtil.convertStreamToString(process.getInputStream()),
-					CoreUtil.convertStreamToString(process.getErrorStream())));
+			final int returnCode = process.waitfor().getReturnCode();
+			if (returnCode != 0) {
+				throw new RuntimeException(String.format("%s did return %s. Stdout: %s Stderr: %s",
+						Arrays.stream(command).collect(Collectors.joining(" ")), returnCode,
+						CoreUtil.convertStreamToString(process.getInputStream()),
+						CoreUtil.convertStreamToString(process.getErrorStream())));
+			}
 		}
 	}
 

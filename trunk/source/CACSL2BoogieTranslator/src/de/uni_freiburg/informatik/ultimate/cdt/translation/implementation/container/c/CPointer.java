@@ -116,6 +116,11 @@ public final class CPointer implements ICType {
 		return mPointsToType.getUnderlyingType().isVoidType();
 	}
 
+	/**
+	 * Factory method to create a representation of the <code>void*</code> type.
+	 *
+	 * @return the void pointer type
+	 */
 	public static CPointer voidPointer() {
 		return new CPointer(new CPrimitive(CPrimitive.CPrimitives.VOID));
 	}

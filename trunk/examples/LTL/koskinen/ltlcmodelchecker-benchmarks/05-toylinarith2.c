@@ -15,8 +15,8 @@
 //@ ltl invariant positive: AP(c > (servers / 2)) ==> <>AP(resp > (servers / 2));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume(int);
+extern int __VERIFIER_nondet_int();
 
 
 unsigned int c;

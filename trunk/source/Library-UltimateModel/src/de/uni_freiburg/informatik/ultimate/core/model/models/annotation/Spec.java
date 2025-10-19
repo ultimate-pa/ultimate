@@ -104,9 +104,11 @@ public enum Spec {
 			"pointer dereference always succeeds",
 			"pointer dereference may fail"),
 	/**
-	 * Memory leak detected. I.e. missing free!
+	 * Property of a function. Not all memory allocated by this function was freed.
+	 * Note that a violation of memory neutrality does not necessarily indicate a memory leak, as a caller of the
+	 * function may still deallocate the memory.
 	 */
-	MEMORY_LEAK(Group.PROGRAM,
+	MEMORY_NEUTRAL(Group.PROGRAM,
 			"all allocated memory was freed",
 			"not all allocated memory was freed"),
 	/**

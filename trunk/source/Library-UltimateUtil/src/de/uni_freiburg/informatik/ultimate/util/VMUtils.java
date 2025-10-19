@@ -58,9 +58,15 @@ public class VMUtils {
 		return sb.delete(sb.length() - br.length(), sb.length()).toString();
 	}
 
+	/**
+	 * Solution from StackOverflow (apparently quoting http://docs.oracle.com/javase/1.4.2/docs/guide/lang/assert.html)
+	 * to detect if asserts are enabled.
+	 *
+	 * @return true iff Java is running with assertions enabled
+	 */
 	public static boolean areAssertionsEnabled() {
-		boolean rtr = false;
-		assert rtr = true;
-		return rtr;
+		boolean assertsEnabled = false;
+		assert assertsEnabled = true; // Intentional side effect!!!
+		return assertsEnabled;
 	}
 }

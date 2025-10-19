@@ -72,19 +72,13 @@ public class UnaryExpressionAST extends AtsASTNode {
 		return "UnaryExpression [" + operatorToString(moperator) + "]";
 	}
 
-	private String operatorToString(final UnaryOperatorAST uo) {
-		switch (uo) {
-		case EXPR_PLUSPLUS:
-			return " expr++ ";
-		case EXPR_MINUSMINUS:
-			return " expr-- ";
-		case PLUSPLUS_EXPR:
-			return " ++expr ";
-		case MINUSMINUS_EXPR:
-			return " --expr ";
-		default:
-			return "";
-		}
+	private static String operatorToString(final UnaryOperatorAST uo) {
+		return switch (uo) {
+		case EXPR_PLUSPLUS -> " expr++ ";
+		case EXPR_MINUSMINUS -> " expr-- ";
+		case PLUSPLUS_EXPR -> " ++expr ";
+		case MINUSMINUS_EXPR -> " --expr ";
+		};
 	}
 
 	public String getOperatorAsString() {
@@ -93,18 +87,12 @@ public class UnaryExpressionAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		switch (moperator) {
-		case EXPR_PLUSPLUS:
-			return mChildren.get(0).getAsString() + "++";
-		case EXPR_MINUSMINUS:
-			return mChildren.get(0).getAsString() + "--";
-		case PLUSPLUS_EXPR:
-			return "++" + mChildren.get(0).getAsString();
-		case MINUSMINUS_EXPR:
-			return "--" + mChildren.get(0).getAsString();
-		default:
-			return "";
-		}
+		return switch (moperator) {
+		case EXPR_PLUSPLUS -> mChildren.get(0).getAsString() + "++";
+		case EXPR_MINUSMINUS -> mChildren.get(0).getAsString() + "--";
+		case PLUSPLUS_EXPR -> "++" + mChildren.get(0).getAsString();
+		case MINUSMINUS_EXPR -> "--" + mChildren.get(0).getAsString();
+		};
 	}
 
 }

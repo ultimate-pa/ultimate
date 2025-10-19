@@ -93,29 +93,21 @@ public class BinaryExpressionAST extends AtsASTNode {
 		return "BinaryExpression [Operator: " + operatorToString(moperator) + "]";
 	}
 
-	private String operatorToString(final BinaryOperatorAST bo) {
-		switch (bo) {
-		case PLUS:
-			return " + ";
-		case MINUS:
-			return " - ";
-		case MULTIPLICATION:
-			return " * ";
-		case DIVISION:
-			return " / ";
-		default:
-			return "";
-		}
+	private static String operatorToString(final BinaryOperatorAST bo) {
+		return switch (bo) {
+		case PLUS -> " + ";
+		case MINUS -> " - ";
+		case MULTIPLICATION -> " * ";
+		case DIVISION -> " / ";
+		case MODULO -> " % ";
+		};
 	}
 
 	@Override
 	public String getAsString() {
 		if (mChildren.size() == 2) {
 			return mChildren.get(0).getAsString() + operatorToString(moperator) + mChildren.get(1).getAsString();
-		} else {
-			return "";
 		}
-
+		return "";
 	}
-
 }

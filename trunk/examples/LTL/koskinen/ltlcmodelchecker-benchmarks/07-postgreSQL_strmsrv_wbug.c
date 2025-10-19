@@ -17,8 +17,8 @@
 // - The for-loop in L108 never survives the break in L122, therefore added>0 is never true. 
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume(int);
+extern int __VERIFIER_nondet_int();
 
 #include <stdio.h>
 #define AF_INET 1

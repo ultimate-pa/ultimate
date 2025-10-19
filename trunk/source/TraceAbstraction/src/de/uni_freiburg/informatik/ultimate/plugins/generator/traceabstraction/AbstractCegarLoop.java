@@ -98,6 +98,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * one.
  *
  * @author heizmann@informatik.uni-freiburg.de
+ *
+ * @param <L>
+ *            the type of transitions in the analysed program
+ * @param <A>
+ *            The type of abstraction refined by the CEGAR loop
  */
 public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;

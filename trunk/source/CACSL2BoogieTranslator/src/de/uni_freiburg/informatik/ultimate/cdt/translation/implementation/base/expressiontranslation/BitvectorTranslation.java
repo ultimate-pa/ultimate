@@ -1242,8 +1242,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	private static void checkIsFloatPrimitive(final RValue argument) {
-		if (!(argument.getCType().getUnderlyingType() instanceof CPrimitive)
-				|| !((CPrimitive) argument.getCType().getUnderlyingType()).getType().isFloatingtype()) {
+		if (!(argument.getCType().getUnderlyingType() instanceof final CPrimitive cPrimitive)
+				|| !cPrimitive.getType().isFloatingtype()) {
 			throw new IllegalArgumentException(
 					"can apply float operation only to floating type, but saw " + argument.getCType());
 		}
