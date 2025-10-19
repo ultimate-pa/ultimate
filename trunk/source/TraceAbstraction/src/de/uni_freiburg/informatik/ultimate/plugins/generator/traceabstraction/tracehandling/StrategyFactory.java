@@ -276,7 +276,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 	private IPredicateUnifier constructPredicateUnifier(final IUltimateServiceProvider services) {
 		final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
-		final IIcfgSymbolTable symbolTable = mPrefs.getCfgSmtToolkit().getSymbolTable();
+		final IIcfgSymbolTable symbolTable = mInitialIcfg.getCfgSmtToolkit().getSymbolTable();
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {
 			return new BPredicateUnifier(services, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}
