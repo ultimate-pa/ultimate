@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -90,5 +91,9 @@ public class Return extends CodeBlock implements IIcfgReturnTransition<IcfgLocat
 	@Override
 	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
 		return getCorrespondingCall().getLocalVarsAssignment();
+	}
+	
+	public void setPayload(IPayload payload) {
+		mPayload = payload;
 	}
 }

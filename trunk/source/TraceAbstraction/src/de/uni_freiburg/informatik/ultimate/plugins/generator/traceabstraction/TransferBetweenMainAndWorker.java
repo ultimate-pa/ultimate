@@ -148,6 +148,7 @@ private VariableTransferrer mVarTransfer;
 		final Call newCall = new Call(call.getSerialNumber(), (BoogieIcfgLocation) call.getSource(),
 				(BoogieIcfgLocation) call.getTarget(), call.getCallStatement(), mLogger);
 		newCall.setTransitionFormula(transferTransFormulaWithMode(call.getTransformula()));
+		newCall.setPayload(call.getPayload());
 		return newCall;
 	}
 
@@ -156,6 +157,7 @@ private VariableTransferrer mVarTransfer;
 				(BoogieIcfgLocation) stmt.getSource(), (BoogieIcfgLocation) stmt.getTarget(), stmt.getStatements(),
 				mLogger);
 		newStmt.setTransitionFormula(transferTransFormulaWithMode(stmt.getTransformula()));
+		newStmt.setPayload(stmt.getPayload());
 		return newStmt;
 
 	}
@@ -164,6 +166,7 @@ private VariableTransferrer mVarTransfer;
 		final Return newReturn = new Return(re.getSerialNumber(), (BoogieIcfgLocation) re.getSource(),
 				(BoogieIcfgLocation) re.getTarget(), getTransferCall(re.getCorrespondingCall()), mLogger);
 		newReturn.setTransitionFormula(transferTransFormulaWithMode(re.getTransformula()));
+		newReturn.setPayload(re.getPayload());
 		return newReturn;
 
 	}
