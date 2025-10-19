@@ -344,7 +344,7 @@ private VariableTransferrer mVarTransfer;
 				}
 			}
 		}
-
+		// TODO summaries missing, internal alphabet thus smaller
 		assert result.size() == automaton.size();
 		return result;
 
@@ -353,7 +353,7 @@ private VariableTransferrer mVarTransfer;
 	public CfgSmtToolkit constructWorkerCfgSmtToolkit() {
 
 		final HashRelation<String, IProgramNonOldVar> proc2globals = constructNewProc2Globals(
-				mMainCsToolkit.getModifiableGlobalsTable().getProcToGlobals(), mMainScript, mWorkerScript, mVarTransfer);
+				mMainCsToolkit.getModifiableGlobalsTable().getProcToGlobals(), mVarTransfer);
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
 		final IIcfgSymbolTable symbolTable = constructNewSymbolTable(mMainCsToolkit.getSymbolTable(),
 				mMainCsToolkit.getProcedures(), mVarTransfer);
@@ -394,8 +394,7 @@ private VariableTransferrer mVarTransfer;
 	}
 
 	private static HashRelation<String, IProgramNonOldVar> constructNewProc2Globals(
-			final HashRelation<String, IProgramNonOldVar> procToGlobals, final ManagedScript oldMgdScript,
-			final ManagedScript newMgdScript, final VariableTransferrer variableTranslation) {
+			final HashRelation<String, IProgramNonOldVar> procToGlobals, final VariableTransferrer variableTranslation) {
 		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		for (final Entry<String, HashSet<IProgramNonOldVar>> entry : procToGlobals.entrySet()) {
 			for (final IProgramNonOldVar old : entry.getValue()) {
