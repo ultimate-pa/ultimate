@@ -45,6 +45,110 @@ test_if_cmd_is_available() {
   fi
 }
 
+test_cmd_version_greater_equal() {
+  local CMD_VERS_ACTUAL="${1}"
+  local CMD_VERS_EXPCTD="${2}"
+  local CMD_NAME="${3}"
+
+  if [ "$(semver_compare ${CMD_VERS_ACTUAL} ${CMD_VERS_EXPCTD})" -eq -1 ]; then
+    printf '%s version %s is too old. ' "${CMD_NAME}" "${CMD_VERS_ACTUAL}"
+    printf 'Please install %s %s or newer.\n' "${CMD_NAME}" "${CMD_VERS_EXPCTD}"
+    exit 1
+  fi
+}
+
+setup_ultimate_product_info() {
+  local PRODUCT_PATH="${1}"
+  local PRODUCT_LAUNCHER="${2}"
+  local PRODUCT_NAME="${3}"
+  local PRODUCT_VERSION="${4}"
+
+  if [[ -f "${PRODUCT_PATH}/Ultimate.py" ]]; then
+    echo "Setup version and toolname for Ultimate.py"
+    # Replacing toolname value in Ultimate.py
+    exit_on_fail sed -i "s/^toolname =.*$/toolname = \'${PRODUCT_NAME}\'/g" "${PRODUCT_PATH}/Ultimate.py"
+    # Replacing version value in Ultimate.py
+    exit_on_fail sed -i "s/^version =.*$/version = \'${PRODUCT_VERSION}\'/g" "${PRODUCT_PATH}/Ultimate.py"
+    # Adjust permission to execute Ultimate.py
+    exit_on_fail chmod a+x "${PRODUCT_PATH}/Ultimate.py"
+  fi
+
+  if [[ -f "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}" ]]; then
+    echo "Change permissions to run ${PRODUCT_LAUNCHER}"
+    # Adjust permission to execute product launcher (e.g., 'Ultimate' launcher executable)
+    exit_on_fail chmod a+x "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}"
+  fi
+}
+
+setup_ultimate_product_memory() {
+  local PRODUCT_PATH="${1}"
+  local PRODUCT_LAUNCHER="${2}"
+  local PRODUCT_MEM_HEAP_INIT="${3}"
+  local PRODUCT_MEM_HEAP_MAX="${4}"
+  local PRODUCT_MEM_STACK_MAX="${5}"
+
+  if [[ -f "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini" ]]; then
+    echo "Setup stack and heap sizes for ${PRODUCT_LAUNCHER}"
+    # Replacing maximum heap memory size in *.ini
+    exit_on_fail sed -i "s/^-Xmx.*$/-Xmx${PRODUCT_MEM_HEAP_MAX}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
+    # Replacing initial heap memory size in *.ini
+    exit_on_fail sed -i "s/^-Xms.*$/-Xms${PRODUCT_MEM_HEAP_INIT}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
+    # Replacing maximum stack memory size in *.ini
+    exit_on_fail sed -i "s/^-Xss.*$/-Xss${PRODUCT_MEM_STACK_MAX}/g" "${PRODUCT_PATH}/${PRODUCT_LAUNCHER}.ini"
+  fi
+
+  if [[ -f "${PRODUCT_PATH}/Ultimate.py" ]]; then
+    echo "Setup stack and heap sizes in Ultimate.py"
+    # Replacing maximum heap memory size in Ultimate.py
+    exit_on_fail sed -i "s/^memory_heap_size_max =.*$/memory_heap_size_max = \'${PRODUCT_MEM_HEAP_MAX}\'/g" "${PRODUCT_PATH}/Ultimate.py"
+    # Replacing initial heap memory size in Ultimate.py
+    exit_on_fail sed -i "s/^memory_heap_size_init =.*$/memory_heap_size_init = \'${PRODUCT_MEM_HEAP_INIT}\'/g" "${PRODUCT_PATH}/Ultimate.py"
+    # Replacing maximum stack memory size in Ultimate.py
+    exit_on_fail sed -i "s/^memory_stack_size_max =.*$/memory_stack_size_max = \'${PRODUCT_MEM_STACK_MAX}\'/g" "${PRODUCT_PATH}/Ultimate.py"
+  fi
+
+  if [[ -f "${PRODUCT_PATH}/run_complete_analysis.py" ]]; then
+    echo "Setup stack and heap sizes in run_complete_analysis.py"
+    # Replacing maximum heap memory size in reqchecker/run_complete_analysis.py
+    exit_on_fail sed -i "s/^memory_heap_size_max =.*$/memory_heap_size_max = \'${PRODUCT_MEM_HEAP_MAX}\'/g" "${PRODUCT_PATH}/run_complete_analysis.py"
+    # Replacing initial heap memory size in reqchecker/run_complete_analysis.py
+    exit_on_fail sed -i "s/^memory_heap_size_init =.*$/memory_heap_size_init = \'${PRODUCT_MEM_HEAP_INIT}\'/g" "${PRODUCT_PATH}/run_complete_analysis.py"
+    # Replacing maximum stack memory size in reqchecker/run_complete_analysis.py
+    exit_on_fail sed -i "s/^memory_stack_size_max =.*$/memory_stack_size_max = \'${PRODUCT_MEM_STACK_MAX}\'/g" "${PRODUCT_PATH}/run_complete_analysis.py"
+  fi
+}
+
+get_cmd_version() {
+  ${@} | grep -m1 -Eo "([[:digit:]]+\.)+[[:digit:]]+"
+}
+
+print_cmd_version() {
+  local CMD_VERS="${1}"
+  local CMD_NAME="${2}"
+
+  printf '%s: %s\n' "${CMD_NAME}" "${CMD_VERS}"
+}
+
+print_memory_size() {
+  local MEM_SIZE="${1}"
+  local MEM_NAME="${2}"
+
+  printf '%s: %s\n' "${MEM_NAME}" "${MEM_SIZE}"
+}
+
+print_newline() {
+  printf '\n'
+}
+
+print_heading() {
+  local HEADING_NAME="${1}"
+  local HEADING_LENGTH="${#HEADING_NAME}"
+  local HEADING_UNDERLINE="$(printf '━%.0s' $(seq 1 ${HEADING_LENGTH}))"
+
+  printf '%s\n' "${HEADING_NAME}"
+  printf '%s\n' "${HEADING_UNDERLINE}"
+}
+
 spushd() {
   pushd "$1" > /dev/null || { echo "Could not change into $1" ;  exit 1; }
 }

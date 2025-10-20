@@ -161,8 +161,8 @@
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
 		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
 			on OutOfMemory exceptions -->
-		<manualtest-argline>-Xmx4g </manualtest-argline>
-		<coverage-argline>-Xmx4g -ea</coverage-argline>
+		<manualtest-argline>-Xmx4G </manualtest-argline>
+		<coverage-argline>-Xmx4G -ea</coverage-argline>
 	</properties>
 
 	<build>

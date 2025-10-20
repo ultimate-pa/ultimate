@@ -28,16 +28,24 @@ def parse_args() -> argparse.Namespace:
         parser.add_argument(
             "--skip-settings", action="store_true", help="skip rebuilding settings (useful during debugging)"
         )
+        parser.add_argument(
+            "--baseurl", action="store", type=str, help="set base URL for site (necessary when hosting the site in a sub-directory)"
+        )
         return parser.parse_args()
     except argparse.ArgumentError as exc:
         print(exc.message + "\n" + exc.argument)
         sys.exit(1)
 
 
-def run_jekyll(production_build=False):
+def run_jekyll(production_build=False, baseurl=None):
     subprocess.run(get_jekyll_cli() + ["clean"], check=True)
+    baseurl_params = []
 
-    baseurl_params = ["--baseurl", "/"] if production_build else []
+    if production_build:
+        baseurl_params = ["--baseurl", "/"]
+    elif baseurl is not None:
+        baseurl_params = ["--baseurl", baseurl]
+
     subprocess.run(get_jekyll_cli() + ["build", *baseurl_params], check=True)
 
 
@@ -53,7 +61,7 @@ def copy_webinterface_config(production_build):
         shutil.copyfile(src, tgt)
 
 
-def build(production_build=False, skip_settings=False):
+def build(production_build=False, skip_settings=False, baseurl=None):
     # check if external tools are available
     if not skip_settings:
         get_ultimate_cli()
@@ -70,7 +78,7 @@ def build(production_build=False, skip_settings=False):
     refresh_index()
 
     # build the static jekyll site
-    run_jekyll(production_build)
+    run_jekyll(production_build, baseurl)
 
     # copy the appropriate webinterface settings to _site/
     copy_webinterface_config(production_build)
@@ -78,4 +86,4 @@ def build(production_build=False, skip_settings=False):
 
 if __name__ == "__main__":
     args = parse_args()
-    build(args.production, args.skip_settings)
+    build(args.production, args.skip_settings, args.baseurl)

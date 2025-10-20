@@ -56,8 +56,9 @@ def get_binary():
     ultimate_bin = [
         "java",
         "-Dosgi.configuration.area=" + os.path.join(datadir, "config"),
-        "-Xmx12G",
-        "-Xms4m",
+        "-Xms2M",
+        "-Xmx4G",
+        "-Xms1M",
     ]
 
     if enable_assertions:

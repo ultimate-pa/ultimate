@@ -10,10 +10,18 @@
 hs_err_pid*
 *.md.backup
 
-/releaseScripts/default/DeltaDebugger-linux/*
-/releaseScripts/default/DeltaDebugger-win32/*
+/packaging/docker/*.env
+
+/releaseScripts/default/UCLI-E4-linux/*
+/releaseScripts/default/UCLI-E4-win32/*
+/releaseScripts/default/UDebug-E4-linux/*
+/releaseScripts/default/UDebug-E4-win32/*
+/releaseScripts/default/UDeltaDebugger-linux/*
+/releaseScripts/default/UDeltaDebugger-win32/*
 /releaseScripts/default/UAutomizer-linux/*
 /releaseScripts/default/UAutomizer-win32/*
+/releaseScripts/default/UEliminator-linux/*
+/releaseScripts/default/UEliminator-win32/*
 /releaseScripts/default/UGemCutter-linux/*
 /releaseScripts/default/UGemCutter-win32/*
 /releaseScripts/default/UKojak-linux/*
@@ -24,7 +32,8 @@ hs_err_pid*
 /releaseScripts/default/UTaipan-win32/*
 /releaseScripts/default/UTaipan-win32/
 /releaseScripts/default/*.zip
-/releaseScripts/default/WebBackend
+/releaseScripts/default/UWebBackend-linux/*
+/releaseScripts/default/UWebBackend-win32/*
 /releaseScripts/default/WebFrontend
 /releaseScripts/2018chccomp/Unihorn/StarExecArchive/*
 /releaseScripts/2018chccomp/Unihorn/StarExecArchive

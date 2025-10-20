@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="UltimateEliminator" uid="UltimateEliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.0" type="bundles" includeLaunchers="true" autoIncludeRequirements="true">
+<product name="Ultimate-Eliminator" uid="Eliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.0" type="bundles" includeLaunchers="true" autoIncludeRequirements="true">
 
    <aboutInfo>
       <text>
@@ -21,7 +21,7 @@
       </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx4g -Xms4m -Dequinox.resolver.revision.batch.size=1
+      <vmArgs>-Xms2M -Xmx4G -Xss1M -Dequinox.resolver.revision.batch.size=1
       </vmArgs>
    </launcherArgs>
 

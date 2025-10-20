@@ -1,75 +1,77 @@
 #!/bin/bash
-# This script builds Ultimate with Maven and then creates deployable zip archives for 
-# all tools.
+#-------------------------------------------------------------------------------
+# This script builds Ultimate with Maven and then creates deployable zip archives for all tools.
 # Note that it does no longer build the website, as this requires Ruby and Jekyll.
 # If you want to build the website, use makeWebsite.sh after makeFresh.sh.
+#-------------------------------------------------------------------------------
 
-
-# load shared functions and settings
+# Load shared functions and settings
 DIR="${BASH_SOURCE%/*}"
-if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
-. "$DIR/makeSettings.sh"
+if [[ ! -d "${DIR}" ]]; then DIR="${PWD}"; fi
+source "${DIR}/makeSettings.sh"
 
-verlte() {
-  printf '%s\n%s' "$1" "$2" | sort -C -V
+# Load and execute all Ultimate build steps before archive function is called.
+source "${DIR}/makeBuild.sh"
+
+archive_init() {
+  printf ' ▗▄▖ ▗▄▄▖  ▗▄▄▖▗▖ ▗▖▗▄▄▄▖▗▖  ▗▖▗▄▄▄▖\n'
+  printf '▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌ ▐▌  █  ▐▌  ▐▌▐▌   \n'
+  printf '▐▛▀▜▌▐▛▀▚▖▐▌   ▐▛▀▜▌  █  ▐▌  ▐▌▐▛▀▀▘\n'
+  printf '▐▌ ▐▌▐▌ ▐▌▝▚▄▄▖▐▌ ▐▌▗▄█▄▖ ▝▚▞▘ ▐▙▄▄▖\n'
+  printf '┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n'
+  printf '┃        Ultimate Products         ┃\n'
+  printf '┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n'
+  print_newline
 }
 
-build() {
-  spushd "../../trunk/source/BA_MavenParentUltimate/"
-  if ! command -v mvn  &> /dev/null ; then
-    echo "Maven not found. Please install Maven and make sure it is in your PATH."
-    exit 1
-  fi
-  mvn_version=$(mvn --version)
-  java_version=$(grep -oP 'Java version: \K.*?,' <<< "$mvn_version")
-  java_version=${java_version::-1} # remove ,
-  if verlte "$java_version" "21.0.0"; then
-    echo "Java version $java_version is too old. Please install Java 21 or newer."
-    exit 1
-  fi
-  printf 'Using the following versions:\n%s\n' "$mvn_version"
-  exit_on_fail mvn -T 1C clean install -Pmaterialize
-  spopd
-}
+archive_run() {
+  for PLATFORM in "${PLATFORMS[@]}"; do
+    # makeZip.sh <toolname> <targetarch>
+    print_heading "Archive Ultimate Taipan [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Taipan" "${PLATFORM}"
+    print_newline
 
-create_tool_zips() {
-  for platform in {linux,win32}; do
-    # makeZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
-    # Taipan
-    exit_on_fail bash makeZip.sh Taipan $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
+    print_heading "Archive Ultimate Automizer [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Automizer" "${PLATFORM}"
+    print_newline
 
-    # Automizer without separate blockencoding plugin
-    exit_on_fail bash makeZip.sh Automizer $platform AutomizerCInline_WitnessPrinter.xml BuchiAutomizerCInline_WitnessPrinter.xml AutomizerCInline_IcfgBuilder.xml AutomizerCInline_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
+    print_heading "Archive Ultimate Kojak [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Kojak" "${PLATFORM}"
+    print_newline
 
-    # Automizer with separate blockencoding plugin
-    #exit_on_fail bash makeZip.sh Automizer linux AutomizerC_BE_WitnessPrinter.xml BuchiAutomizerCInline_BE_WitnessPrinter.xml AutomizerC.xml AutomizerC_BE_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
+    print_heading "Archive Ultimate GemCutter [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "GemCutter" "${PLATFORM}"
+    print_newline
 
-    # Kojak
-    exit_on_fail bash makeZip.sh Kojak $platform KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE NONE
+    print_heading "Archive Ultimate Referee [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Referee" "${PLATFORM}"
+    print_newline
 
-    # GemCutter
-    exit_on_fail bash makeZip.sh GemCutter $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
+    print_heading "Archive Ultimate DeltaDebugger [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "DeltaDebugger" "${PLATFORM}"
+    print_newline
 
-    # Referee
-    exit_on_fail bash makeZip.sh Referee $platform RefereeCInline.xml NONE RefereeCInline_IcfgBuilder.xml NONE NONE NONE
+    print_heading "Archive Ultimate Eliminator [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Eliminator" "${PLATFORM}"
+    print_newline
 
-    # DeltaDebugger
-    exit_on_fail bash createDeltaDebuggerDir.sh $platform
+    print_heading "Archive Ultimate WebBackend [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "WebBackend" "${PLATFORM}"
+    print_newline
 
-    # ReqCheck
-    exit_on_fail bash createReqCheckZip.sh ReqCheck $platform ReqCheck.xml ReqCheck.xml
+    print_heading "Archive Ultimate ReqCheck [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "ReqCheck" "${PLATFORM}"
+    print_newline
+
+    print_heading "Archive Ultimate Command Line [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "CLI-E4" "${PLATFORM}"
+    print_newline
+
+    print_heading "Archive Ultimate Debug UI [${PLATFORM}]"
+    exit_on_fail bash makeZip.sh "Debug-E4" "${PLATFORM}"
+    print_newline
   done
 }
 
-create_webbackend_dir() {
-  local source="../../trunk/source/BA_SiteRepository/target/products/WebBackend/linux/gtk/x86_64"
-  local target="$(readlink -f WebBackend)"
-  if [ -d "$target" ] ; then rm -r "$target" ; fi
-  mkdir "$target"
-  echo "Copying WebBackend"
-  cp -r "$source/"* "$target"
-}
-
-build
-create_tool_zips
-create_webbackend_dir
+archive_init
+archive_run

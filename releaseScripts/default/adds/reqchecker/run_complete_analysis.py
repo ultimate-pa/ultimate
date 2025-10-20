@@ -18,6 +18,14 @@ from typing import Optional, List
 from tqdm import tqdm
 
 
+# quoting style is important here
+# fmt: off
+memory_heap_size_init = '2M'
+memory_heap_size_max = '4G'
+memory_stack_size_max = '1M'
+# fmt: on
+
+
 class _ExitCode:
     """
     Specify a named exit code for global usage.
@@ -716,8 +724,9 @@ def create_common_ultimate_cli_args(args, toolchain, settings, input_file):
     return [
         "java",
         "-Dosgi.configuration.area=config/",
-        "-Xmx100G",
-        "-Xss4m",
+        "-Xms" + memory_heap_size_init,
+        "-Xmx" + memory_heap_size_max,
+        "-Xss" + memory_stack_size_max,
         "-jar",
         "plugins/org.eclipse.equinox.launcher_1.6.800.v20240513-1750.jar",
         "-tc",
