@@ -334,3 +334,4 @@ trunk/source/WebsiteStatic/webinterface/workers/*.json
 !trunk/source/WebsiteStatic/webinterface/workers/*.override.json
 
 releaseScripts/default/sv-benchmarks
+releaseScripts/default/svcomp/*token
