@@ -145,6 +145,10 @@ public class RTInconsistencyPreCheck {
 		rtiCheckSingles();
 		rtiCheckChainLinkReqs();
 
+		for (final List<ReqsWithAttributes> rtis : mRTICombinations) {
+			mRTIReturnSet.add(rtiSetsFormatted(rtis));
+		}
+
 		printResults();
 		if (mRTIPreCheckOnly) {
 			mLogger.warn("RTI PreCheck only, stopping here. Note that the results are not verified! ");
@@ -429,7 +433,7 @@ public class RTInconsistencyPreCheck {
 			final List<ReqsWithAttributes> combination, final List<ReqsWithAttributes> potentialSingles) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("   Check New Chain: ").append(combinationsHelper.indexOf(combination)).append(" out of ")
-		.append(combinationsHelper.size()).append(" | Chain: [");
+				.append(combinationsHelper.size()).append(" | Chain: [");
 
 		for (final ReqsWithAttributes req : combination) {
 			sb.append(req.mName).append(", ");
@@ -532,7 +536,7 @@ public class RTInconsistencyPreCheck {
 		}
 		// if we reach this point the set is rt-inconsistent
 		mLogger.info("     -Rt-inconsistent set with chain-link found.");
-		mRTIReturnSet.add(rtiSetsFormatted(fullSet));
+		mRTICombinations.add(fullSet);
 	}
 
 	public void checkIfRealChainPossible() {
@@ -944,7 +948,7 @@ public class RTInconsistencyPreCheck {
 		for (final ReqsWithAttributes r : fullSet) {
 			mLogger.debug("   " + r.mName);
 		}
-		mRTIReturnSet.add(rtiSetsFormatted(fullSet));
+		mRTICombinations.add(fullSet);
 		mLogger.info("Rt-inconsistent set with chain-link found");
 	}
 
@@ -991,11 +995,10 @@ public class RTInconsistencyPreCheck {
 				if (!a.mTimed && !b.mTimed) {
 					continue; // skip timed requirements
 				}
-				mRTICombinations.add(canonicalPair);
 
 				if (rtiCheckFor2Reqs(a, b)) {
 					mLogger.debug("RTI found for:" + a.mName + " and " + b.mName);
-					mRTIReturnSet.add(rtiSetsFormatted(canonicalPair));
+					mRTICombinations.add((canonicalPair));
 
 				}
 			}
@@ -1048,7 +1051,7 @@ public class RTInconsistencyPreCheck {
 	/*
 	 * private boolean failReason(final int idx, final String msg) { if (mDebugReasonCOunter) { reasonCounter[idx]++;
 	 * mLogger.debug("rtiCheckFor2Reqs: {}", msg);
-	 * 
+	 *
 	 * } return false; }
 	 */
 
