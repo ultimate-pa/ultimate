@@ -44,6 +44,7 @@ ADDS=(
   "adds/Ultimate.py"
   "adds/Ultimate.ini"
   "adds/README"
+  "adds/examples"
 )
 
 # architecture-specific variables  
@@ -51,7 +52,7 @@ if [ "$2" == "linux" ]; then
   echo "Building .zip for linux..."
   ARCH="linux"
   ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
-  ADDS+=("adds/z3" "adds/cvc4" "adds/mathsat" "adds/ltl2ba")
+  ADDS+=("adds/z3" "adds/cvc4" "adds/mathsat" "adds/ltl2ba" "adds/smoketest.sh")
 elif [ "$2" == "win32" ]; then
   echo "Building .zip for win32..."
   ARCH="win32"
@@ -149,7 +150,7 @@ for add in "${ADDS[@]}" ; do
     echo "$add does not exist, aborting..."
     exit 1
   fi
-  exit_on_fail cp $add "$TARGETDIR"/
+  exit_on_fail cp -r $add "$TARGETDIR"/
 done 
 
 
