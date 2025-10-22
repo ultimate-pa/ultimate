@@ -165,13 +165,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
 	}
 
-	protected NestedRun<L, IPredicate> runWithModifiedGoalSet(final INestedWordAutomaton<L, IPredicate> abstraction,
-			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
-		return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
-				Collections.emptySet(), possibleEndPoints).getNestedRun();
-
-	}
-
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction = mAbstraction;
