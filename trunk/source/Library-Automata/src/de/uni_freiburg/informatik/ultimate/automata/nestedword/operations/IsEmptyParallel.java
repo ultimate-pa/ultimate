@@ -71,9 +71,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * Non-terminating if every existing counterexample is in the set but the state space is infinite.
  *
- * TODO: Has issues with recursive function calls, sometimes finds path that doesnt exist. -> for now we check
- * isAccepted after the search to find these cases
- *
  * TODO: non recursive, have fun
  *
  * @author Max Barth (Max.Barth@lmu.de)
@@ -142,10 +139,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/**
 	 * Mark a call state pair a visited. Only used for tracking the caller of a call not for the bfs search
-	 *
-	 * There is a bug in recursion, not sure what it is but we probably get nested calls that are not possible (not a
-	 * syntactical correct trace)
-	 *
 	 */
 	private void markCallVisited(final STATE state, final STATE stateK) {
 		Set<STATE> callPreds = mVisitedCallPairs.get(state);
@@ -157,7 +150,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		callPreds.add(stateK);
 	}
 
-	// TODO This does not work! we need a different data structure
 	private void unmarkCall(final STATE state, final STATE stateK) {
 		final Set<STATE> callPreds = mVisitedCallPairs.get(state);
 		assert callPreds != null : "Call was not visited! " + state + " " + stateK;
@@ -174,18 +166,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		mInternalSubRun.clear();
 		mCallSubRun.clear();
 		mReturnPredStateK.clear();
-		// mSummaryReturnPred.clear();
-		// mSummaryReturnSymbol.clear();
 		mReconstructionStack.clear();
 		mReturnSubRun.clear();
 		if (!isQueueEmpty()) {
 			mQueue.clear();
 			mQueueCall.clear();
-			// return null;
 		}
-		// is it a call or a internal predi?
 		enqueueAndMarkVisited(startpair.getUp(), startpair.getDown());
-		// enqueueAndMarkVisitedCall(succ, state);
+
 		while (!isQueueEmpty()) {
 			if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
 				mTimedout = true;
@@ -271,15 +259,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				IcfgLocation programPoint = null;
 				final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
 				if (stateInCEx instanceof Return || succ instanceof Return) {
-					// programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
-					// if (programPoint.equals(((Return) succ).getProgramPoint())) {
 					if (symbol == counterexample.getSymbol(position - 1)) {
 						currentScore += 1;
 						activeCounterexamples.add(cexHash);
 					}
-					// } else {
-					// assert !counterexample.getStateAtPosition(position).equals(succ);
-					// }
 				} else if (stateInCEx instanceof ISLPredicate && succ instanceof ISLPredicate) {
 					programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 					if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
@@ -327,20 +310,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			} else {
 				throw new AssertionError("Unexpected Predicate");
 			}
-			final IcfgLocation a = ((ISLPredicate) state).getProgramPoint();
-			/*
-			 * We have the following problem: If we have an edge that is a loop body, often for loop Then it can be just
-			 * one assume statement and a selfloop on the state. We will detect this as diverging from previous cex and
-			 * falsy claim we found a new cex even tho it is semantically the same.
-			 */
-			/*
-			 * Solution, if we have a loop. One more iteration does not count as "new counterexample" So the cost has to
-			 * be the same at the loop head, if we already entered once!
-			 */
-
-			// if (a.getPayload().getAnnotations().containsKey(LoopEntryAnnotation.class.getName())) {
-			// return true;
-			// }
 			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
 				if (symbol == counterexample.getSymbol(position - 1)) {
 					return true;
@@ -624,15 +593,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				final Set<STATE> startset = new HashSet<>(mStartStates);
 				runsearch =
 						new IsEmptyHeuristic<>(mServices, mOperand, startset, funIsForbiddenState, asd,
-								IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0),
-								new ArrayList<>(mCurrentPrefix), false); // TODO no Loop mode
+								IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0),
+								new ArrayList<>(mCurrentPrefix));
 			} else {
 				runsearch =
 						new IsEmptyHeuristic<>(mServices, mOperand,
-								IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0),
-								new ArrayList<>(mCurrentPrefix), false);
+								IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0),
+								new ArrayList<>(mCurrentPrefix));
 			}
-			// final IsEmpty<LETTER, STATE> runsearch = new IsEmpty<>(super.mServices, mOperand, mCurrentPrefix);
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();
 			if (run == null) {
 				return run;
@@ -722,12 +690,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	private NestedRun<LETTER, STATE> getAcceptingRunParallel(final Set<Integer> set)
 			throws AutomataOperationCanceledException {
 		final PriorityQueue<PQState> pqStart = pickStartToExplore(mStartStates, set);
-		// assert !pqStart.isEmpty(); // if abstraction is empty, there might not be a start anymore
+		// if abstraction is empty, there might not be a start anymore
 		while (!pqStart.isEmpty()) {
 			final PQState startpq = pqStart.poll();
 			final STATE start = startpq.getSucc();
-			// enqueueAndMarkVisited(start, mDummyEmptyStackState);#
-			// markCallVisited(start, mDummyEmptyStackState);
 			final NestedRun<LETTER, STATE> runToGoal =
 					constructRunFromStateToNextBranch(0, new DoubleDecker<>(mDummyEmptyStackState, start),
 							startpq.getCounterexamplesUnderConsideration());
@@ -750,7 +716,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	 */
 	private NestedRun<LETTER, STATE> constructRun(final Set<STATE> startStates, final STATE stateIn,
 			final STATE stateKin) {
-		// mLogger.debug("Reconstruction from " + state + " " + stateK);
 		STATE state = stateIn;
 		STATE stateK = stateKin;
 		NestedRun<LETTER, STATE> run = new NestedRun<>(state);

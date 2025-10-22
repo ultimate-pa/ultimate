@@ -67,13 +67,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQue
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Check emptiness and obtain an accepting run of a nested word automaton using a modified version of A*.
+ * Check emptiness and obtain an accepting run of a nested word automaton using
+ * a modified version of A*.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * @param <LETTER>
- *            letter type
- * @param <STATE>
- *            state type
+ * @param <LETTER> letter type
+ * @param <STATE>  state type
  */
 public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 
@@ -85,19 +84,18 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private final NestedRun<LETTER, STATE> mAcceptingRun;
 	private final STATE mDummyEmptyStackState;
 	protected final List<Pair<STATE, LETTER>> mWayPoints;
-	boolean stillFollowingWayPoint = true;
-	boolean mDontVisitLoops = false;
+	private boolean stillFollowingWayPoint = true;
+	private boolean mDontVisitLoops = false;
 	private final IHeuristic<STATE, LETTER> mHeuristic;
 
 	/**
-	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
-	 * automaton and use the zero heuristic.
+	 * Default constructor. Here we search a run from the initial states of the
+	 * automaton to the final states of the automaton and use the zero heuristic.
 	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            input NWA
-	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
+	 * @param services Ultimate services
+	 * @param operand  input NWA
+	 * @see #IsEmpty(AutomataLibraryServices,
+	 *      INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
@@ -106,59 +104,57 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	/**
-	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
-	 * automaton and use the zero heuristic.
+	 * Default constructor. Here we search a run from the initial states of the
+	 * automaton to the final states of the automaton and use the zero heuristic.
 	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            input NWA
-	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
+	 * @param services Ultimate services
+	 * @param operand  input NWA
+	 * @see #IsEmpty(AutomataLibraryServices,
+	 *      INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
-				heuristic, new ArrayList<>(), false);
+				heuristic, new ArrayList<>());
 	}
 
 	/**
-	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
-	 * automaton and use the zero heuristic.
+	 * Default constructor. Here we search a run from the initial states of the
+	 * automaton to the final states of the automaton and use the zero heuristic.
 	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            input NWA
-	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
+	 * @param services Ultimate services
+	 * @param operand  input NWA
+	 * @see #IsEmpty(AutomataLibraryServices,
+	 *      INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
-			final boolean noLoopMode) throws AutomataOperationCanceledException {
+			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints)
+			throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
-				heuristic, wayPoints, noLoopMode);
+				heuristic, wayPoints);
 	}
 
-
 	/**
-	 * Constructor that is not restricted to emptiness checks. The set of startStates defines where the run that we
-	 * search has to start. The set of forbiddenStates defines states that the run must not visit. The set of goalStates
-	 * defines where the run that we search has to end.
+	 * Constructor that is not restricted to emptiness checks. The set of
+	 * startStates defines where the run that we search has to start. The set of
+	 * forbiddenStates defines states that the run must not visit. The set of
+	 * goalStates defines where the run that we search has to end.
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Predicate<STATE> funIsForbiddenState,
 			final Predicate<STATE> funIsGoalState, final IHeuristic<STATE, LETTER> heuristic)
 			throws AutomataOperationCanceledException {
-		this(services, operand, startStates, funIsForbiddenState, funIsGoalState, heuristic, new ArrayList<>(), false);
+		this(services, operand, startStates, funIsForbiddenState, funIsGoalState, heuristic, new ArrayList<>());
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 	}
 
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Predicate<STATE> funIsForbiddenState, final Predicate<STATE> funIsGoalState,
-			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
-			final boolean noLoopMode) throws AutomataOperationCanceledException {
+			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mIsGoalState = funIsGoalState;
@@ -171,7 +167,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
 		mWayPoints = wayPoints;
-		mDontVisitLoops = noLoopMode;
 		if (!mWayPoints.isEmpty()) {
 			stillFollowingWayPoint = true;
 		}
@@ -187,16 +182,16 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	/**
-	 * Get an accepting run of the automaton passed to the constructor. Return null if the automaton does not accept any
-	 * nested word.
+	 * Get an accepting run of the automaton passed to the constructor. Return null
+	 * if the automaton does not accept any nested word.
 	 *
 	 * @param heuristic
 	 */
 	private NestedRun<LETTER, STATE> getAcceptingRun(final Collection<STATE> startStates,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 
-		final HashedPriorityQueue<Item> worklist =
-				new HashedPriorityQueue<>(Comparator.comparing(a -> a.mEstimatedCostToTarget));
+		final HashedPriorityQueue<Item> worklist = new HashedPriorityQueue<>(
+				Comparator.comparing(a -> a.mEstimatedCostToTarget));
 
 		final List<Pair<STATE, LETTER>> visited = new ArrayList<>();
 
@@ -220,7 +215,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		final Map<CallTransition, Map<ReturnTransition, SummaryItem>> summaries = new HashMap<>();
 		final Map<CallTransition, Map<ReturnTransition, Set<Item>>> usedSummaries = new HashMap<>();
 
-		int lengthOfPrefixThatWeFollow =  mWayPoints.size();
+		int lengthOfPrefixThatWeFollow = mWayPoints.size();
 
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -253,15 +248,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				stragglingSummaries = Collections.emptyList();
 			}
 
-			final List<Item> unvaluatedSuccessors =
-					getUnvaluatedSuccessors(current, discoveredUniqueReturnStates, delayedCalls, visited);
+			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current, discoveredUniqueReturnStates,
+					delayedCalls, visited);
 			if (mLogger.isDebugEnabled() && unvaluatedSuccessors.isEmpty()) {
 				mLogger.debug("  No successors");
 				continue;
 			}
 
-			final List<Item> successors =
-					addCostAndSummaries(unvaluatedSuccessors, summaries, usedSummaries, heuristic, current.mCostSoFar);
+			final List<Item> successors = addCostAndSummaries(unvaluatedSuccessors, summaries, usedSummaries, heuristic,
+					current.mCostSoFar);
 			successors.addAll(stragglingSummaries);
 
 			if (heuristic instanceof SmtFeatureHeuristic && ((SmtFeatureHeuristic<STATE, LETTER>) heuristic)
@@ -290,7 +285,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 
 				if (lowestCostSoFar != null && costSoFar >= lowestCostSoFar) {
-					// we have already seen this successor but with a lower cost, so we should not explore with a
+					// we have already seen this successor but with a lower cost, so we should not
+					// explore with a
 					// higher cost
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("    Skip (cost %s, but have seen with cost %s)", costSoFar,
@@ -300,19 +296,23 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 				if (succ.mItemType == ItemType.CALL
 						&& !isCheapestAncestor(lowestCall, discoveredUniqueReturnStates, succ, costSoFar)) {
-					// if the succ is not yet in lowest, there can still be an item with a call stack that has the
-					// same ancestor as the current succ -- if this item is cheaper, we do not insert.
-					// TODO: isCheapestAncestor is rather expensive, but with a dedicated data structure it could be
+					// if the succ is not yet in lowest, there can still be an item with a call
+					// stack that has the
+					// same ancestor as the current succ -- if this item is cheaper, we do not
+					// insert.
+					// TODO: isCheapestAncestor is rather expensive, but with a dedicated data
+					// structure it could be
 					// much cheaper, e.g., something similar to a suffix tree
 					delayedCalls.computeIfAbsent(current.getHierPreState(), a -> new LinkedHashSet<>()).add(succ);
 					continue;
 				}
 
-				final double expectedCostToTarget =
-						heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mLetter);
+				final double expectedCostToTarget = heuristic.getHeuristicValue(succ.mTargetState,
+						succ.getHierPreState(), succ.mLetter);
 				succ.setEstimatedCostToTarget(expectedCostToTarget);
 
-				// we changed the cost of this item, so we have to remove it if it is already in the queue, because
+				// we changed the cost of this item, so we have to remove it if it is already in
+				// the queue, because
 				// its queue position will not be updated otherwise
 				if (worklist.remove(succ)) {
 					if (mLogger.isDebugEnabled()) {
@@ -366,13 +366,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				if (summary != null) {
 					assert !summary.isEmpty();
 					// there is a summary for this call and we are going to use it.
-					// we need to record that we used a summary in case we find more summaries later (straggling
+					// we need to record that we used a summary in case we find more summaries later
+					// (straggling
 					// summaries)
-					// we save the cost of the current location in the successor item, so we may use it for straggling
+					// we save the cost of the current location in the successor item, so we may use
+					// it for straggling
 					// summaries
 					succ.setCostSoFar(currentCostSoFar + concreteCost);
-					final Map<ReturnTransition, Set<Item>> usedSummariesForCall =
-							usedSummaries.computeIfAbsent(callTrans, a -> new HashMap<>());
+					final Map<ReturnTransition, Set<Item>> usedSummariesForCall = usedSummaries
+							.computeIfAbsent(callTrans, a -> new HashMap<>());
 					for (final Entry<ReturnTransition, SummaryItem> entry : summary.entrySet()) {
 						final SummaryItem sumItem = entry.getValue();
 						final Item newSucc = new Item(succ, sumItem);
@@ -405,8 +407,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		final Item callItem = returnItem.findCorrespondingCallItem();
 		final CallTransition callTrans = new CallTransition(callItem);
 		final ReturnTransition returnTrans = new ReturnTransition(returnItem);
-		final Map<ReturnTransition, SummaryItem> oldSummaries =
-				summaries.computeIfAbsent(callTrans, k -> new HashMap<>());
+		final Map<ReturnTransition, SummaryItem> oldSummaries = summaries.computeIfAbsent(callTrans,
+				k -> new HashMap<>());
 
 		final SummaryItem oldSummary = oldSummaries.get(returnTrans);
 		if (oldSummary == null) {
@@ -416,7 +418,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				mLogger.debug(String.format("  Is fresh summary: %s", sItem));
 			}
 
-			// if we add a fresh summary, we also have to add additional items to the worklist for all the items that
+			// if we add a fresh summary, we also have to add additional items to the
+			// worklist for all the items that
 			// already used summaries of this call
 			final Map<ReturnTransition, Set<Item>> usedSummariesForCall = usedSummaries.get(callTrans);
 			if (usedSummariesForCall != null) {
@@ -468,14 +471,16 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			final double lowestCostSoFar = entry.getValue();
 			if (item.mHierPreStates.size() >= succ.mHierPreStates.size()) {
-				// item cannot be prefix, is either longer, or, if it is the same length, has a different
+				// item cannot be prefix, is either longer, or, if it is the same length, has a
+				// different
 				// hashcode (checked before)
 				continue;
 			}
-			final int extension =
-					discoveredUniqueReturnStates.getOrDefault(succ.getHierPreState(), Collections.emptySet()).size();
+			final int extension = discoveredUniqueReturnStates
+					.getOrDefault(succ.getHierPreState(), Collections.emptySet()).size();
 			if (item.isHierStatesPrefixOf(succ, extension) && costSoFar >= lowestCostSoFar) {
-				// we have already seen this successor but with a lower cost, so we should not explore
+				// we have already seen this successor but with a lower cost, so we should not
+				// explore
 				// with a higher cost
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format(
@@ -722,7 +727,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 	private class SummaryItem implements IWithBackPointer<STATE> {
 
-		// the actual cost of this summary, i.e., the cost of the subpath in this summary
+		// the actual cost of this summary, i.e., the cost of the subpath in this
+		// summary
 		private final double mSummaryCost;
 		private final NestedRun<LETTER, STATE> mSubrun;
 		private final IWithBackPointer<STATE> mBackPointer;
@@ -803,7 +809,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private double mCostSoFar;
 		// h-value, i.e., how expensive from here to target using this node
 		private double mEstimatedCostToTargetFromHere;
-		// f-value, i.e. how expensive from start to target if we use this node, i.e. g+h
+		// f-value, i.e. how expensive from start to target if we use this node, i.e.
+		// g+h
 		private double mEstimatedCostToTarget;
 
 		/**
@@ -881,8 +888,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 
 		/**
-		 * @return true iff the hierarchical pre states of this items are a prefix of the hierarchical pre states of the
-		 *         other item, false otherwise.
+		 * @return true iff the hierarchical pre states of this items are a prefix of
+		 *         the hierarchical pre states of the other item, false otherwise.
 		 */
 		public boolean isHierStatesPrefixOf(final Item other) {
 			final Iterator<STATE> iter = mHierPreStates.descendingIterator();
@@ -898,8 +905,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 
 		/**
-		 * @return true iff the hierarchical pre states of this items are a prefix of the hierarchical pre states of the
-		 *         other item ignoring the maxExtension items on top of this, false otherwise.
+		 * @return true iff the hierarchical pre states of this items are a prefix of
+		 *         the hierarchical pre states of the other item ignoring the
+		 *         maxExtension items on top of this, false otherwise.
 		 */
 		public boolean isHierStatesPrefixOf(final Item other, int maxExtension) {
 			final Iterator<STATE> iter = mHierPreStates.descendingIterator();
@@ -926,8 +934,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		/**
 		 *
-		 * @return true iff the last two hierarchical pre states of this item are equal to the last two hierarchical pre
-		 *         states of the other item, false otherwise.
+		 * @return true iff the last two hierarchical pre states of this item are equal
+		 *         to the last two hierarchical pre states of the other item, false
+		 *         otherwise.
 		 */
 		public boolean isAncestorEqual(final Item other) {
 			final Iterator<STATE> iter = mHierPreStates.iterator();
@@ -1135,8 +1144,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			}
 
-			final String ectt =
-					mEstimatedCostToTarget == Double.MAX_VALUE ? "MAX" : String.valueOf(mEstimatedCostToTarget);
+			final String ectt = mEstimatedCostToTarget == Double.MAX_VALUE ? "MAX"
+					: String.valueOf(mEstimatedCostToTarget);
 			final String ecttfh = mEstimatedCostToTargetFromHere == Double.MAX_VALUE ? "MAX"
 					: String.valueOf(mEstimatedCostToTargetFromHere);
 
@@ -1157,43 +1166,39 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	public enum AStarHeuristic {
-		ZERO, RANDOM_HALF, RANDOM_FULL, SMT_FEATURE_COMPARISON, PARALLEL
+		ZERO, RANDOM_HALF, RANDOM_FULL, SMT_FEATURE_COMPARISON
 	}
 
 	/**
-	 * Represents a cost function for edges, together with a heuristic that enables the A* algorithm to find a
-	 * least-cost path.
+	 * Represents a cost function for edges, together with a heuristic that enables
+	 * the A* algorithm to find a least-cost path.
 	 *
-	 * In order to guarantee that A* indeed finds a least-cost path, the heuristic must be "admissible", see
+	 * In order to guarantee that A* indeed finds a least-cost path, the heuristic
+	 * must be "admissible", see
 	 * <https://en.wikipedia.org/wiki/Admissible_heuristic>.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
-	 * @param <STATE>
-	 *            Type of states
-	 * @param <LETTER>
-	 *            Type of transitions
+	 * @param <STATE>  Type of states
+	 * @param <LETTER> Type of transitions
 	 */
 	public interface IHeuristic<STATE, LETTER> {
 		/**
 		 * Estimates the cost of a path to an accepting configuration.
 		 *
-		 * @param state
-		 *            The next NWA state, reached by the transition {@code trans}
-		 * @param stateK
-		 *            The hierarchical predecessor NWA state
-		 * @param trans
-		 *            The first transition on the path whose cost shall be estimated the
-		 * @return a non-negative number representing an estimate of the cost (an under-approximation, for an admissible
-		 *         heuristic)
+		 * @param state  The next NWA state, reached by the transition {@code trans}
+		 * @param stateK The hierarchical predecessor NWA state
+		 * @param trans  The first transition on the path whose cost shall be estimated
+		 *               the
+		 * @return a non-negative number representing an estimate of the cost (an
+		 *         under-approximation, for an admissible heuristic)
 		 */
 		double getHeuristicValue(STATE state, STATE stateK, LETTER trans);
 
 		/**
 		 * Determines the cost of a transition with the given letter.
 		 *
-		 * @param trans
-		 *            the letter labeling the transition
+		 * @param trans the letter labeling the transition
 		 * @return a non-negative number indicating the cost
 		 */
 		double getConcreteCost(LETTER trans);
@@ -1205,30 +1210,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			case RANDOM_HALF -> IHeuristic.getRandomHeuristicHalf(seed);
 			case SMT_FEATURE_COMPARISON -> IHeuristic.getSmtFeatureHeuristic(scoringMethod);
 			case ZERO -> IHeuristic.getZeroHeuristic();
-			case PARALLEL -> IHeuristic.getParallelHeuristic();
-			};
-		}
-
-		/**
-		 * If state and trans are in any cex, we increase the cost
-		 *
-		 * The states and trans in the prefix have 0 cost
-		 *
-		 * @param <STATE>
-		 * @param <LETTER>
-		 * @return
-		 */
-		static <STATE, LETTER> IHeuristic<STATE, LETTER> getParallelHeuristic() {
-			return new IHeuristic<>() {
-				@Override
-				public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
-					return 0.0;
-				}
-
-				@Override
-				public final double getConcreteCost(final LETTER e) {
-					return 1.0;
-				}
 			};
 		}
 
@@ -1283,17 +1264,19 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			};
 		}
 
-		static <STATE, LETTER> SmtFeatureHeuristic<STATE, LETTER>
-				getSmtFeatureHeuristic(final ScoringMethod scoringMethod) {
+		static <STATE, LETTER> SmtFeatureHeuristic<STATE, LETTER> getSmtFeatureHeuristic(
+				final ScoringMethod scoringMethod) {
 			return new SmtFeatureHeuristic<>(scoringMethod);
 		}
 
 	}
 
 	/**
-	 * An {@link ArrayDeque} that uses {@link #hashCode()} and {@link #equals(Object)} of an {@link AbstractList}.
+	 * An {@link ArrayDeque} that uses {@link #hashCode()} and
+	 * {@link #equals(Object)} of an {@link AbstractList}.
 	 *
-	 * This means that two queues with the same elements in the same order are equal and have the same hashcode.
+	 * This means that two queues with the same elements in the same order are equal
+	 * and have the same hashcode.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
