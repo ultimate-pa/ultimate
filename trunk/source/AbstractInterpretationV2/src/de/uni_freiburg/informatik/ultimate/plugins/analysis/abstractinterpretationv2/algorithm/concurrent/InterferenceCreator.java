@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 
 public class InterferenceCreator<UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 
@@ -69,7 +70,7 @@ public class InterferenceCreator<UNDERLYINGSTATE extends IAbstractState<UNDERLYI
 		if ((transition.getTransformula().getAssignedVars().stream().anyMatch(globals::contains))) {
 			return true;
 		}
-		if (transition instanceof ForkThreadCurrent) {
+		if (transition instanceof ForkThreadCurrent || transition instanceof JoinThreadCurrent) {
 			return true;
 		}
 		return false;
