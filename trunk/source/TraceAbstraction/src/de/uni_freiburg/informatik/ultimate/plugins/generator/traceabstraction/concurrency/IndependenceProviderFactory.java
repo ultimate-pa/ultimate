@@ -139,7 +139,8 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		if (settings.getAbstractionType() == AbstractionType.LOOPER) {
 			return new IndependenceProviderForLoopers<>(mServices, csToolkit,
-					new Lazy<>(() -> constructIndependenceScript(settings)), settings.getIndependenceType());
+					new Lazy<>(() -> mIndependenceScript = constructIndependenceScript(settings)),
+					settings.getIndependenceType());
 		}
 
 		// Construct the script used for independence checks.

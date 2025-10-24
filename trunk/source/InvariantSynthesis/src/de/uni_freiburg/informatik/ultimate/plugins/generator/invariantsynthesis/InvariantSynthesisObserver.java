@@ -91,7 +91,7 @@ public class InvariantSynthesisObserver implements IUnmanagedObserver {
 			}
 
 			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
-			final InvariantSynthesisStarter tas = new InvariantSynthesisStarter(mServices, rcfgRootNode);
+			final InvariantSynthesisStarter<?> tas = new InvariantSynthesisStarter<>(mServices, rcfgRootNode);
 			mRootOfNewModel = tas.getRootOfNewModel();
 		}
 	}

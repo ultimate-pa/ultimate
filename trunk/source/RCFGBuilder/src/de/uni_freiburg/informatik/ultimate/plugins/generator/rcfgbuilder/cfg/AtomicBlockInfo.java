@@ -46,8 +46,8 @@ final public class AtomicBlockInfo extends ModernAnnotations {
 
 	private static final long serialVersionUID = -8370873908642083605L;
 
-	private static int START_DELTA = 1;
-	private static int END_DELTA = -1;
+	private static final int START_DELTA = 1;
+	private static final int END_DELTA = -1;
 
 	// Difference of number of atomic blocks opened by the annotated edge and number of atomic blocks closed by the
 	// annotated edge. Hence, positive numbers indicate the start of an atomic block, negative numbers the end, and zero

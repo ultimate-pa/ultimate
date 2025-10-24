@@ -44,9 +44,22 @@ public sealed interface BacktranslatedACSLValue {
 	 *
 	 * Such expressions may be used for the backtranslation of invariants and procedure contracts, as well as for
 	 * program states.
+	 *
+	 * @param expression
+	 *            the ACSL expression representing the backtranslated value
+	 * @param cType
+	 *            the value's C type, if known (may be {@code null})
+	 * @param range
+	 *            an interval encompassing the possible concrete values that {@code expression} may have
 	 */
 	public record BacktranslatedExpression(Expression expression, ICType cType, BigInterval range)
 			implements BacktranslatedACSLValue {
+		/**
+		 * Creates a backtranslated value with an unknown C type and an unbounded range.
+		 *
+		 * @param expression
+		 *            the backtranslated ACSL expression
+		 */
 		public BacktranslatedExpression(final Expression expression) {
 			this(expression, null, BigInterval.unbounded());
 		}

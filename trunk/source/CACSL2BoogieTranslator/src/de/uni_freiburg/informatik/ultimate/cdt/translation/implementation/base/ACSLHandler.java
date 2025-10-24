@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLProblemNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
@@ -950,4 +951,9 @@ public class ACSLHandler implements IACSLHandler {
 						CPointer.voidPointer()));
 	}
 
+	@Override
+	public Result visit(final IDispatcher main, final ACSLProblemNode node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		throw new UnsupportedSyntaxException(loc, "Error during parsing of ACSL (" + node.getErrorMessage() + ")");
+	}
 }

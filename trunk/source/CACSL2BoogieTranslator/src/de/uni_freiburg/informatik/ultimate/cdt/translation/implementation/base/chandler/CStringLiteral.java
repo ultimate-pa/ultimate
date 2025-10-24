@@ -105,16 +105,14 @@ public class CStringLiteral {
 		mByteValues = ISOIEC9899TC3.convertCharacterSequenceToByteSequence(mNumericalValues, mSignednessOfChar);
 	}
 
-	private String stripQuotes(final char[] chars, final int offset) {
+	private static String stripQuotes(final char[] chars, final int offset) {
 		if (chars[offset] == '\"' && chars[chars.length - 1] == '\"') {
 			return new String(chars, offset + 1, chars.length - 2 - offset);
-		} else {
-			throw new UnsupportedOperationException("unsupported representation of string literal " + chars);
 		}
+		throw new UnsupportedOperationException("unsupported representation of string literal " + chars);
 	}
 
 	public List<BigInteger> getByteValues() {
 		return mByteValues;
 	}
-
 }

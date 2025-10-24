@@ -50,6 +50,9 @@ trunk/examples/concurrent/bpl/VMCAI2021/generated/*.yml
 trunk/examples/concurrent/bpl/weaver-benchmarks/generated/**/*.bpl
 trunk/examples/concurrent/bpl/weaver-benchmarks/generated/**/*.yml
 trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
+trunk/examples/witness-generation-validation/regression/*.graphml
+trunk/examples/witness-generation-validation/regression/*.yaml
+trunk/examples/witness-generation-validation/regression/*.yml
 **/.metadata/*
 **/.settings/*
 **/target/*
@@ -62,6 +65,7 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 /trunk/source/.sonarlint/*
 /trunk/source/*.log
 
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLProblemNode.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLResultExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLTransformer.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLType.java
@@ -330,3 +334,4 @@ trunk/source/WebsiteStatic/webinterface/workers/*.json
 !trunk/source/WebsiteStatic/webinterface/workers/*.override.json
 
 releaseScripts/default/sv-benchmarks
+releaseScripts/default/svcomp/*token

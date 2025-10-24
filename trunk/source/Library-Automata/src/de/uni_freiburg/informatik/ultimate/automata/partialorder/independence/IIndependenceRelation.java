@@ -41,8 +41,23 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public interface IIndependenceRelation<STATE, LETTER> {
 
+	/**
+	 * Describes possible results of an independence check between two letters.
+	 */
 	enum Dependence {
-		INDEPENDENT, DEPENDENT, UNKNOWN
+		/**
+		 * The letters are independent, i.e., they can be reordered.
+		 */
+		INDEPENDENT,
+		/**
+		 * The letters are dependent, i.e., their ordering matters.
+		 */
+		DEPENDENT,
+		/**
+		 * The independence relation could not determine for certain whether the letters are independent or not. In most
+		 * contexts, the sound decision in such cases is to pretend that the letters are dependent.
+		 */
+		UNKNOWN
 	}
 
 	/**

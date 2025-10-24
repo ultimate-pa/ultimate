@@ -180,10 +180,9 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 					new IsEmpty<>(new AutomataLibraryServices(mServices), diff.getResult());
 			if (!empty.getResult()) {
 				if (!USE_CONSOLIDATION_IN_NON_EMPTY_CASE) {
-					if (mIpTc instanceof TraceCheckSpWp) {
+					if (mIpTc instanceof final TraceCheckSpWp<?> tc) {
 						// If the forwards predicates is a perfect sequence of interpolants, then use it, otherwise use
 						// the sequence of backwards predicates
-						final TraceCheckSpWp<LETTER> tc = (TraceCheckSpWp<LETTER>) mIpTc;
 						final boolean forwardsPredicatesPerfect = tc.isForwardSequencePerfect();
 						if (forwardsPredicatesPerfect) {
 							mConsolidatedInterpolants = tc.getForwardPredicates().toArray(new IPredicate[0]);
@@ -451,8 +450,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 	}
 
 	public List<IPredicate> getInterpolantsOfType_I() {
-		if (mIpTc instanceof TraceCheckSpWp) {
-			final TraceCheckSpWp<LETTER> tcspwp = (TraceCheckSpWp<LETTER>) mIpTc;
+		if (mIpTc instanceof final TraceCheckSpWp<?> tcspwp) {
 			if (tcspwp.wasForwardPredicateComputationRequested()) {
 				return tcspwp.getForwardPredicates();
 			}
@@ -462,8 +460,7 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 	}
 
 	public List<IPredicate> getInterpolantsOfType_II() {
-		if (mIpTc instanceof TraceCheckSpWp) {
-			final TraceCheckSpWp<LETTER> tcspwp = (TraceCheckSpWp<LETTER>) mIpTc;
+		if (mIpTc instanceof final TraceCheckSpWp<?> tcspwp) {
 			if (tcspwp.wasBackwardSequenceConstructed()) {
 				return tcspwp.getBackwardPredicates();
 			}

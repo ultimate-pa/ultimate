@@ -105,6 +105,11 @@ public class TraceCheckReasonUnknown {
 		 * MathSAT does not support roundNearestTiesToAway as rounding mode.
 		 */
 		MATHSAT_ROUNDINGMODE,
+
+		/**
+		 * MathSAT does not support fp.rem to calculate the floating-point-remainder.
+		 */
+		MATHSAT_REMAINDER,
 	}
 
 	/**
@@ -274,6 +279,10 @@ public class TraceCheckReasonUnknown {
 		} else if (message.contains("unknown symbol: roundNearestTiesToAway")) {
 			// MathSAT does not support roundNearestTiesToAway as rounding mode
 			reason = Reason.MATHSAT_ROUNDINGMODE;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.contains("unknown symbol: fp.rem")) {
+			// MathSAT does not support fp.rem to calculate the floating-point-remainder
+			reason = Reason.MATHSAT_REMAINDER;
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 		} else {
 			reason = Reason.SOLVER_CRASH_OTHER;

@@ -497,13 +497,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
-		forceShutdown();
-		super.finalize();
-	}
-
-	@Override
-	public void close() throws Exception {
+	public void close() {
 		forceShutdown();
 	}
 

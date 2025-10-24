@@ -38,20 +38,11 @@ public class ComperativeOperator extends AstNode {
 
 	@Override
 	public String toString() {
-		String op = "??";
-		switch (type) {
-		case equals:
-			op = "=";
-			break;
-		case greater:
-			op = ">";
-			break;
-		case geq:
-			op = ">=";
-			break;
-		default:
-			throw new IllegalArgumentException();
-		}
+		final String op = switch (type) {
+		case equals -> "=";
+		case greater -> ">";
+		case geq -> ">=";
+		};
 
 		return getOutgoingNodes().get(0).toString() + op + getOutgoingNodes().get(1).toString();
 	}

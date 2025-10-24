@@ -113,6 +113,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLProblemNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
@@ -327,6 +328,7 @@ public class MainDispatcher implements IDispatcher {
 		case final LoopAssigns loopAss -> mAcslHandler.visit(this, loopAss);
 		case final LoopAnnot loopAnnot -> mAcslHandler.visit(this, loopAnnot);
 		case final NullPointer np -> mAcslHandler.visit(this, np);
+		case final ACSLProblemNode problem -> mAcslHandler.visit(this, problem);
 		default -> mAcslHandler.visit(this, n);
 		};
 	}

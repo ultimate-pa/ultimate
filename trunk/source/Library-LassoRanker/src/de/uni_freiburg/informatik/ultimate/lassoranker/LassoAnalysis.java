@@ -371,23 +371,26 @@ public class LassoAnalysis {
 			mLassos.add(new Lasso(LinearTransition.getTranstionTrue(), LinearTransition.getTranstionTrue()));
 		}
 		for (final Lasso lasso : mLassos) {
-
 			final long startTime = System.nanoTime();
-			final NonTerminationAnalysisSettings gev0settings = constructGev0Copy(settings);
-			NonTerminationArgumentSynthesizer nas =
-					new NonTerminationArgumentSynthesizer(lasso, mPreferences, gev0settings, mServices);
-			LBool constraintSat = nas.synthesize();
-			if (constraintSat == LBool.UNSAT) {
-				nas.close();
-				nas = new NonTerminationArgumentSynthesizer(lasso, mPreferences, settings, mServices);
-				constraintSat = nas.synthesize();
-			}
 
+			LBool constraintSat;
+			GeometricNonTerminationArgument nta;
+			final NonTerminationAnalysisSettings gev0settings = constructGev0Copy(settings);
+			try (final var nas = new NonTerminationArgumentSynthesizer(lasso, mPreferences, gev0settings, mServices)) {
+				constraintSat = nas.synthesize();
+				nta = constraintSat == LBool.SAT ? nas.getArgument() : null;
+			}
+			if (constraintSat == LBool.UNSAT) {
+				try (var nas = new NonTerminationArgumentSynthesizer(lasso, mPreferences, settings, mServices)) {
+					constraintSat = nas.synthesize();
+					nta = constraintSat == LBool.SAT ? nas.getArgument() : null;
+				}
+			}
 			final long endTime = System.nanoTime();
 
 			final boolean isFixpoint;
 			if (constraintSat == LBool.SAT) {
-				isFixpoint = nas.getArgument().getLambdas().isEmpty() || nas.getArgument().getGEVs().isEmpty();
+				isFixpoint = nta.getLambdas().isEmpty() || nta.getGEVs().isEmpty();
 			} else {
 				isFixpoint = false;
 			}
@@ -398,7 +401,6 @@ public class LassoAnalysis {
 
 			if (constraintSat == LBool.SAT) {
 				mLogger.info("Proved nontermination for one component.");
-				final GeometricNonTerminationArgument nta = nas.getArgument();
 				ntas.add(nta);
 				mLogger.info(nta);
 			} else if (constraintSat == LBool.UNKNOWN) {
@@ -408,7 +410,6 @@ public class LassoAnalysis {
 			} else {
 				assert false;
 			}
-			nas.close();
 			if (constraintSat != LBool.SAT) {
 				// One component did not have a nontermination argument.
 				// Therefore we have to give up.
@@ -458,23 +459,25 @@ public class LassoAnalysis {
 			// It suffices to prove termination for one component
 			final long startTime = System.nanoTime();
 
-			final TerminationArgumentSynthesizer tas = new TerminationArgumentSynthesizer(lasso, template, mPreferences,
-					settings, mArrayIndexSupportingInvariants, mServices);
-			final LBool constraintSat = tas.synthesize();
+			final LBool constraintSat;
+			final TerminationArgument ta;
+			try (final var tas = new TerminationArgumentSynthesizer(lasso, template, mPreferences, settings,
+					mArrayIndexSupportingInvariants, mServices)) {
+				constraintSat = tas.synthesize();
+				final long endTime = System.nanoTime();
 
-			final long endTime = System.nanoTime();
-
-			final TerminationAnalysisBenchmark tab =
-					new TerminationAnalysisBenchmark(constraintSat, lasso.getStemVarNum(), lasso.getLoopVarNum(),
-							lasso.getStemDisjuncts(), lasso.getLoopDisjuncts(), template.getName(),
-							template.getDegree(), tas.getNumSIs(), tas.getNumMotzkin(), endTime - startTime);
-			mLassoTerminationAnalysisBenchmarks.add(tab);
+				final TerminationAnalysisBenchmark tab =
+						new TerminationAnalysisBenchmark(constraintSat, lasso.getStemVarNum(), lasso.getLoopVarNum(),
+								lasso.getStemDisjuncts(), lasso.getLoopDisjuncts(), template.getName(),
+								template.getDegree(), tas.getNumSIs(), tas.getNumMotzkin(), endTime - startTime);
+				mLassoTerminationAnalysisBenchmarks.add(tab);
+				ta = constraintSat == LBool.SAT ? tas.getArgument() : null;
+			}
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(benchmarkScriptMessage(constraintSat, template));
 			}
 			if (constraintSat == LBool.SAT) {
 				mLogger.info("Proved termination.");
-				final TerminationArgument ta = tas.getArgument();
 				mLogger.info(ta);
 				if (mLogger.isDebugEnabled()) {
 					final Term[] lexTerm = ta.getRankingFunction().asLexTerm(mMgdScript.getScript());
@@ -482,7 +485,6 @@ public class LassoAnalysis {
 						mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
 					}
 				}
-				tas.close();
 				return ta;
 			} else if (constraintSat == LBool.UNKNOWN) {
 				mLogger.info("Proving termination failed: SMT Solver returned 'unknown'.");
@@ -491,7 +493,6 @@ public class LassoAnalysis {
 			} else {
 				assert false;
 			}
-			tas.close();
 		}
 		// No lasso hat a termination argument, so we have to give up
 		return null;

@@ -125,18 +125,22 @@ public class GolemChcScript implements IChcScript {
 			throw new RuntimeException(e);
 		}
 
+		Executor executor = null;
 		try {
 			// run golem on file
-			final var executor = new Executor(getCommand(tmpFile), mMgdScript.getScript(), mLogger, mServices, "golem",
-					null, null, null, determineTimeout(timeout));
+			executor = new Executor(getCommand(tmpFile), mMgdScript.getScript(), mLogger, mServices, "golem", null,
+					null, null, determineTimeout(timeout));
 
 			mLastResult = executor.parseCheckSatResult();
 			mLastModel = (mLastResult == LBool.SAT && mProduceModels) ? executor.parseGetModelResult() : null;
 
 			return mLastResult;
-
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (executor != null) {
+				executor.exit();
+			}
 		}
 	}
 

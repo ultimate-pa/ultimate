@@ -52,9 +52,7 @@ public class BiPredicateStateMap<STATE> implements BiPredicate<STATE, STATE> {
 		return findNextRoot(source, true);
 	}
 
-	@SuppressWarnings("hiding")
-	private <INodePredicate> NormalNode<STATE> findNextRoot(final NormalNode<STATE> source,
-			final boolean isTemporaryNode) {
+	private NormalNode<STATE> findNextRoot(final NormalNode<STATE> source, final boolean isTemporaryNode) {
 		INode<STATE> node = source;
 
 		while (!node.isRoot() && isTemporaryNode || !node.isTemporaryRootOrBridge() && !isTemporaryNode) {

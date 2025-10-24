@@ -355,8 +355,8 @@ public class BvToIntTranslation extends TermTransformer {
 	 */
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
-		final HashSet<TermVariable> newTermVars = new HashSet();
-		final HashSet<Term> tvConstraints = new HashSet();
+		final HashSet<TermVariable> newTermVars = new HashSet<>();
+		final HashSet<Term> tvConstraints = new HashSet<>();
 		if (newBody != old.getSubformula()) {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
@@ -875,7 +875,7 @@ public class BvToIntTranslation extends TermTransformer {
 		// return term;
 	}
 
-	private boolean isBitVecSort(final Sort sort) {
+	private static boolean isBitVecSort(final Sort sort) {
 		if (sort.getName().equals("BitVec")) {
 			return true;
 		}

@@ -11,9 +11,9 @@
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
-extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume(int);
 
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int();
 	 int a27 = -83;
 	 int a9 = 3;
 	 int a14 = -162;

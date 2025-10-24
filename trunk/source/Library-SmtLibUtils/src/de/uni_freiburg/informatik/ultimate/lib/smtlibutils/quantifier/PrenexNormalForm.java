@@ -65,13 +65,12 @@ public class PrenexNormalForm extends TermTransformer {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final String fun = appTerm.getFunction().getName();
 			if (fun.equals("ite")) {
-				if (new ContainsQuantifier().containsQuantifier(appTerm)) {
-					throw new UnsupportedOperationException("ite Term with quantifier, use IteRemover first");
-				} else {
+				if (QuantifierUtils.isQuantifierFree(appTerm)) {
 					// since the subTerm does not contain quantifier we can immediately use this as a result
 					setResult(appTerm);
 					return;
 				}
+				throw new UnsupportedOperationException("ite Term with quantifier, use IteRemover first");
 			}
 		}
 		super.convert(term);

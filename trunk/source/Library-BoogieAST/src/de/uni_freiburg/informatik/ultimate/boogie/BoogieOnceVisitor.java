@@ -103,12 +103,12 @@ public class BoogieOnceVisitor extends BoogieVisitor {
 
 	@Override
 	protected <T extends Attribute> T processAttribute(final T attr) {
-		BoogieASTNode result = mCache.get(attr);
+		T result = (T) mCache.get(attr);
 		if (result == null) {
 			result = super.processAttribute(attr);
 			mCache.put(attr, result);
 		}
-		return (T) result;
+		return result;
 	}
 
 	@Override
