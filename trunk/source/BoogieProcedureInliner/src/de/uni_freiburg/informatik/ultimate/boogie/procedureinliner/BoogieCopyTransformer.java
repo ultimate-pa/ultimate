@@ -77,179 +77,131 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 
 	@Override
 	protected Statement processStatement(final Statement stat) {
-		Statement newStat;
-		if (stat instanceof AssertStatement) {
-			final AssertStatement assertStmt = (AssertStatement) stat;
-			final Expression expr = assertStmt.getFormula();
-			final Expression newExpr = processExpression(expr);
+		final Statement newStat = switch (stat) {
+		case final AssertStatement assertStmt -> {
+			final Expression newExpr = processExpression(assertStmt.getFormula());
 			final Attribute[] newAttr = processAttributes(assertStmt.getAttributes());
-			newStat = new AssertStatement(stat.getLocation(), (NamedAttribute[]) newAttr, newExpr);
-		} else if (stat instanceof AssignmentStatement) {
-			final AssignmentStatement assign = (AssignmentStatement) stat;
-			final LeftHandSide[] lhs = assign.getLhs();
-			final LeftHandSide[] newLhs = processLeftHandSides(lhs);
-			final Expression[] rhs = assign.getRhs();
-			final Expression[] newRhs = processExpressions(rhs);
-			newStat = new AssignmentStatement(stat.getLocation(), newLhs, newRhs);
-		} else if (stat instanceof AssumeStatement) {
-			final AssumeStatement assumeStmt = (AssumeStatement) stat;
-			final Expression expr = assumeStmt.getFormula();
-			final Expression newExpr = processExpression(expr);
-			final Attribute[] newAttr = processAttributes(assumeStmt.getAttributes());
-			newStat = new AssumeStatement(stat.getLocation(), (NamedAttribute[]) newAttr, newExpr);
-		} else if (stat instanceof HavocStatement) {
-			final HavocStatement havoc = (HavocStatement) stat;
-			final VariableLHS[] ids = havoc.getIdentifiers();
-			final VariableLHS[] newIds = processVariableLHSs(ids);
-			newStat = new HavocStatement(havoc.getLocation(), newIds);
-		} else if (stat instanceof CallStatement) {
-			final CallStatement call = (CallStatement) stat;
-			final Expression[] args = call.getArguments();
-			final Expression[] newArgs = processExpressions(args);
-			final VariableLHS[] lhs = call.getLhs();
-			final VariableLHS[] newLhs = processVariableLHSs(lhs);
-			newStat = new CallStatement(call.getLocation(), call.getAttributes(), call.isForall(), newLhs,
-					call.getMethodName(), newArgs);
-		} else if (stat instanceof IfStatement) {
-			final IfStatement ifstmt = (IfStatement) stat;
-			final Expression cond = ifstmt.getCondition();
-			final Expression newCond = processExpression(cond);
-			final Statement[] thens = ifstmt.getThenPart();
-			final Statement[] newThens = processStatements(thens);
-			final Statement[] elses = ifstmt.getElsePart();
-			final Statement[] newElses = processStatements(elses);
-			newStat = new IfStatement(ifstmt.getLocation(), newCond, newThens, newElses);
-		} else if (stat instanceof WhileStatement) {
-			final WhileStatement whilestmt = (WhileStatement) stat;
-			final Expression cond = whilestmt.getCondition();
-			final Expression newCond = processExpression(cond);
-			final LoopInvariantSpecification[] invs = whilestmt.getInvariants();
-			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(invs);
-			final Statement[] body = whilestmt.getBody();
-			final Statement[] newBody = processStatements(body);
-			newStat = new WhileStatement(whilestmt.getLocation(), newCond, newInvs, newBody);
-		} else if (stat instanceof AtomicStatement) {
-			final AtomicStatement atomicstmt = (AtomicStatement) stat;
-			final Statement[] body = atomicstmt.getBody();
-			final Statement[] newBody = processStatements(body);
-			newStat = new AtomicStatement(atomicstmt.getLocation(), newBody);
-		} else if (stat instanceof BreakStatement) {
-			final BreakStatement bs = (BreakStatement) stat;
-			newStat = new BreakStatement(bs.getLocation(), bs.getLabel());
-		} else if (stat instanceof Label) {
-			final Label l = (Label) stat;
-			newStat = new Label(l.getLocation(), l.getName());
-		} else if (stat instanceof ReturnStatement) {
-			final ReturnStatement rs = (ReturnStatement) stat;
-			newStat = new ReturnStatement(rs.getLocation());
-		} else if (stat instanceof GotoStatement) {
-			final GotoStatement gs = (GotoStatement) stat;
-			newStat = new GotoStatement(gs.getLocation(), gs.getLabels());
-		} else if (stat instanceof ForkStatement) {
-			final ForkStatement forkstmt = (ForkStatement) stat;
-			final Expression[] threadId = forkstmt.getThreadID();
-			final String procName = forkstmt.getProcedureName();
-			final Expression[] arguments = forkstmt.getArguments();
-			final Expression[] newThreadId = processExpressions(threadId);
-			final Expression[] newArguments = processExpressions(arguments);
-			newStat = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
-		} else if (stat instanceof JoinStatement) {
-			final JoinStatement joinstmt = (JoinStatement) stat;
-			final Expression[] threadId = joinstmt.getThreadID();
-			final VariableLHS[] lhs = joinstmt.getLhs();
-			final Expression[] newThreadId = processExpressions(threadId);
-			final VariableLHS[] newLhs = processVariableLHSs(lhs);
-			newStat = new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
-		} else {
-			throw new UnsupportedOperationException("Cannot process unknown expression: " + stat.getClass().getName());
+			yield new AssertStatement(stat.getLocation(), (NamedAttribute[]) newAttr, newExpr);
 		}
+		case final AssignmentStatement assign -> {
+			final LeftHandSide[] newLhs = processLeftHandSides(assign.getLhs());
+			final Expression[] newRhs = processExpressions(assign.getRhs());
+			yield new AssignmentStatement(stat.getLocation(), newLhs, newRhs);
+		}
+		case final AssumeStatement assumeStmt -> {
+			final Expression newExpr = processExpression(assumeStmt.getFormula());
+			final Attribute[] newAttr = processAttributes(assumeStmt.getAttributes());
+			yield new AssumeStatement(stat.getLocation(), (NamedAttribute[]) newAttr, newExpr);
+		}
+		case final HavocStatement havoc -> {
+			final VariableLHS[] newIds = processVariableLHSs(havoc.getIdentifiers());
+			yield new HavocStatement(havoc.getLocation(), newIds);
+		}
+		case final CallStatement call -> {
+			final Expression[] newArgs = processExpressions(call.getArguments());
+			final VariableLHS[] newLhs = processVariableLHSs(call.getLhs());
+			yield new CallStatement(call.getLocation(), call.getAttributes(), call.isForall(), newLhs,
+					call.getMethodName(), newArgs);
+		}
+		case final IfStatement ifstmt -> {
+			final Expression newCond = processExpression(ifstmt.getCondition());
+			final Statement[] newThens = processStatements(ifstmt.getThenPart());
+			final Statement[] newElses = processStatements(ifstmt.getElsePart());
+			yield new IfStatement(ifstmt.getLocation(), newCond, newThens, newElses);
+		}
+		case final WhileStatement whilestmt -> {
+			final Expression newCond = processExpression(whilestmt.getCondition());
+			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(whilestmt.getInvariants());
+			final Statement[] newBody = processStatements(whilestmt.getBody());
+			yield new WhileStatement(whilestmt.getLocation(), newCond, newInvs, newBody);
+		}
+		case final AtomicStatement atomicstmt -> {
+			final Statement[] newBody = processStatements(atomicstmt.getBody());
+			yield new AtomicStatement(atomicstmt.getLocation(), newBody);
+		}
+		case final BreakStatement bs -> new BreakStatement(bs.getLocation(), bs.getLabel());
+		case final Label label -> new Label(label.getLocation(), label.getName(), label.getAttributes());
+		case final ReturnStatement rs -> new ReturnStatement(rs.getLocation());
+		case final GotoStatement gs -> new GotoStatement(gs.getLocation(), gs.getLabels());
+		case final ForkStatement forkstmt -> {
+			final Expression[] newThreadId = processExpressions(forkstmt.getThreadID());
+			final Expression[] newArguments = processExpressions(forkstmt.getArguments());
+			yield new ForkStatement(forkstmt.getLoc(), newThreadId, forkstmt.getProcedureName(), newArguments);
+		}
+		case final JoinStatement joinstmt -> {
+			final Expression[] newThreadId = processExpressions(joinstmt.getThreadID());
+			final VariableLHS[] newLhs = processVariableLHSs(joinstmt.getLhs());
+			yield new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
+		}
+		};
 		ModelUtils.copyAnnotations(stat, newStat);
 		return newStat;
 	}
 
 	@Override
 	protected Expression processExpression(final Expression expr) {
-		Expression newExpr;
-		if (expr instanceof BinaryExpression) {
-			final BinaryExpression binexp = (BinaryExpression) expr;
+		final Expression newExpr = switch (expr) {
+		case final BinaryExpression binexp -> {
 			final Expression left = processExpression(binexp.getLeft());
 			final Expression right = processExpression(binexp.getRight());
-			newExpr = new BinaryExpression(expr.getLocation(), binexp.getType(), binexp.getOperator(), left, right);
-		} else if (expr instanceof UnaryExpression) {
-			final UnaryExpression unexp = (UnaryExpression) expr;
+			yield new BinaryExpression(expr.getLocation(), binexp.getType(), binexp.getOperator(), left, right);
+		}
+		case final UnaryExpression unexp -> {
 			final Expression subexpr = processExpression(unexp.getExpr());
-			newExpr = new UnaryExpression(expr.getLocation(), unexp.getType(), unexp.getOperator(), subexpr);
-		} else if (expr instanceof ArrayAccessExpression) {
-			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
+			yield new UnaryExpression(expr.getLocation(), unexp.getType(), unexp.getOperator(), subexpr);
+		}
+		case final ArrayAccessExpression aaexpr -> {
 			final Expression arr = processExpression(aaexpr.getArray());
-			final Expression[] indices = aaexpr.getIndices();
-			final Expression[] newIndices = processExpressions(indices);
-			newExpr = new ArrayAccessExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices);
-		} else if (expr instanceof ArrayStoreExpression) {
-			final ArrayStoreExpression aaexpr = (ArrayStoreExpression) expr;
+			final Expression[] newIndices = processExpressions(aaexpr.getIndices());
+			yield new ArrayAccessExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices);
+		}
+		case final ArrayStoreExpression aaexpr -> {
 			final Expression arr = processExpression(aaexpr.getArray());
 			final Expression value = processExpression(aaexpr.getValue());
-			final Expression[] indices = aaexpr.getIndices();
-			final Expression[] newIndices = processExpressions(indices);
-			newExpr = new ArrayStoreExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices, value);
-		} else if (expr instanceof BitVectorAccessExpression) {
-			final BitVectorAccessExpression bvaexpr = (BitVectorAccessExpression) expr;
+			final Expression[] newIndices = processExpressions(aaexpr.getIndices());
+			yield new ArrayStoreExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices, value);
+		}
+		case final BitVectorAccessExpression bvaexpr -> {
 			final Expression bv = processExpression(bvaexpr.getBitvec());
-			newExpr = new BitVectorAccessExpression(bvaexpr.getLocation(), bvaexpr.getType(), bv, bvaexpr.getEnd(),
+			yield new BitVectorAccessExpression(bvaexpr.getLocation(), bvaexpr.getType(), bv, bvaexpr.getEnd(),
 					bvaexpr.getStart());
-		} else if (expr instanceof FunctionApplication) {
-			final FunctionApplication app = (FunctionApplication) expr;
-			final String name = app.getIdentifier();
+		}
+		case final FunctionApplication app -> {
 			final Expression[] args = processExpressions(app.getArguments());
-			newExpr = new FunctionApplication(app.getLocation(), app.getType(), name, args);
-		} else if (expr instanceof IfThenElseExpression) {
-			final IfThenElseExpression ite = (IfThenElseExpression) expr;
+			yield new FunctionApplication(app.getLocation(), app.getType(), app.getIdentifier(), args);
+		}
+		case final IfThenElseExpression ite -> {
 			final Expression cond = processExpression(ite.getCondition());
 			final Expression thenPart = processExpression(ite.getThenPart());
 			final Expression elsePart = processExpression(ite.getElsePart());
-			newExpr = new IfThenElseExpression(ite.getLocation(), thenPart.getType(), cond, thenPart, elsePart);
-		} else if (expr instanceof QuantifierExpression) {
-			final QuantifierExpression quant = (QuantifierExpression) expr;
-			final Attribute[] attrs = quant.getAttributes();
-			final Attribute[] newAttrs = processAttributes(attrs);
-			final VarList[] params = quant.getParameters();
-			final VarList[] newParams = processVarLists(params);
-			final Expression subform = processExpression(quant.getSubformula());
-			newExpr = new QuantifierExpression(quant.getLocation(), quant.getType(), quant.isUniversal(),
-					quant.getTypeParams(), newParams, newAttrs, subform);
-		} else if (expr instanceof StructConstructor) {
-			final StructConstructor sConst = (StructConstructor) expr;
-			final Expression[] fieldValues = processExpressions(sConst.getFieldValues());
-			newExpr = new StructConstructor(sConst.getLocation(), sConst.getFieldIdentifiers(), fieldValues);
-		} else if (expr instanceof StructAccessExpression) {
-			final StructAccessExpression sae = (StructAccessExpression) expr;
-			final Expression struct = processExpression(sae.getStruct());
-			newExpr = new StructAccessExpression(sae.getLocation(), struct, sae.getField());
-		} else if (expr instanceof BooleanLiteral) {
-			final BooleanLiteral bl = (BooleanLiteral) expr;
-			newExpr = new BooleanLiteral(bl.getLocation(), bl.getType(), bl.getValue());
-		} else if (expr instanceof IntegerLiteral) {
-			final IntegerLiteral il = (IntegerLiteral) expr;
-			newExpr = new IntegerLiteral(il.getLocation(), il.getType(), il.getValue());
-		} else if (expr instanceof BitvecLiteral) {
-			final BitvecLiteral bvl = (BitvecLiteral) expr;
-			newExpr = new BitvecLiteral(bvl.getLocation(), bvl.getType(), bvl.getValue(), bvl.getLength());
-		} else if (expr instanceof StringLiteral) {
-			final StringLiteral sl = (StringLiteral) expr;
-			newExpr = new StringLiteral(sl.getLocation(), sl.getType(), sl.getValue());
-		} else if (expr instanceof IdentifierExpression) {
-			final IdentifierExpression ie = (IdentifierExpression) expr;
-			newExpr = new IdentifierExpression(ie.getLocation(), ie.getType(), ie.getIdentifier(),
-					ie.getDeclarationInformation());
-		} else if (expr instanceof WildcardExpression) {
-			final WildcardExpression we = (WildcardExpression) expr;
-			newExpr = new WildcardExpression(we.getLocation(), we.getType());
-		} else if (expr instanceof RealLiteral) {
-			final RealLiteral rl = (RealLiteral) expr;
-			newExpr = new RealLiteral(rl.getLocation(), rl.getType(), rl.getValue());
-		} else {
-			throw new UnsupportedOperationException("Cannot process unknown expression: " + expr.getClass().getName());
+			yield new IfThenElseExpression(ite.getLocation(), thenPart.getType(), cond, thenPart, elsePart);
 		}
+		case final QuantifierExpression quant -> {
+			final Attribute[] newAttrs = processAttributes(quant.getAttributes());
+			final VarList[] newParams = processVarLists(quant.getParameters());
+			final Expression subform = processExpression(quant.getSubformula());
+			yield new QuantifierExpression(quant.getLocation(), quant.getType(), quant.isUniversal(),
+					quant.getTypeParams(), newParams, newAttrs, subform);
+		}
+		case final StructConstructor sConst -> {
+			final Expression[] fieldValues = processExpressions(sConst.getFieldValues());
+			yield new StructConstructor(sConst.getLocation(), sConst.getFieldIdentifiers(), fieldValues);
+		}
+		case final StructAccessExpression sae -> {
+			final Expression struct = processExpression(sae.getStruct());
+			yield new StructAccessExpression(sae.getLocation(), struct, sae.getField());
+		}
+
+		case final BooleanLiteral bl -> new BooleanLiteral(bl.getLocation(), bl.getType(), bl.getValue());
+		case final IntegerLiteral il -> new IntegerLiteral(il.getLocation(), il.getType(), il.getValue());
+		case final BitvecLiteral bvl ->
+				new BitvecLiteral(bvl.getLocation(), bvl.getType(), bvl.getValue(), bvl.getLength());
+		case final StringLiteral sl -> new StringLiteral(sl.getLocation(), sl.getType(), sl.getValue());
+		case final IdentifierExpression ie -> new IdentifierExpression(ie.getLocation(), ie.getType(),
+				ie.getIdentifier(), ie.getDeclarationInformation());
+		case final WildcardExpression we -> new WildcardExpression(we.getLocation(), we.getType());
+		case final RealLiteral rl -> new RealLiteral(rl.getLocation(), rl.getType(), rl.getValue());
+		};
 		ModelUtils.copyAnnotations(expr, newExpr);
 		return newExpr;
 	}

@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *
  */
 public final class UltimateRunDefinition implements Comparable<UltimateRunDefinition> {
-	private static final String[] PRIMARY_ENDINGS = new String[] { ".i", ".c", ".bpl", ".ats" };
+	private static final String[] PRIMARY_ENDINGS = { ".i", ".c", ".bpl", ".ats" };
 	private static final String PATH_SEPARATOR = ";";
 	private static final String NO_SETTINGS_NAME = "Default Settings";
 
@@ -238,7 +238,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		sb.append(" Toolchain:");
 		sb.append(removeTrunkExamplesPrefix(toolchain.getAbsolutePath()));
 		if (CoreUtil.OS_IS_WINDOWS) {
-			return sb.toString().replaceAll("\\\\", "/");
+			return sb.toString().replace('\\', '/');
 		}
 		return sb.toString();
 	}
@@ -248,7 +248,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		final String examples = trunk + File.separator + "examples" + File.separator;
 		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
-			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			final String trunkated = path.substring(lastIndexOf + examples.length());
 			return trunkated;
 		}
 		return path;

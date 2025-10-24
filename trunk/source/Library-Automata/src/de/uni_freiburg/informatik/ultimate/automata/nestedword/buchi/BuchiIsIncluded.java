@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * Operation that checks if the language of the first Buchi automaton is included in the language of the second Buchi
  * automaton.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -58,7 +58,7 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -124,7 +124,7 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics result = constructBasicInclusionStatistics(mServices, mLogger, this);
@@ -132,20 +132,23 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 		return result;
 	}
 
-	static <LETTER, STATE> AutomataOperationStatistics constructBasicInclusionStatistics(final AutomataLibraryServices services,
-			final ILogger logger, final BinaryNwaOperation<LETTER, STATE, ?> buchiIsIncludedOperation) {
+	static <LETTER, STATE> AutomataOperationStatistics constructBasicInclusionStatistics(
+			final AutomataLibraryServices services, final ILogger logger,
+			final BinaryNwaOperation<LETTER, STATE, ?> buchiIsIncludedOperation) {
 		final AutomataOperationStatistics result = new AutomataOperationStatistics();
 		final int lhsSize = buchiIsIncludedOperation.getFirstOperand().size();
 		final int rhsSize = buchiIsIncludedOperation.getSecondOperand().size();
 		Boolean rhsIsDeterministic = null;
 		try {
-			rhsIsDeterministic = new IsDeterministic<>(services, buchiIsIncludedOperation.getSecondOperand()).getResult();
+			rhsIsDeterministic =
+					new IsDeterministic<>(services, buchiIsIncludedOperation.getSecondOperand()).getResult();
 		} catch (final AutomataOperationCanceledException e) {
 			logger.info("wanted to run IsDeterministic for statistics but toolchain was cancelled");
 		}
 		Boolean rhsIsSemiDeterministic = null;
 		try {
-			rhsIsSemiDeterministic = new IsSemiDeterministic<>(services, buchiIsIncludedOperation.getSecondOperand()).getResult();
+			rhsIsSemiDeterministic =
+					new IsSemiDeterministic<>(services, buchiIsIncludedOperation.getSecondOperand()).getResult();
 		} catch (final AutomataOperationCanceledException e) {
 			logger.info("wanted to run IsSemiDeterministic for statistics but toolchain was cancelled");
 		}

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 public class FunctionTableBuilder extends ASTVisitor {
 
 	private final LinkedHashMap<String, IASTNode> mFunctionTable;
-	
+
 	private final FlatSymbolTable mSymTab;
 
 	public FunctionTableBuilder(final FlatSymbolTable fst) {
@@ -65,13 +65,11 @@ public class FunctionTableBuilder extends ASTVisitor {
 			for (final IASTDeclarator d : cd.getDeclarators()) {
 				final String key = d.getName().toString();
 				final String rslvKey = mSymTab.applyMultiparseRenaming(declaration.getContainingFilename(), key);
-				if (d instanceof IASTFunctionDeclarator) {
-					// we only update the table with a declaration, if there is no entry for that name yet.
-					// otherwise we might only keep the declaration and omit the implementation from
-					// reachableDeclarations.
-					if (!mFunctionTable.containsKey(rslvKey)) {
-						mFunctionTable.put(rslvKey, d);
-					}
+				// we only update the table with a declaration, if there is no entry for that name yet.
+				// otherwise we might only keep the declaration and omit the implementation from
+				// reachableDeclarations.
+				if ((d instanceof IASTFunctionDeclarator) && !mFunctionTable.containsKey(rslvKey)) {
+					mFunctionTable.put(rslvKey, d);
 				}
 
 			}
@@ -82,8 +80,8 @@ public class FunctionTableBuilder extends ASTVisitor {
 				possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
 			}
 			final String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
-			final String rslvName = mSymTab.applyMultiparseRenaming(declaration.getContainingFilename(), 
-					nameOfInnermostDeclarator);
+			final String rslvName =
+					mSymTab.applyMultiparseRenaming(declaration.getContainingFilename(), nameOfInnermostDeclarator);
 			mFunctionTable.put(rslvName, declaration);
 		}
 		return super.visit(declaration);

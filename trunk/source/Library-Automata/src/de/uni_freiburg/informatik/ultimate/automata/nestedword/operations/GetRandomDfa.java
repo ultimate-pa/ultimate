@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Tischner
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * <b>O(n^2 * k) * O(random)</b> if result should be uniform, caching is enabled and there is a valid cache (n must be
  * equals)<br/>
  * where 'n' is the amount of nodes, 'k' the size of the alphabet and 'random' methods of {@link java.util.Random}.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class GetRandomDfa extends GeneralOperation<String, String, IStateFactory<String>> {
@@ -94,7 +94,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * alphabetSize].
 	 * <p>
 	 * Also used for caching purpose with consecutive calls (hence static).
-	 * 
+	 *
 	 * @see #preCalcPermutationsTable(int)
 	 */
 	private static BigInteger[][] sPermutationsTable;
@@ -168,7 +168,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be equals)<br/>
 	 * <b>O(n^3 * k) * O(random)</b> if there is no valid cache<br/>
 	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and 'random' methods of {@link java.util.Random}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider
 	 * @param size
@@ -202,7 +202,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be equals)<br/>
 	 * <b>O(n^3 * k) * O(random)</b> if there is no valid cache<br/>
 	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and 'random' methods of {@link java.util.Random}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider
 	 * @param size
@@ -241,7 +241,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and there is no valid cache<br/>
 	 * <b>O(n * k) * O(random)</b> if result should not be uniform<br/>
 	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and 'random' methods of {@link java.util.Random}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider
 	 * @param size
@@ -284,7 +284,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform, caching is enabled and there is a valid cache (n must
 	 * be equals)<br/>
 	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and 'random' methods of {@link java.util.Random}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider
 	 * @param size
@@ -367,7 +367,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * [0,1,0,0,1,2] with 3 nodes and an alphabet of size 2.<br />
 	 * [0,1|0,0|1,2] each of the 3 nodes has 2 outgoing edges where the number denotes the destination.<br />
 	 * e.g. 2nd edge of first node points to the second node.
-	 * 
+	 *
 	 * @return Uniform or non-uniform distributed random connected total DFA in a specific int[] array format
 	 */
 	private int[] generatePackedRandomDfa() {
@@ -439,7 +439,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * Runtime is in:<br/>
 	 * <b>O(2 * random)</b><br/>
 	 * where 'random' are methods of {@link java.util.Random}.
-	 * 
+	 *
 	 * @param upperBound
 	 *            Upper bound for the generated number (exclusive)
 	 * @param rnd
@@ -463,7 +463,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * Runtime is in:<br />
 	 * <b>O(numOfAccStates)</b> if not every state needs to reach a accepting<br />
 	 * <b>O(size * alphabetSize)</b> if it needs to be ensured that every state reaches a accepting
-	 * 
+	 *
 	 * @param dfa
 	 *            The DFA to calculate accepting states for in the int[] array format specified by
 	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean) generatePackedRandomDFA(...)}
@@ -499,7 +499,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			final int offset = i * mAlphabetSize;
 			// Resulting states are reached by state i
 			for (int j = 0; j < mAlphabetSize; j++) {
-				//Skip transition if it should not be contained in the final automata
+				// Skip transition if it should not be contained in the final automata
 				if (transToDelete.contains(offset + j)) {
 					continue;
 				}
@@ -512,9 +512,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		// final state
 		final LinkedHashSet<Integer> remainingStates = new LinkedHashSet<>(mSize);
 		/*
-		 * Christian: Detected a bug: This value is not necessarily the size of
-		 * the data structure and caused problems (could become negative).
-		 * Let us hope this fixed it.
+		 * Christian: Detected a bug: This value is not necessarily the size of the data structure and caused problems
+		 * (could become negative). Let us hope this fixed it.
 		 */
 		for (int i = 0; i < mSize; i++) {
 			remainingStates.add(i);
@@ -577,7 +576,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * <br />
 	 * <p>
 	 * Runtime is in <b>O(size * alphabetSize)</b>
-	 * 
+	 *
 	 * @param dfa
 	 *            The DFA to calculate accepting states for in the int[] array format specified by
 	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean) generatePackedRandomDFA(...)}
@@ -590,7 +589,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 					+ "' or be less than " + PERC_TOTALITY_BOUND_LOWER + '.');
 		}
 
-		//Skip calculation in default case where no transition should be deleted
+		// Skip calculation in default case where no transition should be deleted
 		if (mPercOfTotality == PERC_TOTALITY_BOUND_UPPER) {
 			return Collections.emptySet();
 		}
@@ -598,12 +597,12 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		final int amountOfTrans = dfa.length;
 		int maxAllowedToDelete;
 		if (mEnsureIsConnected) {
-			//Ensure flag edges are not deleted
+			// Ensure flag edges are not deleted
 			final double percOfFlags = (mFlags.size() + 0D) / amountOfTrans;
 			// TODO Christian 2016-09-04: Is the following line correct? What does '(PERC_FULL + 0D) / PERC_FULL' do?
 			maxAllowedToDelete = (int) Math.round((((PERC_FULL + 0D) / PERC_FULL) - percOfFlags) * amountOfTrans);
 		} else {
-			//All edges are allowed to delete
+			// All edges are allowed to delete
 			maxAllowedToDelete = amountOfTrans;
 		}
 
@@ -615,12 +614,12 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		boolean useShuffleVariant = amountToDelete > variantThreshold;
 		Set<Integer> transToDelete = null;
 
-		//Variant 1: Generate random indexes until we have enough unique
+		// Variant 1: Generate random indexes until we have enough unique
 		if (!useShuffleVariant) {
 			transToDelete = new HashSet<>(amountToDelete);
 			useShuffleVariant = generateRandomIndices(dfa, amountToDelete, transToDelete, generationVariantMaxTries);
 		}
-		//Variant 2: Permute a list of all indexes and select the first valid ones
+		// Variant 2: Permute a list of all indexes and select the first valid ones
 		if (useShuffleVariant) {
 			transToDelete = new HashSet<>(amountToDelete);
 			permuteListAndSelectFirstValid(dfa, amountToDelete, transToDelete);
@@ -635,14 +634,14 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		while (transToDelete.size() < amountToDelete) {
 			final Integer transition = mRandom.nextInt(dfa.length);
 			if (mEnsureIsConnected) {
-				//Don't add flag edges for deletion
+				// Don't add flag edges for deletion
 				if (!mFlags.contains(transition)) {
 					transToDelete.add(transition);
 				}
 			} else {
 				transToDelete.add(transition);
 			}
-			//Break variant and use other if it takes too long
+			// Break variant and use other if it takes too long
 			counter++;
 			if (counter > generationVariantMaxTries) {
 				return true;
@@ -656,7 +655,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean) generatePackedRandomDFA(...)} and returns it as
 	 * {@link INestedWordAutomaton}.<br />
 	 * Runtime is in <b>O(size * alphabetSize)</b>.
-	 * 
+	 *
 	 * @param dfa
 	 *            The DFA to extract in the int[] array format specified by
 	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean) generatePackedRandomDFA(...)}
@@ -680,7 +679,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		}
 
 		final NestedWordAutomaton<String, String> result =
-				new NestedWordAutomaton<>(mServices, new VpAlphabet<String>(new HashSet<>(num2Letter)), new StringFactory());
+				new NestedWordAutomaton<>(mServices, new VpAlphabet<>(new HashSet<>(num2Letter)), new StringFactory());
 
 		// Create states
 		for (int i = 0; i < mSize; ++i) {
@@ -692,7 +691,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 
 		// Create transitions
 		for (int i = 0; i < dfa.length; i++) {
-			//Skip transition if it should not be contained in the final automata
+			// Skip transition if it should not be contained in the final automata
 			if (transToDelete.contains(i)) {
 				continue;
 			}
@@ -725,7 +724,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * Runtime is in:<br/>
 	 * <b>O(n * k) * O(random)</b><br/>
 	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and 'random' methods of {@link java.util.Random}.
-	 * 
+	 *
 	 * @param node
 	 *            Node to calculate flag for
 	 * @param firstPossiblePos
@@ -734,8 +733,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 */
 	private int generateFlag(final int node, final int firstPossiblePos) {
 		/*
-		 * The length of the sequence before 'node's edges are reached. Flag
-		 * must appear before this to satisfy all rules.
+		 * The length of the sequence before 'node's edges are reached. Flag must appear before this to satisfy all
+		 * rules.
 		 */
 		final int preSequenceLength = node * mAlphabetSize;
 
@@ -783,7 +782,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		final List<Integer> transitions = new ArrayList<>(dfa.length - mFlags.size());
 		for (int i = 0; i < dfa.length; i++) {
 			if (mEnsureIsConnected) {
-				//Don't add flag edges for deletion
+				// Don't add flag edges for deletion
 				if (!mFlags.contains(i)) {
 					transitions.add(i);
 				}
@@ -806,7 +805,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * <b>O(1)</b> if caching is enabled and n, k are equal to cached version<br/>
 	 * <b>O(k)</b> if caching is enabled and n is equal to cached version<br/>
 	 * where 'n' is the amount of nodes, 'k' the size of the alphabet.
-	 * 
+	 *
 	 * @param sequenceLength
 	 *            Length of sequence that must be size * alphabetSize
 	 */

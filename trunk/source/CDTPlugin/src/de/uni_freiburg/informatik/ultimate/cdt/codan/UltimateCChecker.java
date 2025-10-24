@@ -90,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author Stefan Wissert
  * @date 31.01.2012
  */
-public class UltimateCChecker extends AbstractFullAstChecker {
+public class UltimateCChecker extends AbstractFullAstChecker implements AutoCloseable {
 	/**
 	 * The identifier.
 	 */
@@ -113,15 +113,13 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	 * @throws Exception
 	 */
 	public UltimateCChecker() throws Throwable {
-		super();
-		mToolchainFiles = new HashMap<String, File>();
+		mToolchainFiles = new HashMap<>();
 		mController = new CDTController(this);
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
+	public void close() {
 		mController.close();
-		super.finalize();
 	}
 
 	@Override
@@ -164,30 +162,27 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		return path;
 	}
 
-	private void updateFileView(final String completePath) {
+	private static void updateFileView(final String completePath) {
 		// After finishing the Ultimate run we update the FileView
 		// We have to do this in this asynch manner, because otherwise we would
 		// get a NullPointerException, because we are not in the UI Thread
-		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-			@Override
-			public void run() {
-				// Present results of the actual run!
-				final IViewPart vpart =
-						PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(ResultList.ID);
-				if (vpart instanceof ResultList) {
-					((ResultList) vpart).setViewerInput(completePath);
-				}
-				// open the file on which the actual run happened!
-				final File fileToOpen = new File(completePath);
-				if (fileToOpen.exists() && fileToOpen.isFile()) {
-					final IFileStore fileStore = EFS.getLocalFileSystem().getStore(fileToOpen.toURI());
-					final IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		PlatformUI.getWorkbench().getDisplay().asyncExec(() -> {
+			// Present results of the actual run!
+			final IViewPart vpart =
+					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(ResultList.ID);
+			if (vpart instanceof ResultList) {
+				((ResultList) vpart).setViewerInput(completePath);
+			}
+			// open the file on which the actual run happened!
+			final File fileToOpen = new File(completePath);
+			if (fileToOpen.exists() && fileToOpen.isFile()) {
+				final IFileStore fileStore = EFS.getLocalFileSystem().getStore(fileToOpen.toURI());
+				final IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
-					try {
-						IDE.openEditorOnFileStore(page, fileStore);
-					} catch (final PartInitException e) {
-						// Put your exception handler here if you wish to
-					}
+				try {
+					IDE.openEditorOnFileStore(page, fileStore);
+				} catch (final PartInitException e) {
+					// Put your exception handler here if you wish to
 				}
 			}
 		});
@@ -294,7 +289,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 				CDTResultStore.addHackyResult(result));
 	}
 
-	private String severityToCheckerDescriptor(final Severity severity) {
+	private static String severityToCheckerDescriptor(final Severity severity) {
 		if (severity.equals(Severity.INFO)) {
 			return CCheckerDescriptor.GENERIC_INFO_RESULT_ID;
 		} else if (severity.equals(Severity.WARNING)) {

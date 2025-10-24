@@ -31,11 +31,9 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * Special case of {@link Overapprox} that indicates that the annotated
- * statement/edge only overapproximates the values that is assigned to one or
- * more variables. In this case the overapproximation does not impair the sound
- * reporting of erroneous program executions if the variable is used afterwards.
- * TODO: More precise documentation.
+ * Special case of {@link Overapprox} that indicates that the annotated statement/edge only overapproximates the values
+ * that is assigned to one or more variables. In this case the overapproximation does not impair the sound reporting of
+ * erroneous program executions if the variable is used afterwards. TODO: More precise documentation.
  *
  * @author Matthias Heizmann (matthias.heizmann@iste.uni-stuttgart.de)
  */

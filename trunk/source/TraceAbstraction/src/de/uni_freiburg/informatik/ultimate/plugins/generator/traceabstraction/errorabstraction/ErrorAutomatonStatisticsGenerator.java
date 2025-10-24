@@ -285,8 +285,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 
 	@Override
 	public Object getValue(final String key) {
-		final ErrorAutomatonStatisticsDefinitions keyEnum =
-				Enum.valueOf(ErrorAutomatonStatisticsDefinitions.class, key);
+		final ErrorAutomatonStatisticsDefinitions keyEnum = ErrorAutomatonStatisticsDefinitions.valueOf(key);
 		switch (keyEnum) {
 		case NumberErrorTraces:
 			return getTotalNumber();

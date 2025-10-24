@@ -94,10 +94,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	// TODO Frank 2022-08-23: Providing the hashCode in the constructor does not seem like a good idea...
 	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final Transition<LETTER, PLACE> transition,
 			final BranchingProcess<LETTER, PLACE> bp, final int hashCode) throws PetriNetNot1SafeException {
-		assert conditionToPlaceEqual(predecessors,
-				transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
-						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
-						+ "\n  " + "transitions predecessors:" + transition.getPredecessors();
+		assert conditionToPlaceEqual(predecessors, transition.getPredecessors())
+				: "An event was created with inappropriate predecessors.\n  " + "transition: " + transition.toString()
+						+ "\n  events predecessors: " + predecessors.toString() + "\n  " + "transitions predecessors:"
+						+ transition.getPredecessors();
 		mPredecessors = new HashSet<>(predecessors);
 
 		mTransition = transition;
@@ -264,10 +264,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		if (!getMark().equals(event.getMark())) {
 			return false;
 		}
-		if (!BUMBLEBEE_B17_OPTIMIZAION) {
-			if (order.compare(event, this) >= 0) {
-				return false;
-			}
+		if (!BUMBLEBEE_B17_OPTIMIZAION && (order.compare(event, this) >= 0)) {
+			return false;
 		}
 		setCompanion(event);
 		return true;

@@ -353,8 +353,7 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * The simplification where we merge divisors by multiplication is only sound
-	 * for positive integers.
+	 * The simplification where we merge divisors by multiplication is only sound for positive integers.
 	 */
 	@Test
 	public void intDivision10() {
@@ -673,8 +672,7 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Minor simplification. Possible because all coefficients, constant, and
-	 * divisor share common factor.
+	 * Minor simplification. Possible because all coefficients, constant, and divisor share common factor.
 	 */
 	@Test
 	public void intDivisionDistributivity05() {
@@ -688,8 +686,8 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * No simplification possible. Similar to example above but
-	 * constant does not share factor with coefficients and divisor.
+	 * No simplification possible. Similar to example above but constant does not share factor with coefficients and
+	 * divisor.
 	 */
 	@Test
 	public void intDivisionDistributivity06() {
@@ -941,12 +939,14 @@ public class PolynomialTest {
 		for (final String arg : outputArgs) {
 			if (!(arg == null)) {
 				inputRemoved = false;
+				break;
 			}
 		}
 		boolean expectedRemoved = true;
 		for (final String arg : expectedArgs) {
 			if (!(arg == null)) {
 				expectedRemoved = false;
+				break;
 			}
 		}
 		final boolean outputIsCorrect = inputRemoved && expectedRemoved;

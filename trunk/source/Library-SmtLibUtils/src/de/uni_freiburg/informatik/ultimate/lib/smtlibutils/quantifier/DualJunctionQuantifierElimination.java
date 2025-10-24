@@ -40,9 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
- * Abstract superclass for our partial quantifier elimination techniques that we
- * apply to a dualJunction. Objects that implement this class can be kept alive
- * throughout an elimination process.
+ * Abstract superclass for our partial quantifier elimination techniques that we apply to a dualJunction. Objects that
+ * implement this class can be kept alive throughout an elimination process.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -54,7 +53,6 @@ public abstract class DualJunctionQuantifierElimination {
 	protected final ILogger mLogger;
 
 	public DualJunctionQuantifierElimination(final ManagedScript script, final IUltimateServiceProvider services) {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		mMgdScript = script;
@@ -66,26 +64,21 @@ public abstract class DualJunctionQuantifierElimination {
 	public abstract String getAcronym();
 
 	/**
-	 * Try to remove {@link TermVariable}s specified by the input
-	 * {@link EliminationTaskSimple}. If nothing can be removed, the method must return
-	 * null. If some eliminatee was removed return as soon as the intermediate
-	 * result becomes a correspondingJunction
+	 * Try to remove {@link TermVariable}s specified by the input {@link EliminationTaskSimple}. If nothing can be
+	 * removed, the method must return null. If some eliminatee was removed return as soon as the intermediate result
+	 * becomes a correspondingJunction
 	 * <p>
-	 * If the quantifier is an existential (resp. universal) quantifier this method
-	 * returns an array of {@link Term}s <code>result</code> such that
-	 * <code>∃ eliminatees. ⋀ dualJuncts</code> is equivalent to
-	 * <code>∃ eliminatees'. ⋀ result</code> (resp.
-	 * <code>∀ eliminatees. ⋁ dualJuncts</code> is equivalent to
-	 * <code>∀ eliminatees'. ⋁ result</code>) where eliminatees' refers to the
-	 * content of the set after this method was executed.
+	 * If the quantifier is an existential (resp. universal) quantifier this method returns an array of {@link Term}s
+	 * <code>result</code> such that <code>∃ eliminatees. ⋀ dualJuncts</code> is equivalent to
+	 * <code>∃ eliminatees'. ⋀ result</code> (resp. <code>∀ eliminatees. ⋁ dualJuncts</code> is equivalent to
+	 * <code>∀ eliminatees'. ⋁ result</code>) where eliminatees' refers to the content of the set after this method was
+	 * executed.
 	 * <p>
-	 * Which and how many variables from the set <code>eliminatees</code> can be
-	 * removed depends on the quantifier elimination algorithm that implements this
-	 * method.
+	 * Which and how many variables from the set <code>eliminatees</code> can be removed depends on the quantifier
+	 * elimination algorithm that implements this method.
 	 * <p>
-	 * Every variable that was successfully eliminated is removed from the set.
-	 * However, due to formula simplifications some variables might get removed
-	 * accidentally. Hence, there might be variables that are not removed from the
+	 * Every variable that was successfully eliminated is removed from the set. However, due to formula simplifications
+	 * some variables might get removed accidentally. Hence, there might be variables that are not removed from the
 	 * eliminatees set but do not occur in the resulting terms.
 	 */
 	public abstract EliminationResult tryToEliminate(EliminationTask et);
@@ -97,7 +90,6 @@ public abstract class DualJunctionQuantifierElimination {
 		private final long mTreeSize;
 
 		public EliminationResult(final EliminationTask eliminationTask, final Set<TermVariable> newEliminatees) {
-			super();
 			mEliminationTask = eliminationTask;
 			mNewEliminatees = Arrays.stream(eliminationTask.getTerm().getFreeVars()).filter(newEliminatees::contains)
 					.collect(Collectors.toSet());
@@ -118,11 +110,9 @@ public abstract class DualJunctionQuantifierElimination {
 		}
 
 		/**
-		 * We want to implement some metric that selects better
-		 * {@link EliminationResult}s. Rather randomly we take a lexicographic order
-		 * that first compares the remaining eliminatees and secondly compares the size
-		 * of the formula. (Rationale: eliminations may increase the size of the formula
-		 * substantially)
+		 * We want to implement some metric that selects better {@link EliminationResult}s. Rather randomly we take a
+		 * lexicographic order that first compares the remaining eliminatees and secondly compares the size of the
+		 * formula. (Rationale: eliminations may increase the size of the formula substantially)
 		 */
 		@Override
 		public int compareTo(final EliminationResult arg0) {

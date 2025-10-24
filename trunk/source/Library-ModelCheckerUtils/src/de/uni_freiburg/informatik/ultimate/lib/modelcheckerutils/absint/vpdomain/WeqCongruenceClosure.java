@@ -37,6 +37,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.WeqCcManager.WeqCcBmNames;
+import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
@@ -294,7 +295,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		WeqCongruenceClosure<NODE> originalCopy = null;
-		if (WeqCcManager.areAssertsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
+		if (VMUtils.areAssertionsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
 			originalCopy = mManager.copyWeqCc(this, true);
 		}
 
@@ -511,8 +512,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 						mManager.getWeqVariableNodeForDimension(0, sampleAi.getArgument().getSort()), true);
 
 				containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
-				assert containsConstraint == null || !mManager.getCcManager().getSetConstraintManager()
-						.isInconsistent(containsConstraint) : "uncaught inconsistent case";
+				assert containsConstraint == null
+						|| !mManager.getCcManager().getSetConstraintManager().isInconsistent(containsConstraint)
+						: "uncaught inconsistent case";
 			}
 		}
 
@@ -785,8 +787,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					final NODE firstWeqVar = mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()).get(0);
 					assert mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction())
 							.equals(mManager.getAllWeqVarsNodeForFunction(ccp2.getAppliedFunction()));
-					assert getEqualityStatus(ccp2.getArgument(),
-							ccp1.getArgument()) == EqualityStatus.EQUAL : " propagation is only allowed if i = j";
+					assert getEqualityStatus(ccp2.getArgument(), ccp1.getArgument()) == EqualityStatus.EQUAL
+							: " propagation is only allowed if i = j";
 
 					final CongruenceClosure<NODE> qUnequalI =
 							mManager.getSingleDisequalityCc(firstWeqVar, ccp1.getArgument(), true);
@@ -1081,7 +1083,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mManager.bmStart(WeqCcBmNames.EXT_AND_TRIANGLE_CLOSURE);
 
 		WeqCongruenceClosure<NODE> originalCopy = null;
-		if (WeqCcManager.areAssertsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
+		if (VMUtils.areAssertionsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
 			originalCopy = mManager.copyWeqCc(this, true);
 		}
 
@@ -1142,8 +1144,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		final Set<NODE> nodesToAddInGpa = getWeakEquivalenceGraph().projectAwaySimpleElementInEdgeLabels(elem);
 
-		assert nodesToAddInGpa.isEmpty() : "we don't allow introduction of new nodes at labels if we"
-				+ "are not in the meet-with-WeqGpa case";
+		assert nodesToAddInGpa.isEmpty()
+				: "we don't allow introduction of new nodes at labels if we" + "are not in the meet-with-WeqGpa case";
 
 		mCongruenceClosure.removeElements(elementsToRemove, nodeToReplacementNode);
 

@@ -41,22 +41,22 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation
 class SearchObserver implements ISpeculativeIterationObserver<IGeneratorSearchStep> {
 	// k such that an info is printed in the debug logger for every k tests
 	private static final int DEBUG_TEST_COUNT = 100;
-	
+
 	private final IVariantTestFunction mTestFunction;
 	private final SearchStats mStats;
 	private IGeneratorSearchStep mPreviousStep;
-	
+
 	private final ILogger mLogger;
-	
+
 	public SearchObserver(final IVariantTestFunction testFunction, final SearchStats stats, final ILogger logger) {
 		mTestFunction = testFunction;
 		mStats = stats;
 		mLogger = logger;
 	}
-	
+
 	/**
 	 * Logs changes in the debug level.
-	 * 
+	 *
 	 * @param changes
 	 *            list of changes
 	 */
@@ -67,10 +67,10 @@ class SearchObserver implements ISpeculativeIterationObserver<IGeneratorSearchSt
 			}
 		}
 	}
-	
+
 	/**
 	 * Logs search statistics in the info level.
-	 * 
+	 *
 	 * @param logger
 	 *            logger
 	 * @param stats
@@ -86,7 +86,7 @@ class SearchObserver implements ISpeculativeIterationObserver<IGeneratorSearchSt
 			logger.info(" - duplicate tests skipped: " + stats.getSkippedDuplicateMinimizerSteps());
 		}
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	@Override
 	public void onStepBegin(final IGeneratorSearchStep step) {
@@ -99,39 +99,39 @@ class SearchObserver implements ISpeculativeIterationObserver<IGeneratorSearchSt
 				mLogger.debug("########################################################################\n");
 				debugLogChangeDetails(mPreviousStep.getActiveChanges());
 			}
-			
+
 			mLogger.debug("\n########################################################################");
 			mLogger.debug("Searching over " + step.getVariantGenerator().getChanges().size() + " changes...");
 			mLogger.debug("########################################################################\n");
 			debugLogChangeDetails(step.getVariantGenerator().getChanges());
 		}
-		
+
 		mPreviousStep = step;
 	}
-	
+
 	@Override
 	public void onStepComplete(final IGeneratorSearchStep step, final boolean keepVariant) {
 		// Update the duplicate tracker with the result, now that we know
 		// that this step is valid
 		step.updateDuplicateTrackerWithTestResult(keepVariant);
-		
+
 		if (keepVariant) {
 			mStats.incrementSuccessfulSteps();
 			mLogger.info("Success: " + step.getVariant().length() + " bytes");
 		} else {
 			mStats.incrementFailedSteps();
 		}
-		
+
 		if (0 == mStats.getOverallTestCount().get() % DEBUG_TEST_COUNT) {
 			infoLogStats(mLogger, mStats);
 		}
 	}
-	
+
 	@Override
 	public void onTasksCanceled(final List<? extends ISpeculativeTask<IGeneratorSearchStep>> tasks) {
 		mStats.addToCanceledSpeculativeSteps(tasks.size());
 	}
-	
+
 	/**
 	 * This method is called by the step iterator, possibly from multiple threads in parallel. Forwards the call to the
 	 * external test if the variant string can be generated.
@@ -144,22 +144,22 @@ class SearchObserver implements ISpeculativeIterationObserver<IGeneratorSearchSt
 	 */
 	Optional<Boolean> runTestForStep(final IGeneratorSearchStep step, final BooleanSupplier isCanceled) {
 		mStats.getOverallTestCount().incrementAndGet();
-		
+
 		String variant;
 		try {
 			variant = step.getVariant();
 		} catch (final ChangeConflictException e) {
 			mLogger.warn("Skipping test because of change conflict: " + e.getMessage());
 			mLogger.debug("change conflict details " + e);
-			
+
 			mStats.getChangeConflicts().incrementAndGet();
 			return Optional.of(Boolean.FALSE);
 		}
-		
+
 		if (isCanceled.getAsBoolean()) {
 			return Optional.empty();
 		}
-		
+
 		return mTestFunction.cancelableTest(variant, isCanceled);
 	}
 }

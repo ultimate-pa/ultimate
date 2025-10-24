@@ -109,6 +109,15 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 
+	// Dominik 2025-04-24: We globally disable auxvar elimination for now, as the overhead is quite horrible.
+	// The elimination was disabled before (in commit b1b9470223) but ignorantly enabled again (in commit 0918a82cb).
+	// The consequences can be seen in the significant CPU time increase for GemCutter from SV-COMP'24 to '25.
+	// Before enabling this again, please benchmark the impact, and don't forget to update this comment.
+	//
+	// Introducing this constant as a global switch allows us to preserve the logic below that is based on
+	// considerations about when elimination is at all worthwhile, in case it is ever enabled again.
+	private static final boolean ENABLE_AUXVAR_ELIMINATION = false;
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
@@ -205,18 +214,12 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	@Override
 	public ISymbolicIndependenceRelation<L, IPredicate> getSymbolicRelation() {
-		switch (mSymbolicIndependenceMode) {
-		case NONE:
-			return null;
-		case SUFFICIENT:
-			return new ConditionGeneratorIndependence(mIndependenceGenerator, false);
-		case SUFFICIENT_WITH_CONTEXT:
-			return new ConditionGeneratorIndependence(mIndependenceGenerator, true);
-		case NECESSARY_AND_SUFFICIENT:
-			return new SymbolicSemanticIndependence(mPredicateFactory);
-		default:
-			throw new IllegalArgumentException("Unsupported symbolic independence mode: " + mSymbolicIndependenceMode);
-		}
+		return switch (mSymbolicIndependenceMode) {
+		case NONE -> null;
+		case SUFFICIENT -> new ConditionGeneratorIndependence(mIndependenceGenerator, false);
+		case SUFFICIENT_WITH_CONTEXT -> new ConditionGeneratorIndependence(mIndependenceGenerator, true);
+		case NECESSARY_AND_SUFFICIENT -> new SymbolicSemanticIndependence(mPredicateFactory);
+		};
 	}
 
 	@Override
@@ -284,10 +287,10 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		// Compose the two transition formulas in both orders.
 		// For the composition a*b, only spend time eliminating auxVars if it might be used on the right-hand side of an
 		// inclusion check, as auxVars on the left-hand side can be skolemized anyway.
-		final UnmodifiableTransFormula transFormulaAB = compose(tfA, tfB, mSymmetric);
-		// For the composition b*a, always try to eliminate auxVars, because it always appears on the right-hand side of
-		// an inclusion check.
-		final UnmodifiableTransFormula transFormulaBA = compose(tfB, tfA, true);
+		final UnmodifiableTransFormula transFormulaAB = compose(tfA, tfB, mSymmetric && ENABLE_AUXVAR_ELIMINATION);
+		// For the composition b*a, always try to eliminate auxVars (if elimination is globally enabled), because it
+		// always appears on the right-hand side of an inclusion check.
+		final UnmodifiableTransFormula transFormulaBA = compose(tfB, tfA, ENABLE_AUXVAR_ELIMINATION);
 
 		return new Pair<>(transFormulaAB, transFormulaBA);
 	}
@@ -316,15 +319,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	private static Dependence toDependence(final LBool value) {
-		switch (value) {
-		case UNSAT:
-			return Dependence.INDEPENDENT;
-		case SAT:
-			return Dependence.DEPENDENT;
-		case UNKNOWN:
-			return Dependence.UNKNOWN;
-		}
-		throw new IllegalArgumentException("Unknown value: " + value);
+		return switch (value) {
+		case UNSAT -> Dependence.INDEPENDENT;
+		case SAT -> Dependence.DEPENDENT;
+		case UNKNOWN -> Dependence.UNKNOWN;
+		};
 	}
 
 	/**
@@ -383,16 +382,15 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			final LBool result = SmtUtils.checkSatTerm(mManagedScript.getScript(), inclusion);
 			mManagedScript.unlock(this);
 
-			switch (result) {
+			return switch (result) {
 			case UNKNOWN:
 				mStatistics.reportUnknownSymbolicCondition();
 				// $FALL-THROUGH$
 			case SAT:
-				return inclusion;
+				yield inclusion;
 			case UNSAT:
-				return mManagedScript.getScript().term(SMTLIBConstants.FALSE);
-			}
-			throw new IllegalStateException("Unknown LBool: " + result);
+				yield mManagedScript.getScript().term(SMTLIBConstants.FALSE);
+			};
 		}
 
 		@Override
@@ -469,17 +467,17 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		private int mSymbolicConditionComputations;
 		private int mUnknownSymbolicConditions;
 
-		public Statistics() {
+		private Statistics() {
 			super(SemanticIndependenceRelation.class);
 			declare(SYMBOLIC_CONDITION_COMPUTATIONS, () -> mSymbolicConditionComputations, KeyType.COUNTER);
 			declare(UNKNOWN_SYMBOLIC_CONDITIONS, () -> mUnknownSymbolicConditions, KeyType.COUNTER);
 		}
 
-		public void reportSymbolicConditionComputation() {
+		private void reportSymbolicConditionComputation() {
 			mSymbolicConditionComputations++;
 		}
 
-		public void reportUnknownSymbolicCondition() {
+		private void reportUnknownSymbolicCondition() {
 			mUnknownSymbolicConditions++;
 		}
 	}

@@ -32,23 +32,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-
 /**
  * Represents a non-termination argument for a lasso program. <br>
- * This is work in progress and should probably replace
- * {@link InfiniteFixpointRepetition}. Currently, we have only an execution for
- * the stem because we cannot yet compute an execution for the loop.
+ * This is work in progress and should probably replace {@link InfiniteFixpointRepetition}. Currently, we have only an
+ * execution for the stem because we cannot yet compute an execution for the loop.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de
  */
-public class InfiniteFixpointRepetitionWithExecution<L extends IIcfgTransition<?>> extends NonTerminationArgument implements Serializable {
+public class InfiniteFixpointRepetitionWithExecution<L extends IIcfgTransition<?>> extends NonTerminationArgument
+		implements Serializable {
 
 	private static final long serialVersionUID = -4391252776990865865L;
 
 	private final IProgramExecution<L, Term> mStemExecution;
 
 	public InfiniteFixpointRepetitionWithExecution(final IProgramExecution<L, Term> stemExecution) {
-		super();
 		mStemExecution = stemExecution;
 	}
 

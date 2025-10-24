@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
@@ -38,34 +38,28 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * A UnifyHash is a collection that helps to implement the fly-weight design
- * pattern. It stores a set of weak references to objects, which can be
- * retrieved by a hash code.
- * 
- * If you use the fly-weight design pattern consequently, you do not need to
- * override equals or hash code at all, as two objects that equal are always the
- * same. Unfortunately, while you are creating a new object, you need to check,
- * if the same object already existed and therefore have a method to compare for
- * equality and to calculate a hash code for the hash table used in this class.
- * Therefore you have to call the put/remove/unify methods with some hash code
- * calculated from the internal data. Also the unify method is called with a
- * comparator, that checks for equality.
- * 
- * The way to use this class is as follows. First follow the fly-weight design
- * pattern and make the class immutable. Make the constructor private so it
- * can't be called from outside the class. Instead add a static method &quot;
- * <code>create</code>&quot; that creates new instances, or reuses old ones that
- * have the same data:
- * 
+ * A UnifyHash is a collection that helps to implement the fly-weight design pattern. It stores a set of weak references
+ * to objects, which can be retrieved by a hash code.
+ *
+ * If you use the fly-weight design pattern consequently, you do not need to override equals or hash code at all, as two
+ * objects that equal are always the same. Unfortunately, while you are creating a new object, you need to check, if the
+ * same object already existed and therefore have a method to compare for equality and to calculate a hash code for the
+ * hash table used in this class. Therefore you have to call the put/remove/unify methods with some hash code calculated
+ * from the internal data. Also the unify method is called with a comparator, that checks for equality.
+ *
+ * The way to use this class is as follows. First follow the fly-weight design pattern and make the class immutable.
+ * Make the constructor private so it can't be called from outside the class. Instead add a static method &quot;
+ * <code>create</code>&quot; that creates new instances, or reuses old ones that have the same data:
+ *
  * <pre>
  *     private static UnifyHash<MyObject> unifyHash;
- * 
+ *
  *      **
  *      * Create a new instance of MyObject with parameters
  *      * "a" and "child", or returns an already existing one.
  *     public static MyObject create(int a, MyObject child) {
  *        int hashcode = a*0x12345679 + child.hashCode();
- * 
+ *
  *         * First iterate the object with the same hashcode and
  *         * check if the same object is already present.
  *        for (MyObject o : unifyHash.iterateHashCode(hashcode)) {
@@ -91,10 +85,10 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	/** the default load factor of a HashMap */
 	private static final float DEFAULT_LOAD_FACTOR = 0.75F;
 
-	private transient ReferenceQueue<E> mQueue = new ReferenceQueue<E>();
+	private transient ReferenceQueue<E> mQueue = new ReferenceQueue<>();
 
 	static class Bucket<E> extends WeakReference<E> {
-		public Bucket(E o, ReferenceQueue<E> q) {
+		public Bucket(final E o, final ReferenceQueue<E> q) {
 			super(o, q);
 		}
 
@@ -110,26 +104,26 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 
 	/**
 	 * Creates a new unify hash.
-	 * 
+	 *
 	 * @param initialCapacity
 	 *            The initial number of hash buckets
 	 * @param loadFactor
 	 *            The maximum average number of objects per buckets.
 	 */
 	@SuppressWarnings("unchecked")
-	public UnifyHash(int initialCapacity, float loadFactor) {
-		this.mLoadFactor = loadFactor;
+	public UnifyHash(final int initialCapacity, final float loadFactor) {
+		mLoadFactor = loadFactor;
 		mBuckets = new Bucket[initialCapacity];
 		mThreshold = (int) (loadFactor * initialCapacity);
 	}
 
 	/**
 	 * Creates a new unify hash with default load factor.
-	 * 
+	 *
 	 * @param initialCapacity
 	 *            The initial number of hash buckets
 	 */
-	public UnifyHash(int initialCapacity) {
+	public UnifyHash(final int initialCapacity) {
 		this(initialCapacity, DEFAULT_LOAD_FACTOR);
 	}
 
@@ -141,9 +135,8 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	}
 
 	/**
-	 * This method is called when the number of objects is bigger than
-	 * loadFactor*buckets.length. It doubles the number of buckets and
-	 * reorganizes the objects into the hash buckets.
+	 * This method is called when the number of objects is bigger than loadFactor*buckets.length. It doubles the number
+	 * of buckets and reorganizes the objects into the hash buckets.
 	 */
 	@SuppressWarnings("unchecked")
 	private void grow() {
@@ -166,9 +159,8 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	}
 
 	/**
-	 * Clean up the hash table, by removing all weak references to objects that
-	 * are no longer existing. This methods is already called from the other
-	 * public methods, so there is no need to call it manually.
+	 * Clean up the hash table, by removing all weak references to objects that are no longer existing. This methods is
+	 * already called from the other public methods, so there is no need to call it manually.
 	 */
 	@SuppressWarnings("unchecked")
 	public final void cleanUp() {
@@ -203,7 +195,7 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	public Iterator<E> iterator() {
 		cleanUp();
 
-		return new Iterator<E>() {
+		return new Iterator<>() {
 			private int mBucket = 0;
 			private final int mKnown = mModCount;
 			private Bucket<E> mNextBucket;
@@ -258,100 +250,92 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	}
 
 	/**
-	 * Gets an iterator of all objects in this collection with the given hash
-	 * code.
+	 * Gets an iterator of all objects in this collection with the given hash code.
 	 */
 	public Iterable<E> iterateHashCode(final int hash) {
 		cleanUp();
-		return new Iterable<E>() {
+		return () -> new Iterator<>() {
+			private int mKnown = mModCount;
+			private boolean mRemoveOk = false;
+			private Bucket<E> mRemoveBucket = null;
+			private Bucket<E> mPrevBucket = null;
+			private Bucket<E> mNextBucket = mBuckets[Math.abs(hash % mBuckets.length)];
+			private E mNextVal;
+
+			{
+				internalNext();
+			}
+
+			private void internalNext() {
+				while (mNextBucket != null) {
+					if (mNextBucket.mHash == hash) {
+						mNextVal = mNextBucket.get();
+						if (mNextVal != null) {
+							return;
+						}
+					}
+					mPrevBucket = mNextBucket;
+					mNextBucket = mNextBucket.mNext;
+				}
+			}
+
 			@Override
-			public Iterator<E> iterator() {
-				return new Iterator<E>() {
-					private int mKnown = mModCount;
-					private boolean mRemoveOk = false;
-					private Bucket<E> mRemoveBucket = null;
-					private Bucket<E> mPrevBucket = null;
-					private Bucket<E> mNextBucket = mBuckets[Math.abs(hash % mBuckets.length)];
-					private E mNextVal;
+			public boolean hasNext() {
+				return mNextBucket != null;
+			}
 
-					{
-						internalNext();
-					}
+			@Override
+			public E next() {
+				if (mKnown != mModCount) {
+					throw new ConcurrentModificationException();
+				}
+				if (mNextBucket == null) {
+					throw new NoSuchElementException();
+				}
+				final E result = mNextVal;
+				mRemoveBucket = mPrevBucket;
+				mRemoveOk = true;
+				mPrevBucket = mNextBucket;
+				mNextBucket = mNextBucket.mNext;
+				internalNext();
+				return result;
+			}
 
-					private void internalNext() {
-						while (mNextBucket != null) {
-							if (mNextBucket.mHash == hash) {
-								mNextVal = mNextBucket.get();
-								if (mNextVal != null) {
-									return;
-								}
-							}
-							mPrevBucket = mNextBucket;
-							mNextBucket = mNextBucket.mNext;
-						}
-					}
-
-					@Override
-					public boolean hasNext() {
-						return mNextBucket != null;
-					}
-
-					@Override
-					public E next() {
-						if (mKnown != mModCount) {
-							throw new ConcurrentModificationException();
-						}
-						if (mNextBucket == null) {
-							throw new NoSuchElementException();
-						}
-						final E result = mNextVal;
-						mRemoveBucket = mPrevBucket;
-						mRemoveOk = true;
-						mPrevBucket = mNextBucket;
-						mNextBucket = mNextBucket.mNext;
-						internalNext();
-						return result;
-					}
-
-					@Override
-					public void remove() {
-						if (mKnown != mModCount) {
-							throw new ConcurrentModificationException();
-						}
-						if (!mRemoveOk) {
-							throw new IllegalStateException();
-						}
-						if (mRemoveBucket == null) {
-							mBuckets[Math.abs(hash % mBuckets.length)] = mBuckets[Math.abs(hash % mBuckets.length)].mNext;
-						} else {
-							mRemoveBucket.mNext = mRemoveBucket.mNext.mNext;
-						}
-						mKnown = ++mModCount;
-						mSize--;
-					}
-				};
+			@Override
+			public void remove() {
+				if (mKnown != mModCount) {
+					throw new ConcurrentModificationException();
+				}
+				if (!mRemoveOk) {
+					throw new IllegalStateException();
+				}
+				if (mRemoveBucket == null) {
+					mBuckets[Math.abs(hash % mBuckets.length)] = mBuckets[Math.abs(hash % mBuckets.length)].mNext;
+				} else {
+					mRemoveBucket.mNext = mRemoveBucket.mNext.mNext;
+				}
+				mKnown = ++mModCount;
+				mSize--;
 			}
 		};
 	}
 
 	/**
-	 * Adds a new object into this collection. There should be no "equal" object
-	 * already in this collection.
-	 * 
+	 * Adds a new object into this collection. There should be no "equal" object already in this collection.
+	 *
 	 * @param hash
-	 *            the hash code of the object (this does not need to be equal to
-	 *            object.hashCode().
+	 *            the hash code of the object (this does not need to be equal to object.hashCode().
 	 * @param o
 	 *            the object to add to this collection.
 	 */
-	public void put(int hash, E o) {
+	public void put(final int hash, final E o) {
 		if (mSize++ > mThreshold) {
 			grow();
 		}
 		mModCount++;
 
 		final int slot = Math.abs(hash % mBuckets.length);
-		final Bucket<E> b = new Bucket<E>(o, mQueue);
+		final Bucket<E> b = new Bucket<>(o, mQueue);
 		b.mHash = hash;
 		b.mNext = mBuckets[slot];
 		mBuckets[slot] = b;
@@ -360,7 +344,7 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	/**
 	 * Remove the object o from the collection.
 	 */
-	public boolean remove(int hash, E o) {
+	public boolean remove(final int hash, final E o) {
 		final Iterator<E> i = iterateHashCode(hash).iterator();
 		while (i.hasNext()) {
 			if (i.next() == o) {
@@ -372,25 +356,21 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	}
 
 	/**
-	 * Adds an object to this collection or returns a reference to an existing
-	 * object from the collection. It is often easier to not use this function
-	 * and use something similar to the example method in the class description.
-	 * This way you do not need to create a Comparator class and create
-	 * unnecessary objects.
-	 * 
+	 * Adds an object to this collection or returns a reference to an existing object from the collection. It is often
+	 * easier to not use this function and use something similar to the example method in the class description. This
+	 * way you do not need to create a Comparator class and create unnecessary objects.
+	 *
 	 * @param o
 	 *            the object to add to this collection.
 	 * @param hash
-	 *            the hash code of the object. This does not need to be equal to
-	 *            object.hashCode(), but objects that compare equal by
-	 *            comparator should have the same hash code.
+	 *            the hash code of the object. This does not need to be equal to object.hashCode(), but objects that
+	 *            compare equal by comparator should have the same hash code.
 	 * @param comparator
-	 *            a comparator that determines if an object in this hash is
-	 *            equal to the object o.
-	 * @return An object from the hash that equals o, or if no such object
-	 *         exists adds o to the collection and returns o.
+	 *            a comparator that determines if an object in this hash is equal to the object o.
+	 * @return An object from the hash that equals o, or if no such object exists adds o to the collection and returns
+	 *         o.
 	 */
-	public E unify(E o, int hash, Comparator<E> comparator) {
+	public E unify(final E o, final int hash, final Comparator<E> comparator) {
 		cleanUp();
 		final int slot = Math.abs(hash % mBuckets.length);
 		for (Bucket<E> b = mBuckets[slot]; b != null; b = b.mNext) {
@@ -407,14 +387,13 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	}
 
 	/**
-	 * Specialized form that takes the hash code from the object and compares
-	 * with {@link Object#equals(Object) equals}.
-	 * 
+	 * Specialized form that takes the hash code from the object and compares with {@link Object#equals(Object) equals}.
+	 *
 	 * @param o
 	 *            Object to unify.
 	 * @return Unified object.
 	 */
-	public E unify(E o) {
+	public E unify(final E o) {
 		cleanUp();
 		final int hash = o.hashCode();
 		final int slot = Math.abs(hash % mBuckets.length);
@@ -431,7 +410,7 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 		return o;
 	}
 
-	private void writeObject(ObjectOutputStream oos) throws IOException {
+	private void writeObject(final ObjectOutputStream oos) throws IOException {
 		oos.defaultWriteObject();
 		oos.writeInt(mBuckets.length);
 		for (Bucket<E> b : mBuckets) {
@@ -450,8 +429,8 @@ public class UnifyHash<E> extends AbstractCollection<E> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-		mQueue = new ReferenceQueue<E>();
+	private void readObject(final ObjectInputStream ois) throws IOException, ClassNotFoundException {
+		mQueue = new ReferenceQueue<>();
 		mModCount = 0;
 		ois.defaultReadObject();
 		final int bucketsize = ois.readInt();

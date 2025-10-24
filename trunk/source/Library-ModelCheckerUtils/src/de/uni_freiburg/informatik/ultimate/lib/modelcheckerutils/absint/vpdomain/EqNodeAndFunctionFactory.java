@@ -171,12 +171,10 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	/**
-	 * Checks if the given term is a literal. Examples of literals (sometimes called
-	 * constants, but we have other uses for that word) are: 1, 2, -1, true, false,
-	 * 1bv16 (bitvector constant/literal)
+	 * Checks if the given term is a literal. Examples of literals (sometimes called constants, but we have other uses
+	 * for that word) are: 1, 2, -1, true, false, 1bv16 (bitvector constant/literal)
 	 *
-	 * The defining trait of literals for our purposes is that two different
-	 * literals always have a different value.
+	 * The defining trait of literals for our purposes is that two different literals always have a different value.
 	 *
 	 * @param term
 	 * @return
@@ -211,12 +209,11 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	/**
-	 * We call a Term atomic here if it is either a TermVariable, or does not
-	 * contain any TermVariables. (this has nothing to do with Boolean atoms)
+	 * We call a Term atomic here if it is either a TermVariable, or does not contain any TermVariables. (this has
+	 * nothing to do with Boolean atoms)
 	 *
-	 * Explanation: Atomic in this sense means dependency-free. I.e.: if we havoc
-	 * some other term (a TermVariable), can we guarantee that this term is not
-	 * concerned by that.
+	 * Explanation: Atomic in this sense means dependency-free. I.e.: if we havoc some other term (a TermVariable), can
+	 * we guarantee that this term is not concerned by that.
 	 *
 	 * @param term
 	 * @return
@@ -297,14 +294,14 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		final Term def = at.getFunction().getDefinition();
 		if (def != null) {
 			throw new AssertionError("not yet implemented");
-//			assert at.getParameters().length == 3;
-//			// we need to substitute the variable in the definition by the argument of at
-//			final TermVariable var = at.getFunction().getDefinitionVars()[0];
-//			final Term value = at.getParameters()[0];
-//			final Term defSubstituted =
-//					new Substitution(mMgdScript, Collections.singletonMap(var, value)).transform(def);
-//
-//			return getOrConstructMixArray(defSubstituted);
+			// assert at.getParameters().length == 3;
+			// // we need to substitute the variable in the definition by the argument of at
+			// final TermVariable var = at.getFunction().getDefinitionVars()[0];
+			// final Term value = at.getParameters()[0];
+			// final Term defSubstituted =
+			// new Substitution(mMgdScript, Collections.singletonMap(var, value)).transform(def);
+			//
+			// return getOrConstructMixArray(defSubstituted);
 		}
 
 		/*
@@ -313,7 +310,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		 */
 		assert at.getParameters().length == 3;
 		assert at.getParameters()[2].getSort().isArraySort()
-			&& new MultiDimensionalSort(at.getParameters()[2].getSort()).getArrayValueSort().getName().equals("Bool");
+				&& new MultiDimensionalSort(at.getParameters()[2].getSort()).getArrayValueSort().getName()
+						.equals("Bool");
 		assert mMixArrayFunctions.contains(at.getFunction().getName());
 
 		final EqNode array1 = getOrConstructNode(at.getParameters()[0]);
@@ -386,8 +384,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	/**
-	 * Determines if a given term should get a node with or without the isFunction
-	 * flag set.
+	 * Determines if a given term should get a node with or without the isFunction flag set.
 	 *
 	 * @param term
 	 * @return

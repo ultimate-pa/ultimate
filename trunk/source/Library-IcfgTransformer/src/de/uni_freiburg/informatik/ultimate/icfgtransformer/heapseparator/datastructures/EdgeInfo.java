@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -75,10 +76,7 @@ public class EdgeInfo {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mEdge == null) ? 0 : mEdge.hashCode());
-		return result;
+		return Objects.hash(mEdge);
 	}
 
 	@Override
@@ -142,6 +140,5 @@ public class EdgeInfo {
 	public Set<IProgramConst> getNonTheoryConsts() {
 		return mEdge.getTransformula().getNonTheoryConsts();
 	}
-
 
 }

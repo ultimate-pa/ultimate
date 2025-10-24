@@ -565,7 +565,7 @@ public class QuadraticMatrix {
 	 * Computes triples (ev, bs, occ) meaning that there are occ blocks of size bs for eigenvalue ev.
 	 */
 	private NestedMap2<Integer, Integer, Integer> computeJordanBlockSizes() {
-		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = new NestedMap2<Integer, Integer, Integer>();
+		final NestedMap2<Integer, Integer, Integer> jordanBlockSizes = new NestedMap2<>();
 		final boolean[] eigenvalues = computeSmallEigenvalues();
 		final int n = mDimension;
 		for (int e = -1; e <= 1; e++) {
@@ -593,6 +593,7 @@ public class QuadraticMatrix {
 	 * Computes the jordan matrix of a given quadratic matrix given jordanBlockSizes which contains triples (eigenvalue,
 	 * blocksize, occurrence). This method also works for integral eigenvalues not equal to -1,0 or 1, only need to
 	 * change eigenvalues array.
+	 *
 	 * @param linearUpdate
 	 */
 	public JordanDecomposition constructJordanDecomposition() {
@@ -688,7 +689,7 @@ public class QuadraticMatrix {
 		final QuadraticMatrix modalIntMatrix = constructZeroMatrix(n);
 		final RationalMatrix modalMatrix = new RationalMatrix(BigInteger.valueOf(1), modalIntMatrix);
 		// Hashmap that assigns order to list of columns corresponding to that order.
-		final HashMap<Integer, ArrayList<Integer>> columnOrder = new HashMap<Integer, ArrayList<Integer>>();
+		final HashMap<Integer, ArrayList<Integer>> columnOrder = new HashMap<>();
 		// current column in modal matrix.
 		int current = n;
 		final Rational[] zeroVector = new Rational[n];
@@ -706,7 +707,7 @@ public class QuadraticMatrix {
 				// s is the size of the greatest jordan block for lambda.
 				// initialize columnOrder hashmap.
 				for (int order = 1; order <= blockSize; order++) {
-					final ArrayList<Integer> orderList = new ArrayList<Integer>();
+					final ArrayList<Integer> orderList = new ArrayList<>();
 					columnOrder.put(order, orderList);
 				}
 				while (blockSize > 0) {
@@ -718,7 +719,7 @@ public class QuadraticMatrix {
 					final RationalMatrix lesMatrix = constructLes(power(eigenvalueMatrix, blockSize), zeroVector);
 					final ArrayList<Integer> constrainingColumns = columnOrder.get(blockSize);
 					final int numberOfConstraints = constrainingColumns.size();
-					final ArrayList<Integer> freeChoice = new ArrayList<Integer>();
+					final ArrayList<Integer> freeChoice = new ArrayList<>();
 					for (int c = 1; c <= n; c++) {
 						freeChoice.add(c);
 					}

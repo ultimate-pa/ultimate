@@ -134,7 +134,7 @@ public class OctValue implements Comparable<OctValue> {
 		}
 		return SmtUtils.toRational(mValue);
 	}
-	
+
 	/**
 	 * Calculates the sum of this and another OctValue. The sum of infinity and something other is infinity.
 	 *

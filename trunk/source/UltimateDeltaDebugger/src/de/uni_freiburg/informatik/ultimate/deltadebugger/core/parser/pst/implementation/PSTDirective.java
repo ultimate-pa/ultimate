@@ -48,17 +48,17 @@ public class PSTDirective extends PSTNode implements IPSTDirective {
 			final IASTPreprocessorStatement statement) {
 		super(source, location, statement);
 	}
-	
+
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-	
+
 	@Override
 	public IASTPreprocessorStatement getAstNode() {
 		return (IASTPreprocessorStatement) mAstNode;

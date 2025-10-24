@@ -59,10 +59,9 @@ public class QuantifierEliminationTestCsvWriter {
 
 	public QuantifierEliminationTestCsvWriter(final String testfileId) {
 		mTestfileId = testfileId;
-		final List<String> list = Arrays.asList(new String[] { "TestId", "InputTreesize", "OutputTreesize", "Runtime",
-				"check-sat time", "#check-sat" });
+		final List<String> list =
+				Arrays.asList("TestId", "InputTreesize", "OutputTreesize", "Runtime", "check-sat time", "#check-sat");
 		mCsv = new SimpleCsvProvider<>(list);
-
 
 	}
 

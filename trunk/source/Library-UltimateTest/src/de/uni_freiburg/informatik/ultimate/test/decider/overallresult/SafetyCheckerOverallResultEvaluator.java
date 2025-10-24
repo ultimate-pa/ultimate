@@ -76,7 +76,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		}
 		//@formatter:off
 		//categories are ordered by priority, with the first being the lowest
-		final SafetyCheckerOverallResult[] categoriesOrderedBySignificance = new SafetyCheckerOverallResult[] {
+		final SafetyCheckerOverallResult[] categoriesOrderedBySignificance = {
 				SafetyCheckerOverallResult.VALID_ANNOTATION,
 				SafetyCheckerOverallResult.SAFE,
 				SafetyCheckerOverallResult.TIMEOUT,
@@ -118,7 +118,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 				return SafetyCheckerOverallResult.UNSAFE_DEREF;
 			} else if (spec.contains(Spec.MEMORY_FREE)) {
 				return SafetyCheckerOverallResult.UNSAFE_FREE;
-			} else if (spec.contains(Spec.MEMORY_LEAK)) {
+			} else if (spec.contains(Spec.MEMORY_NEUTRAL)) {
 				return SafetyCheckerOverallResult.UNSAFE_MEMTRACK;
 			} else {
 				return SafetyCheckerOverallResult.UNSAFE;

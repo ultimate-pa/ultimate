@@ -23,8 +23,8 @@ public class FormulaToEqDisjunctiveConstraint {
 		mServices = services;
 		mMgdScript = mgdScript;
 
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(mServices, mMgdScript, Collections.emptySet(),
-				null, Collections.emptySet());
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(mServices, mMgdScript, Collections.emptySet(), null,
+				Collections.emptySet());
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, services, mMgdScript, settings,
 				false, Collections.emptySet());
 	}
@@ -36,9 +36,8 @@ public class FormulaToEqDisjunctiveConstraint {
 	 * @return
 	 */
 	public EqDisjunctiveConstraint<EqNode> convertFormula(final Term formula) {
-		final FormulaToEqDisjunctiveConstraintConverter converter =
-				new FormulaToEqDisjunctiveConstraintConverter(mServices, mMgdScript, mEqConstraintFactory,
-						mEqNodeAndFunctionFactory, formula);
+		final FormulaToEqDisjunctiveConstraintConverter converter = new FormulaToEqDisjunctiveConstraintConverter(
+				mServices, mMgdScript, mEqConstraintFactory, mEqNodeAndFunctionFactory, formula);
 		return converter.getResult();
 	}
 }

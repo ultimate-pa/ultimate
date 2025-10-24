@@ -25,7 +25,6 @@
  * to convey the resulting work.
  */
 /**
- * This packages contains classes to measure the performance of tree automata
- * reduction operations.
+ * This packages contains classes to measure the performance of tree automata reduction operations.
  */
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.performance;

@@ -44,45 +44,44 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
  *
  */
 public class IcfgSizeBenchmark {
-	
+
 	private final GraphSizeCsvProvider mCsvProvider;
-	
+
 	public IcfgSizeBenchmark(final IIcfg<?> root, final String label) {
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closedE = new HashSet<>();
 		final Set<IcfgLocation> closedV = new HashSet<>();
-		
+
 		edges.addAll(root.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream())
 				.collect(Collectors.toSet()));
 		edges.stream().forEach(e -> closedV.add(e.getSource()));
-		
+
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (closedE.contains(current)) {
 				continue;
 			}
 			closedE.add(current);
-			
+
 			if (current.getTarget() == null) {
 				throw new AssertionError("Target may not be null");
 			}
-			
+
 			closedV.add(current.getTarget());
-			for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
-				edges.add(next);
-			}
+			edges.addAll(current.getTarget().getOutgoingEdges());
 		}
-		
+
 		mCsvProvider = new GraphSizeCsvProvider(closedE.size(), closedV.size(), label);
 	}
-	
+
 	@Override
 	public String toString() {
 		return mCsvProvider.toString();
 	}
-	
+
 	public void reportBenchmarkResult(final IResultService resultService, final String pluginId, final String message) {
-		resultService.reportResult(pluginId, new de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult<>(
-				pluginId, message, mCsvProvider));
+		resultService.reportResult(pluginId,
+				new de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult<>(pluginId, message,
+						mCsvProvider));
 	}
 }

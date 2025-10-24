@@ -46,7 +46,6 @@
 
    <plugins>
       <plugin id="com.github.jhoenicke.javacup"/>
-      <plugin id="com.lmax.disruptor"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.astbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.parser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>

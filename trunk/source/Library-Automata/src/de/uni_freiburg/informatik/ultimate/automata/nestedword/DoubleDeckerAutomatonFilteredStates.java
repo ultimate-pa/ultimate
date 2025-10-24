@@ -65,7 +65,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton, final Set<STATE> remainingStates,
 			final Set<STATE> newInitials, final Set<STATE> newFinals) throws AutomataOperationCanceledException {
 		super(services, automaton, remainingStates, newInitials, newFinals);
-//		assert (successorOfRemovedStatesAreRemoved());
+		// assert (successorOfRemovedStatesAreRemoved());
 		assert (new DownStateConsistencyCheck<>(services, this)).getResult() : "down states inconsistent";
 	}
 
@@ -86,7 +86,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 			final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation)
 			throws AutomataOperationCanceledException {
 		super(services, automaton, ancestorComputation);
-//		assert (successorOfRemovedStatesAreRemoved());
+		// assert (successorOfRemovedStatesAreRemoved());
 		assert (new DownStateConsistencyCheck<>(mServices, this)).getResult() : "down states inconsistent";
 	}
 
@@ -133,7 +133,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 		 * Constructor.
 		 */
 		public WasStateRemovedChecker() {
-			this.mPropertyHolds = true;
+			mPropertyHolds = true;
 		}
 
 		@Override

@@ -2,22 +2,22 @@
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * Object that stores statistics of an automata library operation.
  * <p>
  * Statistics are stored as a key-value map and are not allowed to be overwritten.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
@@ -79,8 +79,8 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 *            value to be associated with the specified key
 	 */
 	public void addKeyValuePair(final StatisticsType key, final Object value) {
-		assert !mKeyValueMap.containsKey(key) : "The statistics for key " + key
-				+ " would be overwritten, which is not allowed.";
+		assert !mKeyValueMap.containsKey(key)
+				: "The statistics for key " + key + " would be overwritten, which is not allowed.";
 		mKeyValueMap.put(key, value);
 	}
 
@@ -97,7 +97,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	/**
 	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
 	 * key <tt>fstBaseKey</tt>.
-	 * 
+	 *
 	 * @param fstBaseKey
 	 *            first key
 	 * @param sndBaseKey
@@ -115,7 +115,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 * key <tt>fstBaseKey</tt>.
 	 * <p>
 	 * The percentage is inverted, i.e., instead of <tt>x</tt> we add <tt>100 - x</tt>.
-	 * 
+	 *
 	 * @param fstBaseKey
 	 *            first key
 	 * @param sndBaseKey
@@ -131,7 +131,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	/**
 	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
 	 * key <tt>fstBaseKey</tt>.
-	 * 
+	 *
 	 * @param fstBaseKey
 	 *            first key
 	 * @param sndBaseKey
@@ -157,7 +157,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	/**
 	 * Adds a key-value pair with the content being the difference between the first key <tt>sndBaseKey</tt> wrt. the
 	 * second key <tt>fstBaseKey</tt>.
-	 * 
+	 *
 	 * @param fstBaseKey
 	 *            first key
 	 * @param sndBaseKey

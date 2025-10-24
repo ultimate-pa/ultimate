@@ -2,22 +2,22 @@
  * Copyright (C) 2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Layla Franke
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * answer was positive, all pairs of states that were tested are equivalent. If the answer was negative, some pairs of
  * states were not equivalent. All those pairs are stored and the information is then propagated to avoid checking these
  * states later.
- * 
+ *
  * @author Layla Franke
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -155,7 +155,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	/**
 	 * GUI Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -173,7 +173,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -191,8 +191,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		super(services, stateFactory, operand, interrupt);
 
 		/*
-		 * Christian: 2016-08-02:
-		 *   initialize() is also executed by executeAlgorithm().
+		 * Christian: 2016-08-02: initialize() is also executed by executeAlgorithm().
 		 */
 		initialize();
 		assert (mInt2state == null && mState2int == null);
@@ -204,7 +203,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	/**
 	 * Constructor for given mappings.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -225,8 +224,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		mState2int = state2int;
 
 		/*
-		 * Christian: 2016-08-02:
-		 *   initialize() is also executed by executeAlgorithm().
+		 * Christian: 2016-08-02: initialize() is also executed by executeAlgorithm().
 		 */
 		initialize();
 		assert (mInt2state != null && mState2int != null);
@@ -241,7 +239,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	/**
 	 * Method for setting the flag before constructor is called.
-	 * 
+	 *
 	 * @param parallel
 	 *            True if MinimizeDfaParallel is called originally, false otherwise.
 	 */
@@ -251,7 +249,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	/**
 	 * Getter for set of distinguishable tuples of states.
-	 * 
+	 *
 	 * @return Set of tuples.
 	 */
 	public Set<Tuple> getNeq() {
@@ -260,7 +258,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	/**
 	 * Get state of this algorithm instance.
-	 * 
+	 *
 	 * @return True if union-find data structure is initialized, false otherwise.
 	 */
 	public boolean getInitialized() {
@@ -301,11 +299,9 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 			mUnionFind = new int[mSize];
 
 			/*
-			 * The maximum number of pairs of states without considering the
-			 * order is (n^2 - n)/2.
-			 * 
-			 * This can easily be more than the maximum integer number. In that
-			 * case the constant is set to this bound.
+			 * The maximum number of pairs of states without considering the order is (n^2 - n)/2.
+			 *
+			 * This can easily be more than the maximum integer number. In that case the constant is set to this bound.
 			 */
 			int possibleOverflow = (mSize * (mSize - 1)) / 2;
 			if (possibleOverflow > 0) {
@@ -345,7 +341,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	/**
 	 * This method invokes the minimization process.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             thrown when execution is cancelled
 	 */
@@ -367,11 +363,12 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 			mInt2state.add(state);
 
 			assert (mState2int.get(state) == null) : "The state is already in the map.";
-			mState2int.put(state, ++i);
+			i++;
+			mState2int.put(state, i);
 		}
 
-		assert ((mState2int.size() == mInt2state.size())
-				&& (mState2int.size() == mSize)) : "The mappings do not have the same size as the input " + "automaton";
+		assert ((mState2int.size() == mInt2state.size()) && (mState2int.size() == mSize))
+				: "The mappings do not have the same size as the input " + "automaton";
 	}
 
 	/**
@@ -444,7 +441,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * The certain candidates are pairs where exactly one state is final.
 	 * <p>
 	 * There is a global option for separating states with different outgoing transitions.
-	 * 
+	 *
 	 * @return set of pairs of states not equivalent to each other
 	 */
 	private void intializeTupleSet() {
@@ -460,8 +457,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 					mNeq.add(new Tuple(i, j));
 				} else if (OPTION_NEQ_TRANS) {
 					/*
-					 * optional separation of states with different outgoing
-					 * transitions
+					 * optional separation of states with different outgoing transitions
 					 */
 					final HashSet<LETTER> letters = new HashSet<>();
 					for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(state1)) {
@@ -490,7 +486,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * The recursion was transformed to an explicit form using a stack.
 	 * <p>
 	 * pseudocode name: EQUIV-P
-	 * 
+	 *
 	 * @param origTuple
 	 *            tuple to check equivalence of
 	 * @return true iff the pair of states is equivalent
@@ -526,8 +522,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 				}
 
 				/*
-				 * tuple was already visited on the path, so the states are
-				 * equivalent
+				 * tuple was already visited on the path, so the states are equivalent
 				 */
 				if (mPath.contains(eTuple)) {
 					continue;
@@ -555,7 +550,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * <p>
 	 * If the states have not been separated wrt. different outgoing transitions at the beginning, this is checked here
 	 * and then possibly a reason for non-equivalence is found.
-	 * 
+	 *
 	 * @param tuple
 	 *            pair of states
 	 * @return true iff no reason for non-equivalence was found
@@ -573,9 +568,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 			int succQ;
 			if (OPTION_NEQ_TRANS) {
-				assert (mOperand.internalSuccessors(secondState, letter).iterator()
-						.hasNext()) : "States with different outgoing transitions "
-								+ "should have been marked as not equivalent.";
+				assert (mOperand.internalSuccessors(secondState, letter).iterator().hasNext())
+						: "States with different outgoing transitions " + "should have been marked as not equivalent.";
 
 				succQ = find(
 						mState2int.get(mOperand.internalSuccessors(secondState, letter).iterator().next().getSucc()));
@@ -644,7 +638,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 		/*
 		 * add transitions
-		 * 
+		 *
 		 * NOTE: This exploits the fact that the input is deterministic.
 		 */
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
@@ -659,7 +653,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 	/**
 	 * This method computes a mapping from old states to new representatives.
-	 * 
+	 *
 	 * @return map old state -> new state
 	 */
 	private HashMap<Integer, ? extends Collection<STATE>> computeMapState2Equiv() {
@@ -709,7 +703,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * updated accordingly for faster future find operations.
 	 * <p>
 	 * pseudocode name: FIND
-	 * 
+	 *
 	 * @param oldRepresentative
 	 *            state
 	 * @return representative of the given state
@@ -749,7 +743,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * certainly the true representatives.
 	 * <p>
 	 * pseudocode name: UNION
-	 * 
+	 *
 	 * @param tuple
 	 *            pair of states that shall be united
 	 */
@@ -803,7 +797,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		 * avoided by this implementation.
 		 * <p>
 		 * pseudocode name: SET-INSERT
-		 * 
+		 *
 		 * @param tuple
 		 *            pair of states
 		 */
@@ -821,7 +815,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		 * implementation.
 		 * <p>
 		 * pseudocode name: SET-REMOVE
-		 * 
+		 *
 		 * @param tuple
 		 *            pair of states
 		 */
@@ -836,7 +830,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		 * This method checks containment of a pair of states.
 		 * <p>
 		 * pseudocode name: SET-SEARCH
-		 * 
+		 *
 		 * @param tuple
 		 *            pair of states
 		 * @return true iff pair of states is contained
@@ -849,7 +843,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		 * This method returns an iterator of all contained elements.
 		 * <p>
 		 * pseudocode name: SET-ELEMENTS
-		 * 
+		 *
 		 * @return iterator
 		 */
 		Iterator<Tuple> iterator() {
@@ -910,7 +904,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 			/**
 			 * Constructor.
-			 * 
+			 *
 			 * @param tuple
 			 *            pair of states
 			 */
@@ -950,7 +944,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 			/**
 			 * This method adds a new pair of states to the end of the list in {@code O(1)}.
-			 * 
+			 *
 			 * @param tuple
 			 *            pair of states
 			 * @return the new list node
@@ -982,7 +976,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 			/**
 			 * This method removes a given list node in {@code O(1)}.
-			 * 
+			 *
 			 * @param listNode
 			 *            list node
 			 */
@@ -1014,13 +1008,13 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 			 * This method returns an iterator of the list elements.
 			 * <p>
 			 * NOTE: It is assumed that the list is not modified during iteration.
-			 * 
+			 *
 			 * @param size
 			 *            the size of the list (known by the set)
 			 * @return iterator of list elements
 			 */
 			Iterator<Tuple> iterator(final int size) {
-				return new Iterator<Tuple>() {
+				return new Iterator<>() {
 					/**
 					 * Number of elements.
 					 */
@@ -1076,7 +1070,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * flag indicating whether this pair has already been investigated or not. The stack is used is to give an explicit
 	 * version of the recursive procedure in the equivalence checking algorithm.
 	 */
-	private class StackElem {
+	private static class StackElem {
 		/**
 		 * Pair of states.
 		 */
@@ -1088,7 +1082,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param tuple
 		 *            pair of states
 		 */

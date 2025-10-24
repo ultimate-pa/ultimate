@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 
 /**
  * Buchi difference "<tt>FKV</tt>".
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -52,7 +52,7 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 
 	/**
 	 * Constructor which creates a PowersetDeterminizer.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -74,7 +74,7 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 
 	/**
 	 * Full constructor with state determinizer.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -114,7 +114,7 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 					final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
 		mOnDemandComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, stateFactory,
 				optimization, userDefinedMaxRank);
-		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(mOnDemandComplemented);
+		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<>(mOnDemandComplemented);
 		constructDifferenceFromComplement(stateFactory);
 	}
 
@@ -124,12 +124,11 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation() + " Second operand "
-				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
-				+ mSndComplemented.size() + " states " + mOnDemandComplemented.getPowersetStates() + " powerset states"
-				+ mOnDemandComplemented.getRankStates() + " rank states. The highest rank that occured is "
-				+ mOnDemandComplemented.getHighesRank();
+		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation()
+				+ " Second operand " + mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation()
+				+ " Complement of second has " + mSndComplemented.size() + " states "
+				+ mOnDemandComplemented.getPowersetStates() + " powerset states" + mOnDemandComplemented.getRankStates()
+				+ " rank states. The highest rank that occured is " + mOnDemandComplemented.getHighesRank();
 	}
-
 
 }

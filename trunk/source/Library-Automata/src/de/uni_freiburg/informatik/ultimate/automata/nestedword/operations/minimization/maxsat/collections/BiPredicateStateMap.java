@@ -6,34 +6,32 @@ import java.util.function.BiPredicate;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.INode;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator.NormalNode;
 
-public class BiPredicateStateMap <STATE> implements BiPredicate<STATE, STATE>{
-	
+public class BiPredicateStateMap<STATE> implements BiPredicate<STATE, STATE> {
+
 	private final Map<STATE, NormalNode<STATE>> mStateMap;
 	private final boolean mCompressPaths;
 
-
-	public BiPredicateStateMap (Map<STATE, NormalNode<STATE>> stateMap, boolean compressPaths) {
+	public BiPredicateStateMap(final Map<STATE, NormalNode<STATE>> stateMap, final boolean compressPaths) {
 		mStateMap = stateMap;
 		mCompressPaths = compressPaths;
 	}
 
+	@Override
 	public boolean test(final STATE t, final STATE u) {
-	
-		if(mStateMap.isEmpty() || mStateMap.get(t) == null || mStateMap.get(u) == null) {
+
+		if (mStateMap.isEmpty() || mStateMap.get(t) == null || mStateMap.get(u) == null) {
 			return false;
-		}
-		else {
+		} else {
 			final NormalNode<STATE> root1 = find(mStateMap.get(t));
 			final NormalNode<STATE> root2 = find(mStateMap.get(u));
 			if (root1 == root2) {
 				return true;
-			}
-			else {
+			} else {
 				return false;
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private NormalNode<STATE> find(final NormalNode<STATE> source) {
 		if (mCompressPaths) {
@@ -53,9 +51,8 @@ public class BiPredicateStateMap <STATE> implements BiPredicate<STATE, STATE>{
 		}
 		return findNextRoot(source, true);
 	}
-	
-	@SuppressWarnings("hiding")
-	private <INodePredicate> NormalNode<STATE> findNextRoot(final NormalNode<STATE> source, final boolean isTemporaryNode) {
+
+	private NormalNode<STATE> findNextRoot(final NormalNode<STATE> source, final boolean isTemporaryNode) {
 		INode<STATE> node = source;
 
 		while (!node.isRoot() && isTemporaryNode || !node.isTemporaryRootOrBridge() && !isTemporaryNode) {

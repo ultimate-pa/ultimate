@@ -151,8 +151,8 @@ public class BinarySearchMinimizer implements IMinimizer {
 		}
 
 		IMinimizerStep<E> reduceToCurrentVariant() {
-			final Part part = this.mStack.peek();
-			ImmutableStack<Part> nextStack = this.mStack.pop();
+			final Part part = mStack.peek();
+			ImmutableStack<Part> nextStack = mStack.pop();
 			if (part.mIsFirstHalf) {
 				// Immediately split the first half, because removing the left and right half together has been tested
 				// in the last step, which was not successful (if it was, there would have been no split

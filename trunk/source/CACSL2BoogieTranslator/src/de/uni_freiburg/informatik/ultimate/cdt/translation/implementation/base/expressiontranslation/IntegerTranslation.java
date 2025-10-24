@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -419,25 +419,24 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
-			final ExpressionResultBuilder expressionResultBuilder) {
+	public Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr, final ICType cType) {
 		if (!mSettings.assumeNondeterministicValuesInRange() || !cType.getUnderlyingType().isIntegerType()) {
 			// only integer types can be out of range
-			return;
+			return Optional.empty();
 		}
 		final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
 		if (mTypeSizes.isUnsigned(cPrimitive)) {
 			// only signed types can be out of range
-			return;
+			return Optional.empty();
 		}
-		expressionResultBuilder.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
+		return Optional.of(constructInRangeExpression(mTypeSizes, loc, expr, cPrimitive));
 	}
 
 	/**
-	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
+	 * Returns "(minValue <= lrValue && lrValue <= maxValue)"
 	 */
-	private AssumeStatement constructAssumeInRangeStatement(final TypeSizes typeSizes, final ILocation loc,
-			final Expression expr, final CPrimitive type) {
+	private Expression constructInRangeExpression(final TypeSizes typeSizes, final ILocation loc, final Expression expr,
+			final CPrimitive type) {
 		final Expression minValue =
 				mTypeSizes.constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type));
 		final Expression maxValue =
@@ -447,8 +446,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
 		final Expression smallerMaxValue =
 				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, expr, type, maxValue, type);
-		return new AssumeStatement(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, biggerMinInt, smallerMaxValue));
+		return ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, biggerMinInt, smallerMaxValue);
 	}
 
 	@Override
@@ -576,7 +574,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	protected Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		if (mSettings.overapproximateFloatingPointOperations()) {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
@@ -587,12 +585,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	protected Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
-		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
+		if (type1 instanceof final CPrimitive primitive1 && type2 instanceof final CPrimitive primitive2) {
 			final Pair<Expression, Expression> wrapped =
-					applyWraparoundsIfNecessary(loc, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
+					applyWraparoundsIfNecessary(loc, exp1, primitive1, exp2, primitive2);
 			leftExpr = wrapped.getFirst();
 			rightExpr = wrapped.getSecond();
 		}
@@ -742,8 +740,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public Pair<Expression, Expression> constructOverflowCheckForArithmeticExpression(final ILocation loc,
 			final int operation, final CPrimitive resultType, final Expression lhsOperand,
 			final Expression rhsOperand) {
-		assert resultType.isIntegerType()
-				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
+		assert resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)
+				: "Overflow check only for signed integer types";
 		assert List.of(IASTBinaryExpression.op_multiply, IASTBinaryExpression.op_multiplyAssign,
 				IASTBinaryExpression.op_plus, IASTBinaryExpression.op_plusAssign, IASTBinaryExpression.op_minus,
 				IASTBinaryExpression.op_minusAssign, IASTBinaryExpression.op_divide,
@@ -757,8 +755,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(final ILocation loc,
 			final int operation, final CPrimitive resultType, final Expression operand) {
-		assert resultType.isIntegerType()
-				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
+		assert resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)
+				: "Overflow check only for signed integer types";
 		assert operation == IASTUnaryExpression.op_minus;
 
 		final Expression operationResult = constructUnaryExpression(loc, operation, operand, resultType);

@@ -557,8 +557,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				final PredicateUnifier pu =
 						new PredicateUnifier(mLogger, mServices, mCsToolkitWithRankVars.getManagedScript(),
 								mPredicateFactory, mCsToolkitWithRankVars.getSymbolTable(), SIMPLIFICATION_TECHNIQUE,
-								bspmResult.getStemPrecondition(), hondaPredicate, rankEqAndSi, bspmResult.getStemPostcondition(),
-								bspmResult.getRankDecreaseAndBound(), bspmResult.getSiConjunction());
+								bspmResult.getStemPrecondition(), hondaPredicate, rankEqAndSi,
+								bspmResult.getStemPostcondition(), bspmResult.getRankDecreaseAndBound(),
+								bspmResult.getSiConjunction());
 				final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
 						bspmResult.getStemPrecondition(), bspmResult.getStemPostcondition(), pu);
 				final IPredicate[] loopInterpolants =

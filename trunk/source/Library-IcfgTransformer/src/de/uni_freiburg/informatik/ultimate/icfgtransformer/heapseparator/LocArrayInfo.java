@@ -6,10 +6,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Represents a loc-array.
- * Each loc-array corresponds to one array-term (typically a TermVariable) in some IcfgEdge.
- * The array-term may or may not be related to an {@link IProgramVarOrConst} (it is, if it belongs to an in var or out
- * var in the given edge).
+ * Represents a loc-array. Each loc-array corresponds to one array-term (typically a TermVariable) in some IcfgEdge. The
+ * array-term may or may not be related to an {@link IProgramVarOrConst} (it is, if it belongs to an in var or out var
+ * in the given edge).
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -54,7 +53,7 @@ public class LocArrayInfo {
 	}
 
 	public boolean isGlobalPvoc() {
-		return mPvoc != null && mPvoc instanceof IProgramNonOldVar;
+		return mPvoc instanceof IProgramNonOldVar;
 	}
 
 	public EdgeInfo getEdge() {

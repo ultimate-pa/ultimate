@@ -105,7 +105,7 @@ public class NoTimeoutTestResultDecider extends TestResultDecider {
 	public TestResult getTestResult(final IUltimateServiceProvider services, final Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
-		TestUtil.logResults(NoTimeoutTestResultDecider.class, mInputFileNames, true, new ArrayList<String>(), services);
+		TestUtil.logResults(NoTimeoutTestResultDecider.class, mInputFileNames, true, new ArrayList<>(), services);
 		return TestResult.FAIL;
 	}
 

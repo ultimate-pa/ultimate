@@ -285,8 +285,7 @@ public class AffineExpression {
 	public AffineExpression add(final AffineExpression summand) {
 		final AffineExpression sum = new AffineExpression();
 		sum.mConstant = mConstant.add(summand.mConstant);
-		final Set<IProgramVarOrConst> vars = new HashSet<>();
-		vars.addAll(mCoefficients.keySet());
+		final Set<IProgramVarOrConst> vars = new HashSet<>(mCoefficients.keySet());
 		vars.addAll(summand.mCoefficients.keySet());
 		for (final IProgramVarOrConst v : vars) {
 			final BigDecimal sumFactor = getCoefficient(v).add(summand.getCoefficient(v));
@@ -442,8 +441,7 @@ public class AffineExpression {
 		if (mConstant.compareTo(other.mConstant) != 0) {
 			return false;
 		}
-		final Set<IProgramVarOrConst> vars = new HashSet<>();
-		vars.addAll(mCoefficients.keySet());
+		final Set<IProgramVarOrConst> vars = new HashSet<>(mCoefficients.keySet());
 		vars.addAll(other.mCoefficients.keySet());
 		for (final IProgramVarOrConst v : vars) {
 			final BigDecimal coeff = getCoefficient(v);
@@ -477,8 +475,8 @@ public class AffineExpression {
 	}
 
 	/**
-	 * Affine expression of the form
-	 * <i>(±var1) + (±var2) + c</i>.
+	 * Affine expression of the form <i>(±var1) + (±var2) + c</i>.
+	 *
 	 * @see AffineExpression#getTwoVarForm()
 	 */
 	public static class TwoVarForm {

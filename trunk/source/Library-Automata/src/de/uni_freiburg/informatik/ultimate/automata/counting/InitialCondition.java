@@ -36,31 +36,31 @@ import java.util.ArrayList;
  */
 
 public class InitialCondition {
-	
+
 	private ArrayList<ArrayList<Guard>> mCondition;
-	
-	public InitialCondition()
-	{}
-	
-	public InitialCondition(ArrayList<ArrayList<Guard>> condition) {
+
+	public InitialCondition() {
+	}
+
+	public InitialCondition(final ArrayList<ArrayList<Guard>> condition) {
 		mCondition = condition;
 	}
-	
+
 	public ArrayList<ArrayList<Guard>> getCondition() {
 		return mCondition;
 	}
-	
+
 	public InitialCondition copyInitialCondition() {
-		ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<ArrayList<Guard>>();
-		for (ArrayList<Guard> list : mCondition) {
-			ArrayList<Guard> guardListCopy = new ArrayList<Guard>();
-			for (Guard guard : list) {
-				Guard guardCopy = guard.copyGuard();
+		final ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<>();
+		for (final ArrayList<Guard> list : mCondition) {
+			final ArrayList<Guard> guardListCopy = new ArrayList<>();
+			for (final Guard guard : list) {
+				final Guard guardCopy = guard.copyGuard();
 				guardListCopy.add(guardCopy);
 			}
 			guardDNFCopy.add(guardListCopy);
 		}
-		InitialCondition copy = new InitialCondition(guardDNFCopy);
+		final InitialCondition copy = new InitialCondition(guardDNFCopy);
 		return copy;
 	}
 }

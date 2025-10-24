@@ -41,7 +41,7 @@ public abstract class CommaSeparatedChildDeleter {
 
 	/**
 	 * Throws {@link MissingChildException} if more nodes are supposed to be deleted than children exist.
-	 * 
+	 *
 	 * @param childLocationsToDelete
 	 *            sorted sub-sequence of node locations in allChildren
 	 * @param allChildren
@@ -78,7 +78,7 @@ public abstract class CommaSeparatedChildDeleter {
 	 * Delete the nodes and necessary commas.
 	 * <p>
 	 * Throws {@link MissingChildException} if child is missing
-	 * 
+	 *
 	 * @throws MissingCommaLocationException
 	 *             if a required comma location is unknown
 	 */

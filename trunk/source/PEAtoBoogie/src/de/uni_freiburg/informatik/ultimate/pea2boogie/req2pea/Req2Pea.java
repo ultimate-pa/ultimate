@@ -210,7 +210,7 @@ public class Req2Pea implements IReq2Pea {
 	 *
 	 * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
 	 */
-	private final class CDDTransformer {
+	private static final class CDDTransformer {
 
 		public CDD transform(final CDD cdd) {
 			if (cdd == null || cdd == CDD.TRUE || cdd == CDD.FALSE) {
@@ -243,7 +243,7 @@ public class Req2Pea implements IReq2Pea {
 	 *
 	 * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
 	 */
-	private final class PrevFunctionApplicationTransformer extends GeneratedBoogieAstTransformer {
+	private static final class PrevFunctionApplicationTransformer extends GeneratedBoogieAstTransformer {
 
 		@Override
 		public Expression transform(final FunctionApplication node) {
@@ -268,7 +268,7 @@ public class Req2Pea implements IReq2Pea {
 		 *
 		 * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
 		 */
-		private final class PrevFunctionApplicationArgumentTransformer extends GeneratedBoogieAstTransformer {
+		private static final class PrevFunctionApplicationArgumentTransformer extends GeneratedBoogieAstTransformer {
 
 			@Override
 			public Expression transform(final FunctionApplication node) {

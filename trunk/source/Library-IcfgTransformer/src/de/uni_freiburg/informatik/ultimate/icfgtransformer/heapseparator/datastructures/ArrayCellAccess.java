@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datast
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -38,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Union type of ArraySelect and ArraySelectOverStore.
- * (EDIT: .. no more.. now it's a very simple wrapper for MultiDimensionalSelect..)
+ * Union type of ArraySelect and ArraySelectOverStore. (EDIT: .. no more.. now it's a very simple wrapper for
+ * MultiDimensionalSelect..)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -50,7 +51,7 @@ public class ArrayCellAccess {
 
 	/**
 	 * The "base" array, i.e. if we have a store as array term of mMdSelect, then this is the array that is stored to.
-	 *  (otherwise it's just that array term of mMdSelect)
+	 * (otherwise it's just that array term of mMdSelect)
 	 */
 	private final Term mSimpleArrayTerm;
 
@@ -77,6 +78,7 @@ public class ArrayCellAccess {
 
 	/**
 	 * get the array of the underlying mdSelect (can be a store term)
+	 *
 	 * @return
 	 */
 	public Term getArray() {
@@ -85,6 +87,7 @@ public class ArrayCellAccess {
 
 	/**
 	 * get the array variable/constant (look inside store terms)
+	 *
 	 * @return
 	 */
 	public Term getSimpleArray() {
@@ -112,10 +115,7 @@ public class ArrayCellAccess {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mMdSelect == null) ? 0 : mMdSelect.hashCode());
-		return result;
+		return Objects.hash(mMdSelect);
 	}
 
 	@Override

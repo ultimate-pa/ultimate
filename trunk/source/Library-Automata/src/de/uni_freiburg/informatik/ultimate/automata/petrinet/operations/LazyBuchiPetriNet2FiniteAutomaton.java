@@ -261,8 +261,8 @@ public class LazyBuchiPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLett
 
 		mState2Marking.put(state, marking);
 
-		assert isInitial == new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()))
-				.equals(marking) : "Wrong initial state";
+		assert isInitial == new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces())).equals(marking)
+				: "Wrong initial state";
 		mCache.addState(isInitial, isAccepting, state);
 
 		return state;

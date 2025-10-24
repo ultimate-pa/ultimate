@@ -90,9 +90,8 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		transformer.preprocessIcfg(originalIcfg);
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(mLogger, funLocFac, backtranslationTracker, transformer, originalIcfg,
-						resultIcfg);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, funLocFac,
+				backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 		return resultIcfg;

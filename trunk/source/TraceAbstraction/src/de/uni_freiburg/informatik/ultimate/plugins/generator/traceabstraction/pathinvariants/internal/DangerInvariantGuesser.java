@@ -228,7 +228,8 @@ public final class DangerInvariantGuesser {
 			final UnmodifiableTransFormula tf, final BasicPredicateFactory predicateFactory,
 			final CfgSmtToolkit csToolkit) {
 		final Term wp = pt.weakestPrecondition(predicateFactory.not(p), tf);
-		final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
+		final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices,
+				csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
 		final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
 		return pre;
 	}

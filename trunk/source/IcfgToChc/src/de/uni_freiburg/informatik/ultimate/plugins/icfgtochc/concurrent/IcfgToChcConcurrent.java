@@ -92,16 +92,19 @@ public class IcfgToChcConcurrent {
 			final Map<String, List<IProgramVar>> localVariables) {
 		int i = 0;
 		for (final IProgramVar v : globalVariables) {
-			mPositions2Vars.put(i++, new HcGlobalVar(v));
+			mPositions2Vars.put(i, new HcGlobalVar(v));
+			i++;
 		}
 		for (final Entry<String, Integer> entry : mNumberOfThreads.entrySet()) {
 			final String proc = entry.getKey();
 			final List<IProgramVar> localVars = localVariables.get(proc);
 			for (int j = 0; j < entry.getValue(); j++) {
 				// Location
-				mPositions2Vars.put(i++, new HcLocationVar(proc, j, getIntSort()));
+				mPositions2Vars.put(i, new HcLocationVar(proc, j, getIntSort()));
+				i++;
 				for (final IProgramVar v : localVars) {
-					mPositions2Vars.put(i++, new HcLocalVar(v, j));
+					mPositions2Vars.put(i, new HcLocalVar(v, j));
+					i++;
 				}
 			}
 		}

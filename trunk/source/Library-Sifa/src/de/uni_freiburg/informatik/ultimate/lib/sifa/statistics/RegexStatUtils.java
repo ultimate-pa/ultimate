@@ -35,11 +35,11 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexToDag;
 
 /**
- * Performs regex operations while updating statistics.
- * Statistics are not included in any regex classes to make them independent of sifa-specific classes.
+ * Performs regex operations while updating statistics. Statistics are not included in any regex classes to make them
+ * independent of sifa-specific classes.
  *
- * TODO This class would be better as wrappers around PEComputer, RegexToDag, and so on.
- *      The classes to be wrapped have only few public methods, so the change should be simple.
+ * TODO This class would be better as wrappers around PEComputer, RegexToDag, and so on. The classes to be wrapped have
+ * only few public methods, so the change should be simple.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -60,8 +60,8 @@ public final class RegexStatUtils {
 	}
 
 	/** @see PathExpressionComputer#exprBetween(Object, Object) */
-	public static <N, L> IRegex<L> exprBetween(final SifaStats stats,
-			final PathExpressionComputer<N, L> peComputer, final N source, final N target) {
+	public static <N, L> IRegex<L> exprBetween(final SifaStats stats, final PathExpressionComputer<N, L> peComputer,
+			final N source, final N target) {
 
 		stats.start(SifaStats.Key.PATH_EXPR_TIME);
 		final IRegex<L> result = peComputer.exprBetween(source, target);
@@ -79,8 +79,8 @@ public final class RegexStatUtils {
 	}
 
 	/** @see RegexToDag#add(IRegex) */
-	public static <L> RegexDagNode<L> addToDag(final SifaStats stats,
-			final RegexToDag<L> regexToDag, final IRegex<L> regex) {
+	public static <L> RegexDagNode<L> addToDag(final SifaStats stats, final RegexToDag<L> regexToDag,
+			final IRegex<L> regex) {
 
 		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
 		final RegexDagNode<L> result = regexToDag.add(regex);
@@ -89,8 +89,7 @@ public final class RegexStatUtils {
 	}
 
 	/** @see RegexToDag#getDagAndReset() */
-	public static <L> RegexDag<L> getDagAndReset(final SifaStats stats,
-			final RegexToDag<L> regexToDag) {
+	public static <L> RegexDag<L> getDagAndReset(final SifaStats stats, final RegexToDag<L> regexToDag) {
 
 		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
 		final RegexDag<L> result = regexToDag.getDagAndReset();
@@ -99,11 +98,10 @@ public final class RegexStatUtils {
 	}
 
 	/**
-	 * Creates a {@link RegexToDag}, adds a single regex using {@link RegexToDag#add(IRegex)},
-	 * and then returns the dag given {@link RegexToDag#getDagAndReset()}.
+	 * Creates a {@link RegexToDag}, adds a single regex using {@link RegexToDag#add(IRegex)}, and then returns the dag
+	 * given {@link RegexToDag#getDagAndReset()}.
 	 */
-	public static <L> RegexDag<L> regexToDag(final SifaStats stats,
-			final IRegex<L> regex) {
+	public static <L> RegexDag<L> regexToDag(final SifaStats stats, final IRegex<L> regex) {
 
 		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
 		final RegexToDag<L> regexToDag = new RegexToDag<>();
@@ -114,8 +112,7 @@ public final class RegexStatUtils {
 	}
 
 	/** @see RegexDagCompressor#compress(RegexDag) */
-	public static <L> RegexDag<L> compress(final SifaStats stats,
-			final RegexDag<L> dag) {
+	public static <L> RegexDag<L> compress(final SifaStats stats, final RegexDag<L> dag) {
 
 		stats.add(SifaStats.Key.DAG_COMPRESSION_PROCESSED_NODES, dag.collectNodes().size());
 		stats.start(SifaStats.Key.DAG_COMPRESSION_TIME);

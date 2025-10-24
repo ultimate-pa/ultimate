@@ -174,10 +174,9 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 					loopInterpolantsForRefinement
 							.addAll(pu.cannibalize(false, bspmResult.getRankEqAndSi().getFormula()));
 
-					final LoopCannibalizer<LETTER> lc =
-							new LoopCannibalizer<>(counterexample, loopInterpolantsForRefinement,
-									bspmResult.getRankEqAndSi(), bspmResult.getHondaPredicate(), pu, mCsToolkit,
-									mInterpolation, mServices, mSimplificationTechnique);
+					final LoopCannibalizer<LETTER> lc = new LoopCannibalizer<>(counterexample,
+							loopInterpolantsForRefinement, bspmResult.getRankEqAndSi(), bspmResult.getHondaPredicate(),
+							pu, mCsToolkit, mInterpolation, mServices, mSimplificationTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
 					final String taskDescription = "loop cannibalization";

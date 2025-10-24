@@ -63,10 +63,8 @@ public class ReUseSupersetCallSummarizer implements ICallSummarizer {
 		mStats.start(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
 		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_APPLICATIONS);
 
-		final IPredicate result = mSummaryCache
-				.computeIfAbsent(callee, unused -> new SummaryCache())
-				.reUseOrCompute(inputAfterCall, this::isSubsetEq,
-						() -> mSummarizer.summarize(callee, inputAfterCall), mTools);
+		final IPredicate result = mSummaryCache.computeIfAbsent(callee, unused -> new SummaryCache()).reUseOrCompute(
+				inputAfterCall, this::isSubsetEq, () -> mSummarizer.summarize(callee, inputAfterCall), mTools);
 
 		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
 		return result;
@@ -77,8 +75,3 @@ public class ReUseSupersetCallSummarizer implements ICallSummarizer {
 		return subsetEq.isTrueForAbstraction() && subsetEq.getRhs() == superset;
 	}
 }
-
-
-
-
-

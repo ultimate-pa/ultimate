@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  */
 public class PSTACSLNode extends PSTNode implements IPSTACSLNode {
 	private final ACSLNode mAcslNode;
-	
+
 	/**
 	 * @param source
 	 *            Source document.
@@ -50,22 +50,22 @@ public class PSTACSLNode extends PSTNode implements IPSTACSLNode {
 		super(source, location, null);
 		mAcslNode = acslNode;
 	}
-	
+
 	@Override
 	public ACSLNode getAcslNode() {
 		return mAcslNode;
 	}
-	
+
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();

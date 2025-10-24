@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProvider {
-	
+
 	private final Benchmark mBenchmark;
 	private boolean mRunning = false;
 
@@ -56,62 +56,66 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 	}
 
 	public long getErrorLocalizationTime() {
-		return (long) mBenchmark.getElapsedTime(String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime), TimeUnit.NANOSECONDS);
+		return (long) mBenchmark.getElapsedTime(
+				String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime), TimeUnit.NANOSECONDS);
 	}
+
 	public void continueErrorLocalizationTime() {
 		assert !mRunning : "Timing already running";
 		mRunning = true;
 		mBenchmark.unpause(String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime));
 	}
+
 	public void stopErrorLocalizationTime() {
 		assert mRunning : "Timing not running";
 		mRunning = false;
 		mBenchmark.pause(String.valueOf(ErrorLocalizationStatisticsDefinitions.ErrorLocalizationTime));
 	}
-	
+
 	public void reportSuccessfullyFinished() {
 		if (mSuccessfullyFinished) {
 			throw new IllegalStateException("already finished before");
 		}
 		mSuccessfullyFinished = true;
 	}
-	
+
 	public void reportIcfgEdge() {
 		mIcfgEdges++;
 	}
-	
+
 	public void reportErrorEnforcingIcfgEdge() {
 		mErrorEnforcingIcfgEdges++;
 	}
-	
+
 	public void reportErrorAdmittingIcfgEdge() {
 		mErrorAdmittingIcfgEdges++;
 	}
-	
+
 	public void reportErrorIrrelevantIcfgEdge() {
 		mErrorIrrelevantIcfgEdges++;
 	}
-	
-	public void reportNumberOfBranches(int numberOfBranches) {
+
+	public void reportNumberOfBranches(final int numberOfBranches) {
 		mNumberOfBranches = numberOfBranches;
 	}
-	
-	public void reportAngelicScore(double angelicScore) {
+
+	public void reportAngelicScore(final double angelicScore) {
 		mAngelicScore = angelicScore;
 	}
-	
-	public void addHoareTripleCheckerStatistics(final HoareTripleCheckerStatisticsGenerator hoareTripleCheckerStatistics) {
+
+	public void
+			addHoareTripleCheckerStatistics(final HoareTripleCheckerStatisticsGenerator hoareTripleCheckerStatistics) {
 		mHoareTripleCheckerStatistics.aggregateBenchmarkData(hoareTripleCheckerStatistics);
 	}
 
-	
 	@Override
 	public Collection<String> getKeys() {
 		return ErrorLocalizationStatisticsType.getInstance().getKeys();
 	}
+
 	@Override
 	public Object getValue(final String key) {
-		final ErrorLocalizationStatisticsDefinitions keyEnum = Enum.valueOf(ErrorLocalizationStatisticsDefinitions.class, key);
+		final ErrorLocalizationStatisticsDefinitions keyEnum = ErrorLocalizationStatisticsDefinitions.valueOf(key);
 		switch (keyEnum) {
 		case ErrorAdmittingIcfgEdges:
 			return mErrorAdmittingIcfgEdges;
@@ -140,7 +144,5 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 	public IStatisticsType getBenchmarkType() {
 		return ErrorLocalizationStatisticsType.getInstance();
 	}
-
-
 
 }

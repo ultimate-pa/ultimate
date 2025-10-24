@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE DebugGUI plug-in.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE DebugGUI plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.gui.dialogs;
@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 
 public class PreferencesDialog extends Dialog {
 
-	public static final String dotpath="dotpath";
-	
+	public static final String dotpath = "dotpath";
+
 	private Text text;
 	protected Object result;
 
@@ -55,23 +55,26 @@ public class PreferencesDialog extends Dialog {
 
 	/**
 	 * Create the dialog
+	 *
 	 * @param parent
 	 * @param style
 	 */
-	public PreferencesDialog(Shell parent, int style) {
+	public PreferencesDialog(final Shell parent, final int style) {
 		super(parent, style);
 	}
 
 	/**
 	 * Create the dialog
+	 *
 	 * @param parent
 	 */
-	public PreferencesDialog(Shell parent) {
+	public PreferencesDialog(final Shell parent) {
 		this(parent, SWT.NONE);
 	}
 
 	/**
 	 * Open the dialog
+	 *
 	 * @return the result
 	 */
 	public Object open() {
@@ -91,8 +94,8 @@ public class PreferencesDialog extends Dialog {
 	 * Create contents of the dialog
 	 */
 	protected void createContents() {
-		final Preferences my=Preferences.userRoot().node(GuiController.PLUGIN_ID);
-		
+		final Preferences my = Preferences.userRoot().node(GuiController.PLUGIN_ID);
+
 		shell = new Shell(getParent(), SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
 		final GridLayout gridLayout_1 = new GridLayout();
 		gridLayout_1.numColumns = 2;
@@ -114,15 +117,15 @@ public class PreferencesDialog extends Dialog {
 		text = new Text(dottyGroup, SWT.BORDER);
 		text.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		text.setText(my.get(dotpath, ""));
-		
+
 		final Button chooseButton = new Button(dottyGroup, SWT.NONE);
 		chooseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				final FileDialog fd= new FileDialog(shell, SWT.OPEN);
+				final FileDialog fd = new FileDialog(shell, SWT.OPEN);
 				fd.setText("Where is your DOT (not dotty!)");
 				final String dotfile = fd.open();
-				if(dotfile != null) {
+				if (dotfile != null) {
 					text.setText(dotfile);
 				}
 			}
@@ -155,13 +158,11 @@ public class PreferencesDialog extends Dialog {
 		cancelButton.setText("Cancel");
 		//
 	}
-	
-	
-	private void save(){
-		final Preferences my=Preferences.userRoot().node(GuiController.PLUGIN_ID);
-		my.put(dotpath, text.getText() );
-		
-		
+
+	private void save() {
+		final Preferences my = Preferences.userRoot().node(GuiController.PLUGIN_ID);
+		my.put(dotpath, text.getText());
+
 	}
 
 }

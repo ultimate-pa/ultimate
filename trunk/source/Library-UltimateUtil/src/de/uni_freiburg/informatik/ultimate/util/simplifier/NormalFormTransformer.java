@@ -240,10 +240,8 @@ public class NormalFormTransformer<E> {
 			if (isOperandSubset(root, candidate)) {
 				return true;
 			}
-		} else if (mWrapper.isOr(root) && mWrapper.isOr(candidate)) {
-			if (isOperandSubset(root, candidate)) {
-				return true;
-			}
+		} else if ((mWrapper.isOr(root) && mWrapper.isOr(candidate)) && isOperandSubset(root, candidate)) {
+			return true;
 		}
 
 		// descend

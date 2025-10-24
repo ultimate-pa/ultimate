@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersect
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 
 public class BuchiDifferenceTest<LETTER, STATE> {
-	
+
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mDifference;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
@@ -25,9 +25,8 @@ public class BuchiDifferenceTest<LETTER, STATE> {
 	private final IBuchiIntersectStateFactory<STATE> mStateFactory;
 	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplemented;
 	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplementedStandard;
-	
-	public <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>  
-	 BuchiDifferenceTest(
+
+	public <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiDifferenceTest(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> difference,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
@@ -36,33 +35,38 @@ public class BuchiDifferenceTest<LETTER, STATE> {
 		mSndOperand = sndOperand;
 		mServices = services;
 		mDifference = difference;
-	    mStateFactory = stateFactory;
-	    constructDifference(stateFactory);
+		mStateFactory = stateFactory;
+		constructDifference(stateFactory);
 	}
-	
-    static int mNumber = 0;
-	private <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-	void constructDifference(final SF stateFactory) throws AutomataLibraryException {
-		INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOp = new GeneralizedBuchiToBuchi<>(stateFactory, mFstOperand);
-		IBuchiComplementNcsbStateFactory<STATE> sf = (IBuchiComplementNcsbStateFactory<STATE>)stateFactory;
-		final BuchiComplementNCSBNwa<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBNwa<>(mServices,
-				sf, mSndOperand, false);
-		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
-		BuchiIntersectNwa<LETTER, STATE> diff = new BuchiIntersectNwa<>(fstOp, mSndComplemented, stateFactory);
-		NestedWordAutomatonReachableStates<LETTER, STATE> reach = new NestedWordAutomatonReachableStates<>(mServices, diff);
-		INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> baDiff = new GeneralizedBuchiToBuchi<>(stateFactory, mDifference);
-		NestedWordAutomatonReachableStates<LETTER, STATE> reachBADiff = new NestedWordAutomatonReachableStates<>(mServices, baDiff);
-		mNumber ++;
-		new AutomatonDefinitionPrinter<String, String>(mServices, "difference",
-		"./difference" + mNumber + "_1", Format.BA, "", reachBADiff);
-		new AutomatonDefinitionPrinter<String, String>(mServices, "difference",
-		"./difference" + mNumber + "_2", Format.BA, "", reach);
+
+	static int mNumber = 0;
+
+	private <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
+			constructDifference(final SF stateFactory) throws AutomataLibraryException {
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOp =
+				new GeneralizedBuchiToBuchi<>(stateFactory, mFstOperand);
+		final IBuchiComplementNcsbStateFactory<STATE> sf = (IBuchiComplementNcsbStateFactory<STATE>) stateFactory;
+		final BuchiComplementNCSBNwa<LETTER, STATE> onDemandComplemented =
+				new BuchiComplementNCSBNwa<>(mServices, sf, mSndOperand, false);
+		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<>(onDemandComplemented);
+		final BuchiIntersectNwa<LETTER, STATE> diff = new BuchiIntersectNwa<>(fstOp, mSndComplemented, stateFactory);
+		final NestedWordAutomatonReachableStates<LETTER, STATE> reach =
+				new NestedWordAutomatonReachableStates<>(mServices, diff);
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> baDiff =
+				new GeneralizedBuchiToBuchi<>(stateFactory, mDifference);
+		final NestedWordAutomatonReachableStates<LETTER, STATE> reachBADiff =
+				new NestedWordAutomatonReachableStates<>(mServices, baDiff);
+		mNumber++;
+		new AutomatonDefinitionPrinter<String, String>(mServices, "difference", "./difference" + mNumber + "_1",
+				Format.BA, "", reachBADiff);
+		new AutomatonDefinitionPrinter<String, String>(mServices, "difference", "./difference" + mNumber + "_2",
+				Format.BA, "", reach);
 		BuchiIsEmpty<LETTER, STATE> check = new BuchiIsEmpty<>(mServices, reach);
 		System.err.println("Difference empty from BA: " + check.getResult());
 		check = new BuchiIsEmpty<>(mServices, reachBADiff);
 		System.err.println("Difference empty from GBA: " + check.getResult());
-		BenchmarkRecord.addDiffComparison(reach.getStates().size(), mDifference.getStates().size(), reachBADiff.getStates().size());
+		BenchmarkRecord.addDiffComparison(reach.getStates().size(), mDifference.getStates().size(),
+				reachBADiff.getStates().size());
 	}
-	
 
 }

@@ -174,8 +174,8 @@ public class InlinerBacktranslator
 				: "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
 
 		final CallReinserter callReinserter = new CallReinserter();
-		final var stem = translateProgramExecution(callReinserter, programExecution.getStem());
-		final var loop = translateProgramExecution(callReinserter, programExecution.getLoop());
+		final var stem = translateProgramExecution(callReinserter, programExecution.stem());
+		final var loop = translateProgramExecution(callReinserter, programExecution.loop());
 		final var translated = new Lasso<IProgramExecution<BoogieASTNode, Expression>>(stem, loop);
 
 		assert checkCallStackTargetLassoProgramExecution(mLogger, translated)

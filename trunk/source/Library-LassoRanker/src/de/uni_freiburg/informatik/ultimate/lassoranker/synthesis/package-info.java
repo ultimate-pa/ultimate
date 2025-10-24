@@ -27,9 +27,8 @@
  * to convey the resulting work.
  */
 /**
- * This package provides a framework for the constraint-based synthesis of
- * safety invariants, ranking functions, danger invariants, recurrence sets,
- * etc.
+ * This package provides a framework for the constraint-based synthesis of safety invariants, ranking functions, danger
+ * invariants, recurrence sets, etc.
  *
  * @author Daniel Fertmann (fertmand@cs.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

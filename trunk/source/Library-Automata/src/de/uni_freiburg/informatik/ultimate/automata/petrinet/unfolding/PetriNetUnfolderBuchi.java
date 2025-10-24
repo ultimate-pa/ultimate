@@ -88,8 +88,8 @@ public class PetriNetUnfolderBuchi<LETTER, PLACE>
 		 * Unfolding-stem-event as companion event, and thus needs special handling.
 		 */
 		if (event.getCompanion().getTransition() == null) {
-			final List<Event<LETTER, PLACE>> configLoopEvents = new ArrayList<>();
-			configLoopEvents.addAll(event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder()));
+			final List<Event<LETTER, PLACE>> configLoopEvents =
+					new ArrayList<>(event.getLocalConfiguration().getSortedConfiguration(mUnfolding.getOrder()));
 			if (checkIfLassoConfigurationAccepted(configLoopEvents, new ArrayList<>())) {
 				return true;
 			}

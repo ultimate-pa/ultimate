@@ -4,22 +4,22 @@
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -31,7 +31,7 @@
  * Buchi automata state space reduction algorithm based on the following paper:
  * "Fair simulation relations, parity games and state space reduction for
  * Buchi automata" - Etessami, Wilke and Schuller.
- * 
+ *
  * Algorithm optimized to work using strongly connected components.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation;
@@ -90,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * the amount of transitions from the inputed automaton.<br/>
  * The algorithm is based on the paper: <i>Fair simulation relations, parity games, and state space reduction for büchi
  * automata</i> by <i>Etessami, Wilke and Schuller</i>.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
@@ -146,7 +146,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Creates a new simulation that initiates all needed data structures and fields.
-	 * 
+	 *
 	 * @param progressTimer
 	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
@@ -179,7 +179,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * Starts the simulation that calculates the corresponding progress measures to all vertices of the underlying game
 	 * graph. After that it uses that information to possible reduce the inputed buechi automaton and finally assigns
 	 * the result which then can be accessed by {@link #getResult()}.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
@@ -228,12 +228,12 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		retrieveGeneralAutomataPerformance();
 
-		mLogger.info((this.mUseSccs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
+		mLogger.info((mUseSccs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
 
 	/**
 	 * Gets the resulting possible reduced buechi automaton.
-	 * 
+	 *
 	 * @return The resulting possible reduced buechi automaton.
 	 */
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
@@ -242,7 +242,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Gets the performance of the simulation.
-	 * 
+	 *
 	 * @return The performance of the simulation.
 	 */
 	public SimulationPerformance getSimulationPerformance() {
@@ -251,7 +251,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Gets t state factory used for creating states.
-	 * 
+	 *
 	 * @return The state factory used for creating states.
 	 */
 	public IStateFactory<STATE> getStateFactory() {
@@ -260,7 +260,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -337,7 +337,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Adds a given vertex to the working list and updates its own working list flag.
-	 * 
+	 *
 	 * @param vertex
 	 *            Vertex to add
 	 */
@@ -354,7 +354,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * For a {@link DuplicatorVertex} the minimal progress measure of its successor is returned, maximal for a
 	 * {@link SpoilerVertex}.<br/>
 	 * The returned value then gets decreased based on the priority of the given vertex.
-	 * 
+	 *
 	 * @param vertex
 	 *            The given vertex to calculate for
 	 * @param localInfinity
@@ -432,7 +432,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * Calculates the number of successors a vertex has that represent the best choice for it to go at.<br/>
 	 * This is represented by the best neighbor measure of the vertex.
-	 * 
+	 *
 	 * @param vertex
 	 *            The vertex to calculate for
 	 * @param localInfinity
@@ -493,7 +493,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * In contrast to the {@link AGameGraph#getGlobalInfinity() global infinity of a game graph} this can be used to
 	 * locally optimize the simulation calculation of a single SCC. This is because we can already be sure that we can
 	 * visit the corresponding vertices infinite times after visiting them the local bound often.
-	 * 
+	 *
 	 * @param scc
 	 *            The SCC to calculate the local infinity for
 	 * @return A, for the SCC, local optimal upper bound for infinity which is the number of vertices in the SCC that
@@ -521,7 +521,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * Decreases a given number based on a given index and a local infinity. <br/>
 	 * The global infinity bound gets returned if the number has reached the local infinity bound. The number itself
 	 * gets returned if the index is not zero and 0 if it is zero.
-	 * 
+	 *
 	 * @param index
 	 *            The index to reduce to
 	 * @param vector
@@ -548,7 +548,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * When finished the progress measures of given vertices determine a simulation relation that is used for reducing
 	 * buechi automata.<br/>
 	 * For a given vertex (q0, q1) we shall say q1 simulates q0 if its progress measure did not reach infinity.
-	 * 
+	 *
 	 * @param localInfinity
 	 *            The local infinity in the containing SCC or global infinity if not used
 	 * @param scc
@@ -659,14 +659,14 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Gets the {@link AGameGraph} used for this simulation.
-	 * 
+	 *
 	 * @return The {@link AGameGraph} used for this simulation.
 	 */
 	protected abstract AGameGraph<LETTER, STATE> getGameGraph();
 
 	/**
 	 * Gets the logger used by the Ultimate framework.
-	 * 
+	 *
 	 * @return The logger used by the Ultimate framework.
 	 */
 	protected ILogger getLogger() {
@@ -675,7 +675,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Gets the timer used for responding to timeouts and operation cancellation.
-	 * 
+	 *
 	 * @return The timer used for responding to timeouts and operation cancellation.
 	 */
 	protected IProgressAwareTimer getProgressTimer() {
@@ -684,7 +684,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Gets the object that is used for computing the SCCs of a given buechi automaton.
-	 * 
+	 *
 	 * @return The object that is used for computing the SCCs of a given buechi automaton.
 	 */
 	protected SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> getSccComp() {
@@ -693,7 +693,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Gets the current working list of the simulation.
-	 * 
+	 *
 	 * @return The current working list of the simulation.
 	 */
 	protected PriorityQueue<Vertex<LETTER, STATE>> getWorkingList() {
@@ -706,7 +706,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * is not one.<br/>
 	 * For a index of one it increases the given number and returns it or global infinity if reached the local infinity
 	 * bound.
-	 * 
+	 *
 	 * @param index
 	 *            The given index to increase from
 	 * @param vector
@@ -737,7 +737,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * Initializes a given vertex for the current simulation calculation by possibly adding it to the working list and
 	 * initializing its values.<br/>
 	 * Used by {@link #initSimulation(int, Set)}.
-	 * 
+	 *
 	 * @param vertex
 	 *            Vertex to initialize
 	 * @param localInfinity
@@ -779,7 +779,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * If the simulation calculation gets optimized by using SCC, Strongly Connected Components.
-	 * 
+	 *
 	 * @return True if the simulation calculation gets optimized by using SCC, false if not.
 	 */
 	protected boolean isUsingSCCs() {
@@ -788,7 +788,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Retrieves and removes the head of the working list. Also updates the working list flag of the vertex.
-	 * 
+	 *
 	 * @return The head of the working list, or <tt>null</tt> if it is empty.
 	 */
 	protected Vertex<LETTER, STATE> pollVertexFromWorkingList() {
@@ -849,7 +849,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Sets the result of the simulation calculation, a possible reduced buechi automaton.
-	 * 
+	 *
 	 * @param result
 	 *            The result of the simulation calculation, a possible reduced buechi automaton.
 	 */
@@ -859,7 +859,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Sets the object that is used for computing the SCCs of a given buechi automaton.
-	 * 
+	 *
 	 * @param sccComp
 	 *            The object to set.
 	 */
@@ -870,7 +870,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 	/**
 	 * Sets if the simulation calculation should be optimized using SCC, Strongly Connected Components or not.
-	 * 
+	 *
 	 * @param useSccs
 	 *            True if the simulation calculation gets optimized by using SCC, false if not.
 	 */
@@ -881,7 +881,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * Gets called after the simulation was run but before the resulting automaton gets generated. Provides a hook for
 	 * manipulating simulation results.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
@@ -894,7 +894,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * and priority.<br/>
 	 * If the returned value has increased the vertex can make a better move than in its previous run and should be
 	 * updated.
-	 * 
+	 *
 	 * @param v
 	 *            The vertex to update
 	 * @param localInfinity

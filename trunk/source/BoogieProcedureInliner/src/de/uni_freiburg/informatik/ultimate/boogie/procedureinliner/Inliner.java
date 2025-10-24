@@ -203,8 +203,7 @@ public class Inliner implements IUnmanagedObserver {
 	}
 
 	private void writeNewDeclarationsToAstUnit() {
-		final List<Declaration> newDeclarations = new ArrayList<>();
-		newDeclarations.addAll(mNonProcedureDeclarations);
+		final List<Declaration> newDeclarations = new ArrayList<>(mNonProcedureDeclarations);
 		final boolean eliminateDeadCode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceItem.ELIMINATE_DEAD_CODE.getName());
 		for (final CallGraphNode proc : mCallGraph.values()) {

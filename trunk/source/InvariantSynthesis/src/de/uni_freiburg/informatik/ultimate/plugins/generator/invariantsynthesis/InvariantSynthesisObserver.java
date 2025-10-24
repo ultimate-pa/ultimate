@@ -85,13 +85,13 @@ public class InvariantSynthesisObserver implements IUnmanagedObserver {
 				} catch (final Exception e) {
 					e.printStackTrace(System.out);
 				}
-			
+
 				System.out.println("test main finished, exiting..");
 				System.exit(0);
 			}
 
 			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
-			final InvariantSynthesisStarter tas = new InvariantSynthesisStarter(mServices, rcfgRootNode);
+			final InvariantSynthesisStarter<?> tas = new InvariantSynthesisStarter<>(mServices, rcfgRootNode);
 			mRootOfNewModel = tas.getRootOfNewModel();
 		}
 	}

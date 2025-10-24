@@ -82,8 +82,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 
 		final EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol();
 
-		mOpenNodes.add(new AppDoubleDecker(root, emptyStackSymbol, new Stack<IIcfgCallTransition<?>>(),
-				new Stack<AnnotatedProgramPoint>()));
+		mOpenNodes.add(new AppDoubleDecker(root, emptyStackSymbol, new Stack<>(), new Stack<>()));
 		Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<IcfgLocation>>> returnedPath = null;
 
 		while (!mOpenNodes.isEmpty() && returnedPath == null) {
@@ -242,12 +241,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 			final ArrayDeque<AnnotatedProgramPoint> newErrorPath = new ArrayDeque<>();
 
 			final Iterator<AnnotatedProgramPoint> pathIt = oldErrorPath.iterator();
-			final Iterator<IIcfgTransition<IcfgLocation>> traceIt = oldErrorTrace.iterator();
-
 			AnnotatedProgramPoint nextApp = pathIt.next();
 
-			while (traceIt.hasNext()) {
-				final IIcfgTransition<IcfgLocation> currentCodeBlock = traceIt.next();
+			for (final IIcfgTransition<IcfgLocation> currentCodeBlock : oldErrorTrace) {
 				final AnnotatedProgramPoint previousApp = nextApp;
 
 				newErrorPath.add(previousApp);

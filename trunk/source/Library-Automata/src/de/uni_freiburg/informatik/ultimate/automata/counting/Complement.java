@@ -39,8 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 
 /**
- * Complement method for Counting Automata
- * Needs a deterministic Automaton as Input
+ * Complement method for Counting Automata Needs a deterministic Automaton as Input
  *
  * @author Marcel Ebbinghaus
  * @author who is the author?
@@ -54,10 +53,7 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 	private final CountingAutomaton<LETTER, STATE> mResult;
 	private final IIntersectionStateFactory<STATE> mStateFactory;
 
-
-	public Complement(
-			final AutomataLibraryServices services, 
-			final IIntersectionStateFactory<STATE> stateFactory,
+	public Complement(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
 			final CountingAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(this.getClass());
@@ -74,65 +70,64 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	private CountingAutomaton<LETTER, STATE> computeResult() {
-		
-		ArrayList<Counter> complementCounter = new ArrayList<Counter>();
-		for (Counter counter : mOperand.getCounter()) {
+
+		final ArrayList<Counter> complementCounter = new ArrayList<>();
+		for (final Counter counter : mOperand.getCounter()) {
 			complementCounter.add(counter.copyCounter());
 		}
-		Map<STATE, InitialCondition> complementInitialConditions = new HashMap<STATE, InitialCondition>();
-		Map<STATE, FinalCondition> complementFinalConditions = new HashMap<STATE, FinalCondition>();
-		Map<STATE, ArrayList<Transition<LETTER, STATE>>> complementTransitions = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
-		
-		for (STATE state : mOperand.getStates()) {
-			
+		final Map<STATE, InitialCondition> complementInitialConditions = new HashMap<>();
+		final Map<STATE, FinalCondition> complementFinalConditions = new HashMap<>();
+		final Map<STATE, ArrayList<Transition<LETTER, STATE>>> complementTransitions = new HashMap<>();
+
+		for (final STATE state : mOperand.getStates()) {
+
 			complementInitialConditions.put(state, mOperand.getInitialConditions().get(state).copyInitialCondition());
-			ArrayList<Transition<LETTER, STATE>> transitionList = new ArrayList<Transition<LETTER, STATE>>();
-			for (Transition<LETTER, STATE> transition : mOperand.getTransitions().get(state)) {
+			final ArrayList<Transition<LETTER, STATE>> transitionList = new ArrayList<>();
+			for (final Transition<LETTER, STATE> transition : mOperand.getTransitions().get(state)) {
 				transitionList.add(transition.copyTransition());
 			}
 			complementTransitions.put(state, transitionList);
-			
-			ArrayList<ArrayList<Guard>> finalConditionsCopy1 = mOperand.getFinalConditions().get(state).copyFinalCondition().getCondition();
-			
-			//negate guards
-			for (ArrayList<Guard> guardList : finalConditionsCopy1) {
-				
-				for (Guard guard : guardList) {
-					
+
+			final ArrayList<ArrayList<Guard>> finalConditionsCopy1 =
+					mOperand.getFinalConditions().get(state).copyFinalCondition().getCondition();
+
+			// negate guards
+			for (final ArrayList<Guard> guardList : finalConditionsCopy1) {
+
+				for (final Guard guard : guardList) {
+
 					if (guard.getTermType() == TermType.TRUE) {
-						
+
 						guard.changeTermType(TermType.FALSE);
-					}
-					else if (guard.getTermType() == TermType.FALSE) {
-						
+					} else if (guard.getTermType() == TermType.FALSE) {
+
 						guard.changeTermType(TermType.TRUE);
-					}
-					else {
-						
-						switch(guard.getRelationSymbol()) {
-						
+					} else {
+
+						switch (guard.getRelationSymbol()) {
+
 						case EQ:
 							guard.changeRelationType(RelationSymbol.DISTINCT);
 							break;
-							
+
 						case DISTINCT:
 							guard.changeRelationType(RelationSymbol.EQ);
 							break;
-							
+
 						case LESS:
 							guard.changeRelationType(RelationSymbol.GEQ);
 							break;
-							
+
 						case GREATER:
 							guard.changeRelationType(RelationSymbol.LEQ);
 							break;
-							
+
 						case LEQ:
 							guard.changeRelationType(RelationSymbol.GREATER);
 							break;
-							
+
 						case GEQ:
 							guard.changeRelationType(RelationSymbol.LESS);
 							break;
@@ -140,28 +135,27 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 					}
 				}
 			}
-			
-			//transform back to DNF
+
+			// transform back to DNF
 			if (finalConditionsCopy1.size() == 1) {
-				
-				for (Guard guard : finalConditionsCopy1.get(0)) {
-					ArrayList<Guard> guardList = new ArrayList<Guard>();
+
+				for (final Guard guard : finalConditionsCopy1.get(0)) {
+					final ArrayList<Guard> guardList = new ArrayList<>();
 					guardList.add(guard.copyGuard());
 					finalConditionsCopy1.add(guardList);
 				}
 				finalConditionsCopy1.remove(0);
 				complementFinalConditions.put(state, new FinalCondition(finalConditionsCopy1));
-			}
-			else {
-				
-				ArrayList<ArrayList<Guard>> finalConditionsCopy2 = new ArrayList<ArrayList<Guard>>();
-				ArrayList<ArrayList<Guard>> finalConditionsCopy3 = new ArrayList<ArrayList<Guard>>();
-				
-				for (Guard guard1 : finalConditionsCopy1.get(0)) {
-					
-					for (Guard guard2 : finalConditionsCopy1.get(1)) {
-						
-						ArrayList<Guard> tempCondition = new ArrayList<Guard>();
+			} else {
+
+				final ArrayList<ArrayList<Guard>> finalConditionsCopy2 = new ArrayList<>();
+				final ArrayList<ArrayList<Guard>> finalConditionsCopy3 = new ArrayList<>();
+
+				for (final Guard guard1 : finalConditionsCopy1.get(0)) {
+
+					for (final Guard guard2 : finalConditionsCopy1.get(1)) {
+
+						final ArrayList<Guard> tempCondition = new ArrayList<>();
 						tempCondition.add(guard1.copyGuard());
 						tempCondition.add(guard2.copyGuard());
 						finalConditionsCopy3.add(tempCondition);
@@ -169,15 +163,15 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 				}
 				finalConditionsCopy1.remove(0);
 				finalConditionsCopy1.remove(0);
-				
+
 				while (finalConditionsCopy1.size() > 0) {
-					
-					for (Guard guard1 : finalConditionsCopy1.get(0)) {
-						
-						for (ArrayList<Guard> guardList : finalConditionsCopy3) {
-							
-							ArrayList<Guard> tempCondition = new ArrayList<Guard>();
-							for (Guard guard3 : guardList) {
+
+					for (final Guard guard1 : finalConditionsCopy1.get(0)) {
+
+						for (final ArrayList<Guard> guardList : finalConditionsCopy3) {
+
+							final ArrayList<Guard> tempCondition = new ArrayList<>();
+							for (final Guard guard3 : guardList) {
 								tempCondition.add(guard3.copyGuard());
 							}
 							tempCondition.add(guard1.copyGuard());
@@ -185,8 +179,8 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 						}
 					}
 					finalConditionsCopy3.clear();
-					for (ArrayList<Guard> list : finalConditionsCopy2) {
-						finalConditionsCopy3.add(new ArrayList<Guard>(list));
+					for (final ArrayList<Guard> list : finalConditionsCopy2) {
+						finalConditionsCopy3.add(new ArrayList<>(list));
 					}
 					finalConditionsCopy1.remove(0);
 					finalConditionsCopy2.clear();
@@ -194,28 +188,21 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 				complementFinalConditions.put(state, new FinalCondition(finalConditionsCopy3));
 			}
 		}
-		
-		//result
-				CountingAutomaton<LETTER, STATE> resultAutomaton = new CountingAutomaton<LETTER, STATE>(
-						mServices,
-						mOperand.getAlphabet(),
-						mOperand.getStates(),
-						complementCounter,
-						complementInitialConditions,
-						complementFinalConditions,
-						complementTransitions);
-				return resultAutomaton;
-	}
 
+		// result
+		final CountingAutomaton<LETTER, STATE> resultAutomaton =
+				new CountingAutomaton<>(mServices, mOperand.getAlphabet(), mOperand.getStates(), complementCounter,
+						complementInitialConditions, complementFinalConditions, complementTransitions);
+		return resultAutomaton;
+	}
 
 	@Override
 	public CountingAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
-
 	@Override
-	public boolean checkResult(CRSF stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		// TODO: Check the result
 		return true;
 	}

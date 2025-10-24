@@ -92,11 +92,11 @@ public class ModifiableTransFormulaUtils {
 	}
 
 	public static boolean isInVar(final TermVariable tv, final ModifiableTransFormula tf) {
-		return tf.getInVarsReverseMapping().keySet().contains(tv);
+		return tf.getInVarsReverseMapping().containsKey(tv);
 	}
 
 	public static boolean isOutVar(final TermVariable tv, final ModifiableTransFormula tf) {
-		return tf.getOutVarsReverseMapping().keySet().contains(tv);
+		return tf.getOutVarsReverseMapping().containsKey(tv);
 	}
 
 	public static LBool implies(final IUltimateServiceProvider services, final ILogger logger,
@@ -255,11 +255,9 @@ public class ModifiableTransFormulaUtils {
 	private static Term constructEqualitiesForCoinciding(final Script script, final ModifiableTransFormula tf) {
 		final ArrayList<Term> conjuncts = new ArrayList<>();
 		for (final IProgramVar rv : tf.getInVars().keySet()) {
-			if (!(rv instanceof IReplacementVarOrConst)) {
-				if (inVarAndOutVarCoincide(rv, tf)) {
-					final IProgramVar bv = rv;
-					conjuncts.add(SmtUtils.binaryEquality(script, bv.getDefaultConstant(), bv.getPrimedConstant()));
-				}
+			if (!(rv instanceof IReplacementVarOrConst) && inVarAndOutVarCoincide(rv, tf)) {
+				final IProgramVar bv = rv;
+				conjuncts.add(SmtUtils.binaryEquality(script, bv.getDefaultConstant(), bv.getPrimedConstant()));
 			}
 		}
 		return SmtUtils.and(script, conjuncts);

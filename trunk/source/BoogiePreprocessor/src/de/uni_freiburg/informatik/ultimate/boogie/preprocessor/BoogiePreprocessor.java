@@ -99,13 +99,12 @@ public class BoogiePreprocessor implements IAnalysis {
 	public List<IObserver> getObservers() {
 		final BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
 		mServices.getBacktranslationService().addTranslator(backTranslator);
-		final boolean useSimplifier = mServices.getPreferenceProvider(getPluginID())
-				.getBoolean(PreferenceInitializer.LABEL_USE_SIMPLIFIER);
+		final boolean useSimplifier =
+				mServices.getPreferenceProvider(getPluginID()).getBoolean(PreferenceInitializer.LABEL_USE_SIMPLIFIER);
 		final boolean useMemorySlicer = mServices.getPreferenceProvider(getPluginID())
 				.getBoolean(PreferenceInitializer.LABEL_USE_MEMORY_SLICER);
 		final boolean replaceWhileAndConditional = mServices.getPreferenceProvider(getPluginID())
 				.getBoolean(PreferenceInitializer.LABEL_REPLACE_WHILE_AND_CONDITIONAL);
-
 
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 

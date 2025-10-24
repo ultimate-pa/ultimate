@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
@@ -58,6 +59,11 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		IBuchiNwaInclusionStateFactory<IPredicate>, IFinitePrefix2PetriNetStateFactory<IPredicate> {
 
 	private static final boolean DEBUG_COMPUTE_HISTORY = false;
+
+	/**
+	 * Enable debug code that we use to find predicates that use local variables of different procedures.
+	 */
+	private static final boolean DEBUG_CHECK_VARIABLES_PERMISSIBLE = false;
 
 	protected final IUltimateServiceProvider mServices;
 	protected int mIteration;
@@ -85,6 +91,9 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 			return mPredicateFactory.newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
 		} else if (p1 instanceof ISLPredicate) {
 			final IcfgLocation pp = ((ISLPredicate) p1).getProgramPoint();
+			if (DEBUG_CHECK_VARIABLES_PERMISSIBLE) {
+				checkIfVariablesArePermissible(pp, p2);
+			}
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
 				Term conjunction = mPredicateFactory.and(p1, p2).getFormula();
 				conjunction = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(conjunction);
@@ -103,6 +112,30 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 
 		} else {
 			throw new AssertionError("unknown predicate");
+		}
+	}
+
+	/**
+	 * Check if {@link IPredicate} contains local variables of another procedure.
+	 */
+	private static void checkIfVariablesArePermissible(final IcfgLocation pp, final IPredicate p) {
+		final String proc = pp.getProcedure();
+		final Set<IProgramVar> vars = p.getVars();
+		checkIfVariablesArePermissible(proc, vars);
+	}
+
+	/**
+	 * Check if {@link IPredicate} contains local variables of another procedure.
+	 */
+	private static void checkIfVariablesArePermissible(final String proc, final Set<IProgramVar> vars) {
+		for (final IProgramVar pv : vars) {
+			final String procOfVar = pv.getProcedure();
+			if (procOfVar == null) {
+				continue;
+			} else if (!procOfVar.equals(proc)) {
+				throw new AssertionError(
+						String.format("Var %s of proc %s must not occur in proc %s", pv, pv.getProcedure(), proc));
+			}
 		}
 	}
 

@@ -97,8 +97,10 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 *
 	 * @param services
 	 * @param factory
-	 * @param tree The given tree automaton
-	 * @param alphabet The given extra alphabet to include while totalization
+	 * @param tree
+	 *            The given tree automaton
+	 * @param alphabet
+	 *            The given extra alphabet to include while totalization
 	 */
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Totalize(
 			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree,
@@ -114,7 +116,7 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 		mAlphabet = new HashSet<>();
 		mAlphabet.addAll(alphabet);
 		mAlphabet.addAll(tree.getAlphabet());
-		//((TreeAutomatonBU<LETTER, STATE>) mTreeAutomaton).extendAlphabet(mAlphabet);
+		// ((TreeAutomatonBU<LETTER, STATE>) mTreeAutomaton).extendAlphabet(mAlphabet);
 		mResult = computeTotalize();
 	}
 
@@ -138,8 +140,7 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 		final List<List<STATE>> subres = combinations(siz - 1);
 		for (final STATE st : mStates) {
 			for (final List<STATE> subst : subres) {
-				final List<STATE> t = new ArrayList<>(subst.size());
-				t.addAll(subst);
+				final List<STATE> t = new ArrayList<>(subst);
 				t.add(st);
 				res.add(t);
 			}

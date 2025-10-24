@@ -37,7 +37,7 @@ public class TestStep {
 	public Map<IdentifierExpression, Collection<Expression>> getOutputAssignment() {
 		return Collections.unmodifiableMap(mOutputAssignment);
 	}
-	
+
 	public Map<IdentifierExpression, Collection<Expression>> getWaitForAssignment() {
 		return Collections.unmodifiableMap(mWaitForAssignment);
 	}

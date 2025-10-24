@@ -59,21 +59,18 @@ public class PrenexNormalForm extends TermTransformer {
 		mMgdScript = mgdScript;
 	}
 
-
-
 	@Override
 	protected void convert(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final String fun = appTerm.getFunction().getName();
 			if (fun.equals("ite")) {
-				if (new ContainsQuantifier().containsQuantifier(appTerm)) {
-					throw new UnsupportedOperationException("ite Term with quantifier, use IteRemover first");
-				} else {
+				if (QuantifierUtils.isQuantifierFree(appTerm)) {
 					// since the subTerm does not contain quantifier we can immediately use this as a result
 					setResult(appTerm);
 					return;
 				}
+				throw new UnsupportedOperationException("ite Term with quantifier, use IteRemover first");
 			}
 		}
 		super.convert(term);
@@ -83,7 +80,6 @@ public class PrenexNormalForm extends TermTransformer {
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		if (!NonCoreBooleanSubTermTransformer.isCoreBooleanNonAtom(appTerm)) {
 			super.convertApplicationTerm(appTerm, newArgs);
-			return;
 		} else {
 			final String fun = appTerm.getFunction().getName();
 			if (fun.equals("not")) {
@@ -102,7 +98,6 @@ public class PrenexNormalForm extends TermTransformer {
 					throw new UnsupportedOperationException("not yet implemented, we need subterm in NNF");
 				} else {
 					super.convertApplicationTerm(appTerm, newArgs);
-					return;
 				}
 			} else {
 				throw new AssertionError("unknown core boolean term");
@@ -117,11 +112,10 @@ public class PrenexNormalForm extends TermTransformer {
 		final Term inner = quantifierSequence.getInnerTerm();
 		final List<QuantifierSequence.QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifierBlocks();
 		Term result = SmtUtils.not(mScript, inner);
-		for (int i = qVarSeq.size()-1; i>=0; i--) {
+		for (int i = qVarSeq.size() - 1; i >= 0; i--) {
 			final QuantifierSequence.QuantifiedVariables quantifiedVars = qVarSeq.get(i);
 			final int resultQuantifier = (quantifiedVars.getQuantifier() + 1) % 2;
-			result = SmtUtils.quantifier(mScript, resultQuantifier,
-					quantifiedVars.getVariables(), result);
+			result = SmtUtils.quantifier(mScript, resultQuantifier, quantifiedVars.getVariables(), result);
 		}
 		return result;
 	}
@@ -129,13 +123,12 @@ public class PrenexNormalForm extends TermTransformer {
 	private Term pullQuantifiers(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final QuantifierSequence[] quantifierSequences = new QuantifierSequence[newArgs.length];
 		final HashSet<TermVariable> freeVariables = new HashSet<>();
-		for (int i=0; i<newArgs.length; i++) {
+		for (int i = 0; i < newArgs.length; i++) {
 			freeVariables.addAll(Arrays.asList(newArgs[i].getFreeVars()));
 			quantifierSequences[i] = new QuantifierSequence(mMgdScript, newArgs[i]);
 		}
-		final Term result = QuantifierSequence.mergeQuantifierSequences(mMgdScript,
-				appTerm.getFunction().getName(), quantifierSequences,
-				freeVariables);
+		final Term result = QuantifierSequence.mergeQuantifierSequences(mMgdScript, appTerm.getFunction().getName(),
+				quantifierSequences, freeVariables);
 		return result;
 	}
 
@@ -144,13 +137,11 @@ public class PrenexNormalForm extends TermTransformer {
 		throw new UnsupportedOperationException("not yet implemented, we need term without let");
 	}
 
-
-
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 		if (SmtUtils.isQuantifiedFormulaWithSameQuantifier(old.getQuantifier(), newBody) != null) {
 			final Term result = SmtUtils.quantifier(mScript, old.getQuantifier(),
-					new HashSet<TermVariable>(Arrays.asList(old.getVariables())), newBody);
+					new HashSet<>(Arrays.asList(old.getVariables())), newBody);
 			setResult(result);
 		} else {
 			super.postConvertQuantifier(old, newBody);
@@ -160,8 +151,8 @@ public class PrenexNormalForm extends TermTransformer {
 	@Override
 	public void postConvertAnnotation(final AnnotatedTerm old, final Annotation[] newAnnots, final Term newBody) {
 		setResult(newBody);
-//		Term result = mScript.annotate(newBody, newAnnots);
-//		setResult(result);
-//		throw new UnsupportedOperationException("not yet implemented: annotations");
+		// Term result = mScript.annotate(newBody, newAnnots);
+		// setResult(result);
+		// throw new UnsupportedOperationException("not yet implemented: annotations");
 	}
 }

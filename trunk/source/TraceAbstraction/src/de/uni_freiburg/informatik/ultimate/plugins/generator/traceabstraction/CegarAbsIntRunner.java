@@ -523,15 +523,15 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				mLogger.info("Generating AbsInt predicates");
 				final List<LETTER> ppTrace = constructTraceFromWord(mCex, mPathProgram);
 				final List<AbsIntPredicate<STATE>> nonUnifiedPredicates = generateAbsIntPredicates(ppTrace);
-				assert isInductive(ppTrace, nonUnifiedPredicates,
-						createHoareTripleChecker(true)) : "Sequence of interpolants not inductive (before weakening)!";
+				assert isInductive(ppTrace, nonUnifiedPredicates, createHoareTripleChecker(true))
+						: "Sequence of interpolants not inductive (before weakening)!";
 
 				final List<AbsIntPredicate<STATE>> weakenedPredicates;
 				if (USE_INTERPOLANT_WEAKENER) {
 					final CachingHoareTripleChecker absIntOnlyHtc = createHoareTripleChecker(true);
 					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace, absIntOnlyHtc);
-					assert isInductive(ppTrace, weakenedPredicates,
-							absIntOnlyHtc) : "Sequence of interpolants not inductive (after weakening)!";
+					assert isInductive(ppTrace, weakenedPredicates, absIntOnlyHtc)
+							: "Sequence of interpolants not inductive (after weakening)!";
 				} else {
 					weakenedPredicates = nonUnifiedPredicates;
 				}
@@ -544,8 +544,8 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 				assert mCex.length() - 1 == interpolants.size() : "Word has length " + mCex.length()
 						+ " but interpolant sequence has length " + interpolants.size();
-				assert isInductive(ppTrace, interpolants,
-						getHoareTripleChecker()) : "Sequence of interpolants not inductive (after unification)";
+				assert isInductive(ppTrace, interpolants, getHoareTripleChecker())
+						: "Sequence of interpolants not inductive (after unification)";
 				mLogger.info("Finished generation of AbsInt predicates");
 				return new AbsIntInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex,
 						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker(),

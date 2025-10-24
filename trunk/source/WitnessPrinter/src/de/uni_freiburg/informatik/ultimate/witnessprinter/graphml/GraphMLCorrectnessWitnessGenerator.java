@@ -60,7 +60,7 @@ import edu.uci.ics.jung.graph.Hypergraph;
  */
 public class GraphMLCorrectnessWitnessGenerator<TTE, TE> extends GraphMLBaseWitnessGenerator<TTE, TE> {
 
-	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
+	private static final String[] ACSL_SUBSTRING = { "\\old", "\\result", "exists", "forall", "\\at" };
 
 	private final ILogger mLogger;
 	private final IBacktranslationValueProvider<TTE, TE> mStringProvider;

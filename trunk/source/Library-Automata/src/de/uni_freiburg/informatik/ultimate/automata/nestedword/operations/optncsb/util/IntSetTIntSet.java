@@ -35,14 +35,14 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class IntSetTIntSet implements IntSet {
-	
+
 	private final TIntSet mSet;
-	
+
 	public IntSetTIntSet() {
 		mSet = new TIntHashSet();
 	}
-	
-	public IntSetTIntSet(TIntSet set) {
+
+	public IntSetTIntSet(final TIntSet set) {
 		mSet = set;
 	}
 
@@ -53,61 +53,52 @@ public class IntSetTIntSet implements IntSet {
 
 	@Override
 	public IntSet clone() {
-		IntSetTIntSet copy = new IntSetTIntSet();
+		final IntSetTIntSet copy = new IntSetTIntSet();
 		copy.mSet.addAll(mSet);
 		return copy;
 	}
 
 	@Override
-	public void andNot(IntSet set) {
-		if(! (set instanceof IntSetTIntSet)) {
-			System.err.println("OPERAND should be TIntSet");
-			System.exit(-1);
-		}
-		IntSetTIntSet temp = (IntSetTIntSet)set;
-		this.mSet.removeAll(temp.mSet);
+	public void andNot(final IntSet set) {
+		assert set instanceof IntSetTIntSet : "OPERAND should be TIntSet";
+		final IntSetTIntSet temp = (IntSetTIntSet) set;
+		mSet.removeAll(temp.mSet);
 	}
 
 	@Override
-	public void and(IntSet set) {
-		if(! (set instanceof IntSetTIntSet)) {
-			System.err.println("OPERAND should be TIntSet");
-			System.exit(-1);
-		}
-		IntSetTIntSet temp = (IntSetTIntSet)set;
-		this.mSet.retainAll(temp.mSet);
+	public void and(final IntSet set) {
+		assert set instanceof IntSetTIntSet : "OPERAND should be TIntSet";
+		final IntSetTIntSet temp = (IntSetTIntSet) set;
+		mSet.retainAll(temp.mSet);
 	}
 
 	@Override
-	public void or(IntSet set) {
-		if(! (set instanceof IntSetTIntSet)) {
-			System.err.println("OPERAND should be TIntSet");
-			System.exit(-1);
-		}
-		IntSetTIntSet temp = (IntSetTIntSet)set;
-		this.mSet.addAll(temp.mSet);
+	public void or(final IntSet set) {
+		assert set instanceof IntSetTIntSet : "OPERAND should be TIntSet";
+		final IntSetTIntSet temp = (IntSetTIntSet) set;
+		mSet.addAll(temp.mSet);
 	}
 
 	@Override
-	public boolean get(int value) {
+	public boolean get(final int value) {
 		return mSet.contains(value);
 	}
-	
+
 	@Override
-	public void set(int value) {
+	public void set(final int value) {
 		mSet.add(value);
 	}
 
 	@Override
-	public void clear(int value) {
+	public void clear(final int value) {
 		mSet.remove(value);
 	}
-	
+
 	@Override
 	public void clear() {
 		mSet.clear();
 	}
-	
+
 	@Override
 	public String toString() {
 		return mSet.toString();
@@ -124,61 +115,63 @@ public class IntSetTIntSet implements IntSet {
 	}
 
 	@Override
-	public boolean subsetOf(IntSet set) {
-		if(! (set instanceof IntSetTIntSet)) {
-			System.err.println("OPERAND should be TIntSet");
-			System.exit(-1);
-		}
-		IntSetTIntSet temp = (IntSetTIntSet)set;
-		return temp.mSet.containsAll(this.mSet);
+	public boolean subsetOf(final IntSet set) {
+		assert set instanceof IntSetTIntSet : "OPERAND should be TIntSet";
+		final IntSetTIntSet temp = (IntSetTIntSet) set;
+		return temp.mSet.containsAll(mSet);
 	}
 
 	@Override
-	public boolean contentEq(IntSet set) {
-		if(! (set instanceof IntSetTIntSet)) {
-			System.err.println("OPERAND should be TIntSet");
-			System.exit(-1);
-		}
-		IntSetTIntSet temp = (IntSetTIntSet)set;
-		return this.mSet.equals(temp.mSet);
+	public boolean contentEq(final IntSet set) {
+		assert set instanceof IntSetTIntSet : "OPERAND should be TIntSet";
+		final IntSetTIntSet temp = (IntSetTIntSet) set;
+		return mSet.equals(temp.mSet);
 	}
 
 	@Override
 	public Object get() {
 		return mSet;
 	}
-	
-	public boolean equals(Object obj) {
-		if(! (obj instanceof IntSetTIntSet)) {
-			System.err.println("OPERAND should be TIntSet");
-			System.exit(-1);
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
 		}
-		IntSetTIntSet temp = (IntSetTIntSet)obj;
-		return this.contentEq(temp);
+		final IntSetTIntSet temp = (IntSetTIntSet) obj;
+		return contentEq(temp);
 	}
-	
+
+	@Override
+	public int hashCode() {
+		return mSet.hashCode();
+	}
+
 	public static class TIntSetIterator implements IntIterator {
 
-		private TIntIterator mSetIter;
-		
-		public TIntSetIterator(IntSetTIntSet set) {
+		private final TIntIterator mSetIter;
+
+		public TIntSetIterator(final IntSetTIntSet set) {
 			mSetIter = set.mSet.iterator();
 		}
-		
+
+		@Override
 		public boolean hasNext() {
 			return mSetIter.hasNext();
 		}
-		
+
+		@Override
 		public int next() {
 			return mSetIter.next();
 		}
-		
+
 	}
-	
+
 	@Override
 	public Iterable<Integer> iterable() {
-		return () -> new Iterator<Integer>() {
+		return () -> new Iterator<>() {
 			TIntIterator iter = mSet.iterator();
+
 			@Override
 			public boolean hasNext() {
 				return iter.hasNext();
@@ -188,7 +181,7 @@ public class IntSetTIntSet implements IntSet {
 			public Integer next() {
 				return iter.next();
 			}
-			
+
 		};
 	}
 

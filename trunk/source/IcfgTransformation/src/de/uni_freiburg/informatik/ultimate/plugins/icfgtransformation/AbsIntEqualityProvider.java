@@ -146,7 +146,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 			result = result == null ? unionStateForCurrentLoc : result.join(unionStateForCurrentLoc);
 		}
 		if (result == null) {
-//			result = mTopState;
+			// result = mTopState;
 			result = mBotState;
 		}
 		assert result != null;

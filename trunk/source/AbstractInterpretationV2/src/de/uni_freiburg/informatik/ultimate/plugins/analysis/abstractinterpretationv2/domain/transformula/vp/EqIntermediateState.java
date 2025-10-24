@@ -25,11 +25,11 @@ public class EqIntermediateState implements IEqualityProvidingIntermediateState 
 		return mConstraint.areUnequal(t1, t2);
 	}
 
-//	@Override
-//	public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+	// @Override
+	// public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
+	// // TODO Auto-generated method stub
+	// return null;
+	// }
 
 	@Override
 	public boolean isBottom() {

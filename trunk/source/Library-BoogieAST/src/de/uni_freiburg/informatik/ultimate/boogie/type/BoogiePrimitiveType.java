@@ -48,7 +48,7 @@ public class BoogiePrimitiveType extends BoogieType {
 	private final int mType;
 
 	BoogiePrimitiveType(final int type) {
-		this.mType = type;
+		mType = type;
 	}
 
 	// @Override

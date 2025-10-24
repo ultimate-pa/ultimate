@@ -234,8 +234,8 @@ public class WitnessPrinter implements IOutput {
 			final LassoShapedNonTerminationArgument<STE, ST> cex) {
 		final Lasso<?> lasso =
 				backtrans.translateLassoProgramExecution(new Lasso<>(cex.getStemExecution(), cex.getLoopExecution()));
-		final var stem = (IProgramExecution<TE, T>) lasso.getStem();
-		final var loop = (IProgramExecution<TE, T>) lasso.getLoop();
+		final var stem = (IProgramExecution<TE, T>) lasso.stem();
+		final var loop = (IProgramExecution<TE, T>) lasso.loop();
 		return new GraphMLViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
 	}
 

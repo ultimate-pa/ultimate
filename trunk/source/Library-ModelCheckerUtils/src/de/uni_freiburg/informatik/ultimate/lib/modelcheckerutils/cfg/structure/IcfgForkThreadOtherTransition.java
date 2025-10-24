@@ -50,8 +50,8 @@ public final class IcfgForkThreadOtherTransition extends AbstractIcfgTransition
 			final IIcfgForkTransitionThreadCurrent icfgForkThreadCurrentTransition, final int id) {
 		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
-		mIcfgForkThreadCurrentTransition = Objects.requireNonNull(icfgForkThreadCurrentTransition,
-				"A forkSmtArguments is missing");
+		mIcfgForkThreadCurrentTransition =
+				Objects.requireNonNull(icfgForkThreadCurrentTransition, "A forkSmtArguments is missing");
 
 		assert TransFormulaUtils.hasInternalNormalForm(mTransFormula) : "Expected TF in internal normal form";
 	}

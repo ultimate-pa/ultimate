@@ -82,19 +82,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result = IncrementalPlicationChecker.convertLBool2Validity(isInductive(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
-		switch (result) {
-		case INVALID:
-			mHoareTripleCheckerStatistics.getSolverCounterSat().incIn();
-			break;
-		case UNKNOWN:
-			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incIn();
-			break;
-		case VALID:
-			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incIn();
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		mHoareTripleCheckerStatistics.getSolverCounter(result).incIn();
 		return result;
 	}
 
@@ -103,19 +91,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result = IncrementalPlicationChecker.convertLBool2Validity(isInductiveCall(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
-		switch (result) {
-		case INVALID:
-			mHoareTripleCheckerStatistics.getSolverCounterSat().incCa();
-			break;
-		case UNKNOWN:
-			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incCa();
-			break;
-		case VALID:
-			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incCa();
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		mHoareTripleCheckerStatistics.getSolverCounter(result).incCa();
 		return result;
 	}
 
@@ -126,19 +102,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final Validity result =
 				IncrementalPlicationChecker.convertLBool2Validity(isInductiveReturn(preLin, preHier, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
-		switch (result) {
-		case INVALID:
-			mHoareTripleCheckerStatistics.getSolverCounterSat().incRe();
-			break;
-		case UNKNOWN:
-			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incRe();
-			break;
-		case VALID:
-			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incRe();
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		mHoareTripleCheckerStatistics.getSolverCounter(result).incRe();
 		return result;
 	}
 
@@ -202,9 +166,9 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				modifiableGlobalsPred, modifiableGlobalsSucc);
 
 		if (expectUnsat) {
-			assert result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN : "From "
-					+ ps1.getFormula().toStringDirect() + "Statements " + ta.toString() + "To "
-					+ ps2.getFormula().toStringDirect() + "Not inductive!";
+			assert result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN
+					: "From " + ps1.getFormula().toStringDirect() + "Statements " + ta.toString() + "To "
+							+ ps2.getFormula().toStringDirect() + "Not inductive!";
 		}
 		mSatCheckTime += System.nanoTime() - startTime;
 		mManagedScript.unlock(this);
@@ -238,8 +202,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// All variables get index 0.
 		final String caller = ta.getPrecedingProcedure();
 		final Set<IProgramNonOldVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
-		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<IProgramVar>(0), 4, 0,
-				Integer.MIN_VALUE, null, -5, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
+		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<>(0), 4, 0, Integer.MIN_VALUE,
+				null, -5, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
 		final UnmodifiableTransFormula tf = ta.getLocalVarsAssignment();
 		final Set<IProgramVar> assignedVars = new HashSet<>();
@@ -251,8 +215,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// Other vars get index 1
 		final String callee = ta.getSucceedingProcedure();
 		final Set<IProgramNonOldVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
-		final Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<IProgramVar>(0), 4, 1, 0, null,
-				23, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCallee);
+		final Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<>(0), 4, 1, 0, null, 23, 0,
+				mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCallee);
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
@@ -317,8 +281,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 		// oldVars not renamed if modifiable
 		// other variables get index 0
-		final Term pskrenamed = PredicateUtils.formulaWithIndexedVars(psk, new HashSet<IProgramVar>(0), 23, 0,
-				Integer.MIN_VALUE, null, 23, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
+		final Term pskrenamed = PredicateUtils.formulaWithIndexedVars(psk, new HashSet<>(0), 23, 0, Integer.MIN_VALUE,
+				null, 23, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
 		// oldVars get index 0
 		// modifiable globals get index 2, unless they are modified on return then they get index 1
@@ -353,9 +317,9 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mManagedScript.getScript().pop(1);
 		mIndexedConstants = null;
 		if (expectUnsat) {
-			assert result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN : "From "
-					+ ps1.getFormula().toStringDirect() + "Caller " + psk.getFormula().toStringDirect() + "Statements "
-					+ ta + "To " + ps2.getFormula().toStringDirect() + "Not inductive!";
+			assert result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN
+					: "From " + ps1.getFormula().toStringDirect() + "Caller " + psk.getFormula().toStringDirect()
+							+ "Statements " + ta + "To " + ps2.getFormula().toStringDirect() + "Not inductive!";
 
 		}
 		mSatCheckTime += System.nanoTime() - startTime;

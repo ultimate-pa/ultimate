@@ -75,7 +75,7 @@ public final class PetriNetUnfolder<L, P> extends PetriNetUnfolderBase<L, P, Pet
 	public enum EventOrderEnum {
 		DBO("Depth-based Order"), ERV("Esparza Römer Vogler"), KMM("Ken McMillan"),;
 
-		private String mDescription;
+		private final String mDescription;
 
 		EventOrderEnum(final String name) {
 			mDescription = name;

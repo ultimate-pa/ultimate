@@ -98,8 +98,8 @@ public interface IPolynomialTerm {
 	Sort getSort();
 
 	/**
-	 * @return A new {@link IPolynomialTerm} that is the multiplication of this
-	 *         {@link IPolynomialTerm} with a {@link Rational literal}
+	 * @return A new {@link IPolynomialTerm} that is the multiplication of this {@link IPolynomialTerm} with a
+	 *         {@link Rational literal}
 	 */
 	default IPolynomialTerm mul(final Rational rat) {
 		// TODO 20220730 Matthias: Do refactor that implements more methods in
@@ -113,39 +113,32 @@ public interface IPolynomialTerm {
 		}
 	}
 
-
 	/**
-	 * @return Divide this {@link IPolynomialTerm} by divisor. Return the result
-	 *         only if there is some "inverse" element invrs such that a
-	 *         multiplication with invrs is equivalent to the original
-	 *         {@link IPolynomialTerm}. Return null if no such inverse element
-	 *         exists.
+	 * @return Divide this {@link IPolynomialTerm} by divisor. Return the result only if there is some "inverse" element
+	 *         invrs such that a multiplication with invrs is equivalent to the original {@link IPolynomialTerm}. Return
+	 *         null if no such inverse element exists.
 	 */
 	IPolynomialTerm divInvertible(Rational divisor);
 
 	/**
 	 * @return
 	 *         <ul>
-	 *         <li>{@link Equivalence#EQUALS} if (= this otherTerm) is valid for all
-	 *         variable assignments
-	 *         <li>{@link Equivalence#DISTINCT} if (not (= this otherTerm)) is valid
-	 *         for all variable assignments
+	 *         <li>{@link Equivalence#EQUALS} if (= this otherTerm) is valid for all variable assignments
+	 *         <li>{@link Equivalence#DISTINCT} if (not (= this otherTerm)) is valid for all variable assignments
 	 *         <li>{@link Equivalence#INCOMPARABLE} otherwise. </ ul>
 	 *
 	 */
 	Equivalence compare(IPolynomialTerm otherTerm);
 
 	/**
-	 * @return A new {@link IPolynomialTerm} that is differs from this only in an
-	 *         offset that was added.
+	 * @return A new {@link IPolynomialTerm} that is differs from this only in an offset that was added.
 	 */
 	IPolynomialTerm add(final Rational offset);
 
 	/**
-	 * Compute the GCD of all coefficients (but do not include the constant in the
-	 * computation). E.g., this method returns 2 for the polynomial 4*x+6*y+5. We
-	 * use the semantics of {@link Rational#gcd}. If there are no coefficients, we
-	 * return the {@link Rational} zero.
+	 * Compute the GCD of all coefficients (but do not include the constant in the computation). E.g., this method
+	 * returns 2 for the polynomial 4*x+6*y+5. We use the semantics of {@link Rational#gcd}. If there are no
+	 * coefficients, we return the {@link Rational} zero.
 	 */
 	Rational computeGcdOfCoefficients();
 

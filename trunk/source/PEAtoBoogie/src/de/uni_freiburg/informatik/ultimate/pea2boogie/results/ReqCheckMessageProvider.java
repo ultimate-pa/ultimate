@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec.Gro
 
 /**
  * Message provider for {@link Group.REQUIREMENT} labeled specifications that are checked.
- * 
+ *
  * @author Manuel Bentele
  */
 public class ReqCheckMessageProvider extends MessageProvider {

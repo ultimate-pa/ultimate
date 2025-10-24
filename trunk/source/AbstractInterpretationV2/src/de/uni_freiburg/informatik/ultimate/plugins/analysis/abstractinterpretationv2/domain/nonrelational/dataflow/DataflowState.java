@@ -293,8 +293,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 			if (set == null) {
 				reachdef.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
 			} else {
-				final Set<ACTION> newset = new HashSet<>();
-				newset.addAll(otherEntry.getValue());
+				final Set<ACTION> newset = new HashSet<>(otherEntry.getValue());
 				newset.addAll(set);
 				reachdef.put(otherEntry.getKey(), newset);
 			}
@@ -305,8 +304,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 			if (set == null) {
 				noWrite.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
 			} else {
-				final Set<IcfgLocation> newset = new HashSet<>();
-				newset.addAll(otherEntry.getValue());
+				final Set<IcfgLocation> newset = new HashSet<>(otherEntry.getValue());
 				newset.addAll(set);
 				noWrite.put(otherEntry.getKey(), newset);
 			}

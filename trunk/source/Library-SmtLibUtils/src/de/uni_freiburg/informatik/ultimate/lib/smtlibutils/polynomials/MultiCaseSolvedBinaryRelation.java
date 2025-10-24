@@ -42,10 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Represents a binary relation that has been solved for a subject x. Unlike
- * {@link SolvedBinaryRelation} object of this class can also represent binary
- * relations for which a case distinction is necessary. E.g., if we solve y*x<t
- * for subject x the result is the following disjunction.
+ * Represents a binary relation that has been solved for a subject x. Unlike {@link SolvedBinaryRelation} object of this
+ * class can also represent binary relations for which a case distinction is necessary. E.g., if we solve y*x<t for
+ * subject x the result is the following disjunction.
  *
  * <pre>
  * x < (div t y) ∧ (mod t y) = 0 ∧ y > 0
@@ -59,28 +58,22 @@ public class MultiCaseSolvedBinaryRelation implements ITermProvider {
 
 	public enum IntricateOperation {
 		/**
-		 * Indicates that we had to divide by a non-constant term in order to
-		 * solve the relation. Necessary e.g,. if we want to solve y*x=t for x
-		 * and y is a variable. This operation is intricate because we now have
-		 * to distinguish the cases that y is zero and that y is non-zero. (If
-		 * the relation symbol is an inequality we even have to take into
-		 * account that the relation symbol is "swapped" if y is negative.)
+		 * Indicates that we had to divide by a non-constant term in order to solve the relation. Necessary e.g,. if we
+		 * want to solve y*x=t for x and y is a variable. This operation is intricate because we now have to distinguish
+		 * the cases that y is zero and that y is non-zero. (If the relation symbol is an inequality we even have to
+		 * take into account that the relation symbol is "swapped" if y is negative.)
 		 */
 		DIV_BY_NONCONSTANT,
 		/**
-		 * Indicates that we had to divide by an integer literal in order to
-		 * solve the relation. Necessary e.g,. if we want to solve k*x=t for x
-		 * and k is a (non-zero) integer literal. This operation is intricate
-		 * because if we divide by k, we loose the information that t is
-		 * divisible by k.
+		 * Indicates that we had to divide by an integer literal in order to solve the relation. Necessary e.g,. if we
+		 * want to solve k*x=t for x and k is a (non-zero) integer literal. This operation is intricate because if we
+		 * divide by k, we loose the information that t is divisible by k.
 		 */
 		DIV_BY_INTEGER_CONSTANT,
 		/**
-		 * Indicates that we had to multiply by an integer literal in order to
-		 * solve the relation. Necessary e.g,. if we want to solve (div x k)=t
-		 * for x and k is a (non-zero) integer literal. This operation is
-		 * intricate because if we multiply by k, we loose the information that
-		 * e.g., t can be zero if x is k-1.
+		 * Indicates that we had to multiply by an integer literal in order to solve the relation. Necessary e.g,. if we
+		 * want to solve (div x k)=t for x and k is a (non-zero) integer literal. This operation is intricate because if
+		 * we multiply by k, we loose the information that e.g., t can be zero if x is k-1.
 		 */
 		MUL_BY_INTEGER_CONSTANT,
 	}
@@ -108,18 +101,15 @@ public class MultiCaseSolvedBinaryRelation implements ITermProvider {
 	/**
 	 *
 	 * @param additionalIntricateOperations
-	 *            {@link IntricateOperation}s that were made and do not already
-	 *            occur in one of the {@link SupportingTerm}s of the
-	 *            {@link Case}s.
+	 *            {@link IntricateOperation}s that were made and do not already occur in one of the
+	 *            {@link SupportingTerm}s of the {@link Case}s.
 	 * @param xnf
-	 *            If CNF each case is a disjunction and this class represents a
-	 *            conjunction of cases. If DNF each case is a conjunction and
-	 *            this class represents a disjunction of cases.
+	 *            If CNF each case is a disjunction and this class represents a conjunction of cases. If DNF each case
+	 *            is a conjunction and this class represents a disjunction of cases.
 	 */
 	public MultiCaseSolvedBinaryRelation(final Term subject, final List<Case> cases,
 			final Set<TermVariable> additionalAuxiliaryVariables,
 			final EnumSet<IntricateOperation> additionalIntricateOperations, final Xnf xnf) {
-		super();
 		mSubject = subject;
 		mCases = cases;
 		mAdditionalAuxiliaryVariables = additionalAuxiliaryVariables;
@@ -171,7 +161,6 @@ public class MultiCaseSolvedBinaryRelation implements ITermProvider {
 		return result;
 	}
 
-
 	public MultiCaseSolutionBuilder constructCopy() {
 		final MultiCaseSolutionBuilder result = new MultiCaseSolutionBuilder(getSubject(), getXnf());
 		result.splitCases(getCases());
@@ -195,10 +184,8 @@ public class MultiCaseSolvedBinaryRelation implements ITermProvider {
 	}
 
 	private boolean isSubjectOnlyOnRhs(final Term subject, final Case c) {
-		if (c.getSolvedBinaryRelation() != null) {
-			if (!c.getSolvedBinaryRelation().getLeftHandSide().equals(subject)) {
-				throw new AssertionError("illegal subject");
-			}
+		if ((c.getSolvedBinaryRelation() != null) && !c.getSolvedBinaryRelation().getLeftHandSide().equals(subject)) {
+			throw new AssertionError("illegal subject");
 		}
 		for (final SupportingTerm st : c.getSupportingTerms()) {
 			final boolean containsSubject = SmtUtils.isSubterm(st.getTerm(), subject);

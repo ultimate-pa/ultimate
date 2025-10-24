@@ -269,20 +269,18 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 				final Set<IAbstractState<?>> currentGenerators = predicateToStates.get(currentPredicate);
 
 				for (final IPredicate otherPredicate : allPredicates) {
-					if (SIMPLE_HOARE_CHECK) {
-						if (internalAction != null) {
-							final Validity simpleHoareCheckResult =
-									sdChecker.checkInternal(currentPredicate, internalAction, otherPredicate);
-							if (simpleHoareCheckResult != Validity.UNKNOWN) {
-								if (simpleHoareCheckResult == Validity.VALID) {
-									result.addInternalTransition(currentPredicate, currentLetter, otherPredicate);
-								}
-								if (simpleHoareCheckResult == Validity.NOT_CHECKED) {
-									throw new UnsupportedOperationException(
-											"Validity result is NOT_CHECKED which should not happen.");
-								}
-								continue;
+					if (SIMPLE_HOARE_CHECK && (internalAction != null)) {
+						final Validity simpleHoareCheckResult =
+								sdChecker.checkInternal(currentPredicate, internalAction, otherPredicate);
+						if (simpleHoareCheckResult != Validity.UNKNOWN) {
+							if (simpleHoareCheckResult == Validity.VALID) {
+								result.addInternalTransition(currentPredicate, currentLetter, otherPredicate);
 							}
+							if (simpleHoareCheckResult == Validity.NOT_CHECKED) {
+								throw new UnsupportedOperationException(
+										"Validity result is NOT_CHECKED which should not happen.");
+							}
+							continue;
 						}
 					}
 

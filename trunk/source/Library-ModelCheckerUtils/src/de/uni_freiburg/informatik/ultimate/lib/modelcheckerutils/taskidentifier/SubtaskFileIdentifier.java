@@ -27,29 +27,22 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier;
 
 /**
- * Usually (but not necessarily) the outermost TaskIdentifier.
- * Specifies the input file(s). 
- * The string that is used as an identifier should nicely describe the input
- * but does not have to (and should not) coincide with the full path.
- * Suggestions: Take filename without path and without file ending. In case 
- * there are several input files take the most important one or combine the 
- * filenames. 
- * 
+ * Usually (but not necessarily) the outermost TaskIdentifier. Specifies the input file(s). The string that is used as
+ * an identifier should nicely describe the input but does not have to (and should not) coincide with the full path.
+ * Suggestions: Take filename without path and without file ending. In case there are several input files take the most
+ * important one or combine the filenames.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class SubtaskFileIdentifier extends TaskIdentifier {
-	
+
 	private final String mFilename;
-	
-	
 
 	public SubtaskFileIdentifier(final TaskIdentifier parentTaskIdentifier, final String filename) {
 		super(parentTaskIdentifier);
 		mFilename = filename;
 	}
-
-
 
 	@Override
 	protected String getSubtaskIdentifier() {

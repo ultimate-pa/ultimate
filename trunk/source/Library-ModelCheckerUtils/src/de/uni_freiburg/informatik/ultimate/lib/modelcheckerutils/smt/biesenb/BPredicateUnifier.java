@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -472,7 +472,7 @@ public class BPredicateUnifier implements IPredicateUnifier {
 	private Pair<IPredicate, IPredicate> getPivot(final Map<IPredicate, Set<IPredicate>> descendantsMap,
 			final Map<IPredicate, Set<IPredicate>> ancestorsMap) {
 		assert (!descendantsMap.isEmpty() && !ancestorsMap.isEmpty());
-		final float optimum = ((float) descendantsMap.keySet().size()) / 2;
+		final float optimum = ((float) descendantsMap.size()) / 2;
 		float minDif = optimum;
 		IPredicate pivotIn = null;
 		// find pivotIn

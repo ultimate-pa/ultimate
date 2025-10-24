@@ -39,7 +39,6 @@ public class BoogieBacktranslationRegressionTestSuite extends AbstractRegression
 	private static final String FILE_ENDING = ".bpl";
 
 	public BoogieBacktranslationRegressionTestSuite() {
-		super();
 		mTimeout = TIMEOUT;
 		mRootFolder = ROOT_FOLDER;
 		mFiletypesToConsider = new String[] { FILE_ENDING };

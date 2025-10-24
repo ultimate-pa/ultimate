@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.core.model.services;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
@@ -61,9 +63,16 @@ public interface IBacktranslationService {
 	 * @param clazz
 	 * @return
 	 */
-	<SE> String translateExpressionToString(SE expression, Class<SE> clazz);
+	@Deprecated
+	default <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
+		return targetExpressionToString(translateExpression(expression, clazz));
+	}
 
-	<SE, CTX> String translateExpressionWithContextToString(SE expression, CTX context, Class<SE> clazz);
+	@Deprecated
+	default <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return targetExpressionToString(translateExpressionWithContext(expression, context, clazz));
+	}
 
 	<STE> List<?> translateTrace(List<STE> trace, Class<STE> clazz);
 
@@ -75,6 +84,7 @@ public interface IBacktranslationService {
 
 	<SE> ProgramState<?> translateProgramState(ProgramState<SE> programState);
 
+	// TODO give default implementation using targetExpressionToString?
 	<SE> String translateProgramStateToString(ProgramState<SE> programState);
 
 	<STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
@@ -82,26 +92,32 @@ public interface IBacktranslationService {
 	<TE, SE, CTX> ProcedureContract<TE, ? extends TE>
 			translateProcedureContract(ProcedureContract<SE, ? extends SE> contract, CTX context, Class<SE> clazz);
 
+	default <TE> String targetExpressionToString(final TE expression) {
+		return expression == null ? null : expression.toString();
+	}
+
+	default <TE> ProcedureContract<String, String>
+			targetProcedureContractToString(final ProcedureContract<TE, ? extends TE> contract) {
+		final String stringifiedRequires =
+				contract.getRequires() == null ? null : targetExpressionToString(contract.getRequires());
+		final String stringifiedEnsures =
+				contract.getEnsures() == null ? null : targetExpressionToString(contract.getEnsures());
+
+		if (contract.hasModifies()) {
+			final Set<String> stringifiedModifies =
+					contract.getModifies().stream().map(this::targetExpressionToString).collect(Collectors.toSet());
+			return new ProcedureContract<>(contract.getProcedure(), stringifiedRequires, stringifiedEnsures,
+					stringifiedModifies);
+		}
+		return new ProcedureContract<>(contract.getProcedure(), stringifiedRequires, stringifiedEnsures);
+	}
+
 	/**
 	 * Use this if you want to keep a certain state of the backtranslation chain during toolchain execution.
 	 */
 	IBacktranslationService getTranslationServiceCopy();
 
-	public final class Lasso<X extends IProgramExecution<?, ?>> {
-		private final X mStem;
-		private final X mLoop;
-
-		public Lasso(final X stem, final X loop) {
-			mStem = stem;
-			mLoop = loop;
-		}
-
-		public X getStem() {
-			return mStem;
-		}
-
-		public X getLoop() {
-			return mLoop;
-		}
+	record Lasso<X extends IProgramExecution<?, ?>>(X stem, X loop) {
+		// simple record
 	}
 }

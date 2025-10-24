@@ -46,8 +46,8 @@ public class Concatenation<L> implements IRegex<L> {
 	 * Use factory method {@link Regex#concat(IRegex, IRegex)} to create objects of this class.
 	 */
 	protected Concatenation(final IRegex<L> a, final IRegex<L> b) {
-		this.mFirst = a;
-		this.mSecond = b;
+		mFirst = a;
+		mSecond = b;
 	}
 
 	@Override

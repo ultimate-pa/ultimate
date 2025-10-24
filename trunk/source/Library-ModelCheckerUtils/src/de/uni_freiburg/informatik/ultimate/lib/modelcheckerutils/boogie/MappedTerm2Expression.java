@@ -277,7 +277,7 @@ public final class MappedTerm2Expression implements Serializable {
 		assert term.getSort().getIndices().length == 1;
 		final String name = term.getFunction().getName();
 		assert name.startsWith("bv");
-		final String decimalValue = name.substring(2, name.length());
+		final String decimalValue = name.substring(2);
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		final String length = term.getSort().getIndices()[0];
 		return new BitvecLiteral(null, type, decimalValue, Integer.valueOf(length));
@@ -407,7 +407,7 @@ public final class MappedTerm2Expression implements Serializable {
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		assert term.getQuantifier() == QuantifiedFormula.FORALL || term.getQuantifier() == QuantifiedFormula.EXISTS;
 		final boolean isUniversal = term.getQuantifier() == QuantifiedFormula.FORALL;
-		final String[] typeParams = new String[0];
+		final String[] typeParams = {};
 		Attribute[] attributes;
 		Term subTerm = term.getSubformula();
 		if (subTerm instanceof AnnotatedTerm) {

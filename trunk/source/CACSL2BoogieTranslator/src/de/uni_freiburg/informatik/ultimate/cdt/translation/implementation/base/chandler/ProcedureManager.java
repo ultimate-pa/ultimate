@@ -66,11 +66,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -87,7 +86,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
  * <ul>
  * <li>translations of C functions ({@link CHandler}, {@link FunctionHandler})
  * <li>helper procedures from the memory model ({@link MemoryHandler})
- * <li>when we provide a Boogie model for a standard C function ({@link StandardFunctionHandler})
+ * <li>when we provide a Boogie model for a standard C function ({@link LibraryModelHandler})
  * <li>Ultimate.start and Ultimate.init ({@link PostProcessor})
  * </ul>
  * Note that at the moment this manages procedure declarations. Procedure implementations are passed around elsewhere.
@@ -214,15 +213,17 @@ public class ProcedureManager {
 
 			final Specification[] newSpecWithExtraEnsuresClauses;
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
-					&& (mSettings.checkAllocationPurity() || (mSettings.getEntryMethod().equals(SFO.EMPTY)
-							|| mSettings.getEntryMethod().equals(procedureName))
-							&& mSettings.checkMemoryLeakInMain())) {
-				// add a specification to check for memory leaks
+					&& mSettings.getFunctionsCheckedForMemoryNeutrality().contains(procedureName)) {
+				// add a specification to check for memory neutrality (i.e., if all dynamically allocated memory is
+				// freed)
+				// TODO Matthias 2025-10-03: It might be confusing for users to check the property only of the memory
+				// model is required. Maybe we can require the memory model if the list of functions for which we
+				// check memory neutrality is not empty.
 
 				final Expression vIe = memoryHandler.getValidArray(loc);
 
 				final int nrSpec = newSpec.length;
-				final Check check = new Check(Spec.MEMORY_LEAK);
+				final Check check = new Check(Spec.MEMORY_NEUTRAL);
 				final ILocation ensLoc = LocationFactory.createLocation(loc);
 				newSpecWithExtraEnsuresClauses = Arrays.copyOf(newSpec, nrSpec + 1);
 				newSpecWithExtraEnsuresClauses[nrSpec] = new EnsuresSpecification(ensLoc, false,
@@ -365,7 +366,7 @@ public class ProcedureManager {
 		return mCurrentProcedureInfo.getProcedureName();
 	}
 
-	public CType getReturnTypeOfCurrentProcedure() {
+	public ICType getReturnTypeOfCurrentProcedure() {
 		if (mCurrentProcedureInfo == null) {
 			throw new IllegalStateException("Check for isGlobalScope first");
 		}
@@ -462,8 +463,7 @@ public class ProcedureManager {
 		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
 		final Procedure oldDecl = procInfo.getDeclaration();
 
-		final List<Specification> newSpecs = new ArrayList<>();
-		newSpecs.addAll(Arrays.asList(oldDecl.getSpecification()));
+		final List<Specification> newSpecs = new ArrayList<>(Arrays.asList(oldDecl.getSpecification()));
 		newSpecs.addAll(specs);
 
 		final Procedure newDecl = new Procedure(oldDecl.getLoc(), oldDecl.getAttributes(), oldDecl.getIdentifier(),

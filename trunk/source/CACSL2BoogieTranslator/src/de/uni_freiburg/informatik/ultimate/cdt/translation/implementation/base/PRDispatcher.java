@@ -26,27 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.text.ParseException;
 import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
-import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
-import org.eclipse.cdt.core.dom.ast.IASTComment;
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTDeclarationListOwner;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
@@ -57,32 +50,22 @@ import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
-import org.eclipse.cdt.core.dom.ast.IASTFieldDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionStyleMacroParameter;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
-import org.eclipse.cdt.core.dom.ast.IASTImplicitName;
-import org.eclipse.cdt.core.dom.ast.IASTImplicitNameOwner;
-import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
-import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTPointer;
-import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
-import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroDefinition;
-import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroExpansion;
-import org.eclipse.cdt.core.dom.ast.IASTPreprocessorObjectStyleMacroDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IASTProblem;
 import org.eclipse.cdt.core.dom.ast.IASTProblemDeclaration;
@@ -92,28 +75,23 @@ import org.eclipse.cdt.core.dom.ast.IASTProblemTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
-import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
-import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdInitializerExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CHandlerTranslationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessDeclaration;
 
@@ -137,248 +115,63 @@ public class PRDispatcher implements IDispatcher {
 
 	@Override
 	public Result dispatch(final IASTNode n) {
-		if (n instanceof IASTTranslationUnit) {
-			return mCHandler.visit(this, (IASTTranslationUnit) n);
-		}
-		if (n instanceof IASTSimpleDeclaration) {
-			return mCHandler.visit(this, (IASTSimpleDeclaration) n);
-		}
-		if (n instanceof IASTParameterDeclaration) {
-			return mCHandler.visit(this, (IASTParameterDeclaration) n);
-		}
-		if (n instanceof IASTProblemDeclaration) {
-			return mCHandler.visit(this, (IASTProblemDeclaration) n);
-		}
-		if (n instanceof IASTASMDeclaration) {
-			return mCHandler.visit(this, (IASTASMDeclaration) n);
-		}
-		if (n instanceof IASTDeclarator) {
-			return mCHandler.visit(this, (IASTDeclarator) n);
-		}
-		if (n instanceof IASTFunctionDefinition) {
-			return mCHandler.visit(this, (IASTFunctionDefinition) n);
-		}
-		if (n instanceof IASTArrayModifier) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTComment) {
-			// TODO : remove? I think they are excluded by the parser anyway?
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTDeclaration) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTDeclSpecifier) {
-			// Here we decide which further Interface we want to visit, and
-			// call the typeHandler
-			if (n instanceof IASTSimpleDeclSpecifier) {
-				return mTypeHandler.visit(this, (IASTSimpleDeclSpecifier) n);
-			}
-			if (n instanceof IASTNamedTypeSpecifier) {
-				return mTypeHandler.visit(this, (IASTNamedTypeSpecifier) n);
-			}
-			if (n instanceof IASTEnumerationSpecifier) {
-				return mTypeHandler.visit(this, (IASTEnumerationSpecifier) n);
-			}
-			if (n instanceof IASTElaboratedTypeSpecifier) {
-				return mTypeHandler.visit(this, (IASTElaboratedTypeSpecifier) n);
-			}
-			if (n instanceof IASTCompositeTypeSpecifier) {
-				return mTypeHandler.visit(this, (IASTCompositeTypeSpecifier) n);
-			}
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTDeclarationListOwner) {
-			// must be after IASTCompositeTypeSpecifier!
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTStatement) {
-			if (n instanceof IASTReturnStatement) {
-				return mCHandler.visit(this, (IASTReturnStatement) n);
-			}
-			if (n instanceof IASTSwitchStatement) {
-				return mCHandler.visit(this, (IASTSwitchStatement) n);
-			}
-			if (n instanceof IASTWhileStatement) {
-				return mCHandler.visit(this, (IASTWhileStatement) n);
-			}
-			if (n instanceof IASTLabelStatement) {
-				return mCHandler.visit(this, (IASTLabelStatement) n);
-			}
-			if (n instanceof IASTNullStatement) {
-				return mCHandler.visit(this, (IASTNullStatement) n);
-			}
-			if (n instanceof IASTContinueStatement) {
-				return mCHandler.visit(this, (IASTContinueStatement) n);
-			}
-			if (n instanceof IASTDeclarationStatement) {
-				return mCHandler.visit(this, (IASTDeclarationStatement) n);
-			}
-			if (n instanceof IASTDefaultStatement) {
-				return mCHandler.visit(this, (IASTDefaultStatement) n);
-			}
-			if (n instanceof IASTDoStatement) {
-				return mCHandler.visit(this, (IASTDoStatement) n);
-			}
-			if (n instanceof IASTExpressionStatement) {
-				return mCHandler.visit(this, (IASTExpressionStatement) n);
-			}
-			if (n instanceof IASTForStatement) {
-				return mCHandler.visit(this, (IASTForStatement) n);
-			}
-			if (n instanceof IASTGotoStatement) {
-				return mCHandler.visit(this, (IASTGotoStatement) n);
-			}
-			if (n instanceof IASTIfStatement) {
-				return mCHandler.visit(this, (IASTIfStatement) n);
-			}
-			if (n instanceof IASTCompoundStatement) {
-				return mCHandler.visit(this, (IASTCompoundStatement) n);
-			}
-			if (n instanceof IASTBreakStatement) {
-				return mCHandler.visit(this, (IASTBreakStatement) n);
-			}
-			if (n instanceof IASTCaseStatement) {
-				return mCHandler.visit(this, (IASTCaseStatement) n);
-			}
-			if (n instanceof IASTProblemStatement) {
-				// error -> we will cancel the translation anyway ...
-				// -> should be at the end of the parent if for performance
-				return mCHandler.visit(this, (IASTProblemStatement) n);
-			}
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTInitializer) {
-			if (n instanceof IASTEqualsInitializer) {
-				return mCHandler.visit(this, (IASTEqualsInitializer) n);
-			}
-			if (n instanceof CASTDesignatedInitializer) {
-				return mCHandler.visit(this, (CASTDesignatedInitializer) n);
-			}
-			if (n instanceof IASTInitializerList) {
-				return mCHandler.visit(this, (IASTInitializerList) n);
-			}
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTExpression) {
-			if (n instanceof IASTLiteralExpression) {
-				return mCHandler.visit(this, (IASTLiteralExpression) n);
-			}
-			if (n instanceof IASTIdExpression) {
-				return mCHandler.visit(this, (IASTIdExpression) n);
-			}
-			if (n instanceof IASTFunctionCallExpression) {
-				return mCHandler.visit(this, (IASTFunctionCallExpression) n);
-			}
-			if (n instanceof IASTFieldReference) {
-				return mCHandler.visit(this, (IASTFieldReference) n);
-			}
-			if (n instanceof IASTExpressionList) {
-				return mCHandler.visit(this, (IASTExpressionList) n);
-			}
-			if (n instanceof IASTConditionalExpression) {
-				return mCHandler.visit(this, (IASTConditionalExpression) n);
-			}
-			if (n instanceof IASTCastExpression) {
-				return mCHandler.visit(this, (IASTCastExpression) n);
-			}
-			if (n instanceof IASTBinaryExpression) {
-				return mCHandler.visit(this, (IASTBinaryExpression) n);
-			}
-			if (n instanceof IASTBinaryTypeIdExpression) {
-				return mCHandler.visit(this, (IASTBinaryTypeIdExpression) n);
-			}
-			if (n instanceof IASTArraySubscriptExpression) {
-				return mCHandler.visit(this, (IASTArraySubscriptExpression) n);
-			}
-			if (n instanceof IASTAmbiguousExpression) {
-				return mCHandler.visit(this, (IASTAmbiguousExpression) n);
-			}
-			if (n instanceof IASTAmbiguousCondition) {
-				return mCHandler.visit(this, (IASTAmbiguousCondition) n);
-			}
-			if (n instanceof IASTTypeIdExpression) {
-				return mCHandler.visit(this, (IASTTypeIdExpression) n);
-			}
-			if (n instanceof IASTTypeIdInitializerExpression) {
-				return mCHandler.visit(this, (IASTTypeIdInitializerExpression) n);
-			}
-			if (n instanceof IASTUnaryExpression) {
-				return mCHandler.visit(this, (IASTUnaryExpression) n);
-			}
-			if (n instanceof IASTProblemExpression) {
-				return mCHandler.visit(this, (IASTProblemExpression) n);
-			}
-			if (n instanceof IGNUASTCompoundStatementExpression) {
-				return mCHandler.visit(this, (IGNUASTCompoundStatementExpression) n);
-			}
-			return mCHandler.visit(this, (IASTExpression) n);
-		}
-		if (n instanceof IASTFunctionStyleMacroParameter) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTImplicitNameOwner) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTName) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTPointerOperator) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTPreprocessorMacroExpansion) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTProblem) {
-			return mCHandler.visit(this, (IASTProblem) n);
-		}
-		if (n instanceof IASTTypeId) {
-			return mCHandler.visit(this, n);
-		}
-		// Indirect implementations of IASTNode in CDT version 7:
-		if (n instanceof IASTArrayDeclarator) {
-			return mCHandler.visit(this, (IASTArrayDeclarator) n);
-		}
-		if (n instanceof IASTASMDeclaration) {
-			return mCHandler.visit(this, (IASTASMDeclaration) n);
-		}
-		if (n instanceof IASTCompositeTypeSpecifier) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTFieldDeclarator) {
-			return mCHandler.visit(this, (IASTFieldDeclarator) n);
-		}
-		if (n instanceof IASTImplicitName) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTInitializerClause) {
-			return mCHandler.visit(this, (IASTInitializerClause) n);
-		}
-		if (n instanceof IASTPointer) {
-			return mCHandler.visit(this, (IASTPointer) n);
-		}
-		if (n instanceof IASTPreprocessorMacroDefinition) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTPreprocessorObjectStyleMacroDefinition) {
-			return mCHandler.visit(this, n);
-		}
-		if (n instanceof IASTStandardFunctionDeclarator) {
-			return mCHandler.visit(this, (IASTStandardFunctionDeclarator) n);
-		}
-		if (n instanceof IASTProblemDeclaration) {
-			// error -> we will cancel the translation anyway ...
-			// -> should be at the end of the parent if for performance
-			return mCHandler.visit(this, (IASTProblemDeclaration) n);
-		}
-		if (n instanceof IASTProblemTypeId) {
-			// error -> we will cancel the translation anyway ...
-			// -> should be at the end of the parent if for performance
-			return mCHandler.visit(this, (IASTProblemTypeId) n);
-		}
-		final String msg = "PRDispatcher: AST node type unknown: " + n.getClass();
-		final ILocation loc = mLocationFactory.createCLocation(n);
-		throw new UnsupportedSyntaxException(loc, msg);
+		return switch (n) {
+		case final IASTTranslationUnit tu -> mCHandler.visit(this, tu);
+		case final IASTSimpleDeclaration dec -> mCHandler.visit(this, dec);
+		case final IASTParameterDeclaration dec -> mCHandler.visit(this, dec);
+		case final IASTProblemDeclaration problem -> mCHandler.visit(this, problem);
+		case final IASTASMDeclaration dec -> mCHandler.visit(this, dec);
+		case final IASTDeclarator dec -> mCHandler.visit(this, dec);
+		case final IASTFunctionDefinition def -> mCHandler.visit(this, def);
+		case final IASTSimpleDeclSpecifier decSpec -> mTypeHandler.visit(this, decSpec);
+		case final IASTNamedTypeSpecifier nts -> mTypeHandler.visit(this, nts);
+		case final IASTEnumerationSpecifier enumSpec -> mTypeHandler.visit(this, enumSpec);
+		case final IASTElaboratedTypeSpecifier ets -> mTypeHandler.visit(this, ets);
+		case final IASTCompositeTypeSpecifier cts -> mTypeHandler.visit(this, cts);
+		case final IASTReturnStatement ret -> mCHandler.visit(this, ret);
+		case final IASTSwitchStatement sw -> mCHandler.visit(this, sw);
+		case final IASTWhileStatement whl -> mCHandler.visit(this, whl);
+		case final IASTLabelStatement label -> mCHandler.visit(this, label);
+		case final IASTNullStatement nul -> mCHandler.visit(this, nul);
+		case final IASTContinueStatement cont -> mCHandler.visit(this, cont);
+		case final IASTDeclarationStatement dec -> mCHandler.visit(this, dec);
+		case final IASTDefaultStatement def -> mCHandler.visit(this, def);
+		case final IASTDoStatement d -> mCHandler.visit(this, d);
+		case final IASTExpressionStatement exprSt -> mCHandler.visit(this, exprSt);
+		case final IASTForStatement forSt -> mCHandler.visit(this, forSt);
+		case final IASTGotoStatement got -> mCHandler.visit(this, got);
+		case final IASTIfStatement ifSt -> mCHandler.visit(this, ifSt);
+		case final IASTCompoundStatement comp -> mCHandler.visit(this, comp);
+		case final IASTBreakStatement brk -> mCHandler.visit(this, brk);
+		case final IASTCaseStatement cs -> mCHandler.visit(this, cs);
+		case final IASTProblemStatement problem -> mCHandler.visit(this, problem);
+		case final IASTEqualsInitializer init -> mCHandler.visit(this, init);
+		case final ICASTDesignatedInitializer init -> mCHandler.visit(this, init);
+		case final IASTInitializerList init -> mCHandler.visit(this, init);
+		case final IASTLiteralExpression lit -> mCHandler.visit(this, lit);
+		case final IASTIdExpression id -> mCHandler.visit(this, id);
+		case final IASTFunctionCallExpression call -> mCHandler.visit(this, call);
+		case final IASTFieldReference ref -> mCHandler.visit(this, ref);
+		case final IASTExpressionList exprLs -> mCHandler.visit(this, exprLs);
+		case final IASTConditionalExpression cond -> mCHandler.visit(this, cond);
+		case final IASTCastExpression cast -> mCHandler.visit(this, cast);
+		case final IASTBinaryExpression bin -> mCHandler.visit(this, bin);
+		case final IASTBinaryTypeIdExpression btie -> mCHandler.visit(this, btie);
+		case final IASTArraySubscriptExpression arraySub -> mCHandler.visit(this, arraySub);
+		case final IASTAmbiguousExpression amb -> mCHandler.visit(this, amb);
+		case final IASTAmbiguousCondition amb -> mCHandler.visit(this, amb);
+		case final IASTTypeIdExpression tie -> mCHandler.visit(this, tie);
+		case final IASTTypeIdInitializerExpression tiie -> mCHandler.visit(this, tiie);
+		case final IASTUnaryExpression unary -> mCHandler.visit(this, unary);
+		case final IASTProblemExpression problem -> mCHandler.visit(this, problem);
+		case final IGNUASTCompoundStatementExpression comp -> mCHandler.visit(this, comp);
+		case final IASTExpression expr -> mCHandler.visit(this, expr);
+		case final IASTProblem problem -> mCHandler.visit(this, problem);
+		case final IASTInitializerClause init -> mCHandler.visit(this, init);
+		case final IASTPointer pointer -> mCHandler.visit(this, pointer);
+		case final IASTProblemTypeId problem -> mCHandler.visit(this, problem);
+		default -> mCHandler.visit(this, n);
+		};
 	}
 
 	@Override
@@ -402,7 +195,7 @@ public class PRDispatcher implements IDispatcher {
 	}
 
 	@Override
-	public NextACSL nextACSLStatement() throws ParseException {
+	public NextACSL nextACSLStatement() {
 		throw new UnsupportedOperationException();
 	}
 

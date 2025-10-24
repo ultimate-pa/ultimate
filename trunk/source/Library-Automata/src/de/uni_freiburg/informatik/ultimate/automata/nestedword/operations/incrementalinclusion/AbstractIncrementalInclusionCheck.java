@@ -87,7 +87,8 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER, STATE> {
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa)
+			throws AutomataLibraryException {
 		mNwaB.add(nwa);
 	}
 

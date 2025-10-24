@@ -42,7 +42,7 @@ public class ExceptionOrErrorResult extends AbstractResult implements IFailedAna
 	public ExceptionOrErrorResult(final String plugin, final Throwable throwable) {
 		super(getPluginName(plugin, throwable));
 		if (throwable instanceof ToolchainExceptionWrapper) {
-			mThrowable = ((ToolchainExceptionWrapper) throwable).getCause();
+			mThrowable = throwable.getCause();
 		} else {
 			mThrowable = throwable;
 		}
@@ -63,11 +63,11 @@ public class ExceptionOrErrorResult extends AbstractResult implements IFailedAna
 	@Override
 	public String getLongDescription() {
 		final StackTraceElement[] stacktrace = mThrowable.getStackTrace();
-		String rtr = getPlugin() + ": " + getShortDescription();
+		final StringBuilder rtr = new StringBuilder().append(getPlugin()).append(": ").append(getShortDescription());
 		if (stacktrace != null && stacktrace.length > 0) {
-			rtr = rtr + ": " + stacktrace[0].toString();
+			rtr.append(": ").append(stacktrace[0].toString());
 		}
-		return rtr;
+		return rtr.toString();
 	}
 
 	@Override

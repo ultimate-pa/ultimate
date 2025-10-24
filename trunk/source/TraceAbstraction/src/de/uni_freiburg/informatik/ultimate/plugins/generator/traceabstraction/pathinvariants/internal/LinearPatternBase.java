@@ -39,31 +39,27 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * A class representing an (possibly strict) linear inequality over a set of
- * {@link IProgramVar}s. A DNF over these inequalities forms a pattern as used
- * within {@link LinearInequalityInvariantPatternProcessor}.
+ * A class representing an (possibly strict) linear inequality over a set of {@link IProgramVar}s. A DNF over these
+ * inequalities forms a pattern as used within {@link LinearInequalityInvariantPatternProcessor}.
+ *
  * @author David Zschocke, Dirk Steinmetz, Betim Musa
  */
 public class LinearPatternBase extends AbstractLinearInvariantPattern {
-
 
 	/**
 	 * Creates a new linear inequality over a given set of {@link IProgramVar}s.
 	 *
 	 * @param solver
-	 *            the solver to generate new function symbols in (for
-	 *            coefficients and constant term)
+	 *            the solver to generate new function symbols in (for coefficients and constant term)
 	 * @param variables
 	 *            collection of variables
 	 * @param prefix
-	 *            unique prefix, which is not used by any other instance of this
-	 *            class or other classes accessing the same solver
+	 *            unique prefix, which is not used by any other instance of this class or other classes accessing the
+	 *            same solver
 	 * @param strict
-	 *            true iff a strict inequality is to be generated, false iff a
-	 *            non-strict inequality is to be generated
+	 *            true iff a strict inequality is to be generated, false iff a non-strict inequality is to be generated
 	 */
-	public LinearPatternBase(final Script solver,
-			final Set<IProgramVar> variables, final String prefix,
+	public LinearPatternBase(final Script solver, final Set<IProgramVar> variables, final String prefix,
 			final boolean strict) {
 		super(solver, variables, prefix, strict);
 	}
@@ -73,21 +69,19 @@ public class LinearPatternBase extends AbstractLinearInvariantPattern {
 	}
 
 	/**
-	 * Returns a linear inequality corresponding to this part of the invariant,
-	 * when applied to a given {@link IProgramVar}-Mapping (that is, a map assigning
-	 * a {@link Term} to each {@link IProgramVar} within the inequality represented
-	 * by this class).
+	 * Returns a linear inequality corresponding to this part of the invariant, when applied to a given
+	 * {@link IProgramVar}-Mapping (that is, a map assigning a {@link Term} to each {@link IProgramVar} within the
+	 * inequality represented by this class).
 	 *
 	 * @param map
-	 *            mapping to {@link Terms} to be used within the
-	 *            {@link LinearInequality} generated
-	 * @return linear inequality equivalent to the linear inequality represented
-	 *         by this class, where each {@link IProgramVar} is replaced according
-	 *         to the given mapping
+	 *            mapping to {@link Terms} to be used within the {@link LinearInequality} generated
+	 * @return linear inequality equivalent to the linear inequality represented by this class, where each
+	 *         {@link IProgramVar} is replaced according to the given mapping
 	 */
 	@Override
 	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map) {
-		assert (map.keySet().containsAll(mVariablesOfThisPattern)) : "The given map does not contain an entry for each variable of this pattern";
+		assert (map.keySet().containsAll(mVariablesOfThisPattern))
+				: "The given map does not contain an entry for each variable of this pattern";
 		final Map<IProgramVar, Term> vars2TermsForThisPattern = new HashMap<>(mVariablesOfThisPattern.size());
 		for (final IProgramVar var : mVariablesOfThisPattern) {
 			vars2TermsForThisPattern.put(var, map.get(var));
@@ -98,17 +92,16 @@ public class LinearPatternBase extends AbstractLinearInvariantPattern {
 	}
 
 	/**
-	 * Returns the affine function \sumi a_ix_i corresponding to the
-	 * linear inequality \sumi a_ix_i < b (for strict linear inequalities)
-	 * or \sumi a_ix_i \le b (for non-strict linear inequalites).
-	 * In addition variables given in the valuation are valuated with
-	 * given values
-	 * @param valuation the valuation (map for TermVariables to Rational)
-	 * to use to valuate variables
+	 * Returns the affine function \sumi a_ix_i corresponding to the linear inequality \sumi a_ix_i < b (for strict
+	 * linear inequalities) or \sumi a_ix_i \le b (for non-strict linear inequalites). In addition variables given in
+	 * the valuation are valuated with given values
+	 *
+	 * @param valuation
+	 *            the valuation (map for TermVariables to Rational) to use to valuate variables
 	 * @return the valuated affine function corresponding to this LinearInequality
 	 */
 	@Override
-	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation){
+	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation) {
 		return mFunctionGenerator.extractAffineFunction(valuation);
 	}
 

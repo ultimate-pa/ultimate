@@ -30,7 +30,7 @@
 			<fileset dir="${astCodeDir}" defaultexcludes="false">
 				<exclude name="Boogie.ast"/>
 				<exclude name="BoogieASTNode.java"/>
-				<exclude name="package.html"/>
+				<exclude name="package-info.java"/>
 			</fileset>
 		</delete>
 	</target>

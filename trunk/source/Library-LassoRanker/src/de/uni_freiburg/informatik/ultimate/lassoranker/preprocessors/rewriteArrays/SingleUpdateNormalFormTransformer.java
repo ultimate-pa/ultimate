@@ -45,12 +45,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCounter;
 
-
-
 /**
- * Transform conjunction into equisatisfiable conjunction such that each multi-
- * dimensional store occurs only in a conjunction of the form
- * a' = (store a index value)
+ * Transform conjunction into equisatisfiable conjunction such that each multi- dimensional store occurs only in a
+ * conjunction of the form a' = (store a index value)
+ *
  * @author Matthias Heizmann
  *
  */
@@ -68,14 +66,14 @@ public class SingleUpdateNormalFormTransformer {
 			final FreshAuxVarGenerator freshAuxVarGenerator) {
 		mScript = script;
 		mFreshAuxVarGenerator = freshAuxVarGenerator;
-		mArrayUpdates = new ArrayList<ArrayUpdate>();
+		mArrayUpdates = new ArrayList<>();
 		final Term[] conjuncts = SmtUtils.getConjuncts(input);
 		final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
 		mRemainderTerms = aue.getRemainingTerms();
 		mArrayUpdates.addAll(aue.getArrayUpdates());
 		mStore2TermVariable = aue.getStore2TermVariable();
 
-		while(true) {
+		while (true) {
 			if (!mStore2TermVariable.isEmpty()) {
 				processNewArrayUpdates();
 			} else {
@@ -93,18 +91,15 @@ public class SingleUpdateNormalFormTransformer {
 	}
 
 	/**
-	 * Construct auxiliary variable a_aux for store term.
-	 * Add array update a_aux = mdStore to mArrayUpdates
-	 * set mStore2TermVariable to (mdStore, a_aux);
+	 * Construct auxiliary variable a_aux for store term. Add array update a_aux = mdStore to mArrayUpdates set
+	 * mStore2TermVariable to (mdStore, a_aux);
 	 */
-	private void processNewStore(
-			final MultiDimensionalStore mdStore) {
+	private void processNewStore(final MultiDimensionalStore mdStore) {
 		final Term oldArray = mdStore.getArray();
 		TermVariable auxArray;
 		auxArray = mFreshAuxVarGenerator.constructFreshCopy(oldArray);
 		assert mStore2TermVariable.isEmpty();
-		mStore2TermVariable =
-				Collections.singletonMap(mdStore.toTerm(mScript), (Term) auxArray);
+		mStore2TermVariable = Collections.singletonMap(mdStore.toTerm(mScript), (Term) auxArray);
 		{
 			final Term newUpdate = mScript.term("=", auxArray, mdStore.toTerm(mScript));
 			final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newUpdate);
@@ -115,13 +110,11 @@ public class SingleUpdateNormalFormTransformer {
 
 	/**
 	 * Return some store term that is either in
-	 * <li> the index of one of the arrayUpdates
-	 * <li> the value of one of the arrayUpdates
-	 * <li> one of the remainderTerms
-	 * Return null of no such store term exists.
+	 * <li>the index of one of the arrayUpdates
+	 * <li>the value of one of the arrayUpdates
+	 * <li>one of the remainderTerms Return null of no such store term exists.
 	 */
-	private MultiDimensionalStore extractStore(
-			final List<ArrayUpdate> arrayUpdates, final List<Term> remainderTerms) {
+	private MultiDimensionalStore extractStore(final List<ArrayUpdate> arrayUpdates, final List<Term> remainderTerms) {
 		for (final ArrayUpdate au : arrayUpdates) {
 			for (final Term entry : au.getIndex()) {
 				final List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(entry);
@@ -151,13 +144,13 @@ public class SingleUpdateNormalFormTransformer {
 					throw new AssertionError("not yet implemented");
 				}
 			}
-			final Term newValue =  PureSubstitution.apply(mScript, mStore2TermVariable, au.getValue());
+			final Term newValue = PureSubstitution.apply(mScript, mStore2TermVariable, au.getValue());
 			if (newValue != au.getValue()) {
 				throw new AssertionError("not yet implemented");
 			}
 		}
-		final ArrayList<Term> newRemainderTerms = new ArrayList<Term>();
-		final Map<Term, Term> newStore2TermVariable = new HashMap<Term, Term>();
+		final ArrayList<Term> newRemainderTerms = new ArrayList<>();
+		final Map<Term, Term> newStore2TermVariable = new HashMap<>();
 		for (final Term term : mRemainderTerms) {
 			final Term newTerm = PureSubstitution.apply(mScript, mStore2TermVariable, term);
 			final ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newTerm);
@@ -187,15 +180,15 @@ public class SingleUpdateNormalFormTransformer {
 		}
 	}
 
-//	private Term addUpdate(MultiDimensionalStore arraryStore, Term term) {
-//		Term oldArray = arraryStore.getArray();
-//		TermVariable auxArray;
-//		auxArray = constructAuxiliaryVariable(oldArray);
-//		Map<Term, Term> substitutionMapping =
-//				Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
-//		Term newTerm = (new SafeSubstitution(mScript, substitutionMapping)).transform(term);
-//		return SmtUtils.and(mScript, newTerm, mScript.term("=", auxArray, arraryStore.getStoreTerm()));
-//	}
+	// private Term addUpdate(MultiDimensionalStore arraryStore, Term term) {
+	// Term oldArray = arraryStore.getArray();
+	// TermVariable auxArray;
+	// auxArray = constructAuxiliaryVariable(oldArray);
+	// Map<Term, Term> substitutionMapping =
+	// Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
+	// Term newTerm = (new SafeSubstitution(mScript, substitutionMapping)).transform(term);
+	// return SmtUtils.and(mScript, newTerm, mScript.term("=", auxArray, arraryStore.getStoreTerm()));
+	// }
 
 	public List<ArrayUpdate> getArrayUpdates() {
 		return Collections.unmodifiableList(mArrayUpdates);
@@ -210,12 +203,11 @@ public class SingleUpdateNormalFormTransformer {
 	}
 
 	public static class FreshAuxVarGenerator {
-		private final Map<TermVariable, Term> mFreshCopyToOriginal = new HashMap<TermVariable, Term>();
+		private final Map<TermVariable, Term> mFreshCopyToOriginal = new HashMap<>();
 		private final MultiElementCounter<Term> mFreshCopyCounter = new MultiElementCounter<>();
 		private final ReplacementVarFactory mReplacementVarFactory;
 
 		public FreshAuxVarGenerator(final ReplacementVarFactory replacementVarFactory) {
-			super();
 			mReplacementVarFactory = replacementVarFactory;
 		}
 
@@ -226,7 +218,8 @@ public class SingleUpdateNormalFormTransformer {
 				original = term;
 			}
 			final Integer numberOfFreshCopy = mFreshCopyCounter.increment(original);
-			final String nameOfFreshCopy = SmtUtils.removeSmtQuoteCharacters(original.toString()) + s_AuxArray + numberOfFreshCopy;
+			final String nameOfFreshCopy =
+					SmtUtils.removeSmtQuoteCharacters(original.toString()) + s_AuxArray + numberOfFreshCopy;
 			final TermVariable freshCopy = mReplacementVarFactory.getOrConstructAuxVar(nameOfFreshCopy, term.getSort());
 			mFreshCopyToOriginal.put(freshCopy, original);
 			return freshCopy;

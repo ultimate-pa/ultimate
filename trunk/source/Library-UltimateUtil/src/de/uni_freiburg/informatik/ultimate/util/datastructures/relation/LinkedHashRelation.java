@@ -30,9 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
 /**
- * Implementation of an {@link AbstractRelation} that uses a
- * {@link LinkedHashMap} for the mapping and a {@link LinkedHashSet} for the
- * elements of the image.
+ * Implementation of an {@link AbstractRelation} that uses a {@link LinkedHashMap} for the mapping and a
+ * {@link LinkedHashSet} for the elements of the image.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -40,7 +39,6 @@ public class LinkedHashRelation<D, R>
 		extends AbstractRelation<D, R, LinkedHashSet<R>, LinkedHashMap<D, LinkedHashSet<R>>> {
 
 	public LinkedHashRelation() {
-		super();
 	}
 
 	public LinkedHashRelation(final AbstractRelation<D, R, ?, ?> rel) {

@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Represents a conjunction over single set constraints that all constrain the
- * same element.
+ * Represents a conjunction over single set constraints that all constrain the same element.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -54,8 +53,8 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		mSurroundingCCSetConstraints = surroundingSetConstraints;
 		mSetConstraintManager = surroundingSetConstraints.getCongruenceClosure().getManager().getSetConstraintManager();
 
-//		final List<SetConstraint<ELEM>> onlyLits =
-//				setConstraintsRaw.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList());
+		// final List<SetConstraint<ELEM>> onlyLits =
+		// setConstraintsRaw.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList());
 		final List<SetConstraint<ELEM>> onlyLits = new ArrayList<>();
 		for (final SetConstraint<ELEM> sc : setConstraintsRaw) {
 			if (sc.hasOnlyLiterals()) {
@@ -87,25 +86,22 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		mSetConstraintManager = original.mSetConstraintManager;
 
 		mSetConstraints = Collections.unmodifiableSet(new HashSet<>(original.getSetConstraints()));
-		mScWithOnlyLiterals  = original.mScWithOnlyLiterals;
+		mScWithOnlyLiterals = original.mScWithOnlyLiterals;
 		assert sanityCheck();
 	}
 
-
 	/**
-	 * The given element is projected away. Assume it is not mConstrainedElement.
-	 * Project it in the sets.
+	 * The given element is projected away. Assume it is not mConstrainedElement. Project it in the sets.
 	 *
 	 * @param elem
 	 */
 	public void projectAway(final ELEM elem) {
-//		assert mSurroundingCCSetConstraints.getCongruenceClosure().isRepresentative(elem) : "right?..";
+		// assert mSurroundingCCSetConstraints.getCongruenceClosure().isRepresentative(elem) : "right?..";
 		assert !elem.equals(mConstrainedElement);
 
 		/*
-		 * remove constraints that have elem on their right hand side (a more precise
-		 * alternative would be to introduce a dummy element, effectively an
-		 * existentially quantified variable.. but we would have to introduce one for
+		 * remove constraints that have elem on their right hand side (a more precise alternative would be to introduce
+		 * a dummy element, effectively an existentially quantified variable.. but we would have to introduce one for
 		 * every projected element, right?..)
 		 */
 		final Set<SetConstraint<ELEM>> newSetConstraints = new HashSet<>();
@@ -134,7 +130,7 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 
 	public boolean isInconsistent() {
 		assert !mIsInconsistent || mSetConstraints == null;
-//		return mIsInconsistent || mSetConstraints.stream().anyMatch(sc -> sc.isInconsistent());
+		// return mIsInconsistent || mSetConstraints.stream().anyMatch(sc -> sc.isInconsistent());
 		if (mIsInconsistent) {
 			return true;
 		}
@@ -154,7 +150,6 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		assert mConstrainedElement != null;
 		return mConstrainedElement;
 	}
-
 
 	CcManager<ELEM> getCcManager() {
 		return mSurroundingCCSetConstraints.getCongruenceClosure().getManager();
@@ -194,9 +189,9 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		return mScWithOnlyLiterals != null;
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean hasOnlyLiterals(
-			final Collection<SetConstraint<ELEM>> setConstraints) {
-//		return setConstraints.stream().anyMatch(sc -> sc.hasOnlyLiterals());
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean
+			hasOnlyLiterals(final Collection<SetConstraint<ELEM>> setConstraints) {
+		// return setConstraints.stream().anyMatch(sc -> sc.hasOnlyLiterals());
 		for (final SetConstraint<ELEM> sc : setConstraints) {
 			if (sc.hasOnlyLiterals()) {
 				return true;
@@ -210,16 +205,16 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		return mScWithOnlyLiterals.getLiterals();
 	}
 
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<ELEM> getLiterals(
-//			final Collection<SetConstraint<ELEM>> setConstraints) {
-//		assert setConstraints.stream().filter(sc -> sc.hasOnlyLiterals()).collect(Collectors.toSet()).size() == 1;
-//		for (final SetConstraint<ELEM> sc : setConstraints) {
-//			if (sc.hasOnlyLiterals()) {
-//				return sc.getLiterals();
-//			}
-//		}
-//		throw new IllegalStateException("check for hasOnlyLiterals before calling this");
-//	}
+	// public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<ELEM> getLiterals(
+	// final Collection<SetConstraint<ELEM>> setConstraints) {
+	// assert setConstraints.stream().filter(sc -> sc.hasOnlyLiterals()).collect(Collectors.toSet()).size() == 1;
+	// for (final SetConstraint<ELEM> sc : setConstraints) {
+	// if (sc.hasOnlyLiterals()) {
+	// return sc.getLiterals();
+	// }
+	// }
+	// throw new IllegalStateException("check for hasOnlyLiterals before calling this");
+	// }
 
 	public void expandVariableToLiterals(final CCLiteralSetConstraints<ELEM> surroundingSetConstraints, final ELEM elem,
 			final Set<ELEM> literals) {
@@ -252,11 +247,10 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 				return true;
 			}
 			// check that inconsistency flag is set correctly
-			if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3) {
-				if (!mSetConstraints.stream().anyMatch(sc -> sc.isInconsistent())) {
-					assert false;
-					return false;
-				}
+			if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3
+					&& !mSetConstraints.stream().anyMatch(sc -> sc.isInconsistent())) {
+				assert false;
+				return false;
 			}
 		} else {
 			// EDIT: new convention: mIsInconsistent flag is a sufficient but not a
@@ -306,7 +300,6 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 			}
 		}
 
-
 		// check minimality: conjunction may not contain tautological elements
 		for (final SetConstraint<ELEM> sc : mSetConstraints) {
 			if (sc.containsElement(mConstrainedElement)) {
@@ -320,8 +313,7 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 	}
 
 	/**
-	 * checks if a set of SetConstraints is fully normalized (and possibly more
-	 * checks)
+	 * checks if a set of SetConstraints is fully normalized (and possibly more checks)
 	 *
 	 * @param constrainedElement
 	 * @param filtered

@@ -340,12 +340,9 @@ public class IcfgProgramExecution<L extends IAction> implements IProgramExecutio
 
 	public IcfgProgramExecution<L> addRelevanceInformation(final List<IRelevanceInformation> relevanceInformation) {
 		final List<AtomicTraceElement<L>> newAtes = new ArrayList<>();
-		final Iterator<AtomicTraceElement<L>> iter = mTrace.iterator();
 		final Iterator<IRelevanceInformation> relIter = relevanceInformation.iterator();
 		boolean isConcurrent = false;
-		while (iter.hasNext()) {
-			final AtomicTraceElement<L> ate =
-					AtomicTraceElementBuilder.from(iter.next()).setRelevanceInformation(relIter.next()).build();
+		for (final AtomicTraceElement<L> ate : mTrace) {
 			isConcurrent = isConcurrent || ate.hasThreadId();
 			newAtes.add(ate);
 		}

@@ -92,8 +92,8 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
-		assert !branchEncoders.isEmpty() || mClosedFormula.getFreeVars().length == 0 : String
-				.format("free variables %s", Arrays.asList(mClosedFormula.getFreeVars()));
+		assert !branchEncoders.isEmpty() || mClosedFormula.getFreeVars().length == 0
+				: String.format("free variables %s", Arrays.asList(mClosedFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
 		assert eachAuxVarOccursInFormula() == null : "Superfluous aux var: " + eachAuxVarOccursInFormula();
 		assert termVariablesHaveUniqueProgramVar() : "Same TermVariable used for different program variables";
@@ -168,7 +168,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	private boolean allSubsetInOutAuxBranch() {
 		boolean result = true;
 		for (final TermVariable tv : mFormula.getFreeVars()) {
-			result &= mInVars.values().contains(tv) || mOutVars.values().contains(tv) || mAuxVars.contains(tv)
+			result &= mInVars.containsValue(tv) || mOutVars.containsValue(tv) || mAuxVars.contains(tv)
 					|| mBranchEncoders.contains(tv);
 			assert result : "unexpected variable in formula";
 		}

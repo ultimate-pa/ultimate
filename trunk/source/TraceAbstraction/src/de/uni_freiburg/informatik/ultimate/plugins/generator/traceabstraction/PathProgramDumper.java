@@ -686,22 +686,17 @@ public class PathProgramDumper {
 	}
 
 	private IIcfgReturnTransition<?, ?> getCorrespondingReturn(final IAction action, final Program program) {
-		IIcfgReturnTransition<?, ?> correspondingReturn = null;
-		final IcfgLocation exitLoc;
-		switch (program) {
-		case ORIGINAL_PROGRAM:
-			exitLoc = mOriginalIcfg.getProcedureExitNodes().get(action.getSucceedingProcedure());
-			break;
-		case PATH_PROGRAM:
-			exitLoc = mPathProgram.getProcedureExitNodes().get(action.getSucceedingProcedure());
-			break;
-		default:
-			throw new AssertionError("unknown value " + program);
-		}
+		final IcfgLocation exitLoc = switch (program) {
+		case ORIGINAL_PROGRAM -> mOriginalIcfg.getProcedureExitNodes().get(action.getSucceedingProcedure());
+		case PATH_PROGRAM -> mPathProgram.getProcedureExitNodes().get(action.getSucceedingProcedure());
+		};
+
 		if (exitLoc == null) {
 			// corresponding return not in path program
 			return null;
 		}
+
+		IIcfgReturnTransition<?, ?> correspondingReturn = null;
 		for (final IcfgEdge returnEdge : exitLoc.getOutgoingEdges()) {
 			final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) returnEdge;
 			if (ret.getCorrespondingCall().equals(action)) {

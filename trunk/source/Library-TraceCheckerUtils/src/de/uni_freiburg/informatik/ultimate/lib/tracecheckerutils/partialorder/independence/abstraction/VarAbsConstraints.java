@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.UpsideDownL
  * @param <L>
  *            The type of statements being constrained
  */
-public class VarAbsConstraints<L extends IAction> {
+public final class VarAbsConstraints<L extends IAction> {
 	private final LazyInt mHash;
 	private final Map<L, BitSubSet<IProgramVar>> mInConstr;
 	private final Map<L, BitSubSet<IProgramVar>> mOutConstr;
@@ -64,7 +64,7 @@ public class VarAbsConstraints<L extends IAction> {
 	 *
 	 * Use with care! The given maps as well as all sets stored within them are expected to never be modified! In many
 	 * cases, it is better to use the methods {@link Lattice#getBottom()}, {@link Lattice#getTop()} and
-	 * {{@link #withModifiedConstraints(IAction, Set, Set)} to create new constraints.
+	 * {@link #withModifiedConstraints(IAction, Set, Set)} to create new constraints.
 	 *
 	 * @param in
 	 *            maps letters to the set of constrained inVars
@@ -134,17 +134,8 @@ public class VarAbsConstraints<L extends IAction> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final VarAbsConstraints<L> other = (VarAbsConstraints<L>) obj;
-		return Objects.equals(mInConstr, other.mInConstr) && Objects.equals(mOutConstr, other.mOutConstr);
+		return this == obj || (obj instanceof final VarAbsConstraints<?> other
+				&& Objects.equals(mInConstr, other.mInConstr) && Objects.equals(mOutConstr, other.mOutConstr));
 	}
 
 	/**

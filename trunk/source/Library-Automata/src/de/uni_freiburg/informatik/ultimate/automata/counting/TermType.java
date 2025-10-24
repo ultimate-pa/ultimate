@@ -36,4 +36,3 @@ package de.uni_freiburg.informatik.ultimate.automata.counting;
 public enum TermType {
 	TRUE, FALSE, CONSTANT, COUNTER, SUM;
 }
-

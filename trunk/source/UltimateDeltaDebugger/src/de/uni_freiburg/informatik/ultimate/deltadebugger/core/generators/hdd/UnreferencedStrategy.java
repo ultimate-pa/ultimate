@@ -43,12 +43,12 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeUtils;
 
 /**
- * A strategy to delete unreferenced things only.
- * A slightly better solution would be to create a dedicated VariantGenerator/Pass that can delete all declarations of
- * the same name, e.g. forward declarations and also function definition and all prototypes.
+ * A strategy to delete unreferenced things only. A slightly better solution would be to create a dedicated
+ * VariantGenerator/Pass that can delete all declarations of the same name, e.g. forward declarations and also function
+ * definition and all prototypes.
  */
 public class UnreferencedStrategy implements IHddStrategy {
-	
+
 	/**
 	 * Specifies what kind of names to delete.
 	 */
@@ -74,16 +74,16 @@ public class UnreferencedStrategy implements IHddStrategy {
 		 */
 		MAKRO_DEF;
 	}
-	
+
 	private final Set<Kind> mKinds;
-	
+
 	/**
 	 * Constructor using all {@link Kind}s.
 	 */
 	public UnreferencedStrategy() {
 		this(EnumSet.allOf(Kind.class));
 	}
-	
+
 	/**
 	 * @param kinds
 	 *            Kinds of names to delete.
@@ -91,7 +91,7 @@ public class UnreferencedStrategy implements IHddStrategy {
 	public UnreferencedStrategy(final Set<Kind> kinds) {
 		mKinds = EnumSet.copyOf(kinds);
 	}
-	
+
 	@Override
 	public void createChangeForNode(final IPSTNode node, final ChangeCollector collector) {
 		final IASTNode astNode = node.getAstNode();
@@ -104,7 +104,7 @@ public class UnreferencedStrategy implements IHddStrategy {
 			collector.addDeleteChange(node);
 		}
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private static boolean isStatementRequired(final IASTNode astNode) {
 		final ASTNodeProperty property = astNode.getPropertyInParent();
@@ -115,13 +115,12 @@ public class UnreferencedStrategy implements IHddStrategy {
 			return false;
 		}
 		if (property == IASTDeclarationStatement.DECLARATION) {
-			return ((IASTDeclarationStatement) astNode.getParent())
-					.getPropertyInParent() != IASTCompoundStatement.NESTED_STATEMENT;
+			return astNode.getParent().getPropertyInParent() != IASTCompoundStatement.NESTED_STATEMENT;
 		}
 		// TODO: find out what's left and handle it accordingly
 		return false;
 	}
-	
+
 	private boolean isUnreferencedNodeToDelete(final IASTNode astNode) {
 		if (astNode instanceof IASTSimpleDeclaration && mKinds.contains(getDeclKind(astNode))) {
 			return !ASTNodeUtils.hasReferences((IASTSimpleDeclaration) astNode);
@@ -132,7 +131,7 @@ public class UnreferencedStrategy implements IHddStrategy {
 		}
 		return false;
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private static Kind getDeclKind(final IASTNode astNode) {
 		final ASTNodeProperty property = astNode.getPropertyInParent();
@@ -144,7 +143,7 @@ public class UnreferencedStrategy implements IHddStrategy {
 		}
 		return Kind.OTHER_DECL;
 	}
-	
+
 	@Override
 	public boolean expandUnchangeableNodeImmediately(final IPSTNode node) {
 		return true;

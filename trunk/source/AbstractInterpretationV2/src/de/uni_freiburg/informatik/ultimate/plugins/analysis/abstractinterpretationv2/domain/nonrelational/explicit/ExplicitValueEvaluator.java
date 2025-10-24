@@ -57,19 +57,18 @@ public class ExplicitValueEvaluator extends NonrelationalEvaluator<ExplicitValue
 
 		final EvaluatorFactory.Function<String, BaseExplicitValueValue> valueExpressionEvaluatorCreator =
 				(value, type) -> new ExplicitValueValue(Rational.valueOf(new BigInteger(value), BigInteger.ONE));
-		final INonrelationalValueFactory<BaseExplicitValueValue> valueFac =
-				new INonrelationalValueFactory<BaseExplicitValueValue>() {
+		final INonrelationalValueFactory<BaseExplicitValueValue> valueFac = new INonrelationalValueFactory<>() {
 
-					@Override
-					public BaseExplicitValueValue createTopValue() {
-						return ExplicitValueTop.DEFAULT;
-					}
+			@Override
+			public BaseExplicitValueValue createTopValue() {
+				return ExplicitValueTop.DEFAULT;
+			}
 
-					@Override
-					public BaseExplicitValueValue createBottomValue() {
-						return ExplicitValueBottom.DEFAULT;
-					}
-				};
+			@Override
+			public BaseExplicitValueValue createBottomValue() {
+				return ExplicitValueBottom.DEFAULT;
+			}
+		};
 		return new EvaluatorFactory<>(getLogger(), maxParallelStates, maxRecursionDepth, valueFac,
 				valueExpressionEvaluatorCreator);
 	}

@@ -43,7 +43,6 @@ public class AbsIntRegressionTestSuite extends AbstractRegressionTestSuite {
 	private static final long DEFAULT_TIMEOUT = 20 * 1000L;
 
 	public AbsIntRegressionTestSuite() {
-		super();
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/programs/abstractInterpretation/");
 		mFiletypesToConsider = new String[] { ".bpl" };

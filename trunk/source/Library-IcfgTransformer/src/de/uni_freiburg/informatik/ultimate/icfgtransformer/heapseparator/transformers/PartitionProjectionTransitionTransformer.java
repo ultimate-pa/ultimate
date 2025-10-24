@@ -85,16 +85,15 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 	private final HashRelation3<ArrayGroup, Integer, StoreLocationBlock> mArrayGroupToDimensionToLocationBlocks;
 
-//	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
-//	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
+	// private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
+	// private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
 
 	private final ComputeStoreInfosAndArrayGroups<?> mCsiag;
 
 	/**
 	 * Map holding the partitioning information.
 	 */
-	private final NestedMap3<EdgeInfo, ArrayCellAccess, Integer, StoreLocationBlock>
-		mEdgeInfoToArrayCellAccessToDimensionToLocationBlock;
+	private final NestedMap3<EdgeInfo, ArrayCellAccess, Integer, StoreLocationBlock> mEdgeInfoToArrayCellAccessToDimensionToLocationBlock;
 
 	private final List<IProgramVarOrConst> mHeapArrays;
 
@@ -119,24 +118,22 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	 * @param funLocFac
 	 * @param backtranslationTracker
 	 * @param selectInfoToDimensionToLocationBlock
-	 * 			Maps each array read at some dimension in the program to its LocationBlock (i.e. set of all array writes
-	 * 			 that may impact the value of the array at the read cell).
-	 * 			This is the processed result of our alias analysis.
+	 *            Maps each array read at some dimension in the program to its LocationBlock (i.e. set of all array
+	 *            writes that may impact the value of the array at the read cell). This is the processed result of our
+	 *            alias analysis.
 	 * @param edgeToIndexToStoreIndexInfo
-	 * 			enables us to find all StoreIndexInfos by their key members
+	 *            enables us to find all StoreIndexInfos by their key members
 	 * @param arrayToArrayGroup
-	 * 			enables us to find all array groups by their elements
+	 *            enables us to find all array groups by their elements
 	 * @param heapArrays
 	 * @param statistics
 	 */
 	public PartitionProjectionTransitionTransformer(final ILogger logger,
 			final NestedMap2<SelectInfo, Integer, StoreLocationBlock> selectInfoToDimensionToLocationBlock,
-//			final NestedMap2<EdgeInfo, Term, StoreInfo> edgeToIndexToStoreIndexInfo,
-//			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
-			final ComputeStoreInfosAndArrayGroups<?> csiag,
-			final List<IProgramVarOrConst> heapArrays,
-			final HeapSeparatorBenchmark statistics,
-			final CfgSmtToolkit inputCfgCsToolkit) {
+			// final NestedMap2<EdgeInfo, Term, StoreInfo> edgeToIndexToStoreIndexInfo,
+			// final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
+			final ComputeStoreInfosAndArrayGroups<?> csiag, final List<IProgramVarOrConst> heapArrays,
+			final HeapSeparatorBenchmark statistics, final CfgSmtToolkit inputCfgCsToolkit) {
 
 		mMgdScript = inputCfgCsToolkit.getManagedScript();
 
@@ -150,31 +147,31 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		mStatistics = statistics;
 
 		/*
-		 * We build two maps each a different view on the input map selectInfoToDimensionToLocationBlock
-		 * <li> we split up the select infos from the input map into their two components: EdgeInfo and ArrayCellAccess
-		 * <li> we combine it with arrayToArrayGroup to group the LocationBlocks by arrayGroup and dimension
-		 *   (for the step in the projection operator when we project an array equation and build a big conjunction with
-		 *    a conjunct for each fitting LocationBlock tuple)
+		 * We build two maps each a different view on the input map selectInfoToDimensionToLocationBlock <li> we split
+		 * up the select infos from the input map into their two components: EdgeInfo and ArrayCellAccess <li> we
+		 * combine it with arrayToArrayGroup to group the LocationBlocks by arrayGroup and dimension (for the step in
+		 * the projection operator when we project an array equation and build a big conjunction with a conjunct for
+		 * each fitting LocationBlock tuple)
 		 */
 		mEdgeInfoToArrayCellAccessToDimensionToLocationBlock = new NestedMap3<>();
 		mArrayGroupToDimensionToLocationBlocks = new HashRelation3<>();
-		for (final Triple<SelectInfo, Integer, StoreLocationBlock> triple
-				: selectInfoToDimensionToLocationBlock.entrySet()) {
+		for (final Triple<SelectInfo, Integer, StoreLocationBlock> triple : selectInfoToDimensionToLocationBlock
+				.entrySet()) {
 			mEdgeInfoToArrayCellAccessToDimensionToLocationBlock.put(triple.getFirst().getEdgeInfo(),
 					triple.getFirst().getArrayCellAccess(), triple.getSecond(), triple.getThird());
 
-//			final IProgramVarOrConst array = triple.getFirst().getArrayPvoc();
-//			final ArrayGroup arrayGroup = arrayToArrayGroup.get(array);
+			// final IProgramVarOrConst array = triple.getFirst().getArrayPvoc();
+			// final ArrayGroup arrayGroup = arrayToArrayGroup.get(array);
 			final Integer dim = triple.getSecond();
 			assert dim == triple.getThird().getDimension();
 			mArrayGroupToDimensionToLocationBlocks.addTriple(triple.getFirst().getArrayGroup(), dim, triple.getThird());
 		}
 
-//		mArrayToArrayGroup = arrayToArrayGroup;
+		// mArrayToArrayGroup = arrayToArrayGroup;
 
 		mSubArrayManager = new SubArrayManager(inputCfgCsToolkit, mStatistics, csiag);
 
-//		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
+		// mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 		mCsiag = csiag;
 
 		mNewSymbolTable = new DefaultIcfgSymbolTable();
@@ -195,19 +192,16 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		final Map<IProgramVar, TermVariable> inVars;
 		final Map<IProgramVar, TermVariable> outVars;
 		{
-			final PartitionProjectionTermTransformer ppttf =
-					new PartitionProjectionTermTransformer(mLogger, mMgdScript, mSubArrayManager,
-							arrayCellAccessToDimensionToLocationBlock,
-							edgeInfo, mArrayGroupToDimensionToLocationBlocks,
-							mCsiag,
-							mHeapArrays);
+			final PartitionProjectionTermTransformer ppttf = new PartitionProjectionTermTransformer(mLogger, mMgdScript,
+					mSubArrayManager, arrayCellAccessToDimensionToLocationBlock, edgeInfo,
+					mArrayGroupToDimensionToLocationBlocks, mCsiag, mHeapArrays);
 			final Term transformedFormulaRaw = ppttf.transform(tf.getFormula());
 			ppttf.finish();
 
 			final Map<Term, Term> substitutionMapping = new IdentityHashMap<>();
 			/*
-			 * do an extra post processing that eliminates trivial array updates
-			 * Collect pairs of termVariables, equations between which should be replaced by "true".
+			 * do an extra post processing that eliminates trivial array updates Collect pairs of termVariables,
+			 * equations between which should be replaced by "true".
 			 */
 			for (final Entry<IProgramVar, TermVariable> ov : ppttf.getNewOutVars().entrySet()) {
 				if (!mSubArrayManager.isSubArray(ov.getKey())) {
@@ -225,9 +219,11 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 				assert outTv != null;
 
 				if (inTv == null) {
-					/* outvar has no corresponding invar --> there are no "neutral" terms like a1' = a1,
-					 *  --> current equation is definitely an actual update */
-					  continue;
+					/*
+					 * outvar has no corresponding invar --> there are no "neutral" terms like a1' = a1, --> current
+					 * equation is definitely an actual update
+					 */
+					continue;
 				}
 
 				if (inTv.equals(outTv)) {
@@ -235,8 +231,8 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 					continue;
 				}
 				/*
-				 * ov is an assigned var belonging to one of the partitioned arrays that only has pseudo updates in
-				 *  the transformula --> drop the update
+				 * ov is an assigned var belonging to one of the partitioned arrays that only has pseudo updates in the
+				 * transformula --> drop the update
 				 */
 
 				// don't use SMTUtils.binaryEquality here because it sorts the arguments!
@@ -278,13 +274,11 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 					continue;
 				}
 
-
 				if (!outVars.containsKey(iv.getKey())) {
 					outVars.put(iv.getKey(), iv.getValue());
 				}
 			}
 		}
-
 
 		{
 			for (final Entry<IProgramVar, TermVariable> en : inVars.entrySet()) {
@@ -302,11 +296,10 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 				mNewSymbolTable.add(en.getKey());
 
 				if (oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure())
-						&& en.getKey() instanceof IProgramNonOldVar
-						&& !en.getValue().equals(inVars.get(en.getKey()))) {
+						&& en.getKey() instanceof IProgramNonOldVar && !en.getValue().equals(inVars.get(en.getKey()))) {
 					/*
-					 * we have and internal transition or summary and a global assigned var
-					 * --> make sure it is tracked in modifiable globals
+					 * we have and internal transition or summary and a global assigned var --> make sure it is tracked
+					 * in modifiable globals
 					 */
 					mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), (IProgramNonOldVar) en.getKey());
 				}
@@ -317,17 +310,15 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		}
 
-
-		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(inVars, outVars,
-				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(),
-				tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
+		final TransFormulaBuilder tfBuilder =
+				new TransFormulaBuilder(inVars, outVars, tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(),
+						tf.getBranchEncoders().isEmpty(), tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
 
 		tfBuilder.setFormula(transformedFormula);
 		tfBuilder.setInfeasibility(tf.isInfeasible());
 		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
 
 		final UnmodifiableTransFormula newTransformula = tfBuilder.finishConstruction(mMgdScript);
-
 
 		assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure())
 				|| newTransformula.getAssignedVars().stream().allMatch(pv -> (pv instanceof ILocalProgramVar))

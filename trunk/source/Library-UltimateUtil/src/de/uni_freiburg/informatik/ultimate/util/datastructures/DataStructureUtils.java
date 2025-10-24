@@ -200,8 +200,7 @@ public class DataStructureUtils {
 	}
 
 	/**
-	 * Returns true, if the given collection and set have at least one common
-	 * element.
+	 * Returns true, if the given collection and set have at least one common element.
 	 */
 	public static <T> boolean haveNonEmptyIntersection(final Collection<T> collection, final Set<T> set) {
 		return collection.stream().anyMatch(set::contains);
@@ -354,8 +353,8 @@ public class DataStructureUtils {
 			return false;
 		}
 		final Set<T> setB = new HashSet<>(Arrays.asList(b));
-		for (int i = 0; i < a.length; ++i) {
-			if (!setB.contains(a[i])) {
+		for (final T element : a) {
+			if (!setB.contains(element)) {
 				return false;
 			}
 		}
@@ -453,9 +452,8 @@ public class DataStructureUtils {
 	}
 
 	/**
-	 * Return an unmodifiable view of the input set. Use
-	 * {@link Collections#emptySet} or {@link Collections#singleton} if possible to
-	 * get a memory-efficient representation.
+	 * Return an unmodifiable view of the input set. Use {@link Collections#emptySet} or {@link Collections#singleton}
+	 * if possible to get a memory-efficient representation.
 	 */
 	public static <T> Set<T> getUnmodifiable(final Set<T> set) {
 		if (set.isEmpty()) {
@@ -467,17 +465,15 @@ public class DataStructureUtils {
 		}
 	}
 
-
 	/**
-	 * Construct a new {@link ArrayList} that is a almost a copy of the input list
-	 * but where one given index is missing.
+	 * Construct a new {@link ArrayList} that is a almost a copy of the input list but where one given index is missing.
 	 *
 	 */
 	public static <E> List<E> copyAllButOne(final List<E> list, final int indexToBeRemoved) {
 		if (indexToBeRemoved < 0 || indexToBeRemoved >= list.size()) {
 			throw new IllegalArgumentException("Index where we remove must be inside array");
 		}
-		final List<E> result = new ArrayList<>(list.size() -1);
+		final List<E> result = new ArrayList<>(list.size() - 1);
 		int i = 0;
 		for (final E elem : list) {
 			if (i != indexToBeRemoved) {

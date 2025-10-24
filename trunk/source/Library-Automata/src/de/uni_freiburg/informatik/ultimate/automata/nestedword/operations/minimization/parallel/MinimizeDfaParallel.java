@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Layla Franke
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class manages the parallel computation of minimization by Hopcroft's and Incremental AMR algorithm.
- * 
+ *
  * @author Layla Franke
  * @param <LETTER>
  *            letter type
@@ -120,7 +120,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimave services
 	 * @param stateFactory
@@ -140,7 +140,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 			throw new UnsupportedOperationException("This class only supports minimization of finite automata.");
 		}
 
-		this.mInterrupt = new Interrupt();
+		mInterrupt = new Interrupt();
 
 		MinimizeDfaHopcroftParallel.setParallelFlag(true);
 		MinimizeDfaIncrementalParallel.setParallelFlag(true);
@@ -154,7 +154,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 		// Create queue
 		mTaskQueue = new LinkedBlockingQueue<>();
 
-		//final int processors = Runtime.getRuntime().availableProcessors();
+		// final int processors = Runtime.getRuntime().availableProcessors();
 		final int processors = 6;
 		mThreads = new ArrayList<>();
 		for (int i = 0; i < Math.max(1, processors - 2); i++) {
@@ -171,7 +171,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 				try {
 					this.wait();
 				} catch (final InterruptedException e) {
-					//e.printStackTrace();
+					// e.printStackTrace();
 				}
 			}
 		}
@@ -200,7 +200,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 			directResultConstruction(mResultGetter.call());
 			mResultConstructed = true;
 		} catch (final Exception e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 
 		mSb = createConsoleOutput();
@@ -241,7 +241,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 
 	/**
 	 * Measure CPU Time of all Threads.
-	 * 
+	 *
 	 * @return Array that holds the cpu times of all threads except for the main thread.
 	 */
 	private void measureTime() {
@@ -256,7 +256,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 
 	/**
 	 * Create formatted output of CPU times.
-	 * 
+	 *
 	 * @return Formatted output.
 	 */
 	private StringBuilder createConsoleOutput() {
@@ -293,7 +293,8 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 		int index = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
-			mState2int.put(state, ++index);
+			index++;
+			mState2int.put(state, index);
 		}
 	}
 
@@ -315,7 +316,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	private class WorkingThread extends Thread {
 		/**
 		 * Creating the thread.
-		 * 
+		 *
 		 * @param name
 		 *            name
 		 */
@@ -328,12 +329,12 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 					setPriority(Thread.MIN_PRIORITY);
 				}
 			} catch (final Exception e) {
-				//e.printStackTrace();
+				// e.printStackTrace();
 			}
 			try {
 				setDaemon(true);
 			} catch (final Exception e) {
-				//e.printStackTrace();
+				// e.printStackTrace();
 			}
 		}
 
@@ -357,7 +358,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	// -------------- Algorithm Tasks -------------//
 	/**
 	 * The algorithm task is a thread that performs a given algorithm for minimizing DFA.
-	 * 
+	 *
 	 * @author layla
 	 */
 	private class AlgorithmTask extends Thread {
@@ -376,7 +377,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 
 		/**
 		 * Constructor for a thread processing a minimization algorithm.
-		 * 
+		 *
 		 * @param mainThread
 		 *            The calling instance.
 		 * @param algorithm
@@ -399,7 +400,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 			try {
 				setDaemon(true);
 			} catch (final Exception e) {
-				//e.printStackTrace();
+				// e.printStackTrace();
 			}
 		}
 
@@ -489,7 +490,6 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	 * Enum for choosing the algorithm to run in AlgorithmTasks.
 	 */
 	private enum Algorithm {
-		HOPCROFT,
-		INCREMENTAL
+		HOPCROFT, INCREMENTAL
 	}
 }

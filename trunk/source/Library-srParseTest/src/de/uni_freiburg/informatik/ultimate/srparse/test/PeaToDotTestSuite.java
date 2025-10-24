@@ -122,7 +122,7 @@ public class PeaToDotTestSuite {
 		if (!CREATE_NEW_FILES || mPatternName.equals("BndEntryConditionPattern")) {
 			return;
 		}
-		
+
 		// Do not add deprecated patterns to documentation.
 		if (mPatternName.equals("BndEntryConditionPattern")) {
 			return;
@@ -150,24 +150,25 @@ public class PeaToDotTestSuite {
 
 		final File file = new File(PEA_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_" + numPea + ".svg");
 
-		final String[] command = new String[] { "dot", "-Tsvg", "-o", file.toString() };
-		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider);
-		final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+		final String[] command = { "dot", "-Tsvg", "-o", file.toString() };
+		try (final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider)) {
+			final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 
-		writer.write(dot.toString());
-		writer.close();
+			writer.write(dot.toString());
+			writer.close();
 
-		final int returnCode = process.waitfor().getReturnCode();
-		if (returnCode != 0) {
-			throw new RuntimeException(String.format("%s did return %s. Stdout: %s Stderr: %s",
-					Arrays.stream(command).collect(Collectors.joining(" ")), returnCode,
-					CoreUtil.convertStreamToString(process.getInputStream()),
-					CoreUtil.convertStreamToString(process.getErrorStream())));
+			final int returnCode = process.waitfor().getReturnCode();
+			if (returnCode != 0) {
+				throw new RuntimeException(String.format("%s did return %s. Stdout: %s Stderr: %s",
+						Arrays.stream(command).collect(Collectors.joining(" ")), returnCode,
+						CoreUtil.convertStreamToString(process.getInputStream()),
+						CoreUtil.convertStreamToString(process.getErrorStream())));
+			}
 		}
 	}
 
 	private void writeMarkdownFile(final List<String> cts) throws IOException {
-		String patternNameShort = mPatternName.replaceAll("Pattern", "");
+		final String patternNameShort = mPatternName.replace("Pattern", "");
 		final File markdownFile = new File(MARKDOWN_DIR + "/" + patternNameShort + ".md");
 		final int numPea =
 				PEA_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName + "_")).length;
@@ -180,7 +181,7 @@ public class PeaToDotTestSuite {
 
 		if (!markdownFile.exists()) {
 			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
-			
+
 			fmt.format("## %s%s", patternNameShort, LINE_SEP);
 		}
 		fmt.format(LINE_SEP);
@@ -220,26 +221,26 @@ public class PeaToDotTestSuite {
 		}
 
 		// TODO: uncomment once negative failure paths examples are fixed
-//		if (negFailureImages.length > 0) {
-//			fmt.format("??? Example \"Negative Examples: %s - %s\"%s", patternNameShort, mScopeName, LINE_SEP);
-//		}
-//
-//		for (int i = 0; i < negFailureImages.length; i++) {
-//			String img = "";
-//
-//			if (i < posFailureImages.length) {
-//				img = "    ![](../" + DOCS_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
-//						+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg){ loading=lazy width=47% align=left }";
-//			}
-//
-//			fmt.format("%s", img, LINE_SEP);
-//			fmt.format(LINE_SEP);
-//		}
+		// if (negFailureImages.length > 0) {
+		// fmt.format("??? Example \"Negative Examples: %s - %s\"%s", patternNameShort, mScopeName, LINE_SEP);
+		// }
+		//
+		// for (int i = 0; i < negFailureImages.length; i++) {
+		// String img = "";
+		//
+		// if (i < posFailureImages.length) {
+		// img = " ![](../" + DOCS_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+		// + "_" + mScopeName + "_" + String.valueOf(i) + ".svg){ loading=lazy width=47% align=left }";
+		// }
+		//
+		// fmt.format("%s", img, LINE_SEP);
+		// fmt.format(LINE_SEP);
+		// }
 		fmt.format(LINE_SEP);
 
-		final BufferedWriter writer = new BufferedWriter(new FileWriter(markdownFile, true));
-		writer.write(fmt.toString());
-		writer.close();
+		try (final BufferedWriter writer = new BufferedWriter(new FileWriter(markdownFile, true))) {
+			writer.write(fmt.toString());
+		}
 		fmt.close();
 	}
 
@@ -271,9 +272,10 @@ public class PeaToDotTestSuite {
 		fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
 
 		if (ULTIMATE_REVISION_FILE.canRead()) {
-			final BufferedReader reader = new BufferedReader(new FileReader(ULTIMATE_REVISION_FILE));
-			final String ultimateRevision = reader.readLine();
-			reader.close();
+			final String ultimateRevision;
+			try (final BufferedReader reader = new BufferedReader(new FileReader(ULTIMATE_REVISION_FILE))) {
+				ultimateRevision = reader.readLine();
+			}
 
 			// fmt.format("### Ultimate revision at GitHub%s", LINE_SEP);
 			fmt.format("Ultimate revision on Github that corresponds to this documention: %s", LINE_SEP);
@@ -286,9 +288,9 @@ public class PeaToDotTestSuite {
 				.forEach(e -> fmt.format("--8<-- \"%s/%s\"%s", markdownDir, e, LINE_SEP));
 
 		final File file = new File(MARKDOWN_DIR + "/includeAllPatterns.md");
-		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-		writer.write(fmt.toString());
-		writer.close();
+		try (final BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+			writer.write(fmt.toString());
+		}
 		fmt.close();
 	}
 

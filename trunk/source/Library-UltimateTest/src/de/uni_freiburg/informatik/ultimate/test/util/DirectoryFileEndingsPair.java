@@ -7,7 +7,6 @@ public class DirectoryFileEndingsPair {
 	private final int mLimit;
 
 	public DirectoryFileEndingsPair(final String file) {
-		super();
 		mDirectory = file;
 		final int index = file.lastIndexOf('.');
 		if (index <= 0) {
@@ -19,7 +18,6 @@ public class DirectoryFileEndingsPair {
 	}
 
 	public DirectoryFileEndingsPair(final String directory, final String[] fileEndings) {
-		super();
 		mDirectory = directory;
 		mFileEndings = fileEndings;
 		mOffset = 0;
@@ -27,7 +25,6 @@ public class DirectoryFileEndingsPair {
 	}
 
 	public DirectoryFileEndingsPair(final String directory, final String[] fileEndings, final int limit) {
-		super();
 		mDirectory = directory;
 		mFileEndings = fileEndings;
 		mOffset = 0;
@@ -36,7 +33,6 @@ public class DirectoryFileEndingsPair {
 
 	public DirectoryFileEndingsPair(final String directory, final String[] fileEndings, final int offset,
 			final int limit) {
-		super();
 		mDirectory = directory;
 		mFileEndings = fileEndings;
 		mOffset = offset;

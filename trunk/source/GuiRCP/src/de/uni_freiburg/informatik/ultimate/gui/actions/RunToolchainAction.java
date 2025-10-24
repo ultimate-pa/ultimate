@@ -34,8 +34,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
@@ -58,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
+import jakarta.xml.bind.JAXBException;
 
 /**
  *
@@ -73,7 +72,6 @@ public abstract class RunToolchainAction extends Action {
 
 	public RunToolchainAction(final ILogger logger, final IWorkbenchWindow window, final ICore<RunDefinition> icore,
 			final GuiController controller, final String id, final String label, final String imageFilePath) {
-		super();
 		mLogger = logger;
 		mWorkbenchWindow = window;
 		mCore = icore;

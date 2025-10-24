@@ -51,36 +51,36 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class SMTTheoryTransitionRelationProvider {
 
-	private ManagedScript mMgdScript;
-	private IUltimateServiceProvider mServices;
-	
-	public SMTTheoryTransitionRelationProvider(IUltimateServiceProvider services, ManagedScript mgdScript) {
+	private final ManagedScript mMgdScript;
+	private final IUltimateServiceProvider mServices;
+
+	public SMTTheoryTransitionRelationProvider(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mServices = services;
 		mMgdScript = mgdScript;
 	}
 
-	public Set<TransFormula> getTransitionRelationDNF(IcfgEdge edge) {
+	public Set<TransFormula> getTransitionRelationDNF(final IcfgEdge edge) {
 		final UnmodifiableTransFormula tf = edge.getTransformula();
-		
+
 		if (tf.isInfeasible() == Infeasibility.INFEASIBLE) {
 			mMgdScript.lock(this);
 			final Term falseTerm = mMgdScript.term(this, "false");
 			mMgdScript.unlock(this);
 			return Collections.singleton(buildNewDisjunctTf(falseTerm, tf));
 		}
-		
+
 		final Term formulaInDNF = new DnfTransformer(mMgdScript, mServices).transform(tf.getFormula());
-		
+
 		final Term[] disjuncts = SmtUtils.getDisjuncts(formulaInDNF);
-		
+
 		final Set<TransFormula> result = new HashSet<>();
-		for (Term disjunct : disjuncts) {
+		for (final Term disjunct : disjuncts) {
 
 			final Term[] conjuncts = SmtUtils.getConjuncts(disjunct);
 			final List<Term> filteredConjuncts = Arrays.stream(conjuncts, 0, conjuncts.length)
@@ -89,36 +89,34 @@ public class SMTTheoryTransitionRelationProvider {
 
 			result.add(buildNewDisjunctTf(filteredDisjunct, tf));
 		}
-		
+
 		return result;
 	}
-	
-	private boolean isTheoryLiteral(Term t) {
+
+	private boolean isTheoryLiteral(final Term t) {
 		assert "Bool".equals(t.getSort().getName());
-		if (SmtUtils.isFunctionApplication(t, "distinct")
-				|| SmtUtils.isFunctionApplication(t, "=")
-				|| (SmtUtils.isFunctionApplication(t, "not") 
-						&& SmtUtils.isFunctionApplication(((ApplicationTerm) t).getParameters()[0], "="))
-				) {
+		if (SmtUtils.isFunctionApplication(t, "distinct") || SmtUtils.isFunctionApplication(t, "=")
+				|| (SmtUtils.isFunctionApplication(t, "not")
+						&& SmtUtils.isFunctionApplication(((ApplicationTerm) t).getParameters()[0], "="))) {
 			return true;
 		}
 		return false;
 	}
 
-	private TransFormula buildNewDisjunctTf(Term disjunct, TransFormula originalTf) {
+	private TransFormula buildNewDisjunctTf(final Term disjunct, final TransFormula originalTf) {
 		final Map<IProgramVar, TermVariable> inVars = originalTf.getInVars();
 		final Map<IProgramVar, TermVariable> outVars = originalTf.getOutVars();
 		final Set<IProgramConst> nonTheoryConsts = originalTf.getNonTheoryConsts();
 		final Collection<TermVariable> branchEncoders = Collections.emptySet();
 		final boolean emptyAuxVars = originalTf.getAuxVars().isEmpty();
-		
-		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(inVars, outVars, nonTheoryConsts.isEmpty(), 
+
+		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(inVars, outVars, nonTheoryConsts.isEmpty(),
 				nonTheoryConsts, branchEncoders.isEmpty(), branchEncoders, emptyAuxVars);
 		tfBuilder.setFormula(disjunct);
 		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		
+
 		final UnmodifiableTransFormula disjunctTf = tfBuilder.finishConstruction(mMgdScript);
-		// assert disjunctTf is conjunctive  TODO
+		// assert disjunctTf is conjunctive TODO
 		return disjunctTf;
 	}
 }

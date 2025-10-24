@@ -167,8 +167,8 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private void matchLocations(final Statement st) {
-		if (st instanceof AssumeStatement) {
-			matchLocations(((AssumeStatement) st).getFormula().getLocation());
+		if (st instanceof final AssumeStatement assumeStmt) {
+			matchLocations(assumeStmt.getFormula().getLocation());
 		} else {
 			matchLocations(st.getLocation());
 		}

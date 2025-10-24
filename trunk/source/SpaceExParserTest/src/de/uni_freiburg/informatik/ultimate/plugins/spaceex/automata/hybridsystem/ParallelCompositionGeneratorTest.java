@@ -7,9 +7,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.FileInputStream;
 
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.Unmarshaller;
-
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -17,13 +14,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
 
 /**
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
 public class ParallelCompositionGeneratorTest {
-	
+
 	/**
 	 * Test method for
 	 * {@link de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.ParallelCompositionGenerator#computeParallelComposition(de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton, de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton)}
@@ -326,5 +325,5 @@ public class ParallelCompositionGeneratorTest {
 		estimatedTime = System.nanoTime() - startTime;
 		System.out.println("Done in " + estimatedTime / (float) 1000000 + " milliseconds");
 	}
-	
+
 }

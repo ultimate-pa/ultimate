@@ -31,8 +31,8 @@ import java.util.NavigableSet;
 import java.util.TreeMap;
 
 /**
- * Implementation of an {@link AbstractRelation} that uses a {@link TreeMap}
- * for the mapping and a {@link HashSet} for the elements of the image.
+ * Implementation of an {@link AbstractRelation} that uses a {@link TreeMap} for the mapping and a {@link HashSet} for
+ * the elements of the image.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -40,12 +40,12 @@ public class TreeHashRelation<D, R> extends AbstractRelation<D, R, HashSet<R>, T
 
 	@Override
 	public TreeMap<D, HashSet<R>> newMap() {
-		return new TreeMap<D, HashSet<R>>();
+		return new TreeMap<>();
 	}
 
 	@Override
 	public HashSet<R> newSet() {
-		return new HashSet<R>();
+		return new HashSet<>();
 	}
 
 	public NavigableSet<D> descendingDomain() {

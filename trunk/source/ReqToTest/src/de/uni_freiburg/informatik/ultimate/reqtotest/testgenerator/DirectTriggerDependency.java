@@ -47,10 +47,7 @@ public class DirectTriggerDependency
 		for (final DirectTriggerDependency in : getIncomingNodes()) {
 			in.disconnectOutgoing(this);
 		}
-		final List<DirectTriggerDependency> remove = new ArrayList<>();
-		for (final DirectTriggerDependency out : getOutgoingNodes()) {
-			remove.add(out);
-		}
+		final List<DirectTriggerDependency> remove = new ArrayList<>(getOutgoingNodes());
 		for (final DirectTriggerDependency out : remove) {
 			removeOutgoingNode(out);
 		}

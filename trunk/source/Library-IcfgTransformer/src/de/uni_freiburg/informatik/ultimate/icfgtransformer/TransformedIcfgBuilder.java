@@ -301,9 +301,11 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final boolean isProcEntry = oldLoc.equals(mOriginalIcfg.getProcedureEntryNodes().get(proc));
 		final boolean isProcExit = oldLoc.equals(mOriginalIcfg.getProcedureExitNodes().get(proc));
 		final boolean isLoopLocation = mOriginalIcfg.getLoopLocations().contains(oldLoc);
+		final boolean isLocationOfInterest = mOriginalIcfg.getLocationsOfInterest().contains(oldLoc);
 
 		// add fresh location to resultIcfg
-		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation,
+				isLocationOfInterest);
 
 		// cache created IcfgLocation
 		mOldLoc2NewLoc.put(oldLoc, freshLoc);
@@ -521,8 +523,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			return new SmtFunctionsAndAxioms(translationResult.getAxiom(), script);
 		}
 
-		final List<Term> newAxiomsClosed = mAdditionalAxioms.stream().map(IPredicate::getClosedFormula)
-				.collect(Collectors.toList());
+		final List<Term> newAxiomsClosed =
+				mAdditionalAxioms.stream().map(IPredicate::getClosedFormula).collect(Collectors.toList());
 		newAxiomsClosed.add(translationResult.getAxiom().getClosedFormula());
 
 		final Term newAxioms = SmtUtils.and(script.getScript(), newAxiomsClosed);

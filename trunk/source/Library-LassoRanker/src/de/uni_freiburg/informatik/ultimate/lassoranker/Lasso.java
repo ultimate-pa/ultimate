@@ -135,8 +135,7 @@ public class Lasso implements Serializable {
 	 * @return all RankVars that occur in the lasso
 	 */
 	public Collection<IProgramVar> getAllRankVars() {
-		final Collection<IProgramVar> rankVars = new LinkedHashSet<>();
-		rankVars.addAll(mStem.getInVars().keySet());
+		final Collection<IProgramVar> rankVars = new LinkedHashSet<>(mStem.getInVars().keySet());
 		rankVars.addAll(mStem.getOutVars().keySet());
 		rankVars.addAll(mLoop.getInVars().keySet());
 		rankVars.addAll(mLoop.getOutVars().keySet());
@@ -193,7 +192,7 @@ public class Lasso implements Serializable {
 							var1 = var2;
 						}
 						if (!aliases.containsKey(var0)) {
-							aliases.put(var0, new HashSet<Term>());
+							aliases.put(var0, new HashSet<>());
 						}
 						aliases.get(var0).add(var1);
 					}

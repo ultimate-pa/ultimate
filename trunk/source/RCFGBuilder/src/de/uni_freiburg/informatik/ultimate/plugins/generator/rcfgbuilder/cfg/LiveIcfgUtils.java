@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * This class provides as method for removing variables from the CFG's
- * {@link TransFormula}s outVars that are never read.
+ * This class provides as method for removing variables from the CFG's {@link TransFormula}s outVars that are never
+ * read.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -72,9 +72,8 @@ public class LiveIcfgUtils {
 	}
 
 	/**
-	 * Remove from the CFG's {@link TransFormula}s the outVars that are local and
-	 * never read. (Cannot remove global vars since they might be needed for our
-	 * interprocedural proofs.)
+	 * Remove from the CFG's {@link TransFormula}s the outVars that are local and never read. (Cannot remove global vars
+	 * since they might be needed for our interprocedural proofs.)
 	 */
 	public static <LOC extends IcfgLocation> void applyFutureLiveOptimization(final IUltimateServiceProvider services,
 			final IIcfg<LOC> icfg) {
@@ -83,9 +82,8 @@ public class LiveIcfgUtils {
 	}
 
 	/**
-	 * Collect all edges of a procedure. Here, this includes
-	 * {@link IIcfgCallTransition}s whose target is in the current procedure and
-	 * {@link IIcfgReturnTransition}s whose target is in the current procedure.
+	 * Collect all edges of a procedure. Here, this includes {@link IIcfgCallTransition}s whose target is in the current
+	 * procedure and {@link IIcfgReturnTransition}s whose target is in the current procedure.
 	 */
 	private static <LOC extends IcfgLocation> Set<IcfgEdge> collectEdges(final Map<DebugIdentifier, LOC> pps) {
 		final Set<IcfgEdge> result = new HashSet<>();
@@ -95,8 +93,8 @@ public class LiveIcfgUtils {
 		return result;
 	}
 
-	private static <LOC extends IcfgLocation> HashRelation<IcfgLocation, IProgramVar> computeFutureLiveVariables(
-			final IUltimateServiceProvider services, final IIcfg<LOC> icfg) {
+	private static <LOC extends IcfgLocation> HashRelation<IcfgLocation, IProgramVar>
+			computeFutureLiveVariables(final IUltimateServiceProvider services, final IIcfg<LOC> icfg) {
 		final HashRelation<IcfgLocation, IProgramVar> result = new HashRelation<>();
 		final ArrayDeque<IcfgEdge> worklist = new ArrayDeque<>();
 		initializeMapAndWorklist(icfg, worklist, result);
@@ -113,8 +111,8 @@ public class LiveIcfgUtils {
 			// are future live at the entry. These variables are needed in interprocedural
 			// proofs.
 			final Set<IProgramVar> indispensibleLocalVars = new HashSet<>();
-			final Set<IProgramVar> futureLiveAtEntry = futureLiveVarsMap
-					.getImage(icfg.getProcedureEntryNodes().get(proc));
+			final Set<IProgramVar> futureLiveAtEntry =
+					futureLiveVarsMap.getImage(icfg.getProcedureEntryNodes().get(proc));
 			final List<ILocalProgramVar> inParams = icfg.getCfgSmtToolkit().getInParams().get(proc);
 			for (final ILocalProgramVar inParam : inParams) {
 				if (futureLiveAtEntry.contains(inParam)) {
@@ -154,9 +152,9 @@ public class LiveIcfgUtils {
 						// auxvars here. This should come with minimal extra costs because the formula
 						// of a return (that is obtained from a Boogie program) is always a conjunction
 						// of equalities.
-						final UnmodifiableTransFormula tmp = TransFormulaBuilder.constructCopy(
-								icfg.getCfgSmtToolkit().getManagedScript(), tf, Collections.emptySet(), outVarsToRemove,
-								Collections.emptyMap());
+						final UnmodifiableTransFormula tmp =
+								TransFormulaBuilder.constructCopy(icfg.getCfgSmtToolkit().getManagedScript(), tf,
+										Collections.emptySet(), outVarsToRemove, Collections.emptyMap());
 						liveTf = eliminateAuxVars(services, tmp, icfg.getCfgSmtToolkit().getManagedScript());
 					} else {
 						liveTf = TransFormulaBuilder.constructCopy(icfg.getCfgSmtToolkit().getManagedScript(), tf,
@@ -174,8 +172,7 @@ public class LiveIcfgUtils {
 	}
 
 	/**
-	 * Remove from progVars all {@link IProgramVar} that are havoced in the
-	 * {@link TransFormula}.
+	 * Remove from progVars all {@link IProgramVar} that are havoced in the {@link TransFormula}.
 	 */
 	public static void removeHavocedVariables(final TransFormula tf, final Set<IProgramVar> progVars) {
 		final Iterator<IProgramVar> it = progVars.iterator();
@@ -195,8 +192,8 @@ public class LiveIcfgUtils {
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(liveTf.getInVars(), liveTf.getOutVars(), false,
 				liveTf.getNonTheoryConsts(), false, liveTf.getBranchEncoders(), false);
-		final Term eliminated = TransFormulaUtils.tryAuxVarEliminationLight(services, managedScript,
-				liveTf.getFormula(), auxVars);
+		final Term eliminated =
+				TransFormulaUtils.tryAuxVarEliminationLight(services, managedScript, liveTf.getFormula(), auxVars);
 		tfb.setFormula(eliminated);
 		tfb.setInfeasibility(liveTf.isInfeasible());
 		tfb.addAuxVarsButRenameToFreshCopies(auxVars, managedScript);
@@ -213,9 +210,7 @@ public class LiveIcfgUtils {
 					final Set<IProgramVar> inVars = outgoing.getTransformula().getInVars().keySet();
 					result.addAllPairs(pp, inVars);
 				}
-				for (final IcfgEdge incoming : pp.getIncomingEdges()) {
-					worklist.add(incoming);
-				}
+				worklist.addAll(pp.getIncomingEdges());
 			}
 		}
 	}
@@ -249,9 +244,7 @@ public class LiveIcfgUtils {
 				throw new AssertionError("Unsupported kind of edge " + edge.getClass().getSimpleName());
 			}
 			if (wasModified) {
-				for (final IcfgEdge incoming : src.getIncomingEdges()) {
-					worklist.add(incoming);
-				}
+				worklist.addAll(src.getIncomingEdges());
 			}
 		}
 	}

@@ -47,14 +47,14 @@ public class SmtTestUtils {
 	}
 
 	/**
-	 * Returns true iff the solver (script) is able to prove that the terms t1 and
-	 * t2 are logically equivalent.
+	 * Returns true iff the solver (script) is able to prove that the terms t1 and t2 are logically equivalent.
 	 */
 	public static boolean areEquivalent(final Script script, final Term t1, final Term t2) {
 		return Util.checkSat(script, script.term("distinct", t1, t2)) == LBool.UNSAT;
 	}
 
-	public static boolean areLogicallyEquivalent(final Script script, final Term formula1, final String formula2AsString) {
+	public static boolean areLogicallyEquivalent(final Script script, final Term formula1,
+			final String formula2AsString) {
 		final Term formula2AsTerm = TermParseUtils.parseTerm(script, formula2AsString);
 		return areEquivalent(script, formula1, formula2AsTerm);
 	}
@@ -64,7 +64,8 @@ public class SmtTestUtils {
 		return areEquivalent(script, script.term("true"), formulaAsTerm);
 	}
 
-	public static boolean areSyntacticallyEquivalent(final Script script, final Term formula1, final String formula2AsString) {
+	public static boolean areSyntacticallyEquivalent(final Script script, final Term formula1,
+			final String formula2AsString) {
 		final Term formula2AsTerm = TermParseUtils.parseTerm(script, formula2AsString);
 		return formula1 == formula2AsTerm;
 	}

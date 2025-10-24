@@ -35,20 +35,19 @@ import java.util.Map.Entry;
  * Auxiliary class for building Maps. Objects of this class return
  * <ul>
  * <li>a {@link Collections#emptyMap} if the built map contains no elements,
- * <li>a {@link Collections#singletonMap} if the built map contains exactly one
- * element, and
+ * <li>a {@link Collections#singletonMap} if the built map contains exactly one element, and
  * <li>a {@link HashMap} if the built map contains two or more elements.
  * </ul>
- * This class deliberately does not implement the Map interface. Such an
- * extension of this class would be possible but such an extension would be
- * very complex since methods like {@link Map#entrySet()} return a view on
- * the underlying Map and can modify the unterlying Map.
+ * This class deliberately does not implement the Map interface. Such an extension of this class would be possible but
+ * such an extension would be very complex since methods like {@link Map#entrySet()} return a view on the underlying Map
+ * and can modify the unterlying Map.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class SparseMapBuilder<K, V> {
-	private static final String MAP_CANNOT_BE_MODIFIED_AFTER_THE_RESULT_WAS_RETURNED = "Map cannot be modified after the result was returned.";
+	private static final String MAP_CANNOT_BE_MODIFIED_AFTER_THE_RESULT_WAS_RETURNED =
+			"Map cannot be modified after the result was returned.";
 	private boolean mConstructionFinished;
 	private Map<K, V> mMap;
 
@@ -66,8 +65,7 @@ public class SparseMapBuilder<K, V> {
 			return null;
 		} else {
 			if (mMap.size() == 1) {
-				final HashMap<K, V> newMap = new HashMap<>();
-				newMap.putAll(mMap);
+				final HashMap<K, V> newMap = new HashMap<>(mMap);
 				mMap = newMap;
 			}
 			return mMap.put(key, value);
@@ -75,8 +73,7 @@ public class SparseMapBuilder<K, V> {
 	}
 
 	/**
-	 * Returns the Map the was built. Afterwards the {@link SparseMapBuilder} cannot
-	 * modify this map any more.
+	 * Returns the Map the was built. Afterwards the {@link SparseMapBuilder} cannot modify this map any more.
 	 */
 	public Map<K, V> getBuiltMap() {
 		mConstructionFinished = true;
@@ -131,7 +128,5 @@ public class SparseMapBuilder<K, V> {
 	public int size() {
 		return mMap.size();
 	}
-
-
 
 }

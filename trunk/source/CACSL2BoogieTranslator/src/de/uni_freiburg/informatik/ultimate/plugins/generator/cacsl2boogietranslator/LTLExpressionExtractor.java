@@ -95,16 +95,16 @@ public class LTLExpressionExtractor {
 			return String.valueOf(ALPHABET.charAt(i));
 		}
 
-		String rtr = "A";
+		final StringBuilder rtr = new StringBuilder("A");
 		int idx = i;
 		while (idx > ALPHABET.length()) {
 			idx = idx - ALPHABET.length();
-			rtr += String.valueOf(ALPHABET.charAt(idx % ALPHABET.length()));
+			rtr.append(ALPHABET.charAt(idx % ALPHABET.length()));
 		}
-		return rtr;
+		return rtr.toString();
 	}
 
-	private class LTLReplaceWeakUntil extends ACSLTransformer {
+	private static final class LTLReplaceWeakUntil extends ACSLTransformer {
 
 		@Override
 		public Expression transform(final BinaryExpression node) {
@@ -136,7 +136,7 @@ public class LTLExpressionExtractor {
 
 	}
 
-	private class LTLFormatStringPrinter extends LTLPrettyPrinter {
+	private static final class LTLFormatStringPrinter extends LTLPrettyPrinter {
 
 		private final Map<String, Expression> mApString2Expr;
 		private final Set<Expression> mSubExpressions;
@@ -152,7 +152,6 @@ public class LTLExpressionExtractor {
 		 */
 		public LTLFormatStringPrinter(final Set<Expression> subExpressions,
 				final Map<String, Expression> apString2Expr) {
-			super();
 			mApString2Expr = apString2Expr;
 			mSubExpressions = subExpressions;
 			mAPCounter = 0;

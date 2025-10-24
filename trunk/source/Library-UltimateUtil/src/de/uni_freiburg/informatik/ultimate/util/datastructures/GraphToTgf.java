@@ -38,19 +38,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IDirectedGraph;
 import de.uni_freiburg.informatik.ultimate.util.TgfBuilder;
 
 /**
- * Converts any graph-based structure into a string using the Trivial Graph Format (TGF) file format.
- * Nodes can be labeled by a custom function. Edges are <i>not</i> represented explicitly. For a TGF converter
- * that also labels edges see {@link TgfBuilder}.
+ * Converts any graph-based structure into a string using the Trivial Graph Format (TGF) file format. Nodes can be
+ * labeled by a custom function. Edges are <i>not</i> represented explicitly. For a TGF converter that also labels edges
+ * see {@link TgfBuilder}.
  * <p>
  * This class is meant to be used in the toString methods of other classes and to debug graph-based structures.
  * <p>
- * Some graph-based structures might represent edges non-symmetrically, that is
- * a node U can have successor V not having U as a predecessor. To show such issues the generated TGF
- * represents directed edges by <i>forward</i> edges and (hopefully anti-parallel) <i>backward</i> edges.
+ * Some graph-based structures might represent edges non-symmetrically, that is a node U can have successor V not having
+ * U as a predecessor. To show such issues the generated TGF represents directed edges by <i>forward</i> edges and
+ * (hopefully anti-parallel) <i>backward</i> edges.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <N> Type of the graph nodes
+ * @param <N>
+ *            Type of the graph nodes
  *
  * @see TgfBuilder Can be used to convert anything into TGF format manually without having to create an IDirectedGraph
  */
@@ -73,13 +74,13 @@ public class GraphToTgf<N> {
 	}
 
 	public static <GN extends IDirectedGraph<GN, ?>> GraphToTgf<GN> graph(final Function<GN, Object> labelOf) {
-		return new GraphToTgf<GN>(GN::getOutgoingNodes, GN::getIncomingNodes, labelOf);
+		return new GraphToTgf<>(GN::getOutgoingNodes, GN::getIncomingNodes, labelOf);
 	}
 
 	public static <GN extends IDirectedGraph<GN, ?>> GraphToTgf<GN> graph(final GN startingNode) {
 		return graph(GN::toString).includeComponentOf(startingNode);
 	}
-	
+
 	/**
 	 * Returns the trivial graph format (TGF) representation of all weakly connected components visited by
 	 * {@link #includeComponentOf(N)} and similar methods.
@@ -91,12 +92,13 @@ public class GraphToTgf<N> {
 	}
 
 	/**
-	 * Includes the weakly connected component of a given node into the resulting TGF.
-	 * The TGF can be retrieved using {@link #getTgf()}.
+	 * Includes the weakly connected component of a given node into the resulting TGF. The TGF can be retrieved using
+	 * {@link #getTgf()}.
 	 * <p>
 	 * This method is idempotent; calling it twice on the same component does not change anything.
 	 *
-	 * @param startingNode Node whose connected component will be included
+	 * @param startingNode
+	 *            Node whose connected component will be included
 	 * @return This converter to allow chaining multiple calls
 	 */
 	public GraphToTgf<N> includeComponentOf(final N startingNode) {
@@ -110,7 +112,7 @@ public class GraphToTgf<N> {
 		}
 		return this;
 	}
-	
+
 	/**
 	 * @see #includeComponentOf(Object)
 	 */
@@ -123,8 +125,7 @@ public class GraphToTgf<N> {
 
 	private void visitNeighbors(final N node) {
 		Stream.concat(mPredecessorsOf.apply(node).stream(), mSuccessorsOf.apply(node).stream())
-			.filter(this::isUnvisited)
-			.forEach(this::visit);
+				.filter(this::isUnvisited).forEach(this::visit);
 	}
 
 	private int visit(final N node) {

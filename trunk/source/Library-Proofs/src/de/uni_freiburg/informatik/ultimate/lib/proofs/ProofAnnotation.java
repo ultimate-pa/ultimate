@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class ProofAnnotation extends ModernAnnotations {
+public final class ProofAnnotation extends ModernAnnotations {
 	private static final long serialVersionUID = -9142656546325935187L;
 
 	private static final String KEY = ProofAnnotation.class.getName();

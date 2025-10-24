@@ -61,7 +61,6 @@ public class OctagonDetector extends NonRecursive {
 
 	public OctagonDetector(final ILogger logger, final ManagedScript managedScript,
 			final IUltimateServiceProvider services) {
-		super();
 		mLogger = logger;
 		mCheckedTerms = new HashSet<>();
 		mSubTerms = new HashSet<>();
@@ -181,15 +180,12 @@ public class OctagonDetector extends NonRecursive {
 				}
 			} else {
 				mIsOctTerm = false;
-				return;
 			}
 		} else if (t instanceof ConstantTerm) {
-			return;
 		} else if (t instanceof AnnotatedTerm) {
 			enqueueWalker(new OctagonDetectionWalker(((AnnotatedTerm) t).getSubterm()));
 		} else {
 			mIsOctTerm = false;
-			return;
 		}
 
 	}

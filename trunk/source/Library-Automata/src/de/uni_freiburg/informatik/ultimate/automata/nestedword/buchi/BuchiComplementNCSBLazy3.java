@@ -55,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class BuchiComplementNCSBLazy3<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public final class BuchiComplementNCSBLazy3<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 
@@ -73,7 +74,8 @@ public final class BuchiComplementNCSBLazy3<LETTER, STATE> extends UnaryNwaOpera
 	 */
 	public BuchiComplementNCSBLazy3(final AutomataLibraryServices services,
 			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 
@@ -118,9 +120,9 @@ public final class BuchiComplementNCSBLazy3<LETTER, STATE> extends UnaryNwaOpera
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
 		/*
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		*/
+		 * lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		 * lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		 */
 		for (int i = 0; i < 11; ++i) {
 			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 1, i));
 			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 2, i));
@@ -148,8 +150,8 @@ public final class BuchiComplementNCSBLazy3<LETTER, STATE> extends UnaryNwaOpera
 	}
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean underApproximationOfComplement)
-			throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		boolean correct;

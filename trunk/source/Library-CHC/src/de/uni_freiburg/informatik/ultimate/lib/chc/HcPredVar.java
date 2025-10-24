@@ -6,10 +6,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 public abstract class HcPredVar extends HcVar {
 
-
 	/**
-	 * The sort of the TermVariable and constants
-	 *  --> this is a field just because it is part of this HCOutVar's identity.
+	 * The sort of the TermVariable and constants --> this is a field just because it is part of this HCOutVar's
+	 * identity.
 	 */
 	private final Sort mSort;
 
@@ -20,38 +19,36 @@ public abstract class HcPredVar extends HcVar {
 	/**
 	 *
 	 * @param globallyUniqueId
-	 * @param headNotBody TODO this determines isGlobal -- why???
+	 * @param headNotBody
+	 *            TODO this determines isGlobal -- why???
 	 * @param predSym
 	 * @param index
 	 * @param sort
 	 * @param mgdScript
 	 * @param lockOwner
 	 */
-	HcPredVar(final String globallyUniqueId, final boolean headNotBody, final HcPredicateSymbol predSym, final int index, final Sort sort,
-			final ManagedScript mgdScript, final Object lockOwner) {
-		super(globallyUniqueId,
-				mgdScript.variable(globallyUniqueId, sort),
+	HcPredVar(final String globallyUniqueId, final boolean headNotBody, final HcPredicateSymbol predSym,
+			final int index, final Sort sort, final ManagedScript mgdScript, final Object lockOwner) {
+		super(globallyUniqueId, mgdScript.variable(globallyUniqueId, sort),
 				ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, globallyUniqueId),
-				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, globallyUniqueId),
-				headNotBody,
-				HornUtilConstants.sanitzePredName(predSym.getName())
-				);
+				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, globallyUniqueId), headNotBody,
+				HornUtilConstants.sanitzePredName(predSym.getName()));
 
 		mPredSymbol = predSym;
-//		mProcName = HornUtilConstants.sanitzePredName(predSym.getName());
+		// mProcName = HornUtilConstants.sanitzePredName(predSym.getName());
 		mIndex = index;
 		mSort = sort;
 
-//		mIsGlobal = headNotBody;
+		// mIsGlobal = headNotBody;
 
-//		mGloballyUniqueId = globallyUniqueId;
-//				HornUtilConstants.computeNameForHcVar(headNotBody ?
-//						HornUtilConstants.HEADVARPREFIX :
-//							HornUtilConstants.BODYVARPREFIX,
-//				predSym, index, sort.toString());
-//		mTermVariable = mgdScript.variable(mGloballyUniqueId, sort);
-//		mDefaultConstant = ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, mGloballyUniqueId);
-//		mPrimedConstant = ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, mGloballyUniqueId);
+		// mGloballyUniqueId = globallyUniqueId;
+		// HornUtilConstants.computeNameForHcVar(headNotBody ?
+		// HornUtilConstants.HEADVARPREFIX :
+		// HornUtilConstants.BODYVARPREFIX,
+		// predSym, index, sort.toString());
+		// mTermVariable = mgdScript.variable(mGloballyUniqueId, sort);
+		// mDefaultConstant = ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, mGloballyUniqueId);
+		// mPrimedConstant = ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, mGloballyUniqueId);
 	}
 
 	public int getIndex() {

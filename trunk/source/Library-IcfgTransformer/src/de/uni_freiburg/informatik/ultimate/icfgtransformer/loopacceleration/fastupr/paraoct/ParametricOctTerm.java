@@ -33,17 +33,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class ParametricOctTerm extends OctTerm {
 
-	public ParametricOctTerm(ParametricOctValue value, TermVariable firstVar, boolean firstNegative) {
+	public ParametricOctTerm(final ParametricOctValue value, final TermVariable firstVar, final boolean firstNegative) {
 		super(value, firstVar, firstNegative);
 	}
 
-	public ParametricOctTerm(ParametricOctValue value, TermVariable firstVar, boolean firstNegative,
-			TermVariable secondVar, boolean secondNegative) {
+	public ParametricOctTerm(final ParametricOctValue value, final TermVariable firstVar, final boolean firstNegative,
+			final TermVariable secondVar, final boolean secondNegative) {
 		super(value, firstVar, firstNegative, secondVar, secondNegative);
 	}
 
 	@Override
-	protected Term rightTerm(Script script) {
+	protected Term rightTerm(final Script script) {
 		return getValue().getTerm(script);
 	}
 

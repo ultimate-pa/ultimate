@@ -32,7 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils.FormulaSize;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -104,7 +104,7 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 		}
 		for (final IPredicate pred : interpolants) {
 			mConstructedInterpolants++;
-			final boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
+			final boolean isQuantified = !QuantifierUtils.isQuantifierFree(pred.getFormula());
 			if (isQuantified) {
 				mQuantifiedInterpolants++;
 			}
@@ -115,8 +115,8 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 
 	private static long computeLongSumOfIntArray(final long[] arr) {
 		long sum = 0;
-		for (int i = 0; i < arr.length; i++) {
-			sum += arr[i];
+		for (final long element : arr) {
+			sum += element;
 		}
 		return sum;
 	}
@@ -140,43 +140,28 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 
 	@Override
 	public Object getValue(final String key) {
-		final TraceCheckStatisticsDefinitions keyEnum = Enum.valueOf(TraceCheckStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case SsaConstructionTime:
-		case SatisfiabilityAnalysisTime:
-		case InterpolantComputationTime:
+		final TraceCheckStatisticsDefinitions keyEnum = TraceCheckStatisticsDefinitions.valueOf(key);
+		return switch (keyEnum) {
+		case SsaConstructionTime, SatisfiabilityAnalysisTime, InterpolantComputationTime -> {
 			try {
-				return getElapsedTime(key);
+				yield getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case NumberOfCodeBlocks:
-			return mNumberOfCodeBlocks;
-		case NumberOfCodeBlocksAsserted:
-			return mNumberOfCodeBlocksAsserted;
-		case NumberOfCheckSat:
-			return mNumberOfCheckSat;
-		case ConstructedInterpolants:
-			return mConstructedInterpolants;
-		case QuantifiedInterpolants:
-			return mQuantifiedInterpolants;
-		case SizeOfPredicates:
-			return mSizeOfPredicates;
-		case NumberOfNonLiveVariables:
-			return mNumberOfNonLiveVariables;
-		case ConjunctsInSsa:
-			return mConjunctsInSsa;
-		case ConjunctsInUnsatCore:
-			return mConjunctsInUnsatCore;
-		case InterpolantComputations:
-			return mInterpolantComputations;
-		case PerfectInterpolantSequences:
-			return mPerfectInterpolantSequences;
-		case InterpolantCoveringCapability:
-			return mInterpolantCoveringCapability;
-		default:
-			throw new AssertionError("unknown data");
 		}
+		case NumberOfCodeBlocks -> mNumberOfCodeBlocks;
+		case NumberOfCodeBlocksAsserted -> mNumberOfCodeBlocksAsserted;
+		case NumberOfCheckSat -> mNumberOfCheckSat;
+		case ConstructedInterpolants -> mConstructedInterpolants;
+		case QuantifiedInterpolants -> mQuantifiedInterpolants;
+		case SizeOfPredicates -> mSizeOfPredicates;
+		case NumberOfNonLiveVariables -> mNumberOfNonLiveVariables;
+		case ConjunctsInSsa -> mConjunctsInSsa;
+		case ConjunctsInUnsatCore -> mConjunctsInUnsatCore;
+		case InterpolantComputations -> mInterpolantComputations;
+		case PerfectInterpolantSequences -> mPerfectInterpolantSequences;
+		case InterpolantCoveringCapability -> mInterpolantCoveringCapability;
+		};
 	}
 
 	@Override

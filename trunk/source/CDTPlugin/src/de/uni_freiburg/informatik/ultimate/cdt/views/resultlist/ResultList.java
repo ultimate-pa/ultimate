@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CDTPlugin plug-in.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CDTPlugin plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.cdt.views.resultlist;
 
@@ -51,11 +51,11 @@ import org.eclipse.ui.part.EditorPart;
 import org.eclipse.ui.part.ViewPart;
 
 /**
- * This is one of the first Views for presenting CounterExamples to the user.
- * Here we list up all feasible CounterExamples for the current viewed File.
- * 
+ * This is one of the first Views for presenting CounterExamples to the user. Here we list up all feasible
+ * CounterExamples for the current viewed File.
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class ResultList extends ViewPart implements ISelectionListener {
 
@@ -68,15 +68,12 @@ public class ResultList extends ViewPart implements ISelectionListener {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets
-	 * .Composite)
+	 *
+	 * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets .Composite)
 	 */
 	@Override
 	public void createPartControl(final Composite parent) {
-		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
-				| SWT.V_SCROLL | SWT.FULL_SELECTION);
+		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		variableTree.setHeaderVisible(true);
 		viewer = new TreeViewer(variableTree);
 
@@ -107,7 +104,7 @@ public class ResultList extends ViewPart implements ISelectionListener {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.ui.part.WorkbenchPart#setFocus()
 	 */
 	@Override
@@ -126,8 +123,7 @@ public class ResultList extends ViewPart implements ISelectionListener {
 			// results
 			// ---> so we need to get the original file from the system
 			if (edPart.getEditorInput() instanceof IFileEditorInput) {
-				final IFileEditorInput fei = (IFileEditorInput) edPart
-						.getEditorInput();
+				final IFileEditorInput fei = (IFileEditorInput) edPart.getEditorInput();
 				file = fei.getFile();
 			}
 			if (file != null && file.getFileExtension().equals("c")) {
@@ -135,42 +131,33 @@ public class ResultList extends ViewPart implements ISelectionListener {
 			} else {
 				viewer.setInput("");
 			}
-		} else if (selection instanceof ITreeSelection
-				&& part instanceof CommonNavigator) {
+		} else if (selection instanceof ITreeSelection && part instanceof CommonNavigator) {
 			final CommonNavigator navi = (CommonNavigator) part;
 			// we only delete our Selection if Linking with Navigator is enabled
-			if (navi.isLinkingEnabled()) {
-				if (((ITreeSelection) selection).getFirstElement() != null) {
-					IFile file = null;
-					final Object firstElement = ((ITreeSelection) selection)
-							.getFirstElement();
-					if (firstElement instanceof TranslationUnit) {
-						file = ((TranslationUnit) firstElement).getFile();
-					}
-					// get all current opened files, we only show results for
-					// them
-					final HashSet<String> currentFilesOpened = new HashSet<String>();
-					for (final IEditorReference ed : getSite().getPage()
-							.getEditorReferences()) {
-						try {
-							if (ed.getEditorInput() instanceof IFileEditorInput) {
-								final IFileEditorInput fei = (IFileEditorInput) ed
-										.getEditorInput();
-								currentFilesOpened.add(fei.getFile()
-										.getLocation().toOSString());
-							}
-						} catch (final PartInitException e) {
-							e.printStackTrace();
+			if (navi.isLinkingEnabled() && (((ITreeSelection) selection).getFirstElement() != null)) {
+				IFile file = null;
+				final Object firstElement = ((ITreeSelection) selection).getFirstElement();
+				if (firstElement instanceof TranslationUnit) {
+					file = ((TranslationUnit) firstElement).getFile();
+				}
+				// get all current opened files, we only show results for
+				// them
+				final HashSet<String> currentFilesOpened = new HashSet<>();
+				for (final IEditorReference ed : getSite().getPage().getEditorReferences()) {
+					try {
+						if (ed.getEditorInput() instanceof IFileEditorInput) {
+							final IFileEditorInput fei = (IFileEditorInput) ed.getEditorInput();
+							currentFilesOpened.add(fei.getFile().getLocation().toOSString());
 						}
+					} catch (final PartInitException e) {
+						e.printStackTrace();
 					}
-					if (file != null
-							&& currentFilesOpened.contains(file.getLocation()
-									.toOSString())
-							&& file.getFileExtension().equals("c")) {
-						viewer.setInput(file.getLocation().toOSString());
-					} else {
-						viewer.setInput("");
-					}
+				}
+				if (file != null && currentFilesOpened.contains(file.getLocation().toOSString())
+						&& file.getFileExtension().equals("c")) {
+					viewer.setInput(file.getLocation().toOSString());
+				} else {
+					viewer.setInput("");
 				}
 			}
 		}

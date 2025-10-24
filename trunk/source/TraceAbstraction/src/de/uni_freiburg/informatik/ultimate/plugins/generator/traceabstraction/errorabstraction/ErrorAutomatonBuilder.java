@@ -156,8 +156,7 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
-			final INestedWordAutomaton<L, IPredicate> abstraction,
-			final NestedWord<L> trace) {
+			final INestedWordAutomaton<L, IPredicate> abstraction, final NestedWord<L> trace) {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier, UNIFY_PREDICATES);
@@ -203,24 +202,24 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 	private NestedWordAutomaton<L, IPredicate> constructStraightLineAutomaton(final IUltimateServiceProvider services,
 			final ILogger logger, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism predicateUnifier, final SimplificationTechnique simplificationTechnique,
-			final IIcfgSymbolTable symbolTable, final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final VpAlphabet<L> alphabet,
-			final NestedWord<L> trace) throws AssertionError {
+			final IIcfgSymbolTable symbolTable,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
+			final VpAlphabet<L> alphabet, final NestedWord<L> trace) throws AssertionError {
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		final List<IPredicatePostprocessor> postprocessors;
 		if (APPLY_FORMULA_POSTPROCESSOR) {
-			final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(services, csToolkit.getManagedScript(),
-					predicateFactory, simplificationTechnique);
+			final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(services,
+					csToolkit.getManagedScript(), predicateFactory, simplificationTechnique);
 			postprocessors = Collections.singletonList(qepp);
 		} else {
 			postprocessors = Collections.emptyList();
 		}
 
 		// compute 'wp' sequence from 'false'
-		final TracePredicates wpPredicates = getPredicates(services, csToolkit, predicateFactory,
-				simplificationTechnique, symbolTable, truePredicate, trace, null, falsePredicate,
-				postprocessors, PredicateTransformerType.WP);
+		final TracePredicates wpPredicates =
+				getPredicates(services, csToolkit, predicateFactory, simplificationTechnique, symbolTable,
+						truePredicate, trace, null, falsePredicate, postprocessors, PredicateTransformerType.WP);
 
 		// negate 'wp' sequence to get 'pre'
 		final List<IPredicate> wpIntermediatePredicates = wpPredicates.getPredicates();
@@ -234,15 +233,13 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 		final IPredicate newPostcondition;
 		if (INTERSECT_WITH_SP_PREDICATES) {
 			// compute 'sp' sequence from error precondition
-			final TracePredicates spPredicates = getPredicates(services, csToolkit, predicateFactory,
-					simplificationTechnique, symbolTable, truePredicate, trace, prePrecondition, null,
-					postprocessors, PredicateTransformerType.SP);
+			final TracePredicates spPredicates =
+					getPredicates(services, csToolkit, predicateFactory, simplificationTechnique, symbolTable,
+							truePredicate, trace, prePrecondition, null, postprocessors, PredicateTransformerType.SP);
 			assert preIntermediatePredicates.size() == spPredicates.getPredicates().size();
 			newIntermediatePredicates = new ArrayList<>(preIntermediatePredicates.size());
-			final Iterator<IPredicate> preIt = preIntermediatePredicates.iterator();
 			final Iterator<IPredicate> spIt = spPredicates.getPredicates().iterator();
-			while (preIt.hasNext()) {
-				final IPredicate pred = predicateFactory.and(preIt.next(), spIt.next());
+			for (final IPredicate pred : preIntermediatePredicates) {
 				newIntermediatePredicates.add(predicateUnifier.getOrConstructPredicate(pred));
 			}
 			newPostcondition = spPredicates.getPostcondition();
@@ -267,9 +264,10 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 
 	private TracePredicates getPredicates(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final SimplificationTechnique simplificationTechnique,
-			final IIcfgSymbolTable symbolTable, final IPredicate truePredicate,
-			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
-			final List<IPredicatePostprocessor> postprocessors, final PredicateTransformerType predicateTransformer) throws AssertionError {
+			final IIcfgSymbolTable symbolTable, final IPredicate truePredicate, final NestedWord<L> trace,
+			final IPredicate precondition, final IPredicate postcondition,
+			final List<IPredicatePostprocessor> postprocessors, final PredicateTransformerType predicateTransformer)
+			throws AssertionError {
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, precondition, postcondition,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 		final IterativePredicateTransformer<L> ipt = new IterativePredicateTransformer<>(predicateFactory,
@@ -299,8 +297,8 @@ class ErrorAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAutom
 			final IUltimateServiceProvider services, final NestedWordAutomaton<L, IPredicate> straightLineAutomaton,
 			final CfgSmtToolkit csToolkit, final PredicateUnificationMechanism predicateUnifier,
 			final PredicateFactory predicateFactory) {
-		assert !containsPredicateState(straightLineAutomaton, predicateUnifier
-				.getFalsePredicate()) : "The error trace is feasible; hence the predicate 'False' should not exist.";
+		assert !containsPredicateState(straightLineAutomaton, predicateUnifier.getFalsePredicate())
+				: "The error trace is feasible; hence the predicate 'False' should not exist.";
 
 		// 'True' state is needed by automaton construction
 		if (!containsPredicateState(straightLineAutomaton, predicateUnifier.getTruePredicate())) {

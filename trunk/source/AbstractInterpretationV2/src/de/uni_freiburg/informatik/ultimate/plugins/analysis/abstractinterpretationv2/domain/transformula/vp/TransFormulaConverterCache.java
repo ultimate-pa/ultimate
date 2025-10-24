@@ -62,8 +62,7 @@ public class TransFormulaConverterCache {
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 
-	private final Map<TransFormula, EqTransitionRelation> mTransformulaToEqTransitionRelationCache =
-			new HashMap<>();
+	private final Map<TransFormula, EqTransitionRelation> mTransformulaToEqTransitionRelationCache = new HashMap<>();
 
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
@@ -71,8 +70,7 @@ public class TransFormulaConverterCache {
 
 	public TransFormulaConverterCache(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<EqNode> eqConstraintFactory,
-			final VPDomainSettings settings) {
+			final EqConstraintFactory<EqNode> eqConstraintFactory, final VPDomainSettings settings) {
 
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
@@ -105,12 +103,11 @@ public class TransFormulaConverterCache {
 	}
 
 	private EqTransitionRelation convertTransformulaToEqTransitionRelation(final TransFormula tf) {
-		final EqDisjunctiveConstraint<EqNode> constraint =
-				new FormulaToEqDisjunctiveConstraintConverter(mServices, mMgdScript, mEqConstraintFactory,
-						mEqNodeAndFunctionFactory, tf.getFormula()).getResult();
+		final EqDisjunctiveConstraint<EqNode> constraint = new FormulaToEqDisjunctiveConstraintConverter(mServices,
+				mMgdScript, mEqConstraintFactory, mEqNodeAndFunctionFactory, tf.getFormula()).getResult();
 
 		assert !mVPDomainSettings.isCheckTransitionAbstractionCorrectness()
-			|| transformulaImpliesResultConstraint(tf, constraint);
+				|| transformulaImpliesResultConstraint(tf, constraint);
 
 		return new EqTransitionRelation(constraint, tf);
 	}
@@ -131,28 +128,27 @@ public class TransFormulaConverterCache {
 			substitutionMapping.put(auxVar, auxVarConst);
 		}
 
-		final Term rcClosed = Substitution.apply(mgdScript, substitutionMapping,
-				resultConstraint.getTerm(mgdScript.getScript()));
+		final Term rcClosed =
+				Substitution.apply(mgdScript, substitutionMapping, resultConstraint.getTerm(mgdScript.getScript()));
 
 		assert rcClosed.getFreeVars().length == 0;
 
 		final Term tfClosed = ((UnmodifiableTransFormula) tf).getClosedFormula();
 
-
-//		final Set<Term> literalTerms = resultConstraint.getAllLiteralNodes().stream()
-//				.map(node -> node.getTerm())
-//				.collect(Collectors.toSet());
-//		final List<Term> nontheoryLiteralDisequalities =
-//				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mgdScript.getScript(),
-//						literalTerms);
+		// final Set<Term> literalTerms = resultConstraint.getAllLiteralNodes().stream()
+		// .map(node -> node.getTerm())
+		// .collect(Collectors.toSet());
+		// final List<Term> nontheoryLiteralDisequalities =
+		// CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mgdScript.getScript(),
+		// literalTerms);
 
 		// we have to stregthen the transFormula with the disequalities between the "literals" we introduced ourselves
-//		Term literalDisequalities = mEqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
+		// Term literalDisequalities = mEqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
 		final Term literalDisequalities =
 				mEqConstraintFactory.getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary();
 		final Term ante = SmtUtils.and(mgdScript.getScript(), tfClosed,
-//				SmtUtils.and(mgdScript.getScript(), nontheoryLiteralDisequalities));
-//				SmtUtils.and(mgdScript.getScript(), literalDisequalities));
+				// SmtUtils.and(mgdScript.getScript(), nontheoryLiteralDisequalities));
+				// SmtUtils.and(mgdScript.getScript(), literalDisequalities));
 				literalDisequalities);
 
 		return new Pair<>(ante, rcClosed);

@@ -62,7 +62,7 @@ public class LiveVariablePreOperator<ACTION extends IAction>
 
 	private UnmodifiableTransFormula getTransformula(final ACTION transition) {
 		if (transition instanceof IInternalAction) {
-			return ((IInternalAction) transition).getTransformula();
+			return transition.getTransformula();
 		} else if (transition instanceof ICallAction) {
 			return ((ICallAction) transition).getLocalVarsAssignment();
 		} else if (transition instanceof IReturnAction) {

@@ -50,15 +50,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Computes a formula F from a TreeRun, i.e., a tree whose nodes are HornClauses (which contain HCTransFormulas).
- * The resulting formula is the result of applying resolution steps to the clauses according to the shape of the tree.
- * The formula F is used to compute "feasibility" of the TreeRun: If F is satisfiable, this means that our set of Horn
+ * Computes a formula F from a TreeRun, i.e., a tree whose nodes are HornClauses (which contain HCTransFormulas). The
+ * resulting formula is the result of applying resolution steps to the clauses according to the shape of the tree. The
+ * formula F is used to compute "feasibility" of the TreeRun: If F is satisfiable, this means that our set of Horn
  * clauses is unsatisfiable, and the given TreeRun is a witness.
  *
  * The formula F is a kind of SSA form, it results from substituting variables in the "statements" of the HornClauses (
- * i.e. the part of a HornClause that is not an uninterpreted predicate).
- * The substitution that is computed is also necessary to translate the interpolants from the SMTSolver back into
- * predicates that TreeAutomizer uses for its interpolant automata.
+ * i.e. the part of a HornClause that is not an uninterpreted predicate). The substitution that is computed is also
+ * necessary to translate the interpolants from the SMTSolver back into predicates that TreeAutomizer uses for its
+ * interpolant automata.
  *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -83,16 +83,21 @@ public class HCSSABuilder {
 	final HcSymbolTable mSymbolTable;
 
 	/**
-	 * Standard constructor, accepts all the input necessary for building the SSA.
-	 * Triggers SSA construction. (result is obtained through getResult())
+	 * Standard constructor, accepts all the input necessary for building the SSA. Triggers SSA construction. (result is
+	 * obtained through getResult())
 	 *
-	 * @param inputTreeRun TreeRun from the emptiness check
-	 * @param preCondition The precondition (the initial state's condition)
-	 * @param postCondition The postcondition (the final state's condition)
-	 * @param script The backend script
-	 * @param predicateUnifier HornClause Predicate Factory
+	 * @param inputTreeRun
+	 *            TreeRun from the emptiness check
+	 * @param preCondition
+	 *            The precondition (the initial state's condition)
+	 * @param postCondition
+	 *            The postcondition (the final state's condition)
+	 * @param script
+	 *            The backend script
+	 * @param predicateUnifier
+	 *            HornClause Predicate Factory
 	 * @param hcSymbolTable
-	 * */
+	 */
 	public HCSSABuilder(final TreeRun<HornClause, IPredicate> inputTreeRun, final IPredicate preCondition,
 			final IPredicate postCondition, final ManagedScript script, final PredicateUnifier predicateUnifier,
 			final HcSymbolTable hcSymbolTable) {
@@ -132,7 +137,7 @@ public class HCSSABuilder {
 		}
 
 		final TreeRun<HornClause, SsaInfo> res;
-			res = new TreeRun<>(ssaInfo, currentHornClause, subTreeRuns);
+		res = new TreeRun<>(ssaInfo, currentHornClause, subTreeRuns);
 		mInputSubTreeToSsaSubtree.put(inputTreeRun, res);
 
 		return res;
@@ -140,11 +145,12 @@ public class HCSSABuilder {
 
 	private SsaInfo buildSsaInfo(final HornClause rootSymbol, final List<Term> headPredVariableReplacements) {
 		final Map<Term, Term> headVarSubsMapping = new HashMap<>();
-//		final Map<Term, Term> subsToConstantMapping = new HashMap<>();
+		// final Map<Term, Term> subsToConstantMapping = new HashMap<>();
 		final Map<Term, Term> backSubsMapping = new HashMap<>();
 		{
 			// arguments of the clause head: substitute the headVars with the term we got from the child
-			for (int headPredArgNr = 0; headPredArgNr < rootSymbol.getTermVariablesForHeadPred().size(); headPredArgNr++) {
+			for (int headPredArgNr = 0; headPredArgNr < rootSymbol.getTermVariablesForHeadPred().size();
+					headPredArgNr++) {
 				final HcHeadVar hv = rootSymbol.getTermVariablesForHeadPred().get(headPredArgNr);
 
 				final TermVariable lhs = hv.getTermVariable();
@@ -152,38 +158,37 @@ public class HCSSABuilder {
 				headVarSubsMapping.put(lhs, rhs);
 				backSubsMapping.put(rhs, lhs);
 
-//				final Term ssaConst = headPredVariableReplacements.get(headPredArgNr).getSsaConstant();
-//				if (ssaConst != null) {
-//					// update subsToConst (for local computation below)
-//					subsToConstantMapping.put(lhs, ssaConst);
-//
-//					// update backsubs mapping
-//					final Term isolatedVar;
-//					final Term otherSide;
-//					try {
-//						final AffineRelation ar = new AffineRelation(mScript.getScript(),
-//								mScript.getScript().term("=", lhs, rhs));
-//						final ApplicationTerm lhso = ar.onLeftHandSideOnly(mScript.getScript(), ssaConst);
-//						isolatedVar = lhso.getParameters()[0];
-//						otherSide = lhso.getParameters()[1];
-//					} catch (final NotAffineException nae) {
-//						throw new AssertionError();
-//					}
-//					backSubsMapping.put(isolatedVar, otherSide);
-//				}
+				// final Term ssaConst = headPredVariableReplacements.get(headPredArgNr).getSsaConstant();
+				// if (ssaConst != null) {
+				// // update subsToConst (for local computation below)
+				// subsToConstantMapping.put(lhs, ssaConst);
+				//
+				// // update backsubs mapping
+				// final Term isolatedVar;
+				// final Term otherSide;
+				// try {
+				// final AffineRelation ar = new AffineRelation(mScript.getScript(),
+				// mScript.getScript().term("=", lhs, rhs));
+				// final ApplicationTerm lhso = ar.onLeftHandSideOnly(mScript.getScript(), ssaConst);
+				// isolatedVar = lhso.getParameters()[0];
+				// otherSide = lhso.getParameters()[1];
+				// } catch (final NotAffineException nae) {
+				// throw new AssertionError();
+				// }
+				// backSubsMapping.put(isolatedVar, otherSide);
+				// }
 			}
 
-//			// each body var is replaced by a fresh constant
-//			for (final HcBodyVar bodyVar : rootSymbol.getBodyVariables()) {
-//				final Term bptv = bodyVar.getTermVariable();
-//				final ApplicationTerm fresh = getFreshConstant(bptv);
-//				headVarSubsMapping.put(bptv, fresh);
-//				subsToConstantMapping.put(bptv, fresh);
-//
-//				backSubsMapping.put(fresh, bptv);
-//			}
+			// // each body var is replaced by a fresh constant
+			// for (final HcBodyVar bodyVar : rootSymbol.getBodyVariables()) {
+			// final Term bptv = bodyVar.getTermVariable();
+			// final ApplicationTerm fresh = getFreshConstant(bptv);
+			// headVarSubsMapping.put(bptv, fresh);
+			// subsToConstantMapping.put(bptv, fresh);
+			//
+			// backSubsMapping.put(fresh, bptv);
+			// }
 		}
-
 
 		final List<Term> constraintWithSsaConstantEqualities = new ArrayList<>();
 		constraintWithSsaConstantEqualities.add(rootSymbol.getConstraintFormula());
@@ -193,32 +198,31 @@ public class HCSSABuilder {
 		 * arg
 		 */
 		final List<List<Term>> substitutionForBodyPred = new ArrayList<>();
-//		final Map<Term, Term> backSubsMapping = new HashMap<>();
+		// final Map<Term, Term> backSubsMapping = new HashMap<>();
 		for (int i = 0; i < rootSymbol.getBodyPredicates().size(); i++) {
 			final List<Term> subsForCurrentBodyPred = new ArrayList<>();
 			for (int j = 0; j < rootSymbol.getBodyPredToArgs().get(i).size(); j++) {
 				final Term bodyPredArg = rootSymbol.getBodyPredToArgs().get(i).get(j);
-//				final Term substituted = substitutionTtf.transform(bodyPredArg);
+				// final Term substituted = substitutionTtf.transform(bodyPredArg);
 
 				final ApplicationTerm ssaConst = getFreshConstant(bodyPredArg, HornUtilConstants.SSA_VAR_PREFIX);
 
 				constraintWithSsaConstantEqualities.add(mScript.getScript().term("=", ssaConst, bodyPredArg));
 
-//				assert bodyPredArg.getFreeVars().length == 1;
-//				final Term substitutorConstant = subsToConstantMapping.get(bodyPredArg.getFreeVars()[0]);
-//				final Term substitutorConstant = headPredVariableReplacements.get(index)
+				// assert bodyPredArg.getFreeVars().length == 1;
+				// final Term substitutorConstant = subsToConstantMapping.get(bodyPredArg.getFreeVars()[0]);
+				// final Term substitutorConstant = headPredVariableReplacements.get(index)
 
-//				subsForCurrentBodyPred.add(new SsaSubstitutor(substituted, substitutorConstant));
-//				subsForCurrentBodyPred.add(substituted);
+				// subsForCurrentBodyPred.add(new SsaSubstitutor(substituted, substitutorConstant));
+				// subsForCurrentBodyPred.add(substituted);
 				subsForCurrentBodyPred.add(ssaConst);
 			}
 			substitutionForBodyPred.add(Collections.unmodifiableList(subsForCurrentBodyPred));
 		}
 
 		/*
-		 *  the substituted formula has the ssa-renaming
-		 *  --> including the closing, i.e., constants instead of variables
-		 *  it contains fresh constants (unless all variabels from the head are unchanged in the body pos)
+		 * the substituted formula has the ssa-renaming --> including the closing, i.e., constants instead of variables
+		 * it contains fresh constants (unless all variabels from the head are unchanged in the body pos)
 		 */
 		final Term withSsaEqualities = SmtUtils.and(mScript.getScript(), constraintWithSsaConstantEqualities);
 		final Term headVarsSubstituted = PureSubstitution.apply(mScript, headVarSubsMapping, withSsaEqualities);
@@ -229,36 +233,34 @@ public class HCSSABuilder {
 		}
 		final Term closed = PureSubstitution.apply(mScript, bodyVarSubstitutionMap, headVarsSubstituted);
 
-
-
-		return new SsaInfo(mScript.getScript(), rootSymbol, headVarSubsMapping, closed,
-				substitutionForBodyPred, backSubsMapping);
+		return new SsaInfo(mScript.getScript(), rootSymbol, headVarSubsMapping, closed, substitutionForBodyPred,
+				backSubsMapping);
 	}
 
 	/**
 	 * obtain a fresh ssa-constant for the given TermVariable, also takes care of declaring it.
+	 *
 	 * @param tv
 	 * @return
 	 */
 	private ApplicationTerm getFreshConstant(final Term t, final String prefix) {
-		final Term res = PredicateUtils.getIndexedConstant(prefix, t.getSort(),
-				getFreshIndex(t), mIndexedConstants, mScript.getScript());
+		final Term res = PredicateUtils.getIndexedConstant(prefix, t.getSort(), getFreshIndex(t), mIndexedConstants,
+				mScript.getScript());
 		return (ApplicationTerm) res;
 	}
-
 
 	private int getFreshIndex(final Term t) {
 		return ++mIndexCounter;
 	}
 
-
 	/**
-	 * Given a map from subtrees (TreeRuns) to interpolants in SSA-fomat, this method constructs a TreeRun that
-	 * matches the input TreeRun of this class (in TreeAutomizer: the counterExample from the emptiness check)
-	 * where the HCPredicates representing a Location/HCPredicateSymbol have been replaced by IPredicates representing
-	 * the corresponding interpolant.
+	 * Given a map from subtrees (TreeRuns) to interpolants in SSA-fomat, this method constructs a TreeRun that matches
+	 * the input TreeRun of this class (in TreeAutomizer: the counterExample from the emptiness check) where the
+	 * HCPredicates representing a Location/HCPredicateSymbol have been replaced by IPredicates representing the
+	 * corresponding interpolant.
 	 *
-	 * @param interpolantsMap represents the tree interpolant as received from the SMT solver
+	 * @param interpolantsMap
+	 *            represents the tree interpolant as received from the SMT solver
 	 * @return
 	 */
 	public TreeRun<HornClause, IPredicate> buildTreeRunWithBackVersionedInterpolants(
@@ -266,7 +268,8 @@ public class HCSSABuilder {
 		return buildBackVersionedTreeRunRec(mInputTreeRun, interpolantsMap);
 	}
 
-	private TreeRun<HornClause, IPredicate> buildBackVersionedTreeRunRec(final TreeRun<HornClause, IPredicate> currentSubTree,
+	private TreeRun<HornClause, IPredicate> buildBackVersionedTreeRunRec(
+			final TreeRun<HornClause, IPredicate> currentSubTree,
 			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
 		final TreeRun<HornClause, SsaInfo> currentSsaSubtree = mInputSubTreeToSsaSubtree.get(currentSubTree);
 		if (currentSsaSubtree == null) {
@@ -287,9 +290,8 @@ public class HCSSABuilder {
 			children.add(buildBackVersionedTreeRunRec(currentSubTree.getChildren().get(i), interpolantsMap));
 		}
 
-		return new TreeRun<HornClause, IPredicate>(backSubstitutedPredicate, currentHornClause, children);
+		return new TreeRun<>(backSubstitutedPredicate, currentHornClause, children);
 	}
-
 
 	public HcSsaTreeFlattener getSSA() {
 		return mResult;
@@ -297,31 +299,31 @@ public class HCSSABuilder {
 
 }
 
-//class SsaSubstitutor {
+// class SsaSubstitutor {
 //
-//	private final Term mSubstitutor;
-//	private final Term mSsaConstant;
+// private final Term mSubstitutor;
+// private final Term mSsaConstant;
 //
-//	public SsaSubstitutor(final Term substitutor, final Term ssaConstant) {
-//		assert ssaConstant == null ||
-//				(SmtUtils.isConstant(ssaConstant) && ssaConstant.toString().contains(HornUtilConstants.SSA_VAR_PREFIX));
-//		mSubstitutor = substitutor;
-//		mSsaConstant = ssaConstant;
-//	}
+// public SsaSubstitutor(final Term substitutor, final Term ssaConstant) {
+// assert ssaConstant == null ||
+// (SmtUtils.isConstant(ssaConstant) && ssaConstant.toString().contains(HornUtilConstants.SSA_VAR_PREFIX));
+// mSubstitutor = substitutor;
+// mSsaConstant = ssaConstant;
+// }
 //
-//	public Term getSubstitutor() {
-//		return mSubstitutor;
-//	}
+// public Term getSubstitutor() {
+// return mSubstitutor;
+// }
 //
-//	public Term getSsaConstant() {
-//		return mSsaConstant;
-//	}
+// public Term getSsaConstant() {
+// return mSsaConstant;
+// }
 //
-//	@Override
-//	public String toString() {
-//		return "SsaSubstitutor [mSubstitutor=" + mSubstitutor + ", mSsaConstant=" + mSsaConstant + "]";
-//	}
-//}
+// @Override
+// public String toString() {
+// return "SsaSubstitutor [mSubstitutor=" + mSubstitutor + ", mSsaConstant=" + mSsaConstant + "]";
+// }
+// }
 
 /**
  * Keeps the information about the SSA-substitution of one node in a TreeRun.
@@ -338,11 +340,15 @@ class SsaInfo {
 
 	/**
 	 *
-	 * @param hornClause the HornClause we are building an SSA for at this node in the tree run (here only for debugging
-	 *  purposes)
-	 * @param substitution the ssa-substitution that is applied for the hornclause's formula
-	 * @param substitutedFormula the hornclause's formula after substitution
-	 * @param substitutionForBodyPred the ssa-constant for each position in each body pred of the hornclause
+	 * @param hornClause
+	 *            the HornClause we are building an SSA for at this node in the tree run (here only for debugging
+	 *            purposes)
+	 * @param substitution
+	 *            the ssa-substitution that is applied for the hornclause's formula
+	 * @param substitutedFormula
+	 *            the hornclause's formula after substitution
+	 * @param substitutionForBodyPred
+	 *            the ssa-constant for each position in each body pred of the hornclause
 	 * @param script
 	 * @param backSubstitution
 	 */
@@ -355,22 +361,22 @@ class SsaInfo {
 		mSsaFormula = substitutedFormula;
 		mSubstitutionForBodyPred = Collections.unmodifiableList(substitutionForBodyPred);
 
-//		final Map<Term, Term> backSubstitution = new HashMap<>();
-//		for (final Entry<Term, Term> en : substitution.entrySet()) {
-////			backSubstitution.put(en.getValue(), en.getKey());
-//			final Term isolatedVar;
-//			final Term otherSide;
-//			try {
-//				final AffineRelation ar = new AffineRelation(script, script.term("=", en.getValue(), en.getKey()));
-//				final ApplicationTerm lhso = ar.onLeftHandSideOnly(script, en.getKey());
-//				isolatedVar = lhso.getParameters()[0];
-//				otherSide = lhso.getParameters()[1];
-//			} catch (final NotAffineException nae) {
-//				throw new AssertionError();
-//			}
-//			backSubstitution.put(isolatedVar, otherSide);
-////			backSubstitution.put(otherSide, isolatedVar);
-//		}
+		// final Map<Term, Term> backSubstitution = new HashMap<>();
+		// for (final Entry<Term, Term> en : substitution.entrySet()) {
+		//// backSubstitution.put(en.getValue(), en.getKey());
+		// final Term isolatedVar;
+		// final Term otherSide;
+		// try {
+		// final AffineRelation ar = new AffineRelation(script, script.term("=", en.getValue(), en.getKey()));
+		// final ApplicationTerm lhso = ar.onLeftHandSideOnly(script, en.getKey());
+		// isolatedVar = lhso.getParameters()[0];
+		// otherSide = lhso.getParameters()[1];
+		// } catch (final NotAffineException nae) {
+		// throw new AssertionError();
+		// }
+		// backSubstitution.put(isolatedVar, otherSide);
+		//// backSubstitution.put(otherSide, isolatedVar);
+		// }
 		mBackSubstitution = Collections.unmodifiableMap(backSubstitution);
 	}
 
@@ -392,11 +398,9 @@ class SsaInfo {
 
 	@Override
 	public String toString() {
-		return "SsaInfo [mHornClause=" + mHornClause + "\n" +
-				", mSubstitution=" + mSubstitution + "\n" +
-				", mBackSubstitution=" + mBackSubstitution + "\n" +
-				", mSsaFormula=" + mSsaFormula + "\n" +
-				", mSubstitutionForBodyPred=" + mSubstitutionForBodyPred + "]";
+		return "SsaInfo [mHornClause=" + mHornClause + "\n" + ", mSubstitution=" + mSubstitution + "\n"
+				+ ", mBackSubstitution=" + mBackSubstitution + "\n" + ", mSsaFormula=" + mSsaFormula + "\n"
+				+ ", mSubstitutionForBodyPred=" + mSubstitutionForBodyPred + "]";
 	}
 
 }

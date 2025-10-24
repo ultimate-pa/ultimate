@@ -91,11 +91,10 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 		}
 		final Set<Term> superfluousParams = new HashSet<>();
 		for (final TermVariable eliminatee : var2arrays.getDomain()) {
-			if (!blacklist.contains(eliminatee)) {
-				if (var2arrays.getImage(eliminatee).size() == 1 && var2parameters.getImage(eliminatee).size() == 1) {
-					superfluousParams.addAll(var2parameters.getImage(eliminatee));
-					affectedEliminatees.add(eliminatee);
-				}
+			if (!blacklist.contains(eliminatee) && (var2arrays.getImage(eliminatee).size() == 1
+					&& var2parameters.getImage(eliminatee).size() == 1)) {
+				superfluousParams.addAll(var2parameters.getImage(eliminatee));
+				affectedEliminatees.add(eliminatee);
 			}
 		}
 		final ArrayList<Term> resultAtoms = new ArrayList<>();

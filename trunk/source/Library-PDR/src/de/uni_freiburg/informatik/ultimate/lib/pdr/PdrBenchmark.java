@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  */
 public final class PdrBenchmark extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
 
-	private static final String[] STOPWATCHES = new String[] { PdrStatisticsDefinitions.PDR_RUNTIME.toString() };
+	private static final String[] STOPWATCHES = { PdrStatisticsDefinitions.PDR_RUNTIME.toString() };
 
 	@Override
 	public Collection<String> getKeys() {
@@ -54,17 +54,15 @@ public final class PdrBenchmark extends StatisticsGeneratorWithStopwatches imple
 
 	@Override
 	public Object getValue(final String key) {
-		final PdrStatisticsDefinitions keyEnum = Enum.valueOf(PdrStatisticsDefinitions.class, key);
-		switch (keyEnum) {
+		final PdrStatisticsDefinitions keyEnum = PdrStatisticsDefinitions.valueOf(key);
+		return switch (keyEnum) {
 		case PDR_RUNTIME:
 			try {
-				return getElapsedTime(key);
+				yield getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		default:
-			throw new AssertionError("unknown data: " + keyEnum);
-		}
+		};
 	}
 
 	@Override

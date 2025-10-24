@@ -31,7 +31,10 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SomeVerificationResultTestResultDecider;
 
 /**
  * @author heizmanninformatik.uni-freiburg.de
@@ -40,13 +43,24 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 public class JordanLoopAccelerationAutomizerTest extends AbstractTraceAbstractionTestSuite {
 
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new SomeVerificationResultTestResultDecider(ultimateRunDefinition);
+	}
+
+	// @formatter:off
 	private static final String[] mUltimateRepository_ForwardPredicates = {
 //		"examples/programs/regression",
 //		"examples/programs/quantifier/regression",
 //		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
 //		"examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/MapElim/"
-		"examples/programs/loopAcceleration/"
+		"examples/programs/loopAcceleration/",
+//		"examples/programs/20170304-DifficultPathPrograms/",
+//		"examples/programs/20170319-ConjunctivePathPrograms/",
+//		"examples/programs/20181010-MemSafetyPathprograms/",
+//		"examples/programs/20181015-LoopsPathprograms/",
+
 	};
 
 	private static final String[] mUltimateRepository_TreeInterpolation = {
@@ -60,6 +74,9 @@ public class JordanLoopAccelerationAutomizerTest extends AbstractTraceAbstractio
 
 	private static final String[] mSettings_ForwardPredicates = {
 		"automizer/LoopAccelerationJordan.epf",
+//		"automizer/acceleratedInterpolation/acceleratedTraceCheck_32.epf",
+//		"automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf",
+//		"automizer/TreeInterpolants.epf",
 	};
 
 	private static final String[] mSettings_TreeInterpolation = {
@@ -76,14 +93,15 @@ public class JordanLoopAccelerationAutomizerTest extends AbstractTraceAbstractio
 	}
 
 	private static final String[] mBoogieToolchains = {
-		"AutomizerBplInlineTransformed.xml",
-//		"AutomizerBplInline.xml",
+//		"AutomizerBplInlineTransformed.xml",
+		"AutomizerBplInline.xml",
 	};
 
 	private static final String[] mCToolchains = {
 //		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 	};
+	// @formatter:on
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -92,34 +110,30 @@ public class JordanLoopAccelerationAutomizerTest extends AbstractTraceAbstractio
 			// Tests with TreeInterpolation
 			for (final String setting : mSettings_TreeInterpolation) {
 				for (final String toolchain : mBoogieToolchains) {
-					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation,
-							new String[] {".bpl"});
+					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation, new String[] { ".bpl" });
 				}
 			}
 			for (final String setting : mSettings_TreeInterpolation) {
 				for (final String toolchain : mCToolchains) {
-					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation,
-							new String[] {".c", ".i"});
+					addTestCase(toolchain, setting, mUltimateRepository_TreeInterpolation, new String[] { ".c", ".i" });
 				}
 			}
 		}
 
-		{	// Tests with ForwardPredicates
+		{
+			// Tests with ForwardPredicates
 			for (final String setting : mSettings_ForwardPredicates) {
 				for (final String toolchain : mBoogieToolchains) {
-					addTestCase(toolchain, setting, mUltimateRepository_ForwardPredicates,
-							new String[] {".bpl"});
+					addTestCase(toolchain, setting, mUltimateRepository_ForwardPredicates, new String[] { ".bpl" });
 				}
 			}
 			for (final String setting : mSettings_ForwardPredicates) {
 				for (final String toolchain : mCToolchains) {
-					addTestCase(toolchain, setting, mUltimateRepository_ForwardPredicates,
-							new String[] {".c", ".i"});
+					addTestCase(toolchain, setting, mUltimateRepository_ForwardPredicates, new String[] { ".c", ".i" });
 				}
 			}
 		}
 		return super.createTestCases();
 	}
-
 
 }

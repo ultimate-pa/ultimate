@@ -35,7 +35,7 @@ public class DeleteChange extends ReplaceChange {
 	DeleteChange(final IPSTNode node) {
 		super(node, RewriteUtils.getDeletionStringWithWhitespaces(node));
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Delete " + getNode();

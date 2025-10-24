@@ -31,7 +31,7 @@ pipeline {
     }
     stage('Build and run basic tests') {
       steps {
-        withMaven(options: [artifactsPublisher(disabled: true)]) {
+        withMaven(mavenOpts: '-Xmx4g -Xss4m -ea', options: [artifactsPublisher(disabled: true)]) {
           sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install'
         }
       }

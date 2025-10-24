@@ -25,8 +25,8 @@
  * to convey the resulting work.
  */
 /**
- * Package contains transformers for transformulas that extend 
- * {@link TransitionPreprocessor}
+ * Package contains transformers for transformulas that extend {@link TransitionPreprocessor}
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */

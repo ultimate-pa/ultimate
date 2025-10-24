@@ -84,12 +84,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Stores a mapping from Boogie identifiers to {@link ProgramVar}s and a mapping
- * from TermVariables that are representatives of {@link ProgramVar}s to their
- * {@link ProgramVar}.
+ * Stores a mapping from Boogie identifiers to {@link ProgramVar}s and a mapping from TermVariables that are
+ * representatives of {@link ProgramVar}s to their {@link ProgramVar}.
  *
- * TODO 2018-09-15 Matthias: This class was build before we had
- * {@link DeclarationInformation} and might be unnecessarily complicated.
+ * TODO 2018-09-15 Matthias: This class was build before we had {@link DeclarationInformation} and might be
+ * unnecessarily complicated.
  *
  * @author Matthias Heizmann
  *
@@ -223,26 +222,25 @@ public class Boogie2SmtSymbolTable
 			final boolean inOldContext) {
 		final StorageClass storageClass = declarationInformation.getStorageClass();
 		final String procedure = declarationInformation.getProcedure();
-		switch (storageClass) {
+		return switch (storageClass) {
 		case GLOBAL:
 			if (inOldContext) {
-				return mOldGlobals.get(varId);
+				yield mOldGlobals.get(varId);
 			}
-			return mGlobals.get(varId);
+			yield mGlobals.get(varId);
 		case PROC_FUNC_INPARAM:
 		case IMPLEMENTATION_INPARAM:
-			return get(varId, procedure, mImplementationInParam);
+			yield get(varId, procedure, mImplementationInParam);
 		case PROC_FUNC_OUTPARAM:
 		case IMPLEMENTATION_OUTPARAM:
-			return get(varId, procedure, mImplementationOutParam);
+			yield get(varId, procedure, mImplementationOutParam);
 		case LOCAL:
-			return get(varId, procedure, mImplementationLocals);
+			yield get(varId, procedure, mImplementationLocals);
 		case IMPLEMENTATION:
 		case PROC_FUNC:
 		case QUANTIFIED:
-		default:
 			throw new AssertionError("inappropriate decl info " + declarationInformation);
-		}
+		};
 	}
 
 	/**
@@ -300,7 +298,7 @@ public class Boogie2SmtSymbolTable
 				return;
 			}
 		}
-		final Sort[] paramTypes = new Sort[0];
+		final Sort[] paramTypes = {};
 		final IBoogieType iType = varlist.getType().getBoogieType();
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 		for (final String constId : varlist.getIdentifiers()) {
@@ -648,12 +646,12 @@ public class Boogie2SmtSymbolTable
 		if (previous != null) {
 			throw new AssertionError("params for procedure " + procId + " already added");
 		}
-		for (int i = 0; i < vl.length; i++) {
-			final IBoogieType type = vl[i].getType().getBoogieType();
-			final String[] ids = vl[i].getIdentifiers();
-			for (int j = 0; j < ids.length; j++) {
-				final LocalProgramVar pv = constructLocalProgramVar(ids[j], procId, type, vl[i], declarationInformation);
-				putNew(procId, ids[j], pv, specMap);
+		for (final VarList element : vl) {
+			final IBoogieType type = element.getType().getBoogieType();
+			final String[] ids = element.getIdentifiers();
+			for (final String id : ids) {
+				final LocalProgramVar pv = constructLocalProgramVar(id, procId, type, element, declarationInformation);
+				putNew(procId, id, pv, specMap);
 				params.add(pv);
 			}
 		}
@@ -746,13 +744,8 @@ public class Boogie2SmtSymbolTable
 		}
 
 		// assume that add auxVar are modifiable by all procedures
-		final Set<String> procedures = new HashSet<>();
-		for (final String procId : mSpecificationInParam.keySet()) {
-			procedures.add(procId);
-		}
-		for (final String procId : mImplementationInParam.keySet()) {
-			procedures.add(procId);
-		}
+		final Set<String> procedures = new HashSet<>(mSpecificationInParam.keySet());
+		procedures.addAll(mImplementationInParam.keySet());
 
 		return result;
 	}

@@ -56,7 +56,8 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, 
 	String folder;
 
 	public Jeffery_Test_4(final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
+			final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b)
 			throws AutomataLibraryException, IOException {
 		folder = "/media/user_data/Java/trunk/examples/Automata/finiteAutomata/incrementalInclusion/randomCasesDumpedResults/";
 		timeBuffer1 = new Date().getTime();
@@ -73,7 +74,7 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, 
 			IIC4.addSubtrahend(b.get(i));
 		}
 		timeBuffer2 = new Date().getTime() - timeBuffer2;
-		long x = new Long(timeBuffer1), y = new Long(timeBuffer2);
+		long x = timeBuffer1, y = timeBuffer2;
 		if (x == 0) {
 			x = 1;
 		}
@@ -125,8 +126,9 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, 
 	}
 
 	public Jeffery_Test_4(final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b,
-			final String folderInput) throws AutomataLibraryException, IOException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
+			final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b, final String folderInput)
+			throws AutomataLibraryException, IOException {
 		folder = folderInput;
 		timeBuffer1 = new Date().getTime();
 		final IncrementalInclusionCheckDifference<LETTER, STATE, ?> IIC1 =
@@ -142,7 +144,7 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, 
 			IIC4.addSubtrahend(b.get(i));
 		}
 		timeBuffer2 = new Date().getTime() - timeBuffer2;
-		long x = new Long(timeBuffer1), y = new Long(timeBuffer2);
+		long x = timeBuffer1, y = timeBuffer2;
 		if (x == 0) {
 			x = 1;
 		}

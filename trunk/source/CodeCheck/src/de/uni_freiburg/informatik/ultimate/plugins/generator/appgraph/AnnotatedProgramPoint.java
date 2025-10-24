@@ -249,8 +249,7 @@ public class AnnotatedProgramPoint
 	 * @return returns a list of copies of this APP
 	 */
 	public List<AnnotatedProgramPoint> getCopies() {
-		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<>();
-		ret.addAll(mCopies);
+		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<>(mCopies);
 		ret.addAll(mNewCopies);
 		return ret;
 	}
@@ -261,8 +260,7 @@ public class AnnotatedProgramPoint
 	 * @return returns a list of new copies of this APP
 	 */
 	public List<AnnotatedProgramPoint> getNewCopies() {
-		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<>();
-		ret.addAll(mNewCopies);
+		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<>(mNewCopies);
 		return ret;
 	}
 

@@ -56,30 +56,26 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Destructive equality resolution (DER) for conjunctions (resp. disjunctions).
- * <br>
- * The DER elimination technique does the following transformation, where t is a
- * term in which x does not occur and [x-->t] denotes the substitution that
- * replaces all occurrences of x by t.
+ * Destructive equality resolution (DER) for conjunctions (resp. disjunctions). <br>
+ * The DER elimination technique does the following transformation, where t is a term in which x does not occur and
+ * [x-->t] denotes the substitution that replaces all occurrences of x by t.
  *
  * <pre>
  * ∃x. x=t ∧ φ(x)   ⟿⟿⟿      φ[x-->t]
  * ∀x. x≠t ∨ φ(x)   ⟿⟿⟿      φ[x-->t]
  * </pre>
  *
- * If relations do not have the form x=t (resp. x≠t) we use our
- * {@link PolynomialRelation}s and {@link SolvedBinaryRelation}s and try to
- * bring them into this form.
+ * If relations do not have the form x=t (resp. x≠t) we use our {@link PolynomialRelation}s and
+ * {@link SolvedBinaryRelation}s and try to bring them into this form.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	/**
-	 * Checks if banned variable occurs in div. Ignores if variable got div captured
-	 * by transformation or occured in div before. <br />
-	 * TODO 20210131 Matthias: Might be helpful for debugging. Remove after a few
-	 * years if transformation is error-free.
+	 * Checks if banned variable occurs in div. Ignores if variable got div captured by transformation or occured in div
+	 * before. <br />
+	 * TODO 20210131 Matthias: Might be helpful for debugging. Remove after a few years if transformation is error-free.
 	 */
 	private static final boolean DO_OLD_DIV_CAPTURE_CHECK = false;
 
@@ -94,12 +90,10 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	/**
 	 * @param expensiveEliminations
-	 *            If set to true we do expensive eliminations where auxiliary
-	 *            variables and case distinctions are allowed. If set to false we do
-	 *            only inexpensive eliminations where non of the above is allowed.
-	 *            Note that in the first case we will not do all simple
-	 *            eliminations. If you want the full elimination power you should
-	 *            two instances of this class.
+	 *            If set to true we do expensive eliminations where auxiliary variables and case distinctions are
+	 *            allowed. If set to false we do only inexpensive eliminations where non of the above is allowed. Note
+	 *            that in the first case we will not do all simple eliminations. If you want the full elimination power
+	 *            you should two instances of this class.
 	 */
 	public DualJunctionDer(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean expensiveEliminations) {
@@ -126,9 +120,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		final IDerHelper<?>[] helpers;
 		if (mExpensiveEliminations) {
 			helpers = new IDerHelper[] { new DerHelperMcsbr(IntricateOperations.AUXILIARY_VARIABLES),
-//					20221121 Matthias: Omit cases that require case distinction temporarily
-//					new DerHelperMcsbr(IntricateOperations.CASE_DISTINCTION)
-					};
+					// 20221121 Matthias: Omit cases that require case distinction temporarily
+					// new DerHelperMcsbr(IntricateOperations.CASE_DISTINCTION)
+			};
 		} else {
 			helpers = new IDerHelper[] { new DerHelperSbr(),
 					new DerHelperMcsbr(IntricateOperations.ADDITIONAL_DUAL_JUNCTS) };
@@ -146,9 +140,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Try to iteratively eliminate as many eliminatees as possible using the given
-	 * "derHelpers", one after another. Return null if did not make progress for any
-	 * eliminatee.
+	 * Try to iteratively eliminate as many eliminatees as possible using the given "derHelpers", one after another.
+	 * Return null if did not make progress for any eliminatee.
 	 */
 	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt,
 			final IDerHelper<?>... derHelpers) {
@@ -180,11 +173,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Try to eliminate some eliminatee using the given "derHelpers", one after
-	 * another. Return immediately after the first successful step (note that a step
-	 * can be successful if a case distinction was made and the variable was only
-	 * eliminated in for some cases). Return null if did not make progress for any
-	 * eliminatee.
+	 * Try to eliminate some eliminatee using the given "derHelpers", one after another. Return immediately after the
+	 * first successful step (note that a step can be successful if a case distinction was made and the variable was
+	 * only eliminated in for some cases). Return null if did not make progress for any eliminatee.
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt, final IDerHelper<?>... derHelpers) {
 		for (final IDerHelper<?> derHelper : derHelpers) {
@@ -197,8 +188,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Try to iteratively eliminate as many eliminatees as possible using the given
-	 * "derHelper". Return null if did not make progress for any eliminatee.
+	 * Try to iteratively eliminate as many eliminatees as possible using the given "derHelper". Return null if did not
+	 * make progress for any eliminatee.
 	 */
 	public EliminationResult tryExhaustivelyToEliminate(final IDerHelper<?> derHelper, final EliminationTask inputEt) {
 		EliminationTask currentEt = inputEt;
@@ -229,11 +220,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Try to eliminate some eliminatee using the given "derHelper". Return
-	 * immediately after the first successful step (note that a step can be
-	 * successful if a case distinction was made and the variable was only
-	 * eliminated in for some cases). Return null if did not make progress
-	 * for any eliminatee.
+	 * Try to eliminate some eliminatee using the given "derHelper". Return immediately after the first successful step
+	 * (note that a step can be successful if a case distinction was made and the variable was only eliminated in for
+	 * some cases). Return null if did not make progress for any eliminatee.
 	 */
 	private EliminationResult tryToEliminateOne(final IDerHelper<?> derHelper, final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
@@ -247,31 +236,28 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	private static Term doSubstitutions(final ManagedScript mgdScript, final int quantifier,
 			final List<Term> otherDualJuncts, final SolvedBinaryRelation sbr, final List<Term> dualJunctsResult) {
-		final Map<Term, Term> substitutionMapping = Collections.singletonMap(sbr.getLeftHandSide(),
-				sbr.getRightHandSide());
+		final Map<Term, Term> substitutionMapping =
+				Collections.singletonMap(sbr.getLeftHandSide(), sbr.getRightHandSide());
 		for (final Term otherDualJunct : otherDualJuncts) {
 			final Term replaced = Substitution.apply(mgdScript, substitutionMapping, otherDualJunct);
 			assert UltimateNormalFormUtils.respectsUltimateNormalForm(replaced) : "Term not in UltimateNormalForm";
 			dualJunctsResult.add(replaced);
 		}
-		final Term dualJunctionResult = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier,
-				dualJunctsResult);
+		final Term dualJunctionResult =
+				QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier, dualJunctsResult);
 		return dualJunctionResult;
 	}
 
 	private static boolean eachCaseHasDerRelationSymbol(final MultiCaseSolvedBinaryRelation mcsbr,
 			final int quantifier) {
 		for (final Case cas : mcsbr.getCases()) {
-			if (cas.getSolvedBinaryRelation() != null) {
-				if (!QuantifierUtils.isDerRelationSymbol(quantifier,
-						cas.getSolvedBinaryRelation().getRelationSymbol())) {
-					return false;
-				}
+			if ((cas.getSolvedBinaryRelation() != null) && !QuantifierUtils.isDerRelationSymbol(quantifier,
+					cas.getSolvedBinaryRelation().getRelationSymbol())) {
+				return false;
 			}
 		}
 		return true;
 	}
-
 
 	public static SolvedBinaryRelation tryPlr(final Script script, final int quantifier, final TermVariable eliminatee,
 			final Term atom) {
@@ -308,33 +294,32 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		}
 	}
 
-
 	private static abstract class IDerHelper<SR> {
 
 		public Pair<Integer, SR> findBestReplacementSbr(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term[] dualJuncts, final Set<TermVariable> bannedForDivCapture) {
 			for (int i = 0; i < dualJuncts.length; i++) {
 				if (Arrays.asList(dualJuncts[i].getFreeVars()).contains(eliminatee)) {
-					final SR sbr = solveForSubject(mgdScript, quantifier, eliminatee, dualJuncts[i],
-							bannedForDivCapture);
+					final SR sbr =
+							solveForSubject(mgdScript, quantifier, eliminatee, dualJuncts[i], bannedForDivCapture);
 					if (sbr != null) {
-						return new Pair<Integer, SR>(i, sbr);
+						return new Pair<>(i, sbr);
 					}
 				}
 			}
 			return null;
 		}
 
-		protected abstract SR solveForSubject(final ManagedScript mgdScript, final int quantifier, final TermVariable eliminatee,
-				final Term term, Set<TermVariable> bannedForDivCapture);
+		protected abstract SR solveForSubject(final ManagedScript mgdScript, final int quantifier,
+				final TermVariable eliminatee, final Term term, Set<TermVariable> bannedForDivCapture);
 
 		private EliminationResult tryToEliminateSbr(final ManagedScript mgdScript, final TermVariable eliminatee,
 				final EliminationTask et) {
 			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 			final Set<TermVariable> bannedForDivCapture = new HashSet<>(et.getEliminatees());
 			bannedForDivCapture.addAll(et.getContext().getBoundByAncestors());
-			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript, et.getQuantifier(), eliminatee,
-					dualJuncts, bannedForDivCapture);
+			final Pair<Integer, SR> pair =
+					findBestReplacementSbr(mgdScript, et.getQuantifier(), eliminatee, dualJuncts, bannedForDivCapture);
 			if (pair == null) {
 				return null;
 			}
@@ -351,8 +336,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	 */
 	private static <E> List<E> toListAllButOne(final E[] array, final int idxOmit) {
 		assert 0 <= idxOmit && idxOmit < array.length;
-		final List<E> result = new ArrayList<E>(array.length-1);
-		for (int i = 0; i<array.length; i++) {
+		final List<E> result = new ArrayList<>(array.length - 1);
+		for (int i = 0; i < array.length; i++) {
 			if (i != idxOmit) {
 				result.add(array[i]);
 			}
@@ -362,17 +347,15 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	public static class DerHelperSbr extends IDerHelper<SolvedBinaryRelation> {
 
-
 		public DerHelperSbr() {
-			super();
 		}
 
 		@Override
 		public SolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term term, final Set<TermVariable> bannedForDivCapture) {
 			if (SmtSortUtils.isBoolSort(eliminatee.getSort()) && SmtSortUtils.isBoolSort(term.getSort())) {
-				final SolvedBinaryRelation sbr = DualJunctionDer.tryPlr(mgdScript.getScript(), quantifier, eliminatee,
-						term);
+				final SolvedBinaryRelation sbr =
+						DualJunctionDer.tryPlr(mgdScript.getScript(), quantifier, eliminatee, term);
 				if (sbr != null) {
 					return sbr;
 				}
@@ -406,8 +389,8 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		protected EliminationResult applyReplacement(final ManagedScript mgdScript, final EliminationTask et,
 				final List<Term> otherDualJuncts, final SolvedBinaryRelation sbr) {
 			final List<Term> dualJunctsResult = new ArrayList<>();
-			final Term dualJunctionResult = doSubstitutions(mgdScript, et.getQuantifier(), otherDualJuncts, sbr,
-					dualJunctsResult);
+			final Term dualJunctionResult =
+					doSubstitutions(mgdScript, et.getQuantifier(), otherDualJuncts, sbr, dualJunctsResult);
 			return new EliminationResult(et.update(dualJunctionResult), Collections.emptySet());
 		}
 	}
@@ -417,7 +400,6 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		private final IntricateOperations mIntricateOperations;
 
 		public DerHelperMcsbr(final IntricateOperations intricateOperations) {
-			super();
 			mIntricateOperations = intricateOperations;
 		}
 
@@ -489,6 +471,5 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			return new EliminationResult(et.update(correspondingJunction), mcsbr.getAuxiliaryVariables());
 		}
 	}
-
 
 }

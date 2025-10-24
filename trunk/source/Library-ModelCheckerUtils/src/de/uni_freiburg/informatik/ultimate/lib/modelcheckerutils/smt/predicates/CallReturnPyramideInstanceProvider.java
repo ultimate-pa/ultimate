@@ -67,7 +67,6 @@ public class CallReturnPyramideInstanceProvider {
 	public CallReturnPyramideInstanceProvider(final ManagedScript mgdScript,
 			final Set<IProgramVar> varsAssignedOnReturn, final Set<IProgramVar> calleeInParams,
 			final Set<IProgramNonOldVar> modifiableGlobals, final Instance nonAuxVarInstance) {
-		super();
 		mMgdScript = mgdScript;
 		mVarsAssignedOnReturn = varsAssignedOnReturn;
 		mCalleeInParams = calleeInParams;
@@ -94,7 +93,7 @@ public class CallReturnPyramideInstanceProvider {
 		}
 	}
 
-	private class DefaultTermVariableProvider implements IValueConstruction<IProgramVar, TermVariable> {
+	private static class DefaultTermVariableProvider implements IValueConstruction<IProgramVar, TermVariable> {
 
 		@Override
 		public TermVariable constructValue(final IProgramVar key) {
@@ -107,7 +106,6 @@ public class CallReturnPyramideInstanceProvider {
 		private final Instance mInstance;
 
 		public FreshTermVariableProvider(final Instance instance) {
-			super();
 			mInstance = instance;
 		}
 
@@ -120,7 +118,7 @@ public class CallReturnPyramideInstanceProvider {
 		}
 	}
 
-	private abstract class CoincidingInstancesClassifier {
+	private abstract static class CoincidingInstancesClassifier {
 
 		public EnumSet<Instance> getInstances(final IProgramVar pv) {
 			if (pv instanceof ILocalProgramVar) {
@@ -262,7 +260,6 @@ public class CallReturnPyramideInstanceProvider {
 				new EnumMap<>(Instance.class);
 
 		public FourWayInstanceProvider(final Instance priorityInstance) {
-			super();
 			mPriorityInstance = priorityInstance;
 			for (final Instance instance : Instance.values()) {
 				if (instance == mPriorityInstance) {

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -55,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends FloydHoareValidityCheck<LOC> {
 	private final IIcfg<LOC> mIcfg;
-	private final Set<LOC> mErrorLocs;
 
 	public IcfgFloydHoareValidityCheck(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
 			final IFloydHoareAnnotation<LOC> annotation, final boolean assertValidity) {
@@ -83,7 +81,6 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 			final MissingAnnotationBehaviour missingAnnotations, final boolean checkSafety) {
 		super(services, mgdScript, hoareTripleChecker, annotation, assertValidity, missingAnnotations, checkSafety);
 		mIcfg = icfg;
-		mErrorLocs = icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toSet());
 
 		if (icfg.getInitialNodes().isEmpty()) {
 			mLogger.warn("There was no procedure with an implementation");
@@ -94,7 +91,7 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 
 	@Override
 	protected Iterable<Pair<IInternalAction, LOC>> getInternalSuccessors(final LOC state) {
-		return getSuccessors(state, IInternalAction.class, this::isNoTrivialSummary);
+		return getSuccessors(state, IInternalAction.class, IcfgFloydHoareValidityCheck::isNoTrivialSummary);
 	}
 
 	@Override
@@ -110,7 +107,7 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 				.collect(Collectors.toList());
 	}
 
-	private boolean isNoTrivialSummary(final IInternalAction action) {
+	private static boolean isNoTrivialSummary(final IInternalAction action) {
 		return !(action instanceof IIcfgSummaryTransition<?>
 				&& ((IIcfgSummaryTransition<?>) action).calledProcedureHasImplementation());
 	}

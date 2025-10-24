@@ -209,29 +209,26 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	private IDfsOrder<L, IPredicate> getDfsOrder(final OrderType orderType, final long randomOrderSeed,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs) {
-		switch (orderType) {
-		case BY_SERIAL_NUMBER:
+		return switch (orderType) {
+		case BY_SERIAL_NUMBER -> {
 			final Set<String> errorThreads =
 					errorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
-			return new ConstantDfsOrder<>(
+			yield new ConstantDfsOrder<>(
 					Comparator.<L, Boolean> comparing(x -> !errorThreads.contains(x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparing(x -> x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparingInt(Object::hashCode)));
-		case PSEUDO_LOCKSTEP:
-			return new BetterLockstepOrder<>(this::normalizePredicate);
-		case RANDOM:
-			return new RandomDfsOrder<>(randomOrderSeed, false);
-		case POSITIONAL_RANDOM:
-			return new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
-		case LOOP_LOCKSTEP:
+		}
+		case PSEUDO_LOCKSTEP -> new BetterLockstepOrder<>(this::normalizePredicate);
+		case RANDOM -> new RandomDfsOrder<>(randomOrderSeed, false);
+		case POSITIONAL_RANDOM -> new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
+		case LOOP_LOCKSTEP -> {
 			final var order =
 					new LoopLockstepOrder<L>(icfg, mStateSplitter == null ? null : mStateSplitter::getOriginal);
 			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((PredicateWithLastThread) x).getUnderlying(),
 					x -> ((PredicateWithLastThread) x).getLastThread());
-			return order;
-		default:
-			throw new UnsupportedOperationException("Unknown order type: " + orderType);
+			yield order;
 		}
+		};
 	}
 
 	private final IPersistentSetChoice<L, IPredicate> createPersistentSets(final IIcfg<?> icfg,
@@ -296,9 +293,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			((SleepMapStateFactory<?>) mSleepMapFactory).reset();
 		}
 
-		ITraversal<L> traversal = buildReducedTraversal(mMode, new BasicTraversal());
-		if (mDfsOrder instanceof LoopLockstepOrder<?>) {
-			traversal = new StatefulOrderTraversal(traversal);
+		ITraversal<L, IPredicate> traversal = buildReducedTraversal(mMode, new BasicTraversal<>(mAutomataServices));
+		if (mDfsOrder instanceof final LoopLockstepOrder<L> lockstep) {
+			traversal = new StatefulOrderTraversal<>(lockstep, traversal);
 		}
 		traversal.traverse(input, mDfsOrder, visitor);
 	}
@@ -308,112 +305,88 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	// It remains to see if we can integrate dead end pruning, covering optimizations, stateful orders, state splitters,
 	// DPOR, dynamic stratification, etc. into this pattern.
 	// Some fields of this class may become fields of the respective ITraversal implementations.
-	private ITraversal<L> buildReducedTraversal(final PartialOrderMode mode, final ITraversal<L> underlying) {
-		switch (mode) {
-		case NONE:
-			return underlying;
-		case SLEEP_NEW_STATES:
-			return buildSleepTraversal(underlying);
-		case PERSISTENT_SETS:
-			return new PersistentSetTraversal(underlying);
-		case PERSISTENT_SLEEP_NEW_STATES:
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			return buildSleepTraversal(new PersistentSetTraversal(underlying));
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
-		}
+	private ITraversal<L, IPredicate> buildReducedTraversal(final PartialOrderMode mode,
+			final ITraversal<L, IPredicate> underlying) {
+		return switch (mode) {
+		case NONE -> underlying;
+		case SLEEP_NEW_STATES -> buildSleepTraversal(underlying);
+		case PERSISTENT_SETS -> new PersistentSetTraversal<>(mPersistent, underlying);
+		case PERSISTENT_SLEEP_NEW_STATES, PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER ->
+				buildSleepTraversal(new PersistentSetTraversal<>(mPersistent, underlying));
+		};
 	}
 
-	private ITraversal<L> buildSleepTraversal(final ITraversal<L> underlying) {
+	private ITraversal<L, IPredicate> buildSleepTraversal(final ITraversal<L, IPredicate> underlying) {
 		if (mIndependenceRelations.size() > 1) {
-			return new SleepMapTraversal(underlying);
+			return new SleepMapTraversal<>(mIndependenceRelations, mSleepMapFactory, mGetBudget, underlying);
 		}
-		return new SleepSetTraversal(underlying);
+
+		assert !mIndependenceRelations.isEmpty() : "Sleep sets require an independence relation";
+		final IIndependenceRelation<IPredicate, L> independence = mIndependenceRelations.get(0);
+		return new SleepSetTraversal<>(independence, mSleepFactory, underlying);
 	}
 
-	private interface ITraversal<L> {
-		// TODO make this method generic in the state type <S> (once we no longer rely on IPredicate everywhere)
-		void traverse(INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton, IDfsOrder<L, IPredicate> order,
-				IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException;
+	private interface ITraversal<L, S> {
+		void traverse(INwaOutgoingLetterAndTransitionProvider<L, S> automaton, IDfsOrder<L, S> order,
+				IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException;
 	}
 
-	private class BasicTraversal implements ITraversal<L> {
+	private record BasicTraversal<L, S>(AutomataLibraryServices automataServices) implements ITraversal<L, S> {
+		@Override
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, S> automaton, final IDfsOrder<L, S> order,
+				final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+			DepthFirstTraversal.traverse(automataServices, automaton, order, visitor);
+		}
+	}
+
+	// TODO once we generally support stateful orders, use the given order (which might wrap the lockstep order)
+	private record StatefulOrderTraversal<L extends IIcfgTransition<?>>(LoopLockstepOrder<L> lockstep,
+			ITraversal<L, IPredicate> underlying) implements ITraversal<L, IPredicate> {
 		@Override
 		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
 				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
 				throws AutomataOperationCanceledException {
-			DepthFirstTraversal.traverse(mAutomataServices, automaton, order, visitor);
+			underlying.traverse(lockstep.wrapAutomaton(automaton), order, visitor);
 		}
 	}
 
-	private class StatefulOrderTraversal implements ITraversal<L> {
-		private final ITraversal<L> mUnderlying;
-
-		public StatefulOrderTraversal(final ITraversal<L> underlying) {
-			mUnderlying = underlying;
-		}
-
+	// TODO Support changing state type from S to reduction state type R by lifting positional order on S to order on R
+	private record SleepSetTraversal<L, S>(IIndependenceRelation<S, L> independence,
+			ISleepSetStateFactory<L, S, S> sleepFactory, ITraversal<L, S> underlying) implements ITraversal<L, S> {
 		@Override
-		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
-				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
-				throws AutomataOperationCanceledException {
-			// TODO once we generally support stateful orders, use the given order (which might wrap the stateful order)
-			final var statefulOrder = (LoopLockstepOrder<L>) mDfsOrder;
-			mUnderlying.traverse(statefulOrder.wrapAutomaton(automaton), order, visitor);
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, S> automaton, final IDfsOrder<L, S> order,
+				final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+			final var reduction = new MinimalSleepSetReduction<>(automaton, sleepFactory, independence, order);
+			underlying.traverse(reduction, order, visitor);
 		}
 	}
 
-	private class SleepSetTraversal implements ITraversal<L> {
-		private final ITraversal<L> mUnderlying;
-
-		public SleepSetTraversal(final ITraversal<L> underlying) {
-			mUnderlying = underlying;
+	// TODO Support changing state type from S to reduction state type R
+	private record SleepMapTraversal<L, S>(List<IIndependenceRelation<S, L>> independenceRelations,
+			ISleepMapStateFactory<L, S, S> sleepMapFactory,
+			Function<SleepMapReduction<L, S, S>, IBudgetFunction<L, S>> getBudget, ITraversal<L, S> underlying)
+			implements ITraversal<L, S> {
+		public SleepMapTraversal {
+			assert independenceRelations.size() > 1 : "Sleep maps require multiple independence relations";
 		}
 
 		@Override
-		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
-				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
-				throws AutomataOperationCanceledException {
-			assert !mIndependenceRelations.isEmpty() : "Sleep sets require an independence relation";
-			final IIndependenceRelation<IPredicate, L> independence = mIndependenceRelations.get(0);
-			final var reduction = new MinimalSleepSetReduction<>(automaton, mSleepFactory, independence, order);
-			mUnderlying.traverse(reduction, order, visitor);
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, S> automaton, final IDfsOrder<L, S> order,
+				final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+			final var reduction = new SleepMapReduction<>(automaton, independenceRelations, order, sleepMapFactory,
+					getBudget.andThen(CachedBudget::new));
+			underlying.traverse(reduction, order, visitor);
 		}
 	}
 
-	private class SleepMapTraversal implements ITraversal<L> {
-		private final ITraversal<L> mUnderlying;
-
-		public SleepMapTraversal(final ITraversal<L> underlying) {
-			mUnderlying = underlying;
-		}
-
+	private record PersistentSetTraversal<L, S>(IPersistentSetChoice<L, S> persistent, ITraversal<L, S> underlying)
+			implements ITraversal<L, S> {
 		@Override
-		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
-				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
-				throws AutomataOperationCanceledException {
-			assert mIndependenceRelations.size() > 1 : "Sleep maps require multiple independence relations";
-			final var reduction = new SleepMapReduction<>(automaton, mIndependenceRelations, order, mSleepMapFactory,
-					mGetBudget.andThen(CachedBudget::new));
-			mUnderlying.traverse(reduction, order, visitor);
-		}
-
-	}
-
-	private class PersistentSetTraversal implements ITraversal<L> {
-		private final ITraversal<L> mUnderlying;
-
-		public PersistentSetTraversal(final ITraversal<L> underlying) {
-			mUnderlying = underlying;
-		}
-
-		@Override
-		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton,
-				final IDfsOrder<L, IPredicate> order, final IDfsVisitor<L, IPredicate> visitor)
-				throws AutomataOperationCanceledException {
-			final var combinedOrder = PersistentSetReduction.ensureCompatibility(mPersistent, order);
-			final var reduced = new PersistentSetReduction<>(automaton, mPersistent);
-			mUnderlying.traverse(reduced, combinedOrder, visitor);
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, S> automaton, final IDfsOrder<L, S> order,
+				final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+			final var combinedOrder = PersistentSetReduction.ensureCompatibility(persistent, order);
+			final var reduced = new PersistentSetReduction<>(automaton, persistent);
+			underlying.traverse(reduced, combinedOrder, visitor);
 		}
 	}
 
@@ -484,9 +457,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return mStatistics;
 	}
 
-	private final class Statistics extends AbstractStatisticsDataProvider {
-		private int mIndependenceStatisticsCounter = 0;
-		private int mPersistentSetStatisticsCounter = 0;
+	private static final class Statistics extends AbstractStatisticsDataProvider {
+		private int mIndependenceStatisticsCounter;
+		private int mPersistentSetStatisticsCounter;
 
 		private void reportIndependenceStatistics(final IIndependenceRelation<?, ?> relation) {
 			final StatisticsData data = new StatisticsData();

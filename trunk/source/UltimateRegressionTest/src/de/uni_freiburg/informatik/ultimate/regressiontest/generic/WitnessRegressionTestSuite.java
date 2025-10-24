@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2025 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2025 University of Freiburg
  *
  * This file is part of the ULTIMATE Regression Test Library.
  *
@@ -30,71 +30,69 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.regressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.KeywordBasedExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  *
- * This test suite automatically generates test cases from the example folder. If you place input files, toolchains and
- * settings files in a folder named regression, they will automatically be picked up.
+ * This test suite automatically generates test cases from the example folder. First the verification and the generation
+ * of witnesses is tested, afterwards the validation of the previously generated witnesses.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
 public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
-	private static final List<String> WITNESS_EXTENSIONS = List.of(".graphml", ".yaml", ".yml");
+	// Be careful: These fields have to match the settings for WitnessPrinter
+	private static final String WITNESS_SUFFIX = "-witness";
+	private static final List<String> WITNESS_EXTENSIONS = List.of(".graphml", ".yml");
+
 	private static final long DEFAULT_TIMEOUT = 25 * 1000L;
 
 	public WitnessRegressionTestSuite() {
 		mTimeout = DEFAULT_TIMEOUT;
-		mRootFolder = TestUtil.getPathFromTrunk("examples/witness-checking");
+		mRootFolder = TestUtil.getPathFromTrunk("examples/witness-generation-validation");
 	}
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
-		return new WitnessSafetyCheckTestResultDecider(runDefinition);
+		return new SafetyCheckTestResultDecider(runDefinition, false);
+	}
+
+	@Override
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
+			final String overridenExpectedVerdict) {
+		return new SafetyCheckTestResultDecider(runDefinition, false, overridenExpectedVerdict);
 	}
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		final List<UltimateTestCase> result = new ArrayList<>();
+		final List<UltimateTestCase> generation = new ArrayList<>();
+		final List<UltimateTestCase> validation = new ArrayList<>();
 		for (final UltimateTestCase t : super.createTestCases()) {
 			final UltimateRunDefinition def = t.getUltimateRunDefinition();
-			for (final File f : def.getInput()) {
-				final File[] witnesses = f.getParentFile().listFiles(
-						(d, n) -> WITNESS_EXTENSIONS.stream().anyMatch(n::endsWith) && n.startsWith(f.getName()));
-				for (final File witness : witnesses) {
-					final File[] newFiles = DataStructureUtils.concat(def.getInput(), new File[] { witness });
-					final UltimateRunDefinition newDef = new UltimateRunDefinition(newFiles, def.getSettings(),
-							def.getToolchain(), def.getTimeout());
-					result.add(new UltimateTestCase(getTestResultDecider(def), newDef, List.of()));
+			final String toolchainName = def.getToolchain().getName().toLowerCase();
+			if (toolchainName.contains("generation")) {
+				generation.add(t);
+			} else if (toolchainName.contains("validation")) {
+				for (final File f : def.getInput()) {
+					for (final String ending : WITNESS_EXTENSIONS) {
+						final File witness = new File(f.getAbsolutePath() + WITNESS_SUFFIX + ending);
+						final File[] newFiles = DataStructureUtils.concat(def.getInput(), new File[] { witness });
+						final UltimateRunDefinition newDef = new UltimateRunDefinition(newFiles, def.getSettings(),
+								def.getToolchain(), def.getTimeout());
+						validation.add(new UltimateTestCase(getTestResultDecider(def), newDef, List.of()));
+					}
 				}
+			} else {
+				throw new AssertionError("Not supported yet.");
 			}
 		}
-		return result;
+		return DataStructureUtils.concat(generation, validation);
 	}
-
-	private static final class WitnessSafetyCheckTestResultDecider extends SafetyCheckTestResultDecider {
-		public WitnessSafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-			super(ultimateRunDefinition, false);
-		}
-
-		@Override
-		public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-			// Determine the expected result, based on the subfolders correctness/violation
-			return new KeywordBasedExpectedResultFinder<>(null, Map.of("correctness", SafetyCheckerOverallResult.SAFE,
-					"violation", SafetyCheckerOverallResult.UNSAFE), null);
-		}
-	}
-
 }

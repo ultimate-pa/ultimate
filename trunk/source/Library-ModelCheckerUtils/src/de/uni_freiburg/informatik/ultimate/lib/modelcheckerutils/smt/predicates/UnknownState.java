@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class UnknownState implements ISLPredicate {
 
@@ -48,18 +49,34 @@ public class UnknownState implements ISLPredicate {
 
 	@Override
 	public String toString() {
-		String result = mSerialNumber + "#";
+		final StringBuilder result = new StringBuilder().append(mSerialNumber).append("#");
 		if (mProgramPoint != null) {
-			result += mProgramPoint.getDebugIdentifier();
+			result.append(mProgramPoint.getDebugIdentifier());
 		} else {
-			result += "unknown";
+			result.append("unknown");
 		}
-		return result;
+		return result.toString();
 	}
 
 	@Override
 	public int hashCode() {
-		return mSerialNumber;
+		return HashUtils.hashJenkins(31, mSerialNumber);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj instanceof final UnknownState other && mSerialNumber == other.mSerialNumber) {
+			// Different predicates with the same serial number must not be used within the same context.
+			// Hence we throw an exception if they are compared for equality.
+			// The only case in which two UnknownState are considered equal is reference equality (case 1 above).
+			//
+			// This aligns with the implementation in BasicPredicate and DebugPredicate.
+			throw new UnsupportedOperationException("different predicates with same serial number");
+		}
+		return false;
 	}
 
 	@Override

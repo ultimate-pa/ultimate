@@ -70,7 +70,6 @@ public class FloatFunction {
 	private final String mTypeSuffix;
 
 	public FloatFunction(final String prefix, final String function, final String typeSuffix) {
-		super();
 		mPrefix = prefix;
 		mFunction = function;
 		mTypeSuffix = typeSuffix;

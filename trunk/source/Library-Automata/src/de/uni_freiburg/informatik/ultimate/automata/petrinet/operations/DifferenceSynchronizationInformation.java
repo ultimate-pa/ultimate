@@ -71,7 +71,6 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 			final Set<Transition<LETTER, PLACE>> contributingTransitions,
 			final HashRelation<Transition<LETTER, PLACE>, PLACE> blockingTransitions,
 			final boolean reachabilityPreserved, final boolean vitalityPreserved) {
-		super();
 		mChangerLetters = changerLetters;
 		mSelfloops = selfloops;
 		mStateChangers = stateChangers;

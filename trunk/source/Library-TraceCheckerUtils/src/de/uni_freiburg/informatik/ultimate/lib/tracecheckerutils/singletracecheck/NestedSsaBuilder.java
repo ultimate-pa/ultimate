@@ -496,7 +496,7 @@ public class NestedSsaBuilder<L extends IAction> {
 		if (bv.isOldvar()) {
 			isModified = oldVarAssignment.getAssignedVars().contains(bv);
 		} else {
-			isModified = oldVarAssignment.getInVars().keySet().contains(bv);
+			isModified = oldVarAssignment.getInVars().containsKey(bv);
 		}
 		return isModified;
 	}

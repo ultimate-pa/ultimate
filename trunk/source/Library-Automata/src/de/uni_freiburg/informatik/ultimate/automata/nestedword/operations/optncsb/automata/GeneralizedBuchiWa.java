@@ -30,15 +30,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 public class GeneralizedBuchiWa extends BuchiWa {
 
-    public GeneralizedBuchiWa(int alphabetSize) {
-        super(alphabetSize);
-    }
-    
-    @Override
-    public Acc getAcceptance() {
-        if(acc == null) {
-            acc = new AccGenBuchi(getFinalStates());
-        }
-        return acc;
-    }
+	public GeneralizedBuchiWa(final int alphabetSize) {
+		super(alphabetSize);
+	}
+
+	@Override
+	public Acc getAcceptance() {
+		if (acc == null) {
+			acc = new AccGenBuchi(getFinalStates());
+		}
+		return acc;
+	}
 }

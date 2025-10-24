@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -75,12 +75,13 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		if (mOperand.getVpAlphabet().getInternalAlphabet().isEmpty()) {
 			mInternalLetterForSpoilerWinningSink = null;
 			if (mOperand.getVpAlphabet().getCallAlphabet().isEmpty()) {
-				throw new UnsupportedOperationException("Unsupported: automata where internal alphabet and call alphabet are empty.");
+				throw new UnsupportedOperationException(
+						"Unsupported: automata where internal alphabet and call alphabet are empty.");
 			}
 			mCallLetterForSpoilerWinningSink = mOperand.getVpAlphabet().getCallAlphabet().iterator().next();
 		} else {
 			mInternalLetterForSpoilerWinningSink = mOperand.getVpAlphabet().getInternalAlphabet().iterator().next();
-			mCallLetterForSpoilerWinningSink = null; 
+			mCallLetterForSpoilerWinningSink = null;
 		}
 		constructInitialStates(initialPairs);
 	}
@@ -170,7 +171,7 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		}
 		return mOperand.lettersCall(state.getSpoilerDoubleDecker().getUp());
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final GS state, final GS hier) {
 		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(state)) {
@@ -178,7 +179,6 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		}
 		return mOperand.lettersReturn(state.getSpoilerDoubleDecker().getUp(), hier.getSpoilerDoubleDecker().getUp());
 	}
-
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, GS>> internalSuccessors(final GS state, final LETTER letter) {

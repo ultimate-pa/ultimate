@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
@@ -51,12 +52,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
@@ -95,28 +98,26 @@ public class ExpressionFactory {
 				new TypeErrorReporter(loc));
 
 		if (isLiteral(expr)) {
-			switch (operator) {
+			return switch (operator) {
 			case ARITHNEGATIVE:
-				if (expr instanceof IntegerLiteral) {
-					final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
-					return createIntegerLiteral(loc, value.negate().toString());
-				} else if (expr instanceof RealLiteral) {
-					final BigDecimal value = new BigDecimal(((RealLiteral) expr).getValue());
-					return createRealLiteral(loc, value.negate().toString());
+				if (expr instanceof final IntegerLiteral intLit) {
+					final BigInteger value = new BigInteger(intLit.getValue());
+					yield createIntegerLiteral(loc, value.negate().toString());
+				} else if (expr instanceof final RealLiteral realLit) {
+					final BigDecimal value = new BigDecimal(realLit.getValue());
+					yield createRealLiteral(loc, value.negate().toString());
 				} else {
 					throw new IllegalArgumentException("type error: unable to apply " + operator);
 				}
 			case LOGICNEG:
-				if (expr instanceof BooleanLiteral) {
-					final boolean value = ((BooleanLiteral) expr).getValue();
-					return createBooleanLiteral(loc, !value);
+				if (expr instanceof final BooleanLiteral boolLit) {
+					final boolean value = boolLit.getValue();
+					yield createBooleanLiteral(loc, !value);
 				}
 				throw new IllegalArgumentException("type error: unable to apply " + operator);
 			case OLD:
-				return expr;
-			default:
-				throw new AssertionError("unknown operator " + operator);
-			}
+				yield expr;
+			};
 		}
 		return new UnaryExpression(loc, resultType, operator, expr);
 	}
@@ -193,8 +194,7 @@ public class ExpressionFactory {
 			final BooleanLiteral leftLiteral, final BooleanLiteral rightLiteral) {
 		final boolean leftValue = leftLiteral.getValue();
 		final boolean rightValue = rightLiteral.getValue();
-		final boolean result;
-		switch (operator) {
+		final boolean result = switch (operator) {
 		case ARITHDIV:
 		case ARITHMINUS:
 		case ARITHMOD:
@@ -208,26 +208,18 @@ public class ExpressionFactory {
 		case COMPPO:
 			throw new IllegalArgumentException("type error: unable to apply " + operator + " to bool");
 		case COMPEQ:
-			result = leftValue == rightValue;
-			break;
+			yield leftValue == rightValue;
 		case COMPNEQ:
-			result = leftValue != rightValue;
-			break;
+			yield leftValue != rightValue;
 		case LOGICAND:
-			result = leftValue && rightValue;
-			break;
+			yield leftValue && rightValue;
 		case LOGICIFF:
-			result = leftValue == rightValue;
-			break;
+			yield leftValue == rightValue;
 		case LOGICIMPLIES:
-			result = !leftValue || rightValue;
-			break;
+			yield !leftValue || rightValue;
 		case LOGICOR:
-			result = leftValue || rightValue;
-			break;
-		default:
-			throw new AssertionError("unknown operator " + operator);
-		}
+			yield leftValue || rightValue;
+		};
 		return createBooleanLiteral(loc, result);
 	}
 
@@ -235,50 +227,50 @@ public class ExpressionFactory {
 			final IntegerLiteral leftLiteral, final IntegerLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
-		switch (operator) {
+		return switch (operator) {
 		case ARITHDIV: {
 			final BigInteger result = ArithmeticUtils.euclideanDiv(leftValue, rightValue);
-			return createIntegerLiteral(loc, result.toString());
+			yield createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMINUS: {
 			final BigInteger result = leftValue.subtract(rightValue);
-			return createIntegerLiteral(loc, result.toString());
+			yield createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMOD: {
 			final BigInteger result = ArithmeticUtils.euclideanMod(leftValue, rightValue);
-			return createIntegerLiteral(loc, result.toString());
+			yield createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMUL: {
 			final BigInteger result = leftValue.multiply(rightValue);
-			return createIntegerLiteral(loc, result.toString());
+			yield createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHPLUS: {
 			final BigInteger result = leftValue.add(rightValue);
-			return createIntegerLiteral(loc, result.toString());
+			yield createIntegerLiteral(loc, result.toString());
 		}
 		case COMPEQ: {
 			final boolean result = leftValue.compareTo(rightValue) == 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPGEQ: {
 			final boolean result = leftValue.compareTo(rightValue) >= 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPGT: {
 			final boolean result = leftValue.compareTo(rightValue) > 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPLEQ: {
 			final boolean result = leftValue.compareTo(rightValue) <= 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPLT: {
 			final boolean result = leftValue.compareTo(rightValue) < 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
 			final boolean result = leftValue.compareTo(rightValue) != 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case BITVECCONCAT:
 		case COMPPO:
@@ -287,9 +279,7 @@ public class ExpressionFactory {
 		case LOGICIMPLIES:
 		case LOGICOR:
 			throw new IllegalArgumentException("type error: unable to apply " + operator + " to bool");
-		default:
-			throw new AssertionError("unknown operator " + operator);
-		}
+		};
 	}
 
 	private static Expression constructBinExprWithLiteralOpsReal(final ILocation loc, final Operator operator,
@@ -297,46 +287,46 @@ public class ExpressionFactory {
 
 		final Rational leftValue = toRational(leftLiteral.getValue());
 		final Rational rightValue = toRational(rightLiteral.getValue());
-		switch (operator) {
+		return switch (operator) {
 		case ARITHDIV: {
 			final Rational result = leftValue.div(rightValue);
-			return new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
+			yield new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
 		}
 		case ARITHMINUS: {
 			final Rational result = leftValue.sub(rightValue);
-			return new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
+			yield new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
 		}
 		case ARITHMUL: {
 			final Rational result = leftValue.mul(rightValue);
-			return new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
+			yield new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
 		}
 		case ARITHPLUS: {
 			final Rational result = leftValue.add(rightValue);
-			return new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
+			yield new RealLiteral(loc, BoogieType.TYPE_REAL, result.toString());
 		}
 		case COMPEQ: {
 			final boolean result = leftValue.compareTo(rightValue) >= 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPGEQ: {
 			final boolean result = leftValue.compareTo(rightValue) >= 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPGT: {
 			final boolean result = leftValue.compareTo(rightValue) >= 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPLEQ: {
 			final boolean result = leftValue.compareTo(rightValue) >= 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPLT: {
 			final boolean result = leftValue.compareTo(rightValue) >= 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
 			final boolean result = leftValue.compareTo(rightValue) >= 0;
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case ARITHMOD:
 		case BITVECCONCAT:
@@ -346,9 +336,7 @@ public class ExpressionFactory {
 		case LOGICIMPLIES:
 		case LOGICOR:
 			throw new IllegalArgumentException("type error: unable to apply " + operator + " to bool");
-		default:
-			throw new AssertionError("unknown operator " + operator);
-		}
+		};
 	}
 
 	private static Expression constructBinExprWithLiteralOpsBitvector(final ILocation loc, final Operator operator,
@@ -364,20 +352,20 @@ public class ExpressionFactory {
 		final int leftLength = leftLiteral.getLength();
 		final int rightLength = rightLiteral.getLength();
 
-		switch (operator) {
+		return switch (operator) {
 		case COMPEQ: {
 			if (leftLength != rightLength) {
 				throw new IllegalArgumentException("type error: cannot compare bitvectors of differnt lengths");
 			}
 			final boolean result = leftValue.equals(rightValue);
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
 			if (leftLength != rightLength) {
 				throw new IllegalArgumentException("type error: cannot compare bitvectors of differnt lengths");
 			}
 			final boolean result = !leftValue.equals(rightValue);
-			return createBooleanLiteral(loc, result);
+			yield createBooleanLiteral(loc, result);
 		}
 		case BITVECCONCAT: {
 			throw new UnsupportedOperationException("not yet implemented " + operator);
@@ -397,9 +385,7 @@ public class ExpressionFactory {
 		case LOGICIMPLIES:
 		case LOGICOR:
 			throw new IllegalArgumentException("type error: unable to apply " + operator + " to bool");
-		default:
-			throw new AssertionError("unknown operator " + operator);
-		}
+		};
 	}
 
 	public static Expression constructIfThenElseExpression(final ILocation loc, final Expression condition,
@@ -766,28 +752,28 @@ public class ExpressionFactory {
 	 * If true, then (binOp left x) == x for any x
 	 */
 	private static boolean isNeutralLeft(final Operator binOp, final Expression left) {
-		switch (binOp) {
+		return switch (binOp) {
 		case ARITHMUL:
-			if (left instanceof IntegerLiteral) {
-				return new BigInteger(((IntegerLiteral) left).getValue()).equals(BigInteger.ONE);
+			if (left instanceof final IntegerLiteral intLit) {
+				yield new BigInteger(intLit.getValue()).equals(BigInteger.ONE);
 			}
-			if (left instanceof RealLiteral) {
-				return toRational(((RealLiteral) left).getValue()).equals(Rational.ONE);
+			if (left instanceof final RealLiteral realLit) {
+				yield toRational(realLit.getValue()).equals(Rational.ONE);
 			}
-			return false;
+			yield false;
 		case ARITHPLUS:
-			if (left instanceof IntegerLiteral) {
-				return new BigInteger(((IntegerLiteral) left).getValue()).signum() == 0;
+			if (left instanceof final IntegerLiteral intLit) {
+				yield new BigInteger(intLit.getValue()).signum() == 0;
 			}
-			if (left instanceof RealLiteral) {
-				return toRational(((RealLiteral) left).getValue()).signum() == 0;
+			if (left instanceof final RealLiteral realLit) {
+				yield toRational(realLit.getValue()).signum() == 0;
 			}
-			return false;
+			yield false;
 		case LOGICAND:
 		case LOGICIMPLIES:
-			return left instanceof BooleanLiteral && ((BooleanLiteral) left).getValue();
+			yield left instanceof final BooleanLiteral boolLit && boolLit.getValue();
 		case LOGICOR:
-			return left instanceof BooleanLiteral && !((BooleanLiteral) left).getValue();
+			yield left instanceof final BooleanLiteral boolLit && !boolLit.getValue();
 		case COMPEQ:
 		case COMPNEQ:
 		case ARITHDIV:
@@ -800,10 +786,8 @@ public class ExpressionFactory {
 		case COMPLT:
 		case COMPPO:
 		case LOGICIFF:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
-		}
+			yield false;
+		};
 	}
 
 	/**
@@ -813,7 +797,7 @@ public class ExpressionFactory {
 	 */
 	private static boolean isNeutralRight(final Operator binOp, final Expression right) {
 		// TODO: Complete
-		switch (binOp) {
+		return switch (binOp) {
 		case ARITHMUL:
 		case ARITHPLUS:
 		case COMPEQ:
@@ -821,11 +805,11 @@ public class ExpressionFactory {
 		case LOGICAND:
 		case LOGICIFF:
 		case LOGICOR:
-			return isNeutralLeft(binOp, right);
+			yield isNeutralLeft(binOp, right);
 		case ARITHDIV:
-			return isNeutralLeft(Operator.ARITHMUL, right);
+			yield isNeutralLeft(Operator.ARITHMUL, right);
 		case ARITHMINUS:
-			return isNeutralLeft(Operator.ARITHPLUS, right);
+			yield isNeutralLeft(Operator.ARITHPLUS, right);
 		case ARITHMOD:
 		case BITVECCONCAT:
 		case COMPGEQ:
@@ -834,18 +818,15 @@ public class ExpressionFactory {
 		case COMPLT:
 		case COMPPO:
 		case LOGICIMPLIES:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
-		}
+			yield false;
+		};
 	}
 
 	/**
 	 * true iff binOp is commutative, false otherwise
 	 */
 	private static boolean isCommutative(final Operator binOp) {
-		// TODO: Complete
-		switch (binOp) {
+		return switch (binOp) {
 		case ARITHMUL:
 		case ARITHPLUS:
 		case COMPEQ:
@@ -853,7 +834,7 @@ public class ExpressionFactory {
 		case LOGICAND:
 		case LOGICIFF:
 		case LOGICOR:
-			return true;
+			yield true;
 		case ARITHDIV:
 		case ARITHMINUS:
 		case ARITHMOD:
@@ -864,10 +845,8 @@ public class ExpressionFactory {
 		case COMPLT:
 		case COMPPO:
 		case LOGICIMPLIES:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
-		}
+			yield false;
+		};
 	}
 
 	/**
@@ -876,26 +855,20 @@ public class ExpressionFactory {
 	 * If true, then (binOp left x) == left for any x
 	 */
 	private static boolean isAnnihilatingLeft(final Operator binOp, final Expression left) {
-		// TODO: Complete
-		switch (binOp) {
+		// TODO Complete
+		return switch (binOp) {
 		case ARITHMUL:
-			if (left instanceof IntegerLiteral) {
-				return new BigInteger(((IntegerLiteral) left).getValue()).signum() == 0;
+			if (left instanceof final IntegerLiteral intLit) {
+				yield new BigInteger(intLit.getValue()).signum() == 0;
 			}
-			if (left instanceof RealLiteral) {
-				return toRational(((RealLiteral) left).getValue()).signum() == 0;
+			if (left instanceof final RealLiteral realLit) {
+				yield toRational(realLit.getValue()).signum() == 0;
 			}
-			return false;
+			yield false;
 		case LOGICAND:
-			if (left instanceof BooleanLiteral) {
-				return !((BooleanLiteral) left).getValue();
-			}
-			return false;
+			yield left instanceof final BooleanLiteral boolLit && !boolLit.getValue();
 		case LOGICOR:
-			if (left instanceof BooleanLiteral) {
-				return ((BooleanLiteral) left).getValue();
-			}
-			return false;
+			yield left instanceof final BooleanLiteral boolLit && boolLit.getValue();
 		case ARITHPLUS:
 		case ARITHDIV:
 		case ARITHMINUS:
@@ -910,10 +883,8 @@ public class ExpressionFactory {
 		case COMPPO:
 		case LOGICIFF:
 		case LOGICIMPLIES:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
-		}
+			yield false;
+		};
 	}
 
 	/**
@@ -922,8 +893,7 @@ public class ExpressionFactory {
 	 * If true, then (binOp right x) == right for any x
 	 */
 	private static boolean isAnnihilatingRight(final Operator binOp, final Expression right) {
-		// TODO: Complete
-		switch (binOp) {
+		return switch (binOp) {
 		case ARITHMUL:
 		case ARITHPLUS:
 		case COMPEQ:
@@ -931,7 +901,7 @@ public class ExpressionFactory {
 		case LOGICAND:
 		case LOGICIFF:
 		case LOGICOR:
-			return isAnnihilatingLeft(binOp, right);
+			yield isAnnihilatingLeft(binOp, right);
 		case ARITHDIV:
 		case ARITHMINUS:
 		case ARITHMOD:
@@ -942,10 +912,8 @@ public class ExpressionFactory {
 		case COMPLT:
 		case COMPPO:
 		case LOGICIMPLIES:
-			return false;
-		default:
-			throw new UnsupportedOperationException("Currently unsupported: " + binOp);
-		}
+			yield false;
+		};
 	}
 
 	private static Rational toRational(final String realLiteralValue) {
@@ -972,4 +940,9 @@ public class ExpressionFactory {
 		return rat;
 	}
 
+	public static QuantifierExpression quantifier(final ILocation loc, final boolean isUniversal,
+			final List<VarList> quantifiedVars, final Expression subformula) {
+		return new QuantifierExpression(loc, BoogieType.TYPE_BOOL, isUniversal, new String[0],
+				quantifiedVars.toArray(VarList[]::new), new Attribute[0], subformula);
+	}
 }

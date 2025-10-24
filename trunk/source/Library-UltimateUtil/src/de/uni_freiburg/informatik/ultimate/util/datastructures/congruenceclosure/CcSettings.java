@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosur
 public class CcSettings {
 	static final boolean MEET_WITH_WEQ_CC = true;
 
-//	public static final boolean FREEZE_ALL_IN_MANAGER = true;
+	// public static final boolean FREEZE_ALL_IN_MANAGER = true;
 
 	public static final boolean REPORT_EQ_DEQ_INPLACE = false;
 	public static final boolean REMOVE_ELEMENT_INPLACE = false;
@@ -34,7 +34,7 @@ public class CcSettings {
 	public static final boolean UNIFY_CCS = false;
 
 	// if we want to use unification, we have to forbid in place computations (copy-on-write)
-//	public static final boolean FORBID_INPLACE = UNIFY_CCS;
+	// public static final boolean FORBID_INPLACE = UNIFY_CCS;
 	public static final boolean FORBID_INPLACE = false;
 
 	public static final boolean IMPLICIT_LITERAL_DISEQUALITIES = true;
@@ -55,7 +55,6 @@ public class CcSettings {
 	 * When e.g. two elements are compared, the expset alignment is made to those elements (not just to a copy).
 	 */
 	public static final boolean ALIGN_INPLACE = true;
-
 
 	/**
 	 * for the record: caching seems to be useless (some maps remembering the results to older queries), or detrimental

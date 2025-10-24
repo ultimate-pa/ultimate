@@ -2,22 +2,22 @@
  * Copyright (C) 2015 Björn Hagemeister
  * Copyright (C) 2015 Layla Franke
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -44,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft-Algorithm.
- * 
+ *
  * @author Layla Franke
  * @param <LETTER>
  *            letter type
@@ -100,7 +99,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	/**
 	 * Create and return initial partition for the given automaton.
-	 * 
+	 *
 	 * @return Initialized partition.
 	 */
 	private Partition createInitialPartition() {
@@ -134,12 +133,14 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		int index = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
-			mState2int.put(state, ++index);
+			index++;
+			mState2int.put(state, index);
 		}
 		index = -1;
 		for (final LETTER letter : mOperand.getVpAlphabet().getInternalAlphabet()) {
 			mInt2letter.add(letter);
-			mLetter2int.put(letter, ++index);
+			index++;
+			mLetter2int.put(letter, index);
 		}
 	}
 
@@ -161,19 +162,16 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		int index = 0;
 		for (int i = 0; i < mInt2state.size(); ++i) {
 			final STATE st = mInt2state.get(i);
-			// Get outgoing transition.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = mOperand.internalSuccessors(st).iterator();
 			// hasNext? --> add to labels.
 			int count = 0;
-			while (it.hasNext()) {
-				final OutgoingInternalTransition<LETTER, STATE> oit = it.next();
+			for (final OutgoingInternalTransition<LETTER, STATE> oit : mOperand.internalSuccessors(st)) {
 				mLabels[index] = mLetter2int.get(oit.getLetter());
 				mLabelTails[index] = mState2int.get(st);
 				mLabelHeads[index] = mState2int.get(oit.getSucc());
 				index++;
 				count++;
 			}
-			final int[] map = new int[] { i, index - count, count };
+			final int[] map = { i, index - count, count };
 			mMapStatesToTransitionTails.add(map);
 		}
 		mNumberOfTransitions = index;
@@ -213,11 +211,11 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 					// and increment if element not in X is found.
 					final ArrayList<Integer> intersection = new ArrayList<>();
 					final ArrayList<Integer> complement = new ArrayList<>();
-					for (int i = 0; i < set.length; i++) {
-						if (x.contains(set[i])) {
-							intersection.add(set[i]);
+					for (final int element : set) {
+						if (x.contains(element)) {
+							intersection.add(element);
 						} else {
-							complement.add(set[i]);
+							complement.add(element);
 						}
 					}
 					final int[] intersect = toIntArray(intersection);
@@ -256,7 +254,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	/**
 	 * Compare equality of two arrays.
-	 * 
+	 *
 	 * @param a
 	 *            first array
 	 * @param b
@@ -286,7 +284,8 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		final int[] ret = new int[list.size()];
 		int i = 0;
 		for (final Integer e : list) {
-			ret[i++] = e.intValue();
+			ret[i] = e;
+			i++;
 		}
 		return ret;
 	}
@@ -319,7 +318,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 		/*
 		 * add transitions
-		 * 
+		 *
 		 * NOTE: This exploits the fact that the input is deterministic.
 		 */
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
@@ -334,15 +333,14 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	/**
 	 * This method computes a mapping from old states to new representatives.
-	 * 
+	 *
 	 * @return map old state -> new state
 	 */
 	private HashMap<Integer, ? extends Collection<STATE>> computeMapState2Equiv() {
 		// Initialize mapping of states to their representatives.
 		mState2representative = new int[mOperand.size()];
 		final HashMap<Integer, LinkedList<STATE>> state2equivStates = new HashMap<>(computeHashCap(mOperand.size()));
-		for (int i = 0; i < mPartition.getPartitions().size(); i++) {
-			final int[] partitionI = mPartition.getPartitions().get(i);
+		for (final int[] partitionI : mPartition.getPartitions()) {
 			if (partitionI.length > 0) {
 				final int representative = partitionI[0];
 				final LinkedList<STATE> equivStates = new LinkedList<>();
@@ -359,7 +357,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	// ---------- Unused methods.---------- //
 	/**
 	 * Returns true if there exists an incoming transition to the state labeled with the letter.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param letter
@@ -374,7 +372,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	/**
 	 * Returns true, if an outgoing transition from the state labeled with the letter exists.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param letter
@@ -390,7 +388,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	// NOTE: There can be several such states in a DFA!!
 	/**
 	 * Returns number of state, which is predecessor of the state with transition labeled with the letter.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param letter
@@ -406,7 +404,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	/**
 	 * Returns number of state, which is successor of the state with transition labeled with the letter.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param letter
@@ -460,13 +458,13 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 			int finalStatesInd = -1;
 			int nonfinalStatesInd = -1;
-			final Iterator<STATE> it = states.iterator();
-			while (it.hasNext()) {
-				final STATE st = it.next();
+			for (final STATE st : states) {
 				if (finalStates.contains(st)) {
-					mFinalStates[++finalStatesInd] = mState2int.get(st);
+					finalStatesInd++;
+					mFinalStates[finalStatesInd] = mState2int.get(st);
 				} else {
-					mNonfinalStates[++nonfinalStatesInd] = mState2int.get(st);
+					nonfinalStatesInd++;
+					mNonfinalStates[nonfinalStatesInd] = mState2int.get(st);
 				}
 				mSize++;
 			}
@@ -479,7 +477,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 		/**
 		 * Size of partition = number of containing sets.
-		 * 
+		 *
 		 * @return number of containing sets.
 		 */
 		public int size() {
@@ -502,7 +500,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 		/**
 		 * The algorithm needs to operate on the worklist of partition.
-		 * 
+		 *
 		 * @return current worklist.
 		 */
 		public Worklist getWorklist() {
@@ -512,7 +510,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	/**
 	 * Class for representing worklist.
-	 * 
+	 *
 	 * @author bjoern
 	 */
 	private static class Worklist {

@@ -39,13 +39,12 @@ public class SimpleSuccessorTransitionProvider<LETTER, PLACE> implements ISucces
 	private final Collection<Transition<LETTER, PLACE>> mTransitions;
 
 	public SimpleSuccessorTransitionProvider(final Collection<Transition<LETTER, PLACE>> transitions) {
-		super();
 		if (transitions.isEmpty()) {
 			throw new IllegalArgumentException("need at least one transition");
 		}
 		mTransitions = transitions;
-		assert PetriNetUtils
-				.similarPredecessorPlaces(transitions) : "not all transitions have similar predecessor places";
+		assert PetriNetUtils.similarPredecessorPlaces(transitions)
+				: "not all transitions have similar predecessor places";
 	}
 
 	@Override

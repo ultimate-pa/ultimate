@@ -38,22 +38,22 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
 public class NullDuplicateTracker<E> implements IDuplicateVariantTracker<E> {
 	@SuppressWarnings("rawtypes")
 	public static final IDuplicateVariantTracker INSTANCE = new NullDuplicateTracker<>();
-	
+
 	@SuppressWarnings("unchecked")
 	public static <E> IDuplicateVariantTracker<E> getInstance() {
 		return INSTANCE;
 	}
-	
+
 	@Override
 	public void add(final List<? extends E> variant) {
 		// store nothing
 	}
-	
+
 	@Override
 	public boolean contains(final List<? extends E> variant) {
 		return false;
 	}
-	
+
 	@Override
 	public void removeLargerVariants(final int keptVariantSize) {
 		// nothing to remove

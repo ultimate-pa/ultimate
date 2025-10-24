@@ -60,13 +60,12 @@ public class TypeCheckHelper {
 	public static <T> BoogieType typeCheckArrayAccessExpressionOrLhs(final BoogieType arrayType,
 			final List<BoogieType> indicesTypes, final ITypeErrorReporter<T> typeErrorReporter) {
 		BoogieType resultType;
-		if (!(arrayType instanceof BoogieArrayType)) {
+		if (!(arrayType instanceof final BoogieArrayType arr)) {
 			if (!BoogieType.TYPE_ERROR.equals(arrayType)) {
 				typeErrorReporter.report(exp -> "Type check failed (not an array): " + exp);
 			}
 			resultType = BoogieType.TYPE_ERROR;
 		} else {
-			final BoogieArrayType arr = (BoogieArrayType) arrayType;
 			final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 			if (indicesTypes.size() != arr.getIndexCount()) {
 				typeErrorReporter.report(exp -> "Type check failed (wrong number of indices): " + exp);
@@ -127,40 +126,30 @@ public class TypeCheckHelper {
 
 	public static <T> BoogieType typeCheckUnaryExpression(final Operator op, final BoogieType subtype,
 			final ITypeErrorReporter<T> typeErrorReporter) {
-		BoogieType resultType;
-		switch (op) {
+		return switch (op) {
 		case LOGICNEG:
 			if (!BoogieType.TYPE_ERROR.equals(subtype) && !BoogieType.TYPE_BOOL.equals(subtype)) {
 				typeErrorReporter.report(exp -> "Type check failed for " + exp);
 			}
 			/* try to recover in any case */
-			resultType = BoogieType.TYPE_BOOL;
-			break;
+			yield BoogieType.TYPE_BOOL;
 		case ARITHNEGATIVE:
 			if (!BoogieType.TYPE_ERROR.equals(subtype) && !BoogieType.TYPE_INT.equals(subtype)
 					&& !BoogieType.TYPE_REAL.equals(subtype)) {
 				typeErrorReporter.report(exp -> "Type check failed for " + exp);
 			}
-			resultType = subtype;
-			break;
+			yield subtype;
 		case OLD:
-			resultType = subtype;
-			break;
-		default:
-			internalError("Unknown Unary operator " + op);
-			resultType = BoogieType.TYPE_ERROR;
-			break;
-		}
-		return resultType;
+			yield subtype;
+		};
 	}
 
 	public static <T> BoogieType typeCheckBinaryExpression(final BinaryExpression.Operator op,
 			final BoogieType leftType, final BoogieType rightType, final ITypeErrorReporter<T> typeErrorReporter) {
-		BoogieType resultType;
 		BoogieType left = leftType;
 		BoogieType right = rightType;
 
-		switch (op) {
+		return switch (op) {
 		case LOGICIFF:
 		case LOGICIMPLIES:
 		case LOGICAND:
@@ -170,8 +159,7 @@ public class TypeCheckHelper {
 				typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
 			}
 			/* try to recover in any case */
-			resultType = BoogieType.TYPE_BOOL;
-			break;
+			yield BoogieType.TYPE_BOOL;
 		case ARITHDIV:
 		case ARITHMINUS:
 		case ARITHMOD:
@@ -186,11 +174,9 @@ public class TypeCheckHelper {
 			if (!right.equals(left) || !BoogieType.TYPE_INT.equals(left) && !BoogieType.TYPE_REAL.equals(left)
 					|| BoogieType.TYPE_REAL.equals(left) && op == BinaryExpression.Operator.ARITHMOD) {
 				typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
-				resultType = BoogieType.TYPE_ERROR;
-			} else {
-				resultType = left;
+				yield BoogieType.TYPE_ERROR;
 			}
-			break;
+			yield left;
 		case COMPLT:
 		case COMPGT:
 		case COMPLEQ:
@@ -207,8 +193,7 @@ public class TypeCheckHelper {
 				typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
 			}
 			/* try to recover in any case */
-			resultType = BoogieType.TYPE_BOOL;
-			break;
+			yield BoogieType.TYPE_BOOL;
 		case COMPNEQ:
 		case COMPEQ:
 			if (!left.isUnifiableTo(right)) {
@@ -216,8 +201,7 @@ public class TypeCheckHelper {
 				typeErrorReporter.report(loc -> msg + loc);
 			}
 			/* try to recover in any case */
-			resultType = BoogieType.TYPE_BOOL;
-			break;
+			yield BoogieType.TYPE_BOOL;
 		case COMPPO:
 			if (!Objects.equals(left, right) && !BoogieType.TYPE_ERROR.equals(left)
 					&& !BoogieType.TYPE_ERROR.equals(right)) {
@@ -225,8 +209,7 @@ public class TypeCheckHelper {
 						+ leftType.getUnderlyingType() + " != " + rightType.getUnderlyingType());
 			}
 			/* try to recover in any case */
-			resultType = BoogieType.TYPE_BOOL;
-			break;
+			yield BoogieType.TYPE_BOOL;
 		case BITVECCONCAT:
 			int leftLen = getBitVecLength(left);
 			int rightLen = getBitVecLength(right);
@@ -239,14 +222,8 @@ public class TypeCheckHelper {
 				leftLen = 0;
 				rightLen = 0;
 			}
-			resultType = BoogieType.createBitvectorType(leftLen + rightLen);
-			break;
-		default:
-			internalError("Unknown Binary operator " + op);
-			resultType = BoogieType.TYPE_ERROR;
-			break;
-		}
-		return resultType;
+			yield BoogieType.createBitvectorType(leftLen + rightLen);
+		};
 	}
 
 	public static <T> BoogieType typeCheckIfThenElseExpression(final BoogieType condType, final BoogieType left,
@@ -308,14 +285,13 @@ public class TypeCheckHelper {
 			final List<BoogieType> indicesTypes, final BoogieType valueType,
 			final ITypeErrorReporter<T> typeErrorReporter) {
 		BoogieType resultType;
-		if (!(arrayType instanceof BoogieArrayType)) {
+		if (!(arrayType instanceof final BoogieArrayType arr)) {
 			if (!BoogieType.TYPE_ERROR.equals(arrayType)) {
 				// typeError(expr, "Type check failed (not an array): " + expr);
 				typeErrorReporter.report(exp -> "Type check failed (not an array): " + exp);
 			}
 			resultType = BoogieType.TYPE_ERROR;
 		} else {
-			final BoogieArrayType arr = (BoogieArrayType) arrayType;
 			final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 			if (indicesTypes.size() != arr.getIndexCount()) {
 				// typeError(expr, "Type check failed (wrong number of indices): " + expr);
@@ -340,15 +316,15 @@ public class TypeCheckHelper {
 		return resultType;
 	}
 
+	// TODO Similar functionality also implemented in DataRaceChecker::getRootLhs
 	public static String getLeftHandSideIdentifier(LeftHandSide lhs) {
 		while (lhs instanceof ArrayLHS || lhs instanceof StructLHS) {
-			if (lhs instanceof ArrayLHS) {
-				lhs = ((ArrayLHS) lhs).getArray();
-			} else if (lhs instanceof StructLHS) {
-				lhs = ((StructLHS) lhs).getStruct();
+			if (lhs instanceof final ArrayLHS array) {
+				lhs = array.getArray();
+			} else if (lhs instanceof final StructLHS struct) {
+				lhs = struct.getStruct();
 			}
 		}
 		return ((VariableLHS) lhs).getIdentifier();
 	}
-
 }

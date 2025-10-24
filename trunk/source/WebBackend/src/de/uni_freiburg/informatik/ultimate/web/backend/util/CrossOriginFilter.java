@@ -266,7 +266,8 @@ public class CrossOriginFilter implements Filter {
 		if (origin != null && isEnabled(request)) {
 			if (mAnyOriginAllowed || originMatches(mAllowedOrigins, mAllowedOriginPatterns, origin)) {
 				if (isSimpleRequest(request)) {
-					LOGGER.debug("Cross-origin request to {} is a simple cross-origin request", request.getRequestURI());
+					LOGGER.debug("Cross-origin request to {} is a simple cross-origin request",
+							request.getRequestURI());
 					handleSimpleResponse(request, response, origin);
 				} else if (isPreflightRequest(request)) {
 					LOGGER.debug("Cross-origin request to {} is a preflight cross-origin request",
@@ -275,7 +276,8 @@ public class CrossOriginFilter implements Filter {
 					if (!mChainPreflight) {
 						return;
 					}
-					LOGGER.debug("Preflight cross-origin request to {} forwarded to application", request.getRequestURI());
+					LOGGER.debug("Preflight cross-origin request to {} forwarded to application",
+							request.getRequestURI());
 				} else {
 					LOGGER.debug("Cross-origin request to {} is a non-simple cross-origin request",
 							request.getRequestURI());

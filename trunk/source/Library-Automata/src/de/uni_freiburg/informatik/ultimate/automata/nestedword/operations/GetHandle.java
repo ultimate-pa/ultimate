@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * <li>each state but the first of the run has exactly one predecessor
  * <li>no state occurs more than once in the handle (automaton does not have a cycle shape)
  * </ul>
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -65,7 +65,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 
 	/**
 	 * Available reasons why the automaton is no handle.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private enum NoHandleReason {
@@ -85,7 +85,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -144,7 +144,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 
 	/**
 	 * TODO Christian 2016-09-04: This method is not used elsewhere. Make it private?
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @return a run of length 2 from the given state to its successor
@@ -180,7 +180,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 
 	/**
 	 * TODO Christian 2016-09-04: This method is not used elsewhere. Make it private?
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param knownPredecessor

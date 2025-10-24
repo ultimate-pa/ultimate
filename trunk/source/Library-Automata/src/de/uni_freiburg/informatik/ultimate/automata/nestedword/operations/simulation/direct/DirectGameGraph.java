@@ -2,22 +2,22 @@
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * <br/>
  * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
  * <b>q1 direct simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of buechi automaton
@@ -87,7 +87,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * <p>
 	 * Throws an IllegalArgumentException If the inputed automaton is no Buechi-automaton. It must have an empty call
 	 * and return alphabet.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -116,7 +116,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
@@ -208,7 +208,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
@@ -231,8 +231,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Calculate v0 and edges [paper ref 10, 11, 12]
 		for (final STATE q0 : mBuechi.getStates()) {
 			for (final STATE q1 : mBuechi.getStates()) {
-				final Set<LETTER> relevantLetters = new HashSet<>();
-				relevantLetters.addAll(mBuechi.lettersInternalIncoming(q0));
+				final Set<LETTER> relevantLetters = new HashSet<>(mBuechi.lettersInternalIncoming(q0));
 				relevantLetters.addAll(mBuechi.lettersInternal(q1));
 				for (final LETTER s : relevantLetters) {
 					final DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(0, false, q0, q1, s);
@@ -278,7 +277,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Sets the internal field of the graphBuildTime.
-	 * 
+	 *
 	 * @param graphBuildTime
 	 *            The graphBuildTime to set
 	 */

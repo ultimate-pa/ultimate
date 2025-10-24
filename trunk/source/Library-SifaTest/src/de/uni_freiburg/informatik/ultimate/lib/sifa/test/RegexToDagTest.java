@@ -57,7 +57,7 @@ public class RegexToDagTest {
 	@SafeVarargs
 	public static void assertEq(final String nodesExpected, final String edgesExpected,
 			final IRegex<String>... regexesToBeAdded) {
-		RegexToDag<String> re2dag = new RegexToDag<>();
+		final RegexToDag<String> re2dag = new RegexToDag<>();
 		for (final IRegex<String> re : regexesToBeAdded) {
 			re2dag.add(re);
 		}
@@ -76,7 +76,7 @@ public class RegexToDagTest {
 		return Regex.union(left, right);
 	}
 
-	/** Creates a regex literal. The l stands for literal.*/
+	/** Creates a regex literal. The l stands for literal. */
 	private static IRegex<String> l(final String letter) {
 		return Regex.literal(letter);
 	}

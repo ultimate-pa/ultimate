@@ -42,7 +42,7 @@ public class HcGlobalVar implements IHcReplacementVar {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof HcGlobalVar)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final HcGlobalVar other = (HcGlobalVar) obj;

@@ -37,11 +37,14 @@ public interface IState {
 	// ----- general requirements
 	int getId();
 
+	@Override
 	boolean equals(Object otherState);
-	
+
+	@Override
 	int hashCode();
-	
+
+	@Override
 	String toString();
-	
+
 	void toDot(PrintStream printer, List<String> alphabet);
 }

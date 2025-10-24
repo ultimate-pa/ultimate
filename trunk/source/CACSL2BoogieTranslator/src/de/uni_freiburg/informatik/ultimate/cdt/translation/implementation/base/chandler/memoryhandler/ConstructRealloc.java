@@ -34,8 +34,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -109,7 +108,7 @@ public final class ConstructRealloc {
 	 */
 	public List<Declaration> declareRealloc(final CHandler main, final Collection<HeapDataArray> heapDataArrays) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final CType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final ICType voidPointerType = CPointer.voidPointer();
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 		final String reallocProcName = SFO.C_REALLOC;
 
@@ -121,8 +120,8 @@ public final class ConstructRealloc {
 				new VarList(ignoreLoc, new String[] { SFO.REALLOC_SIZE }, mTypeHandler.cType2AstType(ignoreLoc, sizeT));
 		final VarList outP =
 				new VarList(ignoreLoc, new String[] { SFO.RES }, mTypeHandler.constructPointerType(ignoreLoc));
-		final VarList[] inParams = new VarList[] { inPPtr, inPSize };
-		final VarList[] outParams = new VarList[] { outP };
+		final VarList[] inParams = { inPPtr, inPSize };
+		final VarList[] outParams = { outP };
 
 		{
 			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], reallocProcName, new String[0],

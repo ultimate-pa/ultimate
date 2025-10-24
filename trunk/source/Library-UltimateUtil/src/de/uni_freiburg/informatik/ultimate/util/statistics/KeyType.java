@@ -69,7 +69,7 @@ public enum KeyType {
 	private final Supplier<Object> mCreate;
 	private final BinaryOperator<Object> mAggregate;
 	private final BiFunction<String, Object, String> mPrettyPrinter;
-	private Function<Object, Object> mConverter;
+	private final Function<Object, Object> mConverter;
 
 	KeyType(final Supplier<Object> create, final BinaryOperator<Object> aggregate,
 			final BiFunction<String, Object, String> prettyprinter, final Function<Object, Object> converter) {

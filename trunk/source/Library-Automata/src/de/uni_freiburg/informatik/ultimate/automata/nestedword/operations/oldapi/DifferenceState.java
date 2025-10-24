@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  * State of an NWA that accepts the language difference of two NWAs. A DifferenceState is a pair whose first entry is a
  * state of the minuend, the second entry is a DeterminizedState of the subtrahend. A DifferenceState is final iff the
  * minuend state is final and the subtrahend state is not final.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Symbol
@@ -49,7 +49,7 @@ public class DifferenceState<LETTER, STATE> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param minuendState
 	 *            state from the minuend
 	 * @param subtrahendDeterminizedState
@@ -59,11 +59,11 @@ public class DifferenceState<LETTER, STATE> {
 	 */
 	public DifferenceState(final STATE minuendState, final DeterminizedState<LETTER, STATE> subtrahendDeterminizedState,
 			final boolean isFinal) {
-		this.mMinuendState = minuendState;
-		this.mSubtrahendDeterminizedState = subtrahendDeterminizedState;
-		this.mIsFinal = isFinal;
+		mMinuendState = minuendState;
+		mSubtrahendDeterminizedState = subtrahendDeterminizedState;
+		mIsFinal = isFinal;
 		// minuend.isFinal(minuendState) && !subtrahendDeterminizedState.containsFinal();
-		this.mHashCode = computehashCode();
+		mHashCode = computehashCode();
 	}
 
 	public STATE getMinuendState() {
@@ -75,7 +75,7 @@ public class DifferenceState<LETTER, STATE> {
 	}
 
 	public boolean isFinal() {
-		return this.mIsFinal;
+		return mIsFinal;
 	}
 
 	/**

@@ -59,15 +59,11 @@ public final class RequiredMemoryModelFeatures {
 
 	private boolean mMemoryModelInfrastructureRequiredHasBeenQueried;
 
-	private final Set<CPrimitives> mDataUncheckedReadRequired;
-	private boolean mPointerUncheckedReadRequired;
-
 	public RequiredMemoryModelFeatures() {
 		mDataOnHeapRequired = new HashSet<>();
 		mRequiredMemoryModelDeclarations = new HashSet<>();
 		mDataUncheckedWriteRequired = new HashSet<>();
 		mDataInitWriteRequired = new HashSet<>();
-		mDataUncheckedReadRequired = new HashSet<>();
 		mDataOnHeapInitFunctionRequired = new HashSet<>();
 		mDataOnHeapStoreFunctionRequired = new HashSet<>();
 	}
@@ -106,16 +102,6 @@ public final class RequiredMemoryModelFeatures {
 		return true;
 	}
 
-	public boolean reportPointerUncheckedReadRequired() {
-		if (mPointerUncheckedReadRequired) {
-			return false;
-		}
-		checkNotFrozen();
-		reportPointerOnHeapRequired();
-		mPointerUncheckedReadRequired = true;
-		return true;
-	}
-
 	public boolean reportPointerInitWriteRequired() {
 		if (mPointerInitWriteRequired) {
 			return false;
@@ -133,16 +119,6 @@ public final class RequiredMemoryModelFeatures {
 		checkNotFrozen();
 		requireMemoryModelInfrastructure();
 		mDataOnHeapRequired.add(primitive);
-		return true;
-	}
-
-	public boolean reportUncheckedReadRequired(final CPrimitives primitive) {
-		if (mDataUncheckedReadRequired.contains(primitive)) {
-			return false;
-		}
-		checkNotFrozen();
-		reportDataOnHeapRequired(primitive);
-		mDataUncheckedReadRequired.add(primitive);
 		return true;
 	}
 
@@ -216,11 +192,6 @@ public final class RequiredMemoryModelFeatures {
 		return mPointerUncheckedWriteRequired;
 	}
 
-	public boolean isPointerUncheckedReadRequired() {
-		checkIsFrozen();
-		return mPointerUncheckedReadRequired;
-	}
-
 	public boolean isPointerInitRequired() {
 		checkIsFrozen();
 		return mPointerInitWriteRequired;
@@ -249,11 +220,6 @@ public final class RequiredMemoryModelFeatures {
 	public boolean isDataOnHeapStoreFunctionRequired(final CPrimitives prim) {
 		checkIsFrozen();
 		return mDataOnHeapStoreFunctionRequired.contains(prim);
-	}
-
-	public Set<CPrimitives> getUncheckedReadRequired() {
-		checkIsFrozen();
-		return mDataUncheckedReadRequired;
 	}
 
 	public Set<CPrimitives> getUncheckedWriteRequired() {

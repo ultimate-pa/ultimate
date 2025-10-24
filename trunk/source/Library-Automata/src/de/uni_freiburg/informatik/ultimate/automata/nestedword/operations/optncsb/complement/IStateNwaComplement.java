@@ -32,8 +32,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IStateNwa;
 
 public interface IStateNwaComplement extends IStateNwa {
-	
+
 	IBuchiNwa getOperand();
-	
+
 	IBuchiNwa getComplement();
 }

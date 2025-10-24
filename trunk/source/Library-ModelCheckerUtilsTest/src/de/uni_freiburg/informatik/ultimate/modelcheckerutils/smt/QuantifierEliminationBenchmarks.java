@@ -67,7 +67,7 @@ public class QuantifierEliminationBenchmarks {
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND =
 			String.format("z3 SMTLIB2_COMPLIANT=true -t:%s -memory:2024 -smt2 -in", TEST_TIMEOUT_MILLISECONDS);
-//	private static final String SOLVER_COMMAND = "mathsat";
+	// private static final String SOLVER_COMMAND = "mathsat";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -97,8 +97,8 @@ public class QuantifierEliminationBenchmarks {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = new HistoryRecordingScript(
-				UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
+		final Script solverInstance =
+				new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
@@ -124,7 +124,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	@Test
 	public void rajdeepIteration5wp() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "~smain.count"),
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "ULTIMATE.start_design_~nack.base", "ULTIMATE.start_design_~nack.offset", "ULTIMATE.start_design_~alloc_addr.base", "ULTIMATE.start_main_~#nack~7.base", "ULTIMATE.start_main_~#nack~7.offset"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv8Sort, "~smain.busy"),
@@ -140,7 +140,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	@Test
 	public void Memsafety20020406_1_false_valid_memtrack() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "DUPFFnew_~ans~6.base", "DUPFFnew_~ans~6.offset"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
@@ -157,7 +157,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	@Test
 	public void memsafet_test_0232_false_valid_free_ias() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_append_~item~4.offset", "ULTIMATE.start_append_~plist.offset", "ULTIMATE.start_append_~plist.base", "ULTIMATE.start_main_~#list~5.base", "ULTIMATE.start_main_~#list~5.offset", "ULTIMATE.start_append_~item~4.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.offset"),
 		};
@@ -171,7 +171,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	@Test
 	public void dll_queue_false_unreach_call_false_valid_memcleanup() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "main_#t~malloc5.offset", "main_~item~5.base", "main_~head~5.base", "main_~item~5.offset", "main_~head~5.offset", "main_#t~malloc5.base"),
 		};
 		final String formulaAsString =
@@ -184,7 +184,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	@Test
 	public void dll_queue_false_unreach_call_false_valid_memcleanup_2() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "main_~item~5.offset", "main_~head~5.offset", "main_~item~5.base", "main_~head~5.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_$Pointer$.base"),
 		};
@@ -195,7 +195,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void forester_heap_dll_simple_white_blue() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~x~0.offset", "main_~head~0.offset", "main_~x~0.base", "main_#t~malloc2.base", "main_~head~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
@@ -208,7 +208,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void dllqueue01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_~item~0.base", "main_~head~0.offset", "main_~item~0.offset", "main_#t~malloc2.offset", "main_#t~malloc2.base", "main_~head~0.base"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#length"),
 		};
@@ -222,7 +222,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	@Test
 	public void list_ext_flag() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "main_~a~0.base", "main_~a~0.offset", "main_~p~0.base", "main_~p~0.offset"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "#memory_$Pointer$.base", "#memory_$Pointer$.offset"),
 		};
@@ -233,7 +233,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void LazycseqOctaveOfEaster() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "~#__cs_active_thread~0.base", "~#__cs_pc~0.base", "~#__cs_pc_cs~0.base", "~#__cs_threadargs~0.base", "~#mutex~0.base", "~#__cs_local_main_t1~0.base", "~#__cs_local_main_t2~0.base", "~#__cs_local_main_t3~0.base", "~#__cs_pc~0.offset", "~#__cs_active_thread~0.offset"),
 			new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int"),
 		};
@@ -247,7 +247,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	@Test
 	public void LazycseqOctaveOfEaster_IntegerOnly() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "#t~string19.base", "~#__cs_local_main_t3~0.base", "~#mutex~0.base", "#t~string13.base", "#t~string15.base", "~#__cs_threadargs~0.base", "~#__cs_local_main_t2~0.base", "#t~string2.base", "#t~string20.base", "~#__cs_local_main_t1~0.base", "~#__cs_thread_lines~0.base", "~#__cs_pc_cs~0.base", "~#__cs_keys~0.base", "~#__cs_pc~0.base", "#t~string9.base", "~#__cs_active_thread~0.base"),
 		};
 		final String formulaAsString =
@@ -261,7 +261,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	 @Test
 	public void BV_2017_Preiner_scholl_smt08_model_model_6_64() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getBoolSort, "bool.b22", "bool.b7", "bool.b5", "bool.b6", "bool.b23", "bool.b12", "bool.b8", "bool.b10", "bool.b14"),
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "x3", "x4", "x5"),
 			};
@@ -272,7 +272,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void LRA_2010MonniauxQE_mjollnir5_formula50() {
-		final FunDecl[] funDecls = new FunDecl[] {};
+		final FunDecl[] funDecls = {};
 		final String formulaAsString = "(forall ((|v17:0| Real)) (forall ((|v16:1| Real)) (forall ((|v15:2| Real)) (forall ((|v14:3| Real)) (forall ((|v13:4| Real)) (forall ((|v12:5| Real)) (exists ((|v11:6| Real)) (exists ((|v10:7| Real)) (exists ((|v9:8| Real)) (exists ((|v8:9| Real)) (exists ((|v7:10| Real)) (exists ((|v6:11| Real)) (forall ((|v5:12| Real)) (forall ((|v4:13| Real)) (forall ((|v3:14| Real)) (forall ((|v2:15| Real)) (forall ((|v1:16| Real)) (forall ((|v0:17| Real)) (or (and (or (<= 8.0 (+ (* 6.0 |v3:14|) (* 16.0 |v16:1|) (* 8.0 |v14:3|))) (<= (+ (* 7.0 |v7:10|) 4.0) (+ (* 10.0 |v1:16|) |v2:15| (* 5.0 |v13:4|)))) (or (<= (+ (* 8.0 |v7:10|) (* 2.0 |v10:7|) 11.0) (+ (* 19.0 |v11:6|) (* 13.0 |v12:5|))) (<= (+ (* 14.0 |v15:2|) (* 16.0 |v14:3|) 7.0) (* 6.0 |v8:9|))) (or (and (<= (+ (* 12.0 |v5:12|) (* 13.0 |v0:17|) (* 15.0 |v14:3|) 12.0) (* 11.0 |v11:6|)) (<= (+ (* 14.0 |v5:12|) (* 15.0 |v16:1|)) (+ (* 15.0 |v4:13|) (* 7.0 |v11:6|) 8.0))) (and (<= (+ (* 11.0 |v5:12|) (* 12.0 |v3:14|) 5.0) (* 12.0 |v0:17|)) (<= 19.0 (+ (* 13.0 |v4:13|) (* 3.0 |v3:14|) (* 8.0 |v17:0|) (* 9.0 |v15:2|)))))) (<= (+ (* 5.0 |v1:16|) (* 11.0 |v16:1|) 20.0) (* 10.0 |v10:7|)) (and (or (and (<= (+ (* 4.0 |v0:17|) 9.0) (+ (* 7.0 |v8:9|) (* 8.0 |v14:3|))) (<= (+ (* 9.0 |v3:14|) (* 19.0 |v11:6|)) (+ (* 15.0 |v10:7|) (* 8.0 |v13:4|) 1.0)) (or (<= (+ (* 14.0 |v10:7|) 4.0) (+ (* 14.0 |v9:8|) (* 8.0 |v12:5|) (* 11.0 |v17:0|))) (<= (+ (* 9.0 |v7:10|) (* 13.0 |v15:2|) 17.0) (* 6.0 |v13:4|)))) (and (<= (+ (* 3.0 |v5:12|) (* 15.0 |v15:2|) (* 19.0 |v14:3|)) (+ (* 2.0 |v1:16|) 4.0)) (<= (+ (* 7.0 |v7:10|) (* 9.0 |v9:8|) (* 13.0 |v17:0|) (* 15.0 |v13:4|) 12.0) 0.0)) (<= 20.0 (+ (* 14.0 |v3:14|) (* 3.0 |v10:7|) (* 16.0 |v11:6|) (* 9.0 |v14:3|))) (and (<= (* 18.0 |v2:15|) (+ (* 19.0 |v3:14|) (* 11.0 |v12:5|) 1.0)) (<= (+ (* 2.0 |v4:13|) (* 18.0 |v1:16|)) (+ (* 6.0 |v3:14|) |v14:3| 3.0)) (<= (+ (* 12.0 |v3:14|) (* 4.0 |v15:2|)) (+ (* 7.0 |v8:9|) (* 8.0 |v9:8|) 10.0))) (<= (+ (* 11.0 |v13:4|) (* 6.0 |v10:7|) 19.0) (+ (* 13.0 |v7:10|) (* 3.0 |v1:16|))) (<= (+ (* 13.0 |v14:3|) (* 19.0 |v11:6|) 17.0) (* 36.0 |v12:5|))) (or (and (or (<= (+ (* 3.0 |v3:14|) (* 18.0 |v11:6|)) (+ (* 11.0 |v13:4|) (* 3.0 |v12:5|) 11.0)) (<= (+ (* 16.0 |v6:11|) 2.0) (+ (* 19.0 |v4:13|) (* 9.0 |v3:14|)))) (<= (+ (* 17.0 |v11:6|) (* 6.0 |v17:0|)) 0.0)) (and (<= (+ (* 13.0 |v2:15|) (* 10.0 |v11:6|)) (+ (* 14.0 |v4:13|) (* 20.0 |v5:12|) 18.0)) (<= 0.0 (+ (* 8.0 |v0:17|) (* 17.0 |v10:7|) (* 14.0 |v17:0|) (* 20.0 |v14:3|) 15.0))) (<= (* 2.0 |v5:12|) (+ (* 12.0 |v13:4|) (* 16.0 |v8:9|) (* 12.0 |v14:3|) 17.0)) (<= (* 5.0 |v10:7|) (+ (* 19.0 |v7:10|) (* 3.0 |v17:0|) 16.0))) (or (and (<= (+ (* 20.0 |v7:10|) 4.0) (+ (* 9.0 |v2:15|) (* 8.0 |v11:6|))) (<= (+ (* 5.0 |v7:10|) (* 19.0 |v8:9|) (* 11.0 |v10:7|) (* 14.0 |v12:5|)) 9.0)) (and (<= (+ (* 16.0 |v4:13|) (* 5.0 |v3:14|)) (+ (* 5.0 |v0:17|) (* 4.0 |v15:2|) 11.0)) (or (<= (+ (* 2.0 |v7:10|) (* 15.0 |v1:16|) (* 8.0 |v11:6|) 9.0) 0.0) (<= (+ (* 11.0 |v4:13|) (* 19.0 |v2:15|)) (+ (* 2.0 |v3:14|) 1.0))) (<= (+ (* 14.0 |v13:4|) |v11:6| 5.0) (+ (* 5.0 |v0:17|) (* 13.0 |v3:14|)))) (and (<= (+ (* 3.0 |v1:16|) (* 2.0 |v0:17|)) (+ (* 10.0 |v2:15|) (* 6.0 |v3:14|) 13.0)) (<= (+ (* 8.0 |v14:3|) (* 17.0 |v11:6|)) (+ (* 18.0 |v0:17|) 10.0))))) (and (or (<= (+ (* 19.0 |v5:12|) (* 6.0 |v8:9|) 11.0) (+ (* 16.0 |v6:11|) (* 20.0 |v9:8|))) (and (<= (+ (* 15.0 |v4:13|) (* 15.0 |v15:2|) (* 17.0 |v8:9|)) (+ (* 12.0 |v5:12|) 6.0)) (<= (+ (* 11.0 |v13:4|) (* 2.0 |v9:8|) (* 8.0 |v14:3|)) 6.0) (or (<= (* 9.0 |v4:13|) (+ (* 18.0 |v7:10|) |v1:16| (* 7.0 |v0:17|) 11.0)) (<= (* 8.0 |v16:1|) (+ (* 10.0 |v2:15|) (* 10.0 |v13:4|))))) (<= (* 9.0 |v4:13|) (+ (* 17.0 |v8:9|) (* 12.0 |v15:2|) 15.0)) (<= (+ (* 6.0 |v6:11|) (* 5.0 |v13:4|) 13.0) (+ (* 5.0 |v0:17|) (* 4.0 |v3:14|)))) (or (and (or (<= (+ (* 15.0 |v4:13|) |v2:15|) (+ (* 14.0 |v5:12|) (* 7.0 |v15:2|) 10.0)) (<= (+ (* 18.0 |v7:10|) (* 11.0 |v12:5|) (* 15.0 |v10:7|) 1.0) (* 13.0 |v17:0|))) (or (<= 3.0 (+ (* 11.0 |v4:13|) (* 5.0 |v3:14|) (* 6.0 |v14:3|) (* 15.0 |v9:8|))) (<= (+ (* 13.0 |v9:8|) 15.0) (* 25.0 |v7:10|)))) (<= 0.0 (+ (* 18.0 |v7:10|) (* 13.0 |v13:4|) (* 13.0 |v15:2|) 2.0)))))))))))))))))))))))";
 		final String expectedResultAsString = "false";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -280,7 +280,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void LRA_scholl_smt08_RNDPRE_RNDPRE_3_52() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getRealSort, "?x1", "?x2"),
 		};
 		final String formulaAsString = "(exists ((?x3 Real)) (and (<= (+ (* 50.0 ?x2) (* 32.0 ?x3)) (+ (* 93.0 ?x1) 74.0)) (not (= 63.0 (+ (* ?x1 (- 53.0)) (* ?x3 2.0)))) (<= (* 43.0 ?x2) (+ (* 53.0 ?x3) 89.0)) (<= (+ (* 48.0 ?x2) (* 16.0 ?x3)) (* 67.0 ?x1)) (< (+ (* 70.0 ?x3) 62.0) (+ (* 52.0 ?x1) (* 98.0 ?x2))) (< 0.0 (+ (* 93.0 ?x2) (* 12.0 ?x3))) (or (and (< (+ (* 43.0 ?x1) (* 91.0 ?x2)) (+ (* 45.0 ?x3) 42.0)) (<= (* 34.0 ?x3) (+ (* 7.0 ?x1) 62.0)) (not (= 75.0 (* ?x1 (- 85.0)))) (<= (+ (* 91.0 ?x1) (* 74.0 ?x3)) 92.0)) (and (= 20.0 (* ?x3 8.0)) (or (<= (* 10.0 ?x1) (+ (* 75.0 ?x2) (* 60.0 ?x3) 74.0)) (< 0.0 (+ (* 73.0 ?x1) (* 64.0 ?x2)))) (= (- 76.0) (+ (* ?x1 (- 6.0)) (* ?x2 (- 99.0)) (* ?x3 (- 1.0)))))) (<= 28.0 (+ (* 36.0 ?x2) (* 71.0 ?x3))) (or (not (= (- 25.0) (+ (* ?x1 (- 100.0)) (* ?x2 (- 51.0)) (* ?x3 (- 29.0))))) (= (+ (* ?x1 (- 35.0)) (* ?x2 (- 52.0)) (* ?x3 4.0)) (- 30.0)) (and (< 0.0 (+ (* 47.0 ?x2) (* 85.0 ?x3) 18.0)) (<= (+ (* 10.0 ?x3) 82.0) (* 25.0 ?x2)) (<= 73.0 (* 12.0 ?x1)) (< 0.0 (* 18.0 ?x2)))) (or (= 14.0 (+ (* ?x1 10.0) (* ?x2 25.0))) (not (= 0.0 (+ (* ?x2 48.0) (* ?x3 60.0)))) (< (+ (* 17.0 ?x1) (* 97.0 ?x2) 14.0) (* 86.0 ?x3))) (or (= 41.0 (+ (* ?x1 28.0) (* ?x3 (- 31.0)))) (not (= (- 24.0) (+ (* ?x1 (- 66.0)) (* ?x2 (- 87.0)) (* ?x3 2.0)))) (<= 22.0 (+ (* 72.0 ?x1) (* 13.0 ?x3)))) (or (= 50.0 (* ?x1 (- 64.0))) (and (<= (+ (* 99.0 ?x1) 4.0) 0.0) (< (+ (* 14.0 ?x3) 54.0) 0.0) (or (< (* 73.0 ?x3) 0.0) (<= 46.0 (+ (* 86.0 ?x1) (* 95.0 ?x3))))) (and (or (and (not (= 21.0 (+ (* ?x1 86.0) (* ?x2 26.0) (* ?x3 (- 27.0))))) (= (+ (* ?x1 (- 97.0)) (* ?x3 71.0)) 0.0) (or (< (+ (* 33.0 ?x2) (* 77.0 ?x3)) (* 23.0 ?x1)) (< (+ (* 78.0 ?x1) (* 41.0 ?x3)) 0.0))) (and (or (not (= (- 51.0) (+ (* ?x1 (- 48.0)) (* ?x2 (- 12.0)) (* ?x3 87.0)))) (<= (+ (* 27.0 ?x2) (* 61.0 ?x3)) 80.0)) (<= 28.0 (* 20.0 ?x2)) (< (+ (* 98.0 ?x1) (* 75.0 ?x3)) 84.0))) (or (and (or (< (+ (* 68.0 ?x1) (* 18.0 ?x2)) 0.0) (< 0.0 (* 2.0 ?x1))) (or (<= (* 75.0 ?x2) (+ (* 44.0 ?x1) (* 9.0 ?x3) 44.0)) (< 0.0 (+ (* 98.0 ?x1) (* 27.0 ?x2) (* 26.0 ?x3) 12.0)))) (<= (+ (* 48.0 ?x3) 37.0) (* 97.0 ?x1)) (and (< (+ (* 70.0 ?x3) 86.0) (* 91.0 ?x2)) (not (= 75.0 (+ (* ?x1 79.0) (* ?x2 (- 26.0)) (* ?x3 33.0))))) (<= (* 62.0 ?x3) (+ (* 72.0 ?x2) 5.0)))) (and (< (* 17.0 ?x3) 0.0) (or (= 11.0 (+ (* ?x1 83.0) (* ?x2 (- 45.0)))) (<= 0.0 (+ (* 9.0 ?x1) (* 46.0 ?x2) 32.0))) (< (* 39.0 ?x1) (* 74.0 ?x3))) (<= (* 16.0 ?x2) (+ (* 27.0 ?x1) (* 29.0 ?x3) 20.0)) (and (< (+ (* 96.0 ?x1) (* 86.0 ?x2) 50.0) (* 15.0 ?x3)) (not (= (- 51.0) (+ (* ?x1 27.0) (* ?x2 (- 18.0))))))) (or (< (+ (* 71.0 ?x1) 65.0) 0.0) (and (not (= (- 4.0) (+ (* ?x1 (- 22.0)) (* ?x2 (- 49.0))))) (= 0.0 (+ (* ?x1 (- 69.0)) (* ?x2 63.0) (* ?x3 (- 59.0))))) (< (+ (* 62.0 ?x2) (* 94.0 ?x3) 65.0) 0.0)) (or (not (= (* ?x3 90.0) 98.0)) (and (= (- 54.0) (+ (* ?x1 (- 82.0)) (* ?x2 73.0))) (< (+ (* 80.0 ?x1) (* 82.0 ?x3) 77.0) (* 93.0 ?x2))) (<= (* 53.0 ?x3) (* 45.0 ?x2))) (or (and (< 47.0 (+ (* 10.0 ?x2) (* 64.0 ?x3))) (<= (+ (* 39.0 ?x2) (* 82.0 ?x3)) (+ (* 39.0 ?x1) 77.0)) (or (and (= 0.0 (+ (* ?x1 (- 47.0)) (* ?x2 79.0) (* ?x3 59.0))) (<= 0.0 (+ (* 77.0 ?x1) (* 43.0 ?x2) (* 77.0 ?x3) 32.0))) (and (< (+ (* 82.0 ?x3) 99.0) (* 92.0 ?x1)) (< (+ (* 91.0 ?x1) (* 93.0 ?x2)) (* 42.0 ?x3))))) (= 0.0 (+ (* ?x1 (- 5.0)) (* ?x2 80.0) (* ?x3 43.0))) (<= (+ (* 64.0 ?x1) (* 80.0 ?x3) 91.0) 0.0) (and (or (not (= 30.0 (* ?x3 (- 41.0)))) (< 2.0 (* 17.0 ?x1))) (or (= 75.0 (+ (* ?x1 (- 2.0)) (* ?x2 (- 50.0)) (* ?x3 96.0))) (not (= 95.0 (+ (* ?x1 (- 94.0)) (* ?x2 5.0) (* ?x3 (- 71.0))))) (< (+ (* 59.0 ?x1) ?x3) 37.0) (<= 0.0 (+ (* 62.0 ?x3) 29.0)))) (and (< 17.0 (+ (* 83.0 ?x1) (* 47.0 ?x2) (* 5.0 ?x3))) (<= 61.0 (+ (* 41.0 ?x1) (* 77.0 ?x3)))) (and (< (* 30.0 ?x1) (+ (* 48.0 ?x2) 67.0)) (< (+ (* 52.0 ?x2) 44.0) (+ (* 40.0 ?x1) (* 17.0 ?x3)))) (and (not (= 69.0 (+ (* ?x1 14.0) (* ?x2 (- 81.0)) (* ?x3 (- 10.0))))) (<= (* 28.0 ?x1) 71.0)) (and (< 50.0 (+ (* 29.0 ?x1) (* 94.0 ?x2))) (< (+ (* 23.0 ?x3) 98.0) (* 95.0 ?x2)) (< (+ (* 68.0 ?x2) 41.0) (* 62.0 ?x1))) (<= (* 15.0 ?x2) (+ (* 89.0 ?x1) (* 46.0 ?x3))) (and (< (* 25.0 ?x3) (+ (* 76.0 ?x1) (* 45.0 ?x2) 46.0)) (< (* 40.0 ?x1) (+ (* 87.0 ?x2) (* 27.0 ?x3))) (< (+ (* 43.0 ?x1) (* 93.0 ?x2) (* 47.0 ?x3)) 0.0) (<= (+ (* 97.0 ?x2) (* 70.0 ?x3)) 26.0)) (and (or (not (= (- 100.0) (+ (* ?x1 48.0) (* ?x3 83.0)))) (< (+ (* 60.0 ?x1) (* 16.0 ?x2)) (+ (* 58.0 ?x3) 94.0))) (or (= (+ (* ?x1 39.0) (* ?x2 (- 48.0)) (* ?x3 40.0)) (- 66.0)) (<= (+ (* 58.0 ?x1) 16.0) (+ (* 63.0 ?x2) (* 4.0 ?x3))))) (and (<= (+ (* 46.0 ?x2) 55.0) (* 71.0 ?x1)) (not (= (- 51.0) (* ?x1 18.0)))) (not (= (+ (* ?x2 (- 80.0)) (* ?x3 32.0)) 62.0)) (and (not (= 0.0 (+ (* ?x1 (- 91.0)) (* ?x2 11.0)))) (<= 0.0 (+ (* 22.0 ?x1) (* 30.0 ?x3)))) (= (- 90.0) (* ?x3 97.0)) (and (or (< (+ (* 26.0 ?x1) (* 74.0 ?x2)) (+ (* 61.0 ?x3) 46.0)) (not (= 83.0 (+ (* ?x1 (- 81.0)) (* ?x2 83.0) (* ?x3 (- 71.0)))))) (not (= (+ (* ?x1 11.0) (* ?x2 (- 8.0)) (* ?x3 (- 37.0))) 72.0))) (and (<= (+ (* 68.0 ?x1) (* 86.0 ?x2)) (* 79.0 ?x3)) (not (= (- 63.0) (+ (* ?x1 (- 23.0)) (* ?x2 (- 40.0)) (* ?x3 (- 4.0))))) (< (* 62.0 ?x1) (+ (* 41.0 ?x2) (* 78.0 ?x3) 42.0)) (or (and (< (+ (* 78.0 ?x1) (* 34.0 ?x2)) (+ (* 5.0 ?x3) 39.0)) (<= 61.0 (+ (* 21.0 ?x2) (* 40.0 ?x3)))) (and (< (+ (* 39.0 ?x2) (* 28.0 ?x3)) 0.0) (<= (+ (* 51.0 ?x1) (* 88.0 ?x3)) 32.0)))) (and (<= (+ (* 23.0 ?x1) 64.0) 0.0) (<= (+ (* 76.0 ?x1) 31.0) (* 23.0 ?x2)) (or (< (+ (* 47.0 ?x1) (* 75.0 ?x2) ?x3) 0.0) (<= 0.0 (+ (* 38.0 ?x1) (* 14.0 ?x2) ?x3 65.0)))) (<= (+ (* 38.0 ?x2) (* 23.0 ?x3) 88.0) (* 95.0 ?x1)) (not (= (* ?x3 (- 3.0)) 41.0)) (= 84.0 (+ (* ?x1 (- 55.0)) (* ?x2 (- 39.0)) (* ?x3 (- 8.0)))) (and (<= (+ (* 93.0 ?x1) (* 83.0 ?x2)) 14.0) (not (= (- 75.0) (+ (* ?x2 (- 1.0)) (* ?x3 47.0))))) (and (< 0.0 (+ (* 61.0 ?x1) 40.0)) (or (not (= 8.0 (+ (* ?x1 79.0) (* ?x2 (- 40.0)) (* ?x3 (- 59.0))))) (<= (* 80.0 ?x3) 0.0)) (< 0.0 (+ (* 8.0 ?x1) (* 60.0 ?x2) (* 31.0 ?x3) 76.0))) (and (<= 0.0 (+ (* 54.0 ?x2) (* 78.0 ?x3) 47.0)) (= 0.0 (+ (* ?x1 (- 76.0)) (* ?x2 91.0) (* ?x3 (- 30.0))))) (and (= 0.0 (+ (* ?x1 (- 99.0)) (* ?x2 26.0) (* ?x3 36.0))) (< (+ (* 96.0 ?x1) (* 18.0 ?x2)) (* 81.0 ?x3))) (and (<= (* 89.0 ?x2) (+ (* 68.0 ?x1) (* 24.0 ?x3))) (not (= (+ (* ?x1 (- 4.0)) (* ?x2 80.0) (* ?x3 (- 22.0))) 0.0))) (and (< (+ (* 9.0 ?x3) 2.0) (+ (* 21.0 ?x1) (* 83.0 ?x2))) (<= 0.0 (+ (* 37.0 ?x1) (* 54.0 ?x3) 99.0)) (or (< 0.0 (+ (* 40.0 ?x2) (* 51.0 ?x3) 37.0)) (< (+ (* 71.0 ?x3) 26.0) (* 2.0 ?x1)))) (and (or (< 71.0 (+ (* 31.0 ?x2) (* 11.0 ?x3))) (<= (* 65.0 ?x1) (+ (* 72.0 ?x3) 86.0)) (not (= (- 99.0) (+ (* ?x1 (- 16.0)) (* ?x2 (- 19.0)) (* ?x3 89.0)))) (and (= 48.0 (+ (* ?x1 (- 16.0)) (* ?x3 (- 2.0)))) (< (+ (* 97.0 ?x1) (* 26.0 ?x2) 59.0) (* 8.0 ?x3)))) (or (= 0.0 (+ (* ?x1 17.0) (* ?x2 95.0) (* ?x3 (- 62.0)))) (< (* 34.0 ?x2) (* 88.0 ?x1)) (<= (+ (* 54.0 ?x1) (* 87.0 ?x2) 76.0) (* 35.0 ?x3)) (and (< (+ (* 53.0 ?x1) 98.0) (* 16.0 ?x2)) (< (* 24.0 ?x2) (+ (* 83.0 ?x1) (* 80.0 ?x3)))) (< (* 62.0 ?x1) (+ (* 18.0 ?x2) (* 46.0 ?x3) 75.0))))) (or (<= (+ (* 87.0 ?x1) (* 82.0 ?x2) (* 78.0 ?x3) 19.0) 0.0) (< (+ (* 22.0 ?x2) (* 70.0 ?x3) 86.0) (* 20.0 ?x1))) (or (<= (+ (* 25.0 ?x1) (* 81.0 ?x3) 97.0) (* 51.0 ?x2)) (not (= 69.0 (* ?x2 57.0))))))";
@@ -290,7 +290,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void NIA_psyco_060() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getBoolSort, "W_S1_V6", "W_S1_V2", "W_S1_V3", "W_S1_V1", "R_S1_V3", "R_S1_V1", "R_S1_V6", "R_S1_V5", "R_S1_V2", "DISJ_W_S1_R_S1", "W_S1_V5"),
 			};
 		final String formulaAsString = "(and (forall ((V2_0 Int) (V5_0 Int) (V6_0 Int) (MW_S1_V1 Bool) (MW_S1_V3 Bool) (MW_S1_V2 Bool) (MW_S1_V5 Bool) (MW_S1_V6 Bool) (S1_V3_!1741 Int) (S1_V3_!1746 Int) (S1_V1_!1740 Int) (S1_V1_!1745 Int) (S1_V2_!1742 Int) (S1_V2_!1747 Int) (S1_V5_!1743 Int) (S1_V5_!1748 Int) (S1_V6_!1744 Int) (S1_V6_!1749 Int)) (or (not (and (>= 1 (* (ite MW_S1_V2 S1_V2_!1747 V2_0) (ite MW_S1_V2 S1_V2_!1747 V2_0))) (<= (ite MW_S1_V2 S1_V2_!1742 V2_0) (+ (ite MW_S1_V3 S1_V3_!1741 0) 1)) (not (<= (* V2_0 V2_0) 0)) (<= (ite MW_S1_V2 S1_V2_!1742 V2_0) (+ (ite MW_S1_V1 S1_V1_!1740 0) 1)) (not (<= V2_0 0)))) (not (and (or (= S1_V3_!1746 S1_V3_!1741) (not (and (or (= (* (div 0 V2_0) V2_0) 0) (not R_S1_V3)) (or (= 0 (div 0 V2_0)) (not R_S1_V1))))) (or (not (and (or (= (* (div 0 V2_0) V2_0) 0) (not R_S1_V3)) (or (= 0 (div 0 V2_0)) (not R_S1_V1)))) (= S1_V5_!1748 S1_V5_!1743)) (or (not (and (or (= (* (div 0 V2_0) V2_0) 0) (not R_S1_V3)) (or (= 0 (div 0 V2_0)) (not R_S1_V1)))) (= S1_V6_!1749 S1_V6_!1744)) (or (not (and (or (= (* (div 0 V2_0) V2_0) 0) (not R_S1_V3)) (or (= 0 (div 0 V2_0)) (not R_S1_V1)))) (= S1_V1_!1745 S1_V1_!1740)) (or W_S1_V3 (not MW_S1_V3)) (or W_S1_V6 (not MW_S1_V6)) (or (not MW_S1_V2) W_S1_V2) (or W_S1_V1 (not MW_S1_V1)) (or (= S1_V2_!1747 S1_V2_!1742) (not (and (or (= (* (div 0 V2_0) V2_0) 0) (not R_S1_V3)) (or (= 0 (div 0 V2_0)) (not R_S1_V1))))))) (and (= (ite MW_S1_V2 S1_V2_!1747 V2_0) (ite MW_S1_V2 S1_V2_!1742 V2_0)) (= (ite MW_S1_V5 S1_V5_!1743 V5_0) (ite MW_S1_V5 S1_V5_!1748 V5_0)) (= (ite MW_S1_V6 S1_V6_!1749 V6_0) (ite MW_S1_V6 S1_V6_!1744 V6_0)) (= (+ (ite MW_S1_V2 S1_V2_!1747 V2_0) (- 1)) (ite MW_S1_V3 S1_V3_!1741 0)) (= (ite MW_S1_V1 S1_V1_!1740 0) (+ (ite MW_S1_V2 S1_V2_!1747 V2_0) (- 1)))))) W_S1_V5 (= DISJ_W_S1_R_S1 (not (or (and W_S1_V1 R_S1_V1) R_S1_V5 (and W_S1_V3 R_S1_V3) (and R_S1_V6 W_S1_V6) (and R_S1_V2 W_S1_V2)))))";
@@ -301,7 +301,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void LIA_psyco_012() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getBoolSort, "R_S1_V1", "DISJ_W_S1_W_S2", "DISJ_W_S1_R_S1", "DISJ_W_S1_R_S2", "W_S1_V4", "R_S1_V2", "W_S1_V3", "R_S1_V3", "W_S1_V2", "R_S1_V4", "W_S1_V1", "R_S1_V5", "W_S1_V5", "DISJ_W_S2_R_S1", "DISJ_W_S2_R_S2", "R_S2_V2", "R_S2_V1", "W_S2_V2", "W_S2_V3", "W_S2_V4", "W_S2_V5", "R_S2_V4", "R_S2_V3", "W_S2_V1", "R_S2_V5")};
 		final String formulaAsString = "(and (= (not (or (and W_S2_V2 R_S1_V2) (and W_S2_V5 R_S1_V5) R_S1_V4 (and W_S2_V3 R_S1_V3) (and W_S2_V1 R_S1_V1))) DISJ_W_S2_R_S1) W_S2_V4 W_S1_V3 (= DISJ_W_S2_R_S2 (not (or R_S2_V4 (and W_S2_V5 R_S2_V5) (and W_S2_V3 R_S2_V3) (and W_S2_V1 R_S2_V1) (and W_S2_V2 R_S2_V2)))) (= DISJ_W_S1_R_S2 (not (or R_S2_V3 (and R_S2_V5 W_S1_V5) (and W_S1_V4 R_S2_V4) (and W_S1_V1 R_S2_V1) (and W_S1_V2 R_S2_V2)))) (= DISJ_W_S1_W_S2 (not (or W_S2_V3 W_S1_V4 (and W_S2_V5 W_S1_V5) (and W_S1_V1 W_S2_V1) (and W_S2_V2 W_S1_V2)))) (= (not (or R_S1_V3 (and W_S1_V1 R_S1_V1) (and W_S1_V4 R_S1_V4) (and R_S1_V5 W_S1_V5) (and R_S1_V2 W_S1_V2))) DISJ_W_S1_R_S1) (forall ((V4_0 Int) (V5_0 Int) (V2_0 Int) (V3_0 Int) (V1_0 Int) (MW_S1_V4 Bool) (MW_S1_V5 Bool) (MW_S1_V2 Bool) (MW_S1_V3 Bool) (MW_S1_V1 Bool) (MW_S2_V4 Bool) (MW_S2_V5 Bool) (MW_S2_V2 Bool) (MW_S2_V3 Bool) (MW_S2_V1 Bool) (S1_V4_!110 Int) (S2_V4_!115 Int) (S2_V4_!120 Int) (S2_V5_!116 Int) (S2_V5_!121 Int) (S1_V1_!114 Int) (S1_V3_!113 Int) (S1_V2_!112 Int) (S2_V1_!119 Int) (S2_V1_!124 Int) (S2_V2_!117 Int) (S2_V2_!122 Int) (S2_V3_!118 Int) (S2_V3_!123 Int) (S1_V5_!111 Int)) (or (not (and (<= (ite MW_S2_V2 S2_V2_!122 V2_0) (ite MW_S2_V1 S2_V1_!124 V1_0)) (not (<= V2_0 V1_0)) (<= (ite MW_S2_V2 S2_V2_!117 (ite MW_S1_V2 S1_V2_!112 V2_0)) (+ (ite MW_S2_V1 S2_V1_!119 (ite MW_S1_V1 S1_V1_!114 V1_0)) 1)))) (not (and (or W_S2_V2 (not MW_S2_V2)) (or (= S2_V4_!115 S2_V4_!120) (not (and (or (= V2_0 (ite MW_S1_V2 S1_V2_!112 V2_0)) (not R_S2_V2)) (or (= V5_0 (ite MW_S1_V5 S1_V5_!111 V5_0)) (not R_S2_V5)) (or (= (ite MW_S1_V3 S1_V3_!113 V3_0) V3_0) (not R_S2_V3)) (or (not R_S2_V1) (= V1_0 (ite MW_S1_V1 S1_V1_!114 V1_0))) (or (not R_S2_V4) (= V4_0 (ite MW_S1_V4 S1_V4_!110 V4_0)))))) (or (not MW_S2_V3) W_S2_V3) (or (= S2_V3_!123 S2_V3_!118) (not (and (or (= V2_0 (ite MW_S1_V2 S1_V2_!112 V2_0)) (not R_S2_V2)) (or (= V5_0 (ite MW_S1_V5 S1_V5_!111 V5_0)) (not R_S2_V5)) (or (= (ite MW_S1_V3 S1_V3_!113 V3_0) V3_0) (not R_S2_V3)) (or (not R_S2_V1) (= V1_0 (ite MW_S1_V1 S1_V1_!114 V1_0))) (or (not R_S2_V4) (= V4_0 (ite MW_S1_V4 S1_V4_!110 V4_0)))))) (or (not (and (or (= V2_0 (ite MW_S1_V2 S1_V2_!112 V2_0)) (not R_S2_V2)) (or (= V5_0 (ite MW_S1_V5 S1_V5_!111 V5_0)) (not R_S2_V5)) (or (= (ite MW_S1_V3 S1_V3_!113 V3_0) V3_0) (not R_S2_V3)) (or (not R_S2_V1) (= V1_0 (ite MW_S1_V1 S1_V1_!114 V1_0))) (or (not R_S2_V4) (= V4_0 (ite MW_S1_V4 S1_V4_!110 V4_0))))) (= S2_V2_!117 S2_V2_!122)) (or W_S1_V4 (not MW_S1_V4)) (or W_S1_V5 (not MW_S1_V5)) (or (not MW_S1_V2) W_S1_V2) (or (not MW_S1_V1) W_S1_V1) (or W_S2_V1 (not MW_S2_V1)) (or W_S2_V5 (not MW_S2_V5)) (or (not (and (or (= V2_0 (ite MW_S1_V2 S1_V2_!112 V2_0)) (not R_S2_V2)) (or (= V5_0 (ite MW_S1_V5 S1_V5_!111 V5_0)) (not R_S2_V5)) (or (= (ite MW_S1_V3 S1_V3_!113 V3_0) V3_0) (not R_S2_V3)) (or (not R_S2_V1) (= V1_0 (ite MW_S1_V1 S1_V1_!114 V1_0))) (or (not R_S2_V4) (= V4_0 (ite MW_S1_V4 S1_V4_!110 V4_0))))) (= S2_V5_!121 S2_V5_!116)) (or (not (and (or (= V2_0 (ite MW_S1_V2 S1_V2_!112 V2_0)) (not R_S2_V2)) (or (= V5_0 (ite MW_S1_V5 S1_V5_!111 V5_0)) (not R_S2_V5)) (or (= (ite MW_S1_V3 S1_V3_!113 V3_0) V3_0) (not R_S2_V3)) (or (not R_S2_V1) (= V1_0 (ite MW_S1_V1 S1_V1_!114 V1_0))) (or (not R_S2_V4) (= V4_0 (ite MW_S1_V4 S1_V4_!110 V4_0))))) (= S2_V1_!124 S2_V1_!119)))) (and (= (ite MW_S2_V5 S2_V5_!116 (ite MW_S1_V5 S1_V5_!111 V5_0)) (ite MW_S2_V5 S2_V5_!121 V5_0)) (= (ite MW_S2_V4 S2_V4_!120 V4_0) (ite MW_S2_V4 S2_V4_!115 (ite MW_S1_V4 S1_V4_!110 V4_0))) (= (ite MW_S2_V3 S2_V3_!118 (ite MW_S1_V3 S1_V3_!113 V3_0)) (ite MW_S2_V3 S2_V3_!123 V3_0)) (= (ite MW_S2_V2 S2_V2_!122 V2_0) (ite MW_S2_V2 S2_V2_!117 (ite MW_S1_V2 S1_V2_!112 V2_0))) (= (ite MW_S2_V1 S2_V1_!119 (ite MW_S1_V1 S1_V1_!114 V1_0)) (+ (ite MW_S2_V1 S2_V1_!124 V1_0) (- 1)))))))";
 		final String expectedResultAsString = formulaAsString;
@@ -312,7 +312,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void LIA_psyco_142() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getBoolSort, "W_S1_V4", "W_S1_V2", "W_S1_V1", "R_E1_V4", "R_E1_V2", "R_E1_V3", "R_S1_V1", "DISJ_W_S1_R_E1", "R_S1_V4", "R_S1_V2", "R_S1_V3", "DISJ_W_S1_R_S1", "W_S1_V3", "R_E1_V1"),
 			};
 		final String formulaAsString = "(and (not R_E1_V1) W_S1_V3 (= DISJ_W_S1_R_E1 (not (or (and W_S1_V2 R_E1_V2) (and W_S1_V4 R_E1_V4) R_E1_V3))) (forall ((V3_0 Int) (V2_0 Int) (V4_0 Int) (MW_S1_V1 Bool) (MW_S1_V3 Bool) (MW_S1_V2 Bool) (MW_S1_V4 Bool) (S1_V3_!152 Int) (S1_V3_!158 Int) (S1_V4_!154 Int) (S1_V4_!160 Int) (S1_V1_!151 Int) (S1_V1_!157 Int) (S1_V2_!153 Int) (S1_V2_!159 Int) (E1_!150 Int) (E1_!155 Int) (E1_!156 Int) (E1_!161 Int)) (or (not (and (not (<= V2_0 E1_!155)) (<= (+ E1_!156 1) V2_0) (not (<= (+ E1_!161 1) (ite MW_S1_V1 S1_V1_!157 (+ V2_0 (- 1))))) (not (<= V2_0 E1_!150)) (<= (ite MW_S1_V2 S1_V2_!153 V2_0) (+ (ite MW_S1_V1 S1_V1_!151 E1_!150) 1)))) (not (and (= E1_!150 E1_!155) (or (not (and (or (not R_E1_V4) (= V4_0 (ite MW_S1_V4 S1_V4_!160 V4_0))) (or (not R_E1_V3) (= V3_0 (ite MW_S1_V3 S1_V3_!158 V3_0))) (or (= (ite MW_S1_V2 S1_V2_!159 V2_0) V2_0) (not R_E1_V2)))) (= E1_!156 E1_!161)) (or (not (and (or (not R_E1_V4) (= V4_0 (ite MW_S1_V4 S1_V4_!160 V4_0))) (or (not R_E1_V3) (= V3_0 (ite MW_S1_V3 S1_V3_!158 V3_0))) (or (= (ite MW_S1_V2 S1_V2_!159 V2_0) V2_0) (not R_E1_V2)))) (= E1_!150 E1_!161)) (or (not MW_S1_V2) W_S1_V2) (or W_S1_V1 (not MW_S1_V1)) (= E1_!156 E1_!155) (= E1_!150 E1_!156) (or (not (or (not R_S1_V1) (= E1_!150 (+ V2_0 (- 1))))) (= S1_V3_!152 S1_V3_!158)) (or (not (or (not R_S1_V1) (= V2_0 (+ E1_!150 1)))) (= S1_V4_!154 S1_V4_!160)) (or (not (or (not R_S1_V1) (= E1_!150 (+ V2_0 (- 1))))) (= S1_V1_!151 S1_V1_!157)) (or (= S1_V2_!159 S1_V2_!153) (not (or (not R_S1_V1) (= V2_0 (+ E1_!150 1))))) (or (not (and (or (not R_E1_V4) (= V4_0 (ite MW_S1_V4 S1_V4_!160 V4_0))) (or (not R_E1_V3) (= V3_0 (ite MW_S1_V3 S1_V3_!158 V3_0))) (or (= (ite MW_S1_V2 S1_V2_!159 V2_0) V2_0) (not R_E1_V2)))) (= E1_!155 E1_!161)) (or W_S1_V4 (not MW_S1_V4)))) (and (= (ite MW_S1_V2 S1_V2_!153 V2_0) (ite MW_S1_V2 S1_V2_!159 V2_0)) (= (+ (ite MW_S1_V2 S1_V2_!159 V2_0) (- 1)) (ite MW_S1_V1 S1_V1_!151 E1_!150)) (= (ite MW_S1_V4 S1_V4_!154 V4_0) (ite MW_S1_V4 S1_V4_!160 V4_0)) (= (ite MW_S1_V3 S1_V3_!152 V3_0) (ite MW_S1_V3 S1_V3_!158 V3_0))))) (= DISJ_W_S1_R_S1 (not (or (and W_S1_V1 R_S1_V1) R_S1_V3 (and W_S1_V4 R_S1_V4) (and R_S1_V2 W_S1_V2)))))";
@@ -322,7 +322,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void scholl_smt08_RNDPRE_RNDPRE_3_39() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getRealSort, "?x1", "?x2"),
 		};
 		final String formulaAsString = "(exists ((?x3 Real)) (and (not (= 0.0 (+ (* ?x1 (- 79.0)) (* ?x2 10.0) (* ?x3 (- 54.0))))) (or (<= (+ (* 95.0 ?x1) (* 69.0 ?x2)) (+ (* 98.0 ?x3) 83.0)) (and (= (+ (* ?x1 (- 19.0)) (* ?x2 40.0) (* ?x3 (- 37.0))) (- 94.0)) (or (<= (+ (* 83.0 ?x1) (* 40.0 ?x2) (* 96.0 ?x3)) 44.0) (= 0.0 (+ (* ?x1 (- 59.0)) (* ?x2 (- 32.0))))) (< (+ (* 67.0 ?x1) (* 48.0 ?x2) (* 80.0 ?x3)) 0.0)) (and (= 0.0 (+ (* ?x1 (- 93.0)) (* ?x2 (- 20.0)) (* ?x3 (- 80.0)))) (< (* 62.0 ?x1) (+ (* 74.0 ?x2) (* 2.0 ?x3)))) (<= 28.0 (+ (* 20.0 ?x1) (* 72.0 ?x2))) (and (or (<= (+ (* 86.0 ?x1) (* 77.0 ?x2) (* 71.0 ?x3) 76.0) 0.0) (< (* 57.0 ?x1) (+ (* 73.0 ?x2) (* 5.0 ?x3)))) (< (+ (* 91.0 ?x1) (* 46.0 ?x3) 41.0) (* 22.0 ?x2))) (and (<= 0.0 (+ (* 99.0 ?x2) (* 22.0 ?x3) 56.0)) (not (= 93.0 (+ (* ?x2 (- 27.0)) (* ?x3 59.0))))) (<= (+ (* 33.0 ?x1) (* 94.0 ?x3)) 26.0) (and (or (< (+ (* 54.0 ?x1) (* 71.0 ?x2) (* 15.0 ?x3)) 0.0) (not (= 84.0 (+ (* ?x1 (- 29.0)) (* ?x2 (- 63.0)) (* ?x3 19.0)))) (and (<= (+ (* 7.0 ?x3) 67.0) (* 35.0 ?x2)) (not (= 3.0 (+ (* ?x1 64.0) (* ?x2 32.0)))))) (or (not (= 0.0 (+ (* ?x1 (- 41.0)) (* ?x2 (- 61.0)) (* ?x3 49.0)))) (< (* 58.0 ?x1) (+ (* 46.0 ?x2) (* 14.0 ?x3) 7.0)))) (<= (+ (* 5.0 ?x2) (* 76.0 ?x3)) (+ (* 39.0 ?x1) 62.0)) (and (or (<= (* 71.0 ?x1) (+ (* 33.0 ?x3) 80.0)) (<= (* 13.0 ?x2) (+ (* 77.0 ?x1) (* 80.0 ?x3)))) (or (< (+ (* 41.0 ?x2) 53.0) (* 2.0 ?x3)) (not (= 0.0 (+ (* ?x2 64.0) (* ?x3 76.0))))))) (or (and (or (not (= (- 3.0) (+ (* ?x1 (- 60.0)) (* ?x2 (- 27.0))))) (< 0.0 (+ (* 32.0 ?x1) (* 92.0 ?x2) (* 72.0 ?x3) 85.0))) (= 0.0 (* ?x2 (- 48.0))) (<= 0.0 (+ (* 40.0 ?x2) (* 61.0 ?x3) 98.0)) (<= (+ (* 23.0 ?x1) 91.0) (+ (* 27.0 ?x2) (* 28.0 ?x3))) (or (and (= (- 19.0) (+ (* ?x2 20.0) (* ?x3 (- 24.0)))) (= (- 4.0) (* ?x1 6.0))) (and (= (- 58.0) (+ (* ?x2 (- 4.0)) (* ?x3 (- 94.0)))) (not (= 96.0 (+ (* ?x1 (- 97.0)) (* ?x2 (- 20.0)) (* ?x3 13.0)))))) (< (+ (* 49.0 ?x3) 77.0) (* 76.0 ?x1)) (or (and (<= (+ (* 69.0 ?x1) (* 76.0 ?x2)) 0.0) (= 71.0 (* ?x2 (- 99.0))) (<= (+ (* 64.0 ?x1) (* 80.0 ?x3) 85.0) 0.0) (<= ?x2 (* 30.0 ?x1)) (or (<= (+ (* 72.0 ?x1) (* 95.0 ?x2)) 77.0) (<= (* 29.0 ?x3) 95.0))) (and (< (+ (* 28.0 ?x1) 11.0) (+ (* 68.0 ?x2) (* 4.0 ?x3))) (not (= (- 54.0) (+ (* ?x2 (- 87.0)) (* ?x3 (- 13.0))))) (not (= 3.0 (+ (* ?x1 (- 100.0)) (* ?x2 66.0) (* ?x3 16.0)))) (or (< (+ (* 34.0 ?x1) (* 13.0 ?x3) 11.0) 0.0) (< (* 99.0 ?x2) (* 75.0 ?x3)) (<= (* 2.0 ?x2) (+ (* 9.0 ?x3) 32.0)) (<= 46.0 (+ (* 89.0 ?x2) (* 53.0 ?x3)))))) (< 0.0 (+ (* 100.0 ?x1) (* 15.0 ?x2) (* 23.0 ?x3))) (or (< (* 7.0 ?x3) (+ (* 95.0 ?x1) (* 90.0 ?x2) 27.0)) (<= (* 50.0 ?x3) (+ (* 31.0 ?x1) (* 15.0 ?x2) 62.0)) (= (- 15.0) (* ?x1 (- 94.0))))) (and (or (not (= 2.0 (+ (* ?x1 31.0) (* ?x2 (- 79.0)) (* ?x3 37.0)))) (not (= 0.0 (+ (* ?x1 27.0) (* ?x2 31.0))))) (<= (+ (* 17.0 ?x1) (* 91.0 ?x2)) (+ (* 4.0 ?x3) 5.0)) (or (= 81.0 (+ (* ?x2 (- 6.0)) (* ?x3 92.0))) (< (+ (* 35.0 ?x1) (* 28.0 ?x2)) 13.0)) (or (<= (+ (* 5.0 ?x2) 78.0) (+ (* 82.0 ?x1) (* 43.0 ?x3))) (= 15.0 (+ (* ?x1 (- 29.0)) (* ?x2 57.0) (* ?x3 24.0)))) (<= (* 98.0 ?x3) (* 52.0 ?x2))) (< (+ (* 9.0 ?x1) (* 9.0 ?x2) 11.0) 0.0) (and (<= (+ (* 34.0 ?x1) (* 78.0 ?x2)) (* 22.0 ?x3)) (or (<= 0.0 (* 88.0 ?x1)) (< (* 97.0 ?x1) (+ (* 44.0 ?x2) (* 45.0 ?x3) 61.0))) (not (= 0.0 (+ (* ?x1 (- 67.0)) (* ?x3 39.0))))) (< (+ (* 82.0 ?x3) 20.0) (+ (* 32.0 ?x1) (* 54.0 ?x2))) (= 96.0 (+ (* ?x1 (- 60.0)) (* ?x2 (- 21.0)) (* ?x3 98.0))))))";
@@ -332,7 +332,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void scholl_smt08_RNDPRE_RNDPRE_3_42() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getRealSort, "?x1"),
 		};
 		final String formulaAsString = "(forall ((?x2 Real)) (or (= (- 25.0) (+ (* ?x1 (- 110.0)) (* ?x2 (- 100.0)) (- 65.0))) (and (or (= 51.0 (+ (* ?x1 (/ 1104.0 7.0)) (* ?x2 43.0) (/ 897.0 7.0))) (<= (* (/ 328.0 7.0) ?x1) (+ ?x2 (/ 388.0 7.0)))) (< 0.0 (+ (* (/ 394.0 7.0) ?x1) (* 19.0 ?x2) (/ 1385.0 7.0))) (<= (+ (* 123.0 ?x1) 82.0) (* 71.0 ?x2)) (= 3.0 (+ (* ?x1 (/ (- 403.0) 7.0)) (* ?x2 (- 20.0)) (/ 156.0 7.0))) (<= 0.0 (+ (* (/ 106.0 7.0) ?x1) (/ 325.0 7.0))) (< 0.0 (+ (* (/ 1144.0 7.0) ?x1) (* 78.0 ?x2) (/ 513.0 7.0))) (<= 0.0 (+ (* (/ 1670.0 7.0) ?x1) (/ 691.0 7.0))) (or (<= 0.0 (+ (* (/ 257.0 7.0) ?x1) (/ 71.0 7.0))) (< (* 65.0 ?x2) (* 23.0 ?x1))) (= (- 69.0) (+ (* ?x1 (/ 1828.0 7.0)) (/ 962.0 7.0))) (<= (+ (* (/ 866.0 7.0) ?x1) (* 100.0 ?x2) (/ 806.0 7.0)) 0.0) (not (= (+ (* ?x1 61.0) (* ?x2 (- 26.0))) 0.0))) (< (* 73.0 ?x2) (+ (* 82.0 ?x1) 18.0)) (and (< (* 25.0 ?x2) (+ (* (/ 1352.0 7.0) ?x1) (/ 1074.0 7.0))) (< (+ (* (/ 638.0 7.0) ?x1) (* 67.0 ?x2) (/ 276.0 7.0)) 0.0)) (and (or (and (<= (+ (* (/ 1802.0 7.0) ?x1) (* 93.0 ?x2) (/ 1885.0 7.0)) 0.0) (<= 0.0 (+ (* (/ 213.0 7.0) ?x1) (/ 660.0 7.0)))) (and (= 0.0 (+ (* ?x1 (/ (- 1495.0) 7.0)) (* ?x2 (- 68.0)) (/ (- 1027.0) 7.0))) (<= (+ (* (/ 848.0 7.0) ?x1) (* 75.0 ?x2) (/ 528.0 7.0)) 0.0))) (or (not (= 33.0 (* ?x2 (- 29.0)))) (not (= 0.0 (* ?x1 (- 98.0)))) (<= (+ (* (/ 101.0 7.0) ?x1) (/ 373.0 7.0)) 0.0))) (and (< 0.0 (+ (* 93.0 ?x2) 79.0)) (or (and (<= (* 78.0 ?x2) (+ (* (/ 293.0 7.0) ?x1) (/ 599.0 7.0))) (< (* 42.0 ?x2) (+ (* 71.0 ?x1) 61.0))) (and (< (* 45.0 ?x2) (+ (* (/ 180.0 7.0) ?x1) (/ 50.0 7.0))) (= (- 33.0) (+ (* ?x1 (/ (- 887.0) 7.0)) (* ?x2 99.0) (/ (- 624.0) 7.0)))) (and (< (+ (* (/ 1367.0 7.0) ?x1) (/ 552.0 7.0)) (* 62.0 ?x2)) (<= (+ (* (/ 1619.0 7.0) ?x1) (* 56.0 ?x2) (/ 1014.0 7.0)) 0.0)) (= 53.0 (+ (* ?x1 (/ 400.0 7.0)) (* ?x2 78.0) (/ 325.0 7.0)))) (<= (* 76.0 ?x1) (* 32.0 ?x2)) (< (+ (* (/ 634.0 7.0) ?x1) (/ 845.0 7.0)) (* 93.0 ?x2)) (< (+ (* (/ 1520.0 7.0) ?x1) (/ 787.0 7.0)) (* 73.0 ?x2)) (or (< 0.0 (+ (* (/ 781.0 7.0) ?x1) (* 2.0 ?x2) (/ 138.0 7.0))) (<= (+ (* (/ 1254.0 7.0) ?x1) (/ 927.0 7.0)) 0.0) (and (< (+ (* 75.0 ?x1) (* 67.0 ?x2)) 0.0) (<= 0.0 (+ (* (/ 1314.0 7.0) ?x1) (/ 708.0 7.0))))) (<= (* 32.0 ?x1) 14.0)) (and (or (and (< 0.0 (+ (* 3.0 ?x1) (* 99.0 ?x2) 61.0)) (or (<= (/ 9.0 7.0) (* (/ 74.0 7.0) ?x1)) (< (+ (* (/ 912.0 7.0) ?x1) (/ 776.0 7.0)) 0.0) (< (+ (* (/ 1088.0 7.0) ?x1) (* 40.0 ?x2) (/ 205.0 7.0)) 0.0)) (< (+ (* (/ 106.0 7.0) ?x1) (* 44.0 ?x2) (/ 1151.0 7.0)) 0.0)) (and (or (< 0.0 (+ (* (/ 1552.0 7.0) ?x1) (* 63.0 ?x2) (/ 1807.0 7.0))) (and (<= 0.0 (+ (* (/ 880.0 7.0) ?x1) (/ 1401.0 7.0))) (< 0.0 (+ (* (/ 1194.0 7.0) ?x1) (/ 936.0 7.0)))) (= 0.0 (+ (* ?x1 3.0) (* ?x2 (- 85.0))))) (or (and (< (+ (* (/ 704.0 7.0) ?x1) (/ 761.0 7.0)) (* 13.0 ?x2)) (<= 0.0 (+ (* 112.0 ?x1) 75.0))) (< 80.0 (+ (* 60.0 ?x1) (* 2.0 ?x2))) (< (+ (* (/ 575.0 7.0) ?x1) (/ 619.0 7.0)) (* 92.0 ?x2))))) (or (and (<= (+ (* (/ 1119.0 7.0) ?x1) (* 85.0 ?x2) (/ 1348.0 7.0)) 0.0) (< (+ (* (/ 557.0 7.0) ?x1) (* 76.0 ?x2) (/ 194.0 7.0)) 0.0)) (and (or (<= (+ (* 160.0 ?x1) 217.0) (* 74.0 ?x2)) (< (+ (* 210.0 ?x1) 169.0) (* 92.0 ?x2)) (<= (+ (* (/ 688.0 7.0) ?x1) (/ 608.0 7.0)) 0.0)) (= (- 31.0) (+ (* ?x1 (/ 972.0 7.0)) (* ?x2 54.0) (/ 1131.0 7.0))) (< (* 87.0 ?x2) (+ (* 24.0 ?x1) 37.0)) (not (= (- 3.0) (+ (* ?x1 (/ (- 288.0) 7.0)) (/ (- 234.0) 7.0)))) (< 0.0 (+ (* (/ 407.0 7.0) ?x1) (* 68.0 ?x2) (/ 514.0 7.0)))) (and (< 0.0 (+ (* 71.0 ?x1) (* 30.0 ?x2) 21.0)) (< 0.0 (+ (* 109.0 ?x1) (* 96.0 ?x2) 143.0))) (= (- 25.0) (+ (* ?x1 85.0) (* ?x2 (- 79.0))))))))";
@@ -342,7 +342,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void scholl_smt08_RNDPRE_RNDPRE_3_56() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getRealSort, "?x1", "?x2"),
 		};
 		final String formulaAsString = "(exists ((?x3 Real)) (and (<= (* 63.0 ?x3) (+ (* 54.0 ?x1) (* 32.0 ?x2) 51.0)) (<= (* 77.0 ?x1) (+ (* 23.0 ?x2) (* 21.0 ?x3) 77.0)) (<= 0.0 (+ (* 11.0 ?x1) (* 61.0 ?x2) (* 19.0 ?x3) 29.0)) (< 0.0 (+ (* 63.0 ?x1) (* 28.0 ?x2) (* 31.0 ?x3) 1.0)) (< (* 2.0 ?x2) (+ (* 66.0 ?x1) (* 30.0 ?x3) 70.0)) (not (= (- 87.0) (+ (* ?x1 (- 32.0)) (* ?x2 (- 69.0)) (* ?x3 16.0)))) (or (and (or (= 48.0 (* ?x2 63.0)) (< (* 70.0 ?x1) (+ (* 99.0 ?x3) 34.0))) (not (= (- 45.0) (+ (* ?x1 (- 48.0)) (* ?x2 (- 26.0)) (* ?x3 (- 97.0)))))) (and (not (= (- 42.0) (+ (* ?x1 99.0) (* ?x3 (- 45.0))))) (< (+ (* 50.0 ?x1) (* 74.0 ?x2)) (+ (* 59.0 ?x3) 19.0)) (<= (+ (* 46.0 ?x1) (* 57.0 ?x3) 100.0) (* 54.0 ?x2)) (= (- 94.0) (+ (* ?x1 14.0) (* ?x2 100.0)))) (and (= (- 90.0) (+ (* ?x1 9.0) (* ?x3 (- 68.0)))) (= 96.0 (+ (* ?x1 89.0) (* ?x2 38.0) (* ?x3 15.0))))) (<= (+ (* 44.0 ?x3) 97.0) (+ (* 20.0 ?x1) (* 72.0 ?x2))) (or (and (<= 0.0 (+ (* 51.0 ?x2) (* 34.0 ?x3))) (< (* 60.0 ?x1) (+ (* 12.0 ?x2) (* 47.0 ?x3) 34.0))) (< 0.0 (+ (* 66.0 ?x2) (* 2.0 ?x3)))) (or (and (or (= 0.0 (+ (* ?x2 (- 33.0)) (* ?x3 21.0))) (not (= 75.0 (+ (* ?x1 (- 26.0)) (* ?x3 66.0))))) (< (+ (* 17.0 ?x3) 77.0) (* 12.0 ?x1))) (and (< (+ (* 35.0 ?x2) 65.0) (+ (* 77.0 ?x1) (* 67.0 ?x3))) (or (<= (+ (* 61.0 ?x2) (* 27.0 ?x3)) (+ (* 9.0 ?x1) 38.0)) (<= (+ (* 41.0 ?x1) (* 15.0 ?x3) 76.0) (* 62.0 ?x2))))) (or (and (<= (* 96.0 ?x3) (* 70.0 ?x2)) (<= (+ (* 62.0 ?x1) 1.0) 0.0)) (and (= 75.0 (+ (* ?x1 (- 39.0)) (* ?x3 (- 47.0)))) (< (* 79.0 ?x1) 70.0)) (and (<= (+ (* 71.0 ?x2) (* 77.0 ?x3) 63.0) (* 97.0 ?x1)) (not (= 11.0 (+ (* ?x1 37.0) (* ?x2 82.0) (* ?x3 (- 81.0)))))) (not (= 57.0 (+ (* ?x1 6.0) (* ?x3 (- 60.0)))))) (<= (* 90.0 ?x1) (* 67.0 ?x3)) (or (< (* 7.0 ?x3) (+ (* 38.0 ?x1) (* 44.0 ?x2))) (<= 82.0 (* 21.0 ?x3))) (<= (* 60.0 ?x2) (+ (* 72.0 ?x3) 98.0)) (or (and (<= (+ (* 76.0 ?x1) (* 86.0 ?x3) 49.0) (* 6.0 ?x2)) (not (= 78.0 (+ (* ?x1 (- 23.0)) (* ?x2 (- 50.0)))))) (and (not (= (- 24.0) (+ (* ?x1 12.0) (* ?x2 (- 21.0))))) (= 59.0 (+ (* ?x1 (- 15.0)) (* ?x2 18.0) (* ?x3 79.0)))) (and (<= (+ ?x3 55.0) (* 15.0 ?x2)) (= 0.0 (* ?x3 (- 35.0)))) (and (or (< (+ (* 4.0 ?x1) (* 63.0 ?x2) 74.0) (* 14.0 ?x3)) (<= (+ (* 94.0 ?x2) (* 7.0 ?x3)) 0.0) (and (< 83.0 (* 95.0 ?x3)) (= 90.0 (+ (* ?x1 (- 27.0)) (* ?x3 8.0))))) (= 66.0 (* ?x3 62.0)) (< 95.0 (+ (* 24.0 ?x1) (* 13.0 ?x3))) (<= (+ (* 59.0 ?x1) (* 85.0 ?x2) 31.0) 0.0)) (not (= (- 16.0) (+ (* ?x1 22.0) (* ?x2 9.0) (* ?x3 (- 8.0))))) (<= (+ (* 68.0 ?x1) 96.0) (* 2.0 ?x3))) (or (<= 76.0 (* 43.0 ?x3)) (and (= (+ (* ?x1 91.0) (* ?x3 99.0)) 0.0) (< (+ (* 91.0 ?x1) (* 81.0 ?x2) (* 89.0 ?x3) 32.0) 0.0)) (<= (* 51.0 ?x3) (* 75.0 ?x1)) (<= 0.0 (+ (* 2.0 ?x1) 11.0)))))";
@@ -352,7 +352,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void fridgeDivCapture() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "main_p"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "main_a"),
 			};
@@ -362,7 +362,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void reqchecker_vacuity_test82(){
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "Constraint_assumption_ct0_pc"),
 				new FunDecl(SmtSortUtils::getIntSort, "req1_ct0_pc"),
 			};
@@ -372,7 +372,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void LRA_2010MonniauxQE_mjollnir4_formula037() {
-		final FunDecl[] funDecls = new FunDecl[] {};
+		final FunDecl[] funDecls = {};
 		final String formulaAsString = "(exists ((|v11:0| Real)) (exists ((|v10:1| Real)) (exists ((|v9:2| Real)) (exists ((|v8:3| Real)) (forall ((|v7:4| Real)) (forall ((|v6:5| Real)) (forall ((|v5:6| Real)) (forall ((|v4:7| Real)) (exists ((|v3:8| Real)) (exists ((|v2:9| Real)) (exists ((|v1:10| Real)) (exists ((|v0:11| Real)) (and (<= 5.0 (+ (* 3.0 |v9:2|) (* 9.0 |v8:3|) (* 3.0 |v3:8|))) (<= 15.0 (+ (* 3.0 |v10:1|) (* 3.0 |v1:10|) (* 14.0 |v7:4|) |v8:3|)) (<= (+ (* 5.0 |v0:11|) 14.0) (+ (* 14.0 |v1:10|) (* 14.0 |v4:7|))) (<= (+ (* 2.0 |v1:10|) (* 12.0 |v8:3|) (* 7.0 |v5:6|)) (* 17.0 |v4:7|)) (<= |v8:3| (+ (* 16.0 |v5:6|) (* 7.0 |v2:9|) |v9:2| 18.0)) (<= (+ (* 5.0 |v1:10|) (* 17.0 |v9:2|) (* 7.0 |v4:7|)) (* 6.0 |v8:3|)) (<= (+ (* 10.0 |v10:1|) (* 20.0 |v6:5|) 7.0) (+ (* 16.0 |v5:6|) |v2:9|)) (<= (+ (* 7.0 |v9:2|) (* 3.0 |v8:3|) 10.0) (* 6.0 |v6:5|)) (<= (+ (* 2.0 |v5:6|) 19.0) (+ (* 2.0 |v10:1|) (* 15.0 |v8:3|) (* 19.0 |v0:11|))) (<= 0.0 (+ (* 13.0 |v2:9|) (* 28.0 |v3:8|) (* 12.0 |v6:5|) 8.0)) (or (<= (+ (* 2.0 |v10:1|) (* 4.0 |v6:5|)) (+ (* 22.0 |v9:2|) 14.0)) (<= (+ (* 14.0 |v10:1|) (* 19.0 |v5:6|) (* 5.0 |v3:8|)) (+ (* 12.0 |v6:5|) 6.0))) (or (<= (+ (* 13.0 |v10:1|) |v6:5| 3.0) (* 12.0 |v4:7|)) (<= (+ (* 16.0 |v10:1|) (* 11.0 |v2:9|) (* 4.0 |v5:6|) 7.0) (* 6.0 |v9:2|))) (<= (+ (* 21.0 |v10:1|) (* 7.0 |v8:3|) 10.0) (* 15.0 |v7:4|)) (<= (+ (* 21.0 |v11:0|) (* 18.0 |v2:9|) 11.0) (* 3.0 |v0:11|)) (<= (* 2.0 |v7:4|) (+ (* 15.0 |v10:1|) (* 4.0 |v4:7|) 8.0)) (<= (+ (* 6.0 |v4:7|) |v8:3|) (+ (* 17.0 |v0:11|) 19.0)) (<= (* 4.0 |v0:11|) (+ (* 19.0 |v1:10|) (* 18.0 |v9:2|) 19.0)) (<= 4.0 (+ (* 6.0 |v6:5|) (* 8.0 |v2:9|) (* 18.0 |v3:8|) (* 19.0 |v9:2|))) (<= (+ (* 13.0 |v2:9|) (* 30.0 |v8:3|)) 20.0) (<= (+ (* 13.0 |v8:3|) (* 16.0 |v7:4|) (* 14.0 |v0:11|)) (+ (* 4.0 |v4:7|) 3.0)) (<= (+ (* 4.0 |v10:1|) (* 16.0 |v6:5|)) (+ (* 2.0 |v5:6|) 20.0)) (<= (+ (* 14.0 |v11:0|) 3.0) (+ |v4:7| (* 2.0 |v2:9|))) (<= (+ (* 8.0 |v1:10|) (* 4.0 |v7:4|) (* 18.0 |v4:7|) (* 2.0 |v5:6|) 18.0) 0.0) (<= (+ (* 10.0 |v2:9|) |v8:3| 3.0) (* 14.0 |v7:4|)) (<= (+ (* 24.0 |v2:9|) (* 8.0 |v3:8|) (* 12.0 |v4:7|) 12.0) 0.0) (<= (+ (* 7.0 |v11:0|) (* 2.0 |v10:1|) |v0:11| 2.0) (* 12.0 |v1:10|)) (<= (+ (* 16.0 |v11:0|) (* 20.0 |v3:8|) (* 3.0 |v2:9|) 17.0) 0.0) (<= (+ (* 14.0 |v8:3|) (* 7.0 |v0:11|)) (+ (* 19.0 |v10:1|) (* 12.0 |v4:7|) 13.0)) (<= (+ (* 12.0 |v8:3|) (* 3.0 |v9:2|) (* 9.0 |v2:9|)) 16.0) (<= (+ (* 20.0 |v10:1|) 11.0) (+ (* 7.0 |v4:7|) (* 3.0 |v7:4|))) (<= (+ (* 15.0 |v10:1|) (* 17.0 |v2:9|) 15.0) (+ |v7:4| (* 11.0 |v9:2|))) (<= (+ (* 8.0 |v8:3|) |v2:9| (* 14.0 |v3:8|)) (+ (* 10.0 |v1:10|) 1.0)) (<= 3.0 (+ |v1:10| (* 6.0 |v4:7|) (* 19.0 |v8:3|))) (<= (+ (* 19.0 |v11:0|) (* 6.0 |v0:11|)) (+ (* 12.0 |v10:1|) (* 8.0 |v4:7|) 3.0)) (<= (+ (* 12.0 |v11:0|) (* 13.0 |v1:10|) (* 16.0 |v4:7|) 3.0) (* 2.0 |v6:5|)) (<= (+ (* 20.0 |v4:7|) (* 18.0 |v5:6|)) (+ (* 15.0 |v11:0|) (* 18.0 |v7:4|) 17.0)) (<= (+ (* 9.0 |v10:1|) (* 12.0 |v11:0|) (* 16.0 |v8:3|)) (+ (* 18.0 |v1:10|) 3.0)) (<= (+ (* 2.0 |v1:10|) (* 14.0 |v5:6|)) (+ (* 3.0 |v0:11|) 6.0)) (<= (+ (* 13.0 |v1:10|) (* 6.0 |v5:6|) 20.0) (* 4.0 |v2:9|)) (<= (+ (* 16.0 |v3:8|) 15.0) (+ (* 16.0 |v10:1|) (* 12.0 |v4:7|))) (<= (+ (* 10.0 |v1:10|) (* 8.0 |v8:3|) (* 16.0 |v2:9|)) (+ (* 11.0 |v5:6|) 10.0)) (<= (* 5.0 |v7:4|) (+ |v10:1| (* 15.0 |v11:0|) 14.0)) (<= (+ (* 30.0 |v7:4|) (* 15.0 |v2:9|) (* 14.0 |v0:11|) 2.0) 0.0) (<= (* 15.0 |v11:0|) (+ (* 16.0 |v4:7|) 8.0)) (<= (+ (* 18.0 |v10:1|) (* 22.0 |v3:8|)) (+ (* 16.0 |v4:7|) 13.0)) (<= (+ (* 19.0 |v10:1|) (* 12.0 |v5:6|) (* 5.0 |v8:3|)) (+ (* 8.0 |v9:2|) 12.0)) (<= (+ (* 5.0 |v0:11|) 12.0) (+ (* 5.0 |v10:1|) (* 9.0 |v1:10|) (* 10.0 |v2:9|))) (<= (+ (* 6.0 |v2:9|) 9.0) (+ (* 17.0 |v6:5|) (* 7.0 |v9:2|) (* 16.0 |v0:11|))) (<= |v10:1| (+ (* 17.0 |v2:9|) (* 20.0 |v9:2|) (* 14.0 |v0:11|) 1.0)) (<= (+ (* 15.0 |v1:10|) 10.0) (+ (* 20.0 |v2:9|) (* 3.0 |v8:3|))) (<= (+ (* 6.0 |v11:0|) (* 6.0 |v5:6|)) (+ (* 17.0 |v9:2|) 6.0)) (<= (+ (* 5.0 |v0:11|) 8.0) (+ (* 3.0 |v10:1|) (* 12.0 |v9:2|))) (<= 11.0 (+ (* 8.0 |v10:1|) (* 2.0 |v4:7|) (* 14.0 |v2:9|) (* 5.0 |v0:11|))) (<= (+ (* 18.0 |v1:10|) (* 8.0 |v8:3|) (* 7.0 |v9:2|) 17.0) 0.0) (or (and (<= (* 16.0 |v10:1|) (+ (* 6.0 |v1:10|) (* 7.0 |v0:11|) 14.0)) (<= (+ (* 20.0 |v1:10|) (* 11.0 |v6:5|)) (+ (* 10.0 |v2:9|) 8.0))) (and (<= (+ (* 19.0 |v2:9|) (* 13.0 |v4:7|)) (+ (* 17.0 |v6:5|) (* 17.0 |v7:4|))) (<= 5.0 (+ (* 18.0 |v11:0|) (* 6.0 |v6:5|) (* 9.0 |v8:3|))))) (<= 16.0 (+ (* 17.0 |v10:1|) (* 13.0 |v11:0|) (* 13.0 |v4:7|) (* 3.0 |v6:5|))) (<= (+ (* 6.0 |v3:8|) 5.0) (+ |v11:0| (* 8.0 |v1:10|) |v4:7|)) (<= (+ (* 20.0 |v11:0|) (* 19.0 |v1:10|) (* 10.0 |v5:6|)) (+ (* 19.0 |v4:7|) 9.0)) (<= (+ (* 20.0 |v5:6|) (* 17.0 |v6:5|) (* 17.0 |v3:8|)) 15.0))))))))))))))";
 		final String expectedResultAsString = "false";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -380,7 +380,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void aws_hash_table_foreach_harness(){
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_#Ultimate.C_memset_#ptr.offset", "ULTIMATE.start_aws_hash_iter_begin_~map.offset", "ULTIMATE.start_aws_hash_iter_begin_~map.base", "ULTIMATE.start_#Ultimate.C_memset_#ptr.base", "ULTIMATE.start_aws_hash_iter_begin_~state~11.base", "ULTIMATE.start_#Ultimate.C_memset_#value", "ULTIMATE.start_aws_hash_iter_begin_~state~11.offset", "ULTIMATE.start_aws_hash_iter_begin_~#iter~1.offset", "ULTIMATE.start_aws_hash_iter_begin_~#iter~1.base", "#funAddr~uninterpreted_equals_assert_inputs_nonnull.base", "#funAddr~uninterpreted_equals_assert_inputs_nonnull.offset", "#funAddr~uninterpreted_hasher.base", "#funAddr~uninterpreted_hasher.offset"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "#memory_int", "#memory_$Pointer$.offset", "#memory_$Pointer$.base"),
 			};
@@ -390,7 +390,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void bug_nla_digbench_egcd2_ll_unwindbound2mmaybeTooDifficult() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "s", "q", "b", "yy", "y"),
 			};
 		final String formulaAsString = "(forall ((x Int)) (or (not (= (+ (* s y) (* q x)) b)) (forall ((xy Int)) (= (+ b (* s yy) (* q xy)) (+ (* s y) (* q x) (* b y))))))";
@@ -403,7 +403,7 @@ public class QuantifierEliminationBenchmarks {
 	 */
 	@Test
 	public void inconsistentDimensionInNestedStoreDueToConstArray() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "~#a~0.base"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "#valid"),
 			};
@@ -414,7 +414,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void minionEliminateesNonterminationBugOriginal() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "False_hbv_False_3_Int", "False_hbv_False_4_Int"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "False_hbv_False_1_Array_Int_Int"),
 			};
@@ -425,7 +425,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void LRA_schollsmt08_model_model_5_62() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getRealSort, "x3", "x4"),
 				new FunDecl(SmtSortUtils::getBoolSort, "bool.b17", "bool.b18", "bool.b19", "bool.b20", "bool.b21", "bool.b22", "bool.b23", "bool.b24"),
 			};
@@ -436,7 +436,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void scholl_smt08_RNDPRE_RNDPRE_4_56() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getRealSort, "?x1", "?x2", "?x3"),
 		};
 		final String formulaAsString = "(exists ((?x4 Real)) (and (< (+ (* 47.0 ?x4) 62.0) (+ (* 21.0 ?x1) (* 39.0 ?x3))) (not (= 0.0 (+ (* ?x1 80.0) (* ?x2 (- 65.0)) (* ?x3 3.0) (* ?x4 16.0)))) (< (* 50.0 ?x3) (+ (* 37.0 ?x1) (* 50.0 ?x2) (* 13.0 ?x4))) (< (+ (* 43.0 ?x1) (* 85.0 ?x2)) (+ (* 91.0 ?x4) 34.0)) (or (= (- 66.0) (+ (* ?x1 28.0) (* ?x2 99.0) (* ?x4 77.0))) (not (= 0.0 (+ (* ?x1 (- 67.0)) (* ?x2 32.0) (* ?x3 37.0))))) (not (= 77.0 (+ (* ?x1 29.0) (* ?x4 (- 59.0))))) (< ?x4 (+ (* 38.0 ?x2) 79.0)) (or (and (< 0.0 (+ (* 78.0 ?x3) 97.0)) (< (+ (* 59.0 ?x2) 65.0) (+ (* 16.0 ?x3) (* 62.0 ?x4)))) (and (<= (* 50.0 ?x2) (+ (* 23.0 ?x1) (* 37.0 ?x3) (* 11.0 ?x4) 80.0)) (<= (+ (* 83.0 ?x1) (* 20.0 ?x3) (* 42.0 ?x4)) (+ (* 41.0 ?x2) 74.0))) (and (< (+ (* 99.0 ?x1) (* 26.0 ?x2) (* 56.0 ?x3)) 28.0) (<= 0.0 (+ (* 31.0 ?x1) (* 48.0 ?x3)))) (and (or (and (not (= 0.0 (+ (* ?x1 (- 79.0)) (* ?x2 72.0) (* ?x3 26.0)))) (< (+ (* 64.0 ?x2) (* 3.0 ?x3) (* 97.0 ?x4)) 25.0)) (< (+ (* 27.0 ?x4) 11.0) (* 50.0 ?x3)) (<= 78.0 (+ (* 27.0 ?x1) (* 98.0 ?x2) (* 61.0 ?x3)))) (< (+ (* 66.0 ?x4) 66.0) (* 21.0 ?x2)) (= 0.0 (+ (* ?x3 89.0) (* ?x4 93.0))))) (< (+ (* 65.0 ?x1) (* 51.0 ?x4) 74.0) (* 27.0 ?x3)) (or (and (or (< (+ (* 28.0 ?x1) (* 7.0 ?x2)) (* 38.0 ?x4)) (< (+ (* 24.0 ?x2) (* 47.0 ?x4)) (+ (* 97.0 ?x1) (* 4.0 ?x3))) (= 41.0 (+ (* ?x1 98.0) (* ?x2 8.0) (* ?x3 (- 15.0)))) (< (* 67.0 ?x1) 0.0)) (= 63.0 (+ (* ?x1 18.0) (* ?x4 54.0))) (or (= 0.0 (+ (* ?x1 13.0) (* ?x2 13.0))) (<= (* 14.0 ?x2) (+ (* 47.0 ?x1) 38.0)) (and (<= (+ (* 11.0 ?x1) (* 57.0 ?x3) 46.0) (* 87.0 ?x4)) (< (+ (* 23.0 ?x2) (* 94.0 ?x3)) (+ (* 93.0 ?x1) (* 21.0 ?x4)))) (not (= 48.0 (+ (* ?x1 88.0) (* ?x2 66.0) (* ?x3 65.0) (* ?x4 20.0))))) (= (- 28.0) (+ (* ?x1 (- 97.0)) (* ?x3 96.0) (* ?x4 31.0))) (not (= 90.0 (+ (* ?x2 86.0) (* ?x3 (- 28.0)) (* ?x4 2.0)))) (or (< (+ (* 81.0 ?x4) 35.0) (+ (* 38.0 ?x1) (* 64.0 ?x2))) (not (= (- 55.0) (+ (* ?x2 (- 24.0)) (* ?x3 (- 96.0)) (* ?x4 40.0))))) (or (and (<= (+ (* 59.0 ?x1) (* 50.0 ?x2) (* 37.0 ?x3)) 80.0) (or (<= (+ (* 3.0 ?x1) (* 46.0 ?x2)) (+ (* 3.0 ?x4) 38.0)) (< (* 98.0 ?x3) (+ (* 95.0 ?x1) (* 2.0 ?x4))))) (< (+ (* 95.0 ?x2) (* 25.0 ?x4)) (+ (* 82.0 ?x1) (* 21.0 ?x3) 79.0)) (= 48.0 (+ (* ?x1 45.0) (* ?x2 49.0)))) (or (<= 0.0 (+ (* 99.0 ?x2) (* 9.0 ?x3) (* 25.0 ?x4) 50.0)) (< (+ (* 27.0 ?x1) (* 97.0 ?x2) (* 97.0 ?x3)) 0.0)) (< (+ (* 60.0 ?x1) (* 73.0 ?x4)) (+ (* 71.0 ?x2) (* 94.0 ?x3) 91.0))) (and (or (and (< (* 27.0 ?x4) (+ (* 29.0 ?x1) 1.0)) (< 12.0 (* 71.0 ?x1))) (and (<= (+ (* 73.0 ?x3) (* 45.0 ?x4) 61.0) 0.0) (or (= 15.0 (+ (* ?x1 97.0) (* ?x4 (- 73.0)))) (< 8.0 (+ (* 3.0 ?x1) (* 99.0 ?x2) (* 25.0 ?x3)))))) (or (= (- 42.0) (+ (* ?x1 2.0) (* ?x3 (- 55.0)) (* ?x4 5.0))) (<= (+ (* 12.0 ?x2) 7.0) (+ (* 73.0 ?x3) (* 70.0 ?x4))) (and (< (+ (* 17.0 ?x2) (* 24.0 ?x3) 32.0) (+ (* 63.0 ?x1) (* 14.0 ?x4))) (not (= 0.0 (+ (* ?x1 (- 21.0)) (* ?x2 (- 14.0)) (* ?x3 (- 48.0)) (* ?x4 83.0))))) (< (+ (* 68.0 ?x1) (* 64.0 ?x2) 47.0) (* 14.0 ?x3))))) (<= (* 17.0 ?x2) (+ (* 24.0 ?x3) (* 82.0 ?x4) 35.0)) (<= 0.0 (* 35.0 ?x4)) (or (not (= 0.0 (+ (* ?x1 49.0) (* ?x3 42.0) (* ?x4 50.0)))) (and (= 0.0 (+ (* ?x1 (- 1.0)) (* ?x2 (- 97.0)) (* ?x3 33.0) (* ?x4 84.0))) (<= (+ (* 23.0 ?x1) (* 73.0 ?x2) 19.0) 0.0)))))";
@@ -446,7 +446,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void endless2() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 				new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_aws_byte_buf_secure_zero_~buf#1.base", "ULTIMATE.start_aws_byte_buf_secure_zero_~buf#1.offset"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntIntSort, "v_arrayElimArr_13", "v_arrayElimArr_12", "#memory_int"),
 			};
@@ -457,7 +457,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void forester_heap_dll_01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "main_#t~malloc9.base", "main_~end~0.offset", "main_~list~0.base", "main_~end~0.base", "main_~list~0.offset"),
 			new FunDecl(QuantifierEliminationTest::getArrayBv32Bv1Sort, "#valid"),
 		};
@@ -476,7 +476,7 @@ public class QuantifierEliminationBenchmarks {
 	 * itself can be simplified quickly.
 	 */
 	public void pthread_atomic_gcd_2() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "b"),
 		};
 		final String formulaAsString = "(or (= (mod (let ((.cse0 (mod b 4294967296))) (mod (mod (+ b .cse0) 4294967296) .cse0)) 4294967296) 0) (forall ((a Int)) (let ((.cse4 (mod b 4294967296))) (let ((.cse1 (* 4294967295 .cse4)) (.cse3 (* 4294967296 a)) (.cse2 (* b 4294967295))) (or (<= (+ 4294967296 .cse1 .cse2) .cse3) (< .cse3 (+ .cse1 .cse2)) (<= .cse3 (+ (* .cse4 4294967296) .cse2)))))))";
@@ -484,9 +484,20 @@ public class QuantifierEliminationBenchmarks {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+
+	@Test
+	public void someSvcompConcurrency() {
+		final FunDecl[] funDecls = {
+			new FunDecl(SmtSortUtils::getIntSort, "~A~0.offset", "~bsum~0", "~asum~0", "thread2Thread1of1ForFork2_~i~1", "~B~0.offset", "~csum~0", "~B~0.base", "~C~0.base", "thread1Thread1of1ForFork1_~i~0"),
+		};
+		final String formulaAsString = "(forall ((~C~0.offset Int) (|#memory_int| (Array Int (Array Int Int))) (~A~0.base Int)) (= (mod (+ ~csum~0 (select (store (select |#memory_int| ~C~0.base) (+ ~C~0.offset (* thread2Thread1of1ForFork2_~i~1 4)) (+ (select (select |#memory_int| ~A~0.base) (+ (* thread2Thread1of1ForFork2_~i~1 4) ~A~0.offset)) (select (select |#memory_int| ~B~0.base) (+ (* thread2Thread1of1ForFork2_~i~1 4) ~B~0.offset)))) ~C~0.offset)) 4294967296) (mod (+ ~asum~0 ~bsum~0 (select (select |#memory_int| ~A~0.base) (+ ~A~0.offset (* thread1Thread1of1ForFork1_~i~0 4))) (select (select (store |#memory_int| ~C~0.base (store (select |#memory_int| ~C~0.base) (+ ~C~0.offset (* thread2Thread1of1ForFork2_~i~1 4)) (+ (select (select |#memory_int| ~A~0.base) (+ (* thread2Thread1of1ForFork2_~i~1 4) ~A~0.offset)) (select (select |#memory_int| ~B~0.base) (+ (* thread2Thread1of1ForFork2_~i~1 4) ~B~0.offset))))) ~B~0.base) (+ ~B~0.offset (* thread1Thread1of1ForFork1_~i~0 4)))) 4294967296)))";
+		final String expectedResultAsString = "(let ((.cse7 (+ ~bsum~0 ~asum~0)) (.cse5 (* ~bsum~0 4294967295)) (.cse6 (* 4294967295 ~asum~0))) (let ((.cse2 (= ~B~0.base ~C~0.base)) (.cse0 (mod (+ .cse5 ~csum~0 .cse6) 4294967296)) (.cse1 (mod ~csum~0 4294967296)) (.cse3 (mod .cse7 4294967296)) (.cse4 (= thread2Thread1of1ForFork2_~i~1 0))) (and (= thread2Thread1of1ForFork2_~i~1 thread1Thread1of1ForFork1_~i~0) (<= .cse0 .cse1) (not .cse2) (<= .cse1 .cse3) .cse4 (or .cse2 (and (<= .cse1 (+ (mod (+ 4294967295 .cse5 ~csum~0 .cse6) 4294967296) 2)) (<= 4294967295 (+ (mod (+ 4294967295 (* 4294967295 .cse7)) 4294967296) .cse1)) (= thread1Thread1of1ForFork1_~i~0 0) (or (< .cse1 1) (< .cse0 1)) (or (< .cse3 (+ .cse1 1)) (< .cse3 2)) .cse4)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	@Test
 	public void tirBvToIntBadgerForall01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
 		};
 		final String formulaAsString = "(forall ((v_y_3 Int) (v_y_2 Int) (v_z_3 Int)) (or (>= (+ (* v_y_3 128) v_z_3) 256) (>= (+ m v_z_3) (+ (* v_y_3 128) (* 256 v_y_2))) (> 0 v_z_3) (> 0 (+ (* v_y_3 128) v_z_3 (* 256 v_y_2))) (> 0 (+ (* v_y_3 128) v_z_3)) (>= v_z_3 128) (>= (+ n (* (mod v_z_3 128) 2)) (+ (* v_y_3 128) v_z_3)) (>= (+ (* v_y_3 128) v_z_3 (* 256 v_y_2)) 256)))";
@@ -496,7 +507,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void tirBvToIntBadgerExists01() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "n", "m"),
 		};
 		final String formulaAsString = "(exists ((v_y_3 Int) (v_z_1 Int) (v_y_2 Int) (v_y_1 Int)) (and (<= 0 (+ (* v_y_3 128) v_z_1 (* v_y_1 128))) (<= 0 v_z_1) (< (+ v_z_1 (* v_y_1 128)) 128) (<= 0 (+ (* v_y_3 128) v_z_1 (* 256 v_y_2) (* v_y_1 128))) (< (+ n v_z_1) (+ (* v_y_3 128) (* v_y_1 128))) (< (+ m v_z_1 (* v_y_1 128)) (+ (* v_y_3 128) (* 256 v_y_2))) (< (+ (* v_y_3 128) v_z_1 (* v_y_1 128)) 256) (< (+ (* v_y_3 128) v_z_1 (* 256 v_y_2) (* v_y_1 128)) 256) (< v_z_1 128) (<= 0 (+ v_z_1 (* v_y_1 128)))))";
@@ -516,7 +527,7 @@ public class QuantifierEliminationBenchmarks {
 
 	@Test
 	public void unsignedintegeroverflowsas23linearinterpolation() {
-		final FunDecl[] funDecls = new FunDecl[] {
+		final FunDecl[] funDecls = {
 			new FunDecl(SmtSortUtils::getIntSort, "a", "b", "c"),
 		};
 		final String formulaAsString = "(and (<= 0 (+ a 2147483648)) (exists ((x Int) (y Int) (z Int)) (and (<= x y) (<= y 2147483647) (<= 0 (+ z 2147483648)) (let ((.cse3 (let ((.cse4 (* 4294967295 z))) (div (mod (* (mod (+ x .cse4) 4294967296) (mod (+ (* 4294967295 a) b) 4294967296)) 18446744073709551616) (mod (+ y .cse4) 4294967296))))) (let ((.cse1 (mod .cse3 18446744073709551616)) (.cse0 (let ((.cse2 (mod (+ .cse3 a) 4294967296))) (or (and (= .cse2 (+ c 4294967296)) (<= 2147483648 .cse2)) (and (<= .cse2 2147483647) (= .cse2 c)))))) (or (and .cse0 (<= 9223372036854775808 .cse1)) (and (<= .cse1 9223372036854775807) .cse0)))) (<= z x) (<= (+ z 1) y))) (<= a b) (<= b 2147483647))";

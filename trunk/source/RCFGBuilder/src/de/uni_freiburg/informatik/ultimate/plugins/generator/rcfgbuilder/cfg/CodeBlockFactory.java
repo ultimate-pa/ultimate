@@ -62,7 +62,6 @@ public class CodeBlockFactory implements IStorable {
 
 	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final CfgSmtToolkit mgvManager, final IIcfgSymbolTable symbolTable, final SerialProvider serialProvider) {
-		super();
 		mSerialProvider = serialProvider;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -84,16 +83,6 @@ public class CodeBlockFactory implements IStorable {
 	public JoinThreadCurrent constructJoinCurrentThread(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final JoinStatement join) {
 		return new JoinThreadCurrent(makeFreshSerial(), source, target, join, mLogger);
-	}
-
-	public ForkThreadOther constructForkOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final ForkStatement fork, final ForkThreadCurrent forkCurrentThread) {
-		return new ForkThreadOther(makeFreshSerial(), source, target, fork, forkCurrentThread, mLogger);
-	}
-
-	public JoinThreadOther constructJoinOtherThread(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final JoinStatement join, final JoinThreadCurrent joinCurrentThread) {
-		return new JoinThreadOther(makeFreshSerial(), source, target, join, joinCurrentThread, mLogger);
 	}
 
 	public GotoEdge constructGotoEdge(final BoogieIcfgLocation source, final BoogieIcfgLocation target) {
@@ -121,8 +110,8 @@ public class CodeBlockFactory implements IStorable {
 	public SequentialComposition constructSequentialCompositionAndDisconnectEdges(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final boolean simplify, final boolean extPqe,
 			final List<CodeBlock> codeBlocks, final SimplificationTechnique simplificationTechnique) {
-		final SequentialComposition edge = constructSequentialComposition(source, target, simplify, extPqe, codeBlocks,
-				simplificationTechnique);
+		final SequentialComposition edge =
+				constructSequentialComposition(source, target, simplify, extPqe, codeBlocks, simplificationTechnique);
 		for (final CodeBlock currentCodeblock : codeBlocks) {
 			currentCodeblock.disconnectSource();
 			currentCodeblock.disconnectTarget();

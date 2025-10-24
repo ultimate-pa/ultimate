@@ -110,8 +110,8 @@ public final class LargeBlockEncodingIcfgTransformer {
 		// with it.
 		ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
 		ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
-		final BlockEncoder blockEncoder = new BlockEncoder(mLogger, beServices, inputIcfg,
-				SimplificationTechnique.SIMPLIFY_DDA);
+		final BlockEncoder blockEncoder =
+				new BlockEncoder(mLogger, beServices, inputIcfg, SimplificationTechnique.SIMPLIFY_DDA);
 		final IIcfg<IcfgLocation> outputIcfg = blockEncoder.getResult();
 		assert !outputIcfg.getInitialNodes().isEmpty() : "LBE ICFG is emtpy";
 		mLbeBacktranslation = blockEncoder.getBacktranslator().getLocationMapping();
@@ -161,7 +161,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 		int numberSpInvariants = 0;
 		final ArrayDeque<IcfgLocation> inputIcfgLocationsWithoutInvariants = new ArrayDeque<>();
 		for (final IcfgLocation loc : inputIcfgLocations) {
-			if (!resultInvariantMapping.keySet().contains(loc)) {
+			if (!resultInvariantMapping.containsKey(loc)) {
 				inputIcfgLocationsWithoutInvariants.add(loc);
 			}
 		}

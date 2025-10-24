@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.CategorizedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.CheckPoint;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.Label;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopFreeSegment;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopFreeSegmentWithStatePair;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AnnotationCheckResult.LoopHead;
@@ -91,7 +93,7 @@ public class InvariantChecker {
 	private IResultWithSeverity mResultForUltimateUser;
 
 	public enum ProgramPointType {
-		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC;
+		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC, LABEL;
 	}
 
 	public InvariantChecker(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
@@ -180,8 +182,8 @@ public class InvariantChecker {
 		}
 		final List<LoopFreeSegment<IcfgEdge>> validSegments = twoPointSubgraphsToSegments(validTpsds);
 		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(unknownTpsds);
-		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments = twoPointSubgraphsToSegments(
-				invalidTpsds);
+		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments =
+				twoPointSubgraphsToSegments(invalidTpsds);
 		mResultForUltimateUser = new AnnotationCheckResult<>(Activator.PLUGIN_ID, mServices.getBacktranslationService(),
 				validSegments, unknownSegments, invalidSegments, nonCycleFreeSubgraphs, Collections.emptyList());
 	}
@@ -238,6 +240,9 @@ public class InvariantChecker {
 		case LOOP_INVARIANT_ERROR_LOC:
 			result = new LoopHead(location);
 			break;
+		case LABEL:
+			result = new Label(location);
+			break;
 		case UNKNOWN:
 		default:
 			throw new AssertionError("unable to categorize program point " + programPoint);
@@ -262,20 +267,12 @@ public class InvariantChecker {
 
 	private ILocation guessLocation(final IcfgLocation programPoint) {
 		final ProgramPointType programPointType = classify(programPoint);
-		final IcfgEdge someEdge;
-		switch (programPointType) {
-		case ENTRY:
-		case LOOP_HEAD:
-			someEdge = programPoint.getOutgoingEdges().get(0);
-			break;
-		case ERROR_LOC:
-		case LOOP_INVARIANT_ERROR_LOC:
-			someEdge = programPoint.getIncomingEdges().get(0);
-			break;
-		case UNKNOWN:
-		default:
-			throw new AssertionError("unable to determine type of program point");
-		}
+		final IcfgEdge someEdge = switch (programPointType) {
+		case ENTRY, LOOP_HEAD, LABEL -> programPoint.getOutgoingEdges().get(0);
+		case ERROR_LOC, LOOP_INVARIANT_ERROR_LOC -> programPoint.getIncomingEdges().get(0);
+		case UNKNOWN -> throw new AssertionError("unable to determine type of program point");
+		};
+
 		final ILocation loc = ILocation.getAnnotation(someEdge);
 		final ILocation result;
 		if (loc instanceof MergedLocation) {
@@ -292,7 +289,7 @@ public class InvariantChecker {
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
 			final ProgramPointType startType = classify(tpsd.getStartLocation());
 			final ProgramPointType endType = classify(tpsd.getEndLocation());
-			hr.addPair(new Pair(startType, endType), tpsd);
+			hr.addPair(new Pair<>(startType, endType), tpsd);
 		}
 		boolean isFirst = true;
 		final StringBuilder sb = new StringBuilder();
@@ -321,7 +318,9 @@ public class InvariantChecker {
 		final Map<IcfgLocation, IcfgEdge> loopLoc2errorEdge = new HashMap<>();
 		final Map<IcfgLocation, IcfgEdge> loopErrorLoc2errorEdge = new HashMap<>();
 		final List<IcfgLocation> loopLocWithoutInvariant = new ArrayList<>();
-		for (final IcfgLocation loopLoc : icfg.getLoopLocations()) {
+		final List<IcfgLocation> loopAndLabelLoc = new ArrayList<>(icfg.getLoopLocations());
+		loopAndLabelLoc.addAll(icfg.getLocationsOfInterest());
+		for (final IcfgLocation loopLoc : loopAndLabelLoc) {
 			final IcfgEdge errorEdge = getErrorEdgeForLoopInvariant(loopLoc);
 			if (errorEdge == null) {
 				loopLocWithoutInvariant.add(loopLoc);
@@ -342,20 +341,22 @@ public class InvariantChecker {
 	 */
 	private List<TwoPointSubgraphDefinition> findSubgraphGivenEndLocation(final IcfgLocation backwardStartLoc,
 			final LoopLocations loopLocations, final IIcfg<IcfgLocation> icfg) {
-		final List<TwoPointSubgraphDefinition> tpsds = new ArrayList<>();
-		final ArrayDeque<IcfgEdge> worklistBackward = new ArrayDeque<>();
-		final Set<IcfgEdge> seenBackward = new HashSet<>();
 		final Set<IcfgLocation> startLocs = new HashSet<>();
-		addIncomingEdgesToWorklistIfNotYetSeen(backwardStartLoc, worklistBackward, seenBackward);
-		while (!worklistBackward.isEmpty()) {
-			final IcfgEdge edge = worklistBackward.removeFirst();
-			final IcfgLocation loc = edge.getSource();
-			if (isEntryNode(icfg, loc) || icfg.getLoopLocations().contains(loc)) {
-				startLocs.add(loc);
-			} else {
-				addIncomingEdgesToWorklistIfNotYetSeen(loc, worklistBackward, seenBackward);
+		final Set<IcfgEdge> seenBackward = new HashSet<>();
+		{
+			final ArrayDeque<IcfgEdge> worklistBackward = new ArrayDeque<>();
+			addIncomingEdgesToWorklistIfNotYetSeen(backwardStartLoc, worklistBackward, seenBackward);
+			while (!worklistBackward.isEmpty()) {
+				final IcfgEdge edge = worklistBackward.removeFirst();
+				final IcfgLocation loc = edge.getSource();
+				if (isEntryNode(icfg, loc) || isLoopHead(icfg, loc) || isLocationOfInterestNode(icfg, loc)) {
+					startLocs.add(loc);
+				} else {
+					addIncomingEdgesToWorklistIfNotYetSeen(loc, worklistBackward, seenBackward);
+				}
 			}
 		}
+		final List<TwoPointSubgraphDefinition> tpsds = new ArrayList<>();
 		for (final IcfgLocation startLoc : startLocs) {
 			final TwoPointSubgraphDefinition tpsd = extractSubgraphGivenStartAndEnd(startLoc, backwardStartLoc,
 					Collections.unmodifiableSet(seenBackward), loopLocations, icfg);
@@ -376,18 +377,26 @@ public class InvariantChecker {
 		return tpsds;
 	}
 
-	private boolean isEntryNode(final IIcfg<IcfgLocation> icfg, final IcfgLocation loc) {
+	private static boolean isEntryNode(final IIcfg<IcfgLocation> icfg, final IcfgLocation loc) {
 		return loc == icfg.getProcedureEntryNodes().get(loc.getProcedure());
 	}
 
-	public void addIncomingEdgesToWorklistIfNotYetSeen(final IcfgLocation loc,
-			final ArrayDeque<IcfgEdge> worklistBackward, final Set<IcfgEdge> seenBackward) {
+	private static boolean isLoopHead(final IIcfg<IcfgLocation> icfg, final IcfgLocation loc) {
+		return icfg.getLoopLocations().contains(loc);
+	}
+
+	private static boolean isLocationOfInterestNode(final IIcfg<IcfgLocation> icfg, final IcfgLocation loc) {
+		return icfg.getLocationsOfInterest().contains(loc);
+	}
+
+	private static void addIncomingEdgesToWorklistIfNotYetSeen(final IcfgLocation loc,
+			final Deque<IcfgEdge> worklistBackward, final Set<IcfgEdge> seenBackward) {
 		for (final IcfgEdge pred : loc.getIncomingEdges()) {
 			addToWorklistIfNotYetSeen(pred, worklistBackward, seenBackward);
 		}
 	}
 
-	public void addToWorklistIfNotYetSeen(final IcfgEdge edge, final ArrayDeque<IcfgEdge> worklistBackward,
+	private static void addToWorklistIfNotYetSeen(final IcfgEdge edge, final Deque<IcfgEdge> worklistBackward,
 			final Set<IcfgEdge> seenBackward) {
 		if (edge instanceof IIcfgInternalTransition) {
 			if (!seenBackward.contains(edge)) {
@@ -397,8 +406,7 @@ public class InvariantChecker {
 		} else if ((edge instanceof IIcfgCallTransition) || (edge instanceof IIcfgReturnTransition)) {
 			// omit this edge, do nothing
 		} else {
-			throw new UnsupportedOperationException(
-					"Unsupported kind of edge " + edge.getClass().getSimpleName());
+			throw new UnsupportedOperationException("Unsupported kind of edge " + edge.getClass().getSimpleName());
 		}
 	}
 
@@ -423,7 +431,7 @@ public class InvariantChecker {
 			final IcfgEdge currentEdge = worklistForward.removeFirst();
 			final IcfgLocation loc = currentEdge.getTarget();
 			if (loc == backwardStartLoc) {
-				if (icfg.getLoopLocations().contains(loc)) {
+				if (isLoopHead(icfg, loc) || isLocationOfInterestNode(icfg, loc)) {
 					final IcfgEdge loopErrorEdge = loopLocations.getLoopLoc2errorEdge().get(loc);
 					seenForward.add(loopErrorEdge);
 					errorLocations.add(loopErrorEdge.getTarget());
@@ -472,6 +480,9 @@ public class InvariantChecker {
 			return ProgramPointType.LOOP_HEAD;
 		} else if (mLoopLocations.getLoopErrorLoc2errorEdge().containsKey(loc)) {
 			return ProgramPointType.LOOP_INVARIANT_ERROR_LOC;
+		} else if (mIcfg.getLocationsOfInterest().contains(loc)) {
+			// TODO 2025-04-18 Matthias: Maybe not every LOI stems from a label.
+			return ProgramPointType.LABEL;
 		} else {
 			final String proc = loc.getProcedure();
 			if (mIcfg.getProcedureEntryNodes().get(proc).equals(loc)) {
@@ -526,7 +537,8 @@ public class InvariantChecker {
 		return ecr;
 	}
 
-	private String generateMessage(final IcfgLocation startLoc, final IcfgLocation errorLoc, final boolean positive) {
+	private static String generateMessage(final IcfgLocation startLoc, final IcfgLocation errorLoc,
+			final boolean positive) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("The annotation(s) from ");
 		sb.append(getType(startLoc));
@@ -545,7 +557,7 @@ public class InvariantChecker {
 	}
 
 	private static String getType(final IcfgLocation startLoc) {
-		if (isInvariant(startLoc)) {
+		if (hasInvariantAnnotation(startLoc)) {
 			return "loop head";
 		} else if (isErrorLoc(startLoc)) {
 			return "error location";
@@ -595,7 +607,7 @@ public class InvariantChecker {
 		IcfgEdge result = null;
 		for (final IcfgEdge succEdge : loopLoc.getOutgoingEdges()) {
 			final IcfgLocation succLoc = succEdge.getTarget();
-			if (isInvariant(succLoc)) {
+			if (hasInvariantAnnotation(succLoc)) {
 				if (result == null) {
 					result = succEdge;
 				} else {
@@ -606,7 +618,7 @@ public class InvariantChecker {
 		return result;
 	}
 
-	private static boolean isInvariant(final IcfgLocation loc) {
+	private static boolean hasInvariantAnnotation(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
 		if (check != null) {
 			final Set<Spec> specs = check.getSpec();
@@ -629,21 +641,15 @@ public class InvariantChecker {
 		return loa != null;
 	}
 
-	private String getNiceSubgraphPointDescription(final ProgramPointType lt) {
-		switch (lt) {
-		case ENTRY:
-			return "procedure entry";
-		case ERROR_LOC:
-			return "error location";
-		case LOOP_HEAD:
-			return "loop head";
-		case LOOP_INVARIANT_ERROR_LOC:
-			return "loop head";
-		case UNKNOWN:
-			return "unspecified location type";
-		default:
-			throw new AssertionError("unknown location type " + lt);
-		}
+	private static String getNiceSubgraphPointDescription(final ProgramPointType lt) {
+		return switch (lt) {
+		case ENTRY -> "procedure entry";
+		case ERROR_LOC -> "error location";
+		case LOOP_HEAD -> "loop head";
+		case LOOP_INVARIANT_ERROR_LOC -> "loop head";
+		case LABEL -> "label";
+		case UNKNOWN -> "unspecified location type";
+		};
 	}
 
 	public IResultWithSeverity getResultForUltimateUser() {
@@ -657,7 +663,6 @@ public class InvariantChecker {
 
 		public TwoPointSubgraphDefinition(final IcfgLocation startLocation, final Set<IcfgEdge> subgraphEdges,
 				final IcfgLocation endLocation) {
-			super();
 			mStartLocation = startLocation;
 			mSubgraphEdges = subgraphEdges;
 			mEndLocation = endLocation;

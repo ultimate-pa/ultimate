@@ -91,8 +91,8 @@ public class PetriLbeInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
-			final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
+	public <LOC extends IcfgLocation> BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<LOC> icfg,
+			final Set<LOC> errorLocs) throws AutomataLibraryException {
 		final BoundedPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 
 		final PetriNetLargeBlockEncoding<L> lbe = new PetriNetLargeBlockEncoding<>(mServices, icfg.getCfgSmtToolkit(),

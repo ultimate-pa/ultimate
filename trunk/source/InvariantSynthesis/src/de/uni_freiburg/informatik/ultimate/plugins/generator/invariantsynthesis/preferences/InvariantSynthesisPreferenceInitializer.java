@@ -38,14 +38,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
  */
 public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceInitializer {
 
-
 	public enum IncreasingStrategy {
-		Conservative,
-		Medium,
-		IncrOnlyConjunctsAfterMaxDisjuncts,
-		Aggressive,
-		ExponentialConjuncts,
-		ConjunctsPriorized
+		Conservative, Medium, IncrOnlyConjunctsAfterMaxDisjuncts, Aggressive, ExponentialConjuncts, ConjunctsPriorized
 	}
 
 	/*
@@ -60,8 +54,7 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	public static final String LABEL_STEP_DISJUNCTS = "Step to increase disjuncts";
 	public static final String LABEL_STEP_CONJUNCTS = "Step to increase conjuncts";
 
-	public static final String LABEL_NONLINEAR_CONSTRAINTS =
-			"Nonlinear constraints";
+	public static final String LABEL_NONLINEAR_CONSTRAINTS = "Nonlinear constraints";
 
 	public static final String LABEL_EXTERNAL_SMT_SOLVER = "Use external solver (z3)";
 	public static final String LABEL_SOLVER_TIMEOUT = "Solver timeout (sec)";
@@ -71,7 +64,6 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	public static final String LABEL_INCR_STRATEGY = "Increasing strategy";
 	public static final String LABEL_DANGER_INVARIANT_GUESSING = "Guess danger invariant";
 	public static final String LABEL_USE_ABSTRACT_INTERPRETATION = "Use abstract interpretation";
-
 
 	/*
 	 * default values for the different preferences
@@ -93,9 +85,6 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	public static final boolean DEF_DANGER_INVARIANT_GUESSING = false;
 	public static final boolean DEF_USE_ABSTRACT_INTERPRETATION = false;
 
-
-
-
 	/**
 	 * Constructor.
 	 */
@@ -106,19 +95,25 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_KIND_INVARIANT, DEF_KIND_INVARIANT, PreferenceType.Combo, KindOfInvariant.values()),
+				new UltimatePreferenceItem<>(LABEL_KIND_INVARIANT, DEF_KIND_INVARIANT, PreferenceType.Combo,
+						KindOfInvariant.values()),
 				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, DEF_UNSAT_CORES, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_NONLINEAR_CONSTRAINTS, DEF_NONLINEAR_CONSTRAINTS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_LARGE_BLOCK_ENCODING, DEF_LARGE_BLOCK_ENCODING, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_NONLINEAR_CONSTRAINTS, DEF_NONLINEAR_CONSTRAINTS,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_LARGE_BLOCK_ENCODING, DEF_LARGE_BLOCK_ENCODING,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INITIAL_DISJUNCTS, DEF_INITIAL_DISJUNCTS, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_STEP_DISJUNCTS, DEF_STEP_DISJUNCTS, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_INITIAL_CONJUNCTS, DEF_INITIAL_CONJUNCTS, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_STEP_CONJUNCTS, DEF_STEP_CONJUNCTS, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_INCR_STRATEGY, DEF_INCR_STRATEGY, PreferenceType.Combo, IncreasingStrategy.values()),
-				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SMT_SOLVER, DEF_EXTERNAL_SMT_SOLVER, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INCR_STRATEGY, DEF_INCR_STRATEGY, PreferenceType.Combo,
+						IncreasingStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SMT_SOLVER, DEF_EXTERNAL_SMT_SOLVER,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SOLVER_TIMEOUT, DEF_SOLVER_TIMEOUT, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_DANGER_INVARIANT_GUESSING, DEF_DANGER_INVARIANT_GUESSING, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION, PreferenceType.Boolean),
-		};
-	};
+				new UltimatePreferenceItem<>(LABEL_DANGER_INVARIANT_GUESSING, DEF_DANGER_INVARIANT_GUESSING,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION,
+						PreferenceType.Boolean), };
+	}
 }

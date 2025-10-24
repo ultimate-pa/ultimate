@@ -67,8 +67,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 
 	@Override
 	public String[] getStopwatches() {
-		final List<String> al = new ArrayList<>();
-		al.addAll(Arrays.asList(super.getStopwatches()));
+		final List<String> al = new ArrayList<>(Arrays.asList(super.getStopwatches()));
 		al.add(BuchiCegarLoopBenchmark.NON_LIVE_STATE_REMOVAL);
 		al.add(BuchiCegarLoopBenchmark.BUCHI_CLOSURE);
 		al.add(BuchiCegarLoopBenchmark.NONTRIVIAL_MODUL_STAGES);

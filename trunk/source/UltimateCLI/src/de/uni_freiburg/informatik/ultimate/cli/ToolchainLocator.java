@@ -34,8 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import jakarta.xml.bind.JAXBException;
 
 /**
  *

@@ -34,35 +34,33 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
-
-
 /**
  * State interface of word automata
- * */
+ */
 public interface IStateWa extends IState {
-		
+
 	void addSuccessor(int letter, int state);
-	
+
 	IntSet getSuccessors(int letter);
-	
+
 	Set<Integer> getEnabledLetters();
 
-	default void toBA(PrintStream printer, List<String> alphabet) {
-		Set<Integer> enabledLetters = this.getEnabledLetters();
-		for(Integer letter : enabledLetters) {
-        	for(Integer succ : this.getSuccessors(letter).iterable()) {
-        		printer.print(alphabet.get(letter) + ",[" + this.getId() + "]->[" + succ + "]\n");
-        	}
+	default void toBA(final PrintStream printer, final List<String> alphabet) {
+		final Set<Integer> enabledLetters = getEnabledLetters();
+		for (final Integer letter : enabledLetters) {
+			for (final Integer succ : getSuccessors(letter).iterable()) {
+				printer.print(alphabet.get(letter) + ",[" + getId() + "]->[" + succ + "]\n");
+			}
 		}
 	}
 
 	@Override
-	default void toDot(PrintStream printer, List<String> alphabet) {
-		Set<Integer> enabledLetters = this.getEnabledLetters();
-		for(Integer letter : enabledLetters) {
-    		for(Integer succ : this.getSuccessors(letter).iterable()) {
-    			printer.print("  " + this.getId() + " -> " + succ + " [label=\"" + alphabet.get(letter) + "\"];\n");
-    		}
-        }
+	default void toDot(final PrintStream printer, final List<String> alphabet) {
+		final Set<Integer> enabledLetters = getEnabledLetters();
+		for (final Integer letter : enabledLetters) {
+			for (final Integer succ : getSuccessors(letter).iterable()) {
+				printer.print("  " + getId() + " -> " + succ + " [label=\"" + alphabet.get(letter) + "\"];\n");
+			}
+		}
 	}
 }

@@ -26,6 +26,7 @@
  */
 /**
  * Package for SMT-LIB arrays.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */

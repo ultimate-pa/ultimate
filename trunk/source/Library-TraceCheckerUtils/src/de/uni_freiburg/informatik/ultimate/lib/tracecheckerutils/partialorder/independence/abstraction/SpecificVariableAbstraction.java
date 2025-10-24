@@ -129,9 +129,8 @@ public class SpecificVariableAbstraction<L extends IAction>
 	private L copy(final L inLetter, final UnaryOperator<UnmodifiableTransFormula> transform) {
 		final UnmodifiableTransFormula newFormula = transform.apply(inLetter.getTransformula());
 		final UnmodifiableTransFormula newFormulaBE;
-		if (ABSTRACT_TF_WITH_BRANCH_ENCODERS && inLetter instanceof IActionWithBranchEncoders) {
-			newFormulaBE =
-					transform.apply(((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders());
+		if (ABSTRACT_TF_WITH_BRANCH_ENCODERS && inLetter instanceof final IActionWithBranchEncoders inLetterBE) {
+			newFormulaBE = transform.apply(inLetterBE.getTransitionFormulaWithBranchEncoders());
 		} else {
 			newFormulaBE = null;
 		}
@@ -242,10 +241,10 @@ public class SpecificVariableAbstraction<L extends IAction>
 		tfBuilder.ensureInternalNormalForm();
 		final UnmodifiableTransFormula newTransFormula = tfBuilder.finishConstruction(mMgdScript);
 
-		assert newTransFormula.getAssignedVars()
-				.equals(utf.getAssignedVars()) : "Abstraction should not change assigned variables";
-		assert utf.getInVars().keySet()
-				.containsAll(newTransFormula.getInVars().keySet()) : "Abstraction should not read more variables";
+		assert newTransFormula.getAssignedVars().equals(utf.getAssignedVars())
+				: "Abstraction should not change assigned variables";
+		assert utf.getInVars().keySet().containsAll(newTransFormula.getInVars().keySet())
+				: "Abstraction should not read more variables";
 		assert TransFormulaUtils.checkImplication(utf, newTransFormula, mMgdScript) != LBool.SAT : "not an abstraction";
 
 		return newTransFormula;

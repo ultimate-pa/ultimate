@@ -103,8 +103,8 @@ final class Partition {
 	 * @return a <code>Partition</code> carrying the compressed array
 	 */
 	public static Partition compress(final int[] root) {
-		for (int i = 0; i < root.length; i++) {
-			assert 0 <= root[i] && root[i] < root.length;
+		for (final int element : root) {
+			assert 0 <= element && element < root.length;
 		}
 
 		int numClasses = 0;
@@ -115,7 +115,8 @@ final class Partition {
 		for (int i = 0; i < root.length; i++) {
 			if (!seen[root[i]]) {
 				seen[root[i]] = true;
-				newName[root[i]] = numClasses++;
+				newName[root[i]] = numClasses;
+				numClasses++;
 			}
 		}
 

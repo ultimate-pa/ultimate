@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
@@ -35,16 +36,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Represents a binary relation that has been solved for a subject x. I.e. this
- * represents a formula of the form x ▷ φ, where x is a variable, φ is a term in
- * which x does not occur. Here, the binary relation symbol ▷ is an element of
- * the following list.
+ * Represents a binary relation that has been solved for a subject x. I.e. this represents a formula of the form x ▷ φ,
+ * where x is a variable, φ is a term in which x does not occur. Here, the binary relation symbol ▷ is an element of the
+ * following list.
  * <p>
  * ▷ ∈ { =, !=, \<=, \<, \>=, \> }
  * </p>
- * Additionally, this class may provide a Boolean formula ψ and if such a
- * formula is provided the formula x ▷ φ holds only under the assumption that ψ
- * holds.
+ * Additionally, this class may provide a Boolean formula ψ and if such a formula is provided the formula x ▷ φ holds
+ * only under the assumption that ψ holds.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -61,7 +60,6 @@ public class SolvedBinaryRelation implements ITermProvider {
 
 	public SolvedBinaryRelation(final Term leftHandSide, final Term rightHandSide, final RelationSymbol relationSymbol,
 			final IntricateOperation... intricateOperation) {
-		super();
 		mLeftHandSide = leftHandSide;
 		mRightHandSide = rightHandSide;
 		mRelationSymbol = relationSymbol;
@@ -113,44 +111,46 @@ public class SolvedBinaryRelation implements ITermProvider {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mIntricateOperations == null) ? 0 : mIntricateOperations.hashCode());
-		result = prime * result + ((mLeftHandSide == null) ? 0 : mLeftHandSide.hashCode());
-		result = prime * result + ((mRelationSymbol == null) ? 0 : mRelationSymbol.hashCode());
-		result = prime * result + ((mRightHandSide == null) ? 0 : mRightHandSide.hashCode());
-		return result;
+		return Objects.hash(mIntricateOperations, mLeftHandSide, mRelationSymbol, mRightHandSide);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final SolvedBinaryRelation other = (SolvedBinaryRelation) obj;
 		if (mIntricateOperations == null) {
-			if (other.mIntricateOperations != null)
+			if (other.mIntricateOperations != null) {
 				return false;
-		} else if (!mIntricateOperations.equals(other.mIntricateOperations))
+			}
+		} else if (!mIntricateOperations.equals(other.mIntricateOperations)) {
 			return false;
+		}
 		if (mLeftHandSide == null) {
-			if (other.mLeftHandSide != null)
+			if (other.mLeftHandSide != null) {
 				return false;
-		} else if (!mLeftHandSide.equals(other.mLeftHandSide))
+			}
+		} else if (!mLeftHandSide.equals(other.mLeftHandSide)) {
 			return false;
-		if (mRelationSymbol != other.mRelationSymbol)
+		}
+		if (mRelationSymbol != other.mRelationSymbol) {
 			return false;
+		}
 		if (mRightHandSide == null) {
-			if (other.mRightHandSide != null)
+			if (other.mRightHandSide != null) {
 				return false;
-		} else if (!mRightHandSide.equals(other.mRightHandSide))
+			}
+		} else if (!mRightHandSide.equals(other.mRightHandSide)) {
 			return false;
+		}
 		return true;
 	}
-
-
 
 }

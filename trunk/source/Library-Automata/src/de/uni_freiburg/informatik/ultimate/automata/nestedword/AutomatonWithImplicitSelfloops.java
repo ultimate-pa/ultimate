@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,15 +45,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.IteratorConcatenation;
 
 /**
- * This {@link INwaOutgoingLetterAndTransitionProvider} represents the
- * modification of another {@link INwaOutgoingLetterAndTransitionProvider}. The
- * input {@link INwaOutgoingLetterAndTransitionProvider} is however not modified
- * at all. An {@link AutomatonWithImplicitSelfloops} is just a layer that acts
- * as a modification and uses the input automaton as back-end. For all STATE-LETTER
- * pairs that in the set product of mLooperStates and mLooperLetters the
- * {@link AutomatonWithImplicitSelfloops} has a self-loop (and no other outgoing
- * transitions), for other LETTERs the {@link AutomatonWithImplicitSelfloops}
- * has the transitions of the input
+ * This {@link INwaOutgoingLetterAndTransitionProvider} represents the modification of another
+ * {@link INwaOutgoingLetterAndTransitionProvider}. The input {@link INwaOutgoingLetterAndTransitionProvider} is however
+ * not modified at all. An {@link AutomatonWithImplicitSelfloops} is just a layer that acts as a modification and uses
+ * the input automaton as back-end. For all STATE-LETTER pairs that in the set product of mLooperStates and
+ * mLooperLetters the {@link AutomatonWithImplicitSelfloops} has a self-loop (and no other outgoing transitions), for
+ * other LETTERs the {@link AutomatonWithImplicitSelfloops} has the transitions of the input
  * {@link INwaOutgoingLetterAndTransitionProvider}.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -70,12 +66,8 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 	public AutomatonWithImplicitSelfloops(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> inputAutomaton,
 			final Set<LETTER> loopersLetters, final Predicate<STATE> looperStates) {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		if (!NestedWordAutomataUtils.isFiniteAutomaton(inputAutomaton)) {
-			throw new UnsupportedOperationException("Calls and returns are not yet supported.");
-		}
 		mInputAutomaton = inputAutomaton;
 		mLooperLetters = loopersLetters;
 		mLooperStates = looperStates;
@@ -160,7 +152,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 			final LETTER letter) {
 		if (mLooperStates.test(state)) {
 			if (mLooperLetters.contains(letter)) {
-				return Collections.singleton(new OutgoingInternalTransition(letter, state));
+				return Collections.singleton(new OutgoingInternalTransition<>(letter, state));
 			} else {
 				return mInputAutomaton.internalSuccessors(state, letter);
 			}
@@ -177,14 +169,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 			for (final LETTER letter : mInputAutomaton.getAlphabet()) {
 				iterators.add(internalSuccessors(state, letter).iterator());
 			}
-			return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
-
-				@Override
-				public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-					return new IteratorConcatenation<OutgoingInternalTransition<LETTER, STATE>>(iterators);
-				}
-
-			};
+			return () -> new IteratorConcatenation<>(iterators);
 		} else {
 			return mInputAutomaton.internalSuccessors(state);
 		}
@@ -192,98 +177,62 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
-		throw new UnsupportedOperationException("does not support call and return");
+		if (mLooperStates.test(state)) {
+			if (mLooperLetters.contains(letter)) {
+				return Collections.singleton(new OutgoingCallTransition<>(letter, state));
+			} else {
+				return mInputAutomaton.callSuccessors(state, letter);
+			}
+		} else {
+			return mInputAutomaton.callSuccessors(state, letter);
+		}
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		return Collections.emptyList();
+		if (mLooperStates.test(state)) {
+			// TODO 2019-10-15 Matthias: Make this method efficient if required.
+			final List<Iterator<OutgoingCallTransition<LETTER, STATE>>> iterators = new ArrayList<>();
+			for (final LETTER letter : mInputAutomaton.getVpAlphabet().getCallAlphabet()) {
+				iterators.add(callSuccessors(state, letter).iterator());
+			}
+			return () -> new IteratorConcatenation<>(iterators);
+		} else {
+			return mInputAutomaton.callSuccessors(state);
+		}
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
-		return Collections.emptyList();
+		if (mLooperStates.test(state)) {
+			if (mLooperLetters.contains(letter)) {
+				return Collections.singleton(new OutgoingReturnTransition<>(hier, letter, state));
+			} else {
+				return mInputAutomaton.returnSuccessors(state, hier, letter);
+			}
+		} else {
+			return mInputAutomaton.returnSuccessors(state, hier, letter);
+		}
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
-		return Collections.emptyList();
+		if (mLooperStates.test(state)) {
+			// TODO 2019-10-15 Matthias: Make this method efficient if required.
+			final List<Iterator<OutgoingReturnTransition<LETTER, STATE>>> iterators = new ArrayList<>();
+			for (final LETTER letter : mInputAutomaton.getVpAlphabet().getReturnAlphabet()) {
+				iterators.add(returnSuccessors(state, hier, letter).iterator());
+			}
+			return () -> new IteratorConcatenation<>(iterators);
+		} else {
+			return mInputAutomaton.returnSuccessorsGivenHier(state, hier);
+		}
 	}
 
 	@Override
 	public String toString() {
 		return (AutomatonDefinitionPrinter.toString(mServices, "nwa", this));
-	}
-
-
-	private static class ContainsAny<E> implements Set<E> {
-
-		@Override
-		public boolean add(final E arg0) {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public boolean addAll(final Collection<? extends E> arg0) {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public boolean contains(final Object arg0) {
-			return true;
-		}
-
-		@Override
-		public boolean containsAll(final Collection<?> arg0) {
-			return true;
-		}
-
-		@Override
-		public boolean isEmpty() {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public Iterator<E> iterator() {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public boolean remove(final Object arg0) {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public boolean removeAll(final Collection<?> arg0) {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public boolean retainAll(final Collection<?> arg0) {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public int size() {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public Object[] toArray() {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
-		@Override
-		public <T> T[] toArray(final T[] arg0) {
-			throw new UnsupportedOperationException("ContainsAny supports only contains");
-		}
-
 	}
 }

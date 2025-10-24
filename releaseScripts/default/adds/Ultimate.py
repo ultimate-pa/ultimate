@@ -468,6 +468,7 @@ def call_desperate(call_args):
             stderr=subprocess.STDOUT,
             shell=False,
             preexec_fn=None if is_windows() else _init_child_process,
+            env={**os.environ, 'PATH': ultimatedir + os.pathsep + os.environ['PATH']}
         )
     except:
         print("Error trying to open subprocess " + str(call_args))
@@ -597,7 +598,8 @@ def check_witness_type(witness, type):
     elif witness.endswith(".graphml"):
         valid = check_witness_type_graphml(witness, type)
     else:
-        print("Unsupported witness type", witness.rpartition(".")[2])
+        print(f'Unexpected witness file ending .{witness.rpartition(".")[2]}. '
+              'The witness has to end with .yml, .yaml, or .graphml.')
     if not valid:
         sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
 

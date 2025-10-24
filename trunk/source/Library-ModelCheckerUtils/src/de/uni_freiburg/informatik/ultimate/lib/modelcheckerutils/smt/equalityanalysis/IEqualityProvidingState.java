@@ -55,7 +55,7 @@ public interface IEqualityProvidingState {
 
 	/**
 	 * Compute the join of two states, i.e., compute a state which only contains constraints that are implied by this
-	 *  and the given other state
+	 * and the given other state
 	 *
 	 * @param other
 	 * @return

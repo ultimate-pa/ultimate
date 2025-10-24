@@ -172,11 +172,9 @@ public enum MemoryModelDeclarations {
 		// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
 		for (final CPrimitives prim : new HashSet<>(mmf.getDataOnHeapRequiredUnchecked())) {
 			changedSomething |= mmf.reportUncheckedWriteRequired(prim);
-			changedSomething |= mmf.reportUncheckedReadRequired(prim);
 		}
 		if (mmf.isPointerOnHeapRequiredUnchecked()) {
 			changedSomething |= mmf.reportPointerUncheckedWriteRequired();
-			changedSomething |= mmf.reportPointerUncheckedReadRequired();
 		}
 		changedSomething |= mmf.require(ULTIMATE_DATA_RACE_MEMORY);
 		return changedSomething;

@@ -216,8 +216,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 				}
 
 				final UnmodifiableTransFormula formula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						mManagedScript, true, false, false, SimplificationTechnique.SIMPLIFY_DDA,
-						formulas);
+						mManagedScript, true, false, false, SimplificationTechnique.SIMPLIFY_DDA, formulas);
 				final FastUPRCore fastUpr = new FastUPRCore(formula, mManagedScript, mLogger, mServices);
 
 				if (mReplacementMethod == FastUPRReplacementMethod.REPLACE_LOOP_EDGE) {
@@ -492,7 +491,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		REPLACE_LOOP_EDGE, REPLACE_EXIT_EDGE,
 	}
 
-	private class LoopEdgeElement {
+	private static class LoopEdgeElement {
 		public final IcfgEdge mEntryEdge;
 		public final IcfgEdge mLoopEdge;
 		public final IcfgEdge mExitEdge;

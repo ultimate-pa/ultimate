@@ -42,7 +42,6 @@ public class AffineSubtermNormalizer extends TermTransformer {
 	private final Script mScript;
 
 	public AffineSubtermNormalizer(final Script script) {
-		super();
 		mScript = script;
 	}
 
@@ -73,4 +72,4 @@ public class AffineSubtermNormalizer extends TermTransformer {
 	}
 
 }
-//TODO polynRelRename
+// TODO polynRelRename

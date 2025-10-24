@@ -29,9 +29,8 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jor
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Represents a decomposition of a {@link QuadraticMatrix} into a product of
- * three matrices M * J * M^{-1}, where J is in Jordan normal form and M is a
- * invertible matrix that we call modal matrix.
+ * Represents a decomposition of a {@link QuadraticMatrix} into a product of three matrices M * J * M^{-1}, where J is
+ * in Jordan normal form and M is a invertible matrix that we call modal matrix.
  * https://en.wikipedia.org/wiki/Jordan_normal_form
  *
  * @author Miriam Herzig
@@ -46,15 +45,14 @@ public class JordanDecomposition {
 		 * We support the transformation to JNF only if each eigenvalue is either -1,0 or 1.
 		 */
 		UNSUPPORTED_EIGENVALUES
-	};
+	}
 
 	private final JordanDecompositionStatus mStatus;
 	private final QuadraticMatrix mJnf;
 	private final RationalMatrix mModal;
 	private final RationalMatrix mInverseModal;
 	/**
-	 * Contains triple (ev, bs, occ) if there are exactly occ Jordan blocks of size
-	 * bs for eigenvalue ev.
+	 * Contains triple (ev, bs, occ) if there are exactly occ Jordan blocks of size bs for eigenvalue ev.
 	 */
 	private final NestedMap2<Integer, Integer, Integer> mJordanBlockSizes;
 
@@ -64,8 +62,8 @@ public class JordanDecomposition {
 		assert (status == JordanDecompositionStatus.SUCCESS) ^ (jnf == null) : "provide JNF iff success";
 		assert (jnf == null) == (jordanBlockSizes == null) : "all or nothing";
 		if (jordanBlockSizes != null) {
-			assert jordanBlockSizes.keySet().stream()
-					.allMatch(x -> x == -1 || x == 0 || x == 1) : "only supported eigenvalues as keys";
+			assert jordanBlockSizes.keySet().stream().allMatch(x -> x == -1 || x == 0 || x == 1)
+					: "only supported eigenvalues as keys";
 		}
 		mStatus = status;
 		mJnf = jnf;

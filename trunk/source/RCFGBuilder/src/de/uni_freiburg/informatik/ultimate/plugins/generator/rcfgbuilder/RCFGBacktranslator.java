@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
@@ -66,10 +65,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadOther;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadOther;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -112,7 +109,8 @@ public class RCFGBacktranslator extends
 		final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<>();
 		for (final IIcfgTransition<IcfgLocation> elem : cbTrace) {
 			if (!(elem instanceof CodeBlock)) {
-				throw new AssertionError("unknown rcfg element");
+				throw new AssertionError(
+						"Transition is not a CodeBlock: " + elem.getClass().getSimpleName() + " " + elem);
 			}
 			addCodeBlock(elem, null, null, null, null, atomicTeList, null);
 		}
@@ -172,18 +170,10 @@ public class RCFGBacktranslator extends
 			final Statement st = ((Return) cb).getCallStatement();
 			ateBuilder.setStepAndElement(st);
 			ateBuilder.setStepInfo(StepInfo.PROC_RETURN);
-		} else if (cb instanceof ForkThreadOther) {
-			final Statement st = ((ForkThreadOther) cb).getForkStatement();
-			ateBuilder.setStepAndElement(st);
-			ateBuilder.setStepInfo(StepInfo.FORK);
 		} else if (cb instanceof ForkThreadCurrent) {
 			final Statement st = ((ForkThreadCurrent) cb).getForkStatement();
 			ateBuilder.setStepAndElement(st);
 			ateBuilder.setStepInfo(StepInfo.FORK);
-		} else if (cb instanceof JoinThreadOther) {
-			final Statement st = ((JoinThreadOther) cb).getJoinStatement();
-			ateBuilder.setStepAndElement(st);
-			ateBuilder.setStepInfo(StepInfo.JOIN);
 		} else if (cb instanceof JoinThreadCurrent) {
 			final Statement st = ((JoinThreadCurrent) cb).getJoinStatement();
 			ateBuilder.setStepAndElement(st);
@@ -254,12 +244,11 @@ public class RCFGBacktranslator extends
 	public IProgramExecution<BoogieASTNode, Expression>
 
 			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution) {
-		if (!(programExecution instanceof IcfgProgramExecution)) {
+		if (!(programExecution instanceof final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> rcfgProgramExecution)) {
 			throw new IllegalArgumentException();
 		}
-		final IcfgProgramExecution rcfgProgramExecution = (IcfgProgramExecution) programExecution;
-		assert checkCallStackSourceProgramExecution(mLogger,
-				programExecution) : "callstack of initial program execution already broken";
+		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
+				: "callstack of initial program execution already broken";
 
 		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
 		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();
@@ -301,13 +290,10 @@ public class RCFGBacktranslator extends
 	 *
 	 * @param cache
 	 */
-	@SuppressWarnings("unchecked")
-	private <TVL> Multigraph<String, BoogieASTNode> translateCFGEdge(
+	private Multigraph<String, BoogieASTNode> translateCFGEdge(
 			final Map<IExplicitEdgesMultigraph<?, ?, IcfgLocation, ? extends IIcfgTransition<IcfgLocation>, ?>, Multigraph<String, BoogieASTNode>> cache,
 			final IIcfgTransition<IcfgLocation> oldEdge, final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final IcfgLocation oldTarget = oldEdge.getTarget();
-		final IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, ? extends IIcfgTransition<IcfgLocation>, VisualizationNode> bla =
-				oldTarget;
 		// this is the node we want to return
 		Multigraph<String, BoogieASTNode> newTarget;
 		if (oldTarget != null) {
@@ -402,4 +388,8 @@ public class RCFGBacktranslator extends
 		return mTerm2Expression.translate(term);
 	}
 
+	@Override
+	public String targetExpressionToString(final Expression expression) {
+		return BoogiePrettyPrinter.print(expression);
+	}
 }

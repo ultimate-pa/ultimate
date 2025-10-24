@@ -99,7 +99,7 @@ public class PathProgramCache<LETTER> {
 			mLogger.warn("You did not report this counterexample before!");
 			return 0;
 		}
-		return count.intValue();
+		return count;
 	}
 
 	public List<Integer> computeSortedHistrogram() {

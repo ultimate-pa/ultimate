@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 
 /**
  * A class that helps fast enabling/disabling of predicate unification. It will unify iff the flag is enabled.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class PredicateUnificationMechanism {

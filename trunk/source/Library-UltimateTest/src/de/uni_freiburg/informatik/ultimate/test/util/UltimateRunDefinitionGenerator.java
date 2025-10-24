@@ -235,9 +235,9 @@ public final class UltimateRunDefinitionGenerator {
 					getInputFiles(dir, pair.getFileEndings(), pair.getOffset(), pair.getLimit());
 			final Collection<File> witnessCandidates;
 			if (dir.isFile()) {
-				witnessCandidates = TestUtil.getFiles(dir.getParentFile(), new String[] { ".graphml" });
+				witnessCandidates = TestUtil.getFiles(dir.getParentFile(), ".graphml");
 			} else {
-				witnessCandidates = TestUtil.getFiles(dir, new String[] { ".graphml" });
+				witnessCandidates = TestUtil.getFiles(dir, ".graphml");
 			}
 
 			for (final File inputFile : inputFiles) {
@@ -283,9 +283,9 @@ public final class UltimateRunDefinitionGenerator {
 		}
 		final Collection<File> witnessCandidates;
 		if (witnessFolderFile.isFile()) {
-			witnessCandidates = TestUtil.getFiles(witnessFolderFile.getParentFile(), new String[] { ".graphml" });
+			witnessCandidates = TestUtil.getFiles(witnessFolderFile.getParentFile(), ".graphml");
 		} else {
-			witnessCandidates = TestUtil.getFiles(witnessFolderFile, new String[] { ".graphml" });
+			witnessCandidates = TestUtil.getFiles(witnessFolderFile, ".graphml");
 		}
 
 		for (final DirectoryFileEndingsPair pair : input) {

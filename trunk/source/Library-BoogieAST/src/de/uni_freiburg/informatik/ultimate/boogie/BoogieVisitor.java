@@ -100,27 +100,18 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
  * @author dietsch
  */
 public abstract class BoogieVisitor extends BoogieTransformer {
-
-	private static final String MSG_EXTEND_THIS_WITH_NEW_TYPE = "Extend this with new type %s";
-
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
-		if (decl instanceof Axiom) {
-			visit((Axiom) decl);
-		} else if (decl instanceof ConstDeclaration) {
-			visit((ConstDeclaration) decl);
-		} else if (decl instanceof FunctionDeclaration) {
-			visit((FunctionDeclaration) decl);
-		} else if (decl instanceof Procedure) {
-			visit((Procedure) decl);
-		} else if (decl instanceof TypeDeclaration) {
-			visit((TypeDeclaration) decl);
-		} else if (decl instanceof VariableDeclaration) {
+		switch (decl) {
+		case final Axiom axiom -> visit(axiom);
+		case final ConstDeclaration constDecl -> visit(constDecl);
+		case final FunctionDeclaration funDecl -> visit(funDecl);
+		case final Procedure proc -> visit(proc);
+		case final TypeDeclaration typeDecl -> visit(typeDecl);
+		case final VariableDeclaration varDecl -> {
 			// this case is already handled by processVariableDeclaration
-		} else {
-			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, decl.getClass()));
 		}
-
+		}
 		return super.processDeclaration(decl);
 	}
 
@@ -146,16 +137,11 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 
 	@Override
 	protected ASTType processType(final ASTType type) {
-		if (type instanceof ArrayType) {
-			visit((ArrayType) type);
-		} else if (type instanceof NamedType) {
-			visit((NamedType) type);
-		} else if (type instanceof PrimitiveType) {
-			visit((PrimitiveType) type);
-		} else if (type instanceof StructType) {
-			visit((StructType) type);
-		} else {
-			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, type.getClass()));
+		switch (type) {
+		case final ArrayType array -> visit(array);
+		case final NamedType named -> visit(named);
+		case final PrimitiveType primitive -> visit(primitive);
+		case final StructType struct -> visit(struct);
 		}
 		return super.processType(type);
 	}
@@ -178,38 +164,22 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 
 	@Override
 	protected Statement processStatement(final Statement statement) {
-		if (statement instanceof AssertStatement) {
-			visit((AssertStatement) statement);
-		} else if (statement instanceof AssignmentStatement) {
-			visit((AssignmentStatement) statement);
-		} else if (statement instanceof AssumeStatement) {
-			visit((AssumeStatement) statement);
-		} else if (statement instanceof BreakStatement) {
-			visit((BreakStatement) statement);
-		} else if (statement instanceof CallStatement) {
-			visit((CallStatement) statement);
-		} else if (statement instanceof ForkStatement) {
-			visit((ForkStatement) statement);
-		} else if (statement instanceof JoinStatement) {
-			visit((JoinStatement) statement);
-		} else if (statement instanceof GotoStatement) {
-			visit((GotoStatement) statement);
-		} else if (statement instanceof HavocStatement) {
-			visit((HavocStatement) statement);
-		} else if (statement instanceof IfStatement) {
-			visit((IfStatement) statement);
-		} else if (statement instanceof Label) {
-			visit((Label) statement);
-		} else if (statement instanceof ReturnStatement) {
-			visit((ReturnStatement) statement);
-		} else if (statement instanceof WhileStatement) {
-			visit((WhileStatement) statement);
-		} else if (statement instanceof AtomicStatement) {
-			visit((AtomicStatement) statement);
-		} else {
-			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, statement.getClass()));
+		switch (statement) {
+		case final AssertStatement assertStmt -> visit(assertStmt);
+		case final AssignmentStatement assignStmt -> visit(assignStmt);
+		case final AssumeStatement assumeStmt -> visit(assumeStmt);
+		case final AtomicStatement atomicStmt -> visit(atomicStmt);
+		case final BreakStatement breakStmt -> visit(breakStmt);
+		case final CallStatement callStmt -> visit(callStmt);
+		case final ForkStatement forkStmt -> visit(forkStmt);
+		case final GotoStatement gotoStmt -> visit(gotoStmt);
+		case final HavocStatement havocStmt -> visit(havocStmt);
+		case final IfStatement ifStmt -> visit(ifStmt);
+		case final JoinStatement joinStmt -> visit(joinStmt);
+		case final Label label -> visit(label);
+		case final ReturnStatement returnStmt -> visit(returnStmt);
+		case final WhileStatement whileStmt -> visit(whileStmt);
 		}
-
 		return super.processStatement(statement);
 	}
 
@@ -271,14 +241,10 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 
 	@Override
 	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-		if (lhs instanceof ArrayLHS) {
-			visit((ArrayLHS) lhs);
-		} else if (lhs instanceof StructLHS) {
-			visit((StructLHS) lhs);
-		} else if (lhs instanceof VariableLHS) {
-			visit((VariableLHS) lhs);
-		} else {
-			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, lhs.getClass()));
+		switch (lhs) {
+		case final ArrayLHS array -> visit(array);
+		case final StructLHS struct -> visit(struct);
+		case final VariableLHS variable -> visit(variable);
 		}
 		return super.processLeftHandSide(lhs);
 	}
@@ -297,16 +263,11 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 
 	@Override
 	protected Specification processSpecification(final Specification spec) {
-		if (spec instanceof EnsuresSpecification) {
-			visit((EnsuresSpecification) spec);
-		} else if (spec instanceof LoopInvariantSpecification) {
-			visit((LoopInvariantSpecification) spec);
-		} else if (spec instanceof ModifiesSpecification) {
-			visit((ModifiesSpecification) spec);
-		} else if (spec instanceof RequiresSpecification) {
-			visit((RequiresSpecification) spec);
-		} else {
-			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, spec.getClass()));
+		switch (spec) {
+		case final EnsuresSpecification ensures -> visit(ensures);
+		case final LoopInvariantSpecification loopInvariant -> visit(loopInvariant);
+		case final ModifiesSpecification modifies -> visit(modifies);
+		case final RequiresSpecification requires -> visit(requires);
 		}
 		return super.processSpecification(spec);
 	}
@@ -329,14 +290,10 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 
 	@Override
 	protected <T extends Attribute> T processAttribute(final T attr) {
-		if (attr instanceof NamedAttribute) {
-			visit((NamedAttribute) attr);
-		} else if (attr instanceof Trigger) {
-			visit((Trigger) attr);
-		} else {
-			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, attr.getClass()));
+		switch (attr) {
+		case final NamedAttribute named -> visit(named);
+		case final Trigger trigger -> visit(trigger);
 		}
-
 		return super.processAttribute(attr);
 	}
 
@@ -350,42 +307,24 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 
 	@Override
 	protected Expression processExpression(final Expression expr) {
-		if (expr instanceof ArrayAccessExpression) {
-			visit((ArrayAccessExpression) expr);
-		} else if (expr instanceof ArrayStoreExpression) {
-			visit((ArrayStoreExpression) expr);
-		} else if (expr instanceof BinaryExpression) {
-			visit((BinaryExpression) expr);
-		} else if (expr instanceof BitvecLiteral) {
-			visit((BitvecLiteral) expr);
-		} else if (expr instanceof BitVectorAccessExpression) {
-			visit((BitVectorAccessExpression) expr);
-		} else if (expr instanceof BooleanLiteral) {
-			visit((BooleanLiteral) expr);
-		} else if (expr instanceof FunctionApplication) {
-			visit((FunctionApplication) expr);
-		} else if (expr instanceof IdentifierExpression) {
-			visit((IdentifierExpression) expr);
-		} else if (expr instanceof IfThenElseExpression) {
-			visit((IfThenElseExpression) expr);
-		} else if (expr instanceof IntegerLiteral) {
-			visit((IntegerLiteral) expr);
-		} else if (expr instanceof QuantifierExpression) {
-			visit((QuantifierExpression) expr);
-		} else if (expr instanceof RealLiteral) {
-			visit((RealLiteral) expr);
-		} else if (expr instanceof StringLiteral) {
-			visit((StringLiteral) expr);
-		} else if (expr instanceof StructAccessExpression) {
-			visit((StructAccessExpression) expr);
-		} else if (expr instanceof StructConstructor) {
-			visit((StructConstructor) expr);
-		} else if (expr instanceof UnaryExpression) {
-			visit((UnaryExpression) expr);
-		} else if (expr instanceof WildcardExpression) {
-			visit((WildcardExpression) expr);
-		} else {
-			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, expr.getClass()));
+		switch (expr) {
+		case final ArrayAccessExpression arrayAccess -> visit(arrayAccess);
+		case final ArrayStoreExpression arrayStore -> visit(arrayStore);
+		case final BinaryExpression binary -> visit(binary);
+		case final BitvecLiteral bitvec -> visit(bitvec);
+		case final BitVectorAccessExpression bitvecAccess -> visit(bitvecAccess);
+		case final BooleanLiteral booleanLit -> visit(booleanLit);
+		case final FunctionApplication funApp -> visit(funApp);
+		case final IdentifierExpression idExpr -> visit(idExpr);
+		case final IfThenElseExpression ite -> visit(ite);
+		case final IntegerLiteral intLit -> visit(intLit);
+		case final QuantifierExpression quantified -> visit(quantified);
+		case final RealLiteral realLit -> visit(realLit);
+		case final StringLiteral stringLit -> visit(stringLit);
+		case final StructAccessExpression structAccess -> visit(structAccess);
+		case final StructConstructor structConstructor -> visit(structConstructor);
+		case final UnaryExpression unary -> visit(unary);
+		case final WildcardExpression wildcard -> visit(wildcard);
 		}
 		return super.processExpression(expr);
 	}
@@ -457,5 +396,4 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 	protected void visit(final ArrayAccessExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
-
 }

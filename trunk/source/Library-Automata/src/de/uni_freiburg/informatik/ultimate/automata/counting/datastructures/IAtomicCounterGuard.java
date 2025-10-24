@@ -40,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 public interface IAtomicCounterGuard {
 
 	/**
-	 * Counter formula of the form c ◁ k such that c is a counter variable, ◁ ∈ { <,
-	 * ⩽, >, ⩾, = }, and k ∈ ℕ.
+	 * Counter formula of the form c ◁ k such that c is a counter variable, ◁ ∈ { <, ⩽, >, ⩾, = }, and k ∈ ℕ.
 	 */
 	public static class SingleCounterGuard implements IAtomicCounterGuard {
 		private final RelationSymbol mRelationSymbol;
@@ -50,7 +49,6 @@ public interface IAtomicCounterGuard {
 
 		public SingleCounterGuard(final RelationSymbol relationSymbol, final String lhsCounter,
 				final BigInteger rhsNaturalNumber) {
-			super();
 			Objects.nonNull(relationSymbol);
 			Objects.nonNull(lhsCounter);
 			Objects.nonNull(rhsNaturalNumber);
@@ -78,9 +76,8 @@ public interface IAtomicCounterGuard {
 	}
 
 	/**
-	 * Counter formula of the form t1 = t2, where t1 and t2 are arithmetic terms of
-	 * the form c + k or k with k ∈ ℕ and c is counter variable. We use a
-	 * representation where we have only one literal at the right-hand side and this
+	 * Counter formula of the form t1 = t2, where t1 and t2 are arithmetic terms of the form c + k or k with k ∈ ℕ and c
+	 * is counter variable. We use a representation where we have only one literal at the right-hand side and this
 	 * literal can be an integer.
 	 */
 	public static class TermEqualityTest implements IAtomicCounterGuard {
@@ -89,7 +86,6 @@ public interface IAtomicCounterGuard {
 		private final BigInteger mRhsNaturalNumber;
 
 		public TermEqualityTest(final String lhsCounter, final String rhsCounter, final BigInteger rhsNaturalNumber) {
-			super();
 			Objects.requireNonNull(lhsCounter);
 			Objects.requireNonNull(rhsCounter);
 			Objects.requireNonNull(rhsNaturalNumber);

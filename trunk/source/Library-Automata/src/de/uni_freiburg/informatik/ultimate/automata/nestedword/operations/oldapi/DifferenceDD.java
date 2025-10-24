@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  * transformation of the automaton nwa_subtrahend that is defined by an implementation of IStateDeterminizer.
  * <p>
  * TODO Christian 2017-02-16 The constructors seem very confusing, are they really intended?
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  * @param <LETTER>
  *            Symbol. Type of the elements of the alphabet over which the automata are defined.
@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  *            Content. Type of the labels that are assigned to the states of automata. In many cases you want to use
  *            String as STATE and your states are labeled e.g. with "q0", "q1", ...
  */
-//TODO: Optimization for special case where subtrahend is closed under
+// TODO: Optimization for special case where subtrahend is closed under
 // concatenation with Sigma^*. Use only one DeterminizedState detFin state that
 // represents all final states. Each successor of detFin is detFin itself.
 public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
@@ -122,7 +122,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 
 	/**
 	 * Constructor with {@link IStateDeterminizer}.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactoryForIntersection
@@ -166,7 +166,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 
 	/**
 	 * Constructor using a {@link PowersetDeterminizer}.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -217,13 +217,13 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 			mLogger.info(startMessage());
 		}
 
-		super.mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, minuend.getVpAlphabet(), mStateFactoryForIntersection);
+		super.mTraversedNwa =
+				new DoubleDeckerAutomaton<>(mServices, minuend.getVpAlphabet(), mStateFactoryForIntersection);
 
 		/*
-		mDeterminizedSubtrahend =
-				new NestedWordAutomaton<LETTER, DeterminizedState<LETTER, STATE>>(minuend.getInternalAlphabet(),
-						minuend.getCallAlphabet(), minuend.getReturnAlphabet(), null);
-		*/
+		 * mDeterminizedSubtrahend = new NestedWordAutomaton<LETTER, DeterminizedState<LETTER,
+		 * STATE>>(minuend.getInternalAlphabet(), minuend.getCallAlphabet(), minuend.getReturnAlphabet(), null);
+		 */
 	}
 
 	@Override
@@ -458,7 +458,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 				mReturnSuccs++;
 				detSucc = mStateDeterminizer.returnSuccessor(detState, detLinPred, symbol);
 				// mLogger.debug("Successor of state " + detState + " symbol " + symbol + " linPred " + detLinPred
-				//		+ " is " + detSucc);
+				// + " is " + detSucc);
 
 				if (mDetStateCache.containsKey(detSucc)) {
 					detSucc = mDetStateCache.get(detSucc);

@@ -62,9 +62,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Rank
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.AutomatonTypeConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessAutomatonAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 /**
@@ -153,8 +153,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 				mTransitionClazz, constructInitialAbstraction(provider, icfg), stateFactory, mCegarLoopBenchmark);
 	}
 
-	private static Set<IcfgLocation> getAcceptingStates(final IIcfg<?> icfg) {
-		final Set<IcfgLocation> allStates =
+	private static <LOC extends IcfgLocation> Set<LOC> getAcceptingStates(final IIcfg<LOC> icfg) {
+		final Set<LOC> allStates =
 				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
 		if (LTLPropertyCheck.getAnnotation(icfg) == null) {
 			return allStates;
@@ -163,8 +163,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 				.collect(Collectors.toSet());
 	}
 
-	private <A extends IAutomaton<L, IPredicate>> A
-			constructInitialAbstraction(final IInitialAbstractionProvider<L, A> provider, final IIcfg<?> icfg) {
+	private <A extends IAutomaton<L, IPredicate>, LOC extends IcfgLocation> A
+			constructInitialAbstraction(final IInitialAbstractionProvider<L, A> provider, final IIcfg<LOC> icfg) {
 		// OverallTime should include InitialAbstractionConstructionTime. Hence we start and stop both stopwatches.
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);

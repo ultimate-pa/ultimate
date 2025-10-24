@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -37,10 +37,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Operation that checks if the language of the first Buchi automaton is included in the language of the second Buchi
- * automaton.
- * Uses the NCSB algorithm for complementation of semideterministic Büchi
- * automata. Is unsound if rhs operand is not semideterministic.
- * 
+ * automaton. Uses the NCSB algorithm for complementation of semideterministic Büchi automata. Is unsound if rhs operand
+ * is not semideterministic.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -57,7 +56,7 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -69,8 +68,8 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiIsIncludedNCSB(final AutomataLibraryServices services,
-			final FACTORY stateFactory,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiIsIncludedNCSB(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
@@ -82,7 +81,7 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 		}
 
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndComplement =
-				(new BuchiComplementNCSB<LETTER, STATE>(mServices, stateFactory, mSndOperand)).getResult();
+				(new BuchiComplementNCSB<>(mServices, stateFactory, mSndOperand)).getResult();
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> difference =
 				(new BuchiIntersectDD<>(mServices, stateFactory, mFstOperand, sndComplement, true)).getResult();
 		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<>(mServices, difference);
@@ -123,10 +122,11 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		final AutomataOperationStatistics result = BuchiIsIncluded.constructBasicInclusionStatistics(mServices, mLogger, this);
+		final AutomataOperationStatistics result =
+				BuchiIsIncluded.constructBasicInclusionStatistics(mServices, mLogger, this);
 
 		return result;
 	}

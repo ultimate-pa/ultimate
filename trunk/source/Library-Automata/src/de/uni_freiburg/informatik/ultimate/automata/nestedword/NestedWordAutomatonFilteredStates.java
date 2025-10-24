@@ -49,11 +49,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
 
 /**
- * This {@link INestedWordAutomaton} represents the modification of another
- * {@link INestedWordAutomaton}. The input {@link INestedWordAutomaton} is
- * however not modified at all. An {@link NestedWordAutomatonFilteredStates} is
- * just a layer that acts as a modification and uses the input automaton as
- * back-end.
+ * This {@link INestedWordAutomaton} represents the modification of another {@link INestedWordAutomaton}. The input
+ * {@link INestedWordAutomaton} is however not modified at all. An {@link NestedWordAutomatonFilteredStates} is just a
+ * layer that acts as a modification and uses the input automaton as back-end.
  *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -74,10 +72,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 
 	/**
-	 * Default constructor. Resulting automaton will not provide
-	 * {@link DoubleDecker} informations. For automata without call and return
-	 * transitions (i.e., finite automata and Büchi automata) this information is
-	 * irrelevant and hence this constructor is as good as the other constructor.
+	 * Default constructor. Resulting automaton will not provide {@link DoubleDecker} informations. For automata without
+	 * call and return transitions (i.e., finite automata and Büchi automata) this information is irrelevant and hence
+	 * this constructor is as good as the other constructor.
 	 */
 	public NestedWordAutomatonFilteredStates(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton, final Set<STATE> remainingStates,
@@ -86,8 +83,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	}
 
 	/**
-	 * Constructor that takes also {@link DoubleDecker} informations. Use this only
-	 * if you know exactly what you are doing.
+	 * Constructor that takes also {@link DoubleDecker} informations. Use this only if you know exactly what you are
+	 * doing.
 	 */
 	public NestedWordAutomatonFilteredStates(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton,
@@ -241,9 +238,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		return letters;
 	}
 
-//	private Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
-//		return new FilteredIterable<>(mNwa.succInternal(state, letter), mRemainingStates::contains);
-//	}
+	// private Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
+	// return new FilteredIterable<>(mNwa.succInternal(state, letter), mRemainingStates::contains);
+	// }
 
 	private Iterable<STATE> succCall(final STATE state, final LETTER letter) {
 		final Set<STATE> result = new HashSet<>();
@@ -263,9 +260,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		return result;
 	}
 
-//	private Iterable<STATE> predInternal(final STATE state, final LETTER letter) {
-//		return new FilteredIterable<>(mNwa.predInternal(state, letter), mRemainingStates::contains);
-//	}
+	// private Iterable<STATE> predInternal(final STATE state, final LETTER letter) {
+	// return new FilteredIterable<>(mNwa.predInternal(state, letter), mRemainingStates::contains);
+	// }
 
 	private Iterable<STATE> predCall(final STATE state, final LETTER letter) {
 		final Set<STATE> result = new HashSet<>();
@@ -296,7 +293,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		// because (succ, trans.getPred()) is not a DoubleDecker of the
 		// resulting automaton
 		final Predicate<IncomingCallTransition<LETTER, STATE>> predicate =
-				trans -> mRemainingStates.contains(trans.getPred()) && isDoubleDeckerThatCanReachPrecious(succ, trans.getPred());
+				trans -> mRemainingStates.contains(trans.getPred())
+						&& isDoubleDeckerThatCanReachPrecious(succ, trans.getPred());
 		return new FilteredIterable<>(mNwa.callPredecessors(succ, letter), predicate);
 	}
 
@@ -306,7 +304,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		// because (succ, trans.getPred()) is not a DoubleDecker of the
 		// resulting automaton
 		final Predicate<IncomingCallTransition<LETTER, STATE>> predicate =
-				trans -> mRemainingStates.contains(trans.getPred()) && isDoubleDeckerThatCanReachPrecious(succ, trans.getPred());
+				trans -> mRemainingStates.contains(trans.getPred())
+						&& isDoubleDeckerThatCanReachPrecious(succ, trans.getPred());
 		return new FilteredIterable<>(mNwa.callPredecessors(succ), predicate);
 	}
 
@@ -330,9 +329,10 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		// filter out also transitions that are not contained any more
 		// because (trans.getSucc(), state) is not a DoubleDecker of the
 		// resulting automaton
-		final Predicate<OutgoingCallTransition<LETTER, STATE>> predicate = trans -> mRemainingStates
-				.contains(trans.getSucc())
-				&& (!mFilterCallTransitionsBasedOnDoubleDeckerInformation || isDoubleDeckerThatCanReachPrecious(trans.getSucc(), state));
+		final Predicate<OutgoingCallTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getSucc())
+						&& (!mFilterCallTransitionsBasedOnDoubleDeckerInformation
+								|| isDoubleDeckerThatCanReachPrecious(trans.getSucc(), state));
 		return new FilteredIterable<>(mNwa.callSuccessors(state, letter), predicate);
 	}
 
@@ -341,9 +341,10 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		// filter out also transitions that are not contained any more
 		// because (trans.getSucc(), state) is not a DoubleDecker of the
 		// resulting automaton
-		final Predicate<OutgoingCallTransition<LETTER, STATE>> predicate = trans -> mRemainingStates
-				.contains(trans.getSucc())
-				&& (!mFilterCallTransitionsBasedOnDoubleDeckerInformation || isDoubleDeckerThatCanReachPrecious(trans.getSucc(), state));
+		final Predicate<OutgoingCallTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getSucc())
+						&& (!mFilterCallTransitionsBasedOnDoubleDeckerInformation
+								|| isDoubleDeckerThatCanReachPrecious(trans.getSucc(), state));
 		return new FilteredIterable<>(mNwa.callSuccessors(state), predicate);
 	}
 
@@ -352,8 +353,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 			final LETTER letter) {
 		// filter out also the return transition that cannot be taken because
 		// the corresponding (lin, hier) DoubleDecker is not reachable
-		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
-				&& mRemainingStates.contains(trans.getHierPred()) && isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), trans.getHierPred());
+		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getLinPred()) && mRemainingStates.contains(trans.getHierPred())
+						&& isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnPredecessors(succ, hier, letter), predicate);
 	}
 
@@ -361,8 +363,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
 		// filter out also the return transition that cannot be taken because
 		// the corresponding (lin, hier) DoubleDecker is not reachable
-		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
-				&& mRemainingStates.contains(trans.getHierPred()) && isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), trans.getHierPred());
+		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getLinPred()) && mRemainingStates.contains(trans.getHierPred())
+						&& isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnPredecessors(succ, letter), predicate);
 	}
 
@@ -370,8 +373,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
 		// filter out also the return transition that cannot be taken because
 		// the corresponding (lin, hier) DoubleDecker is not reachable
-		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
-				&& mRemainingStates.contains(trans.getHierPred()) && isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), trans.getHierPred());
+		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getLinPred()) && mRemainingStates.contains(trans.getHierPred())
+						&& isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnPredecessors(succ), predicate);
 	}
 
@@ -380,8 +384,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 			final LETTER letter) {
 		// filter out also the return transition that cannot be taken because
 		// the corresponding (lin, hier) DoubleDecker is not reachable
-		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getHierPred())
-				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDeckerThatCanReachPrecious(state, trans.getHierPred());
+		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getHierPred()) && mRemainingStates.contains(trans.getSucc())
+						&& isDoubleDeckerThatCanReachPrecious(state, trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnSuccessors(state, hier, letter), predicate);
 	}
 
@@ -389,8 +394,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		// filter out also the return transition that cannot be taken because
 		// the corresponding (lin, hier) DoubleDecker is not reachable
-		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getHierPred())
-				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDeckerThatCanReachPrecious(state, trans.getHierPred());
+		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getHierPred()) && mRemainingStates.contains(trans.getSucc())
+						&& isDoubleDeckerThatCanReachPrecious(state, trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnSuccessors(state), predicate);
 	}
 
@@ -399,8 +405,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 			final STATE hier) {
 		// filter out also the return transition that cannot be taken because
 		// the corresponding (lin, hier) DoubleDecker is not reachable
-		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getHierPred())
-				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDeckerThatCanReachPrecious(state, trans.getHierPred());
+		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getHierPred()) && mRemainingStates.contains(trans.getSucc())
+						&& isDoubleDeckerThatCanReachPrecious(state, trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnSuccessorsGivenHier(state, hier), predicate);
 	}
 
@@ -408,8 +415,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier, final LETTER letter) {
 		// filter out also the return transition that cannot be taken because
 		// the corresponding (lin, hier) DoubleDecker is not reachable
-		final Predicate<SummaryReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
-				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), hier);
+		final Predicate<SummaryReturnTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getLinPred()) && mRemainingStates.contains(trans.getSucc())
+						&& isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), hier);
 		return new FilteredIterable<>(mNwa.summarySuccessors(hier, letter), predicate);
 	}
 
@@ -417,8 +425,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
 		// filter out also the return transition that cannot be taken because
 		// the corresponding (lin, hier) DoubleDecker is not reachable
-		final Predicate<SummaryReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
-				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), hier);
+		final Predicate<SummaryReturnTransition<LETTER, STATE>> predicate =
+				trans -> mRemainingStates.contains(trans.getLinPred()) && mRemainingStates.contains(trans.getSucc())
+						&& isDoubleDeckerThatCanReachPrecious(trans.getLinPred(), hier);
 		return new FilteredIterable<>(mNwa.summarySuccessors(hier), predicate);
 	}
 

@@ -58,12 +58,7 @@ public class SMTTheoryDomain implements IAbstractDomain<SMTTheoryState, IcfgEdge
 
 	@Override
 	public IAbstractStateBinaryOperator<SMTTheoryState> getWideningOperator() {
-		return new IAbstractStateBinaryOperator<SMTTheoryState>() {
-			@Override
-			public SMTTheoryState apply(final SMTTheoryState first, final SMTTheoryState second) {
-				return mPostOperator.getStateFactory().widen(first, second);
-			}
-		};
+		return (first, second) -> mPostOperator.getStateFactory().widen(first, second);
 	}
 
 	@Override

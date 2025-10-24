@@ -69,7 +69,7 @@ public class AffineFunction implements Serializable {
 	protected BigInteger mConstant;
 
 	public AffineFunction() {
-		mCoefficients = new LinkedHashMap<IProgramVar, BigInteger>();
+		mCoefficients = new LinkedHashMap<>();
 		mConstant = BigInteger.ZERO;
 	}
 

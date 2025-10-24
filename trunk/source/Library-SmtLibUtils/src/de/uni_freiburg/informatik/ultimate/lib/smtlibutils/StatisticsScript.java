@@ -61,7 +61,4 @@ public class StatisticsScript extends WrapperScript {
 		return result;
 	}
 
-
-
-
 }

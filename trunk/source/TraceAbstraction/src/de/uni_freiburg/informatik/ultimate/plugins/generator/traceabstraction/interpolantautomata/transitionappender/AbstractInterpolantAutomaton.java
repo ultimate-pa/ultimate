@@ -108,7 +108,6 @@ public abstract class AbstractInterpolantAutomaton<LETTER>
 	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
 			final IPredicate falseState, final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton) {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
@@ -228,10 +227,9 @@ public abstract class AbstractInterpolantAutomaton<LETTER>
 	@Override
 	public final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state,
 			final LETTER letter) {
-		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			if (!mSuccessorComputationBookkeeping.areInternalSuccsComputed(state, letter)) {
-				computeSuccs(state, null, letter, mInSucComp);
-			}
+		if ((mMode == Mode.ON_DEMAND_CONSTRUCTION)
+				&& !mSuccessorComputationBookkeeping.areInternalSuccsComputed(state, letter)) {
+			computeSuccs(state, null, letter, mInSucComp);
 		}
 		return mAlreadyConstructedAutomaton.internalSuccessors(state, letter);
 	}
@@ -251,10 +249,9 @@ public abstract class AbstractInterpolantAutomaton<LETTER>
 	@Override
 	public final Iterable<OutgoingCallTransition<LETTER, IPredicate>> callSuccessors(final IPredicate state,
 			final LETTER letter) {
-		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			if (!mSuccessorComputationBookkeeping.areCallSuccsComputed(state, letter)) {
-				computeSuccs(state, null, letter, mCaSucComp);
-			}
+		if ((mMode == Mode.ON_DEMAND_CONSTRUCTION)
+				&& !mSuccessorComputationBookkeeping.areCallSuccsComputed(state, letter)) {
+			computeSuccs(state, null, letter, mCaSucComp);
 		}
 		return mAlreadyConstructedAutomaton.callSuccessors(state, letter);
 	}
@@ -274,10 +271,9 @@ public abstract class AbstractInterpolantAutomaton<LETTER>
 	@Override
 	public final Iterable<OutgoingReturnTransition<LETTER, IPredicate>> returnSuccessors(final IPredicate state,
 			final IPredicate hier, final LETTER letter) {
-		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			if (!mSuccessorComputationBookkeeping.areReturnSuccsComputed(state, hier, letter)) {
-				computeSuccs(state, hier, letter, mReSucComp);
-			}
+		if ((mMode == Mode.ON_DEMAND_CONSTRUCTION)
+				&& !mSuccessorComputationBookkeeping.areReturnSuccsComputed(state, hier, letter)) {
+			computeSuccs(state, hier, letter, mReSucComp);
 		}
 		return mAlreadyConstructedAutomaton.returnSuccessors(state, hier, letter);
 	}

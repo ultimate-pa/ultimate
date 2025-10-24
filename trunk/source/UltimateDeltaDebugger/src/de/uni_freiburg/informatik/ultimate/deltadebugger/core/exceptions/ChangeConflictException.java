@@ -26,19 +26,18 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
 
 /**
- * Thrown to indicate that one or more changes could not be applied. The caller can continue to generate other
- * variants, just this particular combination of changes is not possible to apply.
+ * Thrown to indicate that one or more changes could not be applied. The caller can continue to generate other variants,
+ * just this particular combination of changes is not possible to apply.
  */
 public class ChangeConflictException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
-	
+
 	/**
 	 * Default constructor.
 	 */
 	public ChangeConflictException() {
-		super();
 	}
-	
+
 	/**
 	 * @param message
 	 *            Message.
@@ -46,7 +45,7 @@ public class ChangeConflictException extends RuntimeException {
 	public ChangeConflictException(final String message) {
 		super(message);
 	}
-	
+
 	/**
 	 * @param message
 	 *            Message.
@@ -56,7 +55,7 @@ public class ChangeConflictException extends RuntimeException {
 	public ChangeConflictException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
-	
+
 	/**
 	 * @param message
 	 *            Message.
@@ -71,7 +70,7 @@ public class ChangeConflictException extends RuntimeException {
 			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
-	
+
 	/**
 	 * @param cause
 	 *            Cause.

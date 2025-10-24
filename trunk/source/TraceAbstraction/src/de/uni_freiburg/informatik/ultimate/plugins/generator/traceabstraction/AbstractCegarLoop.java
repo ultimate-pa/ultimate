@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -96,9 +97,20 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * one.
  *
  * @author heizmann@informatik.uni-freiburg.de
+ *
+ * @param <L>
+ *            the type of transitions in the analysed program
+ * @param <A>
+ *            The type of abstraction refined by the CEGAR loop
  */
 public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
+
+	/**
+	 * Do not force a destruction of the service's storage. This is needed to show {@link StatisticsResult} that were
+	 * collected during the verification process.
+	 */
+	private static final boolean DEBUG_KEEP_STORAGE = false;
 
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
@@ -400,9 +412,14 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			boolean updateBudget = true;
 			try {
 				mCegarLoopBenchmark.announceNextIteration();
+
+				if (mDumper != null) {
+					mDumper.close();
+				}
 				if (mPref.dumpAutomata()) {
 					mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 				}
+
 				try {
 					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible();
 					final AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
@@ -448,10 +465,12 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				if (updateBudget) {
 					mServices = updateTimeBudget(currentErrorLoc, parentServices, iterationServices);
 				}
-				final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
-				if (!destroyedStorables.isEmpty()) {
-					mLogger.warn("Destroyed unattended storables created during the last iteration: "
-							+ destroyedStorables.stream().collect(Collectors.joining(",")));
+				if (!DEBUG_KEEP_STORAGE) {
+					final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
+					if (!destroyedStorables.isEmpty()) {
+						mLogger.warn("Destroyed unattended storables created during the last iteration: "
+								+ destroyedStorables.stream().collect(Collectors.joining(",")));
+					}
 				}
 			}
 		}
@@ -737,18 +756,12 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		}
 
 		public static final Result convert(final TaskCanceledException.UserDefinedLimit limit) {
-			switch (limit) {
-			case ITERATIONS:
-				return Result.USER_LIMIT_ITERATIONS;
-			case PATH_PROGRAM_ATTEMPTS:
-				return Result.USER_LIMIT_PATH_PROGRAM;
-			case TIME_PER_ERROR_LOCATION:
-				return USER_LIMIT_TIME;
-			case TRACE_HISTOGRAM:
-				return Result.USER_LIMIT_TRACEHISTOGRAM;
-			default:
-				throw new UnsupportedOperationException("Unknown UserDefinedLimit " + limit);
-			}
+			return switch (limit) {
+			case ITERATIONS -> Result.USER_LIMIT_ITERATIONS;
+			case PATH_PROGRAM_ATTEMPTS -> Result.USER_LIMIT_PATH_PROGRAM;
+			case TIME_PER_ERROR_LOCATION -> USER_LIMIT_TIME;
+			case TRACE_HISTOGRAM -> Result.USER_LIMIT_TRACEHISTOGRAM;
+			};
 		}
 
 	}

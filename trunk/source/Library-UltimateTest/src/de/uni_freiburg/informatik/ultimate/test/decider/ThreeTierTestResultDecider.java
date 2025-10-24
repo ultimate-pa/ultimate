@@ -156,15 +156,15 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	public abstract ITestResultEvaluation<OVERALL_RESULT> constructTestResultEvaluation();
 
 	public interface ITestResultEvaluation<OVERALL_RESULT> {
-		public void evaluateTestResult(IExpectedResultFinder<OVERALL_RESULT> expectedResultEvaluation,
+		void evaluateTestResult(IExpectedResultFinder<OVERALL_RESULT> expectedResultEvaluation,
 				IOverallResultEvaluator<OVERALL_RESULT> overallResultDeterminer);
 
-		public void evaluateTestResult(IExpectedResultFinder<OVERALL_RESULT> expectedResultEvaluation, Throwable e);
+		void evaluateTestResult(IExpectedResultFinder<OVERALL_RESULT> expectedResultEvaluation, Throwable e);
 
-		public TestResult getTestResult();
+		TestResult getTestResult();
 
-		public String getTestResultCategory();
+		String getTestResultCategory();
 
-		public String getTestResultMessage();
+		String getTestResultMessage();
 	}
 }

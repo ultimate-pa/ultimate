@@ -644,20 +644,20 @@ public class ParametricOctMatrix {
 
 	@Override
 	public String toString() {
-		String result = "ParametricOctMatrix";
+		final StringBuilder result = new StringBuilder("ParametricOctMatrix");
 		if (isParametric()) {
-			result = result + " with parametric Variable " + mParametricVar.toString() + ":\n";
-			result = result + "Coefficients: \n";
-			result = result + mMatrix.toString();
-			result = result + "\n";
-			result = result + "Summands: \n";
-			result = result + mSummands.toString();
+			result.append(" with parametric Variable ").append(mParametricVar.toString()).append(":\n");
+			result.append("Coefficients: \n");
+			result.append(mMatrix.toString());
+			result.append("\n");
+			result.append("Summands: \n");
+			result.append(mSummands.toString());
 		} else {
-			result = result + ":\n";
-			result = result + mMatrix.toString();
+			result.append(":\n");
+			result.append(mMatrix.toString());
 		}
-		result = result + "\n VariableMapping: " + mVariableMapping.toString();
-		return result;
+		result.append("\n VariableMapping: ").append(mVariableMapping.toString());
+		return result.toString();
 	}
 
 	private boolean mappingMatch(final ParametricOctMatrix summand) {

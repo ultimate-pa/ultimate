@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure;
 
 /**
- * An {@link IIcfgTransition} that represents a Call. Edges of this type connect
- * the location of the call with the entry location of the called procedure.
+ * An {@link IIcfgTransition} that represents a Call. Edges of this type connect the location of the call with the entry
+ * location of the called procedure.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

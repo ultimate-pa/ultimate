@@ -117,17 +117,11 @@ public class Program {
 	public Unit toUnit() {
 		final List<Declaration> decls = new ArrayList<>();
 
-		for (final TypeDeclaration var : mTypes) {
-			decls.add(var);
-		}
+		decls.addAll(mTypes);
 
-		for (final VariableDeclaration var : mGlobals) {
-			decls.add(var);
-		}
+		decls.addAll(mGlobals);
 
-		for (final Procedure p : mProcedures.values()) {
-			decls.add(p);
-		}
+		decls.addAll(mProcedures.values());
 
 		return new Unit(LocationProvider.getLocation(), decls.toArray(new Declaration[decls.size()]));
 	}

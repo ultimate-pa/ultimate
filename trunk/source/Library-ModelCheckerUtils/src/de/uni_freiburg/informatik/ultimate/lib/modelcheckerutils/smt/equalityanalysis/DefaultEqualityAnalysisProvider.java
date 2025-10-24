@@ -31,8 +31,8 @@ public class DefaultEqualityAnalysisProvider<LOC, CFG> implements IEqualityAnaly
 	 * added by Alexander Nutz in order to comply with the updated interface, crashes
 	 */
 	@Override
-	public IEqualityProvidingState getEqualityProvidingStateForLocationSet(
-			final Set<IcfgLocation> arrayGroupAccessLocations) {
+	public IEqualityProvidingState
+			getEqualityProvidingStateForLocationSet(final Set<IcfgLocation> arrayGroupAccessLocations) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Class that provides static methods for the extraction of a satisfying
- * model from an SMT solver.
+ * Class that provides static methods for the extraction of a satisfying model from an SMT solver.
+ *
  * @author Jan Leike
  * @author Matthias Heizmann
  *
@@ -121,13 +121,11 @@ public class ModelExtractionUtils {
 	}
 
 	/**
-	 * Extract a valuation from a script and convert ConstantTerms into
-	 * Rationals
+	 * Extract a valuation from a script and convert ConstantTerms into Rationals
 	 *
 	 * @param script
-	 * 			SMT script whose corresponding solver is in a state where
-	 * 			checkSat() was called and the result was SAT.
-	 * 			This method will not modify the assertion stack of the solver.
+	 *            SMT script whose corresponding solver is in a state where checkSat() was called and the result was
+	 *            SAT. This method will not modify the assertion stack of the solver.
 	 * @param coefficients
 	 *            a collection of variables
 	 * @return a valuation that assigns a Rational to every variable
@@ -137,7 +135,7 @@ public class ModelExtractionUtils {
 	public static Map<Term, Rational> getValuation(final Script script, final Collection<Term> coefficients)
 			throws TermException {
 		// assert mscript.checkSat() == LBool.SAT;
-		final Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
+		final Map<Term, Rational> result = new LinkedHashMap<>();
 		if (!coefficients.isEmpty()) {
 			final Map<Term, Term> val = script.getValue(coefficients.toArray(new Term[coefficients.size()]));
 			for (final Map.Entry<Term, Term> entry : val.entrySet()) {
@@ -147,10 +145,8 @@ public class ModelExtractionUtils {
 		return result;
 	}
 
-
 	/**
-	 * Tries to simplify a satisfying assignment by assigning zeros to
-	 * variables. Gets stuck in local optima.
+	 * Tries to simplify a satisfying assignment by assigning zeros to variables. Gets stuck in local optima.
 	 *
 	 * The procedure works according to this principle:
 	 *
@@ -160,14 +156,14 @@ public class ModelExtractionUtils {
 	 *     if sat with v = 0:
 	 *         set v to 0
 	 * </pre>
+	 *
 	 * @param script
-	 * 			SMT script whose corresponding solver is in a state where
-	 * 			checkSat() was called and the result was SAT.
-	 * 			This method will not modify the assertion stack of the solver.
+	 *            SMT script whose corresponding solver is in a state where checkSat() was called and the result was
+	 *            SAT. This method will not modify the assertion stack of the solver.
 	 * @param variables
 	 *            the list of variables that can be set to 0
 	 * @param logger
-	 * 			ILogger to which we write information about the simplification.
+	 *            ILogger to which we write information about the simplification.
 	 * @return the number of pops required on mscript
 	 */
 	@Deprecated
@@ -201,18 +197,17 @@ public class ModelExtractionUtils {
 	}
 
 	/**
-	 * Tries to simplify a satisfying assignment by assigning zeros to
-	 * variables. Gets stuck in local optima.
+	 * Tries to simplify a satisfying assignment by assigning zeros to variables. Gets stuck in local optima.
 	 *
 	 * This is a more efficient version
+	 *
 	 * @param script
-	 * 			SMT script whose corresponding solver is in a state where
-	 * 			checkSat() was called and the result was SAT.
-	 * 			This method will not modify the assertion stack of the solver.
+	 *            SMT script whose corresponding solver is in a state where checkSat() was called and the result was
+	 *            SAT. This method will not modify the assertion stack of the solver.
 	 * @param variables
 	 *            the list of variables that can be set to 0
 	 * @param logger
-	 * 			ILogger to which we write information about the simplification.
+	 *            ILogger to which we write information about the simplification.
 	 * @param services
 	 * @return an assignment with (hopefully) many zeros
 	 * @throws TermException
@@ -223,10 +218,10 @@ public class ModelExtractionUtils {
 		final Random rnd = new Random(s_randomSeed);
 		Map<Term, Rational> val = getValuation(script, variables);
 
-		final Set<Term> zero_vars = new HashSet<Term>(); // set of variables fixed to
-													// 0
-		final Set<Term> not_zero_vars = new HashSet<Term>(variables); // other
-																// variables
+		final Set<Term> zero_vars = new HashSet<>(); // set of variables fixed to
+		// 0
+		final Set<Term> not_zero_vars = new HashSet<>(variables); // other
+		// variables
 
 		int checkSat_calls = 0;
 		int unsat_calls = 0;
@@ -249,7 +244,7 @@ public class ModelExtractionUtils {
 				script.assertTerm(script.term("=", var, Rational.ZERO.toTerm(var.getSort())));
 			}
 			for (int i = 0; i < 10; ++i) { // 10 is a good number
-				final List<Term> vars = new ArrayList<Term>(not_zero_vars);
+				final List<Term> vars = new ArrayList<>(not_zero_vars);
 				// Shuffle the variable list for better effect
 				Collections.shuffle(vars, rnd);
 
@@ -292,20 +287,18 @@ public class ModelExtractionUtils {
 		return val;
 	}
 
-
 	/**
-	 * Tries to simplify a satisfying assignment by assigning zeros to
-	 * variables. Gets stuck in local optima.
+	 * Tries to simplify a satisfying assignment by assigning zeros to variables. Gets stuck in local optima.
 	 *
 	 * This is a more efficient version
+	 *
 	 * @param script
-	 * 			SMT script whose corresponding solver is in a state where
-	 * 			checkSat() was called and the result was SAT.
-	 * 			This method will not modify the assertion stack of the solver.
+	 *            SMT script whose corresponding solver is in a state where checkSat() was called and the result was
+	 *            SAT. This method will not modify the assertion stack of the solver.
 	 * @param coefficients
 	 *            the list of variables that can be set to 0
 	 * @param logger
-	 * 			ILogger to which we write information about the simplification.
+	 *            ILogger to which we write information about the simplification.
 	 * @param services
 	 * @return an assignment with (hopefully) many zeros
 	 * @throws TermException
@@ -314,10 +307,10 @@ public class ModelExtractionUtils {
 	public static Map<Term, Rational> getSimplifiedAssignment_TwoMode(final Script script,
 			final Collection<Term> coefficients, final ILogger logger, final IUltimateServiceProvider services)
 			throws TermException {
-		final Set<Term> alreadyZero = new HashSet<Term>(); // variables fixed to 0
-		final Set<Term> zeroCandidates = new HashSet<Term>(coefficients); // variables that might be fixed to 0
-		final Set<Term> neverZero = new HashSet<Term>(); // variables that will never become 0
-		final Map<Term, Rational> finalValuation = new HashMap<Term, Rational>(getValuation(script, coefficients));
+		final Set<Term> alreadyZero = new HashSet<>(); // variables fixed to 0
+		final Set<Term> zeroCandidates = new HashSet<>(coefficients); // variables that might be fixed to 0
+		final Set<Term> neverZero = new HashSet<>(); // variables that will never become 0
+		final Map<Term, Rational> finalValuation = new HashMap<>(getValuation(script, coefficients));
 
 		{
 			final List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
@@ -434,22 +427,22 @@ public class ModelExtractionUtils {
 				}
 			}
 		}
-		//clear assertion stack
-		for (int i=0; i<pushWithoutPop; i++) {
+		// clear assertion stack
+		for (int i = 0; i < pushWithoutPop; i++) {
 			script.push(1);
 		}
 
 		// Send stats to the logger
 		logger.info("Simplification made " + checkSatCalls + " calls to the SMT solver.");
-		logger.info(variablesInitiallySetToZero + " out of " + finalValuation.size()  +
-				" variables were initially zero. Simplification set additionally " +
-				(alreadyZero.size() - variablesInitiallySetToZero) + " variables to zero.");
+		logger.info(variablesInitiallySetToZero + " out of " + finalValuation.size()
+				+ " variables were initially zero. Simplification set additionally "
+				+ (alreadyZero.size() - variablesInitiallySetToZero) + " variables to zero.");
 		assert alreadyZero.size() + neverZero.size() == finalValuation.size() : "wrong number of variables";
 		return finalValuation;
 	}
 
-	private static Map<Term, Rational> getValuation2(final Script script,
-			final Set<Term> zeroCandidates, final Set<Term> neverZero) throws TermException {
+	private static Map<Term, Rational> getValuation2(final Script script, final Set<Term> zeroCandidates,
+			final Set<Term> neverZero) throws TermException {
 		final List<Term> vars = new ArrayList<>(zeroCandidates.size() + neverZero.size());
 		vars.addAll(zeroCandidates);
 		vars.addAll(neverZero);
@@ -461,19 +454,17 @@ public class ModelExtractionUtils {
 	}
 
 	/**
-	 * Return subset with n elements. If n is greater then set.size() the
-	 * return only set.size() elements.
+	 * Return subset with n elements. If n is greater then set.size() the return only set.size() elements.
 	 */
 	private static <E> List<E> getSubset(final int n, final Set<E> set) {
-		final ArrayList<E> result = new ArrayList<E>();
+		final ArrayList<E> result = new ArrayList<>();
 		final int subsetSize = Math.min(n, set.size());
 		final Iterator<E> it = set.iterator();
-		for (int i=0; i<subsetSize; i++) {
+		for (int i = 0; i < subsetSize; i++) {
 			result.add(it.next());
 		}
 		return result;
 	}
-
 
 	/**
 	 * Rreturn the equality (= t 0) for each t in set.
@@ -481,7 +472,7 @@ public class ModelExtractionUtils {
 	private static Term[] constructEqualsZeroTerms(final Script script, final List<Term> set) {
 		final Term[] result = new Term[set.size()];
 		final Iterator<Term> it = set.iterator();
-		for (int i=0; i<set.size(); i++) {
+		for (int i = 0; i < set.size(); i++) {
 			final Term term = it.next();
 			result[i] = script.term("=", term, Rational.ZERO.toTerm(term.getSort()));
 		}
@@ -489,13 +480,12 @@ public class ModelExtractionUtils {
 	}
 
 	/**
-	 * Check for all zeroCandidates if they are mapped to Rational.ZERO in val.
-	 * If yes, move the variable from the Set zeroCandidates to the set
-	 * alreadyZero. Return all variables that were moved.
+	 * Check for all zeroCandidates if they are mapped to Rational.ZERO in val. If yes, move the variable from the Set
+	 * zeroCandidates to the set alreadyZero. Return all variables that were moved.
 	 */
-	private static List<Term> findNewZeros(final Map<Term, Rational> val,
-			final Set<Term> alreadyZero, final Set<Term> zeroCandidates) {
-		final List<Term> newlyBecomeZero = new ArrayList<Term>();
+	private static List<Term> findNewZeros(final Map<Term, Rational> val, final Set<Term> alreadyZero,
+			final Set<Term> zeroCandidates) {
+		final List<Term> newlyBecomeZero = new ArrayList<>();
 		final Iterator<Term> it = zeroCandidates.iterator();
 		while (it.hasNext()) {
 			final Term var = it.next();
@@ -508,6 +498,5 @@ public class ModelExtractionUtils {
 		}
 		return newlyBecomeZero;
 	}
-
 
 }

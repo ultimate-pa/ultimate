@@ -35,7 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 
 /**
@@ -58,7 +58,7 @@ public interface INameHandler {
 	 *            CType of the object for which we need an identifier
 	 * @return an unique identifier.
 	 */
-	public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap, CType cType,
+	String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap, ICType cType,
 			DeclarationInformation decInfo);
 
 	/**
@@ -66,7 +66,7 @@ public interface INameHandler {
 	 *
 	 * @return a unique identifier for temporary variables.
 	 */
-	String getTempVarUID(AUXVAR purpose, CType cType);
+	String getTempVarUID(AUXVAR purpose, ICType cType);
 
 	/**
 	 * Create identifier for in-parameter of Boogie procedure.
@@ -77,13 +77,13 @@ public interface INameHandler {
 	 *            CType of the object for which we need an identifier
 	 * @return identifier for in-parameter of Boogie procedure.
 	 */
-	String getInParamIdentifier(String cid, CType cType, DeclarationInformation decInfo);
+	String getInParamIdentifier(String cid, ICType cType, DeclarationInformation decInfo);
 
-	public String getGloballyUniqueIdentifier(String looplabel);
+	String getGloballyUniqueIdentifier(String looplabel);
 
-	public boolean isTempVar(String id);
+	boolean isTempVar(String id);
 
-	public String getTempVarUIDForBlockScope(AUXVAR auxVarType, CType cType);
+	String getTempVarUIDForBlockScope(AUXVAR auxVarType, ICType cType);
 
-	void addFunction(final String boogieId, final CType returnType);
+	void addFunction(final String boogieId, final ICType returnType);
 }

@@ -635,8 +635,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// At this point we may validate the correctness of the simulation
 		// results
 		assert NwaSimulationUtil.areNwaSimulationResultsCorrect(mGameGraph, mNwa, mSimulationType,
-				new NwaSimulationUtil.BinaryRelationPredicateFromPartition<>(mPossibleEquivalenceClasses),
-				mLogger) : "The computed simulation results are incorrect.";
+				new NwaSimulationUtil.BinaryRelationPredicateFromPartition<>(mPossibleEquivalenceClasses), mLogger)
+				: "The computed simulation results are incorrect.";
 
 		final FairGameGraph<LETTER, STATE> fairGraph = castGraphToFairGameGraph();
 
@@ -693,10 +693,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						considerVertex = !mNwa.isFinal(state1) || mNwa.isFinal(state2);
 					}
 				}
-				if (considerVertex) {
-					if (v.getPM(null, mGameGraph.getGlobalInfinity()) < mGameGraph.getGlobalInfinity()) {
-						similarStates.addPair(state1, state2);
-					}
+				if (considerVertex
+						&& (v.getPM(null, mGameGraph.getGlobalInfinity()) < mGameGraph.getGlobalInfinity())) {
+					similarStates.addPair(state1, state2);
 				}
 			}
 			// Mark states for merge if they simulate each other
@@ -843,13 +842,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 					// In delayed simulation we may also add a vertex with
 					// priority one that has the bit set to true.
-					if (mSimulationType == SimulationOrMinimizationType.DELAYED) {
-						if (priority == 1) {
-							final Vertex<LETTER, STATE> initialVertex =
-									addSpoilerVertexHelper(1, true, leftState, rightState);
-							if (initialVertex != null) {
-								workingList.add(initialVertex);
-							}
+					if ((mSimulationType == SimulationOrMinimizationType.DELAYED) && (priority == 1)) {
+						final Vertex<LETTER, STATE> initialVertex =
+								addSpoilerVertexHelper(1, true, leftState, rightState);
+						if (initialVertex != null) {
+							workingList.add(initialVertex);
 						}
 					}
 
@@ -1735,10 +1732,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 				// In delayed simulation we may also add a vertex with
 				// priority one that has the bit set to true.
-				if (mSimulationType == SimulationOrMinimizationType.DELAYED) {
-					if (priority == 1) {
-						addSpoilerVertexHelper(1, true, leftState, rightState);
-					}
+				if ((mSimulationType == SimulationOrMinimizationType.DELAYED) && (priority == 1)) {
+					addSpoilerVertexHelper(1, true, leftState, rightState);
 				}
 
 				// Generate Duplicator vertices (leftState, rightState, letter)
@@ -1998,12 +1993,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					mLogger.debug("\tAdded to duplicatorReturningVertices: " + duplicatorVertex);
 				}
 			}
-			if (!hasSuccessors) {
-				if (!type.equals(TransitionType.RETURN)) {
-					mPossibleNonReturnDuplicatorDeadEnd.add(duplicatorVertex);
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("\tAdded to possibleNonReturnDuplicatorDeadEnd: " + duplicatorVertex);
-					}
+			if (!hasSuccessors && !type.equals(TransitionType.RETURN)) {
+				mPossibleNonReturnDuplicatorDeadEnd.add(duplicatorVertex);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("\tAdded to possibleNonReturnDuplicatorDeadEnd: " + duplicatorVertex);
 				}
 			}
 			return duplicatorVertex;
@@ -2144,12 +2137,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// reduces computation time
 		if (!hasInternalSuccessors) {
 			final boolean hasReturnSuccessors = mNwa.returnSuccessors(leftState).iterator().hasNext();
-			if (!hasReturnSuccessors) {
-				if (!hasCallSuccessors) {
-					mPossibleSpoilerDeadEnd.add(spoilerVertex);
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("\tAdded to possibleSpoilerDeadEnd: " + spoilerVertex);
-					}
+			if (!hasReturnSuccessors && !hasCallSuccessors) {
+				mPossibleSpoilerDeadEnd.add(spoilerVertex);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("\tAdded to possibleSpoilerDeadEnd: " + spoilerVertex);
 				}
 			}
 		}
@@ -2401,7 +2392,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			for (final STATE duplicatorHierPred : duplicatorHierPreds) {
 				SpoilerVertex<LETTER, STATE> representingHierPred =
 						getSpoilerVertex(spoilerHierPred, duplicatorHierPred, false, null, null);
-				if (representingHierPred != null && representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
+				if (representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
 					gameHierPreds
 							.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
 				}
@@ -2409,7 +2400,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				// to true
 				if (mSimulationType.equals(SimulationOrMinimizationType.DELAYED)) {
 					representingHierPred = getSpoilerVertex(spoilerHierPred, duplicatorHierPred, true, null, null);
-					if (representingHierPred != null && representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
+					if (representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
 						gameHierPreds.add(
 								new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
 					}
@@ -2597,11 +2588,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private boolean doesLoseInDirectSim(final STATE leftSpoilerState, final STATE rightSpoilerState) {
 		final boolean doesLose = mNwa.isFinal(leftSpoilerState) && !mNwa.isFinal(rightSpoilerState);
-		if (doesLose) {
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("\t\tDuplicator directly loses with Spoiler in: (" + leftSpoilerState + ", "
-						+ rightSpoilerState + ")");
-			}
+		if (doesLose && mLogger.isDebugEnabled()) {
+			mLogger.debug("\t\tDuplicator directly loses with Spoiler in: (" + leftSpoilerState + ", "
+					+ rightSpoilerState + ")");
 		}
 		return doesLose;
 	}

@@ -30,15 +30,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Implementation of an {@link AbstractRelation} that uses a {@link HashMap}
- * for the mapping and a {@link HashSet} for the elements of the image.
+ * Implementation of an {@link AbstractRelation} that uses a {@link HashMap} for the mapping and a {@link HashSet} for
+ * the elements of the image.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class HashRelation<D, R> extends AbstractRelation<D, R, HashSet<R>, HashMap<D, HashSet<R>>> {
 
 	public HashRelation() {
-		super();
 	}
 
 	public HashRelation(final AbstractRelation<D, R, ?, ?> rel) {
@@ -54,6 +53,5 @@ public class HashRelation<D, R> extends AbstractRelation<D, R, HashSet<R>, HashM
 	protected HashSet<R> newSet() {
 		return new HashSet<>();
 	}
-
 
 }

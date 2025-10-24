@@ -42,6 +42,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Executor;
 
+/**
+ * Runs the "golem" tool to solve CHC systems.
+ *
+ * See <https://github.com/usi-verification-and-security/golem/>.
+ */
 public class GolemChcScript implements IChcScript {
 	private static final boolean ADD_CLAUSE_NAMES = false;
 	private static final boolean ADD_COMMENTS = false;
@@ -52,15 +57,36 @@ public class GolemChcScript implements IChcScript {
 	private final ManagedScript mMgdScript;
 	private final long mDefaultQueryTimeout;
 
-	private boolean mProduceModels = false;
+	// defaults to false
+	private boolean mProduceModels;
 
+	// initially null
+	private Model mLastModel;
 	private LBool mLastResult;
-	private Model mLastModel = null;
 
+	/**
+	 * Create a new instance. The new instance can be used to solve multiple CHC systems. By default, the solver is run
+	 * without a time limit.
+	 *
+	 * @param services
+	 *            Ultimate services
+	 * @param mgdScript
+	 *            A managed script used to convert between CHC and SMT terms
+	 */
 	public GolemChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		this(services, mgdScript, -1L);
 	}
 
+	/**
+	 * Create a new instance with a default time limit. The new instance can be used to solve multiple CHC systems.
+	 *
+	 * @param services
+	 *            Ultimate services
+	 * @param mgdScript
+	 *            A managed script used to convert between CHC and SMT terms
+	 * @param defaultTimeout
+	 *            A maximum time limit for all solver calls
+	 */
 	public GolemChcScript(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final long defaultTimeout) {
 		mServices = services;
@@ -99,27 +125,31 @@ public class GolemChcScript implements IChcScript {
 			throw new RuntimeException(e);
 		}
 
+		Executor executor = null;
 		try {
 			// run golem on file
-			final var executor = new Executor(getCommand(tmpFile), mMgdScript.getScript(), mLogger, mServices, "golem",
-					null, null, null, determineTimeout(timeout));
+			executor = new Executor(getCommand(tmpFile), mMgdScript.getScript(), mLogger, mServices, "golem", null,
+					null, null, determineTimeout(timeout));
 
 			mLastResult = executor.parseCheckSatResult();
 			mLastModel = (mLastResult == LBool.SAT && mProduceModels) ? executor.parseGetModelResult() : null;
 
 			return mLastResult;
-
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (executor != null) {
+				executor.exit();
+			}
 		}
 	}
 
 	private String getCommand(final File file) {
-		var command = "golem";
+		final StringBuilder command = new StringBuilder("golem");
 		if (mProduceModels) {
-			command += " --print-witness";
+			command.append(" --print-witness");
 		}
-		return command + " " + file.getAbsolutePath();
+		return command.append(" ").append(file.getAbsolutePath()).toString();
 	}
 
 	@Override

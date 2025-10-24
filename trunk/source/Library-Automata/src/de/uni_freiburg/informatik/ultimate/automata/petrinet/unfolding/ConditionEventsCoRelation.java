@@ -164,8 +164,8 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		final boolean result =
 				mCoRelation.containsTriple(c1, c2.getPredecessorEvent().getTransition(), c2.getPredecessorEvent())
 						|| (c1.getPredecessorEvent().conditionMarkContains(c2));
-		assert result == isInCoRelationNaive(c1, c2) : String
-				.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
+		assert result == isInCoRelationNaive(c1, c2)
+				: String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
 		if (result) {
 			mQueryCounterYes++;
 		} else {
@@ -262,8 +262,8 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = streamCoRelatedConditions(cond).collect(Collectors.toSet());
 		if (EXTENDED_ASSERTION_CHECKING) {
-			assert result
-					.equals(computeCoRelatatedConditionsInefficient(cond)) : "inconsistent co-relation information";
+			assert result.equals(computeCoRelatatedConditionsInefficient(cond))
+					: "inconsistent co-relation information";
 		}
 		return result;
 	}
@@ -289,8 +289,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	public int computeMaximalDegree() {
 		final Function<Condition<LETTER, PLACE>, Integer> computeDegree =
 				(c -> streamCoRelatedEvents(c).map(e -> e.getSuccessorConditions().size()).reduce(0, Integer::sum));
-		final Integer max =
-				mCoRelation.projectToFst().stream().map(computeDegree).max(Integer::compare).orElse(Integer.valueOf(0));
+		final Integer max = mCoRelation.projectToFst().stream().map(computeDegree).max(Integer::compare).orElse(0);
 		return max;
 	}
 

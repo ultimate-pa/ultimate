@@ -166,8 +166,8 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 			}
 
 			// Add transition
-			assert isSound(previousStates, hierarchicalPreState, symbol, postStates,
-					debugHelper) : "About to insert unsound transition";
+			assert isSound(previousStates, hierarchicalPreState, symbol, postStates, debugHelper)
+					: "About to insert unsound transition";
 			if (symbol instanceof Call) {
 				result.addCallTransition(previous, symbol, target);
 			} else if (symbol instanceof Return) {

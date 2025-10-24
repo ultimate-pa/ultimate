@@ -32,20 +32,22 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 /**
  * Stores predicates for locations of interest (LOIs) or any other location.
  * <p>
- * This interface has no way to retrieve the stored predicates.
- * Implementing classes must offer methods to retrieve the stored predicates on their own.
+ * This interface has no way to retrieve the stored predicates. Implementing classes must offer methods to retrieve the
+ * stored predicates on their own.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public interface ILoiPredicateStorage {
 
 	/**
-	 * Adds a predicate to the given location.
-	 * Whether the added predicate replaces the old one or is combined with the old one depends on the implementation.
-	 * Usually we expect that predicates are combined and the initial predicate is bottom/false.
+	 * Adds a predicate to the given location. Whether the added predicate replaces the old one or is combined with the
+	 * old one depends on the implementation. Usually we expect that predicates are combined and the initial predicate
+	 * is bottom/false.
 	 *
-	 * @param location l
-	 * @param addPred Predicate to be stored for location l
+	 * @param location
+	 *            l
+	 * @param addPred
+	 *            Predicate to be stored for location l
 	 */
 	void storePredicate(IcfgLocation location, IPredicate addPred);
 }

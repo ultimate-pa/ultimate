@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
@@ -38,22 +39,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Data structure for a (possibly) nested array select expression.
- * In the array theory of SMT-LIB the Array sort has only two parameters one
- * for the index and one for the value.
- * We model multidimensional arrays by nesting arrays. E.g. an array with two
- * integer indices and real values has the following Sort.
- * (Array Int -> (Array Int -> Real))
- * The store function has the following signature.
- * (store (Array X Y) X Y (Array X Y))
- * Hence we have to use nested store expressions for multidimensional array
- * reads, e.g., in order to get the array that differs from array a only
- * because at index (i1,i2) the value of v was stored we use the following
- * expression.
- * (store a i1 (store (select a i1) i2 v))
- * This is data structure is a wrapper for such a nested select expression which
- * allows you to directly access the array, the indices and the value.
-
+ * Data structure for a (possibly) nested array select expression. In the array theory of SMT-LIB the Array sort has
+ * only two parameters one for the index and one for the value. We model multidimensional arrays by nesting arrays. E.g.
+ * an array with two integer indices and real values has the following Sort. (Array Int -> (Array Int -> Real)) The
+ * store function has the following signature. (store (Array X Y) X Y (Array X Y)) Hence we have to use nested store
+ * expressions for multidimensional array reads, e.g., in order to get the array that differs from array a only because
+ * at index (i1,i2) the value of v was stored we use the following expression. (store a i1 (store (select a i1) i2 v))
+ * This is data structure is a wrapper for such a nested select expression which allows you to directly access the
+ * array, the indices and the value.
+ *
  * @author Matthias Heizmann
  */
 public class MultiDimensionalStore implements ITermProvider {
@@ -62,7 +56,6 @@ public class MultiDimensionalStore implements ITermProvider {
 	private final Term mValue;
 
 	public MultiDimensionalStore(final Term array, final ArrayIndex index, final Term value) {
-		super();
 		if (index.isEmpty()) {
 			throw new AssertionError("Zero dimensions are not supported");
 		}
@@ -119,7 +112,7 @@ public class MultiDimensionalStore implements ITermProvider {
 	}
 
 	private static MultiDimensionalStore of(final Term term, final int maxDimension) {
-		final ArrayList<Term> index = new ArrayList<Term>();
+		final ArrayList<Term> index = new ArrayList<>();
 		Term remainder = term;
 		final Term array;
 		if (isStore(term)) {
@@ -131,7 +124,7 @@ public class MultiDimensionalStore implements ITermProvider {
 					&& isCompatibleSelect(((ApplicationTerm) remainder).getParameters()[0], array, index)) {
 				index.add(((ApplicationTerm) remainder).getParameters()[1]);
 				remainder = ((ApplicationTerm) remainder).getParameters()[2];
-				dimension ++;
+				dimension++;
 			}
 		} else {
 			return null;
@@ -149,8 +142,8 @@ public class MultiDimensionalStore implements ITermProvider {
 		final ArrayIndex lowerIndex = mIndex.getFirst(k);
 		final ArrayIndex higherIndex = mIndex.getLast(mIndex.size() - k);
 		final MultiDimensionalSelect selectInner = new MultiDimensionalSelect(mArray, lowerIndex);
-		final MultiDimensionalStore updateInner = new MultiDimensionalStore(selectInner.toTerm(script), higherIndex,
-				mValue);
+		final MultiDimensionalStore updateInner =
+				new MultiDimensionalStore(selectInner.toTerm(script), higherIndex, mValue);
 		return new MultiDimensionalStore(mArray, lowerIndex, updateInner.toTerm(script));
 	}
 
@@ -162,52 +155,52 @@ public class MultiDimensionalStore implements ITermProvider {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mArray == null) ? 0 : mArray.hashCode());
-		result = prime * result + ((mIndex == null) ? 0 : mIndex.hashCode());
-		result = prime * result + ((mValue == null) ? 0 : mValue.hashCode());
-		return result;
+		return Objects.hash(mArray, mIndex, mValue);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final MultiDimensionalStore other = (MultiDimensionalStore) obj;
 		if (mArray == null) {
-			if (other.mArray != null)
+			if (other.mArray != null) {
 				return false;
-		} else if (!mArray.equals(other.mArray))
+			}
+		} else if (!mArray.equals(other.mArray)) {
 			return false;
+		}
 		if (mIndex == null) {
-			if (other.mIndex != null)
+			if (other.mIndex != null) {
 				return false;
-		} else if (!mIndex.equals(other.mIndex))
+			}
+		} else if (!mIndex.equals(other.mIndex)) {
 			return false;
+		}
 		if (mValue == null) {
-			if (other.mValue != null)
+			if (other.mValue != null) {
 				return false;
-		} else if (!mValue.equals(other.mValue))
+			}
+		} else if (!mValue.equals(other.mValue)) {
 			return false;
+		}
 		return true;
 	}
 
 	/**
-	 * Return all MultiDimensionalStore objects for all multidimensional
-	 * store expressions that occur in term.
-	 * If one multidimensional store occurs in another multidimensional
-	 * store expression (e.g. as index) the nested one is not returned by
-	 * this method.
-	 * If a store term occurs multiple times it is contained multiple times
-	 * in the result.
+	 * Return all MultiDimensionalStore objects for all multidimensional store expressions that occur in term. If one
+	 * multidimensional store occurs in another multidimensional store expression (e.g. as index) the nested one is not
+	 * returned by this method. If a store term occurs multiple times it is contained multiple times in the result.
 	 */
 	public static List<MultiDimensionalStore> extractArrayStoresShallow(final Term term) {
-		final List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
+		final List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<>();
 		final Set<ApplicationTerm> storeTerms = SmtUtils.extractApplicationTerms("store", term, true);
 		for (final Term storeTerm : storeTerms) {
 			final MultiDimensionalStore mdStore = MultiDimensionalStore.of(storeTerm);
@@ -219,23 +212,19 @@ public class MultiDimensionalStore implements ITermProvider {
 		return arrayStoreDefs;
 	}
 
-
 	/**
-	 * Return all MultiDimensionalStore objects for all store expressions
-	 * that occur in term. This method also return the inner multidimensional
-	 * store expressions in other multidimensional store expressions.
-	 * If a store term occurs multiple times it is contained multiple times
-	 * in the result.
-	 * If multidimensional stores are nested, the inner ones occur earlier
-	 * in the resulting list.
+	 * Return all MultiDimensionalStore objects for all store expressions that occur in term. This method also return
+	 * the inner multidimensional store expressions in other multidimensional store expressions. If a store term occurs
+	 * multiple times it is contained multiple times in the result. If multidimensional stores are nested, the inner
+	 * ones occur earlier in the resulting list.
 	 */
 	public static List<MultiDimensionalStore> extractArrayStoresDeep(final Term term) {
-		final List<MultiDimensionalStore> result = new LinkedList<MultiDimensionalStore>();
+		final List<MultiDimensionalStore> result = new LinkedList<>();
 		List<MultiDimensionalStore> foundInThisIteration = extractArrayStoresShallow(term);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
 			final List<MultiDimensionalStore> foundInLastIteration = foundInThisIteration;
-			foundInThisIteration = new ArrayList<MultiDimensionalStore>();
+			foundInThisIteration = new ArrayList<>();
 			for (final MultiDimensionalStore asd : foundInLastIteration) {
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getArray()));
 				foundInThisIteration.addAll(extractArrayStoresShallow(asd.getValue()));

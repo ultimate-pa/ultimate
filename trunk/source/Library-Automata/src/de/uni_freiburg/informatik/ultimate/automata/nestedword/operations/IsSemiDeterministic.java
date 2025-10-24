@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Check if an automaton is
  * <a href="https://en.wikipedia.org/wiki/Semi-deterministic_B%C3%BCchi_automaton">Semi-deterministic</a>.
- * 
+ *
  * @author Matthias Heizmann
  * @param <LETTER>
  *            letter type
@@ -61,7 +61,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -70,7 +70,8 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 	 *             if operation was canceled
 	 */
 	public IsSemiDeterministic(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services);
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			mOperand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;
@@ -105,7 +106,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		final ArrayDeque<DoubleDecker<STATE>> worklist = new ArrayDeque<>();
 
 		// step one: start with finals,
-		//           add all non-call successors
+		// add all non-call successors
 		final Set<DoubleDecker<STATE>> finalDoubleDeckers = getFinalDoubleDeckers();
 		visited.addAll(finalDoubleDeckers);
 		worklist.addAll(finalDoubleDeckers);
@@ -124,7 +125,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 
 		// step two: start with yet visited DoubleDeckers,
-		//           add all non-return successors
+		// add all non-return successors
 		worklist.addAll(visited);
 		while (!worklist.isEmpty()) {
 			final DoubleDecker<STATE> dd = worklist.remove();
@@ -184,8 +185,6 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return succs;
 	}
-
-
 
 	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {

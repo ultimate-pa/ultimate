@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Christian Ortolf
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE GUILoggingWindow plug-in.
- * 
+ *
  * The ULTIMATE GUILoggingWindow plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE GUILoggingWindow plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE GUILoggingWindow plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE GUILoggingWindow plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE GUILoggingWindow plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE GUILoggingWindow plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.gui.views.LoggingView;
 
 /**
  * An appender that fills Ultimate's LoggingView with log messages.
- * 
+ *
  * @author Christian Ortolf
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -67,7 +67,7 @@ public class GuiLoggingWindowAppender {
 		if (window == null) {
 			return null;
 		}
-		
+
 		final IWorkbenchPage activePage = window.getActivePage();
 		if (activePage == null) {
 			return null;
@@ -90,7 +90,7 @@ public class GuiLoggingWindowAppender {
 	private final static class AppendUIJobWriter extends Writer {
 		private final LoggingUIJob mJob;
 
-		private AppendUIJobWriter(LoggingUIJob job) {
+		private AppendUIJobWriter(final LoggingUIJob job) {
 			mJob = job;
 		}
 
@@ -103,7 +103,7 @@ public class GuiLoggingWindowAppender {
 		}
 
 		@Override
-		public void write(char[] arg0, int offset, int count) throws IOException {
+		public void write(final char[] arg0, final int offset, final int count) throws IOException {
 			mJob.appendLog(arg0, offset, count);
 		}
 	}
@@ -128,11 +128,11 @@ public class GuiLoggingWindowAppender {
 
 		public LoggingUIJob() {
 			super(LoggingUIJob.class.getSimpleName());
-			setPriority(UIJob.INTERACTIVE);
+			setPriority(Job.INTERACTIVE);
 		}
 
 		@Override
-		public synchronized IStatus runInUIThread(IProgressMonitor mon) {
+		public synchronized IStatus runInUIThread(final IProgressMonitor mon) {
 			final LoggingView le = getEditor();
 			if (le != null) {
 				le.write(mBuffer.toString());
@@ -141,7 +141,7 @@ public class GuiLoggingWindowAppender {
 			return Status.OK_STATUS;
 		}
 
-		public synchronized void appendLog(char[] arg0, int offset, int count) {
+		public synchronized void appendLog(final char[] arg0, final int offset, final int count) {
 			mBuffer.append(arg0, offset, count);
 			if (getState() == Job.NONE) {
 				schedule(100L);

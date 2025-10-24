@@ -98,7 +98,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	}
 
 	@Override
-	public void setInlineFlags(final Map<String, CallGraphNode> callGraph, boolean programIsConcurrent) {
+	public void setInlineFlags(final Map<String, CallGraphNode> callGraph, final boolean programIsConcurrent) {
 		mProgramIsConcurrent = programIsConcurrent;
 		mLastInlinedCall = new HashMap<>();
 		final List<IEdgeFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);
@@ -129,22 +129,14 @@ public class PreferencesInlineSelector implements IInlineSelector {
 				final CallGraphNode callee) {
 			final boolean inline = callLabel.getInlineFlag();
 			final boolean inUserList = mUserList.contains(callee.getId());
-			switch (mUserListType) {
-			case BLACKLIST_ONLY:
-				return !inUserList;
-			case BLACKLIST_RESTRICT:
-				return inline && !inUserList;
-			case DISABLED:
-				return inline;
-			case WHITELIST_EXTEND:
-				return inline || inUserList;
-			case WHITELIST_ONLY:
-				return inUserList;
-			case WHITELIST_RESTRICT:
-				return inline && inUserList;
-			default:
-				throw new IllegalArgumentException("Unknown user list type: " + mUserListType);
-			}
+			return switch (mUserListType) {
+			case BLACKLIST_ONLY -> !inUserList;
+			case BLACKLIST_RESTRICT -> inline && !inUserList;
+			case DISABLED -> inline;
+			case WHITELIST_EXTEND -> inline || inUserList;
+			case WHITELIST_ONLY -> inUserList;
+			case WHITELIST_RESTRICT -> inline && inUserList;
+			};
 		}
 	}
 

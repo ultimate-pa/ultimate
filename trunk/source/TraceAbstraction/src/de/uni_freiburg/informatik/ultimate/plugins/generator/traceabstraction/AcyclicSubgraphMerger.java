@@ -83,7 +83,6 @@ public class AcyclicSubgraphMerger {
 	public AcyclicSubgraphMerger(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final Set<IcfgEdge> subgraphEdges, final IcfgLocation subgraphStartLocation,
 			final IcfgEdge startLocErrorEdge, final Set<IcfgLocation> subgraphEndLocations) {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final Subgraph initialSubgraph = new Subgraph(icfg, subgraphStartLocation, subgraphEndLocations);
@@ -197,7 +196,6 @@ public class AcyclicSubgraphMerger {
 
 		public Subgraph(final IIcfg<IcfgLocation> icfg, final IcfgLocation subgraphStartLocation,
 				final Set<IcfgLocation> subgraphEndLocations) {
-			super();
 			mIcfg = icfg;
 			mSubgraphStartLocation = subgraphStartLocation;
 			mSubgraphEndLocations = subgraphEndLocations;

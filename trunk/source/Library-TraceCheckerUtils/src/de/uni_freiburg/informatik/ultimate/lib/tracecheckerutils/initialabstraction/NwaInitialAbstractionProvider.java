@@ -83,8 +83,8 @@ public class NwaInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
-			final Set<? extends IcfgLocation> errorLocs) {
+	public <LOC extends IcfgLocation> INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<LOC> icfg,
+			final Set<LOC> errorLocs) {
 		if (mAbstraction == null) {
 			mAbstraction = Cfg2Automaton.constructAutomatonWithSPredicates(mServices, icfg, mStateFactory, errorLocs,
 					mInterprocedural, mPredicateFactory);

@@ -107,8 +107,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			assert segmentation != null : var + " not in segmentation map of state" + this;
 			for (final IProgramVar v : segmentation.getValues()) {
 				final Sort sort2 = v.getSort();
-				assert valueSort.equals(sort2) : "The value " + v
-						+ " has not the sort corresponding to its array variable " + var;
+				assert valueSort.equals(sort2)
+						: "The value " + v + " has not the sort corresponding to its array variable " + var;
 				if (sort2.isArraySort()) {
 					assert getSegmentation(v) != null : v + " not in segmentation map of state" + this;
 				} else {
@@ -442,8 +442,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 					continue;
 				}
 				processedArrays.add(current);
-				final Set<IProgramVarOrConst> currentEquivalenceClass = new HashSet<>();
-				currentEquivalenceClass.addAll(getEqualArrays(current));
+				final Set<IProgramVarOrConst> currentEquivalenceClass = new HashSet<>(getEqualArrays(current));
 				currentEquivalenceClass.addAll(otherState.getEqualArrays(current));
 				queue.addAll(currentEquivalenceClass);
 				equivalenceClass.addAll(currentEquivalenceClass);
@@ -516,8 +515,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 
 	private UnificationResult unify(final ArrayDomainState<STATE> other, final Segmentation segmentation,
 			final Segmentation otherSegmentation) {
-		assert segmentation.getValue(0).getSort()
-				.equals(otherSegmentation.getValue(0).getSort()) : "The segmentations have different sorts.";
+		assert segmentation.getValue(0).getSort().equals(otherSegmentation.getValue(0).getSort())
+				: "The segmentations have different sorts.";
 		final Script script = mToolkit.getScript();
 		final Segmentation simplifiedThisSegmentation = simplifySegmentation(segmentation);
 		final Segmentation simplifiedOtherSegmentation = other.simplifySegmentation(otherSegmentation);
@@ -894,13 +893,11 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 					break;
 				}
 			}
-			if (!added) {
-				if (mToolkit.evaluate(mSubState, SmtUtils.leq(script, bounds.get(bounds.size() - 2), rep),
-						useCache) == EvalResult.TRUE) {
-					bounds.add(bounds.size() - 1, rep);
-					boundEqs.add(boundEqs.size() - 1, eqClass);
-					values.add(values.get(values.size() - 1));
-				}
+			if (!added && (mToolkit.evaluate(mSubState, SmtUtils.leq(script, bounds.get(bounds.size() - 2), rep),
+					useCache) == EvalResult.TRUE)) {
+				bounds.add(bounds.size() - 1, rep);
+				boundEqs.add(boundEqs.size() - 1, eqClass);
+				values.add(values.get(values.size() - 1));
 			}
 		}
 		return new Triple<>(currentState, boundEqs, values);
@@ -1548,7 +1545,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		}
 	}
 
-	private class EqClassSegmentation {
+	private static class EqClassSegmentation {
 		private final List<Set<Term>> mBounds;
 		private final List<IProgramVar> mFirstValues;
 		private final List<IProgramVar> mSecondValues;
@@ -1585,7 +1582,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		}
 	}
 
-	private class EqSegmentationConversionResult {
+	private static class EqSegmentationConversionResult {
 		private final Segmentation mSegmentation;
 		private final Map<IProgramVar, Segmentation> mNewSegmentations;
 		private final Collection<Term> mConstraints;

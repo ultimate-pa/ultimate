@@ -63,9 +63,9 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 	private Term mFinalTerm;
 	private final Map<IProgramVar, Term> mValues = new HashMap<>();
 
-	public AlphaSolver(final ILogger logger, final UnmodifiableTransFormula loopTransFormula, final ManagedScript script,
-			final Map<Integer, Map<Term, Term>> matrix, final Map<Integer, Map<Term, Term>> lgs,
-			final IUltimateServiceProvider service, final int loopCounter) {
+	public AlphaSolver(final ILogger logger, final UnmodifiableTransFormula loopTransFormula,
+			final ManagedScript script, final Map<Integer, Map<Term, Term>> matrix,
+			final Map<Integer, Map<Term, Term>> lgs, final IUltimateServiceProvider service, final int loopCounter) {
 		mMgScript = script;
 		mScript = mMgScript.getScript();
 
@@ -116,41 +116,45 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 				final List<Term> multiplication = new ArrayList<>();
 				for (final IProgramVar pV : mProgramVar) {
 					if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0])).equals(zero)) {
-						multiplication.add(
-								mScript.term("*", mScript.term("to_int", termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0]))),
-										mOriginalTransFormula.getInVars().get(pV)));
+						multiplication.add(mScript.term("*",
+								mScript.term("to_int",
+										termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0]))),
+								mOriginalTransFormula.getInVars().get(pV)));
 					}
 					if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1])).equals(zero)) {
-						multiplication.add(
-								mScript.term("*", mScript.term("to_int", termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1]))),
-										mOriginalTransFormula.getInVars().get(pV), mNVar));
+						multiplication.add(mScript.term("*",
+								mScript.term("to_int",
+										termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1]))),
+								mOriginalTransFormula.getInVars().get(pV), mNVar));
 					}
 				}
 				final Term addition;
-				//TODO multiplication.size() == 0
-				if(multiplication.size() == 1){
+				// TODO multiplication.size() == 0
+				if (multiplication.size() == 1) {
 					addition = multiplication.get(0);
-				}else{
+				} else {
 					addition = mScript.term("+", multiplication.toArray(new Term[multiplication.size()]));
 				}
 				// n and n*n
 				final List<Term> multiplicationN = new ArrayList<>();
 				if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[0])).equals(zero)) {
-					multiplicationN
-							.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[0])), mScript.term("to_real", mNVar)));
+					multiplicationN.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[0])),
+							mScript.term("to_real", mNVar)));
 				}
 				if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[1])).equals(zero)) {
-					multiplicationN.add(
-							mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[1])), mScript.term("to_real", mNVar), mScript.term("to_real", mNVar)));
+					multiplicationN.add(mScript.term("*", termvar2value.get(mAlphaDefaultConstant.get(mAlphaN[1])),
+							mScript.term("to_real", mNVar), mScript.term("to_real", mNVar)));
 				}
 				final Term additionN;
-				//TODO multiplication.size() == 0
-				if(multiplicationN.size() == 1){
+				// TODO multiplication.size() == 0
+				if (multiplicationN.size() == 1) {
 					additionN = mScript.term("to_int", multiplicationN.get(0));
-				}else{
-					additionN = mScript.term("to_int", mScript.term("+", multiplicationN.toArray(new Term[multiplicationN.size()])));
+				} else {
+					additionN = mScript.term("to_int",
+							mScript.term("+", multiplicationN.toArray(new Term[multiplicationN.size()])));
 				}
-				finalTerm = mScript.term("=", mOriginalTransFormula.getOutVars().get(pVar), mScript.term("+", addition, additionN));
+				finalTerm = mScript.term("=", mOriginalTransFormula.getOutVars().get(pVar),
+						mScript.term("+", addition, additionN));
 				mValues.put(pVar, mScript.term("+", addition, additionN));
 			}
 		} finally {
@@ -159,7 +163,7 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 		return finalTerm;
 	}
 
-	public Map<IProgramVar, Term> getValues(){
+	public Map<IProgramVar, Term> getValues() {
 		return mValues;
 	}
 
@@ -196,22 +200,21 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 		mNVar = mScript.variable("n", mScript.sort("Int"));
 		for (final IProgramVar var : mProgramVar) {
 			final TermVariable alphaVar = mScript.variable("alpha" + var.toString(), mScript.sort("Real"));
-			final TermVariable alphaVarN =
-					mScript.variable("alpha" + var.toString() + "n", mScript.sort("Real"));
+			final TermVariable alphaVarN = mScript.variable("alpha" + var.toString() + "n", mScript.sort("Real"));
 			final TermVariable[] alphas = { alphaVar, alphaVarN };
 			mAlphaMap.put(var, alphas);
 
-			mAlphaDefaultConstant.put(alphaVar,
-					ProgramVarUtils.constructDefaultConstant(mMgScript, this, alphaVar.getSort(), alphaVar.getName() + loopCounter));
+			mAlphaDefaultConstant.put(alphaVar, ProgramVarUtils.constructDefaultConstant(mMgScript, this,
+					alphaVar.getSort(), alphaVar.getName() + loopCounter));
 			mAlphaDefaultConstant.put(alphaVarN, ProgramVarUtils.constructDefaultConstant(mMgScript, this,
 					alphaVarN.getSort(), alphaVarN.getName() + loopCounter));
 		}
 		mAlphaN[0] = mScript.variable("alpha_n", mScript.sort("Real"));
 		mAlphaN[1] = mScript.variable("alpha_nn", mScript.sort("Real"));
-		mAlphaDefaultConstant.put(mAlphaN[0],
-				ProgramVarUtils.constructDefaultConstant(mMgScript, this, mAlphaN[0].getSort(), mAlphaN[0].getName() + loopCounter));
-		mAlphaDefaultConstant.put(mAlphaN[1],
-				ProgramVarUtils.constructDefaultConstant(mMgScript, this, mAlphaN[1].getSort(), mAlphaN[1].getName() + loopCounter));
+		mAlphaDefaultConstant.put(mAlphaN[0], ProgramVarUtils.constructDefaultConstant(mMgScript, this,
+				mAlphaN[0].getSort(), mAlphaN[0].getName() + loopCounter));
+		mAlphaDefaultConstant.put(mAlphaN[1], ProgramVarUtils.constructDefaultConstant(mMgScript, this,
+				mAlphaN[1].getSort(), mAlphaN[1].getName() + loopCounter));
 	}
 
 	private void lgsTermN0(final IProgramVar var) {

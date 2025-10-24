@@ -104,7 +104,7 @@ public class IncludeSorter {
 
 	/**
 	 * Traverses translation units in post order and detects cycles.
-	 * 
+	 *
 	 * @param unit
 	 *            The unit, identified by its normalized file path.
 	 */
@@ -130,7 +130,7 @@ public class IncludeSorter {
 
 	/**
 	 * Adds a translation unit to the result - all includes have been processed.
-	 * 
+	 *
 	 * @param unit
 	 *            The unit, identified by its normalized file path.
 	 */

@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -50,11 +49,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Provides static methods that are utilized by the
- * {@link QuantifierPushTermWalker}. Methods in this class are focused the
- * elimination for dualFiniteJunctions. If an elimination is costly, we
- * sometimes what to apply the elimination only to a subset of the
- * dualFiniteJuncts.
+ * Provides static methods that are utilized by the {@link QuantifierPushTermWalker}. Methods in this class are focused
+ * the elimination for dualFiniteJunctions. If an elimination is costly, we sometimes what to apply the elimination only
+ * to a subset of the dualFiniteJuncts.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -62,49 +59,40 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class QuantifierPushUtilsForSubsetPush {
 
 	/**
-	 * TODO: Revise documentation Auxiliary method for quantifier elimination.
-	 * <br />
+	 * TODO: Revise documentation Auxiliary method for quantifier elimination. <br />
 	 * <ul>
-	 * <li>Motivation: One single application of distributivity doubles the size of
-	 * the current formula. If we can apply distributivity only to a subformula this
-	 * blow-up will be smaller.
-	 * <li>Idea: Select one eliminatee and all dualJuncts in which the eliminatee
-	 * occurs. (Omit eliminatees that occur in all dualJuncts) Apply the algorithm
-	 * recursively to this dualJunction. Continue until one of the following
+	 * <li>Motivation: One single application of distributivity doubles the size of the current formula. If we can apply
+	 * distributivity only to a subformula this blow-up will be smaller.
+	 * <li>Idea: Select one eliminatee and all dualJuncts in which the eliminatee occurs. (Omit eliminatees that occur
+	 * in all dualJuncts) Apply the algorithm recursively to this dualJunction. Continue until one of the following
 	 * applies.
 	 * <ul>
-	 * <li>(1) The root symbol of the whole formula is not a dual junction any more,
-	 * e.g., due to simplifications that became possible. (Considered a successful
-	 * elimination)
-	 * <li>(2) We can now partition the dualJuncts according such that no two
-	 * equivalence classes share a common eliminatee. (Considered a successful
-	 * elimination)
-	 * <li>(3) The elimination failed for all eliminatees that does not occur in all
-	 * dualjuncts. (Considered a failed elimination) </ ul><li> Optimization1: Do
-	 * not apply the recursive elimination only to the selected eliminatee but also
-	 * to its "minion" eliminatees. We call an eliminatee a "minion" of the selected
-	 * eliminatee if it occurs only in dualJuncts in which the eliminatee also
-	 * occurs.
-	 * <li>Optimization2: Do not apply the general quantifier elimination
-	 * recursively but only the method that immediately applies the distributivity.
+	 * <li>(1) The root symbol of the whole formula is not a dual junction any more, e.g., due to simplifications that
+	 * became possible. (Considered a successful elimination)
+	 * <li>(2) We can now partition the dualJuncts according such that no two equivalence classes share a common
+	 * eliminatee. (Considered a successful elimination)
+	 * <li>(3) The elimination failed for all eliminatees that does not occur in all dualjuncts. (Considered a failed
+	 * elimination) </ ul><li> Optimization1: Do not apply the recursive elimination only to the selected eliminatee but
+	 * also to its "minion" eliminatees. We call an eliminatee a "minion" of the selected eliminatee if it occurs only
+	 * in dualJuncts in which the eliminatee also occurs.
+	 * <li>Optimization2: Do not apply the general quantifier elimination recursively but only the method that
+	 * immediately applies the distributivity.
 	 * <li>Comment1: This method is useless if we do not apply distributivity.
-	 * <li>Problem1: If the recursive call just replaces that names of the
-	 * quantified variables we run into an infinite loop. Maybe there a similar more
-	 * sophisticated nontermination problems. </ ul>
+	 * <li>Problem1: If the recursive call just replaces that names of the quantified variables we run into an infinite
+	 * loop. Maybe there a similar more sophisticated nontermination problems. </ ul>
 	 *
-	 * TODO: What about eliminatee that occur in a single dualjunct? Have been
-	 * checked before. But track new ones. Flatten after push
+	 * TODO: What about eliminatee that occur in a single dualjunct? Have been checked before. But track new ones.
+	 * Flatten after push
 	 *
-	 * FIXME: Combination of partitioning and flattening may produce an infinite
-	 * loop.
+	 * FIXME: Combination of partitioning and flattening may produce an infinite loop.
 	 *
 	 */
 	public static Term sequentialSubsetPush(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
 			final IQuantifierEliminator qe) {
-		List<Term> currentDualFiniteJuncts = Arrays
-				.asList(QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm()));
+		List<Term> currentDualFiniteJuncts =
+				Arrays.asList(QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm()));
 		// TODO Reduce the following checks
 		if (currentDualFiniteJuncts.size() <= 1) {
 			throw new AssertionError("No dual finite junction");
@@ -133,10 +121,10 @@ public class QuantifierPushUtilsForSubsetPush {
 						"Initially %s eliminatees, after %s iterations we have %s eliminatees. Is this in finite loop?",
 						et.getEliminatees().size(), iterations, currentEliminatees.size()));
 			}
-			final TermVariable eliminatee = XnfScout.selectBestEliminatee(mgdScript.getScript(),
-					et.getQuantifier(), currentSuitableEliminatees, currentDualFiniteJuncts);
-			final PartitionByEliminateeOccurrence parti = new PartitionByEliminateeOccurrence(currentDualFiniteJuncts,
-					eliminatee);
+			final TermVariable eliminatee = XnfScout.selectBestEliminatee(mgdScript.getScript(), et.getQuantifier(),
+					currentSuitableEliminatees, currentDualFiniteJuncts);
+			final PartitionByEliminateeOccurrence parti =
+					new PartitionByEliminateeOccurrence(currentDualFiniteJuncts, eliminatee);
 			// Note 1: minionEliminatees may include failedEliminatees
 			// Note 2: in subsequent calls the selected eliminatee may occur in all params
 			// hence we have to recurse on proper minions even if they have a smaller
@@ -212,8 +200,8 @@ public class QuantifierPushUtilsForSubsetPush {
 				final QuantifiedFormula qf = (QuantifiedFormula) pair.getSecond();
 				currentEliminatees = new ArrayList<>(Arrays.asList(qf.getVariables()));
 				failedEliminatees.retainAll(currentEliminatees);
-				currentDualFiniteJuncts = Arrays
-						.asList(QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), qf.getSubformula()));
+				currentDualFiniteJuncts =
+						Arrays.asList(QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), qf.getSubformula()));
 			}
 
 			currentSuitableEliminatees = findSuitableEliminatees(currentEliminatees, failedEliminatees,
@@ -228,11 +216,9 @@ public class QuantifierPushUtilsForSubsetPush {
 	}
 
 	/**
-	 * Try to push minion eliminatees. Construct appropriate context (mind
-	 * non-minions and other dual juncts) for the push. Return null if push was not
-	 * considered successful. We say that the push is not successful if (1) the
-	 * result of the push is similar to the input or (2) the flattened result is
-	 * similar to the input.
+	 * Try to push minion eliminatees. Construct appropriate context (mind non-minions and other dual juncts) for the
+	 * push. Return null if push was not considered successful. We say that the push is not successful if (1) the result
+	 * of the push is similar to the input or (2) the flattened result is similar to the input.
 	 *
 	 */
 	private static Term pushMinionEliminatees(final IUltimateServiceProvider services, final ManagedScript mgdScript,
@@ -247,8 +233,8 @@ public class QuantifierPushUtilsForSubsetPush {
 		final List<TermVariable> nonMinionEliminatees = new ArrayList<>(currentEliminatees);
 		nonMinionEliminatees.removeAll(new HashSet<>(minionEliminatees));
 		final Context parentContext = et.getContext();
-		Context context = parentContext.constructChildContextForQuantifiedFormula(mgdScript.getScript(),
-				nonMinionEliminatees);
+		Context context =
+				parentContext.constructChildContextForQuantifiedFormula(mgdScript.getScript(), nonMinionEliminatees);
 		context = context.constructChildContextForConDis(services, mgdScript,
 				((ApplicationTerm) et.getTerm()).getFunction(), parti.getFiniteDualJunctsWithoutEliminatee());
 		// Evaluate success: return null if there was not progress.
@@ -279,17 +265,15 @@ public class QuantifierPushUtilsForSubsetPush {
 	 * A currentEliminatee is suitable if
 	 * <ul>
 	 * <li>it is not in the set of `bannedEliminatees`,
-	 * <li>occurs in at least two dualFiniteJuncts (not enforced here but ensured by
-	 * the input),
+	 * <li>occurs in at least two dualFiniteJuncts (not enforced here but ensured by the input),
 	 * <li>does not occur in all dualFiniteJuncts, and
-	 * <li>occurs in at least on dualFiniteJunct that is a corresponding
-	 * finiteJunction (i.e., applying distributivity to a subset makes sense).
+	 * <li>occurs in at least on dualFiniteJunct that is a corresponding finiteJunction (i.e., applying distributivity
+	 * to a subset makes sense).
 	 * </ul>
-	 * Note: If we would allow eliminatees that occur in all subformulas we can run
-	 * into an infinite loop (of subset pushes). If we however allow eliminatees to
-	 * be not suitable for that reason a selected eliminatee with good score (wrt.
-	 * expected eliminatability) may be be replaced by one of its minion with lower
-	 * score in subsequent calls. #overtakingMinionProblem
+	 * Note: If we would allow eliminatees that occur in all subformulas we can run into an infinite loop (of subset
+	 * pushes). If we however allow eliminatees to be not suitable for that reason a selected eliminatee with good score
+	 * (wrt. expected eliminatability) may be be replaced by one of its minion with lower score in subsequent calls.
+	 * #overtakingMinionProblem
 	 *
 	 */
 	private static List<TermVariable> findSuitableEliminatees(final List<TermVariable> currentEliminatees,
@@ -305,12 +289,10 @@ public class QuantifierPushUtilsForSubsetPush {
 	}
 
 	/**
-	 * Class that partitions a list of terms into two lists. One list where a given
-	 * TermVariable occurs as a free variable and one list where the given
-	 * TermVariable does not occur as a free variable. Terminology and assertions
-	 * are fitted to the method
-	 * {@link QuantifierPushUtilsForSubsetPush#sequentialSubsetPush} in which this
-	 * class is used.
+	 * Class that partitions a list of terms into two lists. One list where a given TermVariable occurs as a free
+	 * variable and one list where the given TermVariable does not occur as a free variable. Terminology and assertions
+	 * are fitted to the method {@link QuantifierPushUtilsForSubsetPush#sequentialSubsetPush} in which this class is
+	 * used.
 	 */
 	private static class PartitionByEliminateeOccurrence {
 

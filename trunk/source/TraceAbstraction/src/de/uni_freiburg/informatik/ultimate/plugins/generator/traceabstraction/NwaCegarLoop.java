@@ -107,32 +107,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 /**
- * Subclass of BasicCegarLoop for safety checking based on nested-word automata.
+ * CEGAR loop for safety checking, based on abstractions represented as nested-word automata.
+ *
+ * This is the main CEGAR loop used by Ultimate Automizer.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            the type of transitions in the analysed program
  */
 public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
 
 	private enum AutomatonType {
-		FLOYD_HOARE("FloydHoare", "Fh"), ERROR("Error", "Err");
-
-		private final String mLongString;
-		private final String mShortString;
-
-		AutomatonType(final String longString, final String shortString) {
-			mLongString = longString;
-			mShortString = shortString;
-		}
-
-		public String getLongString() {
-			return mLongString;
-		}
-
-		public String getShortString() {
-			return mShortString;
-		}
+		FLOYD_HOARE, ERROR;
 	}
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
@@ -276,9 +265,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mIcfg, allowedTransitions, Collections.emptySet(), x -> true);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final PredicateFactory predicateFactory = mPredicateFactory;
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
-				mCsToolkit.getManagedScript(), predicateFactory, mCsToolkit.getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_DDA);
+		final IPredicateUnifier predicateUnifier =
+				new PredicateUnifier(mLogger, getServices(), mCsToolkit.getManagedScript(), predicateFactory,
+						mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA);
 		final IPredicate precondition = predicateUnifier.getTruePredicate();
 		final DangerInvariantGuesser dig = new DangerInvariantGuesser(pathProgram, getServices(), precondition,
 				predicateFactory, predicateUnifier, mCsToolkit);
@@ -306,8 +295,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
 				mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);
-		assert accepts(getServices(), resultBeforeEnhancement, mCounterexample.getWord(),
-				false) : "Error automaton broken!";
+		assert accepts(getServices(), resultBeforeEnhancement, mCounterexample.getWord(), false)
+				: "Error automaton broken!";
 	}
 
 	@Override
@@ -384,7 +373,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				throw tce;
 			} finally {
 				if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
-					assert subtrahend instanceof AbstractInterpolantAutomaton : "if enhancement is used, we need AbstractInterpolantAutomaton";
+					assert subtrahend instanceof AbstractInterpolantAutomaton
+							: "if enhancement is used, we need AbstractInterpolantAutomaton";
 					((AbstractInterpolantAutomaton<L>) subtrahend).switchToReadonlyMode();
 				}
 			}
@@ -397,8 +387,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
 							mPref.interprocedural(), mPredicateFactory);
 					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
-							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
-							null, (NestedRun<L, IPredicate>) mCounterexample, (IIcfg<IcfgLocation>) mIcfg);
+							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique,
+							mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,
+							(IIcfg<IcfgLocation>) mIcfg);
 				}
 			}
 
@@ -567,15 +558,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	}
 
 	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
-		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
+		return switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
 				CounterexampleSearchStrategy.class)) {
-		case BFS:
-			return SearchStrategy.BFS;
-		case DFS:
-			return SearchStrategy.DFS;
-		default:
-			throw new IllegalArgumentException();
-		}
+		case BFS -> SearchStrategy.BFS;
+		case DFS -> SearchStrategy.DFS;
+		};
 	}
 
 	@Override

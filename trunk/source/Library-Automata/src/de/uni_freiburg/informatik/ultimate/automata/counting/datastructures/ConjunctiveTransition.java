@@ -31,9 +31,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Represents a transition whose guard is a conjunction of atomic counter
- * guards. In order to represent transitions whose guards contain also
- * disjunctions we bring the guard in DNF and make a copy of the transition.
+ * Represents a transition whose guard is a conjunction of atomic counter guards. In order to represent transitions
+ * whose guards contain also disjunctions we bring the guard in DNF and make a copy of the transition.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -47,7 +46,6 @@ public class ConjunctiveTransition<LETTER, STATE> {
 
 	public ConjunctiveTransition(final STATE predecessor, final STATE successor, final LETTER letter,
 			final ConjunctiveCounterFormula guard, final List<AtomicCounterAssingment> assignment) {
-		super();
 		Objects.nonNull(predecessor);
 		Objects.nonNull(successor);
 		Objects.nonNull(letter);

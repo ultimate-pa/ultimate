@@ -2,22 +2,22 @@
  * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
  * Copyright (C) 2016 Christian Schilling <schillic@informatik.uni-freiburg.de>
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * TODO ignore temporary data structures before first decision
  * <p>
  * TODO detect clause duplicates
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <V>
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
 public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
-	private static final Object[] EMPTY_ARRAY = new Object[0];
+	private static final Object[] EMPTY_ARRAY = {};
 
 	private final SolverStack mStack;
 
@@ -68,14 +68,13 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private int mMaxNonHornClauses;
 
 	/*
-	 * used for debugging, can be very expensive for bigger automata!
-	 * TODO remove after thoroughly testing
+	 * used for debugging, can be very expensive for bigger automata! TODO remove after thoroughly testing
 	 */
 	private final boolean mShowExpensiveDebugLogs = false;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 */
@@ -105,7 +104,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 		assert mPropagatees.isEmpty();
 
-		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
+		final Clause<V> clause = new Clause<>(this, positiveAtoms, negativeAtoms);
 		if (mShowExpensiveDebugLogs && mLogger.isDebugEnabled()) {
 			mLogger.debug("creating clause: " + clause);
 		}
@@ -142,8 +141,8 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	@Override
 	protected Boolean getPersistentAssignment(final V var) {
 		final Boolean result = mVariablesIrrevocablySet.get(var);
-		assert (result == null)
-				|| (!mStack.getVarTempSet().containsKey(var)) : "Unsynchronized assignment data structures.";
+		assert (result == null) || (!mStack.getVarTempSet().containsKey(var))
+				: "Unsynchronized assignment data structures.";
 		return result;
 	}
 
@@ -195,14 +194,14 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 		assert mVariables.contains(var) : "unknown variable";
 		assert !mVariablesIrrevocablySet.containsKey(var) : "variable already set";
-//		assert checkClausesConsistent() : "clauses inconsistent";
+		// assert checkClausesConsistent() : "clauses inconsistent";
 		final Boolean oldStatus = mStack.getVarTempSet().put(var, newStatus);
 		if (oldStatus != null) {
 			throw new IllegalArgumentException("variable already set " + var);
 		}
 		mPropagatees.remove(var);
 		reEvaluateStatusOfAllClauses(var);
-//		assert checkClausesConsistent() : "clauses inconsistent";
+		// assert checkClausesConsistent() : "clauses inconsistent";
 	}
 
 	@Override
@@ -229,7 +228,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 				break;
 			}
 		}
-//		mLogger.debug("finished making solver state persistent");
+		// mLogger.debug("finished making solver state persistent");
 	}
 
 	@Override
@@ -297,8 +296,8 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	}
 
 	private void backtrackFurther(final V var) {
-		assert (mNumberOfNonHornClauses > 0) : "For Horn clauses backtracking should not be necessary for more than "
-				+ "one level.";
+		assert (mNumberOfNonHornClauses > 0)
+				: "For Horn clauses backtracking should not be necessary for more than " + "one level.";
 		assert (var != null);
 		V nextVar = var;
 		do {
@@ -326,30 +325,30 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	}
 
 	private void pushStack(final V var) {
-//		if (mLogger.isDebugEnabled()) {
-//			mLogger.debug("+A stack level " + mStack.size() + ": " + mStack.peek());
-//		}
+		// if (mLogger.isDebugEnabled()) {
+		// mLogger.debug("+A stack level " + mStack.size() + ": " + mStack.peek());
+		// }
 		mStack.push(var);
 
 		synchronizeStack();
-//		if (mLogger.isDebugEnabled()) {
-//			mLogger.debug("+B stack level " + mStack.size() + ": " + mStack.peek());
-//		}
+		// if (mLogger.isDebugEnabled()) {
+		// mLogger.debug("+B stack level " + mStack.size() + ": " + mStack.peek());
+		// }
 	}
 
 	/**
 	 * @return true iff lowest level was popped.
 	 */
 	private boolean popStack() {
-//		if (mLogger.isDebugEnabled()) {
-//			mLogger.debug("-A stack level " + mStack.size() + ": " + mStack.peek());
-//		}
+		// if (mLogger.isDebugEnabled()) {
+		// mLogger.debug("-A stack level " + mStack.size() + ": " + mStack.peek());
+		// }
 		final boolean poppedLowestLevel = mStack.pop();
 
 		synchronizeStack();
-//		if (mLogger.isDebugEnabled()) {
-//			mLogger.debug("-B stack level " + mStack.size() + ": " + mStack.peek());
-//		}
+		// if (mLogger.isDebugEnabled()) {
+		// mLogger.debug("-B stack level " + mStack.size() + ": " + mStack.peek());
+		// }
 		return poppedLowestLevel;
 	}
 
@@ -362,14 +361,14 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		private boolean mIsLowestLevel;
 
 		public SolverStack() {
-			this.mStackInner = new ArrayDeque<>();
+			mStackInner = new ArrayDeque<>();
 			mLowestLevel = new StackContent();
 			mIsLowestLevel = true;
 		}
 
 		/**
 		 * Pops the current stack level, empties the stack if at lowermost level.
-		 * 
+		 *
 		 * @return true iff stack is empty afterward
 		 */
 		public boolean pop() {
@@ -385,7 +384,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 
 		/**
 		 * Pushes a new stack level.
-		 * 
+		 *
 		 * @param var
 		 *            current decision
 		 */
@@ -415,7 +414,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		 * NOTE: Must be used by alternation of <code>hasNext()</code> and <code>next()</code>. <br>
 		 * <p>
 		 * NOTE: Do not edit the stack during iteration!
-		 * 
+		 *
 		 * @return unsynchronized iterator over all temporary maps
 		 */
 		public Iterator<Map<V, Boolean>> iterator() {
@@ -429,7 +428,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 
 		/**
 		 * Iterator through the stack.
-		 * 
+		 *
 		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 		 */
 		private class StackIterator implements Iterator<Map<V, Boolean>> {
@@ -480,9 +479,9 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 
 			@SuppressWarnings("squid:S1172")
 			private StackContent(final V variable, final boolean dummy) {
-				this.mVariableDecision = variable;
-				this.mVariablesTemporarilySet = new HashMap<>();
-				this.mClausesMarkedForRemoval = new LinkedHashSet<Clause<V>>();
+				mVariableDecision = variable;
+				mVariablesTemporarilySet = new HashMap<>();
+				mClausesMarkedForRemoval = new LinkedHashSet<>();
 			}
 
 			public V getVariableDecision() {
@@ -509,7 +508,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 				}
 				b.append(mVariablesTemporarilySet.size());
 				b.append(" variables temporarily assigned, ");
-				b.append(this.mClausesMarkedForRemoval.size());
+				b.append(mClausesMarkedForRemoval.size());
 				b.append(" clauses temporarily satisfied>");
 				return b.toString();
 			}

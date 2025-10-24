@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -90,8 +90,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class CExpressionTranslator {
 
-	private final TranslationSettings mSettings;
-
 	private final MemoryHandler mMemoryHandler;
 	private final StaticObjectsHandler mStaticObjectsHandler;
 
@@ -100,17 +98,40 @@ public class CExpressionTranslator {
 	private final TypeSizes mTypeSizes;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
+	private final CheckMode mPointerSubtractionAndComparisonValidityCheckMode;
+	private final CheckMode mDivisionByZeroOfIntegerTypes;
+	private final CheckMode mDivisionByZeroOfFloatingTypes;
+	private final CheckMode mCheckSignedIntegerBounds;
+
+	private final boolean mEnforceIfForConditional;
+
 	public CExpressionTranslator(final TranslationSettings settings, final MemoryHandler memoryHandler,
 			final ExpressionTranslation expressionTranslation, final ExpressionResultTransformer exprResultTransformer,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizes typeSizes,
 			final StaticObjectsHandler staticObjectsHandler) {
-		mSettings = settings;
+		this(memoryHandler, expressionTranslation, exprResultTransformer, auxVarInfoBuilder, typeSizes,
+				staticObjectsHandler, settings.getPointerSubtractionAndComparisonValidityCheckMode(),
+				settings.getDivisionByZeroOfIntegerTypes(), settings.getDivisionByZeroOfFloatingTypes(),
+				settings.checkSignedIntegerBounds(), settings.enforceIfForConditional());
+	}
+
+	private CExpressionTranslator(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
+			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final TypeSizes typeSizes, final StaticObjectsHandler staticObjectsHandler,
+			final CheckMode pointerSubtractionAndComparisonValidityCheckMode,
+			final CheckMode divisionByZeroOfIntegerTypes, final CheckMode divisionByZeroOfFloatingTypes,
+			final CheckMode checkSignedIntegerBounds, final boolean enforceIfForConditional) {
 		mMemoryHandler = memoryHandler;
 		mStaticObjectsHandler = staticObjectsHandler;
 		mExpressionTranslation = expressionTranslation;
 		mExprResultTransformer = exprResultTransformer;
 		mTypeSizes = typeSizes;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mPointerSubtractionAndComparisonValidityCheckMode = pointerSubtractionAndComparisonValidityCheckMode;
+		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
+		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
+		mCheckSignedIntegerBounds = checkSignedIntegerBounds;
+		mEnforceIfForConditional = enforceIfForConditional;
 	}
 
 	/**
@@ -124,8 +145,8 @@ public class CExpressionTranslator {
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		left = mExprResultTransformer.rexBoolToInt(left, loc);
 		right = mExprResultTransformer.rexBoolToInt(right, loc);
-		CType lType = left.getLrValue().getCType().getUnderlyingType();
-		CType rType = right.getLrValue().getCType().getUnderlyingType();
+		ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		ICType rType = right.getLrValue().getCType().getUnderlyingType();
 
 		final Expression expr;
 
@@ -133,14 +154,12 @@ public class CExpressionTranslator {
 		if (lType instanceof CPrimitive && rType instanceof CPointer
 				&& isNullPointerEquivalent((RValue) left.getLrValue())) {
 			// FIXME: the following is a workaround for the null pointer
-			left = mExprResultTransformer.performImplicitConversion(left,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			left = mExprResultTransformer.performImplicitConversion(left, CPointer.voidPointer(), loc);
 			lType = left.getLrValue().getCType().getUnderlyingType();
 		} else if (lType instanceof CPointer && rType instanceof CPrimitive
 				&& isNullPointerEquivalent((RValue) right.getLrValue())) {
 			// FIXME: the following is a workaround for the null pointer
-			right = mExprResultTransformer.performImplicitConversion(right,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			right = mExprResultTransformer.performImplicitConversion(right, CPointer.voidPointer(), loc);
 			rType = right.getLrValue().getCType().getUnderlyingType();
 		}
 		ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -159,8 +178,8 @@ public class CExpressionTranslator {
 					left.getLrValue().getValue(), right.getLrValue().getValue(), SFO.POINTER_BASE);
 			final Expression offsetRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
 					right.getLrValue().getValue(), SFO.POINTER_OFFSET);
-			switch (mSettings.getPointerSubtractionAndComparisonValidityCheckMode()) {
-			case ASSERTandASSUME:
+			switch (mPointerSubtractionAndComparisonValidityCheckMode) {
+			case CHECK:
 				final Statement assertStm = new AssertStatement(loc, baseEquality);
 				final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 				chk.annotate(assertStm);
@@ -208,20 +227,20 @@ public class CExpressionTranslator {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 
-		CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 
 		if (lType instanceof CArray && rType.isArithmeticType()) {
 			// arrays decay to pointers in this case
 			assert !(((CArray) lType).getBound().getCType() instanceof CArray) : "TODO: think about this case";
-			final CType valueType = ((CArray) lType).getValueType().getUnderlyingType();
+			final ICType valueType = ((CArray) lType).getValueType().getUnderlyingType();
 			left = mExprResultTransformer.performImplicitConversion(left, new CPointer(valueType), loc);
 			lType = left.getLrValue().getCType().getUnderlyingType();
 		}
 
 		final ExpressionResultBuilder builder;
 		final Expression expr;
-		final CType typeOfResult;
+		final ICType typeOfResult;
 		if (lType.isArithmeticType() && rType.isArithmeticType()) {
 			final Pair<ExpressionResult, ExpressionResult> newOps =
 					mExprResultTransformer.usualArithmeticConversions(loc, left, right);
@@ -238,7 +257,7 @@ public class CExpressionTranslator {
 					primitiveTypeOfResult, right.getLrValue().getValue(), primitiveTypeOfResult);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.getLrValue().getCType();
-			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
+			final ICType pointsToType = ((CPointer) typeOfResult).getPointsToType();
 			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
 					left.getLrValue().getValue(), (RValue) right.getLrValue(), pointsToType);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -250,7 +269,7 @@ public class CExpressionTranslator {
 				throw new AssertionError("lType arithmetic, rType CPointer only legal if op is plus");
 			}
 			typeOfResult = right.getLrValue().getCType();
-			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
+			final ICType pointsToType = ((CPointer) typeOfResult).getPointsToType();
 			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
 					right.getLrValue().getValue(), (RValue) left.getLrValue(), pointsToType);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -268,10 +287,10 @@ public class CExpressionTranslator {
 			// We randomly choose the type whose Boogie translation we use to
 			// represent pointer components.
 			typeOfResult = mExpressionTranslation.getCTypeOfPointerComponents();
-			CType pointsToType;
+			ICType pointsToType;
 			{
-				final CType leftPointsToType = ((CPointer) lType).getPointsToType().getUnderlyingType();
-				final CType rightPointsToType = ((CPointer) rType).getPointsToType().getUnderlyingType();
+				final ICType leftPointsToType = ((CPointer) lType).getPointsToType().getUnderlyingType();
+				final ICType rightPointsToType = ((CPointer) rType).getPointsToType().getUnderlyingType();
 				if (!leftPointsToType.equals(rightPointsToType)) {
 					throw new UnsupportedOperationException(
 							"incompatible pointers: pointsto " + leftPointsToType + " " + rightPointsToType);
@@ -311,7 +330,7 @@ public class CExpressionTranslator {
 	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op,
 			ExpressionResult operand) {
 		assert operand.getLrValue() instanceof RValue : "no RValue";
-		final CType inputType = operand.getLrValue().getCType().getUnderlyingType();
+		final ICType inputType = operand.getLrValue().getCType().getUnderlyingType();
 
 		switch (op) {
 		case IASTUnaryExpression.op_not: {
@@ -396,8 +415,8 @@ public class CExpressionTranslator {
 		}
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
-		final CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		final ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 		if (!rType.isIntegerType() || !lType.isIntegerType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
@@ -426,8 +445,8 @@ public class CExpressionTranslator {
 			ExpressionResult right) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
-		final CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		final ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 		if (!rType.isArithmeticType() || !lType.isArithmeticType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
@@ -476,21 +495,19 @@ public class CExpressionTranslator {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		{
-			final CType lType = left.getLrValue().getCType().getUnderlyingType();
-			final CType rType = right.getLrValue().getCType().getUnderlyingType();
+			final ICType lType = left.getLrValue().getCType().getUnderlyingType();
+			final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 			// FIXME Matthias 2015-09-05: operation only legal if both have type
 			// CPointer I guess the following implicit casts are a workaround
 			// for arrays (or structs or union?)
 			if (lType instanceof CPointer || rType instanceof CPointer) {
 				if (!(lType instanceof CPointer)) {
 					// FIXME: the following is a workaround for the null pointer
-					left = mExprResultTransformer.performImplicitConversion(left,
-							new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+					left = mExprResultTransformer.performImplicitConversion(left, CPointer.voidPointer(), loc);
 				}
 				if (!(rType instanceof CPointer)) {
 					// FIXME: the following is a workaround for the null pointer
-					right = mExprResultTransformer.performImplicitConversion(right,
-							new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+					right = mExprResultTransformer.performImplicitConversion(right, CPointer.voidPointer(), loc);
 				}
 			} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 				final Pair<ExpressionResult, ExpressionResult> newOps =
@@ -527,8 +544,8 @@ public class CExpressionTranslator {
 		}
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
-		final CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		final ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 		if (!rType.isIntegerType() || !lType.isIntegerType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
@@ -567,10 +584,10 @@ public class CExpressionTranslator {
 		builder.addAuxVarWithDeclaration(auxvar);
 
 		// assign the old value to the temporary variable
-		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
-		final Expression[] oldValue = new Expression[] { exprRes.getLrValue().getValue() };
+		final LeftHandSide[] tmpAsLhs = { auxvar.getLhs() };
+		final Expression[] oldValue = { exprRes.getLrValue().getValue() };
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, oldValue));
-		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		final ICType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
 
 		final int op;
@@ -622,14 +639,14 @@ public class CExpressionTranslator {
 			throw new AssertionError("no prefix");
 		}
 
-		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		final ICType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		// in-/decremented value
 		final Expression valueXcremented =
 				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue());
 
 		// assign the old value to the temporary variable
-		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
-		final Expression[] newValue = new Expression[] { valueXcremented };
+		final LeftHandSide[] tmpAsLhs = { auxvar.getLhs() };
+		final Expression[] newValue = { valueXcremented };
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, newValue));
 
 		builder.setLrValue(new RValue(valueXcremented, oType, false, false));
@@ -718,7 +735,7 @@ public class CExpressionTranslator {
 			}
 		}
 
-		final CType resultCType;
+		final ICType resultCType;
 		if (opPositive.getLrValue().getCType().isArithmeticType()
 				&& opNegative.getLrValue().getCType().isArithmeticType()) {
 			/*
@@ -798,7 +815,7 @@ public class CExpressionTranslator {
 	 */
 	private ExpressionResult constructResultForConditionalOperator(final ILocation loc,
 			final ExpressionResult opCondition, final ExpressionResult opPositive, final ExpressionResult opNegative,
-			final CType resultCType, final boolean secondArgIsVoid, final boolean thirdArgIsVoid) {
+			final ICType resultCType, final boolean secondArgIsVoid, final boolean thirdArgIsVoid) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary
@@ -808,8 +825,7 @@ public class CExpressionTranslator {
 		// * assignment.
 		// */
 
-		if (!mSettings.enforceIfForConditional() && opPositive.getStatements().isEmpty()
-				&& opNegative.getStatements().isEmpty()) {
+		if (!mEnforceIfForConditional && opPositive.getStatements().isEmpty() && opNegative.getStatements().isEmpty()) {
 			// neither second nor third operand have side-effects, we can translate to
 			// a Boogie if-then-else expression
 			resultBuilder.addAllExceptLrValue(opCondition, opPositive, opNegative);
@@ -837,7 +853,7 @@ public class CExpressionTranslator {
 				auxvar = null;
 			} else {
 				auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultCType, SFO.AUXVAR.ITE);
-				resultBuilder.addAuxVarWithDeclaration(auxvar);
+				resultBuilder.addAuxVarWithDeclaration(auxvar).setLrValue(new RValue(auxvar.getExp(), resultCType));
 			}
 
 			final List<Statement> ifStatements = new ArrayList<>();
@@ -851,11 +867,6 @@ public class CExpressionTranslator {
 				overapprItem.annotate(rtrStatement);
 			}
 			resultBuilder.addStatement(rtrStatement);
-			if (resultCType.isVoidType()) {
-				// result type is void the value is not assigned
-			} else {
-				resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultCType));
-			}
 		}
 
 		return resultBuilder.build();
@@ -873,9 +884,9 @@ public class CExpressionTranslator {
 	 *            note that this method has sideeffects on this object! (add..BoundCheck(..) calls)
 	 */
 	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder result,
-			final CType ctype, final int op, final Expression value) {
-		assert op == IASTBinaryExpression.op_plus
-				|| op == IASTBinaryExpression.op_minus : "has to be either minus or plus";
+			final ICType ctype, final int op, final Expression value) {
+		assert op == IASTBinaryExpression.op_plus || op == IASTBinaryExpression.op_minus
+				: "has to be either minus or plus";
 		final Expression valueIncremented;
 		if (ctype instanceof CPointer) {
 			final CPointer cPointer = (CPointer) ctype;
@@ -885,9 +896,7 @@ public class CExpressionTranslator {
 			final RValue one = new RValue(oneEpr, oneType);
 			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
-		} else if (ctype instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) ctype;
-
+		} else if (ctype instanceof final CPrimitive cPrimitive) {
 			final Expression one;
 			if (ctype.isFloatingType()) {
 				one = mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ONE);
@@ -912,9 +921,9 @@ public class CExpressionTranslator {
 
 		final CheckMode checkMode;
 		if (divisorType.isIntegerType()) {
-			checkMode = mSettings.getDivisionByZeroOfIntegerTypes();
+			checkMode = mDivisionByZeroOfIntegerTypes;
 		} else if (divisorType.isFloatingType()) {
-			checkMode = mSettings.getDivisionByZeroOfFloatingTypes();
+			checkMode = mDivisionByZeroOfFloatingTypes;
 		} else {
 			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
 		}
@@ -937,10 +946,15 @@ public class CExpressionTranslator {
 			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
 		}
 
+		if (ExpressionFactory.isTrueLiteral(divisorNotZero)) {
+			// Avoid the creation of trivial statements
+			return divisorExpRes;
+		}
+
 		final Statement additionalStatement;
 		if (checkMode == CheckMode.ASSUME) {
 			additionalStatement = new AssumeStatement(loc, divisorNotZero);
-		} else if (checkMode == CheckMode.ASSERTandASSUME) {
+		} else if (checkMode == CheckMode.CHECK) {
 			additionalStatement = new AssertStatement(loc, divisorNotZero);
 			final Check check = new Check(Spec.DIVISION_BY_ZERO);
 			check.annotate(additionalStatement);
@@ -1000,7 +1014,7 @@ public class CExpressionTranslator {
 	private void addIntegerBoundsCheck(final ILocation loc, final ExpressionResultBuilder erb,
 			final CPrimitive resultType, final int operation, final Expression... operands) {
 
-		if (mSettings.checkSignedIntegerBounds() == CheckMode.IGNORE || !resultType.isIntegerType()
+		if (mCheckSignedIntegerBounds == CheckMode.IGNORE || !resultType.isIntegerType()
 				|| mTypeSizes.isUnsigned(resultType)) {
 			// nothing to do
 			return;
@@ -1040,14 +1054,14 @@ public class CExpressionTranslator {
 	private ExpressionResultBuilder addBaseEqualityCheck(final ILocation loc, final Expression leftPtr,
 			final Expression rightPtr, final ExpressionResultBuilder erb) {
 
-		if (mSettings.getPointerSubtractionAndComparisonValidityCheckMode() == CheckMode.IGNORE) {
+		if (mPointerSubtractionAndComparisonValidityCheckMode == CheckMode.IGNORE) {
 			// do not check anything
 			return erb;
 		}
 		final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals, leftPtr,
 				rightPtr, SFO.POINTER_BASE);
-		switch (mSettings.getPointerSubtractionAndComparisonValidityCheckMode()) {
-		case ASSERTandASSUME:
+		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
+		case CHECK:
 			final Statement assertStm = new AssertStatement(loc, baseEquality);
 			final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 			chk.annotate(assertStm);
@@ -1068,7 +1082,7 @@ public class CExpressionTranslator {
 	 * Subtract two pointers.
 	 *
 	 * @param pointsToType
-	 *            {@link CType} of the objects to which the pointers point.
+	 *            {@link ICType} of the objects to which the pointers point.
 	 * @param leftPtr
 	 *            Boogie {@link Expression} that represents the left pointer.
 	 * @param rightPtr
@@ -1077,7 +1091,7 @@ public class CExpressionTranslator {
 	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
 	 */
 	private Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
-			final CType pointsToType) {
+			final ICType pointsToType) {
 		final Expression ptr1Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
 		final Expression ptr2Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
 		final Expression offsetDifference = mExpressionTranslation.constructArithmeticExpression(loc,
@@ -1127,9 +1141,7 @@ public class CExpressionTranslator {
 	private static void assignAuxVar(final ILocation loc, final ExpressionResult branchResult,
 			final ExpressionResultBuilder resultBuilder, final AuxVarInfo auxvar,
 			final List<Statement> resultStatements, final boolean relevantArgIsVoid) {
-		if (resultStatements != null) {
-			resultStatements.addAll(branchResult.getStatements());
-		}
+		resultStatements.addAll(branchResult.getStatements());
 		if (auxvar != null && !relevantArgIsVoid) {
 			final LeftHandSide[] lhs = { auxvar.getLhs() };
 			final Expression assignedVal = branchResult.getLrValue().getValue();
@@ -1144,4 +1156,13 @@ public class CExpressionTranslator {
 
 	}
 
+	/**
+	 * Returns a copy of {@code this}, where all checks for undefined behavior are disable (without changing
+	 * {@code this}).
+	 */
+	public CExpressionTranslator disableChecksForUndefinedBehavior() {
+		return new CExpressionTranslator(mMemoryHandler, mExpressionTranslation, mExprResultTransformer,
+				mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, CheckMode.IGNORE, CheckMode.IGNORE,
+				CheckMode.IGNORE, CheckMode.IGNORE, mEnforceIfForConditional);
+	}
 }

@@ -10,7 +10,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-
 public class PeaLocationAnnotation extends ModernAnnotations {
 
 	private final List<Phase> mLocation;
@@ -21,7 +20,7 @@ public class PeaLocationAnnotation extends ModernAnnotations {
 		mAutomaton = aut;
 	}
 
-	public  List<Phase> getLocation() {
+	public List<Phase> getLocation() {
 		return mLocation;
 	}
 
@@ -40,7 +39,8 @@ public class PeaLocationAnnotation extends ModernAnnotations {
 	@Override
 	public IAnnotations merge(final IAnnotations other) {
 		if (other instanceof PeaLocationAnnotation) {
-			return new PeaLocationAnnotation(DataStructureUtils.concat(mAutomaton, ((PeaLocationAnnotation) other).getAutomaton()),
+			return new PeaLocationAnnotation(
+					DataStructureUtils.concat(mAutomaton, ((PeaLocationAnnotation) other).getAutomaton()),
 					DataStructureUtils.concat(mLocation, ((PeaLocationAnnotation) other).getLocation()));
 		}
 		return super.merge(other);

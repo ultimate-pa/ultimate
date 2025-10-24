@@ -47,35 +47,35 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class RelationTemplate extends Template {
 	TermVariable[] mVariables;
 	String mName;
-	public RelationTemplate(Script script, int relation,
-			Set<TermVariable> vars, String name) {
+
+	public RelationTemplate(final Script script, final int relation, final Set<TermVariable> vars, final String name) {
 		mScript = script;
 
 		mName = name;
-		int l = vars.size();
+		final int l = vars.size();
 		int i = 0;
-		Term[] t = new Term[l];
-		mVariables = new TermVariable[l+1];
+		final Term[] t = new Term[l];
+		mVariables = new TermVariable[l + 1];
 		Term lhs = null;
-		for (TermVariable v : vars ){
-			TermVariable lambda = mScript.variable( "v_" + name + "-" + i,  mScript.sort("Real"));
+		for (final TermVariable v : vars) {
+			final TermVariable lambda = mScript.variable("v_" + name + "-" + i, mScript.sort("Real"));
 			mVariables[i] = lambda;
 			t[i] = mScript.term("*", lambda, v);
-			if(i==0){
-				lhs = mScript.term("*", lambda,v);
+			if (i == 0) {
+				lhs = mScript.term("*", lambda, v);
 				System.out.print("lhs is " + lhs.toString());
-			} else{
-				lhs = mScript.term("+", lhs, mScript.term("*", lambda, v) );
+			} else {
+				lhs = mScript.term("+", lhs, mScript.term("*", lambda, v));
 				System.out.print("lhs is " + lhs.toString());
 			}
 			i++;
 		}
-		
-		TermVariable rhs = mScript.variable( "v_" + name + "-" + i,  mScript.sort("Real"));
+
+		final TermVariable rhs = mScript.variable("v_" + name + "-" + i, mScript.sort("Real"));
 		mVariables[l] = rhs;
-		if(l == 0){
+		if (l == 0) {
 			// TODO should this be posssible?
-			mTerm=mScript.term("true");
+			mTerm = mScript.term("true");
 			return;
 		}
 		switch (relation) {

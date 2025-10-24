@@ -30,18 +30,19 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+
 /**
  * The implication vertex is part of the {@link ImplicationGraph} and stores a predicate Descendants are implied
  * predicates and ancestors imply the predicate.
  *
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
-public class ImplicationVertex<T extends IPredicate>{
+public class ImplicationVertex<T extends IPredicate> {
 	private final T mPredicate;
 	private final Set<ImplicationVertex<T>> mChildren;
 	private final Set<ImplicationVertex<T>> mParents;
-	private Set<ImplicationVertex<T>> mDescendants;
-	private Set<ImplicationVertex<T>> mAncestors;
+	private final Set<ImplicationVertex<T>> mDescendants;
+	private final Set<ImplicationVertex<T>> mAncestors;
 
 	public ImplicationVertex(final T predicate, final Set<ImplicationVertex<T>> children,
 			final Set<ImplicationVertex<T>> parents) {
@@ -56,17 +57,17 @@ public class ImplicationVertex<T extends IPredicate>{
 
 	private void updateTransitiveClosure() {
 		mDescendants.addAll(mChildren);
-		for(ImplicationVertex<T> child : mChildren) {
+		for (final ImplicationVertex<T> child : mChildren) {
 			mDescendants.addAll(child.getDescendants());
 		}
 		mAncestors.addAll(mParents);
-		for(ImplicationVertex<T> parent : mParents) {
+		for (final ImplicationVertex<T> parent : mParents) {
 			mAncestors.addAll(parent.getAncestors());
 		}
-		for(ImplicationVertex<T> descendant : mDescendants) {
+		for (final ImplicationVertex<T> descendant : mDescendants) {
 			descendant.addAncestor(this);
 		}
-		for(ImplicationVertex<T> ancestor : mAncestors) {
+		for (final ImplicationVertex<T> ancestor : mAncestors) {
 			ancestor.addDescendant(this);
 		}
 	}
@@ -77,37 +78,37 @@ public class ImplicationVertex<T extends IPredicate>{
 	protected void transitiveReductionAfterAdding() {
 		for (final ImplicationVertex<T> parent : mParents) {
 			for (final ImplicationVertex<T> child : mChildren) {
-				if (((ImplicationVertex<T>) parent).getChildren().contains(child)) {
-					((ImplicationVertex<T>) parent).removeChild(child);
-					((ImplicationVertex<T>) child).removeParent(parent);
+				if (parent.getChildren().contains(child)) {
+					parent.removeChild(child);
+					child.removeParent(parent);
 				}
-				((ImplicationVertex<T>) child).addParent(this);
+				child.addParent(this);
 			}
-			((ImplicationVertex<T>) parent).addChild(this);
+			parent.addChild(this);
 		}
 	}
 
 	@Override
 	public String toString() {
 		final Set<T> c = new HashSet<>();
-		mChildren.forEach(child -> c.add(((ImplicationVertex<T>) child).mPredicate));
+		mChildren.forEach(child -> c.add(child.mPredicate));
 		return String.valueOf(mPredicate.toString()) + "-> " + c.toString();
 	}
-	
+
 	/**
 	 * @return every predicate that is implied by mPredicate (mPredicate is not included)
 	 */
-	public Set<ImplicationVertex<T>> getDescendants(){
+	public Set<ImplicationVertex<T>> getDescendants() {
 		return mDescendants;
 	}
-	
+
 	/**
 	 * @return every predicate that implies mPredicate (mPredicate is not included)
 	 */
-	public Set<ImplicationVertex<T>> getAncestors(){
+	public Set<ImplicationVertex<T>> getAncestors() {
 		return mAncestors;
 	}
-	
+
 	protected Set<ImplicationVertex<T>> getChildren() {
 		return mChildren;
 	}
@@ -115,12 +116,12 @@ public class ImplicationVertex<T extends IPredicate>{
 	protected Set<ImplicationVertex<T>> getParents() {
 		return mParents;
 	}
-	
-	public boolean addAncestor(ImplicationVertex<T> ancestor) {
+
+	public boolean addAncestor(final ImplicationVertex<T> ancestor) {
 		return mAncestors.add(ancestor);
 	}
-	
-	public boolean addDescendant(ImplicationVertex<T> descendant) {
+
+	public boolean addDescendant(final ImplicationVertex<T> descendant) {
 		return mDescendants.add(descendant);
 	}
 

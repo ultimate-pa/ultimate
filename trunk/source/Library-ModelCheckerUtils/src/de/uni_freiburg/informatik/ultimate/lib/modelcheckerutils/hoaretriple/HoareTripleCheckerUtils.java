@@ -93,25 +93,18 @@ public final class HoareTripleCheckerUtils {
 
 	public static ChainingHoareTripleChecker constructSmtHoareTripleChecker(final ILogger logger,
 			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
-		final IHoareTripleChecker solverHtc;
-		switch (hoareTripleChecks) {
-		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(csToolkit);
-			break;
-		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false);
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown value " + hoareTripleChecks);
-		}
+		final IHoareTripleChecker solverHtc = switch (hoareTripleChecks) {
+		case MONOLITHIC -> new MonolithicHoareTripleChecker(csToolkit);
+		case INCREMENTAL -> new IncrementalHoareTripleChecker(csToolkit, false);
+		};
 
 		ChainingHoareTripleChecker chain = ChainingHoareTripleChecker.with(logger, solverHtc);
 		// protect against quantified transition formulas and intricate predicates
 		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
 		final Predicate<IPredicate> quantifierProtectionForPredicates;
 		if (UNKNOWN_FOR_ALL_QUANTIFIED_PREDICATES) {
-			quantifierProtectionForPredicates = (p -> unifier.isIntricatePredicate(p)
-					|| quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula()));
+			quantifierProtectionForPredicates =
+					(p -> unifier.isIntricatePredicate(p) || quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula()));
 		} else {
 			quantifierProtectionForPredicates = (p -> unifier.isIntricatePredicate(p));
 		}

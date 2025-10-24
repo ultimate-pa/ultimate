@@ -34,6 +34,7 @@ import java.util.Set;
 
 /**
  * Ternary relation implemented via nested HashMaps.
+ *
  * @author Matthias Heizmann
  *
  */
@@ -48,9 +49,9 @@ public class HashRelation3<K1, K2, K3> implements Iterable<Triple<K1, K2, K3>> {
 		final IsContained isContained = mBackingMap.put(fst, snd, trd, IsContained.IsContained);
 		return isContained == IsContained.IsContained;
 	}
-	
+
 	public void addAllTriples(final K1 fst, final K2 snd, final Collection<K3> trds) {
-		for(final K3 trd: trds) {
+		for (final K3 trd : trds) {
 			addTriple(fst, snd, trd);
 		}
 	}
@@ -65,26 +66,26 @@ public class HashRelation3<K1, K2, K3> implements Iterable<Triple<K1, K2, K3>> {
 	}
 
 	public Set<K2> projectToSnd(final K1 k1) {
-		 final NestedMap2<K2, K3, IsContained> snd2trd2ic = mBackingMap.get(k1);
-		 if (snd2trd2ic == null) {
-			 return Collections.emptySet();
-		 } else {
-			 return snd2trd2ic.keySet();
-		 }
+		final NestedMap2<K2, K3, IsContained> snd2trd2ic = mBackingMap.get(k1);
+		if (snd2trd2ic == null) {
+			return Collections.emptySet();
+		} else {
+			return snd2trd2ic.keySet();
+		}
 	}
 
 	public Set<K3> projectToTrd(final K1 k1, final K2 k2) {
-		 final Map<K3, IsContained> trd2ic  = mBackingMap.get(k1, k2);
-		 if (trd2ic == null) {
-			 return Collections.emptySet();
-		 } else {
-			 return trd2ic.keySet();
-		 }
+		final Map<K3, IsContained> trd2ic = mBackingMap.get(k1, k2);
+		if (trd2ic == null) {
+			return Collections.emptySet();
+		} else {
+			return trd2ic.keySet();
+		}
 	}
 
 	@Override
 	public Iterator<Triple<K1, K2, K3>> iterator() {
-		return new Iterator<Triple<K1, K2, K3>>() {
+		return new Iterator<>() {
 
 			Iterator<Quad<K1, K2, K3, IsContained>> mBackingMapIterator = mBackingMap.entrySet().iterator();
 			private Triple<K1, K2, K3> mNext;
@@ -132,9 +133,8 @@ public class HashRelation3<K1, K2, K3> implements Iterable<Triple<K1, K2, K3>> {
 		};
 	}
 
-
 	public Iterator<Triple<K1, K2, K3>> iterator(final K1 k1) {
-		return new Iterator<Triple<K1,K2,K3>>() {
+		return new Iterator<>() {
 
 			Iterator<Quad<K1, K2, K3, IsContained>> mBackingMapIterator = mBackingMap.entries(k1).iterator();
 
@@ -146,20 +146,17 @@ public class HashRelation3<K1, K2, K3> implements Iterable<Triple<K1, K2, K3>> {
 			@Override
 			public Triple<K1, K2, K3> next() {
 				final Quad<K1, K2, K3, IsContained> next = mBackingMapIterator.next();
-				return new Triple<K1, K2, K3>(next.getFirst(), next.getSecond(), next.getThird());
+				return new Triple<>(next.getFirst(), next.getSecond(), next.getThird());
 			}
 		};
 	}
 
 	public String toStringAsTable() {
-		final Iterator<Triple<K1, K2, K3>> it = iterator();
 		final StringBuilder sb = new StringBuilder();
-		while (it.hasNext()) {
-			final Triple<K1, K2, K3> next = it.next();
+		for (final Triple<K1, K2, K3> next : this) {
 			sb.append(next.getFirst() + ", " + next.getSecond() + ", " + next.getThird() + System.lineSeparator());
 		}
 		return sb.toString();
 	}
-
 
 }

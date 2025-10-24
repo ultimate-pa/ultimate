@@ -167,8 +167,8 @@ public final class SolverBuilder {
 
 	private static Script createExternalSolver(final IUltimateServiceProvider services, final SolverSettings settings,
 			final ILogger solverLogger, final ILogger localLogger) {
-		assert settings.getSolverMode() == null || settings
-				.getSolverMode() != SolverMode.Internal_SMTInterpol : "You set solver mode to Internal* and enabled useExternalSolver";
+		assert settings.getSolverMode() == null || settings.getSolverMode() != SolverMode.Internal_SMTInterpol
+				: "You set solver mode to Internal* and enabled useExternalSolver";
 		final String command = settings.getCommandExternalSolver();
 		localLogger.info("Constructing external solver with command: %s", settings.getCommandExternalSolver());
 		final String fullPathOfDumpedFile;

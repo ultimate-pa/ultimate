@@ -37,45 +37,45 @@ public class SearchStats {
 	private final AtomicInteger mSkippedDuplicateMinimizerSteps = new AtomicInteger();
 	private final AtomicInteger mOverallTestCount = new AtomicInteger();
 	private final AtomicInteger mChangeConflicts = new AtomicInteger();
-	
+
 	public int getCanceledSpeculativeSteps() {
 		return mCanceledSpeculativeSteps;
 	}
-	
+
 	public AtomicInteger getChangeConflicts() {
 		return mChangeConflicts;
 	}
-	
+
 	public int getFailedSteps() {
 		return mFailedSteps;
 	}
-	
+
 	public AtomicInteger getOverallTestCount() {
 		return mOverallTestCount;
 	}
-	
+
 	public AtomicInteger getSkippedDuplicateMinimizerSteps() {
 		return mSkippedDuplicateMinimizerSteps;
 	}
-	
+
 	public int getSuccessfulSteps() {
 		return mSuccessfulSteps;
 	}
-	
+
 	/**
 	 * Increments the number of successful steps.
 	 */
 	public void incrementSuccessfulSteps() {
 		++mSuccessfulSteps;
 	}
-	
+
 	/**
 	 * Increments the number of failed steps.
 	 */
 	public void incrementFailedSteps() {
 		++mFailedSteps;
 	}
-	
+
 	/**
 	 * @param count
 	 *            Number to add to canceled speculative steps.

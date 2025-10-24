@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
 /**
  *
  * TODO: Maybe do replacement by nice alternatives here
+ *
  * @author heizmann@informatik.uni-freiburg.de
  *
  *
@@ -62,37 +63,26 @@ public class ArrayIndexReplacementConstructor {
 			final TermVariable forbiddenTv) {
 		mForbiddenTv = forbiddenTv;
 
-		final IValueConstruction<Term, Term> entryValueConstruction = new IValueConstruction<Term, Term>() {
-
-			@Override
-			public Term constructValue(final Term indexEntry) {
-				final TermVariable entryReplacement = mgdScript.constructFreshTermVariable(auxVarPrefix,
-						indexEntry.getSort());
-				mAuxVar2Definition.put(entryReplacement, indexEntry);
-				return entryReplacement;
-			}
-
+		final IValueConstruction<Term, Term> entryValueConstruction = indexEntry -> {
+			final TermVariable entryReplacement =
+					mgdScript.constructFreshTermVariable(auxVarPrefix, indexEntry.getSort());
+			mAuxVar2Definition.put(entryReplacement, indexEntry);
+			return entryReplacement;
 		};
 		mEntryConstrCache = new ConstructionCache<>(entryValueConstruction);
 
-		final IValueConstruction<ArrayIndex, ArrayIndex> indexValueConstruction = new IValueConstruction<ArrayIndex, ArrayIndex>() {
-
-			@Override
-			public ArrayIndex constructValue(final ArrayIndex index) {
-				final List<Term> resultIndexEntries = new ArrayList<>();
-				for (int i = 0; i < index.size(); i++) {
-					final Term entry = index.get(i);
-					Term newEntry;
-					if (entryContainsForbiddenTv(entry)) {
-						newEntry = mEntryConstrCache.getOrConstruct(entry);
-					} else {
-						newEntry = entry;
-					}
-					resultIndexEntries.add(newEntry);
+		final IValueConstruction<ArrayIndex, ArrayIndex> indexValueConstruction = index -> {
+			final List<Term> resultIndexEntries = new ArrayList<>();
+			for (final Term entry : index) {
+				Term newEntry;
+				if (entryContainsForbiddenTv(entry)) {
+					newEntry = mEntryConstrCache.getOrConstruct(entry);
+				} else {
+					newEntry = entry;
 				}
-				return new ArrayIndex(resultIndexEntries);
+				resultIndexEntries.add(newEntry);
 			}
-
+			return new ArrayIndex(resultIndexEntries);
 		};
 		mIndexConstrCache = new ConstructionCache<>(indexValueConstruction);
 	}
@@ -144,8 +134,5 @@ public class ArrayIndexReplacementConstructor {
 		final Term dualJunction = QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
 		return dualJunction;
 	}
-
-
-
 
 }

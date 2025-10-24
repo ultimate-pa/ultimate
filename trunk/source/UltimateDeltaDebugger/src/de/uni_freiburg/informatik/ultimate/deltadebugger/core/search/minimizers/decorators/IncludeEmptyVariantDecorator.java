@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
  */
 public class IncludeEmptyVariantDecorator implements IMinimizer {
 	private final IMinimizer mDelegate;
-	
+
 	/**
 	 * @param delegate
 	 *            Delegate minimizer.
@@ -44,7 +44,7 @@ public class IncludeEmptyVariantDecorator implements IMinimizer {
 	public IncludeEmptyVariantDecorator(final IMinimizer delegate) {
 		mDelegate = delegate;
 	}
-	
+
 	@Override
 	public <E> IMinimizerStep<E> create(final List<E> input) {
 		if (input.isEmpty()) {
@@ -52,28 +52,27 @@ public class IncludeEmptyVariantDecorator implements IMinimizer {
 		}
 		return new StepDecorator<>(input);
 	}
-	
+
 	@Override
 	public boolean isEachVariantUnique() {
 		return mDelegate.isEachVariantUnique();
 	}
-	
+
 	@Override
 	public boolean isResultMinimal() {
 		return mDelegate.isResultMinimal();
 	}
-	
+
 	/**
 	 * @param minimizer
 	 *            Minimizer.
 	 * @return the minimizer wrapped in an {@link IncludeEmptyVariantDecorator} if not already of this type
 	 */
 	public static IMinimizer decorate(final IMinimizer minimizer) {
-		return minimizer instanceof IncludeEmptyVariantDecorator
-				? minimizer
+		return minimizer instanceof IncludeEmptyVariantDecorator ? minimizer
 				: new IncludeEmptyVariantDecorator(minimizer);
 	}
-	
+
 	/**
 	 * A step decorator.
 	 *
@@ -82,26 +81,26 @@ public class IncludeEmptyVariantDecorator implements IMinimizer {
 	 */
 	final class StepDecorator<E> implements IMinimizerStep<E> {
 		private final List<E> mInput;
-		
+
 		private StepDecorator(final List<E> input) {
 			mInput = input;
 		}
-		
+
 		@Override
 		public List<E> getResult() {
 			return mInput;
 		}
-		
+
 		@Override
 		public List<E> getVariant() {
 			return Collections.emptyList();
 		}
-		
+
 		@Override
 		public boolean isDone() {
 			return false;
 		}
-		
+
 		@Override
 		public IMinimizerStep<E> next(final boolean keepVariant) {
 			return mDelegate.create(keepVariant ? Collections.emptyList() : mInput);

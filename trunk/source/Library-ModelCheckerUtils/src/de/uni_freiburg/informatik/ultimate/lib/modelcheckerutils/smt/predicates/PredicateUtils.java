@@ -227,8 +227,7 @@ public class PredicateUtils {
 			final int idxOutVar, final Set<IProgramVar> assignedVars, final Map<String, Term> indexedConstants,
 			final Script script) {
 		assert (assignedVars != null && assignedVars.isEmpty());
-		final Set<TermVariable> notYetSubst = new HashSet<>();
-		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
+		final Set<TermVariable> notYetSubst = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
 		final Map<TermVariable, IProgramVar> reverseMapping = new HashMap<>();
 		for (final IProgramVar inVar : tf.getInVars().keySet()) {

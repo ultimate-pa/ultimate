@@ -334,21 +334,15 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		final double switchProbability = mPref.getCoinflipProbability(getIteration());
 		final long seed = mPref.coinflipSeed();
-		switch (mPref.useCoinflip()) {
-		case OFF:
-			return optBudget;
-		case FALLBACK:
-			return new CoinFlipBudget<>(optBudget, switchProbability, seed, true);
-		case PURE:
-			return new CoinFlipBudget<>((s, l) -> 1, switchProbability, seed, true);
-		case COARSE:
+		return switch (mPref.useCoinflip()) {
+		case OFF -> optBudget;
+		case FALLBACK -> new CoinFlipBudget<>(optBudget, switchProbability, seed, true);
+		case PURE -> new CoinFlipBudget<>((s, l) -> 1, switchProbability, seed, true);
+		case COARSE -> {
 			final boolean flip = new Random(seed).nextDouble() >= switchProbability;
-			if (flip) {
-				return (s, l) -> 0;
-			}
-			return optBudget;
+			yield flip ? (s, l) -> 0 : optBudget;
 		}
-		throw new IllegalArgumentException("Unknown coinflip mode: " + mPref.useCoinflip());
+		};
 	}
 
 	@Override

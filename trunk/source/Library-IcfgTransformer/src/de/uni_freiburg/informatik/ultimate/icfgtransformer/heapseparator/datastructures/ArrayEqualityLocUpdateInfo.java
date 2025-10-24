@@ -25,9 +25,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * For an array equality in a given {@link TransFormula}, this collects,
- * computes and provides information required for the program transformation
- * that inserts loc-arrays.
+ * For an array equality in a given {@link TransFormula}, this collects, computes and provides information required for
+ * the program transformation that inserts loc-arrays.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -91,8 +90,7 @@ public class ArrayEqualityLocUpdateInfo {
 
 		final Set<Term> baseArrayTermsRaw = extractBaseArrayTerms(mEquality);
 		final Set<Term> baseArrayTerms = baseArrayTermsRaw.stream()
-				.filter(bat -> mLocArrayManager.isArrayTermSubjectToSeparation(mEdge, bat))
-				.collect(Collectors.toSet());
+				.filter(bat -> mLocArrayManager.isArrayTermSubjectToSeparation(mEdge, bat)).collect(Collectors.toSet());
 
 		final int dimensionality = computeDimensionality();
 
@@ -120,16 +118,17 @@ public class ArrayEqualityLocUpdateInfo {
 					termSubstitutionMapping.put(bat, locArray.getTerm());
 
 					/*
-					 * update invars, outvars, etc. E.g. if a was an invar and we introduced
-					 * a-loc-1, then a-loc-1 must also be an invar.
+					 * update invars, outvars, etc. E.g. if a was an invar and we introduced a-loc-1, then a-loc-1 must
+					 * also be an invar.
 					 */
 					if (mEdge.getInVars().containsValue(bat)) {
 						if (isDefinitelyUnconstrained(bat) && mEdge.getOutVar(bat) == mEdge.getInVar(bat)) {
-							/* omit this invar --> effectively makes an assignment out of an assume on the loc array
-							 *  (this is sound because the base array is in a freshly-havocced state, thus it would not
-							 *   make a difference to havoc the base array, too)
-							 *  TODO: If this cannot be done for assume statements that relate maps, we should crash,
-							 *   as we do not support that syntax. */
+							/*
+							 * omit this invar --> effectively makes an assignment out of an assume on the loc array
+							 * (this is sound because the base array is in a freshly-havocced state, thus it would not
+							 * make a difference to havoc the base array, too) TODO: If this cannot be done for assume
+							 * statements that relate maps, we should crash, as we do not support that syntax.
+							 */
 						} else {
 							mExtraInVars.put((IProgramVar) locArray.getPvoc(), (TermVariable) locArray.getTerm());
 						}
@@ -147,8 +146,8 @@ public class ArrayEqualityLocUpdateInfo {
 			}
 
 			/*
-			 * substitute store-values with their corresponding loc literals for the current
-			 * dimension e.g. phi(a) becomes phi(a-loc-currentDim)
+			 * substitute store-values with their corresponding loc literals for the current dimension e.g. phi(a)
+			 * becomes phi(a-loc-currentDim)
 			 */
 			final Term equalityWithLocArraysAndLocLiterals;
 			{

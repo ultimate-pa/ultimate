@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.AbsencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEntryConditionPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ConditionalResponseBoundL1Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ConstrainedChainPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DurationBoundLPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DurationBoundUPattern;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPatter
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceDelayPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PersistencePattern;
@@ -243,7 +245,7 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(InitializationPattern.class); RESULT.addCdd(r); :}
 		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN IT HOLDS PERSISTENTLY
       		{: RESULT = new PatternBuilder(); RESULT.setType(PersistencePattern.class); RESULT.addCdd(r); :}	
-  		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
+      	| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
       		{: RESULT = new PatternBuilder(); RESULT.setType(InvariancePattern.class); RESULT.addCdd(s,r); :}
 	  	| expression:r EVENTUALLY HOLDS
 	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),r); :}
@@ -287,6 +289,10 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 				{: RESULT = new PatternBuilder().setType(UniversalityDelayPattern.class).addCdd(r).addDuration(c1); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c1
 				{: RESULT = new PatternBuilder().setType(ResponseDelayPattern.class).addCdd(s,r).addDuration(c1); :}
+			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL AFTER AT MOST duration:c1
+      			{: RESULT = new PatternBuilder().setType(InvarianceDelayPattern.class).addCdd(s,r).addDuration(c1); :}
+      		| IF expression:r HOLDS SUCCEEDED BY expression:s FOR AT LEAST duration:c1 COMMA? THEN expression:t HOLDS AFTERWARDS
+      			{: RESULT = new PatternBuilder().setType(ConditionalResponseBoundL1Pattern.class).addCdd(t,s,r).addDuration(c1); :}
   			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS FOR AT LEAST duration:c2
 				{: RESULT = new PatternBuilder().setType(ResponseBoundL12Pattern.class).addCdd(s,r).addDuration(c1,c2); :}
 			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c2

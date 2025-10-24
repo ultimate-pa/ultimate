@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 
 /**
  * {@link ParseEnvironment} that throws {@link SMTLIBException} instead of calling System.exit().
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */

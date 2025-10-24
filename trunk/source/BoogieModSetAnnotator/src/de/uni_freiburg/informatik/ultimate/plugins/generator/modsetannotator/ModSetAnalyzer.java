@@ -1,34 +1,35 @@
 /*
  * Copyright (C) 2015 Sergio Feo Arenis (arenis@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogieModSetAnnotator plug-in.
- * 
+ *
  * The ULTIMATE BoogieModSetAnnotator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogieModSetAnnotator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogieModSetAnnotator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieModSetAnnotator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogieModSetAnnotator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieModSetAnnotator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,8 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * This class is an AST-Visitor that extends the Boogie Type Checker, it
- * computes the modifies sets of all procedures
+ * This class is an AST-Visitor that extends the Boogie Type Checker, it computes the modifies sets of all procedures
  */
 public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObserver {
 
@@ -65,7 +65,7 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	private String mCurrentProcedure;
 	private Map<String, Set<String>> mCallGraph;
 
-	public ModSetAnalyzer(IUltimateServiceProvider services) {
+	public ModSetAnalyzer(final IUltimateServiceProvider services) {
 		mServices = services;
 		logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -75,12 +75,12 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
-			mGlobals = new HashSet<String>();
-			mModifiedGlobals = new HashMap<String, Set<String>>();
-			mCallGraph = new HashMap<String, Set<String>>();
+			mGlobals = new HashSet<>();
+			mModifiedGlobals = new HashMap<>();
+			mCallGraph = new HashMap<>();
 			// First pass: Collect all global variable declarations
 			for (final Declaration decl : unit.getDeclarations()) {
 				if (decl instanceof VariableDeclaration) {
@@ -104,17 +104,17 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 		for (final Entry<String, Set<String>> proc : mCallGraph.entrySet()) {
 			// TODO: do this only for graph roots
 			for (final String callee : proc.getValue()) {
-				final HashSet<String> visited = new HashSet<String>();
+				final HashSet<String> visited = new HashSet<>();
 				visited.add(proc.getKey());
 				final Set<String> modifiedGlobals = mModifiedGlobals.get(proc.getKey());
-				assert(modifiedGlobals != null);
+				assert (modifiedGlobals != null);
 				modifiedGlobals.addAll(getModifiesRecursive(visited, callee));
 			}
 		}
 	}
 
-	private Set<String> getModifiesRecursive(Set<String> visited, String proc) {
-		final Set<String> result = new HashSet<String>();
+	private Set<String> getModifiesRecursive(final Set<String> visited, final String proc) {
+		final Set<String> result = new HashSet<>();
 		if (visited.contains(proc)) {
 			return result;
 		}
@@ -133,7 +133,8 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
+			throws Throwable {
 		// TODO Auto-generated method stub
 
 	}
@@ -150,16 +151,14 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 		return false;
 	}
 
-	private void processGlobalVariableDeclaration(VariableDeclaration varDecl) {
+	private void processGlobalVariableDeclaration(final VariableDeclaration varDecl) {
 		for (final VarList varlist : varDecl.getVariables()) {
-			for (final String id : varlist.getIdentifiers()) {
-				mGlobals.add(id);
-			}
+			Collections.addAll(mGlobals, varlist.getIdentifiers());
 		}
 	}
 
 	@Override
-	protected Declaration processDeclaration(Declaration decl) {
+	protected Declaration processDeclaration(final Declaration decl) {
 		mCurrentProcedure = null;
 		if (decl instanceof Procedure) {
 			final Procedure proc = ((Procedure) decl);
@@ -168,15 +167,15 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 					logger.debug("Processing procedure " + proc.getIdentifier());
 				}
 				mCurrentProcedure = proc.getIdentifier();
-				mModifiedGlobals.put(mCurrentProcedure, new HashSet<String>());
-				mCallGraph.put(mCurrentProcedure, new HashSet<String>());
+				mModifiedGlobals.put(mCurrentProcedure, new HashSet<>());
+				mCallGraph.put(mCurrentProcedure, new HashSet<>());
 			}
 		}
 		return super.processDeclaration(decl);
 	}
 
 	@Override
-	protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
+	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
 		String identifier = null;
 		if (mCurrentProcedure != null && lhs instanceof VariableLHS) {
 			identifier = ((VariableLHS) lhs).getIdentifier();
@@ -188,7 +187,7 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	@Override
-	protected Statement processStatement(Statement statement) {
+	protected Statement processStatement(final Statement statement) {
 		if (mCurrentProcedure != null && statement instanceof CallStatement) {
 			final CallStatement call = (CallStatement) statement;
 			final String method = call.getMethodName();

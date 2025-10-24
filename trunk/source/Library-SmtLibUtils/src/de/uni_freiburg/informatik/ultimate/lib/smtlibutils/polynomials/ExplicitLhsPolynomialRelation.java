@@ -83,7 +83,6 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 
 	public ExplicitLhsPolynomialRelation(final RelationSymbol relationSymbol, final Rational lhsCoefficient,
 			final Monomial lhsMonomial, final IPolynomialTerm rhs) {
-		super();
 		mRelationSymbol = relationSymbol;
 		mLhsCoefficient = lhsCoefficient;
 		mLhsMonomial = lhsMonomial;
@@ -145,9 +144,8 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	}
 
 	/**
-	 * @deprecated We do not have an application for this method yet. I was
-	 *             developed at a time where we wrongly assumed that the following
-	 *             transformation is sound `∃x. lo<=2x /\ 2x<=hi` ~~~> `lo<=hi`
+	 * @deprecated We do not have an application for this method yet. I was developed at a time where we wrongly assumed
+	 *             that the following transformation is sound `∃x. lo<=2x /\ 2x<=hi` ~~~> `lo<=hi`
 	 */
 	@Deprecated
 	public ExplicitLhsPolynomialRelation mul(final Rational factor, final Script script, final boolean tight) {
@@ -185,24 +183,23 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		}
 		final ExplicitLhsPolynomialRelation result =
 				new ExplicitLhsPolynomialRelation(resultRelationSymbol, newLhsCoefficient, mLhsMonomial, newRhs);
-		assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(toTerm(script), result.toTerm(script),
-				script) != LBool.SAT : "mul unsound";
+		assert script instanceof INonSolverScript
+				|| SmtUtils.checkEquivalence(toTerm(script), result.toTerm(script), script) != LBool.SAT
+				: "mul unsound";
 		return result;
 	}
 
 	/**
-	 * Divide both sides of the relation by a {@link Rational} such the resulting
-	 * relation is logically equivalent, has the same monomials (i.e., each `div`
-	 * term can be resolved), and there is an inverse operation (multiplication)
+	 * Divide both sides of the relation by a {@link Rational} such the resulting relation is logically equivalent, has
+	 * the same monomials (i.e., each `div` term can be resolved), and there is an inverse operation (multiplication)
 	 * that yields the original relation. <br>
-	 * This method has a special behavior for inequalities that have Int sort. It is
-	 * applicable even if the constant of the polynomial is not divisible by this
-	 * method's divisor, because we do a transformation that is based on the
+	 * This method has a special behavior for inequalities that have Int sort. It is applicable even if the constant of
+	 * the polynomial is not divisible by this method's divisor, because we do a transformation that is based on the
 	 * following equalities for positive k.
-	 * <li> `k*x <= t` iff `x <= t div k`
-	 * <li> `k*x < t` iff `x < ((t-1) div k) +1`
-	 * <li> `k*x => t` iff `x => ((t-1) div k) +1`
-	 * <li> `k*x => t` iff `x => t div k`
+	 * <li>`k*x <= t` iff `x <= t div k`
+	 * <li>`k*x < t` iff `x < ((t-1) div k) +1`
+	 * <li>`k*x => t` iff `x => ((t-1) div k) +1`
+	 * <li>`k*x => t` iff `x => t div k`
 	 *
 	 */
 	public ExplicitLhsPolynomialRelation divInvertible(final Rational divisor) {
@@ -226,9 +223,11 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 				constWithRightSign = mRhs.getConstant();
 			}
 			final Rational newConst;
-			if (resultRelationSymbol.equals(RelationSymbol.LEQ) || resultRelationSymbol.equals(RelationSymbol.GREATER)) {
+			if (resultRelationSymbol.equals(RelationSymbol.LEQ)
+					|| resultRelationSymbol.equals(RelationSymbol.GREATER)) {
 				newConst = constWithRightSign.div(divisor.abs()).floor();
-			} else if (resultRelationSymbol.equals(RelationSymbol.LESS) || resultRelationSymbol.equals(RelationSymbol.GEQ) ) {
+			} else if (resultRelationSymbol.equals(RelationSymbol.LESS)
+					|| resultRelationSymbol.equals(RelationSymbol.GEQ)) {
 				newConst = constWithRightSign.add(Rational.MONE).div(divisor.abs()).floor().add(Rational.ONE);
 			} else {
 				throw new AssertionError("Unexpected relation symbol: " + resultRelationSymbol);
@@ -256,7 +255,8 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	}
 
 	public static boolean swapOfRelationSymbolRequired(final Rational divisor, final Sort sort) {
-		return divisor.isNegative() || (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOneButNotOne(divisor, sort));
+		return divisor.isNegative()
+				|| (SmtSortUtils.isBitvecSort(sort) && SmtUtils.isBvMinusOneButNotOne(divisor, sort));
 	}
 
 	public Pair<ExplicitLhsPolynomialRelation, Term> divideByIntegerCoefficient(final Script script,
@@ -272,8 +272,8 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 				mRhs, !mLhsCoefficient.isNegative(), divisor, bannedForDivCapture);
 		final Term rhsAsTerm = mRhs.toTerm(script);
 		if (resultRhs == null) {
-			assert (Arrays.stream(rhsAsTerm.getFreeVars())
-					.anyMatch(bannedForDivCapture::contains)) : "no ban problem detected";
+			assert (Arrays.stream(rhsAsTerm.getFreeVars()).anyMatch(bannedForDivCapture::contains))
+					: "no ban problem detected";
 			return null;
 		}
 		final Term divisibilityConstraint;
@@ -301,10 +301,10 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 		default:
 			throw new AssertionError("unknown value " + mRelationSymbol);
 		}
-		final RelationSymbol resultRelationSymbol = determineResultRelationSymbol(mLhsMonomial.getSort(),
-				mRelationSymbol, mLhsCoefficient);
-		final ExplicitLhsPolynomialRelation resultElpr = new ExplicitLhsPolynomialRelation(resultRelationSymbol,
-				Rational.ONE, getLhsMonomial(), resultRhs);
+		final RelationSymbol resultRelationSymbol =
+				determineResultRelationSymbol(mLhsMonomial.getSort(), mRelationSymbol, mLhsCoefficient);
+		final ExplicitLhsPolynomialRelation resultElpr =
+				new ExplicitLhsPolynomialRelation(resultRelationSymbol, Rational.ONE, getLhsMonomial(), resultRhs);
 		return new Pair<>(resultElpr, divisibilityConstraint);
 	}
 
@@ -413,8 +413,8 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 			final Set<SupportingTerm> thisCaseSupportingTerms = new HashSet<>(distinctZeroSupportingTerms);
 			if (SolveForSubjectUtils.isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(),
 					mRelationSymbol)) {
-				final SupportingTerm divisibilityConstraintMonomial = constructDerIntegerDivisionSupportingTerm(script,
-						rhs, mRelationSymbol, divisor);
+				final SupportingTerm divisibilityConstraintMonomial =
+						constructDerIntegerDivisionSupportingTerm(script, rhs, mRelationSymbol, divisor);
 				thisCaseSupportingTerms.add(divisibilityConstraintMonomial);
 				if (intLiteralDivConstraint != null) {
 					final SupportingTerm divisibilityConstraintLiteral = SolveForSubjectUtils
@@ -446,8 +446,8 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 				}
 				if (SolveForSubjectUtils.isDerIntegerDivisionSupportingTermRequired(xnf, subject.getSort(),
 						mRelationSymbol)) {
-					final SupportingTerm divisibilityConstraint = constructDerIntegerDivisionSupportingTerm(script, rhs,
-							mRelationSymbol, divisor);
+					final SupportingTerm divisibilityConstraint =
+							constructDerIntegerDivisionSupportingTerm(script, rhs, mRelationSymbol, divisor);
 					thisCaseSupportingTerms.add(divisibilityConstraint);
 					assert intLiteralDivConstraint != null;
 					final SupportingTerm divisibilityConstraintLiteral = SolveForSubjectUtils
@@ -682,13 +682,11 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	/**
 	 * We call a {@link ExplicitLhsPolynomialRelation} tight if
 	 * <li>the sort is Real and the lhs coefficient is 1.0 or if
-	 * <li>the sort is Int and the lhs coefficient is positive and there is no
-	 * equivalent {@link ExplicitLhsPolynomialRelation} that has a smaller lhs
-	 * coefficient but the same monomials (i.e., it is not allowed to obtain the
-	 * smaller lhs coefficient by a division that introduces a div term on the rhs).
-	 * TODO 20230219 Matthias: Revise this documentation. Since the
-	 * {@link PolynomialRelation} divides by the GCD the work that is done here can
-	 * be explained more precisely.
+	 * <li>the sort is Int and the lhs coefficient is positive and there is no equivalent
+	 * {@link ExplicitLhsPolynomialRelation} that has a smaller lhs coefficient but the same monomials (i.e., it is not
+	 * allowed to obtain the smaller lhs coefficient by a division that introduces a div term on the rhs). TODO 20230219
+	 * Matthias: Revise this documentation. Since the {@link PolynomialRelation} divides by the GCD the work that is
+	 * done here can be explained more precisely.
 	 */
 	public ExplicitLhsPolynomialRelation makeTight() {
 		Rational divisor;

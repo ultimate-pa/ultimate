@@ -384,7 +384,7 @@ public class MCTraceXML2JConverter {
 	 */
 	private static double getTimeBound(final Element timeBound) {
 		final String bound = timeBound.getAttribute(XMLTags.BOUND_TAG);
-		return (new Double(bound)).doubleValue();
+		return Double.parseDouble(bound);
 	}
 
 	/**

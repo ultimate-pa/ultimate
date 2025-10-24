@@ -77,7 +77,8 @@ public class DeterminizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTrans
 	 */
 	public DeterminizeNwa(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IEmptyStackStateFactory<STATE> stateFactory) {
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+			final IEmptyStackStateFactory<STATE> stateFactory) {
 		this(services, operand, stateDeterminizer, stateFactory, null, false);
 	}
 
@@ -99,8 +100,9 @@ public class DeterminizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTrans
 	 */
 	public DeterminizeNwa(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IEmptyStackStateFactory<STATE> stateFactory,
-			final Set<STATE> predefinedInitials, final boolean makeAutomatonTotal) {
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+			final IEmptyStackStateFactory<STATE> stateFactory, final Set<STATE> predefinedInitials,
+			final boolean makeAutomatonTotal) {
 		mOperand = operand;
 		mStateDeterminizer = stateDeterminizer;
 		mStateFactory = stateFactory;

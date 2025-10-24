@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2ExpressionSymbolTable {
 
-	private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
+	private static final Attribute[] EMPTY_ATTRIBUTES = {};
 
 	private final Map<String, BoogieType> mId2Type;
 	private final Map<String, IdentifierExpression> mId2IdExpr;
@@ -83,9 +83,8 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	public List<Declaration> constructVariableDeclarations() {
-		final List<Declaration> decls = new ArrayList<>();
+		final List<Declaration> decls = new ArrayList<>(constructVariableDeclarations(mConstVars));
 
-		decls.addAll(constructVariableDeclarations(mConstVars));
 		decls.addAll(constructVariableDeclarations(mStateVars));
 		decls.addAll(constructVariableDeclarations(mAuxVars));
 		decls.addAll(constructVariableDeclarations(mClockVars));

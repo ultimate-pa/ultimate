@@ -598,9 +598,9 @@ public class PolynomialRelationTest {
 		}
 		mScript = script;
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
-		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
-				.of(mScript, TermParseUtils.parseTerm(mScript, inputAsString))
-				.solveForSubject(new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet(), true);
+		final MultiCaseSolvedBinaryRelation sbr =
+				PolynomialRelation.of(mScript, TermParseUtils.parseTerm(mScript, inputAsString)).solveForSubject(
+						new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet(), true);
 		Assert.assertNull(sbr);
 	}
 
@@ -646,8 +646,7 @@ public class PolynomialRelationTest {
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term subject = TermParseUtils.parseTerm(script, "x");
-		final SolvedBinaryRelation sbr =
-				PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, subject);
+		final SolvedBinaryRelation sbr = PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, subject);
 		Assert.assertNull("Solvable, but unsolvable expected", sbr);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
@@ -669,7 +668,8 @@ public class PolynomialRelationTest {
 			final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 			final ManagedScript mgdScript = new ManagedScript(services, mScript);
 			final ILogger logger = services.getLoggingService().getLogger(this.getClass().getSimpleName());
-			tmp = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.NONE, solvedAsTerm);
+			tmp = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.NONE,
+					solvedAsTerm);
 		} else {
 			tmp = solvedAsTerm;
 		}
@@ -773,7 +773,7 @@ public class PolynomialRelationTest {
 	public void relationIntModEqUselessSummands() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (+ (mod x 3) (* y y) y 1) (* y (+ y 1)) )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	/**
@@ -824,14 +824,14 @@ public class PolynomialRelationTest {
 	public void relationIntDivEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div x 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	@Test
 	public void relationIntMultiParamDivEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div x 2 2 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	@Test
@@ -922,14 +922,14 @@ public class PolynomialRelationTest {
 	public void relationIntRecDivEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
 		final String inputSTR = "(= (div (div x 7) 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	@Test
 	public void relationIntRecDivSimplifyEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div (div x 3) 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	// @Test Insufficient resources to check soundness
@@ -971,14 +971,14 @@ public class PolynomialRelationTest {
 	public void relationIntDivModStickyPaint() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(<= (div (+ z (* y (- 1)) x) (- 8)) 9)";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	@Test
 	public void relationIntDivModStickyPaintSimplified() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (div x (- 8)) y)";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	/**
@@ -1014,11 +1014,9 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Revealed a bug in {@link AbstractGeneralizedAffineTerm}. If we divide, a
-	 * `div` term may originate from two sources. (1) It was already there in the
-	 * input. (2) It stems from the summands whose coefficients could not be divided
-	 * without remainder. The bug was that one abstract variable was overriding the
-	 * other in an abstract map.
+	 * Revealed a bug in {@link AbstractGeneralizedAffineTerm}. If we divide, a `div` term may originate from two
+	 * sources. (1) It was already there in the input. (2) It stems from the summands whose coefficients could not be
+	 * divided without remainder. The bug was that one abstract variable was overriding the other in an abstract map.
 	 */
 	@Test
 	public void bugAbstractDivVarFromTwoSources01() {
@@ -1028,9 +1026,8 @@ public class PolynomialRelationTest {
 	}
 
 	/**
-	 * Revealed but related to the bug above. If we apply div, we can get two
-	 * similar abstract variables for the result of the polynomial. We have to add
-	 * their coefficients. The coefficient can become zero. In this case the entry
+	 * Revealed but related to the bug above. If we apply div, we can get two similar abstract variables for the result
+	 * of the polynomial. We have to add their coefficients. The coefficient can become zero. In this case the entry
 	 * must not be added to the map.
 	 */
 	@Test
@@ -1047,7 +1044,6 @@ public class PolynomialRelationTest {
 		final String expectedResultAsString = "(= (+ (* 3 x) (* y 4)) 5)";
 		testNormalForm(SOLVER_COMMAND_Z3, inputSTR, expectedResultAsString, funDecls);
 	}
-
 
 	@Test
 	public void gcdNormalization02() {

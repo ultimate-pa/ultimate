@@ -60,23 +60,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Operation that minimizes non-deterministic finite bottom-up tree automata
- * (NFTA-BU) by using a modified variant of the Hopcroft algorithm. The
- * resulting automaton is a minimal automaton that is bisimulation-equivalent to
- * the input.<br/>
+ * Operation that minimizes non-deterministic finite bottom-up tree automata (NFTA-BU) by using a modified variant of
+ * the Hopcroft algorithm. The resulting automaton is a minimal automaton that is bisimulation-equivalent to the
+ * input.<br/>
  * Runtime is in:<br/>
  * <b>O(r * m * log(n))</b> with usage of<br/>
  * <b>O(r + m + n)</b> space<br/>
- * where 'r' is the maximum rank of the input alphabet, 'n' is the number of
- * states and 'm' the number of rules.<br/>
+ * where 'r' is the maximum rank of the input alphabet, 'n' is the number of states and 'm' the number of rules.<br/>
  * <br/>
- * The algorithm follows the outline given in [1] and improves the
- * implementation by using some techniques described in [2]:<br/>
+ * The algorithm follows the outline given in [1] and improves the implementation by using some techniques described in
+ * [2]:<br/>
  * <ol>
- * <li><i>2016 Bjorklund, Johanna et al. - A taxonomy of minimisation algorithms
- * for deterministic tree automata.</i></li>
- * <li><i>2006 Abdulla, Parosh Aziz et al. - Bisimulation Minimization of Tree
- * Automata.</i></li>
+ * <li><i>2016 Bjorklund, Johanna et al. - A taxonomy of minimisation algorithms for deterministic tree
+ * automata.</i></li>
+ * <li><i>2006 Abdulla, Parosh Aziz et al. - Bisimulation Minimization of Tree Automata.</i></li>
  * </ol>
  * The runtime is the same as in [2], also for the same reason.
  *
@@ -96,8 +93,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * @param args
 	 *            Not supported
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public static void main(final String[] args) throws AutomataOperationCanceledException {
 		// Dummy services
@@ -141,23 +137,21 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 		System.out.println("Tree before minimization: " + tree);
 
-		final ITreeAutomatonBU<StringRankedLetter, String> result = new MinimizeNftaHopcroft<>(services, mergeFactory,
-				tree).getResult();
+		final ITreeAutomatonBU<StringRankedLetter, String> result =
+				new MinimizeNftaHopcroft<>(services, mergeFactory, tree).getResult();
 
 		System.out.println();
 		System.out.println("Tree after minimization: " + result);
 	}
 
 	/**
-	 * Data-structure which maps compound progress blocks to a set of
-	 * representatives of the blocks it contains. A compound progress block belongs
-	 * to the <tt>progress relation</tt> and consists of several blocks of the
-	 * current relation.
+	 * Data-structure which maps compound progress blocks to a set of representatives of the blocks it contains. A
+	 * compound progress block belongs to the <tt>progress relation</tt> and consists of several blocks of the current
+	 * relation.
 	 */
 	private final LinkedHashMap<STATE, LinkedHashSet<STATE>> mCompoundBlocks;
 	/**
-	 * A boolean indicating if the input automaton has no final states. Used for a
-	 * fast termination.
+	 * A boolean indicating if the input automaton has no final states. Used for a fast termination.
 	 */
 	private boolean mNoFinalStates;
 	/**
@@ -165,19 +159,17 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 */
 	private final ITreeAutomatonBU<LETTER, STATE> mOperand;
 	/**
-	 * The partition of all states which gets refined until it represents the final
-	 * partition of bisimulation equivalent states.
+	 * The partition of all states which gets refined until it represents the final partition of bisimulation equivalent
+	 * states.
 	 */
 	private UnionFind<STATE> mPartition;
 	/**
-	 * Represents the block to use for the last round if the last round is
-	 * introduced.
+	 * Represents the block to use for the last round if the last round is introduced.
 	 */
 	private STATE mPossiblyLastRoundBlockRepresentative;
 	/**
-	 * The partition of all states which iteratively approaches the regular
-	 * partition. Once they are the same a fixed point has been reached which
-	 * indicates that the partition represents a valid bisimulation.
+	 * The partition of all states which iteratively approaches the regular partition. Once they are the same a fixed
+	 * point has been reached which indicates that the partition represents a valid bisimulation.
 	 */
 	private final UnionFind<STATE> mProgressPartition;
 	/**
@@ -191,23 +183,19 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	private final SinkMergeIntersectStateFactory<STATE> mSinkMergeIntersectFactory;
 
 	/**
-	 * Minimizes the given tree automaton operand. The result can be obtained by
-	 * using {@link #getResult()}.
+	 * Minimizes the given tree automaton operand. The result can be obtained by using {@link #getResult()}.
 	 *
 	 * @param <SF>
-	 *            Factory that is able to create sink states, merge and intersect
-	 *            states
+	 *            Factory that is able to create sink states, merge and intersect states
 	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param sinkMergeIntersectFactory
-	 *            The factory to use for creating sink states, merge and intersect
-	 *            states
+	 *            The factory to use for creating sink states, merge and intersect states
 	 * @param operand
 	 *            The operand tree automaton to minimize
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> MinimizeNftaHopcroft(
 			final AutomataLibraryServices services, final SF sinkMergeIntersectFactory,
@@ -216,43 +204,42 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// The algorithm itself only needs a merge factory. However to proof correctness
 		// (with enabled assertions) currently also sink and intersect factories are
 		// needed.
-		this.mSinkMergeIntersectFactory = new SinkMergeIntersectStateFactory<>(sinkMergeIntersectFactory,
+		mSinkMergeIntersectFactory = new SinkMergeIntersectStateFactory<>(sinkMergeIntersectFactory,
 				sinkMergeIntersectFactory, sinkMergeIntersectFactory);
-		this.mOperand = operand;
+		mOperand = operand;
 
-		this.mResult = null;
-		this.mCompoundBlocks = new LinkedHashMap<>();
-		this.mProgressPartition = new UnionFind<>();
-		this.mNoFinalStates = false;
-		this.mPossiblyLastRoundBlockRepresentative = null;
+		mResult = null;
+		mCompoundBlocks = new LinkedHashMap<>();
+		mProgressPartition = new UnionFind<>();
+		mNoFinalStates = false;
+		mPossiblyLastRoundBlockRepresentative = null;
 
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug(startMessage());
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(startMessage());
 		}
 
-		this.mResult = doOperation();
+		mResult = doOperation();
 
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug(exitMessage());
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(exitMessage());
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.
+	 * @see de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.
 	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
 	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// Check language equivalence between input and result automaton
-		final IsEquivalent<LETTER, STATE> equivalenceCheck = new IsEquivalent<>(this.mServices,
-				this.mSinkMergeIntersectFactory, this.mOperand, this.mResult);
-		final boolean isEquivalent = equivalenceCheck.getResult().booleanValue();
+		final IsEquivalent<LETTER, STATE> equivalenceCheck =
+				new IsEquivalent<>(mServices, mSinkMergeIntersectFactory, mOperand, mResult);
+		final boolean isEquivalent = equivalenceCheck.getResult();
 
-		if (!isEquivalent && this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Counterexample: " + equivalenceCheck.getCounterexample().get());
+		if (!isEquivalent && mLogger.isDebugEnabled()) {
+			mLogger.debug("Counterexample: " + equivalenceCheck.getCounterexample().get());
 		}
 
 		return isEquivalent;
@@ -265,12 +252,12 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 */
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
-		return this.mResult;
+		return mResult;
 	}
 
 	/**
-	 * Builds a minimal tree automaton accepting the empty language. The automaton
-	 * consists of no states, no letters and no rules, it is empty.
+	 * Builds a minimal tree automaton accepting the empty language. The automaton consists of no states, no letters and
+	 * no rules, it is empty.
 	 *
 	 * @return A minimal tree automaton accepting the empty language
 	 */
@@ -279,19 +266,17 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	}
 
 	/**
-	 * Collects information of how states behave under rules with a destination
-	 * inside the given block. This information is called context.<br>
-	 * A context represents similar, with respect to the current partition, rules
-	 * and holds which states are able to use that rule at given positions. Based on
-	 * that splits can be determined since if a state is able to use a rule but
+	 * Collects information of how states behave under rules with a destination inside the given block. This information
+	 * is called context.<br>
+	 * A context represents similar, with respect to the current partition, rules and holds which states are able to use
+	 * that rule at given positions. Based on that splits can be determined since if a state is able to use a rule but
 	 * others of the same block are not, then they must not stay in the same block.
 	 *
 	 * @param destinationBlock
 	 *            The block used as destination for rules to be selected
 	 * @return An iterator over all collected contexts
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private Iterator<RuleContext<LETTER, STATE>> collectContexts(final Set<STATE> destinationBlock)
 			throws AutomataOperationCanceledException {
@@ -306,16 +291,17 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// states in the same block that have a different behavior which then need to be
 		// split in the next step of the algorithm.
 
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to collect contexts");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Starting to collect contexts");
 		}
-		final STATE destinationRepresentative = this.mPartition.find(destinationBlock.iterator().next());
-		final NestedMap2<LETTER, List<STATE>, RuleContext<LETTER, STATE>> letterAndSourceSignatureToContexts = new NestedMap2<>();
+		final STATE destinationRepresentative = mPartition.find(destinationBlock.iterator().next());
+		final NestedMap2<LETTER, List<STATE>, RuleContext<LETTER, STATE>> letterAndSourceSignatureToContexts =
+				new NestedMap2<>();
 
 		// Find all rules whose destination is in the given block
 		for (final STATE destination : destinationBlock) {
 			final Map<LETTER, Iterable<List<STATE>>> predecessors =
-					((TreeAutomatonBU<LETTER, STATE>) this.mOperand).getPredecessors(destination);
+					((TreeAutomatonBU<LETTER, STATE>) mOperand).getPredecessors(destination);
 			for (final LETTER letter : predecessors.keySet()) {
 				// Skip all 0-ranked letters as they do not contribute to the language directly
 				if (letter.getRank() == 0) {
@@ -326,13 +312,13 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 				for (final List<STATE> source : sources) {
 					// At this point the rule is fully characterized with a source-tuple,
 					// a letter and a destination
-					if (this.mLogger.isDebugEnabled()) {
-						this.mLogger.debug("Looking at rule: " + source + " -" + letter + "-> " + destination);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Looking at rule: " + source + " -" + letter + "-> " + destination);
 					}
 					// Build the signature of this source
 					final List<STATE> signature = new ArrayList<>(source.size());
 					for (final STATE stateAtPosition : source) {
-						final STATE representative = this.mPartition.find(stateAtPosition);
+						final STATE representative = mPartition.find(stateAtPosition);
 						signature.add(representative);
 					}
 
@@ -346,14 +332,14 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 					// Add the current rule to the corresponding context
 					context.addSource(source);
 
-					if (this.mLogger.isDebugEnabled()) {
-						this.mLogger.debug("Added rule to context: " + context);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Added rule to context: " + context);
 					}
 
 					// If operation was canceled, for example from the
 					// Ultimate framework
-					if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-						this.mLogger.debug("Stopped at collecting contexts");
+					if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+						mLogger.debug("Stopped at collecting contexts");
 						throw new AutomataOperationCanceledException(this.getClass());
 					}
 				}
@@ -368,8 +354,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 *
 	 * @return The resulting tree automaton obtained after minimizing the operand.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private ITreeAutomatonBU<LETTER, STATE> doOperation() throws AutomataOperationCanceledException {
 		// We construct two relations, one regular and one progress relation. In each
@@ -383,7 +368,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		initPartition();
 
 		// If there are no final states abort since the language is empty
-		if (this.mNoFinalStates) {
+		if (mNoFinalStates) {
 			return buildEmptyLanguageTree();
 		}
 
@@ -393,15 +378,15 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// fixed point has been reached which represents a valid bisimulation.
 		boolean isInitialRound = true;
 		boolean isLastRound = false;
-		boolean doProcess = !this.mCompoundBlocks.isEmpty();
+		boolean doProcess = !mCompoundBlocks.isEmpty();
 		while (doProcess) {
-			if (this.mLogger.isDebugEnabled()) {
+			if (mLogger.isDebugEnabled()) {
 				if (isInitialRound) {
-					this.mLogger.debug("Starting initial round");
+					mLogger.debug("Starting initial round");
 				} else if (isLastRound) {
-					this.mLogger.debug("Starting last round");
+					mLogger.debug("Starting last round");
 				} else {
-					this.mLogger.debug("Starting round");
+					mLogger.debug("Starting round");
 				}
 			}
 
@@ -410,13 +395,13 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			if (!isLastRound) {
 				representativeOfBlock = selectBlockForRound(isInitialRound);
 			} else {
-				representativeOfBlock = this.mPossiblyLastRoundBlockRepresentative;
-				if (this.mLogger.isDebugEnabled()) {
-					this.mLogger.debug("Selected block of " + representativeOfBlock + " for last round");
+				representativeOfBlock = mPossiblyLastRoundBlockRepresentative;
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Selected block of " + representativeOfBlock + " for last round");
 				}
 			}
 			// In the paper this block is often referred to as B
-			final ImmutableSet<STATE> block = this.mPartition.getContainingSet(representativeOfBlock);
+			final ImmutableSet<STATE> block = mPartition.getContainingSet(representativeOfBlock);
 
 			final Iterator<RuleContext<LETTER, STATE>> contexts = collectContexts(block);
 			refineBasedOnContexts(contexts, block, isLastRound);
@@ -426,7 +411,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 				// Initial round has finished
 				isInitialRound = false;
 			}
-			if (this.mCompoundBlocks.isEmpty() && !isLastRound) {
+			if (mCompoundBlocks.isEmpty() && !isLastRound) {
 				// Last round begins
 				isLastRound = true;
 			} else if (isLastRound) {
@@ -436,39 +421,37 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-				this.mLogger.debug("Stopped at end of round");
+			if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+				mLogger.debug("Stopped at end of round");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 
 		// Merge the automaton using the current refined partition
-		return mergeUsingPartition(this.mPartition);
+		return mergeUsingPartition(mPartition);
 	}
 
 	/**
-	 * Builds and sets the initial partition and relation which separates final from
-	 * non-final states.
+	 * Builds and sets the initial partition and relation which separates final from non-final states.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private void initPartition() throws AutomataOperationCanceledException {
 		// The initial partition of the regular relation consists of two blocks, all
 		// final states and all non-final states. The initial progress relation only has
 		// one block containing all states. By that the we have one compound progress
 		// block containing both blocks of the regular relation.
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Creating initial partition");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Creating initial partition");
 		}
 
 		final Set<STATE> finalBlock = new HashSet<>();
 		final Set<STATE> nonFinalBlock = new HashSet<>();
 
 		// Iterate all states and put them in the corresponding block
-		for (final STATE state : this.mOperand.getStates()) {
-			if (this.mOperand.isFinalState(state)) {
+		for (final STATE state : mOperand.getStates()) {
+			if (mOperand.isFinalState(state)) {
 				finalBlock.add(state);
 			} else {
 				nonFinalBlock.add(state);
@@ -476,69 +459,63 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-				this.mLogger.debug("Stopped at creating initial partition/block creation");
+			if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+				mLogger.debug("Stopped at creating initial partition/block creation");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 
 		if (finalBlock.isEmpty()) {
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("There are no final states, returning");
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("There are no final states, returning");
 			}
-			this.mNoFinalStates = true;
+			mNoFinalStates = true;
 			return;
 		}
 
 		// Setup the initial partition
-		this.mPartition = new UnionFind<>();
-		this.mPartition.addEquivalenceClass(ImmutableSet.of(finalBlock));
-		this.mPartition.addEquivalenceClass(ImmutableSet.of(nonFinalBlock));
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Initial partition is: " + this.mPartition);
+		mPartition = new UnionFind<>();
+		mPartition.addEquivalenceClass(ImmutableSet.of(finalBlock));
+		mPartition.addEquivalenceClass(ImmutableSet.of(nonFinalBlock));
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Initial partition is: " + mPartition);
 		}
 
 		// Build the progress partition which initially holds all states in one block
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Creating initial progress partition");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Creating initial progress partition");
 		}
-		this.mProgressPartition.addEquivalenceClass(ImmutableSet.of(this.mOperand.getStates()));
-		final STATE representativeOfProgressBlock = this.mProgressPartition.getAllRepresentatives().stream().findFirst()
-				.get();
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Initial progress partition is: " + this.mProgressPartition);
+		mProgressPartition.addEquivalenceClass(ImmutableSet.of(mOperand.getStates()));
+		final STATE representativeOfProgressBlock =
+				mProgressPartition.getAllRepresentatives().stream().findFirst().get();
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Initial progress partition is: " + mProgressPartition);
 		}
 
 		// Register the compound block
-		final LinkedHashSet<STATE> representativesOfCompoundBlocks = new LinkedHashSet<>();
-		for (final STATE representative : this.mPartition.getAllRepresentatives()) {
-			// Initially all blocks belong to the only compound progress block
-			// which consists of all states
-			representativesOfCompoundBlocks.add(representative);
-		}
-		this.mCompoundBlocks.put(representativeOfProgressBlock, representativesOfCompoundBlocks);
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Initial compound blocks are: " + this.mCompoundBlocks);
+		final LinkedHashSet<STATE> representativesOfCompoundBlocks =
+				new LinkedHashSet<>(mPartition.getAllRepresentatives());
+		mCompoundBlocks.put(representativeOfProgressBlock, representativesOfCompoundBlocks);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Initial compound blocks are: " + mCompoundBlocks);
 		}
 	}
 
 	/**
-	 * Merges the operand by using the given partition. The resulting automaton
-	 * contains a state for every block in the given partition. Thus every states
-	 * and rule of the operand will result in a representative where every
-	 * occurrence of states are replaced by the corresponding merged state.
+	 * Merges the operand by using the given partition. The resulting automaton contains a state for every block in the
+	 * given partition. Thus every states and rule of the operand will result in a representative where every occurrence
+	 * of states are replaced by the corresponding merged state.
 	 *
 	 * @param partition
 	 *            The partition to use for merge
 	 * @return The merged automaton
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private ITreeAutomatonBU<LETTER, STATE> mergeUsingPartition(final UnionFind<STATE> partition)
 			throws AutomataOperationCanceledException {
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to construct the result");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Starting to construct the result");
 		}
 		final HashMap<STATE, STATE> representativeToMergedState = new HashMap<>();
 		final TreeAutomatonBU<LETTER, STATE> result = new TreeAutomatonBU<>();
@@ -548,12 +525,12 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			final Set<STATE> block = partition.getEquivalenceClassMembers(representative);
 
 			// Merge the states of the block
-			final STATE mergedState = this.mSinkMergeIntersectFactory.merge(block);
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Merged " + block + " to " + mergedState);
+			final STATE mergedState = mSinkMergeIntersectFactory.merge(block);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Merged " + block + " to " + mergedState);
 			}
 			representativeToMergedState.put(representative, mergedState);
-			if (this.mOperand.isFinalState(representative)) {
+			if (mOperand.isFinalState(representative)) {
 				result.addFinalState(mergedState);
 			} else {
 				result.addState(mergedState);
@@ -561,23 +538,22 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-				this.mLogger.debug("Stopped at creating result/merging states");
+			if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+				mLogger.debug("Stopped at creating result/merging states");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 
 		// Add resulting letters
-		for (final LETTER letter : this.mOperand.getAlphabet()) {
+		for (final LETTER letter : mOperand.getAlphabet()) {
 			result.addLetter(letter);
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Added letter: " + letter);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Added letter: " + letter);
 			}
 		}
 
 		// Add resulting rules
-		for (final TreeAutomatonRule<LETTER, STATE> rule :
-				((TreeAutomatonBU<LETTER, STATE>) this.mOperand).getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : ((TreeAutomatonBU<LETTER, STATE>) mOperand).getRules()) {
 			// Merge source
 			final List<STATE> source = rule.getSource();
 			final List<STATE> mergedSource = new ArrayList<>(source.size());
@@ -590,18 +566,18 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			final STATE mergedDestination = representativeToMergedState.get(partition.find(rule.getDest()));
 
 			// Add the merged rule
-			final TreeAutomatonRule<LETTER, STATE> mergedRule = new TreeAutomatonRule<>(rule.getLetter(), mergedSource,
-					mergedDestination);
+			final TreeAutomatonRule<LETTER, STATE> mergedRule =
+					new TreeAutomatonRule<>(rule.getLetter(), mergedSource, mergedDestination);
 			result.addRule(mergedRule);
 
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Merged rule=" + rule + " to mergedRule=" + mergedRule);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Merged rule=" + rule + " to mergedRule=" + mergedRule);
 			}
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-				this.mLogger.debug("Stopped at creating result/adding rules");
+			if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+				mLogger.debug("Stopped at creating result/adding rules");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -611,9 +587,8 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 	/**
 	 * Refines the current partition based on the given contexts.<br>
-	 * A context represents similar, with respect to the current partition, rules
-	 * and holds which states are able to use that rule at given positions. Based on
-	 * that splits can be determined since if a state is able to use a rule but
+	 * A context represents similar, with respect to the current partition, rules and holds which states are able to use
+	 * that rule at given positions. Based on that splits can be determined since if a state is able to use a rule but
 	 * others of the same block are not, then they must not stay in the same block.
 	 *
 	 * @param contexts
@@ -621,12 +596,10 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * @param destinationBlock
 	 *            The block used as destination all rules in the contexts
 	 * @param isLastRound
-	 *            Whether this is the last round or not. In the last round updates
-	 *            of compound blocks and the progress partition is skipped as not
-	 *            needed anymore
+	 *            Whether this is the last round or not. In the last round updates of compound blocks and the progress
+	 *            partition is skipped as not needed anymore
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private void refineBasedOnContexts(final Iterator<RuleContext<LETTER, STATE>> contexts,
 			final ImmutableSet<STATE> destinationBlock, final boolean isLastRound)
@@ -642,58 +615,58 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// from the regular relation since state 3 behaves differently as states 1 and
 		// 2, based on the definition of bisimulation.
 
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to refine based on contexts");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Starting to refine based on contexts");
 		}
 
 		// Iterate all contexts and refine the partition. In the paper this method is
 		// often referred to as 'split'
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to refine partition");
-			this.mLogger.debug("Partition before update is: " + this.mPartition);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Starting to refine partition");
+			mLogger.debug("Partition before update is: " + mPartition);
 		}
 		UnionFind<STATE> refinedPartition = null;
 		while (contexts.hasNext()) {
 			final RuleContext<LETTER, STATE> context = contexts.next();
 
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Looking at context: " + context);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Looking at context: " + context);
 			}
 			// Iterate each position
 			for (int i = 0; i < context.getSourceSize(); i++) {
 				// If operation was canceled, for example from the
 				// Ultimate framework
-				if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-					this.mLogger.debug("Stopped at refining based on contexts/refining relation");
+				if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+					mLogger.debug("Stopped at refining based on contexts/refining relation");
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 
 				final Set<STATE> sourceStatesAtPosition = context.getSourceStatesAtPosition(i);
 				final STATE representative = context.getSourceRepresentativeAtPosition(i);
-				final Set<STATE> block = this.mPartition.getContainingSet(representative);
+				final Set<STATE> block = mPartition.getContainingSet(representative);
 
-				if (this.mLogger.isDebugEnabled()) {
+				if (mLogger.isDebugEnabled()) {
 					final Set<STATE> statesNotAtPosition = new HashSet<>(block.size() - sourceStatesAtPosition.size());
 					for (final STATE stateOfBlock : block) {
 						if (!sourceStatesAtPosition.contains(stateOfBlock)) {
 							statesNotAtPosition.add(stateOfBlock);
 						}
 					}
-					this.mLogger.debug("At position " + i + " statesAt=" + sourceStatesAtPosition + ", statesNotAt="
+					mLogger.debug("At position " + i + " statesAt=" + sourceStatesAtPosition + ", statesNotAt="
 							+ statesNotAtPosition);
 				}
 
 				// Whether this position yields changes
 				if (sourceStatesAtPosition.size() == block.size()) {
-					if (this.mLogger.isDebugEnabled()) {
-						this.mLogger.debug("Source position does not yield changes");
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Source position does not yield changes");
 					}
 					continue;
 				}
 
 				if (refinedPartition == null) {
 					// Create a clone to iteratively refine
-					refinedPartition = this.mPartition.clone();
+					refinedPartition = mPartition.clone();
 				}
 
 				// Find all refined equivalence classes of the current refinement which belong
@@ -729,8 +702,8 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 					refinedPartition.addEquivalenceClass(ImmutableSet.of(refinedStatesAtSourcePosition));
 					refinedPartition.addEquivalenceClass(ImmutableSet.of(refinedStatesNotAtSourcePosition));
 
-					if (this.mLogger.isDebugEnabled()) {
-						this.mLogger.debug("Split block into: " + refinedStatesAtSourcePosition + " and "
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Split block into: " + refinedStatesAtSourcePosition + " and "
 								+ refinedStatesNotAtSourcePosition);
 					}
 				}
@@ -738,20 +711,20 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		}
 		// If there where changes update the partition by using the refined partition
 		if (refinedPartition != null) {
-			this.mPartition = refinedPartition;
+			mPartition = refinedPartition;
 		} else {
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Contexts did not yield any changes, partition was not refined");
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Contexts did not yield any changes, partition was not refined");
 			}
 		}
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Partition after update is: " + this.mPartition);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Partition after update is: " + mPartition);
 		}
 
 		// If operation was canceled, for example from the
 		// Ultimate framework
-		if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-			this.mLogger.debug("Stopped at refining based on contexts/after updating partition");
+		if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+			mLogger.debug("Stopped at refining based on contexts/after updating partition");
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
@@ -761,8 +734,8 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// from the progress partition in each round.
 		if (isLastRound) {
 			// Skip the update in the last round as not needed anymore
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Last round, skipping update of compound blocks and progress partition");
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Last round, skipping update of compound blocks and progress partition");
 			}
 
 			return;
@@ -771,18 +744,15 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	}
 
 	/**
-	 * Selects a block that is used as starting point for splits in the next round.
-	 * Splits are determined based on rules. In an iteration only rules that have
-	 * states in this selected block will be selected. The selected block is part of
-	 * a compound progress block and its size is less than the half of its
-	 * containing progress block.<br>
+	 * Selects a block that is used as starting point for splits in the next round. Splits are determined based on
+	 * rules. In an iteration only rules that have states in this selected block will be selected. The selected block is
+	 * part of a compound progress block and its size is less than the half of its containing progress block.<br>
 	 * <br>
-	 * If it is the initial round the method will always select the block of final
-	 * states as all recognized words of the language must end with a final state.
+	 * If it is the initial round the method will always select the block of final states as all recognized words of the
+	 * language must end with a final state.
 	 *
 	 * @param initialRound
-	 *            If it is the initial round, thus the block of final states should
-	 *            be selected, or not.
+	 *            If it is the initial round, thus the block of final states should be selected, or not.
 	 *
 	 * @return A block used as starting point for splits
 	 */
@@ -794,17 +764,17 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		// choosable blocks B belong to such compound progress blocks.
 		// However in the initial round we will always select the block of final states
 		// since words contributing to the language always end there.
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Selecting a compound block for this round");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Selecting a compound block for this round");
 		}
 
 		// Select a compound progress block. In the paper this block is often referred
 		// to as S
-		final LinkedHashSet<STATE> progressBlock = this.mCompoundBlocks.values().stream().findFirst().get();
+		final LinkedHashSet<STATE> progressBlock = mCompoundBlocks.values().stream().findFirst().get();
 
 		if (initialRound) {
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Round is initial");
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Round is initial");
 			}
 			// Find the representative of the block of final states as in the initial round
 			// we always start with the set of final states
@@ -815,7 +785,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 				// Could be done slightly faster by memorizing it before. However there are only
 				// two representatives in the initial round thus it has no impact on
 				// performance.
-				if (this.mOperand.isFinalState(representative)) {
+				if (mOperand.isFinalState(representative)) {
 					blockRepresentative = representative;
 				} else {
 					// Remember the other representative as it could possibly be the block for the
@@ -825,7 +795,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			}
 			assert blockRepresentative != null && otherBlockRepresentative != null;
 
-			this.mPossiblyLastRoundBlockRepresentative = otherBlockRepresentative;
+			mPossiblyLastRoundBlockRepresentative = otherBlockRepresentative;
 			return blockRepresentative;
 		}
 
@@ -836,105 +806,101 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		final STATE secondRepresentative = blockRepresentatives.next();
 
 		// Select the smaller block of both
-		final int firstBlockSize = this.mPartition.getContainingSet(firstRepresentative).size();
-		final int secondBlockSize = this.mPartition.getContainingSet(secondRepresentative).size();
+		final int firstBlockSize = mPartition.getContainingSet(firstRepresentative).size();
+		final int secondBlockSize = mPartition.getContainingSet(secondRepresentative).size();
 		if (firstBlockSize < secondBlockSize) {
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger
-						.debug("Block of " + firstRepresentative + " is smaller than block of " + secondRepresentative);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Block of " + firstRepresentative + " is smaller than block of " + secondRepresentative);
 			}
-			this.mPossiblyLastRoundBlockRepresentative = secondRepresentative;
+			mPossiblyLastRoundBlockRepresentative = secondRepresentative;
 			return firstRepresentative;
 		}
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Block of " + secondRepresentative + " is smaller than block of " + firstRepresentative);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Block of " + secondRepresentative + " is smaller than block of " + firstRepresentative);
 		}
-		this.mPossiblyLastRoundBlockRepresentative = firstRepresentative;
+		mPossiblyLastRoundBlockRepresentative = firstRepresentative;
 		return secondRepresentative;
 	}
 
 	/**
-	 * Updates the data about compound progress blocks by using the current
-	 * partition. Also splits a given block from the current progress block. This is
-	 * done such that in each round exactly one block is took over from the
-	 * partition. If the partition does not change anymore the progress blocks will
-	 * be equal to the partition after some steps. At this point a fixed point has
-	 * reached and the partition represents a valid bisimulation.
+	 * Updates the data about compound progress blocks by using the current partition. Also splits a given block from
+	 * the current progress block. This is done such that in each round exactly one block is took over from the
+	 * partition. If the partition does not change anymore the progress blocks will be equal to the partition after some
+	 * steps. At this point a fixed point has reached and the partition represents a valid bisimulation.
 	 *
 	 * @param blockToSplitOff
 	 *            The block to split off
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private void updateCompoundBlocksAndProgressPartition(final ImmutableSet<STATE> blockToSplitOff)
 			throws AutomataOperationCanceledException {
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to update compound blocks and progress partition");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Starting to update compound blocks and progress partition");
 		}
 		// Split the given block off by making it its own equivalence class in the
 		// progress partition. In the paper this method is often referred to as 'cut'.
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Progress partition before update is: " + this.mProgressPartition);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Progress partition before update is: " + mProgressPartition);
 		}
-		this.mProgressPartition.removeAll(blockToSplitOff);
-		this.mProgressPartition.addEquivalenceClass(blockToSplitOff);
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Progress partition after update is: " + this.mProgressPartition);
+		mProgressPartition.removeAll(blockToSplitOff);
+		mProgressPartition.addEquivalenceClass(blockToSplitOff);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Progress partition after update is: " + mProgressPartition);
 		}
 
 		// Determine compound progress blocks by registering all blocks under their
 		// progress block
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Compound blocks before update are: " + this.mCompoundBlocks);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Compound blocks before update are: " + mCompoundBlocks);
 		}
-		this.mCompoundBlocks.clear();
+		mCompoundBlocks.clear();
 		// This map is used to determine when a progress block has more than one blocks,
 		// i.e. when it is compound
 		final HashMap<STATE, STATE> progressBlocksToFirstBlock = new HashMap<>();
-		for (final STATE currentBlock : this.mPartition.getAllRepresentatives()) {
+		for (final STATE currentBlock : mPartition.getAllRepresentatives()) {
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-				this.mLogger.debug("Stopped at updating compound blocks");
+			if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+				mLogger.debug("Stopped at updating compound blocks");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Looking at partition block of " + currentBlock);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Looking at partition block of " + currentBlock);
 			}
 
 			// Find the progress block this block belongs to
-			final STATE progressBlock = this.mProgressPartition.find(currentBlock);
+			final STATE progressBlock = mProgressPartition.find(currentBlock);
 
 			final STATE firstBlock = progressBlocksToFirstBlock.get(progressBlock);
 			if (firstBlock == null) {
 				// It is the first block for this progress block. It is yet not decided whether
 				// the progress block is compound.
 				progressBlocksToFirstBlock.put(progressBlock, currentBlock);
-				if (this.mLogger.isDebugEnabled()) {
-					this.mLogger.debug("Block was first for progress block " + progressBlock);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Block was first for progress block " + progressBlock);
 				}
 				continue;
 			}
 
 			// The progress block already has a block, it is compound
-			LinkedHashSet<STATE> blocksBelongingToProgressBlock = this.mCompoundBlocks.get(progressBlock);
+			LinkedHashSet<STATE> blocksBelongingToProgressBlock = mCompoundBlocks.get(progressBlock);
 			if (blocksBelongingToProgressBlock == null) {
 				// Create an entry and add the first registered block
 				blocksBelongingToProgressBlock = new LinkedHashSet<>();
 				blocksBelongingToProgressBlock.add(firstBlock);
-				this.mCompoundBlocks.put(progressBlock, blocksBelongingToProgressBlock);
+				mCompoundBlocks.put(progressBlock, blocksBelongingToProgressBlock);
 			}
 			// Register the current block for this progress block
 			blocksBelongingToProgressBlock.add(currentBlock);
 
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Progress block " + progressBlock + " is compound, currently is: "
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Progress block " + progressBlock + " is compound, currently is: "
 						+ blocksBelongingToProgressBlock);
 			}
 		}
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Compound blocks after update are: " + this.mCompoundBlocks);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Compound blocks after update are: " + mCompoundBlocks);
 		}
 	}
 
@@ -944,6 +910,6 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * @return The operand of this operation
 	 */
 	protected ITreeAutomatonBU<LETTER, STATE> getOperand() {
-		return this.mOperand;
+		return mOperand;
 	}
 }

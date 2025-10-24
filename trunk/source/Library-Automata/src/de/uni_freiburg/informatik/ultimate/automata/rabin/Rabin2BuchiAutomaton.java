@@ -163,12 +163,10 @@ public class Rabin2BuchiAutomaton<LETTER, STATE, FACTORY extends IBlackWhiteStat
 			result.add(new OutgoingInternalTransition<>(transition.getLetter(), getFiniteVariant(rabinSucc)));
 
 			final STATE nonFiniteVariant = getNonFiniteVariant(rabinSucc);
-			if (nonFiniteVariant != null) {
-				// we only consider accepting states as entries into the non-finite subautomaton, this removes
-				// cul-de-sac paths without accepting components from being computed without necessity
-				if (isFinal(nonFiniteVariant)) {
-					result.add(new OutgoingInternalTransition<>(transition.getLetter(), nonFiniteVariant));
-				}
+			// we only consider accepting states as entries into the non-finite subautomaton, this removes
+			// cul-de-sac paths without accepting components from being computed without necessity
+			if ((nonFiniteVariant != null) && isFinal(nonFiniteVariant)) {
+				result.add(new OutgoingInternalTransition<>(transition.getLetter(), nonFiniteVariant));
 			}
 		}
 		return result;

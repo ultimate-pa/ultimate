@@ -36,38 +36,36 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
-
-
-
 //TODO deal with automata with large alphabet
 public class StateWa implements IStateWa, Comparable<StateWa> {
 
 	private final int mId;
 	private final Map<Integer, IntSet> mSuccessors;
-	public StateWa(int id) {
-		this.mId = id;
-		this.mSuccessors = new HashMap<>();
+
+	public StateWa(final int id) {
+		mId = id;
+		mSuccessors = new HashMap<>();
 	}
-	
+
 	@Override
 	public int getId() {
 		return mId;
 	}
 
 	@Override
-	public void addSuccessor(int letter, int state) {
+	public void addSuccessor(final int letter, final int state) {
 		IntSet succs = mSuccessors.get(letter);
-		if(succs == null) {
-			succs =  UtilIntSet.newIntSet();
+		if (succs == null) {
+			succs = UtilIntSet.newIntSet();
 		}
 		succs.set(state);
 		mSuccessors.put(letter, succs);
 	}
 
 	@Override
-	public IntSet getSuccessors(int letter) {
-		IntSet succs = mSuccessors.get(letter);
-		if(succs == null) { // transition function may not be complete
+	public IntSet getSuccessors(final int letter) {
+		final IntSet succs = mSuccessors.get(letter);
+		if (succs == null) { // transition function may not be complete
 			return UtilIntSet.newIntSet();
 		}
 		return succs.clone();
@@ -79,25 +77,27 @@ public class StateWa implements IStateWa, Comparable<StateWa> {
 	}
 
 	@Override
-	public int compareTo(StateWa other) {
+	public int compareTo(final StateWa other) {
 		return mId - other.mId;
 	}
-	
+
 	@Override
-	public boolean equals(Object other) {
-		if(this == other) return true;
-		if(!(other instanceof StateWa)) {
+	public boolean equals(final Object other) {
+		if (this == other) {
+			return true;
+		}
+		if (other == null || getClass() != other.getClass()) {
 			return false;
 		}
-		StateWa otherState = (StateWa)other;
-		return otherState.mId == this.mId;
+		final StateWa otherState = (StateWa) other;
+		return otherState.mId == mId;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mId;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "s" + mId;

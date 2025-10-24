@@ -75,7 +75,6 @@ public class InterpolantComputationStatus {
 
 	private InterpolantComputationStatus(final boolean computationSuccessful, final ItpErrorStatus status,
 			final Throwable exception) {
-		super();
 		mComputationSuccessful = computationSuccessful;
 		mStatus = status;
 		mException = exception;

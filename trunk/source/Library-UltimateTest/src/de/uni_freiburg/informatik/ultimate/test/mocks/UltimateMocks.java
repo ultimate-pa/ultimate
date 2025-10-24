@@ -71,9 +71,8 @@ public class UltimateMocks {
 	}
 
 	/**
-	 * If the solverCommand is of the form `INTERNAL_SMTINTERPOL:n` where n is the
-	 * decimal representation of a long value. We utilize the internal SMTINterpol
-	 * with a timeout of n milliseconds.
+	 * If the solverCommand is of the form `INTERNAL_SMTINTERPOL:n` where n is the decimal representation of a long
+	 * value. We utilize the internal SMTINterpol with a timeout of n milliseconds.
 	 */
 	public static Script createSolver(final String solverCommand, final LogLevel defaultLogLevel) {
 		final IUltimateServiceProvider services = createUltimateServiceProviderMock(defaultLogLevel);

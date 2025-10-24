@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Provides utility methods for converting benchmark data provided by the Rabit tool to formats used by Ultimates
  * simulation benchmark framework.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class RabitUtil {
@@ -67,7 +67,7 @@ public final class RabitUtil {
 
 	/**
 	 * Appends the given content to the output file.
-	 * 
+	 *
 	 * @param content
 	 *            The content to append to the output
 	 * @throws IOException
@@ -79,7 +79,7 @@ public final class RabitUtil {
 
 	/**
 	 * Collects all the automata to process.
-	 * 
+	 *
 	 * @return A list of automata to process
 	 */
 	public static List<File> collectAutomata() {
@@ -90,7 +90,7 @@ public final class RabitUtil {
 
 	/**
 	 * Executes the Rabit tool on a given automaton using the given arguments.
-	 * 
+	 *
 	 * @param automaton
 	 *            Automaton to execute Rabit on
 	 * @param arguments
@@ -101,14 +101,14 @@ public final class RabitUtil {
 	 */
 	public static List<String> executeRabit(final File automaton, final String arguments) throws IOException {
 		final Runtime rt = Runtime.getRuntime();
-		String command = "java";
-		command += " -Xms" + MIN_HEAP_SIZE_GB + "g -Xms" + MIN_HEAP_SIZE_GB + "G";
-		command += " -Xmx" + MAX_HEAP_SIZE_GB + "g -Xmx" + MAX_HEAP_SIZE_GB + "G";
-		command += " -jar";
-		command += " " + TOOL;
-		command += " \"" + automaton.getAbsolutePath() + "\"";
-		command += " " + arguments;
-		final Process proc = rt.exec(command, null, ENVIRONMENT);
+		final StringBuilder command = new StringBuilder("java");
+		command.append(" -Xms").append(MIN_HEAP_SIZE_GB).append("g -Xms").append(MIN_HEAP_SIZE_GB).append("G");
+		command.append(" -Xmx").append(MAX_HEAP_SIZE_GB).append("g -Xmx").append(MAX_HEAP_SIZE_GB).append("G");
+		command.append(" -jar");
+		command.append(" ").append(TOOL);
+		command.append(" \"").append(automaton.getAbsolutePath()).append("\"");
+		command.append(" ").append(arguments);
+		final Process proc = rt.exec(command.toString(), null, ENVIRONMENT);
 
 		final BufferedReader rabitOutput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 		final BufferedReader rabitError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
@@ -134,7 +134,7 @@ public final class RabitUtil {
 	/**
 	 * Collects all BA-automata from a given directory, executes the RABIT tool on them and finally aggregates and
 	 * converts the results to a format used by Ultimate.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws IOException
@@ -170,7 +170,7 @@ public final class RabitUtil {
 	/**
 	 * Processes the given automaton by executing the Rabit tool with all given commands and saving the output to a
 	 * file.
-	 * 
+	 *
 	 * @param automaton
 	 *            The automaton to process
 	 * @param commands
@@ -179,26 +179,26 @@ public final class RabitUtil {
 	public static void processAutomaton(final File automaton,
 			final List<Pair<String, SimulationOrMinimizationType>> commands) throws IOException {
 		// Print header
-		String header = "<!--";
+		final StringBuilder header = new StringBuilder("<!--");
 		// Fix fields
-		header += SEPARATOR + "NAME";
-		header += SEPARATOR + "TYPE";
-		header += SEPARATOR + "USED_SCCS";
-		header += SEPARATOR + "TIMED_OUT";
-		header += SEPARATOR + "OOM";
+		header.append(SEPARATOR).append("NAME");
+		header.append(SEPARATOR).append("TYPE");
+		header.append(SEPARATOR).append("USED_SCCS");
+		header.append(SEPARATOR).append("TIMED_OUT");
+		header.append(SEPARATOR).append("OOM");
 		// Variable fields
-		header += SEPARATOR + TimeMeasure.OVERALL;
-		header += SEPARATOR + CountingMeasure.BUCHI_ALPHABET_SIZE;
-		header += SEPARATOR + CountingMeasure.BUCHI_STATES;
-		header += SEPARATOR + CountingMeasure.BUCHI_TRANSITIONS;
-		header += SEPARATOR + CountingMeasure.BUCHI_TRANSITIONS_INTERNAL;
-		header += SEPARATOR + CountingMeasure.RESULT_ALPHABET_SIZE;
-		header += SEPARATOR + CountingMeasure.RESULT_STATES;
-		header += SEPARATOR + CountingMeasure.RESULT_TRANSITIONS;
-		header += SEPARATOR + CountingMeasure.RESULT_TRANSITIONS_INTERNAL;
-		header += SEPARATOR + CountingMeasure.REMOVED_STATES;
-		header += SEPARATOR + "-->";
-		appendLineToOutput(header);
+		header.append(SEPARATOR).append(TimeMeasure.OVERALL);
+		header.append(SEPARATOR).append(CountingMeasure.BUCHI_ALPHABET_SIZE);
+		header.append(SEPARATOR).append(CountingMeasure.BUCHI_STATES);
+		header.append(SEPARATOR).append(CountingMeasure.BUCHI_TRANSITIONS);
+		header.append(SEPARATOR).append(CountingMeasure.BUCHI_TRANSITIONS_INTERNAL);
+		header.append(SEPARATOR).append(CountingMeasure.RESULT_ALPHABET_SIZE);
+		header.append(SEPARATOR).append(CountingMeasure.RESULT_STATES);
+		header.append(SEPARATOR).append(CountingMeasure.RESULT_TRANSITIONS);
+		header.append(SEPARATOR).append(CountingMeasure.RESULT_TRANSITIONS_INTERNAL);
+		header.append(SEPARATOR).append(CountingMeasure.REMOVED_STATES);
+		header.append(SEPARATOR).append("-->");
+		appendLineToOutput(header.toString());
 
 		for (final Pair<String, SimulationOrMinimizationType> command : commands) {
 			final String commandArguments = command.getFirst();
@@ -223,32 +223,33 @@ public final class RabitUtil {
 			final int rabitResultAlphabetSizeIndex = 7;
 			final int rabitOverallTime = 9;
 
-			String line = "";
+			final StringBuilder line = new StringBuilder();
 			// Fix fields
-			line += outputData[rabitNameIndex];
-			line += SEPARATOR + commandName;
-			line += SEPARATOR + new Boolean(false).booleanValue();
-			line += SEPARATOR + new Boolean(false).booleanValue();
-			line += SEPARATOR + new Boolean(false).booleanValue();
+			line.append(outputData[rabitNameIndex]);
+			line.append(SEPARATOR).append(commandName);
+			line.append(SEPARATOR).append(false);
+			line.append(SEPARATOR).append(false);
+			line.append(SEPARATOR).append(false);
 			// Variable fields
-			line += SEPARATOR + ComparisonTables.millisToSeconds(Long.parseLong(outputData[rabitOverallTime]));
-			line += SEPARATOR + outputData[rabitBuchiAlphabetSizeIndex];
-			line += SEPARATOR + outputData[rabitBuchiStatesIndex];
-			line += SEPARATOR + outputData[rabitBuchiTransitionsIndex];
-			line += SEPARATOR + outputData[rabitBuchiTransitionsIndex];
-			line += SEPARATOR + outputData[rabitResultAlphabetSizeIndex];
-			line += SEPARATOR + outputData[rabitResultStatesIndex];
-			line += SEPARATOR + outputData[rabitResultTransitionsIndex];
-			line += SEPARATOR + outputData[rabitResultTransitionsIndex];
-			line += SEPARATOR + (Integer.parseInt(outputData[rabitBuchiStatesIndex])
+			line.append(SEPARATOR)
+					.append(ComparisonTables.millisToSeconds(Long.parseLong(outputData[rabitOverallTime])));
+			line.append(SEPARATOR).append(outputData[rabitBuchiAlphabetSizeIndex]);
+			line.append(SEPARATOR).append(outputData[rabitBuchiStatesIndex]);
+			line.append(SEPARATOR).append(outputData[rabitBuchiTransitionsIndex]);
+			line.append(SEPARATOR).append(outputData[rabitBuchiTransitionsIndex]);
+			line.append(SEPARATOR).append(outputData[rabitResultAlphabetSizeIndex]);
+			line.append(SEPARATOR).append(outputData[rabitResultStatesIndex]);
+			line.append(SEPARATOR).append(outputData[rabitResultTransitionsIndex]);
+			line.append(SEPARATOR).append(outputData[rabitResultTransitionsIndex]);
+			line.append(SEPARATOR).append(Integer.parseInt(outputData[rabitBuchiStatesIndex])
 					- Integer.parseInt(outputData[rabitResultStatesIndex]));
-			appendLineToOutput(line);
+			appendLineToOutput(line.toString());
 		}
 	}
 
 	/**
 	 * Appends the given content to the given file.
-	 * 
+	 *
 	 * @param file
 	 *            The file to write to
 	 * @param content
@@ -264,7 +265,7 @@ public final class RabitUtil {
 
 	/**
 	 * Lists all files in the given directory and all sub-directories by adding them to the given list.
-	 * 
+	 *
 	 * @param directory
 	 *            The directory to list all files of
 	 * @param files
@@ -285,7 +286,7 @@ public final class RabitUtil {
 
 	/**
 	 * Strips the extension of a given file name.
-	 * 
+	 *
 	 * @param fileName
 	 *            File name to strip the extension
 	 * @return
@@ -296,10 +297,6 @@ public final class RabitUtil {
 	 *         or <tt>null</tt> if the given file name is <tt>null</tt>
 	 */
 	private static String[] stripExtension(final String fileName) {
-		if (fileName == null) {
-			return null;
-		}
-
 		final String[] result = new String[2];
 
 		final int pos = fileName.lastIndexOf('.');
@@ -309,7 +306,7 @@ public final class RabitUtil {
 			result[1] = "";
 		} else {
 			result[0] = fileName.substring(0, pos);
-			result[1] = fileName.substring(pos + 1, fileName.length());
+			result[1] = fileName.substring(pos + 1);
 		}
 
 		return result;

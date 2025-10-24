@@ -129,7 +129,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * relationship.
 	 */
 	private final Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
-	
+
 	private final IUltimateServiceProvider mServices;
 
 	/**
@@ -137,6 +137,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 *
 	 * After filling all the public attributes, transform() can be called, returning the formula transformed according
 	 * to Motzkin's Transposition Theorem.
+	 *
 	 * @param script
 	 *            The SMTLib script
 	 * @param linear
@@ -337,6 +338,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * inequalities.
 	 *
 	 * TODO: fix documentation
+	 *
 	 * @return a formula equivalent to the negated conjunction of the inequalities
 	 */
 	public Term transform(final Rational[] motzkinGuesses) {
@@ -397,8 +399,7 @@ public class MotzkinTransformation extends InstanceCounting {
 					while (cases[numfixedCoeffs - 1] < motzkinGuesses.length) {
 						if (!mServices.getProgressMonitorService().continueProcessing()) {
 							throw new ToolchainCanceledException(this.getClass(),
-									"approximative transformation where we make " + motzkinGuesses.length
-											+ " guesses");
+									"approximative transformation where we make " + motzkinGuesses.length + " guesses");
 						}
 						// Update the coefficients array
 						for (int j = 0; j < numfixedCoeffs; ++j) {

@@ -379,8 +379,8 @@ public class CfgBuilder {
 			final SimplificationTechnique simplificationTechnique) {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
-		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " call of " + callee
-				+ " but no such procedure.";
+		assert mIcfg.getProcedureEntryNodes().containsKey(callee)
+				: "Source code contains" + " call of " + callee + " but no such procedure.";
 
 		// Add call transition from callerNode to procedures entry node
 		final BoogieIcfgLocation callerNode = (BoogieIcfgLocation) edge.getSource();
@@ -392,8 +392,7 @@ public class CfgBuilder {
 				mIcfg.getBoogie2SMT().getStatements2TransFormula().inParamAssignment(st, simplificationTechnique);
 		final TranslationResult outParams2CallerVars = mIcfg.getBoogie2SMT().getStatements2TransFormula()
 				.resultAssignment(st, caller, simplificationTechnique);
-		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(arguments2InParams.getOverapproximations());
+		final Map<String, ILocation> overapproximations = new HashMap<>(arguments2InParams.getOverapproximations());
 		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
 
 		final Call call = mCbf.constructCall(callerNode, calleeEntryLoc, st);
@@ -758,8 +757,8 @@ public class CfgBuilder {
 				final boolean isChildOfAtomicBlock) {
 			if (st instanceof Label) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
-					assert mCurrent == mIcfg.getProcedureEntryNodes().get(procName)
-							|| precedingSt instanceof Label : "If st is Label and mCurrent is LocNode, lastSt is Label";
+					assert mCurrent == mIcfg.getProcedureEntryNodes().get(procName) || precedingSt instanceof Label
+							: "If st is Label and mCurrent is LocNode, lastSt is Label";
 					mLogger.debug("Two Labels in a row: " + mCurrent + " and " + ((Label) st).getName() + "."
 							+ " I am expecting that at least one was introduced by the user (or vcc)."
 							+ " In the CFG only the first label of those two (or more) will be used");
@@ -768,7 +767,8 @@ public class CfgBuilder {
 					assert precedingSt instanceof AssumeStatement || precedingSt instanceof AssignmentStatement
 							|| precedingSt instanceof HavocStatement || precedingSt instanceof AssertStatement
 							|| precedingSt instanceof CallStatement || precedingSt instanceof AtomicStatement
-							|| precedingSt == null : "If st is a Label and the last constructed node was a TransEdge,"
+							|| precedingSt == null
+							: "If st is a Label and the last constructed node was a TransEdge,"
 									+ " then the last Statement must not be a Label, Return or Goto";
 					mLogger.warn("Label in the middle of a codeblock.");
 				}
@@ -782,7 +782,8 @@ public class CfgBuilder {
 					assert isChildOfAtomicBlock || precedingSt instanceof AssumeStatement
 							|| precedingSt instanceof AssignmentStatement || precedingSt instanceof HavocStatement
 							|| precedingSt instanceof AssertStatement || precedingSt instanceof CallStatement
-							|| precedingSt instanceof AtomicStatement : "If the last constructed node is a TransEdge,"
+							|| precedingSt instanceof AtomicStatement
+							: "If the last constructed node is a TransEdge,"
 									+ " then the last Statement must not be a Label, Return or Goto."
 									+ " (i.e. this is not the first Statement of the block)";
 				}
@@ -794,7 +795,8 @@ public class CfgBuilder {
 					assert isChildOfAtomicBlock || precedingSt instanceof AssumeStatement
 							|| precedingSt instanceof AssignmentStatement || precedingSt instanceof HavocStatement
 							|| precedingSt instanceof AssertStatement || precedingSt instanceof CallStatement
-							|| precedingSt instanceof AtomicStatement : "If the last constructed node is a TransEdge,"
+							|| precedingSt instanceof AtomicStatement
+							: "If the last constructed node is a TransEdge,"
 									+ " then the last Statement must not be a Label, Return or Goto."
 									+ " (i.e. this is not the first Statement of the block)";
 				}
@@ -815,15 +817,16 @@ public class CfgBuilder {
 				if (mCurrent instanceof CodeBlock) {
 					assert isChildOfAtomicBlock || precedingSt instanceof AssumeStatement
 							|| precedingSt instanceof AssignmentStatement || precedingSt instanceof HavocStatement
-							|| precedingSt instanceof AssertStatement
-							|| precedingSt instanceof CallStatement : "If the last constructed node is a TransEdge,"
+							|| precedingSt instanceof AssertStatement || precedingSt instanceof CallStatement
+							: "If the last constructed node is a TransEdge,"
 									+ " then the last Statement must not be a Label, Return or Goto."
 									+ " (i.e. this is not the first Statement of the block)";
 				}
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					assert precedingSt instanceof Label || precedingSt instanceof CallStatement
 							|| precedingSt instanceof ForkStatement || precedingSt instanceof JoinStatement
-							|| precedingSt instanceof AtomicStatement : "If mCurrent is LocNode, then st is"
+							|| precedingSt instanceof AtomicStatement
+							: "If mCurrent is LocNode, then st is"
 									+ " first statement of a block; first statement after a call, fork, or join;"
 									+ " or follows an atomic block";
 				}

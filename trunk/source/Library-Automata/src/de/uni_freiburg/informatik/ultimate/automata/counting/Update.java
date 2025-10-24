@@ -39,11 +39,11 @@ public class Update {
 	private Counter mCounterRight;
 	private Integer mConstant;
 	private TermType mTermType;
-	
-	public Update()
-	{}
-	
-	public Update(Counter c1, Counter c2, Integer constant, TermType term) {
+
+	public Update() {
+	}
+
+	public Update(final Counter c1, final Counter c2, final Integer constant, final TermType term) {
 		mCounterLeft = c1;
 		mCounterRight = c2;
 		mConstant = constant;
@@ -53,21 +53,21 @@ public class Update {
 	public Counter getCounterLeft() {
 		return mCounterLeft;
 	}
-	
+
 	public Counter getCounterRight() {
 		return mCounterRight;
 	}
-	
+
 	public Integer getConstant() {
 		return mConstant;
 	}
-	
+
 	public TermType getTermType() {
 		return mTermType;
 	}
-	
+
 	public Update copyUpdate() {
-		Update copy = new Update(mCounterLeft.copyCounter(), mCounterRight.copyCounter(), mConstant, mTermType);
+		final Update copy = new Update(mCounterLeft.copyCounter(), mCounterRight.copyCounter(), mConstant, mTermType);
 		return copy;
 	}
 }

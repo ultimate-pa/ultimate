@@ -25,9 +25,8 @@
  * to convey the resulting work.
  */
 /**
- * Package contains {@link IOperation}s on Petri nets that are implemented in a
- * few classes (preferably only one) class. Operations that need several classes
- * should be moved to a subpackage.
+ * Package contains {@link IOperation}s on Petri nets that are implemented in a few classes (preferably only one) class.
+ * Operations that need several classes should be moved to a subpackage.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *

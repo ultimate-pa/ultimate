@@ -32,8 +32,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 public interface IBuchiNwaComplement extends IBuchiNwa {
 	IBuchiNwa getOperand();
-	
+
 	DoubleDecker getDoubleDecker(int id);
-	
+
 	int getDoubleDeckerId(DoubleDecker decker);
 }

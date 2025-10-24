@@ -84,12 +84,13 @@ public class DagInterpreter {
 	}
 
 	/**
-	 * Interprets a DAG with starting from its source node using only edges from the overlay
-	 * and returns the computed predicate for the only marker in that overlay.
-	 * Bottom is returned in case the overlay contained no marker or the marker was not reached.
-	 * 
+	 * Interprets a DAG with starting from its source node using only edges from the overlay and returns the computed
+	 * predicate for the only marker in that overlay. Bottom is returned in case the overlay contained no marker or the
+	 * marker was not reached.
+	 *
 	 * @return Value of the sink location after interpreting the DAG
-	 * @throws Exception The interpreter reached more than one marker in the overlay
+	 * @throws Exception
+	 *             The interpreter reached more than one marker in the overlay
 	 */
 	public IPredicate interpretForSingleMarker(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
@@ -99,9 +100,8 @@ public class DagInterpreter {
 	}
 
 	/**
-	 * Interprets a DAG starting from its source node using only edges from the overlay.
-	 * Results can be read from the given ILoiPredicateStorage.
-	 * Calls are not entered but only registered in the given IEnterCallRegistrar.
+	 * Interprets a DAG starting from its source node using only edges from the overlay. Results can be read from the
+	 * given ILoiPredicateStorage. Calls are not entered but only registered in the given IEnterCallRegistrar.
 	 * Registered calls should be processed after this function returns.
 	 */
 	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
@@ -162,8 +162,8 @@ public class DagInterpreter {
 			// happens for instance when summarizing the procedure "f() { label: goto label; }"
 			return mTools.bottom();
 		} else if (regex instanceof Literal) {
-			return ipretTrans(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(),
-					input, loiStorage, enterCallRegr);
+			return ipretTrans(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input, loiStorage,
+					enterCallRegr);
 		} else if (regex instanceof Star) {
 			return ipretLoop((Star<IIcfgTransition<IcfgLocation>>) regex, input, loiStorage);
 		} else {
@@ -241,13 +241,12 @@ public class DagInterpreter {
 		return pred;
 	}
 
-
 	// log messages -------------------------------------------------------------------------------
 
 	private void logWorklistEntry(
 			final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist) {
-		mLogger.debug("●  Processing next worklist item %s with input %s",
-				worklist.getWork().getContent(), worklist.getInput());
+		mLogger.debug("●  Processing next worklist item %s with input %s", worklist.getWork().getContent(),
+				worklist.getInput());
 	}
 
 	private void logWorklistEntryDone(final IPredicate curOutput) {

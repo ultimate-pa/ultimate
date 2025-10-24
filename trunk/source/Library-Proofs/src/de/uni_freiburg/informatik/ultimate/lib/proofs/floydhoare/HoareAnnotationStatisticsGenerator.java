@@ -31,7 +31,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
-public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
+class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
 
 	private int mFormulaSimplifications;
 	private long mFormulaSimplificationTreeSizeReduction;
@@ -48,40 +48,22 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 	private int mPreInvPairs;
 	private int mNumberOfFragments;
 
-	public HoareAnnotationStatisticsGenerator() {
-		super();
-	}
-
 	@Override
 	public Object getValue(final String key) {
-		final HoareAnnotationStatisticsDefinitions keyEnum =
-				Enum.valueOf(HoareAnnotationStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case FormulaSimplifications:
-			return mFormulaSimplifications;
-		case FormulaSimplificationTreeSizeReduction:
-			return mFormulaSimplificationTreeSizeReduction;
-		case HoareSimplificationTime:
-			return mHoareSimplificationTime;
-		case FormulaSimplificationsInter:
-			return mFormulaSimplificationsInter;
-		case FormulaSimplificationTreeSizeReductionInter:
-			return mFormulaSimplificationTreeSizeReductionInter;
-		case HoareSimplificationTimeInter:
-			return mHoareSimplificationTimeInter;
-		case HoareAnnotationTime:
-			return mHoareAnnotationTime;
-		case HoareAnnotationTreeSize:
-			return mHoareAnnotationTreeSize;
-		case LocationsWithAnnotation:
-			return mLocationsWithAnnotation;
-		case PreInvPairs:
-			return mPreInvPairs;
-		case NumberOfFragments:
-			return mNumberOfFragments;
-		default:
-			throw new AssertionError("unknown data");
-		}
+		final HoareAnnotationStatisticsDefinitions keyEnum = HoareAnnotationStatisticsDefinitions.valueOf(key);
+		return switch (keyEnum) {
+		case FormulaSimplifications -> mFormulaSimplifications;
+		case FormulaSimplificationTreeSizeReduction -> mFormulaSimplificationTreeSizeReduction;
+		case HoareSimplificationTime -> mHoareSimplificationTime;
+		case FormulaSimplificationsInter -> mFormulaSimplificationsInter;
+		case FormulaSimplificationTreeSizeReductionInter -> mFormulaSimplificationTreeSizeReductionInter;
+		case HoareSimplificationTimeInter -> mHoareSimplificationTimeInter;
+		case HoareAnnotationTime -> mHoareAnnotationTime;
+		case HoareAnnotationTreeSize -> mHoareAnnotationTreeSize;
+		case LocationsWithAnnotation -> mLocationsWithAnnotation;
+		case PreInvPairs -> mPreInvPairs;
+		case NumberOfFragments -> mNumberOfFragments;
+		};
 	}
 
 	@Override

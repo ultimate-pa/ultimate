@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * information about visited stacks, this seems to be too costly.
  * <p>
  * This class does not give us the shortest lasso, because the construction of the stem is not optimal.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -84,7 +84,7 @@ class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param nwars
@@ -178,7 +178,7 @@ class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			}
 		}
 
-		// TODO: Optimization (you can ignore stacks like (q0,false)  (q0,false)  (q1,true)
+		// TODO: Optimization (you can ignore stacks like (q0,false) (q0,false) (q1,true)
 		for (final IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
 			// note that goal or init can never be reached
 			// (backwards) with empty stack directly after return.
@@ -267,7 +267,7 @@ class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 				return succStack;
 			}
 			if (sofs.height() == 1) {
-				//check also for pending calls
+				// check also for pending calls
 				succStack = new StackOfFlaggedStates(sofs, outTrans, false, true);
 				if (succCandidates.contains(succStack)) {
 					final NestedRun<LETTER, STATE> runSegment = new NestedRun<>(cont.getState(), outTrans.getLetter(),
@@ -316,7 +316,7 @@ class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			if (sofs.height() != 1) {
 				continue;
 			}
-			//check also for pending calls
+			// check also for pending calls
 			succStack = new StackOfFlaggedStates(sofs, outTrans, true, true);
 			if (succCandidates.contains(succStack)) {
 				final NestedRun<LETTER, STATE> runSegment = new NestedRun<>(cont.getState(), outTrans.getLetter(),
@@ -367,7 +367,7 @@ class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 
 	/**
 	 * A stack of flagged states.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	class StackOfFlaggedStates {

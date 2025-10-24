@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 
 public class LocalLValue extends LRValue {
 
@@ -47,16 +47,16 @@ public class LocalLValue extends LRValue {
 	 *
 	 * @param expr
 	 */
-	public LocalLValue(final LeftHandSide lhs, final CType cType, final BitfieldInformation bi) {
+	public LocalLValue(final LeftHandSide lhs, final ICType cType, final BitfieldInformation bi) {
 		this(lhs, cType, false, false, bi);
 
 	}
 
-	public LocalLValue(final LeftHandSide lhs, final CType cType, final boolean isBoogieBool) {
+	public LocalLValue(final LeftHandSide lhs, final ICType cType, final boolean isBoogieBool) {
 		this(lhs, cType, isBoogieBool, false, null);
 	}
 
-	public LocalLValue(final LeftHandSide lhs, final CType cType, final boolean isBoogieBool,
+	public LocalLValue(final LeftHandSide lhs, final ICType cType, final boolean isBoogieBool,
 			final boolean isIntFromPtr, final BitfieldInformation bi) {
 		super(cType, isBoogieBool, isIntFromPtr);
 		mLhs = lhs;

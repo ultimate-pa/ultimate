@@ -49,14 +49,12 @@ public enum SafetyCheckerOverallResult {
 	UNSAFE_OVERAPPROXIMATED,
 
 	/**
-	 * Indicates that a given annotation (e.g., Floyd-Hoare annotation) is a valid
-	 * proof of correctness.
+	 * Indicates that a given annotation (e.g., Floyd-Hoare annotation) is a valid proof of correctness.
 	 */
 	VALID_ANNOTATION,
 
 	/**
-	 * Indicates that a given annotation (e.g., Floyd-Hoare annotation) is
-	 * insufficient to prove correctness.
+	 * Indicates that a given annotation (e.g., Floyd-Hoare annotation) is insufficient to prove correctness.
 	 */
 	INVALID_ANNOTATION,
 

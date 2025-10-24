@@ -115,43 +115,28 @@ public class LiptonReductionStatisticsGenerator extends StatisticsGeneratorWithS
 	}
 
 	public Object getValue(final LiptonReductionStatisticsDefinitions key) {
-		switch (key) {
-		case ChoiceCompositions:
-			return mChoiceCompositions;
-		case CoEnabledTransitionPairs:
-			return mCoEnabledTransitionPairs;
-		case ConcurrentSequentialCompositions:
-			return mConcurrentSequentialCompositions;
-		case ConcurrentYvCompositions:
-			return mConcurrentYvCompositions;
-		case FixpointIterations:
-			return mNumberOfFixpointIterations;
-		case MoverChecksTotal:
-			return mMoverChecksTotal;
-		case PlacesAfterwards:
-			return mPlacesAfterwards;
-		case PlacesBefore:
-			return mPlacesBefore;
-		case ReductionTime:
+		return switch (key) {
+		case ChoiceCompositions -> mChoiceCompositions;
+		case CoEnabledTransitionPairs -> mCoEnabledTransitionPairs;
+		case ConcurrentSequentialCompositions -> mConcurrentSequentialCompositions;
+		case ConcurrentYvCompositions -> mConcurrentYvCompositions;
+		case FixpointIterations -> mNumberOfFixpointIterations;
+		case MoverChecksTotal -> mMoverChecksTotal;
+		case PlacesAfterwards -> mPlacesAfterwards;
+		case PlacesBefore -> mPlacesBefore;
+		case ReductionTime -> {
 			try {
-				return getElapsedTime(key.toString());
+				yield getElapsedTime(key.toString());
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case TotalNumberOfCompositions:
-			return mTotalNumberOfCompositions;
-		case TransitionsAfterwards:
-			return mTransitionsAfterwards;
-		case TransitionsBefore:
-			return mTransitionsBefore;
-		case TrivialSequentialCompositions:
-			return mTrivialSequentialCompositions;
-		case TrivialYvCompositions:
-			return mTrivialYvCompositions;
-		default:
-			throw new AssertionError("unknown data: " + key);
-
 		}
+		case TotalNumberOfCompositions -> mTotalNumberOfCompositions;
+		case TransitionsAfterwards -> mTransitionsAfterwards;
+		case TransitionsBefore -> mTransitionsBefore;
+		case TrivialSequentialCompositions -> mTrivialSequentialCompositions;
+		case TrivialYvCompositions -> mTrivialYvCompositions;
+		};
 	}
 
 	@Override

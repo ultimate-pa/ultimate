@@ -29,17 +29,20 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 /**
  * Visitor for regular expression syntax trees.
  * <p>
- * In addition to the regular visitor pattern this visitor's method can take custom arguments
- * (in addition to syntax tree nodes) and return custom values.
+ * In addition to the regular visitor pattern this visitor's method can take custom arguments (in addition to syntax
+ * tree nodes) and return custom values.
  * <p>
- * The default implementation visits all syntax tree nodes using DFS from left to right,
- * passes custom arguments recursively, and returns null.
- * 
+ * The default implementation visits all syntax tree nodes using DFS from left to right, passes custom arguments
+ * recursively, and returns null.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals
- * @param <RET> Custom return type, use Void if not needed
- * @param <ARG> Custom additional argument, use Void if not needed
+ * @param <L>
+ *            Type of letters that are used inside regex literals
+ * @param <RET>
+ *            Custom return type, use Void if not needed
+ * @param <ARG>
+ *            Custom additional argument, use Void if not needed
  */
 public interface IRegexVisitor<L, RET, ARG> {
 

@@ -114,7 +114,7 @@ public class Req2BoogieTranslator {
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType<?>> patterns) {
-		this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());
+		this(services, logger, patterns, new ArrayList<>());
 	}
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,

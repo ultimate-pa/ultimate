@@ -32,6 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 public interface IBuchiWaComplement extends IBuchiWa {
 	IBuchiWa getOperand();
-//	void useOpTransition(int letter, IntSet states);
-//	int getNumUsedOpTransition();
+	// void useOpTransition(int letter, IntSet states);
+	// int getNumUsedOpTransition();
 }

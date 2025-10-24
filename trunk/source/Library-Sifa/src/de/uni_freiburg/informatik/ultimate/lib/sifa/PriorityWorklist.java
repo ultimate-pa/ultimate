@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 
 /**
  * Priority queue which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>.
- * Entries are sorted according to a custom order on the work entries. Only work entries listed in the
- * custom order can be added to this queue.
+ * Entries are sorted according to a custom order on the work entries. Only work entries listed in the custom order can
+ * be added to this queue.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
@@ -52,10 +52,9 @@ public class PriorityWorklist<W, I> implements IWorklistWithInputs<W, I> {
 	/** Maps work entries to their indices in {@link #mIdxToWork}. */
 	private final Map<W, Integer> mWorkToIdx = new HashMap<>();
 	/**
-	 * The actual priority queue.
-	 * Instead of the pair (W,I) only the index of W in {@link #mIdxToWork} is stored
-	 * and used as a priority. Use {@link #mIdxToWork} to retrieve the work component
-	 * and {@link #mInputsForElemsInWorklist} to retrieve the input component.
+	 * The actual priority queue. Instead of the pair (W,I) only the index of W in {@link #mIdxToWork} is stored and
+	 * used as a priority. Use {@link #mIdxToWork} to retrieve the work component and {@link #mInputsForElemsInWorklist}
+	 * to retrieve the input component.
 	 */
 	private final PriorityQueue<Integer> mWorklistOfIndices = new PriorityQueue<>();
 	/** For each entry in {@link #mWorklistOfIndices} map the work items to their inputs. */

@@ -43,24 +43,24 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 /**
- * Utility class to collect tokens between child nodes.
- * Implementation notes: By checking the "gaps" in the PST we can easily find tokens between nodes without preprocessing
- * the source text. Only requirement is that all preprocessor directives and comments actually exist in the PST.
+ * Utility class to collect tokens between child nodes. Implementation notes: By checking the "gaps" in the PST we can
+ * easily find tokens between nodes without preprocessing the source text. Only requirement is that all preprocessor
+ * directives and comments actually exist in the PST.
  */
 public final class TokenCollector {
 	private static final CharArrayIntMap keywords;
-	
+
 	private static final int INITIAL_KEYWORD_MAP_SIZE = 40;
-	
+
 	static {
 		keywords = new CharArrayIntMap(INITIAL_KEYWORD_MAP_SIZE, -1);
 		Keywords.addKeywordsC(keywords);
 	}
-	
+
 	private TokenCollector() {
 		// utility class
 	}
-	
+
 	/**
 	 * Note: Accesses IASTTranslationUnit to get the LexerOptions.
 	 *
@@ -73,14 +73,14 @@ public final class TokenCollector {
 		GapVisitor.invokeAccept(parentNode, instance);
 		return instance.mResult;
 	}
-	
+
 	/**
 	 * A token.
 	 */
 	public static class Token implements ISourceRange {
 		private final ISourceDocument mSource;
 		private final IToken mDelegate;
-		
+
 		/**
 		 * @param source
 		 *            Source document.
@@ -91,33 +91,33 @@ public final class TokenCollector {
 			mSource = source;
 			mDelegate = token;
 		}
-		
+
 		@Override
 		public int endOffset() {
 			return mDelegate.getEndOffset();
 		}
-		
+
 		public char[] getCharImage() {
 			return mDelegate.getCharImage();
 		}
-		
+
 		public String getImage() {
 			return mDelegate.getImage();
 		}
-		
+
 		public ISourceDocument getSource() {
 			return mSource;
 		}
-		
+
 		public int getType() {
 			return mDelegate.getType();
 		}
-		
+
 		@Override
 		public int offset() {
 			return mDelegate.getOffset();
 		}
-		
+
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
@@ -125,9 +125,9 @@ public final class TokenCollector {
 					.append(mSource.newSourceRange(offset(), endOffset()));
 			return sb.toString();
 		}
-		
+
 	}
-	
+
 	/**
 	 * PST gap visitor.
 	 */
@@ -136,12 +136,12 @@ public final class TokenCollector {
 		private final ISourceDocument mSource;
 		private final List<Token> mResult = new ArrayList<>();
 		private LexerOptions mLexerOptions;
-		
+
 		private Visitor(final IPSTNode parentNode) {
 			mParentNode = parentNode;
 			mSource = parentNode.getSource();
 		}
-		
+
 		private void addTokens(final int offset, final int endOffset) {
 			final String text = mSource.getText(offset, endOffset);
 			if (text.trim().isEmpty()) {
@@ -153,7 +153,7 @@ public final class TokenCollector {
 				// Does not happen without using content assist limit.
 			}
 		}
-		
+
 		@Override
 		public int defaultVisit(final IPSTNode node) {
 			if (node.equals(mParentNode) || node instanceof IPSTConditionalBlock) {
@@ -161,14 +161,14 @@ public final class TokenCollector {
 			}
 			return PROCESS_SKIP;
 		}
-		
+
 		private LexerOptions getLexerOptions() {
 			if (mLexerOptions == null) {
 				mLexerOptions = mParentNode.getTranslationUnit().getAstNode().getAdapter(LexerOptions.class);
 			}
 			return mLexerOptions;
 		}
-		
+
 		private void runLexer(final String text, final int offset) throws OffsetLimitReachedException {
 			final Lexer lexer = new Lexer(text.toCharArray(), getLexerOptions(), ILexerLog.NULL, null);
 			while (true) {
@@ -190,7 +190,7 @@ public final class TokenCollector {
 				mResult.add(new Token(mSource, token));
 			}
 		}
-		
+
 		@Override
 		public int visitGap(final int offset, final int endOffset) {
 			addTokens(offset, endOffset);

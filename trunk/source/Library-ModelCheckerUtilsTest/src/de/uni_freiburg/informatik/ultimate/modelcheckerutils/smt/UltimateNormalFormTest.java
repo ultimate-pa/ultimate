@@ -149,15 +149,15 @@ public class UltimateNormalFormTest {
 	public void unf05() {
 		mScript.reset();
 		mScript.setLogic(Logics.ALL);
-		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "nhb", "nho", "ho", "hb", "lb", "lo"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#length"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Bv32Sort, "#memory_$Pointer$.offset"),
-			};
+		final FunDecl[] funDecls =
+				{ new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "nhb", "nho", "ho", "hb", "lb", "lo"),
+						new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#length"),
+						new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Bv32Sort, "#memory_$Pointer$.offset"), };
 		for (final FunDecl funDecl : funDecls) {
 			funDecl.declareFuns(mMgdScript.getScript());
 		}
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mMgdScript.getScript(), "(bvule (select |#length| (ite (and (= nhb lb) (= nho lo)) nhb hb)) (bvadd (select (select (let ((.cse0 (store |#memory_$Pointer$.offset| nhb (store (select |#memory_$Pointer$.offset| nhb) nho ho)))) (store .cse0 lb (store (select .cse0 lb) lo nho))) nhb) nho) (_ bv8 32)))");
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mMgdScript.getScript(),
+				"(bvule (select |#length| (ite (and (= nhb lb) (= nho lo)) nhb hb)) (bvadd (select (select (let ((.cse0 (store |#memory_$Pointer$.offset| nhb (store (select |#memory_$Pointer$.offset| nhb) nho ho)))) (store .cse0 lb (store (select .cse0 lb) lo nho))) nhb) nho) (_ bv8 32)))");
 		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
 		final Term result = new IteRemover(mMgdScript).transform(letFree);
 		Assert.isTrue(UltimateNormalFormUtils.respectsUltimateNormalForm(result));

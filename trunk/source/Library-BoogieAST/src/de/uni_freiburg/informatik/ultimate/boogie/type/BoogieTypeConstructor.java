@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class BoogieTypeConstructor implements Serializable {
 	/**
@@ -78,8 +79,8 @@ public class BoogieTypeConstructor implements Serializable {
 		if (paramOrder.length > 0) {
 			sb.append('<');
 			String comma = "";
-			for (int i = 0; i < paramOrder.length; i++) {
-				sb.append(comma).append(paramOrder[i]);
+			for (final int element : paramOrder) {
+				sb.append(comma).append(element);
 				comma = ",";
 			}
 			sb.append('>');
@@ -96,14 +97,7 @@ public class BoogieTypeConstructor implements Serializable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (isFinite ? 1231 : 1237);
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + paramCount;
-		result = prime * result + Arrays.hashCode(paramOrder);
-		result = prime * result + ((synonym == null) ? 0 : synonym.hashCode());
-		return result;
+		return Objects.hash(isFinite, name, paramCount, Arrays.hashCode(paramOrder), synonym);
 	}
 
 	@Override

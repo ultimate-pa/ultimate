@@ -423,7 +423,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			mSubtrahendDeterminizedState = subtrahendDeterminizedState;
 			mIsFinal = mMinuend.isFinal(minuendState) && !subtrahendDeterminizedState.containsFinal();
 			mHashCode = PRIME_1 * minuendState.hashCode() + PRIME_2 * subtrahendDeterminizedState.hashCode();
-			//FIXME: hashCode of StatePairList may change over time!
+			// FIXME: hashCode of StatePairList may change over time!
 		}
 
 		public STATE getMinuendState() {

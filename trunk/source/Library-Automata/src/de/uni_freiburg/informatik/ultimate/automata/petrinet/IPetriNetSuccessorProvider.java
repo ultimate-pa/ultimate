@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 
 /**
- * Interface for the development of on-demand Petri net operations, where the
- * construction is driven by an unfolding. TODO: more details
+ * Interface for the development of on-demand Petri net operations, where the construction is driven by an unfolding.
+ * TODO: more details
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -51,7 +51,8 @@ public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LE
 			final Set<PLACE> mayPlaces);
 
 	/**
-	 * @param marking A marking.
+	 * @param marking
+	 *            A marking.
 	 * @return {@code true} iff the marking is accepting.
 	 */
 	boolean isAccepting(Marking<PLACE> marking);

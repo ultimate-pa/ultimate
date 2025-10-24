@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.CheckClosedTerm;
@@ -86,10 +87,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class PredicateUnifier implements IPredicateUnifier {
 
 	/**
-	 * Option for writing a file if we find a quantified formula and a
-	 * quantifier-free formula that are equivalent. (Rationale: case where
-	 * quantifier elimination is possible but our quantifier elimination is not
-	 * successful.)
+	 * Option for writing a file if we find a quantified formula and a quantifier-free formula that are equivalent.
+	 * (Rationale: case where quantifier elimination is possible but our quantifier elimination is not successful.)
 	 *
 	 */
 	private static final boolean DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES = false;
@@ -779,7 +778,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 			mTerm = term;
 			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mMgdScript);
-			mTermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
+			mTermContainsQuantifiers = !QuantifierUtils.isQuantifierFree(term);
 			mEquivalentGtQuantifiedPredicates = new HashSet<>();
 
 			mScript.echo(new QuotedObject("begin unification"));
@@ -981,8 +980,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 					if (mDeprecatedPredicates.containsKey(other)) {
 						return mDeprecatedPredicates.get(other);
 					}
-					final boolean otherContainsQuantifiers =
-							new ContainsQuantifier().containsQuantifier(other.getFormula());
+					final boolean otherContainsQuantifiers = !QuantifierUtils.isQuantifierFree(other.getFormula());
 					if (!otherContainsQuantifiers || mTermContainsQuantifiers
 							&& !thisIsLessQuantifiedThanOther(mClosedTerm, otherClosedTerm)) {
 						return other;

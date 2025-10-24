@@ -46,12 +46,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
  * reduction (in terms of the language), hence persistent sets do not achieve any further reduction in this case.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @param <L>
+ *            The type of letters in the reduced automaton
+ * @param <S>
+ *            The type of states in the reduced automaton
  */
 public final class PersistentSetReduction<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final IPersistentSetChoice<L, S> mPersistentSets;
 
+	/**
+	 * Create a new reduced automaton.
+	 *
+	 * @param operand
+	 *            The original automaton that shall be reduced.
+	 * @param persistentSets
+	 *            A strategy to compute persistent sets for the states of the given automaton.
+	 *
+	 *            As this class does not perform any caching of data, it is recommended to wrap the strategy in
+	 *            {@link CachedPersistentSetChoice}.
+	 */
 	public PersistentSetReduction(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final IPersistentSetChoice<L, S> persistentSets) {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "Only finite automata are supported";
@@ -138,6 +154,26 @@ public final class PersistentSetReduction<L, S> implements INwaOutgoingLetterAnd
 		return mOperand.returnSuccessors(state, hier, letter);
 	}
 
+	/**
+	 * Ensures compatibility of a given preference order (as used for sleep set reduction) with a strategy to compute
+	 * persistent sets. Compatibility is required to soundly combine sleep set reduction and persistent set reduction.
+	 *
+	 * To achieve compatibility, this method modifies the preference order whenever it is required, unless the
+	 * persistent set strategy already guarantees compatibility (as indicated by
+	 * {@link IPersistentSetChoice#ensuresCompatibility(IDfsOrder)}). In the latter case, compatibility is checked at
+	 * runtime to detect soundness issues.
+	 *
+	 * @param <L>
+	 *            The type of letters in the automaton that shall be reduced
+	 * @param <S>
+	 *            The type of states in the automaton that shall be reduced
+	 * @param persistent
+	 *            A strategy for persistent set computation with which the preference order shall be compatible
+	 * @param underlying
+	 *            A given preference order whose compatibility is ensured.
+	 * @return a possibly modified preference order that is guaranteed to be compatible (and throws an error if the
+	 *         guarantee is broken)
+	 */
 	public static <L, S> IDfsOrder<L, S> ensureCompatibility(final IPersistentSetChoice<L, S> persistent,
 			final IDfsOrder<L, S> underlying) {
 		return new CompatibleDfsOrder<>(persistent, underlying);

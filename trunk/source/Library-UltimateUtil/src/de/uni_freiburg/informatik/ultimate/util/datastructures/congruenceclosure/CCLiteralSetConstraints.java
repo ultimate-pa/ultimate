@@ -260,7 +260,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 	public CCLiteralSetConstraints<ELEM> merge(final CongruenceClosure<ELEM> newCc,
 			final HashRelation<ELEM, ELEM> thisSplitInfo, final HashRelation<ELEM, ELEM> otherSplitInfo,
-			final CCLiteralSetConstraints<ELEM> other, final BinaryOperator<Set<SetConstraint<ELEM>>> literalMergeOperator) {
+			final CCLiteralSetConstraints<ELEM> other,
+			final BinaryOperator<Set<SetConstraint<ELEM>>> literalMergeOperator) {
 		if (this.isInconsistent()) {
 			return other;
 		}
@@ -286,7 +287,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 			assert mSetConstraintManager.getSingletonValues(newConstraints).stream()
 					.filter(sv -> !newCc.getRepresentativeElement(sv).equals(constrainedElem))
-					.collect(Collectors.toSet()).isEmpty() : "created non-tautological singleton set constraints "
+					.collect(Collectors.toSet()).isEmpty()
+					: "created non-tautological singleton set constraints "
 							+ "--> report them, befor buildSetConstraintConj.. throws them away!";
 			final SetConstraintConjunction<ELEM> newConstraint =
 					mCcManager.buildSetConstraintConjunction(newSetConstraints, constrainedElem, newConstraints);
@@ -312,8 +314,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		assert CcManager.isPartitionStronger(this.getCongruenceClosure().mElementTVER,
 				other.getCongruenceClosure().mElementTVER) : "assuming this has been checked already";
 
-		final Set<ELEM> constrainedElements = new HashSet<>();
-		constrainedElements.addAll(mContainsConstraints.keySet());
+		final Set<ELEM> constrainedElements = new HashSet<>(mContainsConstraints.keySet());
 		constrainedElements.addAll(other.mContainsConstraints.keySet());
 
 		final HashRelation<ELEM, ELEM> splitInfo =
@@ -584,8 +585,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final ELEM elem1Rep = mCongruenceClosure.getRepresentativeElement(elem1);
 		final ELEM elem2Rep = mCongruenceClosure.getRepresentativeElement(elem2);
 
-		assert !elem1Rep.isLiteral() || !elem2Rep.isLiteral() : "literal disequalities should be implicit and not "
-				+ "reported";
+		assert !elem1Rep.isLiteral() || !elem2Rep.isLiteral()
+				: "literal disequalities should be implicit and not " + "reported";
 
 		// rule: e in L /\ e != l --> e in L\{l}
 		{

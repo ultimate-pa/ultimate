@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -34,16 +35,15 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * The purpose of array groups is to enable the restriction of the separation to some arrays (the "heap arrays").
- * I.e., array groups will be used to determine for a given {@link TermVariable} or {@link IProgramVarOrConst}, if it
- *  is subject to heap/array separation (e.g. a loc-array should be introduced for it).
- *  <p>
- * Historical comments:
- * ArrayGroups are not
+ * The purpose of array groups is to enable the restriction of the separation to some arrays (the "heap arrays"). I.e.,
+ * array groups will be used to determine for a given {@link TermVariable} or {@link IProgramVarOrConst}, if it is
+ * subject to heap/array separation (e.g. a loc-array should be introduced for it).
+ * <p>
+ * Historical comments: ArrayGroups are not
  * <ul>
- *  <li> about "aligning" sub-arrays
- *  <li> about tracking which arrays are assumed equal in the program (we do not handle programs with assumes between
- *    heap arrays)
+ * <li>about "aligning" sub-arrays
+ * <li>about tracking which arrays are assumed equal in the program (we do not handle programs with assumes between heap
+ * arrays)
  * </ul>
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -74,10 +74,7 @@ public class ArrayGroup {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mArraysInThisGroup == null) ? 0 : mArraysInThisGroup.hashCode());
-		return result;
+		return Objects.hash(mArraysInThisGroup);
 	}
 
 	@Override
@@ -143,10 +140,7 @@ public class ArrayGroup {
 
 		@Override
 		public boolean equals(final Object obj) {
-			if (!(obj instanceof NoArrayGroup)) {
-				return false;
-			}
-			return true;
+			return obj != null && getClass() == obj.getClass();
 		}
 	}
 }

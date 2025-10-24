@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO 2020025 Matthias: Revise and add documentation. Because of the SMT-COMP
- * deadline, I committed this without documentation or code review.
+ * TODO 2020025 Matthias: Revise and add documentation. Because of the SMT-COMP deadline, I committed this without
+ * documentation or code review.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -51,7 +51,7 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 			final String result;
 			switch (this) {
 			case ATOM:
-				result = this.toString();
+				result = toString();
 				break;
 			case CONJUNCTION:
 				result = "∧";
@@ -74,7 +74,7 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 
 	@Override
 	protected CondisDepthCode transduceAtom(final Term term) {
-		return new CondisDepthCode(Adk.ATOM, Arrays.asList(new Integer[] { 1 }));
+		return new CondisDepthCode(Adk.ATOM, Arrays.asList(1));
 	}
 
 	@Override
@@ -132,7 +132,6 @@ public class CondisDepthCodeGenerator extends CondisTermTransducer<CondisDepthCo
 		private final List<Integer> mDualJuncts;
 
 		public CondisDepthCode(final Adk adk, final List<Integer> dualJuncts) {
-			super();
 			mAdk = adk;
 			mDualJuncts = dualJuncts;
 		}

@@ -40,10 +40,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTPrettyPr
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-
 /**
- * {@link TransFormula} that can be modified. Stores additionally a
- * mapping from {@link TermVariable}s to {@link IProgramVar}s.
+ * {@link TransFormula} that can be modified. Stores additionally a mapping from {@link TermVariable}s to
+ * {@link IProgramVar}s.
  *
  * @author Jan Leike
  * @author Matthias Heizmann
@@ -60,7 +59,9 @@ public class ModifiableTransFormula extends TransFormula {
 
 	/**
 	 * Create a new TransformulaLR
-	 * @param formula the transition formula
+	 *
+	 * @param formula
+	 *            the transition formula
 	 */
 	public ModifiableTransFormula(final Term formula) {
 		super(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashSet<>(), new LinkedHashSet<>());
@@ -82,19 +83,15 @@ public class ModifiableTransFormula extends TransFormula {
 		mNonTheoryConsts.addAll(other.mNonTheoryConsts);
 	}
 
-
-
 	/**
-	 * @return mapping from inVars to the RankVar that is represented by the
-	 * inVar
+	 * @return mapping from inVars to the RankVar that is represented by the inVar
 	 */
 	public Map<Term, IProgramVar> getInVarsReverseMapping() {
 		return Collections.unmodifiableMap(mInVarsReverseMapping);
 	}
 
 	/**
-	 * @return mapping from outVars to the RankVar that is represented by the
-	 * outVar
+	 * @return mapping from outVars to the RankVar that is represented by the outVar
 	 */
 	public Map<Term, IProgramVar> getOutVarsReverseMapping() {
 		return Collections.unmodifiableMap(mOutVarsReverseMapping);
@@ -102,9 +99,11 @@ public class ModifiableTransFormula extends TransFormula {
 
 	/**
 	 * Add an inVar to the collection
-	 * @param rkVar a RankVar
-	 * @param var the TermVariable corresponding to the RankVar's input state
-	 *            (unprimed version)
+	 *
+	 * @param rkVar
+	 *            a RankVar
+	 * @param var
+	 *            the TermVariable corresponding to the RankVar's input state (unprimed version)
 	 */
 	public void addInVar(final IProgramVar rkVar, final TermVariable var) {
 		final Term oldValue = mInVars.put(rkVar, var);
@@ -112,8 +111,7 @@ public class ModifiableTransFormula extends TransFormula {
 			mInVarsReverseMapping.put(var, rkVar);
 		} else {
 			if (oldValue != var) {
-				throw new IllegalArgumentException(
-						oldValue + " is already the inVar of " + rkVar);
+				throw new IllegalArgumentException(oldValue + " is already the inVar of " + rkVar);
 			}
 		}
 	}
@@ -124,8 +122,7 @@ public class ModifiableTransFormula extends TransFormula {
 	public void removeInVar(final IProgramVar rkVar) {
 		final Term tv = mInVars.remove(rkVar);
 		if (tv == null) {
-			throw new AssertionError(
-					"cannot remove variable that is not contained");
+			throw new AssertionError("cannot remove variable that is not contained");
 		} else {
 			mInVarsReverseMapping.remove(tv);
 		}
@@ -133,9 +130,11 @@ public class ModifiableTransFormula extends TransFormula {
 
 	/**
 	 * Add an outVar to the collection
-	 * @param rkVar a RankVar
-	 * @param var the TermVariable corresponding to the RankVar's output state
-	 *            (primed version)
+	 *
+	 * @param rkVar
+	 *            a RankVar
+	 * @param var
+	 *            the TermVariable corresponding to the RankVar's output state (primed version)
 	 */
 	public void addOutVar(final IProgramVar rkVar, final TermVariable var) {
 		final Term oldValue = mOutVars.put(rkVar, var);
@@ -143,8 +142,7 @@ public class ModifiableTransFormula extends TransFormula {
 			mOutVarsReverseMapping.put(var, rkVar);
 		} else {
 			if (oldValue != var) {
-				throw new IllegalArgumentException(
-						oldValue + " is already the outVar of " + rkVar);
+				throw new IllegalArgumentException(oldValue + " is already the outVar of " + rkVar);
 			}
 		}
 	}
@@ -155,8 +153,7 @@ public class ModifiableTransFormula extends TransFormula {
 	public void removeOutVar(final IProgramVar rkVar) {
 		final Term tv = mOutVars.remove(rkVar);
 		if (tv == null) {
-			throw new AssertionError(
-					"cannot remove variable that is not contained");
+			throw new AssertionError("cannot remove variable that is not contained");
 		} else {
 			mOutVarsReverseMapping.remove(tv);
 		}
@@ -165,16 +162,13 @@ public class ModifiableTransFormula extends TransFormula {
 	public void removeAuxVar(final TermVariable auxVar) {
 		final boolean modified = mAuxVars.remove(auxVar);
 		if (!modified) {
-			throw new AssertionError(
-					"cannot remove variable that is not contained");
+			throw new AssertionError("cannot remove variable that is not contained");
 		}
 	}
 
-
 	/**
-	 * Add a TermVariables that each neither occur as inVar or outVar to the set
-	 * of auxiliary variables. (Note that auxiliary variables are different from
-	 * replacement variables).
+	 * Add a TermVariables that each neither occur as inVar or outVar to the set of auxiliary variables. (Note that
+	 * auxiliary variables are different from replacement variables).
 	 */
 	public void addAuxVars(final Set<TermVariable> auxVars) {
 		mAuxVars.addAll(auxVars);
@@ -189,7 +183,8 @@ public class ModifiableTransFormula extends TransFormula {
 	}
 
 	/**
-	 * @param term the new transition formula
+	 * @param term
+	 *            the new transition formula
 	 */
 	public void setFormula(final Term formula) {
 		mFormula = formula;
@@ -200,8 +195,7 @@ public class ModifiableTransFormula extends TransFormula {
 	}
 
 	/**
-	 * Returns true if each auxVar occurs neither as inVar nor as outVar.
-	 * This property should always hold.
+	 * Returns true if each auxVar occurs neither as inVar nor as outVar. This property should always hold.
 	 */
 	public boolean auxVarsDisjointFromInOutVars() {
 		for (final Term auxVar : mAuxVars) {
@@ -216,11 +210,9 @@ public class ModifiableTransFormula extends TransFormula {
 	}
 
 	/**
-	 * Returns some TermVariable from tvs that occurs neither as inVar nor
-	 * as outVar nor as auxVar. Returns null if no such TermVariable in tvs
-	 * exists.
-	 * For the variables that occur in the transition that uses this
-	 * VarCollector the result should always be null.
+	 * Returns some TermVariable from tvs that occurs neither as inVar nor as outVar nor as auxVar. Returns null if no
+	 * such TermVariable in tvs exists. For the variables that occur in the transition that uses this VarCollector the
+	 * result should always be null.
 	 */
 	public TermVariable allAreInOutAux(final TermVariable[] tvs) {
 		for (final TermVariable tv : tvs) {
@@ -232,10 +224,8 @@ public class ModifiableTransFormula extends TransFormula {
 	}
 
 	/**
-	 * @return the set of assigned/updated variables. A variable is updated by
-	 * this transition if it occurs as outVar and
-     * - it does not occur as inVar
-	 * - or the inVar is represented by a different TermVariable
+	 * @return the set of assigned/updated variables. A variable is updated by this transition if it occurs as outVar
+	 *         and - it does not occur as inVar - or the inVar is represented by a different TermVariable
 	 */
 	@Override
 	public Set<IProgramVar> getAssignedVars() {

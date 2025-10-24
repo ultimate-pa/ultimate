@@ -116,7 +116,7 @@ public class NonIncrementalScriptor extends NoopScript {
 		}
 		mExecutor = new Executor(command, this, logger, services, solverName, fullPathOfDumpedFile);
 		mCommandStack = new LinkedList<>();
-		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
+		mCommandStack.push(new ArrayList<>());
 	}
 
 	private String constructFullFilenameForNewScript() {
@@ -186,7 +186,7 @@ public class NonIncrementalScriptor extends NoopScript {
 	public void push(final int levels) throws SMTLIBException {
 		super.push(levels);
 		for (int i = 0; i < levels; i++) {
-			mCommandStack.add(new ArrayList<ISmtCommand<?>>());
+			mCommandStack.add(new ArrayList<>());
 		}
 	}
 

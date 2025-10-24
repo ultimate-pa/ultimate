@@ -28,15 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
 /**
- * Contains constants used in TreeAutomizer.
- * (not used right now)
- * 
+ * Contains constants used in TreeAutomizer. (not used right now)
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
  */
 public final class TreeAutomizerConstants {
-	
 
 	private TreeAutomizerConstants() {
 		// hides public constructor

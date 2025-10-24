@@ -972,8 +972,8 @@ public class OctagonMatrix {
 		skipVarsLessThan = Math.min(0, skipVarsLessThan);
 		skipVarsBiggerEqualThan = Math.min(variables(), skipVarsBiggerEqualThan);
 
-		assert !containsTautology(source, mapTargetToSourceVar, skipVarsLessThan,
-				skipVarsBiggerEqualThan) : "Overwrite in place with same target and source is not necessary and may cause problems.";
+		assert !containsTautology(source, mapTargetToSourceVar, skipVarsLessThan, skipVarsBiggerEqualThan)
+				: "Overwrite in place with same target and source is not necessary and may cause problems.";
 
 		for (final Map.Entry<Integer, Integer> entry : mapTargetToSourceVar.entrySet()) {
 			final int targetVar = entry.getKey();

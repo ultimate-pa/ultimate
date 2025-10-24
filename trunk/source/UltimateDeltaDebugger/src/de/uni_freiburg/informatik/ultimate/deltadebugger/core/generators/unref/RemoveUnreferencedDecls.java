@@ -52,11 +52,11 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
  * Removes unreferenced typedefs, variables and members in global or local scope. Supports deletion of individual comma
  * separated declarators from a single declaration. Individual enumerators could be supported as well, but that's not
  * implemented yet.
- * 
+ *
  * Performance is certainly far from optimal, because each element is checked individually for being unreferenced by
  * traversing the whole AST. It should be possible to improve performance by collecting unreferenced nodes in one
  * traversal.
- * 
+ *
  */
 public final class RemoveUnreferencedDecls implements IVariantGenerator {
 	private final ISourceDocument mSource;
@@ -73,7 +73,7 @@ public final class RemoveUnreferencedDecls implements IVariantGenerator {
 		activeChanges.stream().forEachOrdered(c -> ((DeclPartChange) c).combine(activeParts));
 
 		final SourceRewriter rewriter = new SourceRewriter(mSource);
-		for (Entry<DeclParts, List<Integer>> entry : activeParts.entrySet()) {
+		for (final Entry<DeclParts, List<Integer>> entry : activeParts.entrySet()) {
 			final DeclParts declParts = entry.getKey();
 			final List<IPSTNode> nodesToDelete = entry.getValue().stream().sorted()
 					.map(declParts.getUnreferencedDeclarators()::get).collect(Collectors.toList());
@@ -139,7 +139,7 @@ public final class RemoveUnreferencedDecls implements IVariantGenerator {
 		final List<DeclParts> listOfDeclParts = new ArrayList<>();
 		translationUnit.accept(new DeclCollector(options, listOfDeclParts));
 		final List<DeclPartChange> changes = new ArrayList<>();
-		for (DeclParts declParts : listOfDeclParts) {
+		for (final DeclParts declParts : listOfDeclParts) {
 			for (int i = 0; i != declParts.getUnreferencedDeclarators().size(); ++i) {
 				changes.add(new DeclPartChange(changes.size(), declParts, i));
 			}
@@ -161,7 +161,7 @@ public final class RemoveUnreferencedDecls implements IVariantGenerator {
 			mDeclaratorIndex = declaratorIndex;
 		}
 
-		void combine(Map<DeclParts, List<Integer>> activeParts) {
+		void combine(final Map<DeclParts, List<Integer>> activeParts) {
 			activeParts.computeIfAbsent(mDeclParts, t -> new ArrayList<>()).add(mDeclaratorIndex);
 		}
 

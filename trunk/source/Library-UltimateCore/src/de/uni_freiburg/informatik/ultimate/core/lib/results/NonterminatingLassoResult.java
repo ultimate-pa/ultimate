@@ -56,8 +56,8 @@ public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElemen
 
 		final var translated = translatorSequence
 				.translateLassoProgramExecution(new IBacktranslationService.Lasso<>(mStemExecution, mLoopExecution));
-		mStemExecutionAsString = translated.getStem().toString();
-		mLoopExecutionAsString = translated.getLoop().toString();
+		mStemExecutionAsString = translated.stem().toString();
+		mLoopExecutionAsString = translated.loop().toString();
 	}
 
 	@Override

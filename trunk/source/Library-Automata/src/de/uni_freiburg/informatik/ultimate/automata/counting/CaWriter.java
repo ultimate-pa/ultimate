@@ -15,17 +15,17 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
  */
 
 public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
-	
+
 	private final CountingAutomaton<LETTER, STATE> mCa;
 	private final Map<STATE, String> mStateMapping;
 	private final Map<LETTER, String> mAlphabetMapping;
-	
+
 	public CaWriter(final PrintWriter writer, final String name, final CountingAutomaton<LETTER, STATE> ca) {
 		super(writer);
 		mCa = ca;
 		mStateMapping = getStateMapping(mCa.getStates());
 		mAlphabetMapping = getAlphabetMapping(mCa.getAlphabet());
-		
+
 		print("CountingAutomaton ");
 		print(name);
 		printAutomatonPrefix();
@@ -37,10 +37,10 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printTransitions();
 		printLastTransitionLineSeparator();
 		printAutomatonSuffix();
-		
+
 		finish();
 	}
-	
+
 	protected Map<STATE, String> getStateMapping(final Collection<STATE> states) {
 		final Map<STATE, String> stateMapping = new HashMap<>();
 		for (final STATE state : states) {
@@ -48,7 +48,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		return stateMapping;
 	}
-	
+
 	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 		final Map<LETTER, String> alphabetMapping = new HashMap<>();
 		for (final LETTER letter : alphabet) {
@@ -56,38 +56,38 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		return alphabetMapping;
 	}
-	
+
 	private void printAlphabet() {
 		printCollectionPrefix("alphabet");
 		printValues(mAlphabetMapping);
 		printCollectionSuffix();
 	}
-	
+
 	private void printCounter() {
 		printCollectionPrefix("counter");
-		for (Counter counter : mCa.getCounter()) {
+		for (final Counter counter : mCa.getCounter()) {
 			printElement(counter.getCounterName());
 		}
 		printCollectionSuffix();
 	}
-	
+
 	private void printStates() {
 		printCollectionPrefix("states");
 		printValues(mStateMapping);
 		printCollectionSuffix();
 	}
-	
-	private void printGuard(Guard guard) {
-		switch(guard.getTermType()) {
-		
+
+	private void printGuard(final Guard guard) {
+		switch (guard.getTermType()) {
+
 		case TRUE:
 			print("true");
 			break;
-			
+
 		case FALSE:
 			print("false");
 			break;
-			
+
 		case CONSTANT:
 			print('(');
 			print(guard.getRelationSymbol().toString());
@@ -97,7 +97,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			print(guard.getConstant().toString());
 			print(')');
 			break;
-			
+
 		case COUNTER:
 			print('(');
 			print(guard.getRelationSymbol().toString());
@@ -107,7 +107,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			print(guard.getCounterRight().getCounterName());
 			print(')');
 			break;
-			
+
 		case SUM:
 			print('(');
 			print(guard.getRelationSymbol().toString());
@@ -121,42 +121,40 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			break;
 		}
 	}
-	
-	private void printSublist(ArrayList<Guard> sublist) {
+
+	private void printSublist(final ArrayList<Guard> sublist) {
 		if (sublist.size() > 1) {
 			print(" (and");
-			for (Guard guard : sublist) {
+			for (final Guard guard : sublist) {
 				print(' ');
 				printGuard(guard);
 			}
 			print(')');
-		}
-		else {
-			for (Guard guard : sublist) {
+		} else {
+			for (final Guard guard : sublist) {
 				print(' ');
 				printGuard(guard);
 			}
 		}
 	}
-	
+
 	private void printInitialConditions() {
 		printCollectionPrefix("initialConditions");
 		print('\n');
-		for (STATE state : mCa.getStates()) {
+		for (final STATE state : mCa.getStates()) {
 			printOneTransitionPrefix();
 			print(mStateMapping.get(state));
 			print(' ');
 			print('\"');
-			ArrayList<ArrayList<Guard>> conditionList = mCa.getInitialConditions().get(state).getCondition();
+			final ArrayList<ArrayList<Guard>> conditionList = mCa.getInitialConditions().get(state).getCondition();
 			if (conditionList.size() > 1) {
 				print("(or");
-				for (ArrayList<Guard> sublist : conditionList) {
+				for (final ArrayList<Guard> sublist : conditionList) {
 					printSublist(sublist);
 				}
 				print(')');
-			}
-			else {
-				for (ArrayList<Guard> sublist : conditionList) {
+			} else {
+				for (final ArrayList<Guard> sublist : conditionList) {
 					printSublist(sublist);
 				}
 			}
@@ -165,25 +163,24 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printCollectionSuffix();
 	}
-	
+
 	private void printFinalConditions() {
 		printCollectionPrefix("finalConditions");
 		print('\n');
-		for (STATE state : mCa.getStates()) {
+		for (final STATE state : mCa.getStates()) {
 			printOneTransitionPrefix();
 			print(mStateMapping.get(state));
 			print(' ');
 			print('\"');
-			ArrayList<ArrayList<Guard>> conditionList = mCa.getFinalConditions().get(state).getCondition();
+			final ArrayList<ArrayList<Guard>> conditionList = mCa.getFinalConditions().get(state).getCondition();
 			if (conditionList.size() > 1) {
 				print("(or");
-				for (ArrayList<Guard> sublist : conditionList) {
+				for (final ArrayList<Guard> sublist : conditionList) {
 					printSublist(sublist);
 				}
 				print(')');
-			}
-			else {
-				for (ArrayList<Guard> sublist : conditionList) {
+			} else {
+				for (final ArrayList<Guard> sublist : conditionList) {
 					printSublist(sublist);
 				}
 			}
@@ -192,61 +189,60 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printCollectionSuffix();
 	}
-	
+
 	private void printTransitions() {
 		printCollectionPrefix("transitions");
 		print('\n');
-		for (STATE state : mCa.getStates()) {
-			for (Transition<LETTER, STATE> transition : mCa.getTransitions().get(state)) {
+		for (final STATE state : mCa.getStates()) {
+			for (final Transition<LETTER, STATE> transition : mCa.getTransitions().get(state)) {
 				printOneTransitionPrefix();
 				print(mStateMapping.get(state));
 				print(' ');
 				print(mAlphabetMapping.get(transition.getLetter()));
 				print(' ');
 				print('\"');
-				ArrayList<ArrayList<Guard>> conditionList = transition.getGuards();
+				final ArrayList<ArrayList<Guard>> conditionList = transition.getGuards();
 				if (conditionList.size() > 1) {
 					print("(or");
-					for (ArrayList<Guard> sublist : conditionList) {
+					for (final ArrayList<Guard> sublist : conditionList) {
 						printSublist(sublist);
 					}
 					print(')');
-				}
-				else {
-					for (ArrayList<Guard> sublist : conditionList) {
+				} else {
+					for (final ArrayList<Guard> sublist : conditionList) {
 						printSublist(sublist);
 					}
 				}
 				print('\"');
 				print(' ');
 				print('{');
-				for (Update update : transition.getUpdates()) {
+				for (final Update update : transition.getUpdates()) {
 					print(' ');
-					
-					switch(update.getTermType()) {
-					
+
+					switch (update.getTermType()) {
+
 					case TRUE:
 						print("true");
 						break;
-						
+
 					case FALSE:
 						print("false");
 						break;
-						
+
 					case CONSTANT:
 						print(update.getCounterLeft().getCounterName());
 						print(" := \"");
 						print(update.getConstant().toString());
 						print('\"');
 						break;
-						
+
 					case COUNTER:
 						print(update.getCounterLeft().getCounterName());
 						print(" := \"");
 						print(update.getCounterRight().getCounterName());
 						print('\"');
 						break;
-						
+
 					case SUM:
 						print(update.getCounterLeft().getCounterName());
 						print(" := \"");
@@ -257,8 +253,8 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 						print(")\"");
 						break;
 					}
-					
-					if (transition.getUpdates().indexOf(update) < (transition.getUpdates().size()-1)) {
+
+					if (transition.getUpdates().indexOf(update) < (transition.getUpdates().size() - 1)) {
 						print(',');
 					}
 				}
@@ -267,7 +263,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				print(' ');
 				print(mStateMapping.get(transition.getSucState()));
 				printOneTransitionSuffix();
-			}	
+			}
 		}
 		printTransitionsSuffix();
 	}

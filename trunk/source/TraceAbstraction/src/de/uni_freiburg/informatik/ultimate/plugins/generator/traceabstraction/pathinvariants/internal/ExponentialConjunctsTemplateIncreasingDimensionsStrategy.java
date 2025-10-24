@@ -5,33 +5,33 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public class ExponentialConjunctsTemplateIncreasingDimensionsStrategy
 		extends AbstractTemplateIncreasingDimensionsStrategy {
 
-	public ExponentialConjunctsTemplateIncreasingDimensionsStrategy(int initialDisjuncts, int initialConjuncts,
-			int disjunctsPerRound, int conjunctsPerRound) {
+	public ExponentialConjunctsTemplateIncreasingDimensionsStrategy(final int initialDisjuncts,
+			final int initialConjuncts, final int disjunctsPerRound, final int conjunctsPerRound) {
 		super(initialDisjuncts, initialConjuncts, disjunctsPerRound, conjunctsPerRound);
 	}
 
 	@Override
-	public int[] getDimensions(IcfgLocation location, int round) {
+	public int[] getDimensions(final IcfgLocation location, final int round) {
 		if (round == 1) {
-			return new int[] {1, 1};
+			return new int[] { 1, 1 };
 		} else if (round == 2) {
-			return new int[] {1, 2};
+			return new int[] { 1, 2 };
 		} else if (round == 3) {
-			return new int[] {1, 4};
+			return new int[] { 1, 4 };
 		} else if (round == 4) {
-			return new int[] {1, 8};
+			return new int[] { 1, 8 };
 		} else if (round == 5) {
-			return new int[] {1, 16};
+			return new int[] { 1, 16 };
 		} else if (round == 6) {
-			return new int[] {1, 32};
+			return new int[] { 1, 32 };
 		} else if (round == 7) {
-			return new int[] {2, 2};
+			return new int[] { 2, 2 };
 		} else if (round == 8) {
-			return new int[] {2, 4};
+			return new int[] { 2, 4 };
 		} else if (round == 9) {
-			return new int[] {2, 8};
+			return new int[] { 2, 8 };
 		} else if (round == 10) {
-			return new int[] {2, 16};
+			return new int[] { 2, 16 };
 		} else {
 			return new int[] { mInitialDisjuncts + round * mDisjunctsPerRound,
 					mInitialConjuncts + round * mConjunctsPerRound };

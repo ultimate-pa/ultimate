@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ReachingDefinitions plug-in.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ReachingDefinitions plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie;
@@ -55,12 +55,14 @@ public class ScopedBoogieVarBuilder {
 		return getScopedBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), tf);
 	}
 
-	public ScopedBoogieVar getScopedBoogieVar(final IdentifierExpression identifier, final UnmodifiableTransFormula tf) {
+	public ScopedBoogieVar getScopedBoogieVar(final IdentifierExpression identifier,
+			final UnmodifiableTransFormula tf) {
 		return getScopedBoogieVar(identifier.getIdentifier(), identifier.getDeclarationInformation(), tf);
 
 	}
 
-	private ScopedBoogieVar getScopedBoogieVar(final String identifier, final DeclarationInformation info, final UnmodifiableTransFormula tf) {
+	private ScopedBoogieVar getScopedBoogieVar(final String identifier, final DeclarationInformation info,
+			final UnmodifiableTransFormula tf) {
 		final VariableDeclaration decl = (VariableDeclaration) mSymbolTable.getDeclaration(identifier,
 				info.getStorageClass(), info.getProcedure());
 		final VariableUID uid = new VariableUID(decl, identifier);
@@ -74,10 +76,11 @@ public class ScopedBoogieVarBuilder {
 		return rtr;
 	}
 
-	private IProgramVar getBoogieVarFromTransformula(final String identifier, final DeclarationInformation info, final UnmodifiableTransFormula tf) {
+	private IProgramVar getBoogieVarFromTransformula(final String identifier, final DeclarationInformation info,
+			final UnmodifiableTransFormula tf) {
 		// TODO: Check if this is the "right" way to get the correct BoogieVar
 
-		final HashSet<IProgramVar> vars = new HashSet<IProgramVar>();
+		final HashSet<IProgramVar> vars = new HashSet<>();
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getInVars().keySet()));
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getOutVars().keySet()));
 		vars.add(getBoogieVarFromSet(identifier, info, tf.getAssignedVars()));
@@ -89,7 +92,8 @@ public class ScopedBoogieVarBuilder {
 		return vars.iterator().next();
 	}
 
-	private IProgramVar getBoogieVarFromSet(final String identifier, final DeclarationInformation info, final Set<IProgramVar> vars) {
+	private IProgramVar getBoogieVarFromSet(final String identifier, final DeclarationInformation info,
+			final Set<IProgramVar> vars) {
 		for (final IProgramVar in : vars) {
 			if (in instanceof ILocalProgramVar) {
 				if (((ILocalProgramVar) in).getIdentifier().equals(identifier)) {
@@ -102,7 +106,8 @@ public class ScopedBoogieVarBuilder {
 			} else if (in instanceof IProgramOldVar) {
 				continue;
 			} else {
-				throw new UnsupportedOperationException("unknown king of IProgramVarIProgramVar " + in.getClass().getSimpleName());
+				throw new UnsupportedOperationException(
+						"unknown king of IProgramVarIProgramVar " + in.getClass().getSimpleName());
 			}
 		}
 		return null;

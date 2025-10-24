@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
  */
 public class IcfgToChcPreferences extends UltimatePreferenceInitializer {
 
-//	public static final String LABEL_TRANSFORMATION_TYPE = "TransformationType";
-//	private static final String DESC_TRANSFORMATION_TYPE = "";
+	// public static final String LABEL_TRANSFORMATION_TYPE = "TransformationType";
+	// private static final String DESC_TRANSFORMATION_TYPE = "";
 
 	/**
 	 * Default constructor.
@@ -53,9 +53,9 @@ public class IcfgToChcPreferences extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 
-//				new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE,
-//						TransformationTestType.LOOP_ACCELERATION_EXAMPLE, DESC_TRANSFORMATION_TYPE,
-//						PreferenceType.Combo, TransformationTestType.values()),
+				// new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE,
+				// TransformationTestType.LOOP_ACCELERATION_EXAMPLE, DESC_TRANSFORMATION_TYPE,
+				// PreferenceType.Combo, TransformationTestType.values()),
 
 		};
 	}

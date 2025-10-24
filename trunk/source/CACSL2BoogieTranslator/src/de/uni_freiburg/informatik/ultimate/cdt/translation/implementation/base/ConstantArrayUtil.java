@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -49,31 +48,70 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Utility class to create and use Boogie functions that return constant arrays, i.e., arrays that store the same value
+ * at every index.
+ *
+ * We create such array using Ultimate's "smt-defined" attribute, and SMT-LIB support for constant arrays.
+ */
 public final class ConstantArrayUtil {
 	private ConstantArrayUtil() {
 		// don't instantiate this utility class
 	}
 
+	/**
+	 * Create a Boogie expression representing a constant array (and if needed, declare necessary Boogie functions).
+	 *
+	 * @param decls
+	 *            used to check if a suitable Boogie function has already been declared, and if not, to declare it
+	 * @param loc
+	 *            the location of the returned expression
+	 * @param arrayType
+	 *            the type of the returned expression
+	 * @param constant
+	 *            the value to be stored at every index of the constant array
+	 * @return a Boogie expression (function application) describing the constant array
+	 */
 	public static Expression getConstantArray(final FunctionDeclarations decls, final ILocation loc,
 			final BoogieArrayType arrayType, final Expression constant) {
-		assert arrayType.getValueType().equals(constant.getType()) : "constant array of type " + arrayType
-				+ " cannot have constant value " + constant;
+		assert arrayType.getValueType().equals(constant.getType())
+				: "constant array of type " + arrayType + " cannot have constant value " + constant;
 		final FunctionDeclaration function = getOrDeclareConstantArrayFunction(decls, arrayType);
-		return new FunctionApplication(loc, arrayType, function.getIdentifier(), new Expression[] { constant });
+		return ExpressionFactory.constructFunctionApplication(loc, function.getIdentifier(),
+				new Expression[] { constant }, arrayType);
 	}
 
-	public static FunctionDeclaration getOrDeclareZeroArrayFunction(final FunctionDeclarations decls,
+	/**
+	 * Create a Boogie expression representing a constant array that stores 0 at every index (and if needed, declare
+	 * necessary Boogie functions).
+	 *
+	 * @param decls
+	 *            used to check if a suitable Boogie function has already been declared, and if not, to declare it
+	 * @param loc
+	 *            the location of the returned expression
+	 * @param arrayType
+	 *            the type of the returned expression
+	 * @return a Boogie expression (function application) describing the constant array
+	 */
+	public static Expression getZeroArray(final FunctionDeclarations decls, final ILocation loc,
+			final BoogieArrayType arrayType) {
+		final FunctionDeclaration function = getOrDeclareZeroArrayFunction(decls, arrayType);
+		return ExpressionFactory.constructFunctionApplication(loc, function.getIdentifier(), new Expression[] {},
+				arrayType);
+	}
+
+	private static FunctionDeclaration getOrDeclareZeroArrayFunction(final FunctionDeclarations decls,
 			final BoogieArrayType type) {
 		return getOrDeclareConstantArrayFunction(decls, type, "", new BoogieType[0],
 				CTranslationUtil::getSmtZeroStringForBoogieType);
 	}
 
-	public static FunctionDeclaration getOrDeclareConstantArrayFunction(final FunctionDeclarations decls,
+	private static FunctionDeclaration getOrDeclareConstantArrayFunction(final FunctionDeclarations decls,
 			final BoogieArrayType type) {
 		return getOrDeclareConstantArrayFunction(decls, type, "~param", new BoogieType[] { type.getValueType() },
 				valType -> {
-					assert valType.equals(type.getValueType()) : "constant value of type " + type.getValueType()
-							+ " cannot be used for " + valType;
+					assert valType.equals(type.getValueType())
+							: "constant value of type " + type.getValueType() + " cannot be used for " + valType;
 					return FunctionDeclarations.constructNameForFunctionInParam(0);
 				});
 	}
@@ -110,8 +148,7 @@ public final class ConstantArrayUtil {
 		final List<Attribute> attributeList = new ArrayList<>();
 
 		final BoogieType ft = StructExpanderUtil.flattenType(boogieType, new HashMap<>(), new HashMap<>());
-		if (ft instanceof BoogieStructType) {
-			final BoogieStructType bst = (BoogieStructType) ft;
+		if (ft instanceof final BoogieStructType bst) {
 			for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
 				// add expand attribute
 				final NamedAttribute expandAttribute =
@@ -125,7 +162,7 @@ public final class ConstantArrayUtil {
 			attributeList.add(createSmtDefinedAttribute(ignoreLoc, boogieType, getConstantValue));
 		}
 
-		final Attribute[] attributes = attributeList.toArray(new Attribute[attributeList.size()]);
+		final Attribute[] attributes = attributeList.toArray(Attribute[]::new);
 
 		// register the FunctionDeclaration
 		final ASTType[] astParams = Arrays.stream(params).map(x -> x.toASTType(ignoreLoc)).toArray(ASTType[]::new);
@@ -144,9 +181,8 @@ public final class ConstantArrayUtil {
 	private static String getSmtConstantArrayStringForBoogieType(final BoogieArrayType boogieArrayType,
 			final Function<BoogieType, String> getConstantValue) {
 		String currentArray;
-		if (boogieArrayType.getValueType() instanceof BoogieArrayType) {
-			currentArray = getSmtConstantArrayStringForBoogieType((BoogieArrayType) boogieArrayType.getValueType(),
-					getConstantValue);
+		if (boogieArrayType.getValueType() instanceof final BoogieArrayType nestedArray) {
+			currentArray = getSmtConstantArrayStringForBoogieType(nestedArray, getConstantValue);
 		} else {
 			currentArray = getConstantValue.apply(boogieArrayType.getValueType());
 		}

@@ -61,9 +61,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * @return {@link RelationSymbol} whose string representation is relAsString
-	 *         and null if no {@link RelationSymbol} has such a string
-	 *         representation.
+	 * @return {@link RelationSymbol} whose string representation is relAsString and null if no {@link RelationSymbol}
+	 *         has such a string representation.
 	 */
 	public static RelationSymbol convert(final String relAsString) {
 		switch (relAsString) {
@@ -101,8 +100,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
-	 * relation ψ ◾ φ is equivalent to the negated relation ¬(ψ ▷ φ).
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
+	 * negated relation ¬(ψ ▷ φ).
 	 */
 	public RelationSymbol negate() {
 		final RelationSymbol result;
@@ -156,9 +155,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the
-	 * relation ψ ◾ φ is equivalent to the relation φ ▷ ψ, which is the relation
-	 * where we swapped the parameters.
+	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
+	 * relation φ ▷ ψ, which is the relation where we swapped the parameters.
 	 */
 	public RelationSymbol swapParameters() {
 		final RelationSymbol result;
@@ -212,9 +210,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * @return true iff the relation symbol is neither EQ nor DISTINCT. We call
-	 *         these inequalities "convex inequalities" to emphasize that
-	 *         DISTINCT is not called an inequality.
+	 * @return true iff the relation symbol is neither EQ nor DISTINCT. We call these inequalities "convex inequalities"
+	 *         to emphasize that DISTINCT is not called an inequality.
 	 */
 	public boolean isConvexInequality() {
 		final boolean result;
@@ -346,8 +343,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * If this is a non-strict inequality then return the corresponding strict inequality symbol.
-	 * Otherwise, return this.
+	 * If this is a non-strict inequality then return the corresponding strict inequality symbol. Otherwise, return
+	 * this.
 	 */
 	public RelationSymbol getCorrespondingStrictRelationSymbol() {
 		switch (this) {
@@ -378,9 +375,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * Let `ψ ▷ 0` be a polynomial relation whose sort is `Int`. Which offset δ do
-	 * we have to add such that the relation `ψ + δ ▶ 0` in which ▶is the strict
-	 * version of ▷(if available) is equivalent to the original relation.
+	 * Let `ψ ▷ 0` be a polynomial relation whose sort is `Int`. Which offset δ do we have to add such that the relation
+	 * `ψ + δ ▶ 0` in which ▶is the strict version of ▷(if available) is equivalent to the original relation.
 	 */
 	public Rational getOffsetForNonstrictToStrictTransformation() {
 		switch (this) {
@@ -436,9 +432,8 @@ public enum RelationSymbol {
 	}
 
 	/**
-	 * Let `ψ ▷ 0` be a polynomial relation whose sort is `Int`. Which offset δ do
-	 * we have to add such that the relation `ψ + δ ▶ 0` in which ▶is the non-strict
-	 * version of ▷(if available) is equivalent to the original relation.
+	 * Let `ψ ▷ 0` be a polynomial relation whose sort is `Int`. Which offset δ do we have to add such that the relation
+	 * `ψ + δ ▶ 0` in which ▶is the non-strict version of ▷(if available) is equivalent to the original relation.
 	 */
 	public Rational getOffsetForStrictToNonstrictTransformation() {
 		switch (this) {
@@ -464,7 +459,6 @@ public enum RelationSymbol {
 			throw new AssertionError("unknown RelationSymbol " + this);
 		}
 	}
-
 
 	public static RelationSymbol getLessRelationSymbol(final boolean strict, final Sort sort,
 			final BvSignedness sigedness) {
@@ -587,7 +581,7 @@ public enum RelationSymbol {
 	}
 
 	public BvSignedness getSignedness() {
-		switch(this) {
+		switch (this) {
 		case BVSGE:
 		case BVSGT:
 		case BVSLE:

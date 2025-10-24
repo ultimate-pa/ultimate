@@ -32,6 +32,7 @@ import java.util.Set;
 
 /**
  * Iterate efficiently over the intersection of two sets
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class IterableIntersection<E> implements Iterable<E> {
@@ -40,7 +41,6 @@ public class IterableIntersection<E> implements Iterable<E> {
 	private final Set<E> mFilterSet;
 
 	public IterableIntersection(final Set<E> set1, final Set<E> set2) {
-		super();
 		if (set1.size() <= set2.size()) {
 			mIteratedCollection = set1;
 			mFilterSet = set2;
@@ -52,7 +52,7 @@ public class IterableIntersection<E> implements Iterable<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return new Iterator<E>() {
+		return new Iterator<>() {
 			Iterator<E> mIt = mIteratedCollection.iterator();
 			E mNext = preComputeNext();
 

@@ -81,7 +81,7 @@ public final class TarjanSCC {
 	 * @return a list of SCCs
 	 */
 	public ImmutableSet<ImmutableSet<String>> getSCCs(final Map<String, Set<String>> graph) {
-		if (graph == null || graph.values().contains(null)) {
+		if (graph == null || graph.containsValue(null)) {
 			throw new IllegalArgumentException();
 		}
 		mGraph = graph;

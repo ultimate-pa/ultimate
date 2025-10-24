@@ -32,10 +32,9 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 /**
- * Functions to aggregate statistics defined by a single {@link IStatisticsElement}.
- * You probably want to use these functions as references (for instance
- * {@code BiFunction<Object, Object, Object> aggr = Aggregate::intAdd})
- * instead of calling them directly.
+ * Functions to aggregate statistics defined by a single {@link IStatisticsElement}. You probably want to use these
+ * functions as references (for instance {@code BiFunction<Object, Object, Object> aggr = Aggregate::intAdd}) instead of
+ * calling them directly.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */

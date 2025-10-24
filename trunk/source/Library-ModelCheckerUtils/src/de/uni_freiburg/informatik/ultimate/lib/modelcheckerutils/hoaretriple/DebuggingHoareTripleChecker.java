@@ -336,7 +336,7 @@ public final class DebuggingHoareTripleChecker implements IHoareTripleChecker {
 
 		final Supplier<Term> actSupplier = () -> {
 			if (act instanceof IInternalAction) {
-				return ((IInternalAction) act).getTransformula().getClosedFormula();
+				return act.getTransformula().getClosedFormula();
 			}
 			if (act instanceof ICallAction) {
 				return ((ICallAction) act).getLocalVarsAssignment().getClosedFormula();

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -97,8 +97,8 @@ public final class ConstructMemcpyOrMemmove {
 				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 		final VarList outP =
 				new VarList(ignoreLoc, new String[] { SFO.RES }, mTypeHandler.constructPointerType(ignoreLoc));
-		final VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
-		final VarList[] outParams = new VarList[] { outP };
+		final VarList[] inParams = { inPDest, inPSrc, inPSize };
+		final VarList[] outParams = { outP };
 
 		{
 			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),
@@ -131,7 +131,7 @@ public final class ConstructMemcpyOrMemmove {
 					loopBody.getStatements()));
 		}
 
-		{
+		if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
 			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 			bodyDecl.add(loopCtrAux.getVarDec());
 
@@ -224,7 +224,7 @@ public final class ConstructMemcpyOrMemmove {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		final CType charCType = new CPrimitive(CPrimitives.CHAR);
+		final ICType charCType = new CPrimitive(CPrimitives.CHAR);
 		final Expression srcId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 				mTypeHandler.getBoogiePointerType(), srcPtrName,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
@@ -242,10 +242,10 @@ public final class ConstructMemcpyOrMemmove {
 					charCType);
 
 			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryModelFeatures().getDataOnHeapRequired()) {
-				final CType cPrimType = new CPrimitive(cPrim);
+				final ICType cPrimType = new CPrimitive(cPrim);
 				final Expression srcAcc;
 				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPrimType, true);
+					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPrimType);
 					srcAcc = srcAccExpRes.getLrValue().getValue();
 					loopBody.addStatements(srcAccExpRes.getStatements());
 					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
@@ -273,7 +273,7 @@ public final class ConstructMemcpyOrMemmove {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		final CType charCType = new CPrimitive(CPrimitives.CHAR);
+		final ICType charCType = new CPrimitive(CPrimitives.CHAR);
 		final Expression srcId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 				mTypeHandler.getBoogiePointerType(), srcPtrName,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
@@ -289,24 +289,21 @@ public final class ConstructMemcpyOrMemmove {
 			final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					destId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
 					charCType);
+			final ICType cPointer = CPointer.voidPointer();
+			final Expression srcAcc;
+			{
+				final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);
+				srcAcc = srcAccExpRes.getLrValue().getValue();
+				loopBody.addStatements(srcAccExpRes.getStatements());
+				loopBody.addDeclarations(srcAccExpRes.getDeclarations());
+				assert srcAccExpRes.getOverapprs().isEmpty();
+			}
 
-			if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
-				final CType cPointer = new CPointer(new CPrimitive(CPrimitives.VOID));
-				final Expression srcAcc;
-				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPointer, true);
-					srcAcc = srcAccExpRes.getLrValue().getValue();
-					loopBody.addStatements(srcAccExpRes.getStatements());
-					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
-					assert srcAccExpRes.getOverapprs().isEmpty();
-				}
-
-				{
-					final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
-							LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null), srcAcc,
-							cPointer, true);
-					loopBody.addStatements(writeCall);
-				}
+			{
+				final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
+						LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null), srcAcc, cPointer,
+						true);
+				loopBody.addStatements(writeCall);
 			}
 		}
 

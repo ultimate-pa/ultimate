@@ -40,10 +40,10 @@ public final class PassDescription {
 	private final String mDescription;
 	private final IVariantGeneratorFactory mVariantGeneratorFactory;
 	private final IMinimizer mMinimizer;
-	
+
 	private final boolean mDisableSpeculativeTesting;
 	private final boolean mRepeatUntilReductionFails;
-	
+
 	/**
 	 * @param builder
 	 *            Builder.
@@ -56,7 +56,7 @@ public final class PassDescription {
 		mDisableSpeculativeTesting = builder.mDisableSpeculativeTestingInner;
 		mRepeatUntilReductionFails = builder.mRepeatUntilReductionFailsInner;
 	}
-	
+
 	/**
 	 * @param variantGeneratorFactory
 	 *            Required variant generator factory function.
@@ -65,14 +65,14 @@ public final class PassDescription {
 	public static Builder builder(final IVariantGeneratorFactory variantGeneratorFactory) {
 		return new Builder(variantGeneratorFactory);
 	}
-	
+
 	/**
 	 * @return New Builder instance to set optional attributes.
 	 */
 	public Builder copy() {
 		return new Builder(this);
 	}
-	
+
 	/**
 	 * Speculative (parallel) testing, which is based on the expectation that a test is more likely to fail than
 	 * succeed, may not be useful for certain passes/minimizer combinations.
@@ -82,7 +82,7 @@ public final class PassDescription {
 	public boolean disableSpeculativeTesting() {
 		return mDisableSpeculativeTesting;
 	}
-	
+
 	/**
 	 * More detailed information about what this pass does.
 	 *
@@ -91,7 +91,7 @@ public final class PassDescription {
 	public String getDescription() {
 		return mDescription;
 	}
-	
+
 	/**
 	 * A pass can specify a preferred minimizer to use.
 	 *
@@ -100,7 +100,7 @@ public final class PassDescription {
 	public Optional<IMinimizer> getMinimizer() {
 		return Optional.ofNullable(mMinimizer);
 	}
-	
+
 	/**
 	 * The name to use to refer to this pass in the generated logger/console output.
 	 *
@@ -109,7 +109,7 @@ public final class PassDescription {
 	public String getName() {
 		return mName;
 	}
-	
+
 	/**
 	 * The actual reduction algorithm is accessed using a variant generator.
 	 *
@@ -118,14 +118,14 @@ public final class PassDescription {
 	public IVariantGeneratorFactory getVariantGeneratorFactory() {
 		return mVariantGeneratorFactory;
 	}
-	
+
 	/**
 	 * @return Whether a pass should be repeated until no more reduction succeeds.
 	 */
 	public boolean repeatUntilReductionFails() {
 		return mRepeatUntilReductionFails;
 	}
-	
+
 	/**
 	 * Builder pattern class.
 	 */
@@ -136,7 +136,7 @@ public final class PassDescription {
 		private IMinimizer mMinimizerInner;
 		private boolean mDisableSpeculativeTestingInner;
 		private boolean mRepeatUntilReductionFailsInner;
-		
+
 		/**
 		 * @param other
 		 *            Pass description.
@@ -149,7 +149,7 @@ public final class PassDescription {
 			mDisableSpeculativeTestingInner = other.mDisableSpeculativeTesting;
 			mRepeatUntilReductionFailsInner = other.mRepeatUntilReductionFails;
 		}
-		
+
 		/**
 		 * @param variantGeneratorFactory
 		 *            Variant generator factory.
@@ -157,14 +157,14 @@ public final class PassDescription {
 		public Builder(final IVariantGeneratorFactory variantGeneratorFactory) {
 			mVariantGeneratorFactoryInner = variantGeneratorFactory;
 		}
-		
+
 		/**
 		 * @return New pass description.
 		 */
 		public PassDescription build() {
 			return new PassDescription(this);
 		}
-		
+
 		/**
 		 * @param description
 		 *            Description of the pass.
@@ -174,7 +174,7 @@ public final class PassDescription {
 			mDescriptionInner = description;
 			return this;
 		}
-		
+
 		/**
 		 * @param disableSpeculativeTesting
 		 *            Flag to disable speculative testing.
@@ -184,7 +184,7 @@ public final class PassDescription {
 			mDisableSpeculativeTestingInner = disableSpeculativeTesting;
 			return this;
 		}
-		
+
 		/**
 		 * @param minimizer
 		 *            Minimizer of the pass.
@@ -194,7 +194,7 @@ public final class PassDescription {
 			mMinimizerInner = minimizer;
 			return this;
 		}
-		
+
 		/**
 		 * @param name
 		 *            Name of the pass.
@@ -204,7 +204,7 @@ public final class PassDescription {
 			mNameInner = name;
 			return this;
 		}
-		
+
 		/**
 		 * @param repeatUntilReductionFails
 		 *            Flag to repeat the same pass until no reduction occurs.
@@ -214,7 +214,7 @@ public final class PassDescription {
 			mRepeatUntilReductionFailsInner = repeatUntilReductionFails;
 			return this;
 		}
-		
+
 		/**
 		 * @param variantGeneratorFactory
 		 *            A function to create a new variant generator instance.

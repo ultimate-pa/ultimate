@@ -71,9 +71,8 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 
 	/**
 	 *
-	 * NOTE: because of a convention in TestFileInterpreter, if an argument for
-	 * the operation is a StateFactory, it must be the first argument same for
-	 * Services, both: first services then StateFactory
+	 * NOTE: because of a convention in TestFileInterpreter, if an argument for the operation is a StateFactory, it must
+	 * be the first argument same for Services, both: first services then StateFactory
 	 *
 	 * @param services
 	 * @param factory
@@ -121,10 +120,10 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 
 	private TreeAutomatonBU<LETTER, STATE> computeResult() {
 		// Minimal states intersection.
-		//final TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res = new TreeAutomatonBU<>();
+		// final TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res = new TreeAutomatonBU<>();
 
-		//res.extendAlphabet(mTreeA.getAlphabet());
-		//res.extendAlphabet(mTreeB.getAlphabet());
+		// res.extendAlphabet(mTreeA.getAlphabet());
+		// res.extendAlphabet(mTreeB.getAlphabet());
 
 		final Set<LETTER> alphabet = new HashSet<>();
 		final Set<Pair<STATE, STATE>> finalStates = new HashSet<>();
@@ -172,7 +171,7 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 							}
 							final Pair<STATE, STATE> dest = getPair(ruleA.getDest(), ruleB.getDest());
 							newRules.add(new TreeAutomatonRule<>(letter, source, dest));
-							//res.addRule(new TreeAutomatonRule<>(letter, source, dest));
+							// res.addRule(new TreeAutomatonRule<>(letter, source, dest));
 						}
 					}
 				}
@@ -184,7 +183,7 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 
 				if (mTreeA.isFinalState(q1) && mTreeB.isFinalState(q2)) {
 					finalStates.add(st);
-					//res.addFinalState(st);
+					// res.addFinalState(st);
 				}
 			}
 		}
@@ -203,13 +202,9 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 			reducedResult.addFinalState(reduceState(state));
 		}
 		/*
-		for (final Pair<STATE, STATE> state : res.getStates()) {
-			reducedResult.addState(reduceState(state));
-			if (res.isFinalState(state)) {
-				reducedResult.addFinalState(reduceState(state));
-			}
-		}
-		*/
+		 * for (final Pair<STATE, STATE> state : res.getStates()) { reducedResult.addState(reduceState(state)); if
+		 * (res.isFinalState(state)) { reducedResult.addFinalState(reduceState(state)); } }
+		 */
 
 		return reducedResult;
 	}

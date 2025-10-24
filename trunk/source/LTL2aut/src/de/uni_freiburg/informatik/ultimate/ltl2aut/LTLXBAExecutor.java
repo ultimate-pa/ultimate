@@ -95,20 +95,21 @@ public class LTLXBAExecutor {
 	 */
 	private String execLTLXBA(final String ltlFormula) throws IOException, InterruptedException {
 		final String[] command = getCommand(ltlFormula);
-		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
-		final MonitoredProcessState state = process.waitfor();
-		final String in = convertStreamToString(process.getInputStream());
-		final String err = convertStreamToString(process.getErrorStream());
+		try (final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices)) {
+			final MonitoredProcessState state = process.waitfor();
+			final String in = convertStreamToString(process.getInputStream());
+			final String err = convertStreamToString(process.getErrorStream());
 
-		if (in == null || in.isEmpty()) {
-			final String cmd = CoreUtil.join(command, " ");
-			mLogger.fatal(cmd + " did not produce any output on stdout");
-			mLogger.fatal("stderr output:");
-			mLogger.fatal(err);
-			mLogger.fatal("Returncode: " + state.getReturnCode());
-			throw new IllegalArgumentException(cmd + " did not produce any output on stdout");
+			if (in == null || in.isEmpty()) {
+				final String cmd = CoreUtil.join(command, " ");
+				mLogger.fatal(cmd + " did not produce any output on stdout");
+				mLogger.fatal("stderr output:");
+				mLogger.fatal(err);
+				mLogger.fatal("Returncode: " + state.getReturnCode());
+				throw new IllegalArgumentException(cmd + " did not produce any output on stdout");
+			}
+			return in;
 		}
-		return in;
 	}
 
 	private static String convertStreamToString(final InputStream is) {
@@ -129,8 +130,8 @@ public class LTLXBAExecutor {
 	private String[] getCommand(String ltlFormula) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		ltlFormula = prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula);
-		ltlFormula = ltlFormula.replaceAll("\\(", " ( ");
-		ltlFormula = ltlFormula.replaceAll("\\)", " ) ");
+		ltlFormula = ltlFormula.replace("(", " ( ");
+		ltlFormula = ltlFormula.replace(")", " ) ");
 		ltlFormula = ltlFormula.replaceAll("\\s+", " ");
 		final List<String> rtr = new ArrayList<>();
 		rtr.add(prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION));

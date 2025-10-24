@@ -221,7 +221,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				mLogger.debug("Size of Formula: " + edge.getElementCount());
 				// Now we create a converted CodeBlock-edge
 				// We add one first sequential composed list level
-				mSeqComposedBlocks.push(new ArrayList<CodeBlock>());
+				mSeqComposedBlocks.push(new ArrayList<>());
 				if (edge.getRating() instanceof DisjunctVariablesRating
 						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
 					final Integer[] ratingValues = (Integer[]) edge.getRating().getRatingValueContainer().getValue();
@@ -379,8 +379,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				// When we have a disjunction we have possible two conjunctions
 				// at both branches of this. So we have to create two new lists
 				// on the stack.
-				mSeqComposedBlocks.push(new ArrayList<CodeBlock>());
-				mSeqComposedBlocks.push(new ArrayList<CodeBlock>());
+				mSeqComposedBlocks.push(new ArrayList<>());
+				mSeqComposedBlocks.push(new ArrayList<>());
 			}
 			final ArrayList<CodeBlock> recConvEdges = new ArrayList<>();
 			for (final IMinimizedEdge compEdge : edges) {

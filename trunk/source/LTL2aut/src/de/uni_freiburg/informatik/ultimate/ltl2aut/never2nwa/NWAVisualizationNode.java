@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
 
 import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -8,16 +9,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdgesMultigraph;
 
-final class NWAVisualizationNode<NWAVertex, NWAEdge>
-		extends
-		ModifiableExplicitEdgesMultigraph<NWAVisualizationNode<NWAVertex, NWAEdge>, NWAVisualizationEdge<NWAVertex, NWAEdge>,NWAVertex, NWAEdge> {
+final class NWAVisualizationNode<NWAVertex, NWAEdge> extends
+		ModifiableExplicitEdgesMultigraph<NWAVisualizationNode<NWAVertex, NWAEdge>, NWAVisualizationEdge<NWAVertex, NWAEdge>, NWAVertex, NWAEdge> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mBacking == null) ? 0 : mBacking.hashCode());
-		return result;
+		return Objects.hash(mBacking);
 	}
 
 	@Override
@@ -48,7 +45,6 @@ final class NWAVisualizationNode<NWAVertex, NWAEdge>
 	private boolean mInitialized;
 
 	public NWAVisualizationNode(final INestedWordAutomaton<NWAEdge, NWAVertex> nwa, final NWAVertex state) {
-		super();
 		mVisNWA = nwa;
 		mBacking = state;
 		mInitialized = false;
@@ -58,16 +54,16 @@ final class NWAVisualizationNode<NWAVertex, NWAEdge>
 	public List<NWAVisualizationEdge<NWAVertex, NWAEdge>> getOutgoingEdges() {
 		if (!mInitialized) {
 			for (final OutgoingCallTransition<NWAEdge, NWAVertex> succ : mVisNWA.callSuccessors(mBacking)) {
-				addOutgoing(new NWAVisualizationEdge<NWAVertex, NWAEdge>(this,
-						new NWAVisualizationNode<NWAVertex, NWAEdge>(mVisNWA, succ.getSucc()), succ.getLetter()));
+				addOutgoing(new NWAVisualizationEdge<>(this, new NWAVisualizationNode<>(mVisNWA, succ.getSucc()),
+						succ.getLetter()));
 			}
 			for (final OutgoingInternalTransition<NWAEdge, NWAVertex> succ : mVisNWA.internalSuccessors(mBacking)) {
-				addOutgoing(new NWAVisualizationEdge<NWAVertex, NWAEdge>(this,
-						new NWAVisualizationNode<NWAVertex, NWAEdge>(mVisNWA, succ.getSucc()), succ.getLetter()));
+				addOutgoing(new NWAVisualizationEdge<>(this, new NWAVisualizationNode<>(mVisNWA, succ.getSucc()),
+						succ.getLetter()));
 			}
 			for (final OutgoingReturnTransition<NWAEdge, NWAVertex> succ : mVisNWA.returnSuccessors(mBacking)) {
-				addOutgoing(new NWAVisualizationEdge<NWAVertex, NWAEdge>(this,
-						new NWAVisualizationNode<NWAVertex, NWAEdge>(mVisNWA, succ.getSucc()), succ.getLetter()));
+				addOutgoing(new NWAVisualizationEdge<>(this, new NWAVisualizationNode<>(mVisNWA, succ.getSucc()),
+						succ.getLetter()));
 			}
 			mInitialized = true;
 		}

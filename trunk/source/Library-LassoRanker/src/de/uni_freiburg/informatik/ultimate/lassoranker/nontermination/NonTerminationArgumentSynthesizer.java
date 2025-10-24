@@ -295,12 +295,12 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				// Use a list of guesses for lambda
 				final Rational[] eigenvalues = mLasso.guessEigenvalues(false);
 				lambda_guesses = new ArrayList<>(eigenvalues.length);
-				for (int i = 0; i < eigenvalues.length; ++i) {
-					assert !eigenvalues[i].isNegative();
-					if (mIntegerMode && !eigenvalues[i].isIntegral()) {
+				for (final Rational eigenvalue : eigenvalues) {
+					assert !eigenvalue.isNegative();
+					if (mIntegerMode && !eigenvalue.isIntegral()) {
 						continue; // ignore non-integral guesses
 					}
-					lambda_guesses.add(eigenvalues[i].toTerm(mSort));
+					lambda_guesses.add(eigenvalue.toTerm(mSort));
 				}
 			} else {
 				assert false; // unreachable branch
@@ -322,8 +322,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 
 		// vars_end + vars_gevs
-		final Map<IProgramVar, Term> vars_end_plus_gevs = new LinkedHashMap<>();
-		vars_end_plus_gevs.putAll(vars_honda);
+		final Map<IProgramVar, Term> vars_end_plus_gevs = new LinkedHashMap<>(vars_honda);
 		for (final IProgramVar rkVar : rankVars) {
 			final Term[] summands = new Term[mSettings.getNumberOfGevs() + 1];
 			summands[0] = vars_honda.get(rkVar);

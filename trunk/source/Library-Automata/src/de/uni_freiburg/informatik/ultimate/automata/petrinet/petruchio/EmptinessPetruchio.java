@@ -100,7 +100,7 @@ public final class EmptinessPetruchio<LETTER, PLACE>
 			mLogger.debug("Net has " + mBoundedNet.getTransitions().size() + " Transitions");
 		}
 
-		final Integer one = Integer.valueOf(1);
+		final Integer one = 1;
 
 		// construct single invariant p_1 + ... + p_n where p_i \in places
 		/*

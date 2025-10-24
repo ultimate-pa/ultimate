@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * Provides utility methods for CSV files used for plotting performance entry tables.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class PlotCsvUtils {
@@ -33,7 +33,7 @@ public final class PlotCsvUtils {
 
 	/**
 	 * Appends the given column content to the given CSV file.
-	 * 
+	 *
 	 * @param csvFile
 	 *            CSV file to add the column to
 	 * @param columnContent
@@ -48,12 +48,10 @@ public final class PlotCsvUtils {
 			System.err.println("Error: Size of CSV must be equal to the size of the column to add.");
 		}
 
-		final Iterator<String> csvIter = fileContent.iterator();
 		final Iterator<String> columnIter = columnContent.iterator();
 
-		final List<String> nextContent = new LinkedList<String>();
-		while (csvIter.hasNext()) {
-			String csvLine = csvIter.next();
+		final List<String> nextContent = new LinkedList<>();
+		for (String csvLine : fileContent) {
 			final String columnLine = columnIter.next();
 
 			csvLine += CSV_SEPARATOR + columnLine;
@@ -66,7 +64,7 @@ public final class PlotCsvUtils {
 
 	/**
 	 * Gets the content of the column given by its index.
-	 * 
+	 *
 	 * @param rawData
 	 *            The data of the CSV file
 	 * @param index
@@ -86,7 +84,7 @@ public final class PlotCsvUtils {
 
 	/**
 	 * Gets the content of a file and returns it as list of lines.
-	 * 
+	 *
 	 * @param file
 	 *            Path to the file
 	 * @return List of lines from the content
@@ -94,22 +92,22 @@ public final class PlotCsvUtils {
 	 *             If an I/O-Exception occurs
 	 */
 	public static List<String> getFileContent(final File file) throws IOException {
-		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-		final List<String> content = new ArrayList<String>();
+		try (final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+			final List<String> content = new ArrayList<>();
 
-		String line = br.readLine();
-		while (line != null) {
-			content.add(line);
-			line = br.readLine();
+			String line = br.readLine();
+			while (line != null) {
+				content.add(line);
+				line = br.readLine();
+			}
+
+			return content;
 		}
-
-		br.close();
-		return content;
 	}
 
 	/**
 	 * Merges the plotting results of two plot files.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws IOException
@@ -151,7 +149,7 @@ public final class PlotCsvUtils {
 
 	/**
 	 * Renames the header of the column given by its index.
-	 * 
+	 *
 	 * @param csvFile
 	 *            The CSV file to rename its column
 	 * @param index
@@ -168,16 +166,9 @@ public final class PlotCsvUtils {
 		final String headerLine = lineIterator.next();
 		final String[] headers = headerLine.split(CSV_SEPARATOR);
 		headers[index] = name;
-		String nextHeaderLine = "";
-		for (int i = 0; i < headers.length; i++) {
-			nextHeaderLine += headers[i];
+		final String nextHeaderLine = String.join(CSV_SEPARATOR, headers);
 
-			if (i != headers.length - 1) {
-				nextHeaderLine += CSV_SEPARATOR;
-			}
-		}
-
-		final List<String> nextContent = new LinkedList<String>();
+		final List<String> nextContent = new LinkedList<>();
 		nextContent.add(nextHeaderLine);
 
 		while (lineIterator.hasNext()) {
@@ -189,7 +180,7 @@ public final class PlotCsvUtils {
 
 	/**
 	 * Writes the given file with the given content. Existing content will be overwritten.
-	 * 
+	 *
 	 * @param file
 	 *            The file to write to
 	 * @param content

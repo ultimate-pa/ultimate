@@ -220,8 +220,7 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 				}
 			}
 		}
-		final Set<IProgramConst> nonTheoryConsts = new HashSet<>();
-		nonTheoryConsts.addAll(first.getNonTheoryConsts());
+		final Set<IProgramConst> nonTheoryConsts = new HashSet<>(first.getNonTheoryConsts());
 		nonTheoryConsts.addAll(second.getNonTheoryConsts());
 		final Term transformedSecond = Substitution.apply(mMgScript, substitute, second.getFormula());
 		final Term jointFormula = mMgScript.getScript().term("and", first.getFormula(), transformedSecond);

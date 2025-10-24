@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
@@ -199,19 +200,19 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		return mLevelRanking.toString() + " O" + mO;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mLevelRanking == null) ? 0 : mLevelRanking.hashCode());
-		result = prime * result + ((mO == null) ? 0 : mO.hashCode());
-		return result;
+		return Objects.hash(mLevelRanking, mO);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -353,7 +354,8 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		return mLevelRanking == null;
 	}
 
-	public boolean isLazyS(final Collection<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease,
+	public boolean isLazyS(
+			final Collection<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease,
 			final LevelRankingConstraintDrdCheck<LETTER, STATE> lrc) {
 		if (isOempty()) {
 			return true;

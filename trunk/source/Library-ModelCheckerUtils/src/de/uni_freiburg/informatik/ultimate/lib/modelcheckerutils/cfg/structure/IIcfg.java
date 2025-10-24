@@ -72,6 +72,21 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	Map<String, Set<LOC>> getProcedureErrorNodes();
 
 	/**
+	 * In our CFG we have distinct nodes that we call location of interest (LOI).
+	 * <li>LOIs are nodes for which verification algorithms typically produce invariants and for which counterexamples
+	 * have to provide values.
+	 * <li>LOIs are not necessarily loop heads. However, loop heads are also nodes for which verification algorithms
+	 * typically produce invariants and for which counterexamples have to provide values.
+	 * <li>A typical application for LOIs is when we want to get invariants for labels in a C program. In that case, we
+	 * make the node that stems from a label a LOI.
+	 * <li>ICFG transformations should try to preserve LOIs or provide a backtranslation that can compute invariants or
+	 * values of counterexample states for LOIs.
+	 *
+	 * @return All locations of interest (LOI).
+	 */
+	Set<LOC> getLocationsOfInterest();
+
+	/**
 	 * Return all locations that are considered to be loop heads.
 	 */
 	Set<LOC> getLoopLocations();
@@ -121,9 +136,8 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	}
 
 	/**
-	 * Converts this Interprocedural Control Flow Graph (ICFG) into the plain text file format
-	 * "Trivial Graph Format" (TGF). TGF files can be used to get a visual representation of this ICFG
-	 * using graph visualization software.
+	 * Converts this Interprocedural Control Flow Graph (ICFG) into the plain text file format "Trivial Graph Format"
+	 * (TGF). TGF files can be used to get a visual representation of this ICFG using graph visualization software.
 	 *
 	 * @return This ICFG in Trivial Graph Format (TGF)
 	 *

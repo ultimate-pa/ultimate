@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * move using an a-transition before whereas <i>Duplicator</i> now is at q1 and must try to also use an a-transition.
  * The bit encodes extra information if needed. This object extends regular DuplicatorVertices by giving it extra
  * information that only occur in Nwa Game Graphs, like sinks.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of nwa automaton
@@ -66,7 +66,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * Constructs a new duplicator vertex with given representation <b>(q0, q1, a, bit)</b> which means <i>Spoiler</i>
 	 * is currently at state q0 and made a move using an a-transition before whereas <i>Duplicator</i> now is at q1 and
 	 * must try to also use an a-transition. The bit encodes extra information if needed.
-	 * 
+	 *
 	 * @param priority
 	 *            The priority of the vertex
 	 * @param b
@@ -90,7 +90,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * is currently at state q0 and made a move using an a-transition before whereas <i>Duplicator</i> now is at q1 and
 	 * must try to also use an a-transition. The bit encodes extra information if needed. If the used transition is of
 	 * type {@link TransitionType#SINK} one can set <tt>sink</tt> to distinguish between similar sinks.
-	 * 
+	 *
 	 * @param priority
 	 *            The priority of the vertex
 	 * @param b
@@ -117,7 +117,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * must try to also use an a-transition. The bit encodes extra information if needed. If the used transition is of
 	 * type {@link TransitionType#SUMMARIZE_ENTRY} or {@link TransitionType#SUMMARIZE_EXIT} one can set
 	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges.
-	 * 
+	 *
 	 * @param priority
 	 *            The priority of the vertex
 	 * @param b
@@ -145,7 +145,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * type {@link TransitionType#SUMMARIZE_ENTRY} or {@link TransitionType#SUMMARIZE_EXIT} one can set
 	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges. If the used transition is of type
 	 * {@link TransitionType#SINK} one can set <tt>sink</tt> to distinguish between similar sinks.
-	 * 
+	 *
 	 * @param priority
 	 *            The priority of the vertex
 	 * @param b
@@ -174,7 +174,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -208,9 +208,8 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * buchiReduction.vertices.Vertex#getName()
+	 *
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations. buchiReduction.vertices.Vertex#getName()
 	 */
 	@Override
 	public String getName() {
@@ -232,7 +231,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	/**
 	 * Gets the sink this vertex belongs to or <tt>null</tt> if not set. This field should only be used if the type of
 	 * the used transition is {@link TransitionType#SINK}.
-	 * 
+	 *
 	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not set.
 	 */
 	public IWinningSink<LETTER, STATE> getSink() {
@@ -242,7 +241,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	/**
 	 * Gets the summarize edge this vertex belongs to or <tt>null</tt> if not set. This field should only be used if the
 	 * type of the used transition is {@link TransitionType#SUMMARIZE_ENTRY} or {@link TransitionType#SUMMARIZE_EXIT}.
-	 * 
+	 *
 	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not set.
 	 */
 	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
@@ -251,7 +250,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 
 	/**
 	 * Gets the type of the transition represented by this vertex.
-	 * 
+	 *
 	 * @return The type of the transition represented by this vertex.
 	 */
 	@Override
@@ -261,7 +260,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -276,7 +275,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override

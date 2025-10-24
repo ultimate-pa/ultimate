@@ -27,9 +27,6 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a struct given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Arrays;
@@ -38,10 +35,12 @@ import java.util.List;
 import java.util.Objects;
 
 /**
+ * Struct / Union type (see C11 6.2.5.20.2/3)
+ *
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
-public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CStructOrUnion> {
+public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CStructOrUnion> {
 
 	public enum StructOrUnion {
 		STRUCT, UNION,
@@ -55,7 +54,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	/**
 	 * Field types.
 	 */
-	private CType[] mFieldTypes;
+	private ICType[] mFieldTypes;
 
 	private final String mStructName;
 
@@ -75,14 +74,12 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 *            the C declaration used.
 	 */
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<String> fNames,
-			final List<CType> fTypes, final List<Integer> bitFieldWidths) {
-		this(isStructOrUnion, name, fNames.toArray(String[]::new), fTypes.toArray(CType[]::new), bitFieldWidths);
+			final List<ICType> fTypes, final List<Integer> bitFieldWidths) {
+		this(isStructOrUnion, name, fNames.toArray(String[]::new), fTypes.toArray(ICType[]::new), bitFieldWidths);
 	}
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
-			final CType[] fTypes, final List<Integer> bitFieldWidths) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, false);
+			final ICType[] fTypes, final List<Integer> bitFieldWidths) {
 		assert name != null;
 		assert fNames.length == bitFieldWidths.size();
 		mIsStructOrUnion = isStructOrUnion;
@@ -94,12 +91,10 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	}
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, false);
 		assert name != null && !name.isEmpty();
 		mIsStructOrUnion = isStructOrUnion;
 		mFieldNames = new String[0];
-		mFieldTypes = new CType[0];
+		mFieldTypes = new ICType[0];
 		mBitFieldWidths = Collections.emptyList();
 		mStructName = Objects.requireNonNull(name);
 		mIsComplete = false;
@@ -126,7 +121,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 *            the fields id.
 	 * @return the field type.
 	 */
-	public CType getFieldType(final String id) {
+	public ICType getFieldType(final String id) {
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
 		final int idx = Arrays.asList(mFieldNames).indexOf(id);
 		if (idx < 0) {
@@ -140,7 +135,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	 *
 	 * @return the types of this strut's fields.
 	 */
-	public CType[] getFieldTypes() {
+	public ICType[] getFieldTypes() {
 		return mFieldTypes;
 	}
 
@@ -193,12 +188,22 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 				cvar.getBitFieldWidths());
 	}
 
-	public void complete(final List<String> memberNames, final List<CType> memberTypes,
-			final List<Integer> bitfieldWidth) {
-		assert memberNames.size() == bitfieldWidth.size();
+	/**
+	 * Complete {@code this} in with the given names, types and bitfield widths (in-place).
+	 *
+	 * @param memberNames
+	 *            names of the members to be completed.
+	 * @param memberTypes
+	 *            types of the members to be completed.
+	 * @param bitfieldWidths
+	 *            the widths of the bitfields to be completed.
+	 */
+	public void complete(final List<String> memberNames, final List<ICType> memberTypes,
+			final List<Integer> bitfieldWidths) {
+		assert memberNames.size() == bitfieldWidths.size();
 		mFieldNames = memberNames.toArray(String[]::new);
-		mFieldTypes = memberTypes.toArray(CType[]::new);
-		mBitFieldWidths = bitfieldWidth;
+		mFieldTypes = memberTypes.toArray(ICType[]::new);
+		mBitFieldWidths = bitfieldWidths;
 		mIsComplete = true;
 	}
 
@@ -222,9 +227,9 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		return getBitFieldWidths().get(idx);
 	}
 
-	public static boolean isUnion(final CType cType) {
-		if (cType instanceof CStructOrUnion) {
-			return ((CStructOrUnion) cType).isStructOrUnion() == StructOrUnion.UNION;
+	public static boolean isUnion(final ICType cType) {
+		if (cType instanceof final CStructOrUnion cStructOrUnion) {
+			return cStructOrUnion.isStructOrUnion() == StructOrUnion.UNION;
 		}
 		return false;
 	}
@@ -242,14 +247,14 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	}
 
 	public static String getPrefix(final StructOrUnion structOrUnion) {
-		switch (structOrUnion) {
-		case STRUCT:
-			return "STRUCT~";
-		case UNION:
-			return "UNION~";
-		default:
-			throw new AssertionError();
-		}
+		return switch (structOrUnion) {
+		case STRUCT -> "STRUCT~";
+		case UNION -> "UNION~";
+		};
 	}
 
+	@Override
+	public boolean isAtomic() {
+		return false;
+	}
 }

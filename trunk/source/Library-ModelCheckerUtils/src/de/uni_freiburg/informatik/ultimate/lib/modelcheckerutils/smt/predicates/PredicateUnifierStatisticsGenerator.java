@@ -85,8 +85,7 @@ public final class PredicateUnifierStatisticsGenerator implements IStatisticsDat
 
 	@Override
 	public Object getValue(final String key) {
-		final PredicateUniferStatisticsDefinitions keyEnum =
-				Enum.valueOf(PredicateUniferStatisticsDefinitions.class, key);
+		final PredicateUniferStatisticsDefinitions keyEnum = PredicateUniferStatisticsDefinitions.valueOf(key);
 		switch (keyEnum) {
 		case DeclaredPredicates:
 			return mDeclaredPredicates;

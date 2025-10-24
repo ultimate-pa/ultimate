@@ -76,8 +76,7 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 		ProAct(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		/**
-		 * Simple Dataflow analysis To False Satisfiable. See
-		 * {@link SdHoareTripleCheckerHelper#sdecInternalToFalse}.
+		 * Simple Dataflow analysis To False Satisfiable. See {@link SdHoareTripleCheckerHelper#sdecInternalToFalse}.
 		 */
 		SDtfs(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
@@ -88,8 +87,7 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 		SDslu(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		/**
-		 * Simple Dataflow Satisfiable. See
-		 * {@link SdHoareTripleCheckerHelper#sdecInteral}.
+		 * Simple Dataflow Satisfiable. See {@link SdHoareTripleCheckerHelper#sdecInteral}.
 		 */
 		SDs(StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 

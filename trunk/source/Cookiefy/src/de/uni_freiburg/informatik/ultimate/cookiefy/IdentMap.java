@@ -59,7 +59,7 @@ public class IdentMap {
 
 	/**
 	 * if the procedure identifier does not have an id then some is assigned. If not, then this does nothing.
-	 * 
+	 *
 	 * @param procedureIdentifier
 	 */
 	public void put(final String procedureIdentifier) {
@@ -72,7 +72,7 @@ public class IdentMap {
 
 	/**
 	 * returns the ID of the given procedure. If none was given yet, then some new is created!
-	 * 
+	 *
 	 * @param procedureIdentifier
 	 * @return
 	 */

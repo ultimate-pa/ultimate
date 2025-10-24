@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * moves. 2016-11-18 Matthias: It seems that for similar alphabets the result of this operation is equivalent to the
  * intersection if the parameter concurrentPrefixProduct is true and it is equivalent to the union if the parameter
  * concurrentPrefixProduct if false.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Symbol
@@ -102,22 +102,20 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	public ConcurrentProduct(final AutomataLibraryServices services,
 			final IConcurrentProductStateFactory<STATE> stateFactory,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand, final boolean concurrentPrefixProduct) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand,
+			final boolean concurrentPrefixProduct) {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		mConcurrentPrefixProduct = concurrentPrefixProduct;
 		mContentFactory = stateFactory;
-		/*FIXME
-		if (mContentFactory != nwa2.getContentFactory()) {
-			throw new IllegalArgumentException("Both NWAs have to use" +
-					"same ContentFactory");
-		}
-		*/
+		/*
+		 * FIXME if (mContentFactory != nwa2.getContentFactory()) { throw new
+		 * IllegalArgumentException("Both NWAs have to use" + "same ContentFactory"); }
+		 */
 
-		if (mLogger.isWarnEnabled()
-				&& (!NestedWordAutomataUtils.isFiniteAutomaton(fstOperand)
-						|| !NestedWordAutomataUtils.isFiniteAutomaton(sndOperand))) {
+		if (mLogger.isWarnEnabled() && (!NestedWordAutomataUtils.isFiniteAutomaton(fstOperand)
+				|| !NestedWordAutomataUtils.isFiniteAutomaton(sndOperand))) {
 			mLogger.warn("Call alphabet and return alphabet are ignored.");
 		}
 		mSynchronizationAlphabet = new HashSet<>(fstOperand.getAlphabet());
@@ -125,8 +123,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 		final Set<LETTER> commonAlphabet = new HashSet<>(fstOperand.getAlphabet());
 		commonAlphabet.addAll(sndOperand.getAlphabet());
 		// TODO Christian 2016-09-04: Use Collections.emptySet() or is it intended that a user modifies the result?
-		mResult = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(commonAlphabet),
-				mContentFactory);
+		mResult = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(commonAlphabet), mContentFactory);
 		constructInitialStates();
 		while (!mWorklist.isEmpty()) {
 			mWorklist.dequeuePair();
@@ -231,7 +228,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 
 	/**
 	 * Maps pairs of states to states.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class StatePair2StateMap {
@@ -258,7 +255,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 
 	/**
 	 * Queue for pairs of states. Pairs are not dequeued in the same order as inserted.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class StatePairQueue {
@@ -277,8 +274,8 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 		}
 
 		protected void dequeuePair() {
-			assert mDequeuedPairFst == null
-					&& mDequeuedPairSnd == null : "Results from last dequeue not yet collected!";
+			assert mDequeuedPairFst == null && mDequeuedPairSnd == null
+					: "Results from last dequeue not yet collected!";
 			final Iterator<STATE> it1 = mQueue.keySet().iterator();
 			mDequeuedPairFst = it1.next();
 			assert mQueue.get(mDequeuedPairFst) != null;

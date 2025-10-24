@@ -59,13 +59,12 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 
 	/**
-	 * Returns a stream to all values of the nested map. The values are backed by
-	 * the map.
+	 * Returns a stream to all values of the nested map. The values are backed by the map.
 	 *
 	 * @return A backed stream to all values of the nested map
 	 */
 	public Stream<V> values() {
-		return this.mK1ToK2ToK3ToV.values().stream().flatMap(NestedMap2::values);
+		return mK1ToK2ToK3ToV.values().stream().flatMap(NestedMap2::values);
 	}
 
 	/**
@@ -120,22 +119,20 @@ public class NestedMap3<K1, K2, K3, V> {
 
 	public Iterable<Triple<K1, K2, K3>> keys3() {
 		final Iterator<Entry<K1, NestedMap2<K2, K3, V>>> innerIterator = mK1ToK2ToK3ToV.entrySet().iterator();
-		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Iterator<Pair<K2, K3>>> nextOuterIteratorProvider = (x -> x
-				.getValue().keys2().iterator());
-		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Function<Pair<K2, K3>, Triple<K1, K2, K3>>> resultProvider = (x -> (y -> new Triple<K1, K2, K3>(
-				x.getKey(), y.getFirst(), y.getSecond())));
-		return () -> new NestedIterator<Entry<K1, NestedMap2<K2, K3, V>>, Pair<K2, K3>, Triple<K1, K2, K3>>(
-				innerIterator, nextOuterIteratorProvider, resultProvider);
+		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Iterator<Pair<K2, K3>>> nextOuterIteratorProvider =
+				(x -> x.getValue().keys2().iterator());
+		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Function<Pair<K2, K3>, Triple<K1, K2, K3>>> resultProvider =
+				(x -> (y -> new Triple<>(x.getKey(), y.getFirst(), y.getSecond())));
+		return () -> new NestedIterator<>(innerIterator, nextOuterIteratorProvider, resultProvider);
 	}
 
 	public Iterable<Quad<K1, K2, K3, V>> entrySet() {
 		final Iterator<Entry<K1, NestedMap2<K2, K3, V>>> innerIterator = mK1ToK2ToK3ToV.entrySet().iterator();
-		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Iterator<Triple<K2, K3, V>>> nextOuterIteratorProvider = (x -> x
-				.getValue().entrySet().iterator());
-		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Function<Triple<K2, K3, V>, Quad<K1, K2, K3, V>>> resultProvider = (x -> (y -> new Quad<K1, K2, K3, V>(
-				x.getKey(), y.getFirst(), y.getSecond(), y.getThird())));
-		return () -> new NestedIterator<Entry<K1, NestedMap2<K2, K3, V>>, Triple<K2, K3, V>, Quad<K1, K2, K3, V>>(
-				innerIterator, nextOuterIteratorProvider, resultProvider);
+		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Iterator<Triple<K2, K3, V>>> nextOuterIteratorProvider =
+				(x -> x.getValue().entrySet().iterator());
+		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Function<Triple<K2, K3, V>, Quad<K1, K2, K3, V>>> resultProvider =
+				(x -> (y -> new Quad<>(x.getKey(), y.getFirst(), y.getSecond(), y.getThird())));
+		return () -> new NestedIterator<>(innerIterator, nextOuterIteratorProvider, resultProvider);
 	}
 
 	/**
@@ -146,10 +143,9 @@ public class NestedMap3<K1, K2, K3, V> {
 		if (k2Tok3ToV == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Triple<K2, K3, V>, Quad<K1, K2, K3, V>> transformer = (x -> new Quad<K1, K2, K3, V>(k1,
-					x.getFirst(), x.getSecond(), x.getThird()));
-			return () -> new TransformIterator<Triple<K2, K3, V>, Quad<K1, K2, K3, V>>(k2Tok3ToV.entrySet().iterator(),
-					transformer);
+			final Function<Triple<K2, K3, V>, Quad<K1, K2, K3, V>> transformer =
+					(x -> new Quad<>(k1, x.getFirst(), x.getSecond(), x.getThird()));
+			return () -> new TransformIterator<>(k2Tok3ToV.entrySet().iterator(), transformer);
 		}
 	}
 
@@ -161,10 +157,9 @@ public class NestedMap3<K1, K2, K3, V> {
 		if (k3ToV == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Entry<K3, V>, Quad<K1, K2, K3, V>> transformer = (x -> new Quad<K1, K2, K3, V>(k1, k2,
-					x.getKey(), x.getValue()));
-			return () -> new TransformIterator<Entry<K3, V>, Quad<K1, K2, K3, V>>(k3ToV.entrySet().iterator(),
-					transformer);
+			final Function<Entry<K3, V>, Quad<K1, K2, K3, V>> transformer =
+					(x -> new Quad<>(k1, k2, x.getKey(), x.getValue()));
+			return () -> new TransformIterator<>(k3ToV.entrySet().iterator(), transformer);
 		}
 	}
 

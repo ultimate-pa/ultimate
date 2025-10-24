@@ -31,8 +31,8 @@ public class VPDomainPreferences {
 	private static final String DESC_USE_WEQ_IN_PROJECT = "Fatten using full WeqCc ground truth before projectAway, "
 			+ "if false only the ground Cc is used for fattening there. (more precise but costly, only makes a "
 			+ "difference if weak equivalences are not deactivated)";
-	private static final String DESC_DEACTIVATE_WEAK_EQUIVALENCES = "Don't use any weak equivalences, perform the "
-			+ "analysis based on congruence closure only";
+	private static final String DESC_DEACTIVATE_WEAK_EQUIVALENCES =
+			"Don't use any weak equivalences, perform the " + "analysis based on congruence closure only";
 	public static final String DESC_FLATTEN_BEFORE_FATTEN = "Before doing a fattening weq fattening, of one weq edge, "
 			+ " flatten all disjunctions on the weq graph to be fattened with. (only makes a difference when "
 			+ " WeqFattening and weak equivalences are active";
@@ -47,8 +47,8 @@ public class VPDomainPreferences {
 				DESC_USE_WEQ_IN_PROJECT, PreferenceType.Boolean));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_DEACTIVATE_WEAK_EQUIVALENCES,
 				DEF_DEACTIVATE_WEAK_EQUIVALENCES, DESC_DEACTIVATE_WEAK_EQUIVALENCES, PreferenceType.Boolean));
-		container.addItem(new UltimatePreferenceItem<>(LABEL_FLATTEN_BEFORE_FATTEN,
-				DEF_FLATTEN_BEFORE_FATTEN, DESC_FLATTEN_BEFORE_FATTEN, PreferenceType.Boolean));
+		container.addItem(new UltimatePreferenceItem<>(LABEL_FLATTEN_BEFORE_FATTEN, DEF_FLATTEN_BEFORE_FATTEN,
+				DESC_FLATTEN_BEFORE_FATTEN, PreferenceType.Boolean));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_PRECISE_COMPARISON_OPERATOR,
 				DEF_PRECISE_COMPARISON_OPERATOR, DESC_PRECISE_COMPARISON_OPERATOR, PreferenceType.Boolean));
 

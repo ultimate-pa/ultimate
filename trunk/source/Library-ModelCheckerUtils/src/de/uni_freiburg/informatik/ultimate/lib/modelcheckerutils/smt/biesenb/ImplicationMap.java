@@ -7,15 +7,15 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T>{
+public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T> {
 
 	private final ManagedScript mMgdScript;
 	private final BPredicateUnifier mUnifier;
@@ -23,7 +23,8 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 	private final Map<T, Set<T>> mAncestors;
 	private final boolean mRandom;
 
-	protected ImplicationMap(final ManagedScript script, final BPredicateUnifier unifer, T falsePred, T truePred, boolean random) {
+	protected ImplicationMap(final ManagedScript script, final BPredicateUnifier unifer, final T falsePred,
+			final T truePred, final boolean random) {
 		mMgdScript = script;
 		mUnifier = unifer;
 		mDescendants = new HashMap<>();
@@ -36,15 +37,15 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 		mDescendants.get(falsePred).add(truePred);
 		mAncestors.get(truePred).add(falsePred);
 	}
-	
-	protected Map<T, Set<T>> getDescendantsMap(){
+
+	protected Map<T, Set<T>> getDescendantsMap() {
 		return mDescendants;
 	}
-	
-	protected Map<T, Set<T>> getAncestorsMap(){
+
+	protected Map<T, Set<T>> getAncestorsMap() {
 		return mAncestors;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder bld = new StringBuilder();
@@ -54,9 +55,8 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 		return bld.toString();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public Validity isCovered(IPredicate lhs, IPredicate rhs) {
+	public Validity isCovered(final IPredicate lhs, final IPredicate rhs) {
 		if (getCoveringPredicates(lhs).contains(rhs)) {
 			return Validity.VALID;
 		}
@@ -64,18 +64,18 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 	}
 
 	@Override
-	public Set<IPredicate> getCoveredPredicates(IPredicate pred) {
-		Set<T> ancestors = mAncestors.get(pred);
-		Set<IPredicate> covered = new HashSet<>(ancestors.size() + 1);
+	public Set<IPredicate> getCoveredPredicates(final IPredicate pred) {
+		final Set<T> ancestors = mAncestors.get(pred);
+		final Set<IPredicate> covered = new HashSet<>(ancestors.size() + 1);
 		ancestors.forEach(a -> covered.add(a));
 		covered.add(pred);
 		return covered;
 	}
 
 	@Override
-	public Set<IPredicate> getCoveringPredicates(IPredicate pred) {
-		Set<T> descendants = mDescendants.get(pred);
-		Set<IPredicate> covering = new HashSet<>(descendants.size() + 1);
+	public Set<IPredicate> getCoveringPredicates(final IPredicate pred) {
+		final Set<T> descendants = mDescendants.get(pred);
+		final Set<IPredicate> covering = new HashSet<>(descendants.size() + 1);
 		descendants.forEach(d -> covering.add(d));
 		covering.add(pred);
 		return covering;
@@ -106,14 +106,14 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 	}
 
 	@Override
-	public boolean unifyPredicate(T predicate) {
-		Map<T, Set<T>> dCopy = new HashMap<>(mDescendants);
+	public boolean unifyPredicate(final T predicate) {
+		final Map<T, Set<T>> dCopy = new HashMap<>(mDescendants);
 		final Set<T> predDescendants = new HashSet<>();
-		//find descendants
-		while(!dCopy.isEmpty()) {
-			T pivot = chosePivot(dCopy.keySet(), true);
-			Set<T> pivotDescendants = dCopy.remove(pivot);
-			if(internImplication(predicate, pivot)) {
+		// find descendants
+		while (!dCopy.isEmpty()) {
+			final T pivot = chosePivot(dCopy.keySet(), true);
+			final Set<T> pivotDescendants = dCopy.remove(pivot);
+			if (internImplication(predicate, pivot)) {
 				predDescendants.add(pivot);
 				predDescendants.addAll(pivotDescendants);
 				pivotDescendants.forEach(d -> dCopy.remove(d));
@@ -121,34 +121,34 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 				mAncestors.get(pivot).forEach(a -> dCopy.remove(a));
 			}
 		}
-		//determine possible ancestors
+		// determine possible ancestors
 		final Map<T, Set<T>> aCopy = new HashMap<>();
-		//option 1
-//		int min = mAncestors.size() + 1;
-//		T minAncestor = null;
-//		for(T d : predDescendants) {
-//			if(mAncestors.get(d).size() < min) {
-//				min = mAncestors.get(d).size();
-//				minAncestor = d;
-//			}
-//		}
-//		mAncestors.get(minAncestor).forEach(a -> aCopy.put(a, mAncestors.get(a)));
-		//option 2
+		// option 1
+		// int min = mAncestors.size() + 1;
+		// T minAncestor = null;
+		// for(T d : predDescendants) {
+		// if(mAncestors.get(d).size() < min) {
+		// min = mAncestors.get(d).size();
+		// minAncestor = d;
+		// }
+		// }
+		// mAncestors.get(minAncestor).forEach(a -> aCopy.put(a, mAncestors.get(a)));
+		// option 2
 		mAncestors.get(predDescendants.iterator().next()).forEach(a -> aCopy.put(a, mAncestors.get(a)));
-		for(T d : predDescendants) {
-			Set<T> it = new HashSet<T>(aCopy.keySet());
-			for(T a : it) {
-				if(!mAncestors.get(d).contains(a)) {
+		for (final T d : predDescendants) {
+			final Set<T> it = new HashSet<>(aCopy.keySet());
+			for (final T a : it) {
+				if (!mAncestors.get(d).contains(a)) {
 					aCopy.remove(a);
 				}
 			}
 		}
-		//find ancestors
+		// find ancestors
 		final Set<T> predAncestors = new HashSet<>();
-		while(!aCopy.isEmpty()) {
-			T pivot = chosePivot(aCopy.keySet(), false);
-			Set<T> pivotAncestors = aCopy.remove(pivot);
-			if(internImplication(pivot, predicate)) {
+		while (!aCopy.isEmpty()) {
+			final T pivot = chosePivot(aCopy.keySet(), false);
+			final Set<T> pivotAncestors = aCopy.remove(pivot);
+			if (internImplication(pivot, predicate)) {
 				predAncestors.add(pivot);
 				predAncestors.addAll(pivotAncestors);
 				pivotAncestors.forEach(a -> aCopy.remove(a));
@@ -163,7 +163,7 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 		return true;
 	}
 
-	private boolean internImplication(T a, T b) {
+	private boolean internImplication(final T a, final T b) {
 		if (a.equals(b)) {
 			return true;
 		}
@@ -195,8 +195,8 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 		}
 	}
 
-	private T chosePivot(Set<T> set, boolean first) {
-		if(mRandom) {
+	private T chosePivot(final Set<T> set, final boolean first) {
+		if (mRandom) {
 			return set.iterator().next();
 		} else {
 			int max = 0;
@@ -204,9 +204,13 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 			for (final T pred : set) {
 				int a = mAncestors.get(pred).size();
 				int b = mDescendants.get(pred).size();
-				if(first) b += 1; else a += 1;
-				int count = (a * b)/(a + b);
-				if(count >= max) {
+				if (first) {
+					b += 1;
+				} else {
+					a += 1;
+				}
+				final int count = (a * b) / (a + b);
+				if (count >= max) {
 					max = count;
 					pivot = pred;
 				}
@@ -216,11 +220,11 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 	}
 
 	@Override
-	public Collection<T> removeImpliedVerticesFromCollection(Collection<T> collection) {
-		Collection<T> result = new HashSet<>(collection);
-		for(T c1 : collection) {
-			for(T c2 : collection) {
-				if(mAncestors.get(c1).contains(c2)) {
+	public Collection<T> removeImpliedVerticesFromCollection(final Collection<T> collection) {
+		final Collection<T> result = new HashSet<>(collection);
+		for (final T c1 : collection) {
+			for (final T c2 : collection) {
+				if (mAncestors.get(c1).contains(c2)) {
 					result.remove(c1);
 					break;
 				}
@@ -230,11 +234,11 @@ public class ImplicationMap<T extends IPredicate> implements IImplicationGraph<T
 	}
 
 	@Override
-	public Collection<T> removeImplyingVerticesFromCollection(Collection<T> collection) {
-		Collection<T> result = new HashSet<>(collection);
-		for(T c1 : collection) {
-			for(T c2 : collection) {
-				if(mDescendants.get(c1).contains(c2)) {
+	public Collection<T> removeImplyingVerticesFromCollection(final Collection<T> collection) {
+		final Collection<T> result = new HashSet<>(collection);
+		for (final T c1 : collection) {
+			for (final T c2 : collection) {
+				if (mDescendants.get(c1).contains(c2)) {
 					result.remove(c1);
 					break;
 				}

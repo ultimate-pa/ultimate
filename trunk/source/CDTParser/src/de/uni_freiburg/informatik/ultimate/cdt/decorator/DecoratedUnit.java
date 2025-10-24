@@ -45,24 +45,24 @@ public class DecoratedUnit {
 	 * The {@link IASTTranslationUnit} that was the source of the CDT AST of this unit
 	 */
 	private final IASTTranslationUnit mSourceTU;
-	
+
 	public DecoratedUnit(final DecoratorNode rootNode, final IASTTranslationUnit sourceTU) {
 		mRootNode = rootNode;
 		mSourceTU = sourceTU;
 	}
-	
+
 	/**
 	 * Getter for the root node
-	 * 
+	 *
 	 * @return the root node
 	 */
 	public DecoratorNode getRootNode() {
 		return mRootNode;
 	}
-	
+
 	/**
 	 * Getter for the source translation unit
-	 * 
+	 *
 	 * @return the translation unit that was the source of the CDT AST
 	 */
 	public IASTTranslationUnit getSourceTranslationUnit() {

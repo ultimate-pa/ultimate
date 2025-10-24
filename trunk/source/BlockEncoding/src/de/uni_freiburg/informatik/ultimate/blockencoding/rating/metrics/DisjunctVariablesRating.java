@@ -1,31 +1,31 @@
 /*
  * Copyright (C) 2013-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics;
 
@@ -36,14 +36,13 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingValueConta
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 
 /**
- * This metric is basically a mixture between counting Disjunctions and the Used
- * Variables in the Edge. <br>
- * So we count here the disjunctions (inherited in the edge) and the number of
- * variables used. Every edge has the following rating formula: <br>
+ * This metric is basically a mixture between counting Disjunctions and the Used Variables in the Edge. <br>
+ * So we count here the disjunctions (inherited in the edge) and the number of variables used. Every edge has the
+ * following rating formula: <br>
  * Value = Count of Disjunctions * Count of different Variables
- * 
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class DisjunctVariablesRating implements IRating {
 
@@ -57,28 +56,24 @@ public class DisjunctVariablesRating implements IRating {
 
 	/**
 	 * Constructor with default visibility, is only used in the factory.
-	 * 
+	 *
 	 * @param edge
 	 *            the IMinimizedEdge to rate
 	 */
-	DisjunctVariablesRating(IMinimizedEdge edge) {
+	DisjunctVariablesRating(final IMinimizedEdge edge) {
 		if (edge.isBasicEdge()) {
-			ratingValue = new RatingValueContainer<Integer[]>(new Integer[] {
-					0, edge.getDifferentVariables().size(),
-					edge.getDifferentVariables().size() });
+			ratingValue = new RatingValueContainer<>(
+					new Integer[] { 0, edge.getDifferentVariables().size(), edge.getDifferentVariables().size() });
 		} else {
 			if (!(edge instanceof ICompositeEdge)) {
-				throw new IllegalArgumentException(
-						"There should be an CompositeEdge here!");
+				throw new IllegalArgumentException("There should be an CompositeEdge here!");
 			}
-			final IMinimizedEdge[] edges = ((ICompositeEdge) edge)
-					.getCompositeEdges();
+			final IMinimizedEdge[] edges = ((ICompositeEdge) edge).getCompositeEdges();
 			int totalDisjunctions = 0;
 			int totalUsedVars = 0;
 			int computedRating = 0;
 			for (final IMinimizedEdge compEdge : edges) {
-				final Integer[] ratingValues = (Integer[]) compEdge.getRating()
-						.getRatingValueContainer().getValue();
+				final Integer[] ratingValues = (Integer[]) compEdge.getRating().getRatingValueContainer().getValue();
 				totalDisjunctions = totalDisjunctions + ratingValues[0];
 				totalUsedVars = totalUsedVars + ratingValues[1];
 			}
@@ -95,48 +90,42 @@ public class DisjunctVariablesRating implements IRating {
 				// by 3 (and so on)
 				computedRating = (totalDisjunctions + 1) * totalUsedVars;
 			}
-			ratingValue = new RatingValueContainer<Integer[]>(new Integer[] {
-					totalDisjunctions, totalUsedVars, computedRating });
+			ratingValue =
+					new RatingValueContainer<>(new Integer[] { totalDisjunctions, totalUsedVars, computedRating });
 		}
 	}
 
 	/**
 	 * Constructor, to create a rating boundary.
-	 * 
+	 *
 	 * @param prefValue
-	 *            only the rating value, disjunctions or used vars doesn't
-	 *            matter
+	 *            only the rating value, disjunctions or used vars doesn't matter
 	 */
 	public DisjunctVariablesRating(String prefValue) {
 		if (prefValue.equals("")) {
 			prefValue = Integer.toString(Integer.MAX_VALUE);
 		}
-		ratingValue = new RatingValueContainer<Integer[]>(new Integer[] { 0, 0,
-				Integer.parseInt(prefValue) });
+		ratingValue = new RatingValueContainer<>(new Integer[] { 0, 0, Integer.parseInt(prefValue) });
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	@Override
-	public int compareTo(IRating other) {
+	public int compareTo(final IRating other) {
 		if (!(other instanceof DisjunctVariablesRating)) {
-			throw new IllegalArgumentException(
-					"Comparison of different Ratings is forbidden!");
+			throw new IllegalArgumentException("Comparison of different Ratings is forbidden!");
 		}
-		final Integer[] values = ((DisjunctVariablesRating) other)
-				.getRatingValueContainer().getValue();
+		final Integer[] values = ((DisjunctVariablesRating) other).getRatingValueContainer().getValue();
 		return ratingValue.getValue()[2].compareTo(values[2]);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating
-	 * #getRatingValueContainer()
+	 *
+	 * @see de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating #getRatingValueContainer()
 	 */
 	@Override
 	public RatingValueContainer<Integer[]> getRatingValueContainer() {

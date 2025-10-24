@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
 /**
- * Contains methods that support the generation of code for our JUnit test files
- * like, e.g., {@link QuantifierEliminationRegressionTest}.
+ * Contains methods that support the generation of code for our JUnit test files like, e.g.,
+ * {@link QuantifierEliminationRegressionTest}.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -55,8 +56,7 @@ public final class SmtTestGenerationUtils {
 	}
 
 	/**
-	 * Hack for generating tests for quantifier elimination. Probably usable for
-	 * SMT-based tests in general.
+	 * Hack for generating tests for quantifier elimination. Probably usable for SMT-based tests in general.
 	 */
 	public static String generateStringForTestfile(final Term term) {
 		final TermVariable[] freeVars = term.getFreeVars();
@@ -68,9 +68,7 @@ public final class SmtTestGenerationUtils {
 		}
 		for (final FunctionSymbol fun : funSyms) {
 			sorts.add(fun.getReturnSort());
-			for (final Sort pSort : fun.getParameterSorts()) {
-				sorts.add(pSort);
-			}
+			Collections.addAll(sorts, fun.getParameterSorts());
 		}
 
 		final Map<Sort, String> sortVarMapping = new HashMap<>();
@@ -92,8 +90,8 @@ public final class SmtTestGenerationUtils {
 					constructionString = "arraySort" + counter;
 				}
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				constructionString = "QuantifierEliminationTest::getBitvectorSort"
-						+ SmtSortUtils.getBitvectorLength(sort);
+				constructionString =
+						"QuantifierEliminationTest::getBitvectorSort" + SmtSortUtils.getBitvectorLength(sort);
 			} else {
 				constructionString = "otherSort" + counter;
 			}
@@ -114,8 +112,8 @@ public final class SmtTestGenerationUtils {
 		result.append(System.lineSeparator());
 
 		for (final Entry<Sort, HashSet<TermVariable>> entry : sort2TermVariable.entrySet()) {
-			final String idList = entry.getValue().stream().map(x -> ("\"" + x.getName() + "\""))
-					.collect(Collectors.joining(", "));
+			final String idList =
+					entry.getValue().stream().map(x -> ("\"" + x.getName() + "\"")).collect(Collectors.joining(", "));
 			final String sortConstructionString = sortVarMapping.get(entry.getKey());
 			final String funDecl = String.format("\t\t\tnew FunDecl(%s, %s),", sortConstructionString, idList);
 			result.append(funDecl);
@@ -126,11 +124,11 @@ public final class SmtTestGenerationUtils {
 			for (final Sort returnSort : sortFunctionSymbol.projectToSnd(paramSorts)) {
 				final String returnSortConstructionString = sortVarMapping.get(returnSort);
 				final Set<FunctionSymbol> funs = sortFunctionSymbol.projectToTrd(paramSorts, returnSort);
-				final String idList = funs.stream().map(x -> ("\"" + x.getName() + "\""))
-						.collect(Collectors.joining(", "));
+				final String idList =
+						funs.stream().map(x -> ("\"" + x.getName() + "\"")).collect(Collectors.joining(", "));
 				if (Arrays.equals(paramSorts, new Sort[0])) {
-					final String funDecl = String.format("\t\t\tnew FunDecl(%s, %s),", returnSortConstructionString,
-							idList);
+					final String funDecl =
+							String.format("\t\t\tnew FunDecl(%s, %s),", returnSortConstructionString, idList);
 					result.append(funDecl);
 					result.append(System.lineSeparator());
 				} else {
@@ -148,27 +146,17 @@ public final class SmtTestGenerationUtils {
 	}
 
 	private static boolean isIntIntArray(final Sort sort) {
-		if (SmtSortUtils.isArraySort(sort)) {
-			if (sort.getArguments().length == 2) {
-				if (SmtSortUtils.isIntSort(sort.getArguments()[0])) {
-					if (SmtSortUtils.isIntSort(sort.getArguments()[1])) {
-						return true;
-					}
-				}
-			}
+		if (((SmtSortUtils.isArraySort(sort) && (sort.getArguments().length == 2))
+				&& SmtSortUtils.isIntSort(sort.getArguments()[0])) && SmtSortUtils.isIntSort(sort.getArguments()[1])) {
+			return true;
 		}
 		return false;
 	}
 
 	private static boolean isIntIntIntArray(final Sort sort) {
-		if (SmtSortUtils.isArraySort(sort)) {
-			if (sort.getArguments().length == 2) {
-				if (SmtSortUtils.isIntSort(sort.getArguments()[0])) {
-					if (isIntIntArray(sort.getArguments()[1])) {
-						return true;
-					}
-				}
-			}
+		if (((SmtSortUtils.isArraySort(sort) && (sort.getArguments().length == 2))
+				&& SmtSortUtils.isIntSort(sort.getArguments()[0])) && isIntIntArray(sort.getArguments()[1])) {
+			return true;
 		}
 		return false;
 	}

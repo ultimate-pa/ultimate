@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 
 /**
  * Always tells not to abstract.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class NeverFluid implements IFluid {

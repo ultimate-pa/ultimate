@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.math.BigInteger;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -247,7 +248,7 @@ public class BitvectorConstant {
 		private final boolean mIsBoolean;
 		private final boolean mIsAssociative;
 
-		private BvOp(final int arity, final boolean isBoolean, final boolean isAssoc) {
+		BvOp(final int arity, final boolean isBoolean, final boolean isAssoc) {
 			mArity = arity;
 			mIsBoolean = isBoolean;
 			mIsAssociative = isAssoc;
@@ -277,12 +278,11 @@ public class BitvectorConstant {
 	}
 
 	public enum ExtendOperation {
-		sign_extend(BvOp.sign_extend),
-		zero_extend(BvOp.zero_extend),;
+		sign_extend(BvOp.sign_extend), zero_extend(BvOp.zero_extend),;
 
 		private final BvOp mBvOp;
 
-		private ExtendOperation(final BvOp bvop) {
+		ExtendOperation(final BvOp bvop) {
 			mBvOp = bvop;
 		}
 
@@ -296,13 +296,11 @@ public class BitvectorConstant {
 	private final BigInteger mIndex;
 
 	public BitvectorConstant(final BigInteger value, final BigInteger index) {
-		super();
 		mValue = computeUnifiedValue(value, index);
 		mIndex = index;
 	}
 
 	public BitvectorConstant(final BigInteger value, final String index) {
-		super();
 		final BigInteger indexAsBi = new BigInteger(index);
 		mValue = computeUnifiedValue(value, indexAsBi);
 		mIndex = indexAsBi;
@@ -337,11 +335,7 @@ public class BitvectorConstant {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mIndex == null ? 0 : mIndex.hashCode());
-		result = prime * result + (mValue == null ? 0 : mValue.hashCode());
-		return result;
+		return Objects.hash(mIndex, mValue);
 	}
 
 	@Override
@@ -602,8 +596,7 @@ public class BitvectorConstant {
 		return toSignedInt(mValue, mIndex);
 	}
 
-	public static BitvectorConstantOperationResult apply(final BvOp sbo,
-			final BitvectorConstant... operands) {
+	public static BitvectorConstantOperationResult apply(final BvOp sbo, final BitvectorConstant... operands) {
 		if (operands == null) {
 			throw new IllegalArgumentException("No operands");
 		}
@@ -611,56 +604,33 @@ public class BitvectorConstant {
 			throw new IllegalArgumentException("Operation " + sbo + " has arity " + sbo.getArity() + " but "
 					+ operands.length + " operands given");
 		}
-		switch (sbo) {
-		case bvadd:
-			return new BitvectorConstantOperationResult(bvadd(operands[0], operands[1]));
-		case bvand:
-			return new BitvectorConstantOperationResult(bvand(operands[0], operands[1]));
-		case bvashr:
-			return new BitvectorConstantOperationResult(bvashr(operands[0], operands[1]));
-		case bvlshr:
-			return new BitvectorConstantOperationResult(bvlshr(operands[0], operands[1]));
-		case bvmul:
-			return new BitvectorConstantOperationResult(bvmul(operands[0], operands[1]));
-		case bvneg:
-			return new BitvectorConstantOperationResult(bvneg(operands[0]));
-		case bvnot:
-			return new BitvectorConstantOperationResult(bvnot(operands[0]));
-		case bvor:
-			return new BitvectorConstantOperationResult(bvor(operands[0], operands[1]));
-		case bvsdiv:
-			return new BitvectorConstantOperationResult(bvsdiv(operands[0], operands[1]));
-		case bvsge:
-			return new BitvectorConstantOperationResult(bvsge(operands[0], operands[1]));
-		case bvsgt:
-			return new BitvectorConstantOperationResult(bvsgt(operands[0], operands[1]));
-		case bvshl:
-			return new BitvectorConstantOperationResult(bvshl(operands[0], operands[1]));
-		case bvsle:
-			return new BitvectorConstantOperationResult(bvsle(operands[0], operands[1]));
-		case bvslt:
-			return new BitvectorConstantOperationResult(bvslt(operands[0], operands[1]));
-		case bvsrem:
-			return new BitvectorConstantOperationResult(bvsrem(operands[0], operands[1]));
-		case bvsub:
-			return new BitvectorConstantOperationResult(bvsub(operands[0], operands[1]));
-		case bvudiv:
-			return new BitvectorConstantOperationResult(bvudiv(operands[0], operands[1]));
-		case bvuge:
-			return new BitvectorConstantOperationResult(bvuge(operands[0], operands[1]));
-		case bvugt:
-			return new BitvectorConstantOperationResult(bvugt(operands[0], operands[1]));
-		case bvule:
-			return new BitvectorConstantOperationResult(bvule(operands[0], operands[1]));
-		case bvult:
-			return new BitvectorConstantOperationResult(bvult(operands[0], operands[1]));
-		case bvurem:
-			return new BitvectorConstantOperationResult(bvurem(operands[0], operands[1]));
-		case bvxor:
-			return new BitvectorConstantOperationResult(bvxor(operands[0], operands[1]));
-		default:
-			throw new UnsupportedOperationException("Operation currently unsupported: " + sbo);
-		}
+		return switch (sbo) {
+		case bvadd -> new BitvectorConstantOperationResult(bvadd(operands[0], operands[1]));
+		case bvand -> new BitvectorConstantOperationResult(bvand(operands[0], operands[1]));
+		case bvashr -> new BitvectorConstantOperationResult(bvashr(operands[0], operands[1]));
+		case bvlshr -> new BitvectorConstantOperationResult(bvlshr(operands[0], operands[1]));
+		case bvmul -> new BitvectorConstantOperationResult(bvmul(operands[0], operands[1]));
+		case bvneg -> new BitvectorConstantOperationResult(bvneg(operands[0]));
+		case bvnot -> new BitvectorConstantOperationResult(bvnot(operands[0]));
+		case bvor -> new BitvectorConstantOperationResult(bvor(operands[0], operands[1]));
+		case bvsdiv -> new BitvectorConstantOperationResult(bvsdiv(operands[0], operands[1]));
+		case bvsge -> new BitvectorConstantOperationResult(bvsge(operands[0], operands[1]));
+		case bvsgt -> new BitvectorConstantOperationResult(bvsgt(operands[0], operands[1]));
+		case bvshl -> new BitvectorConstantOperationResult(bvshl(operands[0], operands[1]));
+		case bvsle -> new BitvectorConstantOperationResult(bvsle(operands[0], operands[1]));
+		case bvslt -> new BitvectorConstantOperationResult(bvslt(operands[0], operands[1]));
+		case bvsrem -> new BitvectorConstantOperationResult(bvsrem(operands[0], operands[1]));
+		case bvsub -> new BitvectorConstantOperationResult(bvsub(operands[0], operands[1]));
+		case bvudiv -> new BitvectorConstantOperationResult(bvudiv(operands[0], operands[1]));
+		case bvuge -> new BitvectorConstantOperationResult(bvuge(operands[0], operands[1]));
+		case bvugt -> new BitvectorConstantOperationResult(bvugt(operands[0], operands[1]));
+		case bvule -> new BitvectorConstantOperationResult(bvule(operands[0], operands[1]));
+		case bvult -> new BitvectorConstantOperationResult(bvult(operands[0], operands[1]));
+		case bvurem -> new BitvectorConstantOperationResult(bvurem(operands[0], operands[1]));
+		case bvxor -> new BitvectorConstantOperationResult(bvxor(operands[0], operands[1]));
+		case bvsmod, concat, extract, sign_extend, zero_extend ->
+				throw new UnsupportedOperationException("Operation currently unsupported: " + sbo);
+		};
 	}
 
 	/**
@@ -688,7 +658,7 @@ public class BitvectorConstant {
 		}
 
 		public boolean getBooleanResult() {
-			return mBooleanResult.booleanValue();
+			return mBooleanResult;
 		}
 
 		public BitvectorConstant getBvResult() {

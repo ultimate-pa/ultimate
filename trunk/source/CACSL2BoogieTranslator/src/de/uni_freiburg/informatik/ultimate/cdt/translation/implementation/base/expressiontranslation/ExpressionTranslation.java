@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
@@ -58,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -72,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -95,21 +95,12 @@ public abstract class ExpressionTranslation {
 		mSymboltable = symboltable;
 		mFunctionDeclarations = new FunctionDeclarations(mTypeHandler, mTypeSizes);
 
-		switch (mSettings.getPointerIntegerCastMode()) {
-		case IdentityAxiom:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
+		mPointerIntegerConversion = switch (mSettings.getPointerIntegerCastMode()) {
 		case NonBijectiveMapping:
-			mPointerIntegerConversion = new NonBijectiveMapping(this, mTypeSizes);
-			break;
-		case NutzBijection:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
+			yield new NonBijectiveMapping(this, mTypeSizes);
 		case Overapproximate:
-			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown value " + mSettings.getPointerIntegerCastMode());
-
-		}
+			yield new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
+		};
 	}
 
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator,
@@ -237,7 +228,7 @@ public abstract class ExpressionTranslation {
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
 	public final Expression constructBinaryEqualityExpression(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		if (type1.isRealFloatingType() || type2.isRealFloatingType()) {
 			return constructBinaryEqualityExpressionFloating(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
@@ -245,10 +236,10 @@ public abstract class ExpressionTranslation {
 	}
 
 	protected abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator,
-			Expression exp1, CType type1, Expression exp2, CType type2);
+			Expression exp1, ICType type1, Expression exp2, ICType type2);
 
 	protected abstract Expression constructBinaryEqualityExpressionInteger(ILocation loc, int nodeOperator,
-			Expression exp1, CType type1, Expression exp2, CType type2);
+			Expression exp1, ICType type1, Expression exp2, ICType type2);
 
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 
@@ -329,17 +320,16 @@ public abstract class ExpressionTranslation {
 	 * result is 0 if the value compares equal to 0; otherwise, the result is 1.
 	 */
 	ExpressionResult convertToBool(final ILocation loc, final ExpressionResult expr) {
-		CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
+		ICType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
 		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
 		final Expression zeroInputType = constructZero(loc, underlyingType);
 		final Expression isZero;
 		if (underlyingType instanceof CPointer) {
 			isZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
 					expr.getLrValue().getValue(), zeroInputType);
-		} else if (underlyingType instanceof CPrimitive) {
+		} else if (underlyingType instanceof final CPrimitive cPrimitive) {
 			isZero = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-					expr.getLrValue().getValue(), (CPrimitive) underlyingType, zeroInputType,
-					(CPrimitive) underlyingType);
+					expr.getLrValue().getValue(), cPrimitive, zeroInputType, cPrimitive);
 		} else {
 			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
 		}
@@ -353,8 +343,21 @@ public abstract class ExpressionTranslation {
 		return new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rValue).build();
 	}
 
-	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
-			ExpressionResultBuilder expressionResultBuilder);
+	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final ICType ctype,
+			final ExpressionResultBuilder expressionResultBuilder) {
+		final var constraint = getTypeConstraint(loc, expr, ctype);
+		if (constraint.isPresent()) {
+			expressionResultBuilder.addStatement(new AssumeStatement(loc, constraint.get()));
+		}
+	}
+
+	/**
+	 * Returns a constraint for the given {@code cType} that is required for the model of the translated expression
+	 * {@code expr}. If the modelling does not require such a type constraint, the function can return
+	 * {@code Optional.empty()}.
+	 */
+	public abstract Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr,
+			final ICType cType);
 
 	public Expression constructNullPointer(final ILocation loc) {
 		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
@@ -369,27 +372,20 @@ public abstract class ExpressionTranslation {
 		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
 	}
 
-	public Expression constructZero(final ILocation loc, final CType cType) {
-		final Expression result;
-		if (cType instanceof CPrimitive) {
-			switch (((CPrimitive) cType).getGeneralType()) {
+	public Expression constructZero(final ILocation loc, final ICType cType) {
+		if (cType instanceof final CPrimitive cPrimitive) {
+			return switch (cPrimitive.getGeneralType()) {
 			case FLOATTYPE:
-				result = constructLiteralForFloatingType(loc, (CPrimitive) cType, BigDecimal.ZERO);
-				break;
+				yield constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
 			case INTTYPE:
-				result = mTypeSizes.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO);
-				break;
+				yield mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
 			case VOID:
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
-			default:
-				throw new AssertionError("illegal type");
-			}
+			};
 		} else if (cType instanceof CPointer || cType instanceof CArray) {
-			result = constructNullPointer(loc);
-		} else {
-			throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
+			return constructNullPointer(loc);
 		}
-		return result;
+		throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
 	}
 
 	/**
@@ -477,14 +473,6 @@ public abstract class ExpressionTranslation {
 	}
 
 	/**
-	 * Check if id is number classification macro according to 7.12.6 of C11.
-	 */
-	public boolean isNumberClassificationMacro(final String cId) {
-		return cId.equals("FP_NAN") || cId.equals("FP_INFINITE") || cId.equals("FP_ZERO") || cId.equals("FP_SUBNORMAL")
-				|| cId.equals("FP_NORMAL");
-	}
-
-	/**
 	 * Translate number classification macros according to 7.12.6 of C11. Although the standard allows any distinct
 	 * integers, we take 0,1,2,3,4 because gcc on Matthias' Linux system uses these numbers.
 	 */
@@ -547,7 +535,7 @@ public abstract class ExpressionTranslation {
 			// Avoid the creation of trivial statements
 			return;
 		}
-		if (mSettings.checkSignedIntegerBounds() == CheckMode.ASSERTandASSUME) {
+		if (mSettings.checkSignedIntegerBounds() == CheckMode.CHECK) {
 			final AssertStatement assertSt = new AssertStatement(loc, condition);
 			new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
 			erb.addStatement(assertSt);
@@ -567,8 +555,8 @@ public abstract class ExpressionTranslation {
 		return ExpressionFactory.constructIfThenElseExpression(loc, boolExpr, one, zero);
 	}
 
-	public Expression toBool(final ILocation loc, final Expression intExpr, final CType cType) {
-		final CType underlyingType = CEnum.replaceEnumWithInt(cType.getUnderlyingType());
+	public Expression toBool(final ILocation loc, final Expression intExpr, final ICType cType) {
+		final ICType underlyingType = CEnum.replaceEnumWithInt(cType.getUnderlyingType());
 		final Expression zero = constructZero(loc, underlyingType);
 
 		if (underlyingType instanceof CPrimitive) {

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,11 +48,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  * BoogieSymbolTable is a symbol table for all scopes of a Boogie program.
- * 
+ *
  * It is still work in progress, so there are no final comments.
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class BoogieSymbolTable {
 
@@ -65,7 +65,7 @@ public class BoogieSymbolTable {
 	/**
 	 * Add a procedure or function declaration to the symbol map. The symbol map will decide if this is an
 	 * implementation, procedure, or function and store it accordingly.
-	 * 
+	 *
 	 * @param symbolName
 	 * @param decl
 	 */
@@ -89,7 +89,8 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	protected void addInParams(final String procedureOrFunctionName, final String paramName, final FunctionDeclaration decl) {
+	protected void addInParams(final String procedureOrFunctionName, final String paramName,
+			final FunctionDeclaration decl) {
 		addSymbol(StorageClass.PROC_FUNC_INPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
@@ -101,7 +102,8 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	protected void addOutParams(final String procedureOrFunctionName, final String paramName, final FunctionDeclaration decl) {
+	protected void addOutParams(final String procedureOrFunctionName, final String paramName,
+			final FunctionDeclaration decl) {
 		addSymbol(StorageClass.PROC_FUNC_OUTPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
@@ -121,7 +123,7 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	private boolean isImplementation(final Procedure decl) {
+	private static boolean isImplementation(final Procedure decl) {
 		return decl.getSpecification() == null;
 	}
 
@@ -146,8 +148,8 @@ public class BoogieSymbolTable {
 		case GLOBAL:
 		case QUANTIFIED:
 			if (!mSymbolTable.containsKey(sc)) {
-				final Map<String, Map<String, Declaration>> outer = new LinkedHashMap<String, Map<String, Declaration>>();
-				final Map<String, Declaration> inner = new LinkedHashMap<String, Declaration>();
+				final Map<String, Map<String, Declaration>> outer = new LinkedHashMap<>();
+				final Map<String, Declaration> inner = new LinkedHashMap<>();
 				outer.put(scopeName, inner);
 				mSymbolTable.put(sc, outer);
 			}
@@ -158,14 +160,14 @@ public class BoogieSymbolTable {
 		case IMPLEMENTATION_OUTPARAM:
 		case LOCAL:
 			if (!mSymbolTable.containsKey(sc)) {
-				final Map<String, Map<String, Declaration>> outer = new LinkedHashMap<String, Map<String, Declaration>>();
-				final Map<String, Declaration> inner = new LinkedHashMap<String, Declaration>();
+				final Map<String, Map<String, Declaration>> outer = new LinkedHashMap<>();
+				final Map<String, Declaration> inner = new LinkedHashMap<>();
 				outer.put(scopeName, inner);
 				mSymbolTable.put(sc, outer);
 			}
 			final Map<String, Map<String, Declaration>> scopeMap = mSymbolTable.get(sc);
 			if (!scopeMap.containsKey(scopeName)) {
-				scopeMap.put(scopeName, new LinkedHashMap<String, Declaration>());
+				scopeMap.put(scopeName, new LinkedHashMap<>());
 			}
 			return scopeMap.get(scopeName);
 		default:
@@ -177,14 +179,13 @@ public class BoogieSymbolTable {
 		scopeName = checkScopeName(scope, scopeName);
 
 		if (!mSymbolTable.containsKey(scope)) {
-			return new ArrayList<String>();
+			return new ArrayList<>();
 		}
 		final Map<String, Declaration> decls = getMap(scope, scopeName);
 		if (decls == null) {
-			return new ArrayList<String>();
+			return new ArrayList<>();
 		}
-		final ArrayList<String> rtr = new ArrayList<>();
-		rtr.addAll(decls.keySet());
+		final ArrayList<String> rtr = new ArrayList<>(decls.keySet());
 		return rtr;
 	}
 
@@ -212,12 +213,12 @@ public class BoogieSymbolTable {
 	 * <li>For procedures, the list may contain up to two procedure declarations: One for the implementation, one for
 	 * the specification.</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param symbolname
 	 * @return
 	 */
 	public List<Declaration> getFunctionOrProcedureDeclaration(final String symbolname) {
-		final StorageClass[] procedures = new StorageClass[] { StorageClass.IMPLEMENTATION, StorageClass.PROC_FUNC };
+		final StorageClass[] procedures = { StorageClass.IMPLEMENTATION, StorageClass.PROC_FUNC };
 		final ArrayList<Declaration> rtr = new ArrayList<>();
 		for (final StorageClass sc : procedures) {
 			final Declaration decl = getDeclaration(symbolname, sc, null);
@@ -234,8 +235,7 @@ public class BoogieSymbolTable {
 
 	public Map<String, Declaration> getLocalVariables(final String procedureName) {
 		assert procedureName != null;
-		final Map<String, Declaration> rtr = new HashMap<String, Declaration>();
-		rtr.putAll(getMap(StorageClass.LOCAL, procedureName));
+		final Map<String, Declaration> rtr = new HashMap<>(getMap(StorageClass.LOCAL, procedureName));
 		rtr.putAll(getMap(StorageClass.IMPLEMENTATION_INPARAM, procedureName));
 		rtr.putAll(getMap(StorageClass.IMPLEMENTATION_OUTPARAM, procedureName));
 		rtr.putAll(getMap(StorageClass.PROC_FUNC_INPARAM, procedureName));
@@ -244,7 +244,7 @@ public class BoogieSymbolTable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param symbolname
 	 * @param scope
 	 * @param scopeName
@@ -259,7 +259,8 @@ public class BoogieSymbolTable {
 				exp.getDeclarationInformation().getProcedure());
 	}
 
-	public IBoogieType getTypeForVariableSymbol(final String symbolname, final StorageClass scope, final String scopeName) {
+	public IBoogieType getTypeForVariableSymbol(final String symbolname, final StorageClass scope,
+			final String scopeName) {
 		final Declaration decl = getDeclaration(symbolname, scope, scopeName);
 		if (decl == null) {
 			return null;
@@ -297,7 +298,7 @@ public class BoogieSymbolTable {
 
 	/**
 	 * Produces a really long string describing the content of the symbol table.
-	 * 
+	 *
 	 * @return A string representation of the symbol table.
 	 */
 	public String prettyPrintSymbolTable() {
@@ -311,8 +312,7 @@ public class BoogieSymbolTable {
 					.append("\n");
 		}
 
-		final HashSet<String> functionSymbols = new HashSet<>();
-		functionSymbols.addAll(getSymbolNames(StorageClass.IMPLEMENTATION, null));
+		final HashSet<String> functionSymbols = new HashSet<>(getSymbolNames(StorageClass.IMPLEMENTATION, null));
 		functionSymbols.addAll(getSymbolNames(StorageClass.PROC_FUNC, null));
 
 		final StringBuilder functions = new StringBuilder();
@@ -387,7 +387,8 @@ public class BoogieSymbolTable {
 		appendLocals(StorageClass.LOCAL, builder, currentFunctionSymbol);
 	}
 
-	private void appendLocals(final StorageClass scClass, final StringBuilder builder, final String currentFunctionSymbol) {
+	private void appendLocals(final StorageClass scClass, final StringBuilder builder,
+			final String currentFunctionSymbol) {
 		final Collection<String> localSymbols = getSymbolNames(scClass, currentFunctionSymbol);
 		if (localSymbols.isEmpty()) {
 			return;
@@ -400,28 +401,17 @@ public class BoogieSymbolTable {
 	}
 
 	private String shorten(final StorageClass scClass) {
-		switch (scClass) {
-		case GLOBAL:
-			return "G";
-		case IMPLEMENTATION:
-			return "IMPL";
-		case IMPLEMENTATION_INPARAM:
-			return "I_IN";
-		case IMPLEMENTATION_OUTPARAM:
-			return "I_OUT";
-		case LOCAL:
-			return "LOC";
-		case PROC_FUNC:
-			return "PF";
-		case PROC_FUNC_INPARAM:
-			return "PF_IN";
-		case PROC_FUNC_OUTPARAM:
-			return "PF_OUT";
-		case QUANTIFIED:
-			return "Q";
-		default:
-			return "UNKNOWN";
-		}
+		return switch (scClass) {
+		case GLOBAL -> "G";
+		case IMPLEMENTATION -> "IMPL";
+		case IMPLEMENTATION_INPARAM -> "I_IN";
+		case IMPLEMENTATION_OUTPARAM -> "I_OUT";
+		case LOCAL -> "LOC";
+		case PROC_FUNC -> "PF";
+		case PROC_FUNC_INPARAM -> "PF_IN";
+		case PROC_FUNC_OUTPARAM -> "PF_OUT";
+		case QUANTIFIED -> "Q";
+		};
 	}
 
 	private String prettyPrintProcedureSignature(final Declaration decl) {

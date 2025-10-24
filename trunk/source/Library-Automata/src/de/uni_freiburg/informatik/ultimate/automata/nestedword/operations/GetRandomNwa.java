@@ -2,22 +2,22 @@
  * Copyright (C) 2012-2015 Fabian Reiter
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * Generates a random connected nested word automaton.
  * <p>
  * Here connected means that every state is reachable from the (unique) initial state.
- * 
+ *
  * @author Fabian Reiter
  */
 public final class GetRandomNwa extends GeneralOperation<String, String, IStateFactory<String>> {
@@ -67,7 +67,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 	 * Constructor with {@code int} values.
 	 * <p>
 	 * Since the parser does not support the {@code double} type, the inputs are values in per mille (divided by 1000).
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param alphabetSize
@@ -93,7 +93,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 
 	/**
 	 * Constructor with {@code double} values.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param alphabetSize
@@ -154,7 +154,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 
 	/**
 	 * Generates the automaton.
-	 * 
+	 *
 	 * @param mAlphabetSize
 	 *            number of letters of the alphabet
 	 * @param mSize
@@ -208,10 +208,12 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 		@SuppressWarnings("squid:S1244")
 		final boolean isFiniteAutomaton = mCallTransitionDensity == 0D && mReturnTransitionDensity == 0D;
 		if (isFiniteAutomaton) {
-			result = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(new HashSet<>(num2Letter)), new StringFactory());
+			result = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(new HashSet<>(num2Letter)),
+					new StringFactory());
 		} else {
-			result = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(new HashSet<>(num2Letter), new HashSet<>(num2Letter),
-					new HashSet<>(num2Letter)), new StringFactory());
+			result = new NestedWordAutomaton<>(mServices,
+					new VpAlphabet<>(new HashSet<>(num2Letter), new HashSet<>(num2Letter), new HashSet<>(num2Letter)),
+					new StringFactory());
 		}
 
 		// --------------------------------------------------------------------
@@ -277,29 +279,20 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			final List<String> num2State, final List<String> num2Letter,
 			final NestedWordAutomaton<String, String> result) {
 		/*
-		 * What follows is essentially an implementation of the approach described in
-		 * [1]. However, the transition function is not encoded as a bit-stream and the
-		 * transitions are numbered slightly differently.
-		 * 
-		 * TRANSITION NUMBERS
-		 * ──────────────────
-		 * Let n = |Q| be the number of states and k = |Σ| the number of symbols. Then
-		 * there are n²k possible transitions. Every transition gets assigned a unique
-		 * number between 0 and n²k−1.
-		 * The number assigned to the transition ⟨qₚ,aₓ⟩ ↦ qₛ is
-		 *   p·(kn) + x·(n) + s .
-		 * 
-		 *   0 ···                                                             ··· n²k−1
-		 * ┏━━━━┳╺╺╺╺┳━━━━┳━  ━┳━━━━┳╺╺╺╺┳━━━━┳━   ━┳━━━━┳╺╺╺╺┳━━━━┳━  ━┳━━━━┳╺╺╺╺┳━━━━┓
-		 * ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ·· ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ··· ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ·· ┃ q₀ ┃ ·· ┃qₙ₋₁┃
-		 * ┗━━━━┻╸╸╸╸┻━━━━┻━  ━┻━━━━┻╸╸╸╸┻━━━━┻━   ━┻━━━━┻╸╸╸╸┻━━━━┻━  ━┻━━━━┻╸╸╸╸┻━━━━┛
-		 * ╰───── a₀ ─────╯    ╰──── aₖ₋₁ ────╯     ╰───── a₀ ─────╯    ╰──── aₖ₋₁ ────╯
-		 * │                                  │ ··· │                                  │
-		 * ╰─────────────── q₀ ───────────────╯     ╰────────────── qₙ₋₁ ──────────────╯
-		 * 
-		 * [1] Marco Almeida, Nelma Moreira and Rogério Reis,
-		 *     “On the Performance of Automata Minimization Algorithms” (2008),
-		 *     Section 4 (“Random Automata Generation”).
+		 * What follows is essentially an implementation of the approach described in [1]. However, the transition
+		 * function is not encoded as a bit-stream and the transitions are numbered slightly differently.
+		 *
+		 * TRANSITION NUMBERS ────────────────── Let n = |Q| be the number of states and k = |Σ| the number of symbols.
+		 * Then there are n²k possible transitions. Every transition gets assigned a unique number between 0 and n²k−1.
+		 * The number assigned to the transition ⟨qₚ,aₓ⟩ ↦ qₛ is p·(kn) + x·(n) + s .
+		 *
+		 * 0 ··· ··· n²k−1 ┏━━━━┳╺╺╺╺┳━━━━┳━ ━┳━━━━┳╺╺╺╺┳━━━━┳━ ━┳━━━━┳╺╺╺╺┳━━━━┳━ ━┳━━━━┳╺╺╺╺┳━━━━┓ ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ··
+		 * ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ··· ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ·· ┃ q₀ ┃ ·· ┃qₙ₋₁┃ ┗━━━━┻╸╸╸╸┻━━━━┻━ ━┻━━━━┻╸╸╸╸┻━━━━┻━
+		 * ━┻━━━━┻╸╸╸╸┻━━━━┻━ ━┻━━━━┻╸╸╸╸┻━━━━┛ ╰───── a₀ ─────╯ ╰──── aₖ₋₁ ────╯ ╰───── a₀ ─────╯ ╰──── aₖ₋₁ ────╯ │ │
+		 * ··· │ │ ╰─────────────── q₀ ───────────────╯ ╰────────────── qₙ₋₁ ──────────────╯
+		 *
+		 * [1] Marco Almeida, Nelma Moreira and Rogério Reis, “On the Performance of Automata Minimization Algorithms”
+		 * (2008), Section 4 (“Random Automata Generation”).
 		 */
 
 		// --------------------------------------------------------------------

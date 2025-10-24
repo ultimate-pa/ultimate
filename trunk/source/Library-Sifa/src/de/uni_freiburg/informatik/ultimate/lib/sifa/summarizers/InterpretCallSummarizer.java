@@ -33,8 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.ProcedureResources;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
 /**
- * Always computes a new call summary by interpreting the callee's path expression
- * from its entry node to its exit node.
+ * Always computes a new call summary by interpreting the callee's path expression from its entry node to its exit node.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -44,8 +43,8 @@ public class InterpretCallSummarizer implements ICallSummarizer {
 	private final ProcedureResourceCache mProcResCache;
 	private final DagInterpreter mDagIpreter;
 
-	public InterpretCallSummarizer(
-			final SifaStats stats, final ProcedureResourceCache procResCache, final DagInterpreter dagIpreter) {
+	public InterpretCallSummarizer(final SifaStats stats, final ProcedureResourceCache procResCache,
+			final DagInterpreter dagIpreter) {
 		mStats = stats;
 		mProcResCache = procResCache;
 		mDagIpreter = dagIpreter;
@@ -57,8 +56,8 @@ public class InterpretCallSummarizer implements ICallSummarizer {
 		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_CACHE_MISSES);
 
 		final ProcedureResources res = mProcResCache.resourcesOf(callee);
-		final IPredicate result = mDagIpreter.interpretForSingleMarker(
-				res.getRegexDag(), res.getDagOverlayPathToReturn(), inputAfterCall);
+		final IPredicate result = mDagIpreter.interpretForSingleMarker(res.getRegexDag(),
+				res.getDagOverlayPathToReturn(), inputAfterCall);
 
 		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
 		return result;

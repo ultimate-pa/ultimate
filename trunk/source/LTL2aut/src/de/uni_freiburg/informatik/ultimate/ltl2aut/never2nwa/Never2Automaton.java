@@ -148,13 +148,10 @@ public class Never2Automaton {
 				collectStates(a, state);
 			}
 		} else if (branch instanceof BoolLiteral) {
-			return;
 		} else if (branch instanceof SkipStatement) {
 			// case " accept_all: skip
 			addTransition(preState, getAssumeTrue(), preState);
-			return;
 		} else if (branch instanceof Name) {
-			return;
 		} else if (branch instanceof OptionStatement) {
 
 			// option.body .goto .name
@@ -189,11 +186,9 @@ public class Never2Automaton {
 
 	private void visitAstForSymbols(final AstNode branch, final Set<CodeBlock> symbols) throws Exception {
 		if (branch instanceof BoolLiteral) {
-			return;
 		} else if (branch instanceof SkipStatement) {
 			symbols.add(getAssumeTrue());
 		} else if (branch instanceof Name) {
-			return;
 		} else if (branch instanceof OptionStatement) {
 			symbols.addAll(getAssume(((OptionStatement) branch).getCondition()));
 		} else {

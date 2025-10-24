@@ -46,8 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 public class CongruenceDomainPreferences {
 	public static final String VALUE_EVALUATOR_DEFAULT = "Congruence Default Evaluator";
 	public static final String VALUE_EVALUATOR_OPTIMIZATION = "Congruence Optimizer Evaluator";
-	public static final String[] VALUES_EVALUATOR_TYPE =
-			new String[] { VALUE_EVALUATOR_DEFAULT, VALUE_EVALUATOR_OPTIMIZATION };
+	public static final String[] VALUES_EVALUATOR_TYPE = { VALUE_EVALUATOR_DEFAULT, VALUE_EVALUATOR_OPTIMIZATION };
 
 	public static final String LABEL_Congruence_WIDENING_OPERATOR = "Congruence Widening operator";
 

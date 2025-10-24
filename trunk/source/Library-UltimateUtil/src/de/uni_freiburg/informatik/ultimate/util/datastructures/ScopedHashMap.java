@@ -137,10 +137,10 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		if (mCurScope == -1) {
 			return entrySet();
 		}
-		return new AbstractSet<Map.Entry<K, V>>() {
+		return new AbstractSet<>() {
 			@Override
 			public Iterator<Map.Entry<K, V>> iterator() {
-				return new Iterator<Map.Entry<K, V>>() {
+				return new Iterator<>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
 
@@ -152,7 +152,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 					@Override
 					public Map.Entry<K, V> next() {
 						final K key = (mLast = mBacking.next()).getKey();
-						return new Entry<K, V>() {
+						return new Entry<>() {
 							@Override
 							public K getKey() {
 								return key;
@@ -190,10 +190,10 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		if (mCurScope == -1) {
 			return keySet();
 		}
-		return new AbstractSet<K>() {
+		return new AbstractSet<>() {
 			@Override
 			public Iterator<K> iterator() {
-				return new Iterator<K>() {
+				return new Iterator<>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
 
@@ -226,10 +226,10 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		if (mCurScope == -1) {
 			return values();
 		}
-		return new AbstractSet<V>() {
+		return new AbstractSet<>() {
 			@Override
 			public Iterator<V> iterator() {
-				return new Iterator<V>() {
+				return new Iterator<>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
 
@@ -292,11 +292,11 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 
 	@Override
 	public Set<Entry<K, V>> entrySet() {
-		return new AbstractSet<Entry<K, V>>() {
+		return new AbstractSet<>() {
 
 			@Override
 			public Iterator<Entry<K, V>> iterator() {
-				return new Iterator<Entry<K, V>>() {
+				return new Iterator<>() {
 					private final Iterator<Entry<K, V>> mBacking = getMap().entrySet().iterator();
 					private Entry<K, V> mLast;
 
@@ -354,7 +354,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 
 	/**
 	 * Checks if the key was overwritten in the given scope.
-	 * 
+	 *
 	 * @param key
 	 *            the key to check for.
 	 * @param scope

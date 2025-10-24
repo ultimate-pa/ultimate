@@ -40,28 +40,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class CCharacterConstant {
-	
+
 	/**
-	 * Representation of this character literal in source code. 
+	 * Representation of this character literal in source code.
 	 */
 	private final String mSourceLiteral;
-	
-	
+
 	private final BigInteger mNumericalValue;
-	
-	
+
 	private final BigInteger mRepresentingValue;
-	
+
 	/**
-	 * The signedness of 'char' determines the representation of the string's
-	 * characters when stored as a sequence of bytes.
+	 * The signedness of 'char' determines the representation of the string's characters when stored as a sequence of
+	 * bytes.
 	 */
 	private final Signedness mSignednessOfChar;
-	
+
 	private final Signedness mSignednessOfRepresentingType;
-	
+
 	private final CPrimitive mType;
-	
 
 	public CCharacterConstant(final String sourceLiteral, final Signedness signednessOfChar) {
 		mSourceLiteral = sourceLiteral;
@@ -107,7 +104,6 @@ public class CCharacterConstant {
 		mRepresentingValue = computeRepresentingValue(mNumericalValue, signednessOfChar, mSignednessOfRepresentingType);
 	}
 
-
 	private BigInteger computeRepresentingValue(final BigInteger numericalValue, final Signedness signednessOfChar,
 			final Signedness signednessOfRepresentingType) {
 		BigInteger result;
@@ -124,17 +120,12 @@ public class CCharacterConstant {
 
 	}
 
-
 	public BigInteger getRepresentingValue() {
 		return mRepresentingValue;
 	}
-
 
 	public CPrimitive getType() {
 		return mType;
 	}
 
-	
-	
-	
 }

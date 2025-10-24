@@ -61,23 +61,14 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult imple
 
 	@Override
 	public String getShortDescription() {
-		switch (mOverallResult) {
-		case ALL_ASSERTIONS_HOLD:
-			return "Finished interpretation of automata script.";
-		case EXCEPTION_OR_ERROR:
-			return "Interpretation of automata script failed.";
-		case NO_ASSERTION:
-			return "Finished interpretation of automata script.";
-		case SOME_ASSERTION_FAILED:
-			return "Some assert statements have been evaluated to false.";
-		// case SYNTAX_ERROR:
-		case TIMEOUT:
-			return "Timeout during interpretation of automata script.";
-		case OUT_OF_MEMORY:
-			return "Run out of memory during interpretation of automata script.";
-		default:
-			throw new AssertionError("unknown case");
-		}
+		return switch (mOverallResult) {
+		case ALL_ASSERTIONS_HOLD -> "Finished interpretation of automata script.";
+		case EXCEPTION_OR_ERROR -> "Interpretation of automata script failed.";
+		case NO_ASSERTION -> "Finished interpretation of automata script.";
+		case SOME_ASSERTION_FAILED -> "Some assert statements have been evaluated to false.";
+		case TIMEOUT -> "Timeout during interpretation of automata script.";
+		case OUT_OF_MEMORY -> "Run out of memory during interpretation of automata script.";
+		};
 	}
 
 	@Override
@@ -95,23 +86,14 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult imple
 
 	@Override
 	public Severity getSeverity() {
-		switch (mOverallResult) {
-		case ALL_ASSERTIONS_HOLD:
-			return Severity.INFO;
-		case EXCEPTION_OR_ERROR:
-			return Severity.ERROR;
-		case NO_ASSERTION:
-			return Severity.INFO;
-		case SOME_ASSERTION_FAILED:
-			return Severity.ERROR;
-		// case SYNTAX_ERROR:
-		case TIMEOUT:
-			return Severity.WARNING;
-		case OUT_OF_MEMORY:
-			return Severity.WARNING;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		return switch (mOverallResult) {
+		case ALL_ASSERTIONS_HOLD -> Severity.INFO;
+		case EXCEPTION_OR_ERROR -> Severity.ERROR;
+		case NO_ASSERTION -> Severity.INFO;
+		case SOME_ASSERTION_FAILED -> Severity.ERROR;
+		case TIMEOUT -> Severity.WARNING;
+		case OUT_OF_MEMORY -> Severity.WARNING;
+		};
 	}
 
 	public OverallResult getOverallResult() {

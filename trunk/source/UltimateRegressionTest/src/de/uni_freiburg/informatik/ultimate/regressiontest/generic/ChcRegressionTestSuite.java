@@ -48,7 +48,6 @@ public class ChcRegressionTestSuite extends AbstractRegressionTestSuite {
 	private static final boolean UNKNOWN_IS_SUCCESS = false;
 
 	public ChcRegressionTestSuite() {
-		super();
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/smtlib/horn/regression");
 

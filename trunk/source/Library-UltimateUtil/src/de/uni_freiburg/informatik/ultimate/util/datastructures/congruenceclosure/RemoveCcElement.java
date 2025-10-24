@@ -11,7 +11,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
-public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //implements IRemovalInfo<ELEM> {
+public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> // implements IRemovalInfo<ELEM> {
 		implements IRemovalInfo<ELEM>, IRestoreNodesBeforeRemove<ELEM> {
 
 	private final ELEM mElem;
@@ -34,8 +34,8 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 		}
 
 		if (elementContainer.isDebugMode()) {
-			elementContainer.getLogger().debug("RemoveElement CC " + hashCode() + " : removing " + elem + " from " +
-				elementContainer.hashCode());
+			elementContainer.getLogger().debug(
+					"RemoveElement CC " + hashCode() + " : removing " + elem + " from " + elementContainer.hashCode());
 		}
 
 		if (!elementContainer.hasElement(elem)) {
@@ -72,12 +72,13 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 			mElementsToRemove = Collections.unmodifiableSet(elementsToRemove);
 		}
 
-		assert mElementsToRemove.stream().allMatch(e -> CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
+		assert mElementsToRemove.stream()
+				.allMatch(e -> CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
 
 		/**
-		 * Map in which try to collect a perfect replacement for each element that is to be removed.
-		 * This map is updated through "getOtherEquivalenceMemeber", for already existing nodes,
-		 *  and through getNodesToIntroducebeforeRemoval, for newly introduced equivalents.
+		 * Map in which try to collect a perfect replacement for each element that is to be removed. This map is updated
+		 * through "getOtherEquivalenceMemeber", for already existing nodes, and through
+		 * getNodesToIntroducebeforeRemoval, for newly introduced equivalents.
 		 *
 		 * Each replacement node must be equivalent to its original node in mElementContainer.
 		 *
@@ -86,8 +87,8 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 		 *
 		 * Note that this map only needs to keep some equivalent element for each removed one (if possible). That needs
 		 * to be the one that will be the new representative of the removed element's equivalence class, i.e., all the
-		 * constraints that held for the removed element need to hold for its replacement.
-		 * Preserving information through adding nodes is only partially related to this map.
+		 * constraints that held for the removed element need to hold for its replacement. Preserving information
+		 * through adding nodes is only partially related to this map.
 		 */
 		final Map<ELEM, ELEM> nodeToReplacementNode = new HashMap<>();
 
@@ -100,11 +101,10 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 			nodeToReplacementNode.put(elemToRemove, otherEqClassMember);
 		}
 		assert DataStructureUtils.intersection(new HashSet<>(nodeToReplacementNode.values()), mElementsToRemove)
-			.isEmpty();
+				.isEmpty();
 		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mElementContainer);
 
 		assert !mElementContainer.isInconsistent();
-
 
 		boolean becameInconsistentWhenAddingANode = false;
 		becameInconsistentWhenAddingANode = addNodesToKeepInformation(this, mElementsToRemove, nodeToReplacementNode);
@@ -122,8 +122,8 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 			return;
 		}
 
-//		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
-//		mElementContainer.prepareForRemove(mUseWeqGpa);
+		// // (for instance:) prepare weq graph by conjoining edge labels with the current gpa
+		// mElementContainer.prepareForRemove(mUseWeqGpa);
 
 		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 			assert mElementContainer.sanityCheck();
@@ -135,11 +135,11 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 			assert mElementContainer.sanityCheck();
 		}
 
-//		mElementContainer.applyClosureOperations();
+		// mElementContainer.applyClosureOperations();
 
 		if (mElementContainer.isDebugMode() && mElementContainer.isInconsistent()) {
-			mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
-					" became inconsistent during closure operation");
+			mElementContainer.getLogger().debug(
+					"RemoveElement: " + mElementContainer.hashCode() + " became inconsistent during closure operation");
 		}
 
 		mDidRemoval = true;
@@ -152,7 +152,6 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 		}
 	}
 
-
 	private boolean nodeAndReplacementAreEquivalent(final Map<ELEM, ELEM> nodeToReplacementNode,
 			final CongruenceClosure<ELEM> elementContainer) {
 		for (final Entry<ELEM, ELEM> en : nodeToReplacementNode.entrySet()) {
@@ -164,9 +163,9 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 		return true;
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean
-			addNodesToKeepInformation(final IRestoreNodesBeforeRemove<ELEM> rce, final Set<ELEM> elementsToRemove,
-					final Map<ELEM, ELEM> nodeToReplacementNode) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean addNodesToKeepInformation(
+			final IRestoreNodesBeforeRemove<ELEM> rce, final Set<ELEM> elementsToRemove,
+			final Map<ELEM, ELEM> nodeToReplacementNode) {
 		if (!rce.isIntroduceNewNodes()) {
 			return false;
 		}
@@ -183,8 +182,8 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 				}
 			}
 
-			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e,
-					Collections.singleton(rce.getElem())));
+			assert nodesToAdd.stream()
+					.allMatch(e -> !CongruenceClosure.dependsOnAny(e, Collections.singleton(rce.getElem())));
 			assert nodesToAdd.stream().allMatch(n -> !rce.getElementContainer().hasElement(n));
 			if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 				assert rce.getElementContainer().sanityCheck();
@@ -201,8 +200,8 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 			// add proxy elements
 			for (final ELEM proxyElem : nodesToAdd) {
 				if (rce.getElementContainer().isDebugMode()) {
-					rce.getElementContainer().getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
-							rce.getElementContainer().hashCode() + " because it was added in weq graph label");
+					rce.getElementContainer().getLogger().debug("RemoveElement: adding element " + proxyElem + " to "
+							+ rce.getElementContainer().hashCode() + " because it was added in weq graph label");
 				}
 
 				rce.getElementContainer().addElement(proxyElem, true);
@@ -210,9 +209,9 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 				if (rce.getElementContainer().isInconsistent()) {
 					// Cc became inconsistent through adding proxyElem --> nothing more to do
 					if (rce.getElementContainer().isDebugMode()) {
-						rce.getElementContainer().getLogger().debug("RemoveElement: " +
-								rce.getElementContainer().hashCode() +
-								" became inconsistent when adding" + proxyElem);
+						rce.getElementContainer().getLogger()
+								.debug("RemoveElement: " + rce.getElementContainer().hashCode()
+										+ " became inconsistent when adding" + proxyElem);
 					}
 					return true;
 				}
@@ -254,19 +253,18 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> //imp
 	 * @param preferredReplacements
 	 * @return
 	 */
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> void removeSimpleElement(
-			final CongruenceClosure<ELEM> cc, final ELEM elem) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void
+			removeSimpleElement(final CongruenceClosure<ELEM> cc, final ELEM elem) {
 		removeSimpleElement(cc, elem, true, CcSettings.MEET_WITH_WEQ_CC);
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> void removeSimpleElementDontIntroduceNewNodes(
-			final CongruenceClosure<ELEM> cc, final ELEM elem) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void
+			removeSimpleElementDontIntroduceNewNodes(final CongruenceClosure<ELEM> cc, final ELEM elem) {
 		removeSimpleElement(cc, elem, false, false);
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>>
-			Set<ELEM> removeSimpleElementDontUseWeqGpaTrackAddedNodes(final CongruenceClosure<ELEM> cc,
-					final ELEM elem) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<ELEM>
+			removeSimpleElementDontUseWeqGpaTrackAddedNodes(final CongruenceClosure<ELEM> cc, final ELEM elem) {
 		return removeSimpleElement(cc, elem, true, false).getAddedNodes();
 	}
 

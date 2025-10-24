@@ -4,19 +4,19 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
-public class RCFGCatcher extends BaseObserver{
+public class RCFGCatcher extends BaseObserver {
 
 	private BoogieIcfgContainer mRoot;
-	
+
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-		if(root instanceof BoogieIcfgContainer){
-			mRoot = (BoogieIcfgContainer) root;	
+		if (root instanceof BoogieIcfgContainer) {
+			mRoot = (BoogieIcfgContainer) root;
 		}
 		return false;
 	}
-	
-	BoogieIcfgContainer getModel(){
+
+	BoogieIcfgContainer getModel() {
 		return mRoot;
 	}
 }

@@ -54,11 +54,7 @@ public class SuffixedDebugIdentifier extends DebugIdentifier {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mDebugIdentifier == null) ? 0 : mDebugIdentifier.hashCode());
-		result = prime * result + ((mSuffix == null) ? 0 : mSuffix.hashCode());
-		return result;
+		return Objects.hash(mDebugIdentifier, mSuffix);
 	}
 
 	@Override

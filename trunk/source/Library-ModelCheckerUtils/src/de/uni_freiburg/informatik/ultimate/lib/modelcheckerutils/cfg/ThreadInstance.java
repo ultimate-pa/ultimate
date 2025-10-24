@@ -44,7 +44,6 @@ public class ThreadInstance {
 
 	public ThreadInstance(final String threadInstanceName, final String threadTemplateName,
 			final IProgramNonOldVar[] idVars) {
-		super();
 		mThreadInstanceName = threadInstanceName;
 		mThreadTemplateName = threadTemplateName;
 		mIdVars = idVars;

@@ -166,7 +166,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	public BaseExplicitValueValue greaterThan(final ExplicitValueValue other) {
 		return nonCommutativeOpCanonical(other,
-				evv -> mValue.compareTo(evv.mValue) == 1 ? this : ExplicitValueBottom.DEFAULT);
+				evv -> mValue.compareTo(evv.mValue) > 0 ? this : ExplicitValueBottom.DEFAULT);
 	}
 
 	@Override
@@ -202,7 +202,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 	@Override
 	public BaseExplicitValueValue lessThan(final BaseExplicitValueValue other) {
 		return nonCommutativeOpCanonical(other,
-				evv -> mValue.compareTo(evv.mValue) == -1 ? this : ExplicitValueBottom.DEFAULT);
+				evv -> mValue.compareTo(evv.mValue) < 0 ? this : ExplicitValueBottom.DEFAULT);
 	}
 
 	@Override

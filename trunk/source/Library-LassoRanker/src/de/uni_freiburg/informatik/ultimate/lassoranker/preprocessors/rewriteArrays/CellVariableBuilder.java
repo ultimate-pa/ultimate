@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker Library.
- * 
+ *
  * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class CellVariableBuilder {
 	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
 	private final Map<Term, Map<ArrayIndex, IReplacementVarOrConst>> mArray2Index2RepVar;
-	private final Set<TermVariable> mAuxVars = new HashSet<TermVariable>();
+	private final Set<TermVariable> mAuxVars = new HashSet<>();
 	private final ModifiableTransFormula mTransFormula;
 	private final TransFormulaLRWithArrayInformation tflrwai;
 	private final TransFormulaLRWithArrayCells tflrwac;
@@ -61,14 +61,10 @@ public class CellVariableBuilder {
 	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellInVars;
 	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars;
 
-
-	public CellVariableBuilder(final ModifiableTransFormula tf, 
-			final TransFormulaLRWithArrayCells tflrwac, 
-			final ReplacementVarFactory replacementVarFactory, 
-			final ILogger logger, 
-			final HashRelation<Term, ArrayIndex> firstGeneration2Indices, 
-			final NestedMap2<TermVariable, ArrayIndex, 
-			ArrayCellReplacementVarInformation> arrayCellInVars, 
+	public CellVariableBuilder(final ModifiableTransFormula tf, final TransFormulaLRWithArrayCells tflrwac,
+			final ReplacementVarFactory replacementVarFactory, final ILogger logger,
+			final HashRelation<Term, ArrayIndex> firstGeneration2Indices,
+			final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> arrayCellInVars,
 			final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> arrayCellOutVars) {
 		mReplacementVarFactory = replacementVarFactory;
 		mLogger = logger;
@@ -76,13 +72,12 @@ public class CellVariableBuilder {
 		mFirstGeneration2Indices = firstGeneration2Indices;
 		this.tflrwac = tflrwac;
 		tflrwai = tflrwac.getTransFormulaLRWithArrayInformation();
-		mArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<ArrayIndex, TermVariable>>();
-		mArray2Index2RepVar = new HashMap<Term, Map<ArrayIndex, IReplacementVarOrConst>>();
+		mArrayInstance2Index2CellVariable = new HashMap<>();
+		mArray2Index2RepVar = new HashMap<>();
 		mArrayCellInVars = arrayCellInVars;
 		mArrayCellOutVars = arrayCellOutVars;
 		dotSomething();
 	}
-
 
 	/**
 	 * Returns a String that we use to refer to the array cell array[index].
@@ -97,7 +92,7 @@ public class CellVariableBuilder {
 			for (final TermVariable instance : tflrwai.getArrayFirstGeneration2Instances().getImage(firstGeneration)) {
 				Map<ArrayIndex, TermVariable> index2ArrayCellTv = mArrayInstance2Index2CellVariable.get(instance);
 				if (index2ArrayCellTv == null) {
-					index2ArrayCellTv = new HashMap<ArrayIndex, TermVariable>();
+					index2ArrayCellTv = new HashMap<>();
 					mArrayInstance2Index2CellVariable.put(instance, index2ArrayCellTv);
 				}
 				final Set<ArrayIndex> indicesOfFirstGeneration = mFirstGeneration2Indices.getImage(firstGeneration);
@@ -114,12 +109,14 @@ public class CellVariableBuilder {
 					final boolean isInVarCell = isInVarCell(instance, index);
 					final boolean isOutVarCell = isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
-						final TermVariable arrayRepresentative = (TermVariable) ModifiableTransFormulaUtils.getDefinition(mTransFormula, instance);
+						final TermVariable arrayRepresentative =
+								(TermVariable) ModifiableTransFormulaUtils.getDefinition(mTransFormula, instance);
 						final ArrayIndex indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
-							final IReplacementVarOrConst varOrConst = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							final IReplacementVarOrConst varOrConst =
+									mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
 							if (varOrConst instanceof ReplacementConst) {
-					            throw new UnsupportedOperationException("not yet implemented");
+								throw new UnsupportedOperationException("not yet implemented");
 							} else if (varOrConst instanceof IReplacementVar) {
 								final IReplacementVar rv = (IReplacementVar) varOrConst;
 								final TermVariable inVar = mTransFormula.getInVars().get(rv);
@@ -128,7 +125,7 @@ public class CellVariableBuilder {
 								} else {
 									// case where two TermVariables have the same
 									// ReplacementVar is also possible e.g. if there
-									// is an array equality, see 
+									// is an array equality, see
 									// SyntaxSupportArrays20-ArrayEquality.bpl
 									addToAuxVars(tv);
 								}
@@ -138,9 +135,10 @@ public class CellVariableBuilder {
 
 						}
 						if (isOutVarCell) {
-							final IReplacementVarOrConst varOrConst = mArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							final IReplacementVarOrConst varOrConst =
+									mArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
 							if (varOrConst instanceof ReplacementConst) {
-					            throw new UnsupportedOperationException("not yet implemented");
+								throw new UnsupportedOperationException("not yet implemented");
 							} else if (varOrConst instanceof IReplacementVar) {
 								final IReplacementVar rv = (IReplacementVar) varOrConst;
 								final TermVariable outVar = mTransFormula.getOutVars().get(rv);
@@ -149,7 +147,7 @@ public class CellVariableBuilder {
 								} else {
 									// case where two TermVariables have the same
 									// ReplacementVar is also possible e.g. if there
-									// is an array equality, see 
+									// is an array equality, see
 									// SyntaxSupportArrays20-ArrayEquality.bpl
 									addToAuxVars(tv);
 								}
@@ -178,15 +176,13 @@ public class CellVariableBuilder {
 		assert mdias.getDimension() == index.size();
 		final Sort valueSort = mdias.getArrayValueSort();
 		final String name = getArrayCellName(instance, index);
-		final TermVariable tv = mReplacementVarFactory.
-				getOrConstructAuxVar(name, valueSort);
+		final TermVariable tv = mReplacementVarFactory.getOrConstructAuxVar(name, valueSort);
 		return tv;
 	}
 
 	/**
-	 * Is the cellVariable that we construct for arrayInstance[index] is an
-	 * inVar. This is the case if arrayInstance and each free variable of
-	 * index is an inVar.
+	 * Is the cellVariable that we construct for arrayInstance[index] is an inVar. This is the case if arrayInstance and
+	 * each free variable of index is an inVar.
 	 */
 	private boolean isInVarCell(final TermVariable arrayInstance, final List<Term> index) {
 		if (ModifiableTransFormulaUtils.isInVar(arrayInstance, mTransFormula)) {

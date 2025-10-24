@@ -26,7 +26,6 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb;
 
 import java.util.Collections;
@@ -39,41 +38,39 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 /**
  * @author Yong Li (liyong@ios.ac.cn)
- * */
+ */
 
 public class StateWA<LETTER, STATE> extends StateWa {
 
-	private WaToBuchiWrapper<LETTER, STATE> mBuchi;
-	
-	private Set<Integer> mEnabledLetters;
-	
-	public StateWA(WaToBuchiWrapper<LETTER, STATE> buchi, int id) {
+	private final WaToBuchiWrapper<LETTER, STATE> mBuchi;
+
+	private final Set<Integer> mEnabledLetters;
+
+	public StateWA(final WaToBuchiWrapper<LETTER, STATE> buchi, final int id) {
 		super(id);
-		this.mBuchi = buchi;
-		this.mEnabledLetters = new HashSet<>();
+		mBuchi = buchi;
+		mEnabledLetters = new HashSet<>();
 	}
-	
+
 	@Override
 	public Set<Integer> getEnabledLetters() {
 		return Collections.unmodifiableSet(mEnabledLetters);
 	}
-	
+
 	// support on-the-fly exploration
 	@Override
-	public IntSet getSuccessors(int letter) {
-		if(mEnabledLetters.contains(letter)) {
+	public IntSet getSuccessors(final int letter) {
+		if (mEnabledLetters.contains(letter)) {
 			return super.getSuccessors(letter);
-		}else {
+		} else {
 			mEnabledLetters.add(letter);
-			IntSet succs = mBuchi.computeSuccessors(getId(), letter);
-			IntIterator iter = succs.iterator();
-			while(iter.hasNext()) {
+			final IntSet succs = mBuchi.computeSuccessors(getId(), letter);
+			final IntIterator iter = succs.iterator();
+			while (iter.hasNext()) {
 				super.addSuccessor(letter, iter.next());
 			}
 			return succs;
 		}
 	}
-	
-	
 
 }

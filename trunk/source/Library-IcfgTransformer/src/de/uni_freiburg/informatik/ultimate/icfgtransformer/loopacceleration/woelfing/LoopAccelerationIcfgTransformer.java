@@ -126,9 +126,8 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	 */
 	public LoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IcfgTransformationBacktranslator backtranslationTracker,
-			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final IUltimateServiceProvider services) {
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final String newIcfgIdentifier, final IUltimateServiceProvider services) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
 
@@ -240,9 +239,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final INLOC oldSource = (INLOC) oldTransition.getSource();
 		final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);
 		final UnmodifiableTransFormula loopTf = getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(oldSource));
-		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true,
-				true, false, SimplificationTechnique.SIMPLIFY_DDA,
-				Arrays.asList(loopTf, oldTransition.getTransformula()));
+		final UnmodifiableTransFormula tf =
+				TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false,
+						SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopTf, oldTransition.getTransformula()));
 		assert oldTransition instanceof IIcfgInternalTransition;
 		// When the iterated symbolic memory cannot represent the values of all variables or when there
 		// are multiple backbones the calculated loop transformula might be an overapproximation.
@@ -412,8 +411,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			}
 
 			final TransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true,
-					false, SimplificationTechnique.SIMPLIFY_DDA,
-					transFormulas);
+					false, SimplificationTechnique.SIMPLIFY_DDA, transFormulas);
 			mBackboneTransformulas.put(backbone, tf);
 
 			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, tf, overapproximation);
@@ -485,7 +483,8 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			term = mScript.getScript().quantifier(Script.FORALL, new TermVariable[] { loopIterators.get(i) }, term);
 			final Term term1 = term;
 
-			term = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term1);
+			term = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+					SimplificationTechnique.SIMPLIFY_DDA, term1);
 			terms[i] = term;
 		}
 
@@ -499,7 +498,8 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		resultTerm = SmtUtils.and(mScript.getScript(), resultTerm, iteratedSymbolicMemory.toTerm());
 		final Term term = resultTerm;
 
-		resultTerm = PartialQuantifierElimination.eliminateCompat(mServices, mScript, SimplificationTechnique.SIMPLIFY_DDA, term);
+		resultTerm = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+				SimplificationTechnique.SIMPLIFY_DDA, term);
 
 		final TransFormulaBuilder builder = new TransFormulaBuilder(iteratedSymbolicMemory.getInVars(),
 				iteratedSymbolicMemory.getOutVars(), true, null, true, null, false);

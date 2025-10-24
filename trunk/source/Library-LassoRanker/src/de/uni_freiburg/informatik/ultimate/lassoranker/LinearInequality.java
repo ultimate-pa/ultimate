@@ -366,7 +366,7 @@ public class LinearInequality implements Serializable {
 	 * for ints
 	 *     a ≥ b --> b ≥ a + 1 (resp. t ≥ 0 ~~> -t-1 ≥ 0)
 	 * </pre>
-	 * 
+	 *
 	 */
 	public void negate() {
 		mult(Rational.MONE);

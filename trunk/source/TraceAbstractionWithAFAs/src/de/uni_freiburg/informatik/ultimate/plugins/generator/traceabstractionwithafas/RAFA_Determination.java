@@ -55,9 +55,8 @@ public class RAFA_Determination<LETTER> extends GeneralOperation<LETTER, IPredic
 		mAlternatingAutomaton = alternatingAutomaton;
 		mCsToolkit = csToolkit;
 		mPredicateUnifier = predicateUnifier;
-		mResultAutomaton = new NestedWordAutomaton<>(services,
-				new VpAlphabet<>(alternatingAutomaton.getAlphabet()),
-				stateFactory);
+		mResultAutomaton =
+				new NestedWordAutomaton<>(services, new VpAlphabet<>(alternatingAutomaton.getAlphabet()), stateFactory);
 		final LinkedList<BitSet> newStates = new LinkedList<>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		mResultAutomaton.addState(true,

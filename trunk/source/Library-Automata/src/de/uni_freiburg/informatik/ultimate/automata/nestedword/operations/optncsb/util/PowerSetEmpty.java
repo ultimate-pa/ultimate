@@ -31,9 +31,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import java.util.Iterator;
 
 class PowerSetEmpty implements Iterator<IntSet> {
-	
+
 	private boolean mHasNext;
-	
+
 	public PowerSetEmpty() {
 		mHasNext = true;
 	}

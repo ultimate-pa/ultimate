@@ -41,12 +41,13 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.synthesis;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public abstract class Template {	
+public abstract class Template {
 	protected Term mTerm;
 	protected Script mScript;
+
 	public Term getTerm() {
 		return mTerm;
 	}
-	//public abstract getTerm();
-	
+	// public abstract getTerm();
+
 }

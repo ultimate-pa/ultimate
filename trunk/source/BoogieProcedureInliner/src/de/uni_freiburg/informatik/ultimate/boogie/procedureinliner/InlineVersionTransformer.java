@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -856,7 +857,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private List<Statement> inlineCall(final CallStatement call, final VariableLHS[] processedCallLHS,
 			final CallGraphNode calleeNode) throws CancelToolchainException {
 
-		mInlinedOldVarStack.push(new HashSet<IdExprWrapper>());
+		mInlinedOldVarStack.push(new HashSet<>());
 
 		final String procId = calleeNode.getId();
 		assert procId.equals(call.getMethodName());
@@ -956,7 +957,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			inlinedBody.addAll(flattenStatements(block));
 
 			// insert end label (ReturnStatements are inlined as jumps to this label)
-			final Label returnLabel = new Label(proc.getLocation(), getCurrentReturnLabelId());
+			final Label returnLabel = BoogieUtils.constuctAuxiliaryLabel(proc.getLocation(), getCurrentReturnLabelId());
 			addBacktranslation(returnLabel, null);
 			inlinedBody.add(returnLabel);
 
@@ -1091,7 +1092,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		Statement newStat = null;
 		if (stat instanceof Label) {
 			final Label label = (Label) stat;
-			newStat = new Label(label.getLocation(), getNewLabelId(label.getName()));
+			newStat = new Label(label.getLocation(), getNewLabelId(label.getName()), label.getAttributes());
 		} else if (stat instanceof GotoStatement) {
 			final GotoStatement gotoStat = (GotoStatement) stat;
 			final String[] labelIds = gotoStat.getLabels();
@@ -1120,27 +1121,21 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 
 	@Override
 	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-		LeftHandSide newLhs = null;
-		if (lhs instanceof VariableLHS) {
-			final VariableLHS varLhs = (VariableLHS) lhs;
+		final LeftHandSide newLhs = switch (lhs) {
+		case final VariableLHS varLhs:
 			final DeclarationInformation declInfo = varLhs.getDeclarationInformation();
-			final VarMapValue mapping = mVarMap
-					.get(new VarMapKey(varLhs.getIdentifier(), declInfo, isGobalInOldExprOfProc(declInfo)));
-			final String newId = mapping.getVarId();
+			final VarMapValue mapping =
+					mVarMap.get(new VarMapKey(varLhs.getIdentifier(), declInfo, isGobalInOldExprOfProc(declInfo)));
 			final DeclarationInformation newDeclInfo = mapping.getDeclInfo();
-			newLhs = new VariableLHS(varLhs.getLocation(), varLhs.getType(), newId, newDeclInfo);
-		} else if (lhs instanceof StructLHS) {
-			final StructLHS structLhs = (StructLHS) lhs;
+			yield new VariableLHS(varLhs.getLocation(), varLhs.getType(), mapping.getVarId(), newDeclInfo);
+		case final StructLHS structLhs:
 			final LeftHandSide newStructStruct = processLeftHandSide(structLhs.getStruct());
-			newLhs = new StructLHS(structLhs.getLocation(), newStructStruct, structLhs.getField());
-		} else if (lhs instanceof ArrayLHS) {
-			final ArrayLHS arrayLhs = (ArrayLHS) lhs;
+			yield new StructLHS(structLhs.getLocation(), newStructStruct, structLhs.getField());
+		case final ArrayLHS arrayLhs:
 			final LeftHandSide newArray = processLeftHandSide(arrayLhs.getArray());
 			final Expression[] newIndices = processExpressions(arrayLhs.getIndices());
-			newLhs = new ArrayLHS(lhs.getLocation(), arrayLhs.getType(), newArray, newIndices);
-		} else {
-			throw new UnsupportedOperationException("Cannot process unknown LHS: " + lhs.getClass().getName());
-		}
+			yield new ArrayLHS(lhs.getLocation(), arrayLhs.getType(), newArray, newIndices);
+		};
 		ModelUtils.copyAnnotations(lhs, newLhs);
 		return newLhs;
 	}
@@ -1331,10 +1326,11 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Creates the last argument for the constructor of VarMapKey.
 	 *
-	 * @param declInfo {@link DeclarationInformation} of the identifier
+	 * @param declInfo
+	 *            {@link DeclarationInformation} of the identifier
 	 *
-	 * @return Current procedure identifier, if processing takes place inside an
-	 *         inlined old() expression, {@code null} otherwise.
+	 * @return Current procedure identifier, if processing takes place inside an inlined old() expression, {@code null}
+	 *         otherwise.
 	 */
 	private String isGobalInOldExprOfProc(final DeclarationInformation declInfo) {
 		if (declInfo.getStorageClass() == StorageClass.GLOBAL && inInlinedOldExpr()) {

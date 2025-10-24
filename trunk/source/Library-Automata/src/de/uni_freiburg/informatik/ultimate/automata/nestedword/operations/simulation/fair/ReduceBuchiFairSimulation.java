@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Operation that reduces a given buechi automaton by using {@link FairSimulation}.<br/>
  * Once constructed the reduction automatically starts, the result can be get by using {@link #getResult()}.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of buechi automaton
@@ -88,7 +88,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -107,7 +107,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -128,7 +128,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -154,7 +154,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -189,7 +189,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 * Creates a new buechi reduce object that starts reducing the given buechi automaton using a given fair
 	 * simulation.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -258,7 +258,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 
 	/**
 	 * Gets the logger used by the Ultimate framework.
-	 * 
+	 *
 	 * @return The logger used by the Ultimate framework.
 	 */
 	protected ILogger getLogger() {
@@ -267,7 +267,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 
 	/**
 	 * Gets the inputed automaton.
-	 * 
+	 *
 	 * @return The inputed automaton.
 	 */
 	@Override
@@ -277,7 +277,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 
 	/**
 	 * Gets the service provider of the Ultimate framework.
-	 * 
+	 *
 	 * @return The service provider of the Ultimate framework.
 	 */
 	protected AutomataLibraryServices getServices() {
@@ -288,7 +288,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 * Checks the operation deeply by using a given instance and comparing results of all stages to an instance with no
 	 * SCC optimization if used SCC optimization and vice versa. Also checks the language equivalence of the results
 	 * from both instances.
-	 * 
+	 *
 	 * @param operation
 	 *            Operation instance for reference
 	 * @param logNoErrorDebug
@@ -356,7 +356,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		final int globalInfinity = simNoSCCGraph.getGlobalInfinity();
 
 		// Compare size
-		if (simSCCVertices.size() != simSCCVertices.size()) {
+		if (simSCCVertices.size() != simNoSCCVertices.size()) {
 			logMessage("SimSCC and SimNoSCC have different size: " + simSCCVertices.size() + " & "
 					+ simNoSCCVertices.size(), logger);
 			errorOccurred = true;
@@ -448,7 +448,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Logs a given message to the debugging channel of a given logger or to {@link System#out} if logger is
 	 * <tt>null</tt>.
-	 * 
+	 *
 	 * @param message
 	 *            Message to log
 	 * @param logger
@@ -466,7 +466,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 
 	/**
 	 * Demo usage of fair simulation in general. Also used for debugging purpose.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws AutomataOperationCanceledException
@@ -484,7 +484,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		alphabet.add("a");
 		alphabet.add("b");
 		INestedWordAutomaton<String, String> buechi;
-//				= new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, null, null, snf);
+		// = new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, null, null, snf);
 
 		// Big example from Matthias cardboard
 		// buechi.addState(true, false, "q0");
@@ -614,7 +614,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 			boolean errorOccurred = false;
 			/*
 			 * TODO Christian 2017-01-28: There is a NullPointerException because the services object has no "progress
-			 *      aware timer".
+			 * aware timer".
 			 */
 			errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
 			// try {

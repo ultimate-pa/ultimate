@@ -78,11 +78,11 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 
 	@Override
 	public String toString() {
-		String result = super.mSerialNumber + "#";
+		final StringBuilder result = new StringBuilder().append(super.mSerialNumber).append("#");
 		if (mProgramPoints != null) {
-			result += Arrays.toString(mProgramPoints);
+			result.append(Arrays.toString(mProgramPoints));
 		}
-		result += mFormula.toString();
-		return result;
+		result.append(mFormula.toString());
+		return result.toString();
 	}
 }

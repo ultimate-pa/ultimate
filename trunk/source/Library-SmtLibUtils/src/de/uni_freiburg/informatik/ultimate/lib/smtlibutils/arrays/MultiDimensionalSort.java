@@ -27,28 +27,25 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Data structure for a (possibly) nested array sort.
- * In the array theory of SMT-LIB the Array sort has only two parameters one
- * for the index and one for the value.
- * We model multidimensional arrays by nesting arrays. E.g. an array with two
- * integer indices and real values has the following Sort.
- * (Array Int -> (Array Int -> Real))
+ * Data structure for a (possibly) nested array sort. In the array theory of SMT-LIB the Array sort has only two
+ * parameters one for the index and one for the value. We model multidimensional arrays by nesting arrays. E.g. an array
+ * with two integer indices and real values has the following Sort. (Array Int -> (Array Int -> Real))
  *
- * This is data structure is a wrapper for such a nested array sort which
- * allows you to directly access the sort of the array values and, the sort of
- * the indices.
- * This data structure allows also multidimensional arrays of dimension 0. In
+ * This is data structure is a wrapper for such a nested array sort which allows you to directly access the sort of the
+ * array values and, the sort of the indices. This data structure allows also multidimensional arrays of dimension 0. In
  * this case, mIndex is empty.
+ *
  * @author Matthias Heizmann
  */
 
 public class MultiDimensionalSort {
-	private final ArrayList<Sort> mIndexSorts = new ArrayList<Sort>();
+	private final ArrayList<Sort> mIndexSorts = new ArrayList<>();
 	private final Sort mArrayValueSort;
 
 	public MultiDimensionalSort(Sort sort) {
@@ -74,26 +71,19 @@ public class MultiDimensionalSort {
 	}
 
 	/**
-	 * Given an multidimensional innerArray that can be accessed via a
-	 * (partial) index form an outerArray, check if the dimensions are
-	 * consistent.
+	 * Given an multidimensional innerArray that can be accessed via a (partial) index form an outerArray, check if the
+	 * dimensions are consistent.
 	 */
-	public static boolean areDimensionsConsistent(final Term outerArray,
-			final ArrayIndex index, final Term innerArray) {
-		final int dimensionInnerArray = (new MultiDimensionalSort(
-				innerArray.getSort())).getDimension();
-		final int dimensionOuterArray = (new MultiDimensionalSort(
-				outerArray.getSort())).getDimension();
+	public static boolean areDimensionsConsistent(final Term outerArray, final ArrayIndex index,
+			final Term innerArray) {
+		final int dimensionInnerArray = (new MultiDimensionalSort(innerArray.getSort())).getDimension();
+		final int dimensionOuterArray = (new MultiDimensionalSort(outerArray.getSort())).getDimension();
 		return (index.size() == dimensionOuterArray - dimensionInnerArray);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mArrayValueSort == null) ? 0 : mArrayValueSort.hashCode());
-		result = prime * result + ((mIndexSorts == null) ? 0 : mIndexSorts.hashCode());
-		return result;
+		return Objects.hash(mArrayValueSort, mIndexSorts);
 	}
 
 	@Override
@@ -108,22 +98,7 @@ public class MultiDimensionalSort {
 			return false;
 		}
 		final MultiDimensionalSort other = (MultiDimensionalSort) obj;
-		if (mArrayValueSort == null) {
-			if (other.mArrayValueSort != null) {
-				return false;
-			}
-		} else if (!mArrayValueSort.equals(other.mArrayValueSort)) {
-			return false;
-		}
-		if (mIndexSorts == null) {
-			if (other.mIndexSorts != null) {
-				return false;
-			}
-		} else if (!mIndexSorts.equals(other.mIndexSorts)) {
-			return false;
-		}
-		return true;
+		return Objects.equals(mArrayValueSort, other.mArrayValueSort) && Objects.equals(mIndexSorts, other.mIndexSorts);
 	}
-
 
 }

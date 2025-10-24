@@ -30,8 +30,7 @@ import java.util.function.BinaryOperator;
 
 public enum VPStatistics {
 	MAX_WEQGRAPH_SIZE, MAX_SIZEOF_WEQEDGELABEL, NO_SUPPORTING_EQUALITIES, NO_SUPPORTING_DISEQUALITIES, NO_DISJUNCTIONS,
-	 MAX_NO_DISJUNCTIONS;
-
+	MAX_NO_DISJUNCTIONS;
 
 	public static BinaryOperator<Integer> getAggregator(final VPStatistics vps) {
 		switch (vps) {
@@ -43,7 +42,7 @@ public enum VPStatistics {
 		case NO_SUPPORTING_DISEQUALITIES:
 		case NO_DISJUNCTIONS:
 			return (i1, i2) -> i1 + i2;
-		default :
+		default:
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -58,7 +57,7 @@ public enum VPStatistics {
 		case NO_SUPPORTING_DISEQUALITIES:
 		case NO_DISJUNCTIONS:
 			return 0;
-		default :
+		default:
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -79,7 +78,7 @@ public enum VPStatistics {
 		case NO_SUPPORTING_DISEQUALITIES:
 		case NO_DISJUNCTIONS:
 			return -2;
-		default :
+		default:
 			throw new UnsupportedOperationException();
 		}
 	}

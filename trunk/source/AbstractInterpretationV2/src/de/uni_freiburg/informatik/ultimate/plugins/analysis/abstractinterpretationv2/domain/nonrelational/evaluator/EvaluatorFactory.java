@@ -141,6 +141,6 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 
 	@FunctionalInterface
 	public interface Function<NAMETYPE, VALUETYPE> {
-		public VALUETYPE apply(final NAMETYPE name, final Class<?> type);
+		VALUETYPE apply(final NAMETYPE name, final Class<?> type);
 	}
 }

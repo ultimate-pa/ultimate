@@ -34,11 +34,11 @@ class OctagonSubstitutionTerm {
 	private final boolean mNegativeVar;
 	private final Object mValue;
 
-	protected OctagonSubstitutionTerm(Object value) {
+	protected OctagonSubstitutionTerm(final Object value) {
 		this(value, null, true);
 	}
 
-	protected OctagonSubstitutionTerm(Object value, TermVariable var, boolean negative) {
+	protected OctagonSubstitutionTerm(final Object value, final TermVariable var, final boolean negative) {
 		mValue = value;
 		mVar = var;
 		mNegativeVar = negative;

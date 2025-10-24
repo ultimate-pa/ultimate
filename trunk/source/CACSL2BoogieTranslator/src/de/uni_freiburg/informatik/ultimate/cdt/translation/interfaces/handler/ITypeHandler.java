@@ -35,6 +35,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author Stefan Wissert
  * @date 07.02.2012
  */
-public interface ITypeHandler extends IHandler {
+public interface ITypeHandler {
 
 	/**
 	 * Translates an IASTSimpleDeclSpecifier. Basically treats all the build in types of C
@@ -146,7 +147,7 @@ public interface ITypeHandler extends IHandler {
 	 * @param cType
 	 * @return
 	 */
-	ASTType cType2AstType(ILocation loc, CType cType);
+	ASTType cType2AstType(ILocation loc, ICType cType);
 
 	/**
 	 * Begin a scope for all Scoped Maps and Sets. (Types are scoped, too..)
@@ -170,7 +171,7 @@ public interface ITypeHandler extends IHandler {
 
 	BoogieType getBoogieTypeForPointerComponents();
 
-	BoogieType getBoogieTypeForCType(CType resultType);
+	BoogieType getBoogieTypeForCType(ICType resultType);
 
 	CPrimitive getThreadIdType();
 
@@ -185,4 +186,6 @@ public interface ITypeHandler extends IHandler {
 	boolean areFloatingTypesNeeded();
 
 	void registerNamedIncompleteType(String incompleteType, String named);
+
+	void addLibraryTypes(Map<String, ICType> libraryTypes);
 }

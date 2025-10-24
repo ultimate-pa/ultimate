@@ -46,9 +46,8 @@ public class HoareTripleCheckerCache {
 	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mInternalCache = new NestedMap3<>();
 	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mCallCache = new NestedMap3<>();
 	/**
-	 * The second component is the hierarchical predecessor, the third component is
-	 * the linear predecessor. We presume that this order is better because we
-	 * typically have fewer hierarchical predecessors than linear predecessors.
+	 * The second component is the hierarchical predecessor, the third component is the linear predecessor. We presume
+	 * that this order is better because we typically have fewer hierarchical predecessors than linear predecessors.
 	 */
 	private final NestedMap4<IAction, IPredicate, IPredicate, IPredicate, Validity> mReturnCache = new NestedMap4<>();
 
@@ -166,7 +165,5 @@ public class HoareTripleCheckerCache {
 	public NestedMap4<IAction, IPredicate, IPredicate, IPredicate, Validity> getReturnCache() {
 		return mReturnCache;
 	}
-
-
 
 }

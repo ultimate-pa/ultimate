@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -105,7 +105,7 @@ class LassoExtractor<LETTER, STATE> {
 
 	/**
 	 * Finds loops.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	class LoopFinder extends RunFinder {
@@ -178,7 +178,7 @@ class LassoExtractor<LETTER, STATE> {
 
 	/**
 	 * Information about successor.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	class SuccInfo {
@@ -320,7 +320,7 @@ class LassoExtractor<LETTER, STATE> {
 
 	/**
 	 * Finds a run.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	abstract class RunFinder {
@@ -338,25 +338,25 @@ class LassoExtractor<LETTER, STATE> {
 		 * need mSuccessorsNoGuarantee for the remainder of the run. If there is no requirement all successor
 		 * informations are in these Maps.
 		 */
-		//	protected final List<Map<STATE, Object>> mSuccessorsWithGuarantee;
+		// protected final List<Map<STATE, Object>> mSuccessorsWithGuarantee;
 
 		/**
 		 * States that have already been visited (without start state) from which there is a run to the start state (of
 		 * this search) such the equirement (e.g., final state visited) is fulfilled.
 		 */
-		//	protected final Set<STATE> mVisitedWithGuarantee;
+		// protected final Set<STATE> mVisitedWithGuarantee;
 
 		/**
 		 * Successor mapping. I you use this to build a run, it is not guaranteed that the requirement (e.g., final
 		 * state visited) is fulfilled.
 		 */
-		//	protected final List<Map<STATE, Object>> mSuccessorsNoGuarantee;
+		// protected final List<Map<STATE, Object>> mSuccessorsNoGuarantee;
 
 		/**
 		 * States that have already been visited (without start state) from which there is a run to the start state (of
 		 * this search) it is not guaranteed that the requirement (e.g., final state visited) is fulfilled.
 		 */
-		//	protected final Set<STATE> mVisitedNoGuarantee;
+		// protected final Set<STATE> mVisitedNoGuarantee;
 
 		protected final List<Map<StateContainer<LETTER, STATE>, SuccInfo>> mSuccessorsWithSummary;
 		protected final List<Map<StateContainer<LETTER, STATE>, SuccInfo>> mSuccessorsWithoutSummary;
@@ -428,14 +428,14 @@ class LassoExtractor<LETTER, STATE> {
 		}
 
 		private void find(final StateContainer<LETTER, STATE> start) {
-			mSuccessorsWithoutSummary.add(new HashMap<StateContainer<LETTER, STATE>, SuccInfo>());
-			mSuccessorsWithSummary.add(new HashMap<StateContainer<LETTER, STATE>, SuccInfo>());
+			mSuccessorsWithoutSummary.add(new HashMap<>());
+			mSuccessorsWithSummary.add(new HashMap<>());
 			findPredecessors(start, !mVisitAccepting || getNwars().isFinal(start.getState()), false);
 			while (continueSearch()) {
 				assert mIteration <= getMaximalIterationNumber() : "too many iterations";
 				mIteration++;
-				mSuccessorsWithoutSummary.add(new HashMap<StateContainer<LETTER, STATE>, SuccInfo>());
-				mSuccessorsWithSummary.add(new HashMap<StateContainer<LETTER, STATE>, SuccInfo>());
+				mSuccessorsWithoutSummary.add(new HashMap<>());
+				mSuccessorsWithSummary.add(new HashMap<>());
 				if (!mFoundWithSummary) {
 					for (final StateContainer<LETTER, STATE> stateContainer : mSuccessorsWithSummary.get(mIteration - 1)
 							.keySet()) {
@@ -469,7 +469,7 @@ class LassoExtractor<LETTER, STATE> {
 		/**
 		 * Add for a predecessor predSc information about successors to succMap. If there is already a successor
 		 * information that is as good as this (requirement already fulfilled) nothing is added.
-		 * 
+		 *
 		 * @param type
 		 *            call, internal, or summary
 		 * @param linPred
@@ -500,7 +500,6 @@ class LassoExtractor<LETTER, STATE> {
 			}
 			if (!current.goalFound() && newSuccInfo.goalFound()) {
 				succMap.put(predSc, newSuccInfo);
-				return;
 			}
 		}
 
@@ -568,7 +567,7 @@ class LassoExtractor<LETTER, STATE> {
 
 		/**
 		 * Construct the run that has been found.
-		 * 
+		 *
 		 * @return nested run
 		 */
 		private NestedRun<LETTER, STATE> constructRun(final int iteration, final boolean foundWithSummary) {
@@ -605,8 +604,7 @@ class LassoExtractor<LETTER, STATE> {
 					} else {
 						findAcceptingSummary = false;
 					}
-					final Set<SuccInfo> forbiddenSummaries = new HashSet<>();
-					forbiddenSummaries.addAll(mForbiddenSummaries);
+					final Set<SuccInfo> forbiddenSummaries = new HashSet<>(mForbiddenSummaries);
 					assert !forbiddenSummaries.contains(succs);
 					forbiddenSummaries.add(succs);
 					final SummaryFinder summaryFinder = new SummaryFinder(succs.getLinPred(), currentState,
@@ -629,7 +627,7 @@ class LassoExtractor<LETTER, STATE> {
 
 	/**
 	 * Finds a summary.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	class SummaryFinder extends RunFinder {

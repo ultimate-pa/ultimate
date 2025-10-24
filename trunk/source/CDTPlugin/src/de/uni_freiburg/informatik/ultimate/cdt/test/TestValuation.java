@@ -58,8 +58,8 @@ public class TestValuation implements IValuation {
 			break;
 		case 1:
 			internalMap.put("names", new SimpleEntry<>(
-			        BoogieType.createArrayType(3, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
-			        Arrays.asList("Stefan", "Alex", "Markus")));
+					BoogieType.createArrayType(3, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
+					Arrays.asList("Stefan", "Alex", "Markus")));
 			break;
 		default:
 			internalMap.put("x", new SimpleEntry<>(BoogieType.TYPE_INT, Arrays.asList("11")));
