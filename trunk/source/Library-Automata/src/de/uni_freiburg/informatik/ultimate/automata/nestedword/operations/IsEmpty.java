@@ -311,7 +311,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			mLogger.info(startMessage());
 		}
 
-		if(initializeOnly) {
+		if (initializeOnly) {
 			mAcceptingRun = null;
 		} else {
 			mAcceptingRun = getAcceptingRun();

@@ -589,17 +589,13 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			final IsEmptyHeuristic<LETTER, STATE> runsearch;
 			if (mGoalStates != null) {
 				final Predicate<STATE> funIsForbiddenState = a -> false;
-				final Predicate<STATE> asd = a -> mGoalStates.contains(a);
+				final Predicate<STATE> goals = a -> mGoalStates.contains(a);
 				final Set<STATE> startset = new HashSet<>(mStartStates);
-				runsearch =
-						new IsEmptyHeuristic<>(mServices, mOperand, startset, funIsForbiddenState, asd,
-								IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0),
-								new ArrayList<>(mCurrentPrefix));
+				runsearch = new IsEmptyHeuristic<>(mServices, mOperand, startset, funIsForbiddenState, goals,
+						IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
 			} else {
-				runsearch =
-						new IsEmptyHeuristic<>(mServices, mOperand,
-								IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0),
-								new ArrayList<>(mCurrentPrefix));
+				runsearch = new IsEmptyHeuristic<>(mServices, mOperand,
+						IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
 			}
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();
 			if (run == null) {
@@ -642,9 +638,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				addToCurrentPrefix(succ, symbol);
 				if (startpq.isCall()) {
 					markCallVisited(newState, newStateK);
-					runToGoal =
-							constructRunFromStateToNextBranch(positionOfThisSubSearch,
-									new DoubleDecker<>(newState, succ), startpq.getCounterexamplesUnderConsideration());
+					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
+							new DoubleDecker<>(newState, succ), startpq.getCounterexamplesUnderConsideration());
 
 					unmarkCall(newState, newStateK);
 
@@ -653,16 +648,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 					// newStateK is the stateKK
 					unmarkCall(stateK, newStateK);
 					addSummary(newStateK, succ, newState, symbol);
-					runToGoal =
-							constructRunFromStateToNextBranch(positionOfThisSubSearch,
-									new DoubleDecker<>(newStateK, succ),
-									startpq.getCounterexamplesUnderConsideration());
+					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
+							new DoubleDecker<>(newStateK, succ), startpq.getCounterexamplesUnderConsideration());
 					markCallVisited(stateK, newStateK);
 				} else {
-					runToGoal =
-							constructRunFromStateToNextBranch(positionOfThisSubSearch,
-									new DoubleDecker<>(newStateK, succ),
-									startpq.getCounterexamplesUnderConsideration());
+					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
+							new DoubleDecker<>(newStateK, succ), startpq.getCounterexamplesUnderConsideration());
 				}
 				removeFromCurrentPrefix(succ, symbol);
 				if (runToGoal != null) {
@@ -694,9 +685,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		while (!pqStart.isEmpty()) {
 			final PQState startpq = pqStart.poll();
 			final STATE start = startpq.getSucc();
-			final NestedRun<LETTER, STATE> runToGoal =
-					constructRunFromStateToNextBranch(0, new DoubleDecker<>(mDummyEmptyStackState, start),
-							startpq.getCounterexamplesUnderConsideration());
+			final NestedRun<LETTER, STATE> runToGoal = constructRunFromStateToNextBranch(0,
+					new DoubleDecker<>(mDummyEmptyStackState, start), startpq.getCounterexamplesUnderConsideration());
 
 			if (runToGoal != null) {
 				for (final Integer cexHash : set) {
