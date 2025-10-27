@@ -215,9 +215,10 @@ public final class TAPreferences {
 		mMinimizeAbstractionPerWorker =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
 		mLoopBoundForNoInterpolationWorker =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_QUICK_CHECK_LOOP_BOUND);
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NOINTERPOLATION_WORKER_LOOP_BOUND);
 		mSearchLoopBound = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEARCH_LOOP_BOUND);
-		mUseNoInterpolationWorker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_QUICK_CHECK);
+		mUseNoInterpolationWorker =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_NOINTERPOLATION_WORKER);
 	}
 
 	/**
