@@ -788,7 +788,4 @@ public class Boogie2SmtSymbolTable
 		return map.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream()).map(a -> fun.apply(a.getValue()));
 	}
 
-	public Map<TermVariable, IProgramVar> getSmtVar2ProgramVarMap() {
-		return mSmtVar2ProgramVar;
-	}
 }

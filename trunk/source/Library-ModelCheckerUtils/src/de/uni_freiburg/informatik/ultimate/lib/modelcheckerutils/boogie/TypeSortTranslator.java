@@ -64,7 +64,7 @@ public class TypeSortTranslator {
 	private final Map<Sort, IBoogieType> mSort2Type = new HashMap<>();
 	private final Map<String, Map<String, Expression[]>> mType2Attributes;
 	private final IUltimateServiceProvider mServices;
-	private ManagedScript mCfgScriptFromWorker;
+	private ManagedScript mCfgScriptFromWorker = null;
 
 	public TypeSortTranslator(final Collection<TypeDeclaration> declarations, final Script script,
 			final IUltimateServiceProvider services) {
@@ -125,9 +125,9 @@ public class TypeSortTranslator {
 	}
 
 	public IBoogieType getType(Sort sort) {
-		if(mCfgScriptFromWorker != null) {
-			TermTransferrer tf = new TermTransferrer(mCfgScriptFromWorker.getScript(), mScript);
-			sort = tf.transferSort(sort);			
+		if (mCfgScriptFromWorker != null) {
+			final TermTransferrer tf = new TermTransferrer(mCfgScriptFromWorker.getScript(), mScript);
+			sort = tf.transferSort(sort);
 		}
 		IBoogieType type = mSort2Type.get(sort);
 		if (type == null) {
@@ -280,7 +280,8 @@ public class TypeSortTranslator {
 		mSort2Type.put(result, boogieType);
 	}
 
-	public void setCfgScriptFromWorker(ManagedScript cfgScriptFromWorker) {
+	// called by @RCFGBacktranslator used to translate the sort form the worker cfg script to the main cfg script
+	public void setCfgScriptFromWorker(final ManagedScript cfgScriptFromWorker) {
 		mCfgScriptFromWorker = cfgScriptFromWorker;
 	}
 
