@@ -451,7 +451,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		mLogger.info("Main: Refinement done.");
 		// Used to wake up the @CegarNWAContiuesIndependentWorkerThread.java
-		refinementLock.notifyAll();
+		synchronized (ParallelNwaCegarLoop.refinementLock) {
+			refinementLock.notifyAll();
+		}
 	}
 
 	/*

@@ -185,7 +185,9 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 				mLogger.info(mFoundFeasiblePaths);
 				mLogger.info("SAT-Worker Going to sleep!!!");
 				// wake up, if abstraction was refined, maybe there are new cex beyond the loop bound to explore
-				ParallelNwaCegarLoop.refinementLock.wait();
+				synchronized (ParallelNwaCegarLoop.refinementLock) {
+					ParallelNwaCegarLoop.refinementLock.wait();
+				}
 				mAbstraction = mMainThread.getAbstraction();
 				mLogger.info("SAT-Worker wakes up and searches for new Cex.");
 				mCounterexample = searchForErrorTrace();
