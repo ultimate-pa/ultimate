@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineConcurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.ThreadModularAbsintPrefs;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
@@ -131,7 +132,11 @@ public final class AbstractInterpreter {
 	}
 
 	private static ThreadModularAbsintPrefs getThreadModPrefs(final IPreferenceProvider prefs) {
-		final var locationAbstraction = prefs.getString(AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION);
+		final LocationAbstractionType locationAbstraction = prefs.getEnum(
+		        AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION,
+		        LocationAbstractionType.SINGLETON,
+		        LocationAbstractionType.class
+		);
 		final var maxStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAXIMUM_PARALLEL_STATES_CONC);
 		final var maxItf = prefs.getInt(AbsIntPrefInitializer.LABEL_MAXIMUM_ITF_RECURSION_DEPTH);
 		return new ThreadModularAbsintPrefs(locationAbstraction, maxStates, maxItf);

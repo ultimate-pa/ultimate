@@ -35,7 +35,7 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 	private final int mMaxParallelStates;
 	private int mIteration = 0;
 
-	private final String mLocationAbstractionType;
+	private final LocationAbstractionType mLocationAbstractionType;
 	private final Map<String, ? extends LOC> mEntryLocs;
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
 	private final IAbstractStateStorage<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage;

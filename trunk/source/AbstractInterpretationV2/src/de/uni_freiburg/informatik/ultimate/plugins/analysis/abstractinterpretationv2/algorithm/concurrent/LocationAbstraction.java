@@ -15,25 +15,18 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 	public LocationAbstraction() {
 	}
 
-	public StaticAbstractLocationMap<LOC> computeLocationAbstraction(final String locationAbstraction,
+	StaticAbstractLocationMap<LOC> computeLocationAbstraction(final LocationAbstractionType type,
 			final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
-		// TODO: enum for setting strings
-		// TODO: parametrize countervalues
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
-		final StaticAbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
-		case "Singleton" -> new StaticAbstractLocationMap<>((l -> 0), icfg);
-		case "Split at Guards" ->
-			mHeuristicLocationAbstraction.entryExitSplitting();
-		case "Split at guards and guard-variable writes" ->
-			mHeuristicLocationAbstraction.allVarOccurencesSplit();
-		case "Split at every location" -> new StaticAbstractLocationMap<>(l -> 
-        mLocId.computeIfAbsent(l, __ -> getAndIncrementThreadLocationCounter(l.getProcedure())), icfg);
-		default -> new StaticAbstractLocationMap<>((l -> 0), icfg);
+		return switch (type) {
+		case SINGLETON -> new StaticAbstractLocationMap<>((l -> 0), icfg);
+		case SPLIT_AT_GUARDS -> mHeuristicLocationAbstraction.entryExitSplitting();
+		case SPLIT_AT_GUARDS_AND_WRITES -> mHeuristicLocationAbstraction.allVarOccurencesSplit();
+		case SPLIT_AT_EVERY_LOCATION -> new StaticAbstractLocationMap<>(
+				l -> mLocId.computeIfAbsent(l, __ -> getAndIncrementThreadLocationCounter(l.getProcedure())), icfg);
 		};
-
-		return absMap;
 	}
-	
+
 	private int getAndIncrementThreadLocationCounter(final String thread) {
 		final int counter = mPerThreadLocationCounterMap.getOrDefault(thread, 0);
 		mPerThreadLocationCounterMap.put(thread, counter + 1);

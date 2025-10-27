@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array.ArrayDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
@@ -79,8 +80,6 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 			VPDomain.class.getSimpleName(), DataflowDomain.class.getSimpleName(),
 			LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
 			PoormanAbstractDomain.class.getSimpleName() };
-
-	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Split at Guards", "Split at guards and guard-variable writes", "Split at every location"};
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
@@ -158,16 +157,14 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		final UltimatePreferenceItemContainer concurrencyContainer = new UltimatePreferenceItemContainer(
 				"Concurrency settings");
 		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_LOCATION_ABSTRACTION,
-				VALUES_LOCATION_ABSTRACTION[0], PreferenceType.Combo, VALUES_LOCATION_ABSTRACTION));
+				LocationAbstractionType.SINGLETON, PreferenceType.Combo, LocationAbstractionType.values()));
 		concurrencyContainer
-		.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_PARALLEL_STATES_CONC, DEF_MAXSTATES_CONC,
-				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
-concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_ITF_RECURSION_DEPTH,
-		DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING, PreferenceType.Integer,
-		new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+				.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_PARALLEL_STATES_CONC, DEF_MAXSTATES_CONC,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_ITF_RECURSION_DEPTH,
+				DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING, PreferenceType.Integer,
+				new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 
-		
-		
 		rtr.add(concurrencyContainer);
 
 		return rtr.toArray(new BaseUltimatePreferenceItem[rtr.size()]);
