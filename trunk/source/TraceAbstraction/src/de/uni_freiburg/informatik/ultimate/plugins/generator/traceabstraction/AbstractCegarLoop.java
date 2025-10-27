@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -115,8 +114,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
-
-	final Set<IPredicate> mNotReachedLongTraceStates = new HashSet<>();
 
 	/**
 	 * Interprocedural control flow graph.

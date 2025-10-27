@@ -171,7 +171,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(
 				new AutomataLibraryServices(mServices), mLogger, mCsToolkit.getManagedScript(), iterationServices,
 				getSolverSettings(iterationServices,
-						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),
+						getIteration() + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),
 				mCsToolkit);
 
 		final CfgSmtToolkit freshToolKit = transferUtils.constructWorkerCfgSmtToolkit();
@@ -243,7 +243,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			abortIfTimeout();
 			boolean abstractionWasRefined = false;
-			mLogger.info(String.format("=== Iteration %s ===", mIteration));
+			mLogger.info(String.format("=== Iteration %s ===", getIteration()));
 
 			try {
 				// we sleep if not: thread or counterexample is available
