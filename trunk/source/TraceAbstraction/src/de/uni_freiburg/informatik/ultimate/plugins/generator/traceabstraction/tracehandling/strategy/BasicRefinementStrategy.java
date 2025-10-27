@@ -177,10 +177,6 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IT
 		return mTraceChecks;
 	}
 
-	public StrategyFactory<L>.StrategyModuleFactory getFactory() {
-		return mFactory;
-	}
-
 	protected IIpgStrategyModule<?, L>[] getInterpolantGeneratorModules() {
 		return mInterpolantGenerators;
 	}
