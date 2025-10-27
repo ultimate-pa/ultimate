@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 
 public class LocationAbstraction<LOC extends IcfgLocation> {
 	private final Map<String, Integer> mPerThreadLocationCounterMap = new HashMap<>();
+	private final Map<LOC, Integer> mLocId = new HashMap<>();
 	private HeuristicLocationAbstraction<LOC> mHeuristicLocationAbstraction;
 
 	public LocationAbstraction() {
@@ -20,14 +21,22 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 		// TODO: parametrize countervalues
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
 		final StaticAbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
-		case "Singleton, Fast Widening", "Singleton, Slow Widening" -> new StaticAbstractLocationMap<>((l -> 0), icfg);
-		case "Low Split, Fast Widening", "Low Split, Slow Widening" ->
+		case "Singleton" -> new StaticAbstractLocationMap<>((l -> 0), icfg);
+		case "Split at Guards" ->
 			mHeuristicLocationAbstraction.entryExitSplitting();
-		case "High Split, Fast Widening", "High Split, Slow Widening" ->
+		case "Split at guards and guard-variable writes" ->
 			mHeuristicLocationAbstraction.allVarOccurencesSplit();
+		case "Split at every location" -> new StaticAbstractLocationMap<>(l -> 
+        mLocId.computeIfAbsent(l, __ -> getAndIncrementThreadLocationCounter(l.getProcedure())), icfg);
 		default -> new StaticAbstractLocationMap<>((l -> 0), icfg);
 		};
 
 		return absMap;
+	}
+	
+	private int getAndIncrementThreadLocationCounter(final String thread) {
+		final int counter = mPerThreadLocationCounterMap.getOrDefault(thread, 0);
+		mPerThreadLocationCounterMap.put(thread, counter + 1);
+		return counter;
 	}
 }

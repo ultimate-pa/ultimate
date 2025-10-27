@@ -80,9 +80,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 			LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
 			PoormanAbstractDomain.class.getSimpleName() };
 
-	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Non-relational Singleton", "Singleton, Fast Widening", "Singleton, Slow Widening",
-			"Low Split, Fast Widening", "Low Split, Slow Widening", "High Split, Fast Widening",
-			"High Split, Slow Widening" };
+	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Split at Guards", "Split at guards and guard-variable writes", "Split at every location"};
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
@@ -101,6 +99,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 	public static final String DEF_ABSTRACT_DOMAIN_FUTURE = VALUES_ABSTRACT_DOMAIN_FUTURE[0];
+	public static final int DEF_MAXSTATES_CONC = 32;
+	public static final int DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING = 16;
 
 	public static final String INDENT = "   ";
 	public static final String DINDENT = INDENT + INDENT;
@@ -159,7 +159,15 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				"Concurrency settings");
 		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_LOCATION_ABSTRACTION,
 				VALUES_LOCATION_ABSTRACTION[0], PreferenceType.Combo, VALUES_LOCATION_ABSTRACTION));
+		concurrencyContainer
+		.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_PARALLEL_STATES_CONC, DEF_MAXSTATES_CONC,
+				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_ITF_RECURSION_DEPTH,
+		DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING, PreferenceType.Integer,
+		new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 
+		
+		
 		rtr.add(concurrencyContainer);
 
 		return rtr.toArray(new BaseUltimatePreferenceItem[rtr.size()]);

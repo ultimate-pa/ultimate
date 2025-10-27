@@ -31,7 +31,7 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 
 	private final ILogger mLogger;
 	private final int mMaxUnwindings;
-	private int mMaxInterferenceFixpointUnwindings;
+	private final int mMaxInterferenceFixpointUnwindings;
 	private final int mMaxParallelStates;
 	private int mIteration = 0;
 
@@ -64,50 +64,14 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 		mUnderlyingDomain = params.getAbstractDomain();
 		mLogger = params.getLogger();
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		mMaxInterferenceFixpointUnwindings = threadModPrefs.maxItf();
-		InterferenceFIxpoint.iterationsReached = 0;
-		InterferenceFIxpoint.nonRelational = false;
 		mCfg = icfg;
 		mLocationAbstractionCalculator = new LocationAbstraction<>();
 		final StaticAbstractLocationMap<LOC> absMap = mLocationAbstractionCalculator
 				.computeLocationAbstraction(threadModPrefs.locationAbstraction(), services, icfg);
 		mLocationAbstraction = absMap;
 
-		switch (threadModPrefs.locationAbstraction()) {
-		case "Non-relational Singleton" -> {
-			mMaxParallelStates = 1;
-			mMaxInterferenceFixpointUnwindings = 1;
-			InterferenceFIxpoint.nonRelational = true;
-		}
-		case "Singleton, Fast Widening" -> {
-			mMaxParallelStates = 1;
-			mMaxInterferenceFixpointUnwindings = 1;
-		}
-		case "Singleton, Slow Widening" -> {
-			mMaxParallelStates = 8;
-			mMaxInterferenceFixpointUnwindings = 8;
-		}
-		case "Low Split, Fast Widening" -> {
-			mMaxParallelStates = 32;
-			mMaxInterferenceFixpointUnwindings = 2;
-		}
-		case "Low Split, Slow Widening" -> {
-			mMaxParallelStates = 32;
-			mMaxInterferenceFixpointUnwindings = 16;
-		}
-		case "High Split, Fast Widening" -> {
-			mMaxParallelStates = 1000;
-			mMaxInterferenceFixpointUnwindings = 2;
-		}
-		case "High Split, Slow Widening" -> {
-			mMaxParallelStates = 1000;
-			mMaxInterferenceFixpointUnwindings = 1000;
-		}
-		default -> {
-			mMaxParallelStates = 1;
-			mMaxInterferenceFixpointUnwindings = 1;
-		}
-		}
+		mMaxParallelStates = threadModPrefs.maxStates();
+		mMaxInterferenceFixpointUnwindings = threadModPrefs.maxItf();
 
 		mMaxUnwindings = mMaxInterferenceFixpointUnwindings;
 

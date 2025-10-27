@@ -40,11 +40,6 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 
 	private void printPrecisionLosses(final int iteration) {
 		// debug info for precision losses
-		if (InterferenceFIxpoint.iterationsReached > mMaxInterferenceFixpointUnwindings) {
-			mLogger.warn("Possible precision loss, widened during one or more interference fixpoint(s). Iterations: "
-					+ InterferenceFIxpoint.iterationsReached + ", with max being: "
-					+ mMaxInterferenceFixpointUnwindings);
-		}
 		if (iteration > mMaxUnwindings) {
 			mLogger.warn("Possible precision loss, widened interferences because iterations were: " + iteration
 					+ " with max being: " + mMaxUnwindings);
