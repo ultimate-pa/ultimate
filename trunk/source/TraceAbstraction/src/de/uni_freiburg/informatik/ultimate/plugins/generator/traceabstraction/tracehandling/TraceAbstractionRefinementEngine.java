@@ -83,10 +83,10 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 	}
 
 	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
-			final ITARefinementStrategy<L> strategy, final boolean quickCheck) {
+			final ITARefinementStrategy<L> strategy, final boolean noInterpolationWorker) {
 		mLogger = logger;
 		mStrategy = strategy;
-		mNoInterpolationWorker = quickCheck;
+		mNoInterpolationWorker = noInterpolationWorker;
 		final AutomatonFreeRefinementEngine<L> afEngine =
 				new AutomatonFreeRefinementEngine<>(services, logger, strategy);
 		mAfeResult = afEngine.getResult();
