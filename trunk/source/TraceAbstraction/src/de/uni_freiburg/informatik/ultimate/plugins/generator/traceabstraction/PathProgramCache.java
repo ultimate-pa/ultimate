@@ -107,17 +107,4 @@ public class PathProgramCache<LETTER> {
 		return Collections.unmodifiableList(Arrays.asList(visualizationArray));
 	}
 
-	public Map<Set<LETTER>, Integer> getPaths() {
-		return mKnownPathPrograms;
-	}
-
-	public final List<Integer> getHashes() {
-		return mTraceHashes;
-	}
-
-	public void copyCache(final PathProgramCache<LETTER> programCache) {
-		mKnownPathPrograms.putAll(programCache.getPaths());
-		mTraceHashes.addAll(programCache.getHashes());
-	}
-
 }
