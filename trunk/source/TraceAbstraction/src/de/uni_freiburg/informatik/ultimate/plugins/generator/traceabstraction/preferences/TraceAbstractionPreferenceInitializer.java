@@ -1041,7 +1041,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Not yet defined...
 		 */
-		LAZY_IN_ORDER
+		LAZY_IN_ORDER,
 	}
 
 	/**
@@ -1109,5 +1109,4 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum PathProgramDumpStop {
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
 	}
-
 }
