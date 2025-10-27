@@ -238,6 +238,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			return new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
 					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		}
+		throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
 	}
 
 	private void requireNoReuse(final String analysis) {
