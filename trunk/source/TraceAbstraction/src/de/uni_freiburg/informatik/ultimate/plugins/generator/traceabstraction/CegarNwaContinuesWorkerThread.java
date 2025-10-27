@@ -225,6 +225,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				mMainThread.getCurrentProgramCache());
 
 		final ITARefinementStrategy<L> strategy;
+		// The worker read-only accesses the PathProgramCache here
 		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7 && false) {
 			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
 					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),

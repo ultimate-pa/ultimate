@@ -67,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.AcceleratedInterpolationRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.AcceleratedTraceCheckRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BadgerRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BasicRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BearRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelNoAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelOnlyBpRefinementStrategy;
@@ -103,7 +102,6 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	private final TAPreferences mTaPrefs;
 	private final TaCheckAndRefinementPreferences<L> mPrefs;
 	private final ILogger mLogger;
-	private final IIcfg<?> mInitialIcfg;
 	private final PredicateFactory mPredicateFactory;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolAut;
 	private final PathProgramCache<L> mPathProgramCache;
@@ -113,31 +111,23 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	public StrategyFactory(final ILogger logger, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<L> prefs, final IIcfg<?> initialIcfg,
 			final PredicateFactory predicateFactory,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz,
-			final PathProgramCache<L> programCache) {
-		mLogger = logger;
-		mTaPrefs = taPrefsForInterpolantConsolidation;
-		mPrefs = prefs;
-		mInitialIcfg = initialIcfg;
-		mCfgSmtToolkit = initialIcfg.getCfgSmtToolkit();
-		mPredicateFactory = predicateFactory;
-		mPredicateFactoryInterpolAut = predicateFactoryInterpolAut;
-		mPathProgramCache = programCache;
-		mTransitionClazz = transitionClazz;
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz) {
+		this(logger, taPrefsForInterpolantConsolidation, prefs, initialIcfg, predicateFactory,
+				predicateFactoryInterpolAut, transitionClazz, new PathProgramCache<>(logger));
 	}
 
 	public StrategyFactory(final ILogger logger, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<L> prefs, final IIcfg<?> initialIcfg,
 			final PredicateFactory predicateFactory,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz) {
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz,
+			final PathProgramCache<L> programCache) {
 		mLogger = logger;
 		mTaPrefs = taPrefsForInterpolantConsolidation;
 		mPrefs = prefs;
-		mInitialIcfg = initialIcfg;
 		mCfgSmtToolkit = initialIcfg.getCfgSmtToolkit();
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolAut = predicateFactoryInterpolAut;
-		mPathProgramCache = new PathProgramCache<>(mLogger);
+		mPathProgramCache = programCache;
 		mTransitionClazz = transitionClazz;
 	}
 
@@ -172,17 +162,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	}
 
 	/**
-	 * Construct Strategy with given type
+	 * Construct Strategy with a RefinementStrategy given as parameter.
 	 *
-	 * @param services
-	 * @param counterexample
-	 * @param abstraction
-	 * @param taskIdentifier
-	 * @param emptyStackFactory
-	 * @param preconditionProvider
-	 * @param postconditionProvider
-	 * @param strategyType
-	 * @return
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
@@ -192,14 +173,23 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
-		// Since we copy the cache, we need to add the cex to the main here and the copy in construct strategy
-		// However, not sure if we really need the copy but i think it thread safer this way
 		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
 				predicateUnifier, precondition, postcondition, strategyType);
 	}
 
 	/**
 	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
+	 *
+	 * @param counterexample
+	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
+	 *            will be constructed.
+	 *
+	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
+	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
+	 *            assert order modulation.
+	 * @param abstraction
+	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
+	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
@@ -280,7 +270,6 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {
 			return new BPredicateUnifier(services, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}
-
 		return new PredicateUnifier(mLogger, services, managedScript, mPredicateFactory, symbolTable,
 				mTaPrefs.getSimplificationTechnique());
 	}
