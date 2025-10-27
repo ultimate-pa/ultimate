@@ -120,7 +120,7 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  */
 public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
 
-	private enum AutomatonType {
+	protected enum AutomatonType {
 		FLOYD_HOARE, ERROR;
 	}
 
@@ -174,12 +174,13 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			if (mUseHeuristicEmptinessCheck) {
 				mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(getServices()), abstraction,
 						IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod, mAStarRandomHeuristicSeed))
-						.getNestedRun();
+								.getNestedRun();
 
 				assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 			} else {
-				mCounterexample = new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction,
-						mSearchStrategy).getNestedRun();
+				mCounterexample =
+						new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
+								.getNestedRun();
 			}
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
@@ -209,8 +210,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 
 		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
-			final String taskDescription = "bailout by trace histogram " + traceHistogram.toString() + " in iteration "
-					+ getIteration();
+			final String taskDescription =
+					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + getIteration();
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
 		}
 
@@ -220,11 +221,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private boolean checkIsEmptyHeuristic(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction)
 			throws AutomataOperationCanceledException {
 		final NestedRun<L, IPredicate> isEmptyHeuristicCex = (NestedRun<L, IPredicate>) mCounterexample;
-		final NestedRun<L, IPredicate> isEmptyCex = new IsEmpty<>(new AutomataLibraryServices(getServices()),
-				abstraction, mSearchStrategy).getNestedRun();
+		final NestedRun<L, IPredicate> isEmptyCex =
+				new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy).getNestedRun();
 
-		final Function<NestedRun<L, IPredicate>, String> toStr = a -> a.getWord().asList().stream()
-				.map(b -> "T" + b.hashCode()).collect(Collectors.joining(" "));
+		final Function<NestedRun<L, IPredicate>, String> toStr =
+				a -> a.getWord().asList().stream().map(b -> "T" + b.hashCode()).collect(Collectors.joining(" "));
 
 		if (isEmptyHeuristicCex == null && isEmptyCex == null) {
 			return true;
@@ -263,17 +264,17 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mIcfg, allowedTransitions, Collections.emptySet(), x -> true);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final PredicateFactory predicateFactory = mPredicateFactory;
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
-				mCsToolkit.getManagedScript(), predicateFactory, mCsToolkit.getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_DDA);
+		final IPredicateUnifier predicateUnifier =
+				new PredicateUnifier(mLogger, getServices(), mCsToolkit.getManagedScript(), predicateFactory,
+						mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA);
 		final IPredicate precondition = predicateUnifier.getTruePredicate();
 		final DangerInvariantGuesser dig = new DangerInvariantGuesser(pathProgram, getServices(), precondition,
 				predicateFactory, predicateUnifier, mCsToolkit);
 		final boolean hasDangerInvariant = dig.isDangerInvariant();
 		if (hasDangerInvariant) {
 			final Map<IcfgLocation, IPredicate> invarP = dig.getCandidateInvariant();
-			final Map<IcfgLocation, Term> invarT = invarP.entrySet().stream()
-					.collect(Collectors.toMap(Entry::getKey, x -> x.getValue().getFormula()));
+			final Map<IcfgLocation, Term> invarT =
+					invarP.entrySet().stream().collect(Collectors.toMap(Entry::getKey, x -> x.getValue().getFormula()));
 			final Set<IcfgLocation> errorLocations = IcfgUtils.getErrorLocations(pathProgram);
 			final DangerInvariantResult<?, Term> res = new DangerInvariantResult<>(Activator.PLUGIN_ID, invarT,
 					errorLocations, getServices().getBacktranslationService());
@@ -290,8 +291,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				getIteration());
 
 		mInterpolAutomaton = null;
-		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement = mErrorGeneralizationEngine
-				.getResultBeforeEnhancement();
+		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
+				mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);
 		assert accepts(getServices(), resultBeforeEnhancement, mCounterexample.getWord(), false)
 				: "Error automaton broken!";
@@ -353,8 +354,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			throws AutomataLibraryException, AssertionError {
 		try {
 			mLogger.debug("Start constructing difference");
-			final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(subtrahend, true,
-					mPredicateFactoryInterpolantAutomata);
+			final PowersetDeterminizer<L, IPredicate> psd =
+					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
@@ -393,8 +394,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 
 			if (mPref.dumpAutomata()) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "AbstractionAfterDifference";
+				final String filename =
+						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "AbstractionAfterDifference";
 				super.writeAutomatonToFile(subtrahend, filename);
 			}
 			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
@@ -446,8 +447,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final AutomatonType automatonType) throws AutomataLibraryException {
-		final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
-				subtrahendBeforeEnhancement, automatonType);
+		final RunningTaskInfo runningTaskInfo =
+				getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend, subtrahendBeforeEnhancement, automatonType);
 		if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
 			mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 					mPredicateFactoryResultChecking, mCounterexample, true);
@@ -497,9 +498,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	 * Automata theoretic minimization of the automaton stored in mAbstraction. Expects that mAbstraction does not have
 	 * dead ends.
 	 *
-	 * @param predicateFactoryRefinement PredicateFactory for the construction of the new (minimized) abstraction.
-	 * @param resultCheckPredFac         PredicateFactory used for auxiliary automata used for checking correctness of
-	 *                                   the result (if assertions are enabled).
+	 * @param predicateFactoryRefinement
+	 *            PredicateFactory for the construction of the new (minimized) abstraction.
+	 * @param resultCheckPredFac
+	 *            PredicateFactory used for auxiliary automata used for checking correctness of the result (if
+	 *            assertions are enabled).
 	 */
 	protected void minimizeAbstraction(final PredicateFactoryRefinement predicateFactoryRefinement,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)

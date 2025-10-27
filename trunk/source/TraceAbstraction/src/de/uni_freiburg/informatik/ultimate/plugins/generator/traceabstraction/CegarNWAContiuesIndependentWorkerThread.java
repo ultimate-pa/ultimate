@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -333,7 +334,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 
-		final BasicCegarLoop.AutomatonType automatonType;
+		final AutomatonType automatonType;
 		final boolean useErrorAutomaton;
 		final NestedWordAutomaton<L, IPredicate> subtrahendBeforeEnhancement;
 		final InterpolantAutomatonEnhancement enhanceMode;
@@ -341,7 +342,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		final boolean exploitSigmaStarConcatOfIa;
 
 		mErrorGeneralizationEngine.startDifference();
-		automatonType = BasicCegarLoop.AutomatonType.ERROR;
+		automatonType = AutomatonType.ERROR;
 		useErrorAutomaton = true;
 		exploitSigmaStarConcatOfIa = false;
 		enhanceMode = mErrorGeneralizationEngine.getEnhancementMode();
