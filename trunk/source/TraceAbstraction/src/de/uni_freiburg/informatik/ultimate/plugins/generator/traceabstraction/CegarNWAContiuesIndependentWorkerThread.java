@@ -226,7 +226,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
 				mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, possibleEndPoints == null,
-				IsEmpty.SearchStrategy.BFS, mCounterexamples, mPref.mQuickCheckLoopBound);
+				IsEmpty.SearchStrategy.BFS, mCounterexamples, mPref.getSearchLoopBoundForNotInterpolationWorker());
 
 	}
 

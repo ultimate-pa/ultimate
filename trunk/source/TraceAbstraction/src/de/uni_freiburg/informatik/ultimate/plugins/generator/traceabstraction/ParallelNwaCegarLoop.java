@@ -225,7 +225,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		boolean didntFindCexLastIteration = false;
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
-		boolean useQuickCheck = mPref.mUseQuickCheckWorker;
+		boolean useQuickCheck = mPref.useNoInterpolationWorker();
 		for (int i = 0; i < mThreadLimit; i++) {
 			try {
 				setUpContinuesWorker(iterationServices, i, useQuickCheck);
@@ -300,7 +300,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				ie.printStackTrace();
 				mLogger.warn("Worker was interrupted! " + ie);
 			}
-			if (abstractionWasRefined && !mPref.minimizeAbstractionPerWorker) {
+			if (abstractionWasRefined && !mPref.minimizeAbstractionPerWorker()) {
 				// uses NWA CEGAR loop
 				// When do we minimize how often?
 				minimizeAbstractionIfEnabled();
@@ -439,7 +439,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		mAbstraction = diff.getResult();
 
-		if (mPref.minimizeAbstractionPerWorker) {
+		if (mPref.minimizeAbstractionPerWorker()) {
 			minimizeAbstractionIfEnabled(stateFactoryForRefinement,
 					new PredicateFactoryResultChecking(mPredicateFactory));
 		}
@@ -472,7 +472,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final int traceHash = trace.hashCode();
 		mLogger.info("Subtrahend traceHash: " + traceHash);
 		// Only remove after the counterexample is no longer in the abstraction
-		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel()) {
 			mActiveCounterexamples.remove(traceHash);
 		} else {
 			if (mCounterexamplesToBeRemovedFromActiveCexMap == null) {
@@ -498,7 +498,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
 					mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints,
 					possibleEndPoints == null, IsEmpty.SearchStrategy.BFS, mActiveCounterexamples,
-					mPref.mSearchLoopBound);
+					mPref.getSearchLoopBound());
 
 		default:
 			return new IsEmpty<>(new AutomataLibraryServices(getServices()), mAbstraction, strategy);
