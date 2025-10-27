@@ -2,6 +2,8 @@
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2016 University of Freiburg
+ * Copyright (C) 2025 Max Barth (Max.Barth@lmu.de)
+ * Copyright (C) 2025 LMU Munich
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -64,14 +66,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Get an accepting run of a nested word automaton. Based on IsEmpty but adapted for Parallel CEGAR Loop.
  *
- * The idea is to have a preprocessing that finds a run to an arbitrary state not taken by any other counterexample.
- * Then we call BFS to find a goal from this arbitrary state. At the end the runs are merged.
+ * The idea is to have a preprocessing that finds a path (prefix) to an arbitrary state not taken by any other
+ * counterexample. Then we call BFS in this arbitrary state to find a path (suffix) to a goal state. At the end both
+ * paths are merged.
  *
- * Uses recursion for backtracking
+ * This class uses recursion. It recursively explores the successor of a state. TODO: non recursive
  *
- * Non-terminating if every existing counterexample is in the set but the state space is infinite.
- *
- * TODO: non recursive, have fun
+ * Non-terminating if every existing counterexample is in the @mActiveCounterexamples set but the state space is
+ * infinite.
  *
  * @author Max Barth (Max.Barth@lmu.de)
  *
@@ -101,7 +103,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/**
 	 * Constructor for parallel search strategy. Gets as additional argument the list of all counterexamples currently
-	 * investigated Tries to find a new counterexample as much different as possible from the once considered.
+	 * investigated. Tries to find a new counterexample as much different as possible from the once considered.
 	 *
 	 * @param services
 	 *            Ultimate services
@@ -122,6 +124,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		assert mStrategy.equals(SearchStrategy.BFS);
 		mLoopBound = loopBound;
 
+		// In case the search is non terminating
 		mStart = System.nanoTime() / 1000000000;
 		mTimeOut = mStart + 50000; // 5 sec timeout atm
 
@@ -150,65 +153,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		callPreds.add(stateK);
 	}
 
+	// unmark incase we backtrack or explore a return
 	private void unmarkCall(final STATE state, final STATE stateK) {
 		final Set<STATE> callPreds = mVisitedCallPairs.get(state);
 		assert callPreds != null : "Call was not visited! " + state + " " + stateK;
 		callPreds.remove(stateK);
-	}
-
-	/**
-	 * Get an accepting run of the automaton passed to the constructor. Return null if the automaton does not accept any
-	 * nested word.
-	 */
-	@SuppressWarnings("squid:S1698")
-	private NestedRun<LETTER, STATE> getAcceptingRun(final DoubleDecker<STATE> startpair)
-			throws AutomataOperationCanceledException {
-		mInternalSubRun.clear();
-		mCallSubRun.clear();
-		mReturnPredStateK.clear();
-		mReconstructionStack.clear();
-		mReturnSubRun.clear();
-		if (!isQueueEmpty()) {
-			mQueue.clear();
-			mQueueCall.clear();
-		}
-		enqueueAndMarkVisited(startpair.getUp(), startpair.getDown());
-
-		while (!isQueueEmpty()) {
-			if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
-				mTimedout = true;
-				return null;
-			}
-			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-				throw new AutomataOperationCanceledException(rti);
-			}
-			final DoubleDecker<STATE> pair = dequeue();
-			final STATE state = pair.getUp();
-			final STATE stateK = pair.getDown();
-
-			if (isGoalState(state)) {
-				return constructRun(Collections.singleton(startpair.getUp()), state, stateK);
-			}
-
-			processSummaries(state, stateK);
-
-			// enqueues successors
-			getAcceptingRunHelperInternal(state, stateK);
-
-			getAcceptingRunHelperCall(state, stateK);
-
-			// equality intended here
-			if (stateK == mOperand.getEmptyStackState()) {
-				// there is no return transition
-				continue;
-			}
-
-			getAcceptingRunHelperReturn(state, stateK);
-		}
-		return null;
-
 	}
 
 	@Override
@@ -324,8 +273,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/*
 	 * We are less strict here and increase already if the succ occurs in the counterexample no matter the position
-	 *
-	 * Might save CPU time but not good, we want to use multiple thread per PathProgram
+	 * Doesnt seem to pay of in our evaluation.
 	 */
 	private boolean increaseScoreBasedOnStates(final NestedRun<LETTER, ?> counterexample, final STATE succ) {
 
@@ -336,6 +284,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		return false;
 	}
 
+	// Calculates the score of an internal successor and tracks how many counterexamples in the given set take this
+	// successor
 	private PQState getSuccOfInternal(final OutgoingInternalTransition<LETTER, STATE> transition, final int position,
 			final STATE state, final STATE stateK, final ArrayList<Integer> counterexamples) {
 		final LETTER symbol = transition.getLetter();
@@ -383,11 +333,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				activeCounterexamples.add(cexHash);
 			}
 		}
-
 		return new PQState(currentScore, state, symbol, transition.getSucc(), stateKk, activeCounterexamples, false,
 				true);
 	}
 
+	// This can be used to restrict the search to omit exploring certain successors, e.g., loop entry locations
 	private boolean exploreThisSuccessor(final STATE state, final LETTER letter, final STATE succ) {
 		if (mForbiddenStates.contains(succ)) {
 			return false;
@@ -441,7 +391,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/**
 	 * Sort the outgoing transitions by how many @param counterexamples cover them. The least has highest priority.
-	 *
 	 */
 	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
 			final ArrayList<Integer> counterexamples) {
@@ -553,7 +502,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/*
 	 * Only check if visited after we reached score 0
-	 *
 	 */
 	private NestedRun<LETTER, STATE> constructRunFromStateToNextBranch(final int position,
 			final DoubleDecker<STATE> pair, final ArrayList<Integer> counterexamples)
@@ -570,9 +518,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			return null;
 		}
 		int positionOfThisSubSearch = position;
-		// if (mBacktracks >= mMaxBacktracks) {
-		// return null;
-		// }
 
 		if (!mServices.getProgressAwareTimer().continueProcessing()) {
 			final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -603,7 +548,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			}
 			for (final Integer cexHash : mActiveCounterexamples.keySet()) {
 				if (cexHash == run.getWord().asList().hashCode()) {
-					// do we get a run with a differn prefix or is my prefix wrong? prefix looks right
 					throw new AssertionError("Not a fresh counterexample!");
 				}
 			}
@@ -629,7 +573,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				if (startpq == null) {
 					throw new AssertionError("No Priority Queue");
 				}
-				final STATE newState = startpq.getState(); // only needed for sumamry
+				final STATE newState = startpq.getState(); // only needed for summaries
 				final STATE newStateK = startpq.getStateK();
 				final STATE succ = startpq.getSucc();
 				final LETTER symbol = startpq.getLetter();
@@ -644,7 +588,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 					unmarkCall(newState, newStateK);
 
 				} else if (startpq.isReturn()) {
-					// stateK is the hierarical pre of state
+					// stateK is the hierarchical pre of state
 					// newStateK is the stateKK
 					unmarkCall(stateK, newStateK);
 					addSummary(newStateK, succ, newState, symbol);
@@ -674,9 +618,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		mCurrentPrefix.removeLast();
 	}
 
-	/**
-	 * Parallel
-	 */
 	@SuppressWarnings("squid:S1698")
 	private NestedRun<LETTER, STATE> getAcceptingRunParallel(final Set<Integer> set)
 			throws AutomataOperationCanceledException {
@@ -698,45 +639,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Construct a run for a discovered final state in the reachability analysis. The run is constructed backwards using
-	 * the information of predecessors in the reachability graph and the corresponding runs of length two.
-	 */
-	private NestedRun<LETTER, STATE> constructRun(final Set<STATE> startStates, final STATE stateIn,
-			final STATE stateKin) {
-		STATE state = stateIn;
-		STATE stateK = stateKin;
-		NestedRun<LETTER, STATE> run = new NestedRun<>(state);
-		while (!startStates.contains(state) || !mReconstructionStack.isEmpty()) {
-			if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
-				mTimedout = true;
-				return null;
-			}
-			if (!computeInternalSubRun(state, stateK) && !computeCallSubRun(state, stateK)
-					&& !computeReturnSubRun(state, stateK)) {
-				if (mLogger.isWarnEnabled()) {
-					mLogger.warn("No Run ending in pair " + state + "  " + stateK + " with reconstructionStack"
-							+ mReconstructionStack);
-				}
-				if (startStates.contains(run.getStateAtPosition(0))
-						|| mReconstructionStack.contains(run.getStateAtPosition(0))) {
-					return run;
-				}
-				for (int i = 0; i < run.getLength(); i++) {
-					if (startStates.contains(run.getStateAtPosition(i))) {
-						return run.getSubRun(i, run.getLength() - 1);
-					}
-				}
-				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
-						+ " run is " + run.getStateSequence());
-			}
-			run = mReconstructionOneStepRun.concatenate(run);
-			state = run.getStateAtPosition(0);
-			stateK = mReconstructionPredK;
-		}
-		return run;
 	}
 
 	@Override
