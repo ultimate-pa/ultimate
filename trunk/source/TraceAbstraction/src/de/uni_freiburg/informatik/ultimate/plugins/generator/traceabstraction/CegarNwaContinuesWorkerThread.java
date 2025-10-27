@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2025 University of Freiburg
+ * Copyright (C) 2025 LMU Munich
+ * Copyright (C) 2025 Max Barth (Max.Barth@lmu.de)
+ *
+ * This file is part of the ULTIMATE Automata Library.
+ *
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.List;
@@ -147,13 +174,6 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 
 		mNwaCexTransferrer = transferWorkerUtils;
 		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
-		final Thread workerThread = new Thread(() -> {
-			try {
-				executeThread();
-			} catch (final InterruptedException e) {
-				throw new AssertionError(e);
-			}
-		});
 
 		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
 			// TODO seems to work not sure if it is usefull
@@ -167,35 +187,40 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 			}
 			mMainThread.reportFailedContinuesWorkerThread();
 		};
-		workerThread.setUncaughtExceptionHandler(exhandler);
-		workerThread.start();
+		Thread.currentThread().setUncaughtExceptionHandler(exhandler);
+
 	}
 
-	private void executeThread() throws InterruptedException {
-		while (true) {
-			mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
-			mIteration += 1;
-			mCounterexample = mNwaCexTransferrer.transferRun((NestedRun) mWorkerTaskQueue.take(), Mode.MAIN2WORKER);
-			final List<L> trace = mCounterexample.getWord().asList();
-			mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
-			final int traceHash = trace.hashCode();
-			mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
-			Thread.currentThread().setName("Worker for " + traceHash);
+	@Override
+	public void run() {
+		while (!Thread.currentThread().isInterrupted()) {
 			try {
-				final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
-				final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
-				final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
-				final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(strategy);
+				mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
+				mIteration += 1;
+				mCounterexample = mNwaCexTransferrer.transferRun((NestedRun) mWorkerTaskQueue.take(), Mode.MAIN2WORKER);
+				final List<L> trace = mCounterexample.getWord().asList();
+				mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
+				final int traceHash = trace.hashCode();
+				mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
+				Thread.currentThread().setName("Worker for " + traceHash);
+				try {
+					final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
+					final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
+					final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
+					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(strategy);
 
-				final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(strategy,
-						isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
-				constructRefinementAutomaton(automatonType);
-				mThreadResult = refineAbstractionInternally();
-			} catch (AutomataLibraryException | ToolchainCanceledException | SMTLIBException e) {
-				throw new AssertionError("WorkerThread Failed: " + e);
+					final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(strategy,
+							isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
+					constructRefinementAutomaton(automatonType);
+					mThreadResult = refineAbstractionInternally();
+				} catch (AutomataLibraryException | ToolchainCanceledException | SMTLIBException e) {
+					throw new AssertionError("WorkerThread Failed: " + e);
+				}
+				mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
+				mBlockingQueueForResults.put(mThreadResult);
+			} catch (final InterruptedException e) {
+				Thread.currentThread().interrupt();
 			}
-			mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
-			mBlockingQueueForResults.put(mThreadResult);
 		}
 	}
 

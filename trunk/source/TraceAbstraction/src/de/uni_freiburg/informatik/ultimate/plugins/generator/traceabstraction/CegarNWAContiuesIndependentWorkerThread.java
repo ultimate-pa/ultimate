@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2025 University of Freiburg
+ * Copyright (C) 2025 LMU Munich
+ * Copyright (C) 2025 Max Barth (Max.Barth@lmu.de)
+ *
+ * This file is part of the ULTIMATE Automata Library.
+ *
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collections;
@@ -123,18 +150,10 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		mSimplificationTechnique = pref.getSimplificationTechnique();
 		mMainThread = mainThread;
 		mBlockingQueueForResults = blockingQueueForResults;
-
-		final Thread workerThread = new Thread(() -> {
-			try {
-				executeThread();
-			} catch (final InterruptedException | AutomataOperationCanceledException e) {
-				throw new AssertionError(e);
-			}
-		});
-		workerThread.start();
 	}
 
-	public void executeThread() throws InterruptedException, AutomataOperationCanceledException {
+	@Override
+	public void run() {
 		mAbstraction = mMainThread.getAbstraction();
 
 		mCounterexamples.putAll(mMainThread.mActiveCounterexamples);
@@ -145,60 +164,64 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		while (true) {
-
-			mAbstraction = mMainThread.getAbstraction();
-			mLogger.debug("SymbolicExecutionWorker: " + mFoundFeasiblePaths);
-			workerIterations += 1;
-			final List<L> trace = mCounterexample.getWord().asList();
-			mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
-			final int traceHash = trace.hashCode();
-			mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
-			Thread.currentThread().setName("Worker for " + traceHash);
-
-			final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
-			final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
-			final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
-			final LBool isCexResult = isCounterexampleFeasible(strategy);
-			mLogger.debug("SAT-Worker CheckSat Done: " + isCexResult);
-			if (isCexResult.equals(LBool.SAT)) {
-				mFoundFeasiblePaths += 1;
-				constructRefinementAutomaton(AbstractCegarLoop.AutomatonType.ERROR);
-				try {
-					mThreadResult = refineAbstractionInternally();
-				} catch (final AutomataLibraryException e) {
-					// TODO Auto-generated catch block
-					throw new AssertionError(e);
-				}
-				mBlockingQueueForResults.put(mThreadResult);
-			}
-
-			mCounterexample = searchForErrorTrace();
-			if (isCexResult.equals(LBool.SAT)) {
-				// needs to be done after searching, since we are faster then the difference in main
-				mCounterexamples.remove(traceHash);
-			}
-
-			boolean flag = false;
-			while (mCounterexample == null) {
-				mLogger.debug("--------Sat Continues Worker Stats--------");
-				mLogger.debug(workerIterations);
-				mLogger.info(mFoundFeasiblePaths);
-				mLogger.info("SAT-Worker Going to sleep!!!");
-				// wake up, if abstraction was refined, maybe there are new cex beyond the loop bound to explore
-				synchronized (ParallelNwaCegarLoop.refinementLock) {
-					ParallelNwaCegarLoop.refinementLock.wait();
-				}
+		while (!Thread.currentThread().isInterrupted()) {
+			try {
 				mAbstraction = mMainThread.getAbstraction();
-				mLogger.info("SAT-Worker wakes up and searches for new Cex.");
-				mCounterexample = searchForErrorTrace();
-				flag = true;
-			}
-			if (flag) {
-				mLogger.info("SAT-Worker continues with new abstraction.");
-			}
+				mLogger.debug("SymbolicExecutionWorker: " + mFoundFeasiblePaths);
+				workerIterations += 1;
+				final List<L> trace = mCounterexample.getWord().asList();
+				mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
+				final int traceHash = trace.hashCode();
+				mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
+				Thread.currentThread().setName("Worker for " + traceHash);
 
+				final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
+				final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
+				final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
+				final LBool isCexResult = isCounterexampleFeasible(strategy);
+				mLogger.debug("SAT-Worker CheckSat Done: " + isCexResult);
+				if (isCexResult.equals(LBool.SAT)) {
+					mFoundFeasiblePaths += 1;
+					constructRefinementAutomaton(AbstractCegarLoop.AutomatonType.ERROR);
+					try {
+						mThreadResult = refineAbstractionInternally();
+					} catch (final AutomataLibraryException e) {
+						// TODO Auto-generated catch block
+						throw new AssertionError(e);
+					}
+					mBlockingQueueForResults.put(mThreadResult);
+				}
+
+				mCounterexample = searchForErrorTrace();
+				if (isCexResult.equals(LBool.SAT)) {
+					// needs to be done after searching, since we are faster then the difference in main
+					mCounterexamples.remove(traceHash);
+				}
+
+				boolean flag = false;
+				while (mCounterexample == null) {
+					mLogger.debug("--------Sat Continues Worker Stats--------");
+					mLogger.debug(workerIterations);
+					mLogger.info(mFoundFeasiblePaths);
+					mLogger.info("SAT-Worker Going to sleep!!!");
+					// wake up, if abstraction was refined, maybe there are new cex beyond the loop bound to explore
+					synchronized (ParallelNwaCegarLoop.refinementLock) {
+						ParallelNwaCegarLoop.refinementLock.wait();
+					}
+					mAbstraction = mMainThread.getAbstraction();
+					mLogger.info("SAT-Worker wakes up and searches for new Cex.");
+					mCounterexample = searchForErrorTrace();
+					flag = true;
+				}
+				if (flag) {
+					mLogger.info("SAT-Worker continues with new abstraction.");
+				}
+
+			} catch (final InterruptedException | AutomataOperationCanceledException e) {
+				Thread.currentThread().interrupt();
+			}
 		}
+
 	}
 
 	/*
