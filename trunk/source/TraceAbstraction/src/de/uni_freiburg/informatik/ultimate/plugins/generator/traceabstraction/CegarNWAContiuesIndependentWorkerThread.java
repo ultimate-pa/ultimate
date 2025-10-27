@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -20,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyParallel;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -37,14 +34,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
@@ -95,10 +89,6 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 
 	INestedWordAutomaton<L, IPredicate> mAbstraction;
 	private final HashMap<Integer, NestedRun<L, ?>> mCounterexamples = new HashMap<>();
-
-	private final ArrayList<Integer> mTestGoalTodoStack = new ArrayList<>();
-	private final Set<Integer> mTestGoalWorkingSet = new HashSet<>();
-	private final Set<Integer> mCoveredTestGoals = new HashSet<>();
 
 	int mFoundFeasiblePaths = 0;
 
@@ -157,11 +147,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		while (true) {
 
 			mAbstraction = mMainThread.getAbstraction();
-			mLogger.info("--------Sat Continues Worker Stats--------");
-			mLogger.info(workerIterations);
-			mLogger.info(mFoundFeasiblePaths);
-			mLogger.info(mCoveredTestGoals.size());
-
+			mLogger.debug("SymbolicExecutionWorker: " + mFoundFeasiblePaths);
 			workerIterations += 1;
 			final List<L> trace = mCounterexample.getWord().asList();
 			mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
@@ -172,13 +158,11 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
 			final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
 			final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
-			mLogger.info("SAT-Worker CheckSat");
 			final LBool isCexResult = isCounterexampleFeasible(strategy);
-			mLogger.info("SAT-Worker CheckSat Done: " + isCexResult);
-			mLogger.info("------------------------------------------");
+			mLogger.debug("SAT-Worker CheckSat Done: " + isCexResult);
 			if (isCexResult.equals(LBool.SAT)) {
 				mFoundFeasiblePaths += 1;
-				constructRefinementAutomaton( AbstractCegarLoop.AutomatonType.ERROR);
+				constructRefinementAutomaton(AbstractCegarLoop.AutomatonType.ERROR);
 				try {
 					mThreadResult = refineAbstractionInternally();
 				} catch (final AutomataLibraryException e) {
@@ -194,50 +178,34 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 				mCounterexamples.remove(traceHash);
 			}
 
-			if (!mTestGoalTodoStack.isEmpty() && workerIterations % 10 == 0) {
-				mTestGoalWorkingSet.add(mTestGoalTodoStack.getLast());
-				mTestGoalTodoStack.removeLast();
+			boolean flag = false;
+			while (mCounterexample == null) {
+				mLogger.debug("--------Sat Continues Worker Stats--------");
+				mLogger.debug(workerIterations);
+				mLogger.info(mFoundFeasiblePaths);
+				mLogger.info("SAT-Worker Going to sleep!!!");
+				// wake up, if abstraction was refined, maybe there are new cex beyond the loop bound to explore
+				ParallelNwaCegarLoop.refinementLock.wait();
+				mAbstraction = mMainThread.getAbstraction();
+				mLogger.info("SAT-Worker wakes up and searches for new Cex.");
+				mCounterexample = searchForErrorTrace();
+				flag = true;
+			}
+			if (flag) {
+				mLogger.info("SAT-Worker continues with new abstraction.");
 			}
 
-			if (!mTestGoalTodoStack.isEmpty() && mTestGoalWorkingSet.isEmpty() && mCounterexample == null) {
-				mTestGoalWorkingSet.add(mTestGoalTodoStack.getLast());
-				mTestGoalTodoStack.removeLast();
-			} else {
-				boolean flag = false;
-				while (mCounterexample == null) {
-					mLogger.info("--------Sat Continues Worker Stats--------");
-					mLogger.info(workerIterations);
-					mLogger.info(mFoundFeasiblePaths);
-					mLogger.info(mCoveredTestGoals.size());
-					mLogger.info("SAT-Worker Going to sleep!!!");
-					synchronized (ParallelNwaCegarLoop.refinementLock) {
-						ParallelNwaCegarLoop.refinementLock.wait();
-						mAbstraction = mMainThread.getAbstraction();
-					}
-					mLogger.info("SAT-Worker Waking Up !!!");
-					// mCsToolkit.getManagedScript().getScript().exit();
-					// break;
-					mCounterexample = searchForErrorTrace();
-					flag = true;
-				}
-				if (flag) {
-					mLogger.info("SAT-Worker Continues after waking up!!!");
-				}
-
-			}
 		}
-
 	}
 
 	/*
 	 * Search for an error trace in the current mAbstraction. First we try BFS, then IsEmptyParallel and finally DFS
 	 */
 	private NestedRun<L, IPredicate> searchForErrorTrace() throws AutomataOperationCanceledException {
-		final Set<IPredicate> possibleEndPoints = null;// calculateGoals();
-
+		final Set<IPredicate> possibleEndPoints = null;
 		final IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
 		if (isSearchCorrectAndTraceFresh(search)) {
-			mLogger.info("Found new Counterexample via IsEmptyParallel!");
+			mLogger.debug("SymbolicExecutionWorker: Found new Counterexample via IsEmptyParallel!");
 			final NestedRun<L, IPredicate> counterexample = search.getNestedRun();
 			final List<L> trace = counterexample.getWord().asList();
 			final int traceHash = trace.hashCode();
@@ -247,7 +215,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			mCounterexamples.put(traceHash, counterexample);
 			return counterexample;
 		}
-		mLogger.info("Did not Find a Counterexample!");
+		mLogger.debug("SymbolicExecutionWorker: Did not Find a Counterexample!");
 		return null;
 	}
 
@@ -295,12 +263,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	}
 
 	/*
-	 * sets up the worker with its own cfg script and its own RefinementStrategy
-	 *
-	 *
 	 * TODO what needs to be done once and what needs to be done for every CEX??????????ß
-	 *
-	 * new constuct Strategy for every cex!
 	 *
 	 */
 	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) throws InterruptedException {
@@ -312,11 +275,10 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 
 		final ITARefinementStrategy<L> strategy;
 
-			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-					mPref.getRefinementStrategy());
-		
+		strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+				new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+				mPref.getRefinementStrategy());
 
 		return strategy;
 	}
@@ -361,10 +323,8 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	}
 
 	/*
-	 * construct the subtrahend automaton
+	 * construct only Error Automata
 	 *
-	 *
-	 * Globals: mErrorGeneralizationEngine mIteration mStateFactoryForRefinement mRefinementResult mInterpolAutomaton
 	 */
 	public WorkerThreadResult<L, A> refineAbstractionInternally() throws AutomataLibraryException {
 		mStateFactoryForRefinement.setIteration(mIteration);
