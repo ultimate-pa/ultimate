@@ -88,14 +88,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 
-/**
- * A CEGAR loop based on the NWA CEGAR loop. It executes each tracecheck in a new thread called worker
- *
- * This loop, only searches for counterexamples and updates the abstraction. The generalization of interpolant automata
- * is done by the workers
- *
- * @author Max Barth (max.barth@lmu.de)
- */
 public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
 
@@ -142,28 +134,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private long mRefinementTime = 0;
 
 	/**
-	 *
-	 * Compute Initial Abstraction, can be reused
-	 *
-	 *
-	 * Search a mCounterexample in Abstraction - Inital Abstraction returns true if counterexample -
-	 * isAbstractionEmpty()
+	 * Based on the @NwaCegarLoop. Given a ThreadLimit, creates a ExecutionerService that will manage the worker
+	 * threads. Executes each tracecheck in a new thread called worker. This loop, only searches for counterexamples and
+	 * updates the abstraction. The feasiblity check and generalization of interpolant automata is done by the workers.
 	 *
 	 * TODO option to save memory, measure heap, then dont spawn worker / kill a worker
 	 *
-	 * @param name
-	 * @param initialAbstraction
-	 * @param rootNode
-	 * @param csToolkit
-	 * @param predicateFactory
-	 * @param taPrefs
-	 * @param errorLocs
-	 * @param interpolation
-	 * @param computeHoareAnnotation
-	 * @param hoareAnnotationLocs
-	 * @param services
-	 * @param transitionClazz
-	 * @param stateFactoryForRefinement
+	 * @author Max Barth (max.barth@lmu.de)
 	 */
 
 	public ParallelNwaCegarLoop(final DebugIdentifier name,
@@ -184,15 +161,15 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mExec = Executors.newFixedThreadPool(mThreadLimit);
 		Thread.currentThread().setName("Main Cegar Thread");
 		getServices().getStorage().pushMarker(mDestroyEverything);
-
 	}
 
 	/*
-	 * sets up the worker with its own cfg script and its own RefinementStrategy
+	 * Sets up a worker with that communicates via blocking queues and stays alive after one counterexample check. Every
+	 * transfer between controller and worker goes via @TransferBetweenMainAndWorker.
+	 *
 	 */
 	private ICegarNwaWorkerThread<L, A> setUpContinuesWorker(final IUltimateServiceProvider iterationServices,
-			final int id, final boolean smybolicExecutionWorker) throws InterruptedException {
-		// mCsToolkit needs to give new mgdScript for each thread
+			final int id, final boolean noInterpolationWorker) throws InterruptedException {
 
 		final TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(
 				new AutomataLibraryServices(mServices), mLogger, mCsToolkit.getManagedScript(), iterationServices,
@@ -223,28 +200,27 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
-		if (smybolicExecutionWorker) {
-			return new CegarNWAContiuesIndependentWorkerThread<>(mLogger, mPref, id, mResultBuilder,
-					mCegarLoopBenchmark, iterationServices, freshToolKit, mIcfg, predicateFactory,
-					taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
-					mComputeHoareAnnotation, this, mWorkerResultQueue, mWorkerTaskQueue);
+		if (noInterpolationWorker) {
+			return new CegarNWANoInterpolationWorkerThread<>(mLogger, mPref, mResultBuilder, mCegarLoopBenchmark,
+					iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
+					predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, this,
+					mWorkerResultQueue, transferUtils);
 		}
 
-		// start worker
-		return new CegarNwaContinuesWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
-				mIcfg, predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
+		// initialize worker
+		return new CegarNwaWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit, mIcfg,
+				predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
 				stateFactoryForRefinement, mComputeHoareAnnotation, this, mWorkerResultQueue, mWorkerTaskQueue,
 				transferUtils);
 	}
 
 	/*
-	 * Parallel CEGAR loop of main thread In each iteration we pick a counterexample and setup a worker to check its
-	 * feasibility
-	 *
-	 * The worker future contains either an interpolant or an error automaton.
-	 *
-	 * As soon as we obtain a worker result, we refine our abstraction. If abstraction is not empty, continue with the
-	 * loop If no worker is done, continue with the loop If no thread is available and no worker is done we sleep
+	 * Parallel CEGAR loop. In each iteration we pick a counterexample and put it into a blocking queue for a worker to
+	 * check its feasibility
+	 **
+	 * As soon as we obtain a worker result via blocking queue, we refine our abstraction. If abstraction is not empty,
+	 * we continue with the loop. If no worker is done, continue with the loop. If no thread is available and no worker
+	 * is done we sleep.
 	 */
 	@Override
 	protected void iterate() throws AutomataLibraryException {
@@ -263,10 +239,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		}
 
 		// start worker for initial cex:
-		mWorkerTaskQueue.add(mCounterexample);
 		startWorker();
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
+			// TODO deal with crashing workers, currently we just sleep thats bad!!!!
 			abortIfTimeout();
 			boolean abstractionWasRefined = false;
 			mLogger.info(String.format("=== Iteration %s ===", getIteration()));
@@ -275,7 +251,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				// we sleep if not: thread or counterexample is available
 				WorkerThreadResult<L, A> workerResult = getWorkerResult(didntFindCexLastIteration);
 
-				// go through all done Futures
+				// go through all done workerResult
 				while (workerResult != null) {
 					final long time = System.nanoTime() / 1000000000;
 					try {
@@ -290,6 +266,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 						if (mPref.stopAfterFirstViolation()
 								&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
 							shutDownAndDestroy(mDestroyEverything);
+							updateAndPrintStatistics(true);
 							return;
 						}
 
@@ -302,7 +279,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 						workerResult.garbageCollect();
 						// If new abstraction is empty terminate immediately
 						if (isSafeThenTerminate()) {
-							updateAndPrintStatistics();
+							updateAndPrintStatistics(true);
 							return;
 						}
 
@@ -337,31 +314,31 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				didntFindCexLastIteration = false;
 			}
 
+			/*
+			 * In the first iteration we search via BFS, then we use IsEmptyParallel
+			 */
 			boolean firstIteration = true;
-
 			while (mRunningThreads < mThreadLimit && !didntFindCexLastIteration) {
-
 				assert mRunningThreads >= 0;
-
 				mCounterexample = searchForErrorTrace(!firstIteration);
 				if (mCounterexample == null) {
 					didntFindCexLastIteration = true;
 					break;
 				}
 				if (mCounterexample != null) {
-					mWorkerTaskQueue.add(mCounterexample);
+					startWorker();
 				}
-				startWorker();
 				firstIteration = false;
 			}
-			updateAndPrintStatistics();
+			updateAndPrintStatistics(false);
 		}
 		mExec.shutdownNow();
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
 
 	}
 
-	private void updateAndPrintStatistics() {
+	private void updateAndPrintStatistics(final boolean printStatistics) {
+
 		if (mRunningThreads > maxActiveThreads) {
 			maxActiveThreads = mRunningThreads;
 		}
@@ -371,23 +348,24 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		if (mRunningThreads == 1) {
 			mIterationsWithOneThread += 1;
 		}
-		mLogger.info("Iteration " + getIteration());
-		mLogger.info("Refinements: " + mRefinementsDone);
-		mLogger.info("Counterexamples: " + mCounterexamplesChecked);
-		mLogger.info("SearchTimeout: " + mCountTimeoutsInSearch);
-		mLogger.info("RunConstructionFailed: " + mCountFailedRunConstructions);
-		mLogger.info("SearchFailed: " + mCountFailedToFindCex);
-		mLogger.info("BFS: " + mCountBfsFoundCex);
-		mLogger.info("IsEmptyParallel: " + mCountIsEmptyParallel);
-		mLogger.info("ActiveThreads: " + maxActiveThreads);
-		mLogger.info("ActiveExecutorsForPathPrograms: " + mActiveExecutors);
-		mLogger.info("IterationsWithMaxThreads: " + mIterationsWithMaxThreads);
-		mLogger.info("IterationsWithONEThread: " + mIterationsWithOneThread);
-		mLogger.info("SearchTime: " + mSearchTime + " s");
-		mLogger.info("WorkerSetUpTime: " + mWorkerSetUpTime + " s");
-		mLogger.info("ExceptionInWorker: " + mExceptionInWorker);
-		mLogger.info("mRefinementTime: " + mRefinementTime);
-
+		if (printStatistics) {
+			mLogger.info("Iteration " + getIteration());
+			mLogger.info("Refinements: " + mRefinementsDone);
+			mLogger.info("Counterexamples: " + mCounterexamplesChecked);
+			mLogger.info("SearchTimeout: " + mCountTimeoutsInSearch);
+			mLogger.info("RunConstructionFailed: " + mCountFailedRunConstructions);
+			mLogger.info("SearchFailed: " + mCountFailedToFindCex);
+			mLogger.info("BFS: " + mCountBfsFoundCex);
+			mLogger.info("IsEmptyParallel: " + mCountIsEmptyParallel);
+			mLogger.info("ActiveThreads: " + maxActiveThreads);
+			mLogger.info("ActiveExecutorsForPathPrograms: " + mActiveExecutors);
+			mLogger.info("IterationsWithMaxThreads: " + mIterationsWithMaxThreads);
+			mLogger.info("IterationsWithONEThread: " + mIterationsWithOneThread);
+			mLogger.info("SearchTime: " + mSearchTime + " s");
+			mLogger.info("WorkerSetUpTime: " + mWorkerSetUpTime + " s");
+			mLogger.info("ExceptionInWorker: " + mExceptionInWorker);
+			mLogger.info("mRefinementTime: " + mRefinementTime);
+		}
 	}
 
 	private boolean isSafeThenTerminate() throws AutomataOperationCanceledException {
@@ -400,7 +378,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			return true;
 		}
 		// set cex to null to be certain we dont check counterexamples from the old
-		// abstraction
+		// abstraction (super.isAbstractionEmpty() will set mCounterexample)
 		mCounterexample = null;
 		return false;
 	}
@@ -409,6 +387,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * When we reach this method, we will always start at least one new worker.
 	 */
 	private void startWorker() {
+		mWorkerTaskQueue.add(mCounterexample);
 		final long time = System.nanoTime() / 1000000000;
 		mLogger.info("Main: Starting Thread");
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
@@ -476,7 +455,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		}
 
 		mLogger.info("Main: Refinement done.");
-		// Used to wake up the @CegarNWAContiuesIndependentWorkerThread.java
+		// Used to wake up the @CegarNWANoInterpolationWorkerThread.java if it sleeps due to reaching the loop bound
 		synchronized (ParallelNwaCegarLoop.refinementLock) {
 			refinementLock.notifyAll();
 		}
@@ -494,6 +473,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mActiveCounterexamples.put(traceHash, counterexample);
 	}
 
+	/*
+	 * OnlyActive means only countereamples actively being checked by workers. The alternative is all previously found
+	 * counterexamples.
+	 */
 	private void removeCounterexampleFromSet(final IRun<L, ?> cex) {
 		final List<L> trace = cex.getWord().asList();
 		final int traceHash = trace.hashCode();
@@ -510,9 +493,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/*
-	 * Potential Data Race?, Main thread can refine abstraction while worker uses it. Doesnt seem to be a problem so far
-	 *
-	 * Alternative: Give a real copy to the worker, leads to more mem consumption
+	 * The worker usign this method to get the Abstraction need to ensure, they use the @TransferBetweenMainAndWorker To
+	 * transfer the abstraction to their cfgscript. Worker may only use this to read-only access the abstraction!
 	 */
 	public INestedWordAutomaton<L, IPredicate> getAbstraction() {
 		return mAbstraction;
@@ -526,12 +508,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints,
 					possibleEndPoints == null, IsEmpty.SearchStrategy.BFS, mActiveCounterexamples,
 					mPref.getSearchLoopBound());
-
 		default:
 			return new IsEmpty<>(new AutomataLibraryServices(getServices()), mAbstraction, strategy);
 		}
 	}
 
+	// If search was BFS, the counterexample might not be fresh.
 	private boolean isSearchCorrectAndTraceFresh(final IsEmpty<L, IPredicate> search) {
 		boolean correct = false;
 		boolean fresh = true;
@@ -555,32 +537,22 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/*
-	 * Search for an error trace in the current mAbstraction. First we try BFS, then IsEmptyParallel and finally DFS
+	 * Search for an error trace in the current mAbstraction. First time with a new abstraction we try BFS, then
+	 * IsEmptyParallel
 	 */
 	private NestedRun<L, IPredicate> searchForErrorTrace(final boolean onlyDoIsEmptyParallel)
 			throws AutomataOperationCanceledException {
 		final long time = System.nanoTime() / 1000000000;
 		final Set<IPredicate> possibleEndPoints = null;
-		/*
-		 * Optimization that ensures we find a trace to a not yet targeted test goal / error loc
-		 */
-		if (onlyDoIsEmptyParallel) {
-			final IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
+
+		IsEmpty<L, IPredicate> search;
+		if (!onlyDoIsEmptyParallel) {
+			search = getSearch(IsEmpty.SearchStrategy.BFS, possibleEndPoints);
 			if (isSearchCorrectAndTraceFresh(search)) {
-				mLogger.info("Found new Counterexample via IsEmptyParallel!");
+				mCountBfsFoundCex += 1;
+				mLogger.info("Found new Counterexample via BFS!");
 				return search.getNestedRun();
 			}
-			mLogger.info("Did not Find a Counterexample!");
-			mCountFailedToFindCex += 1;
-			assert mRunningThreads > 0;
-			return null;
-		}
-
-		IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.BFS, possibleEndPoints);
-		if (isSearchCorrectAndTraceFresh(search)) {
-			mCountBfsFoundCex += 1;
-			mLogger.info("Found new Counterexample via BFS!");
-			return search.getNestedRun();
 		}
 		search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
 		if (isSearchCorrectAndTraceFresh(search)) {
@@ -606,7 +578,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/*
-	 * Difference is calculated twice first in worker and then in master. We need the worker CFG script here
+	 * Difference is calculated twice first in worker and then in master. All automata obtained from the worker need to
+	 * be transferred to the master cfg script!
 	 */
 	private IOpWithDelayedDeadEndRemoval<L, IPredicate> computeAutomataDifference(
 			final INestedWordAutomaton<L, IPredicate> minuend, final WorkerThreadResult<L, A> workerResult,

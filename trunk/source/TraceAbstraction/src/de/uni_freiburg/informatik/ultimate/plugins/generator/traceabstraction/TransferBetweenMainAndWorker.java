@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -66,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.L
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -102,14 +105,16 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	private Mode mMode = Mode.NONE;
 
 	/**
-	 * A class used to transfer runs and automata between worker and main scripts. Also used to create the worker
+	 * A class used to transfer runs / cex and automata between worker and main scripts. Also used to create the worker
 	 * CfgToolKit. Every creation of worker IProgramVars should run through this classes @VariableTransferrer
 	 *
-	 * On initialization this classes creates the workers ManagedScript
+	 * On initialization this classes creates the workers ManagedScript. And the necessary TermTransferrer
 	 *
 	 * @param main
 	 * @param worker
 	 * @param mainCfgToolKit
+	 *
+	 * @author Max Barth (max.barth@lmu.de)
 	 */
 	public TransferBetweenMainAndWorker(final AutomataLibraryServices services, final ILogger logger,
 			final ManagedScript main, final IUltimateServiceProvider solverServices,
@@ -127,7 +132,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	/*
 	 * Gets a run / counterexample with Letters whose transformula comes from one script. Returns a new run with new
-	 * letters, whose transformula comes from target script. The semantics of both runs are equal
+	 * letters, whose transformula comes from target script. The semantics of both runs are equal.
 	 */
 	public IRun<LETTER, ?> transferRun(final NestedRun<LETTER, ?> counterexample, final Mode mode) {
 		final NestedRun<LETTER, ?> oldCounterexample = counterexample;
@@ -152,6 +157,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		return workerCounterexample;
 	}
 
+	// Caches every transferred Edge bidirectional
 	private LETTER transferEdge(final LETTER letter) {
 		LETTER transferredLetter = null;
 		if (mEdgeCache.containsKey(letter)) {
@@ -174,7 +180,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		final Call newCall = new Call(call.getSerialNumber(), (BoogieIcfgLocation) call.getSource(),
 				(BoogieIcfgLocation) call.getTarget(), call.getCallStatement(), mLogger);
 		newCall.setTransitionFormula(transferTransFormulaWithMode(call.getTransformula()));
-		newCall.setPayload(call.getPayload());
+		newCall.setPayload(call.getPayload()); // Payload is need for for example Overaprixmation Annotations
 		return newCall;
 	}
 
@@ -371,15 +377,14 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 					}
 				}
 			}
+			// TODO transfer summaries, so far they are ignored because i dont know how to detect a summary in the input
 		}
-		// TODO summaries missing, internal alphabet thus smaller
 		assert result.size() == automaton.size();
 		return result;
 
 	}
 
 	public CfgSmtToolkit constructWorkerCfgSmtToolkit() {
-
 		final HashRelation<String, IProgramNonOldVar> proc2globals =
 				constructNewProc2Globals(mMainCsToolkit.getModifiableGlobalsTable().getProcToGlobals(), mVarTransfer);
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
@@ -389,7 +394,20 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 				constructNewParams(mMainCsToolkit.getInParams(), mVarTransfer);
 		final Map<String, List<ILocalProgramVar>> outParams =
 				constructNewParams(mMainCsToolkit.getOutParams(), mVarTransfer);
-		final SmtFunctionsAndAxioms smtFunctionsAndAxioms = null;
+
+		final IPredicate mainAxioms = mMainCsToolkit.getSmtFunctionsAndAxioms().getAxioms();
+		final Set<IProgramVar> vars = new HashSet<>();
+		for (final IProgramVar var : mainAxioms.getVars()) {
+			vars.add(mVarTransfer.translateProgramVar(var));
+		}
+		final Set<IProgramFunction> funs = new HashSet<>();
+		for (final IProgramFunction fun : mainAxioms.getFuns()) {
+			// TODO what is a IProgramFunction? Does this do the trick?
+			funs.add(mVarTransfer.getOrConstruct((IProgramConst) fun));
+		}
+		final IPredicate newAxiomsPred = new BasicPredicate(0, mMain2worker.transform(mainAxioms.getFormula()), vars,
+				funs, mMain2worker.transform(mainAxioms.getClosedFormula()));
+		final SmtFunctionsAndAxioms smtFunctionsAndAxioms = new SmtFunctionsAndAxioms(newAxiomsPred, mWorkerScript);
 		return new CfgSmtToolkit(modifiableGlobalsTable, mWorkerScript, symbolTable, mMainCsToolkit.getProcedures(),
 				inParams, outParams, mMainCsToolkit.getIcfgEdgeFactory(), mMainCsToolkit.getConcurrencyInformation(),
 				smtFunctionsAndAxioms);
@@ -432,7 +450,6 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 				final IProgramNonOldVar newVar = variableTranslation.getOrConstruct(old);
 				result.addPair(entry.getKey(), newVar);
 			}
-
 		}
 		return result;
 	}
@@ -519,6 +536,7 @@ class VariableTransferrer {
 		} else {
 			throw new UnsupportedOperationException(pv.getClass().getSimpleName());
 		}
+		assert result != null;
 		return result;
 	}
 

@@ -27,6 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+/*
+ * Interface for grouping different kinds of WorkerThreads
+ */
 public interface ICegarNwaWorkerThread<L, A> extends Runnable {
 
 }

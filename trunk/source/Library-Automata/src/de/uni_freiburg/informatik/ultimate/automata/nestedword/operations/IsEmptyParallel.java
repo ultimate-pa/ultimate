@@ -259,13 +259,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			} else {
 				throw new AssertionError("Unexpected Predicate");
 			}
-			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-				if (symbol == counterexample.getSymbol(position - 1)) {
-					return true;
-				}
-			} else {
-				// can have different serial numbers! is that a problem?
-				// assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
+			// can have different serial numbers! is that a problem?
+			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())
+					&& (symbol == counterexample.getSymbol(position - 1))) {
+				return true;
 			}
 		}
 		return false;
@@ -491,11 +488,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 						throw new AssertionError("Program Point mismatch");
 					}
 				}
-
 			}
-
 			pq.add(new PQState(currentScore, null, null, state, null, activeCounterexamples, false, false));
-
 		}
 		return pq;
 	}
@@ -651,7 +645,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				}
 			}
 		}
-
 		return mAcceptingRun;
 	}
 

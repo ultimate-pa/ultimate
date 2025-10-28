@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TransferBetweenMainAndWorker.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -72,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 
-public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
+public class CegarNWANoInterpolationWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		implements ICegarNwaWorkerThread<L, A> {
 
 	private final ILogger mLogger;
@@ -89,7 +90,6 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	// each worker needs one of their own:
-	private final int mIteration;
 	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	// each worker needs one of their own, but creates it themself:
@@ -97,33 +97,28 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 
 	TaCheckAndRefinementPreferences<L> mTaCheckAndRefinementPrefs;
 
-	// ???
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
-	boolean mComputeHoareAnnotation;
-
 	private WorkerThreadResult<L, A> mThreadResult = null;
 	private final BlockingQueue<WorkerThreadResult<L, A>> mBlockingQueueForResults;
 	protected IRun<L, ?> mCounterexample = null;
-
-	private IcfgLocation mCurrentErrorLoc;
 
 	// for error automata
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 
-	// Globals for Difference (Interpolant Automaton Enhancement)
-	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
-
+	TransferBetweenMainAndWorker<L, IPredicate> mNwaCexTransferrer;
 	INestedWordAutomaton<L, IPredicate> mAbstraction;
 	private final HashMap<Integer, NestedRun<L, ?>> mCounterexamples = new HashMap<>();
 
 	int mFoundFeasiblePaths = 0;
 
-	/*
+	/**
 	 * A continues worker that addionaly searches its own counterexamples Still put the results in the result queue
+	 * 
+	 * @author Max Barth (max.barth@lmu.de)
 	 */
-	public CegarNWAContiuesIndependentWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
+	public CegarNWANoInterpolationWorkerThread(final ILogger logger, final TAPreferences pref,
 			final CegarLoopResultBuilder resultBuilder, final CegarLoopStatisticsGenerator statistcs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IIcfg<? extends IcfgLocation> icfg, final PredicateFactory predicateFactory,
@@ -132,11 +127,10 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ParallelNwaCegarLoop<L, A> mainThread,
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
-			final BlockingQueue<IRun<L, ?>> workerTaskQueue) throws InterruptedException {
+			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils) throws InterruptedException {
 
 		mLogger = logger;
 		mPref = pref;
-		mIteration = id;
 		mRefinementResult = null;
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mCegarLoopBenchmark = statistcs;
@@ -150,6 +144,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		mSimplificationTechnique = pref.getSimplificationTechnique();
 		mMainThread = mainThread;
 		mBlockingQueueForResults = blockingQueueForResults;
+		mNwaCexTransferrer = transferWorkerUtils;
 	}
 
 	@Override
@@ -166,11 +161,10 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		}
 		while (!Thread.currentThread().isInterrupted()) {
 			try {
-				mAbstraction = mMainThread.getAbstraction();
+				mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 				mLogger.debug("SymbolicExecutionWorker: " + mFoundFeasiblePaths);
 				workerIterations += 1;
 				final List<L> trace = mCounterexample.getWord().asList();
-				mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 				final int traceHash = trace.hashCode();
 				mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
 				Thread.currentThread().setName("Worker for " + traceHash);
@@ -208,7 +202,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 					synchronized (ParallelNwaCegarLoop.refinementLock) {
 						ParallelNwaCegarLoop.refinementLock.wait();
 					}
-					mAbstraction = mMainThread.getAbstraction();
+					mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 					mLogger.info("SAT-Worker wakes up and searches for new Cex.");
 					mCounterexample = searchForErrorTrace();
 					flag = true;
@@ -222,6 +216,16 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			}
 		}
 
+	}
+
+	/**
+	 * Worker takes the current abstraction from the main thread (read only). Then transfers it to worker script.
+	 */
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getAbstraction() {
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> workerAbstraction = mNwaCexTransferrer
+				.transferAutomaton(mainAbstraction, mPredicateFactoryInterpolantAutomata, Mode.MAIN2WORKER);
+		return workerAbstraction;
 	}
 
 	/*
@@ -288,24 +292,13 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 				.collect(Collectors.toList());
 	}
 
-	/*
-	 * TODO what needs to be done once and what needs to be done for every CEX??????????ß
-	 *
-	 */
 	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) throws InterruptedException {
-
-		final PathProgramCache<L> cacheNotNeeded = new PathProgramCache<>(mLogger);
-		final StrategyFactory<L> mStrategyFactory =
-				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
-						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, cacheNotNeeded);
-
-		final ITARefinementStrategy<L> strategy;
-
-		strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-				new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+		final StrategyFactory<L> mStrategyFactory = new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs,
+				mIcfg, mPredicateFactory, mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz);
+		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), counterexample,
+				mAbstraction, new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, 1),
 				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 				mPref.getRefinementStrategy());
-
 		return strategy;
 	}
 
@@ -340,8 +333,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
 				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique,
-				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
-				mIteration);
+				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction, 1);
 	}
 
 	protected IUltimateServiceProvider getServices() {
@@ -349,11 +341,10 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	}
 
 	/*
-	 * construct only Error Automata
-	 *
+	 * Constructs only Error Automata
 	 */
 	public WorkerThreadResult<L, A> refineAbstractionInternally() throws AutomataLibraryException {
-		mStateFactoryForRefinement.setIteration(mIteration);
+		mStateFactoryForRefinement.setIteration(1);
 		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 
@@ -372,9 +363,13 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		subtrahendBeforeEnhancement = mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
 
-		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
+		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(
+				mNwaCexTransferrer.transferAutomaton(subtrahend, mStateFactoryForRefinement, Mode.WORKER2MAIN),
+				mNwaCexTransferrer.transferAutomaton(subtrahendBeforeEnhancement, mStateFactoryForRefinement,
+						Mode.WORKER2MAIN),
 				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
-				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
+				mCsToolkit.getManagedScript(),
+				mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mCounterexample, Mode.WORKER2MAIN), mPredicateFactory,
 				mRefinementResult.somePerfectSequenceFound(), true, false);
 		return workerResult;
 	}
