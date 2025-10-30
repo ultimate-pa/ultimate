@@ -187,7 +187,7 @@
 				<configuration>
 					<executionEnvironmentDefault>JavaSE-21</executionEnvironmentDefault>
 					<target>
-						<file>../BA_SiteRepository/Ultimate_E4.32_Java21.target</file>
+						<file>../BA_SiteRepository/Ultimate_E4.37_Java21.target</file>
 					</target>
 					<environments>
 						<environment>

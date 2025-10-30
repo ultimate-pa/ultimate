@@ -10,7 +10,7 @@
 		<arch>x86_64</arch>
 	</environment>
 	<locations>
-		<location type="Target" uri="file:${project_loc:/BA_SiteRepository}/Ultimate_E4.32_Java21.target"/>
+		<location type="Target" uri="file:${project_loc:/BA_SiteRepository}/Ultimate_E4.37_Java21.target"/>
 	</locations>
 	<includeBundles>
 		<plugin id="bcpg" version="1.78.1"/>
