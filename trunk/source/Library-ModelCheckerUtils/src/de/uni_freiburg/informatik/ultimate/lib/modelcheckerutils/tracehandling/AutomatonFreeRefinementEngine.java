@@ -76,14 +76,6 @@ public final class AutomatonFreeRefinementEngine<L extends IAction>
 	private String mUsedTraceCheckFingerprint;
 	private final IUltimateServiceProvider mServices;
 
-	private boolean mNoInterpolation = false;
-
-	public AutomatonFreeRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
-			final IRefinementStrategy<L> strategy, final boolean noInterpolation) {
-		this(services, logger, strategy);
-		mNoInterpolation = noInterpolation;		
-	}
-
 	public AutomatonFreeRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
 			final IRefinementStrategy<L> strategy) {
 		mServices = services;
@@ -134,7 +126,7 @@ public final class AutomatonFreeRefinementEngine<L extends IAction>
 		}
 
 		// trace was feasible, return
-		if (feasibilityResult == LBool.SAT || mNoInterpolation) {
+		if (feasibilityResult == LBool.SAT) {
 			mLogger.info("Strategy %s found a feasible trace", mStrategy.getName());
 			return feasibilityResult;
 		}

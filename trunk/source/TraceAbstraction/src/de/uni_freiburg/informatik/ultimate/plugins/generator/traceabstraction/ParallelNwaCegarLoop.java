@@ -169,7 +169,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 *
 	 */
 	private ICegarNwaWorkerThread<L, A> setUpContinuesWorker(final IUltimateServiceProvider iterationServices,
-			final int id, final boolean noInterpolationWorker) throws InterruptedException {
+			final int id) throws InterruptedException {
 
 		final TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(
 				new AutomataLibraryServices(mServices), mLogger, mCsToolkit.getManagedScript(), iterationServices,
@@ -200,12 +200,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
-		if (noInterpolationWorker) {
-			return new CegarNWANoInterpolationWorkerThread<>(mLogger, mPref, mResultBuilder, mCegarLoopBenchmark,
-					iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
-					predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, this,
-					mWorkerResultQueue, transferUtils);
-		}
 
 		// initialize worker
 		return new CegarNwaWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit, mIcfg,
@@ -228,11 +222,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		boolean didntFindCexLastIteration = false;
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
-		boolean useOneNoInterpolationWorker = mPref.useNoInterpolationWorker();
 		for (int i = 0; i < mThreadLimit; i++) {
 			try {
-				mExec.submit(setUpContinuesWorker(iterationServices, i, useOneNoInterpolationWorker));
-				useOneNoInterpolationWorker = false;
+				mExec.submit(setUpContinuesWorker(iterationServices, i));
 			} catch (final InterruptedException e) {
 				throw new AssertionError("TODO");
 			}

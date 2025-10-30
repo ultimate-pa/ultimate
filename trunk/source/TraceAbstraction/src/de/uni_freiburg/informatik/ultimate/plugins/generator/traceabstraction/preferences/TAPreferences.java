@@ -101,8 +101,6 @@ public final class TAPreferences {
 	private final boolean mParallelCegarLoop;
 	private final boolean mConsiderOnlyActiveCounterexamplesInIsEmptyParallel;
 	private final boolean mMinimizeAbstractionPerWorker;
-	private final boolean mUseNoInterpolationWorker;
-	private final int mLoopBoundForNoInterpolationWorker;
 	private final int mSearchLoopBound;
 
 	public enum Artifact {
@@ -214,11 +212,7 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		mMinimizeAbstractionPerWorker =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
-		mLoopBoundForNoInterpolationWorker =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NOINTERPOLATION_WORKER_LOOP_BOUND);
 		mSearchLoopBound = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEARCH_LOOP_BOUND);
-		mUseNoInterpolationWorker =
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_NOINTERPOLATION_WORKER);
 	}
 
 	/**
@@ -596,10 +590,6 @@ public final class TAPreferences {
 		return mParallelCegarLoop;
 	}
 
-	public boolean useNoInterpolationWorker() {
-		return mUseNoInterpolationWorker;
-	}
-
 	public boolean minimizeAbstractionPerWorker() {
 		return mMinimizeAbstractionPerWorker;
 	}
@@ -611,9 +601,4 @@ public final class TAPreferences {
 	public int getSearchLoopBound() {
 		return mSearchLoopBound;
 	}
-
-	public int getSearchLoopBoundForNotInterpolationWorker() {
-		return mLoopBoundForNoInterpolationWorker;
-	}
-
 }

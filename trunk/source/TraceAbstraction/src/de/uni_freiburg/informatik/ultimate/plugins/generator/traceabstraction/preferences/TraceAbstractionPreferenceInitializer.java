@@ -523,14 +523,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
 			"Minimize Abstraction every time a worker is done";
 	private static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = true;
-	public static final String LABEL_NOINTERPOLATION_WORKER = "use one no-interpolation worker";
-	private static final boolean DEF_NOINTERPOLATION_WORKER = false;
 	// Parallel CEGAR counterexample search stragies
 	// ========================================================================
 	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
 	private static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
-	public static final String LABEL_NOINTERPOLATION_WORKER_LOOP_BOUND = "No interpolation worker loop bound";
-	private static final int DEF_NOINTERPOLATION_WORKER_LOOP_BOUND = 1;
 	public static final String LABEL_SEARCH_LOOP_BOUND = "search loop bound";
 	private static final int DEF_SEARCH_LOOP_BOUND = -1;
 
@@ -820,13 +816,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_NOINTERPOLATION_WORKER_LOOP_BOUND,
-						DEF_NOINTERPOLATION_WORKER_LOOP_BOUND, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_NOINTERPOLATION_WORKER, DEF_NOINTERPOLATION_WORKER,
-						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
