@@ -151,7 +151,7 @@ public class CegarNWANoInterpolationWorkerThread<L extends IIcfgTransition<?>, A
 	public void run() {
 		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 
-		mCounterexamples.putAll(mMainThread.mActiveCounterexamples);
+		// mCounterexamples.putAll(mMainThread.mActiveCounterexamples);
 		int workerIterations = 0;
 		try {
 			mCounterexample = searchForErrorTrace();
