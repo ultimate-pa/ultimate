@@ -621,7 +621,7 @@ public class CHandler {
 				new LinuxLibraryModel(helper, mAuxVarInfoBuilder, mExprResultTransformer, mTypeSizes,
 						mExpressionTranslation),
 				new MathLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mCExpressionTranslator,
-						mNameHandler),
+						mNameHandler, mAuxVarInfoBuilder),
 				new PthreadLibraryModel(helper, mSymbolTable, mAuxVarInfoBuilder, mExprResultTransformer,
 						mExpressionTranslation, mMemoryHandler, mTypeHandler, mTypeSizes, mProcedureManager),
 				new SetjmpLibraryModel(helper, mExpressionTranslation), new SocketLibraryModel(helper),
