@@ -442,10 +442,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					new PredicateFactoryResultChecking(mPredicateFactory));
 		}
 
-		if (!threadResult.fromSATonlyWorker()) {
-			mRunningThreads -= 1;
-		}
-
 		mLogger.info("Main: Refinement done.");
 		// Used to wake up the @CegarNWANoInterpolationWorkerThread.java if it sleeps due to reaching the loop bound
 		synchronized (ParallelNwaCegarLoop.refinementLock) {
@@ -747,7 +743,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 		try {
-			setUpContinuesWorker(iterationServices, 0, false);
+			setUpContinuesWorker(iterationServices, 0);
 		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}

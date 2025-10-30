@@ -23,8 +23,6 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 	private ManagedScript mMgdScript;
 	private IRun<L, ?> mCounterexample;
 	PredicateFactory mPredicateFactory;
-	private final boolean mWasPerfect;
-	private final boolean mSatOnlyWorker;
 	private final boolean mWorkerCrashed;
 
 	/**
@@ -36,8 +34,7 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final InterpolantAutomatonEnhancement enhanceMode, final boolean useErrorAutomaton,
 			final AutomatonType automatonType, final ManagedScript mgdScript, final IRun<L, ?> counterexample,
-			final PredicateFactory predicateFactory, final boolean wasPerfect, final boolean satOnlyWorker,
-			final boolean workerCrashed) {
+			final PredicateFactory predicateFactory,  final boolean workerCrashed) {
 		mSubtrahend = subtrahend;
 		mAutomatonType = automatonType;
 		mUseErrorAutomaton = useErrorAutomaton;
@@ -47,26 +44,11 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 		mMgdScript = mgdScript;
 		mCounterexample = counterexample;
 		mPredicateFactory = predicateFactory;
-		mWasPerfect = wasPerfect;
-		mSatOnlyWorker = satOnlyWorker;
 		mWorkerCrashed = workerCrashed;
-	}
-
-	public boolean fromSATonlyWorker() {
-		return mSatOnlyWorker;
 	}
 
 	public boolean workerCrashed() {
 		return mWorkerCrashed;
-	}
-
-	public IIpTcStrategyModule<?, L> getModule() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public boolean wasPerfect() {
-		return mWasPerfect;
 	}
 
 	public PredicateFactory getPredicateFactory() {

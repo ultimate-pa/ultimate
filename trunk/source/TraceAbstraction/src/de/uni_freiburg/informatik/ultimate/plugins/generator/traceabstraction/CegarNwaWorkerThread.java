@@ -129,7 +129,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 * transferWorkerUtils is used to transfer between worker and controller/main cfgScript
 	 *
 	 * TODO provide CEGAR loop statistics
-	 * 
+	 *
 	 * @author Max Barth (max.barth@lmu.de)
 	 */
 	public CegarNwaWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
@@ -165,7 +165,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
 			// TODO seems to work not sure if it is usefull
 			mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR, null,
-					mCounterexample, null, true, false, true);
+					mCounterexample, null, true);
 			try {
 				mBlockingQueueForResults.put(mThreadResult);
 			} catch (final InterruptedException e) {
@@ -419,7 +419,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
 				mCfgSmtToolkit.getManagedScript(),
 				mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mCounterexample, Mode.WORKER2MAIN), mPredicateFactory,
-				mRefinementResult.somePerfectSequenceFound(), false, false);
+				false);
 
 		// TODO missing a lot of stuff from NwaCegarLoop
 
