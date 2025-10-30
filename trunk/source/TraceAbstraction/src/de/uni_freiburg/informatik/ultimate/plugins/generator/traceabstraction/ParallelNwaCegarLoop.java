@@ -103,8 +103,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	BlockingQueue<IRun<L, ?>> mWorkerTaskQueue = new LinkedBlockingQueue<>();
 	BlockingQueue<WorkerThreadResult<L, A>> mWorkerResultQueue = new LinkedBlockingQueue<>();
 
-	public static final Object refinementLock = new Object();
-
 	// need global program cache, but worker need to get copy otherwise we
 	// synchronize
 	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
@@ -112,8 +110,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	// Strategies
 	public final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
 	private final Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
-
-	private final HashMap<Integer, Integer> mInActiveErrorLocs = new HashMap<>();
 
 	// Addtional Statistiks for Evaluation
 	private Integer mCounterexamplesChecked = 0;
@@ -441,12 +437,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			minimizeAbstractionIfEnabled(stateFactoryForRefinement,
 					new PredicateFactoryResultChecking(mPredicateFactory));
 		}
-
+		mRunningThreads -= 1;
 		mLogger.info("Main: Refinement done.");
-		// Used to wake up the @CegarNWANoInterpolationWorkerThread.java if it sleeps due to reaching the loop bound
-		synchronized (ParallelNwaCegarLoop.refinementLock) {
-			refinementLock.notifyAll();
-		}
 	}
 
 	/*
