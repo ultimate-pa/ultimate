@@ -115,7 +115,7 @@ public class CegarNWANoInterpolationWorkerThread<L extends IIcfgTransition<?>, A
 
 	/**
 	 * A continues worker that addionaly searches its own counterexamples Still put the results in the result queue
-	 * 
+	 *
 	 * @author Max Barth (max.barth@lmu.de)
 	 */
 	public CegarNWANoInterpolationWorkerThread(final ILogger logger, final TAPreferences pref,
@@ -149,7 +149,7 @@ public class CegarNWANoInterpolationWorkerThread<L extends IIcfgTransition<?>, A
 
 	@Override
 	public void run() {
-		mAbstraction = mMainThread.getAbstraction();
+		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 
 		mCounterexamples.putAll(mMainThread.mActiveCounterexamples);
 		int workerIterations = 0;
