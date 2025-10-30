@@ -75,18 +75,10 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 	private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mAfeResult;
 	private final RefinementEngineStatisticsGenerator mAfeStatistics;
 
-	boolean mNoInterpolationWorker = false;
-
 	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
 			final ITARefinementStrategy<L> strategy) {
-		this(services, logger, strategy, false);
-	}
-
-	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
-			final ITARefinementStrategy<L> strategy, final boolean noInterpolationWorker) {
 		mLogger = logger;
 		mStrategy = strategy;
-		mNoInterpolationWorker = noInterpolationWorker;
 		final AutomatonFreeRefinementEngine<L> afEngine =
 				new AutomatonFreeRefinementEngine<>(services, logger, strategy);
 		mAfeResult = afEngine.getResult();
@@ -101,7 +93,7 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 
 	private void generateProof() {
 		final LBool cexResult = mAfeResult.getCounterexampleFeasibility();
-		if (cexResult != LBool.UNSAT || mNoInterpolationWorker) {
+		if (cexResult != LBool.UNSAT) {
 			mInterpolantAutomaton = null;
 			mUsedTracePredicates = null;
 			return;
