@@ -225,23 +225,29 @@ public class WitnessPrinter implements IOutput {
 		final String filename = ILocation.getAnnotation(root).getFileName();
 
 		for (final LassoShapedNonTerminationArgument<?, ?> cex : cexResults) {
+			final var lasso = getBacktranslatedLasso(backtrans, cex);
 			if (createGraphML) {
-				final String witness = getWitness(backtrans, cex);
+				final String witness =
+						new GraphMLViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger, mServices)
+								.makeGraphMLString();
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
-			// TODO: Add support for YAML
+			if (createYaml) {
+				final String witness =
+						new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger, mServices)
+								.makeYamlString();
+				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+			}
 		}
 		return suppliers;
 	}
 
 	@SuppressWarnings("unchecked")
-	private <TE, T, STE extends IElement, ST> String getWitness(final IBacktranslationService backtrans,
-			final LassoShapedNonTerminationArgument<STE, ST> cex) {
+	private static <TE, T, STE extends IElement, ST> Lasso<IProgramExecution<TE, T>> getBacktranslatedLasso(
+			final IBacktranslationService backtrans, final LassoShapedNonTerminationArgument<STE, ST> cex) {
 		final Lasso<?> lasso =
 				backtrans.translateLassoProgramExecution(new Lasso<>(cex.getStemExecution(), cex.getLoopExecution()));
-		final var stem = (IProgramExecution<TE, T>) lasso.stem();
-		final var loop = (IProgramExecution<TE, T>) lasso.loop();
-		return new GraphMLViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
+		return new Lasso<>((IProgramExecution<TE, T>) lasso.stem(), (IProgramExecution<TE, T>) lasso.loop());
 	}
 
 	@Override

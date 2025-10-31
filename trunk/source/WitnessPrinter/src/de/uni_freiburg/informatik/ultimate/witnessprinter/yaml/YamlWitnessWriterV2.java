@@ -197,7 +197,8 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 			for (final Waypoint avoidWP : segment.getAvoidWaypoints()) {
 				segmentList.add(Map.of("waypoint", avoidWP.toMap("avoid")));
 			}
-			segmentList.add(Map.of("waypoint", segment.getFollowWaypoint().toMap("follow")));
+			segmentList
+					.add(Map.of("waypoint", segment.getFollowOrCycleWaypoint().toMap(segment.getType().getAction())));
 			contentList.add(Map.of("segment", segmentList));
 		}
 		witnessMap.put("content", contentList);

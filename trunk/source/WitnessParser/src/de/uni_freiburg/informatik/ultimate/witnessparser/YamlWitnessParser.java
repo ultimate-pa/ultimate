@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Waypoint;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointAssumption;
@@ -120,11 +121,18 @@ public class YamlWitnessParser {
 			final List<Waypoint> avoidWP = new ArrayList<>();
 			for (final Map<String, Object> wpMap : seg.get("segment")) {
 				final Map<String, Object> wp = (Map<String, Object>) wpMap.get("waypoint");
-				if (wp.get("action").equals("avoid")) {
+				final String action = (String) wp.get("action");
+				// TODO: Add some sanity checking (either cycle or follow, no avoid after cycle/follow, not multiple
+				// cycle/follow...)
+				switch (action) {
+				case "avoid":
 					avoidWP.add(parseViolationWaypoint(wp));
-				}
-				if (wp.get("action").equals("follow")) {
-					parsedContent.add(new Segment(avoidWP, parseViolationWaypoint(wp)));
+					break;
+				case "follow":
+					parsedContent.add(new Segment(avoidWP, parseViolationWaypoint(wp), SegmentType.FOLLOW));
+					break;
+				case "cycle":
+					parsedContent.add(new Segment(avoidWP, parseViolationWaypoint(wp), SegmentType.CYCLE));
 				}
 			}
 		}

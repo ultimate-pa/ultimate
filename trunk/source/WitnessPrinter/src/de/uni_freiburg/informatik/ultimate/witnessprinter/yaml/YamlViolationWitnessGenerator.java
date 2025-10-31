@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointAssumption;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointBranching;
@@ -60,21 +61,29 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
 public class YamlViolationWitnessGenerator<TE, E> {
 	private final IPreferenceProvider mPreferences;
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
-	private final IProgramExecution<TE, E> mExecution;
 	private final ILogger mLogger;
 	private final YamlWitnessWriter mWriter;
 	private final ProgramStatePrinter<TE, E> mProgramStatePrinter;
+	private IProgramExecution<TE, E> mStem;
+	private IProgramExecution<TE, E> mLoop;
 
+	// TODO: If when we produce assumptions, we should exclude them for the loop of termination witnesses
 	private static final boolean PRODUCE_ASSUMPTIONS = false;
 
 	public YamlViolationWitnessGenerator(final IProgramExecution<TE, E> execution, final ILogger logger,
 			final IUltimateServiceProvider services) {
-		mStringProvider = execution.getBacktranslationValueProvider();
+		this(execution, null, logger, services);
+	}
+
+	public YamlViolationWitnessGenerator(final IProgramExecution<TE, E> stem, final IProgramExecution<TE, E> loop,
+			final ILogger logger, final IUltimateServiceProvider services) {
+		mStringProvider = stem.getBacktranslationValueProvider();
 		mProgramStatePrinter = new ProgramStatePrinter<>(mStringProvider);
 		mLogger = logger;
-		mExecution = execution;
+		mStem = stem;
+		mLoop = loop;
 		mPreferences = PreferenceInitializer.getPreferences(services);
-		final String filename = mStringProvider.getFileNameFromStep(mExecution.getTraceElement(0).getStep());
+		final String filename = mStringProvider.getFileNameFromStep(stem.getTraceElement(0).getStep());
 		final String producer = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PRODUCER);
 		final String hash = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_PROGRAMHASH);
 		final String spec = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION);
@@ -87,10 +96,11 @@ public class YamlViolationWitnessGenerator<TE, E> {
 				new MetadataProvider(formatVersion, producer, version, programHashes, spec, arch, "C"));
 	}
 
-	private Witness getWitness() {
+	private List<Segment> getSegments(final IProgramExecution<TE, E> execution, final SegmentType segmentType,
+			final boolean addTargetWaypoint) {
 		final List<Segment> segments = new ArrayList<>();
-		for (int i = 0; i < mExecution.getLength(); i++) {
-			final AtomicTraceElement<TE> currentATE = mExecution.getTraceElement(i);
+		for (int i = 0; i < execution.getLength(); i++) {
+			final AtomicTraceElement<TE> currentATE = execution.getTraceElement(i);
 			final TE currentStep = currentATE.getStep();
 			final int line = mStringProvider.getLineNumberFromStep(currentStep, currentATE.getStepInfo());
 			final int column = mStringProvider.getColumnNumberFromStep(currentStep, currentATE.getStepInfo());
@@ -100,35 +110,42 @@ public class YamlViolationWitnessGenerator<TE, E> {
 
 			if (PRODUCE_ASSUMPTIONS && mStringProvider.isValidAssumptionLocation(currentStep)) {
 				final String previousState = mProgramStatePrinter.stateAsExpression(
-						i == 0 ? null : mExecution.getProgramState(i - 1), ProgramStatePrinter::isValidCVariable);
+						i == 0 ? null : execution.getProgramState(i - 1), ProgramStatePrinter::isValidCVariable);
 				if (previousState != null) {
-					segments.add(new Segment(List.of(), new WaypointAssumption(previousState, currentLocation)));
+					segments.add(new Segment(List.of(), new WaypointAssumption(previousState, currentLocation),
+							segmentType));
 				}
 			}
 
-			if (i == mExecution.getLength() - 1) {
-				segments.add(new Segment(List.of(), new WaypointTarget(currentLocation)));
+			if (addTargetWaypoint && i == execution.getLength() - 1) {
+				segments.add(new Segment(List.of(), new WaypointTarget(currentLocation), segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
-				segments.add(new Segment(List.of(), new WaypointBranching("false", currentLocation)));
+				segments.add(new Segment(List.of(), new WaypointBranching("false", currentLocation), segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
-				segments.add(new Segment(List.of(), new WaypointBranching("true", currentLocation)));
+				segments.add(new Segment(List.of(), new WaypointBranching("true", currentLocation), segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
-				segments.add(new Segment(List.of(), new WaypointFunctionEnter(currentLocation)));
+				segments.add(new Segment(List.of(), new WaypointFunctionEnter(currentLocation), segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-				segments.add(new Segment(List.of(), new WaypointFunctionReturn(
-						mProgramStatePrinter.stateAsExpression(mExecution.getProgramState(i), "\\result"::equals),
-						currentLocation)));
+				segments.add(new Segment(
+						List.of(), new WaypointFunctionReturn(mProgramStatePrinter
+								.stateAsExpression(execution.getProgramState(i), "\\result"::equals), currentLocation),
+						segmentType));
 			}
 		}
-		mLogger.info("Generated YAML witness of length %d.", segments.size());
-		return new Witness(List.of(new ViolationSequence(segments)));
+		return segments;
 	}
 
 	public String makeYamlString() {
-		return mWriter.toString(getWitness());
+		final boolean isTerminationWitness = mLoop != null;
+		final List<Segment> segments = getSegments(mStem, SegmentType.FOLLOW, !isTerminationWitness);
+		if (isTerminationWitness) {
+			segments.addAll(getSegments(mLoop, SegmentType.CYCLE, !isTerminationWitness));
+		}
+		mLogger.info("Generated YAML witness of length %d.", segments.size());
+		return mWriter.toString(new Witness(List.of(new ViolationSequence(segments))));
 	}
 }
