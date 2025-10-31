@@ -23,7 +23,7 @@ update_mathsat(){
       platform="Linux"
     elif [[ "$filename" == *zip ]]; then
       unzip -q -o -d "$TMP_DIR" "$filename"
-      find "$TMP_DIR" \( -type f -name mathsat.exe -or -wholename '*/bin/mathsat.dll' -or -wholename '*/bin/mpir.dll' \) -exec cp "{}" adds/ \;
+      find "$TMP_DIR" \( -type f -name mathsat.exe -or -wholename '*/bin/*.dll' \) -exec cp "{}" adds/ \;
       chmod a+x adds/mathsat.exe
       version=$(echo "$filename" | grep -oP "\d+\.\d+\.\d+")
       platform="Windows"
@@ -40,7 +40,7 @@ update_mathsat(){
       echo "$f"
       sed -z -E -i "s/($platform \(mathsat[^\n]*)\n(\s*)[^\n]*/\1\n\2$version/g" "$f"
     done
-  done < <(curl -sL https://mathsat.fbk.eu/download.html |grep -oP "href=\"\K.*(linux-x86_64-reentrant.tar.gz|-win64-msvc.zip)\"" | sed 's:"::g')
+  done < <(curl -sL https://mathsat.fbk.eu/download.html |grep -oP "href=\"\K.*(linux-x86_64*.tar.gz|-win64*.zip)\"" | sed 's:"::g')
 }
 
 ## cvc5
@@ -96,6 +96,6 @@ update_bitwuzla(){
   rm -rf $TMP_DIR
   # TODO: Update readme_files
 }
-update_cvc5
+update_mathsat
 
 # TODO: continue when the rate limit allows us again (its 50 per h for unauthenticated users)
