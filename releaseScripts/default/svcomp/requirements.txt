@@ -2,3 +2,7 @@ pystow
 ruamel.yaml
 zenodo_client
 imap_tools
+zulip
+lxml
+aiohttp
+pyyaml
