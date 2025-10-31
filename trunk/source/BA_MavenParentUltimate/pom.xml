@@ -22,9 +22,9 @@
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
 		<tycho-version>5.0.0</tycho-version>
 		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
-		<sonar-version>5.0.0.4389</sonar-version>
+		<sonar-version>5.2.0.4988</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
-		<jacoco-version>0.8.12</jacoco-version>
+		<jacoco-version>0.8.14</jacoco-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
 		<maven-clean-version>3.5.0</maven-clean-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
