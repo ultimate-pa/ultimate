@@ -300,8 +300,14 @@ async def download_new_results(
     def is_run_in_range(run: ValidatorRun) -> bool:
         run_ts = int(datetime.strptime(run.date, "%Y-%m-%d_%H-%M-%S").timestamp())
         if last_processed_ts is not None and run_ts <= last_processed_ts:
+            logging.info(
+                f"Skipping {run.tool} run from {run.date}: run older than last processed run ({datetime.fromtimestamp(last_processed_ts)})"
+            )
             return False
         if message_ts < run_ts:
+            logging.info(
+                f"Skipping {run.tool} run from {run.date}: message older than run"
+            )
             return False
         return True
 
@@ -316,17 +322,15 @@ async def download_new_results(
     ) as pbar:
         for run in runs:
             if not is_run_in_range(run):
-                logging.info(f"Skipping run {run} not in time range")
                 continue
             download_tasks.append(downloader.download_tool_run_xml(run, pbar))
-        if runs:
+        if download_tasks:
             is_verifier = not runs[0].validator
             download_tasks.append(
                 downloader.download_tool_run_logs(runs[0].tool, runs[0].date, pbar)
             )
-
-        await asyncio.gather(*download_tasks)
-    return is_verifier
+            await asyncio.gather(*download_tasks)
+    return is_verifier, len(download_tasks) != 0
 
 
 def process_new_results(
@@ -424,19 +428,20 @@ async def main(args: argparse.Namespace):
                 logging.info(
                     f"Processing message {message['id']} from topic {topic_name} ({datetime.fromtimestamp(message_ts)})"
                 )
-                is_verifier = await download_new_results(
+                is_verifier, has_new_results = await download_new_results(
                     downloader, topic_name, message, last_processed_ts
                 )
-                new_link = process_new_results(
-                    args.tmp_dir,
-                    topic_name,
-                    is_verifier,
-                    args.other_scripts,
-                    args.output_base_dir,
-                    args.svcomp_year,
-                    message_ts,
-                )
-                new_links.append(new_link)
+                if has_new_results:
+                    new_link = process_new_results(
+                        args.tmp_dir,
+                        topic_name,
+                        is_verifier,
+                        args.other_scripts,
+                        args.output_base_dir,
+                        args.svcomp_year,
+                        message_ts,
+                    )
+                    new_links.append(new_link)
 
     monitor.save_state()
     if args.tmp_dir.exists():
