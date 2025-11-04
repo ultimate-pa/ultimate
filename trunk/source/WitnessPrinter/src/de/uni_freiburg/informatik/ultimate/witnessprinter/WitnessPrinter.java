@@ -201,11 +201,14 @@ public class WitnessPrinter implements IOutput {
 						new GraphMLViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
-			// For now, violation witnesses for concurrent programs are not supported yet
-			if (createYaml && !IcfgUtils.isConcurrent(root)) {
-				final String witness =
-						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
-				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+			if (createYaml) {
+				if (IcfgUtils.isConcurrent(root)) {
+					mLogger.warn("YAML witness skipped, because there is no support for concurrent programs yet.");
+				} else {
+					final String witness =
+							new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
+					suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+				}
 			}
 		}
 		return suppliers;
