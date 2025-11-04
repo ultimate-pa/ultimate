@@ -96,3 +96,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Use\ memory\ slicer=true
 @de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.2.3
 file_export_version=3.0
+
+#Tue Nov 04 10:56:43 CET 2025
+\!/instance/de.uni_freiburg.informatik.ultimate.witnessprinter=
+/instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Delete\ the\ .graphml\ file\ after\ verification=false
+@de.uni_freiburg.informatik.ultimate.witnessprinter=0.3.0
+file_export_version=3.0
