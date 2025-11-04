@@ -515,11 +515,12 @@ def parse_args():
         default="INFO",
         help="Set the logging level. Default: INFO",
     )
+    channel_name_default = "SV-COMP Result Notifications"
     parser.add_argument(
         "--channel-name",
         type=str,
-        default="Result Notifications SV-COMP",
-        help="Name of the Zulip channel where we look for result topics. Default: Result Notifications SV-COMP",
+        default=channel_name_default,
+        help=f"Name of the Zulip channel where we look for result topics. Default: {channel_name_default}",
     )
 
     parser.add_argument(
