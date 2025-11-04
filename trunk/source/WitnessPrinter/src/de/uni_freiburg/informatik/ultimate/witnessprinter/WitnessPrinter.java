@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -200,7 +201,8 @@ public class WitnessPrinter implements IOutput {
 						new GraphMLViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
-			if (createYaml) {
+			// For now, violation witnesses for concurrent programs are not supported yet
+			if (createYaml && !IcfgUtils.isConcurrent(root)) {
 				final String witness =
 						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
