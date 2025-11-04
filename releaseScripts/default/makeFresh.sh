@@ -36,22 +36,22 @@ create_tool_zips() {
   for platform in {linux,win32}; do
     # makeZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltlc> <termwitnessvaltc>
     # Taipan
-    exit_on_fail bash makeZip.sh Taipan $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
+    exit_on_fail bash makeZip.sh Taipan $platform AutomizerCInline_IcfgBuilder_WitnessPrinter.xml NONE AutomizerCInline_IcfgBuilder.xml AutomizerCInline_IcfgBuilder_WitnessPrinter.xml NONE NONE
 
     # Automizer without separate blockencoding plugin
-    exit_on_fail bash makeZip.sh Automizer $platform AutomizerCInline_WitnessPrinter.xml BuchiAutomizerCInline_WitnessPrinter.xml AutomizerCInline_IcfgBuilder.xml AutomizerCInline_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
+    exit_on_fail bash makeZip.sh Automizer $platform AutomizerCInline_IcfgBuilder_WitnessPrinter.xml BuchiAutomizerCInline_IcfgBuilder_WitnessPrinter.xml AutomizerCInline_IcfgBuilder.xml AutomizerCInline_IcfgBuilder_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
 
     # Automizer with separate blockencoding plugin
     #exit_on_fail bash makeZip.sh Automizer linux AutomizerC_BE_WitnessPrinter.xml BuchiAutomizerCInline_BE_WitnessPrinter.xml AutomizerC.xml AutomizerC_BE_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
 
     # Kojak
-    exit_on_fail bash makeZip.sh Kojak $platform KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE NONE
+    exit_on_fail bash makeZip.sh Kojak $platform KojakC_IcfgBuilder_WitnessPrinter.xml NONE NONE KojakC_IcfgBuilder_WitnessPrinter.xml NONE NONE
 
     # GemCutter
-    exit_on_fail bash makeZip.sh GemCutter $platform AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE NONE
+    exit_on_fail bash makeZip.sh GemCutter $platform AutomizerCInline_IcfgBuilder_WitnessPrinter.xml NONE AutomizerCInline_IcfgBuilder.xml AutomizerCInline_IcfgBuilder_WitnessPrinter.xml NONE NONE
 
     # Referee
-    exit_on_fail bash makeZip.sh Referee $platform RefereeCInline.xml NONE RefereeCInline_IcfgBuilder.xml NONE NONE NONE
+    exit_on_fail bash makeZip.sh Referee $platform RefereeCInline_IcfgBuilder.xml NONE RefereeCInline_IcfgBuilder.xml NONE NONE NONE
 
     # DeltaDebugger
     exit_on_fail bash createDeltaDebuggerDir.sh $platform
