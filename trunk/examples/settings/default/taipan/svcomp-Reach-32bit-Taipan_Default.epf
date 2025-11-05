@@ -86,10 +86,3 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list\ type=DISABLED
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_SEQUENTIAL_PROGRAMS
 
-
-
-#Wed Nov 05 12:34:37 CET 2025
-\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Replace\ while\ statements\ and\ if-then-else\ statements=false
-@de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.3.0
-file_export_version=3.0

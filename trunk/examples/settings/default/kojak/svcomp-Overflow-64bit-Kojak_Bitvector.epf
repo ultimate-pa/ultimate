@@ -70,10 +70,3 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=cvc4 --incremental --print-success --lang smt
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=ALL
 @de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
-
-
-#Wed Nov 05 12:34:37 CET 2025
-\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Replace\ while\ statements\ and\ if-then-else\ statements=false
-@de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.3.0
-file_export_version=3.0
