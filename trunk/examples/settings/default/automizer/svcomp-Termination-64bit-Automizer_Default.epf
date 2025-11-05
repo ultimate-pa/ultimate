@@ -93,3 +93,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Generate\ YAML\ witnesses=false
 @de.uni_freiburg.informatik.ultimate.witnessprinter=0.3.0
 file_export_version=3.0
+
+
+#Wed Nov 05 12:34:37 CET 2025
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Replace\ while\ statements\ and\ if-then-else\ statements=false
+@de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.3.0
+file_export_version=3.0
