@@ -14,6 +14,6 @@
 @de.uni_freiburg.informatik.ultimate.plugins.sifa=0.1.24
 file_export_version=3.0
 #Thu Aug 29 17:38:40 CEST 2019
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SingleStatement
 file_export_version=3.0
