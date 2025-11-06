@@ -39,12 +39,10 @@ public class MemoryPointer1D extends MemoryPointerBase {
 						settings.checkPointerDerefValidity() != CheckMode.IGNORE),
 				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID,
 						settings.checkIfFreedPointerIsValid()),
-				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN,
-						settings.checkMemoryLeakInMain()),
+				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_NEUTRALITY,
+						!settings.getFunctionsCheckedForMemoryNeutrality().isEmpty()),
 				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
 						settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE),
-				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY,
-						settings.checkAllocationPurity()),
 				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS, settings.useConstantArrays()));
 
 		final List<String> incompatibleActiveOptions =
