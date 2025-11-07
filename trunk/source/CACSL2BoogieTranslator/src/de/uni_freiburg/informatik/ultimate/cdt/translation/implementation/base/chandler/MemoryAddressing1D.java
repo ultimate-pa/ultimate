@@ -67,8 +67,8 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public List<MemoryModelDeclarations> metaDataDeclarations() {
-		return mMemoryMetadata.metaDataDeclarations();
+	public List<MemoryModelDeclarations> getMetaDataDeclarations() {
+		return mMemoryMetadata.getMetaDataDeclarations();
 	}
 
 	@Override
@@ -80,7 +80,7 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
 
-		final Expression pointerBase = mMemoryPointer.pointerAddress(ptrAddress, loc);
+		final Expression pointerBase = mMemoryPointer.getPointerAddress(ptrAddress, loc);
 		final Expression timesSizeOf =
 				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), integerExpressionType);
 
@@ -91,7 +91,7 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public BigInteger fixedAddressCounterCountingStep(final Expression size) {
+	public BigInteger getFixedAddressCounterCountingStep(final Expression size) {
 		return mTypeSizes.extractIntegerValue(size, new CPrimitive(CPrimitives.LONG));
 	}
 
@@ -99,7 +99,7 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
 			final Offset fieldOffset, final CPrimitive sizeT) {
 
-		final Expression pointerBase = mMemoryPointer.pointerAddress(baseAddress, loc);
+		final Expression pointerBase = mMemoryPointer.getPointerAddress(baseAddress, loc);
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 				pointerBase, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
 
@@ -116,7 +116,7 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
+	public Expression constructFunctionPointer(final ILocation loc, final BigInteger offset) {
 		final Expression base = mTypeSizes.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), functionPointerPointerBaseValue);
 
@@ -132,7 +132,7 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 
 	@Override
 	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
-		final Expression base = mMemoryPointer.pointerAddress(ptrExpr, loc);
+		final Expression base = mMemoryPointer.getPointerAddress(ptrExpr, loc);
 
 		final Expression basePlus =
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, base,
@@ -142,7 +142,7 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
+	public Expression getLastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
 			final IdentifierExpression returnValue) {
 		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
 				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len), sizeT,
@@ -152,7 +152,7 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
+	public AssumeStatement constructStrChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
 			final Expression argSPtr, final Expression nullPtrExpr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
@@ -167,15 +167,15 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
-		return mMemoryPointer.createPointerFromBase(mMemoryPointer.pointerAddress(ptr, loc), loc);
+	public Expression constructInitialPointerFromPointer(final ILocation loc, final Expression ptr) {
+		return mMemoryPointer.createPointerFromBase(mMemoryPointer.getPointerAddress(ptr, loc), loc);
 	}
 
 	@Override
 	public Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
 			final ICType pointsToType) {
-		final Expression ptr1Base = mMemoryPointer.pointerAddress(ptr1, loc);
-		final Expression ptr2Base = mMemoryPointer.pointerAddress(ptr2, loc);
+		final Expression ptr1Base = mMemoryPointer.getPointerAddress(ptr1, loc);
+		final Expression ptr2Base = mMemoryPointer.getPointerAddress(ptr2, loc);
 
 		return pointerComponentSubtraction(loc, ptr1Base, ptr2Base, pointsToType);
 	}

@@ -648,7 +648,7 @@ public class TypeHandler implements ITypeHandler {
 	public ArrayList<Declaration> constructTranslationDefinedDeclarations(final ILocation tuLoc) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		if (mPointerTypeNeeded) {
-			final var pointerDeclaration = mMemoryPointer.typeDeclaration(tuLoc);
+			final var pointerDeclaration = mMemoryPointer.getTypeDeclaration(tuLoc);
 			decl.add(pointerDeclaration);
 		}
 		return decl;
@@ -712,7 +712,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public BoogieType getBoogiePointerType() {
-		return mMemoryPointer.pointerType();
+		return mMemoryPointer.getPointerType();
 	}
 
 	@Override

@@ -752,7 +752,7 @@ public class CHandler {
 		}
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
-		mDeclarations.add(mMemoryPointer.typeDeclaration(loc));
+		mDeclarations.add(mMemoryPointer.getTypeDeclaration(loc));
 
 		/**
 		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}. Short
@@ -1774,7 +1774,7 @@ public class CHandler {
 
 		if ("NULL".equals(cId)) {
 			return new ExpressionResult(
-					new RValue(mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
+					new RValue(mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
 							CPointer.voidPointer()));
 		}
 		if (List.of("__PRETTY_FUNCTION__", "__FUNCTION__", "__func__").contains(cId)) {

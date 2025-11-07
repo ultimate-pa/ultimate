@@ -586,7 +586,7 @@ public class FunctionHandler {
 					&& "0".equals(((IntegerLiteral) returnValue.getLrValue().getValue()).getValue())) {
 				returnValue = new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
 						.setLrValue(new RValue(
-								mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
+								mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
 								functionResultType))
 						.build();
 			}

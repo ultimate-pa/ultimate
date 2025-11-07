@@ -76,8 +76,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	}
 
 	@Override
-	public List<MemoryModelDeclarations> metaDataDeclarations() {
-		return mMemoryMetadata.metaDataDeclarations();
+	public List<MemoryModelDeclarations> getMetaDataDeclarations() {
+		return mMemoryMetadata.getMetaDataDeclarations();
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
 
-		final Expression pointerBase = mMemoryPointer.pointerAddress(ptrAddress, loc);
+		final Expression pointerBase = mMemoryPointer.getPointerAddress(ptrAddress, loc);
 		final Expression pointerOffset = mMemoryPointer.pointerOffset(ptrAddress, loc);
 
 		final Expression timesSizeOf =
@@ -102,7 +102,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	}
 
 	@Override
-	public BigInteger fixedAddressCounterCountingStep(final Expression size) {
+	public BigInteger getFixedAddressCounterCountingStep(final Expression size) {
 		return BigInteger.ONE;
 	}
 
@@ -110,7 +110,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
 			final Offset fieldOffset, final CPrimitive sizeT) {
 
-		final Expression pointerBase = mMemoryPointer.pointerAddress(baseAddress, loc);
+		final Expression pointerBase = mMemoryPointer.getPointerAddress(baseAddress, loc);
 		final Expression pointerOffset = mMemoryPointer.pointerOffset(baseAddress, loc);
 
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
@@ -166,7 +166,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 
-		final Expression ptrBase = mMemoryPointer.pointerAddress(ptrExpr, loc);
+		final Expression ptrBase = mMemoryPointer.getPointerAddress(ptrExpr, loc);
 		final Expression ptrOffset = mMemoryPointer.pointerOffset(ptrExpr, loc);
 		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
@@ -255,7 +255,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 				memoryModelDeclarationsHandler);
 
 		final Expression addrOffset = mMemoryPointer.pointerOffset(pointerToBeFreed.getValue(), loc);
-		final Expression addrBase = mMemoryPointer.pointerAddress(pointerToBeFreed.getValue(), loc);
+		final Expression addrBase = mMemoryPointer.getPointerAddress(pointerToBeFreed.getValue(), loc);
 		final Expression[] idcFree = { addrBase };
 
 		final List<Statement> result = new ArrayList<>();
@@ -299,7 +299,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	}
 
 	@Override
-	public Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
+	public Expression constructFunctionPointer(final ILocation loc, final BigInteger offset) {
 		final Expression baseExpr = mTypeSizes.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), functionPointerPointerBaseValue);
 		final Expression offsetExpr = mTypeSizes.constructLiteralForIntegerType(loc,
@@ -318,7 +318,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 
 	@Override
 	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
-		final Expression base = mMemoryPointer.pointerAddress(ptrExpr, loc);
+		final Expression base = mMemoryPointer.getPointerAddress(ptrExpr, loc);
 		final Expression offset = mMemoryPointer.pointerOffset(ptrExpr, loc);
 
 		final Expression offsetPlus =
@@ -329,18 +329,18 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	}
 
 	@Override
-	public Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
+	public Expression getLastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
 			final IdentifierExpression returnValue) {
 		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
 				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len), sizeT,
 				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
 
-		return mMemoryPointer.constructPointerFromBaseAndOffset(mMemoryPointer.pointerAddress(returnValue, loc),
+		return mMemoryPointer.constructPointerFromBaseAndOffset(mMemoryPointer.getPointerAddress(returnValue, loc),
 				lenMinusOne, loc);
 	}
 
 	@Override
-	public AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
+	public AssumeStatement constructStrChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
 			final Expression argSPtr, final Expression nullPtrExpr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
@@ -377,7 +377,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 				.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessEqual,
 						mMemoryPointer.pointerOffset(tmpExpr, loc), cTypeOfPointerComponent,
 						ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray,
-								new Expression[] { mMemoryPointer.pointerAddress(argSPtr, loc) }),
+								new Expression[] { mMemoryPointer.getPointerAddress(argSPtr, loc) }),
 						cTypeOfPointerComponent);
 		// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
 		final Expression inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquals,
@@ -388,11 +388,11 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	}
 
 	@Override
-	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
+	public Expression constructInitialPointerFromPointer(final ILocation loc, final Expression ptr) {
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 
-		return mMemoryPointer.constructPointerFromBaseAndOffset(mMemoryPointer.pointerAddress(ptr, loc), zero, loc);
+		return mMemoryPointer.constructPointerFromBaseAndOffset(mMemoryPointer.getPointerAddress(ptr, loc), zero, loc);
 	}
 
 	@Override
@@ -414,7 +414,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		if (pointerTargetFullyAllocated != CheckMode.IGNORE) {
 			// s.offset < length[s.base])
 			final Expression ptrOffset = mMemoryPointer.pointerOffset(ptr, loc);
-			final Expression ptrBase = mMemoryPointer.pointerAddress(ptr, loc);
+			final Expression ptrBase = mMemoryPointer.getPointerAddress(ptr, loc);
 
 			final Expression lengthArray =
 					mMemoryMetadata.getLengthArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
@@ -457,7 +457,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	public Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
 			final Expression destId, final Expression dest) {
 		final Expression basesDistinct = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ,
-				mMemoryPointer.pointerAddress(src, loc), mMemoryPointer.pointerAddress(src, loc));
+				mMemoryPointer.getPointerAddress(src, loc), mMemoryPointer.getPointerAddress(src, loc));
 		final Expression destDoesNotReachIntoSrc = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
 				mMemoryPointer.pointerOffset(dest, loc), mMemoryPointer.pointerOffset(srcId, loc));
 		final Expression srcDoesNotReachIntoDest = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
@@ -496,14 +496,14 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 
 			final Expression select = ExpressionFactory.constructFunctionApplication(loc,
 					MemoryHandler.getNameOfHeapSelectFunction(hda.getName()), new Expression[] {
-							hda.getIdentifierExpression(), mMemoryPointer.pointerAddress(ptrIdExprImpl, loc), },
+							hda.getIdentifierExpression(), mMemoryPointer.getPointerAddress(ptrIdExprImpl, loc), },
 					innerArrayBoogieType);
 
 			stmts.add(StatementFactory.constructSingleAssignmentStatement(loc, hda.getVariableLHS(),
 					ExpressionFactory.constructFunctionApplication(loc,
 							MemoryHandler.getNameOfHeapStoreFunction(hda.getName()),
 							new Expression[] { hda.getIdentifierExpression(),
-									mMemoryPointer.pointerAddress(resultExprImpl, loc), select },
+									mMemoryPointer.getPointerAddress(resultExprImpl, loc), select },
 							(BoogieType) hda.getVariableLHS().getType())));
 		}
 
@@ -514,7 +514,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		final Expression ptrBase = mMemoryPointer.pointerAddress(ptr, loc);
+		final Expression ptrBase = mMemoryPointer.getPointerAddress(ptr, loc);
 		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
 				mMemoryMetadata.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler),
 				new Expression[] { ptrBase });

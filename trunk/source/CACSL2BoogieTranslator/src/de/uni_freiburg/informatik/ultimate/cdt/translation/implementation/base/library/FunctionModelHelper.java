@@ -322,7 +322,7 @@ public class FunctionModelHelper {
 		builder.addAuxVarWithDeclaration(retvar);
 		builder.setLrValue(new LocalLValue(retvar.getLhs(), resultType, null));
 
-		final var nullPtr = mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+		final var nullPtr = mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 
 		// one possible return value: NULL
 		final var setPtrToNull = StatementFactory.constructSingleAssignmentStatement(loc, retvar.getLhs(), nullPtr);

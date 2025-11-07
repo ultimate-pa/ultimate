@@ -344,7 +344,7 @@ public class StringLibraryModel implements ILibraryModel {
 				mMemoryHandler.constructMemsafetyChecksForPointerExpression(loc, argS.getLrValue().getValue()));
 
 		final Expression nullExpr =
-				mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+				mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 		// the havocced/uninitialized variable that represents the return value
 		final Expression tmpExpr = auxvarinfo.getExp();// new IdentifierExpression(loc, tmpId);
 

@@ -12,7 +12,7 @@ public interface IBooleanArrayHelper {
 
 	Expression compareWithTrue(Expression expr);
 
-	default Expression constructValue(final boolean value) {
+	default Expression constructFromValue(final boolean value) {
 		return value ? constructTrue() : constructFalse();
 	}
 }

@@ -19,5 +19,5 @@ public interface IMemoryMetadata {
 	 *
 	 * @return The declarations.
 	 */
-	List<MemoryModelDeclarations> metaDataDeclarations();
+	List<MemoryModelDeclarations> getMetaDataDeclarations();
 }

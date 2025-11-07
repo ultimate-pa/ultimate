@@ -354,7 +354,7 @@ public abstract class ExpressionTranslation {
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
 			};
 		} else if (cType instanceof CPointer || cType instanceof CArray) {
-			return mMemoryPointer.nullPointer(loc, getCTypeOfPointerComponents());
+			return mMemoryPointer.constructNullPointer(loc, getCTypeOfPointerComponents());
 		}
 		throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
 	}

@@ -17,42 +17,43 @@ public interface IMemoryPointer {
 	 *
 	 * @return The type.
 	 */
-	BoogieType pointerType();
+	BoogieType getPointerType();
 
 	/**
 	 * Creates a null pointer;
 	 *
 	 * @return The pointer.
 	 */
-	Expression nullPointer(final ILocation loc, final CPrimitive cTypeOfPointerComponent);
+	Expression constructNullPointer(final ILocation loc, final CPrimitive cTypeOfPointerComponent);
 
 	/**
 	 * Returns the type declaration.
 	 *
 	 * @return The declaration.
 	 */
-	TypeDeclaration typeDeclaration(final ILocation loc);
+	TypeDeclaration getTypeDeclaration(final ILocation loc);
 
 	/**
 	 * Creates an initial pointer at certain value.
 	 *
 	 * @return The pointer.
 	 */
-	Expression initialPointer(final ILocation loc, final BigInteger value, final CPrimitive cTypeOfPointerComponent);
+	Expression constructInitialPointer(final ILocation loc, final BigInteger value,
+			final CPrimitive cTypeOfPointerComponent);
 
 	/**
 	 * Returns the base pointer Address.
 	 *
 	 * @return The base address.
 	 */
-	Expression pointerAddress(final Expression pointer, final ILocation loc);
+	Expression getPointerAddress(final Expression pointer, final ILocation loc);
 
 	/**
 	 * Creates the expression used for the pointer relation.
 	 *
 	 * @return The expression.
 	 */
-	Expression pointerRelationExpression(final ILocation loc, final Expression baseEquality,
+	Expression constructPointerRelationExpression(final ILocation loc, final Expression baseEquality,
 			final CheckMode mPointerSubtractionAndComparisonValidityCheckMode,
 			final ExpressionTranslation expressionTranslation, final int op, final ExpressionResult leftPointer,
 			final ExpressionResult rightPointer);

@@ -86,7 +86,7 @@ public class MemoryMetadataDefault2D extends MemoryMetadataBase {
 	}
 
 	@Override
-	public List<MemoryModelDeclarations> metaDataDeclarations() {
+	public List<MemoryModelDeclarations> getMetaDataDeclarations() {
 		return List.of(MemoryModelDeclarations.ULTIMATE_VALID, MemoryModelDeclarations.ULTIMATE_LENGTH);
 	}
 

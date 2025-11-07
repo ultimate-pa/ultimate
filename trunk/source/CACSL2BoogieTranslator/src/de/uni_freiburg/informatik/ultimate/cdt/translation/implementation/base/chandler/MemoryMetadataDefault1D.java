@@ -86,7 +86,7 @@ public class MemoryMetadataDefault1D extends MemoryMetadataBase {
 	}
 
 	@Override
-	public List<MemoryModelDeclarations> metaDataDeclarations() {
+	public List<MemoryModelDeclarations> getMetaDataDeclarations() {
 		return List.of(MemoryModelDeclarations.ULTIMATE_INITIAL_ALLOCATIONS,
 				MemoryModelDeclarations.ULTIMATE_STACK_ALLOCATIONS, MemoryModelDeclarations.ULTIMATE_HEAP_ALLOCATIONS);
 	}

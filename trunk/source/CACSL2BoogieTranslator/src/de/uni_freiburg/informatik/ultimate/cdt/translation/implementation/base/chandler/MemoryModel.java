@@ -233,7 +233,7 @@ public class MemoryModel {
 	 * @return
 	 */
 	public List<MemoryModelDeclarations> metaDataDeclarations() {
-		return mMemoryAddressing.metaDataDeclarations();
+		return mMemoryAddressing.getMetaDataDeclarations();
 	}
 
 	/**
@@ -303,7 +303,7 @@ public class MemoryModel {
 	 * @return The step size.
 	 */
 	public BigInteger fixedAddressCounterCountingStep(final Expression size) {
-		return mMemoryAddressing.fixedAddressCounterCountingStep(size);
+		return mMemoryAddressing.getFixedAddressCounterCountingStep(size);
 	}
 
 	/**
@@ -405,7 +405,7 @@ public class MemoryModel {
 	 * @return The function pointer.
 	 */
 	public final Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
-		return mMemoryAddressing.createFunctionPointer(loc, offset);
+		return mMemoryAddressing.constructFunctionPointer(loc, offset);
 	}
 
 	/**
@@ -424,7 +424,7 @@ public class MemoryModel {
 	 */
 	public Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
 			final IdentifierExpression returnValue) {
-		return mMemoryAddressing.lastCharOfString(loc, sizeT, len, returnValue);
+		return mMemoryAddressing.getLastCharOfString(loc, sizeT, len, returnValue);
 	}
 
 	/**
@@ -433,7 +433,7 @@ public class MemoryModel {
 	 * @return A pointer with offset 0.
 	 */
 	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
-		return mMemoryAddressing.initialPointerFromPointer(loc, ptr);
+		return mMemoryAddressing.constructInitialPointerFromPointer(loc, ptr);
 	}
 
 	/**
@@ -445,7 +445,7 @@ public class MemoryModel {
 			final Expression argSPtr, final Expression nullPtrExpr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, requiredMemoryModelFeatures,
+		return mMemoryAddressing.constructStrChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
 
@@ -479,7 +479,7 @@ public class MemoryModel {
 	 */
 	public Expression[] rhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda,
 			final Expression baseAddress) {
-		return mMemoryAddressing.rhsAssignmentStatementHda(loc, hda, baseAddress);
+		return mMemoryAddressing.constructRhsAssignmentStatementHda(loc, hda, baseAddress);
 	}
 
 	/**

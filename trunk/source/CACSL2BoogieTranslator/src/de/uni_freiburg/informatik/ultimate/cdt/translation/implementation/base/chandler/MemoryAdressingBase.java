@@ -117,24 +117,24 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 			final CPrimitive cTypeOfPointerComponent, final Expression nullPtrExpr) {
 		// res.base == 0
 		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
-				mMemoryPointer.pointerAddress(tmpExpr, loc), cTypeOfPointerComponent,
-				mMemoryPointer.pointerAddress(nullPtrExpr, loc), cTypeOfPointerComponent);
+				mMemoryPointer.getPointerAddress(tmpExpr, loc), cTypeOfPointerComponent,
+				mMemoryPointer.getPointerAddress(nullPtrExpr, loc), cTypeOfPointerComponent);
 	}
 
 	protected Expression baseEqual(final ILocation loc, final Expression tmpExpr,
 			final CPrimitive cTypeOfPointerComponent, final Expression argSPtr) {
 		// res.base == arg_s.base
 		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
-				mMemoryPointer.pointerAddress(tmpExpr, loc), cTypeOfPointerComponent,
-				mMemoryPointer.pointerAddress(argSPtr, loc), cTypeOfPointerComponent);
+				mMemoryPointer.getPointerAddress(tmpExpr, loc), cTypeOfPointerComponent,
+				mMemoryPointer.getPointerAddress(argSPtr, loc), cTypeOfPointerComponent);
 	}
 
 	@Override
-	public Expression[] rhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda,
+	public Expression[] constructRhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda,
 			final Expression baseAddress) {
 		return new Expression[] { ExpressionFactory.constructFunctionApplication(loc,
 				MemoryHandler.getNameOfHeapInitFunction(hda.getName()),
-				new Expression[] { hda.getIdentifierExpression(), mMemoryPointer.pointerAddress(baseAddress, loc) },
+				new Expression[] { hda.getIdentifierExpression(), mMemoryPointer.getPointerAddress(baseAddress, loc) },
 				(BoogieType) hda.getIdentifierExpression().getType()) };
 	}
 

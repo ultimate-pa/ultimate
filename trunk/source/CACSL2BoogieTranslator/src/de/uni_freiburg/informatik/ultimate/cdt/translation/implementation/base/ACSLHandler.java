@@ -950,7 +950,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final NullPointer node) {
 		// \null is an extra notation for the null pointer (i.e. a shortcut for (void*)0).
-		final var nullPtr = mMemoryPointer.nullPointer(mLocationFactory.createACSLLocation(node),
+		final var nullPtr = mMemoryPointer.constructNullPointer(mLocationFactory.createACSLLocation(node),
 				mExpressionTranslation.getCTypeOfPointerComponents());
 
 		return new ExpressionResult(new RValue(nullPtr, CPointer.voidPointer()));

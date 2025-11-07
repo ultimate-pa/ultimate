@@ -63,7 +63,7 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 	public ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		final RValue pointer = (RValue) rexp.getLrValue();
-		final Expression baseAddress = mMemoryPointer.pointerAddress(pointer.getValue(), loc);
+		final Expression baseAddress = mMemoryPointer.getPointerAddress(pointer.getValue(), loc);
 		final Expression offset = mMemoryPointer.pointerOffset(pointer.getValue(), loc);
 		final Expression sumExpr = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_plus, baseAddress, mExpressionTranslation.getCTypeOfPointerComponents(), offset,

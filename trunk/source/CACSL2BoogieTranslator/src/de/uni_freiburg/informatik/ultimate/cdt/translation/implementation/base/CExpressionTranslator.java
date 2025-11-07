@@ -182,7 +182,7 @@ public class CExpressionTranslator {
 					IASTBinaryExpression.op_equals, left.getLrValue().getValue(), right.getLrValue().getValue(),
 					SFO.POINTER_BASE, mExpressionTranslation);
 
-			expr = mMemoryPointer.pointerRelationExpression(loc, baseEquality,
+			expr = mMemoryPointer.constructPointerRelationExpression(loc, baseEquality,
 					mPointerSubtractionAndComparisonValidityCheckMode, mExpressionTranslation, op, left, right);
 
 			result = addBaseEqualityCheck(loc, baseEquality, result);
@@ -340,7 +340,7 @@ public class CExpressionTranslator {
 
 				if (inputType instanceof CPointer) {
 					rhsOfComparison =
-							mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+							mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 				} else if (inputType instanceof CEnum) {
 					final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 					rhsOfComparison = mExpressionTranslation.constructZero(loc, intType);

@@ -42,7 +42,7 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The declarations.
 	 */
-	List<MemoryModelDeclarations> metaDataDeclarations();
+	List<MemoryModelDeclarations> getMetaDataDeclarations();
 
 	/**
 	 * Constructs a list of expressions that are used in the specifications of malloc.
@@ -93,7 +93,7 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The step size.
 	 */
-	BigInteger fixedAddressCounterCountingStep(final Expression size);
+	BigInteger getFixedAddressCounterCountingStep(final Expression size);
 
 	/**
 	 * Returns the address for a field in a struct.
@@ -168,7 +168,7 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The function pointer.
 	 */
-	Expression createFunctionPointer(final ILocation loc, final BigInteger offset);
+	Expression constructFunctionPointer(final ILocation loc, final BigInteger offset);
 
 	/**
 	 * Adds an expression to a pointer.
@@ -182,7 +182,7 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The pointer.
 	 */
-	Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
+	Expression getLastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
 			final IdentifierExpression returnValue);
 
 	/**
@@ -190,7 +190,7 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The statement.
 	 */
-	AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr, final Expression argSPtr,
+	AssumeStatement constructStrChrAssumeStatement(final ILocation loc, final Expression tmpExpr, final Expression argSPtr,
 			final Expression nullPtrExpr, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
@@ -217,14 +217,14 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The expression.
 	 */
-	Expression[] rhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda, final Expression baseAddress);
+	Expression[] constructRhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda, final Expression baseAddress);
 
 	/**
 	 * Returns an initial pointer with the same base address. If 2D-Addressing, than the offset is 0.
 	 *
 	 * @return The initial pointer.
 	 */
-	Expression initialPointerFromPointer(final ILocation loc, final Expression ptr);
+	Expression constructInitialPointerFromPointer(final ILocation loc, final Expression ptr);
 
 	/**
 	 * Subtracts two pointers.

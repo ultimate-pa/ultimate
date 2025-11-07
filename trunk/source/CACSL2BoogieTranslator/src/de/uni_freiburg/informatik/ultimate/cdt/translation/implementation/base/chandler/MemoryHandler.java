@@ -596,7 +596,7 @@ public class MemoryHandler {
 		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
 		final Expression addressExpression =
-				mMemoryPointer.initialPointer(actualLoc, mFixedAddressCounter, cTypeOfPointerComponent);
+				mMemoryPointer.constructInitialPointer(actualLoc, mFixedAddressCounter, cTypeOfPointerComponent);
 
 		final RValue addressRValue = new RValue(addressExpression, cType);
 		final RValue ptrBaseRValue = new RValue(
@@ -888,7 +888,7 @@ public class MemoryHandler {
 		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, index,
 				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
 						new DeclarationInformation(StorageClass.GLOBAL, null)),
-				getBooleanArrayHelper().constructValue(mutexLocked));
+				getBooleanArrayHelper().constructFromValue(mutexLocked));
 	}
 
 	public Expression constructRwLockArrayIdentifierExpression(final ILocation loc) {
@@ -1262,7 +1262,7 @@ public class MemoryHandler {
 				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
 						mExpressionTranslation.getCTypeOfPointerComponents());
 				convertedValue =
-						mMemoryPointer.nullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
+						mMemoryPointer.constructNullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 			} else if (hda.getName().equals(SFO.REAL)) {
 				final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
 				exprRes = mExpressionTranslation.convertIntToFloat(ignoreLoc, exprRes, new CPrimitive(primitive));

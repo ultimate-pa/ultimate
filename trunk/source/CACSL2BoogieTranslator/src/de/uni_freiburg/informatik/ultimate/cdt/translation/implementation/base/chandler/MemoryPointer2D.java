@@ -42,17 +42,17 @@ public class MemoryPointer2D extends MemoryPointerBase {
 	}
 
 	@Override
-	public BoogieType pointerType() {
+	public BoogieType getPointerType() {
 		return mBoogieType;
 	}
 
 	@Override
-	public Expression nullPointer(final ILocation loc, final CPrimitive cTypeOfPointerComponent) {
-		return initialPointer(loc, BigInteger.ZERO, cTypeOfPointerComponent);
+	public Expression constructNullPointer(final ILocation loc, final CPrimitive cTypeOfPointerComponent) {
+		return constructInitialPointer(loc, BigInteger.ZERO, cTypeOfPointerComponent);
 	}
 
 	@Override
-	public TypeDeclaration typeDeclaration(final ILocation loc) {
+	public TypeDeclaration getTypeDeclaration(final ILocation loc) {
 		final VarList fBase = new VarList(loc, new String[] { SFO.POINTER_BASE }, mComponentType.toASTType(loc));
 		final VarList fOffset = new VarList(loc, new String[] { SFO.POINTER_OFFSET }, mComponentType.toASTType(loc));
 		final VarList[] fields = { fBase, fOffset };
@@ -65,7 +65,7 @@ public class MemoryPointer2D extends MemoryPointerBase {
 	}
 
 	@Override
-	public final Expression initialPointer(final ILocation loc, final BigInteger value,
+	public final Expression constructInitialPointer(final ILocation loc, final BigInteger value,
 			final CPrimitive cTypeOfPointerComponent) {
 		final Expression baseExpr = mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, value);
 
@@ -101,7 +101,7 @@ public class MemoryPointer2D extends MemoryPointerBase {
 	}
 
 	@Override
-	public Expression pointerRelationExpression(final ILocation loc, final Expression baseEquality,
+	public Expression constructPointerRelationExpression(final ILocation loc, final Expression baseEquality,
 			final CheckMode mPointerSubtractionAndComparisonValidityCheckMode,
 			final ExpressionTranslation expressionTranslation, final int op, final ExpressionResult left,
 			final ExpressionResult right) {
