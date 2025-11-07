@@ -201,12 +201,12 @@ public class MemoryHandler {
 
 		if (smtBoolArrayWorkaround) {
 			if (mSettings.isBitvectorTranslation()) {
-				mBooleanArrayHelper = new BooleanArrayHelper_Bitvector();
+				mBooleanArrayHelper = new BooleanArrayHelperBitvector();
 			} else {
-				mBooleanArrayHelper = new BooleanArrayHelper_Integer();
+				mBooleanArrayHelper = new BooleanArrayHelperInteger();
 			}
 		} else {
-			mBooleanArrayHelper = new BooleanArrayHelper_Bool();
+			mBooleanArrayHelper = new BooleanArrayHelperBool();
 		}
 
 		mMemoryModelDeclarationsHandler =

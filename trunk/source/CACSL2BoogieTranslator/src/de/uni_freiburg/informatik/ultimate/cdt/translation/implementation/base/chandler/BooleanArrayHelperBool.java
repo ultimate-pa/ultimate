@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public final class BooleanArrayHelper_Bool implements IBooleanArrayHelper {
+public final class BooleanArrayHelperBool implements IBooleanArrayHelper {
 
 	@Override
 	public ASTType constructBoolReplacementType() {

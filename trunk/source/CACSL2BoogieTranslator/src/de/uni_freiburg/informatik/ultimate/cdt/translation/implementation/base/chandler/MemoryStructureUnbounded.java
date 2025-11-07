@@ -47,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryStructure_Unbounded extends BaseMemoryStructure {
+public class MemoryStructureUnbounded extends BaseMemoryStructure {
 
 	private final HeapDataArray mIntegerArray;
 	private final HeapDataArray mFloatingArray;
 
-	public MemoryStructure_Unbounded(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
+	public MemoryStructureUnbounded(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
 		super(typeSizes, typeHandler);
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();

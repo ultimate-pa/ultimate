@@ -41,12 +41,12 @@ public class MemoryModel {
 	 * This enum represents the valid combinations of memory structure and memory adressing.
 	 */
 	private enum Combinations {
-		ONE_Dimensional_SingleBitPrecise(MemoryAddressing1D.class, MemoryStructure_SingleBitprecise.class),
-		ONE_Dimensional_MultiBitPrecise(MemoryAddressing1D.class, MemoryStructure_MultiBitprecise.class),
-		ONE_Dimensional_Unbounded(MemoryAddressing1D.class, MemoryStructure_Unbounded.class),
-		TWO_Dimensional_MultiBitPrecise(MemoryAddressing2D.class, MemoryStructure_MultiBitprecise.class),
-		TWO_Dimensional_SingleBitPrecise(MemoryAddressing2D.class, MemoryStructure_SingleBitprecise.class),
-		TWO_Dimensional_Unbounded(MemoryAddressing2D.class, MemoryStructure_Unbounded.class);
+		ONE_Dimensional_SingleBitPrecise(MemoryAddressing1D.class, MemoryStructureSingleBitprecise.class),
+		ONE_Dimensional_MultiBitPrecise(MemoryAddressing1D.class, MemoryStructureMultiBitprecise.class),
+		ONE_Dimensional_Unbounded(MemoryAddressing1D.class, MemoryStructureUnbounded.class),
+		TWO_Dimensional_MultiBitPrecise(MemoryAddressing2D.class, MemoryStructureMultiBitprecise.class),
+		TWO_Dimensional_SingleBitPrecise(MemoryAddressing2D.class, MemoryStructureSingleBitprecise.class),
+		TWO_Dimensional_Unbounded(MemoryAddressing2D.class, MemoryStructureUnbounded.class);
 
 		private final Class<? extends IMemoryAdressing> mAddressingType;
 		private final Class<? extends IMemoryStructure> mStructureType;
@@ -133,13 +133,13 @@ public class MemoryModel {
 		case HoenickeLindenmann_2ByteResolution:
 		case HoenickeLindenmann_4ByteResolution:
 		case HoenickeLindenmann_8ByteResolution:
-			return new MemoryStructure_SingleBitprecise(memoryStructurePreference.getByteSize(), typeSizes,
+			return new MemoryStructureSingleBitprecise(memoryStructurePreference.getByteSize(), typeSizes,
 					typeHandler);
 		case HoenickeLindenmann_Original:
 			if (settings.isBitvectorTranslation()) {
-				return new MemoryStructure_MultiBitprecise(typeSizes, typeHandler);
+				return new MemoryStructureMultiBitprecise(typeSizes, typeHandler);
 			}
-			return new MemoryStructure_Unbounded(typeSizes, typeHandler);
+			return new MemoryStructureUnbounded(typeSizes, typeHandler);
 		default:
 			throw new UnsupportedOperationException(memoryStructurePreference + " is an invalid memory structure.");
 		}
@@ -151,12 +151,12 @@ public class MemoryModel {
 	}
 
 	public int singleBitPreciseResolution() {
-		assert mMemoryStructure instanceof MemoryStructure_SingleBitprecise;
-		return ((MemoryStructure_SingleBitprecise) mMemoryStructure).getResolution();
+		assert mMemoryStructure instanceof MemoryStructureSingleBitprecise;
+		return ((MemoryStructureSingleBitprecise) mMemoryStructure).getResolution();
 	}
 
 	public boolean isSingleBitPreciseStructure() {
-		return mMemoryStructure instanceof MemoryStructure_SingleBitprecise;
+		return mMemoryStructure instanceof MemoryStructureSingleBitprecise;
 	}
 
 	public String getReadProcedureName(final CPrimitives primitive) {
