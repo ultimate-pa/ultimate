@@ -13,7 +13,7 @@ pipeline {
   }
   tools {
     jdk 'JDK21'
-    maven 'Maven 3.9.8'
+    maven 'Maven 3.9.11'
   }
   stages {
     stage('Checkout') {
