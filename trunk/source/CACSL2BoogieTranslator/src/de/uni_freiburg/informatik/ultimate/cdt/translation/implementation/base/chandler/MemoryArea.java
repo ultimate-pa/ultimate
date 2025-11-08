@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 public enum MemoryArea {
-	STACK, HEAP,;
+	STACK, HEAP;
 
 	MemoryModelDeclarations getMemoryStructureDeclaration() {
 		return switch (this) {
