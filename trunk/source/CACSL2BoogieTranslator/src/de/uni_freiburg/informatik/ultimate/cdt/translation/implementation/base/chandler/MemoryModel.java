@@ -84,7 +84,7 @@ public class MemoryModel {
 			final FunctionDeclarations functionDeclarations, final IMemoryPointer pointer) {
 		final var addressing = MemoryAddressingFactory.createMemoryAddressing(settings, typeHandler, exprTranslation,
 				booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, functionDeclarations, pointer);
-		final var structure = createStructure(settings, typeSizes, typeHandler);
+		final var structure = MemoryStructureFactory.createMemoryStructure(settings, typeSizes, typeHandler);
 
 		if (!Combinations.isValid(addressing.getClass(), structure.getClass())) {
 			throw new UnsupportedOperationException("The combination of addressing: " + addressing.getClass()
@@ -92,35 +92,6 @@ public class MemoryModel {
 		}
 
 		return new MemoryModel(addressing, structure);
-	}
-
-	/**
-	 * The factory method for creating the concrete memory structure instance.
-	 *
-	 * @return A concrete instance of IMemoryStructure.
-	 */
-	private static IMemoryStructure createStructure(final TranslationSettings settings, final TypeSizes typeSizes,
-			final ITypeHandler typeHandler) {
-		final var memoryStructurePreference = settings.getMemoryStructurePreference();
-		if (memoryStructurePreference.isBitVectorRepresentation() && !settings.isBitvectorTranslation()) {
-			throw new UnsupportedOperationException("Memory Structure: " + memoryStructurePreference
-					+ " is only available in using the bitprecise translation");
-		}
-
-		switch (memoryStructurePreference) {
-		case HoenickeLindenmann_1ByteResolution:
-		case HoenickeLindenmann_2ByteResolution:
-		case HoenickeLindenmann_4ByteResolution:
-		case HoenickeLindenmann_8ByteResolution:
-			return new MemoryStructureSingleBitprecise(memoryStructurePreference.getByteSize(), typeSizes, typeHandler);
-		case HoenickeLindenmann_Original:
-			if (settings.isBitvectorTranslation()) {
-				return new MemoryStructureMultiBitprecise(typeSizes, typeHandler);
-			}
-			return new MemoryStructureUnbounded(typeSizes, typeHandler);
-		default:
-			throw new UnsupportedOperationException(memoryStructurePreference + " is an invalid memory structure.");
-		}
 	}
 
 	private MemoryModel(final IMemoryAdressing memoryAdressing, final IMemoryStructure memoryStructure) {
