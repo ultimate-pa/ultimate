@@ -169,7 +169,7 @@ public class TypeHandler implements ITypeHandler {
 		mTranslationSettings = translationSettings;
 		mLocationFactory = locationFactory;
 		mStaticObjectsHandler = staticObjectsHandler;
-		mMemoryPointer = MemoryPointerFactory.create(mTranslationSettings,
+		mMemoryPointer = MemoryPointerFactory.createMemoryPointer(mTranslationSettings,
 				(BoogieType) cType2AstType(null, translationSettings.getCTypeOfPointerComponents()).getBoogieType(),
 				typeSizes);
 	}

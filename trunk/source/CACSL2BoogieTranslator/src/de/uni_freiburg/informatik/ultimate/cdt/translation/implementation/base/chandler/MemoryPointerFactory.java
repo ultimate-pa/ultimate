@@ -12,7 +12,7 @@ public abstract class MemoryPointerFactory {
 	 *
 	 * @return A IMemoryPointer instance.
 	 */
-	public static IMemoryPointer create(final TranslationSettings settings, final BoogieType boogieType,
+	public static IMemoryPointer createMemoryPointer(final TranslationSettings settings, final BoogieType boogieType,
 			final TypeSizes typeSizes) {
 		final var memoryAddressingPreference = settings.memoryAddressingPreference();
 
