@@ -10,9 +10,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public abstract class MemoryMetadataBase implements IMemoryMetadata {
-	final ITypeHandler mTypeHandler;
-	final ExpressionTranslation mExpressionTranslation;
-	final IBooleanArrayHelper mBooleanArrayHelper;
+	protected final ITypeHandler mTypeHandler;
+	protected final ExpressionTranslation mExpressionTranslation;
+	protected final IBooleanArrayHelper mBooleanArrayHelper;
 
 	public MemoryMetadataBase(final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation,
 			final IBooleanArrayHelper booleanArrayHelper) {

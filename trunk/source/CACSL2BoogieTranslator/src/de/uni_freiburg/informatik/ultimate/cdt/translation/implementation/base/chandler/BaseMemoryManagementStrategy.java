@@ -11,10 +11,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public abstract class BaseMemoryManagementStrategy implements IMemoryManagementStrategy {
-	TypeSizes mTypeSizes;
-	ExpressionTranslation mExpressionTranslation;
-	ITypeHandler mTypeHandler;
-	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+	protected final TypeSizes mTypeSizes;
+	protected final ExpressionTranslation mExpressionTranslation;
+	protected final ITypeHandler mTypeHandler;
+	protected final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 
 	public BaseMemoryManagementStrategy(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {

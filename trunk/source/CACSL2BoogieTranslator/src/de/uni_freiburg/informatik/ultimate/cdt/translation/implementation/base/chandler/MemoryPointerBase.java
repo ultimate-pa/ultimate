@@ -12,8 +12,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public abstract class MemoryPointerBase implements IMemoryPointer {
-	TypeSizes mTypeSizes;
-	BoogieType mBoogieType;
+	protected final TypeSizes mTypeSizes;
+	protected BoogieType mBoogieType;
 
 	public MemoryPointerBase(final TypeSizes typeSizes) {
 		mTypeSizes = typeSizes;

@@ -27,16 +27,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements IMemoryAdressing {
-	ITypeHandler mTypeHandler;
-	ExpressionTranslation mExpressionTranslation;
-	IBooleanArrayHelper mBooleanArrayHelper;
-	TypeSizes mTypeSizes;
-	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
-	IPointerIntegerConversion mPointerIntegerConversion;
-	T mMemoryPointer;
-	IMemoryManagementStrategy mMemoryManagementStrategy;
+	protected final ITypeHandler mTypeHandler;
+	protected final ExpressionTranslation mExpressionTranslation;
+	protected final IBooleanArrayHelper mBooleanArrayHelper;
+	protected final TypeSizes mTypeSizes;
+	protected final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+	protected IPointerIntegerConversion mPointerIntegerConversion;
+	protected final T mMemoryPointer;
+	protected IMemoryManagementStrategy mMemoryManagementStrategy;
 
-	BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
+	protected final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 
 	public MemoryAdressingBase(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
