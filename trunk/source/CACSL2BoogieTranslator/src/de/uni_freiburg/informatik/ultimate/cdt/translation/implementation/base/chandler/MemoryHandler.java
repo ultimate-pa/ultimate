@@ -212,8 +212,9 @@ public class MemoryHandler {
 		mMemoryModelDeclarationsHandler =
 				new MemoryModelDeclarationsHandler(mTypeHandler, mBooleanArrayHelper, getRwLockCounterType());
 
-		mMemoryModel = MemoryModel.create(settings, typeHandler, expressionTranslation, mBooleanArrayHelper, typeSizes,
-				typeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations(), memoryPointer);
+		mMemoryModel = MemoryModelFactory.createMemoryModel(settings, typeHandler, expressionTranslation,
+				mBooleanArrayHelper, typeSizes, typeSizeAndOffsetComputer,
+				mExpressionTranslation.getFunctionDeclarations(), memoryPointer);
 
 		mVariablesToBeMalloced = new LinkedScopedHashMap<>();
 		mVariablesToBeFreed = new LinkedScopedHashMap<>();
@@ -243,8 +244,9 @@ public class MemoryHandler {
 		mMemoryModelDeclarationsHandler = prerunMemoryHandler.mMemoryModelDeclarationsHandler;
 		mMemoryPointer = prerunMemoryHandler.mMemoryPointer;
 
-		mMemoryModel = MemoryModel.create(settings, typeHandler, expressionTranslation, mBooleanArrayHelper, typeSizes,
-				typeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations(), mMemoryPointer);
+		mMemoryModel = MemoryModelFactory.createMemoryModel(settings, typeHandler, expressionTranslation,
+				mBooleanArrayHelper, typeSizes, typeSizeAndOffsetComputer,
+				mExpressionTranslation.getFunctionDeclarations(), mMemoryPointer);
 
 		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures(mMemoryModel.metaDataDeclarations());// prerunMemoryHandler.mRequiredMemoryModelFeatures;
 	}
@@ -1261,8 +1263,8 @@ public class MemoryHandler {
 			if (hda.getName().equals(SFO.POINTER)) {
 				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
 						mExpressionTranslation.getCTypeOfPointerComponents());
-				convertedValue =
-						mMemoryPointer.constructNullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
+				convertedValue = mMemoryPointer.constructNullPointer(ignoreLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents());
 			} else if (hda.getName().equals(SFO.REAL)) {
 				final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
 				exprRes = mExpressionTranslation.convertIntToFloat(ignoreLoc, exprRes, new CPrimitive(primitive));
