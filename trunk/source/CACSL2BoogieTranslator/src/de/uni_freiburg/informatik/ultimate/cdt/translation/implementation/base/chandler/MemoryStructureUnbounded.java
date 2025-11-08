@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryStructureUnbounded extends BaseMemoryStructure {
+public class MemoryStructureUnbounded extends MemoryStructureBase {
 
 	private final HeapDataArray mIntegerArray;
 	private final HeapDataArray mFloatingArray;

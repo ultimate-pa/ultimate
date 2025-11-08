@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryStructureMultiBitprecise extends BaseMemoryStructure {
+public class MemoryStructureMultiBitprecise extends MemoryStructureBase {
 
 	private final Map<Integer, HeapDataArray> mSize2HeapIntegerArray = new HashMap<>();
 	private final Map<Integer, HeapDataArray> mSize2HeapFloatingArray = new HashMap<>();

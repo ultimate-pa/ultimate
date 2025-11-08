@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 @SuppressWarnings("unused")
 public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMetadataDefault2D>
-		extends BaseMemoryManagementStrategy {
+		extends MemoryManagementStrategyBase {
 	IBooleanArrayHelper mBooleanArrayHelper;
 	T mMemoryAddressing;
 	T1 mMemoryMetadata;

@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryStructure.ReadWriteDefinition;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureBase.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**

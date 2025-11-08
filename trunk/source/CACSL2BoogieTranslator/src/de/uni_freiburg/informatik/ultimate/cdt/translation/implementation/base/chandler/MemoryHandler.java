@@ -94,7 +94,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryStructure.ReadWriteDefinition;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureBase.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructMemcpyOrMemmove;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructRealloc;

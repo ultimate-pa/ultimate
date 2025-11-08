@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * Memory addresses are increased with every allocation.
  */
 public class SimpleIncreasingStrategy<T extends MemoryAddressing1D, T1 extends MemoryMetadataDefault1D>
-		extends BaseMemoryManagementStrategy {
+		extends MemoryManagementStrategyBase {
 	T mMemoryAddressing;
 	private final Boolean mIsBitVectorTranslation;
 	T1 mMemoryMetadata;

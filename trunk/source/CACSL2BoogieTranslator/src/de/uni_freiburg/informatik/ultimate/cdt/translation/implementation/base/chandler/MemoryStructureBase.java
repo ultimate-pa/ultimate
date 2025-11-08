@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public abstract class BaseMemoryStructure implements IMemoryStructure {
+public abstract class MemoryStructureBase implements IMemoryStructure {
 
 	protected static final String READ_PROCEDURE_PREFIX = "read~";
 	protected static final String WRITE_PROCEDURE_PREFIX = "write~";
@@ -60,7 +60,7 @@ public abstract class BaseMemoryStructure implements IMemoryStructure {
 
 	private final HeapDataArray mPointerArray;
 
-	public BaseMemoryStructure(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
+	public MemoryStructureBase(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
