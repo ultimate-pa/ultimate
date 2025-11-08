@@ -141,11 +141,6 @@ public class MemoryHandler {
 	private static final String FLOAT_ON_HEAP_UNSOUND_MESSAGE =
 			"Analysis for floating types on heap by default disabled (soundness first).";
 
-	/**
-	 * Add also implementations of malloc, free, write and read functions. TODO: details
-	 */
-	private static final boolean ADD_IMPLEMENTATIONS = false;
-
 	// needed for adding modifies clauses
 	private final ITypeHandler mTypeHandler;
 
