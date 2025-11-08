@@ -175,7 +175,7 @@ public class MainTranslator {
 					functionPointers, translationSettings.getEntryFunction());
 
 			mLogger.info("Built tables and reachable declarations");
-			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
+			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler();
 
 			// Don't use the interface here in order to get access to the memory pointer
 			final TypeHandler prerunTypeHandler = new TypeHandler(nameHandler, typeSizes, flatSymbolTable,
@@ -227,7 +227,7 @@ public class MainTranslator {
 		}
 		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
-		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler(mLogger);
+		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler();
 		final TypeHandler typeHandler = new TypeHandler(nameHandler, typeSizes, flatSymbolTable, translationSettings,
 				locationFactory, staticObjectsHandler, prerunTypeHandler);
 		final ExpressionTranslation expressionTranslation = createExpressionTranslation(translationSettings,

@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -85,7 +84,7 @@ public class StaticObjectsHandler {
 	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
 	private final Map<String, TypeDeclaration> mIncompleteType2TypeDecl;
 
-	public StaticObjectsHandler(final ILogger logger) {
+	public StaticObjectsHandler() {
 		mStatementsForUltimateInit = new ArrayList<>();
 		mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
 		mIncompleteType2TypeDecl = new HashMap<>();
