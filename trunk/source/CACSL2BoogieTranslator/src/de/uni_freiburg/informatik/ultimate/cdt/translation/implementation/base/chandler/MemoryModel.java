@@ -82,8 +82,8 @@ public class MemoryModel {
 			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper,
 			final TypeSizes typeSizes, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final FunctionDeclarations functionDeclarations, final IMemoryPointer pointer) {
-		final var addressing = createAddressing(settings, typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-				typeSizeAndOffsetComputer, functionDeclarations, pointer);
+		final var addressing = MemoryAddressingFactory.createMemoryAddressing(settings, typeHandler, exprTranslation,
+				booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, functionDeclarations, pointer);
 		final var structure = createStructure(settings, typeSizes, typeHandler);
 
 		if (!Combinations.isValid(addressing.getClass(), structure.getClass())) {
@@ -92,27 +92,6 @@ public class MemoryModel {
 		}
 
 		return new MemoryModel(addressing, structure);
-	}
-
-	/**
-	 * The factory method for creating the concrete memory structure instance.
-	 *
-	 * @return A concrete instance of IMemoryAdressing.
-	 */
-	private static IMemoryAdressing createAddressing(final TranslationSettings settings, final ITypeHandler typeHandler,
-			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper,
-			final TypeSizes typeSizes, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final FunctionDeclarations functionDeclarations, final IMemoryPointer pointer) {
-
-		if (pointer instanceof final MemoryPointer1D p) {
-			return new MemoryAddressing1D(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-					typeSizeAndOffsetComputer, settings, functionDeclarations, p);
-		} else if (pointer instanceof final MemoryPointer2D p) {
-			return new MemoryAddressing2D(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations, p);
-		}
-
-		throw new UnsupportedOperationException("Unknown pointer instance: " + pointer.getClass());
 	}
 
 	/**
@@ -133,8 +112,7 @@ public class MemoryModel {
 		case HoenickeLindenmann_2ByteResolution:
 		case HoenickeLindenmann_4ByteResolution:
 		case HoenickeLindenmann_8ByteResolution:
-			return new MemoryStructureSingleBitprecise(memoryStructurePreference.getByteSize(), typeSizes,
-					typeHandler);
+			return new MemoryStructureSingleBitprecise(memoryStructurePreference.getByteSize(), typeSizes, typeHandler);
 		case HoenickeLindenmann_Original:
 			if (settings.isBitvectorTranslation()) {
 				return new MemoryStructureMultiBitprecise(typeSizes, typeHandler);
@@ -445,8 +423,8 @@ public class MemoryModel {
 			final Expression argSPtr, final Expression nullPtrExpr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructStrChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, requiredMemoryModelFeatures,
-				memoryModelDeclarationsHandler);
+		return mMemoryAddressing.constructStrChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
 
 	/**
