@@ -232,6 +232,14 @@ public final class SFO {
 
 	public static final String GHOST = "#ghost~";
 
+	public static final String STACK_HEAP_BARRIER = "#StackHeapBarrier";
+
+	public static final String INITIAL_ALLOCATIONS = "#InitialAllocations";
+
+	public static final String STACK_ALLOCATIONS = "#StackAllocations";
+
+	public static final String HEAP_ALLOCATIONS = "#HeapAllocations";
+
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */

@@ -67,18 +67,18 @@ public enum MemoryModelDeclarations {
 	 * constant whose value is not determined. Each pointer whose address-base is strictly smaller than the barrier
 	 * points to the heap, each pointer whose address-base is strictly greater than the barrier points to the stack.
 	 */
-	ULTIMATE_STACK_HEAP_BARRIER("#StackHeapBarrier"),
+	ULTIMATE_STACK_HEAP_BARRIER(SFO.STACK_HEAP_BARRIER),
 
 	/**
 	 * Used to detect data races between concurrent accesses to the same memory location.
 	 */
 	ULTIMATE_DATA_RACE_MEMORY(SFO.MEMORY_RACE),
 
-	ULTIMATE_INITIAL_ALLOCATIONS("#InitialAllocations"),
+	ULTIMATE_INITIAL_ALLOCATIONS(SFO.INITIAL_ALLOCATIONS),
 
-	ULTIMATE_STACK_ALLOCATIONS("#StackAllocations"),
+	ULTIMATE_STACK_ALLOCATIONS(SFO.STACK_ALLOCATIONS),
 
-	ULTIMATE_HEAP_ALLOCATIONS("#HeapAllocations")
+	ULTIMATE_HEAP_ALLOCATIONS(SFO.HEAP_ALLOCATIONS)
 
 	;
 
