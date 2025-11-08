@@ -361,11 +361,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		// res.base == 0 && res.offset == 0
 		final Expression equalsNull =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
-		// old solution did not work quickly..
-		// final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc,
-		// new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
-		// res.base == arg_s.base
 		final Expression baseEquals = baseEqual(loc, tmpExpr, cTypeOfPointerComponent, argSPtr);
+
 		// res.offset >= 0
 		final Expression offsetNonNegative = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
 				IASTBinaryExpression.op_lessEqual,
