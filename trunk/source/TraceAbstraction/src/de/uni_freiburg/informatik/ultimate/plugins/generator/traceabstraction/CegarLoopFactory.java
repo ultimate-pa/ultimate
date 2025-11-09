@@ -231,7 +231,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
 					stateFactoryForRefinement);
 		case NONE:
-			if (mPrefs.isParallelCegarLoop()) {
+			if (mPrefs.isParallelCegarLoop() && !IcfgUtils.isConcurrent(root)) {
 				return new ParallelNwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
 						errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 			}

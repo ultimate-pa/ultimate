@@ -84,7 +84,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE> {
 
-	private final Map<STATE, Set<STATE>> mVisitedCallPairs = new HashMap<>();
+	private final Map<STATE, List<STATE>> mVisitedCallPairs = new HashMap<>();
 	private long mStart = 0;
 	private long mTimeSpendSearching = 0;
 	private final long mTimeOut;
@@ -144,18 +144,21 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	 * Mark a call state pair a visited. Only used for tracking the caller of a call not for the bfs search
 	 */
 	private void markCallVisited(final STATE state, final STATE stateK) {
-		Set<STATE> callPreds = mVisitedCallPairs.get(state);
+		List<STATE> callPreds = mVisitedCallPairs.get(state);
 		if (callPreds == null) {
-			callPreds = new HashSet<>();
+			callPreds = new ArrayList<>();
 			mVisitedCallPairs.put(state, callPreds);
 		}
-		assert !callPreds.contains(stateK);
+//		if (callPreds.contains(stateK)) {
+//			System.out.println(stateK);
+//		}
+//		assert !callPreds.contains(stateK);
 		callPreds.add(stateK);
 	}
 
 	// unmark incase we backtrack or explore a return
 	private void unmarkCall(final STATE state, final STATE stateK) {
-		final Set<STATE> callPreds = mVisitedCallPairs.get(state);
+		final List<STATE> callPreds = mVisitedCallPairs.get(state);
 		assert callPreds != null : "Call was not visited! " + state + " " + stateK;
 		callPreds.remove(stateK);
 	}
@@ -183,7 +186,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	protected Set<STATE> getCallStatesOfCallState(final STATE callState) {
 		Set<STATE> callStatesOfCallStates = mVisitedPairs.get(callState);
 		if (callStatesOfCallStates == null) {
-			callStatesOfCallStates = mVisitedCallPairs.get(callState);
+			callStatesOfCallStates = new HashSet<>(mVisitedCallPairs.get(callState));
 			if (callStatesOfCallStates == null) {
 				return Collections.emptySet();
 			}
