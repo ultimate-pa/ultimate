@@ -111,7 +111,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	 *            input NWA
 	 * @param strategy
 	 *            search strategy
-	 * @see #IsEmptyParallel(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyParallel(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
@@ -149,6 +148,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			callPreds = new ArrayList<>();
 			mVisitedCallPairs.put(state, callPreds);
 		}
+		// TODO evaluate if using a List instead of a Set for callPreds solves our recusrion issues
 //		if (callPreds.contains(stateK)) {
 //			System.out.println(stateK);
 //		}
@@ -657,14 +657,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	}
 
 	private class PQState {
-		Integer mScore;
-		STATE mState;
-		STATE mSucc;
-		STATE mStateK;
+		final Integer mScore;
+		final STATE mState;
+		final STATE mSucc;
+		final STATE mStateK;
 		ArrayList<Integer> mCounterexamples = new ArrayList<>();
-		LETTER mSymbol;
-		boolean mCallTransition;
-		boolean mReturnTransition;
+		final LETTER mSymbol;
+		final boolean mCallTransition;
+		final boolean mReturnTransition;
 
 		public PQState(final int score, final STATE state, final LETTER symbol, final STATE succ, final STATE stateK,
 				final ArrayList<Integer> counterexamples, final boolean call, final boolean ret) {
