@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.L
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -113,6 +114,8 @@ public final class Term2Expression implements Serializable {
 
 	private final NestedMap2<Term, TranslateState, Expression> mCache;
 
+	private Script mOriginCfgScript = null; // the CFG script used by the worker during the trace check
+
 	public Term2Expression(final TypeSortTranslator tsTranslation,
 			final ITerm2ExpressionSymbolTable boogie2SmtSymbolTable, final ManagedScript maScript) {
 		mTypeSortTranslator = tsTranslation;
@@ -128,7 +131,11 @@ public final class Term2Expression implements Serializable {
 		return "freshIdentifier" + mTranslateState.getFreshIdentiferCounter();
 	}
 
-	public Expression translate(final Term term) {
+	public Expression translate(Term term) {
+		if (mOriginCfgScript != null) {
+			final TermTransferrer tf = new TermTransferrer(mOriginCfgScript, mScript);
+			term = tf.transform(term);
+		}
 		final TranslateState stateAtStart = mTranslateState;
 		Expression result = mCache.get(term, mTranslateState);
 		if (result == null) {
@@ -734,5 +741,9 @@ public final class Term2Expression implements Serializable {
 
 	public TypeSortTranslator getTypeSortTranslator() {
 		return mTypeSortTranslator;
+	}
+
+	public void setOriginCfgScript(final Script script) {
+		mOriginCfgScript = script;
 	}
 }

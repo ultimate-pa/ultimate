@@ -247,8 +247,9 @@ public class RCFGBacktranslator extends
 			throw new IllegalArgumentException();
 		}
 
-		// passes the worker cfg script from the rcfgProgramExecution through to the TypeSortTranslator
-		mTerm2Expression.getTypeSortTranslator().setCfgScriptFromWorker(rcfgProgramExecution.getOriginCfgScript());
+		if (rcfgProgramExecution.getOriginCfgScript() != null) {
+			mTerm2Expression.setOriginCfgScript(rcfgProgramExecution.getOriginCfgScript().getScript());
+		}
 
 		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
 				: "callstack of initial program execution already broken";
