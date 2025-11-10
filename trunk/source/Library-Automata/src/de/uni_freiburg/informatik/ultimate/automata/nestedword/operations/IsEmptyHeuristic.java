@@ -106,12 +106,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 	/**
 	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
-	 * automaton and use the zero heuristic.
+	 * automaton and using the provided heuristic.
 	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
 	 *            input NWA
+	 * @param heuristic
+	 *            heuristic for the A*
+	 *
 	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
@@ -122,13 +125,16 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	/**
-	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
-	 * automaton and use the zero heuristic.
+	 * Default constructor. Here we search a run from the initial states of the automaton along the way points to the
+	 * final states of the automaton and using the provided heuristic.
 	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
 	 *            input NWA
+	 * @param heuristic
+	 * @param wayPoints
+	 *            Sequence of Pairs of States and Letters that start in an initial state.
 	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
