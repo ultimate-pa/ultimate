@@ -121,7 +121,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
-				heuristic, new ArrayList<>());
+				heuristic, Collections.emptyList());
 	}
 
 	/**
@@ -154,14 +154,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final Set<STATE> startStates, final Predicate<STATE> funIsForbiddenState,
 			final Predicate<STATE> funIsGoalState, final IHeuristic<STATE, LETTER> heuristic)
 			throws AutomataOperationCanceledException {
-		this(services, operand, startStates, funIsForbiddenState, funIsGoalState, heuristic, new ArrayList<>());
+		this(services, operand, startStates, funIsForbiddenState, funIsGoalState, heuristic, Collections.emptyList());
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 	}
 
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Predicate<STATE> funIsForbiddenState, final Predicate<STATE> funIsGoalState,
-			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints)
+			final IHeuristic<STATE, LETTER> heuristic, final List<Pair<STATE, LETTER>> wayPoints)
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
