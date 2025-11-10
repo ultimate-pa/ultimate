@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 
+import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -279,5 +280,9 @@ public class ArrayHandler {
 			throw new AssertionError("unknown value");
 		}
 
+	}
+
+	private static boolean isInnermostSubscriptExpression(final IASTArraySubscriptExpression node) {
+		return !(node.getArrayExpression() instanceof IASTArraySubscriptExpression);
 	}
 }
