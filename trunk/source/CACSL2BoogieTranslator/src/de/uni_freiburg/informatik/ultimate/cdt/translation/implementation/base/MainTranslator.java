@@ -181,7 +181,7 @@ public class MainTranslator {
 			final TypeHandler prerunTypeHandler = new TypeHandler(nameHandler, typeSizes, flatSymbolTable,
 					translationSettings, locationFactory, prerunStaticObjectsHandler);
 
-			final IMemoryPointer prerunMemoryPointer = prerunTypeHandler.memoryPointer();
+			final IMemoryPointer prerunMemoryPointer = prerunTypeHandler.getMemoryPointer();
 
 			final ExpressionTranslation prerunExpressionTranslation = createExpressionTranslation(translationSettings,
 					flatSymbolTable, typeSizes, prerunTypeHandler, prerunMemoryPointer);

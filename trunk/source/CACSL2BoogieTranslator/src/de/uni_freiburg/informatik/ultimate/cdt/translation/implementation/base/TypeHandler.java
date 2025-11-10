@@ -866,7 +866,7 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public IMemoryPointer memoryPointer() {
+	public IMemoryPointer getMemoryPointer() {
 		return mMemoryPointer;
 	}
 }

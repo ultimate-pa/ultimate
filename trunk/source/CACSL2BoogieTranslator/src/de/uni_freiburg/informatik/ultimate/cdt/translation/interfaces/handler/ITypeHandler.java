@@ -190,5 +190,5 @@ public interface ITypeHandler {
 
 	void addLibraryTypes(Map<String, ICType> libraryTypes);
 
-	IMemoryPointer memoryPointer();
+	IMemoryPointer getMemoryPointer();
 }
