@@ -221,24 +221,22 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		}
 
-		switch (mPrefs.getFloydHoareAutomataReuse()) {
-		case EAGER:
-			return new EagerReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
-					stateFactoryForRefinement);
-		case LAZY_IN_ORDER:
-			return new LazyReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
-					stateFactoryForRefinement);
-		case NONE:
+		return switch (mPrefs.getFloydHoareAutomataReuse()) {
+		case EAGER -> new EagerReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+				proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
+				stateFactoryForRefinement);
+		case LAZY_IN_ORDER -> new LazyReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
+				errorLocs, proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
+				mTransitionClazz, stateFactoryForRefinement);
+		case NONE -> {
 			if (mPrefs.isParallelCegarLoop() && !IcfgUtils.isConcurrent(root)) {
-				return new ParallelNwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
+				yield new ParallelNwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
 						errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 			}
-			return new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+			yield new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
 					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		}
-		throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
+		};
 	}
 
 	private void requireNoReuse(final String analysis) {

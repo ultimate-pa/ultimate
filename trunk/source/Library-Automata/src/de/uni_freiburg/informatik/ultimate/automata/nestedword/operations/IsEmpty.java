@@ -264,29 +264,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
 			final SearchStrategy strategy) throws AutomataOperationCanceledException {
-		super(services);
-		mOperand = operand;
-		mDummyEmptyStackState = mOperand.getEmptyStackState();
-		mStartStates = startStates;
-		mGoalStateIsAcceptingState = goalStateIsAcceptingState;
-		mGoalStates = goalStates;
-		if (mGoalStateIsAcceptingState) {
-			assert mGoalStates == null : "if we search accepting states, mGoalStates is null";
-		} else {
-			assert mGoalStates != null : "mGoalStates must not be null";
-		}
-		mForbiddenStates = forbiddenStates;
-		mStrategy = strategy;
-
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info(startMessage());
-		}
-
-		mAcceptingRun = getAcceptingRun();
-
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info(exitMessage());
-		}
+		this(services, operand, startStates, forbiddenStates, goalStates, goalStateIsAcceptingState, strategy, false);
 	}
 
 	protected IsEmpty(final AutomataLibraryServices services,
@@ -382,7 +360,10 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		// If available, take a state pair that has been discovered by taking an internal or a return transition or a
 		// summary. If not, take a state pair that has been discovered by taking a call transition.
 		case DFS -> dequeueGivenQueues(mQueue, mQueueCall);
-		default -> throw new IllegalArgumentException("Unexpected value: " + mStrategy);
+
+		// The PARALLEL case should be handled by IsEmptyParallel.
+		case PARALLEL ->
+				throw new IllegalArgumentException(mStrategy + " search strategy shouldbe handled by IsEmptyParallel");
 		};
 	}
 
