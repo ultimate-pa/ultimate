@@ -26,13 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer1D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer2D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -42,28 +45,30 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class OverapproximationUF2OneDimensional implements IPointerIntegerConversion {
+public class OverapproximationUF2D implements IPointerIntegerConversion {
 
 	protected final ExpressionTranslation mExpressionTranslation;
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final ITypeHandler mTypeHandler;
-	private final MemoryPointer1D mMemoryPointer;
+	private final TypeSizes mTypeSizes;
+	private final MemoryPointer2D mMemoryPointer;
 
 	/**
 	 * Defines the following conversion between pointers and integers. An integer n is converted to the pointer with
-	 * base address n and 0. If a pointer is converted to an integer type, we use an uninterpreted function and we add
-	 * the overapproximation flag to the resulting expression.
+	 * base address 0 and offset n. If a pointer is converted to an integer type, we use an uninterpreted function and
+	 * we add the overapproximation flag to the resulting expression.
 	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @param typeSizes
 	 */
 
-	public OverapproximationUF2OneDimensional(final ExpressionTranslation expressionTranslation,
-			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler,
-			final MemoryPointer1D pointer) {
+	public OverapproximationUF2D(final ExpressionTranslation expressionTranslation,
+			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler, final TypeSizes typeSizes,
+			final MemoryPointer2D pointer) {
 		mExpressionTranslation = expressionTranslation;
 		mFunctionDeclarations = functionDeclarations;
 		mTypeHandler = typeHandler;
+		mTypeSizes = typeSizes;
 		mMemoryPointer = pointer;
 	}
 
@@ -95,10 +100,12 @@ public class OverapproximationUF2OneDimensional implements IPointerIntegerConver
 			final RValue rVal = new RValue(pointerExpression, newType, false, false);
 			return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 		}
-
 		final ExpressionResult convertedExpr =
 				mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
-		final RValue rVal = new RValue(mMemoryPointer.createPointerFromBase(convertedExpr.getLrValue().getValue(), loc),
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final RValue rVal = new RValue(
+				mMemoryPointer.constructPointerFromBaseAndOffset(zero, convertedExpr.getLrValue().getValue(), loc),
 				newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(convertedExpr).setLrValue(rVal).build();
 	}

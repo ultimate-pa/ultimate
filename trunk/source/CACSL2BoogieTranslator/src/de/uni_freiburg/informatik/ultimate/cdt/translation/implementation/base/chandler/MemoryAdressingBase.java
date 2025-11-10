@@ -13,8 +13,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IPointerIntegerConversion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping2D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping1D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF2D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF1D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -23,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -40,13 +46,37 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 
 	public MemoryAdressingBase(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final T pointer) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final T pointer,
+			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations) {
 		mTypeHandler = typeHandler;
 		mExpressionTranslation = exprTranslation;
 		mBooleanArrayHelper = booleanArrayHelper;
 		mTypeSizes = typeSizes;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 		mMemoryPointer = pointer;
+
+		mPointerIntegerConversion = switch (pointerIntegerMode) {
+		case NonBijectiveMapping:
+			if (mMemoryPointer instanceof final MemoryPointer1D pointer1D) {
+				yield new NonBijectiveMapping1D(exprTranslation, pointer1D);
+			} else if (mMemoryPointer instanceof final MemoryPointer2D pointer2D) {
+				yield new NonBijectiveMapping2D(exprTranslation, typeSizes, pointer2D);
+			} else {
+				throw new UnsupportedOperationException("Unknown pointer type " + mMemoryPointer.getClass());
+			}
+		case Overapproximate:
+			if (mMemoryPointer instanceof final MemoryPointer1D pointer1D) {
+				yield new OverapproximationUF1D(exprTranslation, functionDeclarations, typeHandler,
+						pointer1D);
+			} else if (mMemoryPointer instanceof final MemoryPointer2D pointer2D) {
+				yield new OverapproximationUF2D(exprTranslation, functionDeclarations, typeHandler, typeSizes, pointer2D);
+			} else {
+				throw new UnsupportedOperationException("Unknown pointer type " + mMemoryPointer.getClass());
+			}
+		default:
+			throw new UnsupportedOperationException(
+					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
+		};
 	}
 
 	/**

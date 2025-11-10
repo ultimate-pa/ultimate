@@ -22,8 +22,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMappingOneDimensional;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF2OneDimensional;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -42,21 +40,10 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TranslationSettings settings,
 			final FunctionDeclarations functionDeclarations, final MemoryPointer1D pointer) {
-		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer);
-
-		final var pointerIntegerMode = settings.getPointerIntegerCastMode();
-		mPointerIntegerConversion = switch (pointerIntegerMode) {
-		case NonBijectiveMapping:
-			yield new NonBijectiveMappingOneDimensional(exprTranslation, pointer);
-		case Overapproximate:
-			yield new OverapproximationUF2OneDimensional(exprTranslation, functionDeclarations, typeHandler, pointer);
-		default:
-			throw new UnsupportedOperationException(
-					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
-		};
+		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer,
+				settings.getPointerIntegerCastMode(), functionDeclarations);
 
 		mMemoryMetadata = new MemoryMetadataDefault1D(typeHandler, exprTranslation, booleanArrayHelper);
-
 		mMemoryManagementStrategy = new SimpleIncreasingStrategy<>(typeSizes, exprTranslation, typeHandler,
 				typeSizeAndOffsetComputer, settings.isBitvectorTranslation(), this, mMemoryMetadata);
 	}

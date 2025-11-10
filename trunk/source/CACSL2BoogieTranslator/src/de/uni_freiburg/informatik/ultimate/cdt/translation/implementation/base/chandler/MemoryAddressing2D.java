@@ -28,8 +28,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -52,17 +50,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations,
 			final MemoryPointer2D pointer) {
-		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer);
-
-		mPointerIntegerConversion = switch (pointerIntegerMode) {
-		case NonBijectiveMapping:
-			yield new NonBijectiveMapping(exprTranslation, typeSizes, pointer);
-		case Overapproximate:
-			yield new OverapproximationUF(exprTranslation, functionDeclarations, typeHandler, typeSizes, pointer);
-		default:
-			throw new UnsupportedOperationException(
-					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
-		};
+		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer,
+				pointerIntegerMode, functionDeclarations);
 
 		mMemoryMetadata = new MemoryMetadataDefault2D(typeHandler, exprTranslation, booleanArrayHelper);
 
@@ -170,8 +159,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		final Expression ptrOffset = mMemoryPointer.pointerOffset(ptrExpr, loc);
 		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
-		final Expression lengthArray =
-				mMemoryMetadata.getLengthArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final Expression lengthArray = MemoryMetadataDefault2D.getLengthArray(loc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 		final Expression aae =
 				ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray, new Expression[] { ptrBase });
 		final Expression sum =
@@ -250,7 +239,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 
 		final Expression valid =
-				mMemoryMetadata.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+				MemoryMetadataDefault2D.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 		final Expression stackHeapBarrier = MemoryMetadataBase.getStackHeapBarrier(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 
@@ -345,8 +334,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 
-		final var lengthArray =
-				mMemoryMetadata.getLengthArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final var lengthArray = MemoryMetadataDefault2D.getLengthArray(loc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 
 		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
@@ -413,8 +402,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 			final Expression ptrOffset = mMemoryPointer.pointerOffset(ptr, loc);
 			final Expression ptrBase = mMemoryPointer.getPointerAddress(ptr, loc);
 
-			final Expression lengthArray =
-					mMemoryMetadata.getLengthArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+			final Expression lengthArray = MemoryMetadataDefault2D.getLengthArray(loc, requiredMemoryModelFeatures,
+					memoryModelDeclarationsHandler);
 
 			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray,
 					new Expression[] { ptrBase });
@@ -513,7 +502,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		final Expression ptrBase = mMemoryPointer.getPointerAddress(ptr, loc);
 		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				mMemoryMetadata.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler),
+				MemoryMetadataDefault2D.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler),
 				new Expression[] { ptrBase });
 		return mBooleanArrayHelper.compareWithTrue(aae);
 	}
@@ -521,6 +510,6 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	@Override
 	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryMetadata.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		return MemoryMetadataDefault2D.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
 }
