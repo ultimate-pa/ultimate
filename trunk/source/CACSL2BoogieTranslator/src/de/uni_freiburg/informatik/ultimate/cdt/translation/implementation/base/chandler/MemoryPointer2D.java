@@ -80,7 +80,6 @@ public class MemoryPointer2D extends MemoryPointerBase {
 	 *
 	 * @return The offset.
 	 */
-	@SuppressWarnings("static-method")
 	public Expression pointerOffset(final Expression pointer, final ILocation loc) {
 		if (pointer instanceof StructConstructor) {
 			return ((StructConstructor) pointer).getFieldValues()[1];
@@ -93,7 +92,6 @@ public class MemoryPointer2D extends MemoryPointerBase {
 	 *
 	 * @return The pointer.
 	 */
-	@SuppressWarnings("static-method")
 	public StructConstructor constructPointerFromBaseAndOffset(final Expression base, final Expression offset,
 			final ILocation loc) {
 		return ExpressionFactory.constructStructConstructor(loc, new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },

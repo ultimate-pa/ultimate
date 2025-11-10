@@ -52,7 +52,6 @@ public class CStringLiteral {
 	/**
 	 * Type of this string's characters.
 	 */
-	@SuppressWarnings("unused")
 	private final CharacterType mCharacterType;
 
 	/**

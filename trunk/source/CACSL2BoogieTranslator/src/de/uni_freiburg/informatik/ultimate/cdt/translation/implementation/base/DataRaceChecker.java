@@ -124,7 +124,6 @@ public final class DataRaceChecker {
 	 * @param lrVal
 	 *            The value being read
 	 */
-	@SuppressWarnings({ "unused" })
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -153,7 +152,6 @@ public final class DataRaceChecker {
 	 * @param lrVal
 	 *            The value being written
 	 */
-	@SuppressWarnings("unused")
 	public void checkOnWrite(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -238,7 +236,6 @@ public final class DataRaceChecker {
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	private static boolean isRaceImpossible(final LRValue lrVal) {
 		if (lrVal.getCType().isAtomic()) {
 			// Atomic types cannot lead to data races

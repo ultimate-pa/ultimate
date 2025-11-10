@@ -1773,9 +1773,9 @@ public class CHandler {
 		// deal with builtin constants
 
 		if ("NULL".equals(cId)) {
-			return new ExpressionResult(
-					new RValue(mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
-							CPointer.voidPointer()));
+			return new ExpressionResult(new RValue(
+					mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
+					CPointer.voidPointer()));
 		}
 		if (List.of("__PRETTY_FUNCTION__", "__FUNCTION__", "__func__").contains(cId)) {
 			final ICType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
@@ -3122,7 +3122,6 @@ public class CHandler {
 		return mReachableDeclarations == null || mReachableDeclarations.contains(node);
 	}
 
-	@SuppressWarnings("unused")
 	private void checkUnsupportedPointerCast(final ExpressionResult expr, final ILocation loc, final ICType newCType) {
 		if (!POINTER_CAST_IS_UNSUPPORTED_SYNTAX || !(newCType instanceof CPointer)
 				|| !(expr.getLrValue().getCType() instanceof CPointer)) {
@@ -3424,7 +3423,6 @@ public class CHandler {
 	 *
 	 * @return
 	 */
-	@SuppressWarnings("unused")
 	private ExpressionResultBuilder assignOrHavocUnionNeighbours(final ILocation loc, final RValue rVal,
 			final Collection<ExpressionResult> neighbourUnionFields, final RValue rightHandSideWithConversionsApplied,
 			final ExpressionResultBuilder builderIn, final IASTNode hook) {

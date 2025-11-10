@@ -98,7 +98,6 @@ public class MemoryPointer1D extends MemoryPointerBase {
 	 *
 	 * @return The pointer.
 	 */
-	@SuppressWarnings("static-method")
 	public Expression createPointerFromBase(final Expression base, final ILocation loc) {
 		return ExpressionFactory.constructStructConstructor(loc, new String[] { SFO.POINTER_BASE },
 				new Expression[] { base });

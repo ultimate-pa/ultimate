@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * this strategy is only instanciated within the 2D addressing class because it is not compatible with other modes.
  * Memory addresses get a nondet value, which is not used yet.
  */
-@SuppressWarnings("unused")
 public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMetadataDefault2D>
 		extends MemoryManagementStrategyBase {
 	IBooleanArrayHelper mBooleanArrayHelper;
@@ -58,12 +57,12 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMet
 		final var falseExpr = mBooleanArrayHelper.constructFalse();
 		final var trueExpr = mBooleanArrayHelper.constructTrue();
 
-		final var validArrayExpr =
-				mMemoryMetadata.getValidArray(tuLoc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final var validArrayExpr = MemoryMetadataDefault2D.getValidArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 		final var stackHeapBarrierExpr = MemoryMetadataBase.getStackHeapBarrier(tuLoc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
-		final var lengthArrayExpr =
-				mMemoryMetadata.getLengthArray(tuLoc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final var lengthArrayExpr = MemoryMetadataDefault2D.getLengthArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 
 		final var zeroNumericValueExpr = mTypeSizes.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -133,8 +132,8 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMet
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 
 		final var falseExpr = mBooleanArrayHelper.constructFalse();
-		final var validArrayExpr =
-				mMemoryMetadata.getValidArray(tuLoc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final var validArrayExpr = MemoryMetadataDefault2D.getValidArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 
 		final Expression addrExpr =
 				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.ADDR,
@@ -173,7 +172,7 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMet
 			final Expression literalThatRepresentsFalse = mBooleanArrayHelper.constructFalse();
 			final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 					ExpressionFactory.constructNestedArrayAccessExpression(loc,
-							mMemoryMetadata.getValidArray(loc, requiredMemoryModelFeatures,
+							MemoryMetadataDefault2D.getValidArray(loc, requiredMemoryModelFeatures,
 									memoryModelDeclarationsHandler),
 							new Expression[] { zero }),
 					literalThatRepresentsFalse);
@@ -186,7 +185,8 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMet
 					mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 			final Expression literalThatRepresentsFalse = mBooleanArrayHelper.constructFalse();
 			final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(loc, zero,
-					mMemoryMetadata.getValidArrayLhs(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler),
+					MemoryMetadataDefault2D.getValidArrayLhs(loc, requiredMemoryModelFeatures,
+							memoryModelDeclarationsHandler),
 					literalThatRepresentsFalse);
 
 			statements.add(assignment);
@@ -215,10 +215,10 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMet
 		final var procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
 
 		final var trueExpr = mBooleanArrayHelper.constructTrue();
-		final var validArrayExpr =
-				mMemoryMetadata.getValidArray(tuLoc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
-		final var lengthArrayExpr =
-				mMemoryMetadata.getLengthArray(tuLoc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final var validArrayExpr = MemoryMetadataDefault2D.getValidArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+		final var lengthArrayExpr = MemoryMetadataDefault2D.getLengthArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 		final var size = ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(),
 				SFO.SIZE, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
 

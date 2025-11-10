@@ -95,8 +95,8 @@ public class MemoryMetadataDefault2D extends MemoryMetadataBase {
 	 *
 	 * @return The expression.
 	 */
-	@SuppressWarnings("static-method")
-	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public static Expression getValidArray(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return MemoryModelExpressionHelper.getMemoryModelFeatureExpression(loc, MemoryModelDeclarations.ULTIMATE_VALID,
 				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
@@ -107,8 +107,7 @@ public class MemoryMetadataDefault2D extends MemoryMetadataBase {
 	 *
 	 * @return The variable.
 	 */
-	@SuppressWarnings("static-method")
-	public VariableLHS getValidArrayLhs(final ILocation loc,
+	public static VariableLHS getValidArrayLhs(final ILocation loc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return MemoryModelExpressionHelper.getMemoryModelFeatureLhs(loc, MemoryModelDeclarations.ULTIMATE_VALID,
@@ -120,8 +119,8 @@ public class MemoryMetadataDefault2D extends MemoryMetadataBase {
 	 *
 	 * @return The expression.
 	 */
-	@SuppressWarnings("static-method")
-	public Expression getLengthArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public static Expression getLengthArray(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return MemoryModelExpressionHelper.getMemoryModelFeatureExpression(loc, MemoryModelDeclarations.ULTIMATE_LENGTH,
 				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);

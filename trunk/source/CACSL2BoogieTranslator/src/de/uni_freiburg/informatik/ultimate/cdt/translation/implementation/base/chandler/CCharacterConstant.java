@@ -44,7 +44,6 @@ public class CCharacterConstant {
 	/**
 	 * Representation of this character literal in source code.
 	 */
-	@SuppressWarnings("unused")
 	private final String mSourceLiteral;
 
 	private final BigInteger mNumericalValue;
@@ -55,7 +54,6 @@ public class CCharacterConstant {
 	 * The signedness of 'char' determines the representation of the string's characters when stored as a sequence of
 	 * bytes.
 	 */
-	@SuppressWarnings("unused")
 	private final Signedness mSignednessOfChar;
 
 	private final Signedness mSignednessOfRepresentingType;

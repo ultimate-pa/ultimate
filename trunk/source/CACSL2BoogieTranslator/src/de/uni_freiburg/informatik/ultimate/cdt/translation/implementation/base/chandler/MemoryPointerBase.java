@@ -37,7 +37,6 @@ public abstract class MemoryPointerBase implements IMemoryPointer {
 	 *
 	 * @return The expression.
 	 */
-	@SuppressWarnings("static-method")
 	protected Expression pointerComponentRelation(final ILocation loc, final int op, final Expression leftPointer,
 			final Expression rightPointer, final String component, final ExpressionTranslation expressionTranslation) {
 		final StructAccessExpression leftComponent =

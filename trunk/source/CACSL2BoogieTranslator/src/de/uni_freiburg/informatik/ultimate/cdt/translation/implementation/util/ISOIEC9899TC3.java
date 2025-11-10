@@ -61,7 +61,6 @@ public final class ISOIEC9899TC3 {
 	/**
 	 * Message: "Ignored suffix".
 	 */
-	@SuppressWarnings("unused")
 	private static final String IGNORED_SUFFIX = "Ignored suffix";
 	/**
 	 * Octal prefix.

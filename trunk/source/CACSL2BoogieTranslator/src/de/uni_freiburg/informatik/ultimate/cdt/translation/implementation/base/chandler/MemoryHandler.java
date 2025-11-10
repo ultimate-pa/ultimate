@@ -1804,7 +1804,6 @@ public class MemoryHandler {
 	 * @param op
 	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
 	 */
-	@SuppressWarnings("unused")
 	private Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
 			final Expression left, final Expression right) {
 		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left,

@@ -712,7 +712,6 @@ public class CACSL2BoogieBacktranslator extends
 		return lastTarget;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public ProcedureContract<BacktranslatedACSLValue, BacktranslatedACSLValue> translateProcedureContract(
 			final ProcedureContract<Expression, ? extends Expression> oldContract, final ILocation context) {

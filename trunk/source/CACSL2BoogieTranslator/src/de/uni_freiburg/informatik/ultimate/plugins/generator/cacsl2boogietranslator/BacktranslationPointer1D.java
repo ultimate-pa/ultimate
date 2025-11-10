@@ -33,8 +33,7 @@ public class BacktranslationPointer1D implements IBacktranslationPointer {
 		return newEntries;
 	}
 
-	@SuppressWarnings("static-method")
-	private Pair<Expression, Collection<IExpressionOrPointer>>
+	private static Pair<Expression, Collection<IExpressionOrPointer>>
 			extractTemporaryPointerExpression(final List<Pair<Expression, Collection<Expression>>> oldEntries) {
 		// Find pointer base expressions in oldEntries, merge them with matching pointer offset expressions,
 		// and move the combined expression to newEntries.

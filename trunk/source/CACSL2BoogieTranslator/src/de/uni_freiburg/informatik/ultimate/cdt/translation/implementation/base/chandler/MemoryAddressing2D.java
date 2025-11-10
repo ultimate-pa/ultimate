@@ -438,8 +438,8 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		return result;
 	}
 
-	@SuppressWarnings("static-method")
-	private Statement statementDependentOnCheck(final ILocation loc, final CheckMode check, final Expression expr) {
+	private static Statement statementDependentOnCheck(final ILocation loc, final CheckMode check,
+			final Expression expr) {
 		if (check == CheckMode.CHECK) {
 			final AssertStatement assertion = new AssertStatement(loc, expr);
 			final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
