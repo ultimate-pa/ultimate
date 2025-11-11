@@ -109,7 +109,11 @@ public final class TranslationSettings {
 					ups.getString(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_NEUTRALITY);
 			// Replace each sequence of whitespaces by the empty string
 			final String withoutWhitespaces = commaSeparatedSequence.replaceAll("\\s+", "");
-			mFunctionsCheckedForMemoryNeutrality = Set.of(withoutWhitespaces.split(","));
+			if (withoutWhitespaces.isEmpty()) {
+				mFunctionsCheckedForMemoryNeutrality = Set.of();
+			} else {
+				mFunctionsCheckedForMemoryNeutrality = Set.of(withoutWhitespaces.split(","));
+			}
 		}
 		mMemoryModelPreference = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MemoryModel.class);
 		mFpToIeeeBvExtension = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_TO_IEEE_BV_EXTENSION);
