@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.AutomatonType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TransferBetweenMainAndWorker.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -199,13 +198,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final int id, final boolean smybolicExecutionWorker) throws InterruptedException {
 		// mCsToolkit needs to give new mgdScript for each thread
 
-		TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(new AutomataLibraryServices(mServices), mLogger,
-				mCsToolkit.getManagedScript(),
-				iterationServices, getSolverSettings(iterationServices,
-						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),mCsToolkit);
-		
+		final TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(
+				new AutomataLibraryServices(mServices), mLogger, mCsToolkit.getManagedScript(), iterationServices,
+				getSolverSettings(iterationServices,
+						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),
+				mCsToolkit);
+
 		final CfgSmtToolkit freshToolKit = transferUtils.constructWorkerCfgSmtToolkit();
-	
 
 		// Create predicateFactory with worker script
 		final PredicateFactory predicateFactory =
@@ -232,15 +231,15 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			return new CegarNWAContiuesIndependentWorkerThread<>(mLogger, mPref, id, mResultBuilder,
 					mCegarLoopBenchmark, iterationServices, freshToolKit, mIcfg, predicateFactory,
 					taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
-					mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue);
+					mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue,
+					transferUtils);
 		}
 
-	
 		// start worker
-		return new CegarNwaContinuesWorkerThread<L,A>(mLogger, mPref, id, mResultBuilder,
-				iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
-				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, this,
-				WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue,transferUtils);
+		return new CegarNwaContinuesWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
+				mIcfg, predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
+				stateFactoryForRefinement, mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES,
+				mWorkerResultQueue, mWorkerTaskQueue, transferUtils);
 	}
 
 	/*
@@ -832,13 +831,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			if (mUseIsEmptyHeuristicForparallelCexSearch) {
 				return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
 						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints,
-						possibleEndPoints == null,
-						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mPref.mSearchLoopBound);
+						possibleEndPoints == null, IsEmpty.SearchStrategy.BFS, mActiveCounterexamples,
+						mPref.mSearchLoopBound);
 			} else {
 				return new IsEmptyParallelLegacy<>(new AutomataLibraryServices(mServices), mAbstraction,
 						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints,
-						possibleEndPoints == null,
-						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples);
+						possibleEndPoints == null, IsEmpty.SearchStrategy.BFS, mActiveCounterexamples);
 			}
 
 		default:

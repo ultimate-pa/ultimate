@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TransferBetweenMainAndWorker.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
@@ -94,7 +94,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	private final boolean mUseGoalSetForIsEmpty;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
-
+	TransferBetweenMainAndWorker<L, IPredicate> mNwaCexTransferrer;
 	// Globals for Difference (Interpolant Automaton Enhancement)
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
@@ -121,7 +121,8 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ParallelNwaCegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization,
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
-			final BlockingQueue<IRun<L, ?>> workerTaskQueue) throws InterruptedException {
+			final BlockingQueue<IRun<L, ?>> workerTaskQueue,
+			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils) throws InterruptedException {
 
 		mLogger = logger;
 		mPref = pref;
@@ -146,7 +147,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 		mGeneralize = generalization;
 		mBlockingQueueForResults = blockingQueueForResults;
 		mWorkerTaskQueue = workerTaskQueue;
-
+		mNwaCexTransferrer = transferWorkerUtils;
 		csToolkit.setQuickCheck();
 
 		final Thread workerThread = new Thread(() -> {
@@ -160,7 +161,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	}
 
 	public void executeThread() throws InterruptedException, AutomataOperationCanceledException {
-		mAbstraction = mMainThread.getAbstraction();
+		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 
 		int maxId = -1;
 
@@ -181,7 +182,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			mTestGoalWorkingSet.add(maxId);
 		}
 		// mTestGoalWorkingSet.addAll(mTestGoalTodoStack);
-		mCounterexamples.putAll(mMainThread.mActiveCounterexamples);
+
 		int workerIterations = 0;
 		try {
 			mCounterexample = searchForErrorTrace();
@@ -190,8 +191,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			e.printStackTrace();
 		}
 		while (true) {
-
-			mAbstraction = mMainThread.getAbstraction();
+			mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 			mLogger.info("--------Sat Continues Worker Stats--------");
 			mLogger.info(workerIterations);
 			mLogger.info(mFoundFeasiblePaths);
@@ -263,7 +263,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 					mLogger.info("SAT-Worker Going to sleep!!!");
 					synchronized (ParallelNwaCegarLoop.refinementLock) {
 						ParallelNwaCegarLoop.refinementLock.wait();
-						mAbstraction = mMainThread.getAbstraction();
+						mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 					}
 					mLogger.info("SAT-Worker Waking Up !!!");
 					// mCsToolkit.getManagedScript().getScript().exit();
@@ -278,6 +278,16 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 			}
 		}
 
+	}
+
+	/**
+	 * Worker takes the current abstraction from the main thread (read only). Then transfers it to worker script.
+	 */
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getAbstraction() {
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> workerAbstraction = mNwaCexTransferrer
+				.transferAutomaton(mainAbstraction, mPredicateFactoryInterpolantAutomata, Mode.MAIN2WORKER);
+		return workerAbstraction;
 	}
 
 	/*
@@ -375,25 +385,12 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	 *
 	 */
 	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) throws InterruptedException {
-
-		final PathProgramCache<L> cacheNotNeeded = new PathProgramCache<>(mLogger);
-		final StrategyFactory<L> mStrategyFactory =
-				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
-						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, cacheNotNeeded);
-
-		final ITARefinementStrategy<L> strategy;
-		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7) {
-			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-					RefinementStrategy.ACCELERATED_TRACE_CHECK);
-		} else {
-			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-					mPref.getRefinementStrategy());
-		}
-
+		final StrategyFactory<L> mStrategyFactory = new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs,
+				mIcfg, mPredicateFactory, mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz);
+		final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), counterexample,
+				mAbstraction, new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, 1),
+				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+				mPref.getRefinementStrategy());
 		return strategy;
 	}
 

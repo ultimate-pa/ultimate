@@ -53,7 +53,7 @@ public class Summary extends CodeBlock implements IIcfgSummaryTransition<IcfgLoc
 	@Visualizable
 	private final boolean mCalledProcedureHasImplementation;
 
-	Summary(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+	public Summary(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CallStatement st, final boolean calledProcedureHasImplementation, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;

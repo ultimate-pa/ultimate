@@ -69,4 +69,9 @@ public abstract class BasePayloadContainer implements IElement {
 	public boolean hasPayload() {
 		return mPayload != null;
 	}
+
+	public void setPayload(final IPayload payload) {
+		mPayload = payload;
+	}
+
 }

@@ -154,7 +154,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				mLogger.warn(
 						"Violation witness validation is only supported for CEGAR loops based on %s. "
 								+ "Ignoring concurrency settiong %s and switching to %s.",
-								Concurrency.FINITE_AUTOMATA, mPrefs.getAutomataTypeConcurrency(), Concurrency.FINITE_AUTOMATA);
+						Concurrency.FINITE_AUTOMATA, mPrefs.getAutomataTypeConcurrency(), Concurrency.FINITE_AUTOMATA);
 				automataTypeConcurrency = Concurrency.FINITE_AUTOMATA;
 			} else {
 				automataTypeConcurrency = mPrefs.getAutomataTypeConcurrency();
@@ -231,15 +231,14 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
 					stateFactoryForRefinement);
 		case NONE:
-			if (mPrefs.isParallelCegarLoop()) {
-				return new ParallelNwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-						proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+			if (mPrefs.isParallelCegarLoop() && !IcfgUtils.isConcurrent(root)) {
+				return new ParallelNwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
+						errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 			}
 			return new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
 					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
-		default:
-			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
 		}
+		throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
 	}
 
 	private void requireNoReuse(final String analysis) {
@@ -255,9 +254,9 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	}
 
 	private Triple<IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>, Supplier<NwaHoareProofProducer<L>>, Function<IFloydHoareAnnotation<IPredicate>, IFloydHoareAnnotation<IcfgLocation>>>
-	createAutomataAbstractionProvider(final IUltimateServiceProvider services, final boolean isConcurrent,
-			final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
-			final IWitnessTransformer<L> witnessTransformer) {
+			createAutomataAbstractionProvider(final IUltimateServiceProvider services, final boolean isConcurrent,
+					final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
+					final IWitnessTransformer<L> witnessTransformer) {
 		if (!isConcurrent) {
 			final var provider = new NwaInitialAbstractionProvider<L>(services, stateFactory, mPrefs.interprocedural(),
 					predicateFactory, mPrefs.getHoareSettings());
@@ -321,9 +320,9 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	}
 
 	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
-	createPartialOrderAbstractionProvider(final IUltimateServiceProvider services,
-			final PredicateFactory predicateFactory,
-			final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory) {
+			createPartialOrderAbstractionProvider(final IUltimateServiceProvider services,
+					final PredicateFactory predicateFactory,
+					final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory) {
 		final var netProvider = createPetriAbstractionProvider(services, predicateFactory, false);
 		return new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(services, netProvider, stateFactory);
 	}

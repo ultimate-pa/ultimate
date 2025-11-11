@@ -2,6 +2,8 @@
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2016 University of Freiburg
+ * Copyright (C) 2025 Max Barth (Max.Barth@lmu.de)
+ * Copyright (C) 2025 LMU Munich
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -64,17 +66,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Get an accepting run of a nested word automaton. Based on IsEmpty but adapted for Parallel CEGAR Loop.
  *
- * The idea is to have a preprocessing that finds a run to an arbitrary state not taken by any other counterexample.
- * Then we call BFS to find a goal from this arbitrary state. At the end the runs are merged.
+ * The idea is to have a preprocessing that finds a path (prefix) to an arbitrary state not taken by any other
+ * counterexample. Then we call BFS in this arbitrary state to find a path (suffix) to a goal state. At the end both
+ * paths are merged.
  *
- * Uses recursion for backtracking
+ * This class uses recursion. It recursively explores the successor of a state. TODO: non recursive
  *
- * Non-terminating if every existing counterexample is in the set but the state space is infinite.
- *
- * TODO: Has issues with recursive function calls, sometimes finds path that doesnt exist. -> for now we check
- * isAccepted after the search to find these cases
- *
- * TODO: non recursive, have fun
+ * Non-terminating if every existing counterexample is in the @mActiveCounterexamples set but the state space is
+ * infinite.
  *
  * @author Max Barth (Max.Barth@lmu.de)
  *
@@ -85,7 +84,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE> {
 
-	private final Map<STATE, Set<STATE>> mVisitedCallPairs = new HashMap<>();
+	private final Map<STATE, List<STATE>> mVisitedCallPairs = new HashMap<>();
 	private long mStart = 0;
 	private long mTimeSpendSearching = 0;
 	private final long mTimeOut;
@@ -104,7 +103,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/**
 	 * Constructor for parallel search strategy. Gets as additional argument the list of all counterexamples currently
-	 * investigated Tries to find a new counterexample as much different as possible from the once considered.
+	 * investigated. Tries to find a new counterexample as much different as possible from the once considered.
 	 *
 	 * @param services
 	 *            Ultimate services
@@ -125,6 +124,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		assert mStrategy.equals(SearchStrategy.BFS);
 		mLoopBound = loopBound;
 
+		// In case the search is non terminating
 		mStart = System.nanoTime() / 1000000000;
 		mTimeOut = mStart + 50000; // 5 sec timeout atm
 
@@ -142,85 +142,25 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/**
 	 * Mark a call state pair a visited. Only used for tracking the caller of a call not for the bfs search
-	 *
-	 * There is a bug in recursion, not sure what it is but we probably get nested calls that are not possible (not a
-	 * syntactical correct trace)
-	 *
 	 */
 	private void markCallVisited(final STATE state, final STATE stateK) {
-		Set<STATE> callPreds = mVisitedCallPairs.get(state);
+		List<STATE> callPreds = mVisitedCallPairs.get(state);
 		if (callPreds == null) {
-			callPreds = new HashSet<>();
+			callPreds = new ArrayList<>();
 			mVisitedCallPairs.put(state, callPreds);
 		}
-		assert !callPreds.contains(stateK);
+//		if (callPreds.contains(stateK)) {
+//			System.out.println(stateK);
+//		}
+//		assert !callPreds.contains(stateK);
 		callPreds.add(stateK);
 	}
 
-	// TODO This does not work! we need a different data structure
+	// unmark incase we backtrack or explore a return
 	private void unmarkCall(final STATE state, final STATE stateK) {
-		final Set<STATE> callPreds = mVisitedCallPairs.get(state);
+		final List<STATE> callPreds = mVisitedCallPairs.get(state);
 		assert callPreds != null : "Call was not visited! " + state + " " + stateK;
 		callPreds.remove(stateK);
-	}
-
-	/**
-	 * Get an accepting run of the automaton passed to the constructor. Return null if the automaton does not accept any
-	 * nested word.
-	 */
-	@SuppressWarnings("squid:S1698")
-	private NestedRun<LETTER, STATE> getAcceptingRun(final DoubleDecker<STATE> startpair)
-			throws AutomataOperationCanceledException {
-		mInternalSubRun.clear();
-		mCallSubRun.clear();
-		mReturnPredStateK.clear();
-		// mSummaryReturnPred.clear();
-		// mSummaryReturnSymbol.clear();
-		mReconstructionStack.clear();
-		mReturnSubRun.clear();
-		if (!isQueueEmpty()) {
-			mQueue.clear();
-			mQueueCall.clear();
-			// return null;
-		}
-		// is it a call or a internal predi?
-		enqueueAndMarkVisited(startpair.getUp(), startpair.getDown());
-		// enqueueAndMarkVisitedCall(succ, state);
-		while (!isQueueEmpty()) {
-			if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
-				mTimedout = true;
-				return null;
-			}
-			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-				throw new AutomataOperationCanceledException(rti);
-			}
-			final DoubleDecker<STATE> pair = dequeue();
-			final STATE state = pair.getUp();
-			final STATE stateK = pair.getDown();
-
-			if (isGoalState(state)) {
-				return constructRun(Collections.singleton(startpair.getUp()), state, stateK);
-			}
-
-			processSummaries(state, stateK);
-
-			// enqueues successors
-			getAcceptingRunHelperInternal(state, stateK);
-
-			getAcceptingRunHelperCall(state, stateK);
-
-			// equality intended here
-			if (stateK == mOperand.getEmptyStackState()) {
-				// there is no return transition
-				continue;
-			}
-
-			getAcceptingRunHelperReturn(state, stateK);
-		}
-		return null;
-
 	}
 
 	@Override
@@ -246,7 +186,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	protected Set<STATE> getCallStatesOfCallState(final STATE callState) {
 		Set<STATE> callStatesOfCallStates = mVisitedPairs.get(callState);
 		if (callStatesOfCallStates == null) {
-			callStatesOfCallStates = mVisitedCallPairs.get(callState);
+			callStatesOfCallStates = new HashSet<>(mVisitedCallPairs.get(callState));
 			if (callStatesOfCallStates == null) {
 				return Collections.emptySet();
 			}
@@ -271,15 +211,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				IcfgLocation programPoint = null;
 				final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
 				if (stateInCEx instanceof Return || succ instanceof Return) {
-					// programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
-					// if (programPoint.equals(((Return) succ).getProgramPoint())) {
 					if (symbol == counterexample.getSymbol(position - 1)) {
 						currentScore += 1;
 						activeCounterexamples.add(cexHash);
 					}
-					// } else {
-					// assert !counterexample.getStateAtPosition(position).equals(succ);
-					// }
 				} else if (stateInCEx instanceof ISLPredicate && succ instanceof ISLPredicate) {
 					programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 					if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
@@ -327,27 +262,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			} else {
 				throw new AssertionError("Unexpected Predicate");
 			}
-			final IcfgLocation a = ((ISLPredicate) state).getProgramPoint();
-			/*
-			 * We have the following problem: If we have an edge that is a loop body, often for loop Then it can be just
-			 * one assume statement and a selfloop on the state. We will detect this as diverging from previous cex and
-			 * falsy claim we found a new cex even tho it is semantically the same.
-			 */
-			/*
-			 * Solution, if we have a loop. One more iteration does not count as "new counterexample" So the cost has to
-			 * be the same at the loop head, if we already entered once!
-			 */
-
-			// if (a.getPayload().getAnnotations().containsKey(LoopEntryAnnotation.class.getName())) {
-			// return true;
-			// }
-			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-				if (symbol == counterexample.getSymbol(position - 1)) {
-					return true;
-				}
-			} else {
-				// can have different serial numbers! is that a problem?
-				// assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
+			// can have different serial numbers! is that a problem?
+			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())
+					&& (symbol == counterexample.getSymbol(position - 1))) {
+				return true;
 			}
 		}
 		return false;
@@ -355,8 +273,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/*
 	 * We are less strict here and increase already if the succ occurs in the counterexample no matter the position
-	 *
-	 * Might save CPU time but not good, we want to use multiple thread per PathProgram
+	 * Doesnt seem to pay of in our evaluation.
 	 */
 	private boolean increaseScoreBasedOnStates(final NestedRun<LETTER, ?> counterexample, final STATE succ) {
 
@@ -367,6 +284,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		return false;
 	}
 
+	// Calculates the score of an internal successor and tracks how many counterexamples in the given set take this
+	// successor
 	private PQState getSuccOfInternal(final OutgoingInternalTransition<LETTER, STATE> transition, final int position,
 			final STATE state, final STATE stateK, final ArrayList<Integer> counterexamples) {
 		final LETTER symbol = transition.getLetter();
@@ -414,11 +333,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				activeCounterexamples.add(cexHash);
 			}
 		}
-
 		return new PQState(currentScore, state, symbol, transition.getSucc(), stateKk, activeCounterexamples, false,
 				true);
 	}
 
+	// This can be used to restrict the search to omit exploring certain successors, e.g., loop entry locations
 	private boolean exploreThisSuccessor(final STATE state, final LETTER letter, final STATE succ) {
 		if (mForbiddenStates.contains(succ)) {
 			return false;
@@ -472,7 +391,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/**
 	 * Sort the outgoing transitions by how many @param counterexamples cover them. The least has highest priority.
-	 *
 	 */
 	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
 			final ArrayList<Integer> counterexamples) {
@@ -573,18 +491,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 						throw new AssertionError("Program Point mismatch");
 					}
 				}
-
 			}
-
 			pq.add(new PQState(currentScore, null, null, state, null, activeCounterexamples, false, false));
-
 		}
 		return pq;
 	}
 
 	/*
 	 * Only check if visited after we reached score 0
-	 *
 	 */
 	private NestedRun<LETTER, STATE> constructRunFromStateToNextBranch(final int position,
 			final DoubleDecker<STATE> pair, final ArrayList<Integer> counterexamples)
@@ -601,9 +515,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			return null;
 		}
 		int positionOfThisSubSearch = position;
-		// if (mBacktracks >= mMaxBacktracks) {
-		// return null;
-		// }
 
 		if (!mServices.getProgressAwareTimer().continueProcessing()) {
 			final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -620,26 +531,20 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			final IsEmptyHeuristic<LETTER, STATE> runsearch;
 			if (mGoalStates != null) {
 				final Predicate<STATE> funIsForbiddenState = a -> false;
-				final Predicate<STATE> asd = a -> mGoalStates.contains(a);
+				final Predicate<STATE> goals = a -> mGoalStates.contains(a);
 				final Set<STATE> startset = new HashSet<>(mStartStates);
-				runsearch =
-						new IsEmptyHeuristic<>(mServices, mOperand, startset, funIsForbiddenState, asd,
-								IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0),
-								new ArrayList<>(mCurrentPrefix), false); // TODO no Loop mode
+				runsearch = new IsEmptyHeuristic<>(mServices, mOperand, startset, funIsForbiddenState, goals,
+						IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
 			} else {
-				runsearch =
-						new IsEmptyHeuristic<>(mServices, mOperand,
-								IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0),
-								new ArrayList<>(mCurrentPrefix), false);
+				runsearch = new IsEmptyHeuristic<>(mServices, mOperand,
+						IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
 			}
-			// final IsEmpty<LETTER, STATE> runsearch = new IsEmpty<>(super.mServices, mOperand, mCurrentPrefix);
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();
 			if (run == null) {
 				return run;
 			}
 			for (final Integer cexHash : mActiveCounterexamples.keySet()) {
 				if (cexHash == run.getWord().asList().hashCode()) {
-					// do we get a run with a differn prefix or is my prefix wrong? prefix looks right
 					throw new AssertionError("Not a fresh counterexample!");
 				}
 			}
@@ -665,7 +570,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				if (startpq == null) {
 					throw new AssertionError("No Priority Queue");
 				}
-				final STATE newState = startpq.getState(); // only needed for sumamry
+				final STATE newState = startpq.getState(); // only needed for summaries
 				final STATE newStateK = startpq.getStateK();
 				final STATE succ = startpq.getSucc();
 				final LETTER symbol = startpq.getLetter();
@@ -674,27 +579,22 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				addToCurrentPrefix(succ, symbol);
 				if (startpq.isCall()) {
 					markCallVisited(newState, newStateK);
-					runToGoal =
-							constructRunFromStateToNextBranch(positionOfThisSubSearch,
-									new DoubleDecker<>(newState, succ), startpq.getCounterexamplesUnderConsideration());
+					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
+							new DoubleDecker<>(newState, succ), startpq.getCounterexamplesUnderConsideration());
 
 					unmarkCall(newState, newStateK);
 
 				} else if (startpq.isReturn()) {
-					// stateK is the hierarical pre of state
+					// stateK is the hierarchical pre of state
 					// newStateK is the stateKK
 					unmarkCall(stateK, newStateK);
 					addSummary(newStateK, succ, newState, symbol);
-					runToGoal =
-							constructRunFromStateToNextBranch(positionOfThisSubSearch,
-									new DoubleDecker<>(newStateK, succ),
-									startpq.getCounterexamplesUnderConsideration());
+					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
+							new DoubleDecker<>(newStateK, succ), startpq.getCounterexamplesUnderConsideration());
 					markCallVisited(stateK, newStateK);
 				} else {
-					runToGoal =
-							constructRunFromStateToNextBranch(positionOfThisSubSearch,
-									new DoubleDecker<>(newStateK, succ),
-									startpq.getCounterexamplesUnderConsideration());
+					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
+							new DoubleDecker<>(newStateK, succ), startpq.getCounterexamplesUnderConsideration());
 				}
 				removeFromCurrentPrefix(succ, symbol);
 				if (runToGoal != null) {
@@ -715,22 +615,16 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		mCurrentPrefix.removeLast();
 	}
 
-	/**
-	 * Parallel
-	 */
 	@SuppressWarnings("squid:S1698")
 	private NestedRun<LETTER, STATE> getAcceptingRunParallel(final Set<Integer> set)
 			throws AutomataOperationCanceledException {
 		final PriorityQueue<PQState> pqStart = pickStartToExplore(mStartStates, set);
-		// assert !pqStart.isEmpty(); // if abstraction is empty, there might not be a start anymore
+		// if abstraction is empty, there might not be a start anymore
 		while (!pqStart.isEmpty()) {
 			final PQState startpq = pqStart.poll();
 			final STATE start = startpq.getSucc();
-			// enqueueAndMarkVisited(start, mDummyEmptyStackState);#
-			// markCallVisited(start, mDummyEmptyStackState);
-			final NestedRun<LETTER, STATE> runToGoal =
-					constructRunFromStateToNextBranch(0, new DoubleDecker<>(mDummyEmptyStackState, start),
-							startpq.getCounterexamplesUnderConsideration());
+			final NestedRun<LETTER, STATE> runToGoal = constructRunFromStateToNextBranch(0,
+					new DoubleDecker<>(mDummyEmptyStackState, start), startpq.getCounterexamplesUnderConsideration());
 
 			if (runToGoal != null) {
 				for (final Integer cexHash : set) {
@@ -744,46 +638,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		return null;
 	}
 
-	/**
-	 * Construct a run for a discovered final state in the reachability analysis. The run is constructed backwards using
-	 * the information of predecessors in the reachability graph and the corresponding runs of length two.
-	 */
-	private NestedRun<LETTER, STATE> constructRun(final Set<STATE> startStates, final STATE stateIn,
-			final STATE stateKin) {
-		// mLogger.debug("Reconstruction from " + state + " " + stateK);
-		STATE state = stateIn;
-		STATE stateK = stateKin;
-		NestedRun<LETTER, STATE> run = new NestedRun<>(state);
-		while (!startStates.contains(state) || !mReconstructionStack.isEmpty()) {
-			if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
-				mTimedout = true;
-				return null;
-			}
-			if (!computeInternalSubRun(state, stateK) && !computeCallSubRun(state, stateK)
-					&& !computeReturnSubRun(state, stateK)) {
-				if (mLogger.isWarnEnabled()) {
-					mLogger.warn("No Run ending in pair " + state + "  " + stateK + " with reconstructionStack"
-							+ mReconstructionStack);
-				}
-				if (startStates.contains(run.getStateAtPosition(0))
-						|| mReconstructionStack.contains(run.getStateAtPosition(0))) {
-					return run;
-				}
-				for (int i = 0; i < run.getLength(); i++) {
-					if (startStates.contains(run.getStateAtPosition(i))) {
-						return run.getSubRun(i, run.getLength() - 1);
-					}
-				}
-				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
-						+ " run is " + run.getStateSequence());
-			}
-			run = mReconstructionOneStepRun.concatenate(run);
-			state = run.getStateAtPosition(0);
-			stateK = mReconstructionPredK;
-		}
-		return run;
-	}
-
 	@Override
 	public NestedRun<LETTER, STATE> getNestedRun() {
 		if (!getResult()) {
@@ -794,7 +648,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				}
 			}
 		}
-
 		return mAcceptingRun;
 	}
 
