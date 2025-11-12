@@ -88,13 +88,18 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 
 	@Override
 	public ITestResultEvaluation<SafetyCheckerOverallResult> constructTestResultEvaluation() {
-		return new SafetyCheckerTestResultEvaluation();
+		return new SafetyCheckerTestResultEvaluation(mOverridenExpectedVerdict);
 	}
 
-	public class SafetyCheckerTestResultEvaluation implements ITestResultEvaluation<SafetyCheckerOverallResult> {
-		private String mCategory;
-		private String mMessage;
-		private TestResult mTestResult;
+	public static class SafetyCheckerTestResultEvaluation implements ITestResultEvaluation<SafetyCheckerOverallResult> {
+		protected String mCategory;
+		protected String mMessage;
+		protected TestResult mTestResult;
+		private final String mOverridenExpectedVerdict;
+
+		public SafetyCheckerTestResultEvaluation(final String overridenExpectedVerdict) {
+			mOverridenExpectedVerdict = overridenExpectedVerdict;
+		}
 
 		@Override
 		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
