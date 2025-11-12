@@ -50,9 +50,9 @@ trunk/examples/concurrent/bpl/VMCAI2021/generated/*.yml
 trunk/examples/concurrent/bpl/weaver-benchmarks/generated/**/*.bpl
 trunk/examples/concurrent/bpl/weaver-benchmarks/generated/**/*.yml
 trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
-trunk/examples/witness-generation-validation/regression/*.graphml
-trunk/examples/witness-generation-validation/regression/*.yaml
-trunk/examples/witness-generation-validation/regression/*.yml
+trunk/examples/witness-generation-validation/regression/**/*.graphml
+trunk/examples/witness-generation-validation/regression/**/*.yaml
+trunk/examples/witness-generation-validation/regression/**/*.yml
 **/.metadata/*
 **/.settings/*
 **/target/*
