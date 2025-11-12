@@ -292,7 +292,7 @@ def create_ultimate_base_call():
         "-jar",
         os.path.join(
             ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.6.800.v20240513-1750.jar",
+            "plugins/org.eclipse.equinox.launcher_1.7.0.v20250519-0528.jar",
         ),
         "-data",
         "@noDefault",
