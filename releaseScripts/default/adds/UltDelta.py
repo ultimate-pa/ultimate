@@ -67,7 +67,7 @@ def get_binary():
         "-jar",
         os.path.join(
             ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar",
+            "plugins/org.eclipse.equinox.launcher_1.7.0.v20250519-0528.jar",
         ),
         "-data",
         datadir,
