@@ -755,7 +755,7 @@ public class CfgBuilder {
 						continue;
 					} else if (gotoTarget == 1 && i > 0 && codeblock[i - 1] instanceof final GotoStatement goSt
 							&& goSt.getLabels().length == 1 && goSt.getLabels()[0].equals(laSt.getName())) {
-						// only target of a got in the line before. Skip both, goto and label
+						// only target of a goto in the line before. Skip both, goto and label
 						i--;
 						continue;
 					}
