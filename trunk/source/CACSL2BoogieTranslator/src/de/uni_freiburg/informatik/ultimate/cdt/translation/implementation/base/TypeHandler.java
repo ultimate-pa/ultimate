@@ -422,6 +422,7 @@ public class TypeHandler implements ITypeHandler {
 					bitFieldWidths.add(declaration.getBitfieldSize());
 				}
 			} else if (r instanceof SkipResult) { // skip ;)
+			} else if (r instanceof TypesResult) { // TODO
 			} else {
 				final String msg = "Unexpected syntax in struct declaration!";
 				throw new UnsupportedSyntaxException(loc, msg);

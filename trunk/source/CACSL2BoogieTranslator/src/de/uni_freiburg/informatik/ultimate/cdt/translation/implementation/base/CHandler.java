@@ -2400,7 +2400,7 @@ public class CHandler {
 		final List<Result> noSkipIntermediateResult =
 				intermediateResults.stream().filter(a -> !(a instanceof SkipResult)).collect(Collectors.toList());
 		if (noSkipIntermediateResult.isEmpty()) {
-			return new SkipResult();
+			return typeResult;
 		}
 		final Result first = noSkipIntermediateResult.get(0);
 		if (noSkipIntermediateResult.size() == 1) {
@@ -3641,7 +3641,7 @@ public class CHandler {
 				mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDecl, cd, null);
 			}
 		} else {
-			if (childRes instanceof SkipResult || childRes.getNode() == null) {
+			if (childRes instanceof SkipResult || childRes instanceof TypesResult || childRes.getNode() == null) {
 				return;
 			}
 			assert childRes.getClass() == Result.class;
