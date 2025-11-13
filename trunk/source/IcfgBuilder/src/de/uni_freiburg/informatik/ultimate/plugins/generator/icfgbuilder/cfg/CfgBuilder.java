@@ -571,6 +571,16 @@ public class CfgBuilder {
 	private final class ProcedureCfgBuilder {
 
 		/**
+		 * Merge nodes even if both are LOIs. <br>
+		 * TODO 2025-11-12 Matthias: Problem: we do not report invariants for both LOIs. See
+		 * examples/witness-generation-validation/regression/inductive/loi02.c However, maybe we have to rethink our
+		 * strategy for merging nodes anyway since we might report wrong line numbers for counterexamples. Maybe we can
+		 * still merge IcfgLocations. But we carefully have to think about the order and must not merge (but replace)
+		 * ILocations.
+		 */
+		private static final boolean AGGRESSIVE_NODE_MERGING = true;
+
+		/**
 		 * Maps a position identifier to the LocNode that represents this position in the CFG.
 		 */
 		private Map<DebugIdentifier, BoogieIcfgLocation> mProcLocNodes;
@@ -1443,7 +1453,8 @@ public class CfgBuilder {
 				final boolean childMustBePreserved = isLoopLocationOrLoi(child);
 				if (childMustBePreserved) {
 					final boolean motherMustBePreserved = isLoopLocationOrLoi(mother);
-					if (motherMustBePreserved) {
+					if (!AGGRESSIVE_NODE_MERGING && motherMustBePreserved) {
+						// TODO 2025-11-12 Matthias: Maybe we can just report false and do not merge these nodes.
 						throw new AssertionError(String.format("Can neither remove %s nor %s.", child, mother));
 					}
 					mergeLocNodes(mother, child, false);
