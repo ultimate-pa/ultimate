@@ -45,7 +45,7 @@ create_tool_zips() {
     #exit_on_fail bash makeZip.sh Automizer linux AutomizerC_BE_WitnessPrinter.xml BuchiAutomizerCInline_BE_WitnessPrinter.xml AutomizerC.xml AutomizerC_BE_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
 
     # Kojak
-    exit_on_fail bash makeZip.sh Kojak $platform KojakC_IcfgBuilder_WitnessPrinter.xml NONE NONE KojakC_IcfgBuilder_WitnessPrinter.xml NONE NONE
+    exit_on_fail bash makeZip.sh Kojak $platform KojakC_IcfgBuilder_WitnessPrinter.xml NONE KojakC_IcfgBuilder.xml KojakC_IcfgBuilder_WitnessPrinter.xml NONE NONE
 
     # GemCutter
     exit_on_fail bash makeZip.sh GemCutter $platform AutomizerCInline_IcfgBuilder_WitnessPrinter.xml NONE AutomizerCInline_IcfgBuilder.xml AutomizerCInline_IcfgBuilder_WitnessPrinter.xml NONE NONE
