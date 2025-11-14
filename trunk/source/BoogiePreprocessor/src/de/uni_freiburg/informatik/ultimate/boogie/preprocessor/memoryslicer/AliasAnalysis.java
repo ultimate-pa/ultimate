@@ -443,6 +443,9 @@ public class AliasAnalysis {
 					&& (bst.getFieldIds()[0].equals("base") && bst.getFieldIds()[1].equals("offset"))) {
 				return true;
 			}
+			if (bst.getFieldCount() == 1 && bst.getFieldIds()[0].equals("base")) {
+				return true;
+			}
 		}
 		return false;
 	}
