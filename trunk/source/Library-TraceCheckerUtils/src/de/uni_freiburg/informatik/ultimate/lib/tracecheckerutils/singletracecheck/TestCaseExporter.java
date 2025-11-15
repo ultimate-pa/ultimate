@@ -3,16 +3,17 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletraceche
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,7 +49,6 @@ public class TestCaseExporter {
 	 */
 	public void exportTests(final TestVector testV, final String i, final boolean allInOneFile) throws Exception {
 
-		final String name = "testcase" + i + UUID.randomUUID().toString();
 		final boolean noDirectories = false;
 		final boolean allInOneDirecotry = true;
 		if (noDirectories) {
@@ -66,8 +66,10 @@ public class TestCaseExporter {
 			}
 		}
 
+		Document xml = createXML(testV.values);
+		final String name = "testcase" + sha256(documentToString(xml));
 		try (FileOutputStream output = new FileOutputStream("test-suite/" + name + ".xml")) {
-			writeXml(createXML(testV.values), output);
+			writeXml(xml, output);
 			output.close();
 		}
 		if (testV.need64Bit) {
@@ -76,6 +78,33 @@ public class TestCaseExporter {
 				output.close();
 			}
 		}
+	}
+
+	private String documentToString(Document doc) throws Exception {
+		TransformerFactory tf = TransformerFactory.newInstance();
+		Transformer transformer = tf.newTransformer();
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+		DOMImplementation domImpl = doc.getImplementation();
+		DocumentType doctype =
+				domImpl.createDocumentType("testcase", "+//IDN sosy-lab.org//DTD test-format testcase 1.1//EN",
+						"https://sosy-lab.org/test-format/testcase-1.1.dtd");
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
+
+		StringWriter writer = new StringWriter();
+		transformer.transform(new DOMSource(doc), new StreamResult(writer));
+		return writer.toString();
+	}
+
+	private static String sha256(String text) throws Exception {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] digest = md.digest(text.getBytes());
+		StringBuilder sb = new StringBuilder();
+		for (byte b : digest) {
+			sb.append(String.format("%02x", b));
+		}
+		return sb.toString();
 	}
 
 	// TODO split exportation and creation of the testvectors. Means

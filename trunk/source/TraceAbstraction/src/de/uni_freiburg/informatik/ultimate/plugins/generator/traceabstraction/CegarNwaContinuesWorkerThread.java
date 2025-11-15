@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
@@ -10,13 +9,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
@@ -37,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -70,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy.WorkerGeneralizationMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		implements ICegarNwaWorkerThread<L, A> {
@@ -81,7 +75,6 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	private final CegarLoopResultBuilder mResultBuilder;
 	private final IUltimateServiceProvider mServices;
 
-	
 	private final CfgSmtToolkit mCsToolkit;
 	final PredicateFactory mPredicateFactory;
 	PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -119,20 +112,19 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	TransferBetweenMainAndWorker<L, IPredicate> mNwaCexTransferrer;
 
 	/**
-	 * 
+	 *
 	 * TODO provide CEGAR loop statistics
 	 */
 	public CegarNwaContinuesWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
-			final CegarLoopResultBuilder resultBuilder,
-			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final IIcfg<? extends IcfgLocation> icfg, final PredicateFactory predicateFactory,
-			final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs,
+			final CegarLoopResultBuilder resultBuilder, final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final IIcfg<? extends IcfgLocation> icfg,
+			final PredicateFactory predicateFactory, final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ParallelNwaCegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization,
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
-			final BlockingQueue<IRun<L, ?>> workerTaskQueue, TransferBetweenMainAndWorker<L,IPredicate> transferWorkerUtils)
-			throws InterruptedException {
+			final BlockingQueue<IRun<L, ?>> workerTaskQueue,
+			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils) throws InterruptedException {
 
 		mLogger = logger;
 		mPref = pref;
@@ -157,60 +149,43 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 
 		mNwaCexTransferrer = transferWorkerUtils;
 		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
-		final Thread workerThread = new Thread(() -> {
-			try {
-				executeThread();
-			} catch (final InterruptedException e) {
-				throw new AssertionError(e);
-			}
-		});
-
-		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
-			// TODO seems to work not sure if it is usefull
-			mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR, null,
-					mCounterexample, null, true, false, true);
-			try {
-				mBlockingQueueForResults.put(mThreadResult);
-			} catch (final InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			mMainThread.reportFailedContinuesWorkerThread();
-		};
-		workerThread.setUncaughtExceptionHandler(exhandler);
-		workerThread.start();
 	}
 
-	private void executeThread() throws InterruptedException {
-		while (true) {
-			mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
-			mIteration += 1;
-			mCounterexample = mNwaCexTransferrer.transferRun((NestedRun) mWorkerTaskQueue.take(), Mode.MAIN2WORKER);
-			final List<L> trace = mCounterexample.getWord().asList();
-			mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
-			final int traceHash = trace.hashCode();
-			mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
-			Thread.currentThread().setName("Worker for " + traceHash);
-			try {
-				final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
-				final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
-				final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
-				final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(strategy);
+	@Override
+	public void run() {
+		try {
+			while (true) {
+				mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
+				mIteration += 1;
+				mCounterexample = mNwaCexTransferrer.transferRun((NestedRun) mWorkerTaskQueue.take(), Mode.MAIN2WORKER);
+				final List<L> trace = mCounterexample.getWord().asList();
+				mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
+				final int traceHash = trace.hashCode();
+				mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
+				Thread.currentThread().setName("Worker for " + traceHash);
+				try {
+					final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
+					final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
+					final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
+					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(strategy);
 
-				final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(strategy,
-						isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
-				constructRefinementAutomaton(automatonType);
-				mThreadResult = refineAbstractionInternally();
-			} catch (AutomataLibraryException | ToolchainCanceledException | SMTLIBException e) {
-				throw new AssertionError("WorkerThread Failed: " + e);
+					final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(strategy,
+							isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
+					constructRefinementAutomaton(automatonType);
+					mThreadResult = refineAbstractionInternally();
+				} catch (AutomataLibraryException | ToolchainCanceledException | SMTLIBException e) {
+					throw new AssertionError("WorkerThread Failed: " + e);
+				}
+				mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
+				mBlockingQueueForResults.put(mThreadResult);
 			}
-			mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
-			mBlockingQueueForResults.put(mThreadResult);
+		} catch (final InterruptedException e) {
+
 		}
 	}
 
 	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> run) {
-		assert !IcfgUtils.isConcurrent(mIcfg);		
+		assert !IcfgUtils.isConcurrent(mIcfg);
 		return getIcfgLocationsFromRun(run);
 	}
 
@@ -223,8 +198,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	 * sets up the worker with its own cfg script and its own RefinementStrategy
 	 *
 	 *
-	 * TODO what needs to be done once and what needs to be done for every
-	 * CEX??????????ß
+	 * TODO what needs to be done once and what needs to be done for every CEX??????????ß
 	 *
 	 * new constuct Strategy for every cex!
 	 *
@@ -251,7 +225,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	}
 
 	/**
-	 * Possible Synchronization! Worker takes the current abstraction from the main thread. Then transfers it to worker script.
+	 * Possible Synchronization! Worker takes the current abstraction from the main thread. Then transfers it to worker
+	 * script.
 	 */
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getAbstraction() {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
@@ -268,8 +243,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		return IPostconditionProvider.constructDefaultPostconditionProvider();
 	}
 
-	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible(
-			final ITARefinementStrategy<L> strategy) {
+	protected Pair<LBool, IProgramExecution<L, Term>>
+			isCounterexampleFeasible(final ITARefinementStrategy<L> strategy) {
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
 					.getPathProgramCache().getPathProgramCount(mCounterexample.getWord())) {
@@ -277,8 +252,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
 
-			final TraceAbstractionRefinementEngine<L> refinementEngine = new TraceAbstractionRefinementEngine<>(
-					getServices(), mLogger, strategy);
+			final TraceAbstractionRefinementEngine<L> refinementEngine =
+					new TraceAbstractionRefinementEngine<>(getServices(), mLogger, strategy);
 			mRefinementResult = refinementEngine.getResult();
 
 		} catch (final ToolchainCanceledException | SMTLIBException tce) {
@@ -291,8 +266,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 			if (mRefinementResult.providesIcfgProgramExecution()) {
 				rcfgProgramExecution = mRefinementResult.getIcfgProgramExecution();
 			} else {
-				rcfgProgramExecution = TraceCheckUtils
-						.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
+				rcfgProgramExecution =
+						TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
 			}
 
 		}
@@ -302,8 +277,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	}
 
 	/**
-	 * Report results from a feasibility check if necessary and return the type of
-	 * the refinement automaton
+	 * Report results from a feasibility check if necessary and return the type of the refinement automaton
 	 *
 	 * @param strategy
 	 */
@@ -328,8 +302,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 							"TraceCheck Unknown, dont return result. Might be just this Strategy that fails");
 				}
 			}
-			final UnprovabilityReason reasonUnknown = new UnprovabilityReason(
-					"unable to decide satisfiability of path constraint");
+			final UnprovabilityReason reasonUnknown =
+					new UnprovabilityReason("unable to decide satisfiability of path constraint");
 			actualResult = Result.UNKNOWN;
 			mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
 		}
@@ -345,6 +319,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 
 	/**
 	 * This Method does not do the sanity checks done in NWA for the correctness of Error and Interpolant automata!
+	 *
 	 * @param automatonType
 	 * @throws AutomataOperationCanceledException
 	 */
@@ -438,8 +413,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	}
 
 	/*
-	 * WARNING The real difference has to be computed in the Main Thrad / CEGAR loop
-	 * This is only used to enhance the interpolant automaton
+	 * WARNING The real difference has to be computed in the Main Thrad / CEGAR loop This is only used to enhance the
+	 * interpolant automaton
 	 */
 	private IOpWithDelayedDeadEndRemoval<L, IPredicate> computeAutomataDifference(
 			final INestedWordAutomaton<L, IPredicate> minuend,
@@ -454,8 +429,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		}
 		try {
 			mLogger.debug("WORKER: Start constructing difference for enhancing interpolant automaton in worker");
-			final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(subtrahend, true,
-					mPredicateFactoryInterpolantAutomata);
+			final PowersetDeterminizer<L, IPredicate> psd =
+					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
@@ -464,7 +439,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				} else {
 					diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
 							minuend, subtrahend, psd, explointSigmaStarConcatOfIA);
-				}				
+				}
 			} catch (final AutomataOperationCanceledException | ToolchainCanceledException tce) {
 				final RunningTaskInfo runningTaskInfo = executeDifferenceTimeoutActions(minuend, subtrahend,
 						subtrahendBeforeEnhancement, automatonType);
@@ -498,8 +473,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final AutomatonType automatonType) throws AutomataLibraryException {
-		final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
-				subtrahendBeforeEnhancement, automatonType);
+		final RunningTaskInfo runningTaskInfo =
+				getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend, subtrahendBeforeEnhancement, automatonType);
 		return runningTaskInfo;
 	}
 
@@ -518,8 +493,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		if (refinementHtc != null) {
 			return refinementHtc;
 		}
-		final HoareTripleCheckerCache initialCache = TraceAbstractionUtils
-				.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
+		final HoareTripleCheckerCache initialCache =
+				TraceAbstractionUtils.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
 		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier(), initialCache);
 	}
@@ -568,17 +543,20 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
-		final boolean conservativeSuccessorCandidateSelection = enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
+		final boolean conservativeSuccessorCandidateSelection =
+				enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
 		final boolean secondChance = enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 		return new NondeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, inputInterpolantAutomaton,
 				predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
 	}
 
-	private DeterministicInterpolantAutomaton<L> constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
-			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
-			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
-			final InterpolantAutomatonEnhancement enhanceMode) {
-		final boolean conservativeSuccessorCandidateSelection = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
+	private DeterministicInterpolantAutomaton<L>
+			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+					final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+					final InterpolantAutomatonEnhancement enhanceMode) {
+		final boolean conservativeSuccessorCandidateSelection =
+				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 		return new DeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, inputInterpolantAutomaton,
 				predicateUnifier, conservativeSuccessorCandidateSelection, cannibalize);

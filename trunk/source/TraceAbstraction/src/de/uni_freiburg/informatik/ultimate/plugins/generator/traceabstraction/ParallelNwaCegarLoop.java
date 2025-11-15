@@ -201,7 +201,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(
 				new AutomataLibraryServices(mServices), mLogger, mCsToolkit.getManagedScript(), iterationServices,
 				getSolverSettings(iterationServices,
-						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),
+						getIteration() + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),
 				mCsToolkit);
 
 		final CfgSmtToolkit freshToolKit = transferUtils.constructWorkerCfgSmtToolkit();
@@ -228,11 +228,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
 		if (smybolicExecutionWorker) {
-			return new CegarNWAContiuesIndependentWorkerThread<>(mLogger, mPref, id, mResultBuilder,
-					mCegarLoopBenchmark, iterationServices, freshToolKit, mIcfg, predicateFactory,
-					taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
-					mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue,
-					transferUtils);
+			return new CegarNWAContiuesIndependentWorkerThread<>(mLogger, mPref, mResultBuilder, mCegarLoopBenchmark,
+					iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
+					predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, this,
+					mWorkerResultQueue, transferUtils);
 		}
 
 		// start worker
@@ -350,7 +349,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		for (int i = 0; i < mThreadLimit; i++) {
 			try {
 				if (mPref.mUseContinuesWorker) {
-					setUpContinuesWorker(iterationServices, i, useQuickCheck);
+					mExec.submit(setUpContinuesWorker(iterationServices, i, useQuickCheck));
 					useQuickCheck = false;
 				}
 			} catch (final InterruptedException e) {

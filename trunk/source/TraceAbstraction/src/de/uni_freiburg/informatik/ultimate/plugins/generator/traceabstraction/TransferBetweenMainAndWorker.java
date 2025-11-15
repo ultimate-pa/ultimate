@@ -79,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -168,7 +167,6 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			case final Call call -> transferredLetter = (LETTER) getTransferCall(call);
 			case final Return re -> transferredLetter = (LETTER) getTransferReturn(re);
 			case final StatementSequence stmt -> transferredLetter = (LETTER) getTransferStmtSequence(stmt);
-			case final Summary summary -> transferredLetter = (LETTER) getTransferSummary(summary);
 			default -> new AssertionError("Unexpected letter type: " + letter.getClass());
 			}
 		}
@@ -202,15 +200,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		newReturn.setTransitionFormula(transferTransFormulaWithMode(re.getTransformula()));
 		newReturn.setPayload(re.getPayload());
 		return newReturn;
-	}
 
-	private Summary getTransferSummary(final Summary summary) {
-		final Summary newSummary = new Summary(summary.getSerialNumber(), (BoogieIcfgLocation) summary.getSource(),
-				(BoogieIcfgLocation) summary.getTarget(), summary.getCallStatement(),
-				summary.calledProcedureHasImplementation(), mLogger);
-		newSummary.setTransitionFormula(transferTransFormulaWithMode(summary.getTransformula()));
-		newSummary.setPayload(summary.getPayload());
-		return newSummary;
 	}
 
 	private UnmodifiableTransFormula transferTransFormulaWithMode(final UnmodifiableTransFormula inTF) {
