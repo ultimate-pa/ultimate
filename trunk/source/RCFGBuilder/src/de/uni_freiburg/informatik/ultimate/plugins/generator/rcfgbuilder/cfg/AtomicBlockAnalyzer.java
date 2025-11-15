@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -46,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class AtomicBlockAnalyzer {
+	private static final boolean LOG_ATOMIC_EDGE_STATISTICS = true;
+
 	private final BoogieIcfgContainer mIcfg;
 
 	// Locations that are (strictly) inside an atomic block.
@@ -110,9 +113,24 @@ public class AtomicBlockAnalyzer {
 	}
 
 	public static void ensureAtomicCompositionIsComplete(final BoogieIcfgContainer icfg, final ILogger logger) {
+		int atomicEdgeCount = 0;
+		long totalAtomicEdgeSize = 0L;
+		int maxAtomicEdgeSize = -1;
+
 		final Iterable<IcfgEdge> edges = getAllEdges(icfg)::iterator;
 		for (final var edge : edges) {
+			if (LOG_ATOMIC_EDGE_STATISTICS && AtomicBlockInfo.hasAnnotation(edge)) {
+				atomicEdgeCount++;
+				final int size = new DAGSize().size(edge.getTransformula().getFormula());
+				maxAtomicEdgeSize = Integer.max(maxAtomicEdgeSize, size);
+				totalAtomicEdgeSize += size;
+			}
 			ensureAtomicCompositionComplete(edge, logger);
+		}
+
+		if (LOG_ATOMIC_EDGE_STATISTICS) {
+			logger.info("ICFG has %d atomic edges with overall formula size %d (maximum size: %d)", atomicEdgeCount,
+					totalAtomicEdgeSize, maxAtomicEdgeSize);
 		}
 	}
 

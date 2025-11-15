@@ -63,8 +63,16 @@ public class LargeBlockEncoding {
 
 	private final Map<BoogieIcfgLocation, List<CodeBlock>> mParallelQueue = new HashMap<>();
 
+	// some statistics
+	private int mStraightlineSequentialCompositions;
+	private int mOneToNSequentialCompositions;
+	private int mComplexSequentialCompositions;
+	private int mParallelCompositions;
+
 	public LargeBlockEncoding(final IUltimateServiceProvider services, final BoogieIcfgContainer icfg,
 			final CodeBlockFactory cbf, final InternalLbeMode internalLbeMode) {
+		final long startTime = System.nanoTime();
+
 		mServices = services;
 		mIcfg = icfg;
 		mCbf = cbf;
@@ -74,6 +82,13 @@ public class LargeBlockEncoding {
 				.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY);
 		mEntryNodes = new HashSet<>(mIcfg.getProcedureEntryNodes().values());
 		mAtomicAnalysis = new AtomicBlockAnalyzer(mIcfg);
+
+		mLogger.info(
+				"Applying CFG Large Block Encoding to ICFG that has %d procedures, %d locations, %d edges, "
+						+ "%d initial locations, %d loop locations, and %d error locations.",
+				icfg.getProcedureEntryNodes().size(), IcfgUtils.getNumberOfLocations(icfg),
+				IcfgUtils.getNumberOfEdges(icfg), icfg.getInitialNodes().size(), icfg.getLoopLocations().size(),
+				IcfgUtils.getErrorLocations(icfg).size());
 
 		// initialize queues of locations that are candidates for different kind of compositions
 		IcfgUtils.getAllLocations(mIcfg).forEach(pp -> considerCompositionCandidate(pp, true));
@@ -116,6 +131,14 @@ public class LargeBlockEncoding {
 
 			IcfgUtils.getAllLocations(mIcfg).forEach(pp -> considerCompositionCandidate(pp, true));
 		}
+
+		final long elapsedTime = System.nanoTime() - startTime;
+		mLogger.info(
+				"LargeBlockEncoding completed in %d ms, with %d straightline sequential compositions, "
+						+ "%d parallel compositions, %d 1:n/n:1 sequential compositions "
+						+ "and %d complex sequential compositions.",
+				elapsedTime / 1000 / 1000, mStraightlineSequentialCompositions, mParallelCompositions,
+				mOneToNSequentialCompositions, mComplexSequentialCompositions);
 	}
 
 	/**
@@ -176,10 +199,15 @@ public class LargeBlockEncoding {
 		final List<IcfgEdge> outgoingEdges = new ArrayList<>(pp.getOutgoingEdges());
 		final List<IcfgEdge> newEdges = new ArrayList<>();
 
-		if (incomingEdges.size() > 1 && outgoingEdges.size() > 1) {
+		if (incomingEdges.size() == 1 && outgoingEdges.size() == 1) {
+			mStraightlineSequentialCompositions++;
+		} else if (incomingEdges.size() > 1 && outgoingEdges.size() > 1) {
+			mComplexSequentialCompositions++;
 			mLogger.warn("Complex %d:%d sequential composition. "
 					+ "Such compositions can cause exponential blowup and should not occur in structured programs.",
 					incomingEdges.size(), outgoingEdges.size());
+		} else {
+			mOneToNSequentialCompositions++;
 		}
 
 		for (final IcfgEdge incoming : incomingEdges) {
@@ -225,6 +253,7 @@ public class LargeBlockEncoding {
 	 * compositions.
 	 */
 	private void composeParallel(final BoogieIcfgLocation pp, final List<CodeBlock> outgoing) {
+		mParallelCompositions++;
 		final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.get(0).getTarget();
 		mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
 				CfgBuilder.SIMPLIFICATION_TECHNIQUE);

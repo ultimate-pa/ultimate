@@ -336,6 +336,13 @@ public class CfgBuilder {
 		ModelUtils.copyAnnotations(unit, icfg);
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 
+		mLogger.info(
+				"Constructed ICFG has %d procedures, %d locations, %d edges, %d initial locations, %d loop locations, "
+						+ "and %d error locations.",
+				icfg.getProcedureEntryNodes().size(), IcfgUtils.getNumberOfLocations(icfg),
+				IcfgUtils.getNumberOfEdges(icfg), icfg.getInitialNodes().size(), icfg.getLoopLocations().size(),
+				IcfgUtils.getErrorLocations(icfg).size());
+
 		return icfg;
 	}
 
