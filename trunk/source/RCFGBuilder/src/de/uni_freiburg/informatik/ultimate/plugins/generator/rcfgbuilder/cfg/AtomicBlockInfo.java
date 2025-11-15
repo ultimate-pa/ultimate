@@ -60,11 +60,13 @@ final public class AtomicBlockInfo extends ModernAnnotations {
 
 	@Override
 	public IAnnotations merge(final IAnnotations other) {
-		if (other instanceof AtomicBlockInfo) {
-			final var otherInfo = (AtomicBlockInfo) other;
-			final int combinedDelta = mDelta + otherInfo.mDelta;
-			return new AtomicBlockInfo(combinedDelta);
-		}
+		// We use the default merging behaviour, i.e., merging is not supported.
+		// This annotation should only appear temporarily within CfgBuilder.
+		// It is up to CfgBuilder to make sure it never attempts to merge two instances of this annotation.
+		//
+		// It does not make sense to define merging here, as the correct behaviour depends on the context, e.g. whether
+		// edges are composed sequentially (deltas are summed) or in parallel (deltas of all parallel edges must be the
+		// same as each other, and the same as the delta of the result).
 		return super.merge(other);
 	}
 
@@ -159,6 +161,33 @@ final public class AtomicBlockInfo extends ModernAnnotations {
 		return ModelUtils.getAnnotation(edge, AtomicBlockInfo.class) != null;
 	}
 
+	static int getAnnotatedDelta(final IIcfgTransition<?> edge) {
+		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(edge, AtomicBlockInfo.class);
+		if (annotation != null) {
+			return annotation.mDelta;
+		}
+		return 0;
+	}
+
+	static void mergeSequential(final IIcfgTransition<?> first, final IIcfgTransition<?> second,
+			final IIcfgTransition<?> merged) {
+		final var mergedAnnotation = mergeSequential(ModelUtils.getAnnotation(first, AtomicBlockInfo.class),
+				ModelUtils.getAnnotation(second, AtomicBlockInfo.class));
+		if (mergedAnnotation != null) {
+			addAnnotation(merged, mergedAnnotation);
+		}
+	}
+
+	private static AtomicBlockInfo mergeSequential(final AtomicBlockInfo first, final AtomicBlockInfo second) {
+		if (first == null) {
+			return second;
+		}
+		if (second == null) {
+			return first;
+		}
+		return new AtomicBlockInfo(first.mDelta + second.mDelta);
+	}
+
 	private static boolean hasAnnotatedDelta(final IIcfgTransition<?> edge, final IntPredicate condition) {
 		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(edge, AtomicBlockInfo.class);
 		if (annotation != null) {
@@ -167,12 +196,16 @@ final public class AtomicBlockInfo extends ModernAnnotations {
 		return false;
 	}
 
-	private static void addAnnotation(final IIcfgTransition<?> edge, final int delta) {
+	static void addAnnotation(final IIcfgTransition<?> edge, final int delta) {
+		addAnnotation(edge, new AtomicBlockInfo(delta));
+	}
+
+	private static void addAnnotation(final IIcfgTransition<?> edge, final AtomicBlockInfo annotation) {
 		final var previous = ModelUtils.getAnnotation(edge, AtomicBlockInfo.class);
 		if (previous != null) {
 			throw new UnsupportedOperationException(
-					"Incompatible atomic block annotation: " + previous.mDelta + " and " + delta);
+					"Incompatible atomic block annotation: " + previous.mDelta + " and " + annotation.mDelta);
 		}
-		edge.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(delta));
+		edge.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), annotation);
 	}
 }

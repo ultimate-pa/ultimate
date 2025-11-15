@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.OptionalInt;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -218,7 +219,12 @@ public class LargeBlockEncoding {
 
 				final SequentialComposition comp = mCbf.constructSequentialComposition(predecessor, successor,
 						mSimplifyCodeBlocks, false, sequence, CfgBuilder.SIMPLIFICATION_TECHNIQUE);
-				ModelUtils.mergeAnnotations(comp, incoming, outgoing);
+
+				// transfer annotations (special handling for AtomicBlockInfo, as it cannot be merged)
+				ModelUtils.copyAnnotationsFiltered(incoming, comp, ann -> !(ann instanceof AtomicBlockInfo));
+				ModelUtils.copyAnnotationsFiltered(outgoing, comp, ann -> !(ann instanceof AtomicBlockInfo));
+				AtomicBlockInfo.mergeSequential(incoming, outgoing, comp);
+
 				newEdges.add(comp);
 			}
 		}
@@ -255,8 +261,32 @@ public class LargeBlockEncoding {
 	private void composeParallel(final BoogieIcfgLocation pp, final List<CodeBlock> outgoing) {
 		mParallelCompositions++;
 		final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.get(0).getTarget();
-		mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
+
+		// Compute the atomic delta for the composed edge
+		final OptionalInt composedAtomicDelta;
+		if (outgoing.stream().anyMatch(AtomicBlockInfo::hasAnnotation)) {
+			final int[] deltas = outgoing.stream().mapToInt(AtomicBlockInfo::getAnnotatedDelta).distinct().toArray();
+			assert deltas.length == 1
+					: "cannot perform parallel compositions of edges with different atomic block deltas";
+			composedAtomicDelta = OptionalInt.of(deltas[0]);
+		} else {
+			composedAtomicDelta = OptionalInt.empty();
+		}
+
+		// remove these annotations as constructParallelComposition would try to merge them (which fails)
+		// (this should be fine hopefully, as a once-composed edge is never used again; unlike for seq. compositions)
+		for (final var edge : outgoing) {
+			AtomicBlockInfo.removeAnnotation(edge);
+		}
+
+		final var result = mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
 				CfgBuilder.SIMPLIFICATION_TECHNIQUE);
+
+		// add the atomic edge annotation to the composed edge, if necessary
+		if (composedAtomicDelta.isPresent()) {
+			AtomicBlockInfo.addAnnotation(result, composedAtomicDelta.orElseThrow());
+		}
+
 		considerCompositionCandidate(pp, false);
 		considerCompositionCandidate(successor, false);
 	}
