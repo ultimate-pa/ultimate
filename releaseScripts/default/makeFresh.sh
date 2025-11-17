@@ -39,7 +39,7 @@ create_tool_zips() {
     exit_on_fail bash makeZip.sh Taipan $platform AutomizerCInline_IcfgBuilder_WitnessPrinter.xml NONE AutomizerCInline_IcfgBuilder.xml AutomizerCInline_IcfgBuilder_WitnessPrinter.xml NONE NONE
 
     # Automizer without separate blockencoding plugin
-    exit_on_fail bash makeZip.sh Automizer $platform AutomizerCInline_IcfgBuilder_WitnessPrinter.xml BuchiAutomizerCInline_IcfgBuilder_WitnessPrinter.xml AutomizerCInline_IcfgBuilder.xml AutomizerCInline_IcfgBuilder_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
+    exit_on_fail bash makeZip.sh Automizer $platform AutomizerCInline_IcfgBuilder_WitnessPrinter.xml BuchiAutomizerCInline_IcfgBuilder_WitnessPrinter.xml AutomizerCInline_IcfgBuilder.xml AutomizerCInline_IcfgBuilder_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline_IcfgBuilder.xml
 
     # Automizer with separate blockencoding plugin
     #exit_on_fail bash makeZip.sh Automizer linux AutomizerC_BE_WitnessPrinter.xml BuchiAutomizerCInline_BE_WitnessPrinter.xml AutomizerC.xml AutomizerC_BE_WitnessPrinter.xml LTLAutomizerC.xml BuchiAutomizerCInline.xml
