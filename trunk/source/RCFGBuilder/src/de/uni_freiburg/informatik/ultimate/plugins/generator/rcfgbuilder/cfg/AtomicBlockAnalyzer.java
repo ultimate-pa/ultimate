@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class AtomicBlockAnalyzer {
-	private static final boolean LOG_ATOMIC_EDGE_STATISTICS = true;
+	private static final boolean LOG_ATOMIC_EDGE_STATISTICS = false;
 
 	private final BoogieIcfgContainer mIcfg;
 
