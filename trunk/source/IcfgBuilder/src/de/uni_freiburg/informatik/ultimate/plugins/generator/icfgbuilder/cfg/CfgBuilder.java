@@ -1043,7 +1043,7 @@ public class CfgBuilder {
 			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(origin);
 			ModelUtils.copyAnnotations(origin, condNotError);
 			ModelUtils.copyAnnotations(origin, condError);
-			buildBranching(condNotError, currentElement, condError, error, srcLoc);
+			buildBranching(condError, error, condNotError, currentElement, srcLoc);
 			return srcLoc;
 		}
 
