@@ -271,6 +271,14 @@ public class RTInconsistencyPreCheck {
 		for (final ReqsWithAttributes r : mListChainLinkReqs) {
 			mLogger.info("   " + r.mName);
 		}
+		if(false) {
+			mLogger.info("Skipping RTI PreCheck, only counting fail reasons...");
+			countFailReasons(2);
+			countFailReasons(3);
+
+
+			return new ArrayList<>();
+		}
 
 		// 2) Precompute compatibilities to aggressively prune later searches
 		findSinglesForChains(); // for each chain-link, which singles might help close it?
@@ -278,6 +286,8 @@ public class RTInconsistencyPreCheck {
 
 		// If “full set” requested, search up to the entire number of chain-links
 		mCombinationNum = mFullSet ? mListChainLinkReqs.size() : mCombinationNum;
+		
+
 		mLogger.info("Sort done, starting RTI PreCheck...");
 
 		if (printAllExitConditions) {
@@ -306,6 +316,114 @@ public class RTInconsistencyPreCheck {
 			return new ArrayList<>();
 		}
 		return mRTIReturnSet;
+	}
+	public static <T> List<List<T>> subsetsOfSizeK(List<T> list, int k) {
+	    List<List<T>> result = new ArrayList<>();
+	    generate(list, k, 0, new ArrayList<>(), result);
+	    return result;
+	}
+
+	private static <T> void generate(List<T> list,
+	                                 int k,
+	                                 int index,
+	                                 List<T> current,
+	                                 List<List<T>> result) {
+
+	    // Fertige Kombination
+	    if (current.size() == k) {
+	        result.add(new ArrayList<>(current));
+	        return;
+	    }
+
+	    // Keine Elemente mehr übrig
+	    if (index >= list.size()) {
+	        return;
+	    }
+
+	    // Element nehmen
+	    current.add(list.get(index));
+	    generate(list, k, index + 1, current, result);
+
+	    // Element nicht nehmen
+	    current.remove(current.size() - 1);
+	    generate(list, k, index + 1, current, result);
+	}
+
+	private void countFailReasons(int size) {
+		 List<List<ReqsWithAttributes>> result = new ArrayList<>();
+		    int n = mListAllReqs.size();
+            // Für jede mögliche Größe der Teilmenge	
+		    result =    subsetsOfSizeK(mListAllReqs, size);
+
+		    long criticalPhase = 0;
+		    long nvc = 0;
+		    long timedVariables = 0;
+		    long None = 0;
+		    long NvcTimedCritcal = 0;
+		    long NvcCriticalTimed = 0;
+		    
+		    //nvc
+			for (List<ReqsWithAttributes> subset : result) {
+				
+				Boolean nvcFound = false;
+				Boolean criticalPhaseFound = false;
+
+                Term nvcTerm = subset.get(0).mFullExitCondition;
+                Term criticalPhaseTerm = subset.get(0).mMaxPhase.mInvariant;
+                Boolean timedVarFound = subset.get(0).mTimed;
+				for (int i = 1; i < subset.size(); i++) {
+					nvcTerm = SmtUtils.and(mScript, nvcTerm, subset.get(i).mFullExitCondition);
+					criticalPhaseTerm = SmtUtils.and(mScript, criticalPhaseTerm, subset.get(i).mMaxPhase.mInvariant);
+					if (subset.get(i).mTimed) {
+						timedVarFound = true;
+					}
+				}
+				LBool satNVC = SmtUtils.checkSatTerm(mScript, nvcTerm);
+				LBool satCritical = SmtUtils.checkSatTerm(mScript, criticalPhaseTerm);
+				if (satCritical == LBool.UNSAT) {
+					criticalPhase++;
+					criticalPhaseFound = true;
+				}
+				if (satNVC == LBool.SAT) {
+					nvc++;
+					nvcFound = true;
+				}
+				if (!timedVarFound) {
+					timedVariables++;
+				}
+				if (!nvcFound && !criticalPhaseFound && timedVarFound) {
+					None++;
+				}
+				NvcTimedCritcal++;
+				if(!nvcFound) {
+					NvcTimedCritcal++;
+					if(timedVarFound) {
+						NvcTimedCritcal++;
+                        
+                    } 
+					
+				}
+				NvcCriticalTimed++;
+				if(!nvcFound) {
+					NvcCriticalTimed++;
+					if(!criticalPhaseFound) {
+						NvcCriticalTimed++;
+
+                    } 
+					
+				}
+				
+			}
+			mLogger.info("======== RTI PreCheck Fail Reason Counts for size " + size + " ========");
+			mLogger.info("Total combinations: " + result.size());
+			mLogger.info("Sat NVC combinations: " + nvc);
+			mLogger.info("unsat critical phase combinations: " + criticalPhase);
+			mLogger.info("Combinations without timed variables: " + timedVariables);
+			mLogger.info("Combinations with none of the above issues: " + None);
+			mLogger.info("Nvc, timed, criticel: " + NvcTimedCritcal);
+			mLogger.info("Nvc, critical, timed: " + NvcCriticalTimed);
+			
+		
 	}
 
 	// ================================================================================================================
@@ -1069,6 +1187,11 @@ public class RTInconsistencyPreCheck {
 				req.mMaxPhase.mInvariant = mCddToSmt.toSmt(req.mMaxPhase.mDCPhase.getInvariant());
 				req.mMaxPhase.mInvariantVar = req.mMaxPhase.mInvariant.getFreeVars();
 				req.mMaxPhase.mBound = boundToSmt(req.mMaxPhase);
+				
+				if (req.mMaxPhase.mDCPhase.getBound() == CounterTrace.BOUND_GREATER
+						|| req.mMaxPhase.mDCPhase.getBound() == CounterTrace.BOUND_GREATEREQUAL) {
+					continue;
+				}
 
 				// --- Seeping variants ---
 				// Build cumulative “seep” invariants walking backwards as long as seeping is allowed (both time/obs).
