@@ -2668,7 +2668,7 @@ public class CHandler {
 		case IASTUnaryExpression.op_not:
 		case IASTUnaryExpression.op_plus:
 		case IASTUnaryExpression.op_tilde: {
-			final ExpressionResult rop = mExprResultTransformer.switchToRValue(operand, loc, node);
+			final ExpressionResult rop = mExprResultTransformer.transformDecaySwitch(operand, loc, node);
 			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, node.getOperator(), rop);
 		}
 		case IASTUnaryExpression.op_postFixIncr:
