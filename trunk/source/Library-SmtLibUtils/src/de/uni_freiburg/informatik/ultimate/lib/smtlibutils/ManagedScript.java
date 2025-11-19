@@ -144,10 +144,6 @@ public class ManagedScript {
 
 	public LBool checkSat(final Object lockOwner) throws SMTLIBException {
 		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
-		if (Thread.interrupted()) {
-			mScript.exit();
-			throw new SMTLIBException("Thread Was Interrupted, crashing before checkSat");
-		}
 		return mScript.checkSat();
 	}
 
