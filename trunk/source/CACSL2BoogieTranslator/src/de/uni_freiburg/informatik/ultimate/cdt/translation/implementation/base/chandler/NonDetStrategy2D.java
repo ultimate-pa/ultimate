@@ -63,20 +63,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  * @author Jan Körner
  */
-public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMetadataDefault2D>
-		extends MemoryManagementStrategyBase {
-	IBooleanArrayHelper mBooleanArrayHelper;
-	T mMemoryAddressing;
-	T1 mMemoryMetadata;
+public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManagementStrategyBase {
+	private final IBooleanArrayHelper mBooleanArrayHelper;
+	private final T mMemoryAddressing;
 
 	public NonDetStrategy2D(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final IBooleanArrayHelper booleanArrayHelper, final T addressing, final T1 metadata) {
+			final IBooleanArrayHelper booleanArrayHelper, final T addressing) {
 		super(typeSizes, expressionTranslation, typeHandler, typeSizeAndOffsetComputer);
 
 		mBooleanArrayHelper = booleanArrayHelper;
 		mMemoryAddressing = addressing;
-		mMemoryMetadata = metadata;
 	}
 
 	@Override

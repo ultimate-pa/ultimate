@@ -58,19 +58,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  * @author Jan Körner
  */
-public class SimpleIncreasingStrategy<T extends MemoryAddressing1D, T1 extends MemoryMetadataDefault1D>
-		extends MemoryManagementStrategyBase {
-	T mMemoryAddressing;
-	private final Boolean mIsBitVectorTranslation;
-	T1 mMemoryMetadata;
+public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
+	private final boolean mIsBitVectorTranslation;
 
 	public SimpleIncreasingStrategy(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final Boolean isBitVectorTranslation, final T addressing, final T1 metadata) {
+			final boolean isBitVectorTranslation) {
 		super(typeSizes, expressionTranslation, typeHandler, typeSizeAndOffsetComputer);
-		mMemoryAddressing = addressing;
 		mIsBitVectorTranslation = isBitVectorTranslation;
-		mMemoryMetadata = metadata;
 	}
 
 	@Override

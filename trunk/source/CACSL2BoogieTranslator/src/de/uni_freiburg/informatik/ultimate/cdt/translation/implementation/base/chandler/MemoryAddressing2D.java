@@ -91,7 +91,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		mMemoryMetadata = new MemoryMetadataDefault2D(typeHandler, exprTranslation, booleanArrayHelper);
 
 		mMemoryManagementStrategy = new NonDetStrategy2D<>(typeSizes, exprTranslation, typeHandler,
-				typeSizeAndOffsetComputer, booleanArrayHelper, this, mMemoryMetadata);
+				typeSizeAndOffsetComputer, booleanArrayHelper, this);
 	}
 
 	@Override
