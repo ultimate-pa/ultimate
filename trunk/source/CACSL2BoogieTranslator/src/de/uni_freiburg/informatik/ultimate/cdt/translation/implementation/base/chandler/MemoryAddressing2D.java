@@ -74,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * This class provides the logic to calculate and access memory locations within a linear, two-dimensional memory
  * structure, based on a memory pointer representation of type {@link MemoryPointer2D}. It extends
  * {@link MemoryAdressingBase} to implement the specific addressing behavior for two-dimensional memory structures.
+ *
+ * @author Jan Körner
  */
 public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	private final MemoryMetadataDefault2D mMemoryMetadata;

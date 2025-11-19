@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
  *
  * This class provides a method to instantiate various memory structure implementations depending on the selected
  * translation settings.
+ *
+ * @author Jan Körner
  */
 public class MemoryStructureFactory {
 	/**

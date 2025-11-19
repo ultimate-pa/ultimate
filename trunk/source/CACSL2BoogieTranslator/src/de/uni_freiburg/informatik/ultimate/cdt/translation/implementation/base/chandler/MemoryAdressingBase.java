@@ -66,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  * @param <T>
  *            the memory pointer representation used for addressing, which must implement {@link IMemoryPointer}.
+ * 
+ * @author Jan Körner
  */
 public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements IMemoryAdressing {
 	protected final ITypeHandler mTypeHandler;

@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 /**
  * Interface representing metadata related to memory models, providing a method to construct and a method to retrieve
  * metadata declarations that are necessary for the memory-related features of a memory model.
+ *
+ * @author Jan Körner
  */
 public interface IMemoryMetadata {
 	/**

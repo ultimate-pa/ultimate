@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * This class implements the {@link IMemoryPointer} interface and serves as the base for all specific memory pointer
  * representations. It encapsulates the representation for managing memory addresses within different memory addressing
  * schemes.
+ *
+ * @author Jan Körner
  */
 public abstract class MemoryPointerBase implements IMemoryPointer {
 	protected final TypeSizes mTypeSizes;

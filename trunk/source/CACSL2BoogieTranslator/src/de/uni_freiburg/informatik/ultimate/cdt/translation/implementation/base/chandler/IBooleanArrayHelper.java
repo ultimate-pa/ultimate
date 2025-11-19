@@ -29,6 +29,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 
+/**
+ * Interface providing helper operations for handling boolean arrays, including construction of boolean expressions and
+ * replacement types.
+ *
+ * @author Jan Körner
+ */
 public interface IBooleanArrayHelper {
 	ASTType constructBoolReplacementType();
 

@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
  *
  * This class provides a method to instantiate various memory pointer representations depending on the selected
  * translation settings.
+ *
+ * @author Jan Körner
  */
 public abstract class MemoryPointerFactory {
 	/**

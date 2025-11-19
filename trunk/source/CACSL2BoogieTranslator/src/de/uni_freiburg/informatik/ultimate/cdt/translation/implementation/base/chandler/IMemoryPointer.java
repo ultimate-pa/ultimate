@@ -37,6 +37,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
+/**
+ * Interface for memory pointer representations.
+ *
+ * This interface represents a memory pointer with operations for pointer creation, comparison, and retrieval of
+ * pointer-related information within different memory addressing schemes.
+ *
+ * @author Jan Körner
+ */
 public interface IMemoryPointer {
 	/**
 	 * Returns the BoogieType that is used for a pointer.

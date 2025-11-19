@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
  *
  * This class provides a method to instantiate an entire memory model composed of an memory addressing scheme and a
  * memory layout depending on the selected translation settings.
+ *
+ * @author Jan Körner
  */
 public class MemoryModelFactory {
 	/**

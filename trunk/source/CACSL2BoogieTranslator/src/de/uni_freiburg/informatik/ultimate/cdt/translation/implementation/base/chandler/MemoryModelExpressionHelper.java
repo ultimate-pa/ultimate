@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * Utility class providing helper methods for constructing memory model expressions, especially for handling memory
  * features, array accesses and updates.
+ *
+ * @author Jan Körner
  */
 public class MemoryModelExpressionHelper {
 

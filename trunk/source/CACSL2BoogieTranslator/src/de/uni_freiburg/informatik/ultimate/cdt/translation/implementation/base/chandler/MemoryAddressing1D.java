@@ -62,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * This class provides the logic to calculate and access memory locations within a linear, one-dimensional memory
  * structure, based on a memory pointer representation of type {@link MemoryPointer1D}. It extends
  * {@link MemoryAdressingBase} to implement the specific addressing behavior for one-dimensional memory structures.
+ *
+ * @author Jan Körner
  */
 public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	private final MemoryMetadataDefault1D mMemoryMetadata;

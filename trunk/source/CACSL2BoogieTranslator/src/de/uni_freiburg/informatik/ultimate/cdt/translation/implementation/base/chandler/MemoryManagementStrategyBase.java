@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * This class implements the {@link IMemoryManagementStrategy} interface and provides common functionality for managing
  * memory, in particular by allocation and deallocation operations. Subclasses should extend this class to implement
  * specific memory management strategies.
+ *
+ * @author Jan Körner
  */
 public abstract class MemoryManagementStrategyBase implements IMemoryManagementStrategy {
 	protected final TypeSizes mTypeSizes;

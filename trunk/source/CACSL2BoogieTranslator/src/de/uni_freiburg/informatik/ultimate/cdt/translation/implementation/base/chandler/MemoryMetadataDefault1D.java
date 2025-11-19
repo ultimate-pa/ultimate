@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  *
  * This class {@link MemoryMetadataBase} to provide declarations of the specific data structures and allocation
  * expressions of the metadata required by memory models with a one-dimensional memory structure.
+ *
+ * @author Jan Körner
  */
 public class MemoryMetadataDefault1D extends MemoryMetadataBase {
 

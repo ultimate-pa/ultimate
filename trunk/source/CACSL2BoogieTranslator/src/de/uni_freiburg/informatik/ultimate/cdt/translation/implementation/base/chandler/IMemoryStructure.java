@@ -34,6 +34,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 
 /**
  * The interface defining the functions for the different memory structures.
+ *
+ * @author Jan Körner
  */
 public interface IMemoryStructure {
 	String getReadProcedureName(final CPrimitives primitive);

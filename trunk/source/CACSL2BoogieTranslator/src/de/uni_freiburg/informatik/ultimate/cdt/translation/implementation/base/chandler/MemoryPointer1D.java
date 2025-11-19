@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  *
  * The memory pointer is represented by a single value (base) to address a memory location in a one-dimensional memory
  * structure.
+ *
+ * @author Jan Körner
  */
 public class MemoryPointer1D extends MemoryPointerBase {
 	final BoogieType mComponentType;

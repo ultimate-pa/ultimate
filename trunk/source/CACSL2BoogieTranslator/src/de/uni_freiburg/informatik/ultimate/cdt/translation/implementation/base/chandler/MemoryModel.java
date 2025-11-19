@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * The memory model consisting of a MemoryAdressing and a MemoryStructure.
+ *
+ * @author Jan Körner
  */
 public class MemoryModel {
 	private final IMemoryAdressing mMemoryAddressing;

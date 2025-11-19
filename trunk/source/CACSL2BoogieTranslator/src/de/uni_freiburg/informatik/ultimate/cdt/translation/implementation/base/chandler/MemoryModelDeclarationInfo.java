@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * Holds information about a memory model declaration, including its associated declaration type and optional Boogie
  * type.
+ *
+ * @author Jan Körner
  */
 public class MemoryModelDeclarationInfo {
 	private final MemoryModelDeclarations mMmd;

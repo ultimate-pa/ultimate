@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  *
  * The memory pointer is represented by a pair of values (base & offset) to address a memory location in a
  * two-dimensional memory structure.
+ *
+ * @author Jan Körner
  */
 public class MemoryPointer2D extends MemoryPointerBase {
 	final BoogieType mComponentType;

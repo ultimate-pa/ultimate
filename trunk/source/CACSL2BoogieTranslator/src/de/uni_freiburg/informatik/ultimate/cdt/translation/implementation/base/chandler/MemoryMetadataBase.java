@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  *
  * This class stores references to essential components such as type handling, expression translation, and boolean array
  * helpers, and provides utility methods related to memory model barriers.
+ *
+ * @author Jan Körner
  */
 public abstract class MemoryMetadataBase implements IMemoryMetadata {
 	protected final ITypeHandler mTypeHandler;

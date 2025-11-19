@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
  *
  * This class provides a method to instantiate different memory addressing schemes dynamically depending on the
  * {@link IMemoryPointer} implementation.
+ *
+ * @author Jan Körner
  */
 public class MemoryAddressingFactory {
 	/**
