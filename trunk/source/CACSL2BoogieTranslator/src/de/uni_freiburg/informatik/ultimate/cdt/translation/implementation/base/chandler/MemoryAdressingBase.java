@@ -58,6 +58,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
+/**
+ * Abstract base class for implementing specific memory addressing schemes based on a memory pointer representation.
+ *
+ * This class serves as base to implement memory addressing schemes that specify how a memory location is computed or
+ * accessed based on the provided pointer representation.
+ *
+ * @param <T>
+ *            the memory pointer representation used for addressing, which must implement {@link IMemoryPointer}.
+ */
 public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements IMemoryAdressing {
 	protected final ITypeHandler mTypeHandler;
 	protected final ExpressionTranslation mExpressionTranslation;

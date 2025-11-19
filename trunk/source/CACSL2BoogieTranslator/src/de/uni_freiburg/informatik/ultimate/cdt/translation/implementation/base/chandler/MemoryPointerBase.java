@@ -40,6 +40,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Abstract base class for memory pointer representations.
+ *
+ * This class implements the {@link IMemoryPointer} interface and serves as the base for all specific memory pointer
+ * representations. It encapsulates the representation for managing memory addresses within different memory addressing
+ * schemes.
+ */
 public abstract class MemoryPointerBase implements IMemoryPointer {
 	protected final TypeSizes mTypeSizes;
 	protected BoogieType mBoogieType;

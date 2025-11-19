@@ -39,7 +39,22 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Utility class providing helper methods for constructing memory model expressions, especially for handling memory
+ * features, array accesses and updates.
+ */
 public class MemoryModelExpressionHelper {
+
+	/**
+	 * Ensures that the specified memory model feature is required and creates its necessary declaration information.
+	 *
+	 * @param mmDecl
+	 *            The memory model declaration to require.
+	 * @param requiredMemoryModelFeatures
+	 *            The required memory model features.
+	 * @param memoryModelDeclarationsHandler
+	 *            Handler for managing memory model declarations.
+	 */
 	public static void requireMemoryModelFeature(final MemoryModelDeclarations mmDecl,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
@@ -47,6 +62,19 @@ public class MemoryModelExpressionHelper {
 		memoryModelDeclarationsHandler.createMemoryModelDeclarationInfo(mmDecl);
 	}
 
+	/**
+	 * Retrieves the left-hand side (LHS) variable for a memory model feature.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param decl
+	 *            The memory model declaration.
+	 * @param requiredMemoryModelFeatures
+	 *            The required memory model features.
+	 * @param memoryModelDeclarationsHandler
+	 *            Handler for managing memory model declarations.
+	 * @return The variable corresponding to the memory model feature.
+	 */
 	public static VariableLHS getMemoryModelFeatureLhs(final ILocation loc, final MemoryModelDeclarations decl,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
@@ -55,6 +83,19 @@ public class MemoryModelExpressionHelper {
 		return mmdi.constructVariableLHS(loc);
 	}
 
+	/**
+	 * Constructs an expression representing the memory model feature at a given location.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param decl
+	 *            The memory model declaration.
+	 * @param requiredMemoryModelFeatures
+	 *            The required memory model features.
+	 * @param memoryModelDeclarationsHandler
+	 *            Handler for managing memory model declarations.
+	 * @return The expression representing the memory model feature.
+	 */
 	public static Expression getMemoryModelFeatureExpression(final ILocation loc, final MemoryModelDeclarations decl,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
@@ -63,18 +104,59 @@ public class MemoryModelExpressionHelper {
 		return mmdi.constructIdentifierExpression(loc);
 	}
 
+	/**
+	 * Constructs an expression for accessing a one-dimensional array element.
+	 *
+	 * Represents {@code arr[index]}.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param arr
+	 *            The array expression.
+	 * @param index
+	 *            The index expression.
+	 * @return The array access expression.
+	 */
 	public static Expression constructOneDimensionalArrayAccess(final ILocation loc, final Expression arr,
 			final Expression index) {
 		final Expression[] singletonIndex = { index };
 		return ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, singletonIndex);
 	}
 
+	/**
+	 * Constructs an expression for storing a value into a one-dimensional array at a specific index.
+	 *
+	 * Represents {@code arr[index := newValue]}.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param arr
+	 *            The array expression.
+	 * @param index
+	 *            The index expression.
+	 * @param newValue
+	 *            The value to store.
+	 * @return The array store expression.
+	 */
 	private static Expression constructOneDimensionalArrayStore(final ILocation loc, final Expression arr,
 			final Expression index, final Expression newValue) {
 		final Expression[] singletonIndex = { index };
 		return ExpressionFactory.constructArrayStoreExpression(loc, arr, singletonIndex, newValue);
 	}
 
+	/**
+	 * Constructs nested array store expressions for multiple indices and values.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param arr
+	 *            The initial array expression.
+	 * @param indices
+	 *            List of index expressions.
+	 * @param newValues
+	 *            List of new value expressions corresponding to each index.
+	 * @return The nested array store expression updating multiple indices.
+	 */
 	private static Expression constructNestedOneDimensionalArrayStore(final ILocation loc, final Expression arr,
 			final List<Expression> indices, final List<Expression> newValues) {
 		assert indices.size() == newValues.size();
@@ -86,7 +168,24 @@ public class MemoryModelExpressionHelper {
 		return result;
 	}
 
-	// ensures #memory_X == old(#memory_X)[#ptr := #value];
+	/**
+	 * Constructs an expression ensuring that the memory array's value after a write operation matches the expected
+	 * value.
+	 *
+	 * Represents {@code #memory_X == old(#memory_X)[ptr := value]}.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param valueExprs
+	 *            List of value expressions to write.
+	 * @param ptrExprs
+	 *            List of pointer expressions.
+	 * @param hda
+	 *            The heap data array.
+	 * @param useSelectInsteadOfStore
+	 *            Flag to determine whether to use select or store operation.
+	 * @return The constructed ensures expression.
+	 */
 	public static Expression constructHeapArrayUpdateForWriteEnsures(final ILocation loc,
 			final List<Expression> valueExprs, final List<Expression> ptrExprs, final HeapDataArray hda,
 			final boolean useSelectInsteadOfStore) {
@@ -97,7 +196,20 @@ public class MemoryModelExpressionHelper {
 		return ensuresArrayNestedUpdate(loc, valueExprs, ptrExprs, memArray);
 	}
 
-	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
+	/**
+	 * Constructs an expression representing that the heap array has been hardly modified for a write operation, meaning
+	 * the array remains mostly unchanged except at specific indices.
+	 *
+	 * Represents {@code #memory_X == old(#memory_X)[#ptr := #memory_X[#ptr]]}.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param idxExprs
+	 *            List of index expressions.
+	 * @param hda
+	 *            The heap data array.
+	 * @return The ensures expression representing minimal modification.
+	 */
 	public static Expression constructHeapArrayHardlyModifiedForWriteEnsures(final ILocation loc,
 			final List<Expression> idxExprs, final HeapDataArray hda) {
 		final Expression memArray = hda.getIdentifierExpression();
@@ -111,7 +223,19 @@ public class MemoryModelExpressionHelper {
 	}
 
 	/**
-	 * arr == old(arr)[index := newValue]
+	 * Creates an expression asserting that the array equals its old value with an update at a specific index.
+	 *
+	 * Represents {@code arr == old(arr)[index := newValue]}.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param newValue
+	 *            The new value to assign.
+	 * @param index
+	 *            The index at which to assign.
+	 * @param arrayExpr
+	 *            The array expression.
+	 * @return The equality expression ensuring the update.
 	 */
 	public static Expression ensuresArrayUpdate(final ILocation loc, final Expression newValue, final Expression index,
 			final Expression arrayExpr) {
@@ -121,6 +245,20 @@ public class MemoryModelExpressionHelper {
 		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
 	}
 
+	/**
+	 * Constructs an expression asserting that the array equals its old value with multiple updates at specified
+	 * indices.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param newValues
+	 *            List of new value expressions.
+	 * @param indices
+	 *            List of index expressions.
+	 * @param arrayExpr
+	 *            The array expression.
+	 * @return The equality expression representing nested updates.
+	 */
 	private static Expression ensuresArrayNestedUpdate(final ILocation loc, final List<Expression> newValues,
 			final List<Expression> indices, final Expression arrayExpr) {
 		final Expression oldArray =
@@ -130,7 +268,19 @@ public class MemoryModelExpressionHelper {
 	}
 
 	/**
-	 * arr[index] == value
+	 * Creates an expression asserting that the array element at a given index equals a specific value.
+	 *
+	 * Represents {@code arr[index] == value}.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param value
+	 *            The value to compare.
+	 * @param index
+	 *            The index to access.
+	 * @param arrayExpr
+	 *            The array expression.
+	 * @return The equality expression.
 	 */
 	public static Expression ensuresArrayHasValue(final ILocation loc, final Expression value, final Expression index,
 			final Expression arrayExpr) {
@@ -139,6 +289,19 @@ public class MemoryModelExpressionHelper {
 		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, select, value);
 	}
 
+	/**
+	 * Constructs an expression asserting that multiple array elements at specified indices have expected values.
+	 *
+	 * @param loc
+	 *            The location context.
+	 * @param values
+	 *            List of value expressions.
+	 * @param indices
+	 *            List of index expressions.
+	 * @param arrayExpr
+	 *            The array expression.
+	 * @return A conjunction of all individual array element value assertions.
+	 */
 	private static Expression ensuresArrayHasValues(final ILocation loc, final List<Expression> values,
 			final List<Expression> indices, final Expression arrayExpr) {
 		final List<Expression> conjuncts = new ArrayList<>();

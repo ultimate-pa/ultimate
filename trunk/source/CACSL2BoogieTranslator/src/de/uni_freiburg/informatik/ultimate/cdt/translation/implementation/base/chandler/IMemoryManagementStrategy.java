@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * This interface defines the functions for different memory management strategies. E.g. counting up, counting down, or
- * non-det
+ * non-deterministically.
  *
  * @author Jan Körner
  */

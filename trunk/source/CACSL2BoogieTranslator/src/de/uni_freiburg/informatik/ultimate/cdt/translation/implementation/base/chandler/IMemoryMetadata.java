@@ -30,9 +30,13 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 
+/**
+ * Interface representing metadata related to memory models, providing a method to construct and a method to retrieve
+ * metadata declarations that are necessary for the memory-related features of a memory model.
+ */
 public interface IMemoryMetadata {
 	/**
-	 * Constructs the required metadata for the selected addressing mode.
+	 * Constructs the required metadata for the selected addressing scheme.
 	 *
 	 * @param requiredFeatures
 	 *            The Features that are currently needed for the program to be verified.
@@ -41,7 +45,7 @@ public interface IMemoryMetadata {
 	List<Declaration> constructMetaData(RequiredMemoryModelFeatures requiredFeatures);
 
 	/**
-	 * Returns a list of metadata declarations needed for the memory model infrastructure.
+	 * Returns a list of metadata declarations needed for the memory model representation.
 	 *
 	 * @return The declarations.
 	 */

@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * This strategy is the default strategy for the 1D-memory addressing mode. The generic parameter is used to ensure that
- * this strategy is only instanciated within the 1D addressing class because it is not compatible with other modes.
+ * This strategy is the default strategy for the 1D-memory addressing scheme. The generic parameter is used to ensure
+ * that this strategy is only instanciated within the 1D addressing class because it is not compatible with other modes.
  * Memory addresses are increased with every allocation.
  */
 public class SimpleIncreasingStrategy<T extends MemoryAddressing1D, T1 extends MemoryMetadataDefault1D>

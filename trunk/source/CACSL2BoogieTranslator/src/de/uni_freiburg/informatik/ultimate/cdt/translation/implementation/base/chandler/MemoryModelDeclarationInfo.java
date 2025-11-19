@@ -33,30 +33,71 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Holds information about a memory model declaration, including its associated declaration type and optional Boogie
+ * type.
+ */
 public class MemoryModelDeclarationInfo {
 	private final MemoryModelDeclarations mMmd;
 	private final BoogieType mBoogieType;
 
+	/**
+	 * Constructs a {@code MemoryModelDeclarationInfo} with the specified declaration type.
+	 *
+	 * The Boogie type is set to null.
+	 *
+	 * @param mmd
+	 *            The memory model declaration type.
+	 */
 	public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
 		mMmd = mmd;
 		mBoogieType = null;
 	}
 
+	/**
+	 * Constructs a {@code MemoryModelDeclarationInfo} with the specified declaration type and associated Boogie type.
+	 *
+	 * @param mmd
+	 *            The memory model declaration type.
+	 * @param boogieType
+	 *            The Boogie type associated with this declaration.
+	 */
 	public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd, final BoogieType boogieType) {
 		mMmd = mmd;
 		mBoogieType = boogieType;
 	}
 
+	/**
+	 * Constructs an identifier expression for this memory model declaration at a given location.
+	 *
+	 * @param loc
+	 *            The source location for the expression.
+	 * @return An {@link IdentifierExpression} representing this declaration.
+	 */
 	IdentifierExpression constructIdentifierExpression(final ILocation loc) {
 		return ExpressionFactory.constructIdentifierExpression(loc, mBoogieType, mMmd.getName(),
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
+	/**
+	 * Constructs a variable left-hand side (LHS) for this memory model declaration at a given location.
+	 *
+	 * @param loc
+	 *            The source location for the variable.
+	 * @return A {@link VariableLHS} representing this declaration.
+	 */
 	VariableLHS constructVariableLHS(final ILocation loc) {
 		return ExpressionFactory.constructVariableLHS(loc, mBoogieType, mMmd.getName(),
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
+	/**
+	 * Retrieves the Boogie type associated with this declaration.
+	 *
+	 * @return The {@link BoogieType} associated with this declaration.
+	 * @throws IllegalStateException
+	 *             if the Boogie type is null.
+	 */
 	BoogieType getBoogieType() {
 		if (mBoogieType == null) {
 			throw new IllegalStateException();

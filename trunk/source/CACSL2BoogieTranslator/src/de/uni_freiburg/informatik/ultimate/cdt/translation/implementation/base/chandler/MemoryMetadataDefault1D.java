@@ -39,7 +39,24 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Default implementation of memory metadata for one-dimensional memory structures.
+ *
+ * This class {@link MemoryMetadataBase} to provide declarations of the specific data structures and allocation
+ * expressions of the metadata required by memory models with a one-dimensional memory structure.
+ */
 public class MemoryMetadataDefault1D extends MemoryMetadataBase {
+
+	/**
+	 * Constructs an instance of MemoryMetadataDefault1D with the specified components.
+	 *
+	 * @param typeHandler
+	 *            Handler for managing data types.
+	 * @param expressionTranslation
+	 *            Translator for converting expressions.
+	 * @param booleanArrayHelper
+	 *            Helper for boolean array operations.
+	 */
 	public MemoryMetadataDefault1D(final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation,
 			final IBooleanArrayHelper booleanArrayHelper) {
 		super(typeHandler, expressionTranslation, booleanArrayHelper);

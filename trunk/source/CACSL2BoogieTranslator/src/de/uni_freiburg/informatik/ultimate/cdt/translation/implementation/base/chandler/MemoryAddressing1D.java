@@ -57,7 +57,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * The one dimensional memory addressing.
+ * Implements a specific memory addressing scheme for a one-dimensional memory layout.
+ *
+ * This class provides the logic to calculate and access memory locations within a linear, one-dimensional memory
+ * structure, based on a memory pointer representation of type {@link MemoryPointer1D}. It extends
+ * {@link MemoryAdressingBase} to implement the specific addressing behavior for one-dimensional memory structures.
  */
 public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	private final MemoryMetadataDefault1D mMemoryMetadata;

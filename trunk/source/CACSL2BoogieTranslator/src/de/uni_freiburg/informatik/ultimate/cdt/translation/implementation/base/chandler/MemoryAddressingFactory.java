@@ -31,6 +31,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
+/**
+ * Factory class for creating instances of memory addressing schemes based on a specified {@link IMemoryPointer}
+ * representation.
+ *
+ * This class provides a method to instantiate different memory addressing schemes dynamically depending on the
+ * {@link IMemoryPointer} implementation.
+ */
 public class MemoryAddressingFactory {
 	/**
 	 * The factory method for creating the concrete memory structure instance.

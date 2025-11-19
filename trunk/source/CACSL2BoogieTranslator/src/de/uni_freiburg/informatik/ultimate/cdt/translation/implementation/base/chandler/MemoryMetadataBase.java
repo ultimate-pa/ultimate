@@ -35,11 +35,27 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Abstract base class providing common functionality for memory metadata implementations.
+ *
+ * This class stores references to essential components such as type handling, expression translation, and boolean array
+ * helpers, and provides utility methods related to memory model barriers.
+ */
 public abstract class MemoryMetadataBase implements IMemoryMetadata {
 	protected final ITypeHandler mTypeHandler;
 	protected final ExpressionTranslation mExpressionTranslation;
 	protected final IBooleanArrayHelper mBooleanArrayHelper;
 
+	/**
+	 * Constructs a new instance with the specified type handler, expression translation, and boolean array helper.
+	 *
+	 * @param typeHandler
+	 *            The type handler for managing data types.
+	 * @param expressionTranslation
+	 *            The translator for converting expressions.
+	 * @param booleanArrayHelper
+	 *            Helper for boolean array operations.
+	 */
 	public MemoryMetadataBase(final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation,
 			final IBooleanArrayHelper booleanArrayHelper) {
 		mTypeHandler = typeHandler;
@@ -47,6 +63,12 @@ public abstract class MemoryMetadataBase implements IMemoryMetadata {
 		mBooleanArrayHelper = booleanArrayHelper;
 	}
 
+	/**
+	 * Constructs a variable declaration representing the stack/heap barrier constant used in the representation of
+	 * memory models.
+	 *
+	 * @return The variable declaration for the stack/heap barrier.
+	 */
 	protected VariableDeclaration constructStackHeapBarrierConstant() {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		return new VariableDeclaration(ignoreLoc, new Attribute[0],
@@ -56,9 +78,15 @@ public abstract class MemoryMetadataBase implements IMemoryMetadata {
 	}
 
 	/**
-	 * Returns the #StackHeapBarrier expression.
+	 * Retrieves the expression representing the stack/heap barrier in the memory model.
 	 *
-	 * @return The expression.
+	 * @param loc
+	 *            The location context.
+	 * @param requiredMemoryModelFeatures
+	 *            The features required for verification.
+	 * @param memoryModelDeclarationsHandler
+	 *            Handler for managing memory model declarations.
+	 * @return The expression corresponding to the stack/heap barrier.
 	 */
 	public static Expression getStackHeapBarrier(final ILocation loc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,

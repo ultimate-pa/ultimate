@@ -36,6 +36,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Abstract base class for memory management strategies.
+ *
+ * This class implements the {@link IMemoryManagementStrategy} interface and provides common functionality for managing
+ * memory, in particular by allocation and deallocation operations. Subclasses should extend this class to implement
+ * specific memory management strategies.
+ */
 public abstract class MemoryManagementStrategyBase implements IMemoryManagementStrategy {
 	protected final TypeSizes mTypeSizes;
 	protected final ExpressionTranslation mExpressionTranslation;

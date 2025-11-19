@@ -50,6 +50,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
+/**
+ * Representation of a memory pointer for a two-dimensional memory structure.
+ *
+ * The memory pointer is represented by a pair of values (base & offset) to address a memory location in a
+ * two-dimensional memory structure.
+ */
 public class MemoryPointer2D extends MemoryPointerBase {
 	final BoogieType mComponentType;
 

@@ -51,13 +51,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * The interface defining the functions for the different addressing modes.
+ * The interface defining the functions for the different memory addressing schemes.
  *
  * @author Jan Körner
  */
 public interface IMemoryAdressing {
 	/**
-	 * Constructs the required metadata for the selected addressing mode.
+	 * Constructs the required metadata for the selected addressing scheme.
 	 *
 	 * @param requiredFeatures
 	 *            The Features that are currently needed for the program to be verified.

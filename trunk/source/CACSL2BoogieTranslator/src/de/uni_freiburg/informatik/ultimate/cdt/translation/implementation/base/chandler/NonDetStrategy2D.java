@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * This strategy is the default strategy for the 2D-memory addressing mode. The generic parameter is used to ensure that
- * this strategy is only instanciated within the 2D addressing class because it is not compatible with other modes.
- * Memory addresses get a nondet value, which is not used yet.
+ * This strategy is the default strategy for the 2D-memory addressing scheme. The generic parameter is used to ensure
+ * that this strategy is only instanciated within the 2D addressing class because it is not compatible with other modes.
+ * Memory addresses get a non-deterministic value, which is not used yet.
  */
 public class NonDetStrategy2D<T extends MemoryAddressing2D, T1 extends MemoryMetadataDefault2D>
 		extends MemoryManagementStrategyBase {

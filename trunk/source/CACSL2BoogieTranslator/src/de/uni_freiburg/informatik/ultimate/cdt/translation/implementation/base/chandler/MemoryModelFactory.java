@@ -31,9 +31,15 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
+/**
+ * Factory class for creating an instance of a memory model.
+ *
+ * This class provides a method to instantiate an entire memory model composed of an memory addressing scheme and a
+ * memory layout depending on the selected translation settings.
+ */
 public class MemoryModelFactory {
 	/**
-	 * This enum represents the valid combinations of memory structure and memory adressing.
+	 * This enum represents the valid combinations of memory structure and memory addressing.
 	 */
 	private enum Combinations {
 		ONE_Dimensional_SingleBitPrecise(MemoryAddressing1D.class, MemoryStructureSingleBitprecise.class),

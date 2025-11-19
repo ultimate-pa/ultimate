@@ -49,6 +49,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
+/**
+ * Representation of a memory pointer for a one-dimensional memory structure.
+ *
+ * The memory pointer is represented by a single value (base) to address a memory location in a one-dimensional memory
+ * structure.
+ */
 public class MemoryPointer1D extends MemoryPointerBase {
 	final BoogieType mComponentType;
 

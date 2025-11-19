@@ -69,7 +69,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
 /**
- * The two dimensional memory addressing.
+ * Implements a specific memory addressing scheme for a two-dimensional memory layout.
+ *
+ * This class provides the logic to calculate and access memory locations within a linear, two-dimensional memory
+ * structure, based on a memory pointer representation of type {@link MemoryPointer2D}. It extends
+ * {@link MemoryAdressingBase} to implement the specific addressing behavior for two-dimensional memory structures.
  */
 public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	private final MemoryMetadataDefault2D mMemoryMetadata;
