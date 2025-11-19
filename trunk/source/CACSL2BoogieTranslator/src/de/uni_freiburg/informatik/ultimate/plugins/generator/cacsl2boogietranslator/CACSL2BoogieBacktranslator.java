@@ -1025,7 +1025,7 @@ public class CACSL2BoogieBacktranslator extends
 		// empty
 	}
 
-	public record WrappedExpression(Expression expr) implements IExpressionOrPointer {
+	private record WrappedExpression(Expression expr) implements IExpressionOrPointer {
 		// empty
 	}
 
