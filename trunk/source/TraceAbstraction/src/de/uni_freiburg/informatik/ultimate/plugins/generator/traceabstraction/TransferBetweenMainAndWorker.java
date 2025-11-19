@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,26 +60,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
-import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class TransferBetweenMainAndWorker<LETTER, STATE> {
@@ -96,7 +88,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	private final TermTransferrer mMain2worker;
 	private VpAlphabet<LETTER> mMainVpAlphabet;
 	private final CfgSmtToolkit mMainCsToolkit;
-	private final VariableTransferrer mVarTransfer;
+	private final ProgramVariableTransferrer mVarTransfer;
 
 	enum Mode {
 		NONE, MAIN2WORKER, WORKER2MAIN
@@ -127,7 +119,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 		mWorker2main = new TermTransferrer(mWorkerScript.getScript(), mMainScript.getScript());
 		mMain2worker = new TermTransferrer(mMainScript.getScript(), mWorkerScript.getScript());
-		mVarTransfer = new VariableTransferrer(mMain2worker, mWorkerScript);
+		mVarTransfer = new ProgramVariableTransferrer(mMain2worker, mWorkerScript);
 	}
 
 	/*
@@ -414,7 +406,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	}
 
 	private static Map<String, List<ILocalProgramVar>> constructNewParams(
-			final Map<String, List<ILocalProgramVar>> inParams, final VariableTransferrer variableTranslation) {
+			final Map<String, List<ILocalProgramVar>> inParams, final ProgramVariableTransferrer variableTranslation) {
 		final Map<String, List<ILocalProgramVar>> result = new HashMap<>();
 		for (final Entry<String, List<ILocalProgramVar>> entry : inParams.entrySet()) {
 			final List<ILocalProgramVar> newList = entry.getValue().stream()
@@ -425,7 +417,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	}
 
 	private static IIcfgSymbolTable constructNewSymbolTable(final IIcfgSymbolTable symbolTable,
-			final Set<String> procedures, final VariableTransferrer varTrans) {
+			final Set<String> procedures, final ProgramVariableTransferrer varTrans) {
 		final DefaultIcfgSymbolTable result = new DefaultIcfgSymbolTable();
 		for (final IProgramConst c : symbolTable.getConstants()) {
 			result.add(varTrans.getOrConstruct(c));
@@ -443,7 +435,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	private static HashRelation<String, IProgramNonOldVar> constructNewProc2Globals(
 			final HashRelation<String, IProgramNonOldVar> procToGlobals,
-			final VariableTransferrer variableTranslation) {
+			final ProgramVariableTransferrer variableTranslation) {
 		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		for (final Entry<String, HashSet<IProgramNonOldVar>> entry : procToGlobals.entrySet()) {
 			for (final IProgramNonOldVar old : entry.getValue()) {
@@ -452,96 +444,6 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			}
 		}
 		return result;
-	}
-
-}
-
-class VariableTransferrer {
-	private final ConstructionCache<ILocalProgramVar, ILocalProgramVar> mILocalProgramVarCC;
-	private final ConstructionCache<IProgramNonOldVar, IProgramNonOldVar> mIProgramNonOldVarCC;
-	private final ConstructionCache<IProgramConst, IProgramConst> mIProgramConstCC;
-
-	public VariableTransferrer(final TermTransferrer transferrer, final ManagedScript targetScript) {
-		mILocalProgramVarCC = new ConstructionCache<>(new IValueConstruction<ILocalProgramVar, ILocalProgramVar>() {
-
-			@Override
-			public ILocalProgramVar constructValue(final ILocalProgramVar oldPv) {
-				targetScript.lock(this);
-				final ILocalProgramVar newPv =
-						(ILocalProgramVar) ProgramVarUtils.transferProgramVar(transferrer, oldPv);
-				targetScript.unlock(this);
-				return newPv;
-			}
-		});
-		mIProgramNonOldVarCC = new ConstructionCache<>(new IValueConstruction<IProgramNonOldVar, IProgramNonOldVar>() {
-
-			@Override
-			public IProgramNonOldVar constructValue(final IProgramNonOldVar oldPv) {
-				targetScript.lock(this);
-				final IProgramNonOldVar newPv =
-						(IProgramNonOldVar) ProgramVarUtils.transferProgramVar(transferrer, oldPv);
-				targetScript.unlock(this);
-				return newPv;
-			}
-
-		});
-		mIProgramConstCC = new ConstructionCache<>(oldPv -> {
-			final String newIdentifier = oldPv.getIdentifier();
-			final ApplicationTerm newSmtConstant = (ApplicationTerm) transferrer.transform(oldPv.getDefaultConstant());
-			return new ProgramConst(newIdentifier, newSmtConstant, false);
-		});
-	}
-
-	public ILocalProgramVar getOrConstruct(final ILocalProgramVar key) {
-		return mILocalProgramVarCC.getOrConstruct(key);
-	}
-
-	public IProgramNonOldVar getOrConstruct(final IProgramNonOldVar key) {
-		return mIProgramNonOldVarCC.getOrConstruct(key);
-	}
-
-	public IProgramOldVar getOrConstruct(final IProgramOldVar key) {
-		return mIProgramNonOldVarCC.getOrConstruct(key.getNonOldVar()).getOldVar();
-	}
-
-	public IProgramConst getOrConstruct(final IProgramConst key) {
-		return mIProgramConstCC.getOrConstruct(key);
-	}
-
-	public Map<ILocalProgramVar, ILocalProgramVar> getILocalProgramVarMap() {
-		return Collections.unmodifiableMap(mILocalProgramVarCC);
-	}
-
-	public Map<IProgramNonOldVar, IProgramNonOldVar> getIProgramNonOldVarMap() {
-		return Collections.unmodifiableMap(mIProgramNonOldVarCC);
-	}
-
-	public Map<IProgramConst, IProgramConst> getIProgramConstMap() {
-		return Collections.unmodifiableMap(mIProgramConstCC);
-	}
-
-	public Map<Term, Term> getIProgramConstTermMap() {
-		return getIProgramConstMap().entrySet().stream().collect(
-				Collectors.toMap(x -> x.getKey().getDefaultConstant(), x -> x.getValue().getDefaultConstant()));
-	}
-
-	public IProgramVar translateProgramVar(final IProgramVar pv) {
-		IProgramVar result;
-		if (pv instanceof ILocalProgramVar) {
-			result = getILocalProgramVarMap().get(pv);
-		} else if (pv instanceof IProgramNonOldVar) {
-			result = getIProgramNonOldVarMap().get(pv);
-		} else if (pv instanceof IProgramOldVar) {
-			result = getIProgramNonOldVarMap().get(((IProgramOldVar) pv).getNonOldVar()).getOldVar();
-		} else {
-			throw new UnsupportedOperationException(pv.getClass().getSimpleName());
-		}
-		assert result != null;
-		return result;
-	}
-
-	public IProgramConst translateProgramConst(final IProgramConst pc) {
-		return getIProgramConstMap().get(pc);
 	}
 
 }
