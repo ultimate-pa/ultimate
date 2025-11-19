@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -66,28 +65,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author Jan Körner
  */
 public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
-	private final MemoryMetadataDefault1D mMemoryMetadata;
-
 	public MemoryAddressing1D(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TranslationSettings settings,
 			final FunctionDeclarations functionDeclarations, final MemoryPointer1D pointer) {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer,
-				settings.getPointerIntegerCastMode(), functionDeclarations);
-
-		mMemoryMetadata = new MemoryMetadataDefault1D(typeHandler, exprTranslation, booleanArrayHelper);
+				settings.getPointerIntegerCastMode(), functionDeclarations,
+				new MemoryMetadataDefault1D(typeHandler, exprTranslation, booleanArrayHelper));
 		mMemoryManagementStrategy = new SimpleIncreasingStrategy(typeSizes, exprTranslation, typeHandler,
 				typeSizeAndOffsetComputer, settings.isBitvectorTranslation());
-	}
-
-	@Override
-	public List<Declaration> constructMetaData(final RequiredMemoryModelFeatures requiredFeatures) {
-		return mMemoryMetadata.constructMetaData(requiredFeatures);
-	}
-
-	@Override
-	public List<MemoryModelDeclarations> getMetaDataDeclarations() {
-		return mMemoryMetadata.getMetaDataDeclarations();
 	}
 
 	@Override

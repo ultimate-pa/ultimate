@@ -34,6 +34,7 @@ import java.util.Set;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -66,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  * @param <T>
  *            the memory pointer representation used for addressing, which must implement {@link IMemoryPointer}.
- * 
+ *
  * @author Jan Körner
  */
 public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements IMemoryAdressing {
@@ -78,19 +79,22 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 	protected IPointerIntegerConversion mPointerIntegerConversion;
 	protected final T mMemoryPointer;
 	protected IMemoryManagementStrategy mMemoryManagementStrategy;
+	private final IMemoryMetadata mMemoryMetadata;
 
 	protected final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 
 	public MemoryAdressingBase(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final T pointer,
-			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations) {
+			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations,
+			final IMemoryMetadata memoryMetadata) {
 		mTypeHandler = typeHandler;
 		mExpressionTranslation = exprTranslation;
 		mBooleanArrayHelper = booleanArrayHelper;
 		mTypeSizes = typeSizes;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 		mMemoryPointer = pointer;
+		mMemoryMetadata = memoryMetadata;
 
 		mPointerIntegerConversion = switch (pointerIntegerMode) {
 		case NonBijectiveMapping:
@@ -287,5 +291,15 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 				IASTBinaryExpression.op_divide, offsetDifference, typesizeType, typesize, typesizeType);
 
 		return offsetDifferenceDividedByTypesize;
+	}
+
+	@Override
+	public List<Declaration> constructMetaData(final RequiredMemoryModelFeatures requiredFeatures) {
+		return mMemoryMetadata.constructMetaData(requiredFeatures);
+	}
+
+	@Override
+	public List<MemoryModelDeclarations> getMetaDataDeclarations() {
+		return mMemoryMetadata.getMetaDataDeclarations();
 	}
 }

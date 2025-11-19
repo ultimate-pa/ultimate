@@ -78,30 +78,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @author Jan Körner
  */
 public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
-	private final MemoryMetadataDefault2D mMemoryMetadata;
-
 	public MemoryAddressing2D(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations,
 			final MemoryPointer2D pointer) {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer,
-				pointerIntegerMode, functionDeclarations);
-
-		mMemoryMetadata = new MemoryMetadataDefault2D(typeHandler, exprTranslation, booleanArrayHelper);
+				pointerIntegerMode, functionDeclarations,
+				new MemoryMetadataDefault2D(typeHandler, exprTranslation, booleanArrayHelper));
 
 		mMemoryManagementStrategy = new NonDetStrategy2D<>(typeSizes, exprTranslation, typeHandler,
 				typeSizeAndOffsetComputer, booleanArrayHelper, this);
-	}
-
-	@Override
-	public List<Declaration> constructMetaData(final RequiredMemoryModelFeatures requiredFeatures) {
-		return mMemoryMetadata.constructMetaData(requiredFeatures);
-	}
-
-	@Override
-	public List<MemoryModelDeclarations> getMetaDataDeclarations() {
-		return mMemoryMetadata.getMetaDataDeclarations();
 	}
 
 	@Override
