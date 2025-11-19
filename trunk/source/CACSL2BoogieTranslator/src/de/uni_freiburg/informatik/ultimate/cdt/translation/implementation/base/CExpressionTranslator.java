@@ -339,8 +339,8 @@ public class CExpressionTranslator {
 				final Expression rhsOfComparison;
 
 				if (inputType instanceof CPointer) {
-					rhsOfComparison =
-							mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+					rhsOfComparison = mMemoryPointer.constructNullPointer(loc,
+							mExpressionTranslation.getCTypeOfPointerComponents());
 				} else if (inputType instanceof CEnum) {
 					final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 					rhsOfComparison = mExpressionTranslation.constructZero(loc, intType);

@@ -162,9 +162,9 @@ public final class ConstructRealloc {
 		final List<Statement> bodyStmts = new ArrayList<>();
 
 		// if (ptr == NULL) { return malloc(size) }
-		final Expression condition =
-				ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPEQ, ptrIdExprImpl,
-						mMemoryPointer.constructNullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents()));
+		final Expression condition = ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPEQ,
+				ptrIdExprImpl,
+				mMemoryPointer.constructNullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents()));
 		final Statement mallocCallStm =
 				mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP);
 		final Statement returnStm = new ReturnStatement(ignoreLoc);

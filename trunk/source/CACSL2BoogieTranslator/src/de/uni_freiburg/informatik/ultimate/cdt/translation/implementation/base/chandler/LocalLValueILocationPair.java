@@ -35,7 +35,7 @@ public class LocalLValueILocationPair {
 	ILocation mLoc;
 
 	public LocalLValueILocationPair(final LocalLValue llv, final ILocation loc) {
-		this.mLlv = llv;
-		this.mLoc = loc;
+		mLlv = llv;
+		mLoc = loc;
 	}
 }

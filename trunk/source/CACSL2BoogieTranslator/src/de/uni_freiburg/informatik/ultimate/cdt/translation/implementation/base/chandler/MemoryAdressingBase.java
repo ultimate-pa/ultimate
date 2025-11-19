@@ -16,10 +16,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IPointerIntegerConversion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping2D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping1D;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF2D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping2D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF1D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF2D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -66,10 +66,10 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 			}
 		case Overapproximate:
 			if (mMemoryPointer instanceof final MemoryPointer1D pointer1D) {
-				yield new OverapproximationUF1D(exprTranslation, functionDeclarations, typeHandler,
-						pointer1D);
+				yield new OverapproximationUF1D(exprTranslation, functionDeclarations, typeHandler, pointer1D);
 			} else if (mMemoryPointer instanceof final MemoryPointer2D pointer2D) {
-				yield new OverapproximationUF2D(exprTranslation, functionDeclarations, typeHandler, typeSizes, pointer2D);
+				yield new OverapproximationUF2D(exprTranslation, functionDeclarations, typeHandler, typeSizes,
+						pointer2D);
 			} else {
 				throw new UnsupportedOperationException("Unknown pointer type " + mMemoryPointer.getClass());
 			}

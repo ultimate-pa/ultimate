@@ -190,8 +190,9 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The statement.
 	 */
-	AssumeStatement constructStrChrAssumeStatement(final ILocation loc, final Expression tmpExpr, final Expression argSPtr,
-			final Expression nullPtrExpr, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	AssumeStatement constructStrChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
+			final Expression argSPtr, final Expression nullPtrExpr,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
@@ -217,7 +218,8 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The expression.
 	 */
-	Expression[] constructRhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda, final Expression baseAddress);
+	Expression[] constructRhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda,
+			final Expression baseAddress);
 
 	/**
 	 * Returns an initial pointer with the same base address. If 2D-Addressing, than the offset is 0.

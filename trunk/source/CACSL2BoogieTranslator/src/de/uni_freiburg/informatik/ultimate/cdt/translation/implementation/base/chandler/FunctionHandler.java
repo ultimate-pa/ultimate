@@ -584,11 +584,13 @@ public class FunctionHandler {
 					&& returnValue.getLrValue().getCType() instanceof CPrimitive
 					&& returnValue.getLrValue().getValue() instanceof IntegerLiteral
 					&& "0".equals(((IntegerLiteral) returnValue.getLrValue().getValue()).getValue())) {
-				returnValue = new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
-						.setLrValue(new RValue(
-								mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
-								functionResultType))
-						.build();
+				returnValue =
+						new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
+								.setLrValue(new RValue(
+										mMemoryPointer.constructNullPointer(loc,
+												mExpressionTranslation.getCTypeOfPointerComponents()),
+										functionResultType))
+								.build();
 			}
 
 			if (outParams.length == 0) {
