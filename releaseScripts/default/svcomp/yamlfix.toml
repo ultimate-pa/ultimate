@@ -1,0 +1,5 @@
+sequence_style = "keep_style"
+line_length = 160
+section_whitelines = 1
+explicit_start = false
+preserve_quotes = true

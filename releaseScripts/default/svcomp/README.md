@@ -76,5 +76,6 @@ actually work with them.
       * uses the correct metadata for Zenodo itself (authors, strings, etc).
    6. Use `upload_zenodo.py` to upload the .zips to Zenodo, using metadata from the fm-tools .yml file. This will
       generate a DOI for each tool and modify the .yml file.
-   7. Commit new DOI in fm-tools.
-   8. Push and file MR.
+   7. Use `yamlfix -c svcomp/yamlfix.toml` to ensure correct formatting of the modified .yml files (you can get it via ``pip install yamlfix``).
+   8. Commit new DOI in fm-tools.
+   9. Push and file MR.

@@ -162,8 +162,8 @@ public class StdioLibraryModel implements ILibraryModel {
 				loc, name, 1, new CPrimitive(CPrimitives.INT))));
 		result.add(new FunctionModel("fseek", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
 				loc, name, 3, new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("fread", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
-				loc, name, 4, new CPrimitive(CPrimitives.ULONG))));
+		result.add(new FunctionModel("fread", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.ULONG))));
 		result.add(new FunctionModel("ferror", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
 				loc, name, 1, new CPrimitive(CPrimitives.INT))));
 		result.add(new FunctionModel("fputs", (main, node, loc, name) -> mHelper

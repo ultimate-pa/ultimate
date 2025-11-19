@@ -406,39 +406,7 @@ public abstract class ExpressionTranslation {
 
 	public abstract Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter);
 
-	public abstract ExpressionResult createNanOrInfinity(ILocation loc, String name);
-
-	public ExpressionResult createNan(final ILocation loc, final CPrimitive cPrimitive) {
-		if (!cPrimitive.isFloatingType()) {
-			throw new IllegalArgumentException("can only create NaN for floating types");
-		}
-		final String s;
-		switch (cPrimitive.getType()) {
-		case FLOAT: {
-			s = "nanf";
-			break;
-		}
-		case DOUBLE: {
-			s = "nan";
-			break;
-		}
-		case LONGDOUBLE: {
-			s = "nanl";
-			break;
-		}
-		default:
-			throw new IllegalArgumentException("can only create NaN for floating types");
-		}
-		return createNanOrInfinity(loc, s);
-	}
-
 	public abstract Expression getCurrentRoundingMode();
-
-	public abstract RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction,
-			RValue argument);
-
-	public abstract RValue constructOtherBinaryFloatOperation(ILocation loc, FloatFunction floatFunction, RValue first,
-			RValue second);
 
 	public abstract void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type);
 
@@ -470,36 +438,6 @@ public abstract class ExpressionTranslation {
 	 */
 	private static String makeBoogieIdentifierSuffix(final String val) {
 		return val;
-	}
-
-	/**
-	 * Translate number classification macros according to 7.12.6 of C11. Although the standard allows any distinct
-	 * integers, we take 0,1,2,3,4 because gcc on Matthias' Linux system uses these numbers.
-	 */
-	public RValue handleNumberClassificationMacro(final ILocation loc, final String cId) {
-		final int number;
-		switch (cId) {
-		case "FP_NAN":
-			number = 0;
-			break;
-		case "FP_INFINITE":
-			number = 1;
-			break;
-		case "FP_ZERO":
-			number = 2;
-			break;
-		case "FP_SUBNORMAL":
-			number = 3;
-			break;
-		case "FP_NORMAL":
-			number = 4;
-			break;
-		default:
-			throw new IllegalArgumentException("no number classification macro " + cId);
-		}
-		final CPrimitive type = new CPrimitive(CPrimitives.INT);
-		final Expression expr = mTypeSizes.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(number));
-		return new RValue(expr, type);
 	}
 
 	/**
@@ -612,4 +550,6 @@ public abstract class ExpressionTranslation {
 		return new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
 				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
 	}
+
+	public abstract IFloatingPointHandler getFloatingPointHandler();
 }

@@ -131,8 +131,6 @@ public class GccBuiltinLibraryModel implements ILibraryModel {
 
 		result.add(new FunctionModel("__builtin_constant_p", (main, node, loc, name) -> mHelper
 				.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(CPrimitives.BOOL))));
-		result.add(new FunctionModel("__builtin_isinf_sign", (main, node, loc, name) -> mHelper
-				.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(CPrimitives.INT))));
 
 		/*
 		 * 6.56 Built-in Functions to Perform Arithmetic with Overflow Checking

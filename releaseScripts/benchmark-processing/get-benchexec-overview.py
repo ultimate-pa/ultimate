@@ -25,7 +25,6 @@ from typing import (
 )
 
 import mmap
-import math
 import contextlib
 import yaml
 from tqdm import tqdm
@@ -561,9 +560,9 @@ def print_results(
             for f in fastest:
                 run = runs[os.path.basename(f.logfile)]
                 msg_detail += (
-                    f'\n{" ":<8} {format_number(run.walltime, 2):>8}s {f.logfile}'
+                    f"\n{' ':<8} {format_number(run.walltime, 2):>8}s {f.logfile}"
                 )
-                msg_detail += f'\n{" ":<18} {"Call:":<8} {f.call}'
+                msg_detail += f"\n{' ':<18} {'Call:':<8} {f.call}"
                 if r.category() not in interesting_strings:
                     debug(f"{r.category()} not in interesting_strings")
                     continue
@@ -575,7 +574,7 @@ def print_results(
                         else "--deltadebugger.result.long.description.prefix"
                     )
                     msg_detail += (
-                        f'\n{" ":<18} {"Delta:":<8} {f.call} '
+                        f"\n{' ':<18} {'Delta:':<8} {f.call} "
                         f'--deltadebugger.look.for.result.of.type "{mc.delta_debug_result_type}" '
                         f'{desc} "{r.category() if mc.delta_debug_category else r.message()}" '
                     )
@@ -584,7 +583,7 @@ def print_results(
                     dump_dir = Path(f"{os.path.dirname(f.logfile)}-dump")
                     dump_dir.mkdir(parents=True, exist_ok=True)
                     msg_detail += (
-                        f'\n{" ":<18} {"Dump SMT:":<8} {f.call} '
+                        f"\n{' ':<18} {'Dump SMT:':<8} {f.call} "
                         f"--rcfgbuilder.dump.smt.script.to.file true "
                         f"--rcfgbuilder.compress.dumped.smt.script true "
                         f'--rcfgbuilder.to.the.following.directory "{dump_dir}" '

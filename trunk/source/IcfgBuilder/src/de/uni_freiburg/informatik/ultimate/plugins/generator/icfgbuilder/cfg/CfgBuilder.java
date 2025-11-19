@@ -336,6 +336,13 @@ public class CfgBuilder {
 		ModelUtils.copyAnnotations(unit, icfg);
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 
+		mLogger.info(
+				"Constructed ICFG has %d procedures, %d locations, %d edges, %d initial locations, %d loop locations, "
+						+ "and %d error locations.",
+				icfg.getProcedureEntryNodes().size(), IcfgUtils.getNumberOfLocations(icfg),
+				IcfgUtils.getNumberOfEdges(icfg), icfg.getInitialNodes().size(), icfg.getLoopLocations().size(),
+				IcfgUtils.getErrorLocations(icfg).size());
+
 		return icfg;
 	}
 
@@ -571,6 +578,16 @@ public class CfgBuilder {
 	private final class ProcedureCfgBuilder {
 
 		/**
+		 * Merge nodes even if both are LOIs. <br>
+		 * TODO 2025-11-12 Matthias: Problem: we do not report invariants for both LOIs. See
+		 * examples/witness-generation-validation/regression/inductive/loi02.c However, maybe we have to rethink our
+		 * strategy for merging nodes anyway since we might report wrong line numbers for counterexamples. Maybe we can
+		 * still merge IcfgLocations. But we carefully have to think about the order and must not merge (but replace)
+		 * ILocations.
+		 */
+		private static final boolean AGGRESSIVE_NODE_MERGING = true;
+
+		/**
 		 * Maps a position identifier to the LocNode that represents this position in the CFG.
 		 */
 		private Map<DebugIdentifier, BoogieIcfgLocation> mProcLocNodes;
@@ -755,7 +772,7 @@ public class CfgBuilder {
 						continue;
 					} else if (gotoTarget == 1 && i > 0 && codeblock[i - 1] instanceof final GotoStatement goSt
 							&& goSt.getLabels().length == 1 && goSt.getLabels()[0].equals(laSt.getName())) {
-						// only target of a got in the line before. Skip both, goto and label
+						// only target of a goto in the line before. Skip both, goto and label
 						i--;
 						continue;
 					}
@@ -1026,7 +1043,7 @@ public class CfgBuilder {
 			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(origin);
 			ModelUtils.copyAnnotations(origin, condNotError);
 			ModelUtils.copyAnnotations(origin, condError);
-			buildBranching(condNotError, currentElement, condError, error, srcLoc);
+			buildBranching(condError, error, condNotError, currentElement, srcLoc);
 			return srcLoc;
 		}
 
@@ -1443,7 +1460,8 @@ public class CfgBuilder {
 				final boolean childMustBePreserved = isLoopLocationOrLoi(child);
 				if (childMustBePreserved) {
 					final boolean motherMustBePreserved = isLoopLocationOrLoi(mother);
-					if (motherMustBePreserved) {
+					if (!AGGRESSIVE_NODE_MERGING && motherMustBePreserved) {
+						// TODO 2025-11-12 Matthias: Maybe we can just report false and do not merge these nodes.
 						throw new AssertionError(String.format("Can neither remove %s nor %s.", child, mother));
 					}
 					mergeLocNodes(mother, child, false);

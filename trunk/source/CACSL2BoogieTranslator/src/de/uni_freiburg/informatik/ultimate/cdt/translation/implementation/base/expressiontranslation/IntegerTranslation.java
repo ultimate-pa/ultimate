@@ -75,6 +75,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private static final String NOT_IMPLEMENTED = "Operation is not yet implemented in non-bitprecise translation.";
 
 	private final BitabsTranslation mBitabsTranslation;
+	private final IFloatingPointHandler mFloatingPointHandler = new UnsupportedFloatingPointHandler();
 
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
 			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
@@ -612,27 +613,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult createNanOrInfinity(final ILocation loc, final String name) {
-		throw new UnsupportedOperationException("createNanOrInfinity is unsupported in non-bitprecise translation");
-	}
-
-	@Override
 	public Expression getCurrentRoundingMode() {
 		throw new UnsupportedOperationException("getRoundingMode is unsupported in non-bitprecise translation");
-	}
-
-	@Override
-	public RValue constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue argument) {
-		throw new UnsupportedOperationException("floating point operation not supported in non-bitprecise translation: "
-				+ floatFunction.getFunctionName());
-	}
-
-	@Override
-	public RValue constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue first, final RValue second) {
-		throw new UnsupportedOperationException("floating point operation not supported in non-bitprecise translation: "
-				+ floatFunction.getFunctionName());
 	}
 
 	@Override
@@ -801,5 +783,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
 			final ExpressionResult exprResult) {
 		return constructOverflowCheck(loc, resultType, exprResult.getLrValue().getValue());
+	}
+
+	@Override
+	public IFloatingPointHandler getFloatingPointHandler() {
+		return mFloatingPointHandler;
 	}
 }
