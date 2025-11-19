@@ -259,7 +259,13 @@ public class GccStaticLanguageSettingsProvider implements ILanguageSettingsProvi
 				// Therefore, we replace them by custom GCC attributes that can be used in the C translation.
 				createEntry("__thread", "__attribute__((thread))"),
 				createEntry("thread_local", "__attribute__((thread))"),
-				createEntry("_Atomic", "__attribute__((atomic))") };
+				createEntry("_Atomic", "__attribute__((atomic))"),
+				// WORKAROUND: in non-preprocessed code, the CDT parser mistakenly parsed casts to size_t as function
+				// calls (which lead to errors later, as no function or variable named 'size_t' was known). By replacing
+				// size_t with this definition, this problem can be avoided. The replacement here is based on the
+				// "possible implementation" shown at <https://en.cppreference.com/w/c/types/size_t.html>.
+				// There should be some better way to fix this. Perhaps we are configuring the CDT parser incorrectly?
+				createEntry("size_t", "typeof(sizeof(0))"), };
 
 		mSettings = LanguageSettingsStorage.getPooledList(Arrays.asList(entries));
 
