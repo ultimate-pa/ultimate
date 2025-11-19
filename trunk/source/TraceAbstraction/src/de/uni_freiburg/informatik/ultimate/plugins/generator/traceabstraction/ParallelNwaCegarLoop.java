@@ -222,7 +222,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			try {
 				mExec.submit(setUpContinuesWorker(iterationServices, i));
 			} catch (final InterruptedException e) {
-				throw new AssertionError("TODO");
+				throw new AssertionError("Interrupted during worker setup " + e);
 			}
 		}
 
@@ -230,7 +230,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		startWorker();
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
-			// TODO deal with crashing workers, currently we just sleep thats bad!!!!
 			abortIfTimeout();
 			boolean abstractionWasRefined = false;
 			mLogger.info(String.format("=== Iteration %s ===", getIteration()));
@@ -246,7 +245,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 						mLogger.info("Main: A Thread is Done");
 						if (workerResult.workerCrashed()) {
 							mLogger.error("Main: Worker Crashed! exiting CEGAR loop.");
-							// TODO how do we want to handle a worker crash?
+							// TODO we can try to recover, and restart the worker.
+							// It might be that just this counterexample crashes our worker and we can still prove the
+							// program correct
 							shutDownAndDestroy(mDestroyEverything);
 							throw new AssertionError("Worker Crashed!, Exiting CEGAR loop!");
 						}

@@ -163,14 +163,12 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 
 		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
-			// TODO seems to work not sure if it is usefull
 			mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR, null,
 					mCounterexample, null, true);
 			try {
 				mBlockingQueueForResults.put(mThreadResult);
 			} catch (final InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new AssertionError("Worker Thread failed due to " + e);
 			}
 			mMainThread.reportFailedContinuesWorkerThread();
 		};
@@ -229,8 +227,8 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 
 	/*
 	 * The worker creates for each counterexample a new strategy module. We can switch between different
-	 * RefinementStrateies here. For example we can use @RefinementStrategy.ACCELERATED_TRACE_CHECK if we have seen the
-	 * pp 7 times.
+	 * RefinementStrateies here. For example we can use {@link RefinementStrategy.ACCELERATED_TRACE_CHECK} if we have
+	 * seen the pp 7 times.
 	 *
 	 * Warning, we have shared (read and write) access to the PathProgramCache here. But the PathProgramCache uses
 	 * thread save lists and maps.
