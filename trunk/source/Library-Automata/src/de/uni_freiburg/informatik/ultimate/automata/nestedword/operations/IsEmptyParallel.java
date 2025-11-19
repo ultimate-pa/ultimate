@@ -657,14 +657,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	}
 
 	private class PQState {
-		final Integer mScore;
-		final STATE mState;
-		final STATE mSucc;
-		final STATE mStateK;
-		ArrayList<Integer> mCounterexamples = new ArrayList<>();
-		final LETTER mSymbol;
-		final boolean mCallTransition;
-		final boolean mReturnTransition;
+		private final Integer mScore;
+		private final STATE mState;
+		private final STATE mSucc;
+		private final STATE mStateK;
+		private ArrayList<Integer> mCounterexamples = new ArrayList<>();
+		private final LETTER mSymbol;
+		private final boolean mCallTransition;
+		private final boolean mReturnTransition;
 
 		public PQState(final int score, final STATE state, final LETTER symbol, final STATE succ, final STATE stateK,
 				final ArrayList<Integer> counterexamples, final boolean call, final boolean ret) {
