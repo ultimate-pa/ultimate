@@ -623,7 +623,7 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	/**
-	 * Replace separate values for pointers with a single one {@link PointerValue2D} or {@link PointerValue1D}.
+	 * Replace separate values for pointers with a single one.
 	 *
 	 * @param programState
 	 *            May not be null
@@ -1019,5 +1019,25 @@ public class CACSL2BoogieBacktranslator extends
 			}
 			return super.processExpression(expr);
 		}
+	}
+
+	public interface IExpressionOrPointer {
+		// empty
+	}
+
+	public record WrappedExpression(Expression expr) implements IExpressionOrPointer {
+		// empty
+	}
+
+	// TODO Shouldn't this already be reassembled in BoogiePreprocessor backtranslation?
+	public interface IPointerValue extends IExpressionOrPointer {
+		// empty
+	}
+
+	public interface IBacktranslationPointer {
+		List<Pair<Expression, Collection<IExpressionOrPointer>>>
+				collectAllPointers(List<Pair<Expression, Collection<Expression>>> oldEntries);
+
+		BacktranslatedACSLValue translatePointer(final IPointerValue pointer);
 	}
 }
