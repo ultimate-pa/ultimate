@@ -142,14 +142,14 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 	private Expression constructTypeSizeConstant(final ILocation loc, final ICType cType) {
-		final String id = SFO.PRE_SIZEOF + cType.toString();
+		final String id = SFO.SIZEOF + cType.toString();
 		declareConstant(loc, id);
 		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	private Expression constructTypeSizeConstant_Pointer(final ILocation loc) {
-		final String id = SFO.PRE_SIZEOF + SFO.POINTER;
+		final String id = SFO.SIZEOF + SFO.POINTER;
 		declareConstant(loc, id);
 		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
