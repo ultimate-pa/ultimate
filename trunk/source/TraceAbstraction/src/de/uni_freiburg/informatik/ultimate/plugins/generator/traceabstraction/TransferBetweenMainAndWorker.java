@@ -114,12 +114,17 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		mLogger = logger;
 		mMainScript = main;
 		mWorkerScript = mainCfgToolKit.createFreshManagedScript(solverServices, solverSettings);
+
 		mServices = services;
 		mMainCsToolkit = mainCfgToolKit;
 
 		mWorker2main = new TermTransferrer(mWorkerScript.getScript(), mMainScript.getScript());
 		mMain2worker = new TermTransferrer(mMainScript.getScript(), mWorkerScript.getScript());
 		mVarTransfer = new ProgramVariableTransferrer(mMain2worker, mWorkerScript);
+
+		mWorkerScript.copyVariableManager(mWorkerScript.getVariableManager().getTvForBasenameCounter(),
+				transferTv2StringMap(mMain2worker, mWorkerScript.getVariableManager().getTv2Basename()),
+				mWorkerScript.getVariableManager().getVariableNames());
 	}
 
 	/*
@@ -224,6 +229,15 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		transferredTF.setInfeasibility(inTF.isInfeasible());
 		return transferredTF.finishConstruction(targetScript);
 
+	}
+
+	private Map<TermVariable, String> transferTv2StringMap(final TermTransferrer transferrer,
+			final Map<TermVariable, String> map) {
+		final Map<TermVariable, String> transferredMap = new HashMap<>();
+		for (final Entry<TermVariable, String> entry : map.entrySet()) {
+			transferredMap.put((TermVariable) transferrer.transform(entry.getKey()), entry.getValue());
+		}
+		return transferredMap;
 	}
 
 	private Map<IProgramVar, TermVariable> transferMap(final TermTransferrer transferrer,
