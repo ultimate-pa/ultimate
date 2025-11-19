@@ -73,10 +73,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -110,6 +110,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	// Strategies
 	public final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
 	private final Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
+	protected InterpolationTechnique mInterpolationTechnique;
+
+	protected Class<L> mTransitionClazz;
 
 	// Addtional Statistiks for Evaluation
 	private Integer mCounterexamplesChecked = 0;
@@ -474,7 +477,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/*
-	 * The worker usign this method to get the Abstraction need to ensure, they use the @TransferBetweenMainAndWorker To
+	 * The worker using this method to get the Abstraction need to ensure, they use the @TransferBetweenMainAndWorker To
 	 * transfer the abstraction to their cfgscript. Worker may only use this to read-only access the abstraction!
 	 */
 	public INestedWordAutomaton<L, IPredicate> getAbstraction() {
@@ -728,6 +731,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		}
 	}
 
+	// worker use this method to access the programcache shared across all workers + main
 	public PathProgramCache<L> getCurrentProgramCache() {
 		return mProgramCache;
 	}
@@ -740,9 +744,5 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public ManagedScript getManagedScript() {
-		return mCsToolkit.getManagedScript();
 	}
 }

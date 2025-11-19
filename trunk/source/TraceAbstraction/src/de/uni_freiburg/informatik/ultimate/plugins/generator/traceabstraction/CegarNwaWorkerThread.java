@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpTcStrategyModuleAcceleratedTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
@@ -230,6 +229,11 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 * RefinementStrateies here. For example we can use {@link RefinementStrategy.ACCELERATED_TRACE_CHECK} if we have
 	 * seen the pp 7 times.
 	 *
+	 * if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7 ) { strategy =
+	 * mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction, new
+	 * SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration), mPredicateFactoryInterpolantAutomata,
+	 * getPreconditionProvider(), getPostconditionProvider(), RefinementStrategy.ACCELERATED_TRACE_CHECK); }
+	 *
 	 * Warning, we have shared (read and write) access to the PathProgramCache here. But the PathProgramCache uses
 	 * thread save lists and maps.
 	 */
@@ -239,18 +243,10 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 				mMainThread.getCurrentProgramCache());
 
 		final ITARefinementStrategy<L> strategy;
-
-		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7 && false) {
-			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-					RefinementStrategy.ACCELERATED_TRACE_CHECK);
-		} else {
-			strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-					new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-					mPref.getRefinementStrategy());
-		}
+		strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+				new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+				mPref.getRefinementStrategy());
 		return strategy;
 	}
 

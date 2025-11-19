@@ -156,8 +156,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	protected boolean mFallbackToFpIfInterprocedural = false;
 	protected IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mRefinementResult;
-	protected InterpolationTechnique mInterpolationTechnique;
-	protected Class<L> mTransitionClazz;
 
 	private boolean mFirstReuseDump = true;
 
@@ -168,14 +166,12 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
-		mTransitionClazz = transitionClazz;
 		InterpolationTechnique interpolation = taPrefs.interpolation();
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
 				&& interpolation == InterpolationTechnique.FPandBP) {
 			mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
 			interpolation = InterpolationTechnique.ForwardPredicates;
 		}
-		mInterpolationTechnique = interpolation;
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
