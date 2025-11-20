@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -326,10 +325,6 @@ public class ExpressionResultTransformer {
 			final Expression structOnHeapAddress, final CStructOrUnion structType, final IASTNode hook,
 			final boolean unchecked) {
 
-		final Expression startAddress = structOnHeapAddress;
-		final Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
-		final Expression currentStructOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-
 		// everything for the new Result
 		final ArrayList<Statement> newStmt = new ArrayList<>();
 		final ArrayList<Declaration> newDecl = new ArrayList<>();
@@ -394,14 +389,11 @@ public class ExpressionResultTransformer {
 					throw new UnsupportedOperationException("Bitfield read struct from heap");
 				}
 
-				final Expression offsetSum = mExprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-						currentStructOffset, mExprTrans.getCTypeOfPointerComponents(),
-						innerStructOffset.getAddressOffsetAsExpression(loc), mExprTrans.getCTypeOfPointerComponents());
-				final Expression innerStructAddress =
-						MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, offsetSum, loc);
+				final var newAddress = mMemoryHandler.constructAddressForStructField(loc, structOnHeapAddress,
+						innerStructOffset, mExprTrans.getCTypeOfPointerComponents());
 
 				final ExpressionResult fieldRead =
-						readStructFromHeap(old, loc, innerStructAddress, cStructOrUnion, hook, unchecked);
+						readStructFromHeap(old, loc, newAddress, cStructOrUnion, hook, unchecked);
 
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
@@ -462,23 +454,22 @@ public class ExpressionResultTransformer {
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAuxVarWithDeclaration(newArrayAuxvar);
 
-		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(address, loc);
-		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(address, loc);
 		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType);
-
-		Expression arrayEntryAddressOffset = newStartAddressOffset;
+		final int typeSize =
+				mTypeSizes.extractIntegerValue(valueTypeSize, mExprTrans.getCTypeOfPointerComponents()).intValue();
 
 		for (int pos = 0; pos < bound; pos++) {
 
-			final Expression readAddress =
-					MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
+			final var addressExpr =
+					mMemoryHandler.addIntegerConstantToPointer(loc, address, BigInteger.valueOf(pos * typeSize));
+
 			final ExpressionResult readRex;
 			if (arrayValueType instanceof final CStructOrUnion cStructOrUnion) {
-				readRex = readStructFromHeap(old, loc, readAddress, cStructOrUnion, hook, unchecked);
+				readRex = readStructFromHeap(old, loc, addressExpr, cStructOrUnion, hook, unchecked);
 			} else if (unchecked) {
-				readRex = mMemoryHandler.getReadUnchecked(readAddress, arrayType.getValueType());
+				readRex = mMemoryHandler.getReadUnchecked(addressExpr, arrayType.getValueType());
 			} else {
-				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType());
+				readRex = mMemoryHandler.getReadCall(addressExpr, arrayType.getValueType());
 			}
 			builder.addAllExceptLrValue(readRex);
 			builder.setOrResetLrValue(readRex.getLrValue());
@@ -491,9 +482,6 @@ public class ExpressionResultTransformer {
 							Collections.emptyList(), builder.build(), hook);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(assRex).setLrValue(assRex.getLrValue());
 
-			arrayEntryAddressOffset = mExprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-					arrayEntryAddressOffset, mExprTrans.getCTypeOfPointerComponents(), valueTypeSize,
-					mExprTrans.getCTypeOfPointerComponents());
 		}
 		builder.setOrResetLrValue(resultValue);
 		return builder.build();
@@ -701,13 +689,10 @@ public class ExpressionResultTransformer {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 		case final CPrimitive cPrimitive when cPrimitive.isRealFloatingType() ->
 				mExprTrans.convertFloatToInt(loc, rexp, newType);
-
 		// could happen e.g. for COMPLEX_FLOAT etc
 		case final CPrimitive cPrimitive -> throw new AssertionError("unknown primitive type " + cPrimitive.getType());
-
-		case final CPointer cPointer -> mExprTrans.convertPointerToInt(loc, rexp, newType);
+		case final CPointer cPointer -> mMemoryHandler.convertPointerToInt(loc, rexp, newType);
 		case final CEnum cEnum -> mExprTrans.convertIntToInt(loc, rexp, newType);
-
 		case final CArray cArray -> throw new AssertionError("cannot convert from CArray");
 		case final CFunction cFunction -> throw new AssertionError("cannot convert from CFunction");
 		case final CNamed cNamed -> throw new AssertionError("getUnderlyingType() must not return CNamed");
@@ -720,20 +705,19 @@ public class ExpressionResultTransformer {
 			final CPointer newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
 		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
-
 		return switch (oldType) {
 		case final CPrimitive cPrimitive when cPrimitive.isIntegerType() ->
-				mExprTrans.convertIntToPointer(loc, rexp, newType);
+				mMemoryHandler.convertIntToPointer(loc, rexp, newType);
 		case final CPrimitive cPrimitive when cPrimitive.isRealFloatingType() ->
+
 				throw new IncorrectSyntaxException(loc, "cannot convert float to pointer");
 		case final CPrimitive cPrimitive when cPrimitive.isVoidType() ->
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 
 		// could happen e.g. for COMPLEX_FLOAT etc
 		case final CPrimitive cPrimitive -> throw new AssertionError("unknown primitive type " + cPrimitive.getType());
-
 		case final CPointer cPointer -> convertPointerToPointer(loc, rexp, newType);
-		case final CEnum cEnum -> mExprTrans.convertIntToPointer(loc, rexp, newType);
+		case final CEnum cEnum -> mMemoryHandler.convertIntToPointer(loc, rexp, newType);
 		case final CArray array when rexp instanceof StringLiteralResult -> {
 			// a string literal's char-array decays to a pointer the stringLiteralResult already has the correct
 			// RValue,we just need to change the type
@@ -741,13 +725,13 @@ public class ExpressionResultTransformer {
 					new RValue(rexp.getLrValue().getValue(), new CPointer(new CPrimitive(CPrimitives.CHAR)));
 			yield new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 		}
-
 		case final CArray cArray -> throw new AssertionError("cannot convert from CArray");
 		case final CFunction cFunction -> throw new AssertionError("cannot convert from CFunction");
 		case final CNamed cNamed -> throw new AssertionError("getUnderlyingType() must not return CNamed");
 		case final CStructOrUnion cStructOrUnion ->
 				throw new UnsupportedSyntaxException(loc, "conversion from CStructOrUnion not implemented.");
 		};
+
 	}
 
 	private static ExpressionResult convertPointerToPointer(final ILocation loc, final ExpressionResult rexp,
@@ -967,7 +951,7 @@ public class ExpressionResultTransformer {
 	public ExpressionResult convertNullPointerConstantToPointer(final ExpressionResult nullPointerConstant,
 			final ICType desiredResultType, final ILocation loc) {
 		if (nullPointerConstant.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
-			return mExprTrans.convertIntToPointer(loc, nullPointerConstant, (CPointer) desiredResultType);
+			return mMemoryHandler.convertIntToPointer(loc, nullPointerConstant, (CPointer) desiredResultType);
 		}
 		assert nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		return nullPointerConstant;

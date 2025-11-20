@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
@@ -85,7 +86,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "if the program lost track of allocated memory. If this is set to false we are unsound (at SV-COMP) in "
 			+ "cases where not all memory is freed but pointers to that memory are live at the end of the "
 			+ "main procedure.";
-	public static final String LABEL_MEMORY_MODEL = "Memory model";
+	public static final String LABEL_MEMORY_STRUCTURE = "Memory structure";
 	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
 	public static final String LABEL_BITPRECISE_BITFIELDS = "Bitprecise bitfields";
@@ -163,6 +164,17 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"If this setting is enabled, we try to translate conditional expressions to if-statements in Boogie. "
 					+ "Otherwise, we try to translate them to conditionals expressions in Boogie instead";
 
+	public static final String LABEL_MEMORY_ADDRESSING = "Memory addressing";
+	private static final String DESC_MEMOY_ADDRESSING = "Whether a 2D or 1D memory model should be used.";
+
+	/**
+	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 */
+	public static final String LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION = "Fixed addresses for initialization";
+	private static final String DESC_FIXED_ADDRESSES_FOR_INITIALIZATION =
+			"Whether allocInit should be used to for initial allocations."
+					+ "This speeds up the verification if there is a high amount of allocations that can be made initially.";
+
 	public enum CheckMode {
 		IGNORE, ASSUME, CHECK
 	}
@@ -171,7 +183,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		SIGNED, UNSIGNED
 	}
 
-	public enum MemoryModel {
+	public enum MemoryStructure {
 		HoenickeLindenmann_Original, // one data array for each boogie type
 
 		HoenickeLindenmann_1ByteResolution,
@@ -193,7 +205,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			};
 		}
 
-		public boolean isBitVectorMemoryModel() {
+		public boolean isBitVectorRepresentation() {
 			return switch (this) {
 			case HoenickeLindenmann_1ByteResolution, HoenickeLindenmann_2ByteResolution,
 					HoenickeLindenmann_4ByteResolution, HoenickeLindenmann_8ByteResolution -> true;
@@ -201,7 +213,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			};
 		}
 
-		public static MemoryModel getPreciseEnoughMemoryModelFor(final int byteSize) {
+		public static MemoryStructure getPreciseEnoughMemoryStructureFor(final int byteSize) {
 			if (byteSize >= 8) {
 				return HoenickeLindenmann_8ByteResolution;
 			}
@@ -272,40 +284,39 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		OVERAPPROXIMATE_BEHAVIOUR
 	}
 
+	public enum MemoryAddressing {
+		One_Dimensional, Two_Dimensional
+	}
+
 	public CACSLPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "C+ACSL to Boogie Translator");
 	}
 
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
-
-		return new BaseUltimatePreferenceItem[] {
-
-				new UltimatePreferenceItemGroup("Specification",
-						new UltimatePreferenceItem<>(LABEL_ERROR, true, DESC_ERROR, PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC,
-								PreferenceType.String),
-						new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS, Level.BASIC,
-								PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CHECK_ACSL, true, DESC_CHECK_ACSL, Level.BASIC,
-								PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_DEREF_VALIDITY, CheckMode.CHECK,
-								DESC_CHECK_POINTER_DEREF_VALIDITY, Level.BASIC, PreferenceType.Combo,
-								CheckMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_NEUTRALITY, "", DESC_CHECK_MEMORY_NEUTRALITY,
-								Level.EXPERT, PreferenceType.String),
-						new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
-								DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-								CheckMode.CHECK, PreferenceType.Combo, CheckMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.CHECK,
-								PreferenceType.Combo, CheckMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
-								PreferenceType.Combo, CheckMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, CheckMode.IGNORE,
-								PreferenceType.Combo, CheckMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean)),
+		return new BaseUltimatePreferenceItem[] { new UltimatePreferenceItemGroup("Specification",
+				new UltimatePreferenceItem<>(LABEL_ERROR, true, DESC_ERROR, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS, Level.BASIC,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_ACSL, true, DESC_CHECK_ACSL, Level.BASIC,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_DEREF_VALIDITY, CheckMode.CHECK,
+						DESC_CHECK_POINTER_DEREF_VALIDITY, Level.BASIC, PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_NEUTRALITY, "", DESC_CHECK_MEMORY_NEUTRALITY,
+						Level.EXPERT, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
+						DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, CheckMode.CHECK,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.CHECK,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, CheckMode.IGNORE, PreferenceType.Combo,
+						CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean)),
 
 				new UltimatePreferenceItemGroup("Target Architecture",
 						// typesize stuff
@@ -333,12 +344,16 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_FP_ROUNDING_MODE_INITIAL, DEF_FP_ROUNDING_MODE_INITIAL,
 								DESC_FP_ROUNDING_MODE_INITIAL, PreferenceType.Combo,
 								FloatingPointRoundingMode.values())),
+
 				new UltimatePreferenceItemGroup("Semantics",
 						new UltimatePreferenceItem<>(LABEL_POINTER_INTEGER_CONVERSION,
 								PointerIntegerConversion.NonBijectiveMapping, PreferenceType.Combo,
 								PointerIntegerConversion.values()),
-						new UltimatePreferenceItem<>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
-								PreferenceType.Combo, MemoryModel.values()),
+						new UltimatePreferenceItem<>(LABEL_MEMORY_STRUCTURE,
+								MemoryStructure.HoenickeLindenmann_Original, PreferenceType.Combo,
+								MemoryStructure.values()),
+						new UltimatePreferenceItem<>(LABEL_MEMORY_ADDRESSING, MemoryAddressing.Two_Dimensional,
+								DESC_MEMOY_ADDRESSING, PreferenceType.Combo, MemoryAddressing.values()),
 						new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, false,
 								DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
@@ -360,6 +375,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false, "Only for benchmarking -- do not use",
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false, DESC_ENFORCE_IF_FOR_CONDITIONAL,
-						PreferenceType.Boolean) };
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION, true,
+						DESC_FIXED_ADDRESSES_FOR_INITIALIZATION, PreferenceType.Boolean) };
 	}
 }

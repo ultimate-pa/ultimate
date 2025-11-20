@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2025 Jan Körner
+ * Copyright (C) 2016-2025 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -26,16 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
-import java.math.BigInteger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer1D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -45,29 +43,29 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class OverapproximationUF implements IPointerIntegerConversion {
+public class OverapproximationUF1D implements IPointerIntegerConversion {
 
 	protected final ExpressionTranslation mExpressionTranslation;
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final ITypeHandler mTypeHandler;
-	private final TypeSizes mTypeSizes;
+	private final MemoryPointer1D mMemoryPointer;
 
 	/**
 	 * Defines the following conversion between pointers and integers. An integer n is converted to the pointer with
-	 * base address 0 and offset n. If a pointer is converted to an integer type, we use an uninterpreted function and
-	 * we add the overapproximation flag to the resulting expression.
+	 * base address n and 0. If a pointer is converted to an integer type, we use an uninterpreted function and we add
+	 * the overapproximation flag to the resulting expression.
 	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @param typeSizes
 	 */
 
-	public OverapproximationUF(final ExpressionTranslation expressionTranslation,
+	public OverapproximationUF1D(final ExpressionTranslation expressionTranslation,
 			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler,
-			final TypeSizes typeSizes) {
+			final MemoryPointer1D pointer) {
 		mExpressionTranslation = expressionTranslation;
 		mFunctionDeclarations = functionDeclarations;
 		mTypeHandler = typeHandler;
-		mTypeSizes = typeSizes;
+		mMemoryPointer = pointer;
 	}
 
 	@Override
@@ -98,12 +96,10 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 			final RValue rVal = new RValue(pointerExpression, newType, false, false);
 			return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 		}
+
 		final ExpressionResult convertedExpr =
 				mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final RValue rVal = new RValue(
-				MemoryHandler.constructPointerFromBaseAndOffset(zero, convertedExpr.getLrValue().getValue(), loc),
+		final RValue rVal = new RValue(mMemoryPointer.createPointerFromBase(convertedExpr.getLrValue().getValue(), loc),
 				newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(convertedExpr).setLrValue(rVal).build();
 	}

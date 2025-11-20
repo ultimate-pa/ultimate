@@ -57,6 +57,24 @@ Overapproximation:
 - task: BitwiseOperations02.c
   settings: KojakC-Reach-32Bit-Default.epf
   toolchain: KojakC.xml
+- task: bitwiseOrUnsigned.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml
+- task: bitwiseOrUnsignedMinimal.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml
+- task: NondetermnisticValues02.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml
+- task: ACSL-contractOnDeclarationResult.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml
+- task: bug-undeclared-function-symbol.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml
+- task: ACSL-contractOnDeclaration.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml
 
 TIMEOUT:
 - task: BitwiseOperations01.c

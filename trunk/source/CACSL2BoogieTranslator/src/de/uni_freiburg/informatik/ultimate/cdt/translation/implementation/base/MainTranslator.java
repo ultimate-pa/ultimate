@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings.SettingsChange;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CHandlerTranslationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
@@ -173,17 +175,21 @@ public class MainTranslator {
 					functionPointers, translationSettings.getEntryFunction());
 
 			mLogger.info("Built tables and reachable declarations");
-			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
-			final TypeHandler prerunTypeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
+			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler();
+
+			// Don't use the interface here in order to get access to the memory pointer
+			final TypeHandler prerunTypeHandler = new TypeHandler(nameHandler, typeSizes, flatSymbolTable,
 					translationSettings, locationFactory, prerunStaticObjectsHandler);
 
-			final ExpressionTranslation prerunExpressionTranslation =
-					createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, prerunTypeHandler);
+			final IMemoryPointer prerunMemoryPointer = prerunTypeHandler.getMemoryPointer();
 
-			final CHandler prerunCHandler =
-					new CHandler(mLogger, backtranslatorMapping, translationSettings, flatSymbolTable, functionTable,
-							prerunExpressionTranslation, locationFactory, typeSizes, reachableDeclarations,
-							prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler, functionPointers);
+			final ExpressionTranslation prerunExpressionTranslation = createExpressionTranslation(translationSettings,
+					flatSymbolTable, typeSizes, prerunTypeHandler, prerunMemoryPointer);
+
+			final CHandler prerunCHandler = new CHandler(mLogger, backtranslatorMapping, translationSettings,
+					flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
+					reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler,
+					functionPointers, prerunMemoryPointer);
 
 			final PRDispatcher prerunDispatcher = new PRDispatcher(prerunCHandler, locationFactory, prerunTypeHandler);
 			prerunDispatcher.dispatch(nodes);
@@ -199,8 +205,9 @@ public class MainTranslator {
 			}
 			mLogger.info("Completed pre-run");
 
-			final CHandlerTranslationResult result = performMainRun(translationSettings, prerunCHandler, reporter,
-					locationFactory, witness, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
+			final CHandlerTranslationResult result =
+					performMainRun(translationSettings, prerunCHandler, reporter, locationFactory, witness,
+							backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes, prerunMemoryPointer);
 			mLogger.info("Completed translation");
 
 			return result.getNode();
@@ -211,7 +218,8 @@ public class MainTranslator {
 			final CHandler prerunCHandler, final CTranslationResultReporter reporter,
 			final LocationFactory locationFactory, final IExtractedCorrectnessWitness witness,
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes,
-			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes typeSizes) {
+			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes typeSizes,
+			final IMemoryPointer memoryPointer) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		if (prefs.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING)) {
@@ -219,11 +227,11 @@ public class MainTranslator {
 		}
 		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
 		final ProcedureManager procedureManager = new ProcedureManager(mLogger, translationSettings);
-		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler(mLogger);
-		final TypeHandler typeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
-				translationSettings, locationFactory, staticObjectsHandler, prerunTypeHandler);
-		final ExpressionTranslation expressionTranslation =
-				createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, typeHandler);
+		final StaticObjectsHandler staticObjectsHandler = new StaticObjectsHandler();
+		final TypeHandler typeHandler = new TypeHandler(nameHandler, typeSizes, flatSymbolTable, translationSettings,
+				locationFactory, staticObjectsHandler, prerunTypeHandler);
+		final ExpressionTranslation expressionTranslation = createExpressionTranslation(translationSettings,
+				flatSymbolTable, typeSizes, typeHandler, memoryPointer);
 
 		final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer = new TypeSizeAndOffsetComputer(typeSizes,
 				expressionTranslation, typeHandler, translationSettings.useBitpreciseBitfields());
@@ -233,7 +241,8 @@ public class MainTranslator {
 
 		final PreprocessorHandler ppHandler = new PreprocessorHandler(reporter, locationFactory);
 		final ACSLHandler acslHandler = new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation,
-				typeHandler, procedureManager, locationFactory, mainCHandler);
+				typeHandler, procedureManager, locationFactory, mainCHandler, memoryPointer);
+
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witness, locationFactory, typeHandler,
 				mainCHandler, ppHandler, acslHandler);
 
@@ -242,18 +251,20 @@ public class MainTranslator {
 		mServices.getStorage().putStorable(IdentifierMapping.getStorageKey(),
 				new IdentifierMapping<>(result.getIdentifierMapping()));
 		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mServices, typeSizes,
-				backtranslatorMapping, locationFactory, flatSymbolTable);
+				backtranslatorMapping, locationFactory, flatSymbolTable, memoryPointer);
 		mServices.getBacktranslationService().addTranslator(backtranslator);
 
 		return result;
 	}
 
 	private static ExpressionTranslation createExpressionTranslation(final TranslationSettings translationSettings,
-			final FlatSymbolTable flatSymbolTable, final TypeSizes typeSizes, final TypeHandler typeHandler) {
+			final FlatSymbolTable flatSymbolTable, final TypeSizes typeSizes, final ITypeHandler typeHandler,
+			final IMemoryPointer memoryPointer) {
 		if (translationSettings.isBitvectorTranslation()) {
-			return new BitvectorTranslation(typeSizes, translationSettings, flatSymbolTable, typeHandler);
+			return new BitvectorTranslation(typeSizes, translationSettings, flatSymbolTable, typeHandler,
+					memoryPointer);
 		}
-		return new IntegerTranslation(typeSizes, translationSettings, typeHandler, flatSymbolTable);
+		return new IntegerTranslation(typeSizes, translationSettings, typeHandler, flatSymbolTable, memoryPointer);
 	}
 
 	private Set<IASTDeclaration> initReachableDeclarations(final List<DecoratedUnit> nodes,

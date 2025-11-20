@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -156,11 +155,13 @@ public class InitializationHandler {
 
 	private final boolean mUseConstantArrays;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	public InitializationHandler(final TranslationSettings settings, final MemoryHandler memoryHandler,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final TypeSizes typeSizes, final CHandler chandler,
-			final ExpressionResultTransformer exprResultTransformer) {
+			final TypeSizes typeSizes, final CHandler chandler, final ExpressionResultTransformer exprResultTransformer,
+			final IMemoryPointer memoryPointer) {
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
@@ -171,6 +172,7 @@ public class InitializationHandler {
 		mExprResultTransformer = exprResultTransformer;
 		mUseConstantArrays = settings.useConstantArrays();
 		mUseSelectForArrayCellInitIfPossible = !settings.useStoreChains();
+		mMemoryPointer = memoryPointer;
 	}
 
 	/**
@@ -962,7 +964,7 @@ public class InitializationHandler {
 		} else if (cType instanceof CEnum) {
 			return mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		} else if (cType instanceof CPointer) {
-			return mExpressionTranslation.constructNullPointer(loc);
+			return mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}
@@ -1050,13 +1052,8 @@ public class InitializationHandler {
 		final Expression flatCellNumber =
 				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, new BigInteger(Integer.toString(product)));
 
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
-		final Expression cellOffset =
-				mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cArrayType.getValueType(), flatCellNumber, sizeT);
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, sizeT, cellOffset, sizeT);
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		final var newPointer = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, loc,
+				arrayBaseAddress.getAddress(), new RValue(flatCellNumber, sizeT), cArrayType.getValueType(), sizeT);
 
 		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cArrayType.getValueType(), null);
 	}
@@ -1072,39 +1069,28 @@ public class InitializationHandler {
 
 		/* do a conversion so the expression has boogie pointer type */
 		final RValue addressRVal = arrayBaseAddress.getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
-		// final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(addressRVal.getValue(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(addressRVal.getValue(), loc);
 
 		final ICType cellType = cArrayType.getValueType();
 
-		final Expression cellOffset =
-				mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cellType, flatCellNumber, pointerComponentType);
+		// final var newPointer = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
+		// addressRVal.getValue(), new RValue(flatCellNumber, pointerComponentType), cellType);
 
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, pointerComponentType, cellOffset, pointerComponentType);
-
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		final var newPointer = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, loc,
+				addressRVal.getValue(), new RValue(flatCellNumber, pointerComponentType), cArrayType.getValueType(),
+				pointerComponentType);
 
 		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cellType, null);
+
 	}
 
 	public HeapLValue constructAddressForStructField(final ILocation loc, final HeapLValue baseAddress,
 			final int fieldIndex) {
+
 		final CStructOrUnion cStructType = (CStructOrUnion) baseAddress.getCType().getUnderlyingType();
+		final var fieldOffset = mTypeSetAndOffsetComputer.constructOffsetForField(loc, cStructType, fieldIndex);
 
-		final CPrimitive sizeT = mTypeSetAndOffsetComputer.getSizeT();
-
-		final Offset fieldOffset = mTypeSetAndOffsetComputer.constructOffsetForField(loc, cStructType, fieldIndex);
-		if (fieldOffset.isBitfieldOffset()) {
-			throw new UnsupportedOperationException("Bitfield initialization");
-		}
-
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress.getAddress(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress.getAddress(), loc);
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, baseAddress.getAddress(),
+				fieldOffset, mTypeSetAndOffsetComputer.getSizeT());
 
 		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cStructType.getFieldTypes()[fieldIndex],
 				null);

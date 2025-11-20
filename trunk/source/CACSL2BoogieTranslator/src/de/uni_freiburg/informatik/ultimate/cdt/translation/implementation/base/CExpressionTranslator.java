@@ -46,14 +46,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -97,6 +96,7 @@ public class CExpressionTranslator {
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final TypeSizes mTypeSizes;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final IMemoryPointer mMemoryPointer;
 
 	private final CheckMode mPointerSubtractionAndComparisonValidityCheckMode;
 	private final CheckMode mDivisionByZeroOfIntegerTypes;
@@ -108,11 +108,11 @@ public class CExpressionTranslator {
 	public CExpressionTranslator(final TranslationSettings settings, final MemoryHandler memoryHandler,
 			final ExpressionTranslation expressionTranslation, final ExpressionResultTransformer exprResultTransformer,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizes typeSizes,
-			final StaticObjectsHandler staticObjectsHandler) {
+			final StaticObjectsHandler staticObjectsHandler, final IMemoryPointer memoryPointer) {
 		this(memoryHandler, expressionTranslation, exprResultTransformer, auxVarInfoBuilder, typeSizes,
 				staticObjectsHandler, settings.getPointerSubtractionAndComparisonValidityCheckMode(),
 				settings.getDivisionByZeroOfIntegerTypes(), settings.getDivisionByZeroOfFloatingTypes(),
-				settings.checkSignedIntegerBounds(), settings.enforceIfForConditional());
+				settings.checkSignedIntegerBounds(), settings.enforceIfForConditional(), memoryPointer);
 	}
 
 	private CExpressionTranslator(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
@@ -120,13 +120,16 @@ public class CExpressionTranslator {
 			final TypeSizes typeSizes, final StaticObjectsHandler staticObjectsHandler,
 			final CheckMode pointerSubtractionAndComparisonValidityCheckMode,
 			final CheckMode divisionByZeroOfIntegerTypes, final CheckMode divisionByZeroOfFloatingTypes,
-			final CheckMode checkSignedIntegerBounds, final boolean enforceIfForConditional) {
+			final CheckMode checkSignedIntegerBounds, final boolean enforceIfForConditional,
+			final IMemoryPointer memoryPointer) {
 		mMemoryHandler = memoryHandler;
 		mStaticObjectsHandler = staticObjectsHandler;
 		mExpressionTranslation = expressionTranslation;
 		mExprResultTransformer = exprResultTransformer;
 		mTypeSizes = typeSizes;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mMemoryPointer = memoryPointer;
+
 		mPointerSubtractionAndComparisonValidityCheckMode = pointerSubtractionAndComparisonValidityCheckMode;
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
@@ -174,32 +177,15 @@ public class CExpressionTranslator {
 					(CPrimitive) left.getLrValue().getCType().getUnderlyingType(), right.getLrValue().getValue(),
 					(CPrimitive) right.getLrValue().getCType().getUnderlyingType());
 		} else if (lType instanceof CPointer && rType instanceof CPointer) {
-			final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals,
-					left.getLrValue().getValue(), right.getLrValue().getValue(), SFO.POINTER_BASE);
-			final Expression offsetRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
-					right.getLrValue().getValue(), SFO.POINTER_OFFSET);
-			switch (mPointerSubtractionAndComparisonValidityCheckMode) {
-			case CHECK:
-				final Statement assertStm = new AssertStatement(loc, baseEquality);
-				final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-				chk.annotate(assertStm);
-				result.addStatement(assertStm);
-				expr = offsetRelation;
-				break;
-			case ASSUME:
-				final Statement assumeStm = new AssumeStatement(loc, baseEquality);
-				result.addStatement(assumeStm);
-				expr = offsetRelation;
-				break;
-			case IGNORE:
-				// use conjunction
-				expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
-				// TODO: Do not use conjunction. Use nondeterministic value
-				// if baseEquality does not hold.
-				break;
-			default:
-				throw new AssertionError("unknown value");
-			}
+
+			final Expression baseEquality = mMemoryPointer.constructPointerComponentRelation(loc,
+					IASTBinaryExpression.op_equals, left.getLrValue().getValue(), right.getLrValue().getValue(),
+					SFO.POINTER_BASE, mExpressionTranslation);
+
+			expr = mMemoryPointer.constructPointerRelationExpression(loc, baseEquality,
+					mPointerSubtractionAndComparisonValidityCheckMode, mExpressionTranslation, op, left, right);
+
+			result = addBaseEqualityCheck(loc, baseEquality, result);
 
 		} else {
 			throw new UnsupportedOperationException("unsupported " + lType + ", " + rType);
@@ -298,8 +284,15 @@ public class CExpressionTranslator {
 				pointsToType = leftPointsToType;
 			}
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
-			addBaseEqualityCheck(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), builder);
-			expr = doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), pointsToType);
+
+			final Expression baseEquality = mMemoryPointer.constructPointerComponentRelation(loc,
+					IASTBinaryExpression.op_equals, left.getLrValue().getValue(), right.getLrValue().getValue(),
+					SFO.POINTER_BASE, mExpressionTranslation);
+
+			addBaseEqualityCheck(loc, baseEquality, builder);
+
+			expr = mMemoryHandler.doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(),
+					pointsToType);
 
 		} else {
 			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
@@ -344,8 +337,10 @@ public class CExpressionTranslator {
 						operand.getLrValue().getValue());
 			} else {
 				final Expression rhsOfComparison;
+
 				if (inputType instanceof CPointer) {
-					rhsOfComparison = mExpressionTranslation.constructNullPointer(loc);
+					rhsOfComparison = mMemoryPointer.constructNullPointer(loc,
+							mExpressionTranslation.getCTypeOfPointerComponents());
 				} else if (inputType instanceof CEnum) {
 					final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 					rhsOfComparison = mExpressionTranslation.constructZero(loc, intType);
@@ -751,7 +746,7 @@ public class CExpressionTranslator {
 		} else if (secondArgIsVoid && thirdArgIsVoid) {
 			/* C11 6.5.15.5 If both operands have void type, the result has void type. */
 			resultCType = new CPrimitive(CPrimitives.VOID);
-		} else if (opPositive.getLrValue().isNullPointerConstant()
+		} else if (opPositive.getLrValue().isNullPointerConstant(mMemoryPointer)
 				|| opPositive.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 			// TODO 2018-11-17 Matthias: I could not find a reference in the C standard that
 			// allows the second disjunct above. Maybe a GNU extension?
@@ -773,7 +768,7 @@ public class CExpressionTranslator {
 				resultCType = opNegative.getLrValue().getCType();
 			}
 
-		} else if (opNegative.getLrValue().isNullPointerConstant()
+		} else if (opNegative.getLrValue().isNullPointerConstant(mMemoryPointer)
 				|| opNegative.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 			// TODO 2018-11-17 Matthias: I could not find a reference in the C standard that
 			// allows the second disjunct above. Maybe a GNU extension?
@@ -894,7 +889,8 @@ public class CExpressionTranslator {
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
-			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType());
+			valueIncremented =
+					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), oneType);
 			addOffsetInBoundsCheck(loc, valueIncremented, result);
 		} else if (ctype instanceof final CPrimitive cPrimitive) {
 			final Expression one;
@@ -965,45 +961,6 @@ public class CExpressionTranslator {
 	}
 
 	/**
-	 * Construct {@link Expression} that compares a component of two pointers.
-	 *
-	 * @param loc
-	 * @param op
-	 *            Comparison operation.
-	 * @param leftPointer
-	 *            Boogie expression that represents pointer.
-	 * @param rightPointer
-	 *            Boogie expression that represents pointer.
-	 * @param component
-	 *            Defines which component is compared. Either "base" or "offset"
-	 */
-	private Expression constructPointerComponentRelation(final ILocation loc, final int op,
-			final Expression leftPointer, final Expression rightPointer, final String component) {
-		assert component.equals(SFO.POINTER_BASE) || component.equals(SFO.POINTER_OFFSET) : "unknown pointer component";
-		final StructAccessExpression leftComponent =
-				ExpressionFactory.constructStructAccessExpression(loc, leftPointer, component);
-		final StructAccessExpression rightComponent =
-				ExpressionFactory.constructStructAccessExpression(loc, rightPointer, component);
-		switch (op) {
-		case IASTBinaryExpression.op_equals:
-		case IASTBinaryExpression.op_notequals: {
-			return mExpressionTranslation.constructBinaryEqualityExpression(loc, op, leftComponent,
-					mExpressionTranslation.getCTypeOfPointerComponents(), rightComponent,
-					mExpressionTranslation.getCTypeOfPointerComponents());
-		}
-		case IASTBinaryExpression.op_lessThan:
-		case IASTBinaryExpression.op_lessEqual:
-		case IASTBinaryExpression.op_greaterThan:
-		case IASTBinaryExpression.op_greaterEqual:
-			return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, leftComponent,
-					mExpressionTranslation.getCTypeOfPointerComponents(), rightComponent,
-					mExpressionTranslation.getCTypeOfPointerComponents());
-		default:
-			throw new IllegalArgumentException("op " + op);
-		}
-	}
-
-	/**
 	 * Add checks for integer overflows. Construct arithmetic operation and add an assert statement that checks if the
 	 * result is in the range of the corresponding C data type (i.e. check for overflow wrt. max and min value). Note
 	 * that we do not check if a given expression is in the range. We explicitly construct a new expression for the
@@ -1051,15 +1008,8 @@ public class CExpressionTranslator {
 	 * @param erb
 	 *            {@link ExpressionResultBuilder} to which the additional statements are added.
 	 */
-	private ExpressionResultBuilder addBaseEqualityCheck(final ILocation loc, final Expression leftPtr,
-			final Expression rightPtr, final ExpressionResultBuilder erb) {
-
-		if (mPointerSubtractionAndComparisonValidityCheckMode == CheckMode.IGNORE) {
-			// do not check anything
-			return erb;
-		}
-		final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals, leftPtr,
-				rightPtr, SFO.POINTER_BASE);
+	private ExpressionResultBuilder addBaseEqualityCheck(final ILocation loc, final Expression baseEquality,
+			final ExpressionResultBuilder erb) {
 		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
 		case CHECK:
 			final Statement assertStm = new AssertStatement(loc, baseEquality);
@@ -1072,37 +1022,10 @@ public class CExpressionTranslator {
 			erb.addStatement(assumeStm);
 			return erb;
 		case IGNORE:
-			throw new AssertionError("case handled before");
+			return erb;
 		default:
 			throw new AssertionError("unknown value");
 		}
-	}
-
-	/**
-	 * Subtract two pointers.
-	 *
-	 * @param pointsToType
-	 *            {@link ICType} of the objects to which the pointers point.
-	 * @param leftPtr
-	 *            Boogie {@link Expression} that represents the left pointer.
-	 * @param rightPtr
-	 *            Boogie {@link Expression} that represents the right pointer.
-	 *
-	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
-	 */
-	private Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
-			final ICType pointsToType) {
-		final Expression ptr1Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
-		final Expression ptr2Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
-		final Expression offsetDifference = mExpressionTranslation.constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_minus, ptr1Offset, mExpressionTranslation.getCTypeOfPointerComponents(),
-				ptr2Offset, mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType);
-		final CPrimitive typesizeType = mExpressionTranslation.getCTypeOfPointerComponents();
-		final Expression offsetDifferenceDividedByTypesize =
-				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_divide,
-						offsetDifference, mExpressionTranslation.getCTypeOfPointerComponents(), typesize, typesizeType);
-		return offsetDifferenceDividedByTypesize;
 	}
 
 	/**
@@ -1163,6 +1086,6 @@ public class CExpressionTranslator {
 	public CExpressionTranslator disableChecksForUndefinedBehavior() {
 		return new CExpressionTranslator(mMemoryHandler, mExpressionTranslation, mExprResultTransformer,
 				mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, CheckMode.IGNORE, CheckMode.IGNORE,
-				CheckMode.IGNORE, CheckMode.IGNORE, mEnforceIfForConditional);
+				CheckMode.IGNORE, CheckMode.IGNORE, mEnforceIfForConditional, mMemoryPointer);
 	}
 }

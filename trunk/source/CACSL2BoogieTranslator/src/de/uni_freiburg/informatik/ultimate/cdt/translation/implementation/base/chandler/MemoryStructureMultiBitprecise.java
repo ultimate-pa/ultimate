@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * Instances of this class define a memory model.
+ * Instances of this class define a Memory Structure.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
@@ -38,7 +38,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -49,14 +48,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
+public class MemoryStructureMultiBitprecise extends MemoryStructureBase {
 
 	private final Map<Integer, HeapDataArray> mSize2HeapIntegerArray = new HashMap<>();
 	private final Map<Integer, HeapDataArray> mSize2HeapFloatingArray = new HashMap<>();
 
-	public MemoryModel_MultiBitprecise(final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final ExpressionTranslation expressionTranslation) {
-		super(typeSizes, typeHandler, expressionTranslation);
+	public MemoryStructureMultiBitprecise(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
+		super(typeSizes, typeHandler);
 	}
 
 	@Override
@@ -95,9 +93,9 @@ public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
 
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
-		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final CPrimitives primitive : requiredMemoryStructureFeatures.getDataOnHeapRequired()) {
 			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
@@ -111,9 +109,9 @@ public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
 			final ASTType astType =
 					mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			final boolean alsoUncheckedWrite = DataStructureUtils
-					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedWriteRequired(), primitives);
+					.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
 			final boolean alsoInit = DataStructureUtils
-					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getInitWriteRequired(), primitives);
+					.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getInitWriteRequired(), primitives);
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, new CPrimitive(representative),
 					alsoUncheckedWrite, alsoInit));
 		}

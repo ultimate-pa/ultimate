@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -16,12 +17,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  *
  * Note that this class has two freezing mechanisms. (Here, freezing means that at some point we set a flag and after
  * that nothing may change anymore in the class members associated with the flag.)
- * <li>One for the query if any memory model features are required (PostProcessor queries this because it needs to know
- * for the init procedure.).
- * <li>At the start of {@link MemoryHandler#declareMemoryModelInfrastructure(CHandler, ILocation, IASTNode)}, the method
- * {@link RequiredMemoryModelFeatures#finish()} is called. This method resolves dependencies between the different
- * memory model features (e.g. memcpy requires write_unchecked procedures for all heap data arrays), afterwards it
- * freezes those features.
+ * <li>One for the query if any Memory Structure features are required (PostProcessor queries this because it needs to
+ * know for the init procedure.).
+ * <li>At the start of {@link MemoryHandler#declareMemoryStructureInfrastructure(CHandler, ILocation, IASTNode)}, the
+ * method {@link RequiredMemoryModelFeatures#finish()} is called. This method resolves dependencies between the
+ * different Memory Structure features (e.g. memcpy requires write_unchecked procedures for all heap data arrays),
+ * afterwards it freezes those features.
  *
  * Background: There are different dependencies between features recorded in this class. Simple ones are resolved
  * immediately (e.g. reportPointerUncheckedWriteRequired, triggers reportPointerOnHeapRequired). Others are resolved
@@ -30,9 +31,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public final class RequiredMemoryModelFeatures {
 
 	/**
-	 * This flag must be set if any of the memory model features are required.
+	 * This flag must be set if any of the Memory Structure features are required.
 	 */
-	private boolean mMemoryModelInfrastructureRequired;
+	private boolean mMemoryStructureInfrastructureRequired;
 
 	private final Set<CPrimitives> mDataOnHeapRequired;
 	private final Set<CPrimitives> mDataUncheckedWriteRequired;
@@ -40,7 +41,7 @@ public final class RequiredMemoryModelFeatures {
 	private boolean mPointerOnHeapRequired;
 	private boolean mPointerUncheckedWriteRequired;
 	private boolean mPointerInitWriteRequired;
-	private final Set<MemoryModelDeclarations> mRequiredMemoryModelDeclarations;
+	private final Set<MemoryModelDeclarations> mRequiredMemoryStructureDeclarations;
 
 	/**
 	 * Set of HeapDataArrays for which constant array initialization is required. (for those we create a Boogie function
@@ -57,28 +58,36 @@ public final class RequiredMemoryModelFeatures {
 	 */
 	private boolean mIsFrozen;
 
-	private boolean mMemoryModelInfrastructureRequiredHasBeenQueried;
+	private boolean mMemoryStructureInfrastructureRequiredHasBeenQueried;
 
-	public RequiredMemoryModelFeatures() {
+	private final List<MemoryModelDeclarations> mMetaDataDeclarations;
+
+	public RequiredMemoryModelFeatures(final List<MemoryModelDeclarations> metaDataDeclarations) {
 		mDataOnHeapRequired = new HashSet<>();
-		mRequiredMemoryModelDeclarations = new HashSet<>();
+		mRequiredMemoryStructureDeclarations = new HashSet<>();
 		mDataUncheckedWriteRequired = new HashSet<>();
 		mDataInitWriteRequired = new HashSet<>();
 		mDataOnHeapInitFunctionRequired = new HashSet<>();
 		mDataOnHeapStoreFunctionRequired = new HashSet<>();
+
+		mMetaDataDeclarations = metaDataDeclarations;
 	}
 
-	public boolean requireMemoryModelInfrastructure() {
-		if (mMemoryModelInfrastructureRequired) {
+	public boolean requireMemoryStructureInfrastructure() {
+		if (mMemoryStructureInfrastructureRequired) {
 			return false;
 		}
-		if (mMemoryModelInfrastructureRequiredHasBeenQueried) {
-			final String msg = "someone already asked if memory model infrastructure was required and we " + "said no";
+		if (mMemoryStructureInfrastructureRequiredHasBeenQueried) {
+			final String msg =
+					"someone already asked if Memory Structure infrastructure was required and we " + "said no";
 			assert false : msg;
 		}
-		mMemoryModelInfrastructureRequired = true;
-		require(MemoryModelDeclarations.ULTIMATE_LENGTH);
-		require(MemoryModelDeclarations.ULTIMATE_VALID);
+		mMemoryStructureInfrastructureRequired = true;
+
+		for (final var metaDataDeclaration : mMetaDataDeclarations) {
+			require(metaDataDeclaration);
+		}
+
 		return true;
 	}
 
@@ -87,7 +96,7 @@ public final class RequiredMemoryModelFeatures {
 			return false;
 		}
 		checkNotFrozen();
-		requireMemoryModelInfrastructure();
+		requireMemoryStructureInfrastructure();
 		mPointerOnHeapRequired = true;
 		return true;
 	}
@@ -117,7 +126,7 @@ public final class RequiredMemoryModelFeatures {
 			return false;
 		}
 		checkNotFrozen();
-		requireMemoryModelInfrastructure();
+		requireMemoryStructureInfrastructure();
 		mDataOnHeapRequired.add(primitive);
 		return true;
 	}
@@ -232,9 +241,9 @@ public final class RequiredMemoryModelFeatures {
 		return mDataInitWriteRequired;
 	}
 
-	public boolean isMemoryModelInfrastructureRequired() {
-		mMemoryModelInfrastructureRequiredHasBeenQueried = true;
-		return mMemoryModelInfrastructureRequired;
+	public boolean isMemoryStructureInfrastructureRequired() {
+		mMemoryStructureInfrastructureRequiredHasBeenQueried = true;
+		return mMemoryStructureInfrastructureRequired;
 	}
 
 	/**
@@ -243,18 +252,18 @@ public final class RequiredMemoryModelFeatures {
 	 * @return true if a change was made
 	 */
 	public boolean require(final MemoryModelDeclarations mmdecl) {
-		if (mRequiredMemoryModelDeclarations.contains(mmdecl)) {
+		if (mRequiredMemoryStructureDeclarations.contains(mmdecl)) {
 			// mmdecl has already been added -- nothing to do
 			return false;
 		}
 		checkNotFrozen();
-		requireMemoryModelInfrastructure();
-		return mRequiredMemoryModelDeclarations.add(mmdecl);
+		requireMemoryStructureInfrastructure();
+		return mRequiredMemoryStructureDeclarations.add(mmdecl);
 	}
 
-	public Set<MemoryModelDeclarations> getRequiredMemoryModelDeclarations() {
+	public Set<MemoryModelDeclarations> getRequiredMemoryStructureDeclarations() {
 		checkIsFrozen();
-		return Collections.unmodifiableSet(mRequiredMemoryModelDeclarations);
+		return Collections.unmodifiableSet(mRequiredMemoryStructureDeclarations);
 	}
 
 	/**
@@ -269,7 +278,7 @@ public final class RequiredMemoryModelFeatures {
 		boolean changedSomething = true;
 		while (changedSomething) {
 			changedSomething = false;
-			for (final MemoryModelDeclarations mmdecl : new HashSet<>(mRequiredMemoryModelDeclarations)) {
+			for (final MemoryModelDeclarations mmdecl : new HashSet<>(mRequiredMemoryStructureDeclarations)) {
 				changedSomething |= mmdecl.resolveDependencies(this, settings);
 			}
 		}
@@ -285,8 +294,9 @@ public final class RequiredMemoryModelFeatures {
 	private void checkNotFrozen() {
 		if (mIsFrozen) {
 			throw new AssertionError("attempt to modify, although this has been frozen already, "
-					+ "note that if some memory model feature relies on another one, this has to be declared in"
-					+ "MemoryModelDeclarations.resolveDependencies(..)" + "perhaps we need to update a method there");
+					+ "note that if some Memory Structure feature relies on another one, this has to be declared in"
+					+ "MemoryStructureDeclarations.resolveDependencies(..)"
+					+ "perhaps we need to update a method there");
 		}
 	}
 

@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -81,26 +81,20 @@ public abstract class ExpressionTranslation {
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
 	protected final ITypeHandler mTypeHandler;
-	protected final IPointerIntegerConversion mPointerIntegerConversion;
 	protected final FlatSymbolTable mSymboltable;
+	protected final IMemoryPointer mMemoryPointer;
 
 	protected final TranslationSettings mSettings;
 
 	public ExpressionTranslation(final TypeSizes typeSizes, final TranslationSettings translationSettings,
-			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
+			final ITypeHandler typeHandler, final FlatSymbolTable symboltable, final IMemoryPointer memoryPointer) {
 
 		mSettings = translationSettings;
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		mSymboltable = symboltable;
-		mFunctionDeclarations = new FunctionDeclarations(mTypeHandler, mTypeSizes);
-
-		mPointerIntegerConversion = switch (mSettings.getPointerIntegerCastMode()) {
-		case NonBijectiveMapping:
-			yield new NonBijectiveMapping(this, mTypeSizes);
-		case Overapproximate:
-			yield new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
-		};
+		mFunctionDeclarations = new FunctionDeclarations(typeHandler);
+		mMemoryPointer = memoryPointer;
 	}
 
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator,
@@ -286,16 +280,6 @@ public abstract class ExpressionTranslation {
 	 */
 	public abstract CPrimitive getCTypeOfPointerComponents();
 
-	public final ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
-			final CPrimitive newType) {
-		return mPointerIntegerConversion.convertPointerToInt(loc, rexp, newType);
-	}
-
-	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
-			final CPointer newType) {
-		return mPointerIntegerConversion.convertIntToPointer(loc, rexp, newType);
-	}
-
 	public ExpressionResult convertFloatToInt(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		if (newType.getType() == CPrimitives.BOOL) {
@@ -359,19 +343,6 @@ public abstract class ExpressionTranslation {
 	public abstract Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr,
 			final ICType cType);
 
-	public Expression constructNullPointer(final ILocation loc) {
-		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
-	}
-
-	public Expression constructPointerForIntegerValues(final ILocation loc, final BigInteger baseValue,
-			final BigInteger offsetValue) {
-		final Expression base =
-				mTypeSizes.constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), baseValue);
-		final Expression offset =
-				mTypeSizes.constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), offsetValue);
-		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
-	}
-
 	public Expression constructZero(final ILocation loc, final ICType cType) {
 		if (cType instanceof final CPrimitive cPrimitive) {
 			return switch (cPrimitive.getGeneralType()) {
@@ -383,7 +354,7 @@ public abstract class ExpressionTranslation {
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
 			};
 		} else if (cType instanceof CPointer || cType instanceof CArray) {
-			return constructNullPointer(loc);
+			return mMemoryPointer.constructNullPointer(loc, getCTypeOfPointerComponents());
 		}
 		throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
 	}

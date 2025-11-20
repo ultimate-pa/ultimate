@@ -68,16 +68,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointerFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -139,10 +139,6 @@ public class TypeHandler implements ITypeHandler {
 	 */
 	private boolean mFloatingTypesNeeded = false;
 
-	private final BoogieType mBoogiePointerType;
-
-	private final CTranslationResultReporter mReporter;
-
 	private final INameHandler mNameHandler;
 
 	private final TypeSizes mTypeSizes;
@@ -153,6 +149,8 @@ public class TypeHandler implements ITypeHandler {
 	private final LocationFactory mLocationFactory;
 	private final StaticObjectsHandler mStaticObjectsHandler;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	/**
 	 * If there is an incomplete type X that has not yet been completed and occurs in a statement of the form
 	 * <code>typedef X Y</code>, then the pair (X,Y) is in this relation.
@@ -160,10 +158,9 @@ public class TypeHandler implements ITypeHandler {
 	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
 	private final Map<String, ICType> mLibraryTypes = new HashMap<>();
 
-	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
-			final LocationFactory locationFactory, final StaticObjectsHandler staticObjectsHandler) {
-		mReporter = reporter;
+	public TypeHandler(final INameHandler nameHandler, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
+			final TranslationSettings translationSettings, final LocationFactory locationFactory,
+			final StaticObjectsHandler staticObjectsHandler) {
 		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
 		mDefinedTypes = new LinkedScopedHashMap<>();
@@ -172,19 +169,14 @@ public class TypeHandler implements ITypeHandler {
 		mTranslationSettings = translationSettings;
 		mLocationFactory = locationFactory;
 		mStaticObjectsHandler = staticObjectsHandler;
-
-		// the type of pointer components currently (feb 18) is always int, but we are keeping all options..
-		final BoogieType componentType =
-				(BoogieType) cType2AstType(null, mTranslationSettings.getCTypeOfPointerComponents()).getBoogieType();
-		mBoogiePointerType = BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
-				new BoogieType[] { componentType, componentType });
+		mMemoryPointer = MemoryPointerFactory.createMemoryPointer(mTranslationSettings,
+				(BoogieType) cType2AstType(null, translationSettings.getCTypeOfPointerComponents()).getBoogieType(),
+				typeSizes);
 	}
 
-	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
-			final LocationFactory locationFactory, final StaticObjectsHandler staticObjectsHandler,
-			final TypeHandler prerunTypeHandler) {
-		mReporter = reporter;
+	public TypeHandler(final INameHandler nameHandler, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
+			final TranslationSettings translationSettings, final LocationFactory locationFactory,
+			final StaticObjectsHandler staticObjectsHandler, final TypeHandler prerunTypeHandler) {
 		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
 		mSymboltable = symboltable;
@@ -193,7 +185,7 @@ public class TypeHandler implements ITypeHandler {
 		mStaticObjectsHandler = staticObjectsHandler;
 
 		// reuse typehandler parts from prerun
-		mBoogiePointerType = prerunTypeHandler.mBoogiePointerType;
+		mMemoryPointer = prerunTypeHandler.mMemoryPointer;
 		mDefinedTypes = prerunTypeHandler.mDefinedTypes;
 		mIncompleteType = prerunTypeHandler.mIncompleteType;
 	}
@@ -653,22 +645,11 @@ public class TypeHandler implements ITypeHandler {
 	 * Construct list of type declarations that are needed because the corresponding types are introduced by the
 	 * translation, e.g., pointers.
 	 */
-	public ArrayList<Declaration> constructTranslationDefinedDeclarations(final ILocation tuLoc,
-			final ExpressionTranslation expressionTranslation) {
+	public ArrayList<Declaration> constructTranslationDefinedDeclarations(final ILocation tuLoc) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		if (mPointerTypeNeeded) {
-			final VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE },
-					cType2AstType(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
-			final VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET },
-					cType2AstType(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
-			final VarList[] fields = { fBase, fOffset };
-			final BoogieType boogieType =
-					BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
-							new BoogieType[] { (BoogieType) fBase.getType().getBoogieType(),
-									(BoogieType) fOffset.getType().getBoogieType() });
-			final ASTType pointerType = new StructType(tuLoc, boogieType, fields);
-			// Pointer is non-finite, right? (ZxZ)..
-			decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false, SFO.POINTER, new String[0], pointerType));
+			final var pointerDeclaration = mMemoryPointer.getTypeDeclaration(tuLoc);
+			decl.add(pointerDeclaration);
 		}
 		return decl;
 	}
@@ -731,7 +712,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public BoogieType getBoogiePointerType() {
-		return mBoogiePointerType;
+		return mMemoryPointer.getPointerType();
 	}
 
 	@Override
@@ -882,5 +863,10 @@ public class TypeHandler implements ITypeHandler {
 				&& cArrayType.getValueType().getUnderlyingType() instanceof final CPrimitive cPrimitive
 				&& (cPrimitive.getType() == CPrimitives.CHAR || cPrimitive.getType() == CPrimitives.UCHAR
 						|| cPrimitive.getType() == CPrimitives.SCHAR);
+	}
+
+	@Override
+	public IMemoryPointer getMemoryPointer() {
+		return mMemoryPointer;
 	}
 }

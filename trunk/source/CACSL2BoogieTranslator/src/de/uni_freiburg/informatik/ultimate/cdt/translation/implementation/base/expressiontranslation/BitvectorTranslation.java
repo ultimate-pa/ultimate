@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes.FloatingPointSize;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -181,8 +181,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	private final BitvectorFloatingPointHandler mFloatingPointHandler;
 
 	public BitvectorTranslation(final TypeSizes typeSizeConstants, final TranslationSettings translationSettings,
-			final FlatSymbolTable symboltable, final ITypeHandler typeHandler) {
-		super(typeSizeConstants, translationSettings, typeHandler, symboltable);
+			final FlatSymbolTable symboltable, final ITypeHandler typeHandler, final IMemoryPointer pointer) {
+		super(typeSizeConstants, translationSettings, typeHandler, symboltable, pointer);
 
 		final CACSLLocation loc = LocationFactory.createIgnoreCLocation();
 		final FloatingPointRoundingMode settingsInitialRoundingMode = mSettings.getInitialRoundingMode();
@@ -778,10 +778,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public Expression signExtend(final ILocation loc, final Expression operand, final int bitsBefore,
 			final int bitsAfter) {
 		final String smtFunctionName = "sign_extend";
-		final ASTType resultType =
-				((TypeHandler) mTypeHandler).byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bitsAfter / 8);
-		final ASTType inputType =
-				((TypeHandler) mTypeHandler).byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bitsBefore / 8);
+		final ASTType resultType = mTypeHandler.byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bitsAfter / 8);
+		final ASTType inputType = mTypeHandler.byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bitsBefore / 8);
 		final String boogieFunctionName = BitvectorFactory
 				.generateBoogieFunctionNameForExtend(ExtendOperation.sign_extend, bitsBefore, bitsAfter);
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
@@ -1003,8 +1001,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
 			final int bytesize = mTypeSizes.getSize(cprimitive);
-			final ASTType bvType =
-					((TypeHandler) mTypeHandler).byteSize2AstType(loc, cprimitive.getPrimitiveCategory(), bytesize);
+			final ASTType bvType = mTypeHandler.byteSize2AstType(loc, cprimitive.getPrimitiveCategory(), bytesize);
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, new CPrimitive(cprimitive));
 			final ASTType[] params = { paramASTType };
 			final Attribute[] attributes =

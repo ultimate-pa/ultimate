@@ -228,12 +228,9 @@ public class StdioLibraryModel implements ILibraryModel {
 		body.add(havocNondet);
 
 		// *(ptr + ctr) := aux
-		final var ptrOffset = MemoryHandler.getPointerOffset(ptr.getLrValue().getValue(), loc);
-		final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_plus, ptrOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
-				ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents());
-		final var ptrPlusCtr = MemoryHandler.constructPointerFromBaseAndOffset(
-				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
+
+		final var ptrPlusCtr = mMemoryHandler.addExpressionToPointer(loc, ptr.getLrValue().getValue(), ctr.getExp());
+
 		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
 		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
 				new CPrimitive(CPrimitives.CHAR), false);
@@ -326,12 +323,9 @@ public class StdioLibraryModel implements ILibraryModel {
 		body.add(havocNondet);
 
 		// *(ptr + ctr) := aux
-		final var ptrOffset = MemoryHandler.getPointerOffset(ptr.getLrValue().getValue(), loc);
-		final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_plus, ptrOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
-				ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents());
-		final var ptrPlusCtr = MemoryHandler.constructPointerFromBaseAndOffset(
-				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
+		final Expression ptrPlusCtr =
+				mMemoryHandler.addExpressionToPointer(loc, ptr.getLrValue().getValue(), ctr.getExp());
+
 		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
 		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
 				new CPrimitive(CPrimitives.CHAR), false);

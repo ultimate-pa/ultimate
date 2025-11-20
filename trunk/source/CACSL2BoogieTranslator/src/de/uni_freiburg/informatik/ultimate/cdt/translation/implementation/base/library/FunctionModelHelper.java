@@ -52,8 +52,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -87,13 +88,14 @@ public class FunctionModelHelper {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TypeSizes mTypeSizes;
 	private final ITypeHandler mTypeHandler;
+	private final IMemoryPointer mMemoryPointer;
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mSvcompMemtrackCompatibilityMode;
 
 	public FunctionModelHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizes typeSizes, final ITypeHandler typeHandler, final boolean checkMemoryLeakInMain,
-			final boolean svcompMemtrackCompatibilityMode) {
+			final boolean svcompMemtrackCompatibilityMode, final IMemoryPointer memoryPointer) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -101,6 +103,7 @@ public class FunctionModelHelper {
 		mTypeHandler = typeHandler;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
 		mSvcompMemtrackCompatibilityMode = svcompMemtrackCompatibilityMode;
+		mMemoryPointer = memoryPointer;
 	}
 
 	/**
@@ -250,7 +253,7 @@ public class FunctionModelHelper {
 	public Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final Spec spec, final Expression expr, final String errorMsg) {
 		final boolean checkMemoryleakInMain = mCheckMemoryLeakInMain
-				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
+				&& mMemoryHandler.getRequiredMemoryStructureFeatures().isMemoryStructureInfrastructureRequired();
 		if (!checkProperty && !checkMemoryleakInMain) {
 			return new AssumeStatement(loc, expr);
 		}
@@ -319,9 +322,11 @@ public class FunctionModelHelper {
 		builder.addAuxVarWithDeclaration(retvar);
 		builder.setLrValue(new LocalLValue(retvar.getLhs(), resultType, null));
 
+		final var nullPtr =
+				mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+
 		// one possible return value: NULL
-		final var setPtrToNull = StatementFactory.constructSingleAssignmentStatement(loc, retvar.getLhs(),
-				mExpressionTranslation.constructNullPointer(loc));
+		final var setPtrToNull = StatementFactory.constructSingleAssignmentStatement(loc, retvar.getLhs(), nullPtr);
 
 		// alternative option: return a nondeterministic string of nondeterministic length
 		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, sizeT, SFO.AUXVAR.NONDET);
@@ -335,12 +340,10 @@ public class FunctionModelHelper {
 						len.getExp(), sizeT, mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ZERO),
 						sizeT)));
 		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
+
 		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
-		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
-				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len.getExp()), sizeT,
-				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
-		final var lastChar = MemoryHandler.constructPointerFromBaseAndOffset(
-				MemoryHandler.getPointerBaseAddress(retvar.getExp(), loc), lenMinusOne, loc);
+		final var lastChar = mMemoryHandler.lastCharOfString(loc, sizeT, len.getExp(), retvar.getExp());
+
 		body.addAll(mMemoryHandler.getWriteCall(loc,
 				LRValueFactory.constructHeapLValue(mTypeHandler, lastChar, charType, null), nullChar, charType, false));
 

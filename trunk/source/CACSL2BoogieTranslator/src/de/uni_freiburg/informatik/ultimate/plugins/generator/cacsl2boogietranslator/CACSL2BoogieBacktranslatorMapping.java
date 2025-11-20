@@ -60,8 +60,8 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 	}
 
 	@Override
-	public void putVar(final String boogieId, final String cId, final ICType cType, final DeclarationInformation decInfo,
-			final boolean isOnHeap) {
+	public void putVar(final String boogieId, final String cId, final ICType cType,
+			final DeclarationInformation decInfo, final boolean isOnHeap) {
 		mVar2CVar.put(new Pair<>(boogieId, normalize(decInfo)), new Triple<>(cId, cType, isOnHeap));
 	}
 

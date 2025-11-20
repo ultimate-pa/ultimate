@@ -37,7 +37,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -49,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public abstract class BaseMemoryModel {
+public abstract class MemoryStructureBase implements IMemoryStructure {
 
 	protected static final String READ_PROCEDURE_PREFIX = "read~";
 	protected static final String WRITE_PROCEDURE_PREFIX = "write~";
@@ -61,8 +60,7 @@ public abstract class BaseMemoryModel {
 
 	private final HeapDataArray mPointerArray;
 
-	public BaseMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final ExpressionTranslation expressionTranslation) {
+	public MemoryStructureBase(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -71,82 +69,93 @@ public abstract class BaseMemoryModel {
 				bytesizeOfStoredPointerComponents());
 	}
 
+	@Override
 	public final String getReadProcedureName(final CPrimitives primitive) {
 		return READ_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getUncheckedReadProcedureName(final CPrimitives primitive) {
 		return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getUncheckedWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + UNCHECKED_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getInitWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + INIT_INFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getReadPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return READ_PROCEDURE_PREFIX + hda.getName();
 	}
 
+	@Override
 	public final String getUncheckedReadPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + hda.getName();
 	}
 
+	@Override
 	public final String getWritePointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return WRITE_PROCEDURE_PREFIX + hda.getName();
 	}
 
+	@Override
 	public final String getUncheckedWritePointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return WRITE_PROCEDURE_PREFIX + UNCHECKED_PREFIX + hda.getName();
 	}
 
+	@Override
 	public final String getInitPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return WRITE_PROCEDURE_PREFIX + INIT_INFIX + hda.getName();
 	}
 
-	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
-
+	@Override
 	public final HeapDataArray getPointerHeapArray() {
 		return mPointerArray;
 	}
 
+	@Override
 	public final Collection<HeapDataArray>
-			getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		final Set<HeapDataArray> result = new HashSet<>();
-		if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
+		if (requiredMemoryStructureFeatures.isPointerOnHeapRequired()) {
 			result.add(getPointerHeapArray());
 		}
-		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final CPrimitives primitive : requiredMemoryStructureFeatures.getDataOnHeapRequired()) {
 			result.add(getDataHeapArray(primitive));
 		}
 		return result;
 	}
 
+	@Override
 	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		if (hda == mPointerArray) {
-			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
+			if (requiredMemoryStructureFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(
 						new ReadWriteDefinition(getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(),
 								getPointerHeapArray().getASTType(), new CPointer(new CPrimitive(CPrimitives.INT)),
-								requiredMemoryModelFeatures.isPointerUncheckedWriteRequired(),
-								requiredMemoryModelFeatures.isPointerInitRequired()));
+								requiredMemoryStructureFeatures.isPointerUncheckedWriteRequired(),
+								requiredMemoryStructureFeatures.isPointerInitRequired()));
 			}
 			return Collections.emptyList();
 		}
-		return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryModelFeatures);
+		return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryStructureFeatures);
 	}
 
 	protected abstract int bytesizeOfStoredPointerComponents();
@@ -154,7 +163,7 @@ public abstract class BaseMemoryModel {
 	protected abstract String getProcedureSuffix(CPrimitives primitive);
 
 	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
-			RequiredMemoryModelFeatures requiredMemoryModelFeatures);
+			RequiredMemoryModelFeatures requiredMemoryStructureFeatures);
 
 	public static class ReadWriteDefinition {
 		private final String mProcedureSuffix;

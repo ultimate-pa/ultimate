@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * Instances of this class define a memory model.
+ * Instances of this class define a Memory Structure.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
@@ -36,12 +36,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
@@ -49,24 +48,24 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
+public class MemoryStructureSingleBitprecise extends MemoryStructureBase {
 
 	private final HeapDataArray mDataArray;
 	private final int mResolution;
 
-	public MemoryModel_SingleBitprecise(final int memoryModelResolution, final TypeSizes typeSizes,
-			final TypeHandler typeHandler, final ExpressionTranslation expressionTranslation) {
-		super(typeSizes, typeHandler, expressionTranslation);
+	public MemoryStructureSingleBitprecise(final int memoryStructureResolution, final TypeSizes typeSizes,
+			final ITypeHandler typeHandler) {
+		super(typeSizes, typeHandler);
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
 		final ASTType intArrayType =
-				typeHandler.byteSize2AstType(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryModelResolution);
+				typeHandler.byteSize2AstType(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryStructureResolution);
 		final BoogieType boogieType = mTypeHandler.getBoogieTypeForBoogieASTType(intArrayType);
 
-		mResolution = memoryModelResolution;
+		mResolution = memoryStructureResolution;
 		mDataArray = new HeapDataArray(SFO.INT, intArrayType, boogieType, mTypeHandler.getBoogiePointerType(),
-				memoryModelResolution);
+				memoryStructureResolution);
 	}
 
 	@Override
@@ -81,9 +80,9 @@ public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
 
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		final HashRelation3<CPrimitiveCategory, Integer, CPrimitives> bytesizes2primitives = new HashRelation3<>();
-		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final CPrimitives primitive : requiredMemoryStructureFeatures.getDataOnHeapRequired()) {
 			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addTriple(primitive.getPrimitiveCategory(), bytesize, primitive);
@@ -97,10 +96,10 @@ public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
 				final String procedureName = getProcedureSuffix(representative);
 				final ASTType astType = mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(),
 						new CPrimitive(representative));
-				final boolean alsoUncheckedWrite = DataStructureUtils
-						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedWriteRequired(), primitives);
+				final boolean alsoUncheckedWrite = DataStructureUtils.haveNonEmptyIntersection(
+						requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
 				final boolean alsoInit = DataStructureUtils
-						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getInitWriteRequired(), primitives);
+						.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getInitWriteRequired(), primitives);
 				result.add(new ReadWriteDefinition(procedureName, bytesize, astType, new CPrimitive(representative),
 						alsoUncheckedWrite, alsoInit));
 			}

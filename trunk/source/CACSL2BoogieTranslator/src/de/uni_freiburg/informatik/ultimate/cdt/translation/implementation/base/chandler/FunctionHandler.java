@@ -92,7 +92,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -180,6 +179,8 @@ public class FunctionHandler {
 
 	private final Set<String> mDefinedFunctions;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	/**
 	 *
 	 * @param logger
@@ -200,7 +201,7 @@ public class FunctionHandler {
 			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final CHandler chandler, final LocationFactory locFac,
 			final FlatSymbolTable symbolTable, final ExpressionResultTransformer expressionResultTransformer,
-			final Set<IASTNode> variablesOnHeap) {
+			final Set<IASTNode> variablesOnHeap, final IMemoryPointer pointer) {
 		mLogger = logger;
 		mNameHandler = nameHandler;
 		mExpressionTranslation = expressionTranslation;
@@ -216,6 +217,7 @@ public class FunctionHandler {
 		mVariablesOnHeap = variablesOnHeap;
 		mCalledFunctions = new HashSet<>();
 		mDefinedFunctions = new HashSet<>();
+		mMemoryPointer = pointer;
 	}
 
 	/**
@@ -582,9 +584,13 @@ public class FunctionHandler {
 					&& returnValue.getLrValue().getCType() instanceof CPrimitive
 					&& returnValue.getLrValue().getValue() instanceof IntegerLiteral
 					&& "0".equals(((IntegerLiteral) returnValue.getLrValue().getValue()).getValue())) {
-				returnValue = new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
-						.setLrValue(new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType))
-						.build();
+				returnValue =
+						new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
+								.setLrValue(new RValue(
+										mMemoryPointer.constructNullPointer(loc,
+												mExpressionTranslation.getCTypeOfPointerComponents()),
+										functionResultType))
+								.build();
 			}
 
 			if (outParams.length == 0) {
@@ -618,10 +624,10 @@ public class FunctionHandler {
 		// frees are inserted in handleReturnStm
 		for (final Entry<LocalLValueILocationPair, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {
 			if (entry.getValue() >= 1) {
-				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().llv, entry.getKey().loc));
+				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().mLlv, entry.getKey().mLoc));
 
 				resultBuilder.addStatement(
-						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLhs() }));
+						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().mLlv.getLhs() }));
 			}
 		}
 
@@ -727,26 +733,29 @@ public class FunctionHandler {
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			// Declare the aux-var (it is allocated after the loop when the size is known)
 			functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxvarinfo);
-			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
-			Expression currentOffset =
-					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.ZERO);
+
 			final List<Statement> writes = new ArrayList<>();
-			final Expression originalBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
-			final Expression originalOffset = MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc);
+			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
+
+			Expression currentOffset = mExpressionTranslation.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+
+			// Add zero, in order to get a pointer with base, offset from the auxvarinfo
+			Expression startPointer = memoryHandler.addExpressionToPointer(loc, auxvarinfo.getExp(), currentOffset);
+
 			for (final ExpressionResult param : varargs) {
 				final ICType argType = param.getCType().getUnderlyingType();
-				// Write the current parameter to *(varargs + currentOffset) and increment currentOffset by the typesize
-				// afterwards
-				final Expression pointerOffset = mExpressionTranslation.constructArithmeticExpression(loc,
-						IASTBinaryExpression.op_plus, originalOffset, pointerType, currentOffset, pointerType);
-				final Expression address =
-						MemoryHandler.constructPointerFromBaseAndOffset(originalBase, pointerOffset, loc);
-				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(address, argType, null),
+				final var size = memoryHandler.calculateSizeOf(loc, argType);
+
+				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(startPointer, argType, null),
 						param.getLrValue().getValue(), argType, false));
-				currentOffset =
-						mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
-								currentOffset, pointerType, memoryHandler.calculateSizeOf(loc, argType), pointerType);
+
+				startPointer = memoryHandler.addExpressionToPointer(loc, startPointer, size);
+
+				currentOffset = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
+						currentOffset, pointerType, size, pointerType);
 			}
+
 			// Allocate the aux-var and add the writes of the parameters
 			functionCallExpressionResultBuilder.addStatement(
 					memoryHandler.getUltimateMemAllocCall(currentOffset, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
