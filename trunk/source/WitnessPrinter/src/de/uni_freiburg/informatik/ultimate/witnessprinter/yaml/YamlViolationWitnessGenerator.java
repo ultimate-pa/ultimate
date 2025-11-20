@@ -118,7 +118,17 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			}
 
 			if (addTargetWaypoint && i == execution.getLength() - 1) {
-				segments.add(new Segment(List.of(), new WaypointTarget(currentLocation), segmentType));
+				// WORKAROUND: We only use the column in the target waypoint for unreach-call
+				// For other properties our column do not yet match the witness format. The target waypoint should point
+				// to a full expression or statement
+				// (https://gitlab.com/sosy-lab/benchmarking/sv-witnesses/-/blob/main/user-guide/Witness-Format.md#target)
+				final Location location;
+				if (currentStep.toString().contains("reach_error")) {
+					location = currentLocation;
+				} else {
+					location = new Location(filename, line, null, function);
+				}
+				segments.add(new Segment(List.of(), new WaypointTarget(location), segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
 				segments.add(new Segment(List.of(), new WaypointBranching("false", currentLocation), segmentType));
