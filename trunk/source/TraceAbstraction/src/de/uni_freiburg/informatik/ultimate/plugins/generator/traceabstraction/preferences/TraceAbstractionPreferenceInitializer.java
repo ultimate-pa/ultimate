@@ -207,6 +207,21 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Strategy used to check whether (and prove that) a synthesized commutativity condition holds.";
 	private static final RefinementStrategy DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY = RefinementStrategy.SMTINTERPOL;
 
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD =
+			"Path program threshold for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD =
+			"If commutativity condition synthesis is enabled, it is applied only to traces whose path program "
+					+ "has been encountered at least n times (where n is the value of this setting).";
+	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD = 2;
+
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_RETRIES =
+			"Maximum retries for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_RETRIES =
+			"If commutativity condition synthesis fails due to an imperfect proof, "
+					+ "future iterations may retry synthesizing a commutativity condition "
+					+ "for the same point of redundancy/non-minimality, up to the given number of attempts.";
+	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_RETRIES = 0;
+
 	// Settings for PetriAutomizer
 	// ========================================================================
 
@@ -747,6 +762,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
 						DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY, DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
 						PreferenceType.Combo, RefinementStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD,
+						DEF_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD, DESC_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD,
+						Level.EXPERIMENTAL, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_RETRIES,
+						DEF_COMMUTATIVITY_COND_SYNTHESIS_RETRIES, DESC_COMMUTATIVITY_COND_SYNTHESIS_RETRIES,
+						Level.EXPERIMENTAL, PreferenceType.Integer),
 
 				getIndependenceSettings(0),
 
