@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
 public class MemoryModelDeclarationsHandler {
-	private final Map<MemoryModelDeclarations, MemoryModelDeclarationInfo> declarationInfos;
+	private final Map<MemoryModelDeclarations, MemoryModelDeclarationInfo> mDeclarationInfos;
 
 	private final ITypeHandler mTypeHandler;
 	private final IBooleanArrayHelper mBooleanArrayHelper;
@@ -42,7 +42,7 @@ public class MemoryModelDeclarationsHandler {
 
 	public MemoryModelDeclarationsHandler(final ITypeHandler typeHandler, final IBooleanArrayHelper booleanArrayHelper,
 			final CPrimitive rWLockCounterType) {
-		declarationInfos = new LinkedHashMap<>();
+		mDeclarationInfos = new LinkedHashMap<>();
 
 		mTypeHandler = typeHandler;
 		mBooleanArrayHelper = booleanArrayHelper;
@@ -50,7 +50,7 @@ public class MemoryModelDeclarationsHandler {
 	}
 
 	public MemoryModelDeclarationInfo memoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
-		final var result = declarationInfos.get(mmd);
+		final var result = mDeclarationInfos.get(mmd);
 		if (result == null) {
 			throw new AssertionError("Call requireMemoryStructureFeature first for key: " + mmd);
 		}
@@ -59,7 +59,7 @@ public class MemoryModelDeclarationsHandler {
 	}
 
 	public void createMemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
-		declarationInfos.putIfAbsent(mmd, constructMemoryStructureDeclarationInfo(mmd));
+		mDeclarationInfos.putIfAbsent(mmd, constructMemoryStructureDeclarationInfo(mmd));
 	}
 
 	private MemoryModelDeclarationInfo constructMemoryStructureDeclarationInfo(final MemoryModelDeclarations mmd) {

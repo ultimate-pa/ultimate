@@ -123,7 +123,7 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	@Override
 	public Expression constructFunctionPointer(final ILocation loc, final BigInteger offset) {
 		final Expression base = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), functionPointerPointerBaseValue);
+				mExpressionTranslation.getCTypeOfPointerComponents(), mFunctionPointerPointerBaseValue);
 
 		final Expression integerExpr =
 				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), offset);
