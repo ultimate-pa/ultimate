@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
@@ -134,7 +135,9 @@ public class CLocation extends CACSLLocation {
 
 	@Deprecated
 	public IASTNode getNode() {
-		return mNodes.isEmpty() ? null : mNodes.getFirst();
+		// For compatibility we use the old behavior here: Find the common parent of all the nodes
+		// (except for the translation unit itself)
+		return CdtASTUtils.findCommonParent(mNodes.stream().filter(x -> !(x instanceof IASTTranslationUnit)).toList());
 	}
 
 	public LineDirectiveMapping getLineDirectiveMapping() {
