@@ -165,6 +165,11 @@ class ZulipTopicMonitor:
 
     def save_state(self):
         state_file = self.persistent_state_file
+        # remove duplicate timestamps
+        for state in self.topic_to_state.values():
+            state.seen_message_timestamps = list(
+                dict.fromkeys(state.seen_message_timestamps)
+            )
         with open(state_file, "w") as f:
             json.dump(
                 {k: asdict(v) for k, v in self.topic_to_state.items()}, f, indent=2
@@ -321,14 +326,20 @@ async def download_new_results(
         unit_scale=True,
         desc=f"Downloading result XMLs and logfiles for {topic_name}",
     ) as pbar:
+        first_valid_run = None
         for run in runs:
             if not is_run_in_range(run):
                 continue
+            logging.debug(f"Downloading {run.tool} run from {run.date}")
+            if not first_valid_run:
+                first_valid_run = run
             download_tasks.append(downloader.download_tool_run_xml(run, pbar))
         if download_tasks:
-            is_verifier = not runs[0].validator
+            is_verifier = not first_valid_run.validator
             download_tasks.append(
-                downloader.download_tool_run_logs(runs[0].tool, runs[0].date, pbar)
+                downloader.download_tool_run_logs(
+                    first_valid_run.tool, first_valid_run.date, pbar
+                )
             )
             await asyncio.gather(*download_tasks)
     return is_verifier, len(download_tasks) != 0
