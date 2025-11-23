@@ -21,6 +21,7 @@ import subprocess
 import sys
 import textwrap
 import aiohttp
+import requests
 from tqdm import tqdm
 import zulip
 import json
@@ -395,6 +396,49 @@ def process_new_results(
     return f"https://srv.dietsch.xyz/ultimate-logs/svcomp{svcomp_year}-{topic_name}/{message_ts_str}-svcomp{svcomp_year}-{topic_name}-no-git"
 
 
+def get_mattermost_channel_id(server_url, token, team_name, channel_name):
+    """Get channel ID from team name and channel name."""
+    url = f"{server_url}/api/v4/teams/name/{team_name}/channels/name/{channel_name}"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        channel_data = response.json()
+        return channel_data["id"]
+    else:
+        logging.error(f"Failed to get Mattermost channel ID: {response.status_code}")
+        logging.error(response.text)
+        return None
+
+
+def send_mattermost_message(server_url, token, channel_id, message):
+    """Send a message to a Mattermost channel."""
+    url = f"{server_url}/api/v4/posts"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    payload = {"channel_id": channel_id, "message": message}
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code == 201:
+        return True
+    else:
+        logging.error(f"Failed to send Mattermost message: {response.status_code}")
+        logging.error(response.text)
+        return False
+
+
+def send_single_mattermost_message(args: argparse.Namespace, message):
+    """Send a single message to the specified Mattermost channel.
+    More expensive, because each call gets the channel ID first."""
+    channel_id = get_mattermost_channel_id(
+        args.mm_server, args.mm_token, *(args.mm_channel.split("/", 1))
+    )
+    send_mattermost_message(
+        args.mm_server,
+        args.mm_token,
+        channel_id,
+        message,
+    )
+
+
 async def main(args: argparse.Namespace):
     monitor = ZulipTopicMonitor(args)
     matching_topics = monitor.find_topics_by_title(args.channel_name, args.tools)
@@ -447,9 +491,13 @@ async def main(args: argparse.Namespace):
     if args.tmp_dir.exists():
         shutil.rmtree(args.tmp_dir)
     if new_links:
+        msg = "**New SV-COMP results found!**\n"
         logging.info("New results available")
         for new_link in new_links:
+            msg += f"- {new_link}\n"
             logging.info(new_link)
+        if args.mm_token:
+            send_single_mattermost_message(args, msg)
 
 
 def token_string_or_file(arg):
@@ -556,6 +604,23 @@ def parse_args():
         type=Path,
         default=Path(__file__).parent.parent.parent / "benchmark-processing",
         help=f"Path to benchmark-processing scripts. Default: {Path(__file__).parent.parent.parent / 'benchmark-processing'}",
+    )
+    parser.add_argument(
+        "--mm-server",
+        default="https://chat.sopranium.de",
+        help="Mattermost server URL. Default: https://chat.sopranium.de",
+    )
+    parser.add_argument(
+        "--mm-token",
+        type=token_string_or_file,
+        help="Mattermost personal access token or bot token or a file containing it. "
+        "If you supply it, the script will notify the specified Mattermost channel "
+        "when it found new results. Default: None",
+    )
+    parser.add_argument(
+        "--mm-channel",
+        default="swt/ultimate",
+        help="Channel name or team/channel format. Default: swt/ultimate",
     )
 
     args = parser.parse_args()
