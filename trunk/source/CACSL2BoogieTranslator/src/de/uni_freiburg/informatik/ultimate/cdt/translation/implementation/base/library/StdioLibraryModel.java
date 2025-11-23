@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -373,6 +374,14 @@ public class StdioLibraryModel implements ILibraryModel {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		for (int i = 0; i < arguments.length; i++) {
+			if (i == firstArgumentToWrite - 1 && mHelper.isStringLiteral(arguments[i])) {
+				final String format = arguments[i].toString();
+				// WORKAROUND for #761: We always report unknown, whenever %s, %2c, ... occurs in the pattern.
+				if (Pattern.matches(".*?%(s|\\d+c).*", format)) {
+					return mHelper.handleUnsupportedFunctionByOverapproximation(main, loc, name,
+							new CPrimitive(CPrimitives.LONG));
+				}
+			}
 			if (i < firstArgumentToWrite) {
 				// Don't dispatch string literals
 				if (!mHelper.isStringLiteral(arguments[i])) {
