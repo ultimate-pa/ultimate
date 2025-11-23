@@ -87,8 +87,8 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		 */
 		DFS,
 		/**
-		 * used in IsEmptyParallel. Given a set of counterexamples, searches a path that diverges from all cex in the
-		 * set. Then searches a goal via BFS
+		 * used in IsEmptyParallel. Given a set of counterexamples, searches a prefix that diverges from all cex in the
+		 * set. Then searches a suffix to a goal via BFS
 		 */
 		PARALLEL
 	}
