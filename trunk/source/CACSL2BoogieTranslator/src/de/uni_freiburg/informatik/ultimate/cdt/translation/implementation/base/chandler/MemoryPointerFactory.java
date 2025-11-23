@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
  *
  * @author Jan Körner
  */
-public abstract class MemoryPointerFactory {
+public class MemoryPointerFactory {
 	/**
 	 * The factory method used to create an IMemoryPointer instance.
 	 *

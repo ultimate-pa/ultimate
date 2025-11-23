@@ -81,7 +81,7 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 	protected IMemoryManagementStrategy mMemoryManagementStrategy;
 	private final IMemoryMetadata mMemoryMetadata;
 
-	protected final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
+	protected final BigInteger mFunctionPointerPointerBaseValue = BigInteger.valueOf(-1);
 
 	public MemoryAdressingBase(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,

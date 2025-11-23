@@ -101,42 +101,57 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		final List<Segment> segments = new ArrayList<>();
 		for (int i = 0; i < execution.getLength(); i++) {
 			final AtomicTraceElement<TE> currentATE = execution.getTraceElement(i);
-			final TE currentStep = currentATE.getStep();
-			final int line = mStringProvider.getLineNumberFromStep(currentStep, currentATE.getStepInfo());
-			final int column = mStringProvider.getColumnNumberFromStep(currentStep, currentATE.getStepInfo());
-			final String function = mStringProvider.getFunctionFromStep(currentStep);
-			final String filename = mStringProvider.getFileNameFromStep(currentStep);
-			final Location currentLocation = new Location(filename, line, column, function);
 
-			if (PRODUCE_ASSUMPTIONS && mStringProvider.isValidAssumptionLocation(currentStep)) {
+			if (PRODUCE_ASSUMPTIONS && mStringProvider.isValidAssumptionLocation(currentATE.getStep())) {
 				final String previousState = mProgramStatePrinter.stateAsExpression(
 						i == 0 ? null : execution.getProgramState(i - 1), ProgramStatePrinter::isValidCVariable);
 				if (previousState != null) {
-					segments.add(new Segment(List.of(), new WaypointAssumption(previousState, currentLocation),
-							segmentType));
+					segments.add(new Segment(List.of(),
+							new WaypointAssumption(previousState, getLocation(currentATE, false)), segmentType));
 				}
 			}
 
 			if (addTargetWaypoint && i == execution.getLength() - 1) {
-				segments.add(new Segment(List.of(), new WaypointTarget(currentLocation), segmentType));
+				segments.add(new Segment(List.of(), new WaypointTarget(getLocation(currentATE, true)), segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
-				segments.add(new Segment(List.of(), new WaypointBranching("false", currentLocation), segmentType));
+				segments.add(new Segment(List.of(), new WaypointBranching("false", getLocation(currentATE, false)),
+						segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
-				segments.add(new Segment(List.of(), new WaypointBranching("true", currentLocation), segmentType));
+				segments.add(new Segment(List.of(), new WaypointBranching("true", getLocation(currentATE, false)),
+						segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
-				segments.add(new Segment(List.of(), new WaypointFunctionEnter(currentLocation), segmentType));
+				segments.add(
+						new Segment(List.of(), new WaypointFunctionEnter(getLocation(currentATE, false)), segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-				segments.add(new Segment(
-						List.of(), new WaypointFunctionReturn(mProgramStatePrinter
-								.stateAsExpression(execution.getProgramState(i), "\\result"::equals), currentLocation),
-						segmentType));
+				segments.add(
+						new Segment(List.of(),
+								new WaypointFunctionReturn(mProgramStatePrinter
+										.stateAsExpression(execution.getProgramState(i), "\\result"::equals),
+										getLocation(currentATE, false)),
+								segmentType));
 			}
 		}
 		return segments;
+	}
+
+	private Location getLocation(final AtomicTraceElement<TE> ate, final boolean isTarget) {
+		final TE currentStep = ate.getStep();
+		final int line = mStringProvider.getLineNumberFromStep(currentStep, ate.getStepInfo());
+		final int column = mStringProvider.getColumnNumberFromStep(currentStep, ate.getStepInfo());
+		final String function = mStringProvider.getFunctionFromStep(currentStep);
+		final String filename = mStringProvider.getFileNameFromStep(currentStep);
+		// WORKAROUND: We only use the column in the target waypoint for unreach-call
+		// For other properties our column do not yet match the witness format. The target waypoint should point
+		// to a full expression or statement
+		// (https://gitlab.com/sosy-lab/benchmarking/sv-witnesses/-/blob/main/user-guide/Witness-Format.md#target)
+		if (isTarget && !currentStep.toString().contains("reach_error")) {
+			return new Location(filename, line, null, function);
+		}
+		return new Location(filename, line, column, function);
 	}
 
 	public String makeYamlString() {

@@ -30,7 +30,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -123,18 +122,16 @@ public class BacktranslationPointer2D implements IBacktranslationPointer {
 			mBacktranslator.reportUnfinishedBacktranslation("Pointer with non-unique base value");
 			return null;
 		}
-		final BigInteger baseValue = base.range().getMinValue();
 
 		final BacktranslatedExpression offset = mBacktranslator.translateExpression(ptr2D.offset());
 		if (!offset.range().isSingleton()) {
 			mBacktranslator.reportUnfinishedBacktranslation("Pointer with non-unique base value");
 			return null;
 		}
-		final BigInteger offsetValue = offset.range().getMinValue();
 
 		// Create a value like {base:offset}
 		// This is not a real ACSL expression, so we wrap it into FakePointer.
-		return new FakePointer2D(baseValue, offsetValue);
+		return new FakePointer2D(base.range().getMinValue(), offset.range().getMinValue());
 	}
 
 	/**

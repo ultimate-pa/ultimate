@@ -57,8 +57,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  *
  * @author Jan Körner
  */
-public class MemoryPointer1D extends MemoryPointerBase {
+public final class MemoryPointer1D extends MemoryPointerBase {
 	final BoogieType mComponentType;
+
+	private MemoryPointer1D(final BoogieType componentType, final TypeSizes typeSizes) {
+		super(typeSizes);
+		mComponentType = componentType;
+		mBoogieType =
+				BoogieType.createStructType(new String[] { SFO.POINTER_BASE }, new BoogieType[] { mComponentType });
+	}
 
 	/**
 	 * The factory method that creates a OneDimensionalPointer instance. Ensures, that an instance is only created iff
@@ -91,13 +98,6 @@ public class MemoryPointer1D extends MemoryPointerBase {
 		return new MemoryPointer1D(boogieType, typeSizes);
 	}
 
-	private MemoryPointer1D(final BoogieType componentType, final TypeSizes typeSizes) {
-		super(typeSizes);
-		mComponentType = componentType;
-		mBoogieType =
-				BoogieType.createStructType(new String[] { SFO.POINTER_BASE }, new BoogieType[] { mComponentType });
-	}
-
 	@Override
 	public BoogieType getPointerType() {
 		return mBoogieType;
@@ -120,7 +120,7 @@ public class MemoryPointer1D extends MemoryPointerBase {
 	}
 
 	@Override
-	public final Expression constructInitialPointer(final ILocation loc, final BigInteger value,
+	public Expression constructInitialPointer(final ILocation loc, final BigInteger value,
 			final CPrimitive cTypeOfPointerComponent) {
 		final Expression baseExpr = mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, value);
 

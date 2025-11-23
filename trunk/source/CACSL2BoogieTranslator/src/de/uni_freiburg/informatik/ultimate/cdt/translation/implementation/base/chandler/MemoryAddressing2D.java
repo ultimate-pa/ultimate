@@ -312,7 +312,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	@Override
 	public Expression constructFunctionPointer(final ILocation loc, final BigInteger offset) {
 		final Expression baseExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), functionPointerPointerBaseValue);
+				mExpressionTranslation.getCTypeOfPointerComponents(), mFunctionPointerPointerBaseValue);
 		final Expression offsetExpr = mTypeSizes.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), offset);
 

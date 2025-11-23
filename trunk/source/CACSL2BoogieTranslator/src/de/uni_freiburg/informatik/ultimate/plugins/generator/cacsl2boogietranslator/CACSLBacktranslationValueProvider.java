@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.EnumSet;
 
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -73,15 +72,8 @@ public class CACSLBacktranslationValueProvider
 		if ((stepInfo.contains(StepInfo.CONDITION_EVAL_TRUE) || stepInfo.contains(StepInfo.CONDITION_EVAL_FALSE))
 				&& step instanceof CLocation) {
 			// Use the starting location of the parent (should be the corresponding if/while)
-			return ((CLocation) step).getParent().getStartLine();
-		}
-		// Use the location from the innermost full expression or statement
-		// (https://gitlab.com/sosy-lab/benchmarking/sv-witnesses/-/blob/main/user-guide/Witness-Format.md#target)
-		if (step instanceof CLocation cloc) {
-			while (cloc.getNode() instanceof IASTExpression) {
-				cloc = cloc.getParent();
-			}
-			return cloc.getStartLine();
+			final CLocation parent = ((CLocation) step).getParent();
+			return parent != null ? parent.getStartLine() : -1;
 		}
 		return step.getStartLine();
 	}
@@ -93,17 +85,10 @@ public class CACSLBacktranslationValueProvider
 			return step.getEndColumn() - 1;
 		}
 		if ((stepInfo.contains(StepInfo.CONDITION_EVAL_TRUE) || stepInfo.contains(StepInfo.CONDITION_EVAL_FALSE))
-				&& step instanceof CLocation) {
+				&& step instanceof final CLocation cloc) {
 			// Use the starting location of the parent (should be the corresponding if/while)
-			return ((CLocation) step).getParent().getStartColumn();
-		}
-		// Use the location from the innermost full expression or statement
-		// (https://gitlab.com/sosy-lab/benchmarking/sv-witnesses/-/blob/main/user-guide/Witness-Format.md#target)
-		if (step instanceof CLocation cloc) {
-			while (cloc.getNode() instanceof IASTExpression) {
-				cloc = cloc.getParent();
-			}
-			return cloc.getStartColumn();
+			final CLocation parent = cloc.getParent();
+			return parent == null ? -1 : parent.getStartColumn();
 		}
 		return step.getStartColumn();
 	}
