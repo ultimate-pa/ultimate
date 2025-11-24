@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.Storage
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -63,12 +65,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -310,7 +316,7 @@ public class TypeHandler implements ITypeHandler {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
 				// TODO Frank 2022-11-22: rex might contain statements (e.g. overflow-assertions), but they are ignored
 				// here! We should probably crash instead. But we could try to remove trivial assertions additionally.
-				specifiedValue = rex.getLrValue().getValue();
+				specifiedValue = tryToExtractSimpleExpression(rex.getStatements(), rex.getLrValue().getValue());
 			} else {
 				specifiedValue = null;
 			}
@@ -346,6 +352,29 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		return result;
+	}
+
+	private static Expression tryToExtractSimpleExpression(final List<Statement> statements,
+			final Expression resultExpr) {
+		if (!(resultExpr instanceof final IdentifierExpression id) || statements.size() != 1
+				|| !(statements.getFirst() instanceof final IfStatement ifSt)
+				|| !(ifSt.getCondition() instanceof final BooleanLiteral lit)) {
+			return resultExpr;
+		}
+		final Statement[] effectiveStatements = lit.getValue() ? ifSt.getThenPart() : ifSt.getElsePart();
+		if (effectiveStatements.length == 1 && effectiveStatements[0] instanceof final AssignmentStatement assignSt
+				&& assignSt.getLhs().length == 1 && assignSt.getLhs()[0] instanceof final VariableLHS lhs
+				&& lhs.getIdentifier().equals(id.getIdentifier())) {
+			return assignSt.getRhs()[0];
+		}
+		// Call the method recursively, but check if the last statement is an assignment.
+		if (effectiveStatements.length == 2 && effectiveStatements[1] instanceof final AssignmentStatement assignSt2
+				&& assignSt2.getLhs().length == 1 && assignSt2.getLhs()[0] instanceof final VariableLHS lhs
+				&& lhs.getIdentifier().equals(id.getIdentifier())) {
+			return tryToExtractSimpleExpression(Arrays.asList(effectiveStatements[0]), assignSt2.getRhs()[0]);
+		}
+		// Call the method recursively to check for nested if statements.
+		return tryToExtractSimpleExpression(Arrays.asList(effectiveStatements), resultExpr);
 	}
 
 	@Override
