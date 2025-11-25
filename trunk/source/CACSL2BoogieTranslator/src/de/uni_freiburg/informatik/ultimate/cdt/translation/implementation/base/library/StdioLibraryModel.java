@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
@@ -76,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Model of functions performing input and output from stdio.h (C11 7.21, https://en.cppreference.com/w/c/header/stdio).
@@ -129,20 +132,20 @@ public class StdioLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("swprintf", this::handleSnPrintF));
 
 		// https://en.cppreference.com/w/c/io/fscanf
-		result.add(new FunctionModel("scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
-		result.add(new FunctionModel("scanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
-		result.add(new FunctionModel("fscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
-		result.add(new FunctionModel("fscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
-		result.add(new FunctionModel("sscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
-		result.add(new FunctionModel("sscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+		result.add(new FunctionModel("scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 0)));
+		result.add(new FunctionModel("scanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 0)));
+		result.add(new FunctionModel("fscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("fscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("sscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("sscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
 
 		// https://en.cppreference.com/w/c/io/fwscanf
-		result.add(new FunctionModel("wscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
-		result.add(new FunctionModel("wscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
-		result.add(new FunctionModel("fwscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
-		result.add(new FunctionModel("fwscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
-		result.add(new FunctionModel("swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
-		result.add(new FunctionModel("swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+		result.add(new FunctionModel("wscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 0)));
+		result.add(new FunctionModel("wscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 0)));
+		result.add(new FunctionModel("fwscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("fwscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
 
 		// https://en.cppreference.com/w/c/io/puts
 		result.add(new FunctionModel("puts", this::handlePuts));
@@ -367,22 +370,22 @@ public class StdioLibraryModel implements ILibraryModel {
 	// we would need two writes, for the format %s even non-determinstically many writes! Determining whether this
 	// occurs in the format, is only possible if the format is a literal (it can be any expression in general).
 	private Result handleScanf(final String name, final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final int firstArgumentToWrite) {
+			final ILocation loc, final int formatPosition) {
 		// The application is only marked as an overapproximation, if we read from a string.
 		final boolean markAsOverapproximation = name.startsWith("sscanf") || name.startsWith("swscanf");
 		final IASTInitializerClause[] arguments = node.getArguments();
+		final IASTInitializerClause formatArgument = arguments[formatPosition];
+		// WORKAROUND for #761: We always report unknown, whenever %s, %2c, ... occurs in the pattern.
+		if (mHelper.isStringLiteral(formatArgument) && !Pattern.matches(".*?%(s|\\d+c).*", formatArgument.toString())) {
+			// TODO: Extract format
+		} else {
+			return mHelper.handleUnsupportedFunctionByOverapproximation(main, loc, name,
+					new CPrimitive(CPrimitives.LONG));
+		}
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		for (int i = 0; i < arguments.length; i++) {
-			if (i == firstArgumentToWrite - 1 && mHelper.isStringLiteral(arguments[i])) {
-				final String format = arguments[i].toString();
-				// WORKAROUND for #761: We always report unknown, whenever %s, %2c, ... occurs in the pattern.
-				if (Pattern.matches(".*?%(s|\\d+c).*", format)) {
-					return mHelper.handleUnsupportedFunctionByOverapproximation(main, loc, name,
-							new CPrimitive(CPrimitives.LONG));
-				}
-			}
-			if (i < firstArgumentToWrite) {
+			if (i <= formatPosition) {
 				// Don't dispatch string literals
 				if (!mHelper.isStringLiteral(arguments[i])) {
 					builder.addAllExceptLrValue(
@@ -398,6 +401,11 @@ public class StdioLibraryModel implements ILibraryModel {
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, valueType, SFO.AUXVAR.NONDET);
 			builder.addAuxVarWithDeclaration(auxvar);
 			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), valueType, builder);
+			// TODO: Write based on the format. Requires handling of the following cases:
+			// - assignment of non-deterministic bytes (%s)
+			// - assignment of fixed bytes (e.g., %3c)
+			// - assignment of single primitive (e.g., %d, %f)
+			// - assignment of single primitive with additional constraints (e.g., %2d, %3f is between -9 and 99)
 			final ExpressionResult writeResult =
 					mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), auxvar.getExp());
 			if (markAsOverapproximation) {
@@ -416,7 +424,7 @@ public class StdioLibraryModel implements ILibraryModel {
 		final var retVal = returnAuxVar.getExp();
 		final var greaterMin = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_lessEqual, minValue, retValueType, retVal, retValueType);
-		final int writtenArgs = arguments.length - firstArgumentToWrite;
+		final int writtenArgs = arguments.length - formatPosition - 1;
 		final var maxValue = mExpressionTranslation.constructLiteralForIntegerType(loc, retValueType,
 				BigInteger.valueOf(writtenArgs));
 		final var smallerMax = mExpressionTranslation.constructBinaryComparisonExpression(loc,
@@ -428,6 +436,50 @@ public class StdioLibraryModel implements ILibraryModel {
 		}
 
 		return builder.build();
+	}
+
+	private static List<Pair<Integer, ICType>> parseFormat(final String formatString) {
+		// See table here: https://en.cppreference.com/w/c/io/fscanf
+		return Pattern.compile("%(\\d*)((h|hh|l|ll|j|z|t|L)?(c|s|d|i|u|o|x|X|n|a|A|e|E|f|F|g|G|p))")
+				.matcher(formatString).results()
+				.map(x -> new Pair<>(x.group(1).isEmpty() ? null : Integer.parseInt(x.group(1)), parseType(x.group(2))))
+				.toList();
+	}
+
+	private static ICType parseType(final String formatSpecifier) {
+		switch (formatSpecifier) {
+		case "c", "s":
+			return new CPrimitive(CPrimitives.CHAR);
+		case "d":
+			return new CPrimitive(CPrimitives.INT);
+		case "hhd":
+			return new CPrimitive(CPrimitives.SCHAR);
+		case "hd":
+			return new CPrimitive(CPrimitives.SHORT);
+		case "ld":
+			return new CPrimitive(CPrimitives.LONG);
+		case "lld":
+			return new CPrimitive(CPrimitives.LONGLONG);
+		case "u":
+			return new CPrimitive(CPrimitives.UINT);
+		case "hhu":
+			return new CPrimitive(CPrimitives.UCHAR);
+		case "hu":
+			return new CPrimitive(CPrimitives.USHORT);
+		case "lu":
+			return new CPrimitive(CPrimitives.ULONG);
+		case "llu":
+			return new CPrimitive(CPrimitives.ULONGLONG);
+		case "a", "A", "e", "E", "f", "F", "g", "G":
+			return new CPrimitive(CPrimitives.FLOAT);
+		case "la", "lA", "le", "lE", "lf", "lF", "lg", "lG":
+			return new CPrimitive(CPrimitives.DOUBLE);
+		case "La", "LA", "Le", "LE", "Lf", "LF", "Lg", "LG":
+			return new CPrimitive(CPrimitives.LONGDOUBLE);
+		default:
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(),
+					"Unsupported format specifier: " + formatSpecifier);
+		}
 	}
 
 	private ExpressionResult handlePrintFunction(final IDispatcher main, final IASTFunctionCallExpression node,
