@@ -1085,7 +1085,7 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation buildBreak(final BoogieIcfgLocation currentLocation, final BreakStatement st) {
-			ModelUtils.copyAnnotations(st, mWhileExits.peek());
+			ModelUtils.copyAnnotationsExcept(st, mWhileExits.peek(), ILocation.class);
 			new LoopExitAnnotation(LoopExitType.BREAK).annotate(mWhileExits.peek());
 			return mWhileExits.peek();
 		}
