@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -347,8 +348,8 @@ public class StdioLibraryModel implements ILibraryModel {
 						mExpressionTranslation.getCTypeOfPointerComponents()));
 		body.add(incrementCtr);
 
-		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
-				body.toArray(Statement[]::new));
+		final var loop = new WhileStatement(LocationFactory.createIgnoreLocation(loc), new WildcardExpression(loc),
+				new LoopInvariantSpecification[0], body.toArray(Statement[]::new));
 		builder.addStatement(loop);
 
 		final var ret =
