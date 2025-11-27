@@ -253,8 +253,8 @@ public class StdioLibraryModel implements ILibraryModel {
 						mExpressionTranslation.getCTypeOfPointerComponents()));
 		body.add(incrementCtr);
 
-		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
-				body.toArray(Statement[]::new));
+		final var loop = new WhileStatement(LocationFactory.createIgnoreLocation(loc), new WildcardExpression(loc),
+				new LoopInvariantSpecification[0], body.toArray(Statement[]::new));
 		builder.addStatement(loop);
 
 		final var ret =

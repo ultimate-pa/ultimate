@@ -518,8 +518,9 @@ public abstract class ExpressionTranslation {
 		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox(reason, loc).annotate(assertFalse);
 		new Check(Spec.UNSUPPORTED_FEATURE).annotate(assertFalse);
-		return new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
-				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
+		return new WhileStatement(LocationFactory.createIgnoreLocation(loc),
+				ExpressionFactory.createBooleanLiteral(loc, true), new LoopInvariantSpecification[0],
+				new Statement[] { assertFalse });
 	}
 
 	public abstract IFloatingPointHandler getFloatingPointHandler();
