@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: IcfgBuilder
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder;singleton:=true
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.3.0
+Bundle-Version: 0.3.1
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,

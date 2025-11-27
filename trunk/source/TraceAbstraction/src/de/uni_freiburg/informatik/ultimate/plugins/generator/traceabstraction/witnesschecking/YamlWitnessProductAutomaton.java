@@ -255,17 +255,8 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			return false;
 		}
 		final Location witnessLoc = waypoint.getLocation();
-		if (programLoc.getStartLine() == witnessLoc.getLine()) {
-			if (witnessLoc.getColumn() == null) {
-				return true;
-			}
-			if (programLoc.toString().contains("?")) {
-				throw new UnsupportedOperationException(
-						"Location matching for conditional expressions is not supported yet.");
-			}
-			return witnessLoc.getColumn() == programLoc.getStartColumn();
-		}
-		return false;
+		return programLoc.getStartLine() == witnessLoc.getLine()
+				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getStartColumn());
 	}
 
 	/** Returns true if the end line and column of the statement match the location of the waypoint */
