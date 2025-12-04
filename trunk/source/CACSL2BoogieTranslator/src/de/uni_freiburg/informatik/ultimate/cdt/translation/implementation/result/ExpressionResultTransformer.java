@@ -445,15 +445,15 @@ public class ExpressionResultTransformer {
 		}
 
 		final AuxVarInfo newArrayAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, arrayType, SFO.AUXVAR.ARRAYCOPY);
+		final LRValue resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAuxVarWithDeclaration(newArrayAuxvar);
-		builder.setLrValue(new RValue(newArrayAuxvar.getExp(), arrayType));
 
 		if (arrayType.isIncomplete()) {
 			// TODO Frank 2023-11-14: This is just a workaround! We just return a non-deterministic value here, because
 			// we need it for structs with flexible arrays. The value is not used, we just need to be type-consistent
 			// and should not crash.
-			return builder.build();
+			return builder.setLrValue(resultValue).build();
 		}
 
 		final BigInteger boundBigInteger =
@@ -489,6 +489,7 @@ public class ExpressionResultTransformer {
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(assRex).setLrValue(assRex.getLrValue());
 
 		}
+		builder.setOrResetLrValue(resultValue);
 		return builder.build();
 	}
 
