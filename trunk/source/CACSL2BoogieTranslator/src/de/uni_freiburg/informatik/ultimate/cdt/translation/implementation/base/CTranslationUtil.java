@@ -133,7 +133,7 @@ public class CTranslationUtil {
 	public static boolean isVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
 		CArray currentArrayType = cArrayType;
 		while (true) {
-			if (typeSizes.extractIntegerValue(currentArrayType.getBound(), currentArrayType.getValueType()) == null) {
+			if (typeSizes.extractIntegerValue(currentArrayType.getBound(), currentArrayType.getBoundType()) == null) {
 				// found a variable length bound
 				return true;
 			}
