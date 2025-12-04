@@ -1993,7 +1993,6 @@ public class CHandler {
 		 * declarator: (e.g. (int [])): then the size depends on the initializer - otherwise: the size is given by the
 		 * CType
 		 */
-		mTypeSizeComputer.constructBytesizeExpression(loc, cType);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
