@@ -1219,9 +1219,12 @@ public class InitializationHandler {
 		ICType cellType = null;
 		if (targetCType instanceof final CArray array) {
 			cellType = array.getValueType();
-			bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
-			if (CTranslationUtil.isToplevelVarlengthArray(array, mTypeSizes)) {
-				throw new UnsupportedOperationException("varlength not yet supported here");
+			if (array.isIncomplete()) {
+				bound = initializerResults.size();
+				array.complete(mExpressionTranslation.constructLiteralForIntegerType(loc,
+						(CPrimitive) array.getBoundType(), BigInteger.valueOf(bound)));
+			} else {
+				bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
 			}
 		} else {
 			bound = ((CStructOrUnion) targetCType).getFieldCount();
