@@ -69,7 +69,7 @@ public class CddToSmt {
 	private final Term mFalse;
 	private final IIdentifierTranslator[] mIdentifierTranslators;
 	private final IReqSymbolTable mReqSymboltable;
-	private final Boogie2SMT mBoogieToSmt;
+	protected final Boogie2SMT mBoogieToSmt;
 	private final PeaResultUtil mResultUtil;
 
 	public CddToSmt(final IUltimateServiceProvider services, final PeaResultUtil resultUtil, final Script script,

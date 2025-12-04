@@ -71,7 +71,7 @@ public class MusEnumerationScript extends WrapperScript {
 
 	ScopedArrayList<Term> mRememberedAssertions;
 	int mCustomNameId;
-	boolean mAssertedTermsAreUnsat;
+	public boolean mAssertedTermsAreUnsat;
 
 	EnumOption<HeuristicsType> mInterpolationHeuristic;
 	DoubleOption mTolerance;
@@ -372,7 +372,7 @@ public class MusEnumerationScript extends WrapperScript {
 		return executeReMus(translator);
 	}
 
-	private ArrayList<MusContainer> executeReMus(final Translator translator) {
+	public ArrayList<MusContainer> executeReMus(final Translator translator) {
 		if (translator.getNumberOfConstraints() != 0) {
 			throw new SMTLIBException("Translator must be new.");
 		}
@@ -496,9 +496,9 @@ public class MusEnumerationScript extends WrapperScript {
 
 	private String findName(final Annotation[] annotations) {
 		String name = null;
-		for (int i = 0; i < annotations.length; i++) {
-			if (annotations[i].getKey().equals(":named")) {
-				name = (String) annotations[i].getValue();
+		for (final Annotation annotation : annotations) {
+			if (annotation.getKey().equals(":named")) {
+				name = (String) annotation.getValue();
 			}
 		}
 		return name;
@@ -598,7 +598,7 @@ public class MusEnumerationScript extends WrapperScript {
 		default:
 			throw new SMTLIBException("Unknown Enum for Interpolation heuristic");
 		}
-		if (mLogAdditionalInformation.getValue() == true) {
+		if (mLogAdditionalInformation.getValue()) {
 			final String heuristic = mInterpolationHeuristic.getValue().toString();
 			mLogger.fatal("Heuristic: " + heuristic);
 			final HeuristicsType heurType = mInterpolationHeuristic.getValue();
