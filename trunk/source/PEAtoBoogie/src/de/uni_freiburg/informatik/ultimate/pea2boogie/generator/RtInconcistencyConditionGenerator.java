@@ -130,6 +130,8 @@ public class RtInconcistencyConditionGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final boolean mSeparateInvariantHandling;
+	private final PeaResultUtil mPeaResultUtil;
+	private final BoogieDeclarations mBoogieDeclarations;
 	private final CddToSmt mCddToSmt;
 
 	private final ConstructionCache<Term, Term> mProjectionCache;
@@ -186,7 +188,10 @@ public class RtInconcistencyConditionGenerator {
 		mGeneratedChecks = 0;
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
-		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
+
+		mPeaResultUtil = peaResultUtil;
+		mBoogieDeclarations = boogieDeclarations;
+		mCddToSmt = new CddToSmt(mServices, mPeaResultUtil, mScript, mBoogie2Smt, mBoogieDeclarations, mReqSymboltable);
 
 		final boolean useEpsilon =
 				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(Pea2BoogiePreferences.LABEL_USE_EPSILON);
@@ -649,12 +654,11 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
-			final int rTIPreCheckRange, boolean preCheckFullSet, boolean onlyPreCheck) {
-		final RTInconsistencyPreCheck rtiPreCheck = new RTInconsistencyPreCheck();
+			final int rTIPreCheckRange, final boolean preCheckFullSet, final boolean onlyPreCheck) {
 
-		// TODO Auto-generated method stub
-		return rtiPreCheck.doRtiPreCheck(reqPeas, mLogger, mScript, mCddToSmt, mServices, mManagedScript,
-				rTIPreCheckRange, preCheckFullSet, onlyPreCheck);
+		return new RtInconsistencyPreCheckMus(reqPeas, mPeaResultUtil, mBoogie2Smt, mBoogieDeclarations,
+				mReqSymboltable, mScript, mManagedScript, mServices, mLogger).check();
+
 	}
 
 }
