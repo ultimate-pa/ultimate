@@ -139,7 +139,7 @@ public final class CArray implements ICType {
 		if (this == obj) {
 			return true;
 		}
-		if (!super.equals(obj) || getClass() != obj.getClass()) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final CArray other = (CArray) obj;
