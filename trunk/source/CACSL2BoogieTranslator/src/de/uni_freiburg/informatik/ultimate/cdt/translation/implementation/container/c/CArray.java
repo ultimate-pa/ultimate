@@ -88,7 +88,7 @@ public final class CArray implements ICType {
 	}
 
 	public void complete(final Expression bound) {
-		if (!isIncomplete()) {
+		if (mBound != null) {
 			throw new AssertionError("only incomplete arrays can be completed");
 		}
 		mBound = bound;
