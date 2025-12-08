@@ -97,7 +97,7 @@ public class CTranslationUtil {
 		CArray currentArrayType = cArrayType;
 
 		for (int i = 0; i < arrayIndex.size(); i++) {
-			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBoundType().getUnderlyingType();
+			final CPrimitive currentIndexType = cArrayType.getBoundType();
 			index[i] = typeSizes.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.get(i).toString()));
 
@@ -118,7 +118,7 @@ public class CTranslationUtil {
 			final Integer arrayIndex, final TypeSizes typeSizes) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
-		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBoundType();
+		final CPrimitive currentIndexType = cArrayType.getBoundType();
 		final Expression index =
 				typeSizes.constructLiteralForIntegerType(loc, currentIndexType, new BigInteger(arrayIndex.toString()));
 

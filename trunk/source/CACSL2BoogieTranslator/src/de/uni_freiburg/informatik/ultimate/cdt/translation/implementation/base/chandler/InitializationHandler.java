@@ -1224,8 +1224,8 @@ public class InitializationHandler {
 				// If an array of unknown size is initialized, its size is determined by the largest indexed element
 				// with an explicit initializer. The array type is completed at the end of its initializer list.
 				bound = initializerResults.size();
-				array.complete(mExpressionTranslation.constructLiteralForIntegerType(loc,
-						(CPrimitive) array.getBoundType(), BigInteger.valueOf(bound)));
+				array.complete(mExpressionTranslation.constructLiteralForIntegerType(loc, array.getBoundType(),
+						BigInteger.valueOf(bound)));
 			} else {
 				bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
 			}
