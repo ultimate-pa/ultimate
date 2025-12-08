@@ -1342,7 +1342,7 @@ public class CHandler {
 			// the innermost type is the value type.
 			ICType arrayType = resType.getCType();
 
-			final CPrimitive arrayIndexCtype = mTypeSizes.getSizeT();
+			final CPrimitive arrayIndexCtype = mExpressionTranslation.getCTypeOfPointerComponents();
 
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
@@ -1359,7 +1359,7 @@ public class CHandler {
 					final ExpressionResult dispatched = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					final ExpressionResult switched = mExprResultTransformer.switchToRValue(dispatched, loc, node);
 					final ExpressionResult converted =
-							mExpressionTranslation.convertIntToInt(loc, switched, mTypeSizes.getSizeT());
+							mExpressionTranslation.convertIntToInt(loc, switched, arrayIndexCtype);
 					expressionResults.add(converted);
 					final RValue rValue = (RValue) converted.getLrValue();
 					bound = rValue.getValue();
