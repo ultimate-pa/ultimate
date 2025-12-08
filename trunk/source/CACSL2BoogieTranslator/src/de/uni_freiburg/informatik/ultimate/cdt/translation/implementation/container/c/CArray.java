@@ -52,7 +52,7 @@ public final class CArray implements ICType {
 	 * Array bound. Note that we use nesting of array types for multidimensional array types
 	 */
 	private Expression mBound;
-	private final ICType mBoundType;
+	private final CPrimitive mBoundType;
 	private final ICType mValueType;
 
 	/**
@@ -63,7 +63,7 @@ public final class CArray implements ICType {
 	 * @param valueType
 	 *            the type of the array.
 	 */
-	public CArray(final Expression bound, final ICType boundType, final ICType valueType) {
+	public CArray(final Expression bound, final CPrimitive boundType, final ICType valueType) {
 		mBound = bound;
 		mBoundType = boundType;
 		mValueType = valueType;
@@ -76,7 +76,7 @@ public final class CArray implements ICType {
 		return mBound;
 	}
 
-	public ICType getBoundType() {
+	public CPrimitive getBoundType() {
 		return mBoundType;
 	}
 

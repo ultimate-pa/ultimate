@@ -1352,7 +1352,7 @@ public class CHandler {
 			while (it.hasPrevious()) {
 				final IASTArrayModifier am = it.previous();
 				final Expression bound;
-				final ICType boundType;
+				final CPrimitive boundType;
 				if (am.getConstantExpression() != null) {
 					// case where we have a number between the brackets,
 					// e.g., a[23] or a[n+1]
@@ -1363,7 +1363,7 @@ public class CHandler {
 					expressionResults.add(converted);
 					final RValue rValue = (RValue) converted.getLrValue();
 					bound = rValue.getValue();
-					boundType = rValue.getCType();
+					boundType = (CPrimitive) rValue.getCType();
 				} else if (am.getConstantExpression() == null
 						&& arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
 					// the innermost array modifier may be empty, if there is an initializer; like

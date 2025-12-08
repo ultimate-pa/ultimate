@@ -183,13 +183,13 @@ public class ArrayHandler {
 			final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftlrValue).getLhs();
 
 			final Expression bound = lhsArrayType.getBound();
-			final ICType boundType = lhsArrayType.getBoundType();
+			final CPrimitive boundType = lhsArrayType.getBoundType();
 
 			// The following is not in the standard, since there everything
 			// is defined via pointers. However, we have to make the subscript
 			// compatible to the type of the dimension of the array
 			final ExpressionResult convertedSubscript =
-					mExpressionTranslation.convertIntToInt(loc, subscript, (CPrimitive) boundType);
+					mExpressionTranslation.convertIntToInt(loc, subscript, boundType);
 			final RValue index = (RValue) convertedSubscript.getLrValue();
 			final ArrayLHS newInnerArrayLHS;
 			if (oldInnerArrayLHS instanceof ArrayLHS) {
@@ -243,7 +243,7 @@ public class ArrayHandler {
 	 *            {@link Expression} that represents the dimension that corresponds to the index
 	 */
 	private void addArrayBoundsCheckForCurrentIndex(final ILocation loc, final RValue currentIndex,
-			final Expression currentDimension, final ICType currentBoundType,
+			final Expression currentDimension, final CPrimitive currentBoundType,
 			final ExpressionResultBuilder exprResult) {
 		if (mSettings.checkPointerDerefValidity() == CheckMode.IGNORE) {
 			// do not check anything
@@ -262,9 +262,9 @@ public class ArrayHandler {
 		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
 		final Expression nonNegative = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_lessEqual, zero, indexType, currentIndex.getValue(), indexType);
-		final Expression notTooBig = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-				IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, currentDimension,
-				(CPrimitive) currentBoundType.getUnderlyingType());
+		final Expression notTooBig =
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
+						currentIndex.getValue(), indexType, currentDimension, currentBoundType);
 		inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		switch (mSettings.checkPointerDerefValidity()) {
 		case CHECK:
