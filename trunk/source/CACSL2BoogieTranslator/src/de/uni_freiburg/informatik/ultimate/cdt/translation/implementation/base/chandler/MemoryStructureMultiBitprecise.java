@@ -59,16 +59,11 @@ public class MemoryStructureMultiBitprecise extends MemoryStructureBase {
 
 	@Override
 	public HeapDataArray getDataHeapArray(final CPrimitives primitive) {
-		switch (primitive.getPrimitiveCategory()) {
-		case FLOATTYPE:
-			return getDataHeapArrayForGivenGeneralType(primitive, mSize2HeapFloatingArray);
-		case INTTYPE:
-			return getDataHeapArrayForGivenGeneralType(primitive, mSize2HeapIntegerArray);
-		case VOID:
-			throw new AssertionError("void on the heap???");
-		default:
-			throw new AssertionError("unknown primitive category");
-		}
+		return switch (primitive.getPrimitiveCategory()) {
+		case FLOATTYPE -> getDataHeapArrayForGivenGeneralType(primitive, mSize2HeapFloatingArray);
+		case INTTYPE -> getDataHeapArrayForGivenGeneralType(primitive, mSize2HeapIntegerArray);
+		case VOID -> throw new AssertionError("void on the heap???");
+		};
 	}
 
 	private HeapDataArray getDataHeapArrayForGivenGeneralType(final CPrimitives primitive,
