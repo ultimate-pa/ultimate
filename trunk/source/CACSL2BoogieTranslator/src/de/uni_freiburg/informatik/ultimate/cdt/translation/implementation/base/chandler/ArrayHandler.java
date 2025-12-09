@@ -249,7 +249,6 @@ public class ArrayHandler {
 			// do not check anything
 			return;
 		}
-
 		final Expression inRange;
 		// 2015-09-21 Matthias:
 		// This check will fail in the bitvector translation if the typesize
