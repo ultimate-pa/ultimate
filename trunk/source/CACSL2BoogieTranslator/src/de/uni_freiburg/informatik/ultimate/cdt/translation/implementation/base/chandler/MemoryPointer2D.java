@@ -118,8 +118,8 @@ public final class MemoryPointer2D extends MemoryPointerBase {
 	 * @return The offset.
 	 */
 	public Expression pointerOffset(final Expression pointer, final ILocation loc) {
-		if (pointer instanceof StructConstructor) {
-			return ((StructConstructor) pointer).getFieldValues()[1];
+		if (pointer instanceof final StructConstructor sc) {
+			return sc.getFieldValues()[1];
 		}
 		return ExpressionFactory.constructStructAccessExpression(loc, pointer, SFO.POINTER_OFFSET);
 	}
