@@ -113,9 +113,6 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 			} else {
 				throw new UnsupportedOperationException("Unknown pointer type " + mMemoryPointer.getClass());
 			}
-		default:
-			throw new UnsupportedOperationException(
-					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
 		};
 	}
 
