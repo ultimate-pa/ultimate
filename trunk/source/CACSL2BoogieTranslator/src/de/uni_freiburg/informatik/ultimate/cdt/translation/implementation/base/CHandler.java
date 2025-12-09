@@ -1352,7 +1352,6 @@ public class CHandler {
 			while (it.hasPrevious()) {
 				final IASTArrayModifier am = it.previous();
 				final Expression bound;
-				final CPrimitive boundType;
 				if (am.getConstantExpression() != null) {
 					// case where we have a number between the brackets,
 					// e.g., a[23] or a[n+1]
@@ -1363,7 +1362,6 @@ public class CHandler {
 					expressionResults.add(converted);
 					final RValue rValue = (RValue) converted.getLrValue();
 					bound = rValue.getValue();
-					boundType = (CPrimitive) rValue.getCType();
 				} else if (am.getConstantExpression() == null
 						&& arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
 					// the innermost array modifier may be empty, if there is an initializer; like
@@ -1376,7 +1374,6 @@ public class CHandler {
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) arrDecl.getInitializer());
 						bound = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
 								BigInteger.valueOf(intSizeFactor));
-						boundType = arrayIndexCtype;
 					} else if (resType.getCType() instanceof CFunction) {
 						// if we have an array of function pointers,
 						// the initializer is stored in the parent node
@@ -1391,18 +1388,16 @@ public class CHandler {
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) fundecl.getInitializer());
 						bound = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
 								BigInteger.valueOf(intSizeFactor));
-						boundType = arrayIndexCtype;
 					} else {
 						// we have an incomplete array type without an initializer --
 						// this may happen in a function parameter or as a flexible array in structs
 						bound = null;
-						boundType = arrayIndexCtype;
 					}
 
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-				arrayType = new CArray(bound, boundType, arrayType);
+				arrayType = new CArray(bound, arrayIndexCtype, arrayType);
 			}
 			final ExpressionResult allResults = new ExpressionResultBuilder()
 					.addAllExceptLrValue(expressionResults.toArray(new ExpressionResult[expressionResults.size()]))
