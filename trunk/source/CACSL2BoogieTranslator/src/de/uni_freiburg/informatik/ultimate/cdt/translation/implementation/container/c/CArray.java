@@ -51,7 +51,7 @@ public final class CArray implements ICType {
 	/**
 	 * Array bound. Note that we use nesting of array types for multidimensional array types
 	 */
-	private Expression mBound;
+	private final Expression mBound;
 	private final CPrimitive mBoundType;
 	private final ICType mValueType;
 
@@ -85,13 +85,6 @@ public final class CArray implements ICType {
 	 */
 	public ICType getValueType() {
 		return mValueType;
-	}
-
-	public void complete(final Expression bound) {
-		if (mBound != null) {
-			throw new AssertionError("only incomplete arrays can be completed");
-		}
-		mBound = bound;
 	}
 
 	@Override

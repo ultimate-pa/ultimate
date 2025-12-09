@@ -1219,16 +1219,7 @@ public class InitializationHandler {
 		ICType cellType = null;
 		if (targetCType instanceof final CArray array) {
 			cellType = array.getValueType();
-			if (array.isIncomplete()) {
-				// C11 6.7.9.22:
-				// If an array of unknown size is initialized, its size is determined by the largest indexed element
-				// with an explicit initializer. The array type is completed at the end of its initializer list.
-				bound = initializerResults.size();
-				array.complete(mExpressionTranslation.constructLiteralForIntegerType(loc, array.getBoundType(),
-						BigInteger.valueOf(bound)));
-			} else {
-				bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
-			}
+			bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
 		} else {
 			bound = ((CStructOrUnion) targetCType).getFieldCount();
 		}

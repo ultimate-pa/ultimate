@@ -1942,11 +1942,20 @@ public class CHandler {
 		final CDeclaration cDeclaration = declaratorResult.getDeclaration();
 		assert !cDeclaration.hasInitializer() : "unexpected, inspect this case";
 		assert !cDeclaration.isOnHeap() : "unexpected, inspect this case";
-		final ICType cType = cDeclaration.getType().getUnderlyingType();
+		ICType cType = cDeclaration.getType().getUnderlyingType();
 
 		// translate initializer
 		final IASTInitializer initializer = node.getInitializer();
 		final InitializerResult ir = (InitializerResult) main.dispatch(initializer);
+
+		if (cType instanceof final CArray cArray && cType.isIncomplete()) {
+			// C11 6.7.9.22:
+			// If an array of unknown size is initialized, its size is determined by the largest indexed element with an
+			// explicit initializer. The array type is completed at the end of its initializer list.
+			cType = new CArray(mExpressionTranslation.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(ir.getList().size())),
+					cArray.getBoundType(), cArray.getValueType());
+		}
 
 		final boolean isAddressTaken = node.getParent() instanceof IASTUnaryExpression
 				&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
