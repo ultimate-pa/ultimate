@@ -49,10 +49,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
  */
 public final class CArray implements ICType {
 	/**
-	 * Array bound. Note that we use nesting of array types for multidimensional array types
+	 * Array bound. We use null to indicate that an array has a variable length.
 	 */
 	private final Expression mBound;
 	private final CPrimitive mBoundType;
+	/**
+	 * Type of the array value. We use nesting of array types for multidimensional array types.
+	 */
 	private final ICType mValueType;
 
 	/**
