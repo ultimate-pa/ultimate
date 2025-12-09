@@ -1358,8 +1358,7 @@ public class CHandler {
 					final ExpressionResult switched = mExprResultTransformer.switchToRValue(dispatched, loc, node);
 					final ExpressionResult converted = mExpressionTranslation.convertIntToInt(loc, switched, boundType);
 					expressionResults.add(converted);
-					final RValue rValue = (RValue) converted.getLrValue();
-					bound = rValue.getValue();
+					bound = converted.getLrValue().getValue();
 				} else if (am.getConstantExpression() == null
 						&& arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
 					// the innermost array modifier may be empty, if there is an initializer; like
