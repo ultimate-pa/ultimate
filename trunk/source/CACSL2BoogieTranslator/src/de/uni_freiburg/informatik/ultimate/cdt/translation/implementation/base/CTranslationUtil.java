@@ -130,35 +130,14 @@ public class CTranslationUtil {
 		return new LocalLValue(alhs, cellType, null);
 	}
 
-	public static boolean isVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		CArray currentArrayType = cArrayType;
-		while (true) {
-			if (typeSizes.extractIntegerValue(currentArrayType.getBound(), currentArrayType.getBoundType()) == null) {
-				// found a variable length bound
-				return true;
-			}
-			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
-			if (valueType instanceof CArray) {
-				currentArrayType = (CArray) valueType;
-			} else {
-				// reached at non-array type, found no varlength bound
-				return false;
-			}
-		}
-	}
-
-	public static boolean isToplevelVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		return typeSizes.extractIntegerValue(cArrayType.getBound(), cArrayType.getBoundType()) == null;
-	}
-
 	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		if (CTranslationUtil.isVarlengthArray(cArrayType, typeSizes)) {
-			throw new IllegalArgumentException("only call this for non-varlength array types");
-		}
 		CArray currentArrayType = cArrayType;
 
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
+			if (currentArrayType.isIncomplete()) {
+				throw new IllegalArgumentException("Cannot get the dimensions of an incomplete array.");
+			}
 			result.add(Integer.parseUnsignedInt(typeSizes
 					.extractIntegerValue(currentArrayType.getBound(), currentArrayType.getBoundType()).toString()));
 
@@ -197,9 +176,6 @@ public class CTranslationUtil {
 			throw new IllegalArgumentException("This array type is incomplete! Cannot extract actual dimensions.");
 		}
 		final BigInteger extracted = typeSizes.extractIntegerValue(cArrayType.getBound(), cArrayType.getBoundType());
-		if (extracted == null) {
-			throw new IllegalArgumentException("only call this for non-varlength first dimension types");
-		}
 		return Integer.parseUnsignedInt(extracted.toString());
 	}
 
