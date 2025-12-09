@@ -217,11 +217,15 @@ public class StructHandler {
 
 		final ICType resultType = structType.getFieldTypes()[fieldIndex];
 
-		final ExpressionResult call = unchecked ? mMemoryHandler.getReadUnchecked(newPointer, resultType)
-				: mMemoryHandler.getReadCall(newPointer, resultType);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		resultBuilder.addAllExceptLrValue(call);
-		resultBuilder.setLrValue(new RValue(call.getLrValue().getValue(), resultType));
+		if (unchecked) {
+			final Expression read = mMemoryHandler.getReadUnchecked(newPointer, resultType);
+			resultBuilder.setLrValue(new RValue(read, resultType));
+		} else {
+			final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType);
+			resultBuilder.addAllExceptLrValue(call);
+			resultBuilder.setLrValue(new RValue(call.getLrValue().getValue(), resultType));
+		}
 		return resultBuilder.build();
 	}
 

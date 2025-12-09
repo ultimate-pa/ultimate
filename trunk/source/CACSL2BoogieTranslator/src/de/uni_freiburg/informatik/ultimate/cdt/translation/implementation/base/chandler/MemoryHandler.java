@@ -663,9 +663,9 @@ public class MemoryHandler {
 	 *            the address to read from.
 	 * @param resultType
 	 *            the CType of the pointer
-	 * @return an ExpressionResult consisting only of a array access to the memory array.
+	 * @return an array access to the memory array.
 	 */
-	public ExpressionResult getReadUnchecked(final Expression address, final ICType resultType) {
+	public Expression getReadUnchecked(final Expression address, final ICType resultType) {
 		final int byteSize;
 		if (resultType instanceof CPointer) {
 			byteSize = mTypeSizes.getSizeOfPointer();
@@ -675,8 +675,7 @@ public class MemoryHandler {
 			throw new AssertionError("We only support reading primitive or pointer types");
 		}
 		final ILocation loc = address.getLocation();
-		return new ExpressionResult(new RValue(
-				readFromHeap(loc, determineMemoryArrayForType(resultType), address, resultType, byteSize), resultType));
+		return readFromHeap(loc, determineMemoryArrayForType(resultType), address, resultType, byteSize);
 	}
 
 	private String determineReadProcedure(final ICType resultType, final ILocation loc) throws AssertionError {
