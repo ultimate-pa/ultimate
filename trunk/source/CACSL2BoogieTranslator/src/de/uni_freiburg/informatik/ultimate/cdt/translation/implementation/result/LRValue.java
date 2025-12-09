@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -118,9 +117,6 @@ public abstract class LRValue {
 			return true;
 		}
 
-		if (value instanceof StructConstructor) {
-			return memoryPointer.isNullPointer(value);
-		}
-		return false;
+		return memoryPointer.isNullPointer(value);
 	}
 }

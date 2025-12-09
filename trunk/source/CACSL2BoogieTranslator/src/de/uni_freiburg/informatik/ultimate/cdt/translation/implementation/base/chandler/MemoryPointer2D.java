@@ -167,14 +167,10 @@ public final class MemoryPointer2D extends MemoryPointerBase {
 
 	@Override
 	public boolean isNullPointer(final Expression ptr) {
-		final StructConstructor sc = (StructConstructor) ptr;
-		if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
+		return ptr instanceof final StructConstructor sc && sc.getFieldValues().length == 2
+				&& sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
 				&& sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET)
 				&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0]))
-				&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
-			return true;
-		}
-
-		return false;
+				&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]));
 	}
 }

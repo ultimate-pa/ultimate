@@ -77,7 +77,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -907,9 +906,8 @@ public class MemoryHandler {
 	 * caution or improve this method.
 	 */
 	public boolean isNullPointerLiteral(final Expression expr) {
-
-		if (expr instanceof StructConstructor) {
-			return mMemoryPointer.isNullPointer(expr);
+		if (mMemoryPointer.isNullPointer(expr)) {
+			return true;
 		}
 
 		final BigInteger integerValue = mTypeSizes.extractIntegerValue(expr, new CPrimitive(CPrimitives.LONG));
