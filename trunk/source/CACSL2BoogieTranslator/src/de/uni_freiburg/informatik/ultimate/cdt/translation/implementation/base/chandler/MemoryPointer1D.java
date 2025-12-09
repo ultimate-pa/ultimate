@@ -147,15 +147,10 @@ public final class MemoryPointer1D extends MemoryPointerBase {
 		final Expression pointerRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
 				right.getLrValue().getValue(), SFO.POINTER_BASE, expressionTranslation);
 
-		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
-		case CHECK:
-		case ASSUME:
-			return ExpressionFactory.createBooleanLiteral(loc, true);
-		case IGNORE:
-			return pointerRelation;
-		default:
-			throw new AssertionError("unknown value");
-		}
+		return switch (mPointerSubtractionAndComparisonValidityCheckMode) {
+		case CHECK, ASSUME -> ExpressionFactory.createBooleanLiteral(loc, true);
+		case IGNORE -> pointerRelation;
+		};
 	}
 
 	@Override

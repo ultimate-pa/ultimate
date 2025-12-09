@@ -144,18 +144,13 @@ public final class MemoryPointer2D extends MemoryPointerBase {
 		final Expression offsetRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
 				right.getLrValue().getValue(), SFO.POINTER_OFFSET, expressionTranslation);
 
-		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
-		case CHECK:
-		case ASSUME:
-			return offsetRelation;
-		case IGNORE:
-			// use conjunction
-			return ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
-		// TODO: Do not use conjunction. Use nondeterministic value if baseEquality does not hold.
-		default:
-			throw new AssertionError("unknown value");
-		}
+		return switch (mPointerSubtractionAndComparisonValidityCheckMode) {
+		case CHECK, ASSUME -> offsetRelation;
 
+		// use conjunction
+		// TODO: Do not use conjunction. Use nondeterministic value if baseEquality does not hold.
+		case IGNORE -> ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
+		};
 	}
 
 	@Override
