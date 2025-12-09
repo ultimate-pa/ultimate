@@ -79,10 +79,6 @@ public class MemoryModel {
 		return mMemoryStructure.getReadProcedureName(primitive);
 	}
 
-	public String getUncheckedReadProcedureName(final CPrimitives primitive) {
-		return mMemoryStructure.getUncheckedReadProcedureName(primitive);
-	}
-
 	public String getWriteProcedureName(final CPrimitives primitive) {
 		return mMemoryStructure.getWriteProcedureName(primitive);
 	}
@@ -97,10 +93,6 @@ public class MemoryModel {
 
 	public String getReadPointerProcedureName() {
 		return mMemoryStructure.getReadPointerProcedureName();
-	}
-
-	public String getUncheckedReadPointerProcedureName() {
-		return mMemoryStructure.getUncheckedReadPointerProcedureName();
 	}
 
 	public String getWritePointerProcedureName() {
