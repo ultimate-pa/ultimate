@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
@@ -120,8 +121,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -1751,13 +1755,13 @@ public class MemoryHandler {
 	 * memory at the base address of the pointer. Furthermore, we check that the offset is greater than or equal to
 	 * zero.
 	 *
-	 * In case mPointerBaseValidity is CHECK, we construct the requires specification
+	 * In case {@code mSettings.checkPointerDerefValidity()} is CHECK, we construct the requires specification
 	 * <code>requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
 	 *
-	 * In case mPointerBaseValidity is CHECK, we construct the <b>free</b> requires specification
-	 * <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
+	 * In case {@code mSettings.checkPointerDerefValidity()} is ASSUME, we construct the <b>free</b> requires
+	 * specification <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
 	 *
-	 * In case mPointerBaseValidity is IGNORE, we construct nothing.
+	 * In case {@code mSettings.checkPointerDerefValidity()} is IGNORE, we construct nothing.
 	 *
 	 * @param loc
 	 *            location of translation unit
@@ -1769,17 +1773,36 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
 			final String ptrName, final String procedureName) {
-		return mMemoryModel.constructPointerTargetFullyAllocatedCheck(loc, size, ptrName, procedureName,
-				mSettings.checkPointerDerefValidity(), mSettings.isBitvectorTranslation(), mRequiredMemoryModelFeatures,
+		final var mode = mSettings.checkPointerDerefValidity();
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		final Expression ptrExpr =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+
+		final Expression offsetInAllocatedRange = mMemoryModel.constructPointerTargetFullyAllocatedCheckExpr(loc,
+				ptrExpr, size, mSettings.isBitvectorTranslation(), mRequiredMemoryModelFeatures,
 				mMemoryModelDeclarationsHandler);
+
+		final boolean isFreeRequires = mode == CheckMode.ASSUME;
+		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
+		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
+		check.annotate(spec);
+		return Collections.singletonList(spec);
 	}
 
 	/**
-	 * Construct specification that the pointer base address is valid. In case
-	 * {@link #getPointerBaseValidityCheckMode()} is ASSERTandASSUME, we add the requires specification
-	 * <code>requires #valid[#ptr!base]</code>. In case {@link #getPointerBaseValidityCheckMode()} is ASSERTandASSUME,
-	 * we add the <b>free</b> requires specification <code>free requires #valid[#ptr!base]</code>. In case
-	 * {@link #getPointerBaseValidityCheckMode()} is IGNORE, we add nothing.
+	 * Construct specification that the pointer base address is valid.
+	 *
+	 * In case {@code mSettings.checkPointerDerefValidity()} is CHECK, we add the requires specification
+	 * <code>requires #valid[#ptr!base]</code>.
+	 *
+	 * In case {@code mSettings.checkPointerDerefValidity()} is ASSUME, we add the <b>free</b> requires specification
+	 * <code>free requires #valid[#ptr!base]</code>.
+	 *
+	 * In case {@code mSettings.checkPointerDerefValidity()} is IGNORE, we add nothing.
 	 *
 	 * @param loc
 	 *            location of translation unit
@@ -1791,8 +1814,24 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName) {
-		return mMemoryModel.constructPointerBaseValidityCheck(loc, ptrName, procedureName,
-				mSettings.checkPointerDerefValidity(), mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		final var mode = mSettings.checkPointerDerefValidity();
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		final Expression ptrExpr =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+
+		final Expression isValid = mMemoryModel.constructPointerBaseValidityCheckExpr(loc, ptrExpr,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+
+		final boolean isFreeRequires = mode == CheckMode.ASSUME;
+
+		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
+		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
+		check.annotate(spec);
+		return Collections.singletonList(spec);
 	}
 
 	/**

@@ -37,8 +37,6 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -46,11 +44,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -141,44 +136,12 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	}
 
 	@Override
-	public List<Specification> constructPointerValidityCheck(final ILocation loc, final String ptrName,
-			final String procedureName, final CheckMode mode,
+	public Expression constructPointerTargetFullyAllocatedCheckExpr(final ILocation loc, final Expression ptr,
+			final Expression size, final boolean isBitVectorTranslation,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (mode == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
-		final Expression ptrExpr =
-				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
-		final Expression isValid = constructPointerValidityCheckExpr(loc, ptrExpr, requiredMemoryModelFeatures,
-				memoryModelDeclarationsHandler);
-
-		final boolean isFreeRequires = mode == CheckMode.CHECK ? false : true;
-
-		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
-		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
-		check.annotate(spec);
-		return Collections.singletonList(spec);
-	}
-
-	@Override
-	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
-			final String ptrName, final String procedureName, final CheckMode mode,
-			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-
-		if (mode == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
-		final Expression ptrExpr =
-				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
-
-		final Expression ptrBase = mMemoryPointer.getPointerAddress(ptrExpr, loc);
-		final Expression ptrOffset = mMemoryPointer.pointerOffset(ptrExpr, loc);
+		final Expression ptrBase = mMemoryPointer.getPointerAddress(ptr, loc);
+		final Expression ptrOffset = mMemoryPointer.pointerOffset(ptr, loc);
 		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
 		final Expression lengthArray = MemoryMetadataDefault2D.getLengthArray(loc, requiredMemoryModelFeatures,
@@ -206,14 +169,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 			leq = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, noOverFlowInSum);
 		}
 
-		final Expression offsetInAllocatedRange =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, offsetGeqZero);
-
-		final boolean isFreeRequires = mode == CheckMode.CHECK ? false : true;
-		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
-		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
-		check.annotate(spec);
-		return Collections.singletonList(spec);
+		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, offsetGeqZero);
 	}
 
 	/**

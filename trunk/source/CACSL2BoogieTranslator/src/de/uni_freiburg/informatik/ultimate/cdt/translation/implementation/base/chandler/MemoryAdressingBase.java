@@ -36,7 +36,6 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -210,30 +209,21 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 	}
 
 	@Override
-	public List<Specification> constructPointerValidityCheck(final ILocation loc, final String ptrName,
-			final String procedureName, final CheckMode mode,
+	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (mode == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
 		throw new UnsupportedOperationException("The pointer base validity check is not compatible with the selected: "
 				+ this.getClass() + " addressing mode!");
 	}
 
 	@Override
-	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
-			final String ptrName, final String procedureName, final CheckMode mode,
-			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public Expression constructPointerTargetFullyAllocatedCheckExpr(final ILocation loc, final Expression ptr,
+			final Expression size, final boolean isBitVectorTranslation,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (mode == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
 		throw new UnsupportedOperationException(
 				"The target pointer fully allocated check is not compatible with the selected: " + this.getClass()
-						+ "  " + "addressing mode!");
+						+ "  addressing mode!");
 	}
 
 	@Override

@@ -209,14 +209,6 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		throw new UnsupportedOperationException("The pointer validity check is not available with the 1D Addressing");
-
-	}
-
-	@Override
 	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		throw new UnsupportedOperationException(

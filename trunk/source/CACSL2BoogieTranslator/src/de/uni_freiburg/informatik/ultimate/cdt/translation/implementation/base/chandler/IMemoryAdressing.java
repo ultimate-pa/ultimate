@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -140,16 +139,6 @@ public interface IMemoryAdressing {
 			final BigInteger integerConstant);
 
 	/**
-	 * Constructs the specifications that the pointer base address is valid.
-	 *
-	 * @return The specifications.
-	 */
-	List<Specification> constructPointerValidityCheck(final ILocation loc, final String ptrName,
-			final String procedureName, final CheckMode mode,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
-
-	/**
 	 * Constructs the pointer base validity check expression.
 	 *
 	 * @return The expression.
@@ -163,9 +152,8 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The specifications.
 	 */
-	List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
-			final String ptrName, final String procedureName, final CheckMode mode,
-			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	Expression constructPointerTargetFullyAllocatedCheckExpr(final ILocation loc, Expression ptr, final Expression size,
+			final boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**

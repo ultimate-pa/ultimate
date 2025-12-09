@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -238,24 +237,11 @@ public class MemoryModel {
 	}
 
 	/**
-	 * Constructs the specifications that the pointer base address is valid.
-	 *
-	 * @return The specifications.
-	 */
-	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
-			final String procedureName, final CheckMode mode,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructPointerValidityCheck(loc, ptrName, procedureName, mode,
-				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
-	}
-
-	/**
 	 * Constructs the pointer base validity check expression.
 	 *
 	 * @return The expression.
 	 */
-	Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
+	public Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return mMemoryAddressing.constructPointerValidityCheckExpr(loc, ptr, requiredMemoryModelFeatures,
@@ -267,12 +253,12 @@ public class MemoryModel {
 	 *
 	 * @return The specifications.
 	 */
-	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
-			final String ptrName, final String procedureName, final CheckMode mode,
-			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public Expression constructPointerTargetFullyAllocatedCheckExpr(final ILocation loc, final Expression ptr,
+			final Expression size, final boolean isBitVectorTranslation,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructPointerTargetFullyAllocatedCheck(loc, size, ptrName, procedureName, mode,
-				isBitVectorTranslation, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		return mMemoryAddressing.constructPointerTargetFullyAllocatedCheckExpr(loc, ptr, size, isBitVectorTranslation,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
 
 	/**
