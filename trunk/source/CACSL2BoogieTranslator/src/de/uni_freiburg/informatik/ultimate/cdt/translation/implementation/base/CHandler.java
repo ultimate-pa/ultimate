@@ -1341,8 +1341,7 @@ public class CHandler {
 		if (node instanceof final IASTArrayDeclarator arrDecl) {
 			// the innermost type is the value type.
 			ICType arrayType = resType.getCType();
-
-			final CPrimitive arrayIndexCtype = mExpressionTranslation.getCTypeOfPointerComponents();
+			final CPrimitive boundType = mExpressionTranslation.getCTypeOfPointerComponents();
 
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
@@ -1357,8 +1356,7 @@ public class CHandler {
 					// e.g., a[23] or a[n+1]
 					final ExpressionResult dispatched = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					final ExpressionResult switched = mExprResultTransformer.switchToRValue(dispatched, loc, node);
-					final ExpressionResult converted =
-							mExpressionTranslation.convertIntToInt(loc, switched, arrayIndexCtype);
+					final ExpressionResult converted = mExpressionTranslation.convertIntToInt(loc, switched, boundType);
 					expressionResults.add(converted);
 					final RValue rValue = (RValue) converted.getLrValue();
 					bound = rValue.getValue();
@@ -1372,7 +1370,7 @@ public class CHandler {
 							throw new UnsupportedOperationException("expected IASTEqualsInitializer");
 						}
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) arrDecl.getInitializer());
-						bound = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
+						bound = mTypeSizes.constructLiteralForIntegerType(loc, boundType,
 								BigInteger.valueOf(intSizeFactor));
 					} else if (resType.getCType() instanceof CFunction) {
 						// if we have an array of function pointers,
@@ -1386,7 +1384,7 @@ public class CHandler {
 							throw new UnsupportedOperationException("expected initializer");
 						}
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) fundecl.getInitializer());
-						bound = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
+						bound = mTypeSizes.constructLiteralForIntegerType(loc, boundType,
 								BigInteger.valueOf(intSizeFactor));
 					} else {
 						// we have an incomplete array type without an initializer --
@@ -1397,7 +1395,7 @@ public class CHandler {
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-				arrayType = new CArray(bound, arrayIndexCtype, arrayType);
+				arrayType = new CArray(bound, boundType, arrayType);
 			}
 			final ExpressionResult allResults = new ExpressionResultBuilder()
 					.addAllExceptLrValue(expressionResults.toArray(new ExpressionResult[expressionResults.size()]))
