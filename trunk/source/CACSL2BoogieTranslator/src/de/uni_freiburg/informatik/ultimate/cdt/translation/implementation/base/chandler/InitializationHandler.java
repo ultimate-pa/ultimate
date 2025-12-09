@@ -1220,6 +1220,9 @@ public class InitializationHandler {
 		if (targetCType instanceof final CArray array) {
 			cellType = array.getValueType();
 			bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
+			if (CTranslationUtil.isToplevelVarlengthArray(array, mTypeSizes)) {
+				throw new UnsupportedOperationException("varlength not yet supported here");
+			}
 		} else {
 			bound = ((CStructOrUnion) targetCType).getFieldCount();
 		}
