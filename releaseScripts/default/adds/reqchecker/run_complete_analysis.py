@@ -719,7 +719,7 @@ def create_common_ultimate_cli_args(args, toolchain, settings, input_file):
         "-Xmx100G",
         "-Xss4m",
         "-jar",
-        "plugins/org.eclipse.equinox.launcher_1.7.0.v20250519-0528.jar",
+        "plugins/org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar",
         "-tc",
         toolchain,
         "-s",
