@@ -447,7 +447,7 @@ public class TypeSizeAndOffsetComputer {
 		Expression asExpression(ILocation loc);
 	}
 
-	class SizeTValueInteger implements SizeTValue {
+	private class SizeTValueInteger implements SizeTValue {
 		private final BigInteger mValue;
 
 		public SizeTValueInteger(final BigInteger value) {
