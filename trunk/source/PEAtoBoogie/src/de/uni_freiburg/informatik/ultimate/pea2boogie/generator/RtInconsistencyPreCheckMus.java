@@ -147,6 +147,7 @@ public class RtInconsistencyPreCheckMus {
 
 		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
 		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
+		musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 0);
 
 		final TermTransferrer termTransferrer =
 				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
