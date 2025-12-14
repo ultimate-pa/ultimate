@@ -53,6 +53,7 @@ public class PathProgramCache<LETTER> {
 
 	public PathProgramCache(final ILogger logger) {
 		mLogger = logger;
+		// for safety reasons these are thread save, i (max) did not encounter any issues when they were not.
 		mKnownPathPrograms = new ConcurrentHashMap<>();
 		mTraceHashes = Collections.synchronizedList(new ArrayList<>());
 	}
