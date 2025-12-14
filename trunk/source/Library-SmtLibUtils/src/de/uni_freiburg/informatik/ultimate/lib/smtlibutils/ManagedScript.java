@@ -272,15 +272,6 @@ public class ManagedScript {
 		void releaseLock();
 	}
 
-	public void copyVariableManager(final MultiElementCounter<String> tvForBasenameCounter,
-			final Map<TermVariable, String> tv2Basename, final Set<String> variableNames) {
-		mVariableManager.copyVariableManager(tvForBasenameCounter, tv2Basename, variableNames);
-	}
-
-	public VariableManager getVariableManager() {
-		return mVariableManager;
-	}
-
 	/**
 	 * Constructs fresh TermVariables (i.e., TermVariables that have not been used before). Each constructed
 	 * TermVariable is named as follows. The name start with the prefix "v_". Next follows the "basename" which is a
@@ -289,7 +280,7 @@ public class ManagedScript {
 	 *
 	 * @author Matthias Heizmann
 	 */
-	public class VariableManager {
+	private class VariableManager {
 
 		/**
 		 * Counter for the construction of fresh variables.
@@ -339,7 +330,6 @@ public class ManagedScript {
 				mLogger.warn("TermVariable " + tv
 						+ " not constructed by VariableManager. Cannot ensure absence of name clashes.");
 				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
-				mTv2Basename.put(tv, basename);
 			}
 			final TermVariable result = constructFreshTermVariable(basename, tv.getSort());
 			return result;
@@ -355,31 +345,6 @@ public class ManagedScript {
 			final TermVariable result = mScript.variable(varname, sort);
 			mTv2Basename.put(result, varname);
 			return result;
-		}
-
-		public MultiElementCounter<String> getTvForBasenameCounter() {
-			return mTvForBasenameCounter;
-		}
-
-		public Map<TermVariable, String> getTv2Basename() {
-			return mTv2Basename;
-		}
-
-		public Set<String> getVariableNames() {
-			return mVariableNames;
-		}
-
-		public void copyVariableManager(final MultiElementCounter<String> tvForBasenameCounter,
-				final Map<TermVariable, String> transferredTv2Basename, final Set<String> variableNames) {
-
-			for (final String elem : tvForBasenameCounter.getElements()) {
-				final int newNumber = tvForBasenameCounter.getNumber(elem);
-				final int oldNumber = mTvForBasenameCounter.getNumber(elem);
-				assert oldNumber <= newNumber;
-				mTvForBasenameCounter.increment(elem, (newNumber - oldNumber));
-			}
-			mTv2Basename.putAll(transferredTv2Basename);
-			mVariableNames.addAll(variableNames);
 		}
 	}
 

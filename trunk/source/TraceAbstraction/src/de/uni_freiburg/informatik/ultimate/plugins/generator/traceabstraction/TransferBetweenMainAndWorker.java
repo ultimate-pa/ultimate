@@ -102,6 +102,9 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 *
 	 * On initialization this classes creates the workers ManagedScript. And the necessary TermTransferrer
 	 *
+	 * See TransferrerWithVariableCache::transferTransFormula and TransFormulaBuilder::transferTransformula In the
+	 * future we might want to use those here, too.
+	 *
 	 * @param main
 	 * @param worker
 	 * @param mainCfgToolKit
@@ -121,10 +124,6 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		mWorker2main = new TermTransferrer(mWorkerScript.getScript(), mMainScript.getScript());
 		mMain2worker = new TermTransferrer(mMainScript.getScript(), mWorkerScript.getScript());
 		mVarTransfer = new ProgramVariableTransferrer(mMain2worker, mWorkerScript);
-
-		mWorkerScript.copyVariableManager(mWorkerScript.getVariableManager().getTvForBasenameCounter(),
-				transferTv2StringMap(mMain2worker, mWorkerScript.getVariableManager().getTv2Basename()),
-				mWorkerScript.getVariableManager().getVariableNames());
 	}
 
 	/*

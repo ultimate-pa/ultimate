@@ -743,6 +743,11 @@ public final class Term2Expression implements Serializable {
 		return mTypeSortTranslator;
 	}
 
+	/*
+	 * The current solution to get the script that was used to create the terms and values within the program execution.
+	 * The TypeSortTranslator cannot determine the type without the correct script. In the future, we might want find a
+	 * more elegant solution.
+	 */
 	public void setOriginCfgScript(final Script script) {
 		mOriginCfgScript = script;
 	}
