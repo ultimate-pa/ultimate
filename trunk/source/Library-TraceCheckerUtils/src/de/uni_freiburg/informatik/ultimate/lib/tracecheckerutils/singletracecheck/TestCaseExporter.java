@@ -67,7 +67,7 @@ public class TestCaseExporter {
 		}
 
 		Document xml = createXML(testV.values);
-		final String name = "testcase" + sha256(documentToString(xml));
+		final String name = "testcase" + sha256(documentToString(xml)); // + UUID.randomUUID();
 		try (FileOutputStream output = new FileOutputStream("test-suite/" + name + ".xml")) {
 			writeXml(xml, output);
 			output.close();

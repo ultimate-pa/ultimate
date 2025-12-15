@@ -147,7 +147,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	public void run() {
 		try {
 			mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
-			Thread.sleep(120000);
+			Thread.sleep(30000);
 			int maxId = -1;
 
 			for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
@@ -210,7 +210,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 						// TODO Auto-generated catch block
 						throw new AssertionError(e);
 					}
-					if (workerIterations % 10 == 0) {
+					if (workerIterations % 3 == 0) {
 						Thread.sleep(1000);
 					}
 					mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
