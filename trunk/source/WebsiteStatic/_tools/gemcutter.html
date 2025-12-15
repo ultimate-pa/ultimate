@@ -32,11 +32,37 @@ languages: [
 
 <h2>Awards</h2>
 <ul>
-  <li>Ultimate GemCutter won 2<sup>nd</sup> place in the <em>ConcurrencySafety</em> category at the <a href="http://sv-comp.sosy-lab.org/2023/">SV-COMP 2024</a></li>
-  <li>Ultimate GemCutter won 3<sup>rd</sup> place in the <em>ConcurrencySafety</em> category at the <a href="http://sv-comp.sosy-lab.org/2023/">SV-COMP 2023</a>.</li>
-  <li>Ultimate GemCutter won 3<sup>rd</sup> place in the <em>ConcurrencySafety</em> category at the <a href="http://sv-comp.sosy-lab.org/2022/">SV-COMP 2022</a>.<br/>
-    GemCutter also won 1<sup>st</sup> place in the <a href="https://sv-comp.sosy-lab.org/2022/demo.php">NoDataRace</a> demo category.
+{% assign awards_sorted = site.awards | sort: 'year' | reverse %}
+{% for comp in awards_sorted -%}
+  {%- assign gemcutter = comp.awards | find: "name", "GemCutter" -%}
+  {%- if gemcutter -%}
+  <li>
+    {% assign overall = gemcutter.medals | find_exp: "medal", "medal.category == 'ConcurrencySafety' or medal.category == 'Concurrency'" -%}
+    {% if overall %}
+      {% if overall.medal == "gold" %}
+        {% assign place = "1<sup>st</sup>" %}
+      {% elsif overall.medal == "silver" %}
+        {% assign place = "2<sup>nd</sup>" %}
+      {% else %}
+        {% assign place = "3<sup>rd</sup>" %}
+      {% endif %}
+      <span style="font-variant: small-caps">Ultimate</span> GemCutter won {{place}} place in the <em>{{ overall.category }}</em> category at the <a href="{{ comp.competition_link }}">{{ comp.competition }}</a>.
+    {% endif %}
+    {% assign other_medals = gemcutter.medals | where_exp: "medal", "medal != overall" %}
+    {% for other in other_medals %}
+      <br/>
+      {% if other.medal == "gold" %}
+        {% assign place = "1<sup>st</sup>" %}
+      {% elsif other.medal == "silver" %}
+        {% assign place = "2<sup>nd</sup>" %}
+      {% else %}
+        {% assign place = "3<sup>rd</sup>" %}
+      {% endif %}
+      GemCutter also won {{place}} in the <em>{{ other.category }}</em> category.
+    {% endfor %}
+  {% endif -%}
   </li>
+{% endfor %}
 </ul>
 
 <h2>Web interface</h2>
