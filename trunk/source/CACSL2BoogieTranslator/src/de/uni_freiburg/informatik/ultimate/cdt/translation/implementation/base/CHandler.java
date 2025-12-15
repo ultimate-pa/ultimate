@@ -1099,8 +1099,6 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTCastExpression node) {
-		final ILocation loc = mLocationFactory.createCLocation(node);
-
 		// TODO: check validity of cast?
 
 		final TypesResult resTypes = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
@@ -1111,24 +1109,30 @@ public class CHandler {
 		mCurrentDeclaredTypes.pop();
 
 		final ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
-		ExpressionResult exprWithType = new ExpressionResultBuilder().addAllSideEffects(declResult)
-				.addAllExceptLrValue(expr).setLrValue(expr.getLrValue()).build();
+		final ExpressionResult exprWithType =
+				new ExpressionResultBuilder().addAllSideEffects(declResult).addAllIncludingLrValue(expr).build();
+		return handleCast(newCType, node, exprWithType);
+	}
 
-		if (!exprWithType.hasLRValue()) {
+	private Result handleCast(final ICType type, final IASTNode node, final ExpressionResult exprResult) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(exprResult);
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		if (!exprResult.hasLRValue()) {
 			// creates a void expression for null RValues
 			final Expression newExpression = ExpressionFactory.createVoidDummyExpression(loc);
 			final RValue rVal = new RValue(newExpression, new CPrimitive(CPrimitives.VOID));
-			exprWithType = new ExpressionResultBuilder().addAllExceptLrValue(exprWithType).setLrValue(rVal).build();
+			builder.resetLrValue(rVal);
 		}
-		exprWithType = mExprResultTransformer.makeRepresentationReadyForConversion(exprWithType, loc, newCType, node);
-		checkUnsupportedPointerCast(exprWithType, loc, newCType);
+		final ExpressionResult exprResultReady =
+				mExprResultTransformer.makeRepresentationReadyForConversion(builder.build(), loc, type, node);
+		checkUnsupportedPointerCast(exprResultReady, loc, type);
 
 		if (mSettings.isAdaptMemoryStructureResolutionOnPointerCasts() && mIsPrerun) {
-			checkIfNecessaryMemoryStructureAdaption(loc, newCType, exprWithType);
+			checkIfNecessaryMemoryStructureAdaption(loc, type, exprResultReady);
 		}
 
-		exprWithType = mExprResultTransformer.rexBoolToInt(exprWithType, loc);
-		return mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
+		return mExprResultTransformer
+				.performImplicitConversion(mExprResultTransformer.rexBoolToInt(exprResultReady, loc), type, loc);
 	}
 
 	private void checkIfNecessaryMemoryStructureAdaption(final ILocation loc, final ICType castTargetType,
@@ -1727,12 +1731,29 @@ public class CHandler {
 				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
 			}
 		}
+		// WOKAROUND: On non-preprocessed files, casts may be accidentally misparsed as function calls, if the type is
+		// defined in some include (e.g., size_t) that we currently don't handle, if the expression is also in
+		// parentheses. In that case we just handle the handle the "function call" in the AST just as a cast.
+		final ICType castType = getTypeOfMisparsedCast(node);
+		if (castType != null) {
+			return handleCast(castType, node, (ExpressionResult) main.dispatch(node.getArguments()[0]));
+		}
 		final Result standardFunction = mLibraryModelHandler.translateStandardFunction(main, node);
 		if (standardFunction != null) {
 			return standardFunction;
 		}
 		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments(),
 				mMemoryHandler);
+	}
+
+	private ICType getTypeOfMisparsedCast(final IASTFunctionCallExpression node) {
+		if (node.getArguments().length == 1
+				&& node.getFunctionNameExpression() instanceof final IASTUnaryExpression unary
+				&& unary.getOperator() == IASTUnaryExpression.op_bracketedPrimary
+				&& unary.getOperand() instanceof final IASTIdExpression id) {
+			return mTypeHandler.getLibraryType(id.getName().toString());
+		}
+		return null;
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionDefinition node) {

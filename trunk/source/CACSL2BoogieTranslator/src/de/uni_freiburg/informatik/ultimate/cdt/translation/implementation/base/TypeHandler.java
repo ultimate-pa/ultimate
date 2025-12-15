@@ -858,6 +858,11 @@ public class TypeHandler implements ITypeHandler {
 		mLibraryTypes.putAll(libraryTypes);
 	}
 
+	@Override
+	public ICType getLibraryType(final String name) {
+		return mLibraryTypes.get(name);
+	}
+
 	public static boolean isCharArray(final ICType cTypeRaw) {
 		return cTypeRaw.getUnderlyingType() instanceof final CArray cArrayType
 				&& cArrayType.getValueType().getUnderlyingType() instanceof final CPrimitive cPrimitive
