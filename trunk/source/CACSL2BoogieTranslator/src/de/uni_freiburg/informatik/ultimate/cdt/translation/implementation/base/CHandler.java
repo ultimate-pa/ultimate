@@ -1121,7 +1121,7 @@ public class CHandler {
 			// creates a void expression for null RValues
 			final Expression newExpression = ExpressionFactory.createVoidDummyExpression(loc);
 			final RValue rVal = new RValue(newExpression, new CPrimitive(CPrimitives.VOID));
-			builder.resetLrValue(rVal);
+			builder.setLrValue(rVal);
 		}
 		final ExpressionResult exprResultReady =
 				mExprResultTransformer.makeRepresentationReadyForConversion(builder.build(), loc, type, node);
