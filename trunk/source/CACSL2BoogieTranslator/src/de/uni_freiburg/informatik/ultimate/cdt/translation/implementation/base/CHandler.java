@@ -1115,24 +1115,24 @@ public class CHandler {
 	}
 
 	private Result handleCast(final ICType type, final IASTNode node, final ExpressionResult exprResult) {
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder(exprResult);
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (!exprResult.hasLRValue()) {
+		final ExpressionResult exprResultReady;
+		if (exprResult.hasLRValue()) {
+			exprResultReady = mExprResultTransformer.rexBoolToInt(
+					mExprResultTransformer.makeRepresentationReadyForConversion(exprResult, loc, type, node), loc);
+		} else {
 			// creates a void expression for null RValues
 			final Expression newExpression = ExpressionFactory.createVoidDummyExpression(loc);
 			final RValue rVal = new RValue(newExpression, new CPrimitive(CPrimitives.VOID));
-			builder.setLrValue(rVal);
+			exprResultReady = new ExpressionResultBuilder(exprResult).setLrValue(rVal).build();
 		}
-		final ExpressionResult exprResultReady =
-				mExprResultTransformer.makeRepresentationReadyForConversion(builder.build(), loc, type, node);
 		checkUnsupportedPointerCast(exprResultReady, loc, type);
 
 		if (mSettings.isAdaptMemoryStructureResolutionOnPointerCasts() && mIsPrerun) {
 			checkIfNecessaryMemoryStructureAdaption(loc, type, exprResultReady);
 		}
 
-		return mExprResultTransformer
-				.performImplicitConversion(mExprResultTransformer.rexBoolToInt(exprResultReady, loc), type, loc);
+		return mExprResultTransformer.performImplicitConversion(exprResultReady, type, loc);
 	}
 
 	private void checkIfNecessaryMemoryStructureAdaption(final ILocation loc, final ICType castTargetType,
