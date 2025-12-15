@@ -35,15 +35,17 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -90,6 +92,85 @@ public class CfgToBtorObserver extends BaseObserver {
 		return true;
 	}
 
+	// If there are error locations, process btormc output.
+
+	// Generate error trace if an error location is reachable.
+
+	private AbstractResult constructErrorTrace(final Scanner witnessScan, final IIcfg<BoogieIcfgLocation> icfg,
+			final CFGToBTOR processor) {
+		// Parse btormc witness into a sequence of program states.
+		final ArrayList<Long> pcList = new ArrayList<>();
+		final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
+		final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
+		final Matcher m = p.matcher(witnessScan.next()); // ??
+
+		while (m.find()) {
+			if (m.group(2).equals("pc")) {
+				pcList.add(Long.parseLong(m.group(1), 2));
+			} else {
+				final long sequenceNumber = Long.parseUnsignedLong(m.group(3));
+				if (!programStateSequence.containsKey(sequenceNumber)) {
+					programStateSequence.put(sequenceNumber, new HashMap<>());
+				}
+				programStateSequence.get(sequenceNumber).put(m.group(2), Long.parseUnsignedLong(m.group(1), 2));
+			}
+		}
+
+		System.out.println(pcList);
+		System.out.println(programStateSequence);
+		// Convert program state sequence into icfg program execution.
+		final IcfgProgramExecution<IcfgEdge> pe = processor.extractErrorTrace(icfg, pcList, programStateSequence);
+		// Send counterexample result to Ultimate backend.
+		final CounterExampleResult<IcfgLocation, IcfgEdge, Term> nResult =
+				new CounterExampleResult<>(pe.getTraceElement(pe.getLength() - 1).getTraceElement().getTarget(),
+						Activator.PLUGIN_ID, mServices.getBacktranslationService(), pe);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, nResult);
+		return nResult;
+
+	}
+
+	private int determineErrorLocation(final Scanner witnessScan) {
+		while (!witnessScan.hasNext("b(\\d+)")) {
+			witnessScan.nextLine();
+		}
+		final String badState = witnessScan.next();
+		final int errorIndex = Integer.valueOf(badState.substring(1));
+		return errorIndex;
+	}
+
+	private ArrayList<AbstractResult> parseResults(final String btormcWitness,
+			final ArrayList<BoogieIcfgLocation> errorLocations, final IIcfg<BoogieIcfgLocation> icfg,
+			final CFGToBTOR processor) {
+		final Scanner witnessScan = new Scanner(btormcWitness);
+		final ArrayList<AbstractResult> results = new ArrayList<>();
+		while (witnessScan.hasNextLine()) {
+			if (witnessScan.hasNext("sat")) {
+				witnessScan.skip("sat");
+				while (!((witnessScan.hasNext("sat")) || (witnessScan.hasNext("unsat")))
+						|| (witnessScan.hasNextLine())) {
+					final AbstractResult nResult = constructErrorTrace(witnessScan, icfg, processor);
+					results.add(nResult);
+				}
+
+			} else if (witnessScan.hasNext("unsat")) {
+				witnessScan.skip("unsat");
+				final int errorIndex = determineErrorLocation(witnessScan);
+				while (!((witnessScan.hasNext("sat")) || (witnessScan.hasNext("unsat")))
+						|| (witnessScan.hasNextLine())) {
+					// Error location is not reachable within the timeout limit.
+					// TODO: (@xinyu) make this correct, send unknown result unless an unsat result is returned
+					// TODO: (@xinyu) handle multiple sat results, or unsat followed by sat, etc etc
+					final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
+							errorLocations.get(errorIndex), mServices.getBacktranslationService());
+					results.add(pResult);
+
+				}
+
+			}
+		}
+		return results;
+	}
+
 	private void processIcfg(final IIcfg<BoogieIcfgLocation> icfg) throws Exception {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		Boogie2SMT boogie2SMT = null;
@@ -105,7 +186,15 @@ public class CfgToBtorObserver extends BaseObserver {
 		processor.extractTransitions(icfg);
 		processor.extractBadStates(icfg);
 		// Generate the BTOR script using extracted information.
-		final BtorScript script = processor.generateScript(icfg);
+		BtorScript script;
+		try {
+			script = processor.generateScript(icfg);
+		} catch (final Exception e) {
+			final ExceptionOrErrorResult eResult = new ExceptionOrErrorResult("Cannot generate script", e);
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, eResult);
+			return;
+		}
+
 		try {
 			// Dump script to console and temp file.
 			script.dumpScript(new OutputStreamWriter(System.out));
@@ -144,10 +233,10 @@ public class CfgToBtorObserver extends BaseObserver {
 			// Assume one initial node for trace generation.
 			final IIcfgElement rootLocation = icfg.getInitialNodes().iterator().next();
 
-			// If there are error locations, process btormc output.
 			if (!icfg.getProcedureErrorNodes().values().isEmpty()) {
 				// Get error nodes.
-				final Set<BoogieIcfgLocation> errorLocations = icfg.getProcedureErrorNodes().values().iterator().next();
+				final ArrayList<BoogieIcfgLocation> errorLocations =
+						new ArrayList<>(icfg.getProcedureErrorNodes().values().iterator().next());
 				if (!finished) {
 					// Return timeout result if btormc did not return.
 					final TimeoutResult timeoutResult =
@@ -156,55 +245,25 @@ public class CfgToBtorObserver extends BaseObserver {
 				} else if (process.exitValue() != 0) {
 					// Throw exception if btormc failed.
 					throw new Exception("btormc returned nonzero exit value");
-				} else if (btormcWitness.startsWith("sat")) {
-					// Generate error trace if an error location is reachable.
-
-					// Parse btormc witness into a sequence of program states.
-					final ArrayList<Long> pcList = new ArrayList<>();
-					final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
-					final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
-					final Matcher m = p.matcher(btormcWitness);
-					while (m.find()) {
-						if (m.group(2).equals("pc")) {
-							pcList.add(Long.parseLong(m.group(1), 2));
-						} else {
-							final long sequenceNumber = Long.parseUnsignedLong(m.group(3));
-							if (!programStateSequence.containsKey(sequenceNumber)) {
-								programStateSequence.put(sequenceNumber, new HashMap<>());
-							}
-							programStateSequence.get(sequenceNumber).put(m.group(2),
-									Long.parseUnsignedLong(m.group(1), 2));
-
-						}
-					}
-					System.out.println(pcList);
-					System.out.println(programStateSequence);
-					// Convert program state sequence into icfg program execution.
-					final IcfgProgramExecution<IcfgEdge> pe =
-							processor.extractErrorTrace(icfg, pcList, programStateSequence);
-					// Send counterexample result to Ultimate backend.
-					final CounterExampleResult<IcfgLocation, IcfgEdge, Term> nResult = new CounterExampleResult<>(
-							pe.getTraceElement(pe.getLength() - 1).getTraceElement().getTarget(), Activator.PLUGIN_ID,
-							mServices.getBacktranslationService(), pe);
-					mServices.getResultService().reportResult(Activator.PLUGIN_ID, nResult);
 				} else {
-					// Error location is not reachable within the timeout limit.
-					// TODO: (@xinyu) make this correct, send unknown result unless an unsat result is returned
-					// TODO: (@xinyu) handle multiple sat results, or unsat followed by sat, etc etc
-					mServices.getResultService().reportResult(Activator.PLUGIN_ID, AllSpecificationsHoldResult
-							.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, errorLocations.size()));
-					for (final IcfgLocation errorLocation : errorLocations) {
-						final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
-								errorLocation, mServices.getBacktranslationService());
-						mServices.getResultService().reportResult(Activator.PLUGIN_ID, pResult);
+					final ArrayList<AbstractResult> results =
+							parseResults(btormcWitness, errorLocations, icfg, processor);
+					for (final AbstractResult result : results) {
+						// report result;
+						// mServices.getResultService().reportResult(Activator.PLUGIN_ID, AllSpecificationsHoldResult
+						// .createAllSpecificationsHoldResult(Activator.PLUGIN_ID, errorLocations.size()));
+						// for (final IcfgLocation errorLocation : errorLocations) {
+						// final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
+						// errorLocation, mServices.getBacktranslationService());
+						// mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+						// }
+						mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 					}
 
 				}
-
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, 0));
 			}
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-					AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, 0));
-
 		} catch (final IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

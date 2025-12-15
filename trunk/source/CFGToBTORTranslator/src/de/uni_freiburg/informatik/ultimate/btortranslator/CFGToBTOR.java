@@ -382,7 +382,10 @@ public class CFGToBTOR {
 		final BtorExpression pcUpdate = generatePCUpdateExpression();
 		final Set<BoogieIcfgLocation> initial = icfg.getInitialNodes();
 		if (initial.size() != 1) {
-			throw new UnsupportedOperationException("Multiple initial states");
+			// multiple initial states
+			// create an initial state that goes to all the initial states
+
+			// throw new UnsupportedOperationException("Multiple initial states");
 		}
 		final BtorExpression initial_pc =
 				pcMap.get(new SuffixedDebugIdentifier(initial.iterator().next().getDebugIdentifier(),
