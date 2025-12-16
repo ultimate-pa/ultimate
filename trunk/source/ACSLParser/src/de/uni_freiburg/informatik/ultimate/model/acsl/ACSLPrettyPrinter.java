@@ -244,7 +244,7 @@ public class ACSLPrettyPrinter {
 		};
 	}
 
-	// https://en.cppreference.com/w/c/language/operator_precedence.html
+	// See Section 2.2.1 of the ACSL standard.
 	private static Precedence getPrecedence(final Expression expression) {
 		return switch (expression) {
 		case final BinaryExpression binExp -> getPrecedence(binExp.getOperator());
@@ -278,8 +278,8 @@ public class ACSLPrettyPrinter {
 		};
 	}
 
-	// Follows the precedence defined in our parser (see GlobalLocalParser.cup).
-	// (See also: https://en.cppreference.com/w/c/language/operator_precedence.html)
+	// See Section 2.2.1 of the ACSL standard.
+	// For custom additions (LTL), this follows the precedence defined in our parser (see GlobalLocalParser.cup).
 	private static Precedence getPrecedence(final BinaryExpression.Operator operator) {
 		return switch (operator) {
 		case LOGICIFF -> Precedence.EQUIV;
@@ -302,7 +302,12 @@ public class ACSLPrettyPrinter {
 		};
 	}
 
-	// Choice of left-/right-associativity follows our parser (see GlobalLocalParser.cup).
+	// See Section 2.2.1 of the ACSL standard for information on left-/right-associativity.
+	// For custom additions (LTL), this follows the associativity defined in our parser (see GlobalLocalParser.cup).
+	//
+	// Note that for operators that are semantically associative, we use the value ASSOCIATIVE rather than
+	// LEFT_ASSOCIATIVE resp. RIGHT_ASSOCIATIVE. This allows us to omit parentheses regardless of how subexpressions are
+	// nested (to the left of the operator, to the right, or both).
 	private static Associativity getAssociativity(final BinaryExpression.Operator operator) {
 		return switch (operator) {
 		case LOGICIFF -> Associativity.LEFT_ASSOCIATIVE;
@@ -316,7 +321,7 @@ public class ACSLPrettyPrinter {
 		case BITIMPLIES -> Associativity.RIGHT_ASSOCIATIVE;
 		case BITXOR -> Associativity.LEFT_ASSOCIATIVE;
 
-		// comparison operators (TODO does the ACSL feature of chaining comparisons play a role here?)
+		// comparison operators
 		case COMPGEQ, COMPGT, COMPLEQ, COMPLT -> Associativity.NO_ASSOCIATIVITY;
 		case COMPEQ, COMPNEQ -> Associativity.NO_ASSOCIATIVITY;
 
