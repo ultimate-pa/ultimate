@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -183,43 +184,47 @@ public final class Boogie2ACSL {
 			mReporter.accept("Unknown expressions could not be backtranslated (possibly during translation to Boogie)");
 			return null;
 		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression) {
-			return translateUnaryExpression((de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression) expression,
-					context, isNegated);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression) {
-			return translateBinaryExpression(
-					(de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression) expression, context, isNegated);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression) {
-			return translateIdentifierExpression(
-					(de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression) expression, context);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral) {
-			return translateIntegerLiteral(new BigInteger(
-					((de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral) expression).getValue()));
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral) {
-			return translateBooleanLiteral((de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral) expression);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral) {
-			return translateRealLiteral((de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral) expression);
-		}
-		if (expression instanceof BitvecLiteral) {
-			return translateBitvecLiteral((BitvecLiteral) expression);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication) {
-			return translateFunctionApplication(
-					(de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication) expression, context,
-					isNegated);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression) {
-			return translateArrayAccess(
-					(de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression) expression, context);
-		}
-		mReporter.accept(
-				"Expression type not yet supported in backtranslation: " + expression.getClass().getSimpleName());
-		return null;
+
+		final Function<de.uni_freiburg.informatik.ultimate.boogie.ast.Expression, BacktranslatedExpression> unsupported =
+				(e) -> {
+					mReporter.accept(
+							"Expression type not yet supported in backtranslation: " + e.getClass().getSimpleName());
+					return null;
+				};
+
+		return switch (expression) {
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression uexp ->
+				translateUnaryExpression(uexp, context, isNegated);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression bexp ->
+				translateBinaryExpression(bexp, context, isNegated);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression id ->
+				translateIdentifierExpression(id, context);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral intLit ->
+				translateIntegerLiteral(new BigInteger(intLit.getValue()));
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral bLit -> translateBooleanLiteral(bLit);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral rLit -> translateRealLiteral(rLit);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral bvLit -> translateBitvecLiteral(bvLit);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication funApp ->
+				translateFunctionApplication(funApp, context, isNegated);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression aaExp ->
+				translateArrayAccess(aaExp, context);
+
+		// TODO merge these cases once unnamed patterns are supported (Java >= 22); remove function "unsupported"
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression asExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression bvaExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression iteExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression qExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral sLit -> unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression saExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor sc -> unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression we ->
+				unsupported.apply(expression);
+		};
 	}
 
 	private BacktranslatedExpression translateIdentifierExpression(
@@ -264,7 +269,7 @@ public final class Boogie2ACSL {
 	}
 
 	private static boolean isFunctionDefinition(final ILocation context) {
-		return context instanceof CLocation && ((CLocation) context).getNode() instanceof IASTFunctionDefinition;
+		return context instanceof final CLocation cLoc && cLoc.getNode() instanceof IASTFunctionDefinition;
 	}
 
 	private BacktranslatedExpression constructFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
@@ -769,8 +774,8 @@ public final class Boogie2ACSL {
 	}
 
 	private boolean isPresentInContext(final String cId, final ILocation context) {
-		if (context instanceof CLocation) {
-			return mSymbolTable.containsCSymbol(((CLocation) context).getNode(), cId);
+		if (context instanceof final CLocation cLoc) {
+			return mSymbolTable.containsCSymbol(cLoc.getNode(), cId);
 		}
 		return true;
 	}
