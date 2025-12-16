@@ -11,6 +11,5 @@
 
 int main() {
   int x = __VERIFIER_nondet_int();
-  long long y = (size_t)(x);
-  if (y < 0) reach_error();
+  if ((size_t)(x) < 0) reach_error();
 }
