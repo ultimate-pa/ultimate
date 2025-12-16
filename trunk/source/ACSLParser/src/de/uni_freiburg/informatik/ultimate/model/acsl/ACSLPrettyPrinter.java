@@ -75,8 +75,6 @@ public class ACSLPrettyPrinter {
 	private static final String STRING_TIMES = "*";
 	private static final String STRING_PLUS = "+";
 
-	private static final int UNARY_PREFIX_PRECEDENCE = 200;
-
 	public static String print(final ACSLNode node) {
 		switch (node) {
 		case final CodeAnnotStmt codeAnnot:
@@ -174,9 +172,9 @@ public class ACSLPrettyPrinter {
 	// Prints the expression, and wraps it in parentheses if the parent expression's precedence is lower.
 	private static String printExpression(final Expression expression, final Expression parent) {
 		final String expr = printExpression(expression);
-		final int precedence = getPrecedence(expression);
-		final int parentPrecedence = getPrecedence(parent);
-		if (precedence > parentPrecedence) {
+		final Precedence precedence = getPrecedence(expression);
+		final Precedence parentPrecedence = getPrecedence(parent);
+		if (precedence.compareTo(parentPrecedence) > 0) {
 			return expr;
 		}
 		return "(" + expr + ")";
@@ -187,10 +185,10 @@ public class ACSLPrettyPrinter {
 	private static String printExpression(final Expression expression, final BinaryExpression.Operator parentOperator,
 			final Associativity requiredAssoc) {
 		final String expr = printExpression(expression);
-		final int precedence = getPrecedence(expression);
-		final int parentPrecedence = getPrecedence(parentOperator);
+		final Precedence precedence = getPrecedence(expression);
+		final Precedence parentPrecedence = getPrecedence(parentOperator);
 
-		if (precedence > parentPrecedence) {
+		if (precedence.compareTo(parentPrecedence) > 0) {
 			return expr;
 		}
 		if (expression instanceof final BinaryExpression bExp && bExp.getOperator() == parentOperator
@@ -247,73 +245,60 @@ public class ACSLPrettyPrinter {
 	}
 
 	// https://en.cppreference.com/w/c/language/operator_precedence.html
-	private static int getPrecedence(final Expression expression) {
+	private static Precedence getPrecedence(final Expression expression) {
 		return switch (expression) {
 		case final BinaryExpression binExp -> getPrecedence(binExp.getOperator());
-		case final UnaryExpression unExp -> getPrecedence(unExp.getOperator());
-		case final CastExpression castExp -> UNARY_PREFIX_PRECEDENCE;
-
-		case final FieldAccessExpression faExp -> 300;
-
-		case final IfThenElseExpression iteExp -> 3;
-		case final QuantifierExpression quantExp -> 2;
-		case final SyntacticNamingExpression synExp -> 0;
+		case final CastExpression castExp -> Precedence.UNARY;
+		case final FieldAccessExpression faExp -> Precedence.SELECTION;
+		case final IfThenElseExpression iteExp -> Precedence.TERNARY;
+		case final QuantifierExpression quantExp -> Precedence.BINDING;
+		case final UnaryExpression unExp -> Precedence.UNARY;
+		case final SyntacticNamingExpression synExp -> Precedence.NAMING;
 
 		// unambiguous / highest precedence
-		case final ACSLResultExpression resExp -> Integer.MAX_VALUE;
-		case final AtLabelExpression atExp -> Integer.MAX_VALUE;
-		case final BaseAddrExpression baseExp -> Integer.MAX_VALUE;
-		case final BlockLengthExpression blockExp -> Integer.MAX_VALUE;
-		case final BooleanLiteral bLit -> Integer.MAX_VALUE;
-		case final FreeableExpression freeExp -> Integer.MAX_VALUE;
-		case final FunctionApplication funApp -> Integer.MAX_VALUE;
-		case final IdentifierExpression idExp -> Integer.MAX_VALUE;
-		case final IntegerLiteral intLit -> Integer.MAX_VALUE;
-		case final MallocableExpression malExp -> Integer.MAX_VALUE;
-		case final NullPointer np -> Integer.MAX_VALUE;
-		case final OldValueExpression oldExp -> Integer.MAX_VALUE;
-		case final RealLiteral rLit -> Integer.MAX_VALUE;
-		case final SizeOfExpression sizeExp -> Integer.MAX_VALUE;
-		case final StringLiteral strLit -> Integer.MAX_VALUE;
-		case final ValidExpression valExp -> Integer.MAX_VALUE;
+		case final ACSLResultExpression resExp -> Precedence.TOP;
+		case final AtLabelExpression atExp -> Precedence.TOP;
+		case final BaseAddrExpression baseExp -> Precedence.TOP;
+		case final BlockLengthExpression blockExp -> Precedence.TOP;
+		case final BooleanLiteral bLit -> Precedence.TOP;
+		case final FreeableExpression freeExp -> Precedence.TOP;
+		case final FunctionApplication funApp -> Precedence.TOP;
+		case final IdentifierExpression idExp -> Precedence.TOP;
+		case final IntegerLiteral intLit -> Precedence.TOP;
+		case final MallocableExpression malExp -> Precedence.TOP;
+		case final NullPointer np -> Precedence.TOP;
+		case final OldValueExpression oldExp -> Precedence.TOP;
+		case final RealLiteral rLit -> Precedence.TOP;
+		case final SizeOfExpression sizeExp -> Precedence.TOP;
+		case final StringLiteral strLit -> Precedence.TOP;
+		case final ValidExpression valExp -> Precedence.TOP;
 
 		// safe assumption: expression has lowest possible precedence
-		default -> Integer.MIN_VALUE;
-		};
-	}
-
-	private static int getPrecedence(final UnaryExpression.Operator operator) {
-		// use numbers in the range 100-200 that are higher than any precedence given for binary operators
-		return switch (operator) {
-		case PLUS, MINUS -> 101;
-		case LTLGLOBALLY, LTLFINALLY, LTLNEXT -> 102;
-		case LOGICNEG, LOGICCOMPLEMENT, ADDROF, POINTER -> UNARY_PREFIX_PRECEDENCE;
+		default -> Precedence.BOTTOM;
 		};
 	}
 
 	// Follows the precedence defined in our parser (see GlobalLocalParser.cup).
 	// (See also: https://en.cppreference.com/w/c/language/operator_precedence.html)
-	private static int getPrecedence(final BinaryExpression.Operator operator) {
+	private static Precedence getPrecedence(final BinaryExpression.Operator operator) {
 		return switch (operator) {
-		case LOGICIFF -> 4;
-		case LOGICIMPLIES -> 5;
-
-		// We pretend &&, ^^ and || have the same precedence, so that parentheses are added for clarity.
-		case LOGICAND, LOGICXOR, LOGICOR -> 6;
-
-		case BITOR -> 7;
-		case BITIFF -> 8;
-		case BITIMPLIES -> 9;
-		case BITXOR -> 10;
-		case BITAND -> 11;
-		case COMPLT, COMPLEQ, COMPGT, COMPGEQ, COMPEQ, COMPNEQ -> 12;
-		case BITSHIFTLEFT, BITSHIFTRIGHT -> 13;
-		case ARITHPLUS, ARITHMINUS -> 14;
-		case ARITHMUL, ARITHDIV, ARITHMOD -> 15;
-		case LTLUNTIL, LTLWEAKUNTIL, LTLRELEASE -> 16;
+		case LOGICIFF -> Precedence.EQUIV;
+		case LOGICIMPLIES -> Precedence.IMPLIES;
+		case LOGICAND, LOGICXOR, LOGICOR -> Precedence.OR_XOR_AND;
+		case BITOR -> Precedence.BIT_OR;
+		case BITIFF -> Precedence.BIT_EQUIV;
+		case BITIMPLIES -> Precedence.BIT_IMPLIES;
+		case BITXOR -> Precedence.BIT_XOR;
+		case BITAND -> Precedence.BIT_AND;
+		case COMPLT, COMPLEQ, COMPGT, COMPGEQ -> Precedence.COMPARISON;
+		case COMPEQ, COMPNEQ -> Precedence.EQUALITY;
+		case BITSHIFTLEFT, BITSHIFTRIGHT -> Precedence.SHIFT;
+		case ARITHPLUS, ARITHMINUS -> Precedence.ADDITIVE;
+		case ARITHMUL, ARITHDIV, ARITHMOD -> Precedence.MULTIPLICATIVE;
+		case LTLUNTIL, LTLWEAKUNTIL, LTLRELEASE -> Precedence.LTL_INFIX;
 
 		// safe assumption: expression has lowest possible precedence
-		case BITVECCONCAT, COMPPO -> Integer.MIN_VALUE;
+		case BITVECCONCAT, COMPPO -> Precedence.BOTTOM;
 		};
 	}
 
@@ -361,5 +346,22 @@ public class ACSLPrettyPrinter {
 		public boolean satisfies(final Associativity other) {
 			return this == ASSOCIATIVE || other == NO_ASSOCIATIVITY || this == other;
 		}
+	}
+
+	// cf. ACSL standard, section 2.2.1
+	// (note that the order of declaration is crucial for this enum!)
+	private enum Precedence {
+		BOTTOM,
+
+		NAMING, BINDING, TERNARY, EQUIV, IMPLIES,
+
+		// We pretend &&, ^^ and || have the same precedence, so that parentheses are added for clarity:
+		// Instead of "A && B || C && D", we print "(A && B) || (C && D)".
+		OR_XOR_AND,
+
+		BIT_EQUIV, BIT_IMPLIES, BIT_OR, BIT_XOR, BIT_AND, EQUALITY, COMPARISON, SHIFT, ADDITIVE, MULTIPLICATIVE,
+		LTL_INFIX, UNARY, SELECTION,
+
+		TOP
 	}
 }
