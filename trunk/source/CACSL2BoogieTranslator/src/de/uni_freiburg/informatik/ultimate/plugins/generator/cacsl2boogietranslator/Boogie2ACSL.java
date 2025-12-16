@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -215,13 +216,13 @@ public final class Boogie2ACSL {
 				translateFunctionApplication(funApp, context);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression aaExp ->
 				translateArrayAccess(aaExp, context);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression iteExp ->
+				translateIfThenElse(iteExp, context, permissibleApproximation);
 
 		// TODO merge these cases once unnamed patterns are supported (Java >= 22); remove function "unsupported"
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression asExp ->
 				unsupported.apply(expression);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression bvaExp ->
-				unsupported.apply(expression);
-		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression iteExp ->
 				unsupported.apply(expression);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression qExp ->
 				unsupported.apply(expression);
@@ -273,6 +274,43 @@ public final class Boogie2ACSL {
 		}
 		mReporter.accept("Unknown variable: " + expr.getIdentifier());
 		return null;
+	}
+
+	private BacktranslatedExpression translateIfThenElse(
+			final de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression iteExp, final ILocation context,
+			final Approximation permissibleApproximation) {
+		final var condition = translateExpression(iteExp.getCondition(), context, Approximation.PRECISE);
+		if (condition == null) {
+			// Technically we might still be able to derive a restricted range from then/else.
+			// But for now we do not support returning only a range, so we simply return null.
+			return null;
+		}
+
+		if (condition.range().isZero()) {
+			return translateExpression(iteExp.getElsePart(), context, permissibleApproximation);
+		} else if (!condition.range().contains(BigInteger.ZERO)) {
+			return translateExpression(iteExp.getThenPart(), context, permissibleApproximation);
+		}
+
+		final var thenPart = translateExpression(iteExp.getThenPart(), context, permissibleApproximation);
+		final var elsePart = translateExpression(iteExp.getElsePart(), context, permissibleApproximation);
+		if (thenPart == null || elsePart == null) {
+			return null;
+		}
+
+		ICType resultType;
+		if (thenPart.cType() instanceof CPrimitive && elsePart.cType() instanceof CPrimitive) {
+			resultType = determineTypeForArithmeticOperation(thenPart.cType(), elsePart.cType());
+		} else if (Objects.equals(thenPart.cType(), elsePart.cType())) {
+			resultType = thenPart.cType();
+		} else {
+			// The C standard has additional rules for this case, if the involved types are pointer types.
+			// As we currently implement only a rudimentary backtranslation for pointers, this is omitted here.
+			resultType = null;
+		}
+
+		final var ite = new IfThenElseExpression(condition.expression(), thenPart.expression(), elsePart.expression());
+		return new BacktranslatedExpression(ite, resultType, thenPart.range().join(elsePart.range()));
 	}
 
 	private static boolean isFunctionDefinition(final ILocation context) {
