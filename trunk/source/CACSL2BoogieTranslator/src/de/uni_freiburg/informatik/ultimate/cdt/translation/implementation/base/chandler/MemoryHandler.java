@@ -1933,7 +1933,7 @@ public class MemoryHandler {
 					"we need to generalize this to nested and/or variable length arrays");
 		}
 
-		final BigInteger dimBigInteger = mTypeSizes.extractIntegerValue(valueType.getBound());
+		final BigInteger dimBigInteger = mTypeSizes.extractIntegerValue(valueType.getBound(), valueType.getBoundType());
 		if (dimBigInteger == null) {
 			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
@@ -1980,6 +1980,10 @@ public class MemoryHandler {
 			if (checkForFloats && fieldType.getUnderlyingType().isFloatingType()) {
 				stmt.add(ExpressionTranslation.modelUnsupportedFeature(loc,
 						"write for union with floats in the HoenickeLindenmann_Original Memory Structure"));
+			}
+			if (fieldType.getUnderlyingType() instanceof CArray && fieldType.isIncomplete()) {
+				// Assignment of structs ignores flexible arrays, https://en.cppreference.com/w/c/language/struct
+				continue;
 			}
 
 			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId);

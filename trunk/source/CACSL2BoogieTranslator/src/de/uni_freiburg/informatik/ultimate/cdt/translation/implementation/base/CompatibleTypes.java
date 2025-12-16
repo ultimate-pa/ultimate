@@ -279,8 +279,8 @@ public final class CompatibleTypes {
 		if (array1.isIncomplete() || array2.isIncomplete()) {
 			return true;
 		}
-		final BigInteger bound1 = CTranslationUtil.extractIntegerValue(array1.getBound().getValue());
-		final BigInteger bound2 = CTranslationUtil.extractIntegerValue(array2.getBound().getValue());
+		final BigInteger bound1 = CTranslationUtil.extractIntegerValue(array1.getBound());
+		final BigInteger bound2 = CTranslationUtil.extractIntegerValue(array2.getBound());
 		return bound1 == null || bound2 == null || bound1.equals(bound2);
 	}
 }

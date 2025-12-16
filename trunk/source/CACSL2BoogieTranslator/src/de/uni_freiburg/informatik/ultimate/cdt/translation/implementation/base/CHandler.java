@@ -1341,6 +1341,7 @@ public class CHandler {
 		if (node instanceof final IASTArrayDeclarator arrDecl) {
 			// the innermost type is the value type.
 			ICType arrayType = resType.getCType();
+			final CPrimitive boundType = mExpressionTranslation.getCTypeOfPointerComponents();
 
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
@@ -1349,16 +1350,15 @@ public class CHandler {
 					Arrays.asList(arrDecl.getArrayModifiers()).listIterator(arrDecl.getArrayModifiers().length);
 			while (it.hasPrevious()) {
 				final IASTArrayModifier am = it.previous();
-				final RValue sizeFactor;
+				final Expression bound;
 				if (am.getConstantExpression() != null) {
 					// case where we have a number between the brackets,
 					// e.g., a[23] or a[n+1]
 					final ExpressionResult dispatched = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					final ExpressionResult switched = mExprResultTransformer.switchToRValue(dispatched, loc, node);
-					final ExpressionResult converted =
-							mExpressionTranslation.convertIntToInt(loc, switched, mTypeSizes.getSizeT());
+					final ExpressionResult converted = mExpressionTranslation.convertIntToInt(loc, switched, boundType);
 					expressionResults.add(converted);
-					sizeFactor = (RValue) converted.getLrValue();
+					bound = converted.getLrValue().getValue();
 				} else if (am.getConstantExpression() == null
 						&& arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
 					// the innermost array modifier may be empty, if there is an initializer; like
@@ -1369,6 +1369,8 @@ public class CHandler {
 							throw new UnsupportedOperationException("expected IASTEqualsInitializer");
 						}
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) arrDecl.getInitializer());
+						bound = mTypeSizes.constructLiteralForIntegerType(loc, boundType,
+								BigInteger.valueOf(intSizeFactor));
 					} else if (resType.getCType() instanceof CFunction) {
 						// if we have an array of function pointers,
 						// the initializer is stored in the parent node
@@ -1381,26 +1383,18 @@ public class CHandler {
 							throw new UnsupportedOperationException("expected initializer");
 						}
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) fundecl.getInitializer());
+						bound = mTypeSizes.constructLiteralForIntegerType(loc, boundType,
+								BigInteger.valueOf(intSizeFactor));
 					} else {
 						// we have an incomplete array type without an initializer --
-						// this may happen in a function parameter..
-						intSizeFactor = CArray.INCOMPLETE_ARRY_MAGIC_NUMBER;
+						// this may happen in a function parameter or as a flexible array in structs
+						bound = null;
 					}
-					// Index type of the array. All C expressions that access the array are
-					// converted to this type.
-					// In the past we wanted a type that is large enough for the
-					// CArray.INCOMPLETE_ARRY_MAGIC_NUMBER.
-					// If we work with an unsigned type for pointer components we have to rethink
-					// the use of the magic number.
-					final CPrimitive arrayIndexCtype = mTypeSizes.getSizeT();
-					final Expression sizeExpression = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
-							BigInteger.valueOf(intSizeFactor));
-					sizeFactor = new RValue(sizeExpression, arrayIndexCtype, false, false);
 
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-				arrayType = new CArray(sizeFactor, arrayType);
+				arrayType = new CArray(bound, boundType, arrayType);
 			}
 			final ExpressionResult allResults = new ExpressionResultBuilder()
 					.addAllExceptLrValue(expressionResults.toArray(new ExpressionResult[expressionResults.size()]))
@@ -1940,11 +1934,20 @@ public class CHandler {
 		final CDeclaration cDeclaration = declaratorResult.getDeclaration();
 		assert !cDeclaration.hasInitializer() : "unexpected, inspect this case";
 		assert !cDeclaration.isOnHeap() : "unexpected, inspect this case";
-		final ICType cType = cDeclaration.getType().getUnderlyingType();
+		ICType cType = cDeclaration.getType().getUnderlyingType();
 
 		// translate initializer
 		final IASTInitializer initializer = node.getInitializer();
 		final InitializerResult ir = (InitializerResult) main.dispatch(initializer);
+
+		if (cType instanceof final CArray cArray && cType.isIncomplete()) {
+			// C11 6.7.9.22:
+			// If an array of unknown size is initialized, its size is determined by the largest indexed element with an
+			// explicit initializer. The array type is completed at the end of its initializer list.
+			cType = new CArray(mExpressionTranslation.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(ir.getList().size())),
+					cArray.getBoundType(), cArray.getValueType());
+		}
 
 		final boolean isAddressTaken = node.getParent() instanceof IASTUnaryExpression
 				&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
@@ -1991,7 +1994,6 @@ public class CHandler {
 		 * declarator: (e.g. (int [])): then the size depends on the initializer - otherwise: the size is given by the
 		 * CType
 		 */
-		mTypeSizeComputer.constructBytesizeExpression(loc, cType);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
@@ -2168,8 +2170,8 @@ public class CHandler {
 		final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(actualLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
 
-		final RValue dimension = new RValue(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents());
-		final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
+		final CArray arrayType = new CArray(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents(),
+				new CPrimitive(CPrimitives.CHAR));
 		final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 
 		final RValue addressRValue;

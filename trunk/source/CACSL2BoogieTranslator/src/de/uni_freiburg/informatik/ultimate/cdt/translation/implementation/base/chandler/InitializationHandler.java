@@ -536,9 +536,6 @@ public class InitializationHandler {
 		 * Iterate over all array indices and assign the corresponding array cell; In the sophisticated case, only cells
 		 * explicitly mentioned by the initializer are updated here. Otherwise all cells are updated
 		 */
-		if (CTranslationUtil.isToplevelVarlengthArray(cArrayType, mTypeSizes)) {
-			throw new UnsupportedOperationException("handling varlength arrays not implemented for this case");
-		}
 		final int bound = CTranslationUtil.getConstantFirstDimensionOfArray(cArrayType, mTypeSizes);
 
 		for (int i = 0; i < bound; i++) {
@@ -1030,7 +1027,7 @@ public class InitializationHandler {
 				return BigInteger.ZERO;
 			}
 			final BigInteger innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
-			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound());
+			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound(), cArray.getBoundType());
 			return innerCount.multiply(bound);
 		}
 		throw new AssertionError("Cannot count the primitive elements in type " + cType.getClass().getSimpleName());
@@ -1220,9 +1217,6 @@ public class InitializationHandler {
 		if (targetCType instanceof final CArray array) {
 			cellType = array.getValueType();
 			bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
-			if (CTranslationUtil.isToplevelVarlengthArray(array, mTypeSizes)) {
-				throw new UnsupportedOperationException("varlength not yet supported here");
-			}
 		} else {
 			bound = ((CStructOrUnion) targetCType).getFieldCount();
 		}

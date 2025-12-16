@@ -218,7 +218,6 @@ public class CExpressionTranslator {
 
 		if (lType instanceof CArray && rType.isArithmeticType()) {
 			// arrays decay to pointers in this case
-			assert !(((CArray) lType).getBound().getCType() instanceof CArray) : "TODO: think about this case";
 			final ICType valueType = ((CArray) lType).getValueType().getUnderlyingType();
 			left = mExprResultTransformer.performImplicitConversion(left, new CPointer(valueType), loc);
 			lType = left.getLrValue().getCType().getUnderlyingType();

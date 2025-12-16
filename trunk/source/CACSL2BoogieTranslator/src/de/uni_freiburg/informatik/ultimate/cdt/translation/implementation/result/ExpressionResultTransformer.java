@@ -338,8 +338,6 @@ public class ExpressionResultTransformer {
 		final ArrayList<Expression> fieldValues = new ArrayList<>();
 
 		for (int i = 0; i < fieldIds.length; i++) {
-			fieldIdentifiers.add(fieldIds[i]);
-
 			final ICType underlyingType;
 			if (fieldTypes[i] instanceof final CNamed cNamed) {
 				underlyingType = cNamed.getUnderlyingType();
@@ -364,6 +362,10 @@ public class ExpressionResultTransformer {
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof final CArray cArray) {
+				if (cArray.isIncomplete()) {
+					// Assignment of structs ignores flexible arrays, https://en.cppreference.com/w/c/language/struct
+					continue;
+				}
 				final Expression arrayPointer =
 						mStructHandler.computeStructFieldAddress(loc, i, structOnHeapAddress, structType);
 				final ExpressionResult xres1 = readArrayFromHeap(old, loc, arrayPointer, cArray, hook, unchecked);
@@ -405,6 +407,7 @@ public class ExpressionResultTransformer {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
 
+			fieldIdentifiers.add(fieldIds[i]);
 			if (fieldLRVal instanceof RValue) {
 				fieldValues.add(fieldLRVal.getValue());
 			} else if (fieldLRVal instanceof final HeapLValue hlv) {
@@ -444,11 +447,13 @@ public class ExpressionResultTransformer {
 					"we need to generalize this to nested and/or variable length arrays");
 		}
 
-		final BigInteger boundBigInteger = mTypeSizes.extractIntegerValue(arrayType.getBound());
+		final BigInteger boundBigInteger =
+				mTypeSizes.extractIntegerValue(arrayType.getBound(), arrayType.getBoundType());
 		if (boundBigInteger == null) {
 			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
 		final int bound = boundBigInteger.intValue();
+
 		final AuxVarInfo newArrayAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, arrayType, SFO.AUXVAR.ARRAYCOPY);
 		final LRValue resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
@@ -648,9 +653,11 @@ public class ExpressionResultTransformer {
 		final BoogieType newBoogieType = mTypeHandler.getBoogieTypeForCType(targetCType);
 
 		if (CompatibleTypes.areCompatible(newType, oldType) && !newType.equals(new CPrimitive(CPrimitives.BOOL))
-				&& oldBoogieType.equals(newBoogieType)) {
+				&& (oldBoogieType.equals(newBoogieType) || newType instanceof CStructOrUnion)) {
 			// types are already identical -- nothing to do
 			// For _Bool we always do the conversion to ensure that the resulting value is 0 or 1
+			// If the C types are compatible struct types, ignore the Boogie types as they might differ because of
+			// flexible arrays.
 			return expr;
 		}
 
