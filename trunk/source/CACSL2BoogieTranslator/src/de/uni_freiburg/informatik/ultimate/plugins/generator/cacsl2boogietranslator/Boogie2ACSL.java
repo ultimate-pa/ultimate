@@ -93,7 +93,14 @@ public final class Boogie2ACSL {
 
 	public BacktranslatedExpression translateExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context) {
-		return translateExpression(expression, context, false);
+		// Dominik (2025-12-16): To reproduce existing behaviour, we default to allowing overapproximations.
+		// For instance, in location invariants, we may omit some conjuncts (but not disjuncts!) if they cannot be
+		// backtranslated. The result is still an invariant (though the overall annotation is likely no longer
+		// inductive) and can be useful in correctness witnesses.
+		// In the long term, we should consider whether we want to keep this behaviour, or allow callers to determine
+		// the permissible approximations. For instance, in expressions that are part of a program state,
+		// overapproximation might not be a good result.
+		return translateExpression(expression, context, Approximation.OVERAPPROXIMATION);
 	}
 
 	/**
@@ -179,7 +186,7 @@ public final class Boogie2ACSL {
 
 	private BacktranslatedExpression translateExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context,
-			final boolean isNegated) {
+			final Approximation permissibleApproximation) {
 		if (expression == null) {
 			mReporter.accept("Unknown expressions could not be backtranslated (possibly during translation to Boogie)");
 			return null;
@@ -194,9 +201,9 @@ public final class Boogie2ACSL {
 
 		return switch (expression) {
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression uexp ->
-				translateUnaryExpression(uexp, context, isNegated);
+				translateUnaryExpression(uexp, context, permissibleApproximation);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression bexp ->
-				translateBinaryExpression(bexp, context, isNegated);
+				translateBinaryExpression(bexp, context, permissibleApproximation);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression id ->
 				translateIdentifierExpression(id, context);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral intLit ->
@@ -205,7 +212,7 @@ public final class Boogie2ACSL {
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral rLit -> translateRealLiteral(rLit);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral bvLit -> translateBitvecLiteral(bvLit);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication funApp ->
-				translateFunctionApplication(funApp, context, isNegated);
+				translateFunctionApplication(funApp, context);
 		case final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression aaExp ->
 				translateArrayAccess(aaExp, context);
 
@@ -321,11 +328,10 @@ public final class Boogie2ACSL {
 	// TODO: Currently we don't care about types here, since function applications should only occur in bitvector
 	// setting, where we should not need any casts.
 	private BacktranslatedExpression translateFunctionApplication(
-			final de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication fun, final ILocation context,
-			final boolean isNegated) {
+			final de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication fun, final ILocation context) {
 		final BacktranslatedExpression[] translatedArguments = new BacktranslatedExpression[fun.getArguments().length];
 		for (int i = 0; i < fun.getArguments().length; i++) {
-			translatedArguments[i] = translateExpression(fun.getArguments()[i], context, isNegated);
+			translatedArguments[i] = translateExpression(fun.getArguments()[i], context, Approximation.PRECISE);
 			if (translatedArguments[i] == null) {
 				return null;
 			}
@@ -606,13 +612,20 @@ public final class Boogie2ACSL {
 
 	private BacktranslatedExpression translateBinaryExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression expression, final ILocation context,
-			final boolean isNegated) {
-		final BacktranslatedExpression lhs = translateExpression(expression.getLeft(), context, isNegated);
-		final BacktranslatedExpression rhs = translateExpression(expression.getRight(), context, isNegated);
+			final Approximation permissibleApproximation) {
+
+		final Approximation allowed = switch (expression.getOperator()) {
+		case LOGICAND, LOGICOR -> permissibleApproximation;
+		default -> Approximation.PRECISE;
+		};
+
+		final BacktranslatedExpression lhs = translateExpression(expression.getLeft(), context, allowed);
+		final BacktranslatedExpression rhs = translateExpression(expression.getRight(), context, allowed);
 		final BigInterval leftRange = lhs == null ? BigInterval.unbounded() : lhs.range();
 		final BigInterval rightRange = rhs == null ? BigInterval.unbounded() : rhs.range();
 		final ICType leftType = lhs == null ? null : lhs.cType();
 		final ICType rightType = rhs == null ? null : rhs.cType();
+
 		final Operator operator;
 		final BigInterval range;
 		ICType resultType;
@@ -676,7 +689,7 @@ public final class Boogie2ACSL {
 			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case LOGICAND:
-			if (!isNegated) {
+			if (permissibleApproximation == Approximation.OVERAPPROXIMATION) {
 				if (lhs == null) {
 					return rhs;
 				}
@@ -689,7 +702,7 @@ public final class Boogie2ACSL {
 			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case LOGICOR:
-			if (isNegated) {
+			if (permissibleApproximation == Approximation.UNDERAPPROXIMATION) {
 				if (lhs == null) {
 					return rhs;
 				}
@@ -724,13 +737,14 @@ public final class Boogie2ACSL {
 
 	private BacktranslatedExpression translateUnaryExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression expr, final ILocation context,
-			final boolean isNegated) {
+			final Approximation permissibleApproximation) {
 		final Expression resultExpr;
 		final BigInterval range;
 		final ICType cType;
 		switch (expr.getOperator()) {
 		case ARITHNEGATIVE: {
-			final BacktranslatedExpression innerTrans = translateExpression(expr.getExpr(), context, isNegated);
+			final BacktranslatedExpression innerTrans =
+					translateExpression(expr.getExpr(), context, Approximation.PRECISE);
 			if (innerTrans == null) {
 				return null;
 			}
@@ -740,7 +754,8 @@ public final class Boogie2ACSL {
 			break;
 		}
 		case LOGICNEG: {
-			final BacktranslatedExpression innerTrans = translateExpression(expr.getExpr(), context, !isNegated);
+			final BacktranslatedExpression innerTrans =
+					translateExpression(expr.getExpr(), context, permissibleApproximation.invert());
 			if (innerTrans == null) {
 				return null;
 			}
@@ -750,7 +765,8 @@ public final class Boogie2ACSL {
 			break;
 		}
 		case OLD: {
-			final BacktranslatedExpression innerTrans = translateExpression(expr.getExpr(), context, isNegated);
+			final BacktranslatedExpression innerTrans =
+					translateExpression(expr.getExpr(), context, permissibleApproximation);
 			if (innerTrans == null) {
 				return null;
 			}
@@ -794,7 +810,8 @@ public final class Boogie2ACSL {
 	private BacktranslatedExpression translateArrayAccess(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression expression,
 			final ILocation context) {
-		final BacktranslatedExpression array = translateExpression(expression.getArray(), context);
+		final BacktranslatedExpression array =
+				translateExpression(expression.getArray(), context, Approximation.PRECISE);
 		if (array == null) {
 			// TODO: Translate pointer accesses back (i.e. array accesses in the memory array)
 			// - Check if the array is the memory array first
@@ -806,7 +823,7 @@ public final class Boogie2ACSL {
 		Expression result = array.expression();
 		ICType resultType = array.cType();
 		for (final var index : expression.getIndices()) {
-			final BacktranslatedExpression translatedIndex = translateExpression(index, context);
+			final BacktranslatedExpression translatedIndex = translateExpression(index, context, Approximation.PRECISE);
 			if (translatedIndex == null) {
 				return null;
 			}
@@ -815,5 +832,17 @@ public final class Boogie2ACSL {
 		}
 		final var range = getRangeForCType(resultType);
 		return new BacktranslatedExpression(result, resultType, range);
+	}
+
+	private enum Approximation {
+		OVERAPPROXIMATION, UNDERAPPROXIMATION, PRECISE;
+
+		private Approximation invert() {
+			return switch (this) {
+			case OVERAPPROXIMATION -> UNDERAPPROXIMATION;
+			case UNDERAPPROXIMATION -> OVERAPPROXIMATION;
+			case PRECISE -> PRECISE;
+			};
+		}
 	}
 }
