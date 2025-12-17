@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
@@ -227,8 +226,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final Set<IProgramVar> failedGhosts = new HashSet<>();
 				final var ghostsInits = new HashMap<String, String>();
 				for (final var entry : annotation.getGhostAssignment().entrySet()) {
-					final var ghost = (IProgramVar) entry.getKey();
-					final var expr = (Term) entry.getValue();
+					final var ghost = entry.getKey();
+					final var expr = entry.getValue();
 
 					final var initialValue = backTranslatorService.translateExpressionToString(expr, Term.class);
 					if (initialValue == null) {
@@ -243,7 +242,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 				for (final var entry : annotation.getAssignmentMapping().entrySet()) {
 					final var edge = (IIcfgTransition<?>) entry.getKey();
-					final GhostUpdate update = (GhostUpdate) entry.getValue();
+					final GhostUpdate update = entry.getValue();
 
 					final Map<String, String> ghostUpdate = new HashMap<>();
 					for (final var ghost : update.getAssignedVariables()) {
@@ -268,8 +267,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final var failedGhostTvs =
 						failedGhosts.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 				for (final var entry : annotation.getFormulaMapping().entrySet()) {
-					final IcfgLocation loc = (IcfgLocation) entry.getKey();
-					final Term formula = ((IPredicate) entry.getValue()).getFormula();
+					final IcfgLocation loc = entry.getKey();
+					final Term formula = entry.getValue().getFormula();
 					final Object invariant = backTranslatorService.translateExpressionWithContext(formula,
 							ILocation.getAnnotation(loc), Term.class);
 					final String invariantString =
