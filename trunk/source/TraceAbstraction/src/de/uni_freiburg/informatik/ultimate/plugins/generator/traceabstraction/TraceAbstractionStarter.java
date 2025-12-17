@@ -272,12 +272,15 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					final Term formula = ((IPredicate) entry.getValue()).getFormula();
 					final Object invariant = backTranslatorService.translateExpressionWithContext(formula,
 							ILocation.getAnnotation(loc), Term.class);
+					final String invariantString =
+							invariant == null ? null : backTranslatorService.targetExpressionToString(invariant);
 
 					if (invariant == null || invariant.toString().equals("1")) {
 						continue;
 					}
 
-					final var invResult = new InvariantResult<>(Activator.PLUGIN_NAME, loc, invariant, null /* TODO */);
+					final var invResult = new InvariantResult<>(Activator.PLUGIN_NAME, loc, invariant, invariantString,
+							null /* TODO */);
 					mResultReporter.reportResult(invResult);
 
 					final var failedGhost =
