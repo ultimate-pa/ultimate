@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -85,14 +84,11 @@ public class StaticObjectsHandler {
 	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
 	private final Map<String, TypeDeclaration> mIncompleteType2TypeDecl;
 
-	private final ILogger mLogger;
-
-	public StaticObjectsHandler(final ILogger logger) {
+	public StaticObjectsHandler() {
 		mStatementsForUltimateInit = new ArrayList<>();
 		mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
 		mIncompleteType2TypeDecl = new HashMap<>();
 		mIsFrozen = false;
-		mLogger = logger;
 	}
 
 	/**
@@ -127,10 +123,10 @@ public class StaticObjectsHandler {
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final ICType cType = cDec.getType();
 		if (cType.isIncomplete() && !cDec.getType().isVoidType()) {
-			if (cType instanceof CStructOrUnion) {
-				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
-			} else if (cType instanceof CEnum) {
-				mIncompleteType2TypeDecl.put(((CEnum) cType).getName(), boogieDec);
+			if (cType instanceof final CStructOrUnion structOrUnion) {
+				mIncompleteType2TypeDecl.put(structOrUnion.getName(), boogieDec);
+			} else if (cType instanceof final CEnum enumType) {
+				mIncompleteType2TypeDecl.put(enumType.getName(), boogieDec);
 			} else if (cType instanceof CNamed) {
 				// do nothing, this is handled by TypeHandler::redirectNamedType
 			} else {
@@ -177,9 +173,7 @@ public class StaticObjectsHandler {
 
 	private static Triple<VariableDeclaration, CDeclaration, Integer>
 			computeSuitableVarDecl(final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls) {
-		if (decls.size() == 1) {
-			return decls.iterator().next();
-		}
+		// Try to find a declaration with an initializer
 		Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
 		for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
 			if (pair.getSecond().getInitializer() != null) {
@@ -190,11 +184,16 @@ public class StaticObjectsHandler {
 				}
 			}
 		}
-		if (suiteableDecl == null) {
-			// no declaration has an initializer, pick some
-			suiteableDecl = decls.iterator().next();
+		if (suiteableDecl != null) {
+			return suiteableDecl;
 		}
-		return suiteableDecl;
+		// If no declaration has an initializer, choose a non-extern declaration (if possible)
+		final var nonExternDecl = decls.stream().filter(x -> !x.getSecond().isExtern()).findAny();
+		if (nonExternDecl.isPresent()) {
+			return nonExternDecl.get();
+		}
+		// If there are only extern declarations, pick any
+		return decls.iterator().next();
 	}
 
 	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,

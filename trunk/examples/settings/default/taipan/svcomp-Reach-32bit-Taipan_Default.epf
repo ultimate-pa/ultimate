@@ -24,13 +24,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long\ double=12
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ division\ by\ zero=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ array\ bounds\ for\ arrays\ that\ are\ off\ heap=IGNORE
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ memory\ neutrality=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/If\ two\ pointers\ are\ subtracted\ or\ compared\ they\ have\ the\ same\ base\ address=IGNORE
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ dereference\ validity=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ constant\ arrays=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Memory\ addressing=One_Dimensional
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Behaviour\ of\ calls\ to\ undefined\ functions=OVERAPPROXIMATE_BEHAVIOUR
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 
@@ -88,3 +86,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list\ type=DISABLED
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_SEQUENTIAL_PROGRAMS
 
+
+
+#Wed Nov 05 12:34:37 CET 2025
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Replace\ while\ statements\ and\ if-then-else\ statements=false
+@de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.3.0
+file_export_version=3.0

@@ -37,19 +37,39 @@ import java.util.List;
  */
 public class Segment {
 	private final List<Waypoint> mAvoidWaypoints;
-	private final Waypoint mFollowWaypoint;
+	private final Waypoint mFollowOrCycleWaypoint;
+	private final SegmentType mType;
 
-	public Segment(final List<Waypoint> avoidWaypoints, final Waypoint followWaypoint) {
+	public enum SegmentType {
+		FOLLOW("follow"), CYCLE("cycle");
+
+		private final String mAction;
+
+		SegmentType(final String action) {
+			mAction = action;
+		}
+
+		public String getAction() {
+			return mAction;
+		}
+	}
+
+	public Segment(final List<Waypoint> avoidWaypoints, final Waypoint followOrCycleWaypoint, final SegmentType type) {
 		mAvoidWaypoints = avoidWaypoints;
-		mFollowWaypoint = followWaypoint;
+		mFollowOrCycleWaypoint = followOrCycleWaypoint;
+		mType = type;
 	}
 
 	public List<Waypoint> getAvoidWaypoints() {
 		return mAvoidWaypoints;
 	}
 
-	public Waypoint getFollowWaypoint() {
-		return mFollowWaypoint;
+	public Waypoint getFollowOrCycleWaypoint() {
+		return mFollowOrCycleWaypoint;
+	}
+
+	public SegmentType getType() {
+		return mType;
 	}
 
 	@Override
@@ -59,7 +79,7 @@ public class Segment {
 		if (!mAvoidWaypoints.isEmpty()) {
 			sb.append("avoid:").append(mAvoidWaypoints).append(", ");
 		}
-		return sb.append("follow: ").append(mFollowWaypoint).toString();
+		return sb.append(mType.getAction()).append(": ").append(mFollowOrCycleWaypoint).toString();
 	}
 
 }

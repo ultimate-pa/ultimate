@@ -97,12 +97,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public class PRDispatcher implements IDispatcher {
 
-	private final LocationFactory mLocationFactory;
 	private final ITypeHandler mTypeHandler;
 	private final CHandler mCHandler;
 
 	public PRDispatcher(final CHandler chandler, final LocationFactory locFac, final ITypeHandler typeHandler) {
-		mLocationFactory = locFac;
 		mTypeHandler = typeHandler;
 		mCHandler = chandler;
 	}

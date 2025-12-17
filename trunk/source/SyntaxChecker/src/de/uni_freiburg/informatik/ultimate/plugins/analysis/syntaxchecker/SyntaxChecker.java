@@ -123,7 +123,7 @@ public class SyntaxChecker implements IAnalysis {
 		final boolean removeFilename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_RemoveFilename);
 
-		final String outputError = callSytaxCheckerAndReturnStderrOutput(toolCommandError, filename);
+		final String outputError = callSyntaxCheckerAndReturnStderrOutput(toolCommandError, filename);
 		if (outputError == null) {
 			// everything fine, do nothing
 		} else {
@@ -143,7 +143,7 @@ public class SyntaxChecker implements IAnalysis {
 			if (Objects.equals(toolCommandError, toolCommandWarnings)) {
 				outputWarnings = outputError;
 			} else {
-				outputWarnings = callSytaxCheckerAndReturnStderrOutput(toolCommandWarnings, filename);
+				outputWarnings = callSyntaxCheckerAndReturnStderrOutput(toolCommandWarnings, filename);
 			}
 			if (outputWarnings == null) {
 				// everything fine, do nothing
@@ -171,20 +171,20 @@ public class SyntaxChecker implements IAnalysis {
 				+ System.lineSeparator() + toolOutput;
 	}
 
-	private String callSytaxCheckerAndReturnStderrOutput(final String toolCommand, final String filename)
+	private String callSyntaxCheckerAndReturnStderrOutput(final String toolCommand, final String filename)
 			throws IOException {
 		final String syntaxCheckerCommand = toolCommand + " " + filename;
-		final MonitoredProcess proc = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices);
+		try (final MonitoredProcess proc = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices)) {
+			if (proc == null) {
+				final String errorMsg = " Could not create process, terminating... ";
+				mLogger.fatal(errorMsg);
+				throw new IllegalStateException(errorMsg);
+			}
+			// Let all processes terminate when the toolchain terminates
+			proc.setTerminationAfterTimeout(SYNTAX_CHECKER_TIMEOUT_MS);
 
-		if (proc == null) {
-			final String errorMsg = " Could not create process, terminating... ";
-			mLogger.fatal(errorMsg);
-			throw new IllegalStateException(errorMsg);
+			return convert(proc.getErrorStream());
 		}
-		// Let all processes terminate when the toolchain terminates
-		proc.setTerminationAfterTimeout(SYNTAX_CHECKER_TIMEOUT_MS);
-
-		return convert(proc.getErrorStream());
 	}
 
 	private static String convert(final InputStream is) throws IOException {

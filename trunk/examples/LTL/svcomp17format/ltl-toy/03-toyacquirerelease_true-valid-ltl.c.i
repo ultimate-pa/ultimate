@@ -1,6 +1,6 @@
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int();
 int a = 0;
 int r = 0;
 int main() {

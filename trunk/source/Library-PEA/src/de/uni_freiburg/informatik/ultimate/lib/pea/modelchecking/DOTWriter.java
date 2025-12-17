@@ -6,7 +6,6 @@ package de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Iterator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
@@ -171,9 +170,7 @@ public class DOTWriter extends TCSWriter {
 					+ DOTString.DOT_NODEDEF_END);
 
 			final List<Transition> transitions = currentPhase.getTransitions();
-			final Iterator it = transitions.iterator();
-			while (it.hasNext()) {
-				final Transition t = (Transition) it.next();
+			for (Transition t : transitions) {
 				String start = t.getSrc().getName();
 				start = start.replace("_", "");
 				String end = t.getDest().getName();

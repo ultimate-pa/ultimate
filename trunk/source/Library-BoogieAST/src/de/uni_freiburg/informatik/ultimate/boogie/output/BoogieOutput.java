@@ -587,14 +587,14 @@ public class BoogieOutput {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("type ");
 		appendAttributes(sb, decl.getAttributes());
-		if (decl.isFinite()) {
+		final ASTType synonym = decl.getSynonym();
+		if (synonym == null && decl.isFinite()) {
 			sb.append("finite ");
 		}
 		sb.append(decl.getIdentifier());
 		for (final String args : decl.getTypeParams()) {
 			sb.append(" ").append(args);
 		}
-		final ASTType synonym = decl.getSynonym();
 		if (synonym != null) {
 			sb.append(" = ");
 			appendType(sb, synonym, 0);

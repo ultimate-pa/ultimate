@@ -64,8 +64,8 @@ public class WitnessAutomatonAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
-			final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
+	public <LOC extends IcfgLocation> INestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<LOC> icfg,
+			final Set<LOC> errorLocs) throws AutomataLibraryException {
 		final var abstraction = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 		return mWitnessTransformer.transform(abstraction, mPredicateFactory);
 	}

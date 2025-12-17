@@ -44,6 +44,7 @@ ADDS=(
   "adds/Ultimate.py"
   "adds/Ultimate.ini"
   "adds/README"
+  "adds/examples"
 )
 
 # architecture-specific variables  
@@ -51,7 +52,7 @@ if [ "$2" == "linux" ]; then
   echo "Building .zip for linux..."
   ARCH="linux"
   ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
-  ADDS+=("adds/z3" "adds/cvc4" "adds/mathsat" "adds/ltl2ba")
+  ADDS+=("adds/z3" "adds/cvc4" "adds/mathsat" "adds/ltl2ba" "adds/smoketest.sh")
 elif [ "$2" == "win32" ]; then
   echo "Building .zip for win32..."
   ARCH="win32"
@@ -149,7 +150,7 @@ for add in "${ADDS[@]}" ; do
     echo "$add does not exist, aborting..."
     exit 1
   fi
-  exit_on_fail cp $add "$TARGETDIR"/
+  exit_on_fail cp -r $add "$TARGETDIR"/
 done 
 
 
@@ -162,5 +163,22 @@ exit_on_fail sed "s/toolname =.*/toolname = \'$TOOLNAME\'/g" "$TARGETDIR"/Ultima
 
 ## creating new zipfile 
 echo "Creating .zip"
-exit_on_fail zip -q "${ZIPFILE}" -r "$TARGETDIR"/*
+# Note: it seems that zip strips the x flag from executables (unclear why and how I can fix that), so we
+# use python's zipfile module instead.
+# The old command was: exit_on_fail zip -q "${ZIPFILE}" -r "$TARGETDIR"/*
+exit_on_fail python3 << EOF
+import zipfile
+import os
+import sys
 
+targetdir = "${TARGETDIR}"
+zipfile_path = "${ZIPFILE}"
+dirname = os.path.basename(targetdir.rstrip('/'))
+
+with zipfile.ZipFile(zipfile_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+    for root, dirs, files in os.walk(targetdir):
+        for file in files:
+            file_path = os.path.join(root, file)
+            arcname = os.path.join(dirname, os.path.relpath(file_path, targetdir))
+            z.write(file_path, arcname)
+EOF

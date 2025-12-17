@@ -37,18 +37,18 @@ languages: [
 
 <h2>Awards</h2>
 <ul>
-    <li>Ultimate Automizer won the <a
-            href="http://sv-comp.sosy-lab.org/2023/results/">overall ranking</a>
-        at the <a href="http://sv-comp.sosy-lab.org/2023/">SV-COMP 2024</a></li>
-    <li>Ultimate Automizer won the <a
-            href="http://sv-comp.sosy-lab.org/2023/results/">overall ranking</a>
-        at the <a href="http://sv-comp.sosy-lab.org/2023/">SV-COMP 2023</a></li>
-    <li>Ultimate Automizer won the <a
-            href="http://sv-comp.sosy-lab.org/2017/results/">overall ranking</a>
-        at the <a href="http://sv-comp.sosy-lab.org/2017/">SV-COMP 2017</a></li>
-    <li>Ultimate Automizer won the <a
-            href="http://sv-comp.sosy-lab.org/2016/results/">overall ranking</a>
-        at the <a href="http://sv-comp.sosy-lab.org/2016/">SV-COMP 2016</a></li>
+{% assign awards_sorted = site.awards | where_exp: "comp", "comp.competition contains 'SV-COMP'" | sort: 'year' | reverse %}
+{% for comp in awards_sorted -%}
+  {%- assign automizer = comp.awards | find: "name", "Automizer" -%}
+  {%- if automizer -%}
+    {% assign overall = automizer.medals | find_exp: "medal", "medal.category == 'Overall'" -%}
+    {% if overall and overall.medal == "gold" %}
+  <li>
+      <span style="font-variant: small-caps">Ultimate</span> Automizer won the <a href="{{ comp.competition_link }}results/results-verified/">overall ranking</a> at the <a href="{{ comp.competition_link }}">{{ comp.competition }}</a>.
+  </li>
+    {% endif %}
+  {% endif -%}
+{% endfor %}
 </ul>
 
 

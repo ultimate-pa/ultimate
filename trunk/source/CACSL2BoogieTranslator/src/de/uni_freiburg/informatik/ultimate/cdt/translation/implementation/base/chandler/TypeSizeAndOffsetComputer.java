@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -123,8 +122,8 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 	/**
-	 * @return An Expression that represents the offset (in bytes) at which a certain field of a stuct is stored (on the
-	 *         heap).
+	 * @return An Expression that represents the offset (in bytes) at which a certain field of a struct is stored (on
+	 *         the heap).
 	 */
 	public Offset constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final int fieldIndex) {
 		if (!mTypeSizeCache.containsKey(cStruct)) {
@@ -176,12 +175,12 @@ public class TypeSizeAndOffsetComputer {
 		}
 		SizeTValue sizeTValue = mTypeSizeCache.get(underlyingType);
 		if (sizeTValue == null) {
-			if (underlyingType instanceof CPrimitive) {
-				sizeTValue = constructSizeTValuePrimitive(loc, (CPrimitive) underlyingType);
-			} else if (underlyingType instanceof CArray) {
-				sizeTValue = constructSizeTValueArray(loc, (CArray) underlyingType);
-			} else if (underlyingType instanceof CStructOrUnion) {
-				sizeTValue = constructSizeTValueAndOffsetsStructAndUnion(loc, (CStructOrUnion) underlyingType);
+			if (underlyingType instanceof final CPrimitive primitive) {
+				sizeTValue = constructSizeTValuePrimitive(loc, primitive);
+			} else if (underlyingType instanceof final CArray array) {
+				sizeTValue = constructSizeTValueArray(loc, array);
+			} else if (underlyingType instanceof final CStructOrUnion structOrUnion) {
+				sizeTValue = constructSizeTValueAndOffsetsStructAndUnion(loc, structOrUnion);
 			} else if (underlyingType instanceof CFunction) {
 				// https://gcc.gnu.org/onlinedocs/gcc/Pointer-Arith.html
 				sizeTValue = new SizeTValueInteger(BigInteger.ONE);
@@ -207,7 +206,7 @@ public class TypeSizeAndOffsetComputer {
 
 	private SizeTValue constructSizeTValueArray(final ILocation loc, final CArray cArray) {
 		final SizeTValue valueSize = computeSize(loc, cArray.getValueType());
-		final SizeTValue factor = extractSizeTValue(cArray.getBound());
+		final SizeTValue factor = extractSizeTValue(cArray.getBound(), cArray.getBoundType());
 
 		final SizeTValue size = (new SizeTValueAggregatorMultiply()).aggregate(loc, Arrays.asList(valueSize, factor));
 		if (!mPreferConstantsOverValues) {
@@ -311,12 +310,12 @@ public class TypeSizeAndOffsetComputer {
 		return new Axiom(loc, new Attribute[0], isNonNegative);
 	}
 
-	private SizeTValue extractSizeTValue(final RValue rvalue) {
-		final BigInteger value = mTypeSizes.extractIntegerValue(rvalue);
+	private SizeTValue extractSizeTValue(final Expression bound, final ICType boundType) {
+		final BigInteger value = mTypeSizes.extractIntegerValue(bound, boundType);
 		if (value != null) {
 			return new SizeTValueInteger(value);
 		}
-		return new SizeTValueExpression(rvalue.getValue());
+		return new SizeTValueExpression(bound);
 	}
 
 	/**
@@ -447,7 +446,7 @@ public class TypeSizeAndOffsetComputer {
 		Expression asExpression(ILocation loc);
 	}
 
-	private class SizeTValueInteger implements SizeTValue {
+	class SizeTValueInteger implements SizeTValue {
 		private final BigInteger mValue;
 
 		public SizeTValueInteger(final BigInteger value) {

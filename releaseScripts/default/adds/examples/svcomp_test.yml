@@ -1,0 +1,28 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: bb0a3ca4-8cc8-4d72-8cb0-972f10662a7b
+    creation_time: '2025-10-21T18:32:34+02:00'
+    producer:
+      name: Automizer
+      version: 0.3.0-dev-12eeb57b61
+    task:
+      input_files:
+      - /mnt/c/Portable/UAutomizer-linux/examples/svcomp_test.c
+      input_file_hashes:
+        /mnt/c/Portable/UAutomizer-linux/examples/svcomp_test.c: d2232c6b79b0a4463bd7fd88c782c389cefab15f2c7a43182bd69d99d18ab047
+      specification: |+
+        CHECK( init(main()), LTL(G ! call(reach_error())) )
+
+      data_model: ILP32
+      language: C
+  content:
+  - invariant:
+      type: loop_invariant
+      location:
+        file_name: /mnt/c/Portable/UAutomizer-linux/examples/svcomp_test.c
+        line: 9
+        column: 3
+        function: main
+      value: (i <= r)
+      format: c_expression

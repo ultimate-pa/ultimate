@@ -525,14 +525,10 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
             "--preprocessor.replace.while.statements.and.if-then-else.statements"
         )
         ret.append("false")
-        # For YAML violation witnesses:
-        # - disable procedure inlining and
-        # - enforce if statements for conditional expressions
+        # For YAML violation witnesses, disable procedure inlining
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
             ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
-            ret.append("--cacsl2boogietranslator.always.translate.conditional.expressions.to.if-statements")
-            ret.append("true")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer

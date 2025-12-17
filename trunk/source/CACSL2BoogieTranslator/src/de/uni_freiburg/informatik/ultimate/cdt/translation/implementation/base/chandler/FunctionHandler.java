@@ -51,7 +51,6 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IBinding;
@@ -93,7 +92,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -181,6 +179,8 @@ public class FunctionHandler {
 
 	private final Set<String> mDefinedFunctions;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	/**
 	 *
 	 * @param logger
@@ -201,7 +201,7 @@ public class FunctionHandler {
 			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final CHandler chandler, final LocationFactory locFac,
 			final FlatSymbolTable symbolTable, final ExpressionResultTransformer expressionResultTransformer,
-			final Set<IASTNode> variablesOnHeap) {
+			final Set<IASTNode> variablesOnHeap, final IMemoryPointer pointer) {
 		mLogger = logger;
 		mNameHandler = nameHandler;
 		mExpressionTranslation = expressionTranslation;
@@ -217,6 +217,7 @@ public class FunctionHandler {
 		mVariablesOnHeap = variablesOnHeap;
 		mCalledFunctions = new HashSet<>();
 		mDefinedFunctions = new HashSet<>();
+		mMemoryPointer = pointer;
 	}
 
 	/**
@@ -583,9 +584,13 @@ public class FunctionHandler {
 					&& returnValue.getLrValue().getCType() instanceof CPrimitive
 					&& returnValue.getLrValue().getValue() instanceof IntegerLiteral
 					&& "0".equals(((IntegerLiteral) returnValue.getLrValue().getValue()).getValue())) {
-				returnValue = new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
-						.setLrValue(new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType))
-						.build();
+				returnValue =
+						new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
+								.setLrValue(new RValue(
+										mMemoryPointer.constructNullPointer(loc,
+												mExpressionTranslation.getCTypeOfPointerComponents()),
+										functionResultType))
+								.build();
 			}
 
 			if (outParams.length == 0) {
@@ -619,10 +624,10 @@ public class FunctionHandler {
 		// frees are inserted in handleReturnStm
 		for (final Entry<LocalLValueILocationPair, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {
 			if (entry.getValue() >= 1) {
-				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().llv, entry.getKey().loc));
+				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().mLlv, entry.getKey().mLoc));
 
 				resultBuilder.addStatement(
-						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLhs() }));
+						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().mLlv.getLhs() }));
 			}
 		}
 
@@ -686,8 +691,8 @@ public class FunctionHandler {
 				ICType expectedParamType =
 						calleeProcInfo.getCType().getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
-				if (expectedParamType instanceof CPrimitive
-						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE
+				if ((expectedParamType instanceof final CPrimitive cPrimitive
+						&& cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE)
 						|| expectedParamType instanceof CEnum) {
 					in = mExprResultTransformer.rexBoolToInt(in, loc);
 				}
@@ -695,9 +700,9 @@ public class FunctionHandler {
 					// workaround - better: make this conversion already in declaration
 					expectedParamType = new CPointer(expectedParamType);
 				}
-				if (expectedParamType instanceof CArray) {
+				if (expectedParamType instanceof final CArray cArray) {
 					// workaround - better: make this conversion already in declaration
-					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
+					expectedParamType = new CPointer(cArray.getValueType());
 				}
 				// implicit casts
 				in = mExprResultTransformer.performImplicitConversion(in, expectedParamType, loc);
@@ -728,26 +733,29 @@ public class FunctionHandler {
 					mTypeHandler.constructPointerType(loc), SFO.AUXVAR.VARARGS_POINTER);
 			// Declare the aux-var (it is allocated after the loop when the size is known)
 			functionCallExpressionResultBuilder.addAuxVarWithDeclaration(auxvarinfo);
-			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
-			Expression currentOffset =
-					mExpressionTranslation.constructLiteralForIntegerType(loc, pointerType, BigInteger.ZERO);
+
 			final List<Statement> writes = new ArrayList<>();
-			final Expression originalBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
-			final Expression originalOffset = MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc);
+			final CPrimitive pointerType = mExpressionTranslation.getCTypeOfPointerComponents();
+
+			Expression currentOffset = mExpressionTranslation.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+
+			// Add zero, in order to get a pointer with base, offset from the auxvarinfo
+			Expression startPointer = memoryHandler.addExpressionToPointer(loc, auxvarinfo.getExp(), currentOffset);
+
 			for (final ExpressionResult param : varargs) {
 				final ICType argType = param.getCType().getUnderlyingType();
-				// Write the current parameter to *(varargs + currentOffset) and increment currentOffset by the typesize
-				// afterwards
-				final Expression pointerOffset = mExpressionTranslation.constructArithmeticExpression(loc,
-						IASTBinaryExpression.op_plus, originalOffset, pointerType, currentOffset, pointerType);
-				final Expression address =
-						MemoryHandler.constructPointerFromBaseAndOffset(originalBase, pointerOffset, loc);
-				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(address, argType, null),
+				final var size = memoryHandler.calculateSizeOf(loc, argType);
+
+				writes.addAll(memoryHandler.getWriteCall(loc, new HeapLValue(startPointer, argType, null),
 						param.getLrValue().getValue(), argType, false));
-				currentOffset =
-						mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
-								currentOffset, pointerType, memoryHandler.calculateSizeOf(loc, argType), pointerType);
+
+				startPointer = memoryHandler.addExpressionToPointer(loc, startPointer, size);
+
+				currentOffset = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
+						currentOffset, pointerType, size, pointerType);
 			}
+
 			// Allocate the aux-var and add the writes of the parameters
 			functionCallExpressionResultBuilder.addStatement(
 					memoryHandler.getUltimateMemAllocCall(currentOffset, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
@@ -894,24 +902,24 @@ public class FunctionHandler {
 			final boolean isInLibraryMode) {
 		final VarList[] inparamVarListArray =
 				mProcedureManager.getCurrentProcedureInfo().getDeclaration().getInParams();
-		IASTNode[] paramDecs;
+		final IASTDeclarator[] paramDecs;
 		if (inparamVarListArray.length == 0) {
 			/*
 			 * In C it is possible to write func(void) { ... } This results in the empty name. (alex: what is an empty
 			 * name??)
 			 */
-			if (parent.getDeclarator() instanceof IASTStandardFunctionDeclarator) {
-				assert ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters().length == 0
-						|| ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters().length == 1 && ""
-								.equals(((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters()[0]
-										.getDeclarator().getName().toString());
+			if (parent.getDeclarator() instanceof final IASTStandardFunctionDeclarator standFuncDecl) {
+				assert standFuncDecl.getParameters().length == 0 || standFuncDecl.getParameters().length == 1
+						&& "".equals(standFuncDecl.getParameters()[0].getDeclarator().getName().toString());
 
 			}
-			paramDecs = new IASTParameterDeclaration[0];
-		} else if (parent.getDeclarator() instanceof IASTStandardFunctionDeclarator) {
-			paramDecs = ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters();
-		} else if (parent.getDeclarator() instanceof ICASTKnRFunctionDeclarator) {
-			paramDecs = ((ICASTKnRFunctionDeclarator) parent.getDeclarator()).getParameterDeclarations();
+			paramDecs = new IASTDeclarator[0];
+		} else if (parent.getDeclarator() instanceof final IASTStandardFunctionDeclarator standFuncDecl) {
+			paramDecs = Arrays.stream(standFuncDecl.getParameters()).map(decl -> decl.getDeclarator())
+					.toArray(IASTDeclarator[]::new);
+		} else if (parent.getDeclarator() instanceof final ICASTKnRFunctionDeclarator knrFuncDecl) {
+			paramDecs = Arrays.stream(knrFuncDecl.getParameterNames())
+					.map(name -> knrFuncDecl.getDeclaratorForParameterName(name)).toArray(IASTDeclarator[]::new);
 		} else {
 			paramDecs = null;
 			assert false : "are we missing a type of function declarator??";
@@ -919,7 +927,7 @@ public class FunctionHandler {
 
 		for (int i = 0; i < paramDecs.length; ++i) {
 			final VarList inparamVarList = inparamVarListArray[i];
-			final IASTNode paramDec = paramDecs[i];
+			final IASTDeclarator paramDec = paramDecs[i];
 			for (final String inparamBId : inparamVarList.getIdentifiers()) {
 				final String inparamCId = mSymboltable.getCIdForBoogieId(inparamBId);
 
@@ -942,7 +950,7 @@ public class FunctionHandler {
 				// addressoffed in the function body
 				boolean isOnHeap = false;
 				if (main instanceof MainDispatcher) {
-					isOnHeap = mVariablesOnHeap.contains(paramDec);
+					isOnHeap = mVariablesOnHeap.contains(paramDec.getParent());
 				}
 
 				// Copy of inparam that is writeable
@@ -1004,7 +1012,7 @@ public class FunctionHandler {
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				mSymboltable.storeCSymbol(parent, inparamCId, new SymbolTableValue(inparamAuxVarName, inVarDecl, type,
-						new CDeclaration(cvar, inparamCId), inparamAuxVarDeclInfo, paramDec, false));
+						new CDeclaration(cvar, inparamCId), inparamAuxVarDeclInfo, paramDec.getParent(), false));
 			}
 		}
 	}

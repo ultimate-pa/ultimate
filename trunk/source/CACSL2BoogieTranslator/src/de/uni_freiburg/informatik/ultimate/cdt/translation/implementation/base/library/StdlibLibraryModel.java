@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
@@ -491,7 +491,10 @@ public class StdlibLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<ConstantModel> getConstantModels() {
-		return List.of(new ConstantModel("NULL", loc -> new ExpressionResult(
-				new RValue(mExpressionTranslation.constructNullPointer(loc), CPointer.voidPointer()))));
+		return List
+				.of(new ConstantModel("NULL",
+						loc -> new ExpressionResult(
+								new RValue(mExpressionTranslation.constructZero(loc, CPointer.voidPointer()),
+										CPointer.voidPointer()))));
 	}
 }

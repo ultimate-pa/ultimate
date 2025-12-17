@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -98,7 +97,7 @@ public class CTranslationUtil {
 		CArray currentArrayType = cArrayType;
 
 		for (int i = 0; i < arrayIndex.size(); i++) {
-			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType().getUnderlyingType();
+			final CPrimitive currentIndexType = cArrayType.getBoundType();
 			index[i] = typeSizes.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.get(i).toString()));
 
@@ -119,7 +118,7 @@ public class CTranslationUtil {
 			final Integer arrayIndex, final TypeSizes typeSizes) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
-		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType();
+		final CPrimitive currentIndexType = cArrayType.getBoundType();
 		final Expression index =
 				typeSizes.constructLiteralForIntegerType(loc, currentIndexType, new BigInteger(arrayIndex.toString()));
 
@@ -131,36 +130,16 @@ public class CTranslationUtil {
 		return new LocalLValue(alhs, cellType, null);
 	}
 
-	public static boolean isVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		CArray currentArrayType = cArrayType;
-		while (true) {
-			if (typeSizes.extractIntegerValue(currentArrayType.getBound()) == null) {
-				// found a variable length bound
-				return true;
-			}
-			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
-			if (valueType instanceof CArray) {
-				currentArrayType = (CArray) valueType;
-			} else {
-				// reached at non-array type, found no varlength bound
-				return false;
-			}
-		}
-	}
-
-	public static boolean isToplevelVarlengthArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		return typeSizes.extractIntegerValue(cArrayType.getBound()) == null;
-	}
-
 	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		if (CTranslationUtil.isVarlengthArray(cArrayType, typeSizes)) {
-			throw new IllegalArgumentException("only call this for non-varlength array types");
-		}
 		CArray currentArrayType = cArrayType;
 
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
-			result.add(Integer.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound()).toString()));
+			if (currentArrayType.isIncomplete()) {
+				throw new IllegalArgumentException("Cannot get the dimensions of an incomplete array.");
+			}
+			result.add(Integer.parseUnsignedInt(typeSizes
+					.extractIntegerValue(currentArrayType.getBound(), currentArrayType.getBoundType()).toString()));
 
 			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
@@ -177,9 +156,8 @@ public class CTranslationUtil {
 	 */
 	public static boolean isAggregateType(final ICType valueTypeRaw) {
 		final ICType valueType = valueTypeRaw.getUnderlyingType();
-		return (valueType instanceof CStructOrUnion
-				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.STRUCT)
-				|| valueType instanceof CArray);
+		return (valueType instanceof final CStructOrUnion structOrUnion
+				&& structOrUnion.isStructOrUnion() == StructOrUnion.STRUCT) || valueType instanceof CArray;
 	}
 
 	public static boolean isAggregateOrUnionType(final ICType valueTypeRaw) {
@@ -189,24 +167,16 @@ public class CTranslationUtil {
 
 	private static boolean isUnionType(final ICType valueTypeRaw) {
 		final ICType valueType = valueTypeRaw.getUnderlyingType();
-		return valueType instanceof CStructOrUnion
-				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.UNION);
+		return valueType instanceof final CStructOrUnion structOrUnion
+				&& structOrUnion.isStructOrUnion() == StructOrUnion.UNION;
 	}
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType, final TypeSizes typeSizes) {
-		final RValue dimRVal = cArrayType.getBound();
-
-		final BigInteger extracted = typeSizes.extractIntegerValue(dimRVal);
-		if (extracted == null) {
-			throw new IllegalArgumentException("only call this for non-varlength first dimension types");
-		}
-
-		if (extracted.equals(BigInteger.valueOf(CArray.INCOMPLETE_ARRY_MAGIC_NUMBER))) {
+		if (cArrayType.isIncomplete()) {
 			throw new IllegalArgumentException("This array type is incomplete! Cannot extract actual dimensions.");
 		}
-
-		final int dimInt = Integer.parseUnsignedInt(extracted.toString());
-		return dimInt;
+		final BigInteger extracted = typeSizes.extractIntegerValue(cArrayType.getBound(), cArrayType.getBoundType());
+		return Integer.parseUnsignedInt(extracted.toString());
 	}
 
 	/**
@@ -249,7 +219,8 @@ public class CTranslationUtil {
 				return i;
 			}
 		}
-		throw new AssertionError("designator does not occur in struct type");
+		throw new AssertionError(
+				"designator '" + rootDesignator + "' does not occur in struct type '" + targetCType.getName() + "'");
 	}
 
 	public static LocalLValue constructOffHeapStructAccessLhs(final ILocation loc,
@@ -443,16 +414,15 @@ public class CTranslationUtil {
 	public static Set<ICType> extractNonAggregateNonUnionTypes(final ICType aggregateOrUnionCType) {
 		assert isAggregateOrUnionType(aggregateOrUnionCType) : "not an aggregate or union type";
 		final ICType underlyingType = aggregateOrUnionCType.getUnderlyingType();
-		if (underlyingType instanceof CArray) {
-			final ICType valueType = getValueTypeOfNestedArray((CArray) underlyingType).getUnderlyingType();
+		if (underlyingType instanceof final CArray array) {
+			final ICType valueType = getValueTypeOfNestedArray(array).getUnderlyingType();
 			if (isAggregateOrUnionType(valueType)) {
 				return extractNonAggregateNonUnionTypes(valueType);
-			} else {
-				return Collections.singleton(valueType.getUnderlyingType());
 			}
-		} else if (underlyingType instanceof CStructOrUnion) {
+			return Collections.singleton(valueType.getUnderlyingType());
+		} else if (underlyingType instanceof final CStructOrUnion structOrUnion) {
 			final Set<ICType> result = new HashSet<>();
-			for (final ICType fieldType : ((CStructOrUnion) underlyingType).getFieldTypes()) {
+			for (final ICType fieldType : structOrUnion.getFieldTypes()) {
 				if (isAggregateOrUnionType(fieldType)) {
 					result.addAll(extractNonAggregateNonUnionTypes(fieldType.getUnderlyingType()));
 				} else {
@@ -506,9 +476,8 @@ public class CTranslationUtil {
 			} else {
 				throw new AssertionError("missing case");
 			}
-		} else {
-			throw new AssertionError("missing case");
 		}
+		throw new AssertionError("missing case");
 	}
 
 	/**

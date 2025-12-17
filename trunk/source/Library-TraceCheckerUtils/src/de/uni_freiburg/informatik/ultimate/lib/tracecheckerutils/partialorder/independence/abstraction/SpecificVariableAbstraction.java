@@ -129,9 +129,8 @@ public class SpecificVariableAbstraction<L extends IAction>
 	private L copy(final L inLetter, final UnaryOperator<UnmodifiableTransFormula> transform) {
 		final UnmodifiableTransFormula newFormula = transform.apply(inLetter.getTransformula());
 		final UnmodifiableTransFormula newFormulaBE;
-		if (ABSTRACT_TF_WITH_BRANCH_ENCODERS && inLetter instanceof IActionWithBranchEncoders) {
-			newFormulaBE =
-					transform.apply(((IActionWithBranchEncoders) inLetter).getTransitionFormulaWithBranchEncoders());
+		if (ABSTRACT_TF_WITH_BRANCH_ENCODERS && inLetter instanceof final IActionWithBranchEncoders inLetterBE) {
+			newFormulaBE = transform.apply(inLetterBE.getTransitionFormulaWithBranchEncoders());
 		} else {
 			newFormulaBE = null;
 		}

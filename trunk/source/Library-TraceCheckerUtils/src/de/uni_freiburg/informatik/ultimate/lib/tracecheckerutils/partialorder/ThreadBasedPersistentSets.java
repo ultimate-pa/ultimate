@@ -165,6 +165,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		// For non-concurrent parts of a program, no need for complicated computations.
 		if (enabled.size() <= 1) {
 			mStatistics.reportTrivialQuery();
+			mLogger.debug("persistent set for %s is trivial (only 1 thread enabled)", state);
 			return null;
 		}
 
@@ -174,6 +175,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		assert persistentLocs.size() <= active.size() : "Non-active locs must not be base for persistent set";
 		if (persistentLocs.containsAll(enabled)) {
 			mStatistics.reportTrivialQuery();
+			mLogger.debug("persistent set for %s is trivial (conflicts forced all threads)", state);
 			return null;
 		}
 
@@ -182,6 +184,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		if (result.isEmpty()) {
 			throw new AssertionError("Non-trivial persistent set must never be empty");
 		}
+		mLogger.debug("persistent set for %s is %s", state, result);
 		return result;
 	}
 

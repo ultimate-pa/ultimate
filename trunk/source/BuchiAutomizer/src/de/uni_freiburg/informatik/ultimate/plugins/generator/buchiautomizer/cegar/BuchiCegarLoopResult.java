@@ -46,9 +46,9 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 	/**
 	 * Result of CEGAR loop iteration
 	 * <ul>
-	 * <li>SAFE: There is no feasible trace to an error location.
-	 * <li>UNSAFE: There is a feasible trace to an error location (the underlying program has at least one execution
-	 * which violates its specification).
+	 * <li>TERMINATING: There is no feasible infinite trace.
+	 * <li>NONTERMINATING: There is a feasible infinite trace (the underlying program has at least one execution which
+	 * does not terminate).
 	 * <li>UNKNOWN: We found a trace for which we could not decide feasibility or we found an infeasible trace but were
 	 * not able to exclude it in abstraction refinement.
 	 * <li>TIMEOUT: A timeout occurred.

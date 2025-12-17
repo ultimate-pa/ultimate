@@ -118,7 +118,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 				return SafetyCheckerOverallResult.UNSAFE_DEREF;
 			} else if (spec.contains(Spec.MEMORY_FREE)) {
 				return SafetyCheckerOverallResult.UNSAFE_FREE;
-			} else if (spec.contains(Spec.MEMORY_LEAK)) {
+			} else if (spec.contains(Spec.MEMORY_NEUTRAL)) {
 				return SafetyCheckerOverallResult.UNSAFE_MEMTRACK;
 			} else {
 				return SafetyCheckerOverallResult.UNSAFE;

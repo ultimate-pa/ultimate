@@ -45,24 +45,31 @@ public abstract class SimpleRCFGVisitor implements IObserver {
 	}
 
 	public void endOfTrace() {
+		// default implementation is empty
 	}
 
 	public void pre(final IcfgLocation node) {
+		// default implementation is empty
 	}
 
 	public void pre(final IcfgEdge edge) {
+		// default implementation is empty
 	}
 
 	public void post(final IcfgLocation node) {
+		// default implementation is empty
 	}
 
 	public void post(final IcfgEdge edge) {
+		// default implementation is empty
 	}
 
 	public void level(final IcfgLocation node) {
+		// default implementation is empty
 	}
 
 	public void level(final IcfgEdge edge) {
+		// default implementation is empty
 	}
 
 	public abstract boolean abortCurrentBranch();
@@ -71,9 +78,11 @@ public abstract class SimpleRCFGVisitor implements IObserver {
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
+		// default implementation is empty
 	}
 
 	@Override
 	public void finish() {
+		// default implementation is empty
 	}
 }

@@ -266,7 +266,7 @@ public class NestedMap2<K1, K2, V> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final NestedMap2 other = (NestedMap2) obj;
+		final NestedMap2<?, ?, ?> other = (NestedMap2<?, ?, ?>) obj;
 		return mK1ToK2ToV.equals(other.mK1ToK2ToV);
 	}
 }

@@ -21,7 +21,7 @@ deploy(){
   fi
 
   echo "Stopping Ultimate website"
-  exit_on_fail ssh ${RHOST} -- "cd /srv/infrastructure/deployments/ultimate-pa ; docker-compose down"
+  exit_on_fail ssh ${RHOST} -- "cd /srv/infrastructure/deployments/ultimate-pa ; docker compose down"
   
   echo "Removing old website"
   ssh ${RHOST} bash <<EOF
@@ -47,7 +47,7 @@ EOF
   rm WEBSITE_VERSION
 
   echo "Starting Ultimate website"
-  exit_on_fail ssh "root@${RHOST}" -- "cd /srv/infrastructure/deployments/ultimate-pa ; docker-compose up -d"
+  exit_on_fail ssh "root@${RHOST}" -- "cd /srv/infrastructure/deployments/ultimate-pa ; docker compose up -d"
 
   spopd
 }

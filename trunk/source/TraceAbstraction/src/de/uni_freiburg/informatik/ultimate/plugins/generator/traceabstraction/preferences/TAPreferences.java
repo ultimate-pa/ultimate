@@ -565,6 +565,14 @@ public final class TAPreferences {
 				RefinementStrategy.class);
 	}
 
+	public int conditionalCommutativityThreshold() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD);
+	}
+
+	public int conditionalCommutativityRetries() {
+		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS_RETRIES);
+	}
+
 	public HoareProofSettings getHoareSettings() {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
 	}

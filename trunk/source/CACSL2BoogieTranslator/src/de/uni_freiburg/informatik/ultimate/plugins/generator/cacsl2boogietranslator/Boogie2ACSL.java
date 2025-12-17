@@ -33,9 +33,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -97,7 +99,14 @@ public final class Boogie2ACSL {
 
 	public BacktranslatedExpression translateExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context) {
-		return translateExpression(expression, context, false);
+		// Dominik (2025-12-16): To reproduce existing behaviour, we default to allowing overapproximations.
+		// For instance, in location invariants, we may omit some conjuncts (but not disjuncts!) if they cannot be
+		// backtranslated. The result is still an invariant (though the overall annotation is likely no longer
+		// inductive) and can be useful in correctness witnesses.
+		// In the long term, we should consider whether we want to keep this behaviour, or allow callers to determine
+		// the permissible approximations. For instance, in expressions that are part of a program state,
+		// overapproximation might not be a good result.
+		return translateExpression(expression, context, Approximation.OVERAPPROXIMATION);
 	}
 
 	/**
@@ -183,48 +192,52 @@ public final class Boogie2ACSL {
 
 	private BacktranslatedExpression translateExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expression, final ILocation context,
-			final boolean isNegated) {
+			final Approximation permissibleApproximation) {
 		if (expression == null) {
 			mReporter.accept("Unknown expressions could not be backtranslated (possibly during translation to Boogie)");
 			return null;
 		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression) {
-			return translateUnaryExpression((de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression) expression,
-					context, isNegated);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression) {
-			return translateBinaryExpression(
-					(de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression) expression, context, isNegated);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression) {
-			return translateIdentifierExpression(
-					(de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression) expression, context);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral) {
-			return translateIntegerLiteral(new BigInteger(
-					((de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral) expression).getValue()));
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral) {
-			return translateBooleanLiteral((de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral) expression);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral) {
-			return translateRealLiteral((de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral) expression);
-		}
-		if (expression instanceof BitvecLiteral) {
-			return translateBitvecLiteral((BitvecLiteral) expression);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication) {
-			return translateFunctionApplication(
-					(de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication) expression, context,
-					isNegated);
-		}
-		if (expression instanceof de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression) {
-			return translateArrayAccess(
-					(de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression) expression, context);
-		}
-		mReporter.accept(
-				"Expression type not yet supported in backtranslation: " + expression.getClass().getSimpleName());
-		return null;
+
+		final Function<de.uni_freiburg.informatik.ultimate.boogie.ast.Expression, BacktranslatedExpression> unsupported =
+				(e) -> {
+					mReporter.accept(
+							"Expression type not yet supported in backtranslation: " + e.getClass().getSimpleName());
+					return null;
+				};
+
+		return switch (expression) {
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression uexp ->
+				translateUnaryExpression(uexp, context, permissibleApproximation);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression bexp ->
+				translateBinaryExpression(bexp, context, permissibleApproximation);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression id ->
+				translateIdentifierExpression(id, context);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral intLit ->
+				translateIntegerLiteral(new BigInteger(intLit.getValue()));
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral bLit -> translateBooleanLiteral(bLit);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral rLit -> translateRealLiteral(rLit);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral bvLit -> translateBitvecLiteral(bvLit);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication funApp ->
+				translateFunctionApplication(funApp, context);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression aaExp ->
+				translateArrayAccess(aaExp, context);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression iteExp ->
+				translateIfThenElse(iteExp, context, permissibleApproximation);
+
+		// TODO merge these cases once unnamed patterns are supported (Java >= 22); remove function "unsupported"
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression asExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression bvaExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression qExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral sLit -> unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression saExp ->
+				unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor sc -> unsupported.apply(expression);
+		case final de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression we ->
+				unsupported.apply(expression);
+		};
 	}
 
 	private BacktranslatedExpression translateIdentifierExpression(
@@ -270,8 +283,45 @@ public final class Boogie2ACSL {
 		return null;
 	}
 
+	private BacktranslatedExpression translateIfThenElse(
+			final de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression iteExp, final ILocation context,
+			final Approximation permissibleApproximation) {
+		final var condition = translateExpression(iteExp.getCondition(), context, Approximation.PRECISE);
+		if (condition == null) {
+			// Technically we might still be able to derive a restricted range from then/else.
+			// But for now we do not support returning only a range, so we simply return null.
+			return null;
+		}
+
+		if (condition.range().isZero()) {
+			return translateExpression(iteExp.getElsePart(), context, permissibleApproximation);
+		} else if (!condition.range().contains(BigInteger.ZERO)) {
+			return translateExpression(iteExp.getThenPart(), context, permissibleApproximation);
+		}
+
+		final var thenPart = translateExpression(iteExp.getThenPart(), context, permissibleApproximation);
+		final var elsePart = translateExpression(iteExp.getElsePart(), context, permissibleApproximation);
+		if (thenPart == null || elsePart == null) {
+			return null;
+		}
+
+		ICType resultType;
+		if (thenPart.cType() instanceof CPrimitive && elsePart.cType() instanceof CPrimitive) {
+			resultType = determineTypeForArithmeticOperation(thenPart.cType(), elsePart.cType());
+		} else if (Objects.equals(thenPart.cType(), elsePart.cType())) {
+			resultType = thenPart.cType();
+		} else {
+			// The C standard has additional rules for this case, if the involved types are pointer types.
+			// As we currently implement only a rudimentary backtranslation for pointers, this is omitted here.
+			resultType = null;
+		}
+
+		final var ite = new IfThenElseExpression(condition.expression(), thenPart.expression(), elsePart.expression());
+		return new BacktranslatedExpression(ite, resultType, thenPart.range().join(elsePart.range()));
+	}
+
 	private static boolean isFunctionDefinition(final ILocation context) {
-		return context instanceof CLocation && ((CLocation) context).getNode() instanceof IASTFunctionDefinition;
+		return context instanceof final CLocation cLoc && cLoc.getNode() instanceof IASTFunctionDefinition;
 	}
 
 	private BacktranslatedExpression constructFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
@@ -323,11 +373,10 @@ public final class Boogie2ACSL {
 	// TODO: Currently we don't care about types here, since function applications should only occur in bitvector
 	// setting, where we should not need any casts.
 	private BacktranslatedExpression translateFunctionApplication(
-			final de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication fun, final ILocation context,
-			final boolean isNegated) {
+			final de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication fun, final ILocation context) {
 		final BacktranslatedExpression[] translatedArguments = new BacktranslatedExpression[fun.getArguments().length];
 		for (int i = 0; i < fun.getArguments().length; i++) {
-			translatedArguments[i] = translateExpression(fun.getArguments()[i], context, isNegated);
+			translatedArguments[i] = translateExpression(fun.getArguments()[i], context, Approximation.PRECISE);
 			if (translatedArguments[i] == null) {
 				return null;
 			}
@@ -486,12 +535,10 @@ public final class Boogie2ACSL {
 		if (type1 == null || type2 == null) {
 			return null;
 		}
-		if (!(type1 instanceof CPrimitive) || !(type2 instanceof CPrimitive)) {
+		if (!(type1 instanceof final CPrimitive prim1) || !(type2 instanceof final CPrimitive prim2)) {
 			// TODO: What to do here?
 			return type1;
 		}
-		final CPrimitive prim1 = (CPrimitive) type1;
-		final CPrimitive prim2 = (CPrimitive) type2;
 		if (!prim1.isIntegerType() || !prim2.isIntegerType()) {
 			// TODO: What to do here?
 			return type1;
@@ -610,13 +657,20 @@ public final class Boogie2ACSL {
 
 	private BacktranslatedExpression translateBinaryExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression expression, final ILocation context,
-			final boolean isNegated) {
-		final BacktranslatedExpression lhs = translateExpression(expression.getLeft(), context, isNegated);
-		final BacktranslatedExpression rhs = translateExpression(expression.getRight(), context, isNegated);
+			final Approximation permissibleApproximation) {
+
+		final Approximation allowed = switch (expression.getOperator()) {
+		case LOGICAND, LOGICOR -> permissibleApproximation;
+		default -> Approximation.PRECISE;
+		};
+
+		final BacktranslatedExpression lhs = translateExpression(expression.getLeft(), context, allowed);
+		final BacktranslatedExpression rhs = translateExpression(expression.getRight(), context, allowed);
 		final BigInterval leftRange = lhs == null ? BigInterval.unbounded() : lhs.range();
 		final BigInterval rightRange = rhs == null ? BigInterval.unbounded() : rhs.range();
 		final ICType leftType = lhs == null ? null : lhs.cType();
 		final ICType rightType = rhs == null ? null : rhs.cType();
+
 		final Operator operator;
 		final BigInterval range;
 		ICType resultType;
@@ -680,7 +734,7 @@ public final class Boogie2ACSL {
 			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case LOGICAND:
-			if (!isNegated) {
+			if (permissibleApproximation == Approximation.OVERAPPROXIMATION) {
 				if (lhs == null) {
 					return rhs;
 				}
@@ -693,7 +747,7 @@ public final class Boogie2ACSL {
 			resultType = new CPrimitive(CPrimitives.INT);
 			break;
 		case LOGICOR:
-			if (isNegated) {
+			if (permissibleApproximation == Approximation.UNDERAPPROXIMATION) {
 				if (lhs == null) {
 					return rhs;
 				}
@@ -728,13 +782,14 @@ public final class Boogie2ACSL {
 
 	private BacktranslatedExpression translateUnaryExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression expr, final ILocation context,
-			final boolean isNegated) {
+			final Approximation permissibleApproximation) {
 		final Expression resultExpr;
 		final BigInterval range;
 		final ICType cType;
 		switch (expr.getOperator()) {
 		case ARITHNEGATIVE: {
-			final BacktranslatedExpression innerTrans = translateExpression(expr.getExpr(), context, isNegated);
+			final BacktranslatedExpression innerTrans =
+					translateExpression(expr.getExpr(), context, Approximation.PRECISE);
 			if (innerTrans == null) {
 				return null;
 			}
@@ -744,7 +799,8 @@ public final class Boogie2ACSL {
 			break;
 		}
 		case LOGICNEG: {
-			final BacktranslatedExpression innerTrans = translateExpression(expr.getExpr(), context, !isNegated);
+			final BacktranslatedExpression innerTrans =
+					translateExpression(expr.getExpr(), context, permissibleApproximation.invert());
 			if (innerTrans == null) {
 				return null;
 			}
@@ -754,7 +810,8 @@ public final class Boogie2ACSL {
 			break;
 		}
 		case OLD: {
-			final BacktranslatedExpression innerTrans = translateExpression(expr.getExpr(), context, isNegated);
+			final BacktranslatedExpression innerTrans =
+					translateExpression(expr.getExpr(), context, permissibleApproximation);
 			if (innerTrans == null) {
 				return null;
 			}
@@ -778,17 +835,16 @@ public final class Boogie2ACSL {
 	}
 
 	private boolean isPresentInContext(final String cId, final ILocation context) {
-		if (context instanceof CLocation) {
-			return mSymbolTable.containsCSymbol(((CLocation) context).getNode(), cId);
+		if (context instanceof final CLocation cLoc) {
+			return mSymbolTable.containsCSymbol(cLoc.getNode(), cId);
 		}
 		return true;
 	}
 
 	private BigInterval getRangeForCType(final ICType type) {
-		if (type == null || !(type.getUnderlyingType() instanceof CPrimitive)) {
+		if (type == null || !(type.getUnderlyingType() instanceof final CPrimitive prim)) {
 			return BigInterval.unbounded();
 		}
-		final CPrimitive prim = (CPrimitive) type.getUnderlyingType();
 		if (!prim.isIntegerType()) {
 			return BigInterval.unbounded();
 		}
@@ -799,7 +855,8 @@ public final class Boogie2ACSL {
 	private BacktranslatedExpression translateArrayAccess(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression expression,
 			final ILocation context) {
-		final BacktranslatedExpression array = translateExpression(expression.getArray(), context);
+		final BacktranslatedExpression array =
+				translateExpression(expression.getArray(), context, Approximation.PRECISE);
 		if (array == null) {
 			// TODO: Translate pointer accesses back (i.e. array accesses in the memory array)
 			// - Check if the array is the memory array first
@@ -811,7 +868,7 @@ public final class Boogie2ACSL {
 		Expression result = array.expression();
 		ICType resultType = array.cType();
 		for (final var index : expression.getIndices()) {
-			final BacktranslatedExpression translatedIndex = translateExpression(index, context);
+			final BacktranslatedExpression translatedIndex = translateExpression(index, context, Approximation.PRECISE);
 			if (translatedIndex == null) {
 				return null;
 			}
@@ -840,5 +897,17 @@ public final class Boogie2ACSL {
 		final var idExpr = new BacktranslatedExpression(new IdentifierExpression(newIdentifier));
 		mAuxVariables.put(identifier, idExpr);
 		return idExpr;
+	}
+
+	private enum Approximation {
+		OVERAPPROXIMATION, UNDERAPPROXIMATION, PRECISE;
+
+		private Approximation invert() {
+			return switch (this) {
+			case OVERAPPROXIMATION -> UNDERAPPROXIMATION;
+			case UNDERAPPROXIMATION -> OVERAPPROXIMATION;
+			case PRECISE -> PRECISE;
+			};
+		}
 	}
 }

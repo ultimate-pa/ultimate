@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class ChcToBoogieObserver implements IUnmanagedObserver {
+	private static final String GOTO_VAR_NAME = "gotoSwitch";
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -79,11 +80,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	private HcSymbolTable mHcSymbolTable;
 	private final ILocation mLocation;
 
-	private boolean mEncodeAsGotoProgram;
-
 	private final IPreferenceProvider mPrefs;
-	private String mGotoProcName;
-	private String mGotoVarName;
 
 	public ChcToBoogieObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -148,12 +145,11 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		// sortHornClausesByHeads(hornClausesRaw);
 		final ChcPreMetaInfoProvider preAnalysis = new ChcPreMetaInfoProvider(hornClausesRaw, mHcSymbolTable);
 
-		mGotoVarName = "gotoSwitch";
 		final GenerateBoogieAstHelper helper = new GenerateBoogieAstHelper(mLocation, mHcSymbolTable, mTerm2Expression,
 				mTypeSortTanslator, mNameOfMainEntryPointProc);
 		if (mPrefs.getBoolean(ChcToBoogiePreferenceInitializer.ENCODE_AS_GOTO_PROGRAM)) {
 			mHcSymbolTable.setGotoProcMode(true);
-			mBoogieUnit = new GenerateGotoBoogieAst(preAnalysis, helper, mGotoVarName).getResult();
+			mBoogieUnit = new GenerateGotoBoogieAst(preAnalysis, helper, GOTO_VAR_NAME).getResult();
 		} else {
 			mHcSymbolTable.setGotoProcMode(false);
 			mBoogieUnit = new GenerateBoogieAst(preAnalysis.getHornClausesSorted(), helper).getResult();

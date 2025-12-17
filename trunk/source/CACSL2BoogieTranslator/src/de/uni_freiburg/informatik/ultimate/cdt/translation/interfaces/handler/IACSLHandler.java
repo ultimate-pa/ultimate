@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLProblemNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
@@ -350,4 +351,6 @@ public interface IACSLHandler {
 	 * @return a result object
 	 */
 	Result visit(IDispatcher main, ACSLNode node);
+
+	Result visit(IDispatcher main, ACSLProblemNode node);
 }

@@ -228,37 +228,40 @@ public class WitnessManager {
 				timeoutInS);
 		timeoutInS++;
 		mLogger.info(StringUtils.join(cmdArray, " "));
-		final MonitoredProcess cpaCheckerProcess = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices);
-		final BufferedInputStream errorStream = new BufferedInputStream(cpaCheckerProcess.getErrorStream());
-		final BufferedInputStream outputStream = new BufferedInputStream(cpaCheckerProcess.getInputStream());
-		final String error = convertStreamToString(errorStream);
-		final String output = convertStreamToString(outputStream);
+		try (final MonitoredProcess cpaCheckerProcess =
+				MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices)) {
+			final BufferedInputStream errorStream = new BufferedInputStream(cpaCheckerProcess.getErrorStream());
+			final BufferedInputStream outputStream = new BufferedInputStream(cpaCheckerProcess.getInputStream());
+			final String error = convertStreamToString(errorStream);
+			final String output = convertStreamToString(outputStream);
 
-		// wait for timeoutInS seconds for the witness checker, then kill it
-		// forcefully
-		mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
-		final MonitoredProcessState cpaCheckerState = cpaCheckerProcess.impatientWaitUntilTime(timeoutInS * 1000L);
-		mLogger.info("Return code was " + cpaCheckerState.getReturnCode());
+			// wait for timeoutInS seconds for the witness checker, then kill it
+			// forcefully
+			mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
+			final MonitoredProcessState cpaCheckerState = cpaCheckerProcess.impatientWaitUntilTime(timeoutInS * 1000L);
+			mLogger.info("Return code was " + cpaCheckerState.getReturnCode());
 
-		// TODO: interpret error and output
+			// TODO: interpret error and output
 
-		if (checkOutputForSuccess(output)) {
-			mLogger.info("Witness for CEX was verified successfully");
-			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFIED,
+			if (checkOutputForSuccess(output)) {
+				mLogger.info("Witness for CEX was verified successfully");
+				reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFIED,
+						WitnessVerificationStatus.VERIFIED);
+				return true;
+			}
+			final StringBuilder logMessage = new StringBuilder().append("Witness for CEX did not verify");
+			if (cpaCheckerState.isKilled()) {
+				logMessage.append(" due to timeout of ").append(timeoutInS).append("s");
+			}
+			logMessage.append("! CPAChecker said:").append(CoreUtil.getPlatformLineSeparator()).append("STDERR:")
+					.append(CoreUtil.getPlatformLineSeparator()).append(error)
+					.append(CoreUtil.getPlatformLineSeparator()).append("STDOUT:")
+					.append(CoreUtil.getPlatformLineSeparator()).append(output);
+			mLogger.error(logMessage.toString());
+			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFICATION_FAILED,
 					WitnessVerificationStatus.VERIFIED);
-			return true;
+			return false;
 		}
-		final StringBuilder logMessage = new StringBuilder().append("Witness for CEX did not verify");
-		if (cpaCheckerState.isKilled()) {
-			logMessage.append(" due to timeout of ").append(timeoutInS).append("s");
-		}
-		logMessage.append("! CPAChecker said:").append(CoreUtil.getPlatformLineSeparator()).append("STDERR:")
-				.append(CoreUtil.getPlatformLineSeparator()).append(error).append(CoreUtil.getPlatformLineSeparator())
-				.append("STDOUT:").append(CoreUtil.getPlatformLineSeparator()).append(output);
-		mLogger.error(logMessage.toString());
-		reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFICATION_FAILED,
-				WitnessVerificationStatus.VERIFIED);
-		return false;
 	}
 
 	private static boolean checkOutputForSuccess(final String output) {

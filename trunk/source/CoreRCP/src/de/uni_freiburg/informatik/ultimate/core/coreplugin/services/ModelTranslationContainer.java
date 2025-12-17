@@ -91,14 +91,6 @@ class ModelTranslationContainer implements IBacktranslationService {
 		return translateExpressionWithContext(current, expression, context);
 	}
 
-	@Override
-	public <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
-			final Class<SE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
-		final ITranslator<?, ?, ?, ?, ?, ?, CTX> last = (ITranslator<?, ?, ?, ?, ?, ?, CTX>) current.firstElement();
-		return translateExpressionToString(translateExpressionWithContext(current, expression, context), last);
-	}
-
 	@SuppressWarnings("unchecked")
 	private <TE, SE, CTX> TE translateExpressionWithContext(final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> remaining,
 			final SE expression, final CTX context) {
@@ -111,10 +103,8 @@ class ModelTranslationContainer implements IBacktranslationService {
 	}
 
 	@Override
-	public <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?, ?>> current = prepareTranslatorStackAndCheckSourceExpression(clazz);
-		final ITranslator<?, ?, ?, ?, ?, ?, ?> last = current.firstElement();
-		return translateExpressionToString(translateExpression(current, expression), last);
+	public <TE> String targetExpressionToString(final TE expression) {
+		return translateExpressionToString(expression, mTranslationSequence.getFirst());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -429,5 +419,4 @@ class ModelTranslationContainer implements IBacktranslationService {
 		final ITranslator<?, ?, SE, TE, ?, ?, ?> tmp = (ITranslator<?, ?, SE, TE, ?, ?, ?>) remaining.pop();
 		return declareAndTranslateAuxiliaryVariable(remaining, tmp.declareAndTranslateAuxiliaryVariable(variable));
 	}
-
 }

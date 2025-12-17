@@ -25,7 +25,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
@@ -44,12 +43,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public final class ConstructMemcpyOrMemmove {
 	private final MemoryHandler mMemoryHandler;
 	private final ProcedureManager mProcedureManager;
-	private final TypeHandler mTypeHandler;
+	private final ITypeHandler mTypeHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
@@ -57,7 +57,7 @@ public final class ConstructMemcpyOrMemmove {
 	private final DataRaceChecker mDataRaceChecker;
 
 	public ConstructMemcpyOrMemmove(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
-			final TypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final TypeSizes typeSizes, final DataRaceChecker dataRaceChecker) {
 		mMemoryHandler = memoryHandler;
@@ -131,7 +131,7 @@ public final class ConstructMemcpyOrMemmove {
 					loopBody.getStatements()));
 		}
 
-		{
+		if (mMemoryHandler.getRequiredMemoryStructureFeatures().isPointerOnHeapRequired()) {
 			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 			bodyDecl.add(loopCtrAux.getVarDec());
 
@@ -236,12 +236,13 @@ public final class ConstructMemcpyOrMemmove {
 		{
 			final Expression currentSrc = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					srcId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType);
+					charCType, mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					destId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType);
+					charCType, mExpressionTranslation.getCTypeOfPointerComponents());
 
-			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryModelFeatures().getDataOnHeapRequired()) {
+			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryStructureFeatures()
+					.getDataOnHeapRequired()) {
 				final ICType cPrimType = new CPrimitive(cPrim);
 				final Expression srcAcc;
 				{
@@ -285,12 +286,12 @@ public final class ConstructMemcpyOrMemmove {
 		{
 			final Expression currentSrc = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					srcId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType);
+					charCType, mExpressionTranslation.getCTypeOfPointerComponents());
 			final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					destId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
-					charCType);
+					charCType, mExpressionTranslation.getCTypeOfPointerComponents());
 
-			if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
+			if (mMemoryHandler.getRequiredMemoryStructureFeatures().isPointerOnHeapRequired()) {
 				final ICType cPointer = CPointer.voidPointer();
 				final Expression srcAcc;
 				{

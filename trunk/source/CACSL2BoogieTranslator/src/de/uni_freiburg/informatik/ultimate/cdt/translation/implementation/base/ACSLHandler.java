@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -95,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLProblemNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
@@ -176,12 +178,14 @@ public class ACSLHandler implements IACSLHandler {
 	private final LocationFactory mLocationFactory;
 	private final CHandler mCHandler;
 	private final CExpressionTranslator mCExpressionTranslator;
+	private final IMemoryPointer mMemoryPointer;
 
 	private final ScopedHashMap<String, LRValue> mBoundVariables = new ScopedHashMap<>();
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
-			final ProcedureManager procedureManager, final LocationFactory locationFactory, final CHandler chandler) {
+			final ProcedureManager procedureManager, final LocationFactory locationFactory, final CHandler chandler,
+			final IMemoryPointer memoryPointer) {
 		mWitnessInvariantMode = witnessInvariantMode;
 		mSymboltable = symboltable;
 		mExpressionTranslation = expressionTranslation;
@@ -192,6 +196,7 @@ public class ACSLHandler implements IACSLHandler {
 		// Use a copy of CExpressionTranslator, where all checks for UB are disabled.
 		mCExpressionTranslator = chandler.getCExpressionTranslator().disableChecksForUndefinedBehavior();
 		mCHandler = chandler;
+		mMemoryPointer = memoryPointer;
 	}
 
 	@Override
@@ -945,9 +950,15 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final NullPointer node) {
 		// \null is an extra notation for the null pointer (i.e. a shortcut for (void*)0).
-		return new ExpressionResult(
-				new RValue(mExpressionTranslation.constructNullPointer(mLocationFactory.createACSLLocation(node)),
-						CPointer.voidPointer()));
+		final var nullPtr = mMemoryPointer.constructNullPointer(mLocationFactory.createACSLLocation(node),
+				mExpressionTranslation.getCTypeOfPointerComponents());
+
+		return new ExpressionResult(new RValue(nullPtr, CPointer.voidPointer()));
 	}
 
+	@Override
+	public Result visit(final IDispatcher main, final ACSLProblemNode node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		throw new UnsupportedSyntaxException(loc, "Error during parsing of ACSL (" + node.getErrorMessage() + ")");
+	}
 }

@@ -535,7 +535,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 						mStateFactoryForRefinement);
 
 		return new ConditionalCommutativityCounterexampleChecker<>(mServices, mPOR.getDfsOrder(), conComChecker,
-				mPOR.getSleepFactory(), createAutomatonBuilder);
+				mPOR.getSleepFactory(), createAutomatonBuilder, mPref.conditionalCommutativityThreshold(),
+				mPref.conditionalCommutativityRetries());
 	}
 
 	@Override

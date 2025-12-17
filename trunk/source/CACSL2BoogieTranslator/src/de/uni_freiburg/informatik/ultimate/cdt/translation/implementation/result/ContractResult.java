@@ -43,7 +43,7 @@ public class ContractResult extends Result {
 	/**
 	 * Specifications.
 	 */
-	private final Specification[] specs;
+	private final Specification[] mSpecs;
 
 	/**
 	 * Constructor.
@@ -53,11 +53,11 @@ public class ContractResult extends Result {
 	 */
 	public ContractResult(final Specification[] specs) {
 		super(null);
-		this.specs = specs;
+		this.mSpecs = specs;
 	}
 
 	public Specification[] getSpecs() {
-		return specs;
+		return mSpecs;
 	}
 
 }

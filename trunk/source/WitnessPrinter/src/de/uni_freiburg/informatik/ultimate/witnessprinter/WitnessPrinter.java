@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -201,9 +202,13 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final String witness =
-						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
-				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+				if (IcfgUtils.isConcurrent(root)) {
+					mLogger.warn("YAML witness skipped, because there is no support for concurrent programs yet.");
+				} else {
+					final String witness =
+							new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
+					suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+				}
 			}
 		}
 		return suppliers;
@@ -220,23 +225,29 @@ public class WitnessPrinter implements IOutput {
 		final String filename = ILocation.getAnnotation(root).getFileName();
 
 		for (final LassoShapedNonTerminationArgument<?, ?> cex : cexResults) {
+			final var lasso = getBacktranslatedLasso(backtrans, cex);
 			if (createGraphML) {
-				final String witness = getWitness(backtrans, cex);
+				final String witness =
+						new GraphMLViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger, mServices)
+								.makeGraphMLString();
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
-			// TODO: Add support for YAML
+			if (createYaml) {
+				final String witness =
+						new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger, mServices)
+								.makeYamlString();
+				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+			}
 		}
 		return suppliers;
 	}
 
 	@SuppressWarnings("unchecked")
-	private <TE, T, STE extends IElement, ST> String getWitness(final IBacktranslationService backtrans,
-			final LassoShapedNonTerminationArgument<STE, ST> cex) {
+	private static <TE, T, STE extends IElement, ST> Lasso<IProgramExecution<TE, T>> getBacktranslatedLasso(
+			final IBacktranslationService backtrans, final LassoShapedNonTerminationArgument<STE, ST> cex) {
 		final Lasso<?> lasso =
 				backtrans.translateLassoProgramExecution(new Lasso<>(cex.getStemExecution(), cex.getLoopExecution()));
-		final var stem = (IProgramExecution<TE, T>) lasso.stem();
-		final var loop = (IProgramExecution<TE, T>) lasso.loop();
-		return new GraphMLViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
+		return new Lasso<>((IProgramExecution<TE, T>) lasso.stem(), (IProgramExecution<TE, T>) lasso.loop());
 	}
 
 	@Override

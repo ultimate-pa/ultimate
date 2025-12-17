@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -162,8 +164,8 @@ public class StdioLibraryModel implements ILibraryModel {
 				loc, name, 1, new CPrimitive(CPrimitives.INT))));
 		result.add(new FunctionModel("fseek", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
 				loc, name, 3, new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("fread", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
-				loc, name, 4, new CPrimitive(CPrimitives.ULONG))));
+		result.add(new FunctionModel("fread", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.ULONG))));
 		result.add(new FunctionModel("ferror", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
 				loc, name, 1, new CPrimitive(CPrimitives.INT))));
 		result.add(new FunctionModel("fputs", (main, node, loc, name) -> mHelper
@@ -228,12 +230,9 @@ public class StdioLibraryModel implements ILibraryModel {
 		body.add(havocNondet);
 
 		// *(ptr + ctr) := aux
-		final var ptrOffset = MemoryHandler.getPointerOffset(ptr.getLrValue().getValue(), loc);
-		final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_plus, ptrOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
-				ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents());
-		final var ptrPlusCtr = MemoryHandler.constructPointerFromBaseAndOffset(
-				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
+
+		final var ptrPlusCtr = mMemoryHandler.addExpressionToPointer(loc, ptr.getLrValue().getValue(), ctr.getExp());
+
 		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
 		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
 				new CPrimitive(CPrimitives.CHAR), false);
@@ -254,8 +253,8 @@ public class StdioLibraryModel implements ILibraryModel {
 						mExpressionTranslation.getCTypeOfPointerComponents()));
 		body.add(incrementCtr);
 
-		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
-				body.toArray(Statement[]::new));
+		final var loop = new WhileStatement(LocationFactory.createIgnoreLocation(loc), new WildcardExpression(loc),
+				new LoopInvariantSpecification[0], body.toArray(Statement[]::new));
 		builder.addStatement(loop);
 
 		final var ret =
@@ -326,12 +325,9 @@ public class StdioLibraryModel implements ILibraryModel {
 		body.add(havocNondet);
 
 		// *(ptr + ctr) := aux
-		final var ptrOffset = MemoryHandler.getPointerOffset(ptr.getLrValue().getValue(), loc);
-		final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_plus, ptrOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
-				ctr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents());
-		final var ptrPlusCtr = MemoryHandler.constructPointerFromBaseAndOffset(
-				MemoryHandler.getPointerBaseAddress(ptr.getLrValue().getValue(), loc), newOffset, loc);
+		final Expression ptrPlusCtr =
+				mMemoryHandler.addExpressionToPointer(loc, ptr.getLrValue().getValue(), ctr.getExp());
+
 		final var ptrPlusCtrHlv = LRValueFactory.constructHeapLValue(mTypeHandler, ptrPlusCtr, ptr.getCType(), null);
 		final var writeToMem = mMemoryHandler.getWriteCall(loc, ptrPlusCtrHlv, auxvar.getExp(),
 				new CPrimitive(CPrimitives.CHAR), false);
@@ -352,8 +348,8 @@ public class StdioLibraryModel implements ILibraryModel {
 						mExpressionTranslation.getCTypeOfPointerComponents()));
 		body.add(incrementCtr);
 
-		final var loop = new WhileStatement(loc, new WildcardExpression(loc), new LoopInvariantSpecification[0],
-				body.toArray(Statement[]::new));
+		final var loop = new WhileStatement(LocationFactory.createIgnoreLocation(loc), new WildcardExpression(loc),
+				new LoopInvariantSpecification[0], body.toArray(Statement[]::new));
 		builder.addStatement(loop);
 
 		final var ret =
@@ -379,6 +375,14 @@ public class StdioLibraryModel implements ILibraryModel {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		for (int i = 0; i < arguments.length; i++) {
+			if (i == firstArgumentToWrite - 1 && mHelper.isStringLiteral(arguments[i])) {
+				final String format = arguments[i].toString();
+				// WORKAROUND for #761: We always report unknown, whenever %s, %2c, ... occurs in the pattern.
+				if (Pattern.matches(".*?%(s|\\d+c).*", format)) {
+					return mHelper.handleUnsupportedFunctionByOverapproximation(main, loc, name,
+							new CPrimitive(CPrimitives.LONG));
+				}
+			}
 			if (i < firstArgumentToWrite) {
 				// Don't dispatch string literals
 				if (!mHelper.isStringLiteral(arguments[i])) {

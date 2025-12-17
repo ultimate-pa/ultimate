@@ -44,9 +44,22 @@ public sealed interface BacktranslatedACSLValue {
 	 *
 	 * Such expressions may be used for the backtranslation of invariants and procedure contracts, as well as for
 	 * program states.
+	 *
+	 * @param expression
+	 *            the ACSL expression representing the backtranslated value
+	 * @param cType
+	 *            the value's C type, if known (may be {@code null})
+	 * @param range
+	 *            an interval encompassing the possible concrete values that {@code expression} may have
 	 */
 	public record BacktranslatedExpression(Expression expression, ICType cType, BigInterval range)
 			implements BacktranslatedACSLValue {
+		/**
+		 * Creates a backtranslated value with an unknown C type and an unbounded range.
+		 *
+		 * @param expression
+		 *            the backtranslated ACSL expression
+		 */
 		public BacktranslatedExpression(final Expression expression) {
 			this(expression, null, BigInterval.unbounded());
 		}
@@ -74,8 +87,8 @@ public sealed interface BacktranslatedACSLValue {
 	 * While these values do not make sense outside of our tool (and thus should never make it into witnesses etc), they
 	 * can be used for log output and can be helpful when debugging a feasible error trace reported by Ultimate.
 	 */
-	public record FakePointer(BigInteger base, BigInteger offset) implements BacktranslatedACSLValue {
-		public FakePointer {
+	public record FakePointer2D(BigInteger base, BigInteger offset) implements BacktranslatedACSLValue {
+		public FakePointer2D {
 			Objects.requireNonNull(base);
 			Objects.requireNonNull(offset);
 		}
@@ -83,6 +96,28 @@ public sealed interface BacktranslatedACSLValue {
 		@Override
 		public String toString() {
 			return "{%s:%s}".formatted(base, offset);
+		}
+	}
+
+	/**
+	 * Represents a backtranslated value for a memory address in our memory model, consisting of a base address and an
+	 * offset.
+	 *
+	 * This is not a real ACSL expression, and should only be used in the backtranslation of program states, not in
+	 * invariants or contracts. Moreover, it must only be used for the values in a program state, not as a key (it does
+	 * not represent a variable).
+	 *
+	 * While these values do not make sense outside of our tool (and thus should never make it into witnesses etc), they
+	 * can be used for log output and can be helpful when debugging a feasible error trace reported by Ultimate.
+	 */
+	public record FakePointer1D(BigInteger base) implements BacktranslatedACSLValue {
+		public FakePointer1D {
+			Objects.requireNonNull(base);
+		}
+
+		@Override
+		public String toString() {
+			return "{%s}".formatted(base);
 		}
 	}
 }

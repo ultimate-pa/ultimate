@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.l
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -86,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
  * Boogie procedures are inserted into the translated program from several sources:
  * <ul>
  * <li>translations of C functions ({@link CHandler}, {@link FunctionHandler})
- * <li>helper procedures from the memory model ({@link MemoryHandler})
+ * <li>helper procedures from the Memory Structure ({@link MemoryHandler})
  * <li>when we provide a Boogie model for a standard C function ({@link LibraryModelHandler})
  * <li>Ultimate.start and Ultimate.init ({@link PostProcessor})
  * </ul>
@@ -175,7 +174,7 @@ public class ProcedureManager {
 	 * Returns declarations for all procedures that will appear in the translated program. Ensures that the modifies
 	 * clauses of all procedures are transitive with respect to the call graph.
 	 * <p>
-	 * Special case regarding memory models: if one memory-array is included, all active memory arrays have to be
+	 * Special case regarding Memory Structure: if one memory-array is included, all active memory arrays have to be
 	 * included (f.i. we have procedure modifies memory_int, and memoryHandler.isFloatMMArray == true, and
 	 * memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false, then we have to add memory_real to
 	 * the modifies clause of procedure
@@ -213,16 +212,17 @@ public class ProcedureManager {
 					procedureName, oldSpec, loc);
 
 			final Specification[] newSpecWithExtraEnsuresClauses;
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
-					&& (mSettings.checkAllocationPurity() || (mSettings.getEntryMethod().equals(SFO.EMPTY)
-							|| mSettings.getEntryMethod().equals(procedureName))
-							&& mSettings.checkMemoryLeakInMain())) {
-				// add a specification to check for memory leaks
+			if (memoryHandler.getRequiredMemoryStructureFeatures().isMemoryStructureInfrastructureRequired()
+					&& mSettings.getFunctionsCheckedForMemoryNeutrality().contains(procedureName)) {
+				// add a specification to check for memory neutrality (i.e., if all dynamically allocated memory is
+				// freed)
+				// TODO Matthias 2025-10-03: It might be confusing for users to check the property only of the memory
+				// model is required. Maybe we can require the memory model if the list of functions for which we
+				// check memory neutrality is not empty.
 
 				final Expression vIe = memoryHandler.getValidArray(loc);
-
 				final int nrSpec = newSpec.length;
-				final Check check = new Check(Spec.MEMORY_LEAK);
+				final Check check = new Check(Spec.MEMORY_NEUTRAL);
 				final ILocation ensLoc = LocationFactory.createLocation(loc);
 				newSpecWithExtraEnsuresClauses = Arrays.copyOf(newSpec, nrSpec + 1);
 				newSpecWithExtraEnsuresClauses[nrSpec] = new EnsuresSpecification(ensLoc, false,
@@ -262,7 +262,7 @@ public class ProcedureManager {
 		 *
 		 */
 		final Collection<HeapDataArray> heapDataArrays =
-				memoryHandler.getMemoryModel().getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
+				memoryHandler.getDataHeapArrays(memoryHandler.getRequiredMemoryStructureFeatures());
 		if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 			for (final HeapDataArray hda : heapDataArrays) {
 				procInfo.addModifiedGlobal(hda.getVariableLHS());
@@ -308,7 +308,7 @@ public class ProcedureManager {
 	/**
 	 * Announces the beginning of the declaration of a custom procedure. A custom procedure is a procedure that is
 	 * introduced by the translation and has no direct counterpart in the translated C program. Examples are
-	 * Ultimate.start, Ultimate.init, and the procedures introduces by the memory model.
+	 * Ultimate.start, Ultimate.init, and the procedures introduces by the Memory Structure.
 	 *
 	 * @param main
 	 * @param loc

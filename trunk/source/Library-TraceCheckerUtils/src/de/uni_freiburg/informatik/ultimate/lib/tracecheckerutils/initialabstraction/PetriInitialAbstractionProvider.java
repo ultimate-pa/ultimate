@@ -96,8 +96,8 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
-			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
+	public <LOC extends IcfgLocation> BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<LOC> icfg,
+			final Set<LOC> errorLocs) throws AutomataOperationCanceledException {
 		mIcfg = icfg;
 		mAbstraction = Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
 		mThreadMonitorPlaces =

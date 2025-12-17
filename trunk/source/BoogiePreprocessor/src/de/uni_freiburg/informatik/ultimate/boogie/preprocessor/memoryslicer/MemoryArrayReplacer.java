@@ -147,7 +147,7 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 				final int memorySliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(memorySliceNumber);
 				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
-						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
+						cs.getLhs(), cs.getMethodName() + suffix, processExpressions(cs.getArguments()));
 				ModelUtils.copyAnnotations(statement, result);
 				mAccessCounter++;
 				mSliceAccessCounter[memorySliceNumber]++;
@@ -167,7 +167,7 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 				final int memorySliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(memorySliceNumber);
 				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
-						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
+						cs.getLhs(), cs.getMethodName() + suffix, processExpressions(cs.getArguments()));
 				ModelUtils.copyAnnotations(statement, result);
 				mAccessCounter++;
 				mSliceAccessCounter[memorySliceNumber]++;
@@ -180,7 +180,7 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 				final int memorySliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(memorySliceNumber);
 				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
-						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
+						cs.getLhs(), cs.getMethodName() + suffix, processExpressions(cs.getArguments()));
 				ModelUtils.copyAnnotations(statement, result);
 				mAccessCounter++;
 				mSliceAccessCounter[memorySliceNumber]++;
@@ -202,7 +202,7 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 				final int memorySliceNumber = getMemorySliceNumberFromPointer(pointerBaseExpr);
 				final String suffix = MemorySliceUtils.constructMemorySliceSuffix(memorySliceNumber);
 				final CallStatement result = new CallStatement(cs.getLoc(), cs.getAttributes(), cs.isForall(),
-						cs.getLhs(), cs.getMethodName() + suffix, cs.getArguments());
+						cs.getLhs(), cs.getMethodName() + suffix, processExpressions(cs.getArguments()));
 				ModelUtils.copyAnnotations(statement, result);
 				mAccessCounter++;
 				mSliceAccessCounter[memorySliceNumber]++;
