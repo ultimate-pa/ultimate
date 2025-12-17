@@ -113,8 +113,8 @@ public class ACSLPrettyPrinter {
 	private static String printExpression(final Expression expression) {
 		return switch (expression) {
 		case final ACSLResultExpression res -> "\\result";
-		case final ArrayAccessExpression arrayAccess ->
-				"%s[%s]".formatted(printExpression(arrayAccess.getArray()), printExpression(arrayAccess.getIndex()));
+		case final ArrayAccessExpression arrayAccess -> "%s[%s]".formatted(
+				printExpression(arrayAccess.getArray(), arrayAccess), printExpression(arrayAccess.getIndex()));
 		case final AtLabelExpression at -> "\\at(%s, %s)".formatted(printExpression(at.getExpression()), at.getLabel());
 		case final BaseAddrExpression base -> "\\base_addr{%s}".formatted(printExpression(base.getExpression()));
 		case final BinaryExpression bin -> printBinaryExpression(bin);
@@ -122,14 +122,14 @@ public class ACSLPrettyPrinter {
 				"\\block_length{%s}".formatted(printExpression(block.getExpression()));
 		case final BooleanLiteral boolLit -> "\\" + boolLit.getValue();
 		case final CastExpression cast ->
-				"(%s) %s".formatted(cast.getCastedType().getTypeName(), printExpression(cast.getExpression()));
-		case final FieldAccessExpression f -> "(%s).%s".formatted(printExpression(f.getStruct()), f.getField());
+				"(%s) %s".formatted(cast.getCastedType().getTypeName(), printExpression(cast.getExpression(), cast));
+		case final FieldAccessExpression f -> "%s.%s".formatted(printExpression(f.getStruct(), f), f.getField());
 		case final FreeableExpression freeable -> "\\freeable{%s}".formatted(printExpression(freeable.getExpression()));
 		case final FunctionApplication function -> "%s(%s)".formatted(function.getIdentifier(),
 				Arrays.stream(function.getArguments()).map(x -> printExpression(x)).collect(Collectors.joining(", ")));
 		case final IdentifierExpression id -> id.getIdentifier();
-		case final IfThenElseExpression ite -> "(%s ? %s : %s)".formatted(printExpression(ite.getCondition()),
-				printExpression(ite.getThenPart()), printExpression(ite.getElsePart()));
+		case final IfThenElseExpression ite -> "%s ? %s : %s".formatted(printExpression(ite.getCondition(), ite),
+				printExpression(ite.getThenPart(), ite), printExpression(ite.getElsePart(), ite));
 		case final IntegerLiteral intLit -> intLit.getValue();
 		case final MallocableExpression malloc -> "\\mallocable{%s}".formatted(printExpression(malloc.getExpression()));
 		case final NotDefinedExpression nd ->
@@ -142,7 +142,7 @@ public class ACSLPrettyPrinter {
 		case final SizeOfExpression sizeof -> "sizeof(%s)".formatted(printExpression(sizeof.getExpression()));
 		case final StringLiteral string -> "\"%s\"".formatted(string.getValue());
 		case final SyntacticNamingExpression naming ->
-				"%s : %s".formatted(naming.getIdentifier(), printExpression(naming.getExpression()));
+				"%s : %s".formatted(naming.getIdentifier(), printExpression(naming.getExpression(), naming));
 		case final UnaryExpression unary -> printUnaryExpression(unary);
 		case final ValidExpression valid -> "\\valid(%s)".formatted(printExpression(valid.getExpression()));
 		};
@@ -152,19 +152,50 @@ public class ACSLPrettyPrinter {
 		final String quantor = quantifier.isUniversal() ? "\\forall" : "\\exists";
 		final String vars = Arrays.stream(quantifier.getVariables())
 				.map(x -> x.getType().getTypeName() + " " + x.getName()).collect(Collectors.joining(", "));
-		return "%s %s; %s".formatted(quantor, vars, printExpression(quantifier.getSubformula()));
+		return "%s %s; %s".formatted(quantor, vars, printExpression(quantifier.getSubformula(), quantifier));
 	}
 
 	private static String printUnaryExpression(final UnaryExpression expression) {
-		return unaryOperatorToString(expression.getOperator()) + printExpression(expression.getExpr());
+		return unaryOperatorToString(expression.getOperator()) + printExpression(expression.getExpr(), expression);
 	}
 
-	// TODO: Check the operator precedence to avoid unnecessary parentheses
 	private static String printBinaryExpression(final BinaryExpression expression) {
 		final String op = binaryOperatorToString(expression.getOperator());
-		final String left = printExpression(expression.getLeft());
-		final String right = printExpression(expression.getRight());
-		return String.format("(%s %s %s)", left, op, right);
+		final String left =
+				printExpression(expression.getLeft(), expression.getOperator(), Associativity.LEFT_ASSOCIATIVE);
+		final String right =
+				printExpression(expression.getRight(), expression.getOperator(), Associativity.RIGHT_ASSOCIATIVE);
+
+		return String.format("%s %s %s", left, op, right);
+	}
+
+	// Prints the expression, and wraps it in parentheses if the parent expression's precedence is lower.
+	private static String printExpression(final Expression expression, final Expression parent) {
+		final String expr = printExpression(expression);
+		final Precedence precedence = getPrecedence(expression);
+		final Precedence parentPrecedence = getPrecedence(parent);
+		if (precedence.compareTo(parentPrecedence) > 0) {
+			return expr;
+		}
+		return "(" + expr + ")";
+	}
+
+	// Prints the expression, and wraps it in parentheses if the parent binary operator's precedence is lower,
+	// unless associativity rules permit omitting the parentheses.
+	private static String printExpression(final Expression expression, final BinaryExpression.Operator parentOperator,
+			final Associativity requiredAssoc) {
+		final String expr = printExpression(expression);
+		final Precedence precedence = getPrecedence(expression);
+		final Precedence parentPrecedence = getPrecedence(parentOperator);
+
+		if (precedence.compareTo(parentPrecedence) > 0) {
+			return expr;
+		}
+		if (expression instanceof final BinaryExpression bExp && bExp.getOperator() == parentOperator
+				&& getAssociativity(parentOperator).satisfies(requiredAssoc)) {
+			return expr;
+		}
+		return "(" + expr + ")";
 	}
 
 	public static String unaryOperatorToString(final UnaryExpression.Operator operator) {
@@ -211,5 +242,131 @@ public class ACSLPrettyPrinter {
 		case LTLWEAKUNTIL -> "WU";
 		case COMPPO, BITVECCONCAT -> throw new AssertionError("Unhandled operator " + operator);
 		};
+	}
+
+	// See Section 2.2.1 of the ACSL standard.
+	private static Precedence getPrecedence(final Expression expression) {
+		return switch (expression) {
+		case final BinaryExpression binExp -> getPrecedence(binExp.getOperator());
+		case final CastExpression castExp -> Precedence.UNARY;
+		case final FieldAccessExpression faExp -> Precedence.SELECTION;
+		case final IfThenElseExpression iteExp -> Precedence.TERNARY;
+		case final QuantifierExpression quantExp -> Precedence.BINDING;
+		case final UnaryExpression unExp -> Precedence.UNARY;
+		case final SyntacticNamingExpression synExp -> Precedence.NAMING;
+
+		// unambiguous / highest precedence
+		case final ACSLResultExpression resExp -> Precedence.TOP;
+		case final AtLabelExpression atExp -> Precedence.TOP;
+		case final BaseAddrExpression baseExp -> Precedence.TOP;
+		case final BlockLengthExpression blockExp -> Precedence.TOP;
+		case final BooleanLiteral bLit -> Precedence.TOP;
+		case final FreeableExpression freeExp -> Precedence.TOP;
+		case final FunctionApplication funApp -> Precedence.TOP;
+		case final IdentifierExpression idExp -> Precedence.TOP;
+		case final IntegerLiteral intLit -> Precedence.TOP;
+		case final MallocableExpression malExp -> Precedence.TOP;
+		case final NullPointer np -> Precedence.TOP;
+		case final OldValueExpression oldExp -> Precedence.TOP;
+		case final RealLiteral rLit -> Precedence.TOP;
+		case final SizeOfExpression sizeExp -> Precedence.TOP;
+		case final StringLiteral strLit -> Precedence.TOP;
+		case final ValidExpression valExp -> Precedence.TOP;
+
+		// safe assumption: expression has lowest possible precedence
+		default -> Precedence.BOTTOM;
+		};
+	}
+
+	// See Section 2.2.1 of the ACSL standard.
+	// For custom additions (LTL), this follows the precedence defined in our parser (see GlobalLocalParser.cup).
+	private static Precedence getPrecedence(final BinaryExpression.Operator operator) {
+		return switch (operator) {
+		case LOGICIFF -> Precedence.EQUIV;
+		case LOGICIMPLIES -> Precedence.IMPLIES;
+		case LOGICAND, LOGICXOR, LOGICOR -> Precedence.OR_XOR_AND;
+		case BITOR -> Precedence.BIT_OR;
+		case BITIFF -> Precedence.BIT_EQUIV;
+		case BITIMPLIES -> Precedence.BIT_IMPLIES;
+		case BITXOR -> Precedence.BIT_XOR;
+		case BITAND -> Precedence.BIT_AND;
+		case COMPLT, COMPLEQ, COMPGT, COMPGEQ -> Precedence.COMPARISON;
+		case COMPEQ, COMPNEQ -> Precedence.EQUALITY;
+		case BITSHIFTLEFT, BITSHIFTRIGHT -> Precedence.SHIFT;
+		case ARITHPLUS, ARITHMINUS -> Precedence.ADDITIVE;
+		case ARITHMUL, ARITHDIV, ARITHMOD -> Precedence.MULTIPLICATIVE;
+		case LTLUNTIL, LTLWEAKUNTIL, LTLRELEASE -> Precedence.LTL_INFIX;
+
+		// safe assumption: expression has lowest possible precedence
+		case BITVECCONCAT, COMPPO -> Precedence.BOTTOM;
+		};
+	}
+
+	// See Section 2.2.1 of the ACSL standard for information on left-/right-associativity.
+	// For custom additions (LTL), this follows the associativity defined in our parser (see GlobalLocalParser.cup).
+	//
+	// Note that for operators that are semantically associative, we use the value ASSOCIATIVE rather than
+	// LEFT_ASSOCIATIVE resp. RIGHT_ASSOCIATIVE. This allows us to omit parentheses regardless of how subexpressions are
+	// nested (to the left of the operator, to the right, or both).
+	private static Associativity getAssociativity(final BinaryExpression.Operator operator) {
+		return switch (operator) {
+		case LOGICIFF -> Associativity.LEFT_ASSOCIATIVE;
+		case LOGICIMPLIES -> Associativity.RIGHT_ASSOCIATIVE;
+
+		case LOGICAND, LOGICOR -> Associativity.ASSOCIATIVE;
+		case LOGICXOR -> Associativity.LEFT_ASSOCIATIVE;
+
+		case BITAND, BITOR -> Associativity.ASSOCIATIVE;
+		case BITIFF -> Associativity.LEFT_ASSOCIATIVE;
+		case BITIMPLIES -> Associativity.RIGHT_ASSOCIATIVE;
+		case BITXOR -> Associativity.LEFT_ASSOCIATIVE;
+
+		// comparison operators
+		case COMPGEQ, COMPGT, COMPLEQ, COMPLT -> Associativity.NO_ASSOCIATIVITY;
+		case COMPEQ, COMPNEQ -> Associativity.NO_ASSOCIATIVITY;
+
+		case BITSHIFTLEFT, BITSHIFTRIGHT -> Associativity.LEFT_ASSOCIATIVE;
+
+		// TODO is this ok for (i) floating-point types, and (ii) in the presence of overflows? (otherwise use LEFT)
+		case ARITHMUL, ARITHPLUS -> Associativity.ASSOCIATIVE;
+
+		case ARITHDIV, ARITHMINUS, ARITHMOD -> Associativity.LEFT_ASSOCIATIVE;
+		case LTLUNTIL, LTLWEAKUNTIL, LTLRELEASE -> Associativity.LEFT_ASSOCIATIVE;
+
+		// safe fallback: no associativity
+		case BITVECCONCAT, COMPPO -> Associativity.NO_ASSOCIATIVITY;
+		};
+	}
+
+	private enum Associativity {
+		// a <op> b <op> c == (a <op> b) <op> c == a <op> (b <op> c)
+		ASSOCIATIVE,
+		// a <op> b <op> c == (a <op> b) <op> c
+		LEFT_ASSOCIATIVE,
+		// a <op> b <op> c == a <op> (b <op> c)
+		RIGHT_ASSOCIATIVE,
+		// none of the above
+		NO_ASSOCIATIVITY;
+
+		public boolean satisfies(final Associativity other) {
+			return this == ASSOCIATIVE || other == NO_ASSOCIATIVITY || this == other;
+		}
+	}
+
+	// cf. ACSL standard, section 2.2.1
+	// (note that the order of declaration is crucial for this enum!)
+	private enum Precedence {
+		BOTTOM,
+
+		NAMING, BINDING, TERNARY, EQUIV, IMPLIES,
+
+		// We pretend &&, ^^ and || have the same precedence, so that parentheses are added for clarity:
+		// Instead of "A && B || C && D", we print "(A && B) || (C && D)".
+		OR_XOR_AND,
+
+		BIT_EQUIV, BIT_IMPLIES, BIT_OR, BIT_XOR, BIT_AND, EQUALITY, COMPARISON, SHIFT, ADDITIVE, MULTIPLICATIVE,
+		LTL_INFIX, UNARY, SELECTION,
+
+		TOP
 	}
 }
