@@ -382,7 +382,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 					}
 				}
 			}
-			// TODO transfer summaries, so far they are ignored because i dont know how to detect a summary in the input
+			// Afaik. Summaries are automatically created by adding a return transition, thus we do not need to handle
+			// them
 		}
 		assert result.size() == automaton.size();
 		return result;
