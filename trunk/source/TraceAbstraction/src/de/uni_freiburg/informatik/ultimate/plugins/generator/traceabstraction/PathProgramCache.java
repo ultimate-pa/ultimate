@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -53,8 +53,9 @@ public class PathProgramCache<LETTER> {
 
 	public PathProgramCache(final ILogger logger) {
 		mLogger = logger;
-		mKnownPathPrograms = new HashMap<>();
-		mTraceHashes = new ArrayList<>();
+		// for safety reasons these are thread save, i (max) did not encounter any issues when they were not.
+		mKnownPathPrograms = new ConcurrentHashMap<>();
+		mTraceHashes = Collections.synchronizedList(new ArrayList<>());
 	}
 
 	/**

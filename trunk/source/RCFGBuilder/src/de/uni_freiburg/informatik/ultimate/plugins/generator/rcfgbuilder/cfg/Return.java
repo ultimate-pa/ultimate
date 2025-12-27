@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -48,7 +49,7 @@ public class Return extends CodeBlock implements IIcfgReturnTransition<IcfgLocat
 
 	private final Call mCorrespondingCall;
 
-	Return(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+	public Return(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final Call correspondingCall, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCorrespondingCall = correspondingCall;
@@ -90,5 +91,9 @@ public class Return extends CodeBlock implements IIcfgReturnTransition<IcfgLocat
 	@Override
 	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
 		return getCorrespondingCall().getLocalVarsAssignment();
+	}
+	
+	public void setPayload(IPayload payload) {
+		mPayload = payload;
 	}
 }

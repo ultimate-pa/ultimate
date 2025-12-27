@@ -120,7 +120,7 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  */
 public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
 
-	private enum AutomatonType {
+	protected enum AutomatonType {
 		FLOYD_HOARE, ERROR;
 	}
 
@@ -135,13 +135,13 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	protected final Collection<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mStoredRawInterpolantAutomata;
 
-	private final SearchStrategy mSearchStrategy;
-	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
+	protected final SearchStrategy mSearchStrategy;
+	protected final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	private final boolean mUseHeuristicEmptinessCheck;
 	private final ScoringMethod mScoringMethod;
 	private final AStarHeuristic mAStarHeuristic;
-	private final Integer mAStarRandomHeuristicSeed;
+	protected final Integer mAStarRandomHeuristicSeed;
 
 	protected final NwaHoareProofProducer<L> mProofUpdater;
 

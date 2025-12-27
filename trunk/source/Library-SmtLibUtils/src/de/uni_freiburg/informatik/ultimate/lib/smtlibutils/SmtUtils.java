@@ -1574,6 +1574,9 @@ public final class SmtUtils {
 		case "bvsge":
 			result = BitvectorUtils.unfTerm(script, funcname, toBigIntegerArray(indices), params);
 			break;
+		case "fp":
+			result = script.term(funcname, null, null, params);
+			break;
 		default:
 			result = script.term(funcname, indices, resultSort, params);
 			break;

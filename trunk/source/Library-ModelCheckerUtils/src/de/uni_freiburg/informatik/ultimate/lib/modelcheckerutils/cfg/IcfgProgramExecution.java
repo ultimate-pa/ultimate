@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -69,6 +70,7 @@ public class IcfgProgramExecution<L extends IAction> implements IProgramExecutio
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
 	private final boolean mIsConcurrent;
 	private final Class<L> mTransitionClazz;
+	private ManagedScript mScript = null; // the cfg script used on creation
 
 	public IcfgProgramExecution(final List<AtomicTraceElement<L>> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
@@ -359,5 +361,12 @@ public class IcfgProgramExecution<L extends IAction> implements IProgramExecutio
 	public boolean isConcurrent() {
 		return mIsConcurrent;
 	}
+	
+	public void setOriginCfgScript(ManagedScript managedScript) {
+		mScript = managedScript;
+	}
 
+	public ManagedScript getOriginCfgScript() {
+		return mScript;
+	}
 }

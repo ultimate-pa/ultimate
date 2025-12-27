@@ -169,7 +169,8 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IT
 		return imperfectIpps.size() < DEFAULT_INTERPOLANT_THRESHOLD;
 	}
 
-	protected ITraceCheckStrategyModule<L, ?>[] getTraceCheckModules() {
+	@Override
+	public ITraceCheckStrategyModule<L, ?>[] getTraceCheckModules() {
 		return mTraceChecks;
 	}
 

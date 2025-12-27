@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeat
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQueue;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Check emptiness and obtain an accepting run of a nested word automaton using a modified version of A*.
@@ -83,7 +84,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private final Predicate<STATE> mIsForbiddenState;
 	private final NestedRun<LETTER, STATE> mAcceptingRun;
 	private final STATE mDummyEmptyStackState;
-
+	protected final List<Pair<STATE, LETTER>> mWayPoints;
+	private boolean stillFollowingWayPoint = true;
 	private final IHeuristic<STATE, LETTER> mHeuristic;
 
 	/**
@@ -104,19 +106,43 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 	/**
 	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
-	 * automaton and use the zero heuristic.
+	 * automaton and using the provided heuristic.
 	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
 	 *            input NWA
+	 * @param heuristic
+	 *            heuristic for the A*
+	 *
 	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
-				heuristic);
+				heuristic, Collections.emptyList());
+	}
+
+	/**
+	 * Default constructor. Here we search a run from the initial states of the automaton along the way points to the
+	 * final states of the automaton and using the provided heuristic.
+	 *
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
+	 * @param heuristic
+	 * @param wayPoints
+	 *            Sequence of Pairs of States and Letters that start in an initial state.
+	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
+	 */
+	public IsEmptyHeuristic(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints)
+			throws AutomataOperationCanceledException {
+		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
+				heuristic, wayPoints);
 	}
 
 	/**
@@ -128,15 +154,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final Set<STATE> startStates, final Predicate<STATE> funIsForbiddenState,
 			final Predicate<STATE> funIsGoalState, final IHeuristic<STATE, LETTER> heuristic)
 			throws AutomataOperationCanceledException {
-		this(services, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) operand, startStates,
-				funIsForbiddenState, funIsGoalState, heuristic);
+		this(services, operand, startStates, funIsForbiddenState, funIsGoalState, heuristic, Collections.emptyList());
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 	}
 
-	private IsEmptyHeuristic(final AutomataLibraryServices services,
+	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Predicate<STATE> funIsForbiddenState, final Predicate<STATE> funIsGoalState,
-			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
+			final IHeuristic<STATE, LETTER> heuristic, final List<Pair<STATE, LETTER>> wayPoints)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mIsGoalState = funIsGoalState;
@@ -148,7 +174,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		assert mOperand != null;
 
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
-
+		mWayPoints = wayPoints;
+		if (!mWayPoints.isEmpty()) {
+			stillFollowingWayPoint = true;
+		}
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -172,12 +201,13 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		final HashedPriorityQueue<Item> worklist =
 				new HashedPriorityQueue<>(Comparator.comparing(a -> a.mEstimatedCostToTarget));
 
+		final List<Pair<STATE, LETTER>> visited = new ArrayList<>();
+
 		for (final STATE state : startStates) {
 			final Item initialItem = new Item(state);
 			initialItem.setCostSoFar(0.0);
 			worklist.add(initialItem);
 		}
-
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format("Initial queue: %s", worklist));
 		}
@@ -189,6 +219,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		final Map<STATE, Set<Item>> delayedCalls = new HashMap<>();
 		final Map<CallTransition, Map<ReturnTransition, SummaryItem>> summaries = new HashMap<>();
 		final Map<CallTransition, Map<ReturnTransition, Set<Item>>> usedSummaries = new HashMap<>();
+
+		int lengthOfPrefixThatWeFollow = mWayPoints.size();
 
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -202,7 +234,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Current: %s", current));
 			}
-			if (mIsGoalState.test(current.mTargetState)) {
+			if (mIsGoalState.test(current.mTargetState) && !stillFollowingWayPoint) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("  Is target");
 					printDebugStats(lowestCall, lowestOther, summaries);
@@ -218,7 +250,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			final List<Item> unvaluatedSuccessors =
-					getUnvaluatedSuccessors(current, discoveredUniqueReturnStates, delayedCalls);
+					getUnvaluatedSuccessors(current, discoveredUniqueReturnStates, delayedCalls, visited);
 			if (mLogger.isDebugEnabled() && unvaluatedSuccessors.isEmpty()) {
 				mLogger.debug("  No successors");
 				continue;
@@ -234,6 +266,12 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			for (final Item succ : successors) {
+				if (lengthOfPrefixThatWeFollow >= 0) {
+					// consider all successors, even the once seen before by prefix check
+					worklist.add(succ);
+					lengthOfPrefixThatWeFollow -= 1;
+					continue;
+				}
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("  Succ: %s", succ));
 				}
@@ -334,6 +372,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					for (final Entry<ReturnTransition, SummaryItem> entry : summary.entrySet()) {
 						final SummaryItem sumItem = entry.getValue();
 						final Item newSucc = new Item(succ, sumItem);
+
 						newSucc.setCostSoFar(succ.mCostSoFar + sumItem.mSummaryCost);
 						newSuccs.add(newSucc);
 
@@ -446,7 +485,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	private List<Item> getUnvaluatedSuccessors(final Item current,
-			final Map<STATE, Set<STATE>> discoveredUniqueReturnStates, final Map<STATE, Set<Item>> delayedCalls) {
+			final Map<STATE, Set<STATE>> discoveredUniqueReturnStates, final Map<STATE, Set<Item>> delayedCalls,
+			final List<Pair<STATE, LETTER>> visited) {
 		final List<Item> rtr = new ArrayList<>();
 
 		// process internal transitions
@@ -454,20 +494,29 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				.internalSuccessors(current.mTargetState)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if (mIsForbiddenState.test(succ)) {
+
+			if (mIsForbiddenState.test(succ) || visited.contains(new Pair<>(current.mTargetState, symbol))
+					|| !followingWayPoint(succ, symbol)) {
 				continue;
 			}
 			rtr.add(new Item(succ, current.getHierPreState(), symbol, current, ItemType.INTERNAL));
+			if (stillFollowingWayPoint) {
+				break;
+			}
 		}
 
 		// process call transitions
 		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(current.mTargetState)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if (mIsForbiddenState.test(succ)) {
+			if (mIsForbiddenState.test(succ) || visited.contains(new Pair<>(current.mTargetState, symbol))
+					|| !followingWayPoint(succ, symbol)) {
 				continue;
 			}
 			rtr.add(new Item(succ, current.mTargetState, symbol, current, ItemType.CALL));
+			if (stillFollowingWayPoint) {
+				break;
+			}
 		}
 
 		final STATE hierPre = current.getHierPreState();
@@ -482,11 +531,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				.returnSuccessorsGivenHier(current.mTargetState, hierPre)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if (mIsForbiddenState.test(succ)) {
+			if (mIsForbiddenState.test(succ) || visited.contains(new Pair<>(current.mTargetState, symbol))
+					|| !followingWayPoint(succ, symbol)) {
 				continue;
 			}
 			// hierarchical predecessor will be taken from current
 			rtr.add(new Item(succ, null, symbol, current, ItemType.RETURN));
+			if (stillFollowingWayPoint) {
+				break;
+			}
 		}
 		if (old != rtr.size()) {
 			// we found a new state from which a hierPre call can take at least one return
@@ -518,6 +571,21 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			return false;
 		}
 		return true;
+	}
+
+	protected boolean followingWayPoint(final STATE state, final LETTER letter) {
+		final boolean empty = mWayPoints.isEmpty();
+		if (empty) {
+			stillFollowingWayPoint = false;
+			return true;
+		}
+		boolean contains = mWayPoints.getFirst().getFirst().equals(state);
+		contains = contains && mWayPoints.getFirst().getSecond().equals(letter);
+		if (contains) {
+			mWayPoints.removeFirst();
+
+		}
+		return contains || mWayPoints.isEmpty();
 	}
 
 	@Override
