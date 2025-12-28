@@ -26,12 +26,15 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbolFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -48,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScrip
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.Translator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class RtInconsistencyPreCheckMus {
 	private final CddToSmtPreCheck mCddToSmtPreCheck;
@@ -61,16 +65,23 @@ public class RtInconsistencyPreCheckMus {
 			PhaseEventAutomata pea, Map<Integer, CritPhase> critPhases) {
 	}
 
-	private record CritPhase(Integer index, Term invariant, Term nvc, boolean seeping) {
+	private record CritPhase(Integer index, Term invariant, Term nvc, boolean seeping,
+			Set<NonTheorySymbol<?>> symbols) {
+		public CritPhase(final Integer index, final Term invariant, final Term nvc, final boolean seeping) {
+			this(index, invariant, nvc, seeping, new NonTheorySymbolFinder().findNonTheorySymbols(nvc));
+		}
 	}
 
 	private record MusElement(String reqName, Integer critPhaseIndex, boolean seeping) {
 	}
 
+	private record Nvc(String name, Term term, Set<NonTheorySymbol<?>> symbols) {
+	}
+
 	public RtInconsistencyPreCheckMus(final List<ReqPeas> reqPeas, final PeaResultUtil peaResultUtil,
-			final Boogie2SMT boogie2Smt,
-			final BoogieDeclarations boogieDeclarations, final IReqSymbolTable reqSymbolTable, final Script script,
-			final ManagedScript managedScript, final IUltimateServiceProvider services, final ILogger logger) {
+			final Boogie2SMT boogie2Smt, final BoogieDeclarations boogieDeclarations,
+			final IReqSymbolTable reqSymbolTable, final Script script, final ManagedScript managedScript,
+			final IUltimateServiceProvider services, final ILogger logger) {
 
 		mScript = script;
 		mManagedScript = managedScript;
@@ -83,13 +94,20 @@ public class RtInconsistencyPreCheckMus {
 		for (final var reqPea : reqPeas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> e : reqPea.getCounterTrace2Pea()) {
 				mAnnotatedReqs.put(e.getValue().getName(), new AnnotatedReq(e.getValue().getName(), reqPea.getPattern(),
-						e.getKey(), e.getValue(), identifyCritPhases(e.getKey())));
+						e.getKey(), e.getValue(), computeCritPhases(e.getKey())));
 			}
 		}
 	}
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> check() {
-		final Set<Set<MusElement>> muses = enumerateNvcMuses(new ArrayList<>(mAnnotatedReqs.values()));
+		final Set<Set<Nvc>> nvcGroups = groupNvcsBySymbols(new ArrayList<>(mAnnotatedReqs.values()));
+
+		final Set<Set<MusElement>> muses = new HashSet<>();
+		for (final var nvcGroup : nvcGroups) {
+			mLogger.info("Enumerate Muses of NVC group: " + nvcGroup);
+			final Set<Set<MusElement>> musesGroup = enumerateNvcMuses(nvcGroup);
+			muses.addAll(musesGroup);
+		}
 		mLogger.info("Size of nvc muses: " + muses.size());
 
 		muses.removeIf(e -> hasUnsatCritPhases(e, mAnnotatedReqs));
@@ -100,11 +118,9 @@ public class RtInconsistencyPreCheckMus {
 
 		mLogger.info("Muses: " + muses);
 
-		final Set<Set<String>> uniqueMuses = muses.stream()
-				.map(inner -> inner.stream()
-						.map(s -> s.reqName())
-						.collect(Collectors.toSet()))
-				.collect(Collectors.toSet());
+		final Set<Set<String>> uniqueMuses =
+				muses.stream().map(inner -> inner.stream().map(s -> s.reqName()).collect(Collectors.toSet()))
+						.collect(Collectors.toSet());
 
 		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> result =
 				uniqueMuses.stream().map(mus -> mus.stream().map(name -> {
@@ -120,9 +136,8 @@ public class RtInconsistencyPreCheckMus {
 		final ArrayList<Term> critPhaseInvariants = new ArrayList<>();
 
 		for (final var musElement : musElements) {
-			critPhaseInvariants
-			.add(annotatedReqs.get(musElement.reqName()).critPhases()
-					.get(musElement.critPhaseIndex()).invariant);
+			critPhaseInvariants.add(
+					annotatedReqs.get(musElement.reqName()).critPhases().get(musElement.critPhaseIndex()).invariant);
 		}
 
 		return LBool.UNSAT == SmtUtils.checkSatTerm(mScript, SmtUtils.and(mScript, critPhaseInvariants));
@@ -138,49 +153,7 @@ public class RtInconsistencyPreCheckMus {
 				.anyMatch(dcPhase -> dcPhase.getBound() == CounterTrace.BOUND_NONE);
 	}
 
-	private Set<Set<MusElement>> enumerateNvcMuses(final List<AnnotatedReq> annotatedReqs) {
-		Set<Set<MusElement>> result = new HashSet<>();
-
-		final SMTInterpol smtInterpol = new SMTInterpol();
-		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
-		smtInterpol.setLogic(Logics.ALL);
-
-		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
-		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
-		musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 0);
-
-		final TermTransferrer termTransferrer =
-				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
-
-		for (final var annotatedReq : annotatedReqs) {
-			annotatedReq.critPhases().forEach((phaseIndex, critPhase) -> {
-				final String name = annotatedReq.name() + "_" + phaseIndex + (critPhase.seeping ? "s" : "");
-
-				musEnumerationScript
-				.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(critPhase.nvc),
-						new Annotation(":named", name)));
-
-				mLogger.info(String.format("Assert nvc for mus enumeration: %s %s", name, critPhase.nvc));
-			});
-		}
-
-		final LBool sat = musEnumerationScript.checkSat();
-		mLogger.info("Check sat of all nvcs: " + sat);
-
-		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
-			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
-				final String reqName = s.substring(0, s.lastIndexOf('_'));
-				final String index = s.substring(s.lastIndexOf('_') + 1);
-				final boolean seeping = index.endsWith("s");
-				return new MusElement(reqName,
-						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
-			}).collect(Collectors.toSet())).collect(Collectors.toSet());
-		}
-
-		return result;
-	}
-
-	private Map<Integer, CritPhase> identifyCritPhases(final CounterTrace counterTrace) {
+	private Map<Integer, CritPhase> computeCritPhases(final CounterTrace counterTrace) {
 		final Map<Integer, CritPhase> results = new HashMap<>();
 
 		final DCPhase[] phases = counterTrace.getPhases();
@@ -227,6 +200,90 @@ public class RtInconsistencyPreCheckMus {
 		 * mCddToSmtPreCheck.toSmt(phases[0].getInvariant())), SmtUtils.not(mScript, seepInvariants.getLast()))); }
 		 */
 		return results;
+	}
+
+	private Set<Set<Nvc>> groupNvcsBySymbols(final List<AnnotatedReq> annotatedReqs) {
+		// Collect all CritPhases into a list so we can index them for UnionFind
+		final List<Pair<String, CritPhase>> critPhases = new ArrayList<>();
+		for (final var annotatedReq : annotatedReqs) {
+			annotatedReq.critPhases().forEach((phaseIndex, critPhase) -> {
+				final String name = annotatedReq.name() + "_" + phaseIndex + (critPhase.seeping ? "s" : "");
+				critPhases.add(new Pair<>(name, critPhase));
+			});
+		}
+
+		final UnionFind unionFind = new UnionFind(critPhases.size());
+
+		// Map each symbol to the list of indices of critPhases that contain it
+		final Map<NonTheorySymbol<?>, List<Integer>> symbolToCritPhaseIndices = new HashMap<>();
+		for (int i = 0; i < critPhases.size(); i++) {
+			final var critPhase = critPhases.get(i).getSecond();
+			for (final var symbol : critPhase.symbols()) {
+				symbolToCritPhaseIndices.computeIfAbsent(symbol, k -> new ArrayList<>()).add(i);
+			}
+		}
+
+		// Union critPhases that share a symbol
+		for (final var indices : symbolToCritPhaseIndices.values()) {
+			assert !indices.isEmpty();
+
+			final int first = indices.get(0);
+			for (int j = 1; j < indices.size(); j++) {
+				unionFind.union(first, indices.get(j));
+			}
+		}
+
+		// Group by root
+		final Map<Integer, Set<Nvc>> groups = new HashMap<>();
+		for (int i = 0; i < critPhases.size(); i++) {
+			final int root = unionFind.find(i);
+			groups.computeIfAbsent(root, k -> new HashSet<>()).add(new Nvc(critPhases.get(i).getFirst(),
+					critPhases.get(i).getSecond().nvc(), critPhases.get(i).getSecond().symbols()));
+		}
+
+		return new HashSet<>(groups.values());
+	}
+
+	private Set<Set<MusElement>> enumerateNvcMuses(final Set<Nvc> nvcs) {
+		Set<Set<MusElement>> result = new HashSet<>();
+
+		final SMTInterpol smtInterpol = new SMTInterpol();
+		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
+		smtInterpol.setLogic(Logics.ALL);
+
+		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
+		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
+		musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 0);
+
+		final TermTransferrer termTransferrer =
+				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
+
+		for (final var nvc : nvcs) {
+			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(nvc.term),
+					new Annotation(":named", nvc.name)));
+
+			final String symbols_string = nvc.symbols.stream().map(
+					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
+					.collect(Collectors.joining(", "));
+
+			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
+					nvc.name, nvc.term, symbols_string));
+		}
+
+		final LBool sat = musEnumerationScript.checkSat();
+		mLogger.info("Check sat of nvcs in group: " + sat);
+
+		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
+			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
+				final String reqName = s.substring(0, s.lastIndexOf('_'));
+				final String index = s.substring(s.lastIndexOf('_') + 1);
+				final boolean seeping = index.endsWith("s");
+				return new MusElement(reqName,
+						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
+			}).collect(Collectors.toSet())).collect(Collectors.toSet());
+		}
+
+		return result;
 	}
 
 	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
@@ -317,6 +374,95 @@ public class RtInconsistencyPreCheckMus {
 			}
 
 			return rtr;
+		}
+	}
+
+	private static class UnionFind {
+
+		private final int[] parent;
+		private final int[] rank;
+
+		/**
+		 * Create a UnionFind for elements 0..n-1.
+		 *
+		 * @param n
+		 *            number of elements (must be >= 0)
+		 */
+		public UnionFind(final int n) {
+			if (n < 0) {
+				throw new IllegalArgumentException("n must be non-negative");
+			}
+			parent = new int[n];
+			rank = new int[n];
+			for (int i = 0; i < n; i++) {
+				parent[i] = i;
+				rank[i] = 0;
+			}
+		}
+
+		/**
+		 * Find the representative (root) of the set that contains x. Uses path compression to flatten the tree.
+		 *
+		 * @param x
+		 *            element index
+		 * @return root of the set containing x
+		 * @throws IndexOutOfBoundsException
+		 *             if x is outside [0, n)
+		 */
+		public int find(final int x) {
+			checkIndex(x);
+			if (parent[x] != x) {
+				parent[x] = find(parent[x]);
+			}
+			return parent[x];
+		}
+
+		/**
+		 * Union the sets containing x and y. If already in the same set, does nothing. Uses union by rank.
+		 *
+		 * @param x
+		 *            element index
+		 * @param y
+		 *            element index
+		 * @throws IndexOutOfBoundsException
+		 *             if x or y is outside [0, n)
+		 */
+		public void union(final int x, final int y) {
+			final int rootX = find(x);
+			final int rootY = find(y);
+
+			if (rootX == rootY) {
+				return; // already in same set
+			}
+
+			if (rank[rootX] < rank[rootY]) {
+				parent[rootX] = rootY;
+			} else if (rank[rootX] > rank[rootY]) {
+				parent[rootY] = rootX;
+			} else {
+				parent[rootY] = rootX;
+				rank[rootX]++;
+			}
+		}
+
+		/**
+		 * Return true if x and y are in the same set.
+		 */
+		public boolean connected(final int x, final int y) {
+			return find(x) == find(y);
+		}
+
+		/**
+		 * Number of elements managed by this UnionFind.
+		 */
+		public int size() {
+			return parent.length;
+		}
+
+		private void checkIndex(final int x) {
+			if (x < 0 || x >= parent.length) {
+				throw new IndexOutOfBoundsException("Index out of range: " + x);
+			}
 		}
 	}
 }
