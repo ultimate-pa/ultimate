@@ -286,53 +286,6 @@ public class RtInconsistencyPreCheckMus {
 		return result;
 	}
 
-//	private Set<Set<MusElement>> enumerateNvcMuses(final List<AnnotatedReq> annotatedReqs) {
-//		Set<Set<MusElement>> result = new HashSet<>();
-//
-//		final SMTInterpol smtInterpol = new SMTInterpol();
-//		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
-//		smtInterpol.setLogic(Logics.ALL);
-//
-//		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
-//		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
-//		musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 0);
-//
-//		final TermTransferrer termTransferrer =
-//				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
-//
-//		for (final var annotatedReq : annotatedReqs) {
-//			annotatedReq.critPhases().forEach((phaseIndex, critPhase) -> {
-//				final String name = annotatedReq.name() + "_" + phaseIndex + (critPhase.seeping ? "s" : "");
-//
-//				musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(critPhase.nvc),
-//						new Annotation(":named", name)));
-//
-//				final String symbols_string = critPhase.symbols.stream()
-//						.map(s -> String.format("(%s, %s)", s,
-//								((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
-//						.collect(Collectors.joining(", "));
-//
-//				mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
-//						name, critPhase.nvc, symbols_string));
-//			});
-//		}
-//
-//		final LBool sat = musEnumerationScript.checkSat();
-//		mLogger.info("Check sat of all nvcs: " + sat);
-//
-//		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
-//			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
-//				final String reqName = s.substring(0, s.lastIndexOf('_'));
-//				final String index = s.substring(s.lastIndexOf('_') + 1);
-//				final boolean seeping = index.endsWith("s");
-//				return new MusElement(reqName,
-//						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
-//			}).collect(Collectors.toSet())).collect(Collectors.toSet());
-//		}
-//
-//		return result;
-//	}
-
 	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
 		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
 			throw new SMTLIBException("Call checkSat to determine satisfiability.");
