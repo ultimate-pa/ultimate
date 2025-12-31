@@ -29,13 +29,15 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbolFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -46,11 +48,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LiffitonMusExample.MapSolver;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LiffitonMusExample.SubsetSolver;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusContainer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.Translator;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class RtInconsistencyPreCheckMus {
@@ -97,6 +99,12 @@ public class RtInconsistencyPreCheckMus {
 						e.getKey(), e.getValue(), computeCritPhases(e.getKey())));
 			}
 		}
+
+		// final var s1 = mServices.
+		// final var s2 = mScript;
+		// final var equal = s1.equals(s2);
+
+		// mLogger.info("");
 	}
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> check() {
@@ -105,8 +113,7 @@ public class RtInconsistencyPreCheckMus {
 		final Set<Set<MusElement>> muses = new HashSet<>();
 		for (final var nvcGroup : nvcGroups) {
 			mLogger.info("Enumerate Muses of NVC group: " + nvcGroup);
-			final Set<Set<MusElement>> musesGroup = enumerateNvcMuses(nvcGroup);
-			muses.addAll(musesGroup);
+			muses.addAll(enumerateMusesLiffiton(new ArrayList<>(nvcGroup)));
 		}
 		mLogger.info("Size of nvc muses: " + muses.size());
 
@@ -244,47 +251,135 @@ public class RtInconsistencyPreCheckMus {
 		return new HashSet<>(groups.values());
 	}
 
-	private Set<Set<MusElement>> enumerateNvcMuses(final Set<Nvc> nvcs) {
-		Set<Set<MusElement>> result = new HashSet<>();
+	private Set<Set<MusElement>> enumerateMusesLiffiton(final ArrayList<Nvc> nvcs) {
+		final SolverSettings settings = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
+		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, settings, "CSolver");
 
-		final SMTInterpol smtInterpol = new SMTInterpol();
-		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
-		smtInterpol.setLogic(Logics.ALL);
-
-		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
-		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
-		musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 0);
-
-		final TermTransferrer termTransferrer =
-				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
-
-		for (final var nvc : nvcs) {
-			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(nvc.term),
-					new Annotation(":named", nvc.name)));
-
-			final String symbols_string = nvc.symbols.stream().map(
-					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
-					.collect(Collectors.joining(", "));
-
-			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
-					nvc.name, nvc.term, symbols_string));
+		final List<Term> constraints = new ArrayList<>();
+		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(script));
+		for (final Nvc nvc : nvcs) {
+			constraints.add(termTransferrer.transform(nvc.term));
 		}
 
-		final LBool sat = musEnumerationScript.checkSat();
-		mLogger.info("Check sat of nvcs in group: " + sat);
+		final SubsetSolver csolver = new LiffitonMusExample.SubsetSolver(script, constraints);
+		final MapSolver msolver = new LiffitonMusExample.MapSolver(constraints.size());
+		final Iterable<Set<Integer>> muses = LiffitonMusExample.enumerateSets(csolver, msolver, mLogger);
+		script.exit();
 
-		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
-			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
-				final String reqName = s.substring(0, s.lastIndexOf('_'));
-				final String index = s.substring(s.lastIndexOf('_') + 1);
-				final boolean seeping = index.endsWith("s");
-				return new MusElement(reqName,
-						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
-			}).collect(Collectors.toSet())).collect(Collectors.toSet());
+		final Set<Set<MusElement>> result = new HashSet<>();
+		for (final var mus : muses) {
+			final Set<MusElement> musElements = new HashSet<>();
+			for (final var index : mus) {
+				final Nvc nvc = nvcs.get(index);
+				final String reqName = nvc.name.substring(0, nvc.name.lastIndexOf('_'));
+				final String phaseIndexStr = nvc.name.substring(nvc.name.lastIndexOf('_') + 1);
+				final boolean seeping = phaseIndexStr.endsWith("s");
+				final Integer phaseIndex = Integer
+						.parseInt(seeping ? phaseIndexStr.substring(0, phaseIndexStr.length() - 1) : phaseIndexStr);
+				musElements.add(new MusElement(reqName, phaseIndex, seeping));
+			}
+			result.add(musElements);
 		}
 
 		return result;
 	}
+
+	private void enumerateNvcMusesLiffitonExperiments(final Set<Nvc> nvcs) {
+		// mScript.push(1);
+
+		// Plan B: if nothing works, try to call the liffiton script directly
+//		try {
+//			MonitoredProcess process;
+//			final String[] command = { "/usr/bin/python", "-u",
+//					"/mnt/Data/Projects/ultimate/releaseScripts/default/adds/hello_world.py" };
+//			process = MonitoredProcess.exec(command, null, null, mServices);
+//			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//			// reader.close();
+//			String line;
+//			while ((line = reader.readLine()) != null) {
+//				mLogger.info(line);
+//			}
+//		} catch (final IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+
+//		final SMTInterpol script = new SMTInterpol();
+//		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
+//		script.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
+//		script.setLogic(Logics.ALL);
+
+		final SolverSettings settings1 = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
+		final Script script1 = SolverBuilder.buildAndInitializeSolver(mServices, settings1, "CSolver");
+
+//		final SolverSettings settings2 = SolverBuilder.constructSolverSettings()
+//				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
+//		final Script script2 = SolverBuilder.buildAndInitializeSolver(mServices, settings2, "MSolver");
+
+		final List<Term> constraints = new ArrayList<>();
+		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(script1));
+		for (final Nvc nvc : nvcs) {
+			constraints.add(termTransferrer.transform(nvc.term));
+		}
+
+		// final List constraints = nvcs.stream().map(nvc -> nvc.term).collect(Collectors.toList());
+
+		final SubsetSolver csolver = new LiffitonMusExample.SubsetSolver(script1, constraints);
+		final MapSolver msolver = new LiffitonMusExample.MapSolver(constraints.size());
+		final var muses = LiffitonMusExample.enumerateSets(csolver, msolver, mLogger);
+
+		script1.exit();
+		// script2.exit();
+
+		// mScript.pop(1);
+	}
+
+//	private Set<Set<MusElement>> enumerateNvcMuses(final Set<Nvc> nvcs) {
+//		Set<Set<MusElement>> result = new HashSet<>();
+//
+//		final SMTInterpol smtInterpol = new SMTInterpol();
+//		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
+//		smtInterpol.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
+//		// smtInterpol.setLogic(Logics.ALL);
+//		smtInterpol.setLogic(Logics.QF_UFLIRA);
+//
+//		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
+//		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
+//		// musEnumerationScript.setOption(MusOptions.UNKNOWN_ALLOWED, true);
+//		// musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
+//
+//		final TermTransferrer termTransferrer =
+//				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
+//
+//		for (final var nvc : nvcs) {
+//			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(nvc.term),
+//					new Annotation(":named", nvc.name)));
+//
+//			final String symbols_string = nvc.symbols.stream().map(
+//					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
+//					.collect(Collectors.joining(", "));
+//
+//			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
+//					nvc.name, nvc.term, symbols_string));
+//		}
+//
+//		final LBool sat = musEnumerationScript.checkSat();
+//		mLogger.info("Check sat of nvcs in group: " + sat);
+//
+//		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
+//			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
+//				final String reqName = s.substring(0, s.lastIndexOf('_'));
+//				final String index = s.substring(s.lastIndexOf('_') + 1);
+//				final boolean seeping = index.endsWith("s");
+//				return new MusElement(reqName,
+//						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
+//			}).collect(Collectors.toSet())).collect(Collectors.toSet());
+//		}
+//
+//		return result;
+//	}
 
 	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
 		if (!musEnumerationScript.mAssertedTermsAreUnsat) {

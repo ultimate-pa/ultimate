@@ -273,7 +273,6 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
-
 		SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
 		if (SOLVER_LOG_DIR != null) {
