@@ -38,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -54,9 +52,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LiffitonMusExamp
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LiffitonMusExample.SubsetSolver;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusContainer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.Translator;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class RtInconsistencyPreCheckMus {
@@ -340,50 +336,50 @@ public class RtInconsistencyPreCheckMus {
 		// mScript.pop(1);
 	}
 
-	private Set<Set<MusElement>> enumerateNvcMuses(final Set<Nvc> nvcs) {
-		Set<Set<MusElement>> result = new HashSet<>();
-
-		final SMTInterpol smtInterpol = new SMTInterpol();
-		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
-		smtInterpol.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
-		// smtInterpol.setLogic(Logics.ALL);
-		smtInterpol.setLogic(Logics.QF_UFLIRA);
-
-		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
-		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
-		// musEnumerationScript.setOption(MusOptions.UNKNOWN_ALLOWED, true);
-		// musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
-
-		final TermTransferrer termTransferrer =
-				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
-
-		for (final var nvc : nvcs) {
-			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(nvc.term),
-					new Annotation(":named", nvc.name)));
-
-			final String symbols_string = nvc.symbols.stream().map(
-					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
-					.collect(Collectors.joining(", "));
-
-			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
-					nvc.name, nvc.term, symbols_string));
-		}
-
-		final LBool sat = musEnumerationScript.checkSat();
-		mLogger.info("Check sat of nvcs in group: " + sat);
-
-		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
-			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
-				final String reqName = s.substring(0, s.lastIndexOf('_'));
-				final String index = s.substring(s.lastIndexOf('_') + 1);
-				final boolean seeping = index.endsWith("s");
-				return new MusElement(reqName,
-						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
-			}).collect(Collectors.toSet())).collect(Collectors.toSet());
-		}
-
-		return result;
-	}
+//	private Set<Set<MusElement>> enumerateNvcMuses(final Set<Nvc> nvcs) {
+//		Set<Set<MusElement>> result = new HashSet<>();
+//
+//		final SMTInterpol smtInterpol = new SMTInterpol();
+//		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
+//		smtInterpol.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
+//		// smtInterpol.setLogic(Logics.ALL);
+//		smtInterpol.setLogic(Logics.QF_UFLIRA);
+//
+//		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
+//		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
+//		// musEnumerationScript.setOption(MusOptions.UNKNOWN_ALLOWED, true);
+//		// musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
+//
+//		final TermTransferrer termTransferrer =
+//				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
+//
+//		for (final var nvc : nvcs) {
+//			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(nvc.term),
+//					new Annotation(":named", nvc.name)));
+//
+//			final String symbols_string = nvc.symbols.stream().map(
+//					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
+//					.collect(Collectors.joining(", "));
+//
+//			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
+//					nvc.name, nvc.term, symbols_string));
+//		}
+//
+//		final LBool sat = musEnumerationScript.checkSat();
+//		mLogger.info("Check sat of nvcs in group: " + sat);
+//
+//		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
+//			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
+//				final String reqName = s.substring(0, s.lastIndexOf('_'));
+//				final String index = s.substring(s.lastIndexOf('_') + 1);
+//				final boolean seeping = index.endsWith("s");
+//				return new MusElement(reqName,
+//						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
+//			}).collect(Collectors.toSet())).collect(Collectors.toSet());
+//		}
+//
+//		return result;
+//	}
 
 	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
 		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
