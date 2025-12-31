@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -28,45 +27,45 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class LiffitonMusExample {
 
-	public static void main(final String[] args) {
-		final SMTInterpol script = new SMTInterpol();
-		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
-		script.setLogic(Logics.QF_LRA);
-		// script.setLogic(Logics.ALL);
-
-		final Sort realSort = script.getTheory().getRealSort();
-		script.declareFun("x", new Sort[0], realSort);
-		script.declareFun("y", new Sort[0], realSort);
-		final Term x = script.term("x");
-		final Term y = script.term("y");
-
-		final Term zero = script.numeral("0");
-		final Term one = script.numeral("1");
-		final Term two = script.numeral("2");
-
-		// Build constraints corresponding to the original example
-		// x > 2, x < 1, x < 0, Or(x + y > 0, y < 0), Or(y >= 0, x >= 0), Or(y < 0, x < 0), Or(y > 0, x < 0)
-		final List<Term> constraints = new ArrayList<>() {
-			{
-				add(SmtUtils.greater(script, x, two));
-				add(SmtUtils.less(script, x, one));
-				add(SmtUtils.less(script, x, zero));
-				add(SmtUtils.or(script, SmtUtils.greater(script, SmtUtils.sum(script, "+", x, y), zero),
-						SmtUtils.less(script, y, zero)));
-				add(SmtUtils.or(script, SmtUtils.geq(script, y, zero), SmtUtils.geq(script, x, zero)));
-				add(SmtUtils.or(script, SmtUtils.less(script, y, zero), SmtUtils.less(script, x, zero)));
-				add(SmtUtils.or(script, SmtUtils.greater(script, y, zero), SmtUtils.less(script, x, zero)));
-			}
-		};
-
-		final SubsetSolver csolver = new SubsetSolver(script, constraints);
-		final MapSolver msolver = new MapSolver(constraints.size());
-
-		System.out.println("Starting MUS/MSS enumeration:");
-		for (final Set<Integer> result : enumerateSets(csolver, msolver, null)) {
-			// System.out.println(result);
-		}
-	}
+//	public static void main(final String[] args) {
+//		final SMTInterpol script = new SMTInterpol();
+//		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
+//		script.setLogic(Logics.QF_LRA);
+//		// script.setLogic(Logics.ALL);
+//
+//		final Sort realSort = script.getTheory().getRealSort();
+//		script.declareFun("x", new Sort[0], realSort);
+//		script.declareFun("y", new Sort[0], realSort);
+//		final Term x = script.term("x");
+//		final Term y = script.term("y");
+//
+//		final Term zero = script.numeral("0");
+//		final Term one = script.numeral("1");
+//		final Term two = script.numeral("2");
+//
+//		// Build constraints corresponding to the original example
+//		// x > 2, x < 1, x < 0, Or(x + y > 0, y < 0), Or(y >= 0, x >= 0), Or(y < 0, x < 0), Or(y > 0, x < 0)
+//		final List<Term> constraints = new ArrayList<>() {
+//			{
+//				add(SmtUtils.greater(script, x, two));
+//				add(SmtUtils.less(script, x, one));
+//				add(SmtUtils.less(script, x, zero));
+//				add(SmtUtils.or(script, SmtUtils.greater(script, SmtUtils.sum(script, "+", x, y), zero),
+//						SmtUtils.less(script, y, zero)));
+//				add(SmtUtils.or(script, SmtUtils.geq(script, y, zero), SmtUtils.geq(script, x, zero)));
+//				add(SmtUtils.or(script, SmtUtils.less(script, y, zero), SmtUtils.less(script, x, zero)));
+//				add(SmtUtils.or(script, SmtUtils.greater(script, y, zero), SmtUtils.less(script, x, zero)));
+//			}
+//		};
+//
+//		final SubsetSolver csolver = new SubsetSolver(script, constraints);
+//		final MapSolver msolver = new MapSolver(constraints.size());
+//
+//		System.out.println("Starting MUS/MSS enumeration:");
+//		for (final Set<Integer> result : enumerateSets(csolver, msolver, null)) {
+//			// System.out.println(result);
+//		}
+//	}
 
 	public static Iterable<Set<Integer>> enumerateSets(final SubsetSolver csolver, final MapSolver msolver,
 			final ILogger logger) {
