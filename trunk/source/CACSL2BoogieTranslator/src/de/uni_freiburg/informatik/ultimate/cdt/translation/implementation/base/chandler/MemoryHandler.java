@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
@@ -531,9 +532,22 @@ public class MemoryHandler {
 				mMemoryModelDeclarationsHandler);
 	}
 
-	public Collection<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed) {
-		return mMemoryModel.getChecksForFreeCall(loc, pointerToBeFreed, mSettings.checkIfFreedPointerIsValid(),
+	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed) {
+		if (!mSettings.checkIfFreedPointerIsValid()) {
+			return Collections.emptyList();
+		}
+
+		final List<Expression> checkExpressions = mMemoryModel.getChecksForFreeCall(loc, pointerToBeFreed,
 				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		final List<Statement> statements =
+				checkExpressions.stream().<Statement> map(expr -> new AssertStatement(loc, expr)).toList();
+
+		final Check check = new Check(Spec.MEMORY_FREE);
+		for (final Statement stmt : statements) {
+			check.annotate(stmt);
+		}
+
+		return statements;
 	}
 
 	/**

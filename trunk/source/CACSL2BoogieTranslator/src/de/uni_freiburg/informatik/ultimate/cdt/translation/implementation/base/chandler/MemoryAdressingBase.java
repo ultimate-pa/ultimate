@@ -224,14 +224,10 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 	}
 
 	@Override
-	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
-			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public List<Expression> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
-
-		if (!isPointerCheckRequired) {
-			return Collections.emptyList();
-		}
 
 		throw new UnsupportedOperationException(
 				"The check if the freed pointer is valid is not compatible with the selected: " + this.getClass()

@@ -32,7 +32,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -202,14 +201,10 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	}
 
 	@Override
-	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
-			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public List<Expression> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
-
-		if (!isPointerCheckRequired) {
-			return Collections.emptyList();
-		}
 
 		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
@@ -225,7 +220,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		final Expression addrBase = mMemoryPointer.getPointerAddress(pointerToBeFreed.getValue(), loc);
 		final Expression[] idcFree = { addrBase };
 
-		final List<Statement> result = new ArrayList<>();
+		final List<Expression> result = new ArrayList<>();
 
 		/*
 		 * creating the specification according to C99:7.20.3.2-2: The free function causes the space pointed to by ptr
@@ -234,32 +229,27 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 		 * realloc function, or if the space has been deallocated by a call to free or realloc, the behavior is
 		 * undefined.
 		 */
-		final Check check = new Check(Spec.MEMORY_FREE);
 
-		// assert (~addr!offset == 0);
-		final AssertStatement offsetZero = new AssertStatement(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrOffset, zeroNumericExpr));
-		check.annotate(offsetZero);
+		// ~addr!offset == 0;
+		final Expression offsetZero =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrOffset, zeroNumericExpr);
 		result.add(offsetZero);
 
 		// assert (~addr!base < #StackHeapBarrier);
 		final Expression inHeapArea =
 				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan,
 						addrBase, cTypeOfPointerComponent, stackHeapBarrier, cTypeOfPointerComponent);
-		final AssertStatement assertInHeapArea = new AssertStatement(loc, inHeapArea);
-		check.annotate(assertInHeapArea);
-		result.add(assertInHeapArea);
+		result.add(inHeapArea);
 
 		// ~addr!base == 0
 		final Expression isNullPtr =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrBase, zeroNumericExpr);
 
-		// requires ~addr!base == 0 || #valid[~addr!base];
+		// ~addr!base == 0 || #valid[~addr!base];
 		final Expression addrIsValid = mBooleanArrayHelper
 				.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(loc, valid, idcFree));
-		final AssertStatement baseValid = new AssertStatement(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNullPtr, addrIsValid));
-		check.annotate(baseValid);
+		final Expression baseValid =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNullPtr, addrIsValid);
 		result.add(baseValid);
 
 		return result;
@@ -280,7 +270,6 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 						mTypeSizeAndOffsetComputer.getSizeT(), integerExpr, mTypeSizeAndOffsetComputer.getSizeT());
 
 		return mMemoryPointer.constructPointerFromBaseAndOffset(baseExpr, offsetMinus, loc);
-
 	}
 
 	@Override

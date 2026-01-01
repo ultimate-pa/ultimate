@@ -266,11 +266,11 @@ public class MemoryModel {
 	 *
 	 * @return The statements.
 	 */
-	List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
-			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	List<Expression> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.getChecksForFreeCall(loc, pointerToBeFreed, isPointerCheckRequired,
-				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		return mMemoryAddressing.getChecksForFreeCall(loc, pointerToBeFreed, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 	}
 
 	/**
