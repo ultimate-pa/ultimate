@@ -240,6 +240,14 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 						+ "  addressing mode!");
 	}
 
+	@Override
+	public Expression constructMemoryNeutralityCheckExpr(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		throw new UnsupportedOperationException("The check for memory neutrality is not compatible with the selected: "
+				+ this.getClass() + " addressing mode!");
+	}
+
 	/**
 	 * Creates a valid expression representing a pointer subtractions of a pointer component. The component is either
 	 * base or offset.

@@ -253,6 +253,11 @@ public interface IMemoryAdressing {
 			final RequiredMemoryModelFeatures requiredFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
-	Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	/**
+	 * Constructs a boolean expression that, when evaluated at the end of a procedure invocation, results in
+	 * {@code true} iff no memory is allocated that was not already allocated at the beginning of the invocation.
+	 */
+	Expression constructMemoryNeutralityCheckExpr(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 }

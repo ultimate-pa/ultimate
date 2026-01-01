@@ -512,12 +512,12 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * @param loc
-	 *            location of translation unit
-	 * @return new IdentifierExpression that represents the <em>#valid array</em>
+	 * Constructs a boolean expression that, when evaluated at the end of a procedure invocation, results in
+	 * {@code true} iff no memory is allocated that was not already allocated at the beginning of the invocation.
 	 */
-	public Expression getValidArray(final ILocation loc) {
-		return mMemoryModel.getValidArray(loc, mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+	public Expression constructMemoryNeutralityCheckExpr(final ILocation loc) {
+		return mMemoryModel.constructMemoryNeutralityCheckExpr(loc, mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
 	}
 
 	public Expression getMemoryRaceArray(final ILocation loc) {

@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -415,8 +416,12 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	}
 
 	@Override
-	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public Expression constructMemoryNeutralityCheckExpr(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return MemoryMetadataDefault2D.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final Expression validArray =
+				MemoryMetadataDefault2D.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		return ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, validArray,
+				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, validArray));
 	}
 }

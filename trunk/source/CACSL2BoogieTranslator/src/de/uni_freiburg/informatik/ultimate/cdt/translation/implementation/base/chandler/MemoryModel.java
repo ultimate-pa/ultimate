@@ -388,9 +388,11 @@ public class MemoryModel {
 				memoryModelDeclarationsHandler);
 	}
 
-	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public Expression constructMemoryNeutralityCheckExpr(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.getValidArray(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		return mMemoryAddressing.constructMemoryNeutralityCheckExpr(loc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 	}
 
 }

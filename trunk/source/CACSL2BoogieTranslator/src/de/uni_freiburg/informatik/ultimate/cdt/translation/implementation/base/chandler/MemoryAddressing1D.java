@@ -207,12 +207,4 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 
 		return stmts;
 	}
-
-	@Override
-	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		throw new UnsupportedOperationException(
-				"The valid array is not part of the metadata values from the 1D Addressing");
-
-	}
 }
