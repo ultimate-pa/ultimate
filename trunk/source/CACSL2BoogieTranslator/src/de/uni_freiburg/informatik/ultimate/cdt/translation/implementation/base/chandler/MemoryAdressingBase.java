@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -53,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -232,19 +230,6 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 		throw new UnsupportedOperationException(
 				"The check if the freed pointer is valid is not compatible with the selected: " + this.getClass()
 						+ "  addressing mode!");
-	}
-
-	@Override
-	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
-			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (pointerBaseValid == CheckMode.IGNORE && pointerTargetFullyAllocated == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
-		throw new UnsupportedOperationException(
-				"The MemSafety checks are not compatible with the selected: " + this.getClass() + "  addressing mode!");
 	}
 
 	@Override

@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -341,19 +340,6 @@ public class MemoryModel {
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return mMemoryAddressing.constructStrChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr,
 				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
-	}
-
-	/**
-	 * Constructs assert / assume statements for ptr memsafety checks.
-	 *
-	 * @return The statements.
-	 */
-	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
-			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructMemSafeStatementsForPointerExpression(loc, ptr, pointerBaseValid,
-				pointerTargetFullyAllocated, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
 
 	/**

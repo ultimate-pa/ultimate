@@ -56,10 +56,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
 /**
@@ -149,6 +146,7 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 				ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray, new Expression[] { ptrBase });
 		final Expression sum =
 				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
+		// TODO 2026-01-01: Should this be IASTBinaryExpression.op_lessThan ?
 		Expression leq = constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, sum, aae);
 
 		final Expression zeroNumericLiteral =
@@ -346,64 +344,6 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 
 		return mMemoryPointer.constructPointerFromBaseAndOffset(mMemoryPointer.getPointerAddress(ptr, loc), zero, loc);
-	}
-
-	@Override
-	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
-			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		final List<Statement> result = new ArrayList<>();
-
-		if (pointerBaseValid != CheckMode.IGNORE) {
-
-			// valid[s.base]
-			final Expression validBase = constructPointerValidityCheckExpr(loc, ptr, requiredMemoryModelFeatures,
-					memoryModelDeclarationsHandler);
-			final var stmt = statementDependentOnCheck(loc, pointerBaseValid, validBase);
-			result.add(stmt);
-		}
-
-		if (pointerTargetFullyAllocated != CheckMode.IGNORE) {
-			// s.offset < length[s.base])
-			final Expression ptrOffset = mMemoryPointer.pointerOffset(ptr, loc);
-			final Expression ptrBase = mMemoryPointer.getPointerAddress(ptr, loc);
-
-			final Expression lengthArray = MemoryMetadataDefault2D.getLengthArray(loc, requiredMemoryModelFeatures,
-					memoryModelDeclarationsHandler);
-
-			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray,
-					new Expression[] { ptrBase });
-
-			final Expression offsetSmallerLength =
-					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, ptrOffset, aae);
-
-			// s.offset >= 0;
-			final var zeroExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-
-			final Expression offsetNonnegative = constructPointerBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_greaterEqual, ptrOffset, zeroExpr);
-
-			final Expression aAndB = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
-					offsetNonnegative);
-
-			final var stmt = statementDependentOnCheck(loc, pointerTargetFullyAllocated, aAndB);
-			result.add(stmt);
-		}
-		return result;
-	}
-
-	private static Statement statementDependentOnCheck(final ILocation loc, final CheckMode check,
-			final Expression expr) {
-		if (check == CheckMode.CHECK) {
-			final AssertStatement assertion = new AssertStatement(loc, expr);
-			final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
-			chk.annotate(assertion);
-			return assertion;
-		}
-		assert check == CheckMode.ASSUME : "missed a case?";
-		return new AssumeStatement(loc, expr);
 	}
 
 	@Override

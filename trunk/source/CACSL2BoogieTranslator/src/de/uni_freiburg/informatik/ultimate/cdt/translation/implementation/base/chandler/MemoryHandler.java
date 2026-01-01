@@ -2664,14 +2664,41 @@ public class MemoryHandler {
 
 	/**
 	 * Construct assert statements that do memsafety checks for {@link pointerValue} if the corresponding settings are
-	 * active. settings concerned are: - "Pointer base address is valid at dereference" - "Pointer to allocated memory
-	 * at dereference"
+	 * active.
 	 */
 	public List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue) {
-		return mMemoryModel.constructMemSafeStatementsForPointerExpression(loc, pointerValue,
-				mSettings.checkPointerDerefValidity(), mSettings.checkPointerDerefValidity(),
+		final var mode = mSettings.checkPointerDerefValidity();
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		final List<Statement> result = new ArrayList<>();
+
+		final Expression validBase = mMemoryModel.constructPointerBaseValidityCheckExpr(loc, pointerValue,
 				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		result.add(statementDependentOnCheck(loc, mode, validBase));
+
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final Expression pointerTargetFullyAllocated = mMemoryModel.constructPointerTargetFullyAllocatedCheckExpr(loc,
+				pointerValue, zero, mSettings.isBitvectorTranslation(), mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
+		result.add(statementDependentOnCheck(loc, mode, pointerTargetFullyAllocated));
+
+		return result;
+	}
+
+	private static Statement statementDependentOnCheck(final ILocation loc, final CheckMode check,
+			final Expression expr) {
+		if (check == CheckMode.CHECK) {
+			final AssertStatement assertion = new AssertStatement(loc, expr);
+			final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+			chk.annotate(assertion);
+			return assertion;
+		}
+		assert check == CheckMode.ASSUME : "missed a case?";
+		return new AssumeStatement(loc, expr);
 	}
 
 	public List<Statement> ultimateInitStatements(final ILocation loc) {
