@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2026 Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE PEAtoBoogie plug-in.
+ *
+ * The ULTIMATE PEAtoBoogie plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE PEAtoBoogie plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE PEAtoBoogie plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.util.ArrayList;
@@ -14,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -23,90 +49,47 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
- * Java translation of the Z3 Python example for MUS/MSS enumeration (Liffiton style).
- *
- * This example closely follows the algorithm on
+ * Java translation of the Z3 Python example "Enumeration of Minimal Unsatisfiable Cores and Maximal Satisfying Subsets"
+ * The source can be found here:
  * https://microsoft.github.io/z3guide/programming/Example%20Programs/Cores%20and%20Satisfying%20Subsets/
  */
-public class LiffitonMusExample {
+public class MusEnumerator {
 
-	public static void main(final String[] args) {
-		final SMTInterpol script = new SMTInterpol();
-		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
-		script.setLogic(Logics.QF_LRA);
-		// script.setLogic(Logics.ALL);
-
-		final Sort realSort = script.getTheory().getRealSort();
-		script.declareFun("x", new Sort[0], realSort);
-		script.declareFun("y", new Sort[0], realSort);
-		final Term x = script.term("x");
-		final Term y = script.term("y");
-
-		final Term zero = script.numeral("0");
-		final Term one = script.numeral("1");
-		final Term two = script.numeral("2");
-
-		// Build constraints corresponding to the original example
-		// x > 2, x < 1, x < 0, Or(x + y > 0, y < 0), Or(y >= 0, x >= 0), Or(y < 0, x < 0), Or(y > 0, x < 0)
-		final List<Term> constraints = new ArrayList<>() {
-			{
-				add(SmtUtils.greater(script, x, two));
-				add(SmtUtils.less(script, x, one));
-				add(SmtUtils.less(script, x, zero));
-				add(SmtUtils.or(script, SmtUtils.greater(script, SmtUtils.sum(script, "+", x, y), zero),
-						SmtUtils.less(script, y, zero)));
-				add(SmtUtils.or(script, SmtUtils.geq(script, y, zero), SmtUtils.geq(script, x, zero)));
-				add(SmtUtils.or(script, SmtUtils.less(script, y, zero), SmtUtils.less(script, x, zero)));
-				add(SmtUtils.or(script, SmtUtils.greater(script, y, zero), SmtUtils.less(script, x, zero)));
-			}
-		};
-
-		final SubsetSolver csolver = new SubsetSolver(script, constraints);
-		final MapSolver msolver = new MapSolver(constraints.size());
-
-		System.out.println("Starting MUS/MSS enumeration:");
-		for (final Set<Integer> result : enumerateSets(csolver, msolver, null)) {
-			// System.out.println(result);
+	public record MusEnumeratorResult(Type type, Set<Integer> indices, List<Term> terms) {
+		public enum Type {
+			MUS, MSS
 		}
 	}
 
-	public static Iterable<Set<Integer>> enumerateSets(final SubsetSolver csolver, final MapSolver msolver,
+	public static List<MusEnumeratorResult> enumerate(final SubsetSolver csolver, final MapSolver msolver,
 			final ILogger logger) {
-		final List<Set<Integer>> results = new ArrayList<>();
+		final List<MusEnumeratorResult> results = new ArrayList<>();
 
 		while (true) {
-			final Set<Integer> seed = msolver.nextSeed();
+			final Set<Integer> seed = msolver.nextSeed(); // MSolver -> checkSat / getModel
 
 			if (seed == null) {
 				break;
 			}
 
-			if (csolver.checkSubset(seed)) { // <--- CSolver checkSat
+			if (csolver.checkSubset(seed)) { // CSolver -> checkSat
+				// Found MSS
 				final Set<Integer> mss = csolver.grow(new HashSet<>(seed));
+
+				if (!mss.isEmpty()) {
+					results.add(new MusEnumeratorResult(MusEnumeratorResult.Type.MSS, mss,
+							mss.stream().map(i -> csolver.mConstraints.get(i)).toList()));
+				}
 				msolver.blockDown(mss);
-
-//				if (!mss.isEmpty()) {
-//					results.add(mss);
-//				}
-
-//				if (logger != null) {
-//					logger.info("MSS: " + mss);
-//				} else {
-//					System.out.println("MSS: " + mss);
-//				}
 			} else {
-				final Set<Integer> mus = csolver.shrink(seed); // <--- CSolver getUnsatCore
-				msolver.blockUp(mus);
+				// Found MUS
+				final Set<Integer> mus = csolver.shrink(seed); // CSolver -> seedFromCore -> getUnsatCore
 
 				if (!mus.isEmpty()) {
-					results.add(mus);
+					results.add(new MusEnumeratorResult(MusEnumeratorResult.Type.MUS, mus,
+							mus.stream().map(i -> csolver.mConstraints.get(i)).toList()));
 				}
-
-//				if (logger != null) {
-//					logger.info("MUS: " + mus);
-//				} else {
-//					System.out.println("MUS: " + mus);
-//				}
+				msolver.blockUp(mus);
 			}
 		}
 
@@ -126,6 +109,7 @@ public class LiffitonMusExample {
 				final Term cVar = cVar(i);
 				final Term annotated = script.annotate(script.term("=>", cVar, constraints.get(i)),
 						new Annotation(":named", "n" + String.valueOf(i)));
+
 				script.assertTerm(annotated);
 			}
 		}
@@ -158,6 +142,7 @@ public class LiffitonMusExample {
 			}
 
 			// TODO: CheckSatAssuming would be better
+			// final LBool result = mScript.checkSatAssuming(assumptions);
 			final LBool result = mScript.checkSat();
 			assert result != LBool.UNKNOWN;
 
@@ -180,7 +165,7 @@ public class LiffitonMusExample {
 			return result;
 		}
 
-		private List<Integer> seedFromCore() { // <--- CSolver getUnsatCore
+		private List<Integer> seedFromCore() {
 			final List<Integer> result = new ArrayList<>();
 			final Term[] core = mScript.getUnsatCore();
 
@@ -235,10 +220,10 @@ public class LiffitonMusExample {
 		private final Set<Integer> mAllIndices = new HashSet<>();
 
 		public MapSolver(final int n) {
-			this(n, new SMTInterpol());
+			this(new SMTInterpol(), n);
 		}
 
-		public MapSolver(final int n, final Script script) {
+		public MapSolver(final Script script, final int n) {
 			mScript = script;
 
 			if (mScript instanceof SMTInterpol) {
@@ -271,9 +256,9 @@ public class LiffitonMusExample {
 			final Set<Integer> seed = new HashSet<>(mAllIndices);
 			final Set<Integer> toRemove = new HashSet<>();
 			for (final Integer i : evaluations.keySet()) {
-				final Term val = evaluations.get(i);
+				final Term valueTerm = evaluations.get(i);
 
-				if (val.equals(mScript.getTheory().mFalse)) {
+				if (valueTerm.equals(mScript.getTheory().mFalse)) {
 					toRemove.add(i);
 				}
 			}

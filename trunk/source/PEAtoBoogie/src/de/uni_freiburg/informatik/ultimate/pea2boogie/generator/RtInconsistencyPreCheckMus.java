@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2026 Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE PEAtoBoogie plug-in.
+ *
+ * The ULTIMATE PEAtoBoogie plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE PEAtoBoogie plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE PEAtoBoogie plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.util.AbstractMap;
@@ -44,8 +71,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LiffitonMusExample.MapSolver;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LiffitonMusExample.SubsetSolver;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MapSolver;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MusEnumeratorResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.SubsetSolver;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class RtInconsistencyPreCheckMus {
@@ -245,39 +273,43 @@ public class RtInconsistencyPreCheckMus {
 	}
 
 	private Set<Set<MusElement>> enumerateMusesLiffiton(final ArrayList<Nvc> nvcs) {
-		final SolverSettings settings = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
-		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, settings, "CSolver");
+		final Script scriptCSolver = SolverBuilder.buildAndInitializeSolver(mServices,
+				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
+						.setUseExternalSolver(ExternalSolver.Z3),
+				"CSolver");
 
-		final SolverSettings settings2 = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
-		final Script script2 = SolverBuilder.buildAndInitializeSolver(mServices, settings2, "MSolver");
+		final Script scriptMSolver = SolverBuilder.buildAndInitializeSolver(mServices,
+				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsMode)
+						.setUseExternalSolver(ExternalSolver.Z3),
+				"MSolver");
 
 		final List<Term> constraints = new ArrayList<>();
-		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(script));
+		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(scriptCSolver));
 		for (final Nvc nvc : nvcs) {
 			constraints.add(termTransferrer.transform(nvc.term));
 		}
 
-		final SubsetSolver csolver = new LiffitonMusExample.SubsetSolver(script, constraints);
-		final MapSolver msolver = new LiffitonMusExample.MapSolver(constraints.size(), script2);
-		final Iterable<Set<Integer>> muses = LiffitonMusExample.enumerateSets(csolver, msolver, mLogger);
-		script.exit();
-		script2.exit();
+		final SubsetSolver csolver = new MusEnumerator.SubsetSolver(scriptCSolver, constraints);
+		final MapSolver msolver = new MusEnumerator.MapSolver(scriptMSolver, constraints.size());
+		final List<MusEnumeratorResult> musResults = MusEnumerator.enumerate(csolver, msolver, mLogger);
+		scriptCSolver.exit();
+		scriptMSolver.exit();
 
 		final Set<Set<MusElement>> result = new HashSet<>();
-		for (final var mus : muses) {
-			final Set<MusElement> musElements = new HashSet<>();
-			for (final var index : mus) {
-				final Nvc nvc = nvcs.get(index);
-				final String reqName = nvc.name.substring(0, nvc.name.lastIndexOf('_'));
-				final String phaseIndexStr = nvc.name.substring(nvc.name.lastIndexOf('_') + 1);
-				final boolean seeping = phaseIndexStr.endsWith("s");
-				final Integer phaseIndex = Integer
-						.parseInt(seeping ? phaseIndexStr.substring(0, phaseIndexStr.length() - 1) : phaseIndexStr);
-				musElements.add(new MusElement(reqName, phaseIndex, seeping));
+		for (final var musResult : musResults) {
+			if (musResult.type() == MusEnumeratorResult.Type.MUS) {
+				final Set<MusElement> musElements = new HashSet<>();
+				for (final var index : musResult.indices()) {
+					final Nvc nvc = nvcs.get(index);
+					final String reqName = nvc.name.substring(0, nvc.name.lastIndexOf('_'));
+					final String phaseIndexStr = nvc.name.substring(nvc.name.lastIndexOf('_') + 1);
+					final boolean seeping = phaseIndexStr.endsWith("s");
+					final Integer phaseIndex = Integer
+							.parseInt(seeping ? phaseIndexStr.substring(0, phaseIndexStr.length() - 1) : phaseIndexStr);
+					musElements.add(new MusElement(reqName, phaseIndex, seeping));
+				}
+				result.add(musElements);
 			}
-			result.add(musElements);
 		}
 
 		return result;
@@ -324,9 +356,9 @@ public class RtInconsistencyPreCheckMus {
 
 		// final List constraints = nvcs.stream().map(nvc -> nvc.term).collect(Collectors.toList());
 
-		final SubsetSolver csolver = new LiffitonMusExample.SubsetSolver(script1, constraints);
-		final MapSolver msolver = new LiffitonMusExample.MapSolver(constraints.size());
-		final var muses = LiffitonMusExample.enumerateSets(csolver, msolver, mLogger);
+		final SubsetSolver csolver = new MusEnumerator.SubsetSolver(script1, constraints);
+		final MapSolver msolver = new MusEnumerator.MapSolver(constraints.size());
+		final var muses = MusEnumerator.enumerate(csolver, msolver, mLogger);
 
 		script1.exit();
 		// script2.exit();
