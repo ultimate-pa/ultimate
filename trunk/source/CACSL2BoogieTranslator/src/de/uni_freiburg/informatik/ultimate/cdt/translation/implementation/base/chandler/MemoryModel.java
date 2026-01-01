@@ -311,16 +311,6 @@ public class MemoryModel {
 	}
 
 	/**
-	 * Returns a pointer to the last character of a string.
-	 *
-	 * @return The pointer.
-	 */
-	public Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
-			final IdentifierExpression returnValue) {
-		return mMemoryAddressing.getLastCharOfString(loc, sizeT, len, returnValue);
-	}
-
-	/**
 	 * Returns a pointer with the same base address but an offset of 0.
 	 *
 	 * @return A pointer with offset 0.

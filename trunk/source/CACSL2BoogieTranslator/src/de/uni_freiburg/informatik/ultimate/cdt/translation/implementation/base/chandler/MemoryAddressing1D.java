@@ -147,16 +147,6 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public Expression getLastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
-			final IdentifierExpression returnValue) {
-		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
-				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len), sizeT,
-				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
-
-		return mMemoryPointer.createPointerFromBase(lenMinusOne, loc);
-	}
-
-	@Override
 	public AssumeStatement constructStrChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
 			final Expression argSPtr, final Expression nullPtrExpr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,

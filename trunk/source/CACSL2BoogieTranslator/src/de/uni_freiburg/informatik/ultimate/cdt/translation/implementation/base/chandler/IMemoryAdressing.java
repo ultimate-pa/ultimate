@@ -193,14 +193,6 @@ public interface IMemoryAdressing {
 	Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr);
 
 	/**
-	 * Returns a pointer to the last character of a string.
-	 *
-	 * @return The pointer.
-	 */
-	Expression getLastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
-			final IdentifierExpression returnValue);
-
-	/**
 	 * Creates the assume statement used in the handling of strchr.
 	 *
 	 * @return The statement.
