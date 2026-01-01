@@ -11,12 +11,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
@@ -27,45 +30,45 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class LiffitonMusExample {
 
-//	public static void main(final String[] args) {
-//		final SMTInterpol script = new SMTInterpol();
-//		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
-//		script.setLogic(Logics.QF_LRA);
-//		// script.setLogic(Logics.ALL);
-//
-//		final Sort realSort = script.getTheory().getRealSort();
-//		script.declareFun("x", new Sort[0], realSort);
-//		script.declareFun("y", new Sort[0], realSort);
-//		final Term x = script.term("x");
-//		final Term y = script.term("y");
-//
-//		final Term zero = script.numeral("0");
-//		final Term one = script.numeral("1");
-//		final Term two = script.numeral("2");
-//
-//		// Build constraints corresponding to the original example
-//		// x > 2, x < 1, x < 0, Or(x + y > 0, y < 0), Or(y >= 0, x >= 0), Or(y < 0, x < 0), Or(y > 0, x < 0)
-//		final List<Term> constraints = new ArrayList<>() {
-//			{
-//				add(SmtUtils.greater(script, x, two));
-//				add(SmtUtils.less(script, x, one));
-//				add(SmtUtils.less(script, x, zero));
-//				add(SmtUtils.or(script, SmtUtils.greater(script, SmtUtils.sum(script, "+", x, y), zero),
-//						SmtUtils.less(script, y, zero)));
-//				add(SmtUtils.or(script, SmtUtils.geq(script, y, zero), SmtUtils.geq(script, x, zero)));
-//				add(SmtUtils.or(script, SmtUtils.less(script, y, zero), SmtUtils.less(script, x, zero)));
-//				add(SmtUtils.or(script, SmtUtils.greater(script, y, zero), SmtUtils.less(script, x, zero)));
-//			}
-//		};
-//
-//		final SubsetSolver csolver = new SubsetSolver(script, constraints);
-//		final MapSolver msolver = new MapSolver(constraints.size());
-//
-//		System.out.println("Starting MUS/MSS enumeration:");
-//		for (final Set<Integer> result : enumerateSets(csolver, msolver, null)) {
-//			// System.out.println(result);
-//		}
-//	}
+	public static void main(final String[] args) {
+		final SMTInterpol script = new SMTInterpol();
+		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
+		script.setLogic(Logics.QF_LRA);
+		// script.setLogic(Logics.ALL);
+
+		final Sort realSort = script.getTheory().getRealSort();
+		script.declareFun("x", new Sort[0], realSort);
+		script.declareFun("y", new Sort[0], realSort);
+		final Term x = script.term("x");
+		final Term y = script.term("y");
+
+		final Term zero = script.numeral("0");
+		final Term one = script.numeral("1");
+		final Term two = script.numeral("2");
+
+		// Build constraints corresponding to the original example
+		// x > 2, x < 1, x < 0, Or(x + y > 0, y < 0), Or(y >= 0, x >= 0), Or(y < 0, x < 0), Or(y > 0, x < 0)
+		final List<Term> constraints = new ArrayList<>() {
+			{
+				add(SmtUtils.greater(script, x, two));
+				add(SmtUtils.less(script, x, one));
+				add(SmtUtils.less(script, x, zero));
+				add(SmtUtils.or(script, SmtUtils.greater(script, SmtUtils.sum(script, "+", x, y), zero),
+						SmtUtils.less(script, y, zero)));
+				add(SmtUtils.or(script, SmtUtils.geq(script, y, zero), SmtUtils.geq(script, x, zero)));
+				add(SmtUtils.or(script, SmtUtils.less(script, y, zero), SmtUtils.less(script, x, zero)));
+				add(SmtUtils.or(script, SmtUtils.greater(script, y, zero), SmtUtils.less(script, x, zero)));
+			}
+		};
+
+		final SubsetSolver csolver = new SubsetSolver(script, constraints);
+		final MapSolver msolver = new MapSolver(constraints.size());
+
+		System.out.println("Starting MUS/MSS enumeration:");
+		for (final Set<Integer> result : enumerateSets(csolver, msolver, null)) {
+			// System.out.println(result);
+		}
+	}
 
 	public static Iterable<Set<Integer>> enumerateSets(final SubsetSolver csolver, final MapSolver msolver,
 			final ILogger logger) {
@@ -99,11 +102,11 @@ public class LiffitonMusExample {
 					results.add(mus);
 				}
 
-				if (logger != null) {
-					logger.info("MUS: " + mus);
-				} else {
-					System.out.println("MUS: " + mus);
-				}
+//				if (logger != null) {
+//					logger.info("MUS: " + mus);
+//				} else {
+//					System.out.println("MUS: " + mus);
+//				}
 			}
 		}
 
@@ -131,7 +134,6 @@ public class LiffitonMusExample {
 			assert i >= 0 && i < mConstraints.size();
 
 			if (!varcache.containsKey(i)) {
-				// final String name = String.format("c%d ", i) + mConstraints.get(i).toString();
 				final String name = "c" + String.valueOf(i);
 				mScript.declareFun(name, new Sort[0], mScript.getTheory().getBooleanSort());
 				final Term v = mScript.term(name);
@@ -155,7 +157,7 @@ public class LiffitonMusExample {
 				mScript.assertTerm(assumption);
 			}
 
-			// final LBool result = mScript.checkSatAssuming(assumptions);
+			// TODO: CheckSatAssuming would be better
 			final LBool result = mScript.checkSat();
 			assert result != LBool.UNKNOWN;
 
@@ -231,7 +233,6 @@ public class LiffitonMusExample {
 	public static class MapSolver {
 		private final Script mScript;
 		private final Set<Integer> mAllIndices = new HashSet<>();
-		private final Map<Integer, Term> mModelVars = new HashMap<>();
 
 		public MapSolver(final int n) {
 			this(n, new SMTInterpol());
@@ -249,29 +250,7 @@ public class LiffitonMusExample {
 			}
 		}
 
-//		public Map<Term, Term> getModelAssignments(final Model model) {
-//			final Map<Term, Term> results = new HashMap<>();
-//
-//			for (final FunctionSymbol fs : model.getDefinedFunctions()) {
-//				// Nur Bool-Konstanten
-//				if (fs.getParameterSorts().length == 0
-//						&& fs.getReturnSort().equals(mScript.getTheory().getBooleanSort())) {
-//
-//					// Definition holen
-//					final Term valueTerm = model.getFunctionDefinition(fs.getName(), new TermVariable[0]);
-//
-//					final boolean isTrue = valueTerm.toString().equals("true");
-//					final boolean isFalse = valueTerm.toString().equals("false");
-//
-//					results.put(mScript.term(fs.getName()), valueTerm);
-//				}
-//			}
-//
-//			return results;
-//		}
-
 		public Set<Integer> nextSeed() {
-			// Check satisfiability ------------------------------------------------------------------------------------
 			final LBool res = mScript.checkSat();
 			assert res != LBool.UNKNOWN;
 
@@ -280,22 +259,19 @@ public class LiffitonMusExample {
 			}
 
 			final Model model = mScript.getModel();
+			final Map<Integer, Term> evaluations = new HashMap<>();
+			for (final FunctionSymbol fs : model.getDefinedFunctions()) {
+				assert fs.getParameterSorts().length == 0
+						&& fs.getReturnSort().equals(mScript.getTheory().getBooleanSort());
+
+				final Term valueTerm = model.getFunctionDefinition(fs.getName(), new TermVariable[0]);
+				evaluations.put(Integer.valueOf(fs.getName()), valueTerm);
+			}
+
 			final Set<Integer> seed = new HashSet<>(mAllIndices);
 			final Set<Integer> toRemove = new HashSet<>();
-
-//			for (final var evaluation : evaluations.entrySet()) {
-//				final Term v = evaluation.getKey();
-//				final Term val = evaluation.getValue();
-//				final int i = Integer.parseInt(((ApplicationTerm) v).getFunction().getName());
-//
-//				if (val.equals(mScript.getTheory().mFalse)) {
-//					toRemove.add(i);
-//				}
-//			}
-
-			for (final Integer i : mModelVars.keySet()) {
-				final Term v = mModelVars.get(i);
-				final Term val = model.evaluate(v);
+			for (final Integer i : evaluations.keySet()) {
+				final Term val = evaluations.get(i);
 
 				if (val.equals(mScript.getTheory().mFalse)) {
 					toRemove.add(i);
@@ -314,16 +290,14 @@ public class LiffitonMusExample {
 		}
 
 		public void blockDown(final Set<Integer> fromPoint) {
-			final Set<Integer> comp = complement(fromPoint);
+			final Set<Integer> complement = complement(fromPoint);
 
 			final List<Term> lits = new ArrayList<>();
-			for (final int i : comp) {
-				if (!mModelVars.containsKey(i)) {
+			for (final int i : complement) {
+				if (mScript.getTheory().getFunctionSymbol(String.valueOf(i)) == null) {
 					mScript.declareFun(Integer.toString(i), new Sort[0], mScript.getTheory().getBooleanSort());
-					mModelVars.put(i, mScript.term(Integer.toString(i)));
 				}
-
-				lits.add(mModelVars.get(i));
+				lits.add(mScript.term(Integer.toString(i)));
 			}
 
 			mScript.assertTerm(SmtUtils.or(mScript, lits));
@@ -332,12 +306,10 @@ public class LiffitonMusExample {
 		public void blockUp(final Set<Integer> fromPoint) {
 			final List<Term> lits = new ArrayList<>();
 			for (final int i : fromPoint) {
-				if (!mModelVars.containsKey(i)) {
+				if (mScript.getTheory().getFunctionSymbol(String.valueOf(i)) == null) {
 					mScript.declareFun(Integer.toString(i), new Sort[0], mScript.getTheory().getBooleanSort());
-					mModelVars.put(i, mScript.term(Integer.toString(i)));
 				}
-
-				lits.add(mScript.term("not", mModelVars.get(i)));
+				lits.add(mScript.term("not", mScript.term(Integer.toString(i))));
 			}
 
 			mScript.assertTerm(SmtUtils.or(mScript, lits));

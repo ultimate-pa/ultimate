@@ -36,10 +36,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
-import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -50,9 +46,6 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LiffitonMusExample.MapSolver;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LiffitonMusExample.SubsetSolver;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusContainer;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.Translator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class RtInconsistencyPreCheckMus {
@@ -256,6 +249,10 @@ public class RtInconsistencyPreCheckMus {
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
 		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, settings, "CSolver");
 
+		final SolverSettings settings2 = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
+		final Script script2 = SolverBuilder.buildAndInitializeSolver(mServices, settings2, "MSolver");
+
 		final List<Term> constraints = new ArrayList<>();
 		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(script));
 		for (final Nvc nvc : nvcs) {
@@ -263,9 +260,10 @@ public class RtInconsistencyPreCheckMus {
 		}
 
 		final SubsetSolver csolver = new LiffitonMusExample.SubsetSolver(script, constraints);
-		final MapSolver msolver = new LiffitonMusExample.MapSolver(constraints.size());
+		final MapSolver msolver = new LiffitonMusExample.MapSolver(constraints.size(), script2);
 		final Iterable<Set<Integer>> muses = LiffitonMusExample.enumerateSets(csolver, msolver, mLogger);
 		script.exit();
+		script2.exit();
 
 		final Set<Set<MusElement>> result = new HashSet<>();
 		for (final var mus : muses) {
@@ -381,39 +379,39 @@ public class RtInconsistencyPreCheckMus {
 //		return result;
 //	}
 
-	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
-		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
-			throw new SMTLIBException("Call checkSat to determine satisfiability.");
-		}
-
-		if (!((boolean) musEnumerationScript.getOption(SMTLIBConstants.PRODUCE_UNSAT_CORES))) {
-			throw new SMTLIBException("Unsat core production must be enabled (you can do this via setOption).");
-		}
-
-		final Translator translator = new Translator();
-		final ArrayList<MusContainer> muses = musEnumerationScript.executeReMus(translator);
-
-		final ArrayList<ArrayList<String>> unsatCores = new ArrayList<>();
-		for (final var mus : muses) {
-			final ArrayList<String> unsatCore = new ArrayList<>();
-
-			for (final Term term : translator.translateToTerms(mus.getMus())) {
-				if (!(term instanceof final AnnotatedTerm annotatedTerm)) {
-					continue;
-				}
-
-				for (final Annotation annotation : annotatedTerm.getAnnotations()) {
-					if (":named".equals(annotation.getKey())) {
-						unsatCore.add(((String) annotation.getValue()).intern());
-						break;
-					}
-				}
-			}
-			unsatCores.add(unsatCore);
-		}
-
-		return unsatCores;
-	}
+//	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
+//		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
+//			throw new SMTLIBException("Call checkSat to determine satisfiability.");
+//		}
+//
+//		if (!((boolean) musEnumerationScript.getOption(SMTLIBConstants.PRODUCE_UNSAT_CORES))) {
+//			throw new SMTLIBException("Unsat core production must be enabled (you can do this via setOption).");
+//		}
+//
+//		final Translator translator = new Translator();
+//		final ArrayList<MusContainer> muses = musEnumerationScript.executeReMus(translator);
+//
+//		final ArrayList<ArrayList<String>> unsatCores = new ArrayList<>();
+//		for (final var mus : muses) {
+//			final ArrayList<String> unsatCore = new ArrayList<>();
+//
+//			for (final Term term : translator.translateToTerms(mus.getMus())) {
+//				if (!(term instanceof final AnnotatedTerm annotatedTerm)) {
+//					continue;
+//				}
+//
+//				for (final Annotation annotation : annotatedTerm.getAnnotations()) {
+//					if (":named".equals(annotation.getKey())) {
+//						unsatCore.add(((String) annotation.getValue()).intern());
+//						break;
+//					}
+//				}
+//			}
+//			unsatCores.add(unsatCore);
+//		}
+//
+//		return unsatCores;
+//	}
 
 	private class CddToSmtPreCheck extends CddToSmt {
 		private final Map<Term, Term> mConstants;
