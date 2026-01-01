@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -98,17 +97,6 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	@Override
 	public BigInteger getFixedAddressCounterCountingStep(final Expression size) {
 		return mTypeSizes.extractIntegerValue(size, new CPrimitive(CPrimitives.LONG));
-	}
-
-	@Override
-	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
-			final Offset fieldOffset, final CPrimitive sizeT) {
-
-		final Expression pointerBase = mMemoryPointer.getPointerAddress(baseAddress, loc);
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerBase, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
-
-		return mMemoryPointer.createPointerFromBase(sum, loc);
 	}
 
 	@Override

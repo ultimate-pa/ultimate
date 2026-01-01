@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -107,19 +106,6 @@ public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	@Override
 	public BigInteger getFixedAddressCounterCountingStep(final Expression size) {
 		return BigInteger.ONE;
-	}
-
-	@Override
-	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
-			final Offset fieldOffset, final CPrimitive sizeT) {
-
-		final Expression pointerBase = mMemoryPointer.getPointerAddress(baseAddress, loc);
-		final Expression pointerOffset = mMemoryPointer.pointerOffset(baseAddress, loc);
-
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
-
-		return mMemoryPointer.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 	}
 
 	@Override

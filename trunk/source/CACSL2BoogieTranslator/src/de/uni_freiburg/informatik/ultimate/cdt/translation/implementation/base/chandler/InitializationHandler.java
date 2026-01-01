@@ -1089,8 +1089,8 @@ public class InitializationHandler {
 		final CStructOrUnion cStructType = (CStructOrUnion) baseAddress.getCType().getUnderlyingType();
 		final var fieldOffset = mTypeSetAndOffsetComputer.constructOffsetForField(loc, cStructType, fieldIndex);
 
-		final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, baseAddress.getAddress(),
-				fieldOffset, mTypeSetAndOffsetComputer.getSizeT());
+		final Expression newPointer =
+				mMemoryHandler.constructAddressForStructField(loc, baseAddress.getAddress(), fieldOffset);
 
 		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cStructType.getFieldTypes()[fieldIndex],
 				null);

@@ -387,8 +387,8 @@ public class ExpressionResultTransformer {
 					throw new UnsupportedOperationException("Bitfield read struct from heap");
 				}
 
-				final var newAddress = mMemoryHandler.constructAddressForStructField(loc, structOnHeapAddress,
-						innerStructOffset, mExprTrans.getCTypeOfPointerComponents());
+				final var newAddress =
+						mMemoryHandler.constructAddressForStructField(loc, structOnHeapAddress, innerStructOffset);
 
 				final ExpressionResult fieldRead =
 						readStructFromHeap(old, loc, newAddress, cStructOrUnion, hook, unchecked);

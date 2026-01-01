@@ -130,8 +130,7 @@ public class StructHandler {
 			// TODO: different calculations for unions
 			final Expression startAddress = fieldOwnerHlv.getAddress();
 
-			final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, startAddress, fieldOffset,
-					mExpressionTranslation.getCTypeOfPointerComponents());
+			final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, startAddress, fieldOffset);
 
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
 			newValue = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
@@ -197,8 +196,8 @@ public class StructHandler {
 				final Offset fieldOffset =
 						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
 
-				final Expression neighbourFieldAddress = mMemoryHandler.constructAddressForStructField(loc,
-						unionAddress, fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
+				final Expression neighbourFieldAddress =
+						mMemoryHandler.constructAddressForStructField(loc, unionAddress, fieldOffset);
 
 				builder.setLrValue(LRValueFactory.constructHeapLValue(mTypeHandler, neighbourFieldAddress,
 						foType.getFieldType(neighbourField), null));
@@ -237,8 +236,7 @@ public class StructHandler {
 		}
 		final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, fieldIndex);
 
-		return mMemoryHandler.constructAddressForStructField(loc, address, fieldOffset,
-				mTypeSizeAndOffsetComputer.getSizeT());
+		return mMemoryHandler.constructAddressForStructField(loc, address, fieldOffset);
 
 	}
 }

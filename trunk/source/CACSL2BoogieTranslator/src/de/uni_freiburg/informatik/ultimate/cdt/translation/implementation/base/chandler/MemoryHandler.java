@@ -864,8 +864,11 @@ public class MemoryHandler {
 	}
 
 	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
-			final Offset fieldOffset, final CPrimitive type) {
-		return mMemoryModel.constructAddressForStructField(loc, baseAddress, fieldOffset, type);
+			final Offset fieldOffset) {
+		if (fieldOffset.isBitfieldOffset()) {
+			throw new UnsupportedOperationException("Bitfield read");
+		}
+		return mMemoryModel.addExpressionToPointer(loc, baseAddress, fieldOffset.getAddressOffsetAsExpression(loc));
 	}
 
 	public void beginScope() {
@@ -2037,8 +2040,7 @@ public class MemoryHandler {
 				throw new UnsupportedOperationException("Bitfield write");
 			}
 
-			final Expression newPointer = mMemoryModel.constructAddressForStructField(loc, startAddress, fieldOffset,
-					mExpressionTranslation.getCTypeOfPointerComponents());
+			final Expression newPointer = constructAddressForStructField(loc, startAddress, fieldOffset);
 
 			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, fieldType, null);
 			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
