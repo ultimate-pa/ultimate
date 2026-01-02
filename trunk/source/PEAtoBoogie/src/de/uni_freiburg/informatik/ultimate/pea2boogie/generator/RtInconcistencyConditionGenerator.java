@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.EpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.IEpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -653,10 +654,9 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
-			final int rTIPreCheckRange, final boolean preCheckFullSet, final boolean onlyPreCheck) {
-
-		return new RtInconsistencyPreCheckMus(reqPeas, mPeaResultUtil, mBoogie2Smt, mBoogieDeclarations,
-				mReqSymboltable, mScript, mManagedScript, mServices, mLogger).check();
+			final CompleteRtInconsistencyCheckMode mode) {
+		return new CompleteRtInconsistencyCheck(reqPeas, mPeaResultUtil, mBoogie2Smt, mBoogieDeclarations,
+				mReqSymboltable, mScript, mManagedScript, mServices, mLogger, mode).check();
 
 	}
 

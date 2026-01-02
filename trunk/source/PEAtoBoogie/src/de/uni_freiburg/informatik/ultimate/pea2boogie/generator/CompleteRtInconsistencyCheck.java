@@ -59,10 +59,15 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -74,9 +79,15 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MapSolver;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MusEnumeratorResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.SubsetSolver;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusContainer;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusOptions;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.Translator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class RtInconsistencyPreCheckMus {
+public class CompleteRtInconsistencyCheck {
 	private final CddToSmtPreCheck mCddToSmtPreCheck;
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
@@ -101,10 +112,11 @@ public class RtInconsistencyPreCheckMus {
 	private record Nvc(String name, Term term, Set<NonTheorySymbol<?>> symbols) {
 	}
 
-	public RtInconsistencyPreCheckMus(final List<ReqPeas> reqPeas, final PeaResultUtil peaResultUtil,
+	public CompleteRtInconsistencyCheck(final List<ReqPeas> reqPeas, final PeaResultUtil peaResultUtil,
 			final Boogie2SMT boogie2Smt, final BoogieDeclarations boogieDeclarations,
 			final IReqSymbolTable reqSymbolTable, final Script script, final ManagedScript managedScript,
-			final IUltimateServiceProvider services, final ILogger logger) {
+			final IUltimateServiceProvider services, final ILogger logger,
+			final CompleteRtInconsistencyCheckMode mode) {
 
 		mScript = script;
 		mManagedScript = managedScript;
@@ -315,10 +327,8 @@ public class RtInconsistencyPreCheckMus {
 		return result;
 	}
 
-	private void enumerateNvcMusesLiffitonExperiments(final Set<Nvc> nvcs) {
-		// mScript.push(1);
-
-		// Plan B: if nothing works, try to call the liffiton script directly
+	private void enumerateMusesPython(final Set<Nvc> nvcs) {
+//		Plan B: if nothing works, try to call the liffiton script directly
 //		try {
 //			MonitoredProcess process;
 //			final String[] command = { "/usr/bin/python", "-u",
@@ -334,116 +344,85 @@ public class RtInconsistencyPreCheckMus {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
-
-//		final SMTInterpol script = new SMTInterpol();
-//		script.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
-//		script.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
-//		script.setLogic(Logics.ALL);
-
-		final SolverSettings settings1 = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
-		final Script script1 = SolverBuilder.buildAndInitializeSolver(mServices, settings1, "CSolver");
-
-//		final SolverSettings settings2 = SolverBuilder.constructSolverSettings()
-//				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
-//		final Script script2 = SolverBuilder.buildAndInitializeSolver(mServices, settings2, "MSolver");
-
-		final List<Term> constraints = new ArrayList<>();
-		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(script1));
-		for (final Nvc nvc : nvcs) {
-			constraints.add(termTransferrer.transform(nvc.term));
-		}
-
-		// final List constraints = nvcs.stream().map(nvc -> nvc.term).collect(Collectors.toList());
-
-		final SubsetSolver csolver = new MusEnumerator.SubsetSolver(script1, constraints);
-		final MapSolver msolver = new MusEnumerator.MapSolver(constraints.size());
-		final var muses = MusEnumerator.enumerate(csolver, msolver, mLogger);
-
-		script1.exit();
-		// script2.exit();
-
-		// mScript.pop(1);
 	}
 
-//	private Set<Set<MusElement>> enumerateNvcMuses(final Set<Nvc> nvcs) {
-//		Set<Set<MusElement>> result = new HashSet<>();
-//
-//		final SMTInterpol smtInterpol = new SMTInterpol();
-//		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
-//		smtInterpol.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
-//		// smtInterpol.setLogic(Logics.ALL);
-//		smtInterpol.setLogic(Logics.QF_UFLIRA);
-//
-//		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
-//		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
-//		// musEnumerationScript.setOption(MusOptions.UNKNOWN_ALLOWED, true);
-//		// musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
-//
-//		final TermTransferrer termTransferrer =
-//				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
-//
-//		for (final var nvc : nvcs) {
-//			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(nvc.term),
-//					new Annotation(":named", nvc.name)));
-//
-//			final String symbols_string = nvc.symbols.stream().map(
-//					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
-//					.collect(Collectors.joining(", "));
-//
-//			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
-//					nvc.name, nvc.term, symbols_string));
-//		}
-//
-//		final LBool sat = musEnumerationScript.checkSat();
-//		mLogger.info("Check sat of nvcs in group: " + sat);
-//
-//		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
-//			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
-//				final String reqName = s.substring(0, s.lastIndexOf('_'));
-//				final String index = s.substring(s.lastIndexOf('_') + 1);
-//				final boolean seeping = index.endsWith("s");
-//				return new MusElement(reqName,
-//						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
-//			}).collect(Collectors.toSet())).collect(Collectors.toSet());
-//		}
-//
-//		return result;
-//	}
+	private Set<Set<MusElement>> enumerateMusesRemus(final Set<Nvc> nvcs) {
+		Set<Set<MusElement>> result = new HashSet<>();
 
-//	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
-//		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
-//			throw new SMTLIBException("Call checkSat to determine satisfiability.");
-//		}
-//
-//		if (!((boolean) musEnumerationScript.getOption(SMTLIBConstants.PRODUCE_UNSAT_CORES))) {
-//			throw new SMTLIBException("Unsat core production must be enabled (you can do this via setOption).");
-//		}
-//
-//		final Translator translator = new Translator();
-//		final ArrayList<MusContainer> muses = musEnumerationScript.executeReMus(translator);
-//
-//		final ArrayList<ArrayList<String>> unsatCores = new ArrayList<>();
-//		for (final var mus : muses) {
-//			final ArrayList<String> unsatCore = new ArrayList<>();
-//
-//			for (final Term term : translator.translateToTerms(mus.getMus())) {
-//				if (!(term instanceof final AnnotatedTerm annotatedTerm)) {
-//					continue;
-//				}
-//
-//				for (final Annotation annotation : annotatedTerm.getAnnotations()) {
-//					if (":named".equals(annotation.getKey())) {
-//						unsatCore.add(((String) annotation.getValue()).intern());
-//						break;
-//					}
-//				}
-//			}
-//			unsatCores.add(unsatCore);
-//		}
-//
-//		return unsatCores;
-//	}
+		final SMTInterpol smtInterpol = new SMTInterpol();
+		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
+		smtInterpol.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
+		smtInterpol.setLogic(Logics.ALL);
+
+		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
+		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
+		// musEnumerationScript.setOption(MusOptions.UNKNOWN_ALLOWED, true);
+		// musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
+
+		final TermTransferrer termTransferrer =
+				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
+
+		for (final var nvc : nvcs) {
+			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(nvc.term),
+					new Annotation(":named", nvc.name)));
+
+			final String symbols_string = nvc.symbols.stream().map(
+					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
+					.collect(Collectors.joining(", "));
+
+			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
+					nvc.name, nvc.term, symbols_string));
+		}
+
+		final LBool sat = musEnumerationScript.checkSat();
+		mLogger.info("Check sat of nvcs in group: " + sat);
+
+		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
+			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
+				final String reqName = s.substring(0, s.lastIndexOf('_'));
+				final String index = s.substring(s.lastIndexOf('_') + 1);
+				final boolean seeping = index.endsWith("s");
+				return new MusElement(reqName,
+						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
+			}).collect(Collectors.toSet())).collect(Collectors.toSet());
+		}
+
+		return result;
+	}
+
+	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
+		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
+			throw new SMTLIBException("Call checkSat to determine satisfiability.");
+		}
+
+		if (!((boolean) musEnumerationScript.getOption(SMTLIBConstants.PRODUCE_UNSAT_CORES))) {
+			throw new SMTLIBException("Unsat core production must be enabled (you can do this via setOption).");
+		}
+
+		final Translator translator = new Translator();
+		final ArrayList<MusContainer> muses = musEnumerationScript.executeReMus(translator);
+
+		final ArrayList<ArrayList<String>> unsatCores = new ArrayList<>();
+		for (final var mus : muses) {
+			final ArrayList<String> unsatCore = new ArrayList<>();
+
+			for (final Term term : translator.translateToTerms(mus.getMus())) {
+				if (!(term instanceof final AnnotatedTerm annotatedTerm)) {
+					continue;
+				}
+
+				for (final Annotation annotation : annotatedTerm.getAnnotations()) {
+					if (":named".equals(annotation.getKey())) {
+						unsatCore.add(((String) annotation.getValue()).intern());
+						break;
+					}
+				}
+			}
+			unsatCores.add(unsatCore);
+		}
+
+		return unsatCores;
+	}
 
 	private class CddToSmtPreCheck extends CddToSmt {
 		private final Map<Term, Term> mConstants;
