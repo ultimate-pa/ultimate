@@ -99,7 +99,7 @@ public class MusEnumerator {
 	public static class SubsetSolver {
 		private final Script mScript;
 		private final List<Term> mConstraints;
-		private final Map<Integer, Term> varcache = new HashMap<>();
+		private final Map<Integer, Term> mVarCache = new HashMap<>();
 
 		public SubsetSolver(final Script script, final List<Term> constraints) {
 			mScript = script;
@@ -117,15 +117,15 @@ public class MusEnumerator {
 		private Term cVar(final int i) {
 			assert i >= 0 && i < mConstraints.size();
 
-			if (!varcache.containsKey(i)) {
+			if (!mVarCache.containsKey(i)) {
 				final String name = "c" + String.valueOf(i);
 				mScript.declareFun(name, new Sort[0], mScript.getTheory().getBooleanSort());
 				final Term v = mScript.term(name);
 
-				varcache.put(i, v);
+				mVarCache.put(i, v);
 			}
 
-			return varcache.get(i);
+			return mVarCache.get(i);
 		}
 
 		public boolean checkSubset(final Set<Integer> seed) {
@@ -141,7 +141,7 @@ public class MusEnumerator {
 				mScript.assertTerm(assumption);
 			}
 
-			// TODO: CheckSatAssuming would be better
+			// TODO: CheckSatAssuming would be better, but is not available for z3
 			// final LBool result = mScript.checkSatAssuming(assumptions);
 			final LBool result = mScript.checkSat();
 			assert result != LBool.UNKNOWN;
@@ -217,11 +217,7 @@ public class MusEnumerator {
 
 	public static class MapSolver {
 		private final Script mScript;
-		private final Set<Integer> mAllIndices = new HashSet<>();
-
-		public MapSolver(final int n) {
-			this(new SMTInterpol(), n);
-		}
+		private final Set<Integer> mAllN = new HashSet<>();
 
 		public MapSolver(final Script script, final int n) {
 			mScript = script;
@@ -231,7 +227,7 @@ public class MusEnumerator {
 			}
 
 			for (int i = 0; i < n; i++) {
-				mAllIndices.add(i);
+				mAllN.add(i);
 			}
 		}
 
@@ -253,7 +249,7 @@ public class MusEnumerator {
 				evaluations.put(Integer.valueOf(fs.getName()), valueTerm);
 			}
 
-			final Set<Integer> seed = new HashSet<>(mAllIndices);
+			final Set<Integer> seed = new HashSet<>(mAllN);
 			final Set<Integer> toRemove = new HashSet<>();
 			for (final Integer i : evaluations.keySet()) {
 				final Term valueTerm = evaluations.get(i);
@@ -268,7 +264,7 @@ public class MusEnumerator {
 		}
 
 		private Set<Integer> complement(final Set<Integer> set) {
-			final Set<Integer> result = new HashSet<>(mAllIndices);
+			final Set<Integer> result = new HashSet<>(mAllN);
 			result.removeAll(set);
 
 			return result;

@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
@@ -89,24 +90,20 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
 
-	private static final boolean RTI_PRE_CHECK = false;
-
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mPeaResultUtil;
 	private final BoogieLocation mUnitLocation;
 
 	private boolean mCheckVacuity;
-	private boolean mRTIPreCheck;
+	private boolean mCompleteRtInconsistencyCheck;
+	private CompleteRtInconsistencyCheckMode mCompleteRtInconsistencyCheckMode;
 	private int mCombinationNum;
-	private boolean mPreCheckFullSet;
 	private boolean mCheckConsistency;
 	private boolean mCheckComplement;
 	private boolean mCheckRedundancy;
 	private boolean mReportTrivialConsistency;
 	private boolean mGenerateFailurePath;
-
-	private int mRTIPreCheckRange;
 
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
@@ -115,8 +112,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private final List<ReqPeas> mReqPeas;
 
 	private final Durations mDurations;
-
-	private boolean mRTIPreCheckOnly;
 
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
 			final IReqSymbolTable symbolTable, final Durations durations) {
@@ -138,7 +133,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// set preferences
 		mCheckVacuity = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
-		mRTIPreCheck = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK);
+		mCompleteRtInconsistencyCheck = prefs.getBoolean(Pea2BoogiePreferences.LABEL_COMPLETE_RT_INCONSISTENCY_CHECK);
+		mCompleteRtInconsistencyCheckMode =
+				prefs.getEnum(Pea2BoogiePreferences.LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_MODE,
+						CompleteRtInconsistencyCheckMode.class);
 
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
 			final int length = mReqPeas.size();
@@ -152,12 +150,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
-		mRTIPreCheckRange = prefs.getInt(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS);
-		mPreCheckFullSet = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET);
-		if (mPreCheckFullSet) {
-			mLogger.info("check full set");
-		}
-		mRTIPreCheckOnly = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_ONLY);
 
 		// log preferences
 		mLogger.info(
@@ -370,11 +362,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		final List<Statement> stmtList = new ArrayList<>();
 		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = new ArrayList<>();
-		if (mRTIPreCheck) {
-			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mRTIPreCheckRange, mPreCheckFullSet, mRTIPreCheckOnly);
-
+		if (mCompleteRtInconsistencyCheck) {
+			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mCompleteRtInconsistencyCheckMode);
 		} else {
-
 			subsets = CrossProducts.subArrays(consideredAutomata.toArray(new Entry[count]), actualCombinationNum,
 					new Entry[actualCombinationNum]);
 		}
