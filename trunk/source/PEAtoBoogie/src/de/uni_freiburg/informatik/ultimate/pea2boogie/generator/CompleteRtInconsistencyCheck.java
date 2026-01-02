@@ -339,8 +339,7 @@ public class CompleteRtInconsistencyCheck {
 		}
 
 		try {
-			final String[] command =
-					{ "/mnt/Data/Projects/Complete-RT-Check/misc/dist/mus_enumerator", stringBuilder.toString() };
+			final String[] command = { "mus_enumerator", stringBuilder.toString() };
 			final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
