@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
  * Java translation of the Z3 Python example "Enumeration of Minimal Unsatisfiable Cores and Maximal Satisfying Subsets"
- * The source can be found here:
  * https://microsoft.github.io/z3guide/programming/Example%20Programs/Cores%20and%20Satisfying%20Subsets/
  */
 public class MusEnumerator {

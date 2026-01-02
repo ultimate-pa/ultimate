@@ -68,7 +68,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_MODE = "Complete rt-inconsistency check mode";
 	public static final CompleteRtInconsistencyCheckMode DEF_COMPLETE_RT_INCONSISTENCY_CHECK_MODE =
-			CompleteRtInconsistencyCheckMode.LIFFITON;
+			CompleteRtInconsistencyCheckMode.MARCO_BASIC;
 	private static final String DESC_COMPLETE_RT_INCONSISTENCY_CHECK_MODE = """
 			Switches between MUS enumeration algorithms for complete rt-inconsistency checking.""";
 
@@ -132,7 +132,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	}
 
 	public enum CompleteRtInconsistencyCheckMode {
-		LIFFITON
+		MARCO_BASIC, REMUS, EXPERIMENTAL_PYTHON
 	}
 
 	public Pea2BoogiePreferences() {

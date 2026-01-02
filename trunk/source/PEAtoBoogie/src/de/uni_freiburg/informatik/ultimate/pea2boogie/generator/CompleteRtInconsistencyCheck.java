@@ -27,6 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +44,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
@@ -85,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScrip
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.Translator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CompleteRtInconsistencyCheck {
 	private final CddToSmtPreCheck mCddToSmtPreCheck;
@@ -93,23 +96,22 @@ public class CompleteRtInconsistencyCheck {
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final CompleteRtInconsistencyCheckMode mMode;
 	final Map<String, AnnotatedReq> mAnnotatedReqs;
 
 	private record AnnotatedReq(String name, PatternType<?> patternType, CounterTrace counterTrace,
 			PhaseEventAutomata pea, Map<Integer, CritPhase> critPhases) {
 	}
 
-	private record CritPhase(Integer index, Term invariant, Term nvc, boolean seeping,
+	private record CritPhase(String reqName, Integer index, Term invariant, Term nvc, boolean seeping,
 			Set<NonTheorySymbol<?>> symbols) {
-		public CritPhase(final Integer index, final Term invariant, final Term nvc, final boolean seeping) {
-			this(index, invariant, nvc, seeping, new NonTheorySymbolFinder().findNonTheorySymbols(nvc));
+		public CritPhase(final String reqName, final Integer index, final Term invariant, final Term nvc,
+				final boolean seeping) {
+			this(reqName, index, invariant, nvc, seeping, new NonTheorySymbolFinder().findNonTheorySymbols(nvc));
 		}
 	}
 
 	private record MusElement(String reqName, Integer critPhaseIndex, boolean seeping) {
-	}
-
-	private record Nvc(String name, Term term, Set<NonTheorySymbol<?>> symbols) {
 	}
 
 	public CompleteRtInconsistencyCheck(final List<ReqPeas> reqPeas, final PeaResultUtil peaResultUtil,
@@ -122,6 +124,7 @@ public class CompleteRtInconsistencyCheck {
 		mManagedScript = managedScript;
 		mServices = services;
 		mLogger = logger;
+		mMode = mode;
 		mCddToSmtPreCheck =
 				new CddToSmtPreCheck(services, peaResultUtil, script, boogie2Smt, boogieDeclarations, reqSymbolTable);
 
@@ -129,24 +132,26 @@ public class CompleteRtInconsistencyCheck {
 		for (final var reqPea : reqPeas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> e : reqPea.getCounterTrace2Pea()) {
 				mAnnotatedReqs.put(e.getValue().getName(), new AnnotatedReq(e.getValue().getName(), reqPea.getPattern(),
-						e.getKey(), e.getValue(), computeCritPhases(e.getKey())));
+						e.getKey(), e.getValue(), computeCritPhases(e.getKey(), e.getValue().getName())));
 			}
 		}
-
-		// final var s1 = mServices.
-		// final var s2 = mScript;
-		// final var equal = s1.equals(s2);
-
-		// mLogger.info("");
 	}
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> check() {
-		final Set<Set<Nvc>> nvcGroups = groupNvcsBySymbols(new ArrayList<>(mAnnotatedReqs.values()));
+		final Set<Set<CritPhase>> groups = groupNvcsBySymbols(new ArrayList<>(mAnnotatedReqs.values()));
 
 		final Set<Set<MusElement>> muses = new HashSet<>();
-		for (final var nvcGroup : nvcGroups) {
-			mLogger.info("Enumerate Muses of NVC group: " + nvcGroup);
-			muses.addAll(enumerateMusesLiffiton(new ArrayList<>(nvcGroup)));
+		for (final var group : groups) {
+			mLogger.info("Enumerate Muses of NVC group: " + group);
+			if (mMode == CompleteRtInconsistencyCheckMode.MARCO_BASIC) {
+				muses.addAll(enumerateMusesLiffiton(new ArrayList<>(group)));
+			} else if (mMode == CompleteRtInconsistencyCheckMode.REMUS) {
+				muses.addAll(enumerateMusesRemus(group));
+			} else if (mMode == CompleteRtInconsistencyCheckMode.EXPERIMENTAL_PYTHON) {
+				muses.addAll(enumerateMusesPython(new ArrayList<>(group)));
+			} else {
+				throw new IllegalArgumentException("Unknown CompleteRtInconsistencyCheckMode: " + mMode);
+			}
 		}
 		mLogger.info("Size of nvc muses: " + muses.size());
 
@@ -193,7 +198,7 @@ public class CompleteRtInconsistencyCheck {
 				.anyMatch(dcPhase -> dcPhase.getBound() == CounterTrace.BOUND_NONE);
 	}
 
-	private Map<Integer, CritPhase> computeCritPhases(final CounterTrace counterTrace) {
+	private Map<Integer, CritPhase> computeCritPhases(final CounterTrace counterTrace, final String reqName) {
 		final Map<Integer, CritPhase> results = new HashMap<>();
 
 		final DCPhase[] phases = counterTrace.getPhases();
@@ -219,15 +224,16 @@ public class CompleteRtInconsistencyCheck {
 				}
 
 				// Found a critical phase without lower bound.
-				results.put(i, new CritPhase(i, invariant, SmtUtils.not(mScript, seepInvariants.getLast()),
+				results.put(i, new CritPhase(reqName, i, invariant, SmtUtils.not(mScript, seepInvariants.getLast()),
 						results.size() > 0));
 				seepInvariants.add(seepInvariant);
 			} else {
 				// Found a critical phase with lower bound.
 				if (mScript.getTheory().mTrue == SmtUtils.implies(mScript, invariant, seepInvariants.getLast())) {
-					results.put(i, new CritPhase(i, invariant, SmtUtils.not(mScript, invariant), results.size() > 0));
+					results.put(i,
+							new CritPhase(reqName, i, invariant, SmtUtils.not(mScript, invariant), results.size() > 0));
 				} else {
-					results.put(i, new CritPhase(i, invariant, SmtUtils.not(mScript, seepInvariants.getLast()),
+					results.put(i, new CritPhase(reqName, i, invariant, SmtUtils.not(mScript, seepInvariants.getLast()),
 							results.size() > 0));
 				}
 
@@ -242,22 +248,16 @@ public class CompleteRtInconsistencyCheck {
 		return results;
 	}
 
-	private Set<Set<Nvc>> groupNvcsBySymbols(final List<AnnotatedReq> annotatedReqs) {
-		// Collect all CritPhases into a list so we can index them for UnionFind
-		final List<Pair<String, CritPhase>> critPhases = new ArrayList<>();
-		for (final var annotatedReq : annotatedReqs) {
-			annotatedReq.critPhases().forEach((phaseIndex, critPhase) -> {
-				final String name = annotatedReq.name() + "_" + phaseIndex + (critPhase.seeping ? "s" : "");
-				critPhases.add(new Pair<>(name, critPhase));
-			});
-		}
+	private Set<Set<CritPhase>> groupNvcsBySymbols(final List<AnnotatedReq> annotatedReqs) {
+		final List<CritPhase> critPhases =
+				annotatedReqs.stream().flatMap(ar -> ar.critPhases().values().stream()).collect(Collectors.toList());
 
 		final UnionFind unionFind = new UnionFind(critPhases.size());
 
 		// Map each symbol to the list of indices of critPhases that contain it
 		final Map<NonTheorySymbol<?>, List<Integer>> symbolToCritPhaseIndices = new HashMap<>();
 		for (int i = 0; i < critPhases.size(); i++) {
-			final var critPhase = critPhases.get(i).getSecond();
+			final var critPhase = critPhases.get(i);
 			for (final var symbol : critPhase.symbols()) {
 				symbolToCritPhaseIndices.computeIfAbsent(symbol, k -> new ArrayList<>()).add(i);
 			}
@@ -274,17 +274,16 @@ public class CompleteRtInconsistencyCheck {
 		}
 
 		// Group by root
-		final Map<Integer, Set<Nvc>> groups = new HashMap<>();
+		final Map<Integer, Set<CritPhase>> groups = new HashMap<>();
 		for (int i = 0; i < critPhases.size(); i++) {
 			final int root = unionFind.find(i);
-			groups.computeIfAbsent(root, k -> new HashSet<>()).add(new Nvc(critPhases.get(i).getFirst(),
-					critPhases.get(i).getSecond().nvc(), critPhases.get(i).getSecond().symbols()));
+			groups.computeIfAbsent(root, k -> new HashSet<>()).add(critPhases.get(i));
 		}
 
 		return new HashSet<>(groups.values());
 	}
 
-	private Set<Set<MusElement>> enumerateMusesLiffiton(final ArrayList<Nvc> nvcs) {
+	private Set<Set<MusElement>> enumerateMusesLiffiton(final List<CritPhase> critPhases) {
 		final Script scriptCSolver = SolverBuilder.buildAndInitializeSolver(mServices,
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
 						.setUseExternalSolver(ExternalSolver.Z3),
@@ -297,9 +296,11 @@ public class CompleteRtInconsistencyCheck {
 
 		final List<Term> constraints = new ArrayList<>();
 		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(scriptCSolver));
-		for (final Nvc nvc : nvcs) {
-			constraints.add(termTransferrer.transform(nvc.term));
+		for (final CritPhase critPhase : critPhases) {
+			constraints.add(termTransferrer.transform(critPhase.nvc));
 		}
+
+		final var s = constraints.get(0).toString();
 
 		final SubsetSolver csolver = new MusEnumerator.SubsetSolver(scriptCSolver, constraints);
 		final MapSolver msolver = new MusEnumerator.MapSolver(scriptMSolver, constraints.size());
@@ -312,13 +313,8 @@ public class CompleteRtInconsistencyCheck {
 			if (musResult.type() == MusEnumeratorResult.Type.MUS) {
 				final Set<MusElement> musElements = new HashSet<>();
 				for (final var index : musResult.indices()) {
-					final Nvc nvc = nvcs.get(index);
-					final String reqName = nvc.name.substring(0, nvc.name.lastIndexOf('_'));
-					final String phaseIndexStr = nvc.name.substring(nvc.name.lastIndexOf('_') + 1);
-					final boolean seeping = phaseIndexStr.endsWith("s");
-					final Integer phaseIndex = Integer
-							.parseInt(seeping ? phaseIndexStr.substring(0, phaseIndexStr.length() - 1) : phaseIndexStr);
-					musElements.add(new MusElement(reqName, phaseIndex, seeping));
+					final CritPhase critPhase = critPhases.get(index);
+					musElements.add(new MusElement(critPhase.reqName, critPhase.index, critPhase.seeping));
 				}
 				result.add(musElements);
 			}
@@ -327,26 +323,63 @@ public class CompleteRtInconsistencyCheck {
 		return result;
 	}
 
-	private void enumerateMusesPython(final Set<Nvc> nvcs) {
-//		Plan B: if nothing works, try to call the liffiton script directly
-//		try {
-//			MonitoredProcess process;
-//			final String[] command = { "/usr/bin/python", "-u",
-//					"/mnt/Data/Projects/ultimate/releaseScripts/default/adds/hello_world.py" };
-//			process = MonitoredProcess.exec(command, null, null, mServices);
-//			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//			// reader.close();
-//			String line;
-//			while ((line = reader.readLine()) != null) {
-//				mLogger.info(line);
-//			}
-//		} catch (final IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+	private Set<Set<MusElement>> enumerateMusesPython(final List<CritPhase> critPhases) {
+		final Set<Set<MusElement>> result = new HashSet<>();
+
+		final StringBuilder stringBuilder = new StringBuilder();
+		for (final var critPhase : critPhases) {
+			final String symbols_string = critPhase.symbols.stream()
+					.map(s -> String.format("{\"name\": \"%s\", \"sort\": \"%s\"}", s,
+							((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
+					.collect(Collectors.joining(", "));
+
+			final String name = critPhase.reqName + "_" + critPhase.index + (critPhase.seeping ? "s" : "");
+			stringBuilder.append(String.format("{\"name\": \"%s\", \"smt_expr\": \"%s\", \"symbols\": [%s]}\n", name,
+					critPhase.nvc, symbols_string));
+		}
+
+		try {
+			final String[] command =
+					{ "/mnt/Data/Projects/Complete-RT-Check/misc/dist/mus_enumerator", stringBuilder.toString() };
+			final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
+			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+			String line;
+			while ((line = reader.readLine()) != null) {
+				mLogger.info(line);
+				if (!line.startsWith("MUS")) {
+					continue;
+				}
+				final String[] parts = line.split("\\|");
+				final String ids = parts[1].trim().substring(4);
+				final String lits = parts[2].trim().substring(5);
+				final String[] idList = ids.split(",");
+				final String[] litList = lits.split(";");
+
+				final Set<MusElement> mus = new HashSet<>();
+				for (final String element : idList) {
+					final var index = Integer.parseInt(element.trim());
+
+					final CritPhase critPhase = critPhases.get(index);
+					mus.add(new MusElement(critPhase.reqName, critPhase.index, critPhase.seeping));
+				}
+				result.add(mus);
+			}
+
+			final BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			String errLine;
+			while ((errLine = err.readLine()) != null) {
+				mLogger.error(errLine);
+			}
+		} catch (final IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return result;
 	}
 
-	private Set<Set<MusElement>> enumerateMusesRemus(final Set<Nvc> nvcs) {
+	private Set<Set<MusElement>> enumerateMusesRemus(final Set<CritPhase> critPhases) {
 		Set<Set<MusElement>> result = new HashSet<>();
 
 		final SMTInterpol smtInterpol = new SMTInterpol();
@@ -362,16 +395,17 @@ public class CompleteRtInconsistencyCheck {
 		final TermTransferrer termTransferrer =
 				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
 
-		for (final var nvc : nvcs) {
-			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(nvc.term),
-					new Annotation(":named", nvc.name)));
+		for (final CritPhase critPhase : critPhases) {
+			final String name = critPhase.reqName + "_" + critPhase.index + (critPhase.seeping ? "s" : "");
+			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(critPhase.nvc),
+					new Annotation(":named", name)));
 
-			final String symbols_string = nvc.symbols.stream().map(
+			final String symbols_string = critPhase.symbols.stream().map(
 					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
 					.collect(Collectors.joining(", "));
 
-			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", nvc=\"%s\", symbols=\"%s\"",
-					nvc.name, nvc.term, symbols_string));
+			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", smt_expr=\"%s\", symbols=\"%s\"",
+					name, critPhase.nvc, symbols_string));
 		}
 
 		final LBool sat = musEnumerationScript.checkSat();
