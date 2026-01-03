@@ -302,8 +302,8 @@ public class MemoryHandler {
 			declarations
 					.add(constructMemoryArrayDeclaration(tuLoc, heapDataArray.getName(), heapDataArray.getASTType()));
 			// create and add read and write procedure
-			declarations.addAll(constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray));
-			declarations.addAll(constructReadProcedures(main, tuLoc, heapDataArray));
+			constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray);
+			constructReadProcedures(main, tuLoc, heapDataArray);
 		}
 
 		// add store function (to be able to assign subarrays at pointer base addresses)
@@ -328,11 +328,11 @@ public class MemoryHandler {
 			declareDataOnHeapInitFunction(mMemoryModel.getPointerHeapArray());
 		}
 
-		declarations.addAll(declareDeallocation(main, tuLoc));
+		declareDeallocation(main, tuLoc);
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK)) {
-			declarations.addAll(declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.STACK));
+			declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.STACK);
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
@@ -342,7 +342,7 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP)) {
-			declarations.addAll(declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.HEAP));
+			declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.HEAP);
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
@@ -1445,26 +1445,19 @@ public class MemoryHandler {
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
 
-	private List<Declaration> constructWriteProcedures(final CHandler main, final ILocation loc,
+	private void constructWriteProcedures(final CHandler main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray) {
-		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
-			final Collection<Procedure> writeDeclaration =
-					constructWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda);
-			result.addAll(writeDeclaration);
+			constructWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda);
 		}
-		return result;
 	}
 
-	private List<Declaration> constructReadProcedures(final CHandler main, final ILocation loc,
-			final HeapDataArray heapDataArray) {
-		final List<Declaration> result = new ArrayList<>();
+	private void constructReadProcedures(final CHandler main, final ILocation loc, final HeapDataArray heapDataArray) {
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
-			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda));
+			constructSingleReadProcedure(main, loc, heapDataArray, rda);
 		}
-		return result;
 	}
 
 	private VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
@@ -1499,7 +1492,7 @@ public class MemoryHandler {
 	 * @param rda
 	 * @return
 	 */
-	private Collection<Procedure> constructWriteProcedure(final CHandler main, final ILocation loc,
+	private void constructWriteProcedure(final CHandler main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray,
 			final ReadWriteDefinition rda) {
 		if (rda.alsoUncheckedWrite()) {
@@ -1509,7 +1502,6 @@ public class MemoryHandler {
 			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.SELECT);
 		}
 		constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.STORE_CHECKED);
-		return Collections.emptySet();
 	}
 
 	private void constructSingleWriteProcedure(final CHandler main, final ILocation loc,
@@ -1671,8 +1663,8 @@ public class MemoryHandler {
 	 *            whether we should construct an unchecked read procedure (i.e. one that omits validity checks)
 	 * @return
 	 */
-	private List<Procedure> constructSingleReadProcedure(final CHandler main, final ILocation loc,
-			final HeapDataArray hda, final ReadWriteDefinition rda) {
+	private void constructSingleReadProcedure(final CHandler main, final ILocation loc, final HeapDataArray hda,
+			final ReadWriteDefinition rda) {
 		// specification for memory reads
 		final String returnValue = "#value";
 		final ASTType valueAstType = rda.getASTType();
@@ -1718,8 +1710,6 @@ public class MemoryHandler {
 
 		mProcedureManager.addSpecificationsToCurrentProcedure(sread);
 		mProcedureManager.endCustomProcedure(main, readProcedureName);
-
-		return Collections.emptyList();
 	}
 
 	private Expression readFromHeap(final ILocation loc, final HeapDataArray hda, final Expression address,
@@ -1852,19 +1842,6 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Compare a pointer component (base or offset) to another expression.
-	 *
-	 * @param op
-	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
-	 */
-	private Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
-			final Expression left, final Expression right) {
-		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left,
-				mExpressionTranslation.getCTypeOfPointerComponents(), right,
-				mExpressionTranslation.getCTypeOfPointerComponents());
-	}
-
-	/**
 	 * Generate <code>procedure ULTIMATE.dealloc(~addr:$Pointer$) returns()</code>'s declaration and implementation.
 	 * This procedure should be used for deallocations where do not want to check if given memory area is valid (because
 	 * we already know this) which is the case, e.g., for arrays that we store on the heap or for alloca.
@@ -1874,8 +1851,7 @@ public class MemoryHandler {
 	 *
 	 * @return declaration and implementation of procedure <code>Ultimate_dealloc</code>
 	 */
-	private List<Declaration> declareDeallocation(final CHandler main, final ILocation tuLoc) {
-
+	private void declareDeallocation(final CHandler main, final ILocation tuLoc) {
 		final Procedure deallocDeclaration = new Procedure(tuLoc, new Attribute[0],
 				MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(), new String[0],
 				new VarList[] {
@@ -1890,7 +1866,6 @@ public class MemoryHandler {
 		mProcedureManager.addSpecificationsToCurrentProcedure(specification.constructSpecificationClauses(tuLoc));
 
 		mProcedureManager.endCustomProcedure(main, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName());
-		return Collections.emptyList();
 	}
 
 	/**
@@ -1903,8 +1878,8 @@ public class MemoryHandler {
 	 *
 	 * @return declaration and implementation of procedure <code>~malloc</code>
 	 */
-	private ArrayList<Declaration> declareMalloc(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc, final MemoryArea memArea) {
+	private void declareMalloc(final CHandler main, final ITypeHandler typeHandler, final ILocation tuLoc,
+			final MemoryArea memArea) {
 		final MemoryModelDeclarations alloc = memArea.getMemoryStructureDeclaration();
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], alloc.getName(), new String[0],
@@ -1919,9 +1894,7 @@ public class MemoryHandler {
 		mProcedureManager.addModifiedGlobalsToCurrentProcedure(specification.modifies());
 		mProcedureManager.addSpecificationsToCurrentProcedure(specification.constructSpecificationClauses(tuLoc));
 
-		final ArrayList<Declaration> result = new ArrayList<>();
 		mProcedureManager.endCustomProcedure(main, alloc.getName());
-		return result;
 	}
 
 	/**
