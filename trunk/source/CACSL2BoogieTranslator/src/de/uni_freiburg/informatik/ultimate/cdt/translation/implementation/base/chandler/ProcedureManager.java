@@ -453,7 +453,11 @@ public class ProcedureManager {
 		return new EnsuresSpecification(loc, isFree, formula);
 	}
 
-	public void addSpecificationsToCurrentProcedure(final List<Specification> specs) {
+	public void addModifiedGlobalsToCurrentProcedure(final Set<VariableLHS> modifiedGlobals) {
+		mCurrentProcedureInfo.addModifiedGlobals(modifiedGlobals);
+	}
+
+	public void addSpecificationsToCurrentProcedure(final List<? extends Specification> specs) {
 		assert !isGlobalScope();
 		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
 		final Procedure oldDecl = procInfo.getDeclaration();

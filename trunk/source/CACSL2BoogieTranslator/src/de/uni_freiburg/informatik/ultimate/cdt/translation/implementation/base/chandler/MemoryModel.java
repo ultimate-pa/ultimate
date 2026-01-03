@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryManagementStrategy.AllocationProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureBase.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -46,8 +46,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * The memory model consisting of a MemoryAdressing and a MemoryStructure.
@@ -142,28 +140,38 @@ public class MemoryModel {
 	}
 
 	/**
-	 * Constructs the expressions used in the specifications for malloc.
+	 * Constructs the specification of malloc.
 	 *
-	 * @return A list of a pair consisting of an expression and a set of the global variables that must be added to the
-	 *         modifies clause.
+	 * @return a record representing the specification
 	 */
-	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
-			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructMallocSpecification(final ILocation tuLoc, final MemoryArea memoryArea,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructMallocSpecificationExpressions(tuLoc, memoryArea, requiredMemoryModelFeatures,
+		return mMemoryAddressing.constructMallocSpecification(tuLoc, memoryArea, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
 
 	/**
-	 * Constructs the expressions used in the specifications for dealloc.
+	 * Constructs the specification of dealloc.
 	 *
-	 * @return A list of a pair consisting of an expression and a set of the global variables that must be added to the
-	 *         modifies clause.
+	 * @return a record representing the specification
 	 */
-	public List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(
-			final ILocation tuLoc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructDeallocSpecification(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructDeallocSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
+		return mMemoryAddressing.constructDeallocSpecification(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+	}
+
+	/**
+	 * Constructs the specification of allocInit.
+	 *
+	 * @return a record representing the specification
+	 */
+	public AllocationProcedureSpec constructAllocInitSpecification(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructAllocInitSpecification(tuLoc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
 
@@ -177,18 +185,6 @@ public class MemoryModel {
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
 		return mMemoryAddressing.constructUltimateInitStatements(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler, fixedAddressCounter);
-	}
-
-	/**
-	 * Constructs the expressions used in the specifications for allocInit.
-	 *
-	 * @return The expressions.
-	 */
-	public List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(final ILocation tuLoc,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructAllocInitSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
-				memoryModelDeclarationsHandler);
 	}
 
 	/**

@@ -48,8 +48,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * This strategy is the default strategy for the 1D-memory addressing scheme. The generic parameter is used to ensure
@@ -69,12 +67,12 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 	}
 
 	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
+	public AllocationProcedureSpec constructMallocSpecification(final ILocation tuLoc,
 			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
-		final ArrayList<Pair<Expression, Set<VariableLHS>>> expressions = new ArrayList<>();
+		final ArrayList<Expression> expressions = new ArrayList<>();
 
 		final var memoryAreaName = memoryArea.getMemoryStructureDeclaration().getName();
 		final var zeroNumericValueExpr =
@@ -104,7 +102,7 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 		// #res!base == old(counterExpression);
 		final var baseEqualCounterExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, resBaseExpr,
 				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression));
-		expressions.add(new Pair<>(baseEqualCounterExpr, Collections.emptySet()));
+		expressions.add(baseEqualCounterExpr);
 
 		// #res!base > 0;
 		final var baseGreaterZeroExpr = mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
@@ -112,18 +110,18 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
 				cTypeOfPointerComponent, zeroNumericValueExpr, cTypeOfPointerComponent);
 
-		expressions.add(new Pair<>(baseGreaterZeroExpr, Collections.emptySet()));
+		expressions.add(baseGreaterZeroExpr);
 
 		if (memoryArea == MemoryArea.STACK) {
 			// res!base > #StackHeapBarrier
 			final var baseGreaterThanBarrierExpr = baseGreaterThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
-			expressions.add(new Pair<>(baseGreaterThanBarrierExpr, Collections.emptySet()));
+			expressions.add(baseGreaterThanBarrierExpr);
 
 			// #StackAllocations > #StackHeapBarrier;
 			final var stackAllocationsGreaterThanBarrier = mExpressionTranslation
 					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_greaterThan,
 							counterExpression, cTypeOfPointerComponent, stackHeapBarrierExpr, cTypeOfPointerComponent);
-			expressions.add(new Pair<>(stackAllocationsGreaterThanBarrier, Collections.emptySet()));
+			expressions.add(stackAllocationsGreaterThanBarrier);
 
 			// #StackAllocations < #32-bit max / 64-bit max
 			if (mIsBitVectorTranslation) {
@@ -139,19 +137,19 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 						.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_lessThan,
 								counterExpression, cTypeOfPointerComponent, maxExpr, cTypeOfPointerComponent);
 
-				expressions.add(new Pair<>(stackAllocationsSmallerThanMax, Collections.emptySet()));
+				expressions.add(stackAllocationsSmallerThanMax);
 			}
 
 		} else if (memoryArea == MemoryArea.HEAP) {
 			// res!base < #StackHeapBarrier
 			final var baseSmallerThanBarrierExpr = baseSmallerThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
-			expressions.add(new Pair<>(baseSmallerThanBarrierExpr, Collections.emptySet()));
+			expressions.add(baseSmallerThanBarrierExpr);
 
 			// #HeapAllocations < #StackHeapBarrier;
 			final var stackAllocationsGreaterThanBarrier = mExpressionTranslation
 					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_lessThan,
 							counterExpression, cTypeOfPointerComponent, stackHeapBarrierExpr, cTypeOfPointerComponent);
-			expressions.add(new Pair<>(stackAllocationsGreaterThanBarrier, Collections.emptySet()));
+			expressions.add(stackAllocationsGreaterThanBarrier);
 		}
 
 		// res!base > #InitialAllocation
@@ -159,7 +157,7 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 				tuLoc, IASTBinaryExpression.op_greaterThan,
 				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
 				cTypeOfPointerComponent, initialAllocCounterExpr, cTypeOfPointerComponent);
-		expressions.add(new Pair<>(baseGreaterThanInitialAllocsExpr, Collections.emptySet()));
+		expressions.add(baseGreaterThanInitialAllocsExpr);
 
 		// StackAllocations == old(StackAllocations) + ~size
 		// HeapAllocations == old(HeapAllocations) + ~size
@@ -169,18 +167,17 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 				oldExpr, cTypeOfPointerComponent, sizeExpr, mTypeSizeAndOffsetComputer.getSizeT());
 		final var counterUpdateValueExpr =
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, counterExpression, sumExpr);
+		expressions.add(counterUpdateValueExpr);
 
-		expressions.add(new Pair<>(counterUpdateValueExpr,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
-
-		return expressions;
+		final var counterLHS = (VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression);
+		return new AllocationProcedureSpec(expressions, Set.of(counterLHS));
 	}
 
 	@Override
-	public List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(
-			final ILocation tuLoc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructDeallocSpecification(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return Collections.emptyList();
+		return new AllocationProcedureSpec(Collections.emptyList(), Collections.emptySet());
 	}
 
 	@Override
@@ -218,10 +215,10 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 	}
 
 	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(final ILocation tuLoc,
+	public AllocationProcedureSpec constructAllocInitSpecification(final ILocation tuLoc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return Collections.emptyList();
+		return new AllocationProcedureSpec(Collections.emptyList(), Collections.emptySet());
 	}
 
 }

@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryManagementStrategy.AllocationProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureBase.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructMemcpyOrMemmove;
@@ -130,7 +131,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @author Markus Lindenmann
@@ -1884,18 +1884,11 @@ public class MemoryHandler {
 		mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(),
 				deallocDeclaration);
 
-		final List<Triple<Expression, Set<VariableLHS>, Boolean>> deallocSpecificationExpressions =
-				mMemoryModel.constructDeallocSpecificationExpressions(tuLoc, mRequiredMemoryModelFeatures,
-						mMemoryModelDeclarationsHandler);
+		final AllocationProcedureSpec specification = mMemoryModel.constructDeallocSpecification(tuLoc,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		mProcedureManager.addModifiedGlobalsToCurrentProcedure(specification.modifies());
+		mProcedureManager.addSpecificationsToCurrentProcedure(specification.constructSpecificationClauses(tuLoc));
 
-		final List<Specification> deallocSpecifications = new ArrayList<>();
-
-		for (final Triple<Expression, Set<VariableLHS>, Boolean> triple : deallocSpecificationExpressions) {
-			deallocSpecifications.add(mProcedureManager.constructEnsuresSpecification(tuLoc, triple.getThird(),
-					triple.getFirst(), triple.getSecond()));
-		}
-
-		mProcedureManager.addSpecificationsToCurrentProcedure(deallocSpecifications);
 		mProcedureManager.endCustomProcedure(main, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName());
 		return Collections.emptyList();
 	}
@@ -1921,18 +1914,10 @@ public class MemoryHandler {
 
 		mProcedureManager.beginCustomProcedure(main, tuLoc, alloc.getName(), allocDeclaration);
 
-		final List<Pair<Expression, Set<VariableLHS>>> mallocSpecificationExpressions =
-				mMemoryModel.constructMallocSpecificationExpressions(tuLoc, memArea, mRequiredMemoryModelFeatures,
-						mMemoryModelDeclarationsHandler);
-
-		final List<Specification> mallocSpecifications = new ArrayList<>();
-
-		for (final Pair<Expression, Set<VariableLHS>> pair : mallocSpecificationExpressions) {
-			mallocSpecifications.add(
-					mProcedureManager.constructEnsuresSpecification(tuLoc, false, pair.getFirst(), pair.getSecond()));
-		}
-
-		mProcedureManager.addSpecificationsToCurrentProcedure(mallocSpecifications);
+		final AllocationProcedureSpec specification = mMemoryModel.constructMallocSpecification(tuLoc, memArea,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		mProcedureManager.addModifiedGlobalsToCurrentProcedure(specification.modifies());
+		mProcedureManager.addSpecificationsToCurrentProcedure(specification.constructSpecificationClauses(tuLoc));
 
 		final ArrayList<Declaration> result = new ArrayList<>();
 		mProcedureManager.endCustomProcedure(main, alloc.getName());
@@ -1955,17 +1940,11 @@ public class MemoryHandler {
 
 		mProcedureManager.beginCustomProcedure(main, tuLoc, procedureIdentifier, allocDeclaration);
 
-		final var allocInitSpecificationExpressions = mMemoryModel.constructAllocInitSpecificationExpressions(tuLoc,
+		final AllocationProcedureSpec specification = mMemoryModel.constructAllocInitSpecification(tuLoc,
 				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		mProcedureManager.addModifiedGlobalsToCurrentProcedure(specification.modifies());
+		mProcedureManager.addSpecificationsToCurrentProcedure(specification.constructSpecificationClauses(tuLoc));
 
-		final List<Specification> allocInitSpecifications = new ArrayList<>();
-
-		for (final Pair<Expression, Set<VariableLHS>> pair : allocInitSpecificationExpressions) {
-			allocInitSpecifications.add(
-					mProcedureManager.constructEnsuresSpecification(tuLoc, false, pair.getFirst(), pair.getSecond()));
-		}
-
-		mProcedureManager.addSpecificationsToCurrentProcedure(allocInitSpecifications);
 		mProcedureManager.endCustomProcedure(main, procedureIdentifier);
 	}
 

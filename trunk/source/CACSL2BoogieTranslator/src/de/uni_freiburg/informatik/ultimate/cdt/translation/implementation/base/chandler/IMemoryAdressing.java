@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -38,14 +37,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryManagementStrategy.AllocationProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * The interface defining the functions for the different memory addressing schemes.
@@ -70,20 +68,29 @@ public interface IMemoryAdressing {
 	List<MemoryModelDeclarations> getMetaDataDeclarations();
 
 	/**
-	 * Constructs a list of expressions that are used in the specifications of malloc.
+	 * Constructs the specification of malloc.
 	 *
-	 * @return The expressions.
+	 * @return a record representing the specification
 	 */
-	List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(ILocation tuLoc,
-			MemoryArea memoryArea, RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	AllocationProcedureSpec constructMallocSpecification(ILocation tuLoc, MemoryArea memoryArea,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
-	 * Constructs a list of expressions that are used in the specifications of dealloc.
+	 * Constructs the specification of dealloc.
 	 *
-	 * @return The expressions.
+	 * @return a record representing the specification
 	 */
-	List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(ILocation tuLoc,
+	AllocationProcedureSpec constructDeallocSpecification(ILocation tuLoc,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Constructs the specification of allocInit.
+	 *
+	 * @return a record representing the specification
+	 */
+	AllocationProcedureSpec constructAllocInitSpecification(ILocation tuLoc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
@@ -95,15 +102,6 @@ public interface IMemoryAdressing {
 	List<Statement> constructUltimateInitStatements(ILocation loc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, BigInteger fixedAddressCounter);
-
-	/**
-	 * Constructs the expressions used in the specifications for allocInit.
-	 *
-	 * @return The expressions.
-	 */
-	List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(ILocation tuLoc,
-			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
 	 * Add or subtracts a pointer and an integer.

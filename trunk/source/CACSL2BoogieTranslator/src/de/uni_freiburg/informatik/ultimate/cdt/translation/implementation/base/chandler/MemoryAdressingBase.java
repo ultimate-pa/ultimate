@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
@@ -36,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryManagementStrategy.AllocationProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IPointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping1D;
@@ -53,8 +52,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Abstract base class for implementing specific memory addressing schemes based on a memory pointer representation.
@@ -135,18 +132,26 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 	}
 
 	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
-			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructMallocSpecification(final ILocation tuLoc, final MemoryArea memoryArea,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryManagementStrategy.constructMallocSpecificationExpressions(tuLoc, memoryArea,
-				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		return mMemoryManagementStrategy.constructMallocSpecification(tuLoc, memoryArea, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 	}
 
 	@Override
-	public List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(
-			final ILocation tuLoc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructDeallocSpecification(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryManagementStrategy.constructDeallocSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
+		return mMemoryManagementStrategy.constructDeallocSpecification(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+	}
+
+	@Override
+	public AllocationProcedureSpec constructAllocInitSpecification(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryManagementStrategy.constructAllocInitSpecification(tuLoc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
 
@@ -156,14 +161,6 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
 		return mMemoryManagementStrategy.constructUltimateInitStatements(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler, fixedAddressCounter);
-	}
-
-	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(final ILocation tuLoc,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryManagementStrategy.constructAllocInitSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
-				memoryModelDeclarationsHandler);
 	}
 
 	@Override
