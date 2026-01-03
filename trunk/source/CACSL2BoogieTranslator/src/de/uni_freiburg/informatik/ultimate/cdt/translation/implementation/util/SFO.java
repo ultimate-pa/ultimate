@@ -183,6 +183,8 @@ public final class SFO {
 	public static final String STRCPY_DEST = "dest";
 	public static final String STRCPY_SRC = "src";
 
+	public static final String ALLOCINIT_PTRBASE = "ptrBase";
+
 	public static final String TO_INT = "#to_int";
 
 	/**

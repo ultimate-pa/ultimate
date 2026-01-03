@@ -236,7 +236,6 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 	public AllocationProcedureSpec constructAllocInitSpecification(final ILocation tuLoc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		final var pointerBaseIdentifier = "ptrBase";
 		final var procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
 
 		final var trueExpr = mBooleanArrayHelper.constructTrue();
@@ -248,7 +247,7 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 				SFO.SIZE, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
 
 		final var ptrBase = ExpressionFactory.constructIdentifierExpression(tuLoc,
-				mTypeHandler.getBoogieTypeForPointerComponents(), pointerBaseIdentifier,
+				mTypeHandler.getBoogieTypeForPointerComponents(), SFO.ALLOCINIT_PTRBASE,
 				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
 
 		// ensures #valid[ptrBase] == true;

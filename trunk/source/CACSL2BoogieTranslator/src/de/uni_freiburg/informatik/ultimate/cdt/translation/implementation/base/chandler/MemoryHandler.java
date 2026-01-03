@@ -1931,11 +1931,10 @@ public class MemoryHandler {
 	 */
 	private void declareAllocInit(final CHandler main, final ITypeHandler typeHandler, final ILocation tuLoc) {
 		final String procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
-		final String pointerBaseIdentifier = "ptrBase";
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 
 		final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], procedureIdentifier, new String[0],
-				new VarList[] { new VarList(tuLoc, new String[] { SFO.SIZE, pointerBaseIdentifier }, intType) },
+				new VarList[] { new VarList(tuLoc, new String[] { SFO.SIZE, SFO.ALLOCINIT_PTRBASE }, intType) },
 				new VarList[0], new Specification[0], null);
 
 		mProcedureManager.beginCustomProcedure(main, tuLoc, procedureIdentifier, allocDeclaration);
