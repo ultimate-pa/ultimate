@@ -119,6 +119,8 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	private final BlockingQueue<IRun<L, ?>> mWorkerTaskQueue;
 	private final TransferBetweenMainAndWorker<L, IPredicate> mNwaCexTransferrer;
 
+	private final PathProgramCache<L> mProgramCache;
+
 	/**
 	 * CegarNwaWorkerThread is a runnable that will be executed by an executor service. It takes counterexamples from
 	 * the workerTaskQueue and puts the resulting automata into the blockingQueueForResults. It takes the current
@@ -127,8 +129,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 * TransferBetweenMainAndWorker is used to transfer between worker and controller/main cfgScript
 	 *
 	 * Thread-safety: everything that is given via constructor needs to be thread-save, Most things are freshly created
-	 * in when the this object is created. 
-	 * Exceptions are: services, Preferences, the Logger and the PathProgramCache 
+	 * in when the this object is created. Exceptions are: services, Preferences, the Logger and the PathProgramCache
 	 * PathProgramCacheis thread save, the others shouldnt be an issue.
 	 *
 	 * TODO provide CEGAR loop statistics
@@ -164,6 +165,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		mWorkerTaskQueue = workerTaskQueue;
 		mNwaCexTransferrer = transferWorkerUtils;
 		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
+		mProgramCache = new PathProgramCache<>(mLogger);
 
 		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
 			mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR, null,
@@ -192,7 +194,14 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			try {
 				mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
 				mIteration += 1;
-				mCounterexample = mNwaCexTransferrer.transferRun((NestedRun) mWorkerTaskQueue.take(), Mode.MAIN2WORKER);
+				final IRun<L, ?> mainThreadCounterexample = mWorkerTaskQueue.take();
+				mProgramCache.copyProgramCache(mMainThread.getCurrentProgramCache());
+				mCounterexample =
+						mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mainThreadCounterexample, Mode.MAIN2WORKER);
+
+				// set the programCount to x-1, because we will report it again later
+				mProgramCache.setPathProgramCount(mCounterexample.getWord(),
+						mProgramCache.getPathProgramCount(mainThreadCounterexample.getWord()) - 1);
 				final List<L> trace = mCounterexample.getWord().asList();
 				mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 				final int traceHash = trace.hashCode();
@@ -243,8 +252,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 */
 	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) {
 		mStrategyFactory = new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mCfgSmtToolkit,
-				mPredicateFactory, mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz,
-				mMainThread.getCurrentProgramCache());
+				mPredicateFactory, mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, mProgramCache);
 
 		final ITARefinementStrategy<L> strategy;
 		strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,

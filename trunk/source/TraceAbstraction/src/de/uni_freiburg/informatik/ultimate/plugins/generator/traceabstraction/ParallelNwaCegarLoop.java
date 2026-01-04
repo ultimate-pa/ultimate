@@ -176,7 +176,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 						getIteration() + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),
 				mCsToolkit);
 
-		final CfgSmtToolkit freshToolKit = transferUtils.constructWorkerCfgSmtToolkit();
+		final CfgSmtToolkit freshToolKit = transferUtils.getWorkerCfgSmtToolKit();
 
 		// Create predicateFactory with worker script
 		final PredicateFactory predicateFactory =
@@ -379,6 +379,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 */
 	private void startWorker() {
 		mWorkerTaskQueue.add(mCounterexample);
+		mProgramCache.addRun(mCounterexample.getWord());
 		final long time = System.nanoTime() / 1000000000;
 		mLogger.info("Main: Starting Thread");
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
