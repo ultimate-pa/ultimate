@@ -656,7 +656,7 @@ public class RtInconcistencyConditionGenerator {
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
 			final CompleteRtInconsistencyCheckMode mode) {
 		return new CompleteRtInconsistencyCheck(reqPeas, mPeaResultUtil, mBoogie2Smt, mBoogieDeclarations,
-				mReqSymboltable, mScript, mManagedScript, mServices, mLogger, mode).check();
+				mReqSymboltable, mScript, mServices, mLogger, mode).check();
 
 	}
 

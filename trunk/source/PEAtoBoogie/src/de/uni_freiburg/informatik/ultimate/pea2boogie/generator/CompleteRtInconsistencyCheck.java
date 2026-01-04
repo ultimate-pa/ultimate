@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -56,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbolFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -93,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 public class CompleteRtInconsistencyCheck {
 	private final CddToSmtPreCheck mCddToSmtPreCheck;
 	private final Script mScript;
-	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final CompleteRtInconsistencyCheckMode mMode;
@@ -116,12 +113,10 @@ public class CompleteRtInconsistencyCheck {
 
 	public CompleteRtInconsistencyCheck(final List<ReqPeas> reqPeas, final PeaResultUtil peaResultUtil,
 			final Boogie2SMT boogie2Smt, final BoogieDeclarations boogieDeclarations,
-			final IReqSymbolTable reqSymbolTable, final Script script, final ManagedScript managedScript,
-			final IUltimateServiceProvider services, final ILogger logger,
-			final CompleteRtInconsistencyCheckMode mode) {
+			final IReqSymbolTable reqSymbolTable, final Script script, final IUltimateServiceProvider services,
+			final ILogger logger, final CompleteRtInconsistencyCheckMode mode) {
 
 		mScript = script;
-		mManagedScript = managedScript;
 		mServices = services;
 		mLogger = logger;
 		mMode = mode;
@@ -142,9 +137,10 @@ public class CompleteRtInconsistencyCheck {
 
 		final Set<Set<MusElement>> muses = new HashSet<>();
 		for (final var group : groups) {
-			mLogger.info("Enumerate Muses of NVC group: " + group);
+			mLogger.info("Enumerate muses of nvc group size: " + group.size());
+
 			if (mMode == CompleteRtInconsistencyCheckMode.MARCO_BASIC) {
-				muses.addAll(enumerateMusesLiffiton(new ArrayList<>(group)));
+				muses.addAll(enumerateMusesMarcoBasic(new ArrayList<>(group)));
 			} else if (mMode == CompleteRtInconsistencyCheckMode.REMUS) {
 				muses.addAll(enumerateMusesRemus(group));
 			} else if (mMode == CompleteRtInconsistencyCheckMode.EXPERIMENTAL_PYTHON) {
@@ -186,7 +182,6 @@ public class CompleteRtInconsistencyCheck {
 		}
 
 		return LBool.UNSAT == SmtUtils.checkSatTerm(mScript, SmtUtils.and(mScript, critPhaseInvariants));
-
 	}
 
 	private static boolean hasTimeBound(final Set<MusElement> musElements,
@@ -240,11 +235,7 @@ public class CompleteRtInconsistencyCheck {
 				break;
 			}
 		}
-		/*
-		 * if (results.isEmpty()) { // Can be skipped. There is no finite prefix such that the requirement is involved
-		 * in a rt-inconsistency. results.put(-1, new CritPhase(-1, SmtUtils.not(mScript,
-		 * mCddToSmtPreCheck.toSmt(phases[0].getInvariant())), SmtUtils.not(mScript, seepInvariants.getLast()))); }
-		 */
+
 		return results;
 	}
 
@@ -283,7 +274,7 @@ public class CompleteRtInconsistencyCheck {
 		return new HashSet<>(groups.values());
 	}
 
-	private Set<Set<MusElement>> enumerateMusesLiffiton(final List<CritPhase> critPhases) {
+	private Set<Set<MusElement>> enumerateMusesMarcoBasic(final List<CritPhase> critPhases) {
 		final Script scriptCSolver = SolverBuilder.buildAndInitializeSolver(mServices,
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
 						.setUseExternalSolver(ExternalSolver.Z3),
@@ -294,31 +285,22 @@ public class CompleteRtInconsistencyCheck {
 						.setUseExternalSolver(ExternalSolver.Z3),
 				"MSolver");
 
-		final List<Term> constraints = new ArrayList<>();
 		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(scriptCSolver));
-		for (final CritPhase critPhase : critPhases) {
-			constraints.add(termTransferrer.transform(critPhase.nvc));
-		}
+		final List<Term> constraints = critPhases.stream().map(critPhase -> termTransferrer.transform(critPhase.nvc))
+				.collect(Collectors.toList());
 
-		final var s = constraints.get(0).toString();
-
-		final SubsetSolver csolver = new MusEnumerator.SubsetSolver(scriptCSolver, constraints);
-		final MapSolver msolver = new MusEnumerator.MapSolver(scriptMSolver, constraints.size());
-		final List<MusEnumeratorResult> musResults = MusEnumerator.enumerate(csolver, msolver, mLogger);
+		final SubsetSolver cSolver = new MusEnumerator.SubsetSolver(scriptCSolver, constraints);
+		final MapSolver mSolver = new MusEnumerator.MapSolver(scriptMSolver, constraints.size());
+		final List<MusEnumeratorResult> musResults = MusEnumerator.enumerate(cSolver, mSolver, mLogger);
 		scriptCSolver.exit();
 		scriptMSolver.exit();
 
-		final Set<Set<MusElement>> result = new HashSet<>();
-		for (final var musResult : musResults) {
-			if (musResult.type() == MusEnumeratorResult.Type.MUS) {
-				final Set<MusElement> musElements = new HashSet<>();
-				for (final var index : musResult.indices()) {
-					final CritPhase critPhase = critPhases.get(index);
-					musElements.add(new MusElement(critPhase.reqName, critPhase.index, critPhase.seeping));
-				}
-				result.add(musElements);
-			}
-		}
+		final Set<Set<MusElement>> result =
+				musResults.stream().filter(musResult -> musResult.type() == MusEnumeratorResult.Type.MUS)
+						.map(musResult -> musResult.indices().stream().map(critPhases::get)
+								.map(critPhase -> new MusElement(critPhase.reqName, critPhase.index, critPhase.seeping))
+								.collect(Collectors.toSet()))
+						.collect(Collectors.toSet());
 
 		return result;
 	}
@@ -326,54 +308,37 @@ public class CompleteRtInconsistencyCheck {
 	private Set<Set<MusElement>> enumerateMusesPython(final List<CritPhase> critPhases) {
 		final Set<Set<MusElement>> result = new HashSet<>();
 
-		final StringBuilder stringBuilder = new StringBuilder();
-		for (final var critPhase : critPhases) {
-			final String symbols_string = critPhase.symbols.stream()
-					.map(s -> String.format("{\"name\": \"%s\", \"sort\": \"%s\"}", s,
-							((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
+		final String json = critPhases.stream().map(critPhase -> {
+			final String symbols = critPhase.symbols.stream()
+					.map(symbol -> String.format("{\"name\": \"%s\", \"sort\": \"%s\"}", symbol,
+							((ApplicationTerm) symbol.getSymbol()).getFunction().getReturnSort()))
 					.collect(Collectors.joining(", "));
-
 			final String name = critPhase.reqName + "_" + critPhase.index + (critPhase.seeping ? "s" : "");
-			stringBuilder.append(String.format("{\"name\": \"%s\", \"smt_expr\": \"%s\", \"symbols\": [%s]}\n", name,
-					critPhase.nvc, symbols_string));
-		}
 
-		try {
-			final String[] command =
-					{ "/mnt/Data/Projects/Complete-RT-Check/misc/dist/mus_enumerator", stringBuilder.toString() };
-			final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
-			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			return String.format("{\"name\": \"%s\", \"smt_expr\": \"%s\", \"symbols\": [%s]}", name, critPhase.nvc,
+					symbols);
+		}).collect(Collectors.joining("\n"));
 
-			String line;
-			while ((line = reader.readLine()) != null) {
+		final String[] command = { "mus_enumerator", json + "\n" };
+		try (final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices)) {
+			final BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			final BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+			input.lines().filter(line -> line.startsWith("MUS")).forEach(line -> {
 				mLogger.info(line);
-				if (!line.startsWith("MUS")) {
-					continue;
-				}
+
 				final String[] parts = line.split("\\|");
-				final String ids = parts[1].trim().substring(4);
-				final String lits = parts[2].trim().substring(5);
-				final String[] idList = ids.split(",");
-				final String[] litList = lits.split(";");
+				final Set<MusElement> musElement = Arrays.stream(parts[1].trim().substring(4).split(","))
+						.map(String::trim).map(Integer::parseInt).map(critPhases::get)
+						.map(critPhase -> new MusElement(critPhase.reqName, critPhase.index, critPhase.seeping))
+						.collect(Collectors.toSet());
+				result.add(musElement);
+			});
 
-				final Set<MusElement> mus = new HashSet<>();
-				for (final String element : idList) {
-					final var index = Integer.parseInt(element.trim());
+			error.lines().forEach(line -> mLogger.error("mus_enumerator stderr: " + line));
 
-					final CritPhase critPhase = critPhases.get(index);
-					mus.add(new MusElement(critPhase.reqName, critPhase.index, critPhase.seeping));
-				}
-				result.add(mus);
-			}
-
-			final BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			String errLine;
-			while ((errLine = err.readLine()) != null) {
-				mLogger.error(errLine);
-			}
-		} catch (final IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (final Exception e) {
+			mLogger.fatal("Failed to start mus_enumerator process: ", e);
 		}
 
 		return result;
@@ -390,7 +355,6 @@ public class CompleteRtInconsistencyCheck {
 		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
 		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
 		// musEnumerationScript.setOption(MusOptions.UNKNOWN_ALLOWED, true);
-		// musEnumerationScript.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
 
 		final TermTransferrer termTransferrer =
 				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
@@ -400,16 +364,17 @@ public class CompleteRtInconsistencyCheck {
 			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(critPhase.nvc),
 					new Annotation(":named", name)));
 
-			final String symbols_string = critPhase.symbols.stream().map(
-					s -> String.format("(%s, %s)", s, ((ApplicationTerm) s.getSymbol()).getFunction().getReturnSort()))
+			final String symbols = critPhase.symbols.stream()
+					.map(symbol -> String.format("(%s, %s)", symbol,
+							((ApplicationTerm) symbol.getSymbol()).getFunction().getReturnSort()))
 					.collect(Collectors.joining(", "));
 
-			mLogger.info(String.format("Assert NVC for MUS enumeration: name=\"%s\", smt_expr=\"%s\", symbols=\"%s\"",
-					name, critPhase.nvc, symbols_string));
+			mLogger.info(String.format("Assert nvc for mus enumeration: name=\"%s\", smt_expr=\"%s\", symbols=\"%s\"",
+					name, critPhase.nvc, symbols));
 		}
 
 		final LBool sat = musEnumerationScript.checkSat();
-		mLogger.info("Check sat of nvcs in group: " + sat);
+		mLogger.info("Check sat of asserted nvcs in group: " + sat);
 
 		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
 			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {

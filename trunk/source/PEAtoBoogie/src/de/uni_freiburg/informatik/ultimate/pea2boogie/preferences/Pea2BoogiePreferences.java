@@ -72,6 +72,11 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final String DESC_COMPLETE_RT_INCONSISTENCY_CHECK_MODE = """
 			Switches between MUS enumeration algorithms for complete rt-inconsistency checking.""";
 
+	public static final String LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION = "Candidate extraction only";
+	private static final boolean DEF_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION = false;
+	private static final String DESC_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION = """
+			Only extract candidates for rt-inconsistency instead of performing the full check.""";
+
 	public static final String LABEL_GEN_FAILURE_PATH = "Generate failure path for rt-inconsistency";
 	private static final boolean DEF_GEN_FAILURE_PATH = false;
 	private static final String DESC_GEN_FAILURE_PATH = """
@@ -156,7 +161,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 								PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_MODE,
 								DEF_COMPLETE_RT_INCONSISTENCY_CHECK_MODE, DESC_COMPLETE_RT_INCONSISTENCY_CHECK_MODE,
-								PreferenceType.Combo, CompleteRtInconsistencyCheckMode.values())),
+								PreferenceType.Combo, CompleteRtInconsistencyCheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION,
+								DEF_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION,
+								DESC_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION, PreferenceType.Boolean)),
 				new UltimatePreferenceItemGroup("Rt-Inconsistency",
 						new UltimatePreferenceItem<>(LABEL_GEN_FAILURE_PATH, DEF_GEN_FAILURE_PATH,
 								DESC_GEN_FAILURE_PATH, PreferenceType.Boolean),
