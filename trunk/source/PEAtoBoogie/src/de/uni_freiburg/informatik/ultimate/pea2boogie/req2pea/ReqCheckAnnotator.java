@@ -98,6 +98,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mCheckVacuity;
 	private boolean mCompleteRtInconsistencyCheck;
 	private CompleteRtInconsistencyCheckMode mCompleteRtInconsistencyCheckMode;
+	private boolean mCompleteRtInconsistencyCheckCandidateExtraction;
 	private int mCombinationNum;
 	private boolean mCheckConsistency;
 	private boolean mCheckComplement;
@@ -137,6 +138,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCompleteRtInconsistencyCheckMode =
 				prefs.getEnum(Pea2BoogiePreferences.LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_MODE,
 						CompleteRtInconsistencyCheckMode.class);
+		mCompleteRtInconsistencyCheckCandidateExtraction =
+				prefs.getBoolean(Pea2BoogiePreferences.LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION);
 
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
 			final int length = mReqPeas.size();
@@ -364,6 +367,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = new ArrayList<>();
 		if (mCompleteRtInconsistencyCheck) {
 			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mCompleteRtInconsistencyCheckMode);
+			if (mCompleteRtInconsistencyCheckCandidateExtraction) {
+				return new ArrayList<>();
+			}
 		} else {
 			subsets = CrossProducts.subArrays(consideredAutomata.toArray(new Entry[count]), actualCombinationNum,
 					new Entry[actualCombinationNum]);
