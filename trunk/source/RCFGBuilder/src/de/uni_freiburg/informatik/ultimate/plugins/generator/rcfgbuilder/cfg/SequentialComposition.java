@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -65,17 +66,22 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 	private final List<CodeBlock> mCodeBlocks;
 	private String mPrettyPrinted;
 	private final int mCallsWithoutReturns;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final boolean mSimplify;
+	private final boolean mExtPqe;
 
-	SequentialComposition(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final CfgSmtToolkit csToolkit, final boolean simplify, final boolean extPqe,
-			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks,
+	public SequentialComposition(final int serialNumber, final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final CfgSmtToolkit csToolkit, final boolean simplify,
+			final boolean extPqe, final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks,
 			final SimplificationTechnique simplificationTechnique) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 
 		mCodeBlocks = codeBlocks;
 		mCallsWithoutReturns = getCheckedOpenCalls(codeBlocks).size();
 		mPrettyPrinted = null;
-
+		mSimplificationTechnique = simplificationTechnique;
+		mSimplify = simplify;
+		mExtPqe = extPqe;
 		final boolean transformToCNF =
 				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
@@ -280,5 +286,21 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 	@Override
 	protected int getNumberOfOpenCalls() {
 		return mCallsWithoutReturns;
+	}
+
+	public SimplificationTechnique getSimplificationTechnique() {
+		return mSimplificationTechnique;
+	}
+
+	public boolean getSimplify() {
+		return mSimplify;
+	}
+
+	public boolean getExtPqe() {
+		return mExtPqe;
+	}
+
+	public void setPayload(final IPayload payload) {
+		mPayload = payload;
 	}
 }

@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -71,23 +72,28 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	private final ILogger mLogger;
+
 	private final ManagedScript mMainScript;
 	private final ManagedScript mWorkerScript;
 	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>(); // Bidirectional
 	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>(); // Maps worker ->
 																										// main
 	private final AutomataLibraryServices mServices;
+	private final IUltimateServiceProvider mIUltiamteServices;
 	private final TermTransferrer mWorker2main;
 	private final TermTransferrer mMain2worker;
 	private VpAlphabet<LETTER> mMainVpAlphabet;
 	private final CfgSmtToolkit mMainCsToolkit;
+	private final CfgSmtToolkit mWorkerCsToolkit;
 	private final ProgramVariableTransferrer mVarTransfer;
 
 	enum Mode {
@@ -115,6 +121,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			final ManagedScript main, final IUltimateServiceProvider solverServices,
 			final SolverSettings solverSettings, final CfgSmtToolkit mainCfgToolKit) {
 		mLogger = logger;
+		mIUltiamteServices = solverServices;
 		mMainScript = main;
 		mWorkerScript = mainCfgToolKit.createFreshManagedScript(solverServices, solverSettings);
 
@@ -124,6 +131,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		mWorker2main = new TermTransferrer(mWorkerScript.getScript(), mMainScript.getScript());
 		mMain2worker = new TermTransferrer(mMainScript.getScript(), mWorkerScript.getScript());
 		mVarTransfer = new ProgramVariableTransferrer(mMain2worker, mWorkerScript);
+
+		mWorkerCsToolkit = constructWorkerCfgSmtToolkit();
 	}
 
 	/*
@@ -141,6 +150,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			case final Call call -> nestingOperation = NestedWord.PLUS_INFINITY;
 			case final Return re -> nestingOperation = NestedWord.MINUS_INFINITY;
 			case final StatementSequence stmt -> nestingOperation = NestedWord.INTERNAL_POSITION;
+			case final SequentialComposition seqComp -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			default -> new AssertionError("Unexpected letter type: " + letter.getClass());
 			}
 			final NestedWord<LETTER> singleWord = new NestedWord<>(transferEdge(letter), nestingOperation);
@@ -163,6 +173,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			case final Call call -> transferredLetter = (LETTER) getTransferCall(call);
 			case final Return re -> transferredLetter = (LETTER) getTransferReturn(re);
 			case final StatementSequence stmt -> transferredLetter = (LETTER) getTransferStmtSequence(stmt);
+			case final SequentialComposition seqComp -> transferredLetter = (LETTER) getTransferSeqComp(seqComp);
 			default -> new AssertionError("Unexpected letter type: " + letter.getClass());
 			}
 		}
@@ -172,11 +183,28 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		return transferredLetter;
 	}
 
+	private SequentialComposition getTransferSeqComp(final SequentialComposition seqComp) {
+		final SequentialComposition newSeqComp = new SequentialComposition(seqComp.getSerialNumber(),
+				(BoogieIcfgLocation) seqComp.getSource(), (BoogieIcfgLocation) seqComp.getTarget(), mWorkerCsToolkit,
+				seqComp.getSimplify(), seqComp.getExtPqe(), mIUltiamteServices,
+				getTransferredCodeBlocks(seqComp.getCodeBlocks()), seqComp.getSimplificationTechnique());
+		newSeqComp.setPayload(seqComp.getPayload());
+		return newSeqComp;
+	}
+
+	private List<CodeBlock> getTransferredCodeBlocks(final List<CodeBlock> codeBlocks) {
+		final List<CodeBlock> transferredCodeBlock = new ArrayList<>();
+		for (final CodeBlock block : codeBlocks) {
+			transferredCodeBlock.add((CodeBlock) transferEdge((LETTER) block));
+		}
+		return transferredCodeBlock;
+	}
+
 	private Call getTransferCall(final Call call) {
 		final Call newCall = new Call(call.getSerialNumber(), (BoogieIcfgLocation) call.getSource(),
 				(BoogieIcfgLocation) call.getTarget(), call.getCallStatement(), mLogger);
 		newCall.setTransitionFormula(transferTransFormulaWithMode(call.getTransformula()));
-		newCall.setPayload(call.getPayload()); // Payload is need for for example Overaprixmation Annotations
+		newCall.setPayload(call.getPayload()); // Payload is needed for for example Overapproximation Annotations
 		return newCall;
 	}
 
@@ -458,6 +486,10 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			}
 		}
 		return result;
+	}
+
+	public CfgSmtToolkit getWorkerCfgSmtToolKit() {
+		return mWorkerCsToolkit;
 	}
 
 }
