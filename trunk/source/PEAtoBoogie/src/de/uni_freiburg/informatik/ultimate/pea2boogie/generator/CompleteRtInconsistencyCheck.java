@@ -154,6 +154,7 @@ public class CompleteRtInconsistencyCheck {
 		muses.removeIf(e -> hasUnsatCritPhases(e, mAnnotatedReqs));
 		mLogger.info("Size of nvc muses after filtering unsat crit phases: " + muses.size());
 
+		// TODO: Check if it is correct to filter muses without lower time bound
 		muses.removeIf(e -> !hasTimeBound(e, mAnnotatedReqs));
 		mLogger.info("Size of nvc muses after filtering time bound: " + muses.size());
 
