@@ -137,8 +137,11 @@ public class CompleteRtInconsistencyCheck {
 
 		final Set<Set<MusElement>> muses = new HashSet<>();
 		for (final var group : groups) {
-			mLogger.info("Enumerate muses of nvc group size: " + group.size());
+			if (group.size() <= 1) {
+				continue;
+			}
 
+			mLogger.info("Enumerate muses of nvc group size: " + group.size());
 			if (mMode == CompleteRtInconsistencyCheckMode.MARCO_BASIC) {
 				muses.addAll(enumerateMusesMarcoBasic(new ArrayList<>(group)));
 			} else if (mMode == CompleteRtInconsistencyCheckMode.REMUS) {
@@ -157,11 +160,15 @@ public class CompleteRtInconsistencyCheck {
 		muses.removeIf(e -> !hasTimeBound(e, mAnnotatedReqs));
 		mLogger.info("Size of nvc muses after filtering time bound: " + muses.size());
 
-		mLogger.info("Muses: " + muses);
-
 		final Set<Set<String>> uniqueMuses =
 				muses.stream().map(inner -> inner.stream().map(s -> s.reqName()).collect(Collectors.toSet()))
 						.collect(Collectors.toSet());
+
+		mLogger.info("Size of unique muses wrt. reqIds: " + uniqueMuses.size());
+		mLogger.info("Size distribution of unique muses: "
+				+ uniqueMuses.stream().collect(Collectors.groupingBy(Set::size, Collectors.counting())).entrySet()
+						.stream().sorted(Map.Entry.comparingByKey())
+						.map(e -> "(" + e.getKey() + ": " + e.getValue() + ")").collect(Collectors.joining(", ")));
 
 		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> result =
 				uniqueMuses.stream().map(mus -> mus.stream().map(name -> {
@@ -190,7 +197,13 @@ public class CompleteRtInconsistencyCheck {
 		return musElements.stream()
 				.flatMap(
 						musElement -> Arrays.stream(annotatedReqs.get(musElement.reqName()).counterTrace().getPhases()))
-				.anyMatch(dcPhase -> dcPhase.getBound() == CounterTrace.BOUND_NONE);
+				.anyMatch(dcPhase -> (dcPhase.getBoundType() == CounterTrace.BOUND_GREATER
+						|| dcPhase.getBoundType() == CounterTrace.BOUND_GREATEREQUAL));
+
+//		return musElements.stream()
+//				.flatMap(
+//						musElement -> Arrays.stream(annotatedReqs.get(musElement.reqName()).counterTrace().getPhases()))
+//				.anyMatch(dcPhase -> dcPhase.getBoundType() != CounterTrace.BOUND_NONE);
 	}
 
 	private Map<Integer, CritPhase> computeCritPhases(final CounterTrace counterTrace, final String reqName) {
