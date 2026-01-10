@@ -172,7 +172,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			mInterpolantComputationStatus =
 					new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
 		}
-		mgdScriptTc.getScript().exit(); // Max: I observed that these trace check scripts are not terminated
 	}
 
 	@Override
