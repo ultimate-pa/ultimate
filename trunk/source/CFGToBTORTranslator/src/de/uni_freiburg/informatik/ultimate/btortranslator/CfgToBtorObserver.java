@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
+import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
@@ -98,23 +98,47 @@ public class CfgToBtorObserver extends BaseObserver {
 
 	private AbstractResult constructErrorTrace(final Scanner witnessScan, final IIcfg<BoogieIcfgLocation> icfg,
 			final CFGToBTOR processor) {
+		// System.out.println(witnessScan.next());
 		// Parse btormc witness into a sequence of program states.
 		final ArrayList<Long> pcList = new ArrayList<>();
 		final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
-		final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
-		final Matcher m = p.matcher(witnessScan.next()); // ??
+		// final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
+		final Pattern p = Pattern.compile("([0-9]+) ([0-9]+) ([a-zA-Z][a-zA-Z0-9_]*)(#[0-9]+)");
+		// ([0-9]+) ([0-9]+) pc#([0-9]+)
 
-		while (m.find()) {
-			if (m.group(2).equals("pc")) {
-				pcList.add(Long.parseLong(m.group(1), 2));
-			} else {
-				final long sequenceNumber = Long.parseUnsignedLong(m.group(3));
-				if (!programStateSequence.containsKey(sequenceNumber)) {
-					programStateSequence.put(sequenceNumber, new HashMap<>());
+		while (!witnessScan.hasNext("sat|unsat|\\.")) {
+			if (witnessScan.hasNext(p)) {
+				final String nextToken = witnessScan.next(p);
+				// final Matcher m = p.matcher(witnessScan.next());
+				final MatchResult m = witnessScan.match();
+				if (m.group(3).equals("pc")) {
+					pcList.add(Long.parseLong(m.group(2), 2));
+				} else {
+					final long sequenceNumber = Long.parseUnsignedLong(m.group(4));
+					if (!programStateSequence.containsKey(sequenceNumber)) {
+						programStateSequence.put(sequenceNumber, new HashMap<>());
+					}
+					programStateSequence.get(sequenceNumber).put(m.group(3), Long.parseUnsignedLong(m.group(2), 2));
 				}
-				programStateSequence.get(sequenceNumber).put(m.group(2), Long.parseUnsignedLong(m.group(1), 2));
+			} else {
+				witnessScan.nextLine();
 			}
+
 		}
+
+//		while (witnessScan.hasNext(p)) {
+//			final String nextToken = witnessScan.next(p);
+//			final MatchResult m = witnessScan.match();
+//			if (m.group(2).equals("pc")) {
+//				pcList.add(Long.parseLong(m.group(1), 2));
+//			} else {
+//				final long sequenceNumber = Long.parseUnsignedLong(m.group(3));
+//				if (!programStateSequence.containsKey(sequenceNumber)) {
+//					programStateSequence.put(sequenceNumber, new HashMap<>());
+//				}
+//				programStateSequence.get(sequenceNumber).put(m.group(2), Long.parseUnsignedLong(m.group(1), 2));
+//			}
+//		}
 
 		System.out.println(pcList);
 		System.out.println(programStateSequence);
@@ -142,30 +166,31 @@ public class CfgToBtorObserver extends BaseObserver {
 			final ArrayList<BoogieIcfgLocation> errorLocations, final IIcfg<BoogieIcfgLocation> icfg,
 			final CFGToBTOR processor) {
 		final Scanner witnessScan = new Scanner(btormcWitness);
+		witnessScan.useDelimiter("\n");
+		// System.out.println(witnessScan.next());
 		final ArrayList<AbstractResult> results = new ArrayList<>();
 		while (witnessScan.hasNextLine()) {
 			if (witnessScan.hasNext("sat")) {
-				witnessScan.skip("sat");
-				while (!((witnessScan.hasNext("sat")) || (witnessScan.hasNext("unsat")))
-						|| (witnessScan.hasNextLine())) {
-					final AbstractResult nResult = constructErrorTrace(witnessScan, icfg, processor);
-					results.add(nResult);
-				}
+				witnessScan.skip("sat\n");
+				final int errorIndex = determineErrorLocation(witnessScan);
+				final AbstractResult nResult = constructErrorTrace(witnessScan, icfg, processor);
+				results.add(nResult);
 
 			} else if (witnessScan.hasNext("unsat")) {
-				witnessScan.skip("unsat");
-				final int errorIndex = determineErrorLocation(witnessScan);
-				while (!((witnessScan.hasNext("sat")) || (witnessScan.hasNext("unsat")))
-						|| (witnessScan.hasNextLine())) {
-					// Error location is not reachable within the timeout limit.
-					// TODO: (@xinyu) make this correct, send unknown result unless an unsat result is returned
-					// TODO: (@xinyu) handle multiple sat results, or unsat followed by sat, etc etc
-					final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
-							errorLocations.get(errorIndex), mServices.getBacktranslationService());
+				witnessScan.skip("unsat\n");
+				// final int errorIndex = determineErrorLocation(witnessScan);
+
+				// Error location is not reachable within the timeout limit.
+				// TODO: (@xinyu) make this correct, send unknown result unless an unsat result is returned
+				// TODO: (@xinyu) handle multiple sat results, or unsat followed by sat, etc etc
+				for (final BoogieIcfgLocation loc : errorLocations) {
+					final PositiveResult<IIcfgElement> pResult =
+							new PositiveResult<>(Activator.PLUGIN_ID, loc, mServices.getBacktranslationService());
 					results.add(pResult);
-
 				}
-
+				break;
+			} else if (witnessScan.hasNext("\\.")) {
+				break;
 			}
 		}
 		return results;
@@ -233,7 +258,7 @@ public class CfgToBtorObserver extends BaseObserver {
 			// Assume one initial node for trace generation.
 			final IIcfgElement rootLocation = icfg.getInitialNodes().iterator().next();
 
-			if (!icfg.getProcedureErrorNodes().values().isEmpty()) {
+			if (!icfg.getProcedureErrorNodes().isEmpty()) {
 				// Get error nodes.
 				final ArrayList<BoogieIcfgLocation> errorLocations =
 						new ArrayList<>(icfg.getProcedureErrorNodes().values().iterator().next());

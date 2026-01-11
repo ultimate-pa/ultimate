@@ -65,9 +65,9 @@ public class AssignmentRule {
 					final HavocStatement havocStatement = (HavocStatement) statement;
 					final LeftHandSide[] leftHandSides = havocStatement.getIdentifiers();
 					// add a new assignment rule with null rhs for each havoced variable
-					for (int i = 0; i < leftHandSides.length; i++) {
-						if (leftHandSides[i] instanceof VariableLHS) {
-							final VariableLHS lhs = (VariableLHS) leftHandSides[i];
+					for (final LeftHandSide leftHandSide : leftHandSides) {
+						if (leftHandSide instanceof VariableLHS) {
+							final VariableLHS lhs = (VariableLHS) leftHandSide;
 							final IProgramVar assignedVar = boogie2SMT.getBoogie2SmtSymbolTable()
 									.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false);
 							assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar, null,
@@ -86,11 +86,11 @@ public class AssignmentRule {
 		final BtorSort sort = new BtorSort(lhs.getSort());
 
 		if (rhs != null) {
-			final IIdentifierTranslator[] its = new IIdentifierTranslator[] {
-					boogie2SMT.new LocalVarAndGlobalVarTranslator(), boogie2SMT.createConstOnlyIdentifierTranslator() };
+			final IIdentifierTranslator[] its = { boogie2SMT.new LocalVarAndGlobalVarTranslator(),
+					boogie2SMT.createConstOnlyIdentifierTranslator() };
 			// first convert expression to SMT term, then use TermToBtorUtil to obtain the btor expression
 			final BtorExpression btorexpression = TermToBtorUtil.convertRhsToBtorExpression(
-					boogie2SMT.getExpression2Term().translateToTerm(its, rhs).getTerm(), tf, variableMap, sort,
+					boogie2SMT.getExpression2Term().translateToTerm(its, rhs).term(), tf, variableMap, sort,
 					boogie2SMT);
 			return btorexpression;
 		} else {
