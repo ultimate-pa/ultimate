@@ -37,13 +37,39 @@ public class EqualityExtractor {
 		}
 
 		public void and(final Equation newEquation, final Script script) {
-			mEquations.addAll(newEquation.solveForVars(script));
+			mEquations.add(newEquation);// .addAll(newEquation.solveForVars(script));
 		}
 
 		public Set<SolvedEquation> solveForAllVars(final Script script) {
 			final Set<SolvedEquation> outData = new HashSet<>();
 			for (final Equation equation : mEquations) {
-				outData.addAll(equation.solveForVars(script));
+				outData.addAll(equation.solveForAllVars(script));
+			}
+			return outData;
+		}
+
+		/**
+		 * Solve all equations for all contained out vars.
+		 *
+		 * @param script
+		 * @return
+		 */
+		public Set<SolvedEquation> solveForRelevantVars(final Script script, final UnmodifiableTransFormula formula) {
+			final Set<SolvedEquation> outData = new HashSet<>();
+			final Set<Term> outVars = Set.copyOf(formula.getOutVars().values());
+			final Set<Term> inVars = Set.copyOf(formula.getInVars().values());
+			final Set<Term> assignableOutVars = Set
+					.copyOf(outVars.stream().filter(outVar -> !inVars.contains(outVar)).toList());
+			final Set<Term> auxVars = Set.copyOf(formula.getAuxVars());
+
+			for (final Equation equation : mEquations) {
+				// Solve the equation for all out variables that can change / are not constant
+				outData.addAll(equation.solveForVars(script, assignableOutVars));
+				final Set<TermVariable> freeVars = equation.getFreeVars();
+				if (!assignableOutVars.stream().anyMatch((var) -> freeVars.contains(var))) {
+					// We also solve for aux vars if no assignable out var is contained. ()
+					outData.addAll(equation.solveForVars(script, auxVars));
+				}
 			}
 			return outData;
 		}
@@ -72,6 +98,7 @@ public class EqualityExtractor {
 	}
 
 	public static class EdgeUntranslatableError extends AssertionError {
+		private static final long serialVersionUID = 1L;
 	}
 
 	public static Equations extractApplicationTerm(final ApplicationTerm term, final Script script,

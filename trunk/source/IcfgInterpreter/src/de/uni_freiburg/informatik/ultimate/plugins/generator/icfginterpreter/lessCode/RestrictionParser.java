@@ -3,11 +3,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
@@ -15,8 +17,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Triple;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
@@ -26,28 +28,30 @@ public class RestrictionParser {
 	private final HashSet<Term> mLessEq;
 	private final HashSet<Term> mGreaterEq;
 	private final HashSet<Term> mInEqual;
-	private final Term mEqual;
+	private final HashSet<Term> mEqual;
 	private final TermVariable mVariable;
 	private final Term mFullTerm;
-	private final List<Triple<Term, TermVariable, List<Term>>> mArrayReads;
+	private final Map<Term, Pair<TermVariable, List<Term>>> mArrayReads;
 	private final Set<TermVariable> mFreeVars;
+	private final boolean mIsArray;
 
 	public RestrictionParser(final TermVariable variable, final List<SolvedEquation> equations) {
 		this(variable, variable, equations);
 	}
 
-	public RestrictionParser(final TermVariable variable, final Term fullTerm,
-			final List<SolvedEquation> equations) {
+	public RestrictionParser(final TermVariable variable, final Term fullTerm, final List<SolvedEquation> equations) {
 		mVariable = variable;
 		mFullTerm = fullTerm;
 		final Theory theory = mVariable.getTheory();
 		mLessEq = new HashSet<>();
 		mGreaterEq = new HashSet<>();
 		mInEqual = new HashSet<>();
+		mEqual = new HashSet<>();
 
-		Term equal = null;
+		mIsArray = variable.getSort().isArraySort();
+
 		final Term one = theory.constant(BigInteger.ONE, theory.getNumericSort());
-		final ArrayList<Triple<Term, TermVariable, List<Term>>> arrayReads = new ArrayList<>();
+		final Map<Term, Pair<TermVariable, List<Term>>> arrayReads = new HashMap<>();
 
 		for (final SolvedEquation equation : equations) {
 			Term newTerm;
@@ -86,33 +90,24 @@ public class RestrictionParser {
 			case EQ:
 				// Havoc turned out to be exactly one value
 				newTerm = trySimplifyToConstant(equation.getRhs());
-				equal = newTerm;
-				continue;
+				mEqual.add(newTerm);
+				break;
 			default:
 				continue;
 			}
 
 			final List<ApplicationTerm> selected = Util.extractSelects(newTerm);
-			arrayReads.addAll(selected.stream().map(select -> Util.selectToKeyTriple(select)).toList());
-		}
-		mEqual = equal;
 
-		if (mEqual != null) {
-			// TODO check that all other restrictions follow this value
-			mInEqual.clear();
-			mLessEq.clear();
-			mGreaterEq.clear();
-			mFreeVars = Set.of(mEqual.getFreeVars());
-			final List<ApplicationTerm> selected = Util.extractSelects(mEqual);
-			mArrayReads = List.copyOf(selected.stream().map(select -> Util.selectToKeyTriple(select)).toList());
-		} else {
-			mFreeVars = Set.copyOf(equations.stream().map((eq) -> eq.getRhs().getFreeVars())
-					.flatMap((arr) -> Arrays.stream(arr)).toList());
-			mArrayReads = List.copyOf(arrayReads);
+			arrayReads.putAll(selected.stream()
+					.collect(Collectors.toMap((select -> (Term) select), (select -> Util.selectToKeyPair(select)))));
 		}
+
+		mFreeVars = Set.copyOf(equations.stream().map((eq) -> eq.getRhs().getFreeVars())
+				.flatMap((arr) -> Arrays.stream(arr)).toList());
+		mArrayReads = Map.copyOf(arrayReads);
 	}
 
-	public Restriction<?> getRestriction(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
+	public Restriction<?> getRestriction(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc) {
 		if (mInEqual.size() + mLessEq.size() + mGreaterEq.size() == 0 && mEqual == null) {
 			return new IntegerRestriction(Set.of(), null, null);
 		}
@@ -124,26 +119,39 @@ public class RestrictionParser {
 			returnSort = mFullTerm.getSort().getName();
 		}
 
-		if (mEqual != null) {
-			final Value value = TermEvaluator.evaluate(state, mEqual);
-			switch (value) {
-			case final BoolValue bv:
-				// Var is unequal to !value => is equal to value
-				return new BooleanRestriction(Set.of(bv.not()));
-			default:
-				// (Assumption: all non-integer cases are handled by cases above)
-				// Var is both min and most the value
-				final IntValue valueParsed = parseIntValue(value);
-				return new IntegerRestriction(Set.of(), valueParsed, valueParsed);
+		if (mEqual.size() > 0) {
+			// Try to get equivalent term
+			for (final Term equals : mEqual) {
+				final Value value;
+				try {
+					value = TermEvaluator.evaluate(state, equals);
+				} catch (final Exception e) {
+					continue;
+				}
+				switch (value) {
+				case final BoolValue bv:
+					// Var is unequal to !value => is equal to value
+					return new BooleanRestriction(Set.of(bv.not()));
+				default:
+					// (Assumption: all non-integer / non-bit-vector cases are handled above)
+					// The term is both at least and at most the value
+					final IntValue valueParsed = parseIntValue(value);
+					return new IntegerRestriction(Set.of(), valueParsed, valueParsed);
+				}
 			}
 		}
+		// Either no equals are known, or none could be resolved (depending on variables not in state)
 
 		switch (returnSort) {
 		case SMTLIBConstants.BOOL:
 			final HashSet<BoolValue> inEqualBools = new HashSet<>();
 
 			for (final Term inEqual : mInEqual) {
-				inEqualBools.add((BoolValue) TermEvaluator.evaluate(state, inEqual));
+				try {
+					inEqualBools.add((BoolValue) TermEvaluator.evaluate(state, inEqual));
+				} catch (final Exception e) {
+					continue;
+				}
 			}
 
 			return new BooleanRestriction(inEqualBools);
@@ -153,10 +161,22 @@ public class RestrictionParser {
 			IntValue maximum = null;
 			if (mLessEq.size() > 0) {
 				final Iterator<Term> lessEqlIter = mLessEq.iterator();
-				maximum = parseIntValue(TermEvaluator.evaluate(state, lessEqlIter.next()));
+				while (maximum == null && lessEqlIter.hasNext()) {
+					try {
+						final Value value = TermEvaluator.evaluate(state, lessEqlIter.next());
+						maximum = parseIntValue(value);
+					} catch (final Exception e) {
+						continue;
+					}
+				}
 
 				while (lessEqlIter.hasNext()) {
-					final IntValue nextValue = parseIntValue(TermEvaluator.evaluate(state, lessEqlIter.next()));
+					final IntValue nextValue;
+					try {
+						nextValue = parseIntValue(TermEvaluator.evaluate(state, lessEqlIter.next()));
+					} catch (final Exception e) {
+						continue;
+					}
 					if (nextValue.compareTo(maximum) < 0) {
 						maximum = nextValue;
 					}
@@ -166,10 +186,23 @@ public class RestrictionParser {
 			IntValue minimum = null;
 			if (mGreaterEq.size() > 0) {
 				final Iterator<Term> greaterEqlIter = mGreaterEq.iterator();
-				minimum = parseIntValue(TermEvaluator.evaluate(state, greaterEqlIter.next()));
+
+				while (minimum == null && greaterEqlIter.hasNext()) {
+					try {
+						final Value value = TermEvaluator.evaluate(state, greaterEqlIter.next());
+						minimum = parseIntValue(value);
+					} catch (final Exception e) {
+						continue;
+					}
+				}
 
 				while (greaterEqlIter.hasNext()) {
-					final IntValue nextValue = parseIntValue(TermEvaluator.evaluate(state, greaterEqlIter.next()));
+					final IntValue nextValue;
+					try {
+						nextValue = parseIntValue(TermEvaluator.evaluate(state, greaterEqlIter.next()));
+					} catch (final Exception e) {
+						continue;
+					}
 					if (minimum.compareTo(nextValue) < 0) {
 						minimum = nextValue;
 					}
@@ -179,8 +212,12 @@ public class RestrictionParser {
 			final Set<IntValue> inEqualInts = new HashSet<>();
 			final Iterator<Term> inEqualIter = mInEqual.iterator();
 			while (inEqualIter.hasNext()) {
-				final IntValue nextValue = parseIntValue(TermEvaluator.evaluate(state, inEqualIter.next()));
-
+				final IntValue nextValue;
+				try {
+					nextValue = parseIntValue(TermEvaluator.evaluate(state, inEqualIter.next()));
+				} catch (final Exception e) {
+					continue;
+				}
 				if ((minimum == null || minimum.compareTo(nextValue) <= 0)
 						&& (maximum == null || nextValue.compareTo(maximum) <= 0)) {
 					inEqualInts.add(nextValue);
@@ -193,11 +230,15 @@ public class RestrictionParser {
 		}
 	}
 
+	public boolean isArray() {
+		return mIsArray;
+	}
+
 	public Set<TermVariable> getFreeVars() {
 		return mFreeVars;
 	}
 
-	public List<Triple<Term, TermVariable, List<Term>>> getArrayReads() {
+	public Map<Term, Pair<TermVariable, List<Term>>> getArrayReads() {
 		return mArrayReads;
 	}
 
@@ -242,13 +283,13 @@ public class RestrictionParser {
 	public String toString() {
 		final ArrayList<String> types = new ArrayList<>();
 
-		if (mEqual != null) {
-			types.add("var = " + mEqual.toStringDirect());
+		if (!mEqual.isEmpty()) {
+			types.add("var = {" + String.join(", ", mEqual.stream().map(eq -> eq.toStringDirect()).toList()) + "}");
 		}
 
 		if (!mInEqual.isEmpty()) {
-			types.add("var != {" + String.join(", ", mInEqual.stream().map(neq -> neq.toStringDirect()).toList())
-					+ "}");
+			types.add(
+					"var != {" + String.join(", ", mInEqual.stream().map(neq -> neq.toStringDirect()).toList()) + "}");
 		}
 
 		if (!mGreaterEq.isEmpty()) {
@@ -257,8 +298,7 @@ public class RestrictionParser {
 		}
 
 		if (!mLessEq.isEmpty()) {
-			types.add("var <= {" + String.join(", ", mLessEq.stream().map(leq -> leq.toStringDirect()).toList())
-					+ "}");
+			types.add("var <= {" + String.join(", ", mLessEq.stream().map(leq -> leq.toStringDirect()).toList()) + "}");
 		}
 
 		return "(" + String.join("; ", types) + ")";

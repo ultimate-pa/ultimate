@@ -32,10 +32,10 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 		final IntegerValidator validatePositive = IUltimatePreferenceItemValidator.ONLY_POSITIVE_NON_ZERO;
 
 		final BaseUltimatePreferenceItem[] mainPrefs = {
-				new UltimatePreferenceItem<>(SettingLabel.EXECUTION_SEED.text(), -301796050, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(SettingLabel.OUTPUT_METHOD.text(), OutputMethod.PRINT_TO_TERMINAL,
+				new UltimatePreferenceItem<>(SettingLabel.EXECUTION_SEED.text(), 301796050, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(SettingLabel.OUTPUT_METHOD.text(), OutputMethod.DONT_PRINT,
 						PreferenceType.Radio, OutputMethod.values()),
-				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_PER_ENTRYPOINT.text(), 1, PreferenceType.Integer,
+				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_PER_ENTRYPOINT.text(), 5, PreferenceType.Integer,
 						validatePositive),
 				new UltimatePreferenceItem<>(SettingLabel.VARIANTS_PER_HAVOC_EDGE.text(), 3, PreferenceType.Integer,
 						validatePositive),
@@ -43,7 +43,13 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 						validatePositive),
 				new UltimatePreferenceItem<>(SettingLabel.EXECUTION_MAX_LENGTH.text(), 1024, PreferenceType.Integer,
 						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
-				new UltimatePreferenceItem<>(SettingLabel.BITS_HAVOCED.text(), 64, PreferenceType.Integer,
+
+				new UltimatePreferenceItem<>(SettingLabel.PARTIAL_RESULTS_COUNT.text(), 50, PreferenceType.Integer,
+						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+				new UltimatePreferenceItem<>(SettingLabel.PARTIAL_RESULTS_STORE.text(), true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(SettingLabel.MIN_BITS.text(), 64, PreferenceType.Integer,
+						new IntegerValidator(4, 2048)),
+				new UltimatePreferenceItem<>(SettingLabel.MAX_BITS.text(), 64, PreferenceType.Integer,
 						new IntegerValidator(4, 2048)),
 				// ADD NEW SETTINGS HERE
 		};
@@ -66,7 +72,12 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 		EXECUTIONS_QUEUED("Number of unfinished executions to store before disregarding new ones"),
 		OUTPUT_METHOD("How to print the created executions."
 				+ " The executions are always passed to the next plug-in regardless of choice."),
-		BITS_HAVOCED("Number of bits to havoc for integers. (Bounds of the ICFG take priority over this setting.)");
+		PARTIAL_RESULTS_COUNT(
+				"Number of finished executions per output batch." + " (0 to output all executions at the end)"),
+		PARTIAL_RESULTS_STORE("If true, finished executions will be discarded after the batch is processed."
+				+ " They will not be passed to the next plug-in."),
+		MIN_BITS("Havoc numbers are between 0 and -2^x + 1. (Bounds of the ICFG take priority over this setting.)"),
+		MAX_BITS("Havoc numbers are between 0 and 2^x - 1. (Bounds of the ICFG take priority over this setting.)");
 
 		private final String mText;
 

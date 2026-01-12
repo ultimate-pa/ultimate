@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Triple;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class Util {
 	public static Long SMTDiv(final long m, final long n) {
@@ -61,7 +61,7 @@ public class Util {
 		return out;
 	}
 
-	public static Triple<Term, TermVariable, List<Term>> selectToKeyTriple(final ApplicationTerm select) {
+	public static Pair<TermVariable, List<Term>> selectToKeyPair(final ApplicationTerm select) {
 		final ArrayDeque<Term> keys = new ArrayDeque<>();
 		Term arrayTerm = null;
 
@@ -77,6 +77,6 @@ public class Util {
 				break;
 			}
 		}
-		return new Triple<>(select, (TermVariable) arrayTerm, List.of(keys.toArray(new Term[keys.size()])));
+		return new Pair<>((TermVariable) arrayTerm, List.of(keys.toArray(new Term[keys.size()])));
 	}
 }

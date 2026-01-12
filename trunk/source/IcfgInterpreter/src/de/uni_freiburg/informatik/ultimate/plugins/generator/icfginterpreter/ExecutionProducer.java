@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,13 +24,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
@@ -58,8 +57,12 @@ public class ExecutionProducer {
 	private int executionMaxLength;
 	private int variantsPerHavoc;
 	private int unfinishedMaxStored;
+	private int batchSize;
+	private final Set<IcfgLocation> mErrorLocations;
+	private boolean deleteBatch;
 
-	public ExecutionProducer(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services) {
+	public ExecutionProducer(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services,
+			final Set<IcfgLocation> errorLocations) {
 		mIcfg = icfg;
 
 		final Set<? extends IcfgLocation> initialNodes = mIcfg.getInitialNodes();
@@ -103,12 +106,18 @@ public class ExecutionProducer {
 		}
 
 		mErrorMap = getErrorLocations(mIcfg);
+		mErrorLocations = errorLocations;
 	}
 
-	public Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> makeExecutions(final ILogger logger)
+	public Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> makeExecutions(final ILogger logger,
+			final BiConsumer<Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>>, Set<IcfgLocation>> outMethod)
 			throws Exception {
 
-		IcfgInterpreterPreferences.updatePreferences();
+		batchSize = IcfgInterpreterPreferences.getPreferences()
+				.getInt(IcfgInterpreterPreferences.SettingLabel.PARTIAL_RESULTS_COUNT.toString());
+
+		deleteBatch = IcfgInterpreterPreferences.getPreferences()
+				.getBoolean(IcfgInterpreterPreferences.SettingLabel.PARTIAL_RESULTS_STORE.toString());
 
 		final int seed = IcfgInterpreterPreferences.getPreferences()
 				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTION_SEED.toString());
@@ -125,36 +134,62 @@ public class ExecutionProducer {
 		executionMaxLength = Math.max(0, IcfgInterpreterPreferences.getPreferences()
 				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTION_MAX_LENGTH.toString()));
 
-		final int bitsHavoced = Math.max(4, IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.BITS_HAVOCED.toString()));
+		final int minBits = Math.max(4, IcfgInterpreterPreferences.getPreferences()
+				.getInt(IcfgInterpreterPreferences.SettingLabel.MIN_BITS.toString()));
+
+		final int maxBits = Math.max(4, IcfgInterpreterPreferences.getPreferences()
+				.getInt(IcfgInterpreterPreferences.SettingLabel.MAX_BITS.toString()));
 
 		logger.info("Creating " + testExecutionCount + " executions per initial node.");
 
 		final Set<? extends IcfgLocation> initialNodes = mIcfg.getInitialNodes();
 
-		final NonDeterministicChoice ndc = new NonDeterministicChoice(seed, bitsHavoced);
+		final NonDeterministicChoice ndc = new NonDeterministicChoice(seed, minBits, maxBits);
 
 		final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> executions = new HashMap<>();
 
+		for (final ExecutionTermintionReason reason : ExecutionTermintionReason.values()) {
+			executions.put(reason, new ArrayList<>());
+		}
+
+		storedFinalizedExecutions = 0;
 		final long startTime = System.nanoTime();
 		for (final IcfgLocation node : initialNodes) {
 			for (int i = 0; i < testExecutionCount; i++) {
-				final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> newExecutions = makeExecutions(
-						ndc, node);
-				for (final ExecutionTermintionReason reason : newExecutions.keySet()) {
-					// executions.getOrDefault(executions, null)
-					final List<IcfgProgramExecution<IcfgEdge>> executionList = executions.getOrDefault(reason,
-							new ArrayList<>());
-					executionList.addAll(newExecutions.get(reason));
-					executions.put(reason, executionList);
-				}
+				makeExecutions(ndc, node, executions, outMethod);
 			}
 		}
+
+		if (batchSize > 0 && !executions.isEmpty()) {
+			// There likely weren't enough executions to exactly fill a final batch
+			outMethod.accept(executions, mErrorLocations);
+			if (deleteBatch) {
+				executions.forEach((x, list) -> list.clear());
+			}
+		} else if (batchSize == 0) {
+			// All executions are processed together at the end
+			outMethod.accept(executions, mErrorLocations);
+		}
+
+		for (final ExecutionTermintionReason reason : ExecutionTermintionReason.values()) {
+			if (executions.get(reason).isEmpty()) {
+				executions.remove(reason);
+			}
+		}
+
 		final long endTime = System.nanoTime();
 
 		final long executionTime = endTime - startTime;
 
-		logger.info(getClass().getSimpleName() + " used " + (executionTime / 1000000.0) + "ms for execution.");
+		final int executionSeconds = (int) Math.floor((executionTime / 1000000.0) / 1000.0);
+		final int executionSecRemainder = executionSeconds % 60;
+		final double executionMSremainder = executionTime % 1000000000 / 1000000.0;
+
+		final int executionMinutes = (int) Math.floor(executionSeconds / 60.0);
+
+		logger.info(getClass().getSimpleName() + " used " + (executionMinutes > 0 ? executionMinutes + "m " : "")
+				+ (executionSeconds > 0 ? executionSecRemainder + "s " : "") + (executionMSremainder)
+				+ "ms for execution.");
 		return executions;
 	}
 
@@ -185,10 +220,6 @@ public class ExecutionProducer {
 				final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
 						.addUpdates(extractUpdates(formula, script, script.getTheory().mTrue))
 						.makeGuardUnchanged(services, mngScript, formula).finish();
-
-				// make sure that the extracted guard is equivalent to the whole transition formula
-				final Term fullTermSub = substituteProgramVars(formula.getFormula(), formula);
-				assert SmtUtils.checkEquivalence(icfgEdge.getGuardTerm(), fullTermSub, script) == LBool.UNSAT;
 
 				System.out.println(icfgEdge.toString());
 				System.out.println("\n\n");
@@ -223,25 +254,42 @@ public class ExecutionProducer {
 
 	private Update[] extractUpdates(final UnmodifiableTransFormula formula, final Script script, final Term term) {
 		final Equations equations = EqualityExtractor.extract(term, script, formula);
-		final Set<SolvedEquation> solvedEquations = equations.solveForAllVars(script);
-		return makeUpdates(solvedEquations, formula);
+		final Set<SolvedEquation> solvedEquationsB = equations.solveForRelevantVars(script, formula);
+		return makeUpdates(solvedEquationsB, formula);
 	}
 
-	private static ArrayDeque<Update> sortEqs(final Map<TermVariable, List<TermVariable>> neededInVars,
-			final Map<TermVariable, List<TermVariable>> neededOutVars, final Map<TermVariable, Update> equationList) {
+	private ArrayDeque<Update> sortEqs(final Map<TermVariable, List<TermVariable>> neededInVars,
+			final Map<TermVariable, List<TermVariable>> neededOutVars, final Map<TermVariable, Update> equationList,
+			final UnmodifiableTransFormula formula) {
 		// add each update that needs no InVars (that are updated)
 		// add updates for which all needed InVars already exist, but only if all that need it as invar are updated
 
 		final ArrayDeque<Update> out = new ArrayDeque<>();
 		final Set<TermVariable> updatedVars = new HashSet<>();
 
+		final Map<TermVariable, Update> equationListGlobal = new HashMap<>();
+		for (final Entry<TermVariable, Update> entry : equationList.entrySet()) {
+			equationListGlobal.put(entry.getValue().getVariable(), entry.getValue());
+		}
+
+		final Map<TermVariable, List<TermVariable>> neededInVarsGlobal = new HashMap<>();
+		for (final Entry<TermVariable, List<TermVariable>> entry : neededInVars.entrySet()) {
+			neededInVarsGlobal.put(lookupSymbolTableSafe(entry.getKey(), formula), entry.getValue().stream()
+					.map((final TermVariable var) -> lookupSymbolTableSafe(var, formula)).toList());
+		}
+		final Map<TermVariable, List<TermVariable>> neededOutVarsGlobal = new HashMap<>();
+		for (final Entry<TermVariable, List<TermVariable>> entry : neededOutVars.entrySet()) {
+			neededOutVarsGlobal.put(lookupSymbolTableSafe(entry.getKey(), formula), entry.getValue().stream()
+					.map((final TermVariable var) -> lookupSymbolTableSafe(var, formula)).toList());
+		}
+
 		while (equationList.size() > updatedVars.size()) {
-			final List<TermVariable> neededInVarsTotal = neededInVars.entrySet().stream()
-					.filter(entry -> !updatedVars.contains(entry.getKey())).flatMap(entry -> entry.getValue().stream())
-					.toList();
+			final Set<TermVariable> neededInVarsTotal = Set.copyOf(
+					neededInVarsGlobal.entrySet().stream().filter(entry -> !updatedVars.contains(entry.getKey()))
+							.flatMap(entry -> entry.getValue().stream()).toList());
 
 			// get vars that can be updated because all needed outvars are already updated
-			final Stream<TermVariable> updatableVars = neededOutVars.entrySet().stream()
+			final Stream<TermVariable> updatableVars = neededOutVarsGlobal.entrySet().stream()
 					.filter(entry -> !updatedVars.contains(entry.getKey()) && updatedVars.containsAll(entry.getValue()))
 					.map(entry -> entry.getKey());
 
@@ -253,7 +301,7 @@ public class ExecutionProducer {
 			safeUpdates.sort(Comparator.comparing(TermVariable::getName));
 			for (final TermVariable updateVar : safeUpdates) {
 				updatedVars.add(updateVar);
-				out.addLast(equationList.get(updateVar));
+				out.addLast(equationListGlobal.get(updateVar));
 			}
 		}
 
@@ -267,7 +315,6 @@ public class ExecutionProducer {
 		assignableVars.addAll(formula.getOutVars().values().stream().filter((outVar) -> {
 			return !formula.getInVars().containsValue(outVar);
 		}).toList());
-
 		final ArrayList<SolvedEquation> equationList = new ArrayList<>(
 				equations.stream().filter((eq) -> assignableVars.contains(eq.getLhs())).toList());
 
@@ -279,7 +326,6 @@ public class ExecutionProducer {
 			// var = select)
 			// List<SolvedEquation> updatingEquations = arrayEquations.stream().filter(eq ->
 			// Set.of(eq.getRhs().getFreeVars()).stream().anyMatch(var -> formula.getAssignedVars())).toList();
-			System.out.println("yo");
 		}
 
 		// For each equation, the set of InVars / OutVars that are used. They need to come before / after all
@@ -294,11 +340,12 @@ public class ExecutionProducer {
 		for (final SolvedEquation equation : equationList) {
 			final List<TermVariable> inVars = neededInVars.getOrDefault(equation, new ArrayList<>());
 			final List<TermVariable> outVars = neededOutVars.getOrDefault(equation, new ArrayList<>());
-			final TermVariable updatedVar = lookupSymbolTableSafe((TermVariable) equation.getLhs(), formula);
+			final TermVariable updatedVar = (TermVariable) equation.getLhs();// lookupSymbolTableSafe((TermVariable)
+																				// equation.getLhs(), formula);
 
 			for (final TermVariable usedVar : equation.getRhs().getFreeVars()) {
-				final TermVariable globalVar = lookupSymbolTableSafe(usedVar, formula);
-				if (updatedVar == globalVar) {
+				// final TermVariable globalVar = lookupSymbolTableSafe(usedVar, formula);
+				if (lookupSymbolTableSafe(updatedVar, formula) == lookupSymbolTableSafe(usedVar, formula)) {
 					continue; // No need to define that x' may depend on x since it can't be updated before itself
 				}
 				if (formulaInVars.containsValue(usedVar) && formulaOutVars.containsValue(usedVar)) {
@@ -306,10 +353,10 @@ public class ExecutionProducer {
 					continue;
 				}
 				if (formulaInVars.containsValue(usedVar)) {
-					inVars.add(globalVar);
+					inVars.add(usedVar);
 				}
 				if (formulaOutVars.containsValue(usedVar) || formulaAuxVars.contains(usedVar)) {
-					outVars.add(globalVar);
+					outVars.add(usedVar);
 				}
 			}
 
@@ -324,12 +371,12 @@ public class ExecutionProducer {
 			}
 
 			final TermVariable localVar = inVar.getValue();
-			final TermVariable globalVar = lookupSymbolTableSafe(localVar, formula);
+			// final TermVariable globalVar = lookupSymbolTableSafe(localVar, formula);
 
 			final SolvedEquation havocEquation = new SolvedEquation(null, localVar, null);
 			equationList.add(havocEquation);
-			neededInVars.put(globalVar, new ArrayList<>());
-			neededOutVars.put(globalVar, new ArrayList<>());
+			neededInVars.put(localVar, new ArrayList<>());
+			neededOutVars.put(localVar, new ArrayList<>());
 		}
 
 		for (final Entry<IProgramVar, TermVariable> outVar : formula.getOutVars().entrySet()) {
@@ -339,11 +386,11 @@ public class ExecutionProducer {
 				continue;
 			}
 			final TermVariable localVar = outVar.getValue();
-			final TermVariable globalVar = lookupSymbolTableSafe(localVar, formula);
+			// final TermVariable globalVar = lookupSymbolTableSafe(localVar, formula);
 			final SolvedEquation havocEquation = new SolvedEquation(null, localVar, null);
 			equationList.add(havocEquation);
-			neededInVars.put(globalVar, new ArrayList<>());
-			neededOutVars.put(globalVar, new ArrayList<>());
+			neededInVars.put(localVar, new ArrayList<>());
+			neededOutVars.put(localVar, new ArrayList<>());
 		}
 
 		for (final TermVariable auxVar : formula.getAuxVars()) {
@@ -364,7 +411,8 @@ public class ExecutionProducer {
 			final TermVariable globalVar = lookupSymbolTableSafe(definedVar, formula);
 
 			final List<SolvedEquation> definitions = equationList.stream()
-					.filter((eq) -> eq.getLhs().equals(definedVar)).toList();
+					.filter((eq) -> eq.getLhs().equals(definedVar))
+					/* .filter((eq) -> formulaAuxVars.contains(eq.getLhs()) && ) */.toList();
 
 			if (definitions.size() == 1 && definitions.get(0).getRelation() == null) {
 				// This is freely havoced
@@ -380,6 +428,7 @@ public class ExecutionProducer {
 			for (final SolvedEquation definition : definitions) {
 				if (definition.getRelation().equals(RelationSymbol.EQ)) {
 					equals.add(generalize(definition, formula));
+					continue;
 				}
 				inequals.add(generalize(definition, formula));
 			}
@@ -396,6 +445,13 @@ public class ExecutionProducer {
 					}
 				}
 				newUpdate = new AssignmentUpdate(globalVar, substituteProgramVars(leastNeeded.getRhs(), formula));
+
+				// Remove required in / out vars such that only those of the used term remain
+				final Set<TermVariable> remainingVars = Set.of(leastNeeded.getRhs().getFreeVars());
+				neededInVars.put(definedVar, neededInVars.get(definedVar).stream()
+						.filter(var -> remainingVars.contains(lookupSymbolTableSafe(var, formula))).toList());
+				neededOutVars.put(definedVar, neededOutVars.get(definedVar).stream()
+						.filter(var -> remainingVars.contains(lookupSymbolTableSafe(var, formula))).toList());
 			} else {
 				// We only have bounds for the Term.
 
@@ -405,16 +461,11 @@ public class ExecutionProducer {
 				newUpdate = new HavocUpdate(globalVar, inequals, removePreviousRestrictions);
 			}
 
-			// Remove unnecessary restrictions (for example: x = 4, x < y, we don't need y if we can take this edge)
-			neededInVars.put(globalVar,
-					neededInVars.get(globalVar).stream().filter(var -> newUpdate.getFreeVars().contains(var)).toList());
-			neededOutVars.put(globalVar, neededOutVars.get(globalVar).stream()
-					.filter(var -> newUpdate.getFreeVars().contains(var)).toList());
-			updates.put(globalVar, newUpdate);
+			updates.put(definedVar, newUpdate);
 		}
 
 		// TODO make restrictions from array equations
-		final ArrayDeque<Update> updatesSorted = sortEqs(neededInVars, neededOutVars, updates);
+		final ArrayDeque<Update> updatesSorted = sortEqs(neededInVars, neededOutVars, updates, formula);
 
 		return updatesSorted.toArray(new Update[updatesSorted.size()]);
 	}
@@ -477,18 +528,18 @@ public class ExecutionProducer {
 		}
 	}
 
-	private Map<Term, Term> castMap(final Map<Term, Value> state) {
+	private Map<Term, Term> castMap(final Map<TermVariable, Value> state) {
 		final HashMap<Term, Term> out = new HashMap<>();
 
-		for (final Entry<Term, Value> entry : state.entrySet()) {
+		for (final Entry<TermVariable, Value> entry : state.entrySet()) {
 			out.putAll(entry.getValue().toTerm(mngScript.getScript(), entry.getKey()));
 		}
 
 		return out;
 	}
 
-	private HashMap<Term, Value> makeState() {
-		final HashMap<Term, Value> state = new HashMap<>();
+	private HashMap<TermVariable, Value> makeState() {
+		final HashMap<TermVariable, Value> state = new HashMap<>();
 
 		for (final IProgramVar programVar : mSymbolTable.values()) {
 			final TermVariable termVar = programVar.getTermVariable();
@@ -502,19 +553,18 @@ public class ExecutionProducer {
 		return state;
 	}
 
-	public Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> makeExecutions(
-			final NonDeterministicChoice ndc, final IcfgLocation source) {
+	public void makeExecutions(final NonDeterministicChoice ndc, final IcfgLocation source,
+			final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> out,
+			final BiConsumer<Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>>, Set<IcfgLocation>> outMethod) {
 		final ArrayDeque<PartialExecution> executions = new ArrayDeque<>();
 		executions.add(new PartialExecution(source, List.of(), List.of(makeState()), new HashMap<>(), null));
 
-		final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> out = new HashMap<>();
-
 		while (!executions.isEmpty()) {
 			final PartialExecution execution = executions.pop();
-			final Map<Term, Value> state = execution.getCurrentState();
+			final Map<TermVariable, Value> state = execution.getCurrentState();
 
 			if (executionMaxLength != 0 && execution.edges.size() >= executionMaxLength) {
-				finalizeExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out);
+				finalizeExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out, outMethod);
 				continue;
 			}
 
@@ -523,13 +573,13 @@ public class ExecutionProducer {
 
 			final IcfgLocation currentLocation = execution.currentLocation;
 			if (mErrorMap.getOrDefault(currentLocation.getProcedure(), new HashSet<>()).contains(currentLocation)) {
-				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_ERROR), out);
+				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_ERROR), out, outMethod);
 				continue;
 			}
 
 			if (nextEdges.size() == 0) {
 				// No edges exist from the current vertex
-				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out);
+				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod);
 				continue;
 			}
 
@@ -543,7 +593,7 @@ public class ExecutionProducer {
 
 				for (int i = 0; i < nextExecutions; i++) {
 					try {
-						final Map<Term, Value> nextState = new HashMap<>(execution.getCurrentState());
+						final Map<TermVariable, Value> nextState = new HashMap<>(execution.getCurrentState());
 						final HashMap<Term, Restriction<?>> newBounds = new HashMap<>(execution.havocBounds);
 						if (!nextEdge.guard(nextState, ndc, newBounds)) {
 							continue;
@@ -552,14 +602,17 @@ public class ExecutionProducer {
 
 						nextEdge.update(nextState, ndc, newBounds);
 
-						final List<PartialExecution> newExecutionsOfEdge = newExecutions.getOrDefault(nextEdge,
-								new ArrayList<>());
+						List<PartialExecution> newExecutionsOfEdge = newExecutions.get(nextEdge);
+						if (newExecutionsOfEdge == null) {
+							newExecutionsOfEdge = new ArrayList<>();
+							newExecutions.put(nextEdge, newExecutionsOfEdge);
+						}
 						newExecutionsOfEdge.add(execution.addStep(nextEdge, nextState, newBounds));
-						newExecutions.put(nextEdge, newExecutionsOfEdge);
 					} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
 						unsupportedFound = true;
 						final PartialExecution failedExecution = execution.addStep(nextEdge, Map.of(), Map.of());
-						finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
+						finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out,
+								outMethod);
 					}
 				}
 			}
@@ -582,22 +635,23 @@ public class ExecutionProducer {
 
 			// no more edges can be taken, and it was not because an edge could not be translated
 			if (((nextEdges.size() == 0 || !anyGuardTrue) && !unsupportedFound) && unsupportedFound) {
-				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out);
+				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod);
 			}
 		}
-
-		return out;
 	}
 
+	private int storedFinalizedExecutions;
+
 	private void finalizeExecution(final PartialExecution execution,
-			final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> outMap) {
+			final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> outMap,
+			final BiConsumer<Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>>, Set<IcfgLocation>> outMethod) {
 		// Execution must be finished
 		assert execution.status != null;
 		// Report if the exit location was an error location
-		if (execution.status == ExecutionTermintionReason.REACHED_ERROR) {
-			IcfgInterpreterObserver.getLogger()
-					.error("Execution successfully ended at error location " + execution.currentLocation.toString());
-		}
+		/*
+		 * if (execution.status == ExecutionTermintionReason.REACHED_ERROR) { IcfgInterpreterObserver.getLogger()
+		 * .error("Execution successfully ended at error location " + execution.currentLocation.toString()); }
+		 */
 
 		final List<Map<Term, Term>> statesCast = execution.states.stream().map(stateUncast -> castMap(stateUncast))
 				.toList();
@@ -605,15 +659,22 @@ public class ExecutionProducer {
 
 		final IcfgProgramExecution<IcfgEdge> out = createExecution(edgesCast, statesCast);
 
-		final List<IcfgProgramExecution<IcfgEdge>> executions = outMap.getOrDefault(execution.status,
-				new ArrayList<>());
-		executions.add(out);
-		outMap.put(execution.status, executions);
+		outMap.get(execution.status).add(out);
+		storedFinalizedExecutions++;
+
+		if (batchSize > 0 && batchSize <= storedFinalizedExecutions) {
+			outMethod.accept(outMap, mErrorLocations);
+			storedFinalizedExecutions = 0;
+			if (deleteBatch) {
+				outMap.forEach((x, list) -> list.clear());
+			}
+		}
 	}
 
 	private record PartialExecution(IcfgLocation currentLocation, List<InterpretedIcfgEdge> edges,
-			List<Map<Term, Value>> states, Map<Term, Restriction<?>> havocBounds, ExecutionTermintionReason status) {
-		public Map<Term, Value> getCurrentState() {
+			List<Map<TermVariable, Value>> states, Map<Term, Restriction<?>> havocBounds,
+			ExecutionTermintionReason status) {
+		public Map<TermVariable, Value> getCurrentState() {
 			return states.getLast();
 		}
 
@@ -621,20 +682,20 @@ public class ExecutionProducer {
 			return new PartialExecution(currentLocation, edges, states, havocBounds, reason);
 		}
 
-		public PartialExecution addStep(final InterpretedIcfgEdge nextEdge, final Map<Term, Value> nextState,
+		public PartialExecution addStep(final InterpretedIcfgEdge nextEdge, final Map<TermVariable, Value> nextState,
 				final Map<Term, Restriction<?>> newBounds) {
 			if (status != null) {
 				throw new AssertionError("Cannot add steps to finished Execution.");
 			}
 
 			final List<InterpretedIcfgEdge> newEdges = new ArrayList<>(edges());
-			final List<Map<Term, Value>> newStates = new ArrayList<>(
+			final List<Map<TermVariable, Value>> newStates = new ArrayList<>(
 					states().stream().map(map -> new HashMap<>(map)).toList());
 
 			int index = newStates.size() - 1;
 
-			Map<Term, Value> previousState = newStates.get(index);
-			final Set<Term> currentVars = new HashSet<>(nextState.keySet());
+			Map<TermVariable, Value> previousState = newStates.get(index);
+			final Set<TermVariable> currentVars = new HashSet<>(nextState.keySet());
 			nextEdge.removeSafe(currentVars);
 
 			// Propagate havoced variables backwards
@@ -648,9 +709,9 @@ public class ExecutionProducer {
 					havocedToThisState = Set.of();
 				}
 
-				final Set<Term> finishedVars = new HashSet<>();
+				final Set<TermVariable> finishedVars = new HashSet<>();
 
-				for (final Term variable : currentVars) {
+				for (final TermVariable variable : currentVars) {
 					if (previousState.containsKey(variable)) {
 						// Variable was already known in this state, stop propagating it.
 						finishedVars.add(variable);

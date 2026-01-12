@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -94,31 +95,21 @@ public class Equation implements ITermProvider {
 		return selects;
 	}
 
-	private boolean containsTerm(final Term container, final Term subject) {
-		if (container == subject) {
-			return true;
-		}
-		if (container instanceof final ApplicationTerm at) {
-			for (final Term param : at.getParameters()) {
-				if (containsTerm(param, subject)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	public ArrayList<SolvedEquation> solveForVars(final Script script) {
-		final ArrayList<SolvedEquation> out = new ArrayList<>();
-
+	public ArrayList<SolvedEquation> solveForAllVars(final Script script) {
 		final Set<Term> freeVars = new HashSet<>(getFreeVars());
 		freeVars.addAll(getSelects());
+		return solveForVars(script, freeVars);
+	}
 
-		for (final Term termVar : freeVars) {
+	public ArrayList<SolvedEquation> solveForVars(final Script script, final Collection<Term> variables) {
+		final ArrayList<SolvedEquation> out = new ArrayList<>();
+
+		for (final Term termVar : variables) {
 
 			final boolean leftContains = SmtUtils.isSubterm(mLHS, termVar);
 			final boolean rightContains = SmtUtils.isSubterm(mRHS, termVar);
 
+			// variable is not in equation
 			if (!(leftContains ^ rightContains)) {
 				continue;
 			}

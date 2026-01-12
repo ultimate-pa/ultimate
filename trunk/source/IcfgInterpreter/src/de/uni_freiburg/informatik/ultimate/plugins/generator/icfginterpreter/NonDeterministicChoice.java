@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
@@ -25,11 +26,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.les
  */
 public class NonDeterministicChoice {
 	private final Random mRandom;
-	private final int mHavocBits;
+	private final IntValue mMin;
+	private final IntValue mMax;
 
-	public NonDeterministicChoice(final long seed, final int havocBits) {
+	public NonDeterministicChoice(final long seed, final int minBits, final int maxBits) {
 		mRandom = new Random(seed);
-		mHavocBits = havocBits;
+		mMin = new IntValue(BigInteger.TWO.pow(minBits).negate().add(BigInteger.ONE));
+		mMax = new IntValue(BigInteger.TWO.pow(maxBits).subtract(BigInteger.ONE));
 	}
 
 	public <T> T chooseEdge(final List<T> edges) {
@@ -58,45 +61,77 @@ public class NonDeterministicChoice {
 		}
 	}
 
-	public IntValue havocInt(final IntegerRestriction values) {
-		final int length;// mRandom.nextInt(2, mHavocBits);
-		if (values != null && values.getValueCount() != null) {
-			length = values.getValueCount().getValue().bitCount();
+	private static IntegerRestriction boundIntRestriction(final IntegerRestriction values, final IntValue minInt,
+			final IntValue maxInt) {
+		IntValue min;
+		IntValue max;
+		Set<IntValue> inequal;
+
+		if (values == null) {
+			inequal = Set.of();
+			min = minInt;
+			max = maxInt;
 		} else {
-			length = mHavocBits;
+			inequal = values.getInequal();
+
+			min = values.getMinimum();
+			max = values.getMaximum();
+			if (min == null) {
+				min = minInt;
+			}
+			if (max == null) {
+				max = maxInt;
+			}
 		}
 
-		return havocInt(values, length);
+		return new IntegerRestriction(inequal, min, max);
+	}
+
+	public IntValue havocInt(final IntegerRestriction values) {
+		final IntegerRestriction boundedValues = boundIntRestriction(values, mMin, mMax);
+
+		final int length = boundedValues.getRangeSize().getValue().subtract(BigInteger.ONE).bitLength();
+
+		return havocInt(boundedValues, length);
+	}
+
+	public BitVecValue havocBitVector(final int length, final IntegerRestriction values) {
+		final IntValue min = new IntValue(BigInteger.TWO.pow(length - 1).negate());
+		final IntValue max = new IntValue(BigInteger.TWO.pow(length - 1));
+		final IntegerRestriction boundedValues = boundIntRestriction(values, min, max);
+
+		return new BitVecValue(havocInt(boundedValues, length).getValue(), length);
+	}
+
+	/**
+	 * Generates a random BigInteger from [0, maximum).
+	 *
+	 * @param length  The number of bits, optimally this is maximum.bitLength()
+	 * @param maximum The random value generated is at most maximum - 1.
+	 * @return
+	 */
+	private BigInteger randomBigInt(final int length, final BigInteger maximum) {
+		BigInteger randBigInt = new BigInteger(length, mRandom);
+		while (randBigInt.compareTo(maximum) >= 0) {
+			randBigInt = new BigInteger(length, mRandom);
+		}
+		return randBigInt;
 	}
 
 	private IntValue havocInt(final IntegerRestriction values, final int length) {
-		IntValue randBigInt = null;
+		final IntValue minimum = values.getMinimum();
+		final BigInteger valueCount = values.getRangeSize().getValue();
+		IntValue randIntVal = new IntValue(randomBigInt(length, valueCount)).add(minimum);
 
-		if (values != null) {
-			final IntValue minimum = values.getMinimum();
-			final IntValue maximum = values.getMaximum();
-
-			while (randBigInt == null || values.getInequal().contains(randBigInt)) {
-				randBigInt = new IntValue(new BigInteger(length, mRandom));
-				if (minimum != null) {
-					randBigInt = randBigInt.add(minimum);
-				} else if (mRandom.nextBoolean()) {
-					// 50/50 for value to be negative
-					randBigInt = randBigInt.negate();
-				}
-				if (maximum != null) {
-					randBigInt = randBigInt.mod(maximum);
-				}
-			}
-		} else {
-			randBigInt = new IntValue(new BigInteger(length, mRandom));
-			if (mRandom.nextBoolean()) {
-				// 50/50 for value to be negative
-				randBigInt = randBigInt.negate();
-			}
+		while (values.getInequal().contains(randIntVal)) {
+			randIntVal = new IntValue(randomBigInt(length, valueCount)).add(minimum);
 		}
 
-		return randBigInt;
+		if (randIntVal.lss(minimum).getValue() || values.getMaximum().lss(randIntVal).getValue()) {
+			return randIntVal;
+		}
+
+		return randIntVal;
 	}
 
 	public BoolValue havocBool(final BooleanRestriction values) {
@@ -106,10 +141,6 @@ public class NonDeterministicChoice {
 		}
 		// can be false or true (either both allowed or neither)
 		return new BoolValue(mRandom.nextBoolean());
-	}
-
-	public BitVecValue havocBitVector(final int length, final IntegerRestriction values) {
-		return new BitVecValue(havocInt(values, length).getValue(), length);
 	}
 
 	public UltimatePreferenceItemGroup getImplementationSettings() {

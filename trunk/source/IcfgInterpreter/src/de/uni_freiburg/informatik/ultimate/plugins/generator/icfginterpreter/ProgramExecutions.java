@@ -15,6 +15,13 @@ public final class ProgramExecutions<L extends IAction> extends BasePayloadConta
 	}
 
 	public record Triple<A, B, C>(A a, B b, C c) {
+		@Override
+		public boolean equals(final Object other) {
+			if (other instanceof final Triple t) {
+				return a == t.a() && b == t.b() && c == t.c();
+			}
+			return false;
+		}
 	}
 
 	public enum ExecutionTermintionReason {

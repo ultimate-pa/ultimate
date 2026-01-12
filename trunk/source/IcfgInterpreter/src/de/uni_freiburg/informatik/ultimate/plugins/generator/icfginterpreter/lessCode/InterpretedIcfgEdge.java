@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -20,10 +22,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Triple;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction.EmptyRangeException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ArrayValue.EmptyArrayEntryException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
@@ -36,7 +39,7 @@ public class InterpretedIcfgEdge {
 	private final IcfgEdge mEdge;
 	private final Set<TermVariable> mAuxVars;
 	private final Set<TermVariable> mGuardVars;
-	private final List<Triple<Term, TermVariable, List<Term>>> mGuardArrayReads;
+	private final Map<Term, Pair<TermVariable, List<Term>>> mGuardArrayReads;
 	/** Variables that were read on this edge */
 	private final Set<TermVariable> mReadVars;
 	/** Variables that were havoced on this edge. */
@@ -50,13 +53,16 @@ public class InterpretedIcfgEdge {
 	 * variable havoced in
 	 */
 	private final Map<Term, RestrictionParser> mGuardRestrictions;
+	private final ArrayList<Term> mAllVars;
 
 	private InterpretedIcfgEdge(final Term guard, final Update[] updateVariants, final IcfgEdge edge,
 			final Set<TermVariable> auxVars, final Map<Term, RestrictionParser> guardRestrictions) {
 		mGuard = guard;
 		mGuardVars = Set.of(mGuard.getFreeVars());
 		final List<ApplicationTerm> guardSelects = Util.extractSelects(guard);
-		mGuardArrayReads = List.copyOf(guardSelects.stream().map(select -> Util.selectToKeyTriple(select)).toList());
+
+		mGuardArrayReads = guardSelects.stream()
+				.collect(Collectors.toMap((select -> (Term) select), (select -> Util.selectToKeyPair(select))));
 		mGuardRestrictions = guardRestrictions;
 
 		mUpdates = updateVariants;
@@ -97,6 +103,9 @@ public class InterpretedIcfgEdge {
 		readVars.removeAll(mAuxVars);
 		mReadVars = Set.copyOf(readVars);
 		mAssignedVars = Set.copyOf(assignedVars);
+		mAllVars = new ArrayList<>();
+		mAllVars.addAll(mReadVars);
+		mAllVars.addAll(mAuxVars);
 	}
 
 	public IcfgLocation getTarget() {
@@ -115,14 +124,15 @@ public class InterpretedIcfgEdge {
 		return mHavocedVars;
 	}
 
-	public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+	public void update(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions) {
 		for (final Update update : mUpdates) {
 			// havoc variables that are not in the state
-			havocNeeded(state, ndc, havocRestrictions, update.getFreeVars(), false);
+			// havocNeeded(state, ndc, havocRestrictions, update.getFreeVars(), false);
 
 			// havoc read array entries that don't exist yet
-			havocArrayReads(state, ndc, havocRestrictions, update.getArrayReads(), false);
+			// havocArrayReads(state, ndc, havocRestrictions, update.getArrayReads(), false);
+			havocOrdered(state, ndc, havocRestrictions, update.getFreeVars(), update.getArrayReads(), false);
 
 			update.update(state, ndc, havocRestrictions);
 		}
@@ -132,77 +142,93 @@ public class InterpretedIcfgEdge {
 		}
 	}
 
-	public boolean containsHavoc(final Map<Term, Value> state) {
+	public boolean containsHavoc(final Map<TermVariable, Value> state) {
 		// Havoc happens if a variable undergoes an havoc update and is then read on this edge
 		// OR when a variable underwent a havoc update in a previous state and is read on this edge.
 		return mHavocedAndReadVars.size() > 0 || !state.keySet().containsAll(mReadVars);
 	}
 
-	private void havocNeeded(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+	public void havocOrdered(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions, final Set<TermVariable> required,
-			final boolean useGuardRestrictions) {
-		for (final TermVariable var : required) {
-			if (state.containsKey(var)) {
-				continue;
-			}
+			final Map<Term, Pair<TermVariable, List<Term>>> arrayReads, final boolean useGuardRestrictions) {
 
-			Restriction<?> restriction;
-			final Restriction<?> existingRestriction = havocRestrictions.remove(var);
-			final RestrictionParser guardRestriction = mGuardRestrictions.get(var);
-			if (!useGuardRestrictions || guardRestriction == null) {
-				restriction = existingRestriction;
-			} else if (!state.keySet().containsAll(guardRestriction.getFreeVars())) {
-				// can't build guard restriction since it requires another variable that was not yet havoced
-				restriction = existingRestriction;
-			} else {
-				try {
-					if (existingRestriction != null) {
-						restriction = existingRestriction.combine(guardRestriction.getRestriction(state, ndc));
-					} else {
-						restriction = guardRestriction.getRestriction(state, ndc);
+		final HashSet<Term> remainingRequired = new HashSet<>(required);
+		remainingRequired.addAll(arrayReads.keySet());
+		final Set<Term> completedTerms = new HashSet<>();
+
+		while (!remainingRequired.isEmpty()) {
+			for (final Term term : remainingRequired) {
+				final TermVariable termVar;
+				final ArrayValue array;
+				final List<Value> keyValues;
+				if (term instanceof final TermVariable tv) {
+					if (state.containsKey(term) || !required.contains(term)) {
+						completedTerms.add(term);
+						continue;
 					}
-				} catch (final EmptyRangeException a) {
-					// The new range contains no values. The guard will be false!
-					restriction = existingRestriction;
+					termVar = tv;
+					array = null;
+					keyValues = null;
+				} else {
+					final Pair<TermVariable, List<Term>> data = arrayReads.get(term);
+					if (data == null) {
+						continue;
+					}
+					termVar = data.a();
+					try {
+						keyValues = new ArrayList<>();
+						for (final Term key : data.b()) {
+							keyValues.add(TermEvaluator.evaluate(state, key));
+						}
+					} catch (final Error e) {
+						continue;
+					}
+					array = (ArrayValue) state.get(termVar);
+					if ((array).hasKey(keyValues)) {
+						completedTerms.add(term);
+						continue;
+					}
 				}
-			}
+				// The term must be havoced
 
-			state.put(var, ndc.havoc(var.getSort(), restriction));
-		}
-	}
-
-	private void havocArrayReads(final Map<Term, Value> state, final NonDeterministicChoice ndc,
-			final Map<Term, Restriction<?>> havocRestrictions,
-			final List<Triple<Term, TermVariable, List<Term>>> arrayReads, final boolean useGuardRestrictions) {
-		for (final Triple<Term, TermVariable, List<Term>> select : arrayReads) {
-			final TermVariable arrayTerm = select.b();
-			final ArrayValue array = (ArrayValue) state.get(arrayTerm);
-			final List<Value> keyValues = select.c().stream().map(term -> TermEvaluator.evaluate(state, term)).toList();
-
-			if (array.hasKey(keyValues)) {
-				continue;
-			}
-
-			final Restriction<?> existingRestriction = havocRestrictions.remove(select.a());
-			final Restriction<?> restriction;
-			if (useGuardRestrictions) {
-				final RestrictionParser restrictionBuilder = mGuardRestrictions.get(select.a());
-
-				if (restrictionBuilder != null) {
-					final Restriction<?> guardRestriction = restrictionBuilder.getRestriction(state, ndc);
-					if (guardRestriction != null) {
-						restriction = guardRestriction.combine(existingRestriction);
-					} else {
+				final Restriction<?> existingRestriction = havocRestrictions.get(term);
+				final RestrictionParser guardRestriction = mGuardRestrictions.get(term);
+				Restriction<?> restriction;
+				if (!useGuardRestrictions || guardRestriction == null) {
+					restriction = existingRestriction;
+				} else if (!state.keySet().containsAll(guardRestriction.getFreeVars())) {
+					// can't build guard restriction since it requires another variable that was not yet havoced
+					restriction = existingRestriction;
+				} else {
+					try {
+						if (existingRestriction != null) {
+							restriction = existingRestriction.combine(guardRestriction.getRestriction(state, ndc));
+						} else {
+							restriction = guardRestriction.getRestriction(state, ndc);
+						}
+					} catch (final EmptyRangeException a) {
+						// The new range contains no values.
+						// We simply use the existing restriction to havoc a value.
+						// The guard will be false!
+						restriction = existingRestriction;
+					} catch (final EmptyArrayEntryException b) {
+						// The guard restriction calls on an array entry that is still undetermined.
+						// We will resolve non-array variables first.
 						restriction = existingRestriction;
 					}
-				} else {
-					restriction = existingRestriction;
 				}
-			} else {
-				restriction = existingRestriction;
-			}
 
-			state.put(arrayTerm, array.store(keyValues, ndc.havoc(array.getValueSort(), restriction)));
+				if (array == null) {
+					state.put(termVar, ndc.havoc(termVar.getSort(), restriction));
+					completedTerms.add(term);
+				} else {
+					state.put(termVar, array.store(keyValues, ndc.havoc(array.getValueSort(), restriction)));
+					completedTerms.add(termVar);
+				}
+				havocRestrictions.remove(term);
+			}
+			remainingRequired.removeAll(completedTerms);
+			completedTerms.clear();
 		}
 	}
 
@@ -212,7 +238,7 @@ public class InterpretedIcfgEdge {
 	 *
 	 * @param currentVars
 	 */
-	public void removeSafe(final Set<Term> currentVars) {
+	public void removeSafe(final Set<TermVariable> currentVars) {
 		/*
 		 * Assigned variables may have been havoced (and possibly read after the havoc update) on this edge after being
 		 * assigned, but they do not need to be propagated back to earlier states if this is the case, so this is fine.
@@ -220,10 +246,11 @@ public class InterpretedIcfgEdge {
 		currentVars.removeAll(mAssignedVars);
 	}
 
-	public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+	public boolean guard(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions) {
-		havocNeeded(state, ndc, havocRestrictions, mGuardVars, true);
-		havocArrayReads(state, ndc, havocRestrictions, mGuardArrayReads, true);
+		havocOrdered(state, ndc, havocRestrictions, mGuardVars, mGuardArrayReads, true);
+		// havocNeeded(state, ndc, havocRestrictions, mGuardVars, true);
+		// havocArrayReads(state, ndc, havocRestrictions, mGuardArrayReads, true);
 
 		return ((BoolValue) TermEvaluator.evaluate(state, mGuard)).getValue();
 	}
@@ -262,13 +289,13 @@ public class InterpretedIcfgEdge {
 		}
 
 		@Override
-		public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+		public boolean guard(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
 			throw new EdgeUntranslatableError();
 		}
 
 		@Override
-		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+		public void update(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
 			throw new EdgeUntranslatableError();
 		}
@@ -280,6 +307,7 @@ public class InterpretedIcfgEdge {
 		private final IcfgEdge mGraphEdge;
 		private final Set<TermVariable> mAuxVariables;
 		private Map<Term, RestrictionParser> mGuardRestrictions;
+		// private Term[] mHavocOrder;
 
 		public InterpretedIcfgEdgeBuilder(final IcfgEdge edge, final Set<TermVariable> auxVars) {
 			mGraphEdge = edge;
@@ -323,12 +351,19 @@ public class InterpretedIcfgEdge {
 			final List<SolvedEquation> solvedEquations = new ArrayList<>(equations.solveForAllVars(script));
 
 			final Map<Term, RestrictionParser> guardRestrictions = new HashMap<>();
+			final List<Term> occuringTerms = new ArrayList<>();
+
+			final ArrayDeque<Term> havocOrder = new ArrayDeque<>();
+
 			while (!solvedEquations.isEmpty()) {
 				final Term solvedFor = solvedEquations.get(0).getLhs();
+				occuringTerms.add(solvedFor);
 
+				// Havoc InVars before AuxVars
 				if (formula.getInVars().containsValue(solvedFor)) {
-					// Guards only contain InVars, so
-					continue;
+					havocOrder.addFirst(solvedFor);
+				} else {
+					havocOrder.addLast(solvedFor);
 				}
 
 				final List<SolvedEquation> varEquations = solvedEquations.stream()
@@ -356,6 +391,7 @@ public class InterpretedIcfgEdge {
 
 				guardRestrictions.put(solvedFor, parser);
 			}
+
 			mGuardRestrictions = Map.copyOf(guardRestrictions);
 		}
 

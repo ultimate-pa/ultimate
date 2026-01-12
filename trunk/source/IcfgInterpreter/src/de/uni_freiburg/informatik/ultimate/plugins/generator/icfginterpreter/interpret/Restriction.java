@@ -8,6 +8,7 @@ public abstract class Restriction<T> {
 	protected final T mMaximum;
 
 	public static class EmptyRangeException extends AssertionError {
+		private static final long serialVersionUID = 1L;
 	}
 
 	/**
@@ -16,6 +17,7 @@ public abstract class Restriction<T> {
 	 * @param maximuum The biggest value a variable can take
 	 */
 	public Restriction(final Set<T> inequal, final T minimum, final T maximum) {
+
 		mInequal = inequal;
 		mMinimum = minimum;
 		mMaximum = maximum;

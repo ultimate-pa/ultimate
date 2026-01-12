@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class TermEvaluator {
-	public static Value evaluate(final Map<Term, Value> state, final Term term) {
+	public static Value evaluate(final Map<TermVariable, Value> state, final Term term) {
 		switch (term) {
 		case final ApplicationTerm a:
 			return evaluateApplicationTerm(state, a);
@@ -63,7 +63,8 @@ public class TermEvaluator {
 		}
 	}
 
-	private static Pair<ArrayValue, ArrayDeque<Value>> unpackSelect(final Map<Term, Value> state, final Term term) {
+	private static Pair<ArrayValue, ArrayDeque<Value>> unpackSelect(final Map<TermVariable, Value> state,
+			final Term term) {
 		final ArrayDeque<Value> keys = new ArrayDeque<>();
 		Term arrayTerm = term;
 		while (arrayTerm instanceof final ApplicationTerm at
@@ -79,7 +80,7 @@ public class TermEvaluator {
 		return null;
 	}
 
-	private static Value evaluateApplicationTerm(final Map<Term, Value> state, final ApplicationTerm aTerm) {
+	private static Value evaluateApplicationTerm(final Map<TermVariable, Value> state, final ApplicationTerm aTerm) {
 		Value value;
 		final Iterator<Value> iter;
 		IntValue intValue;
@@ -210,6 +211,7 @@ public class TermEvaluator {
 	}
 
 	public static class UnsopportedTermError extends AssertionError {
+		private static final long serialVersionUID = 1L;
 
 	}
 

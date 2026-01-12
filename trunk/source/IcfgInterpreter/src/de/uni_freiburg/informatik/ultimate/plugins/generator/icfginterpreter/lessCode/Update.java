@@ -3,18 +3,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Triple;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 
 public interface Update {
-	void update(Map<Term, Value> state, NonDeterministicChoice ndc, Map<Term, Restriction<?>> havocRestrictions);
+	void update(Map<TermVariable, Value> state, NonDeterministicChoice ndc,
+			Map<Term, Restriction<?>> havocRestrictions);
 
 	TermVariable getVariable();
 
@@ -25,13 +27,13 @@ public interface Update {
 	 */
 	Set<TermVariable> getFreeVars();
 
-	List<Triple<Term, TermVariable, List<Term>>> getArrayReads();
+	Map<Term, Pair<TermVariable, List<Term>>> getArrayReads();
 
 	public static class AssignmentUpdate implements Update {
 		private final TermVariable mTermVar;
 		private final Term mValue;
 		private final Set<TermVariable> mFreeVars;
-		private final List<Triple<Term, TermVariable, List<Term>>> mArrayReads;
+		private final Map<Term, Pair<TermVariable, List<Term>>> mArrayReads;
 
 		public AssignmentUpdate(final TermVariable programVar, final Term value) {
 			assert programVar.getSort().equals(value.getSort());
@@ -39,12 +41,13 @@ public interface Update {
 			mFreeVars = Set.of(value.getFreeVars());
 
 			final List<ApplicationTerm> selected = Util.extractSelects(value);
-			mArrayReads = List.copyOf(selected.stream().map(select -> Util.selectToKeyTriple(select)).toList());
+			mArrayReads = selected.stream()
+					.collect(Collectors.toMap((select -> (Term) select), (select -> Util.selectToKeyPair(select))));
 			mValue = value;
 		}
 
 		@Override
-		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+		public void update(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
 			state.put(mTermVar, TermEvaluator.evaluate(state, mValue));
 		}
@@ -78,7 +81,7 @@ public interface Update {
 		}
 
 		@Override
-		public List<Triple<Term, TermVariable, List<Term>>> getArrayReads() {
+		public Map<Term, Pair<TermVariable, List<Term>>> getArrayReads() {
 			return mArrayReads;
 		}
 	}
@@ -120,7 +123,7 @@ public interface Update {
 		}
 
 		@Override
-		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+		public void update(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
 			final Restriction<?> existingRestriction = havocRestrictions.remove(mUpdatedTerm);
 			final Restriction<?> restriction;
@@ -171,7 +174,7 @@ public interface Update {
 		}
 
 		@Override
-		public List<Triple<Term, TermVariable, List<Term>>> getArrayReads() {
+		public Map<Term, Pair<TermVariable, List<Term>>> getArrayReads() {
 			return mRestrictionParser.getArrayReads();
 		}
 	}

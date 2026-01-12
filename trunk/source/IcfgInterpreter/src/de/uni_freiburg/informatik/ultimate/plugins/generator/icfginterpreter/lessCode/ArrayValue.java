@@ -18,6 +18,14 @@ public class ArrayValue implements Value {
 	private final Sort mSort;
 	private final Sort mValueSort;
 
+	public static class EmptyArrayEntryException extends AssertionError {
+		private static final long serialVersionUID = 1L;
+
+		public EmptyArrayEntryException(final String text) {
+			super(text);
+		}
+	}
+
 	public ArrayValue(final Map<List<Value>, Value> value, final TermVariable arrayVar) {
 		mValue = value;
 		mArrayVar = arrayVar;
@@ -35,7 +43,7 @@ public class ArrayValue implements Value {
 		if (mValue.containsKey(key)) {
 			return mValue.get(key);
 		}
-		throw new AssertionError("Array does not contain key " + key.toString());
+		throw new EmptyArrayEntryException("Array does not contain key " + key.toString());
 	}
 
 	public boolean hasKey(final List<Value> key) {
