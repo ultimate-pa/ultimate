@@ -78,7 +78,7 @@ public class SifaObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		mLogger.info(mServices.getPreferenceProvider(Activator.PLUGIN_ID).getSingleLinePreferenceString());
 		mSifaComponents = new SifaBuilder(mServices, mLogger).construct(icfg, mServices.getProgressMonitorService());
-		final Map<IcfgLocation, IPredicate> predicates = mSifaComponents.getIcfgInterpreter().interpret();
+		final Map<IcfgLocation, IPredicate> predicates = mSifaComponents.getInterpreter().interpret();
 		reportStats(mSifaComponents.getStats());
 		reportResults(predicates);
 	}

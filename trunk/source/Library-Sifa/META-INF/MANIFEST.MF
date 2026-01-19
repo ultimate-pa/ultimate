@@ -15,6 +15,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.sifa,
  de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing,
+ de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent,
  de.uni_freiburg.informatik.ultimate.lib.sifa.domain,
  de.uni_freiburg.informatik.ultimate.lib.sifa.fluid,
  de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag,

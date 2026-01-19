@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -76,6 +77,11 @@ public class SymbolicTools {
 
 	public SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats, final IIcfg<IcfgLocation> icfg,
 			final SimplificationTechnique simplification) {
+		this(services, stats, icfg, simplification, icfg.getCfgSmtToolkit().getSymbolTable());
+	}
+
+	public SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats, final IIcfg<IcfgLocation> icfg,
+			final SimplificationTechnique simplification, final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mStats = stats;
 		mIcfg = icfg;
@@ -88,7 +94,7 @@ public class SymbolicTools {
 		mSimplification = simplification;
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
-		mFactory = new BasicPredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
+		mFactory = new BasicPredicateFactory(services, mMngdScript, symbolTable);
 		mTransformer = new PredicateTransformer<>(mMngdScript,
 				new TermDomainOperationProviderWithLightElimination(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));

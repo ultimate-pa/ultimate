@@ -35,10 +35,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.PrimedDefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
@@ -93,14 +97,28 @@ public class SifaBuilder {
 				constructLoopSummarizer(stats, timer, tools, domain, fluid);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
 				constructCallSummarizer(stats, tools, domain);
-		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg,
-				locationsOfInterest, domain, fluid, loopSum, callSum);
-		return new SifaComponents(icfgInterpreter, domain, stats);
+
+		final ISifaInterpreter interpreter;
+		if (IcfgUtils.isConcurrent(icfg)) {
+			mLogger.info("Concurrent program detected, using thread-modular SIFA interpreter");
+			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest,
+					domain, fluid, loopSum, callSum);
+		} else {
+			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
+					loopSum, callSum);
+		}
+		return new SifaComponents(interpreter, domain, stats);
 	}
 
 	private SymbolicTools constructTools(final SifaStats stats, final IIcfg<IcfgLocation> icfg) {
-		return new SymbolicTools(mServices, stats, icfg,
-				mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION));
+		final var simplification = mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION);
+		if (IcfgUtils.isConcurrent(icfg)) {
+			final var toolkit = icfg.getCfgSmtToolkit();
+			final var primedTable = new PrimedDefaultIcfgSymbolTable(toolkit.getSymbolTable(),
+						toolkit.getProcedures(), toolkit.getManagedScript());
+			return new SymbolicTools(mServices, stats, icfg, simplification, primedTable);
+		}
+		return new SymbolicTools(mServices, stats, icfg, simplification);
 	}
 
 	private IDomain constructStatsDomain(final SifaStats stats, final SymbolicTools tools,
@@ -202,24 +220,24 @@ public class SifaBuilder {
 	}
 
 	/**
-	 * Sifa is divided into components – this class stores the main component {@link #getIcfgInterpreter()} and gives
+	 * Sifa is divided into components – this class stores the main component {@link #getInterpreter()} and gives
 	 * access to some intern components which are useful after interpretation.
 	 *
 	 * @author schaetzc@tf.uni-freiburg.de
 	 */
 	public static class SifaComponents {
-		private final IcfgInterpreter mIcfgInterpreter;
+		private final ISifaInterpreter mInterpreter;
 		private final IDomain mDomain;
 		private final SifaStats mStats;
 
-		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain, final SifaStats stats) {
-			mIcfgInterpreter = icfgInterpreter;
+		public SifaComponents(final ISifaInterpreter interpreter, final IDomain domain, final SifaStats stats) {
+			mInterpreter = interpreter;
 			mDomain = domain;
 			mStats = stats;
 		}
 
-		public IcfgInterpreter getIcfgInterpreter() {
-			return mIcfgInterpreter;
+		public ISifaInterpreter getInterpreter() {
+			return mInterpreter;
 		}
 
 		public IDomain getDomain() {

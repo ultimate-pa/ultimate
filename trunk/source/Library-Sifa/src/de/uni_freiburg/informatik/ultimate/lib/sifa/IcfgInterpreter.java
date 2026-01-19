@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class IcfgInterpreter implements IEnterCallRegistrar {
+public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 
 	private final SifaStats mStats;
 
@@ -110,6 +110,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	 * @return Map from all locations of interest (specified in the constructor of this class) to invariants (predicates
 	 *         over-approximating the program states at these locations)
 	 */
+	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
 		mStats.start(SifaStats.Key.OVERALL_TIME);
 		logStartingInterpretation();
