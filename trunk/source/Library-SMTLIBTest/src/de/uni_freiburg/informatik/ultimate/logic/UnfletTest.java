@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
 @RunWith(JUnit4.class)
 public class UnfletTest {
 
-	Theory mTheory = new Theory(Logics.AUFDTLIRA);
+	Theory mTheory = new Theory(Logics.valueOf("AUFDTLIRA"));
 
 	Sort mIntSort = mTheory.getSort("Int");
 	Sort[] mInt2 = arr(mIntSort, mIntSort);

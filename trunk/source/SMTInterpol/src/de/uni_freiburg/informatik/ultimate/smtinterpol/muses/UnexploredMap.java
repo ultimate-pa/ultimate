@@ -25,6 +25,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
@@ -134,7 +135,7 @@ public class UnexploredMap {
 				mEngine.pop(1);
 				return false;
 			} else {
-				mMaximalUnexploredSubset = collectAtomsWithCriteria(workingSet, this::isSetToTrue);
+				mMaximalUnexploredSubset = collectAtomsWithCriteria(workingSet, this::isNotSetToFalse);
 				// The implied crits must be contained in the Maximal unexplored subset
 				// therefore, it is enough to look whether the constraint has been decided in level 0
 				mImpliedCrits = collectAtomsWithCriteria(mMaximalUnexploredSubset, this::isDecidedInLevelZero);
@@ -166,8 +167,9 @@ public class UnexploredMap {
 		return model;
 	}
 
-	private boolean isSetToTrue(final int atomNumber) {
-		return mTranslator.translate2Atom(atomNumber).getDecideStatus().getSign() == 1;
+	private boolean isNotSetToFalse(final int atomNumber) {
+		final DPLLAtom atom = mTranslator.translate2Atom(atomNumber);
+		return atom.getDecideStatus() != atom.negate();
 	}
 
 	private boolean isDecidedInLevelZero(final int atomNumber) {

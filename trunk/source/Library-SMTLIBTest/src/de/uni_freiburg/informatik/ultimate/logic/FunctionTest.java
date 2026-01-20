@@ -30,7 +30,7 @@ public class FunctionTest {
 
 	@Test
 	public void test() {
-		final Theory theory = new Theory(Logics.AUFLIRA);
+		final Theory theory = new Theory(Logics.valueOf("AUFLIRA"));
 
 		final Sort sortInt = theory.getSort("Int");
 		final Sort sortReal = theory.getSort("Real");

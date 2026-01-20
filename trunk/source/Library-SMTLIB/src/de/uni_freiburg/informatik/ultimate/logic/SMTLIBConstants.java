@@ -104,6 +104,17 @@ public interface SMTLIBConstants {
 	public static final String BVSLE = "bvsle";
 	public static final String BVSGT = "bvsgt";
 	public static final String BVSGE = "bvsge";
+	public static final String UBV_TO_INT = "ubv_to_int";
+	public static final String SBV_TO_INT = "sbv_to_int";
+	public static final String INT_TO_BV = "int_to_bv";
+	public static final String BVNEGO = "bvnego";
+	public static final String BVUADDO = "bvuaddo";
+	public static final String BVSADDO = "bvsaddo";
+	public static final String BVUMULO = "bvumulo";
+	public static final String BVSMULO = "bvsmulo";
+	public static final String BVUSUBO = "bvusubo";
+	public static final String BVSSUBO = "bvssubo";
+	public static final String BVSDIVO = "bvsdivo";
 	public static final String PREFIX_BINARY = "#b";
 	public static final String PREFIX_HEX = "#x";
 

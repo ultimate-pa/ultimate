@@ -140,6 +140,7 @@ public class InterpolantChecker {
 	public void checkInductivity(final Term[] literals, final Term[] ipls) {
 		final LogProxy logger = mInterpolator.getLogger();
 		final Theory theory = mInterpolator.mTheory;
+		final AuxFunctionRemover quantAuxRemover = new AuxFunctionRemover();
 		final int old = logger.getLoglevel();// NOPMD
 		logger.setLoglevel(LogProxy.LOGLEVEL_ERROR);
 
@@ -231,7 +232,7 @@ public class InterpolantChecker {
 				if (occInfo.contains(part)) {
 					// Purify literal and replace purification variable by fresh term.
 					final Term purLit = purifyAndFix(lit, purVarToTerm, purVarToFreshTerm);
-					mCheckingSolver.assertTerm(theory.not(purLit));
+					mCheckingSolver.assertTerm(quantAuxRemover.transform(theory.not(purLit)));
 				} else if (occInfo.isBLocal(part)) {
 					// nothing to do, literal cannot be mixed in sub-tree.
 				} else if (occInfo.isALocalInSomeChild(part)) {

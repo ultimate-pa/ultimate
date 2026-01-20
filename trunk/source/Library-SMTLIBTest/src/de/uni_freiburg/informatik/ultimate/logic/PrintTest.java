@@ -28,7 +28,7 @@ public class PrintTest {
 
 	@Test
 	public void testSort() {
-		final Theory theory = new Theory(Logics.QF_UFLIA);
+		final Theory theory = new Theory(Logics.valueOf("QF_UFLIA"));
 
 		final Sort sortInt = theory.getSort("Int");
 		final Sort sortReal = theory.getSort("Real");
@@ -56,7 +56,7 @@ public class PrintTest {
 
 	@Test
 	public void testFun() {
-		final Theory theory = new Theory(Logics.QF_UFLIA);
+		final Theory theory = new Theory(Logics.valueOf("QF_UFLIA"));
 
 		final Sort sortInt = theory.getSort("Int");
 		final Sort[] empty = new Sort[0];

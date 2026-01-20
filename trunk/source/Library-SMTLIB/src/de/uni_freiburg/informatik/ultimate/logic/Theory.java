@@ -154,10 +154,11 @@ public class Theory {
 		final Sort[] bool2 = new Sort[] { mBooleanSort, mBooleanSort };
 		final Sort[] generic2 = new Sort[] { generic1[0], generic1[0] };
 		final int leftassoc = FunctionSymbol.LEFTASSOC;
+		final int rightassoc = FunctionSymbol.RIGHTASSOC;
 		mNot = declareInternalFunction("not", bool1, mBooleanSort, 0);
 		mAnd = declareInternalFunction("and", bool2, mBooleanSort, leftassoc);
 		mOr = declareInternalFunction("or", bool2, mBooleanSort, leftassoc);
-		mImplies = declareInternalFunction("=>", bool2, mBooleanSort, FunctionSymbol.RIGHTASSOC);
+		mImplies = declareInternalFunction("=>", bool2, mBooleanSort, rightassoc);
 		mEquals = declareInternalPolymorphicFunction("=", generic1, generic2, mBooleanSort, FunctionSymbol.CHAINABLE);
 		mDistinct = declareInternalPolymorphicFunction("distinct", generic1, generic2, mBooleanSort,
 				FunctionSymbol.PAIRWISE);
@@ -166,7 +167,11 @@ public class Theory {
 				generic1[0], 0);
 		mTrue = (ApplicationTerm) term(declareInternalFunction("true", noarg, mBooleanSort, 0));
 		mFalse = (ApplicationTerm) term(declareInternalFunction("false", noarg, mBooleanSort, 0));
-		declareInternalSort(SMTLIBConstants.FUNC, 2, SortSymbol.FUNCTION);
+		mDeclaredSorts.put(SMTLIBConstants.FUNC,
+				new AssociativeSortSymbol(this, SMTLIBConstants.FUNC, SortSymbol.INTERNAL + SortSymbol.FUNCTION));
+		final Sort[] genericAB = createSortVariables("A", "B");
+		declareInternalPolymorphicFunction("_", genericAB,
+				new Sort[] { getSort(SMTLIBConstants.FUNC, genericAB), genericAB[0] }, genericAB[1], rightassoc);
 
 		// Finally, declare logic specific functions
 		setLogic(logic);
@@ -490,6 +495,15 @@ public class Theory {
 	}
 
 	public Term numeral(final BigInteger num) {
+		if (mLogic.isBitVector() && mLogic.hasReals() && !mLogic.hasIntegers()) {
+			// The curious case of BVLRA logics. We treat this as decimals, since we
+			// internally use LIRA logic, but the benchmark does not.
+			// This means that this is one instance where we apply transformations in the
+			// parser and these aren't tracked at all. There is no way around this,
+			// since our proof is in LIRA and thus uses a different semantics for
+			// NUMERAL than the benchmark.
+			return constant(Rational.valueOf(num, BigInteger.ONE), mRealSort);
+		}
 		if (mNumericSort != mRealSort) {
 			// For integer sort, always use Rational constants for numerals.
 			return constant(Rational.valueOf(num, BigInteger.ONE), mNumericSort);
@@ -547,7 +561,7 @@ public class Theory {
 		}
 		final String bsize = String.valueOf(value.length() - 2);
 		final Sort sort = mBitVecSort.getSort(new String[] { bsize }, new Sort[0]);
-		return new ConstantTerm(value, sort, ConstantTerm.hashConstant(value, sort));
+		return constant(value, sort);
 	}
 
 	public Term hexadecimal(final String value) {
@@ -557,7 +571,7 @@ public class Theory {
 		}
 		final String bsize = String.valueOf(4 * (value.length() - 2));// NOCHECKSTYLE
 		final Sort sort = mBitVecSort.getSort(new String[] { bsize }, new Sort[0]);
-		return new ConstantTerm(value, sort, ConstantTerm.hashConstant(value, sort));
+		return constant(value, sort);
 	}
 
 	public Term modelRational(final Rational rat, final Sort sort) {
@@ -608,7 +622,9 @@ public class Theory {
 
 	public PolymorphicFunctionSymbol declareInternalPolymorphicFunction(final String name, final Sort[] sortParams,
 			final Sort[] paramTypes, final Sort resultType, final int flags) {
-		assert !mFunFactory.containsKey(name);
+		if (mFunFactory.get(name) != null || mDeclaredFuns.get(name) != null) {
+			throw new SMTLIBException("Function " + name + " is already defined.");
+		}
 		final PolymorphicFunctionSymbol f = new PolymorphicFunctionSymbol(name, sortParams, paramTypes, resultType,
 				flags | FunctionSymbol.INTERNAL);
 		declareInternalFunctionFactory(f);
@@ -742,7 +758,7 @@ public class Theory {
 
 		declareInternalFunctionFactory(new FunctionSymbolFactory("abs") {
 			@Override
-			public Term getDefinition(final TermVariable[] tvs, final Sort resultSort) {
+			public Term getDefinition(String[] indices, final TermVariable[] tvs, final Sort resultSort) {
 				return absDefinition(tvs[0]);
 			}
 
@@ -863,7 +879,6 @@ public class Theory {
 		class Bv2NatFunction extends FunctionSymbolFactory {
 			public Bv2NatFunction(final String name) {
 				super(name);
-				assert name.equals("bv2nat") : "Wrong name: " + name;
 			}
 
 			@Override
@@ -874,11 +889,19 @@ public class Theory {
 				}
 				return mNumericSort;
 			}
+
+			@Override
+			public Term getDefinition(String[] indices, TermVariable[] tvs, Sort resultSort) {
+				/* TODO: Backwards compatibility. Remove when no longer needed */
+				if (mFuncName == "bv2nat") {
+					return term(SMTLIBConstants.UBV_TO_INT, tvs[0]);
+				}
+				return null;
+			}
 		}
 		class Nat2BvFunction extends FunctionSymbolFactory {
 			public Nat2BvFunction(final String name) {
 				super(name);
-				assert name.equals("nat2bv") : "Wrong name: " + name;
 			}
 
 			@Override
@@ -888,6 +911,15 @@ public class Theory {
 					return null;
 				}
 				return mBitVecSort.getSort(indices);
+			}
+
+			@Override
+			public Term getDefinition(String[] indices, TermVariable[] tvs, Sort resultSort) {
+				/* TODO: Backwards compatibility. Remove when no longer needed */
+				if (mFuncName == "nat2bv") {
+					return term(SMTLIBConstants.INT_TO_BV, indices, null, tvs[0]);
+				}
+				return null;
 			}
 		}
 		declareInternalFunctionFactory(new FunctionSymbolFactory("concat") {
@@ -986,11 +1018,28 @@ public class Theory {
 		declareInternalFunctionFactory(new RegularBitVecFunction("bvsge", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 
+		declareInternalFunctionFactory(
+				new RegularBitVecFunction(SMTLIBConstants.BVNEGO, 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(
+				new RegularBitVecFunction(SMTLIBConstants.BVUADDO, 2, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(
+				new RegularBitVecFunction(SMTLIBConstants.BVSADDO, 2, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(
+				new RegularBitVecFunction(SMTLIBConstants.BVUMULO, 2, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(
+				new RegularBitVecFunction(SMTLIBConstants.BVSMULO, 2, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(
+				new RegularBitVecFunction(SMTLIBConstants.BVUSUBO, 2, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(
+				new RegularBitVecFunction(SMTLIBConstants.BVSSUBO, 2, mBooleanSort, FunctionSymbol.INTERNAL));
+		declareInternalFunctionFactory(
+				new RegularBitVecFunction(SMTLIBConstants.BVSDIVO, 2, mBooleanSort, FunctionSymbol.INTERNAL));
+
+		declareInternalFunctionFactory(new Bv2NatFunction(SMTLIBConstants.UBV_TO_INT));
+		declareInternalFunctionFactory(new Bv2NatFunction(SMTLIBConstants.SBV_TO_INT));
+		declareInternalFunctionFactory(new Nat2BvFunction(SMTLIBConstants.INT_TO_BV));
 		declareInternalFunctionFactory(new Bv2NatFunction("bv2nat"));
 		declareInternalFunctionFactory(new Nat2BvFunction("nat2bv"));
-
-
-
 	}
 
 	private void createFloatingPointOperators() {

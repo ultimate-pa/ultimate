@@ -12,7 +12,7 @@
 
 (assert (= (f (f b)) (f (f c))))
 (assert (= (f b) (_ bv1 8)))
-(assert (= (f c) ((_ nat2bv 8) k)))
+(assert (= (f c) ((_ int_to_bv 8) k)))
 (assert (distinct (f (f b)) (f b) b c))
 (assert (= k 257))
 (check-sat)

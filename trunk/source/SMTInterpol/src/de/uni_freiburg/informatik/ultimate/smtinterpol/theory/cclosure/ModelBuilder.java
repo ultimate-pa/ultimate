@@ -185,7 +185,7 @@ public class ModelBuilder {
 					for (final CCTerm member : ccterm.mRepStar.mMembers) {
 						final Term t = member.getFlatTerm();
 						if (t instanceof ApplicationTerm) {
-							if (((ApplicationTerm) t).getFunction().getName().equals("nat2bv")) {
+							if (((ApplicationTerm) t).getFunction().getName().equals(SMTLIBConstants.INT_TO_BV)) {
 								final Term arg = ((ApplicationTerm) t).getParameters()[0];
 								final Rational v = mEvaluator.evaluate(arg, mTheory);
 								assert v.isIntegral();

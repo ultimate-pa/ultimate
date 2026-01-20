@@ -482,7 +482,8 @@ terminal String UNDERSCORE, BANG,
          DIVISIBLEDEF, GTDEF, GEQDEF, TRICHOTOMY, TOTAL, TOTALINT, FARKAS, MULPOS, TOINTHIGH, TOINTLOW,
          MINUSDEF, DIVIDEDEF, POLYADD, POLYMUL, TOREALDEF, DIVLOW, DIVHIGH, MODDEF,
          SELECTSTORE1, SELECTSTORE2, EXTDIFF, CONST,
-         DT_PROJECT, DT_CONS, DT_TESTI, DT_TESTE, DT_EXHAUST, DT_ACYCLIC, DT_MATCH;
+         DT_PROJECT, DT_CONS, DT_TESTI, DT_TESTE, DT_EXHAUST, DT_ACYCLIC, DT_MATCH,
+         BVCONST, BVLITERAL, UBV2INT2BV, INT2UBV2INT;
 
 /* Predefined Keywords */
 terminal String /* attribute */
@@ -498,6 +499,7 @@ non terminal String keyword, symbol, symbol_not_axiom, allsymbol;
 non terminal String keywordAttr;
 non terminal String keywordNoAttr;
 non terminal String index;
+non terminal String bitvecLiteral;
 non terminal IndexedIdentifier identifier, identifierIndexed;
 non terminal Object specConstant;
 non terminal Object sExpr;
@@ -568,6 +570,8 @@ identifierIndexed ::= LPAR UNDERSCORE symbol:id index+:indices RPAR
              {: RESULT = new IndexedIdentifier(id, indices); :};
 identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
            | identifierIndexed;
+
+bitvecLiteral ::= HEXADECIMAL | BINARY;
 
 sort ::= identifier:id {: RESULT = lookupSort(id$, id, emptySortArray); :}
        | LPAR identifier:id sort+:sorts RPAR
@@ -823,6 +827,14 @@ axiom ::= FALSEE {: RESULT = parser.getProofRules().falseElim(); :}
              RESULT = parser.getProofRules().dtAcyclic(t, intpos); :}
         | LPAR DT_MATCH term:t RPAR
           {: RESULT = parser.getProofRules().dtMatch(t); :}
+        | LPAR BVCONST NUMERAL:x NUMERAL:bitLength RPAR
+          {: RESULT = parser.getProofRules().bvConst(x, bitLength); :}
+        | LPAR BVLITERAL bitvecLiteral:x RPAR
+          {: RESULT = parser.getProofRules().bvLiteral(x); :}
+        | LPAR UBV2INT2BV term:t RPAR
+          {: RESULT = parser.getProofRules().ubv2int2bv(t); :}
+        | LPAR INT2UBV2INT NUMERAL:bitLength term:t RPAR
+          {: RESULT = parser.getProofRules().int2ubv2int(bitLength, t); :}
         | LPAR BANG proof:p attribute+:attr RPAR
           {: RESULT = p; :}
         ;

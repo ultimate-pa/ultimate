@@ -196,6 +196,12 @@ Keyword = ":" {SMTLetterDigit}+
   "dt-acyclic"           { return symbol(ProofSymbols.DT_ACYCLIC, yytext()); }
   "dt-match"             { return symbol(ProofSymbols.DT_MATCH, yytext()); }
 
+  /* bit-vectors */
+  "bvconst"              { return symbol(ProofSymbols.BVCONST, yytext()); }
+  "bvliteral"            { return symbol(ProofSymbols.BVLITERAL, yytext()); }
+  "ubv2int2bv"           { return symbol(ProofSymbols.UBV2INT2BV, yytext()); }
+  "int2ubv2int"          { return symbol(ProofSymbols.INT2UBV2INT, yytext()); }
+
   /* Predefined Keywords */
   ":named"               { return symbol(ProofSymbols.CNAMED, yytext()); }
   ":pattern"             { return symbol(ProofSymbols.CPATTERN, yytext()); }

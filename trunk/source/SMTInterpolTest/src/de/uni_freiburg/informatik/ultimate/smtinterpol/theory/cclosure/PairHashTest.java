@@ -48,7 +48,7 @@ public final class PairHashTest {
 	CCTerm[] mTerms;
 
 	public PairHashTest() {
-		mTheory = new Theory(Logics.QF_UF);
+		mTheory = new Theory(Logics.valueOf("QF_UF"));
 		final DPLLEngine dpllEngine = new DPLLEngine(new DefaultLogger(), () -> false);
 		final Clausifier clausifier = new Clausifier(mTheory, dpllEngine, ProofMode.NONE);
 		mCClosure = new CClosure(clausifier);

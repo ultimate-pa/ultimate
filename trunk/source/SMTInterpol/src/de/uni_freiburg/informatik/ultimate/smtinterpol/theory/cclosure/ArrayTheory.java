@@ -789,6 +789,12 @@ public class ArrayTheory implements ITheory {
 
 	@Override
 	public Literal getSuggestion() {
+		for (final ArrayLemma lemma : mPropClauses) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("AL suggest: " + lemma);
+			}
+			return lemma.mUndecidedLits.iterator().next();
+		}
 		return null;
 	}
 

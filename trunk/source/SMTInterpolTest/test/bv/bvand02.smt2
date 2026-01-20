@@ -11,5 +11,4 @@
 
 (assert (not (= a #x56781234)))
 (check-sat)
-(set-option :print-terms-cse false)
 (get-proof)

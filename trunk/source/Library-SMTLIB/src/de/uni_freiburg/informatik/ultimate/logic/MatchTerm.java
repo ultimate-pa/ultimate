@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.util.ArrayDeque;
+import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -37,6 +38,30 @@ public class MatchTerm extends Term {
 	private final Term mCases[];
 	private final DataType.Constructor[] mConstructors;
 
+	private final static void checkWellformed(DataType datatype, TermVariable[][] vars,
+			DataType.Constructor[] constructors) {
+		final HashSet<DataType.Constructor> constrMap = new HashSet<DataType.Constructor>(constructors.length);
+		boolean hasDefaultCase = false;
+		for (int i = 0; i < constructors.length; i++) {
+			if (vars[i].length != (constructors[i] == null ? 1 : constructors[i].getArgumentSorts().length)) {
+				throw new SMTLIBException("Wrong number of variables in match pattern");
+			}
+			if (constructors[i] == null) {
+				hasDefaultCase = true;
+			}
+			constrMap.add(constructors[i]);
+		}
+		if (!hasDefaultCase) {
+			// check that the constructor is exhaustive.
+			final DataType.Constructor[] datatypeCons = datatype.getConstructors();
+			for (int i = 0; i < datatypeCons.length; i++) {
+				if (!constrMap.contains(datatypeCons[i])) {
+					throw new SMTLIBException("Match case missing for constructor: " + datatypeCons[i]);
+				}
+			}
+		}
+	}
+
 	MatchTerm(final int hash, final Term dataArg, final TermVariable[][] vars, final Term[] cases,
 			final DataType.Constructor[] constructors) {
 		super(hash);
@@ -44,6 +69,7 @@ public class MatchTerm extends Term {
 		mVariables = vars;
 		mCases = cases;
 		mConstructors = constructors;
+		checkWellformed((DataType) dataArg.getSort().getSortSymbol(), vars, constructors);
 	}
 
 	@Override
