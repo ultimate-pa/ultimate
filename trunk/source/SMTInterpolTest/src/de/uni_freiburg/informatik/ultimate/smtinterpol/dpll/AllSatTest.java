@@ -38,7 +38,7 @@ public class AllSatTest {
 	public void testAllSat() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
 		solver.setOption(":verbosity", 10);
-		solver.setLogic(Logics.QF_LIA);
+		solver.setLogic(Logics.valueOf("QF_LIA"));
 		final Sort[] empty = new Sort[0];
 		final Sort intSort = solver.sort("Int");
 		solver.declareFun("x", empty, intSort);

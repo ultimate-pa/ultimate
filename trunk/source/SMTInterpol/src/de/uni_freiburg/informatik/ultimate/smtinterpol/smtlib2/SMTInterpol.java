@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap.CopyMode;
@@ -483,6 +484,19 @@ public class SMTInterpol extends NoopScript {
 						if (!mModel.checkTypeValues(mLogger)) {
 							if (mErrorCallback != null) {
 								mErrorCallback.notifyError(ErrorReason.INVALID_MODEL);
+							}
+						}
+						if (!getTheory().getLogic().isQuantified()) {
+							for (final Literal lit : mEngine.getAssertedLiterals()) {
+								// skip named atoms; because of Plaisted-Greenbaum they may be wrong.
+								if (lit.getAtom() instanceof NamedAtom) {
+									continue;
+								}
+								final Term litTerm = lit.getSMTFormula(getTheory());
+								final Term litValue = mModel.evaluate(litTerm);
+								if (litValue != getTheory().mTrue) {
+									mLogger.fatal("Literal %s not satisfied", lit);
+								}
 							}
 						}
 						for (final Term asserted : mAssertions) {

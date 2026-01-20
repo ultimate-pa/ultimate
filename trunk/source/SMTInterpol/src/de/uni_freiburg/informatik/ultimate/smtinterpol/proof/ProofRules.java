@@ -122,6 +122,12 @@ public class ProofRules {
 	public final static String DT_ACYCLIC = "dt-acyclic";
 	public final static String DT_MATCH = "dt-match";
 
+	// axioms for bitvectors
+	public final static String BVCONST = "bvconst";
+	public final static String BVLITERAL = "bvliteral";
+	public final static String INT2UBV2INT = "int2ubv2int";
+	public final static String UBV2INT2BV = "ubv2int2bv";
+
 	/**
 	 * sort name for proofs.
 	 */
@@ -134,6 +140,7 @@ public class ProofRules {
 	public final static String ANNOT_COEFFS = ":coeffs";
 	public final static String ANNOT_DIVISOR = ":divisor";
 	public final static String ANNOT_POS = ":pos";
+	public final static String ANNOT_BVLEN = ":bvlen";
 	public final static String ANNOT_UNIT = ":unit";
 	public final static String ANNOT_DEFINE_FUN = ":define-fun";
 	public final static String ANNOT_DECLARE_FUN = ":declare-fun";
@@ -754,6 +761,35 @@ public class ProofRules {
 		return mTheory.annotatedTerm(annotate(":" + DT_MATCH, new Term[] { matchTerm }), mAxiom);
 	}
 
+	public Term bvConst(final BigInteger constValue, final BigInteger bitLength) {
+		assert constValue.signum() >= 0;
+		assert bitLength.bitCount() <= 32;
+		assert constValue.bitLength() <= bitLength.intValue();
+		final Term constTerm = Rational.valueOf(constValue, BigInteger.ONE).toTerm(mTheory.getNumericSort());
+		return mTheory.annotatedTerm(
+				annotate(":" + BVCONST, constTerm,
+				new Annotation(ANNOT_BVLEN, bitLength.toString())),
+				mAxiom);
+	}
+
+	public Term bvLiteral(final String bvLiteral) {
+		assert bvLiteral.matches("#x[0-9a-fA-F]+") || bvLiteral.matches("#b[01]+");
+		final Term litTerm = bvLiteral.startsWith("#b") ? mTheory.binary(bvLiteral) : mTheory.hexadecimal(bvLiteral);
+		return mTheory.annotatedTerm(annotate(":" + BVLITERAL, litTerm), mAxiom);
+	}
+
+	public Term int2ubv2int(final BigInteger bitLength, final Term natTerm) {
+		assert natTerm.getSort().isInternal() && natTerm.getSort().getName().equals("Int");
+		assert bitLength.bitCount() <= 32;
+		return mTheory.annotatedTerm(
+				annotate(":" + INT2UBV2INT, natTerm, new Annotation(ANNOT_BVLEN, bitLength.toString())), mAxiom);
+	}
+
+	public Term ubv2int2bv(final Term bvTerm) {
+		assert bvTerm.getSort().isBitVecSort();
+		return mTheory.annotatedTerm(annotate(":" + UBV2INT2BV, bvTerm), mAxiom);
+	}
+
 	public static void printProof(final Appendable appender, final Term proof) {
 		new PrintProof().append(appender, proof);
 	}
@@ -1076,7 +1112,8 @@ public class ProofRules {
 					case ":" + ITE1:
 					case ":" + ITE2:
 					case ":" + EQI:
-					case ":" + DISTINCTI: {
+					case ":" + DISTINCTI:
+					case ":" + UBV2INT2BV: {
 						assert annots.length == 1;
 						final Term param = (Term) annots[0].getValue();
 						mTodo.add(")");
@@ -1128,6 +1165,36 @@ public class ProofRules {
 						final Term param = (Term) annots[0].getValue();
 						assert annots.length == 2;
 						assert annots[1].getKey() == ANNOT_POS;
+						mTodo.add(")");
+						mTodo.add(param);
+						mTodo.add(" ");
+						mTodo.add(annots[1].getValue());
+						mTodo.add("(" + annots[0].getKey().substring(1) + " ");
+						return;
+					}
+					case ":" + BVCONST: {
+						final Term param = (Term) annots[0].getValue();
+						assert annots.length == 2;
+						assert annots[1].getKey() == ANNOT_BVLEN;
+						mTodo.add(")");
+						mTodo.add(annots[1].getValue());
+						mTodo.add(" ");
+						mTodo.add(param);
+						mTodo.add("(" + annots[0].getKey().substring(1) + " ");
+						return;
+					}
+					case ":" + BVLITERAL: {
+						final Term param = (Term) annots[0].getValue();
+						assert annots.length == 1;
+						mTodo.add(")");
+						mTodo.add(param);
+						mTodo.add("(" + annots[0].getKey().substring(1) + " ");
+						return;
+					}
+					case ":" + INT2UBV2INT: {
+						final Term param = (Term) annots[0].getValue();
+						assert annots.length == 2;
+						assert annots[1].getKey() == ANNOT_BVLEN;
 						mTodo.add(")");
 						mTodo.add(param);
 						mTodo.add(" ");

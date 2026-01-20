@@ -28,7 +28,7 @@ public class LetTest {
 
 	@Test
 	public void testNoLet() {
-		final Theory theory = new Theory(Logics.AUFLIA);
+		final Theory theory = new Theory(Logics.valueOf("AUFLIA"));
 		final Sort intSort = theory.getNumericSort();
 		theory.declareFunction("i", Script.EMPTY_SORT_ARRAY, intSort);
 		theory.declareFunction("j", Script.EMPTY_SORT_ARRAY, intSort);
@@ -45,7 +45,7 @@ public class LetTest {
 
 	@Test
 	public void testArith() {
-		final Theory theory = new Theory(Logics.AUFLIA);
+		final Theory theory = new Theory(Logics.valueOf("AUFLIA"));
 		final Sort intSort = theory.getNumericSort();
 		theory.declareFunction("i", Script.EMPTY_SORT_ARRAY, intSort);
 		theory.declareFunction("j", Script.EMPTY_SORT_ARRAY, intSort);
@@ -61,7 +61,7 @@ public class LetTest {
 
 	@Test
 	public void testLet() {
-		final Theory theory = new Theory(Logics.AUFLIA);
+		final Theory theory = new Theory(Logics.valueOf("AUFLIA"));
 		final Sort intSort = theory.getNumericSort();
 		theory.declareFunction("i", Script.EMPTY_SORT_ARRAY, intSort);
 		theory.declareFunction("j", Script.EMPTY_SORT_ARRAY, intSort);
@@ -92,7 +92,7 @@ public class LetTest {
 
 	@Test
 	public void testStuff() {
-		final Theory theory = new Theory(Logics.QF_UF);
+		final Theory theory = new Theory(Logics.valueOf("QF_UF"));
 		theory.declareSort("U", 0);
 		final Sort u = theory.getSort("U");
 		final Sort[] unary = { u };
@@ -138,7 +138,7 @@ public class LetTest {
 
 	@Test
 	public void testScope() {
-		final Theory theory = new Theory(Logics.AUFLIA);
+		final Theory theory = new Theory(Logics.valueOf("AUFLIA"));
 		theory.declareSort("U", 0);
 		final Sort u = theory.getSort("U");
 		final Sort[] unary = { u };

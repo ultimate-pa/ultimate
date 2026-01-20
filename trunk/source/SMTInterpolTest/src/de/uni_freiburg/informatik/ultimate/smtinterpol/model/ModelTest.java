@@ -31,7 +31,6 @@ import org.junit.runners.JUnit4;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
@@ -60,7 +59,7 @@ public class ModelTest implements SMTLIBConstants {
 		return (ConstantTerm) model.evaluate(term);
 	}
 
-	private Script setupScript(final Logics logic) {
+	private Script setupScript(final String logic) {
 		final Script res = new SMTInterpol(new DefaultLogger());
 		res.setOption(":produce-models", true);
 		res.setLogic(logic);
@@ -69,7 +68,7 @@ public class ModelTest implements SMTLIBConstants {
 
 	@Test
 	public void testBoolean() {
-		final Script script = setupScript(Logics.QF_UF);
+		final Script script = setupScript("QF_UF");
 		final Term[] boolTerms = new Term[mBooleanNames.length];
 		final Sort bool = script.sort("Bool");
 		int p = -1;
@@ -170,9 +169,9 @@ public class ModelTest implements SMTLIBConstants {
 
 	@Test
 	public void testLIA() {
-		final Script script = setupScript(Logics.QF_LIA);
-		final Term[] intTerms = new Term[mVarNames.length];
+		final Script script = setupScript("QF_LIA");
 		final Sort intSort = script.sort("Int");
+		final Term[] intTerms = new Term[mVarNames.length];
 		int p = -1;
 		for (final String name : mVarNames) {
 			script.declareFun(name, Script.EMPTY_SORT_ARRAY, intSort);
@@ -270,7 +269,7 @@ public class ModelTest implements SMTLIBConstants {
 
 	@Test
 	public void testLIRA() {
-		final Script script = setupScript(Logics.QF_UFLIRA);
+		final Script script = setupScript("QF_UFLIRA");
 		final LBool isSat = script.checkSat();
 		Assert.assertEquals(LBool.SAT, isSat);
 		final Model model = script.getModel();
@@ -293,7 +292,7 @@ public class ModelTest implements SMTLIBConstants {
 		// care about the types, we don't have to repeat the simple tests here
 		// New tests needed for /, infinitesimal elements, and tableau
 		// simplification
-		final Script script = setupScript(Logics.QF_LRA);
+		final Script script = setupScript("QF_LRA");
 		final Term[] realTerms = new Term[mVarNames.length];
 		final Sort realSort = script.sort("Real");
 		int p = -1;
@@ -338,7 +337,7 @@ public class ModelTest implements SMTLIBConstants {
 
 	@Test
 	public void testShared() {
-		final Script script = setupScript(Logics.QF_UFLIA);
+		final Script script = setupScript("QF_UFLIA");
 		final Sort intSort = script.sort("Int");
 		script.declareFun("f", new Sort[] { intSort }, intSort);
 		script.declareFun("x", Script.EMPTY_SORT_ARRAY, intSort);
@@ -372,7 +371,7 @@ public class ModelTest implements SMTLIBConstants {
 
 	@Test
 	public void testTermITE() {
-		final Script script = setupScript(Logics.QF_UF);
+		final Script script = setupScript("QF_UF");
 		final Term[] boolTerms = new Term[mBooleanNames.length];
 		final Sort bool = script.sort("Bool");
 		int p = -1;
@@ -406,7 +405,7 @@ public class ModelTest implements SMTLIBConstants {
 
 	@Test
 	public void testUF() {
-		final Script script = setupScript(Logics.QF_UF);
+		final Script script = setupScript("QF_UF");
 		script.declareSort("U", 0);
 		final Sort u = script.sort("U");
 		script.declareSort("V", 0);
@@ -464,7 +463,7 @@ public class ModelTest implements SMTLIBConstants {
 
 	@Test
 	public void testValuation() {
-		final Script script = setupScript(Logics.QF_LIA);
+		final Script script = setupScript("QF_LIA");
 		final Term[] intTerms = new Term[mVarNames.length];
 		final Sort intSort = script.sort("Int");
 		int p = -1;
@@ -539,7 +538,7 @@ public class ModelTest implements SMTLIBConstants {
 
 	@Test
 	public void testBitVecDivision() {
-		final Script script = setupScript(Logics.QF_BV);
+		final Script script = setupScript("QF_BV");
 		final LBool isSat = script.checkSat();
 		final Sort bvSort = script.sort(BITVEC, new String[] { "8" });
 		Assert.assertEquals(LBool.SAT, isSat);

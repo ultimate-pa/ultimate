@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.ProofMode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.bitvector.BvToIntUtils;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
@@ -1089,9 +1090,9 @@ public class Clausifier {
 					} else if (fs.getName().equals(SMTInterpolConstants.DIFF)) {
 						addDiffAxiom(at, source);
 						mArrayTheory.notifyDiff((CCAppTerm) ccTerm);
-					} else if (fs.getName().equals("bv2nat")) {
+					} else if (fs.getName().equals(SMTLIBConstants.UBV_TO_INT)) {
 						addBv2NatAxioms(at, ccTerm, source);
-					} else if (fs.getName().equals("nat2bv")) {
+					} else if (fs.getName().equals(SMTLIBConstants.INT_TO_BV)) {
 						addNat2BvAxiom(at, ccTerm, source);
 					}
 				}
@@ -1164,30 +1165,21 @@ public class Clausifier {
 	 * Adds the Axiom that nat2bv(x) equals x mod width Thereby gives an interpretation for nat2bv
 	 */
 	private void addNat2BvAxiom(final ApplicationTerm at, final CCTerm ccTerm, final SourceAnnotation source) {
-		assert at.getFunction().getName() == SMTInterpolConstants.NAT2BV;
+		assert at.getFunction().getName() == SMTLIBConstants.INT_TO_BV;
 		final Term arg = at.getParameters()[0];
-		if (TermUtils.isApplication(SMTInterpolConstants.BV2NAT, arg)
+		if (TermUtils.isApplication(SMTLIBConstants.UBV_TO_INT, arg)
 				&& ((ApplicationTerm) arg).getParameters()[0].getSort() == at.getSort()) {
 			final Term argarg = ((ApplicationTerm) arg).getParameters()[0];
 			final Term axiom = mTheory.term("=", at, argarg);
-			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_BV2NAT2BV), source);
+			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_UBV2INT2BV), source);
 		} else {
 			// nat2bv(n) = nat2bv(n mod 2^bvlen)
 			final int width = Integer.valueOf(at.getSort().getIndices()[0]);
 			final Rational modulus = Rational.valueOf(BigInteger.ONE.shiftLeft(width), BigInteger.ONE);
-			final Term mod = normalizeMod(at.getParameters()[0], modulus);
+			final Term mod = mBvToIntUtils.normalizeMod(at.getParameters()[0], modulus);
 			final Term axiom = mTheory.term("=", at, mTheory.term(at.getFunction(), mod));
-			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_NAT2BV), source);
+			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_INT2BV), source);
 		}
-	}
-
-	private Term normalizeMod(final Term lhs, final Rational maxNumber) {
-		final Term rhs = mTheory.rational(maxNumber, mTheory.getSort(SMTLIBConstants.INT));
-		final SMTAffineTerm arg0 = new SMTAffineTerm(lhs);
-		arg0.mod(maxNumber);
-		final Term div = mTheory.term("div", arg0.toTerm(mTheory.getSort(SMTLIBConstants.INT)), rhs);
-		arg0.add(maxNumber.negate(), div);
-		return arg0.toTerm(rhs.getSort());
 	}
 
 	/*
@@ -1196,18 +1188,18 @@ public class Clausifier {
 	 * At this point, we assume that the parameter of bv2nat can only be an uninterpreted function symbol.
 	 */
 	private void addBv2NatAxioms(final ApplicationTerm at, final CCTerm ccTerm, final SourceAnnotation source) {
-		assert at.getFunction().getName() == SMTInterpolConstants.BV2NAT;
+		assert at.getFunction().getName() == SMTLIBConstants.UBV_TO_INT;
 		final int width = Integer.valueOf(at.getParameters()[0].getSort().getIndices()[0]);
 		// maxNumber = 2 ^ width
 		final Rational modulus = Rational.valueOf(BigInteger.ONE.shiftLeft(width), BigInteger.ONE);
 
 		final Term arg = at.getParameters()[0];
-		if (TermUtils.isApplication(SMTInterpolConstants.NAT2BV, arg)) {
+		if (TermUtils.isApplication(SMTLIBConstants.INT_TO_BV, arg)) {
 			// bv2nat nat2bv n == n mod maxNumber
 
-			final Term mod = normalizeMod(((ApplicationTerm) arg).getParameters()[0], modulus);
+			final Term mod = mBvToIntUtils.normalizeMod(((ApplicationTerm) arg).getParameters()[0], modulus);
 			final Term axiom = mTheory.term("=", at, mod);
-			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_NAT2BV), source);
+			buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_INT2UBV2INT), source);
 		} else {
 			// 0 <= bv2nat b < maxNumber
 			final Sort intSort = mTheory.getSort(SMTLIBConstants.INT);
@@ -1219,8 +1211,8 @@ public class Clausifier {
 			final Term axiomLowerBound2 = mTheory.term("<=", leq0LowerBound.toTerm(intSort), zero);
 			final Term axiomUpperBound2 = mTheory.term("<=", leq0UpperBound.toTerm(intSort), zero);
 
-			buildClause(mTracker.tautology(axiomLowerBound2, ProofConstants.TAUT_BV2NATLOW), source);
-			buildClause(mTracker.tautology(axiomUpperBound2, ProofConstants.TAUT_BV2NATHIGH), source);
+			buildClause(mTracker.tautology(axiomLowerBound2, ProofConstants.TAUT_UBV2INTLOW), source);
+			buildClause(mTracker.tautology(axiomUpperBound2, ProofConstants.TAUT_UBV2INTHIGH), source);
 		}
 	}
 
@@ -1231,9 +1223,9 @@ public class Clausifier {
 	 * But only for bitvectors a that are not nat2bv terms themselves.
 	 */
 	private void addBitvectorAxiom(final Term term, final CCTerm ccTerm, final SourceAnnotation source) {
-		if (TermUtils.isApplication(SMTInterpolConstants.NAT2BV, term)) {
+		if (TermUtils.isApplication(SMTLIBConstants.INT_TO_BV, term)) {
 			final Term arg = ((ApplicationTerm) term).getParameters()[0];
-			if (TermUtils.isApplication(SMTInterpolConstants.BV2NAT, arg)
+			if (TermUtils.isApplication(SMTLIBConstants.UBV_TO_INT, arg)
 					&& ((ApplicationTerm) arg).getParameters()[0].getSort() == term.getSort()) {
 				// this is a nat2bv(bv2nat(x)) term with matching sorts.
 				// We don't do anything.
@@ -1242,11 +1234,11 @@ public class Clausifier {
 
 			// this is a nat2bv(y) term but y is not a matching bv2nat. Create the matching
 			// bv2nat term.
-			buildCCTerm(term.getTheory().term(SMTInterpolConstants.BV2NAT, term), source);
+			buildCCTerm(term.getTheory().term(SMTLIBConstants.UBV_TO_INT, term), source);
 		} else {
 			// Not a nat2bv bitvector term. Create nat2bv(bv2nat(term)).
-			final Term bv2nat = term.getTheory().term(SMTInterpolConstants.BV2NAT, term);
-			buildCCTerm(term.getTheory().term(SMTInterpolConstants.NAT2BV, term.getSort().getIndices(), null, bv2nat),
+			final Term bv2nat = term.getTheory().term(SMTLIBConstants.UBV_TO_INT, term);
+			buildCCTerm(term.getTheory().term(SMTLIBConstants.INT_TO_BV, term.getSort().getIndices(), null, bv2nat),
 					source);
 		}
 	}
@@ -1395,8 +1387,8 @@ public class Clausifier {
 			case SMTLIBConstants.CONST:
 			case "@EQ":
 			case "is":
-			case "bv2nat":
-			case "nat2bv":
+			case SMTLIBConstants.UBV_TO_INT:
+			case SMTLIBConstants.INT_TO_BV:
 				return true;
 			case "div":
 			case "mod":
@@ -1571,6 +1563,7 @@ public class Clausifier {
 	 */
 	private final IProofTracker mTracker;
 	private final LogicSimplifier mUtils;
+	private final BvToIntUtils mBvToIntUtils;
 
 	final static ILiteral mTRUE = new TrueLiteral();
 	final static ILiteral mFALSE = new FalseLiteral();
@@ -1582,7 +1575,8 @@ public class Clausifier {
 		mTracker = proofLevel == ProofMode.NONE || proofLevel == ProofMode.CLAUSES ? new NoopProofTracker()
 				: new ProofTracker(theory);
 		mUtils = new LogicSimplifier(mTracker);
-		mCompiler.setProofTracker(mTracker);
+		mBvToIntUtils = new BvToIntUtils(theory, mTracker, true);
+		mCompiler.setProofTracker(mTracker, mUtils, mBvToIntUtils);
 	}
 
 	public void setAssignmentProduction(final boolean on) {

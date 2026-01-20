@@ -474,9 +474,21 @@ public interface Script {
 	 */
 	public Term quantifier(int quantor, TermVariable[] vars, Term body,
 			Term[]... patterns) throws SMTLIBException;
+	
 	/**
-	 * Create a let term.  Note that you have to provide exactly as many
-	 * variables as you provide values.
+	 * Create a lambda term.
+	 *
+	 * @param vars The variables.
+	 * @param body The body of the quantified formula.
+	 * @return The lambda term.
+	 * @throws SMTLIBException If an error occurred.
+	 */
+	public Term lambda(TermVariable[] vars, Term body) throws SMTLIBException;
+
+	/**
+	 * Create a let term. Note that you have to provide exactly as many variables as
+	 * you provide values.
+	 *
 	 * @param vars   Variables bound by a let.
 	 * @param values Values for these variables.
 	 * @param body   Body of the let term.

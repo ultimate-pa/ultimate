@@ -288,7 +288,7 @@ public class CutCreator {
 			String plus = "";
 			for (int i = 0; i < mIndices.length; i++) {
 				sb.append(plus).append(mCoeffs[i])
-					.append(" * (").append(mIndices[i]).append(')');
+						.append(" * (").append(mIndices[i].mMatrixpos).append(')');
 				plus = " + ";
 			}
 			return sb.toString();

@@ -49,7 +49,7 @@ public final class IntDivideTest {
 	ArrayList<Literal[]> mClauses = new ArrayList<>();
 
 	public IntDivideTest() {
-		mTheory = new Theory(Logics.QF_UFLIRA);
+		mTheory = new Theory(Logics.valueOf("QF_UFLIRA"));
 		final DPLLEngine dpllEngine = new DPLLEngine(new DefaultLogger(), () -> false);
 		mClausifier = new Clausifier(mTheory, dpllEngine, ProofMode.NONE) {
 			@Override
@@ -57,7 +57,7 @@ public final class IntDivideTest {
 				mClauses.add(lits);
 			}
 		};
-		mClausifier.setLogic(Logics.QF_UFLIRA);
+		mClausifier.setLogic(Logics.valueOf("QF_UFLIRA"));
 
 		final Sort[] empty = new Sort[0];
 		mIntSort = mTheory.getSort("Int");
