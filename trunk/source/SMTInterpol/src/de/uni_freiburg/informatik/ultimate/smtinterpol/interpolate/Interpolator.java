@@ -366,7 +366,7 @@ public class Interpolator extends NonRecursive {
 			case ":dt-cases":
 			case ":dt-cycle":
 			case ":dt-disjoint":
-			case ":dt-injective": 
+			case ":dt-injective":
 			case ":dt-constructor":
 			case ":dt-tester":
 			case ":dt-unique": {

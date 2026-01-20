@@ -85,10 +85,8 @@ public class ProofSimplifier extends TermTransformer {
 	/**
 	 * Create a proof checker.
 	 *
-	 * @param script
-	 *            An SMT2 script.
-	 * @param logger
-	 *            The logger where errors are reported.
+	 * @param script An SMT2 script.
+	 * @param logger The logger where errors are reported.
 	 */
 	public ProofSimplifier(final Script script) {
 		mSkript = script;
@@ -141,12 +139,10 @@ public class ProofSimplifier extends TermTransformer {
 	/**
 	 * Extend a proof to eliminate not terms from the given candidateTerm
 	 *
-	 * @param proof
-	 *            the current proof
-	 * @param candidateTerm
-	 *            the literal occurring in the proved clause
-	 * @param positive
-	 *            true iff the literal is expected to occur positive in the clause
+	 * @param proof         the current proof
+	 * @param candidateTerm the literal occurring in the proved clause
+	 * @param positive      true iff the literal is expected to occur positive in
+	 *                      the clause
 	 * @return the extended proof where the literal is no longer double negated.
 	 */
 	private Term removeNot(Term proof, Term candidateTerm, boolean positive) {
@@ -167,7 +163,7 @@ public class ProofSimplifier extends TermTransformer {
 		final Term goal = iteEquality.getParameters()[1];
 		final ArrayList<Term> intermediates = new ArrayList<>();
 		final ArrayList<Term> proofs = new ArrayList<>();
-		final HashMap<Term,ProofLiteral> conditionLits = new HashMap<>();
+		final HashMap<Term, ProofLiteral> conditionLits = new HashMap<>();
 		for (int i = 0; i < clause.length - 1; i++) {
 			conditionLits.put(clause[i].getAtom(), clause[i]);
 		}
@@ -318,12 +314,14 @@ public class ProofSimplifier extends TermTransformer {
 					final ApplicationTerm subIteTerm = (ApplicationTerm) candidate;
 					iteArgs = subIteTerm.getParameters();
 					if (!visited.contains(iteArgs[1]) || !visited.contains(iteArgs[2])) {
-						// if children have not been visited yet, visit them first, then visit ite again.
+						// if children have not been visited yet, visit them first, then visit ite
+						// again.
 						todo.addLast(candidate);
 						todo.addLast(iteArgs[1]);
 						todo.addLast(iteArgs[2]);
 					} else {
-						// children already visited.  Add candidate to subIteTerms in reverse order and visit it.
+						// children already visited. Add candidate to subIteTerms in reverse order and
+						// visit it.
 						// this way children are guaranteed to appear after parents.
 						subIteTerms.addFirst(subIteTerm);
 						visited.add(candidate);
@@ -412,8 +410,8 @@ public class ProofSimplifier extends TermTransformer {
 				newLeaf = newSum.toTerm(leaf.getSort());
 				if (rhs != newLeaf) {
 					proof = res(theory.term(SMTLIBConstants.EQUALS, mulIte, rhs), proof,
-							res(theory.term(SMTLIBConstants.EQUALS, rhs, newLeaf),
-								mProofRules.polyMul(rhs, newLeaf), mProofRules.trans(mulIte, rhs, newLeaf)));
+							res(theory.term(SMTLIBConstants.EQUALS, rhs, newLeaf), mProofRules.polyMul(rhs, newLeaf),
+									mProofRules.trans(mulIte, rhs, newLeaf)));
 				}
 				eq = theory.term(SMTLIBConstants.EQUALS, mulIte, newLeaf);
 			}
@@ -433,8 +431,8 @@ public class ProofSimplifier extends TermTransformer {
 				newLeaf = newSum.toTerm(leaf.getSort());
 				if (rhs != newLeaf) {
 					proof = res(theory.term(SMTLIBConstants.EQUALS, leqArgs[0], rhs), proof,
-							res(theory.term(SMTLIBConstants.EQUALS, rhs, newLeaf),
-									mProofRules.polyAdd(rhs, newLeaf), mProofRules.trans(leqArgs[0], rhs, newLeaf)));
+							res(theory.term(SMTLIBConstants.EQUALS, rhs, newLeaf), mProofRules.polyAdd(rhs, newLeaf),
+									mProofRules.trans(leqArgs[0], rhs, newLeaf)));
 				}
 				eq = theory.term(SMTLIBConstants.EQUALS, leqArgs[0], newLeaf);
 			}
@@ -450,7 +448,8 @@ public class ProofSimplifier extends TermTransformer {
 			proof = res(newLt, proof, mProofRules.farkas(new Term[] { newLt }, new BigInteger[] { BigInteger.ONE }));
 		}
 
-		// Now we have a proof for ~(< 0 leqArgs[0]); finish using total and reflexivity.
+		// Now we have a proof for ~(< 0 leqArgs[0]); finish using total and
+		// reflexivity.
 		proof = res(theory.term(lt, leqArgs[1], leqArgs[0]), mProofRules.total(leqArgs[0], leqArgs[1]), proof);
 		for (final Term t : neededRefls) {
 			proof = res(theory.term(SMTLIBConstants.EQUALS, t, t), mProofRules.refl(t), proof);
@@ -495,8 +494,7 @@ public class ProofSimplifier extends TermTransformer {
 		final Term quantChoose = theory.term(qFunc, chooseTerms);
 		final Term quantSkolem = theory.term(qFunc, skolemFuns);
 		final Term subSkolem = unletter.unlet(mSkript.let(vars, skolemFuns, qf.getSubformula()));
-		Term transProof = res(
-				theory.term(SMTLIBConstants.EQUALS, quantSkolem, subSkolem),
+		Term transProof = res(theory.term(SMTLIBConstants.EQUALS, quantSkolem, subSkolem),
 				mProofRules.expand(quantSkolem),
 				res(theory.term(SMTLIBConstants.EQUALS, subSkolem, quantSkolem),
 						mProofRules.symm(subSkolem, quantSkolem),
@@ -811,7 +809,8 @@ public class ProofSimplifier extends TermTransformer {
 		final Term arrEq = clause[0].getAtom();
 		assert isApplication("=", arrEq);
 		final Term[] arrays = ((ApplicationTerm) arrEq).getParameters();
-		// we could check the second equality, but the proof check in tautology will catch any problems
+		// we could check the second equality, but the proof check in tautology will
+		// catch any problems
 		return mProofRules.extDiff(arrays[0], arrays[1]);
 	}
 
@@ -881,7 +880,8 @@ public class ProofSimplifier extends TermTransformer {
 		assert clause[clause.length - 1].getPolarity() != isHigh;
 		// isLow: (= d 0), (<= (+ (- arg0) (* d candidate) ) 0)
 		// aka. (= d 0) or (>= (- arg0 (* d candidate)) 0)
-		// isHigh: (not (<= (+ d (-1)) 0)), (not (<= (+ (- arg0) (* d candidate) (- d)) 0)
+		// isHigh: (not (<= (+ d (-1)) 0)), (not (<= (+ (- arg0) (* d candidate) (- d))
+		// 0)
 		// or (<= d 0), (not (<= (+ (- arg0) (* d candidate) d) 0)
 		// aka. (< d 0) => (< (- arg0 (* d candidate)) (- d))
 		// or (> d 0) => (< (- arg0 (* d candidate)) d)
@@ -925,15 +925,13 @@ public class ProofSimplifier extends TermTransformer {
 		Term proof;
 		switch (ruleName) {
 		case ":toIntLow": {
-			axiomTerm = theory.term(SMTLIBConstants.LEQ,
-					theory.term(SMTLIBConstants.TO_REAL, divTerm), args[0]);
+			axiomTerm = theory.term(SMTLIBConstants.LEQ, theory.term(SMTLIBConstants.TO_REAL, divTerm), args[0]);
 			proof = mProofRules.toIntLow(args[0]);
 			break;
 		}
 		case ":toIntHigh": {
-			axiomTerm = theory.term(SMTLIBConstants.LT, args[0],
-					theory.term(SMTLIBConstants.PLUS, theory.term(SMTLIBConstants.TO_REAL, divTerm),
-							Rational.ONE.toTerm(args[0].getSort())));
+			axiomTerm = theory.term(SMTLIBConstants.LT, args[0], theory.term(SMTLIBConstants.PLUS,
+					theory.term(SMTLIBConstants.TO_REAL, divTerm), Rational.ONE.toTerm(args[0].getSort())));
 			proof = mProofRules.toIntHigh(args[0]);
 			break;
 		}
@@ -971,21 +969,19 @@ public class ProofSimplifier extends TermTransformer {
 			if (realPlusTerm != plusTerm) {
 				final Term mixPlusTerm = theory.term(SMTLIBConstants.PLUS, mulTerm, realAbsTerm);
 				final Term eqMulProof = mProofRules.polyMul(realMulTerm, mulTerm);
-				Term eqPlusProof =
-						res(theory.term(SMTLIBConstants.EQUALS, realMulTerm, mulTerm), eqMulProof,
+				Term eqPlusProof = res(theory.term(SMTLIBConstants.EQUALS, realMulTerm, mulTerm), eqMulProof,
 						res(theory.term(SMTLIBConstants.EQUALS, realAbsTerm, realAbsTerm),
-										mProofRules.refl(realAbsTerm), mProofRules.cong(realPlusTerm, mixPlusTerm)));
-				if (mixPlusTerm != plusTerm ) {
+								mProofRules.refl(realAbsTerm), mProofRules.cong(realPlusTerm, mixPlusTerm)));
+				if (mixPlusTerm != plusTerm) {
 					final Term polyPlusProof = mProofRules.polyAdd(mixPlusTerm, plusTerm);
 					final Term eqTrans = mProofRules.trans(realPlusTerm, mixPlusTerm, plusTerm);
-					eqPlusProof =
-						res(theory.term(SMTLIBConstants.EQUALS, realPlusTerm, mixPlusTerm), eqPlusProof,
+					eqPlusProof = res(theory.term(SMTLIBConstants.EQUALS, realPlusTerm, mixPlusTerm), eqPlusProof,
 							res(theory.term(SMTLIBConstants.EQUALS, mixPlusTerm, plusTerm), polyPlusProof, eqTrans));
 				}
 				final Term newAxiomTerm = theory.term(SMTLIBConstants.LT, args[0], plusTerm);
 				final Term iffAxiom = theory.term(SMTLIBConstants.EQUALS, axiomTerm, newAxiomTerm);
 				final Term iffProof = res(theory.term(SMTLIBConstants.EQUALS, realPlusTerm, plusTerm), eqPlusProof,
-							res(theory.term(SMTLIBConstants.EQUALS, args[0], args[0]), mProofRules.refl(args[0]),
+						res(theory.term(SMTLIBConstants.EQUALS, args[0], args[0]), mProofRules.refl(args[0]),
 								mProofRules.cong(axiomTerm, newAxiomTerm)));
 				proof = res(axiomTerm, proof, res(iffAxiom, iffProof, mProofRules.iffElim2(iffAxiom)));
 				axiomTerm = newAxiomTerm;
@@ -1012,13 +1008,14 @@ public class ProofSimplifier extends TermTransformer {
 				absD = args[1];
 			}
 			final Term absDivisor = theory.term(SMTLIBConstants.EQUALS, realAbsD, absD);
-			proof = res(axiomTerm, proof,
-					mProofRules.farkas(new Term[] { realAtom, axiomTerm, absDivisor },
-							new BigInteger[] { BigInteger.ONE, BigInteger.ONE, BigInteger.ONE }));
+			proof = res(axiomTerm, proof, mProofRules.farkas(new Term[] { realAtom, axiomTerm, absDivisor },
+					new BigInteger[] { BigInteger.ONE, BigInteger.ONE, BigInteger.ONE }));
 			if (d.isConstant()) {
-				proof = res(theory.term(SMTLIBConstants.EQUALS, realAbsD, absD), proveAbsConstant(ratD, args[1].getSort()), proof);
+				proof = res(theory.term(SMTLIBConstants.EQUALS, realAbsD, absD),
+						proveAbsConstant(ratD, args[1].getSort()), proof);
 			} else {
-				proof = res(theory.term(SMTLIBConstants.EQUALS, realAbsD, absD), proveAbsEquality(args[1], absD), proof);
+				proof = res(theory.term(SMTLIBConstants.EQUALS, realAbsD, absD), proveAbsEquality(args[1], absD),
+						proof);
 				final Term zero = Rational.ZERO.toTerm(args[1].getSort());
 				final Term ltDZero = theory.term(SMTLIBConstants.LT, args[1], zero);
 				final Term eqDZero = theory.term(SMTLIBConstants.EQUALS, args[1], zero);
@@ -1029,22 +1026,18 @@ public class ProofSimplifier extends TermTransformer {
 					proof = res(eqDZero, proof, mProofRules.symm(zero, args[1]));
 					final Term leqZeroD = theory.term(SMTLIBConstants.LEQ, zero, args[1]);
 					final Term eqZeroD = theory.term(SMTLIBConstants.EQUALS, zero, args[1]);
-					proof = res(leqZeroD, proof,
-							mProofRules.farkas(new Term[] { leqZeroD, leqAtom },
-									new BigInteger[] { BigInteger.ONE, BigInteger.ONE }));
-					proof = res(eqZeroD, proof,
-							mProofRules.farkas(new Term[] { eqZeroD, leqAtom },
-									new BigInteger[] { BigInteger.ONE, BigInteger.ONE }));
+					proof = res(leqZeroD, proof, mProofRules.farkas(new Term[] { leqZeroD, leqAtom },
+							new BigInteger[] { BigInteger.ONE, BigInteger.ONE }));
+					proof = res(eqZeroD, proof, mProofRules.farkas(new Term[] { eqZeroD, leqAtom },
+							new BigInteger[] { BigInteger.ONE, BigInteger.ONE }));
 				} else {
 					assert clause.length == 2 && clause[0].getPolarity();
 					assert clause[0].getAtom() == theory.term(SMTLIBConstants.LEQ, args[1], zero);
 					final Term ltZeroD = theory.term(SMTLIBConstants.LT, zero, args[1]);
-					proof = res(eqDZero, proof,
-							mProofRules.farkas(new Term[] { ltZeroD, eqDZero },
-									new BigInteger[] { BigInteger.ONE, BigInteger.ONE }));
-					proof = res(ltDZero, proof,
-							mProofRules.farkas(new Term[] { ltZeroD, ltDZero },
-									new BigInteger[] { BigInteger.ONE, BigInteger.ONE }));
+					proof = res(eqDZero, proof, mProofRules.farkas(new Term[] { ltZeroD, eqDZero },
+							new BigInteger[] { BigInteger.ONE, BigInteger.ONE }));
+					proof = res(ltDZero, proof, mProofRules.farkas(new Term[] { ltZeroD, ltDZero },
+							new BigInteger[] { BigInteger.ONE, BigInteger.ONE }));
 					proof = res(ltZeroD, mProofRules.total(args[1], zero), proof);
 				}
 			}
@@ -1105,7 +1098,7 @@ public class ProofSimplifier extends TermTransformer {
 		for (caseNr = 0; caseNr < constrs.length; caseNr++) {
 			if (isMatchCase ? constrs[caseNr].getName().equals(isTerm.getFunction().getIndices()[0])
 					: constrs[caseNr] == null) {
-					break;
+				break;
 			}
 		}
 		final Theory theory = matchTerm.getTheory();
@@ -1164,6 +1157,139 @@ public class ProofSimplifier extends TermTransformer {
 			proof = res(matchEq, proof, (negated ? mProofRules.iffElim2(matchEq) : mProofRules.iffElim1(matchEq)));
 			proof = removeNot(proof, iteTerm, negated);
 		}
+		return proof;
+	}
+
+	private Term proveInt2Bv2Int(ApplicationTerm int2bv2intTerm, Term goalModTerm) {
+		final Theory theory = int2bv2intTerm.getTheory();
+		final ApplicationTerm bvTerm = (ApplicationTerm) int2bv2intTerm.getParameters()[0];
+		final Term intTerm = bvTerm.getParameters()[0];
+		final String bitLength = bvTerm.getSort().getIndices()[0];
+		final int bitLengthInt = Integer.parseInt(bitLength);
+		final Term bv2intProof = mProofRules.int2ubv2int(BigInteger.valueOf(bitLengthInt), intTerm);
+		final BigInteger pow2 = BigInteger.ONE.shiftLeft(bitLengthInt);
+		final Term pow2Term = theory.constant(Rational.valueOf(pow2, BigInteger.ONE), theory.getNumericSort());
+		final Term modTerm = theory.term(SMTLIBConstants.MOD, intTerm, pow2Term);
+		final Term modProof = convertRewriteNormalizeModulo(modTerm, goalModTerm);
+		final Term eq1 = theory.term(SMTLIBConstants.EQUALS, int2bv2intTerm, modTerm);
+		final Term eq2 = theory.term(SMTLIBConstants.EQUALS, modTerm, goalModTerm);
+		return res(eq1, bv2intProof, res(eq2, modProof, mProofRules.trans(int2bv2intTerm, modTerm, goalModTerm)));
+	}
+
+	private Term convertTautInt2Ubv2Int(final ProofLiteral[] clause) {
+		assert clause.length == 1;
+		final ApplicationTerm goalEq = (ApplicationTerm) clause[0].mAtom;
+		final ApplicationTerm int2bv2intTerm = (ApplicationTerm) goalEq.getParameters()[0];
+		final Term goalModTerm = goalEq.getParameters()[1];
+		return proveInt2Bv2Int(int2bv2intTerm, goalModTerm);
+	}
+
+	private Term convertTautUbv2Int2Bv(final ProofLiteral[] clause) {
+		assert clause.length == 1;
+		return mProofRules.ubv2int2bv(((ApplicationTerm) clause[0].mAtom).getParameters()[1]);
+	}
+
+	private Term convertTautInt2bv(final ProofLiteral[] clause) {
+		assert clause.length == 1;
+		final ApplicationTerm goalEq = (ApplicationTerm) clause[0].mAtom;
+		final Theory theory = goalEq.getTheory();
+		final ApplicationTerm lhsBv = (ApplicationTerm) goalEq.getParameters()[0];
+		final ApplicationTerm rhsBv = (ApplicationTerm) goalEq.getParameters()[1];
+
+		assert isApplication(SMTLIBConstants.INT_TO_BV, lhsBv);
+		assert isApplication(SMTLIBConstants.INT_TO_BV, rhsBv);
+		final Term rhs = rhsBv.getParameters()[0];
+
+		final Term int2bv2int = theory.term(SMTLIBConstants.UBV_TO_INT, lhsBv);
+		final Term int2bv2int2bv = theory.term(lhsBv.getFunction(), int2bv2int);
+		Term proof = res(theory.term(SMTLIBConstants.EQUALS, int2bv2int2bv, lhsBv), mProofRules.ubv2int2bv(lhsBv),
+				mProofRules.symm(lhsBv, int2bv2int2bv));
+		proof = res(theory.term(SMTLIBConstants.EQUALS, lhsBv, int2bv2int2bv), proof,
+				mProofRules.trans(lhsBv, int2bv2int2bv, rhsBv));
+		final Term proof2 = res(theory.term(SMTLIBConstants.EQUALS, int2bv2int, rhs),
+				proveInt2Bv2Int((ApplicationTerm) int2bv2int, rhs), mProofRules.cong(int2bv2int2bv, rhsBv));
+		proof = res(theory.term(SMTLIBConstants.EQUALS, int2bv2int2bv, rhsBv), proof2, proof);
+		return proof;
+	}
+
+	private Term convertTautUbv2IntBound(final ProofLiteral[] clause) {
+		assert clause.length == 1;
+		final ApplicationTerm goalLeq = (ApplicationTerm) clause[0].mAtom;
+		assert isApplication(SMTLIBConstants.LEQ, goalLeq) && isZero(goalLeq.getParameters()[1]);
+		final Term goalLhs = goalLeq.getParameters()[0];
+		final Polynomial leqPoly = new Polynomial(goalLhs);
+		final Rational constant = leqPoly.getConstant();
+		leqPoly.add(constant.negate());
+		assert leqPoly.getSummands().size() == 1;
+		final Map<Term, Integer> monom = leqPoly.getSummands().keySet().iterator().next();
+		assert monom.size() == 1;
+		final Term var = monom.keySet().iterator().next();
+		assert monom.get(var) == 1;
+		assert isApplication(SMTLIBConstants.UBV_TO_INT, var);
+		assert leqPoly.getSummands().get(monom) == (constant.signum() == 0 ? Rational.MONE : Rational.ONE);
+		final ApplicationTerm bv2int = (ApplicationTerm) var;
+		final Sort sort = var.getSort();
+		final Term bv = bv2int.getParameters()[0];
+		final Sort bvSort = bv.getSort();
+		final String bitLengthString = bvSort.getIndices()[0];
+		final int bitLength = Integer.parseInt(bitLengthString);
+		final Rational pow2 = Rational.valueOf(BigInteger.ONE.shiftLeft(bitLength), BigInteger.ONE);
+		final Term pow2Term = pow2.toTerm(sort);
+		final Term zero = Rational.ZERO.toTerm(sort);
+		final Theory theory = bv2int.getTheory();
+		final Term bv2int2bv = theory.term(SMTLIBConstants.INT_TO_BV, bvSort.getIndices(), null, bv2int);
+		final Term bv2int2bv2int = theory.term(SMTLIBConstants.UBV_TO_INT, bv2int2bv);
+		final Term modTerm = theory.term(SMTLIBConstants.MOD, bv2int, pow2Term);
+		final Term divTerm = theory.term(SMTLIBConstants.DIV, bv2int, pow2Term);
+		final Term mulDivTerm = theory.term(SMTLIBConstants.MUL, pow2Term, divTerm);
+		final Term divPlusMod = theory.term(SMTLIBConstants.PLUS, mulDivTerm, modTerm);
+		final Term divModEq = theory.term(SMTLIBConstants.EQUALS, divPlusMod, bv2int);
+		final Term bv2intEqMod = theory.term(SMTLIBConstants.EQUALS, bv2int, modTerm);
+
+		Term proof;
+		if (constant.signum() == 0) {
+			// Low axiom -bv2nat(x) <= 0.
+			final Term newGoal = theory.term(SMTLIBConstants.LT, zero, goalLhs);
+			final Term divLow = theory.term(SMTLIBConstants.LEQ, mulDivTerm, bv2int);
+			final Term divModEqSymm = theory.term(SMTLIBConstants.EQUALS, bv2int, divPlusMod);
+			final Term bv2intEqModSymm = theory.term(SMTLIBConstants.EQUALS, modTerm, bv2int);
+			proof = mProofRules.farkas(new Term[] { newGoal, bv2intEqModSymm, divModEqSymm, divLow },
+					new BigInteger[] { BigInteger.ONE, BigInteger.ONE, BigInteger.ONE, BigInteger.ONE });
+			proof = res(divLow, mProofRules.divLow(bv2int, pow2Term), proof);
+			proof = res(divModEqSymm, mProofRules.symm(bv2int, divPlusMod), proof);
+			proof = res(bv2intEqModSymm, mProofRules.symm(modTerm, bv2int), proof);
+			proof = res(newGoal, mProofRules.total(goalLhs, zero), proof);
+		} else {
+			// High axiom bv2nat(x) - (2^k - 1) <= 0.
+			// prove instead ~(1 <= bv2nat(x) - (2^k -1)).
+
+			final Term newGoal = theory.term(SMTLIBConstants.LEQ, Rational.ONE.toTerm(sort), goalLhs);
+			final Term absPow2Term = theory.term(SMTLIBConstants.ABS, pow2Term);
+			final Term absEq = theory.term(SMTLIBConstants.EQUALS, absPow2Term, pow2Term);
+			final Term mulDivTermPlus = theory.term(SMTLIBConstants.PLUS, mulDivTerm, absPow2Term);
+			final Term divHigh = theory.term(SMTLIBConstants.LT, bv2int, mulDivTermPlus);
+			proof = mProofRules.farkas(new Term[] { newGoal, bv2intEqMod, divModEq, divHigh, absEq },
+					new BigInteger[] { BigInteger.ONE, BigInteger.ONE, BigInteger.ONE, BigInteger.ONE,
+							BigInteger.ONE });
+			proof = res(divHigh, mProofRules.divHigh(bv2int, pow2Term), proof);
+			proof = res(newGoal, mProofRules.totalInt(goalLhs, BigInteger.ZERO), proof);
+			proof = res(absEq, proveAbsConstant(pow2, sort), proof);
+		}
+		final Term bv2intEqbv2int2bv2int = theory.term(SMTLIBConstants.EQUALS, bv2int, bv2int2bv2int);
+		final Term bv2int2bv2intEqMod = theory.term(SMTLIBConstants.EQUALS, bv2int2bv2int, modTerm);
+		final Term bvEqbv2int2bv = theory.term(SMTLIBConstants.EQUALS, bv, bv2int2bv);
+		final Term bv2int2bvEqbv = theory.term(SMTLIBConstants.EQUALS, bv2int2bv, bv);
+		proof = res(bv2intEqMod,
+				res(bv2intEqbv2int2bv2int,
+						res(bvEqbv2int2bv,
+								res(bv2int2bvEqbv, mProofRules.ubv2int2bv(bv), mProofRules.symm(bv, bv2int2bv)),
+								mProofRules.cong(bv2int, bv2int2bv2int)),
+						res(bv2int2bv2intEqMod, mProofRules.int2ubv2int(BigInteger.valueOf(bitLength), bv2int),
+								mProofRules.trans(bv2int, bv2int2bv2int, modTerm))),
+
+				proof);
+		proof = res(divModEq, mProofRules.modDef(bv2int, pow2Term), proof);
+		proof = res(theory.term(SMTLIBConstants.EQUALS, pow2Term, zero), proof, proveTrivialDisequality(pow2Term, zero));
 		return proof;
 	}
 
@@ -1302,6 +1428,19 @@ public class ProofSimplifier extends TermTransformer {
 		case ":matchDefault":
 			proof = convertTautDtMatch(ruleName, clause);
 			break;
+		case ":ubv2int2bv":
+			proof = convertTautUbv2Int2Bv(clause);
+			break;
+		case ":int2ubv2int":
+			proof = convertTautInt2Ubv2Int(clause);
+			break;
+		case ":int2bv":
+			proof = convertTautInt2bv(clause);
+			break;
+		case ":bv2intLow":
+		case ":bv2intHigh":
+			proof = convertTautUbv2IntBound(clause);
+			break;
 		default:
 			throw new IllegalArgumentException("Unknown Tautology");
 		}
@@ -1380,12 +1519,12 @@ public class ProofSimplifier extends TermTransformer {
 		final TermVariable[][] caseVars = new TermVariable[newParams.length - 1][];
 		final Constructor[] constructors = new Constructor[newParams.length - 1];
 		final Term[] rewriteProofs = new Term[newParams.length - 1];
-		for  (int i = 1; i < newParams.length; i++) {
+		for (int i = 1; i < newParams.length; i++) {
 			final AnnotatedTerm caseRewrite = (AnnotatedTerm) newParams[i];
 			final AnnotatedTerm rewrite = (AnnotatedTerm) caseRewrite.getSubterm();
 			final ApplicationTerm caseEquality = (ApplicationTerm) provedTerm(rewrite);
 			assert caseRewrite.getAnnotations()[0].getKey() == ProofConstants.ANNOTKEY_VARS;
-			caseVars[i-1] = (TermVariable[]) caseRewrite.getAnnotations()[0].getValue();
+			caseVars[i - 1] = (TermVariable[]) caseRewrite.getAnnotations()[0].getValue();
 			assert caseRewrite.getAnnotations()[1].getKey() == ProofConstants.ANNOTKEY_CONSTRUCTOR;
 			final String constructorName = (String) caseRewrite.getAnnotations()[1].getValue();
 			oldMatchCases[i - 1] = caseEquality.getParameters()[0];
@@ -1408,12 +1547,11 @@ public class ProofSimplifier extends TermTransformer {
 			final Term newBody = theory.term(bodyFunc, newData);
 			final Term oldOldMatchBodyEq = res(theory.term(SMTLIBConstants.EQUALS, oldBody, oldOldMatch),
 					mProofRules.expand(oldBody), mProofRules.symm(oldOldMatch, oldBody));
-			final Term oldNewBodyEq = res(theory.term(SMTLIBConstants.EQUALS, oldData, newData),
-					subproof(dataRewrite), mProofRules.cong(oldBody, newBody));
+			final Term oldNewBodyEq = res(theory.term(SMTLIBConstants.EQUALS, oldData, newData), subproof(dataRewrite),
+					mProofRules.cong(oldBody, newBody));
 			oldMatchEqualityProof = res(theory.term(SMTLIBConstants.EQUALS, oldOldMatch, oldBody), oldOldMatchBodyEq,
 					res(theory.term(SMTLIBConstants.EQUALS, oldBody, newBody), oldNewBodyEq,
-							res(theory.term(SMTLIBConstants.EQUALS, newBody, oldMatch),
-									mProofRules.expand(newBody),
+							res(theory.term(SMTLIBConstants.EQUALS, newBody, oldMatch), mProofRules.expand(newBody),
 									mProofRules.trans(oldOldMatch, oldBody, newBody, oldMatch))));
 			oldMatchEqualityProof = mProofRules.defineFun(bodyFunc, theory.lambda(bodyVars, bodyDef),
 					oldMatchEqualityProof);
@@ -1465,8 +1603,8 @@ public class ProofSimplifier extends TermTransformer {
 		}
 		iteEqualsProof = new FormulaUnLet().unlet(iteEqualsProof);
 		if (needReflData) {
-			iteEqualsProof = res(theory.term(SMTLIBConstants.EQUALS, newData, newData),
-					mProofRules.refl(newData), iteEqualsProof);
+			iteEqualsProof = res(theory.term(SMTLIBConstants.EQUALS, newData, newData), mProofRules.refl(newData),
+					iteEqualsProof);
 		}
 		final Term iteEquality = theory.term(SMTLIBConstants.EQUALS, oldIte, newIte);
 		Term proof = res(iteEquality, iteEqualsProof, mProofRules.trans(oldMatch, oldIte, newIte, newMatch));
@@ -1524,8 +1662,7 @@ public class ProofSimplifier extends TermTransformer {
 						final Term transitivity = mProofRules.trans(lhs, rhsArgs[0], rhs);
 						proof = mProofRules.resolutionRule(equality1, proof, transitivity);
 						proof = res(theory.term("=", lhs, rhsArgs[0]), res(theory.term("=", rhsArgs[0], lhs),
-												mProofRules.expand(rhsArgs[0]), mProofRules.symm(lhs, rhsArgs[0])),
-										proof);
+								mProofRules.expand(rhsArgs[0]), mProofRules.symm(lhs, rhsArgs[0])), proof);
 					}
 					return proof;
 				}
@@ -1583,9 +1720,8 @@ public class ProofSimplifier extends TermTransformer {
 		if (isTrue) {
 			assert param0.signum() <= 0 && isApplication("true", rhs);
 			final Term falseLhs = lhs.getTheory().term("<", params[1], params[0]);
-			return proveIffTrue(rewrite,
-					mProofRules.resolutionRule(falseLhs, mProofRules.total(params[0], params[1]),
-							mProofRules.farkas(new Term[] { falseLhs }, new BigInteger[] { BigInteger.ONE })));
+			return proveIffTrue(rewrite, mProofRules.resolutionRule(falseLhs, mProofRules.total(params[0], params[1]),
+					mProofRules.farkas(new Term[] { falseLhs }, new BigInteger[] { BigInteger.ONE })));
 		} else {
 			assert param0.signum() > 0 && isApplication("false", rhs);
 			return proveIffFalse(rewrite, mProofRules.farkas(new Term[] { lhs }, new BigInteger[] { BigInteger.ONE }));
@@ -1680,7 +1816,7 @@ public class ProofSimplifier extends TermTransformer {
 		}
 		Term proofLhs = params.length > 2 ? mProofRules.equalsIntro(lhs) : null;
 		for (int i = 0; i < params.length - 1; i++) {
-			final Term equality = theo.term(SMTLIBConstants.EQUALS, params[i], params[i+1]);
+			final Term equality = theo.term(SMTLIBConstants.EQUALS, params[i], params[i + 1]);
 			final Term iffIntro = trueCase ? mProofRules.iffIntro2(equality) : mProofRules.iffIntro1(equality);
 			proofLhs = res(equality, iffIntro, proofLhs);
 		}
@@ -1746,8 +1882,7 @@ public class ProofSimplifier extends TermTransformer {
 			iffIntro1 = mProofRules.resolutionRule(rhs, mProofRules.iffIntro1(rewrite), mProofRules.notElim(rhs));
 			iffIntro2 = mProofRules.resolutionRule(rhs, mProofRules.notIntro(rhs), mProofRules.iffIntro2(rewrite));
 		} else {
-			iffIntro1 = mProofRules.resolutionRule(lhs, mProofRules.distinctIntro(lhs),
-					mProofRules.iffIntro2(rewrite));
+			iffIntro1 = mProofRules.resolutionRule(lhs, mProofRules.distinctIntro(lhs), mProofRules.iffIntro2(rewrite));
 			iffIntro2 = mProofRules.resolutionRule(lhs, mProofRules.iffIntro1(rewrite),
 					mProofRules.distinctElim(0, 1, lhs));
 		}
@@ -1813,10 +1948,8 @@ public class ProofSimplifier extends TermTransformer {
 				Term proofStep;
 				if (numNegations % 2 == 0) {
 					// prove - xor(lhsArg, rhsArg)
-					final Term proofXor = mProofRules.resolutionRule(rhsArg,
-							mProofRules.resolutionRule(lhsArg,
-									mProofRules.xorIntro(new Term[] { lhsArg }, new Term[] { rhsArg }, xorArgs),
-									proofLhsNeg),
+					final Term proofXor = mProofRules.resolutionRule(rhsArg, mProofRules.resolutionRule(lhsArg,
+							mProofRules.xorIntro(new Term[] { lhsArg }, new Term[] { rhsArg }, xorArgs), proofLhsNeg),
 							mProofRules.resolutionRule(lhsArg, proofLhsPos,
 									mProofRules.xorElim(new Term[] { lhsArg }, new Term[] { rhsArg }, xorArgs)));
 					if (xorAll == null) {
@@ -1831,7 +1964,7 @@ public class ProofSimplifier extends TermTransformer {
 					final Term proofXor = mProofRules.resolutionRule(rhsArg,
 							mProofRules.resolutionRule(lhsArg, proofLhsPos,
 									mProofRules.xorIntro(xorArgs, new Term[] { rhsArg }, new Term[] { lhsArg })),
-						mProofRules.resolutionRule(lhsArg,
+							mProofRules.resolutionRule(lhsArg,
 									mProofRules.xorIntro(xorArgs, new Term[] { lhsArg }, new Term[] { rhsArg }),
 									proofLhsNeg));
 					// Now compute the proof for !polarity * xorAllNext
@@ -1867,10 +2000,10 @@ public class ProofSimplifier extends TermTransformer {
 		}
 
 		final Term proof = mProofRules.resolutionRule(lhs,
-				mProofRules.resolutionRule(rhs, mProofRules.iffIntro1(rewrite),
-						proof1),
+				mProofRules.resolutionRule(rhs, mProofRules.iffIntro1(rewrite), proof1),
 				mProofRules.resolutionRule(rhs, proof2, mProofRules.iffIntro2(rewrite)));
-		return mProofRules.resolutionRule(xorAll, xorAllNegated ? proofXorAll : proof, xorAllNegated ? proof : proofXorAll);
+		return mProofRules.resolutionRule(xorAll, xorAllNegated ? proofXorAll : proof,
+				xorAllNegated ? proof : proofXorAll);
 	}
 
 	private Term convertRewriteXorConst(final String rewriteRule, final Term rewrite, final Term lhs, final Term rhs) {
@@ -1886,13 +2019,12 @@ public class ProofSimplifier extends TermTransformer {
 			final Term proof = proveIff(rewrite,
 					mProofRules.resolutionRule(xorArgs[1 - constIdx], mProofRules.notIntro(rhs),
 							mProofRules.xorElim(otherArg, xorArgs, constArg)),
-					mProofRules.resolutionRule(xorArgs[1 - constIdx],
-							mProofRules.xorIntro(otherArg, xorArgs, constArg), mProofRules.notElim(rhs)));
+					mProofRules.resolutionRule(xorArgs[1 - constIdx], mProofRules.xorIntro(otherArg, xorArgs, constArg),
+							mProofRules.notElim(rhs)));
 			return mProofRules.resolutionRule(xorArgs[constIdx], mProofRules.trueIntro(), proof);
 		} else {
 			assert isApplication("false", xorArgs[constIdx]) && rhs == xorArgs[1 - constIdx];
-			final Term proof = proveIff(rewrite,
-					mProofRules.xorIntro(otherArg, constArg, xorArgs),
+			final Term proof = proveIff(rewrite, mProofRules.xorIntro(otherArg, constArg, xorArgs),
 					mProofRules.xorIntro(xorArgs, constArg, otherArg));
 			return mProofRules.resolutionRule(xorArgs[constIdx], proof, mProofRules.falseElim());
 		}
@@ -1950,7 +2082,7 @@ public class ProofSimplifier extends TermTransformer {
 				if (seen.add(eq)) {
 					proofRhsToLhs = mProofRules.resolutionRule(eq,
 							mProofRules.equalsElim(rhsTerms.get(lhsParams[i]), rhsTerms.get(lhsParams[i + 1]), rhs),
-						proofRhsToLhs);
+							proofRhsToLhs);
 				}
 			}
 			return proveIff(theory.term("=", lhs, rhs), proofLhsToRhs, proofRhsToLhs);
@@ -1969,23 +2101,24 @@ public class ProofSimplifier extends TermTransformer {
 		final Term[] rhsParams = ((ApplicationTerm) rhsAtom).getParameters();
 		assert lhsParams.length == rhsParams.length + 1;
 
-		final Term proof1 = mProofRules.resolutionRule(rhs, mProofRules.iffIntro1(rewrite),
-				mProofRules.notElim(rhs));
+		final Term proof1 = mProofRules.resolutionRule(rhs, mProofRules.iffIntro1(rewrite), mProofRules.notElim(rhs));
 		Term proof2 = mProofRules.resolutionRule(rhs, mProofRules.notIntro(rhs), mProofRules.iffIntro2(rewrite));
 		proof2 = mProofRules.resolutionRule(rhsAtom, proof2, mProofRules.orElim(rhsAtom));
 		proof2 = mProofRules.resolutionRule(lhs, mProofRules.equalsIntro(lhs), proof2);
 		// proof1: (= lhs rhs), lhs, ~rhsAtom
-		// proof2: (= lhs rhs), ~(= lhs0 lhs1), ..., ~(= lhsn lhsn+1), rhsParam[0],...rhsParam[n]
+		// proof2: (= lhs rhs), ~(= lhs0 lhs1), ..., ~(= lhsn lhsn+1),
+		// rhsParam[0],...rhsParam[n]
 		for (int i = 0; i < rhsParams.length; i++) {
 			final Term eqi = theory.term("=", lhsParams[i], lhsParams[i + 1]);
 			assert rhsParams[i] == theory.term("not", eqi);
 			proof2 = mProofRules.resolutionRule(rhsParams[i], proof2, mProofRules.notElim(rhsParams[i]));
 			proof2 = mProofRules.resolutionRule(eqi,
 					mProofRules.resolutionRule(rhsParams[i], mProofRules.notIntro(rhsParams[i]),
-					mProofRules.resolutionRule(rhsAtom, mProofRules.orIntro(i, rhsAtom),
+							mProofRules.resolutionRule(rhsAtom, mProofRules.orIntro(i, rhsAtom),
 									mProofRules.resolutionRule(lhs, proof1, mProofRules.equalsElim(i, i + 1, lhs)))),
 					proof2);
-			// proof2: (= lhs rhs), ~(= lhsi+1 lhsi+2), ..., ~(= lhsn lhsn+1), rhsParam[i+1],...rhsParam[n]
+			// proof2: (= lhs rhs), ~(= lhsi+1 lhsi+2), ..., ~(= lhsn lhsn+1),
+			// rhsParam[i+1],...rhsParam[n]
 		}
 		return proof2;
 	}
@@ -2006,14 +2139,12 @@ public class ProofSimplifier extends TermTransformer {
 			// Prove contradiction using the three equalities eq01, eq02, eq12.
 			// Do case distinction over three boolean values and show that in each case one
 			// equality needs to hold.
-			Term proof =
-					mProofRules.resolutionRule(args[0],
-							mProofRules.resolutionRule(args[1], mProofRules.iffIntro1(eq01),
-									mProofRules.resolutionRule(args[2], mProofRules.iffIntro1(eq02),
-											mProofRules.iffIntro2(eq12))),
-							mProofRules.resolutionRule(args[1], mProofRules.resolutionRule(args[2],
-									mProofRules.iffIntro1(eq12), mProofRules.iffIntro2(eq02)),
-									mProofRules.iffIntro2(eq01)));
+			Term proof = mProofRules.resolutionRule(args[0],
+					mProofRules.resolutionRule(args[1], mProofRules.iffIntro1(eq01),
+							mProofRules.resolutionRule(args[2], mProofRules.iffIntro1(eq02),
+									mProofRules.iffIntro2(eq12))),
+					mProofRules.resolutionRule(args[1], mProofRules.resolutionRule(args[2], mProofRules.iffIntro1(eq12),
+							mProofRules.iffIntro2(eq02)), mProofRules.iffIntro2(eq01)));
 			// Now use the fact that one of the equalities is false, to prove that distinct
 			// is false.
 			proof = mProofRules.resolutionRule(eq01,
@@ -2025,14 +2156,13 @@ public class ProofSimplifier extends TermTransformer {
 		case ":distinctSame": {
 			// (distinct ... x ... x ...) = false
 			assert isApplication("false", rhs);
-			final HashMap<Term,Integer> seen = new HashMap<>();
+			final HashMap<Term, Integer> seen = new HashMap<>();
 			for (int i = 0; i < args.length; i++) {
 				final Integer otherIdx = seen.put(args[i], i);
 				if (otherIdx != null) {
 					final Term eq = theory.term("=", args[i], args[i]);
 					return proveIffFalse(rewrite,
-							res(eq, mProofRules.refl(args[i]),
-									mProofRules.distinctElim(otherIdx, i, lhs)));
+							res(eq, mProofRules.refl(args[i]), mProofRules.distinctElim(otherIdx, i, lhs)));
 				}
 			}
 			throw new AssertionError();
@@ -2053,14 +2183,12 @@ public class ProofSimplifier extends TermTransformer {
 			assert isApplication("or", rhsAtom);
 			final Term[] rhsArgs = ((ApplicationTerm) rhsAtom).getParameters();
 			Term proof1 = mProofRules.distinctIntro(lhs);
-			Term proof2 = mProofRules.resolutionRule(rhsAtom, mProofRules.notIntro(rhs),
-					mProofRules.orElim(rhsAtom));
+			Term proof2 = mProofRules.resolutionRule(rhsAtom, mProofRules.notIntro(rhs), mProofRules.orElim(rhsAtom));
 			int offset = 0;
 			for (int i = 0; i < args.length - 1; i++) {
 				for (int j = i + 1; j < args.length; j++) {
 					assert offset < rhsArgs.length && rhsArgs[offset] == mSkript.term("=", args[i], args[j]);
-					proof1 = mProofRules.resolutionRule(rhsArgs[offset], proof1,
-							mProofRules.orIntro(offset, rhsAtom));
+					proof1 = mProofRules.resolutionRule(rhsArgs[offset], proof1, mProofRules.orIntro(offset, rhsAtom));
 					proof2 = mProofRules.resolutionRule(rhsArgs[offset], proof2, mProofRules.distinctElim(i, j, lhs));
 					offset++;
 				}
@@ -2121,7 +2249,7 @@ public class ProofSimplifier extends TermTransformer {
 		// case 2
 		// lhs: (or ... p ... (not p) ...), rhs: true
 		Term proof = mProofRules.iffIntro2(rewrite);
-		final HashMap<Term,Integer> seen = new HashMap<>();
+		final HashMap<Term, Integer> seen = new HashMap<>();
 		final Term[] lhsParams = ((ApplicationTerm) lhs).getParameters();
 		for (int i = 0; i < lhsParams.length; i++) {
 			if (isApplication("true", lhsParams[i])) {
@@ -2169,11 +2297,9 @@ public class ProofSimplifier extends TermTransformer {
 				return mProofRules.toRealDef(lhs);
 			} else {
 				// difference can only be order of +
-				return res(theory.term(SMTLIBConstants.EQUALS, lhs, expected),
-						mProofRules.toRealDef(lhs),
-						res(theory.term(SMTLIBConstants.EQUALS, expected, rhs),
-								 mProofRules.polyAdd(expected, rhs),
-								 mProofRules.trans(lhs, expected, rhs)));
+				return res(theory.term(SMTLIBConstants.EQUALS, lhs, expected), mProofRules.toRealDef(lhs),
+						res(theory.term(SMTLIBConstants.EQUALS, expected, rhs), mProofRules.polyAdd(expected, rhs),
+								mProofRules.trans(lhs, expected, rhs)));
 			}
 		}
 		case "-": {
@@ -2182,10 +2308,10 @@ public class ProofSimplifier extends TermTransformer {
 				return mProofRules.minusDef(lhs);
 			}
 			if (lhsArgs.length == 1) {
-				final Term proof = res(theory.term(SMTLIBConstants.EQUALS, lhs, minusToPlus),
-						mProofRules.minusDef(lhs), mProofRules.trans(lhs, minusToPlus, rhs));
-				return res(theory.term(SMTLIBConstants.EQUALS, minusToPlus, rhs),
-						mProofRules.polyMul(minusToPlus, rhs), proof);
+				final Term proof = res(theory.term(SMTLIBConstants.EQUALS, lhs, minusToPlus), mProofRules.minusDef(lhs),
+						mProofRules.trans(lhs, minusToPlus, rhs));
+				return res(theory.term(SMTLIBConstants.EQUALS, minusToPlus, rhs), mProofRules.polyMul(minusToPlus, rhs),
+						proof);
 			} else {
 				final Term[] expectedArgs = new Term[lhsArgs.length];
 				expectedArgs[0] = lhsArgs[0];
@@ -2208,15 +2334,15 @@ public class ProofSimplifier extends TermTransformer {
 						mProofRules.cong(minusToPlus, expectedPlus), proof);
 				final HashSet<Term> seenEqs = new HashSet<>();
 				final Term[] minusToPlusArgs = ((ApplicationTerm) minusToPlus).getParameters();
- 				for (int i = 0; i < minusToPlusArgs.length; i++) {
+				for (int i = 0; i < minusToPlusArgs.length; i++) {
 					final Term eq = theory.term(SMTLIBConstants.EQUALS, minusToPlusArgs[i], expectedArgs[i]);
 					if (seenEqs.add(eq)) {
 						final Term proofEq = minusToPlusArgs[i] == expectedArgs[i]
 								? mProofRules.refl(minusToPlusArgs[i])
-										: mProofRules.polyMul(minusToPlusArgs[i], expectedArgs[i]);
+								: mProofRules.polyMul(minusToPlusArgs[i], expectedArgs[i]);
 						proof = res(eq, proofEq, proof);
 					}
- 				}
+				}
 				return proof;
 			}
 		}
@@ -2238,16 +2364,14 @@ public class ProofSimplifier extends TermTransformer {
 				final Term mulShortTerm = theory.term("*", multiplier.toTerm(sort), lhs);
 				proofDivDef = res(theory.term(SMTLIBConstants.EQUALS, mulShortTerm, mulTerm),
 						res(theory.term(SMTLIBConstants.EQUALS, mulTerm, mulShortTerm),
-								mProofRules.polyMul(mulTerm, mulShortTerm),
-								mProofRules.symm(mulShortTerm, mulTerm)),
+								mProofRules.polyMul(mulTerm, mulShortTerm), mProofRules.symm(mulShortTerm, mulTerm)),
 						mProofRules.trans(mulShortTerm, mulTerm, lhsArgs[0]));
 				mulTerm = mulShortTerm;
 			}
 			// now mulTerm is (* multiplier lhs)
 			// and proofDivDef is a proof for (= mulTerm lhsArgs[0])
-			return res(theory.term(SMTLIBConstants.EQUALS, mulTerm, lhsArgs[0]), proofDivDef,
-					proveEqWithMultiplier(new Term[] { mulTerm, lhsArgs[0] }, new Term[] { lhs, rhs },
-							multiplier.inverse()));
+			return res(theory.term(SMTLIBConstants.EQUALS, mulTerm, lhsArgs[0]), proofDivDef, proveEqWithMultiplier(
+					new Term[] { mulTerm, lhsArgs[0] }, new Term[] { lhs, rhs }, multiplier.inverse()));
 		}
 		default:
 			throw new AssertionError();
@@ -2312,7 +2436,6 @@ public class ProofSimplifier extends TermTransformer {
 		final Term selectLhsI = theory.term(SMTLIBConstants.SELECT, lhs, index);
 		final Term selectRhsI = theory.term(SMTLIBConstants.SELECT, rhs, index);
 
-
 		// show (select lhs diff) = (select rhs diff) lhs if (= i diff)
 		Term proof1 = mProofRules.trans(selectLhsDiff, selectLhsI, valueW, selectRhsI, selectRhsDiff);
 		proof1 = res(theory.term("=", selectLhsDiff, selectLhsI), mProofRules.cong(selectLhsDiff, selectLhsI), proof1);
@@ -2334,8 +2457,8 @@ public class ProofSimplifier extends TermTransformer {
 			proof2 = res(theory.term("=", innerIndex, diff), proof2, mProofRules.trans(index, innerIndex, diff));
 			proof2 = res(theory.term("=", index, innerIndex), proofEq, proof2);
 		}
-		proof2 = res(theory.term("=", selectArrayDiff, selectRhsDiff),
-				mProofRules.symm(selectArrayDiff, selectRhsDiff), proof2);
+		proof2 = res(theory.term("=", selectArrayDiff, selectRhsDiff), mProofRules.symm(selectArrayDiff, selectRhsDiff),
+				proof2);
 		proof2 = res(theory.term("=", selectRhsDiff, selectArrayDiff),
 				mProofRules.selectStore2(array, index, valueW, diff), proof2);
 
@@ -2369,7 +2492,7 @@ public class ProofSimplifier extends TermTransformer {
 			assert rhs == storeArgs[2];
 			final Term selectStoreI = theory.term("select", store, indexI);
 			Term proof = mProofRules.trans(lhs, selectStoreI, value);
-			proof = res(theory.term("=", lhs, selectStoreI), mProofRules.cong(lhs,  selectStoreI), proof);
+			proof = res(theory.term("=", lhs, selectStoreI), mProofRules.cong(lhs, selectStoreI), proof);
 			proof = res(theory.term("=", store, store), mProofRules.refl(store), proof);
 			proof = res(theory.term("=", indexJ, indexI), proveTrivialEquality(indexJ, indexI), proof);
 			proof = res(theory.term("=", selectStoreI, value), mProofRules.selectStore1(array, indexI, value), proof);
@@ -2416,30 +2539,28 @@ public class ProofSimplifier extends TermTransformer {
 		final Term selectArrayI = theory.term(SMTLIBConstants.SELECT, array, index);
 		final Term selectStoreI = theory.term(SMTLIBConstants.SELECT, store, index);
 
-
 		// show (select a i) = v if array = store
 		Term proofRhs = res(theory.term("=", selectArrayI, selectStoreI),
 				res(theory.term("=", index, index), mProofRules.refl(index),
 						mProofRules.cong(selectArrayI, selectStoreI)),
-						mProofRules.trans(selectArrayI, selectStoreI, value));
+				mProofRules.trans(selectArrayI, selectStoreI, value));
 
 		// show (select store diff) = (select array diff) lhs if (= i diff)
 		Term proofLhs = mProofRules.trans(selectStoreDiff, selectStoreI, value, selectArrayI, selectArrayDiff);
-		proofLhs = res(theory.term("=", selectStoreDiff, selectStoreI),
-				mProofRules.cong(selectStoreDiff, selectStoreI), proofLhs);
+		proofLhs = res(theory.term("=", selectStoreDiff, selectStoreI), mProofRules.cong(selectStoreDiff, selectStoreI),
+				proofLhs);
 		proofLhs = res(theory.term("=", diff, index), mProofRules.symm(diff, index), proofLhs);
 		proofLhs = res(theory.term("=", store, store), mProofRules.refl(store), proofLhs);
 		proofLhs = res(theory.term("=", value, selectArrayI), mProofRules.symm(value, selectArrayI), proofLhs);
-		proofLhs = res(theory.term("=", selectArrayI, selectArrayDiff),
-				mProofRules.cong(selectArrayI, selectArrayDiff), proofLhs);
+		proofLhs = res(theory.term("=", selectArrayI, selectArrayDiff), mProofRules.cong(selectArrayI, selectArrayDiff),
+				proofLhs);
 		proofLhs = res(theory.term("=", array, array), mProofRules.refl(array), proofLhs);
 
 		// show (select store diff) = (select array diff) lhs also if ~(= i diff)
 		proofLhs = res(theory.term("=", index, diff), mProofRules.selectStore2(array, index, value, diff), proofLhs);
 
 		// hence store = array.
-		proofLhs = res(theory.term("=", selectStoreDiff, selectArrayDiff),
-				proofLhs, mProofRules.extDiff(store, array));
+		proofLhs = res(theory.term("=", selectStoreDiff, selectArrayDiff), proofLhs, mProofRules.extDiff(store, array));
 
 		// swap store and array according to lhs.
 		if (storeIdx == 0) {
@@ -2531,13 +2652,11 @@ public class ProofSimplifier extends TermTransformer {
 			final Term iteTrue = mSkript.term("=", ite, t1);
 			final Term iteT2 = mSkript.term("=", ite, t2);
 			// show ~ite, (or cond t2) by case distinction over cond, t2
-			final Term proofRhs = mProofRules
-					.resolutionRule(cond,
-							mProofRules.resolutionRule(t2,
-									mProofRules.resolutionRule(iteT2, mProofRules.ite2(ite),
-											mProofRules.iffElim2(iteT2)),
-									mProofRules.orIntro(1, rhs)),
-							mProofRules.orIntro(0, rhs));
+			final Term proofRhs = mProofRules.resolutionRule(cond,
+					mProofRules.resolutionRule(t2,
+							mProofRules.resolutionRule(iteT2, mProofRules.ite2(ite), mProofRules.iffElim2(iteT2)),
+							mProofRules.orIntro(1, rhs)),
+					mProofRules.orIntro(0, rhs));
 			// show ite, ~(or cond t2) by case distinction over cond, t2
 			Term proofLhs = mProofRules.resolutionRule(cond,
 					mProofRules.resolutionRule(t2, mProofRules.orElim(rhs),
@@ -2590,8 +2709,7 @@ public class ProofSimplifier extends TermTransformer {
 			Term proofLhs = mProofRules.resolutionRule(cond,
 					mProofRules.resolutionRule(iteTrue, mProofRules.ite2(ite), mProofRules.iffElim1(iteTrue)),
 					mProofRules.resolutionRule(t1,
-							mProofRules.resolutionRule(notCond, mProofRules.orElim(rhs),
-									mProofRules.notElim(notCond)),
+							mProofRules.resolutionRule(notCond, mProofRules.orElim(rhs), mProofRules.notElim(notCond)),
 							mProofRules.resolutionRule(iteT1, mProofRules.ite1(ite), mProofRules.iffElim1(iteT1))));
 			proofLhs = mProofRules.resolutionRule(t2, mProofRules.trueIntro(), proofLhs);
 			return proveIff(rewriteStmt, proofRhs, proofLhs);
@@ -2606,25 +2724,23 @@ public class ProofSimplifier extends TermTransformer {
 			final Term iteT1 = mSkript.term("=", ite, t1);
 			final Term iteFalse = mSkript.term("=", ite, t2);
 			// show ~ite, (not (or (not cond) (not t1))) by case distinction over cond, t1
-			Term proofRhs =
-					mProofRules.resolutionRule(cond, mProofRules.resolutionRule(iteFalse, mProofRules.ite2(ite), mProofRules.iffElim2(iteFalse)),
+			Term proofRhs = mProofRules.resolutionRule(cond,
+					mProofRules.resolutionRule(iteFalse, mProofRules.ite2(ite), mProofRules.iffElim2(iteFalse)),
 					mProofRules.resolutionRule(notCond,
-									mProofRules.resolutionRule(notT1, mProofRules.orElim(notRhs),
-							mProofRules.resolutionRule(t1,
-									mProofRules.resolutionRule(iteT1, mProofRules.ite1(ite),
-											mProofRules.iffElim2(iteT1)),
-									mProofRules.notElim(notT1))),
-									mProofRules.notElim(notCond)));
+							mProofRules.resolutionRule(notT1, mProofRules.orElim(notRhs),
+									mProofRules.resolutionRule(t1,
+											mProofRules.resolutionRule(iteT1, mProofRules.ite1(ite),
+													mProofRules.iffElim2(iteT1)),
+											mProofRules.notElim(notT1))),
+							mProofRules.notElim(notCond)));
 			proofRhs = mProofRules.resolutionRule(t2, proofRhs, mProofRules.falseElim());
 			proofRhs = mProofRules.resolutionRule(notRhs, mProofRules.notIntro(rhs), proofRhs);
 			// show ite, ~(not (or (not cond) (not t1)))) by case distinction over cond, t1
 			Term proofLhs = mProofRules.resolutionRule(notCond,
-					mProofRules.resolutionRule(cond, mProofRules.notIntro(notCond),
-							mProofRules.resolutionRule(t1,
-									mProofRules.resolutionRule(notT1, mProofRules.notIntro(notT1),
-											mProofRules.orIntro(1, notRhs)),
-									mProofRules.resolutionRule(iteT1, mProofRules.ite1(ite),
-											mProofRules.iffElim1(iteT1)))),
+					mProofRules.resolutionRule(cond, mProofRules.notIntro(notCond), mProofRules.resolutionRule(t1,
+							mProofRules.resolutionRule(notT1, mProofRules.notIntro(notT1),
+									mProofRules.orIntro(1, notRhs)),
+							mProofRules.resolutionRule(iteT1, mProofRules.ite1(ite), mProofRules.iffElim1(iteT1)))),
 					mProofRules.orIntro(0, notRhs));
 			proofLhs = mProofRules.resolutionRule(notRhs, proofLhs, mProofRules.notElim(rhs));
 			return proveIff(rewriteStmt, proofRhs, proofLhs);
@@ -2717,11 +2833,69 @@ public class ProofSimplifier extends TermTransformer {
 		final BigInteger[] coeffs3 = new BigInteger[] { BigInteger.ONE, divisor.abs().numerator(), BigInteger.ONE };
 		final Term eqAbs = theory.term(SMTLIBConstants.EQUALS, absDivArg, absDivisor);
 		proof = res(lhsRhsLow, proof, mProofRules.farkas(new Term[] { origDivLow, lhsRhsLow }, coeffs));
-		proof = res(lhsRhsHigh, proof,
-				mProofRules.farkas(new Term[] { origDivHigh, lhsRhsHigh, eqAbs }, coeffs3));
+		proof = res(lhsRhsHigh, proof, mProofRules.farkas(new Term[] { origDivHigh, lhsRhsHigh, eqAbs }, coeffs3));
 		proof = res(eqAbs, proveAbsConstant(divisor, sort), proof);
 		proof = res(origDivHigh, mProofRules.divHigh(divArgs[0], divArgs[1]), proof);
 		proof = res(origDivLow, mProofRules.divLow(divArgs[0], divArgs[1]), proof);
+		return proof;
+	}
+
+	private Term proveTwoDivWithFarkas(final Term divTerm1, final Term divTerm2, final Term divResult) {
+		final Theory theory = divTerm1.getTheory();
+		final Sort sort = divTerm1.getSort();
+
+		assert isApplication("div", divTerm1);
+		assert isApplication("div", divTerm2);
+		final Term[] divArgs = ((ApplicationTerm) divTerm1).getParameters();
+		assert divArgs.length == 2;
+		final Term[] divArgs2 = ((ApplicationTerm) divTerm2).getParameters();
+		assert divArgs2.length == 2;
+		assert divArgs[1] == divArgs2[1]; // divisors must be the same
+		final Rational divisor = parseConstant(divArgs[1]);
+		assert divisor != null && divisor.isIntegral();
+		assert divisor.signum() > 0;
+
+		final Term zero = Rational.ZERO.toTerm(sort);
+		final Term absDivArg = theory.term(SMTLIBConstants.ABS, divArgs[1]);
+		final Term absDivisor = divisor.abs().toTerm(sort);
+		final Term origDivLow1 = theory.term(SMTLIBConstants.LEQ,
+				theory.term(SMTLIBConstants.MUL, divArgs[1], divTerm1), divArgs[0]);
+		final Term origDivHigh1 = theory.term(SMTLIBConstants.LT, divArgs[0],
+				theory.term(SMTLIBConstants.PLUS, theory.term(SMTLIBConstants.MUL, divArgs[1], divTerm1), absDivArg));
+		final Term origDivLow2 = theory.term(SMTLIBConstants.LEQ,
+				theory.term(SMTLIBConstants.MUL, divArgs2[1], divTerm2), divArgs2[0]);
+		final Term origDivHigh2 = theory.term(SMTLIBConstants.LT, divArgs2[0],
+				theory.term(SMTLIBConstants.PLUS, theory.term(SMTLIBConstants.MUL, divArgs2[1], divTerm2), absDivArg));
+
+		final Polynomial diffAffine = new Polynomial(divTerm1);
+		diffAffine.add(Rational.MONE, divResult);
+		final Term diffLhsRhs = diffAffine.toTerm(sort);
+		final Term ltLhsRhs = theory.term(SMTLIBConstants.LT, divTerm1, divResult);
+		final Term gtLhsRhs = theory.term(SMTLIBConstants.LT, divResult, divTerm1);
+		final Term leqLhsRhs = theory.term(SMTLIBConstants.LEQ, diffLhsRhs, zero);
+		final Term geqLhsRhsOne = theory.term(SMTLIBConstants.LEQ, Rational.ONE.toTerm(sort), diffLhsRhs);
+		final Term geqLhsRhs = theory.term(SMTLIBConstants.LEQ, zero, diffLhsRhs);
+		final Term leqLhsRhsOne = theory.term(SMTLIBConstants.LEQ, diffLhsRhs, Rational.MONE.toTerm(sort));
+
+		final Term eqAbs = theory.term(SMTLIBConstants.EQUALS, absDivArg, absDivisor);
+		final Term proofLeqOne = mProofRules.farkas(new Term[] { origDivHigh1, origDivLow2, eqAbs, leqLhsRhsOne },
+				new BigInteger[] { BigInteger.ONE, BigInteger.ONE, BigInteger.ONE, divisor.numerator() });
+		final Term proofGeqOne = mProofRules.farkas(new Term[] { origDivLow1, origDivHigh2, eqAbs, geqLhsRhsOne },
+				new BigInteger[] { BigInteger.ONE, BigInteger.ONE, BigInteger.ONE, divisor.numerator() });
+
+		final BigInteger[] oneone = new BigInteger[] { BigInteger.ONE, BigInteger.ONE };
+		Term proof = mProofRules.trichotomy(divTerm1, divResult);
+		proof = res(gtLhsRhs, proof, mProofRules.farkas(new Term[] { gtLhsRhs, leqLhsRhs }, oneone));
+		proof = res(leqLhsRhs, mProofRules.totalInt(diffLhsRhs, BigInteger.ZERO), proof);
+		proof = res(ltLhsRhs, proof, mProofRules.farkas(new Term[] { ltLhsRhs, geqLhsRhs }, oneone));
+		proof = res(geqLhsRhs, mProofRules.totalInt(diffLhsRhs, BigInteger.ONE.negate()), proof);
+		proof = res(leqLhsRhsOne, proof, proofLeqOne);
+		proof = res(geqLhsRhsOne, proof, proofGeqOne);
+		proof = res(eqAbs, proveAbsConstant(divisor, sort), proof);
+		proof = res(origDivHigh1, mProofRules.divHigh(divArgs[0], divArgs[1]), proof);
+		proof = res(origDivLow1, mProofRules.divLow(divArgs[0], divArgs[1]), proof);
+		proof = res(origDivHigh2, mProofRules.divHigh(divArgs2[0], divArgs[1]), proof);
+		proof = res(origDivLow2, mProofRules.divLow(divArgs2[0], divArgs[1]), proof);
 		return proof;
 	}
 
@@ -2757,7 +2931,8 @@ public class ProofSimplifier extends TermTransformer {
 		Term proof = mProofRules.modDef(modArgs[0], modArgs[1]);
 		final Term zero = Rational.ZERO.toTerm(sort);
 		// proof shows (+ (* c (div x c)) (mod x c)) = x
-		final Term divPlusMod = theory.term(SMTLIBConstants.PLUS, theory.term(SMTLIBConstants.MUL, modArgs[1], divTerm), lhs);
+		final Term divPlusMod = theory.term(SMTLIBConstants.PLUS, theory.term(SMTLIBConstants.MUL, modArgs[1], divTerm),
+				lhs);
 		final Term modDefEq = theory.term(SMTLIBConstants.EQUALS, divPlusMod, modArgs[0]);
 		final Polynomial affine = new Polynomial(modArgs[0]);
 		affine.add(divisor.negate(), divTerm);
@@ -2796,12 +2971,82 @@ public class ProofSimplifier extends TermTransformer {
 				proveEqWithMultiplier(new Term[] { divPlusMod, modArgs[0] }, new Term[] { lhs, middle }, Rational.ONE));
 		if (divResult != divTerm) {
 			final Term proof2 = res(theory.term(SMTLIBConstants.EQUALS, divTerm, divResult),
-					proveDivWithFarkas(divTerm, divResult),
-					proveEqWithMultiplier(new Term[] { divTerm, divResult }, new Term[] { middle, rhs },
-							divisor.negate()));
+					proveDivWithFarkas(divTerm, divResult), proveEqWithMultiplier(new Term[] { divTerm, divResult },
+							new Term[] { middle, rhs }, divisor.negate()));
 			proof = res(theory.term(SMTLIBConstants.EQUALS, lhs, middle), proof,
-					res(theory.term(SMTLIBConstants.EQUALS, middle, rhs), proof2,
-							mProofRules.trans(lhs, middle, rhs)));
+					res(theory.term(SMTLIBConstants.EQUALS, middle, rhs), proof2, mProofRules.trans(lhs, middle, rhs)));
+		}
+		proof = res(theory.term(SMTLIBConstants.EQUALS, modArgs[1], zero), proof,
+				proveTrivialDisequality(modArgs[1], zero));
+		return proof;
+	}
+
+	private Term convertRewriteNormalizeModulo(final Term lhs, final Term rhs) {
+		// (mod x c) -> (- x' (* c (div x' c)))
+		// where in x every constant is taken modulo c.
+		assert isApplication("mod", lhs);
+		final Theory theory = lhs.getTheory();
+		final Term[] modArgs = ((ApplicationTerm) lhs).getParameters();
+		assert modArgs.length == 2;
+		assert modArgs[1] instanceof ConstantTerm;
+		final Rational modulus = (Rational) ((ConstantTerm) modArgs[1]).getValue();
+
+		final Polynomial rhsPoly = new Polynomial(rhs);
+		// find div term;
+		ApplicationTerm normDivTerm = null;
+		for (final Map.Entry<Map<Term, Integer>, Rational> summand : rhsPoly.getSummands().entrySet()) {
+			if (summand.getValue().negate().equals(modulus) && summand.getKey().size() == 1) {
+				final Map.Entry<Term, Integer> monoid = summand.getKey().entrySet().iterator().next();
+				if (monoid.getValue() == 1 && isApplication(SMTLIBConstants.DIV, monoid.getKey())) {
+					final ApplicationTerm appTerm = (ApplicationTerm) monoid.getKey();
+					if (appTerm.getParameters()[1] == modArgs[1]) {
+						final Polynomial test = new Polynomial(appTerm.getParameters()[0]);
+						test.add(modulus.negate(), appTerm);
+						if (test.equals(rhsPoly)) {
+							normDivTerm = appTerm;
+							break;
+						}
+					}
+				}
+			}
+		}
+		// modArgs[0] = lhsDiff*modulus + divArg
+		// modArgs[0] mod modulus = modArgs[0] - modulus*div(modArgs[0], modulus);
+		// = lhsDiff*modulus + divArg - modulus*div(divArg, modulus);
+
+		// (modArgs[0] - divArg)/modulus = lhsDiff
+		// (modArgs[0] = divArg - modulus*div(divArg
+		// lhs = modArgs[0] - modulus*(div modArgs[0] modulus)
+		// = divArg - modulus * divTerm
+		final Sort sort = lhs.getSort();
+		Term proof = mProofRules.modDef(modArgs[0], modArgs[1]);
+		final Term zero = Rational.ZERO.toTerm(sort);
+		final Polynomial lhsDiff = new Polynomial(modArgs[0]);
+		lhsDiff.add(Rational.MONE, rhsPoly);
+		lhsDiff.mul(modulus.inverse());
+		final Term divResult = lhsDiff.toTerm(sort);
+
+		final Term divTerm = lhs.getTheory().term("div", modArgs);
+		final Term divPlusMod = theory.term(SMTLIBConstants.PLUS, theory.term(SMTLIBConstants.MUL, modArgs[1], divTerm),
+				lhs);
+		final Term modDefEq = theory.term(SMTLIBConstants.EQUALS, divPlusMod, modArgs[0]);
+		final Polynomial affine = new Polynomial(modArgs[0]);
+		affine.add(modulus.negate(), divTerm);
+		final Term middle = divResult == divTerm ? rhs : affine.toTerm(sort);
+		proof = res(modDefEq, proof,
+				proveEqWithMultiplier(new Term[] { divPlusMod, modArgs[0] }, new Term[] { lhs, middle }, Rational.ONE));
+		if (divResult != divTerm) {
+			Term proofDivEq;
+			if (normDivTerm == null || normDivTerm == divTerm) {
+				proofDivEq = proveDivWithFarkas(divTerm, divResult);
+			} else {
+				proofDivEq = proveTwoDivWithFarkas(divTerm, normDivTerm, divResult);
+			}
+			final Term proof2 = res(theory.term(SMTLIBConstants.EQUALS, divTerm, divResult), proofDivEq,
+					proveEqWithMultiplier(new Term[] { divTerm, divResult }, new Term[] { middle, rhs },
+							modulus.negate()));
+			proof = res(theory.term(SMTLIBConstants.EQUALS, lhs, middle), proof,
+					res(theory.term(SMTLIBConstants.EQUALS, middle, rhs), proof2, mProofRules.trans(lhs, middle, rhs)));
 		}
 		proof = res(theory.term(SMTLIBConstants.EQUALS, modArgs[1], zero), proof,
 				proveTrivialDisequality(modArgs[1], zero));
@@ -2833,8 +3078,7 @@ public class ProofSimplifier extends TermTransformer {
 			/* divisible is rewritten to false */
 			// show ~(= x (* n (div x n)))
 			assert isApplication(SMTLIBConstants.FALSE, rhs);
-			proof2 = res(rhs,
-					res(equalTerm, mProofRules.iffIntro1(eqRhs), proveTrivialDisequality(arg, mulDivTerm)),
+			proof2 = res(rhs, res(equalTerm, mProofRules.iffIntro1(eqRhs), proveTrivialDisequality(arg, mulDivTerm)),
 					mProofRules.falseElim());
 		} else {
 			/* divisible is rewritten to true */
@@ -2858,6 +3102,18 @@ public class ProofSimplifier extends TermTransformer {
 		}
 		return res(eqRhs, proof2, res(theory.term(SMTLIBConstants.EQUALS, lhs, equalTerm), proof,
 				mProofRules.trans(lhs, equalTerm, rhs)));
+	}
+
+	private Term convertRewriteBvEval(final Term lhs, final Term rhs) {
+		final ConstantTerm lhsConst = (ConstantTerm) lhs;
+		if (lhsConst.getValue() instanceof BigInteger) {
+			final BigInteger value = (BigInteger) lhsConst.getValue();
+			final String bitLength = lhsConst.getSort().getIndices()[0];
+			return mProofRules.bvConst(value, new BigInteger(bitLength));
+		} else {
+			final String value = (String) lhsConst.getValue();
+			return mProofRules.bvLiteral(value);
+		}
 	}
 
 	private Term convertRewrite(final Term lhs, Term rhs, Annotation annot) {
@@ -2975,6 +3231,9 @@ public class ProofSimplifier extends TermTransformer {
 		case ":auxIntro":
 			subProof = convertRewriteAuxIntro(rewriteStmt, lhs, rhs);
 			break;
+		case ":bveval":
+			subProof = convertRewriteBvEval(lhs, rhs);
+			break;
 		default:
 			subProof = mProofRules.oracle(termToProofLiterals(rewriteStmt), new Annotation[] { annot });
 		}
@@ -3031,11 +3290,11 @@ public class ProofSimplifier extends TermTransformer {
 						realAtomProof = mProofRules.totalInt(atomParams[0], BigInteger.ZERO);
 					} else {
 						realAtom = theory.term("<", atomParams[1], atomParams[0]);
-						realAtomProof = mProofRules.total(atomParams[0],  atomParams[1]);
+						realAtomProof = mProofRules.total(atomParams[0], atomParams[1]);
 					}
 				} else {
 					realAtom = theory.term("<=", atomParams[1], atomParams[0]);
-					realAtomProof = mProofRules.total(atomParams[1],  atomParams[0]);
+					realAtomProof = mProofRules.total(atomParams[1], atomParams[0]);
 				}
 			}
 			realAtoms[i] = realAtom;
@@ -3052,8 +3311,7 @@ public class ProofSimplifier extends TermTransformer {
 	/**
 	 * Convert a trichotomy lemma to a proof.
 	 *
-	 * @param clause
-	 *            the clause to check.
+	 * @param clause the clause to check.
 	 */
 	private Term convertTrichotomy(final ProofLiteral[] clause) {
 		assert clause.length == 3;
@@ -3144,17 +3402,18 @@ public class ProofSimplifier extends TermTransformer {
 		posDiff.add(Rational.MONE, posAtomArgs[1]);
 		assert !negDiff.isZero();
 		final Map<Term, Integer> someMonomial = negDiff.getSummands().keySet().iterator().next();
-		final Rational multiplier = posDiff.getSummands().get(someMonomial).div(negDiff.getSummands().get(someMonomial));
+		final Rational multiplier = posDiff.getSummands().get(someMonomial)
+				.div(negDiff.getSummands().get(someMonomial));
 		final Term proof = proveEqWithMultiplier(negAtomArgs, posAtomArgs, multiplier);
 		return proof;
 	}
 
 	/**
-	 *  Collect literals in a CC or array lemma clause
+	 * Collect literals in a CC or array lemma clause
 	 *
-	 *  @param clause the clause.
-	 *  @param equalities  HashMap to store equalities (negated in the clause).
-	 *  @param disequalities HashMap to store disequalities (positive in the clause).
+	 * @param clause        the clause.
+	 * @param equalities    HashMap to store equalities (negated in the clause).
+	 * @param disequalities HashMap to store disequalities (positive in the clause).
 	 */
 	private void collectEqualities(final ProofLiteral[] clause, final HashMap<SymmetricPair<Term>, Term> equalities,
 			final HashMap<SymmetricPair<Term>, Term> disequalities) {
@@ -3190,7 +3449,6 @@ public class ProofSimplifier extends TermTransformer {
 		final HashMap<SymmetricPair<Term>, Term> allDisequalities = new HashMap<>();
 		collectEqualities(clause, allEqualities, allDisequalities);
 		assert allDisequalities.size() <= 1;
-
 
 		Term proof;
 		final HashSet<Term> neededEqualities = new HashSet<>();
@@ -3286,8 +3544,7 @@ public class ProofSimplifier extends TermTransformer {
 	 *         neededEqualities.
 	 */
 	private Term proveSelectPathTrans(final Term arrayLeft, final Term value1, final Term value2, final Term arrayRight,
-			final Term weakIdx, final Term proofLeft, final Term proofRight,
-			final Set<Term> neededEqualities) {
+			final Term weakIdx, final Term proofLeft, final Term proofRight, final Set<Term> neededEqualities) {
 		final Theory theory = arrayLeft.getTheory();
 		final Term selectLeft = theory.term(SMTLIBConstants.SELECT, arrayLeft, weakIdx);
 		final Term selectRight = theory.term(SMTLIBConstants.SELECT, arrayRight, weakIdx);
@@ -3307,8 +3564,8 @@ public class ProofSimplifier extends TermTransformer {
 			neededEqualities.add(theory.term(SMTLIBConstants.EQUALS, value1, value2));
 		}
 		if (selectRight != value2) {
-			proof = res(theory.term(SMTLIBConstants.EQUALS, value2, selectRight),
-					mProofRules.symm(value2, selectRight), proof);
+			proof = res(theory.term(SMTLIBConstants.EQUALS, value2, selectRight), mProofRules.symm(value2, selectRight),
+					proof);
 			proof = res(theory.term(SMTLIBConstants.EQUALS, selectRight, value2), proofRight, proof);
 		}
 		return proof;
@@ -3347,14 +3604,12 @@ public class ProofSimplifier extends TermTransformer {
 			Term eq1 = proveSelectConst(first, arrayLeft, weakIdx, allEqualities, neededEqualities);
 			Term eq2 = proveSelectConst(second, arrayRight, weakIdx, allEqualities, neededEqualities);
 			if (eq1 != null && eq2 != null) {
-				return proveSelectPathTrans(arrayLeft, first, second, arrayRight, weakIdx, eq1, eq2,
-						neededEqualities);
+				return proveSelectPathTrans(arrayLeft, first, second, arrayRight, weakIdx, eq1, eq2, neededEqualities);
 			}
 			eq1 = proveSelectConst(second, arrayLeft, weakIdx, allEqualities, neededEqualities);
 			eq2 = proveSelectConst(first, arrayRight, weakIdx, allEqualities, neededEqualities);
 			if (eq1 != null && eq2 != null) {
-				return proveSelectPathTrans(arrayLeft, second, first, arrayRight, weakIdx, eq1, eq2,
-						neededEqualities);
+				return proveSelectPathTrans(arrayLeft, second, first, arrayRight, weakIdx, eq1, eq2, neededEqualities);
 			}
 		}
 		// No candidate equality was found but it could also be a select-const edge
@@ -3435,9 +3690,9 @@ public class ProofSimplifier extends TermTransformer {
 	 *         which case they are added to the needed(Dis)Equalities set.
 	 */
 	private Term proveSelectOverPathStep(final Term arrayLeft, final Term arrayRight, final Term weakIdx,
-			final Term selectLeft, final Term selectRight,
-			final Set<SymmetricPair<Term>> equalities, final Set<SymmetricPair<Term>> disequalities,
-			final Set<Term> neededEqualities, final Set<Term> neededDisequalities) {
+			final Term selectLeft, final Term selectRight, final Set<SymmetricPair<Term>> equalities,
+			final Set<SymmetricPair<Term>> disequalities, final Set<Term> neededEqualities,
+			final Set<Term> neededDisequalities) {
 		final Theory theory = arrayLeft.getTheory();
 		/* check for strong path first */
 		if (equalities.contains(new SymmetricPair<>(arrayLeft, arrayRight))) {
@@ -3452,8 +3707,8 @@ public class ProofSimplifier extends TermTransformer {
 		}
 		proof = proveStoreStep(arrayRight, arrayLeft, weakIdx, disequalities, neededDisequalities);
 		if (proof != null) {
-			return res(theory.term(SMTLIBConstants.EQUALS, selectRight, selectLeft),
-					proof, mProofRules.symm(selectLeft, selectRight));
+			return res(theory.term(SMTLIBConstants.EQUALS, selectRight, selectLeft), proof,
+					mProofRules.symm(selectLeft, selectRight));
 		}
 		/*
 		 * check for select path with select indices equal to weakIdx, both trivially
@@ -3480,9 +3735,9 @@ public class ProofSimplifier extends TermTransformer {
 	 *         some trivial (dis)equalities or some from (dis)equalities set, in
 	 *         which case they are added to the needed(Dis)Equalities set.
 	 */
-	private Term proveSelectOverPath(final Term weakIdx, final Term[] path,
-			final Set<SymmetricPair<Term>> equalities, final Set<SymmetricPair<Term>> disequalities,
-			final Set<Term> neededEqualities, final Set<Term> neededDisequalities) {
+	private Term proveSelectOverPath(final Term weakIdx, final Term[] path, final Set<SymmetricPair<Term>> equalities,
+			final Set<SymmetricPair<Term>> disequalities, final Set<Term> neededEqualities,
+			final Set<Term> neededDisequalities) {
 		// note that a read-const-weakeq path can have length 1
 		assert path.length >= 1;
 		final Theory theory = path[0].getTheory();
@@ -3505,19 +3760,17 @@ public class ProofSimplifier extends TermTransformer {
 	/**
 	 * Convert an array lemma of type :read-const-weakeq to a simplified proof.
 	 *
-	 * @param type
-	 *            the lemma type
-	 * @param clause
-	 *            the clause to check
-	 * @param ccAnnotation
-	 *            the argument of the lemma annotation.
+	 * @param type         the lemma type
+	 * @param clause       the clause to check
+	 * @param ccAnnotation the argument of the lemma annotation.
 	 */
 	private Term convertArraySelectConstWeakEqLemma(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length >= 3;
 		final Theory theory = clause[0].getAtom().getTheory();
 		/*
-		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
-		 * pair. strongPaths contains the sets of all proven strong paths.
+		 * weakPaths maps from a symmetric pair to the set of weak indices such that a
+		 * weak path was proven for this pair. strongPaths contains the sets of all
+		 * proven strong paths.
 		 */
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		/* indexDiseqs contains all index equalities in the clause */
@@ -3533,7 +3786,8 @@ public class ProofSimplifier extends TermTransformer {
 		assert goalTerms.length == 2;
 
 		/*
-		 * Check the paths in reverse order. Collect proven paths in a hash set, so that they can be used later.
+		 * Check the paths in reverse order. Collect proven paths in a hash set, so that
+		 * they can be used later.
 		 */
 		assert ccAnnotation.length == 3;
 		assert ccAnnotation[1] == ":weakpath";
@@ -3560,19 +3814,17 @@ public class ProofSimplifier extends TermTransformer {
 	/**
 	 * Convert an array lemma of type :read-over-weakeq to a simplified proof.
 	 *
-	 * @param type
-	 *            the lemma type
-	 * @param clause
-	 *            the clause to check
-	 * @param ccAnnotation
-	 *            the argument of the lemma annotation.
+	 * @param type         the lemma type
+	 * @param clause       the clause to check
+	 * @param ccAnnotation the argument of the lemma annotation.
 	 */
 	private Term convertArraySelectWeakEqLemma(final ProofLiteral[] clause, final Object[] ccAnnotation) {
 		assert ccAnnotation.length >= 3;
 		final Theory theory = clause[0].getAtom().getTheory();
 		/*
-		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
-		 * pair. strongPaths contains the sets of all proven strong paths.
+		 * weakPaths maps from a symmetric pair to the set of weak indices such that a
+		 * weak path was proven for this pair. strongPaths contains the sets of all
+		 * proven strong paths.
 		 */
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		/* indexDiseqs contains all index equalities in the clause */
@@ -3588,7 +3840,8 @@ public class ProofSimplifier extends TermTransformer {
 		assert goalTerms.length == 2;
 
 		/*
-		 * Check the paths in reverse order. Collect proven paths in a hash set, so that they can be used later.
+		 * Check the paths in reverse order. Collect proven paths in a hash set, so that
+		 * they can be used later.
 		 */
 		assert ccAnnotation.length == 3;
 		assert ccAnnotation[1] == ":weakpath";
@@ -3636,8 +3889,9 @@ public class ProofSimplifier extends TermTransformer {
 		assert ccAnnotation.length >= 3;
 		final Theory theory = clause[0].getAtom().getTheory();
 		/*
-		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
-		 * pair. strongPaths contains the sets of all proven strong paths.
+		 * weakPaths maps from a symmetric pair to the set of weak indices such that a
+		 * weak path was proven for this pair. strongPaths contains the sets of all
+		 * proven strong paths.
 		 */
 		final HashMap<SymmetricPair<Term>, Term> allEqualities = new HashMap<>();
 		/* indexDiseqs contains all index equalities in the clause */
@@ -3653,7 +3907,8 @@ public class ProofSimplifier extends TermTransformer {
 		assert goalTerms.length == 2;
 
 		/*
-		 * Check the paths in reverse order. Collect proven paths in a hash set, so that they can be used later.
+		 * Check the paths in reverse order. Collect proven paths in a hash set, so that
+		 * they can be used later.
 		 */
 		assert ccAnnotation.length % 2 == 1;
 		assert ccAnnotation[1] == ":subpath";
@@ -3666,8 +3921,8 @@ public class ProofSimplifier extends TermTransformer {
 		for (int i = 0; i < mainPath.length; i++) {
 			mainSelectChain[i] = theory.term(SMTLIBConstants.SELECT, mainPath[i], diffTerm);
 		}
-		final Term selectLeftDiff =  mainSelectChain[0];
-		final Term selectRightDiff =  mainSelectChain[mainPath.length - 1];
+		final Term selectLeftDiff = mainSelectChain[0];
+		final Term selectRightDiff = mainSelectChain[mainPath.length - 1];
 
 		final HashSet<SymmetricPair<Term>> weakDisequalities = new HashSet<>();
 		final HashSet<Term> neededWeakDisequalities = new HashSet<>();
@@ -3720,10 +3975,10 @@ public class ProofSimplifier extends TermTransformer {
 
 			final Term selectLeftIdx = theory.term(SMTLIBConstants.SELECT, arrayLeft, idx);
 			final Term selectRightIdx = theory.term(SMTLIBConstants.SELECT, arrayRight, idx);
-			Term subproof = proveSelectOverPath(idx, weakPath,
-					allEqualities.keySet(), allDisequalities.keySet(), neededEqualities, neededDisequalities);
-			subproof = res(theory.term(SMTLIBConstants.EQUALS, selectLeftIdx, selectRightIdx),
-					subproof, mProofRules.trans(selectLeftDiff, selectLeftIdx, selectRightIdx, selectRightDiff));
+			Term subproof = proveSelectOverPath(idx, weakPath, allEqualities.keySet(), allDisequalities.keySet(),
+					neededEqualities, neededDisequalities);
+			subproof = res(theory.term(SMTLIBConstants.EQUALS, selectLeftIdx, selectRightIdx), subproof,
+					mProofRules.trans(selectLeftDiff, selectLeftIdx, selectRightIdx, selectRightDiff));
 			subproof = res(theory.term(SMTLIBConstants.EQUALS, selectLeftDiff, selectLeftIdx),
 					mProofRules.cong(selectLeftDiff, selectLeftIdx), subproof);
 			subproof = res(theory.term(SMTLIBConstants.EQUALS, selectRightIdx, selectRightDiff),
@@ -3736,8 +3991,9 @@ public class ProofSimplifier extends TermTransformer {
 		}
 		assert neededWeakDisequalities.isEmpty();
 
-		/* Build the main proof:
-		 * use extensionality and equality on select is proved by transitivity over the main path.
+		/*
+		 * Build the main proof: use extensionality and equality on select is proved by
+		 * transitivity over the main path.
 		 */
 		Term proof = mProofRules.extDiff(arrayLeft, arrayRight);
 		proof = res(theory.term("=", selectLeftDiff, selectRightDiff), mainChainProof, proof);
@@ -3792,8 +4048,8 @@ public class ProofSimplifier extends TermTransformer {
 			neededEqualities.add(theory.term("=", selectArg, consTerm));
 			proof = res(theory.term("=", selectConsTerm, consArg), proof,
 					mProofRules.trans(selectTerm, selectConsTerm, consArg));
-			proof = res(theory.term("=", selectTerm, selectConsTerm),
-					mProofRules.cong(selectTerm, selectConsTerm), proof);
+			proof = res(theory.term("=", selectTerm, selectConsTerm), mProofRules.cong(selectTerm, selectConsTerm),
+					proof);
 		}
 
 		return resolveNeededEqualities(proof, allEqualities, allDisequalities, neededEqualities, neededDisequalities);
@@ -3857,8 +4113,7 @@ public class ProofSimplifier extends TermTransformer {
 			neededEqualities.add(theory.term("=", testerArg, consTerm));
 			proof = res(theory.term("=", testConsTerm, trueFalseTerm), proof,
 					mProofRules.trans(testerTerm, testConsTerm, trueFalseTerm));
-			proof = res(theory.term("=", testerTerm, testConsTerm), mProofRules.cong(testerTerm, testConsTerm),
-					proof);
+			proof = res(theory.term("=", testerTerm, testConsTerm), mProofRules.cong(testerTerm, testConsTerm), proof);
 		}
 
 		return resolveNeededEqualities(proof, allEqualities, allDisequalities, neededEqualities, neededDisequalities);
@@ -3927,7 +4182,6 @@ public class ProofSimplifier extends TermTransformer {
 		final ApplicationTerm firstTester = (ApplicationTerm) ccAnnotation[0];
 		assert isApplication(SMTLIBConstants.IS, firstTester);
 		final Term firstData = firstTester.getParameters()[0];
-
 
 		Term proof = mProofRules.dtExhaust(firstData);
 		for (int i = 0; i < ccAnnotation.length; i++) {
@@ -4094,10 +4348,10 @@ public class ProofSimplifier extends TermTransformer {
 
 		// the proof basically shows a contradiction via:
 		// (iscons1 cons1) = (iscons1 cons2)
-		final Term isCons11 =
-				theory.term(SMTLIBConstants.IS, new String[] { consTerm1.getFunction().getName() }, null, consTerm1);
-		final Term isCons12 =
-				theory.term(SMTLIBConstants.IS, new String[] { consTerm1.getFunction().getName() }, null, consTerm2);
+		final Term isCons11 = theory.term(SMTLIBConstants.IS, new String[] { consTerm1.getFunction().getName() }, null,
+				consTerm1);
+		final Term isCons12 = theory.term(SMTLIBConstants.IS, new String[] { consTerm1.getFunction().getName() }, null,
+				consTerm2);
 		final Term isConsEq = theory.term(SMTLIBConstants.EQUALS, isCons11, isCons12);
 		Term proof = mProofRules.cong(isCons11, isCons12);
 		neededEqualities.add(theory.term(SMTLIBConstants.EQUALS, consTerm1, consTerm2));
@@ -4162,8 +4416,8 @@ public class ProofSimplifier extends TermTransformer {
 		Term proof = mProofRules.refl(runningTerm);
 		final int[] argSequence = new int[(cycle.length - 1) / 2];
 		for (int i = cycle.length - 3; i >= 0; i -= 2) {
-			final Term selectTerm = cycle[i+2];
-			final Term consTerm = cycle[i+1];
+			final Term selectTerm = cycle[i + 2];
+			final Term consTerm = cycle[i + 1];
 			int pos = checkAndFindConsArg(consTerm, selectTerm);
 			if (pos >= 0) {
 				if (runningTerm == selectTerm) {
@@ -4281,12 +4535,15 @@ public class ProofSimplifier extends TermTransformer {
 		proof = mProofRules.resolutionRule(provedEqSides[0], proof, mProofRules.iffElim2(provedEq));
 		proof = mProofRules.resolutionRule(provedEq, subproof, proof);
 		Term[] result = new Term[] { provedEqSides[1] };
-		if (isApplication("false", provedEqSides[1])) {
-			result = new Term[0];
-			proof = mProofRules.resolutionRule(provedEqSides[1], proof, mProofRules.falseElim());
-		} else if (isApplication("or", provedEqSides[1])) {
-			result = ((ApplicationTerm) provedEqSides[1]).getParameters();
-			proof = mProofRules.resolutionRule(provedEqSides[1], proof, mProofRules.orElim(provedEqSides[1]));
+		if (clause.length != 2) {
+			if (isApplication("false", provedEqSides[1])) {
+				result = new Term[0];
+				proof = mProofRules.resolutionRule(provedEqSides[1], proof, mProofRules.falseElim());
+			} else if (isApplication("or", provedEqSides[1])) {
+				result = ((ApplicationTerm) provedEqSides[1]).getParameters();
+				proof = mProofRules.resolutionRule(provedEqSides[1], proof, mProofRules.orElim(provedEqSides[1]));
+			}
+			assert clause.length == 1 + result.length;
 		}
 		for (int i = 0; i < result.length; i++) {
 			proof = removeNot(proof, result[i], true);
@@ -4499,6 +4756,11 @@ public class ProofSimplifier extends TermTransformer {
 		case ":diff":
 		case ":matchCase":
 		case ":matchDefault":
+		case ":int2ubv2int":
+		case ":ubv2int2bv":
+		case ":int2bv":
+		case ":bv2intHigh":
+		case ":bv2intLow":
 			setResult(convertTautology(clause, annots[1]));
 			break;
 
@@ -4580,7 +4842,6 @@ public class ProofSimplifier extends TermTransformer {
 		}
 	}
 
-
 	/* === Auxiliary functions === */
 
 	private Term expandAux(final ApplicationTerm auxTerm) {
@@ -4595,10 +4856,10 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Negate a term, avoiding double negation. If formula is (not x) it returns x, otherwise it returns (not formula).
+	 * Negate a term, avoiding double negation. If formula is (not x) it returns x,
+	 * otherwise it returns (not formula).
 	 *
-	 * @param formula
-	 *            the formula to negate.
+	 * @param formula the formula to negate.
 	 * @return the negated formula.
 	 */
 	private Term negate(final Term formula) {
@@ -4609,10 +4870,10 @@ public class ProofSimplifier extends TermTransformer {
 	}
 
 	/**
-	 * Parses a constant term. It handles Rationals given as ConstantTerm or parsed as div terms.
+	 * Parses a constant term. It handles Rationals given as ConstantTerm or parsed
+	 * as div terms.
 	 *
-	 * @param term
-	 *            the term to parse.
+	 * @param term the term to parse.
 	 * @returns the parsed constant, null if parse error occured.
 	 */
 	private Rational parseConstant(final Term term) {
@@ -4622,10 +4883,8 @@ public class ProofSimplifier extends TermTransformer {
 	/**
 	 * Checks if a term is an application of an internal function symbol.
 	 *
-	 * @param funcSym
-	 *            the expected function symbol.
-	 * @param term
-	 *            the term to check.
+	 * @param funcSym the expected function symbol.
+	 * @param term    the term to check.
 	 * @return true if term is an application of funcSym.
 	 */
 	private boolean isApplication(final String funcSym, final Term term) {
@@ -4642,8 +4901,7 @@ public class ProofSimplifier extends TermTransformer {
 	/**
 	 * Checks if a term is zero, either Int or Real.
 	 *
-	 * @param zero
-	 *            the term to check.
+	 * @param zero the term to check.
 	 * @return true if zero is 0.
 	 */
 	private boolean isZero(final Term zero) {
@@ -4694,7 +4952,8 @@ public class ProofSimplifier extends TermTransformer {
 	 *
 	 * @param first  the left-hand side of the equality
 	 * @param second the right-hand side of the equality
-	 * @return the proof for `~(= first second)` or null if this is not a trivial disequality.
+	 * @return the proof for `~(= first second)` or null if this is not a trivial
+	 *         disequality.
 	 */
 	private Term proveTrivialDisequality(final Term first, final Term second) {
 		final Theory theory = first.getTheory();
@@ -4921,8 +5180,7 @@ public class ProofSimplifier extends TermTransformer {
 		assert isApplication("=", equality);
 		final Term[] sides = ((ApplicationTerm) equality).getParameters();
 		assert isApplication("false", sides[1]);
-		return res(sides[1], res(sides[0], mProofRules.iffIntro1(equality), proofLeftFalse),
-				mProofRules.falseElim());
+		return res(sides[1], res(sides[0], mProofRules.iffIntro1(equality), proofLeftFalse), mProofRules.falseElim());
 	}
 
 	private Term proveIff(final Term equality, final Term proofLeftToRight, final Term proofRightToLeft) {
@@ -4984,10 +5242,9 @@ public class ProofSimplifier extends TermTransformer {
 		final Term secondEq = mSkript.term(SMTLIBConstants.EQUALS, auxTerm, expanded);
 
 		return mProofRules.resolutionRule(firstEq,
-						mProofRules.resolutionRule(trueTerm, mProofRules.trueIntro(),
-								proveIff(firstEq, mProofRules.iffElim1(auxEqAtom),
-										mProofRules.iffIntro2(auxEqAtom))),
-						mProofRules.resolutionRule(secondEq, mProofRules.expand(auxTerm),
+				mProofRules.resolutionRule(trueTerm, mProofRules.trueIntro(),
+						proveIff(firstEq, mProofRules.iffElim1(auxEqAtom), mProofRules.iffIntro2(auxEqAtom))),
+				mProofRules.resolutionRule(secondEq, mProofRules.expand(auxTerm),
 						mProofRules.trans(auxEqAtom, auxTerm, expanded)));
 	}
 

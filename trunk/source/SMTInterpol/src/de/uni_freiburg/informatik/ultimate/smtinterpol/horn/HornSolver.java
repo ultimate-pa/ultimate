@@ -145,8 +145,8 @@ public class HornSolver extends NoopScript {
 		if (!logic.equals("HORN")) {
 			throw new SMTLIBException("No Horn logic");
 		}
-		super.setLogic(Logics.AUFLIRA);
-		mBackend.setLogic(Logics.QF_LIA);
+		super.setLogic(Logics.ALL);
+		mBackend.setLogic(Logics.valueOf("QF_LIA"));
 	}
 
 	@Override

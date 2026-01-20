@@ -146,7 +146,7 @@ public class LoggingScript extends WrapperScript {
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
-		mPw.println("(set-logic " + logic.name() + ")");
+		mPw.println("(set-logic " + logic.getName() + ")");
 		super.setLogic(logic);
 	}
 

@@ -43,14 +43,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
   private StringBuilder string; // NOPMD
   private SimpleSymbolFactory symFactory;
   private final UnifyHash<BigInteger> bignumbers = new UnifyHash<BigInteger>();
-  private boolean version25 = true;
+  private int majorVersion = 2, minorVersion = 7;
   
-  public void setVersion25(boolean on) {
-    version25 = on;
+  public void setVersion(int major, int minor) {
+    majorVersion = major;
+    minorVersion = minor;
   }
   
   public boolean isVersion25() {
-    return version25;
+    return majorVersion > 2 || (majorVersion == 2 && minorVersion >= 5);
+  }
+  
+  public boolean isVersion27() {
+    return majorVersion > 2 || (majorVersion == 2 && minorVersion >= 7);
   }
   
   public void setSymbolFactory(SimpleSymbolFactory factory) {
@@ -136,6 +141,7 @@ Keyword = ":" {SMTLetterDigit}+
   "immediate-exit"       { return symbol(LexerSymbols.IMMEDIATEEXIT, yytext()); }
   "include"              { return symbol(LexerSymbols.INCLUDE, yytext()); }
   "incomplete"           { return symbol(LexerSymbols.INCOMPLETE, yytext()); }
+  "lambda"               { return symbol(isVersion27() ? LexerSymbols.LAMBDA : LexerSymbols.SYMBOL, yytext()); }
   "let"                  { return symbol(LexerSymbols.LET, yytext()); }
   "logic"                { return symbol(LexerSymbols.LOGIC, yytext()); }
   "none"                 { return symbol(LexerSymbols.NONE, yytext()); }
@@ -205,7 +211,7 @@ Keyword = ":" {SMTLetterDigit}+
   {Decimal}              { return symbol(LexerSymbols.DECIMAL, new BigDecimal(yytext())); }
   {HexaDecimal}          { return symbol(LexerSymbols.HEXADECIMAL, yytext()); }
   {Binary}               { return symbol(LexerSymbols.BINARY, yytext()); }
-  \"                     { string = new StringBuilder(); if (version25) yybegin(STRING25); else yybegin(STRING20); }
+  \"                     { string = new StringBuilder(); if (isVersion25()) yybegin(STRING25); else yybegin(STRING20); }
 
  
   /* comments */

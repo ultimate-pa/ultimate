@@ -11,23 +11,19 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.LogicSimplifier;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
-public class BvToIntUtils {
+public class BvToIntUtils extends BvUtils {
 
-	private final Theory mTheory;
 	private final Sort mInteger;
-	private final BvUtils mBvUtils;
 	IProofTracker mTracker;
 	boolean mDealWithBvToNatAndNatToBvInPreprocessing;
 
-	public BvToIntUtils(final Theory theory, final LogicSimplifier utils, final BvUtils bvutils,
-			final IProofTracker tracker, final boolean dealWithBvToNatAndNatToBvInPreprocessing) {
-		mTheory = theory;
-		mBvUtils = bvutils;
+	public BvToIntUtils(Theory theory, final IProofTracker tracker,
+			final boolean dealWithBvToNatAndNatToBvInPreprocessing) {
 		mTracker = tracker;
 		mInteger = theory.getSort(SMTLIBConstants.INT);
 		mDealWithBvToNatAndNatToBvInPreprocessing = dealWithBvToNatAndNatToBvInPreprocessing;
@@ -35,9 +31,9 @@ public class BvToIntUtils {
 
 	/*
 	 * Deals with the uninterpreted function symbol bv2nat. Call this instead of
-	 * theory.term("bv2nat", param); Does local simplifications, without using
-	 * pushTerm to go throu the term again. Replaces bv2nat by a modulo in most
-	 * cases
+	 * theory.term(SMTLIBConstants.BV_TO_INT, param); Does local simplifications,
+	 * without using pushTerm to go throu the term again. Replaces bv2nat by a
+	 * modulo in most cases
 	 *
 	 * At the end bv2nat should only be around uninterpreted functions (constants
 	 * variables, selects, ...)
@@ -47,11 +43,12 @@ public class BvToIntUtils {
 	 * Case Switch, param is nat2bv (return param of nat2bv), param is constant,
 	 *
 	 */
-	public Term bv2nat(final Term param, boolean mod) {
+	public Term ubv2int(final Term param, boolean mod) {
+		final Theory theory = param.getTheory();
 		assert param.getSort().isBitVecSort();
 		if (param instanceof ApplicationTerm && mDealWithBvToNatAndNatToBvInPreprocessing) {
 			final ApplicationTerm apParam = (ApplicationTerm) param;
-			if (apParam.getFunction().getName().equals("nat2bv")) {
+			if (apParam.getFunction().getName().equals(SMTLIBConstants.INT_TO_BV)) {
 				final Term argument = apParam.getParameters()[0];
 				if (mod) {
 					final int width = Integer.valueOf(apParam.getSort().getIndices()[0]);
@@ -60,23 +57,35 @@ public class BvToIntUtils {
 						final Rational rat = (Rational) ((ConstantTerm) argument).getValue();
 						return rat.sub(maxNumber.mul(rat.div(maxNumber).floor())).toTerm(mInteger);
 					} else {
-						return mTheory.term("mod", argument, maxNumber.toTerm(mInteger));
+						return theory.term("mod", argument, maxNumber.toTerm(mInteger));
 					}
 				} else {
 					return argument;
 				}
 			}
 			if (apParam.getFunction().getName().equals("ite")) {
-				return mTheory.term("ite", apParam.getParameters()[0], bv2nat(apParam.getParameters()[1], mod),
-						bv2nat(apParam.getParameters()[2], mod));
+				return theory.term("ite", apParam.getParameters()[0], ubv2int(apParam.getParameters()[1], mod),
+						ubv2int(apParam.getParameters()[2], mod));
 			}
 		}
-		return mTheory.term("bv2nat", param);
+		return theory.term(SMTLIBConstants.UBV_TO_INT, param);
 	}
 
-	public Term nat2bv(final Term param, final String[] width) {
+	public Term int2bv(final Term param, final String[] width) {
+		final Theory theory = param.getTheory();
 		assert param.getSort().isNumericSort();
-		return mTheory.term("nat2bv", width, null, param);
+		return theory.term(SMTLIBConstants.INT_TO_BV, width, null, param);
+	}
+
+	public Term normalizeMod(final Term lhs, final Rational maxNumber) {
+		final Theory theory = lhs.getTheory();
+		final Sort sort = lhs.getSort();
+		final SMTAffineTerm arg0 = new SMTAffineTerm(lhs);
+		arg0.mod(maxNumber);
+		final Term div = arg0.isConstant() ? arg0.getConstant().div(maxNumber).floor().toTerm(sort)
+				: theory.term("div", arg0.toTerm(sort), maxNumber.toTerm(sort));
+		arg0.add(maxNumber.negate(), div);
+		return arg0.toTerm(sort);
 	}
 
 	private Rational pow2(int exponent) {
@@ -88,14 +97,14 @@ public class BvToIntUtils {
 	 */
 	public Term translateBvConstantTerm(final ConstantTerm term) {
 		assert term.getSort().isBitVecSort();
-		return nat2bv(translateConstant(term.getValue()), term.getSort().getIndices());
+		final Theory theory = term.getTheory();
+		return int2bv(translateConstant(term.getValue(), theory.getNumericSort()), term.getSort().getIndices());
 	}
 
 	/*
 	 * Gets as Input the value of a bit-vec const and returns an integer constant
 	 */
-	private Term translateConstant(final Object value) {
-		final Sort intSort = mTheory.getSort(SMTLIBConstants.INT);
+	private Term translateConstant(final Object value, Sort intSort) {
 		BigInteger constValue;
 		if (value instanceof String) {
 			String bitString = (String) value;
@@ -112,7 +121,7 @@ public class BvToIntUtils {
 		} else {
 			throw new UnsupportedOperationException("Unexpected constant type");
 		}
-		final Term intConst = mTheory.rational(Rational.valueOf(constValue, BigInteger.ONE), intSort);
+		final Term intConst = Rational.valueOf(constValue, BigInteger.ONE).toTerm(intSort);
 		return intConst;
 	}
 
@@ -127,8 +136,8 @@ public class BvToIntUtils {
 		final Term provedTerm = tracker.getProvedTerm(convertedApp);
 		final Term[] params = ((ApplicationTerm) provedTerm).getParameters();
 		Annotation proofRule = null;
-		final Polynomial poly = new Polynomial(bv2nat(params[0], false));
-		final Polynomial secondParam = new Polynomial(bv2nat(params[1], false));
+		final Polynomial poly = new Polynomial(ubv2int(params[0], false));
+		final Polynomial secondParam = new Polynomial(ubv2int(params[1], false));
 		switch (fsym.getName()) {
 		case "bvadd": {
 			poly.add(Rational.ONE, secondParam);
@@ -150,7 +159,7 @@ public class BvToIntUtils {
 					"Not an artihmetic BitVector Function: " + fsym.getName());
 		}
 		Term transformed = poly.toTerm(mInteger);
-		transformed = nat2bv(transformed, params[0].getSort().getIndices());
+		transformed = int2bv(transformed, params[0].getSort().getIndices());
 		return trackBvRewrite(convertedApp, transformed, proofRule);
 	}
 
@@ -160,11 +169,11 @@ public class BvToIntUtils {
 		final Term[] params = ((ApplicationTerm) provedTerm).getParameters();
 		// nat2bv[m](-bv2nat([[s]]))
 		final Polynomial poly = new Polynomial();
-		poly.add(Rational.MONE, bv2nat(params[0], false));
+		poly.add(Rational.MONE, ubv2int(params[0], false));
 		final Term negResult = poly.toTerm(mInteger);
 		Term transformed;
-		transformed = nat2bv(negResult, params[0].getSort().getIndices());
-		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVNOT2INT);
+		transformed = int2bv(negResult, params[0].getSort().getIndices());
+		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVNEG2INT);
 	}
 
 	public Term translateBvNot(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
@@ -175,9 +184,9 @@ public class BvToIntUtils {
 		// nat2bv[m](2^k-1-bv2nat([[s]]))
 		final Polynomial poly = new Polynomial();
 		poly.add(pow2(widthInt).add(Rational.MONE));
-		poly.add(Rational.MONE, bv2nat(params[0], false));
+		poly.add(Rational.MONE, ubv2int(params[0], false));
 		final Term not = poly.toTerm(mInteger);
-		final Term transformed = nat2bv(not, params[0].getSort().getIndices());
+		final Term transformed = int2bv(not, params[0].getSort().getIndices());
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVNOT2INT);
 	}
 
@@ -185,52 +194,62 @@ public class BvToIntUtils {
 		final Term provedTerm = tracker.getProvedTerm(convertedApp);
 		final Term[] params = ((ApplicationTerm) provedTerm).getParameters();
 		final int widthInt = Integer.valueOf(params[1].getSort().getIndices()[0]); // width of second argument
-		// 2 pow width
 		final Polynomial poly = new Polynomial();
-		poly.add(pow2(widthInt), bv2nat(params[0], false));
-		poly.add(Rational.ONE, bv2nat(params[1], true));
+		poly.add(pow2(widthInt), ubv2int(params[0], false));
+		poly.add(Rational.ONE, ubv2int(params[1], true));
 		final Term concat = poly.toTerm(mInteger);
-		final Term transformed = nat2bv(concat, fsym.getReturnSort().getIndices());
+		final Term transformed = int2bv(concat, fsym.getReturnSort().getIndices());
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_CONCAT2INT);
+	}
 
+	public Term translateRepeat(final Term[] params, final FunctionSymbol fsym, final Term convertedApp) {
+		assert params.length == 1 && fsym.getIndices().length == 1;
+		final int repeatCount = Integer.parseInt(fsym.getIndices()[0]);
+		final int bvWidth = Integer.valueOf(params[0].getSort().getIndices()[0]);
+		final Rational magicMultiplier = pow2(repeatCount * bvWidth).add(Rational.MONE)
+				.div(pow2(bvWidth).add(Rational.MONE));
+
+		final Polynomial poly = new Polynomial();
+		poly.add(magicMultiplier, ubv2int(params[0], false));
+		final Term repeated = poly.toTerm(mInteger);
+		final Term transformed = int2bv(repeated, fsym.getReturnSort().getIndices());
+		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_REPEAT2INT);
 	}
 
 	public Term translateBvudiv(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
+		final Theory theory = convertedApp.getTheory();
 		final Term provedTerm = tracker.getProvedTerm(convertedApp);
 		final Term[] params = ((ApplicationTerm) provedTerm).getParameters();
 		final int widthInt = Integer.valueOf(fsym.getReturnSort().getIndices()[0]);
 		final BigInteger two = BigInteger.valueOf(2);
 		// 2 pow width
-		final Term maxNumberMinusOne = mTheory.rational(
+		final Term maxNumberMinusOne = theory.rational(
 				Rational.valueOf(two.pow(widthInt).subtract(BigInteger.ONE), BigInteger.ONE),
-				mTheory.getSort(SMTLIBConstants.INT));
+				theory.getSort(SMTLIBConstants.INT));
 
-		final Term ifTerm = mTheory.term("=", bv2nat(params[1], true),
-				mTheory.rational(Rational.ZERO, mTheory.getSort(SMTLIBConstants.INT)));
+		final Term ifTerm = theory.term("=", ubv2int(params[1], true),
+				theory.rational(Rational.ZERO, theory.getSort(SMTLIBConstants.INT)));
 		final Term thenTerm = maxNumberMinusOne;
-		final Term elseTerm = mTheory.term("div", bv2nat(params[0], true), bv2nat(params[1], true));
-		final Term transformed = nat2bv(mTheory.term("ite", ifTerm, thenTerm, elseTerm),
+		final Term elseTerm = theory.term("div", ubv2int(params[0], true), ubv2int(params[1], true));
+		final Term transformed = int2bv(theory.term("ite", ifTerm, thenTerm, elseTerm),
 				fsym.getReturnSort().getIndices());
 
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVUDIV2INT);
 	}
 
 	public Term translateBvurem(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
+		final Theory theory = convertedApp.getTheory();
 		final Term provedTerm = tracker.getProvedTerm(convertedApp);
 		final Term[] params = ((ApplicationTerm) provedTerm).getParameters();
-		if (mBvUtils.isConstRelation(params[0], params[1])) {
-			final Term transformed = mBvUtils.simplifyBitvectorConstantOp(fsym, params[0], params[1]);
-			return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVEVAL);
-		}
-		final Sort intSort = mTheory.getSort(SMTLIBConstants.INT);
-		final Term lhs = bv2nat(params[0], true);
-		final Term rhs = bv2nat(params[1], true);
+		final Sort intSort = theory.getSort(SMTLIBConstants.INT);
+		final Term lhs = ubv2int(params[0], true);
+		final Term rhs = ubv2int(params[1], true);
 
-		final Term ifTerm = mTheory.term("=", rhs, mTheory.rational(Rational.ZERO, intSort));
+		final Term ifTerm = theory.term("=", rhs, theory.rational(Rational.ZERO, intSort));
 		final Term thenTerm = lhs;
-		final Term elseTerm = mTheory.term("mod", lhs, rhs);
+		final Term elseTerm = theory.term("mod", lhs, rhs);
 
-		final Term transformed = nat2bv(mTheory.term("ite", ifTerm, thenTerm, elseTerm),
+		final Term transformed = int2bv(theory.term("ite", ifTerm, thenTerm, elseTerm),
 				fsym.getReturnSort().getIndices());
 
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVUREM2INT);
@@ -245,19 +264,22 @@ public class BvToIntUtils {
 	}
 
 	public Term translateBvshl(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
+		final Theory theory = convertedApp.getTheory();
 		final Term provedTerm = tracker.getProvedTerm(convertedApp);
 		final Term[] params = ((ApplicationTerm) provedTerm).getParameters();
-		final Term translatedLHS = bv2nat(params[0], false);
-		final Term translatedRHS = bv2nat(params[1], true);
+		final Term translatedLHS = ubv2int(params[0], false);
+		final Term translatedRHS = ubv2int(params[1], true);
 		final int width = Integer.valueOf(fsym.getReturnSort().getIndices()[0]);
-		final Term zero = mTheory.rational(Rational.ZERO, mInteger);
+		final Term zero = theory.rational(Rational.ZERO, mInteger);
 		final Term transformedAsInt;
 		if (translatedRHS instanceof ConstantTerm) {
 			final Rational shiftValue = (Rational) ((ConstantTerm) translatedRHS).getValue();
+			assert shiftValue.denominator() == BigInteger.ONE && shiftValue.signum() >= 0;
 			if (shiftValue.numerator().compareTo(BigInteger.valueOf(width)) >= 0) {
 				transformedAsInt = zero;
 			} else {
-				final int shiftAsInt = shiftValue.numerator().intValueExact();
+				assert shiftValue.numerator().bitLength() <= 32;
+				final int shiftAsInt = shiftValue.numerator().intValue();
 				final Polynomial multiply = new Polynomial();
 				multiply.add(pow2(shiftAsInt), translatedLHS);
 				transformedAsInt = multiply.toTerm(mInteger);
@@ -271,38 +293,41 @@ public class BvToIntUtils {
 				final Polynomial compare = new Polynomial();
 				compare.add(shiftStep);
 				compare.add(Rational.MONE, shift);
-				final Term cond = mTheory.term("<=", compare.toTerm(mInteger), zero);
-				shift.add(Rational.ONE, mTheory.term("ite", cond, shiftStep.negate().toTerm(mInteger), zero));
+				final Term cond = theory.term("<=", compare.toTerm(mInteger), zero);
+				shift.add(Rational.ONE, theory.term("ite", cond, shiftStep.negate().toTerm(mInteger), zero));
 				final Polynomial multiply = new Polynomial();
 				multiply.add(pow2(1 << i), result);
-				result = mTheory.term("ite", cond, multiply.toTerm(mInteger), result);
+				result = theory.term("ite", cond, multiply.toTerm(mInteger), result);
 			}
 			transformedAsInt = result;
 		}
-		return trackBvRewrite(convertedApp, nat2bv(transformedAsInt, fsym.getReturnSort().getIndices()),
+		return trackBvRewrite(convertedApp, int2bv(transformedAsInt, fsym.getReturnSort().getIndices()),
 				ProofConstants.RW_BVSHL2INT);
 	}
 
 	public Term translateBvlshr(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
+		final Theory theory = convertedApp.getTheory();
 		final Term provedTerm = tracker.getProvedTerm(convertedApp);
 		final Term[] params = ((ApplicationTerm) provedTerm).getParameters();
 		final int width = Integer.valueOf(fsym.getReturnSort().getIndices()[0]);
 		// nat2bv[m](bv2nat([[s]]) div 2^(bv2nat([[t]])))
-		final Term translatedLHS = bv2nat(params[0], true);
-		final Term translatedRHS = bv2nat(params[1], true);
+		final Term translatedLHS = ubv2int(params[0], true);
+		final Term translatedRHS = ubv2int(params[1], true);
 
-		final Term zero = mTheory.rational(Rational.ZERO, mInteger);
+		final Term zero = theory.rational(Rational.ZERO, mInteger);
 		final Term transformedAsInt;
 		if (translatedRHS instanceof ConstantTerm) {
 			final Rational shiftValue = (Rational) ((ConstantTerm) translatedRHS).getValue();
+			assert shiftValue.denominator() == BigInteger.ONE && shiftValue.signum() >= 0;
 			if (shiftValue.numerator().compareTo(BigInteger.valueOf(width)) >= 0) {
 				transformedAsInt = zero;
 			} else {
-				final int shiftAsInt = shiftValue.numerator().intValueExact();
+				assert shiftValue.numerator().bitLength() <= 32;
+				final int shiftAsInt = shiftValue.numerator().intValue();
 				if (shiftAsInt == 0) {
 					transformedAsInt = translatedLHS;
 				} else {
-					transformedAsInt = mTheory.term(SMTLIBConstants.DIV, translatedLHS,
+					transformedAsInt = theory.term(SMTLIBConstants.DIV, translatedLHS,
 							pow2(shiftAsInt).toTerm(mInteger));
 				}
 			}
@@ -315,41 +340,47 @@ public class BvToIntUtils {
 				final Polynomial compare = new Polynomial();
 				compare.add(shiftStep);
 				compare.add(Rational.MONE, shift);
-				final Term cond = mTheory.term("<=", compare.toTerm(mInteger), zero);
-				shift.add(Rational.ONE, mTheory.term("ite", cond, shiftStep.negate().toTerm(mInteger), zero));
-				final Term divide = mTheory.term(SMTLIBConstants.DIV, result, pow2(1 << i).toTerm(mInteger));
-				result = mTheory.term("ite", cond, divide, result);
+				final Term cond = theory.term("<=", compare.toTerm(mInteger), zero);
+				shift.add(Rational.ONE, theory.term("ite", cond, shiftStep.negate().toTerm(mInteger), zero));
+				final Term divide = theory.term(SMTLIBConstants.DIV, result, pow2(1 << i).toTerm(mInteger));
+				result = theory.term("ite", cond, divide, result);
 			}
 			transformedAsInt = result;
 		}
-		return trackBvRewrite(convertedApp, nat2bv(transformedAsInt, fsym.getReturnSort().getIndices()),
+		return trackBvRewrite(convertedApp, int2bv(transformedAsInt, fsym.getReturnSort().getIndices()),
 				ProofConstants.RW_BVLSHR2INT);
 	}
 
 	public Term translateExtract(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
+		final Theory theory = convertedApp.getTheory();
 		final Term provedTerm = tracker.getProvedTerm(convertedApp);
 		final Term[] params = ((ApplicationTerm) provedTerm).getParameters();
-		if (mBvUtils.isConstant(params[0])) {
-			final Term transformed = mBvUtils.simplifySelectConst(fsym, params[0]);
-			return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVEVAL);
-		}
-		final Sort intSort = mTheory.getSort(SMTLIBConstants.INT);
-		final Term translatedLHS = bv2nat(params[0], false);
-		final BigInteger two = BigInteger.valueOf(2);
+		final Sort intSort = theory.getSort(SMTLIBConstants.INT);
+		final Term translatedLHS = ubv2int(params[0], false);
 		final int lowerIndex = Integer.parseInt(fsym.getIndices()[1]);
 		final int upperIndex = Integer.parseInt(fsym.getIndices()[0]);
-
-		final Term divby = mTheory.rational(Rational.valueOf(two.pow(lowerIndex), BigInteger.ONE), intSort);
-
 		final int extractedWidth = upperIndex - lowerIndex + 1;
+
+		Term resultTerm;
+		if (translatedLHS instanceof ConstantTerm) {
+			final Rational modulus = pow2(extractedWidth);
+			Rational result = (Rational) ((ConstantTerm) translatedLHS).getValue();
+			result = result.div(pow2(lowerIndex)).floor();
+			result = result.sub(modulus.mul(result.div(modulus).floor()));
+			resultTerm = result.toTerm(intSort);
+		} else {
+			resultTerm = theory.term(SMTLIBConstants.DIV, translatedLHS, pow2(lowerIndex).toTerm(intSort));
+		}
+
 		final String[] newWidth = new String[1];
 		newWidth[0] = String.valueOf(extractedWidth);
 
-		final Term transformed = nat2bv(mTheory.term("div", translatedLHS, divby), newWidth);
+		final Term transformed = int2bv(resultTerm, newWidth);
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_EXTRACT2INT);
 	}
 
 	public Term translateRelations(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
+		final Theory theory = convertedApp.getTheory();
 		final Term[] params = ((ApplicationTerm) tracker.getProvedTerm(convertedApp)).getParameters();
 		final int width = Integer.valueOf(params[0].getSort().getIndices()[0]);
 
@@ -415,17 +446,18 @@ public class BvToIntUtils {
 		}
 		final Term[] translatedArgs = new Term[params.length];
 		for (int i = 0; i < params.length; i++) {
-			translatedArgs[i] = bv2nat(params[i], !isSigned);
+			translatedArgs[i] = ubv2int(params[i], !isSigned);
 			if (isSigned) {
 				translatedArgs[i] = uts(width, translatedArgs[i]);
 			}
 		}
-		transformed = mTheory.term(newFsym, translatedArgs);
+		transformed = theory.term(newFsym, translatedArgs);
 		return trackBvRewrite(convertedApp, transformed, proofRule);
 	}
 
 	// unsigned to signed for relations
 	private final Term uts(final int width, Term bv2natparam) {
+		final Theory theory = bv2natparam.getTheory();
 		// signed(x) = (x+2^{k-1}) mod 2^k - 2^{k-1}
 		final Rational signBit = pow2(width - 1);
 		final Rational maxNumber = pow2(width);
@@ -438,13 +470,14 @@ public class BvToIntUtils {
 			final Polynomial poly = new Polynomial(bv2natparam);
 			poly.add(signBit);
 			final Term shiftedX = poly.toTerm(mInteger);
-			poly.add(maxNumber.negate(), mTheory.term(SMTLIBConstants.DIV, shiftedX, maxNumber.toTerm(mInteger)));
+			poly.add(maxNumber.negate(), theory.term(SMTLIBConstants.DIV, shiftedX, maxNumber.toTerm(mInteger)));
 			poly.add(signBit.negate());
 			return poly.toTerm(mInteger);
 		}
 	}
 
 	public Term bitBlastAndConstant(final Term lhs, final Rational rhs, int width) {
+		final Theory theory = lhs.getTheory();
 		assert rhs.isIntegral();
 		BigInteger mask = rhs.numerator();
 		final Polynomial result = new Polynomial();
@@ -466,7 +499,7 @@ public class BvToIntUtils {
 				result.add(Rational.ONE, lhs);
 			} else {
 				final Rational powLowRat = Rational.valueOf(powLow, BigInteger.ONE);
-				result.add(powLowRat, mTheory.term(SMTLIBConstants.DIV, lhs, powLowRat.toTerm(mInteger)));
+				result.add(powLowRat, theory.term(SMTLIBConstants.DIV, lhs, powLowRat.toTerm(mInteger)));
 			}
 			final int high = mask.getLowestSetBit();
 			if (high >= width || high < 0) {
@@ -475,24 +508,25 @@ public class BvToIntUtils {
 			final BigInteger powHigh = BigInteger.ONE.shiftLeft(high);
 			mask = mask.subtract(powHigh);
 			final Rational powHighRat = Rational.valueOf(powHigh, BigInteger.ONE);
-			result.add(powHighRat.negate(), mTheory.term(SMTLIBConstants.DIV, lhs, powHighRat.toTerm(mInteger)));
+			result.add(powHighRat.negate(), theory.term(SMTLIBConstants.DIV, lhs, powHighRat.toTerm(mInteger)));
 		}
 		return result.toTerm(mInteger);
 	}
 
 	public Term bitBlastAnd(final Term lhs, final Term rhs, int width) {
+		final Theory theory = lhs.getTheory();
 		if (rhs instanceof ConstantTerm) {
 			return bitBlastAndConstant(lhs, (Rational) ((ConstantTerm) rhs).getValue(), width);
 		}
 		if (lhs instanceof ConstantTerm) {
 			return bitBlastAndConstant(rhs, (Rational) ((ConstantTerm) lhs).getValue(), width);
 		}
-		final Term one = mTheory.rational(Rational.ONE, mInteger);
-		final Term zero = mTheory.rational(Rational.ZERO, mInteger);
+		final Term one = theory.rational(Rational.ONE, mInteger);
+		final Term zero = theory.rational(Rational.ZERO, mInteger);
 		final Polynomial poly = new Polynomial();
 
 		for (int i = 0; i < width; i++) {
-			final Term ite = mTheory.term("ite", mTheory.term("=", isel(i, lhs), one), isel(i, rhs), zero);
+			final Term ite = theory.term("ite", theory.term("=", isel(i, lhs), one), isel(i, rhs), zero);
 			poly.add(pow2(i), ite);
 		}
 		return poly.toTerm(mInteger);
@@ -503,45 +537,46 @@ public class BvToIntUtils {
 		final int width = Integer.valueOf(bvSort.getIndices()[0]);
 		final Term[] params = ((ApplicationTerm) tracker.getProvedTerm(convertedApp)).getParameters();
 
-		final Term lhs = bv2nat(params[0], false);
-		final Term rhs = bv2nat(params[1], false);
+		final Term lhs = ubv2int(params[0], false);
+		final Term rhs = ubv2int(params[1], false);
 
-		final Term transformed = nat2bv(bitBlastAnd(lhs, rhs, width), bvSort.getIndices());
+		final Term transformed = int2bv(bitBlastAnd(lhs, rhs, width), bvSort.getIndices());
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVBLAST);
 	}
 
 	// Term that picks the bit at position "i" of integer term "term"
 	// interpreted as binary
 	private Term isel(final int i, final Term term) {
-		final Sort intSort = mTheory.getSort(SMTLIBConstants.INT);
-		final Term two = mTheory.rational(Rational.TWO, intSort);
-		final Term twoPowI = mTheory.rational(Rational.valueOf(BigInteger.valueOf(2).pow(i), BigInteger.ONE), intSort);
-		return mTheory.term("mod", mTheory.term("div", term, twoPowI), two);
+		final Theory theory = term.getTheory();
+		final Sort intSort = theory.getSort(SMTLIBConstants.INT);
+		final Term two = theory.rational(Rational.TWO, intSort);
+		final Term twoPowI = theory.rational(Rational.valueOf(BigInteger.valueOf(2).pow(i), BigInteger.ONE), intSort);
+		return theory.term("mod", theory.term("div", term, twoPowI), two);
 	}
 
 	public Term translateBvor(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
 		final Term[] params = ((ApplicationTerm) tracker.getProvedTerm(convertedApp)).getParameters();
-		final Term lhs = bv2nat(params[0], false);
-		final Term rhs = bv2nat(params[1], false);
+		final Term lhs = ubv2int(params[0], false);
+		final Term rhs = ubv2int(params[1], false);
 		final Sort bvSort = fsym.getReturnSort();
 		final int width = Integer.valueOf(bvSort.getIndices()[0]);
 		final Polynomial poly = new Polynomial(lhs);
 		poly.add(Rational.ONE, rhs);
 		poly.add(Rational.MONE, bitBlastAnd(lhs, rhs, width));
-		final Term transformed = nat2bv(poly.toTerm(mInteger), bvSort.getIndices());
+		final Term transformed = int2bv(poly.toTerm(mInteger), bvSort.getIndices());
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVBLAST);
 	}
 
 	public Term translateBvxor(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
 		final Term[] params = ((ApplicationTerm) tracker.getProvedTerm(convertedApp)).getParameters();
-		final Term lhs = bv2nat(params[0], false);
-		final Term rhs = bv2nat(params[1], false);
+		final Term lhs = ubv2int(params[0], false);
+		final Term rhs = ubv2int(params[1], false);
 		final Sort bvSort = fsym.getReturnSort();
 		final int width = Integer.valueOf(bvSort.getIndices()[0]);
 		final Polynomial poly = new Polynomial(lhs);
 		poly.add(Rational.ONE, rhs);
 		poly.add(Rational.TWO.negate(), bitBlastAnd(lhs, rhs, width));
-		final Term transformed = nat2bv(poly.toTerm(mInteger), bvSort.getIndices());
+		final Term transformed = int2bv(poly.toTerm(mInteger), bvSort.getIndices());
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVBLAST);
 	}
 
@@ -550,14 +585,23 @@ public class BvToIntUtils {
 		Term arg;
 		Annotation proofRule;
 		if (fsym.getName().equals(SMTLIBConstants.ZERO_EXTEND)) {
-			arg = bv2nat(params[0], true);
+			arg = ubv2int(params[0], true);
 			proofRule = ProofConstants.RW_ZEROEXTEND;
 		} else {
 			final int inputWidth = Integer.valueOf(params[0].getSort().getIndices()[0]);
-			arg = uts(inputWidth, bv2nat(params[0], false));
+			arg = uts(inputWidth, ubv2int(params[0], false));
 			proofRule = ProofConstants.RW_SIGNEXTEND;
 		}
-		final Term transformed = nat2bv(arg, fsym.getReturnSort().getIndices());
+		final Term transformed = int2bv(arg, fsym.getReturnSort().getIndices());
+		return trackBvRewrite(convertedApp, transformed, proofRule);
+	}
+
+	public Term translateSbvToInt(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
+		final Term[] params = ((ApplicationTerm) tracker.getProvedTerm(convertedApp)).getParameters();
+		Annotation proofRule;
+		final int inputWidth = Integer.valueOf(params[0].getSort().getIndices()[0]);
+		final Term transformed = uts(inputWidth, ubv2int(params[0], false));
+		proofRule = ProofConstants.RW_BV_EXPAND_DEF;
 		return trackBvRewrite(convertedApp, transformed, proofRule);
 	}
 }

@@ -439,6 +439,17 @@ public class NoopScript implements Script {
 	}
 
 	@Override
+	public Term lambda(final TermVariable[] vars, Term body) throws SMTLIBException {
+		if (vars.length == 0) {
+			throw new SMTLIBException("No variables given");
+		}
+		if (body == null) {
+			throw new SMTLIBException("Empty body");
+		}
+		return mTheory.lambda(vars, body);
+	}
+
+	@Override
 	public Term let(final TermVariable[] vars, final Term[] values, final Term body)
 		throws SMTLIBException {
 		if (vars.length != values.length) {

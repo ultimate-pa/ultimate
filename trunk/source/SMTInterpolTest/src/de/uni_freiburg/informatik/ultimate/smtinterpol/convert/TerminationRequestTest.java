@@ -38,7 +38,7 @@ public class TerminationRequestTest {
 		cancel.setResourceLimit(1);
 		final SMTInterpol smtinterpol = new SMTInterpol(cancel);
 		smtinterpol.setOption(":verbosity", 3);
-		smtinterpol.setLogic(Logics.QF_UF);
+		smtinterpol.setLogic(Logics.valueOf("QF_UF"));
 		smtinterpol.assertTerm(smtinterpol.term("false"));
 		final LBool status = smtinterpol.checkSat();
 		Assert.assertEquals(LBool.UNKNOWN, status);

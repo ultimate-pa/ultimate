@@ -364,11 +364,12 @@ public class InstantiationManager {
 					final InstClause instClause = existingInst.getValue();
 					if (instClause != null) {
 						final int numUndef = instClause.countAndSetUndefLits();
-						assert numUndef == -1 || numUndef == 0;
 						if (numUndef == 0) {
 							mQuantTheory.getLogger().info(
 									"Conflict on existing clause instance hasn't been detected in checkpoint(): ",
 									instClause);
+						}
+						if (numUndef >= 0) {
 							return Collections.singleton(instClause);
 						}
 					}
@@ -1277,7 +1278,6 @@ public class InstantiationManager {
 
 		// Check for true ground literals first.
 		for (final Literal groundLit : quantClause.getGroundLits()) {
-			assert groundLit.getAtom().getDecideStatus() != null;
 			if (groundLit.getAtom().getDecideStatus() == groundLit) {
 				return new Pair<>(InstanceValue.TRUE, null);
 			}

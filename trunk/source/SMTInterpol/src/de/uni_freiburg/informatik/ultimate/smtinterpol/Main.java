@@ -90,7 +90,7 @@ public final class Main {
 					scriptName = "de.uni_freiburg.informatik.ultimate.smtinterpol.scripts." + scriptName;
 				}
 				final Class<?> scriptClass = Class.forName(scriptName);
-				solver = (Script) scriptClass.newInstance();
+				solver = (Script) scriptClass.getDeclaredConstructor().newInstance();
 			} else if (param[paramctr].equals("-ddfriendly")) {
 				errorCallback = new ErrorCallback() {
 					@Override

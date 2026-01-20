@@ -28,8 +28,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.NoopProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.bitvector.BvToIntUtils;
 
 @RunWith(JUnit4.class)
 public class TermCompilerTest {
@@ -40,7 +42,7 @@ public class TermCompilerTest {
 
 	public TermCompilerTest() {
 		mSolver = new SMTInterpol(new DefaultLogger());
-		mSolver.setLogic(Logics.QF_LIA);
+		mSolver.setLogic(Logics.valueOf("QF_LIA"));
 		final Sort boolSort = mSolver.sort("Bool");
 		final Sort intSort = mSolver.sort("Int");
 		final Sort[] empty = {};
@@ -61,7 +63,9 @@ public class TermCompilerTest {
 		mThree = mSolver.numeral("3");
 		mFive = mSolver.numeral("5");
 		mCompiler = new TermCompiler();
-		mCompiler.setProofTracker(new NoopProofTracker());
+		final IProofTracker tracker = new NoopProofTracker();
+		mCompiler.setProofTracker(tracker, new LogicSimplifier(tracker),
+				new BvToIntUtils(mSolver.getTheory(), tracker, true));
 	}
 
 	@Test

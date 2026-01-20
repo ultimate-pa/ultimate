@@ -28,7 +28,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -53,7 +52,7 @@ public class EpsilonTest {
 	public void setUp() throws Exception {
 		mSolver = new SMTInterpol(new DefaultLogger());
 		mSolver.setOption(":produce-models", Boolean.TRUE);
-		mSolver.setLogic(Logics.QF_LRA);
+		mSolver.setLogic("QF_LRA");
 		final Sort real = mSolver.sort("Real");
 		mSolver.declareFun("x", Script.EMPTY_SORT_ARRAY, real);
 		mSolver.declareFun("y", Script.EMPTY_SORT_ARRAY, real);
