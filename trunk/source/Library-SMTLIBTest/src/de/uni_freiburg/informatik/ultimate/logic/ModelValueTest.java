@@ -30,7 +30,7 @@ public class ModelValueTest {
 	public void test() {
 		final Script script = new NoopScript();
 
-		script.setLogic(Logics.QF_AUFLIA);
+		script.setLogic(Logics.valueOf("QF_AUFLIA"));
 		final Sort sortInt = script.sort("Int");
 		script.declareSort("U", 0);
 		final Sort sortU = script.sort("U");

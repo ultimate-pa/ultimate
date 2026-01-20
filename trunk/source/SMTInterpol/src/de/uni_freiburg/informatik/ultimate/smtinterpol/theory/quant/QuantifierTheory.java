@@ -339,6 +339,7 @@ public class QuantifierTheory implements ITheory {
 				if (inst.isUnit()) {
 					assert !Config.EXPENSIVE_ASSERTS || inst.countAndSetUndefLits() == 1;
 					final Clause expl = inst.toClause(mEngine.isProofGenerationEnabled());
+					assert expl != null;
 					lit.getAtom().mExplanation = expl;
 					mEngine.learnClause(expl);
 					mNumProps++;
@@ -363,8 +364,11 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public Literal getSuggestion() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mPendingInstances.isEmpty()) {
+			return null;
+		} else {
+			return mPendingInstances.keySet().iterator().next();
+		}
 	}
 
 	@Override

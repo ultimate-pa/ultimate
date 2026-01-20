@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -45,7 +44,7 @@ public class AssumptionTest {
 	public void badAssumptions() {
 		if (Config.STRONG_USAGE_CHECKS) {
 			final SMTInterpol solver = new SMTInterpol();
-			solver.setLogic(Logics.QF_UFLIA);
+			solver.setLogic("QF_UFLIA");
 			final Sort boolsort = solver.sort("Bool");
 			final Sort intsort = solver.sort("Int");
 			solver.declareFun("P", Script.EMPTY_SORT_ARRAY, boolsort);
@@ -99,7 +98,7 @@ public class AssumptionTest {
 	@Test
 	public void clearRepeatedAssumptions() {
 		final SMTInterpol solver = new SMTInterpol();
-		solver.setLogic(Logics.QF_UF);
+		solver.setLogic("QF_UF");
 		solver.declareFun("P", Script.EMPTY_SORT_ARRAY, solver.sort("Bool"));
 		final Term p = solver.term("P");
 		final Term notp = solver.term("not", p);
@@ -115,7 +114,7 @@ public class AssumptionTest {
 	@Test
 	public void conflictingAssumptions() {
 		final SMTInterpol solver = new SMTInterpol();
-		solver.setLogic(Logics.QF_UF);
+		solver.setLogic("QF_UF");
 		solver.declareFun("P", Script.EMPTY_SORT_ARRAY, solver.sort("Bool"));
 		final Term p = solver.term("P");
 		final Term notp = solver.term("not", p);
@@ -131,7 +130,7 @@ public class AssumptionTest {
 	@Test
 	public void modelproduction() {
 		final SMTInterpol solver = new SMTInterpol();
-		solver.setLogic(Logics.QF_UFLIA);
+		solver.setLogic("QF_UFLIA");
 		final Sort boolsort = solver.sort("Bool");
 		final Sort intsort = solver.sort("Int");
 		solver.declareFun("P", Script.EMPTY_SORT_ARRAY, boolsort);
@@ -161,7 +160,7 @@ public class AssumptionTest {
 	@Test
 	public void testAssumptionRemoval() {
 		final SMTInterpol solver = new SMTInterpol();
-		solver.setLogic(Logics.QF_UFLIA);
+		solver.setLogic("QF_UFLIA");
 		final Sort boolsort = solver.sort("Bool");
 		final Sort intsort = solver.sort("Int");
 		solver.declareFun("P", Script.EMPTY_SORT_ARRAY, boolsort);

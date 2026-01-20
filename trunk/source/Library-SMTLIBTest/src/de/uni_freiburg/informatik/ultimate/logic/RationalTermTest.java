@@ -262,7 +262,7 @@ public final class RationalTermTest {
 	@Test
 	public void testLIA() {
 		final Script script = new NoopScript();
-		script.setLogic(Logics.QF_LIA);
+		script.setLogic("QF_LIA");
 
 		internalTestInputInt(script);
 		internalTestOutputInt(script);
@@ -272,7 +272,7 @@ public final class RationalTermTest {
 	@Test
 	public void testLRA() {
 		final Script script = new NoopScript();
-		script.setLogic(Logics.QF_LRA);
+		script.setLogic("QF_LRA");
 
 		internalTestInputReal(script);
 		internalTestOutputReal(script);
@@ -283,7 +283,7 @@ public final class RationalTermTest {
 	@Test
 	public void testLIRA() {
 		final Script script = new NoopScript();
-		script.setLogic(Logics.QF_LIRA);
+		script.setLogic("QF_LIRA");
 
 		internalTestInputInt(script);
 		internalTestInputReal(script);

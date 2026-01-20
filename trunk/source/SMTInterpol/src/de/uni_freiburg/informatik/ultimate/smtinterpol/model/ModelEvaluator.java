@@ -279,18 +279,38 @@ public class ModelEvaluator extends TermTransformer {
 		}
 
 		case SMTLIBConstants.EQUALS:
-			for (int i = 1; i < args.length; ++i) {
-				if (args[i] != args[0]) {
-					return theory.mFalse;
+			if (fs.getDefinition() != null) {
+				// This is a LIRA equality between numbers of different types
+				final Rational arg0Value = rationalValue(args[0]);
+				for (int i = 1; i < args.length; ++i) {
+					if (rationalValue(args[i]) != arg0Value) {
+						return theory.mFalse;
+					}
+				}
+			} else {
+				for (int i = 1; i < args.length; ++i) {
+					if (args[i] != args[0]) {
+						return theory.mFalse;
+					}
 				}
 			}
 			return theory.mTrue;
 
 		case SMTLIBConstants.DISTINCT: {
-			final HashSet<Term> vals = new HashSet<>();
-			for (final Term arg : args) {
-				if (!vals.add(arg)) {
-					return theory.mFalse;
+			if (fs.getDefinition() != null) {
+				// This is a LIRA equality between numbers of different types
+				final HashSet<Rational> vals = new HashSet<>();
+				for (final Term arg : args) {
+					if (!vals.add(rationalValue(arg))) {
+						return theory.mFalse;
+					}
+				}
+			} else {
+				final HashSet<Term> vals = new HashSet<>();
+				for (final Term arg : args) {
+					if (!vals.add(arg)) {
+						return theory.mFalse;
+					}
 				}
 			}
 			return theory.mTrue;
@@ -483,7 +503,7 @@ public class ModelEvaluator extends TermTransformer {
 			return array.computeDiff(args[0], args[1], fs.getReturnSort());
 		}
 
-		case SMTInterpolConstants.NAT2BV: {
+		case SMTLIBConstants.INT_TO_BV: {
 			assert args.length == 1;
 			final Rational n = rationalValue(args[0]);
 			assert n.isIntegral();
@@ -491,7 +511,7 @@ public class ModelEvaluator extends TermTransformer {
 			return createBitvectorTerm(n.numerator().and(mask), fs.getReturnSort());
 		}
 
-		case SMTInterpolConstants.BV2NAT: {
+		case SMTLIBConstants.UBV_TO_INT: {
 			assert args.length == 1;
 			final BigInteger value = bitvectorValue(args[0]);
 			return Rational.valueOf(value, BigInteger.ONE).toTerm(fs.getReturnSort());
@@ -773,8 +793,9 @@ public class ModelEvaluator extends TermTransformer {
 			final BigInteger shiftArg = bitvectorValue(args[1]);
 			BigInteger value;
 			if (shiftArg.compareTo(BigInteger.valueOf(size)) < 0) {
+				assert shiftArg.bitLength() <= 32;
 				final BigInteger mask = BigInteger.ONE.shiftLeft(size).subtract(BigInteger.ONE);
-				value = bitvectorValue(args[0]).shiftLeft(shiftArg.intValueExact()).and(mask);
+				value = bitvectorValue(args[0]).shiftLeft(shiftArg.intValue()).and(mask);
 			} else {
 				value = BigInteger.ZERO;
 			}
@@ -786,7 +807,8 @@ public class ModelEvaluator extends TermTransformer {
 			final BigInteger shiftArg = bitvectorValue(args[1]);
 			BigInteger value;
 			if (shiftArg.compareTo(BigInteger.valueOf(size)) < 0) {
-				value = bitvectorValue(args[0]).shiftRight(shiftArg.intValueExact());
+				assert shiftArg.bitLength() <= 32;
+				value = bitvectorValue(args[0]).shiftRight(shiftArg.intValue());
 			} else {
 				value = BigInteger.ZERO;
 			}
@@ -798,7 +820,8 @@ public class ModelEvaluator extends TermTransformer {
 			final BigInteger shiftArg = bitvectorValue(args[1]);
 			BigInteger value = bitvectorValue(args[0]);
 			if (shiftArg.compareTo(BigInteger.valueOf(size)) < 0) {
-				final int shiftInt = shiftArg.intValueExact();
+				assert shiftArg.bitLength() <= 32;
+				final int shiftInt = shiftArg.intValue();
 				final BigInteger signBits = value.testBit(size - 1)
 						? BigInteger.ONE.shiftLeft(size - shiftInt).subtract(BigInteger.ONE).shiftLeft(shiftInt)
 						: BigInteger.ZERO;

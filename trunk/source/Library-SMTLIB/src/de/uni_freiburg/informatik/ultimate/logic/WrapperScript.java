@@ -267,6 +267,11 @@ public class WrapperScript implements Script {
 	}
 
 	@Override
+	public Term lambda(final TermVariable[] vars, final Term body) throws SMTLIBException {
+		return mScript.lambda(vars, body);
+	}
+
+	@Override
 	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
 		return mScript.let(vars, values, body);
 	}

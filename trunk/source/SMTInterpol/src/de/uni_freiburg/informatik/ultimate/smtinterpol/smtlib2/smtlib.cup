@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 import java.math.BigInteger;
 import java.math.BigDecimal;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
@@ -375,15 +376,56 @@ action code {:
 		}
 	}
 
-	public Term createTerm(Symbol fsym, String name, String[] indices, Sort resultSort, Term[] param) {
+	public Term createIndexTerm(Symbol pos, String index) {
+		try {
+			if (index.charAt(0) >= '0' && index.charAt(0) <= '9') {
+				return parser.env.getScript().numeral(index);
+			} else if (index.startsWith("#x")) {
+				return parser.env.getScript().hexadecimal(index);
+			} else if (index.startsWith("#b")) {
+				return parser.env.getScript().binary(index);
+			} else {
+				return createSymbolTerm(pos, index);
+			}
+		} catch (SMTLIBException se) {
+			parser.report_error(se.getMessage(), pos);
+			return null;
+		}
+	}
+
+	public Term createTerm(Symbol fsym, String name, String[] indices, Sort resultSort, Term[] params) {
 		// check if there was an error when creating the child term.
-		for (Term p : param) {
+		for (Term p : params) {
 			if (p == null)
 				return null;
 		}
 		try {
-			return parser.env.getScript().term(name, indices, resultSort, param);
+			return parser.env.getScript().term(name, indices, resultSort, params);
 		} catch (SMTLIBException se) {
+			if (indices != null || params.length > 0) {
+				final Term me = createSymbolTerm(fsym, name);
+				if (me == null) {
+					return null;
+				}
+				if (me.getSort().getSortSymbol().isFunction()) {
+					/* reinterpret term as application term */
+					Term application = me;
+					if (indices != null) {
+						final Term[] args = new Term[indices.length];
+						for (int i = 0; i < indices.length; i++) {
+							args[i] = createIndexTerm(fsym, indices[i]);
+							if (args[i] == null) {
+								return null;
+							}
+						}
+						application = createApplication(fsym, me, args);
+					}
+					if (application != null && params.length > 0) {
+						application = createApplication(fsym, application, params);
+					}
+					return application;
+				}
+			}
 			parser.report_error(se.getMessage(), fsym);
 		}
 		return null;
@@ -401,8 +443,23 @@ action code {:
 		throw new AssertionError();
 	}
 
+	public Term createSymbolTerm(Symbol fsym, String symbol) {
+		Term term = getTermVariable(symbol);
+		if (term == null) {
+			term = createTerm(fsym, symbol, null, null, new Term[0]);
+		}
+		return term;
+	}
+
 	private Term getTermVariable(String name) {
 		return localVars.get(name);
+	}
+
+	private Term createApplication(Symbol fsym, Term func, Term[] args) {
+		final Term[] allArgs = new Term[args.length + 1];
+		allArgs[0] = func;
+		System.arraycopy(args, 0, allArgs, 1, args.length);
+		return createTerm(fsym, "_", null, null, allArgs);
 	}
 
 	public Term annotateTerm(Term term, Annotation[] annots) {
@@ -429,7 +486,7 @@ terminal String UNDERSCORE, BANG,
          EXISTS, EXIT, FALSE, FORALL, GETASSERTIONS, GETASSIGNMENT, GETINFO,
          GETINTERPOLANTS,
          GETMODEL, GETOPTION, GETPROOF, GETUNSATCORE, GETVALUE, IMMEDIATEEXIT,
-         INCOMPLETE, LET, LOGIC, NONE, NUMERALSYM, MATCH, MEMOUT, PAR, POP, PUSH,
+         INCOMPLETE, LAMBDA, LET, LOGIC, NONE, NUMERALSYM, MATCH, MEMOUT, PAR, POP, PUSH,
          DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
          THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
          INCLUDE, RESET, RESETASSERTIONS, SIMPLIFY, TIMED, ALLSAT, ECHO,
@@ -461,22 +518,24 @@ non terminal String keywordAttr, keywordOption;
 non terminal String keywordTheory, keywordLogic, keywordTheoryLogic;
 non terminal String keywordNoAttr, keywordNoTheory, keywordNoLogic, keywordNoOption;
 non terminal String booleanOption, stringOption, numeralOption;
-non terminal String index;
+non terminal String indexConstant, index;
 non terminal IndexedIdentifier identifier, identifierIndexed;
 non terminal Object specConstant;
 non terminal Object sExpr;
 non terminal QuotedObject string;
+non terminal ArrayDeque<Term> noIndexTermList;
 
 non terminal Sort sort;
 non terminal Object attributeValue;
 non terminal Annotation attribute;
 non terminal Annotation attributeTheory, attributeLogic;
-non terminal QualIdentifier qualIdentifier;
+non terminal QualIdentifier noSymbolQualIdentifier, qualIdentifier;
 non terminal Binding varBinding;
 non terminal TermVariable sortedVar;
 non terminal Pattern pattern;
 non terminal MatchCase matchCase;
-non terminal Term constantTerm, term;
+non terminal Term noIndexConstantTerm, indexConstantTerm;
+non terminal Term noIndexTerm, noSymbolTerm, symbolTerm, noQualIdentifierIndexTerm, noQualIdentifierTerm, term;
 non terminal InterpolationInfo interpolantpartition;
 non terminal SelectorDec selectorDec;
 non terminal DataType sortDec, sortDec0;
@@ -508,39 +567,9 @@ sExpr ::= specConstant
         | KEYWORD
         | LPAR sExpr*:s RPAR {: RESULT = s; :};
 
-constantTerm ::= NUMERAL:n
-				{: try {
-					RESULT = parser.env.getScript().numeral(n);
-					} catch (SMTLIBException se) {
-						parser.report_error(se.getMessage());
-						RESULT = null;
-					} :}
-             | DECIMAL:n
-             	{: try {
-             		RESULT = parser.env.getScript().decimal(n);
-             		} catch (SMTLIBException se) {
-             			parser.report_error(se.getMessage());
-             			RESULT = null;
-             		} :}
-             | HEXADECIMAL:n {: try {
-             		RESULT = parser.env.getScript().hexadecimal(n);
-             		} catch (SMTLIBException se) {
-             			parser.report_error(se.getMessage());
-             			RESULT = null;
-             		}  :}
-             | BINARY:n {: try {
-             		RESULT = parser.env.getScript().binary(n);
-             		} catch (SMTLIBException se) {
-             			parser.report_error(se.getMessage());
-             			RESULT = null;
-             		} :}
-             | string:n {: try {
-                    RESULT = parser.env.getScript().string(n);
-             		} catch (SMTLIBException se) {
-             			parser.report_error(se.getMessage());
-             			RESULT = null;
-             		} :};
-index ::= NUMERAL:n {: RESULT = n.toString(); :} | symbol | HEXADECIMAL | BINARY;
+
+indexConstant ::= NUMERAL:n {: RESULT = n.toString(); :} | HEXADECIMAL | BINARY;
+index ::= symbol | indexConstant;
 identifierIndexed ::= LPAR UNDERSCORE symbol:id index+:indices RPAR
              {: RESULT = new IndexedIdentifier(id, indices); :};
 identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
@@ -561,6 +590,10 @@ attributeTheory ::= keywordNoTheory:k attributeValue?:v
                     {: RESULT = new Annotation(k, v); :};
 
 qualIdentifier ::= identifier:i
+         {: RESULT = new QualIdentifier(i, null); :}
+       | LPAR AS identifier:i sort:s RPAR
+         {: RESULT = new QualIdentifier(i, s); :};
+noSymbolQualIdentifier ::= identifierIndexed:i
          {: RESULT = new QualIdentifier(i, null); :}
        | LPAR AS identifier:i sort:s RPAR
          {: RESULT = new QualIdentifier(i, s); :};
@@ -605,13 +638,52 @@ matchCase ::= LPAR {: localVars.beginScope(); :} pattern:p term:t RPAR
             	RESULT = new MatchCase(p, t);
             }
          :};
-term ::= constantTerm
-       | qualIdentifier:fun
-         {: RESULT = fun.getIndices() == null && fun.getSort() == null ? getTermVariable(fun.getIdentifier()) : null;
-            if (RESULT == null)
-                RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), new Term[0]); :}
-       | LPAR qualIdentifier:fun term+:args RPAR
+noIndexTermList ::= index*:indices noIndexTerm:t
+	{:
+		RESULT = new ArrayDeque<Term>();
+		for (String index : indices) {
+			RESULT.add(createIndexTerm(indices$, index));
+		}
+		RESULT.add(t);
+	:}
+	| noIndexTermList:l term:t
+	{:
+		l.add(t);
+		RESULT = l;
+	:};
+term ::= symbolTerm | noSymbolTerm;
+symbolTerm ::= symbol:s
+	{: RESULT = createSymbolTerm(s$, s); :};
+noSymbolTerm ::= noIndexTerm | indexConstantTerm;
+indexConstantTerm ::= indexConstant:index
+	{: RESULT = createIndexTerm(index$, index); :};
+noIndexTerm ::= noIndexConstantTerm
+	| noSymbolQualIdentifier:fun
+		{: RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), new Term[0]); :}
+	| noQualIdentifierIndexTerm;
+noIndexConstantTerm ::= DECIMAL:n
+             	{: try {
+             		RESULT = parser.env.getScript().decimal(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		} :}
+             | string:n {: try {
+                    RESULT = parser.env.getScript().string(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		} :};
+noQualIdentifierTerm ::= indexConstantTerm | noQualIdentifierIndexTerm;
+noQualIdentifierIndexTerm ::=
+         LPAR qualIdentifier:fun term+:args RPAR
          {: RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), args); :}
+       | LPAR noQualIdentifierTerm:t term+:args RPAR
+         {: RESULT = createApplication(t$, t, args); :}
+       | LPAR UNDERSCORE:u noSymbolTerm:t term+:args RPAR
+         {: RESULT = createApplication(u$, t, args); :}
+       | LPAR UNDERSCORE:u symbol:s noIndexTermList:args RPAR
+         {: RESULT = createApplication(u$, createSymbolTerm(s$, s), args.toArray(new Term[args.size()])); :}
        | LPAR LET {: localVars.beginScope(); :}
                   LPAR varBinding+:bindings RPAR term:t RPAR
          {: TermVariable[] vars = new TermVariable[bindings.length];
@@ -627,6 +699,16 @@ term ::= constantTerm
             	RESULT = null;
             else
             	RESULT = parser.env.getScript().let(vars, terms, t); :}
+       | LPAR LAMBDA:sym {: localVars.beginScope(); :}
+              LPAR sortedVar+:vars RPAR term:t RPAR
+         {: localVars.endScope();
+           	RESULT = null;
+			try {
+				if (!hasError())
+					RESULT = parser.env.getScript().lambda(vars, t);
+			} catch (SMTLIBException se) {
+				parser.report_error(se.getMessage(), sym$);
+			} :}
        | LPAR FORALL:sym {: localVars.beginScope(); :}
               LPAR sortedVar+:vars RPAR term:t RPAR
          {: localVars.endScope();
@@ -1161,7 +1243,7 @@ symbol ::= SYMBOL | CONTINUEDEXECUTION | ERRORSYM | FALSE | IMMEDIATEEXIT |
 /* The following are reserved words and are only allowed in sexpr. */
 allsymbol ::= symbol |
          PAR | NUMERALSYM | DECIMALSYM | STRINGSYM |
-         UNDERSCORE | AS | BANG | LET | FORALL | EXISTS | MATCH |
+         UNDERSCORE | AS | BANG | LAMBDA | LET | FORALL | EXISTS | MATCH |
          ASSERT | CHECKSAT | CHECKSATASSUMING |
          DECLARESORT | DECLAREFUN | DECLARECONST | DEFINESORT | DEFINEFUN |
          ECHO | EXIT | GETASSERTIONS | GETASSIGNMENT | GETINFO |

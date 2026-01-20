@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 
 import org.junit.Assert;
@@ -31,7 +30,7 @@ public class SortTest {
 
 	@Test
 	public void test() {
-		final Theory theory = new Theory(Logics.QF_UF);
+		final Theory theory = new Theory(Logics.valueOf("QF_UF"));
 		theory.declareSort("Int", 0);
 		theory.declareSort("Real", 0);
 		theory.declareSort("Array", 2);
@@ -66,7 +65,7 @@ public class SortTest {
 
 	@Test
 	public void testRecursive() {
-		final Theory theory = new Theory(Logics.QF_UF);
+		final Theory theory = new Theory(Logics.valueOf("QF_UF"));
 		theory.declareSort("U", 0);
 		final Sort sort = theory.getSort("U");
 		theory.declareSort("un", 1);
@@ -107,7 +106,7 @@ public class SortTest {
 
 	@Test
 	public void testUnification() {
-		final Theory theory = new Theory(Logics.AUFLIRA);
+		final Theory theory = new Theory(Logics.valueOf("AUFLIRA"));
 
 		final Sort sortInt = theory.getSort("Int");
 		final Sort sortReal = theory.getSort("Real");
@@ -130,7 +129,7 @@ public class SortTest {
 
 	@Test
 	public void testIndexedSort() {
-		final Theory theory = new Theory(Logics.QF_UF);
+		final Theory theory = new Theory(Logics.valueOf("QF_UF"));
 		final String[] size = new String[] { String.valueOf(5) };// NOCHECKSTYLE
 		final String[] dim = new String[] { String.valueOf(2) };
 		final Sort bv5 = new SortSymbol(theory, "bv", 0, null, SortSymbol.INDEXED) {
@@ -147,5 +146,40 @@ public class SortTest {
 		}.getSort(dim, bv5, bv5);// NOCHECKSTYLE
 		Assert.assertEquals("(_ bv 5)", bv5.toString());
 		Assert.assertEquals("((_ MultiArray 2) (_ bv 5) (_ bv 5))", marr.toString());
+	}
+
+	private Sort[] createDummySorts(Theory theory, int len) {
+		final Sort[] sorts = new Sort[len];
+		for (int i = 0; i < len; i++) {
+			final String name = "S" + i;
+			theory.declareSort(name, 0);
+			sorts[i] = theory.getSort(name);
+		}
+		return sorts;
+	}
+
+	@Test
+	public void testFunctionSort() {
+		final Theory theory = new Theory(Logics.valueOf("QF_UF"));
+		final Sort[] sorts = createDummySorts(theory, 5);
+
+		final Sort sort2 = theory.getSort(SMTLIBConstants.FUNC, sorts[0], sorts[1]);
+		Assert.assertEquals("(-> S0 S1)", sort2.toString());
+		Assert.assertSame(sort2, sort2.getRealSort());
+		final Sort sort3 = theory.getSort(SMTLIBConstants.FUNC, sorts[0], sorts[1], sorts[2]);
+		Assert.assertEquals("(-> S0 S1 S2)", sort3.toString());
+		Assert.assertEquals("(-> x0 (-> x1 x2))", sort3.getSortSymbol().mSortDefinition.toString());
+		Assert.assertEquals("(-> S0 (-> S1 S2))", sort3.getRealSort().toString());
+		final Sort sort3b = theory.getSort(SMTLIBConstants.FUNC, sorts[0], sorts[2], sorts[1]);
+		Assert.assertSame(sort3.getSortSymbol(), sort3b.getSortSymbol());
+		final Sort sort3c = theory.getSort(SMTLIBConstants.FUNC, sorts[0], sorts[1], sorts[2]);
+		Assert.assertSame(sort3, sort3c);
+		final Sort sort3d = theory.getSort(SMTLIBConstants.FUNC, sorts[0],
+				theory.getSort(SMTLIBConstants.FUNC, sorts[1], sorts[2]));
+		Assert.assertSame(sort3d, sort3d.getRealSort());
+		Assert.assertSame(sort3.getRealSort(), sort3d.getRealSort());
+		final Sort sort5 = theory.getSort(SMTLIBConstants.FUNC, sorts[0], sorts[1], sorts[2], sorts[3], sorts[4]);
+		Assert.assertEquals("(-> S0 S1 S2 S3 S4)", sort5.toString());
+		Assert.assertEquals("(-> S0 (-> S1 (-> S2 (-> S3 S4))))", sort5.getRealSort().toString());
 	}
 }

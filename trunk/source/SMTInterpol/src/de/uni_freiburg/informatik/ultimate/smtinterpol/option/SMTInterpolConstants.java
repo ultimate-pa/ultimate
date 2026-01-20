@@ -28,11 +28,11 @@ public interface SMTInterpolConstants {
 	/** Diff function symbol name for arrays. */
 	public String DIFF = "@diff";
 
-	// BitVector extensions
 	public String NAT2BV = "nat2bv";
 	public String BV2NAT = "bv2nat";
-	public String INTAND = "intand";
-	public String INTSHL = "intshl";
+	public String INTAND = "&";
+	public String INTPOW2 = "pow2";
+	public String INTLOG2 = "log2";
 
 	public String PRINT_TERMS_CSE = ":print-terms-cse";
 	public String CONTINUE_ON_ERROR = ":continue-on-error";

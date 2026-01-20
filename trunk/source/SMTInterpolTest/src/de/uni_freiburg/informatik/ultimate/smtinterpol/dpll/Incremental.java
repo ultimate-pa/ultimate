@@ -38,7 +38,7 @@ public class Incremental {
 	public void testPushPop() throws Exception {
 		// Setup theory and formulae
 		final Script script = new SMTInterpol(new DefaultLogger());
-		script.setLogic(Logics.QF_UFLIA);
+		script.setLogic(Logics.valueOf("QF_UFLIA"));
 		final Sort intSort = script.sort("Int");
 		script.declareFun("f", new Sort[] { intSort }, intSort);
 		script.declareFun("x", new Sort[] {}, intSort);

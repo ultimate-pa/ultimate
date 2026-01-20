@@ -28,7 +28,7 @@ public class TermEquivalenceTest {
 
 	@Test
 	public void testEq() {
-		final Theory theory = new Theory(Logics.AUFLIRA);
+		final Theory theory = new Theory(Logics.valueOf("AUFLIRA"));
 		// (let ((x y)) (forall ((y Int)) (>= y x)))
 		// (let ((z y)) (forall ((w Int)) (>= w z)))
 		final Sort intSort = theory.getNumericSort();

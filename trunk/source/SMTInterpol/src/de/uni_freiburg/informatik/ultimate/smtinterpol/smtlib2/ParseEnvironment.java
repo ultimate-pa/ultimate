@@ -52,7 +52,7 @@ public class ParseEnvironment {
 	private final FrontEndOptions mOptions;
 
 	private Lexer mLexer = null;
-	private boolean mVersion25 = true;
+	private final boolean mVersion25 = true;
 
 	public ParseEnvironment(final Script script, final OptionMap options) {
 		mScript = script;
@@ -192,14 +192,12 @@ public class ParseEnvironment {
 	public void setInfo(final String info, final Object value) {
 		if (info.equals(SMTLIBConstants.SMT_LIB_VERSION)) {
 			final String svalue = String.valueOf(value);
-			if ("2.5".equals(svalue) || "2.6".equals(svalue)) {
-				mVersion25 = true;
-				mLexer.setVersion25(true);
-			} else if ("2.0".equals(svalue)) {
-				mVersion25 = false;
-				mLexer.setVersion25(false);
-			} else {
+			final String[] components = svalue.split("\\.");
+			if (components.length != 2 || !"2".equals(components[0])) {
 				throw new SMTLIBException("Unknown SMT-LIB version");
+			} else {
+				final int minorVersion = Integer.parseInt(components[1]);
+				mLexer.setVersion(2, minorVersion);
 			}
 		} else if (info.equals(SMTLIBConstants.ERROR_BEHAVIOR)) {
 			switch ((String) value) {

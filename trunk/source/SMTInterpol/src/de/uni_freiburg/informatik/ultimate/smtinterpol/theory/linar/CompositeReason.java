@@ -107,6 +107,7 @@ public class CompositeReason extends LAReason {
 				? mExactBound.sub(getBound())
 				: getBound().sub(mExactBound);
 		final int decideLevel = explainer.getDecideLevel();
+		needToExplain = true;
 		// Should we create a composite literal?  We do this only, if there
 		// is not already a weaker usable bound (needToExplain is true), and
 		// if we do not have enough slack to avoid the composite literal
