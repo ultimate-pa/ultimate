@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstan
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.bitvector.BvToIntUtils;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.bitvector.BvUtils;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.TermUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
@@ -65,7 +64,7 @@ public class TermCompiler extends TermTransformer {
 
 	private IProofTracker mTracker;
 	private LogicSimplifier mUtils;
-	private final boolean mDealWithBvToNatAndNatToBvInPreprocessing = true;
+	private BvToIntUtils mBvToIntUtils;
 
 	static class TransitivityStep implements Walker {
 		final Term mFirst;
@@ -87,9 +86,10 @@ public class TermCompiler extends TermTransformer {
 		}
 	}
 
-	public void setProofTracker(final IProofTracker tracker) {
+	public void setProofTracker(final IProofTracker tracker, LogicSimplifier utils, BvToIntUtils bvToIntUtils) {
 		mTracker = tracker;
-		mUtils = new LogicSimplifier(tracker);
+		mUtils = utils;
+		mBvToIntUtils = bvToIntUtils;
 	}
 
 	public void setAssignmentProduction(final boolean on) {
@@ -195,11 +195,7 @@ public class TermCompiler extends TermTransformer {
 			setResult(mTracker.buildRewrite(term, res, ProofConstants.RW_CANONICAL_SUM));
 			return;
 		} else if (term instanceof ConstantTerm && term.getSort().isBitVecSort()) {
-			final Theory theory = term.getTheory();
-			final BvUtils bvUtils = new BvUtils(theory, mUtils);
-			final BvToIntUtils bvToIntUtils = new BvToIntUtils(theory, mUtils, bvUtils, mTracker,
-					mDealWithBvToNatAndNatToBvInPreprocessing);
-			setResult(mTracker.buildRewrite(term, bvToIntUtils.translateBvConstantTerm((ConstantTerm) term),
+			setResult(mTracker.buildRewrite(term, mBvToIntUtils.translateBvConstantTerm((ConstantTerm) term),
 					ProofConstants.RW_BVEVAL));
 			return;
 		} else if (term instanceof TermVariable) {
@@ -217,11 +213,8 @@ public class TermCompiler extends TermTransformer {
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] args) {
 		final FunctionSymbol fsym = appTerm.getFunction();
-		final Theory theory = appTerm.getTheory();
-		final BvUtils bvUtils = new BvUtils(theory, mUtils);
-		final BvToIntUtils bvToIntUtils = new BvToIntUtils(theory, mUtils, bvUtils, mTracker,
-				mDealWithBvToNatAndNatToBvInPreprocessing);
 		Term convertedApp = mTracker.congruence(mTracker.reflexivity(appTerm), args);
+		final Theory theory = appTerm.getTheory();
 
 		if (mTracker.getProvedTerm(convertedApp) instanceof ConstantTerm) {
 			setResult(convertedApp);
@@ -564,52 +557,52 @@ public class TermCompiler extends TermTransformer {
 				break;
 			}
 			case "bvmul": {
-				repush(bvToIntUtils.translateBvArithmetic(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvArithmetic(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvsub":
 			case "bvadd": {
-				repush(bvToIntUtils.translateBvArithmetic(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvArithmetic(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvneg": {
-				repush(bvToIntUtils.translateBvNeg(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvNeg(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvnot": {
-				repush(bvToIntUtils.translateBvNot(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvNot(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "concat": {
-				repush(bvToIntUtils.translateConcat(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateConcat(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvudiv": {
-				repush(bvToIntUtils.translateBvudiv(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvudiv(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvurem": {
-				repush(bvToIntUtils.translateBvurem(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvurem(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvlshr": {
-				repush(bvToIntUtils.translateBvlshr(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvlshr(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvshl": {
-				repush(bvToIntUtils.translateBvshl(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvshl(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvand": {
-				repush(bvToIntUtils.translateBvandSum(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvandSum(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvor": { // x or y = (x + y ) - (x and y)
-				repush(bvToIntUtils.translateBvor(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvor(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvxor": { // x or y = (x + y ) - (x and y)
-				repush(bvToIntUtils.translateBvxor(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateBvxor(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "bvuge":
@@ -620,36 +613,34 @@ public class TermCompiler extends TermTransformer {
 			case "bvsgt":
 			case "bvsge":
 			case "bvult": {
-				repush(bvToIntUtils.translateRelations(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateRelations(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "extract": {
-				repush(bvToIntUtils.translateExtract(mTracker, appTerm.getFunction(), convertedApp));
+				repush(mBvToIntUtils.translateExtract(mTracker, appTerm.getFunction(), convertedApp));
 				return;
 			}
 			case "repeat": {
-				final Term rhs = bvUtils.transformRepeat(params, fsym, convertedApp);
+				final Term rewrite = mBvToIntUtils.translateRepeat(params, fsym, convertedApp);
+				repush(rewrite);
+				return;
+			}
+			case "zero_extend":
+			case "sign_extend": {
+				repush(mBvToIntUtils.translateExtend(mTracker, appTerm.getFunction(), convertedApp));
+				return;
+			}
+			case "rotate_left": {
+				final Term rhs = mBvToIntUtils.transformRotateleft(params, fsym, convertedApp);
 				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
 						ProofConstants.RW_BV_EXPAND_DEF);
 				repush(mTracker.transitivity(convertedApp, rewrite));
 				return;
 			}
-			case "zero_extend":
-			case "sign_extend": {
-				repush(bvToIntUtils.translateExtend(mTracker, appTerm.getFunction(), convertedApp));
-				return;
-			}
-			case "rotate_left": {
-				final Term rhs = bvUtils.transformRotateleft(params, fsym, convertedApp);
-				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
-						ProofConstants.RW_BVBLAST);
-				repush(mTracker.transitivity(convertedApp, rewrite));
-				return;
-			}
 			case "rotate_right": {
-				final Term rhs = bvUtils.transformRotateright(params, fsym, convertedApp);
+				final Term rhs = mBvToIntUtils.transformRotateright(params, fsym, convertedApp);
 				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
-						ProofConstants.RW_BVBLAST);
+						ProofConstants.RW_BV_EXPAND_DEF);
 				repush(mTracker.transitivity(convertedApp, rewrite));
 				return;
 			}
@@ -672,14 +663,14 @@ public class TermCompiler extends TermTransformer {
 			}
 			case "bvxnor": {
 				assert params.length == 2;
-				final Term rhs = bvUtils.transformBvxnor(params);
+				final Term rhs = mBvToIntUtils.transformBvxnor(params);
 				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
 						ProofConstants.RW_BVBLAST);
 				repush(mTracker.transitivity(convertedApp, rewrite));
 				return;
 			}
 			case "bvcomp": {
-				final Term rhs = bvUtils.transformBvcomp(params);
+				final Term rhs = mBvToIntUtils.transformBvcomp(params);
 				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
 						ProofConstants.RW_BV_EXPAND_DEF);
 				repush(mTracker.transitivity(convertedApp, rewrite));
@@ -687,35 +678,39 @@ public class TermCompiler extends TermTransformer {
 			}
 
 			case "bvsdiv": {
-				final Term rhs = bvUtils.transformBvsdiv(params);
+				final Term rhs = mBvToIntUtils.transformBvsdiv(params);
 				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
 						ProofConstants.RW_BV_EXPAND_DEF);
 				repush(mTracker.transitivity(convertedApp, rewrite));
 				return;
 			}
 			case "bvsrem": {
-				final Term rhs = bvUtils.transformBvsrem(params);
+				final Term rhs = mBvToIntUtils.transformBvsrem(params);
 				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
 						ProofConstants.RW_BV_EXPAND_DEF);
 				repush(mTracker.transitivity(convertedApp, rewrite));
 				return;
 			}
 			case "bvsmod": {
-				final Term rhs = bvUtils.transformBvsmod(params);
+				final Term rhs = mBvToIntUtils.transformBvsmod(params);
 				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
 						ProofConstants.RW_BV_EXPAND_DEF);
 				repush(mTracker.transitivity(convertedApp, rewrite));
 				return;
 			}
 			case "bvashr": {
-				final Term rhs = bvUtils.transformBvashr(params);
+				final Term rhs = mBvToIntUtils.transformBvashr(params);
 				final Term rewrite = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), rhs,
 						ProofConstants.RW_BV_EXPAND_DEF);
 				repush(mTracker.transitivity(convertedApp, rewrite));
 				return;
 			}
-			case "bv2nat": {
-				final Term rhs = bvToIntUtils.bv2nat(params[0], true);
+			case SMTLIBConstants.SBV_TO_INT: {
+				repush(mBvToIntUtils.translateSbvToInt(mTracker, appTerm.getFunction(), convertedApp));
+				return;
+			}
+			case SMTLIBConstants.UBV_TO_INT: {
+				final Term rhs = mBvToIntUtils.ubv2int(params[0], true);
 				if (rhs == mTracker.getProvedTerm(convertedApp)) {
 					setResult(convertedApp);
 				} else {
@@ -725,7 +720,7 @@ public class TermCompiler extends TermTransformer {
 				}
 				return;
 			}
-			case "nat2bv":
+			case SMTLIBConstants.INT_TO_BV:
 			case "intand":
 			case "true":
 			case "false":

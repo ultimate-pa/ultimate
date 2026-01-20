@@ -91,7 +91,7 @@ public class APITest {
 				solver.term("not", solver.term("R"))));
 		isSat = solver.checkSat();
 		Assert.assertSame(LBool.UNKNOWN, isSat);
-		ReasonUnknown ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
+		final ReasonUnknown ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
 		Assert.assertSame(ReasonUnknown.CANCELLED, ru);
 		// Calling sat retry with a new resource limit
 		tc.setStop(false);
@@ -121,7 +121,7 @@ public class APITest {
 		} catch (final UnsupportedOperationException eunsupp) {
 			Assert.fail("global-declarations not supported!!!");
 		}
-		solver.setLogic(Logics.QF_LIA);
+		solver.setLogic("QF_LIA");
 		solver.declareFun("x", Script.EMPTY_SORT_ARRAY, solver.sort("Int"));
 		final Term x = solver.term("x");
 		try {
@@ -193,7 +193,7 @@ public class APITest {
 	@Test
 	public void testPushPop() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		solver.setLogic(Logics.QF_LIA);
+		solver.setLogic("QF_LIA");
 		try {
 			solver.push(3);// NOCHECKSTYLE
 		} catch (final SMTLIBException eUnexpected) {
@@ -215,7 +215,7 @@ public class APITest {
 	@Test
 	public void testResetAssertions() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		solver.setLogic(Logics.QF_LIA);
+		solver.setLogic("QF_LIA");
 		solver.declareFun("x", Script.EMPTY_SORT_ARRAY, solver.sort("Int"));
 		solver.assertTerm(solver.term("false"));
 		LBool res = solver.checkSat();
@@ -239,9 +239,9 @@ public class APITest {
 	@Test
 	public void testSetLogicTwice() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		solver.setLogic(Logics.QF_LIA);
+		solver.setLogic("QF_LIA");
 		try {
-			solver.setLogic(Logics.QF_LIA);
+			solver.setLogic("QF_LIA");
 			Assert.fail("Could set logic a second time");
 		} catch (final SMTLIBException expected) {
 			System.err.println(expected.getMessage());
@@ -258,7 +258,7 @@ public class APITest {
 	@Test
 	public void testSetOptionLate() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		solver.setLogic(Logics.QF_LIA);
+		solver.setLogic("QF_LIA");
 		try {
 			solver.setOption(":interactive-mode", true);
 			Assert.fail("Could activate interactive mode after setting logic");
@@ -301,8 +301,8 @@ public class APITest {
 	public void testTermAssertion() {
 		final SMTInterpol solver1 = new SMTInterpol(new DefaultLogger());
 		final SMTInterpol solver2 = new SMTInterpol(new DefaultLogger());
-		solver1.setLogic(Logics.QF_LIA);
-		solver2.setLogic(Logics.QF_LIA);
+		solver1.setLogic("QF_LIA");
+		solver2.setLogic("QF_LIA");
 		solver1.declareFun("x", new Sort[0], solver1.sort("Int"));
 		solver2.declareFun("x", new Sort[0], solver2.sort("Int"));
 		try {
@@ -332,7 +332,7 @@ public class APITest {
 	@Test
 	public void testUndeclared() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		solver.setLogic(Logics.QF_LIA);
+		solver.setLogic("QF_LIA");
 		try {
 			solver.term("x");
 			Assert.fail("Could create undeclared term");
@@ -361,8 +361,8 @@ public class APITest {
 		solver.assertTerm(solver.term("=", solver.term("i0"), solver.numeral(BigInteger.ZERO)));
 		for (int j = 1; j < n; j++) {
 			solver.assertTerm(solver.term("=", is[j], solver.term("+", is[j-1], solver.numeral(BigInteger.ONE))));
-			Term xp1 = solver.term("=", xs[j], solver.term("+", xs[j-1], solver.numeral(BigInteger.ONE)));
-			Term xm1 = solver.term("=", xs[j], solver.term("-", xs[j-1], solver.numeral(BigInteger.ONE)));
+			final Term xp1 = solver.term("=", xs[j], solver.term("+", xs[j-1], solver.numeral(BigInteger.ONE)));
+			final Term xm1 = solver.term("=", xs[j], solver.term("-", xs[j-1], solver.numeral(BigInteger.ONE)));
 			solver.assertTerm(solver.term("or", xp1, xm1));
 		}
 		solver.assertTerm(solver.term(">", xs[n-1], is[n-1]));
@@ -370,14 +370,14 @@ public class APITest {
 
 	@Test
 	public void testReproducibleResourceLimit() {
-		long[] limits = {100, 10000, 0};
-		LBool[] expected = {LBool.UNKNOWN, LBool.UNSAT, LBool.UNSAT};
+		final long[] limits = {100, 10000, 0};
+		final LBool[] expected = {LBool.UNKNOWN, LBool.UNSAT, LBool.UNSAT};
 		for (int i = 0; i < limits.length; i++) {
 			final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-			solver.setLogic(Logics.QF_LIA);
+			solver.setLogic("QF_LIA");
 			solver.setOption(":reproducible-resource-limit", limits[i]);
 			randomWalk(solver, 10);
-			LBool isSat = solver.checkSat();
+			final LBool isSat = solver.checkSat();
 			Assert.assertSame("check-sat with limit " + limits[i], expected[i], isSat);
 			Assert.assertEquals("resource limit is " + limits[i], BigInteger.valueOf(limits[i]), solver.getOption(":reproducible-resource-limit"));
 		}
@@ -386,7 +386,7 @@ public class APITest {
 	@Test
 	public void testReproducibleResourceLimitChange() {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
-		solver.setLogic(Logics.QF_LIA);
+		solver.setLogic("QF_LIA");
 		randomWalk(solver, 5);
 		solver.setOption(":reproducible-resource-limit", 10);
 		Assert.assertSame("check-sat with limit 10", LBool.UNKNOWN, solver.checkSat());

@@ -77,16 +77,16 @@ public class Benchmark {
 	public void setLogic(final String logic) {
 		final Logics l = Logics.valueOf(logic);
 		mScript.setLogic(l);
-		switch (l) {
-		case QF_AX:
+		switch (l.toString()) {
+		case "QF_AX":
 			mScript.declareSort("Index", 0);
 			mScript.declareSort("Element", 0);
 			mSortTranslator.put("Array",
 					mScript.sort("Array", mScript.sort("Index"),
 							mScript.sort("Element")));
 			break;
-		case AUFLIRA:
-		case AUFNIRA:
+		case "AUFLIRA":
+		case "AUFNIRA":
 			final Sort array1 = mScript.sort("Array", mScript.sort("Int"),
 					mScript.sort("Real"));
 			mSortTranslator.put("Array1", array1);
@@ -95,24 +95,24 @@ public class Benchmark {
 			mapFuns();
 			mapArith();
 			break;
-		case QF_AUFLIA:
-		case AUFLIA:
+		case "QF_AUFLIA":
+		case "AUFLIA":
 			mSortTranslator.put("Array", mScript.sort("Array",
-					mScript.sort("Int"), mScript.sort("Real")));
+					mScript.sort("Int"), mScript.sort("Int")));
 			//$FALL-THROUGH$
-		case QF_UFLIA:
-		case QF_UFLRA:
+		case "QF_UFLIA":
+		case "QF_UFLRA":
 			mapFuns();
 			mapArith();
 			break;
-		case QF_UF:
+		case "QF_UF":
 			mScript.declareSort("U", 0);
 			break;
-		case LRA:
-		case QF_LIA:
-		case QF_LRA:
-		case QF_RDL:
-		case QF_IDL:
+		case "LRA":
+		case "QF_LIA":
+		case "QF_LRA":
+		case "QF_RDL":
+		case "QF_IDL":
 			mapArith();
 			break;
 		default:

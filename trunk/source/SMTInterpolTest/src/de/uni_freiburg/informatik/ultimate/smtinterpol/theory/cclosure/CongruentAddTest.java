@@ -66,12 +66,13 @@ public class CongruentAddTest {
 	CCEquality mAB = null, mBC = null, mCD = null;
 
 	public CongruentAddTest() {
-		mTheory = new Theory(Logics.QF_UF);
+		final Logics QF_UF = Logics.valueOf("QF_UF");
+		mTheory = new Theory(QF_UF);
 		mLogger = new DefaultLogger();
 		mLogger.setLoglevel(LogProxy.LOGLEVEL_DEBUG);
 		mDPLL = new DPLLEngine(mLogger, () -> false);
 		mClausifier = new Clausifier(mTheory, mDPLL, ProofMode.NONE);
-		mClausifier.setLogic(Logics.QF_UF);
+		mClausifier.setLogic(QF_UF);
 		mClosure = mClausifier.getCClosure();
 		createterms();
 	}

@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
@@ -55,7 +56,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.NumericSortInterpre
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -365,8 +368,6 @@ public class LinArSolve implements ITheory {
 		}
 
 		assert !(updateVar.getValue().getRealValue().denominator().equals(BigInteger.ZERO));
-		final BitSet dependencies = mDependentRows.get(updateVar.mMatrixpos);
-		mDirty.or(dependencies);
 		for (final MatrixEntry entry : updateVar.getTableauxColumn(this)) {
 			final LinVar var = entry.getRow();
 			assert var.mBasic;
@@ -385,13 +386,21 @@ public class LinArSolve implements ITheory {
 		final LinVar var = reason.getVar();
 		LAReason chain;
 		if (reason.isUpper()) {
+			// remove a literal reason from literal reason chain
+			if (reason instanceof LiteralReason) {
+				LiteralReason litReason = var.mUpperLiteral;
+				if (litReason == reason) {
+					var.mUpperLiteral = litReason.getOldLiteralReason();
+				} else {
+					// note that any literal reason must be on the literal reason chain.
+					while (litReason.getOldLiteralReason() != reason) {
+						litReason = litReason.getOldLiteralReason();
+					}
+					litReason.setOldLiteralReason(litReason.getOldLiteralReason().getOldLiteralReason());
+				}
+			}
 			if (var.mUpper == reason) {
 				var.mUpper = reason.getOldReason();
-				if (var.mUpperLiteral == reason) {
-					var.mUpperLiteral = ((LiteralReason) reason).getOldLiteralReason();
-				} else {
-					assert reason instanceof CompositeReason;
-				}
 				if (!var.mBasic) { // NOPMD
 					if (var.getValue().compareTo(var.getLowerBound()) < 0) {
 						updateVariableValue(var, new ExactInfinitesimalNumber(var.getLowerBound()));
@@ -402,17 +411,22 @@ public class LinArSolve implements ITheory {
 				return;
 			}
 			chain = var.mUpper;
-			if (var.mUpperLiteral == reason) {
-				var.mUpperLiteral = ((LiteralReason) reason).getOldLiteralReason();
-			}
 		} else {
+			// remove it from literal reason chain
+			if (reason instanceof LiteralReason) {
+				LiteralReason litReason = var.mLowerLiteral;
+				if (litReason == reason) {
+					var.mLowerLiteral = litReason.getOldLiteralReason();
+				} else {
+					// note that any literal reason must be on the literal reason chain.
+					while (litReason.getOldLiteralReason() != reason) {
+						litReason = litReason.getOldLiteralReason();
+					}
+					litReason.setOldLiteralReason(litReason.getOldLiteralReason().getOldLiteralReason());
+				}
+			}
 			if (var.mLower == reason) {
 				var.mLower = reason.getOldReason();
-				if (var.mLowerLiteral == reason) {
-					var.mLowerLiteral = ((LiteralReason) reason).getOldLiteralReason();
-				} else {
-					assert reason instanceof CompositeReason;
-				}
 				if (!var.mBasic) { // NOPMD
 					if (var.getValue().compareTo(var.getUpperBound()) > 0) {
 						updateVariableValue(var, new ExactInfinitesimalNumber(var.getUpperBound()));
@@ -423,14 +437,8 @@ public class LinArSolve implements ITheory {
 				return;
 			}
 			chain = var.mLower;
-			if (var.mLowerLiteral == reason) {
-				var.mLowerLiteral = ((LiteralReason) reason).getOldLiteralReason();
-			}
 		}
-		while (true) {
-			if (chain instanceof LiteralReason && ((LiteralReason) chain).getOldLiteralReason() == reason) {
-				((LiteralReason) chain).setOldLiteralReason(((LiteralReason) reason).getOldLiteralReason());
-			}
+		while (chain != null) {
 			if (chain.getOldReason() == reason) {
 				chain.setOldReason(reason.getOldReason());
 				break;
@@ -470,24 +478,26 @@ public class LinArSolve implements ITheory {
 			return;
 		}
 
-		LAReason reason = var.mUpper;
-		while (reason != null && reason.getBound().lesseq(bound)) {
-			if ((reason instanceof LiteralReason) && ((LiteralReason) reason).getLiteral() == literal
-					&& reason.getLastLiteral() == reason) {
-				removeLiteralReason((LiteralReason) reason);
+		LiteralReason litReason = var.mUpperLiteral;
+		while (litReason != null && litReason.getBound().lesseq(bound)) {
+			if ((litReason instanceof LiteralReason) && litReason.getLiteral() == literal) {
+				removeLiteralReason(litReason);
 				break;
 			}
-			reason = reason.getOldReason();
+			litReason = litReason.getOldLiteralReason();
 		}
-		reason = var.mLower;
-		while (reason != null && bound.lesseq(reason.getBound())) {
-			if ((reason instanceof LiteralReason) && ((LiteralReason) reason).getLiteral() == literal
-					&& reason.getLastLiteral() == reason) {
-				removeLiteralReason((LiteralReason) reason);
+		assert var.mUpperLiteral == null || var.mUpperLiteral.getOldLiteralReason() == null
+				|| var.mUpperLiteral.getOldLiteralReason().getLiteral() != literal;
+		litReason = var.mLowerLiteral;
+		while (litReason != null && bound.lesseq(litReason.getBound())) {
+			if ((litReason instanceof LiteralReason) && litReason.getLiteral() == literal) {
+				removeLiteralReason(litReason);
 				break;
 			}
-			reason = reason.getOldReason();
+			litReason = litReason.getOldLiteralReason();
 		}
+		assert var.mLowerLiteral == null || var.mLowerLiteral.getOldLiteralReason() == null
+				|| var.mLowerLiteral.getOldLiteralReason().getLiteral() != literal;
 	}
 
 	/**
@@ -523,6 +533,8 @@ public class LinArSolve implements ITheory {
 
 	@Override
 	public Clause backtrackComplete() {
+		mLastNumFixed = 0;
+		mDirty.set(0, mLinvars.size());
 		Clause conflict = checkPendingConflict();
 		if (conflict != null) {
 			return conflict;
@@ -558,6 +570,12 @@ public class LinArSolve implements ITheory {
 					}
 				}
 			}
+			if (lv.isFixed()) {
+				final LAEquality laeq = lv.mEqualities.get(lv.getTightLowerBound());
+				if (laeq != null && laeq.getDecideStatus() == null) {
+					mProplist.add(laeq);
+				}
+			}
 		}
 
 		assert checkClean();
@@ -570,6 +588,7 @@ public class LinArSolve implements ITheory {
 			final LinVar var = mLinvars.get(matrixPos);
 			mDirty.clear(matrixPos);
 			if (!var.mBasic) {
+				mDirty.clear(matrixPos);
 				continue;
 			}
 			long time;
@@ -812,13 +831,14 @@ public class LinArSolve implements ITheory {
 			// find reason where to insert into literal bound chain
 			LiteralReason prevReason = null;
 			LiteralReason nextReason = var.mUpperLiteral;
-			while (nextReason != null && nextReason.getBound().less(bound)) {
+			while (nextReason != null && nextReason.getBound().lesseq(bound)) {
 				prevReason = nextReason;
 				nextReason = nextReason.getOldLiteralReason();
 			}
 			final LiteralReason reason = new LiteralReason(var, nextReason, bound, true, lit);
 			if (prevReason != null) {
 				prevReason.setOldLiteralReason(reason);
+				assert prevReason.getBound().less(bound) || prevReason.getLiteral() instanceof LAEquality;
 			} else {
 				var.mUpperLiteral = reason;
 			}
@@ -831,7 +851,10 @@ public class LinArSolve implements ITheory {
 				while (thereason.getOldReason().getExactBound().less(bound)) {
 					thereason = thereason.getOldReason();
 				}
-				assert (thereason.getExactBound().less(bound) && bound.less(thereason.getOldReason().getExactBound()));
+				if (thereason.getOldReason().getExactBound().equals(bound)
+						&& thereason.getOldReason() instanceof LiteralReason) {
+					thereason = thereason.getOldReason();
+				}
 				reason.setOldReason(thereason.getOldReason());
 				thereason.setOldReason(reason);
 			}
@@ -847,13 +870,14 @@ public class LinArSolve implements ITheory {
 			// find reason where to insert into literal bound chain
 			LiteralReason prevReason = null;
 			LiteralReason nextReason = var.mLowerLiteral;
-			while (nextReason != null && bound.less(nextReason.getBound())) {
+			while (nextReason != null && bound.lesseq(nextReason.getBound())) {
 				prevReason = nextReason;
 				nextReason = nextReason.getOldLiteralReason();
 			}
 			final LiteralReason reason = new LiteralReason(var, nextReason, bound, false, lit);
 			if (prevReason != null) {
 				prevReason.setOldLiteralReason(reason);
+				assert bound.less(prevReason.getBound()) || prevReason.getLiteral() instanceof LAEquality;
 			} else {
 				var.mLowerLiteral = reason;
 			}
@@ -863,10 +887,15 @@ public class LinArSolve implements ITheory {
 				var.mLower = reason;
 			} else {
 				LAReason thereason = var.mLower;
-				while (bound.less(thereason.getOldReason().getExactBound())) {
+				while (bound.lesseq(thereason.getOldReason().getExactBound())) {
 					thereason = thereason.getOldReason();
 				}
-				assert (thereason.getOldReason().getExactBound().less(bound) && bound.less(thereason.getExactBound()));
+				if (thereason.getOldReason().getExactBound().equals(bound)
+						&& thereason.getOldReason() instanceof LiteralReason) {
+					thereason = thereason.getOldReason();
+				}
+				assert (thereason.getOldReason().getExactBound().less(bound)
+						&& bound.lesseq(thereason.getExactBound()));
 				reason.setOldReason(thereason.getOldReason());
 				thereason.setOldReason(reason);
 			}
@@ -891,87 +920,104 @@ public class LinArSolve implements ITheory {
 			} else {
 				reason.getVar().mLowerLiteral = (LiteralReason) reason;
 			}
+			if (!var.mBasic) {
+				final BitSet dependencies = mDependentRows.get(var.mMatrixpos);
+				mDirty.or(dependencies);
+			}
 		}
 		if (reason.isUpper()) {
 			// check if bound is stronger
 			final InfinitesimalNumber oldBound = var.getTightUpperBound();
-			assert reason.getExactBound().less(var.getExactUpperBound());
-			reason.setOldReason(var.mUpper);
-			var.mUpper = reason;
+			if (reason.getExactBound().less(var.getExactUpperBound())) {
+				reason.setOldReason(var.mUpper);
+				var.mUpper = reason;
 
-			// Propagate Disequalities
-			LAEquality ea;
-			while (bound.mEps == 0 && (ea = var.getDiseq(bound.mReal)) != null) {
-				bound = bound.sub(epsilon);
-				if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
-					lastLiteral = new LiteralReason(var, var.mUpperLiteral, bound, true, ea.negate());
-					var.mUpper = var.mUpperLiteral = lastLiteral;
-				} else {
-					var.mUpper = var.mUpperLiteral = new LiteralReason(var, var.mUpperLiteral, bound, true, ea.negate(),
-							lastLiteral);
-					lastLiteral.addDependent(var.mUpper);
+				// Propagate Disequalities
+				LAEquality ea;
+				while (bound.mEps == 0 && (ea = var.getDiseq(bound.mReal)) != null) {
+					bound = bound.sub(epsilon);
+					if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
+						lastLiteral = new LiteralReason(var, var.mUpperLiteral, bound, true, ea.negate());
+						var.mUpper = var.mUpperLiteral = lastLiteral;
+					} else {
+						var.mUpper = var.mUpperLiteral = new LiteralReason(var, var.mUpperLiteral, bound, true,
+								ea.negate(), lastLiteral);
+						lastLiteral.addDependent(var.mUpper);
+					}
+					var.mUpper.setOldReason(reason);
+					reason = var.mUpper;
 				}
-				var.mUpper.setOldReason(reason);
-				reason = var.mUpper;
-			}
 
-			if (!var.mBasic) {
-				updateVariable(var, true, oldBound, bound);
-			} else if (var.outOfBounds()) {
-				mOob.add(var);
-			}
+				if (!var.mBasic) {
+					updateVariable(var, true, oldBound, bound);
+				} else if (var.outOfBounds()) {
+					mOob.add(var);
+				}
 
-			for (final BoundConstraint bc : var.mConstraints.subMap(bound, oldBound).values()) {
-				assert var.getTightUpperBound().lesseq(bc.getBound());
-				mProplist.add(bc);
-			}
-			for (final LAEquality laeq : var.mEqualities
-					.subMap(bound.add(var.getEpsilon()), oldBound.add(var.getEpsilon())).values()) {
-				mProplist.add(laeq.negate());
+				for (final BoundConstraint bc : var.mConstraints.subMap(bound, oldBound).values()) {
+					assert var.getTightUpperBound().lesseq(bc.getBound());
+					mProplist.add(bc);
+				}
+				for (final LAEquality laeq : var.mEqualities
+						.subMap(bound.add(var.getEpsilon()), oldBound.add(var.getEpsilon())).values()) {
+					mProplist.add(laeq.negate());
+				}
 			}
 		} else {
 			// lower
 			// check if bound is stronger
 			final InfinitesimalNumber oldBound = var.getTightLowerBound();
-			assert var.getExactLowerBound().less(reason.getExactBound());
-			reason.setOldReason(var.mLower);
-			var.mLower = reason;
+			if (var.getExactLowerBound().less(reason.getExactBound())) {
+				reason.setOldReason(var.mLower);
+				var.mLower = reason;
 
-			// Propagate Disequalities
-			LAEquality ea;
-			while (bound.mEps == 0 && (ea = var.getDiseq(bound.mReal)) != null) {
-				bound = bound.add(epsilon);
-				if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
-					lastLiteral = new LiteralReason(var, var.mLowerLiteral, bound, false, ea.negate());
-					var.mLower = var.mLowerLiteral = lastLiteral;
-				} else {
-					var.mLower = var.mLowerLiteral = new LiteralReason(var, var.mLowerLiteral, bound, false,
-							ea.negate(), lastLiteral);
-					lastLiteral.addDependent(var.mLower);
+				// Propagate Disequalities
+				LAEquality ea;
+				while (bound.mEps == 0 && (ea = var.getDiseq(bound.mReal)) != null) {
+					bound = bound.add(epsilon);
+					if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
+						lastLiteral = new LiteralReason(var, var.mLowerLiteral, bound, false, ea.negate());
+						var.mLower = var.mLowerLiteral = lastLiteral;
+					} else {
+						var.mLower = var.mLowerLiteral = new LiteralReason(var, var.mLowerLiteral, bound, false,
+								ea.negate(), lastLiteral);
+						lastLiteral.addDependent(var.mLower);
+					}
+					var.mLower.setOldReason(reason);
+					reason = var.mLower;
 				}
-				var.mLower.setOldReason(reason);
-				reason = var.mLower;
-			}
 
-			if (!var.mBasic) {
-				updateVariable(var, false, oldBound, bound);
-			} else if (var.outOfBounds()) {
-				mOob.add(var);
-			}
+				if (!var.mBasic) {
+					updateVariable(var, false, oldBound, bound);
+				} else if (var.outOfBounds()) {
+					mOob.add(var);
+				}
 
-			for (final BoundConstraint bc : var.mConstraints.subMap(oldBound, bound).values()) {
-				assert bc.getInverseBound().lesseq(var.getTightLowerBound());
-				mProplist.add(bc.negate());
-			}
-			for (final LAEquality laeq : var.mEqualities.subMap(oldBound, bound).values()) {
-				mProplist.add(laeq.negate());
+				for (final BoundConstraint bc : var.mConstraints.subMap(oldBound, bound).values()) {
+					assert bc.getInverseBound().lesseq(var.getTightLowerBound());
+					mProplist.add(bc.negate());
+				}
+				for (final LAEquality laeq : var.mEqualities.subMap(oldBound, bound).values()) {
+					mProplist.add(laeq.negate());
+				}
 			}
 		}
 		final InfinitesimalNumber ubound = var.getTightUpperBound();
 		final InfinitesimalNumber lbound = var.getTightLowerBound();
 		if (lbound.equals(ubound)) {
-			final LAEquality lasd = var.mEqualities.get(lbound);
-			if (lasd != null && lasd.getDecideStatus() == null) {
+			LAEquality lasd = var.mEqualities.get(lbound);
+			if (lasd == null) {
+				final MutableAffineTerm at = new MutableAffineTerm();
+				at.add(Rational.ONE, var);
+				final Theory theory = mClausifier.getTheory();
+				final Term lvTerm = at.toSMTLib(theory, var.mIsInt);
+				final EqualityProxy eq = mClausifier.createEqualityProxy(lvTerm, lbound.mReal.toTerm(lvTerm.getSort()),
+						null);
+				assert eq != EqualityProxy.getTrueProxy();
+				assert eq != EqualityProxy.getFalseProxy();
+				lasd = eq.createLAEquality();
+			}
+			if (lasd.getDecideStatus() == null) {
 				mProplist.add(lasd);
 			}
 		} else if (ubound.less(lbound)) {
@@ -1017,13 +1063,13 @@ public class LinArSolve implements ITheory {
 				if (mClausifier.getLogger().isDebugEnabled()) {
 					mClausifier.getLogger().debug("Setting " + lasd.getVar() + " to " + lasd.getBound());
 				}
-				if (bound.less(var.getTightUpperBound())) {
+				if (bound.less(var.getUpperBound())) {
 					conflict = setBound(new LiteralReason(var, var.mUpperLiteral, bound, true, literal));
 				}
 				if (conflict != null) {
 					return conflict;
 				}
-				if (var.getTightLowerBound().less(bound)) {
+				if (var.getLowerBound().less(bound)) {
 					conflict = setBound(new LiteralReason(var, var.mLowerLiteral, bound, false, literal));
 				}
 			} else {
@@ -1046,11 +1092,11 @@ public class LinArSolve implements ITheory {
 			// same bound, we still may use it later to explain the literal,
 			// see LiteralReason.explain.
 			if (literal == bc) {
-				if (bc.getBound().less(var.getExactUpperBound())) {
+				if (bc.getBound().less(var.getUpperBound())) {
 					conflict = setBound(new LiteralReason(var, var.mUpperLiteral, bc.getBound(), true, literal));
 				}
 			} else {
-				if (var.getExactLowerBound().less(bc.getInverseBound())) {
+				if (var.getLowerBound().less(bc.getInverseBound())) {
 					conflict = setBound(
 							new LiteralReason(var, var.mLowerLiteral, bc.getInverseBound(), false, literal));
 				}
@@ -1073,6 +1119,150 @@ public class LinArSolve implements ITheory {
 		return false;
 	}
 
+	public void pivotEqualities() {
+//		for (int rowIndex = 0; rowIndex < mLinvars.size(); rowIndex++) {
+//			final LinVar rowVar = mLinvars.get(rowIndex);
+//			if (rowVar.mBasic && rowVar.isFixed()) {
+//				// this is a basic variable that is an equality. Check if we can pivot it with
+//				// one of the columns.
+//				final TableauxRow row = mTableaux.get(rowIndex);
+//				assert rowIndex == row.getRawIndex(0);
+//				for (int j = 1; j < row.size(); j++) {
+//					final int colIndex = row.getRawIndex(j);
+//					if (!mLinvars.get(colIndex).isFixed()) {
+//						pivot(rowIndex, colIndex);
+//						updateVariableValue(rowVar, new ExactInfinitesimalNumber(rowVar.getTightUpperBound()));
+//						break;
+//					}
+//				}
+//			}
+//		}
+	}
+
+	public void addToFingerprint(FingerPrint fpr, Rational coeff, LinVar lv) {
+		if (lv.isFixed()) {
+			assert lv.getValue().getEpsilon() == Rational.ZERO;
+			fpr.add(coeff.mul(lv.getValue().getRealValue()));
+		} else {
+			fpr.add(coeff, lv);
+		}
+	}
+
+	class FingerPrint {
+		Map<LinVar, Rational> mSummands = new HashMap<>();
+
+		public void add(Rational c, LinVar lv) {
+			assert (!c.equals(Rational.ZERO));
+			final Rational oldc = mSummands.remove(lv);
+			if (oldc != null) {
+				c = oldc.add(c);
+				if (c.equals(Rational.ZERO)) {
+					return;
+				}
+			}
+			mSummands.put(lv, c);
+		}
+
+		public void add(Rational coeff) {
+			if (coeff != Rational.ZERO) {
+				add(coeff, null);
+			}
+		}
+
+		public Map<LinVar, Rational> getSummands() {
+			return mSummands;
+		}
+	}
+
+	public Map<LinVar, Rational> fingerprintSharedVar(LASharedTerm shared) {
+		final FingerPrint fpr = new FingerPrint();
+		for (final Map.Entry<LinVar, Rational> summand : shared.getSummands().entrySet()) {
+			final Rational factor = summand.getValue();
+			final LinVar lv = summand.getKey();
+			if (lv.mBasic) {
+				final TableauxRow row = mTableaux.get(lv.mMatrixpos);
+				final BigInteger coeff0 = row.getRawCoeff(0).negate();
+				for (int i = 1; i < row.size(); i++) {
+					final Rational combinedFactor = factor.mul(Rational.valueOf(row.getRawCoeff(i), coeff0));
+					final LinVar nonbasic = mLinvars.get(row.getRawIndex(i));
+					addToFingerprint(fpr, combinedFactor, nonbasic);
+				}
+			} else {
+				addToFingerprint(fpr, factor, lv);
+			}
+		}
+		fpr.add(shared.getOffset());
+		return fpr.getSummands();
+	}
+
+	public Clause propagateSharedEquality(LASharedTerm lhs, LASharedTerm rhs,
+			HashSet<SymmetricPair<CCTerm>> propagated) {
+		final CCTerm lhsCC = mClausifier.getCCTerm(lhs.getTerm()).getRepresentative();
+		final CCTerm rhsCC = mClausifier.getCCTerm(rhs.getTerm()).getRepresentative();
+		if (lhsCC == rhsCC || !propagated.add(new SymmetricPair<CCTerm>(lhsCC, rhsCC))) {
+			return null;
+		}
+		final EqualityProxy eq = mClausifier.createEqualityProxy(lhs.getTerm(), rhs.getTerm(), null);
+		assert eq != EqualityProxy.getTrueProxy();
+		assert eq != EqualityProxy.getFalseProxy();
+		final CCEquality cceq = eq.createCCEquality(lhs.getTerm(), rhs.getTerm());
+		final LAEquality laeq = cceq.getLASharedData();
+		mClausifier.getLogger().debug("Propagate: %s  (laeq: %s) %s %s", cceq, laeq, cceq.getDecideStatus(),
+				laeq.getDecideStatus());
+		if (laeq.getDecideStatus() == null) {
+			assert mDirty.get(laeq.getVar().mMatrixpos);
+			// mProplist.add(laeq);
+		} else if (cceq.getDecideStatus() == cceq.negate()) {
+			return generateEqualityClause(cceq);
+		} else if (cceq.getDecideStatus() == null) {
+			mProplist.add(cceq);
+		} else {
+			mClausifier.getLogger().debug("already set: %s", cceq.getAtom().getDecideStatus());
+		}
+		return null;
+	}
+
+	int mLastNumFixed = 0;
+
+	public Clause propagateSharedEqualities() {
+		int numFix = 0;
+		for (final LinVar lv : mLinvars) {
+			if (!lv.mBasic && lv.isFixed()) {
+				numFix++;
+			}
+		}
+		if (numFix == mLastNumFixed) {
+			return null;
+		}
+		mLastNumFixed = numFix;
+		mClausifier.getLogger().debug("Shared Terms: %d, Matrix Size: %d + %d, Num Fixed: %d", mSharedVars.size(),
+				mLinvars.size() - mBasics.size(), mBasics.size(), mLastNumFixed);
+		// TODO: store sharedVars already separated by sorts.
+		final Set<Sort> sharedVarSorts = new LinkedHashSet<Sort>();
+		for (final LASharedTerm shared : mSharedVars) {
+			sharedVarSorts.add(shared.getTerm().getSort());
+		}
+		for (final Sort sort : sharedVarSorts) {
+			final Map<Map<LinVar, Rational>, LASharedTerm> fingerprints = new HashMap<>();
+			final HashSet<SymmetricPair<CCTerm>> propagated = new HashSet<>();
+			for (final LASharedTerm shared : mSharedVars) {
+				if (shared.getTerm().getSort() == sort) {
+					final Map<LinVar,Rational> fingerprint = fingerprintSharedVar(shared);
+					final LASharedTerm other = fingerprints.get(fingerprint);
+					if (other == null) {
+						fingerprints.put(fingerprint, shared);
+					} else {
+						final Clause conflict = propagateSharedEquality(other, shared, propagated);
+						if (conflict != null) {
+							return conflict;
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public Clause checkpoint() {
 		do {
@@ -1087,12 +1277,13 @@ public class LinArSolve implements ITheory {
 			if (!mInCheck) {
 				return null;
 			}
+			pivotEqualities();
 			conflict = fixOobs();
 			if (conflict != null) {
 				return conflict;
 			}
 		} while (!mDirty.isEmpty());
-		return null;
+		return propagateSharedEqualities();
 	}
 
 	public Rational realValue(final LinVar var) {
@@ -1980,6 +2171,9 @@ public class LinArSolve implements ITheory {
 			sharedData = new LAEquality(mClausifier.getStackLevel(), var, bound.mReal);
 			getEngine().addAtom(sharedData);
 			var.addEquality(sharedData);
+			if (var.isFixed() && var.getTightLowerBound().equals(bound)) {
+				mProplist.add(sharedData);
+			}
 		}
 		return sharedData;
 	}

@@ -855,7 +855,7 @@ public class MusesTest {
 
 	@Test
 	public void testShrinkerNormal() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -872,7 +872,7 @@ public class MusesTest {
 
 	@Test
 	public void testShrinkerRestrictedSet() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -894,7 +894,7 @@ public class MusesTest {
 
 	@Test
 	public void testShrinkerWorkingSetIsMus() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -913,7 +913,7 @@ public class MusesTest {
 
 	@Test
 	public void testShrinkerMusAssertedBefore() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -938,7 +938,7 @@ public class MusesTest {
 
 	@Test
 	public void testShrinkerSatSetAssertedBefore() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -962,7 +962,7 @@ public class MusesTest {
 
 	@Test(expected = SMTLIBException.class)
 	public void testShrinkerWorkingSetDoesNotContainCrits() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -984,7 +984,7 @@ public class MusesTest {
 
 	@Test(expected = SMTLIBException.class)
 	public void testShrinkerEmptySet() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -997,7 +997,7 @@ public class MusesTest {
 
 	@Test(expected = SMTLIBException.class)
 	public void testShrinkerSatSet() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1014,7 +1014,7 @@ public class MusesTest {
 
 	@Test
 	public void testExtensionLightDemand() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet1(script, translator, engine);
@@ -1029,7 +1029,7 @@ public class MusesTest {
 
 	@Test
 	public void testExtensionMediumDemand() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet1(script, translator, engine);
@@ -1047,7 +1047,7 @@ public class MusesTest {
 
 	@Test
 	public void testExtensionHeavyDemand() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), null);
 		final Translator translator = new Translator();
 		setupUnsatSet1(script, translator, engine);
@@ -1065,7 +1065,7 @@ public class MusesTest {
 
 	@Test
 	public void testMapBlockDown() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), new TimeoutHandler(null));
 		final Translator translator = new Translator();
 		setupUnsatSet3(script, translator, engine);
@@ -1094,7 +1094,7 @@ public class MusesTest {
 
 	@Test
 	public void testMapBlockUp() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), new TimeoutHandler(null));
 		;
 		final Translator translator = new Translator();
@@ -1124,7 +1124,7 @@ public class MusesTest {
 
 	@Test
 	public void testMapWorkingSet() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), new TimeoutHandler(null));
 		final Translator translator = new Translator();
 		setupUnsatSet3(script, translator, engine);
@@ -1143,7 +1143,7 @@ public class MusesTest {
 
 	@Test
 	public void testMapNoUnexploredSet() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), new TimeoutHandler(null));
 		final Translator translator = new Translator();
 		setupUnsatSet3(script, translator, engine);
@@ -1165,7 +1165,7 @@ public class MusesTest {
 
 	@Test
 	public void testMapExplicitlyForFindCrits() {
-		final Script script = setupScript(Logics.AUFLIRA);
+		final Script script = setupScript(Logics.ALL);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), new TimeoutHandler(null));
 		final Translator translator = new Translator();
 		setupUnsatSet3(script, translator, engine);
@@ -1195,7 +1195,7 @@ public class MusesTest {
 	public void testReMusSet1() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet1(script, translator, engine);
@@ -1219,7 +1219,7 @@ public class MusesTest {
 	public void testReMusSet2() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1243,7 +1243,7 @@ public class MusesTest {
 	public void testReMusSet2AssertSomeAsAxioms1() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2AssertSomeAsAxioms1(script, translator, engine);
@@ -1268,7 +1268,7 @@ public class MusesTest {
 	public void testReMusSet2AssertSomeAsAxioms2() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2AssertSomeAsAxioms2(script, translator, engine);
@@ -1292,7 +1292,7 @@ public class MusesTest {
 	public void testReMusSet5() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet5(script, translator, engine);
@@ -1316,7 +1316,7 @@ public class MusesTest {
 	public void testReMusUnknownSetTestFailIfUnknownAllowedTurnedOff() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnknownSet1(script, translator, engine);
@@ -1338,7 +1338,7 @@ public class MusesTest {
 	public void testReMusUnknownSet1() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnknownSet1(script, translator, engine);
@@ -1376,7 +1376,7 @@ public class MusesTest {
 	public void testReMusUnknownSet2() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnknownSet2(script, translator, engine);
@@ -1419,7 +1419,7 @@ public class MusesTest {
 	public void testReMusUnknownSet3() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnknownSet3(script, translator, engine);
@@ -1443,7 +1443,7 @@ public class MusesTest {
 	public void testReMusEmptySet() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1462,7 +1462,7 @@ public class MusesTest {
 	public void testReMusWorkingSetTooBig() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1479,7 +1479,7 @@ public class MusesTest {
 	public void testReMusSet2WithTimeout() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1500,7 +1500,7 @@ public class MusesTest {
 	public void testHeuristicSmallest01() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1521,7 +1521,7 @@ public class MusesTest {
 	public void testHeuristicSmallest02() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet5(script, translator, engine);
@@ -1543,7 +1543,7 @@ public class MusesTest {
 	public void testHeuristicBiggest01() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1565,7 +1565,7 @@ public class MusesTest {
 	public void testHeuristicBiggest02() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet5(script, translator, engine);
@@ -1587,7 +1587,7 @@ public class MusesTest {
 	public void testHeuristicLowestLexOrder() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1612,7 +1612,7 @@ public class MusesTest {
 	public void testHeuristicHighestLexOrder() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1637,7 +1637,7 @@ public class MusesTest {
 	public void testHeuristicShallowest() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1660,7 +1660,7 @@ public class MusesTest {
 	public void testHeuristicDeepest() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1683,7 +1683,7 @@ public class MusesTest {
 	public void testHeuristicNarrowest() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1707,7 +1707,7 @@ public class MusesTest {
 	public void testHeuristicWidest() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet2(script, translator, engine);
@@ -1731,7 +1731,7 @@ public class MusesTest {
 	public void testHeuristicSmallestAmongWide01() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		// We use set 4 here, because in set 2 the widest mus is also one of the
@@ -1759,7 +1759,7 @@ public class MusesTest {
 	public void testHeuristicSmallestAmongWide02() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		// We use set 4 here, because in set 2 the widest mus is also one of the
@@ -1786,7 +1786,7 @@ public class MusesTest {
 	public void testHeuristicWidestAmongSmall01() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(new DefaultLogger(), handler);
 		final Translator translator = new Translator();
 		// We use set 4 here, because in set 2 the widest mus is also one of the
@@ -1813,7 +1813,7 @@ public class MusesTest {
 	public void testHeuristicWidestAmongSmall02() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		// We use set 4 here, because in set 2 the widest mus is also one of the
@@ -1838,7 +1838,7 @@ public class MusesTest {
 
 	@Test
 	public void testMusEnumerationScriptFirst() {
-		final MusEnumerationScript script = setupMusEnumerationScript(Logics.AUFLIRA);
+		final MusEnumerationScript script = setupMusEnumerationScript(Logics.ALL);
 		script.setOption(MusOptions.INTERPOLATION_HEURISTIC, HeuristicsType.FIRST);
 		script.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
 		script.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, true);
@@ -1862,7 +1862,7 @@ public class MusesTest {
 	public void testNumberOfDifferentStatements() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet5(script, translator, engine);
@@ -1893,7 +1893,7 @@ public class MusesTest {
 	public void testHeuristicDifferentMusesWithRespectToStatements01() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet5(script, translator, engine);
@@ -1935,7 +1935,7 @@ public class MusesTest {
 	public void testHeuristicDifferentMusesWithRespectToStatements02() {
 		final LogProxy logger = new DefaultLogger();
 		final TimeoutHandler handler = new TimeoutHandler(null);
-		final Script script = setupScript(Logics.AUFLIRA, handler, logger);
+		final Script script = setupScript(Logics.ALL, handler, logger);
 		final DPLLEngine engine = new DPLLEngine(logger, handler);
 		final Translator translator = new Translator();
 		setupUnsatSet5(script, translator, engine);
@@ -1975,7 +1975,7 @@ public class MusesTest {
 
 	@Test
 	public void testMusEnumerationScriptSet2() {
-		final MusEnumerationScript script = setupMusEnumerationScript(Logics.AUFLIRA);
+		final MusEnumerationScript script = setupMusEnumerationScript(Logics.ALL);
 		script.setOption(MusOptions.INTERPOLATION_HEURISTIC, HeuristicsType.SMALLEST);
 		script.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
 		script.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, true);
@@ -2003,7 +2003,7 @@ public class MusesTest {
 
 	@Test
 	public void testMusEnumerationScriptSet2WithUnnamedTerms1() {
-		final MusEnumerationScript script = setupMusEnumerationScript(Logics.AUFLIRA);
+		final MusEnumerationScript script = setupMusEnumerationScript(Logics.ALL);
 		script.setOption(MusOptions.INTERPOLATION_HEURISTIC, HeuristicsType.SMALLEST);
 		script.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
 		script.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, true);
@@ -2031,7 +2031,7 @@ public class MusesTest {
 
 	@Test
 	public void testMusEnumerationScriptSet2WithUnnamedTerms2() {
-		final MusEnumerationScript script = setupMusEnumerationScript(Logics.AUFLIRA);
+		final MusEnumerationScript script = setupMusEnumerationScript(Logics.ALL);
 		script.setOption(MusOptions.INTERPOLATION_HEURISTIC, HeuristicsType.SMALLEST);
 		script.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
 		script.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, true);
@@ -2059,7 +2059,7 @@ public class MusesTest {
 
 	@Test
 	public void testMusEnumerationScriptSet5() {
-		final MusEnumerationScript script = setupMusEnumerationScript(Logics.AUFLIRA);
+		final MusEnumerationScript script = setupMusEnumerationScript(Logics.ALL);
 		script.setOption(MusOptions.INTERPOLATION_HEURISTIC, HeuristicsType.SMALLEST);
 		script.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
 		script.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, true);
@@ -2087,7 +2087,7 @@ public class MusesTest {
 
 	@Test
 	public void testMusEnumerationScriptUnknownSet1() {
-		final MusEnumerationScript script = setupMusEnumerationScript(Logics.AUFLIRA);
+		final MusEnumerationScript script = setupMusEnumerationScript(Logics.ALL);
 		script.setOption(MusOptions.INTERPOLATION_HEURISTIC, HeuristicsType.BIGGEST);
 		script.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
 		script.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, true);
@@ -2117,7 +2117,7 @@ public class MusesTest {
 	 */
 	@Test
 	public void testMusEnumerationScriptNoMusEnumerated() {
-		final MusEnumerationScript script = setupMusEnumerationScript(Logics.AUFLIRA);
+		final MusEnumerationScript script = setupMusEnumerationScript(Logics.ALL);
 		script.setOption(MusOptions.INTERPOLATION_HEURISTIC, HeuristicsType.BIGGEST);
 		script.setOption(SMTLIBConstants.RANDOM_SEED, 1337);
 		script.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, true);
