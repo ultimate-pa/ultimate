@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
@@ -73,10 +74,10 @@ public class TransformulaPredicateStrongestPostTest {
 		final IPredicate state = predicate(eq(x.getTermVariable(), num(0)));
 		final UnmodifiableTransFormula tf = createIncrement(x, 1);
 
-		// Create relational predicate machinery
+		// Create relational predicate machinery with symbol table
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final var translator = new TransFormulaToPredicate(mMgdScript, primedFactory);
+		final var translator = new TransFormulaToPredicate(mServices, mMgdScript, primedFactory, primedTable);
 		final IPredicate relationPred = translator.translate(tf);
 
 		mMgdScript.unlock(this);
@@ -86,9 +87,8 @@ public class TransformulaPredicateStrongestPostTest {
 				new TermDomainOperationProvider(mServices, mMgdScript));
 		final Term spViaTransformula = transformer.strongestPostcondition(state, tf);
 
-		final var relPost = new RelationalPredicatePostcondition(mServices, mMgdScript, mPredicateFactory);
-		final IPredicate spViaRelation = relPost.strongestPostcondition(state, relationPred,
-				RelationalPredicatePostcondition.extractVariables(tf));
+		final var relPost = new RelationalPredicatePostcondition(mServices, mMgdScript, mPredicateFactory, primedTable);
+		final IPredicate spViaRelation = relPost.strongestPostcondition(state, relationPred);
 
 		mMgdScript.lock(this);
 
@@ -98,6 +98,72 @@ public class TransformulaPredicateStrongestPostTest {
 		final IPredicate spViaTransformulaPred = mPredicateFactory.newPredicate(spViaTransformula);
 		assertEquals(spViaTransformulaPred.getVars(), spViaRelation.getVars());
 		assertEquivalent(spViaTransformulaPred.getClosedFormula(), spViaRelation.getClosedFormula());
+		assertEquals(SmtUtils.checkEquivalence(spViaTransformulaPred.getClosedFormula(),
+				spViaRelation.getClosedFormula(), mScript), LBool.UNSAT);
+	}
+
+	@Test
+	public void unchangedVariablesPassThrough() {
+		// State has x and y, but relation only modifies x
+		// Expected: y passes through unchanged
+		final ProgramNonOldVar x = createIntVar("x");
+		final ProgramNonOldVar y = createIntVar("y");
+
+		// State: x = 5 ∧ y = 10
+		final IPredicate state = predicate(SmtUtils.and(mScript,
+				eq(x.getTermVariable(), num(5)),
+				eq(y.getTermVariable(), num(10))));
+
+		// Relation: x' = x + 1 (only modifies x, y is unchanged)
+		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
+		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
+		final TermVariable xPrimed = primedTable.getPrimedVar(x);
+		final IPredicate relation = primedFactory.newPredicate(
+				eq(xPrimed, mScript.term("+", x.getTermVariable(), num(1))));
+
+		mMgdScript.unlock(this);
+
+		final var relPost = new RelationalPredicatePostcondition(mServices, mMgdScript, mPredicateFactory, primedTable);
+		final IPredicate result = relPost.strongestPostcondition(state, relation);
+
+		mMgdScript.lock(this);
+
+		// Expected result: x = 6 ∧ y = 10
+		assertNotNull(result);
+		assertTrue("Result should contain x", result.getVars().contains(x));
+		assertTrue("Result should contain y", result.getVars().contains(y));
+
+		final IPredicate expected = predicate(SmtUtils.and(mScript,
+				eq(x.getTermVariable(), num(6)),
+				eq(y.getTermVariable(), num(10))));
+		assertEquivalent(expected.getClosedFormula(), result.getClosedFormula());
+	}
+
+	@Test
+	public void unknownVariableInRelationThrowsError() {
+		// State only has x, but relation references y (unknown variable)
+		final ProgramNonOldVar x = createIntVar("x");
+		final ProgramNonOldVar y = createIntVar("y");
+
+		// State: x = 5 (no y)
+		final IPredicate state = predicate(eq(x.getTermVariable(), num(5)));
+
+		// Relation: x' = x + y (references y which is not in state)
+		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
+		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
+		final TermVariable xPrimed = primedTable.getPrimedVar(x);
+		final IPredicate relation = primedFactory.newPredicate(
+				eq(xPrimed, mScript.term("+", x.getTermVariable(), y.getTermVariable())));
+
+		mMgdScript.unlock(this);
+
+		final var relPost = new RelationalPredicatePostcondition(mServices, mMgdScript, mPredicateFactory, primedTable);
+
+		assertThrows(IllegalArgumentException.class, () -> {
+			relPost.strongestPostcondition(state, relation);
+		});
+
+		mMgdScript.lock(this);
 	}
 
 	private ProgramNonOldVar createIntVar(final String name) {

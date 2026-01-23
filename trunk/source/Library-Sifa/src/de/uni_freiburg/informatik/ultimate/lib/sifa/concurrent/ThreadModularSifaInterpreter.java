@@ -60,6 +60,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
 		final Set<String> threadIds = collectThreadIds();
+		// TODO: immutable maybe
 		final Map<String, Set<IPredicate>> interferences = new HashMap<>();
 		for (final String threadId : threadIds) {
 			interferences.put(threadId, Collections.emptySet());
@@ -67,8 +68,10 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final Map<IcfgLocation, IPredicate> result = new HashMap<>();
 
 		// TODO: just one round right now, for testing. (needs fixpoint loop)
+		// buffer statt reihenfolge
 		for (final String threadId : threadIds) {
 			final ConcurrentDomain concurrentDomain = new ConcurrentDomain(mBaseDomain, threadId, interferences);
+			// TODO: nur einen thread uebergeben/behandeln
 			final IcfgInterpreter interpreter = new IcfgInterpreter(mLogger, mTimer, mStats, mTools, mIcfg,
 					mLocationsOfInterest, concurrentDomain, mFluid, mLoopSumFactory, mCallSumFactory);
 			final Map<IcfgLocation, IPredicate> threadResult = interpreter.interpret();
@@ -79,6 +82,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	}
 
 	private Set<String> collectThreadIds() {
+		// TODO: callgraph modifizieren potentiell
 		final Set<String> threadIds = new HashSet<>();
 		final ConcurrencyInformation concInfo = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap = concInfo

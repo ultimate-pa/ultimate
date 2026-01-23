@@ -33,6 +33,31 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		return Collections.unmodifiableMap(mPrimedVars);
 	}
 
+	/**
+	 * Returns the primed term variable for the given program variable, or null if not found.
+	 */
+	public TermVariable getPrimedVar(final IProgramVar var) {
+		return mPrimedVars.get(var);
+	}
+
+	/**
+	 * Checks if the given program variable is a primed variable (created by this symbol table).
+	 */
+	public boolean isPrimedVar(final IProgramVar var) {
+		return var instanceof PrimedProgramVar;
+	}
+
+	/**
+	 * If the given variable is a primed variable, returns the underlying base variable. Otherwise returns the variable
+	 * itself.
+	 */
+	public IProgramVar getBaseVar(final IProgramVar var) {
+		if (var instanceof PrimedProgramVar) {
+			return ((PrimedProgramVar) var).mBase;
+		}
+		return var;
+	}
+
 	private void addPrimedMappings(final Set<String> procedures, final ManagedScript managedScript) {
 		final Set<IProgramVar> vars = new HashSet<>();
 		vars.addAll(getGlobals());

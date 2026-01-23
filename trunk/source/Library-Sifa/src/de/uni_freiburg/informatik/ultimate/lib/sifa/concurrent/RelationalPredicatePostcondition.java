@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -24,75 +23,58 @@ public class RelationalPredicatePostcondition {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
+	private final PrimedDefaultIcfgSymbolTable mSymbolTable;
 
 	public RelationalPredicatePostcondition(final IUltimateServiceProvider services, final ManagedScript managedScript,
-			final BasicPredicateFactory predicateFactory) {
+			final BasicPredicateFactory predicateFactory, final PrimedDefaultIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
+		mSymbolTable = symbolTable;
 	}
 
 	/**
-	 * The state predicate must be over term variables (not constants). The relation predicate is be over constants (c_x
-	 * for pre-state, c_x_primed for post-state) created by {@link TransFormulaToPredicate}.
+	 * Computes the strongest postcondition of a state predicate with respect to a relational predicate.
+	 *
+	 * The state predicate uses unprimed term variables. The relational predicate uses unprimed term variables for
+	 * pre-state and primed term variables for post-state.
+	 *
+	 * Variables in the state predicate that are not mentioned in the relational predicate pass through unchanged.
 	 */
-	public IPredicate strongestPostcondition(final IPredicate statePredicate, final IPredicate relationPredicate,
-			final Set<IProgramVar> relationVars) {
-		final Map<Term, Term> relationSubstitution = new HashMap<>();
-		final Map<IProgramVar, TermVariable> postVarMap = new HashMap<>();
+	public IPredicate strongestPostcondition(final IPredicate statePredicate, final IPredicate relationalPredicate) {
+		final Set<IProgramVar> stateVars = statePredicate.getVars();
+
+		// Build projection set and renaming map by inspecting relational predicate variables
 		final Set<TermVariable> preVarsToProject = new HashSet<>();
-
-		// Combine variables from state predicate and relation
-		final Set<IProgramVar> allVars = new HashSet<>(statePredicate.getVars());
-		allVars.addAll(relationVars);
-
-		// Build substitution: constants → term variables
-		for (final IProgramVar pv : allVars) {
-			final TermVariable preVar = pv.getTermVariable();
-			final TermVariable postVar = mManagedScript.constructFreshTermVariable(pv.getGloballyUniqueId() + "_post",
-					preVar.getSort());
-			relationSubstitution.put(pv.getDefaultConstant(), preVar);
-			relationSubstitution.put(pv.getPrimedConstant(), postVar);
-			postVarMap.put(pv, postVar);
-			preVarsToProject.add(preVar);
+		final Map<Term, Term> primedToUnprimed = new HashMap<>();
+		for (final IProgramVar pv : relationalPredicate.getVars()) {
+			if (mSymbolTable.isPrimedVar(pv)) {
+				// Primed variable: add to renaming map
+				final IProgramVar baseVar = mSymbolTable.getBaseVar(pv);
+				primedToUnprimed.put(pv.getTermVariable(), baseVar.getTermVariable());
+				preVarsToProject.add(baseVar.getTermVariable());
+			} else {
+				// Unprimed variable: must be in state predicate
+				if (!stateVars.contains(pv)) {
+					throw new IllegalArgumentException("Relational predicate references variable " + pv
+							+ " which is not in the state predicate");
+				}
+			}
 		}
 
-		// Substitute constants in relation predicate with term variables
-		final Term substitutedRelation = Substitution.apply(mManagedScript, relationSubstitution,
-				relationPredicate.getFormula());
+		// Conjoin state predicate with relation predicate
+		final Term conjunction =
+				SmtUtils.and(mManagedScript.getScript(), statePredicate.getFormula(), relationalPredicate.getFormula());
 
-		// Conjoin state predicate with substituted relation
-		final Term conjunction = SmtUtils.and(mManagedScript.getScript(), statePredicate.getFormula(),
-				substitutedRelation);
-
-		// Existentially quantify pre-state variables and eliminate
-		final Term quantified = SmtUtils.quantifier(mManagedScript.getScript(), Script.EXISTS, preVarsToProject,
-				conjunction);
-		// TODO:
-		// Use full elimination (?)
+		// Existentially quantify pre-state variables (only those modified by the relation) and eliminate
+		final Term quantified =
+				SmtUtils.quantifier(mManagedScript.getScript(), Script.EXISTS, preVarsToProject, conjunction);
 		final Term projected = PartialQuantifierElimination.eliminate(mServices, mManagedScript, quantified,
 				SimplificationTechnique.SIMPLIFY_DDA);
 
-		// Rename post variables back to original term variables
-		final Map<Term, Term> postToPre = new HashMap<>();
-		for (final Map.Entry<IProgramVar, TermVariable> entry : postVarMap.entrySet()) {
-			postToPre.put(entry.getValue(), entry.getKey().getTermVariable());
-		}
-		final Term renamed = Substitution.apply(mManagedScript, postToPre, projected);
+		// Rename primed variables back to unprimed term variables
+		final Term renamed = Substitution.apply(mManagedScript, primedToUnprimed, projected);
 		return mPredicateFactory.newPredicate(renamed);
-	}
-
-	public IPredicate strongestPostcondition(final IPredicate statePredicate, final TransFormula tf,
-			final TransFormulaToPredicate translator) {
-		final IPredicate relationPredicate = translator.translate(tf);
-		final Set<IProgramVar> relationVars = extractVariables(tf);
-		return strongestPostcondition(statePredicate, relationPredicate, relationVars);
-	}
-
-	public static Set<IProgramVar> extractVariables(final TransFormula tf) {
-		final Set<IProgramVar> vars = new HashSet<>(tf.getInVars().keySet());
-		vars.addAll(tf.getOutVars().keySet());
-		return vars;
 	}
 
 	public IUltimateServiceProvider getServices() {
@@ -105,5 +87,9 @@ public class RelationalPredicatePostcondition {
 
 	public BasicPredicateFactory getPredicateFactory() {
 		return mPredicateFactory;
+	}
+
+	public PrimedDefaultIcfgSymbolTable getSymbolTable() {
+		return mSymbolTable;
 	}
 }
