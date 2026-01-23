@@ -3,18 +3,14 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
@@ -59,42 +55,36 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
-		final Set<String> threadIds = collectThreadIds();
-		// TODO: immutable maybe
+		// Thread entry procedures are exactly the initial nodes of the ICFG
+		final Set<String> threadIds = mIcfg.getInitialNodes().stream()
+				.map(IcfgLocation::getProcedure)
+				.collect(Collectors.toSet());
+
 		final Map<String, Set<IPredicate>> interferences = new HashMap<>();
 		for (final String threadId : threadIds) {
 			interferences.put(threadId, Collections.emptySet());
 		}
+
 		final Map<IcfgLocation, IPredicate> result = new HashMap<>();
 
-		// TODO: just one round right now, for testing. (needs fixpoint loop)
-		// buffer statt reihenfolge
-		for (final String threadId : threadIds) {
-			final ConcurrentDomain concurrentDomain = new ConcurrentDomain(mBaseDomain, threadId, interferences);
-			// TODO: nur einen thread uebergeben/behandeln
-			final IcfgInterpreter interpreter = new IcfgInterpreter(mLogger, mTimer, mStats, mTools, mIcfg,
-					mLocationsOfInterest, concurrentDomain, mFluid, mLoopSumFactory, mCallSumFactory);
-			final Map<IcfgLocation, IPredicate> threadResult = interpreter.interpret();
-			result.putAll(threadResult);
+		// Outer fixpoint loop: iterate until interferences stabilize
+		// TODO: add actual fixpoint check (interferences unchanged)
+		while (true) {
+			for (final String threadId : threadIds) {
+				final ConcurrentDomain concurrentDomain = new ConcurrentDomain(mBaseDomain, threadId, interferences);
+				// Wrap ICFG to restrict initial nodes to this thread's entry point.
+				// Pass all LOIs - CallGraph will filter to reachable ones automatically.
+				final IIcfg<IcfgLocation> threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
+				final IcfgInterpreter interpreter = new IcfgInterpreter(mLogger, mTimer, mStats, mTools, threadIcfg,
+						mLocationsOfInterest, concurrentDomain, mFluid, mLoopSumFactory, mCallSumFactory);
+				final Map<IcfgLocation, IPredicate> threadResult = interpreter.interpret();
+				result.putAll(threadResult);
+			}
+
+			// TODO: check if interferences changed, break if fixpoint reached
+			break;
 		}
 
 		return result;
-	}
-
-	private Set<String> collectThreadIds() {
-		// TODO: callgraph modifizieren potentiell
-		final Set<String> threadIds = new HashSet<>();
-		final ConcurrencyInformation concInfo = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
-		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap = concInfo
-				.getThreadInstanceMap();
-		for (final List<ThreadInstance> instances : threadInstanceMap.values()) {
-			for (final ThreadInstance instance : instances) {
-				threadIds.add(instance.getThreadInstanceName());
-			}
-		}
-		if (threadIds.isEmpty()) {
-			threadIds.add("main");
-		}
-		return threadIds;
 	}
 }

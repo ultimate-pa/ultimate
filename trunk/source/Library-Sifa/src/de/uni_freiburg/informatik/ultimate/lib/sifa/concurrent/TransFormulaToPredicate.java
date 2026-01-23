@@ -42,20 +42,8 @@ public class TransFormulaToPredicate {
 	 * primed term variables for post-state (outVars).
 	 */
 	public IPredicate translate(final TransFormula tf) {
-		final Map<Term, Term> substitution = new HashMap<>();
-		final List<IProgramVar> unchangedVars = new ArrayList<>();
-
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			substitution.put(entry.getValue(), entry.getKey().getTermVariable());
-		}
-
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			final IProgramVar pv = entry.getKey();
-			substitution.put(entry.getValue(), mSymbolTable.getPrimedVar(pv));
-			if (entry.getValue() == tf.getInVars().get(pv)) {
-				unchangedVars.add(pv);
-			}
-		}
+		final Map<Term, Term> substitution = addInVars(tf);
+		final List<IProgramVar> unchangedVars = addOutVars(tf, substitution);
 
 		Term formula = Substitution.apply(mManagedScript, substitution, tf.getFormula());
 		formula = addIdentityConstraints(formula, unchangedVars);
@@ -67,30 +55,9 @@ public class TransFormulaToPredicate {
 	 * away, making the result suitable for use as an interference relation across threads.
 	 */
 	public IPredicate translateToGlobal(final TransFormula tf) {
-		final Map<Term, Term> substitution = new HashMap<>();
 		final Set<TermVariable> localVars = new HashSet<>();
-		final List<IProgramVar> unchangedGlobals = new ArrayList<>();
-
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			final IProgramVar pv = entry.getKey();
-			if (pv.isGlobal()) {
-				substitution.put(entry.getValue(), pv.getTermVariable());
-			} else {
-				localVars.add(entry.getValue());
-			}
-		}
-
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			final IProgramVar pv = entry.getKey();
-			if (pv.isGlobal()) {
-				substitution.put(entry.getValue(), mSymbolTable.getPrimedVar(pv));
-				if (entry.getValue() == tf.getInVars().get(pv)) {
-					unchangedGlobals.add(pv);
-				}
-			} else {
-				localVars.add(entry.getValue());
-			}
-		}
+		final Map<Term, Term> substitution = addGlobalInVars(tf, localVars);
+		final List<IProgramVar> unchangedGlobals = addGlobalOutVars(tf, substitution, localVars);
 
 		Term formula = Substitution.apply(mManagedScript, substitution, tf.getFormula());
 		formula = addIdentityConstraints(formula, unchangedGlobals);
@@ -107,4 +74,55 @@ public class TransFormulaToPredicate {
 				mManagedScript.getScript());
 		return RelationalPredicateUtils.conjoinWithIdentities(formula, identities, mManagedScript.getScript());
 	}
+
+	private Map<Term, Term> addInVars(final TransFormula tf) {
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+			substitution.put(entry.getValue(), entry.getKey().getTermVariable());
+		}
+		return substitution;
+	}
+
+	private Map<Term, Term> addGlobalInVars(final TransFormula tf, final Set<TermVariable> localVars) {
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+			final IProgramVar pv = entry.getKey();
+			if (pv.isGlobal()) {
+				substitution.put(entry.getValue(), pv.getTermVariable());
+			} else {
+				localVars.add(entry.getValue());
+			}
+		}
+		return substitution;
+	}
+
+	private List<IProgramVar> addOutVars(final TransFormula tf, final Map<Term, Term> substitution) {
+		final List<IProgramVar> unchangedVars = new ArrayList<>();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+			final IProgramVar pv = entry.getKey();
+			substitution.put(entry.getValue(), mSymbolTable.getPrimedVar(pv));
+			if (entry.getValue() == tf.getInVars().get(pv)) {
+				unchangedVars.add(pv);
+			}
+		}
+		return unchangedVars;
+	}
+
+	private List<IProgramVar> addGlobalOutVars(final TransFormula tf, final Map<Term, Term> substitution,
+			final Set<TermVariable> localVars) {
+		final List<IProgramVar> unchangedGlobals = new ArrayList<>();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+			final IProgramVar pv = entry.getKey();
+			if (pv.isGlobal()) {
+				substitution.put(entry.getValue(), mSymbolTable.getPrimedVar(pv));
+				if (entry.getValue() == tf.getInVars().get(pv)) {
+					unchangedGlobals.add(pv);
+				}
+			} else {
+				localVars.add(entry.getValue());
+			}
+		}
+		return unchangedGlobals;
+	}
+
 }
