@@ -21,8 +21,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.PrimedDefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.TransFormulaToPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -116,8 +116,8 @@ public class SharedVariableTranslationTest {
 
 		mMgdScript.unlock(this);
 
-		// Translate directly to global
-		final IPredicate globalRelation = translator.translateToGlobal(tf);
+		// Translate (always projects to global)
+		final IPredicate globalRelation = translator.translate(tf);
 
 		mMgdScript.lock(this);
 
@@ -155,8 +155,8 @@ public class SharedVariableTranslationTest {
 	}
 
 	private ILocalProgramVar createLocalIntVar(final String name, final String procedure) {
-		final ILocalProgramVar var =
-				ProgramVarUtils.constructLocalProgramVar(name, procedure, mIntSort, mMgdScript, this);
+		final ILocalProgramVar var = ProgramVarUtils.constructLocalProgramVar(name, procedure, mIntSort, mMgdScript,
+				this);
 		mSymbolTable.add(var);
 		return var;
 	}

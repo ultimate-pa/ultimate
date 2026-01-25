@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas;
 
 import java.util.ArrayList;
 import java.util.List;

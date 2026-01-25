@@ -1,30 +1,32 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceOrchestrator;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 /**
- * Wrapper domain for thread-modular analysis based on SIFA.
+ * Wrapper domain for thread-modular analysis.
+ *
+ * Applies interference abstraction in the alpha function to account for possible interleavings from other threads.
  */
 public class ConcurrentDomain implements IDomain {
 
 	private final IDomain mUnderlyingDomain;
-	private final String mCurrentThread;
-	private final Map<String, Set<IPredicate>> mInterferences;
+	private final InterferenceOrchestrator mInterferenceOrchestrator;
+	private final String mThreadId;
 
-	public ConcurrentDomain(final IDomain underlyingDomain, final String currentThread) {
-		this(underlyingDomain, currentThread, Collections.emptyMap());
-	}
-
-	public ConcurrentDomain(final IDomain underlyingDomain, final String currentThread,
-			final Map<String, Set<IPredicate>> interferences) {
+	/**
+	 * Creates a concurrent domain for analyzing a specific thread.
+	 *
+	 * @param underlyingDomain         The base abstract domain.
+	 * @param interferenceOrchestrator The shared interference abstraction.
+	 * @param threadId                 The thread being analyzed.
+	 */
+	public ConcurrentDomain(final IDomain underlyingDomain, final InterferenceOrchestrator interferenceOrchestrator,
+			final String threadId) {
 		mUnderlyingDomain = underlyingDomain;
-		mCurrentThread = currentThread;
-		mInterferences = interferences;
+		mInterferenceOrchestrator = interferenceOrchestrator;
+		mThreadId = threadId;
 	}
 
 	@Override
@@ -49,28 +51,19 @@ public class ConcurrentDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		// TODO:
-		// Interferences
-		return mUnderlyingDomain.alpha(pred);
+		final IPredicate abstracted = mUnderlyingDomain.alpha(pred);
+		return mInterferenceOrchestrator.itfFixpoint(abstracted, mThreadId);
 	}
 
 	public IDomain getUnderlyingDomain() {
 		return mUnderlyingDomain;
 	}
 
-	public String getCurrentThread() {
-		return mCurrentThread;
+	public InterferenceOrchestrator getInterferenceOrchestrator() {
+		return mInterferenceOrchestrator;
 	}
 
-	public Map<String, Set<IPredicate>> getInterferences() {
-		return mInterferences;
-	}
-
-	public ConcurrentDomain forThread(final String newCurrentThread) {
-		return new ConcurrentDomain(mUnderlyingDomain, newCurrentThread, mInterferences);
-	}
-
-	public ConcurrentDomain withInterferences(final Map<String, Set<IPredicate>> newInterferences) {
-		return new ConcurrentDomain(mUnderlyingDomain, mCurrentThread, newInterferences);
+	public String getThreadId() {
+		return mThreadId;
 	}
 }

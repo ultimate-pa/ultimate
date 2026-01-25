@@ -22,9 +22,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.PrimedDefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.RelationalPredicatePostcondition;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.TransFormulaToPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -110,16 +110,15 @@ public class TransformulaPredicateStrongestPostTest {
 		final ProgramNonOldVar y = createIntVar("y");
 
 		// State: x = 5 ∧ y = 10
-		final IPredicate state = predicate(SmtUtils.and(mScript,
-				eq(x.getTermVariable(), num(5)),
-				eq(y.getTermVariable(), num(10))));
+		final IPredicate state = predicate(
+				SmtUtils.and(mScript, eq(x.getTermVariable(), num(5)), eq(y.getTermVariable(), num(10))));
 
 		// Relation: x' = x + 1 (only modifies x, y is unchanged)
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
 		final TermVariable xPrimed = primedTable.getPrimedVar(x);
-		final IPredicate relation = primedFactory.newPredicate(
-				eq(xPrimed, mScript.term("+", x.getTermVariable(), num(1))));
+		final IPredicate relation = primedFactory
+				.newPredicate(eq(xPrimed, mScript.term("+", x.getTermVariable(), num(1))));
 
 		mMgdScript.unlock(this);
 
@@ -133,9 +132,8 @@ public class TransformulaPredicateStrongestPostTest {
 		assertTrue("Result should contain x", result.getVars().contains(x));
 		assertTrue("Result should contain y", result.getVars().contains(y));
 
-		final IPredicate expected = predicate(SmtUtils.and(mScript,
-				eq(x.getTermVariable(), num(6)),
-				eq(y.getTermVariable(), num(10))));
+		final IPredicate expected = predicate(
+				SmtUtils.and(mScript, eq(x.getTermVariable(), num(6)), eq(y.getTermVariable(), num(10))));
 		assertEquivalent(expected.getClosedFormula(), result.getClosedFormula());
 	}
 
@@ -152,8 +150,8 @@ public class TransformulaPredicateStrongestPostTest {
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
 		final TermVariable xPrimed = primedTable.getPrimedVar(x);
-		final IPredicate relation = primedFactory.newPredicate(
-				eq(xPrimed, mScript.term("+", x.getTermVariable(), y.getTermVariable())));
+		final IPredicate relation = primedFactory
+				.newPredicate(eq(xPrimed, mScript.term("+", x.getTermVariable(), y.getTermVariable())));
 
 		mMgdScript.unlock(this);
 
