@@ -51,8 +51,8 @@ public class ConcurrentDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		final IPredicate abstracted = mUnderlyingDomain.alpha(pred);
-		return mInterferenceOrchestrator.itfFixpoint(abstracted, mThreadId);
+		final IPredicate itfState = mInterferenceOrchestrator.itfFixpoint(pred, mThreadId);
+		return mUnderlyingDomain.alpha(itfState);
 	}
 
 	public IDomain getUnderlyingDomain() {

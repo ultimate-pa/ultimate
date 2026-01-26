@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public final class SifaResultPrinter {
@@ -62,6 +63,20 @@ public final class SifaResultPrinter {
 
 	private void printLocation(final IcfgLocation location, final IPredicate predicate) {
 		mLogger.info("  %s: %s", formatLocation(location), formatPredicate(predicate));
+		for (final IcfgEdge edge : location.getOutgoingEdges()) {
+			mLogger.info("    -> %s [Action: %s]", formatLocation(edge.getTarget()),
+					formatTransformula(edge.getTransformula()));
+		}
+	}
+
+	private String formatTransformula(final UnmodifiableTransFormula transformula) {
+		if (transformula == null) {
+			return "<null>";
+		}
+		if (transformula.getFormula().toString().equals("true")) {
+			return "skip";
+		}
+		return transformula.getFormula().toString();
 	}
 
 	private String sortKey(final IcfgLocation location) {
@@ -80,10 +95,6 @@ public final class SifaResultPrinter {
 		final Term term = predicate.getClosedFormula();
 		final String formula = String.valueOf(term);
 
-		// Truncate long formulas
-		if (formula.length() > 100) {
-			return formula.substring(0, 97) + "... (size: " + new DagSizePrinter(term) + ")";
-		}
 		return formula;
 	}
 }

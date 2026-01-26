@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -36,153 +39,144 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 
 public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
-	private final ILogger mLogger;
-	private final IProgressAwareTimer mTimer;
-	private final SifaStats mStats;
-	private final SymbolicTools mTools;
-	private final IIcfg<IcfgLocation> mIcfg;
-	private final Set<String> mThreadIds;
-	private final Collection<IcfgLocation> mLocationsOfInterest;
-	private final IDomain mBaseDomain;
-	private final IFluid mFluid;
-	private final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> mLoopSumFactory;
-	private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
+    private final ILogger mLogger;
+    private final IProgressAwareTimer mTimer;
+    private final SifaStats mStats;
+    private final SymbolicTools mTools;
+    private final IIcfg<IcfgLocation> mIcfg;
+    private final Set<String> mThreadIds;
+    private final Collection<IcfgLocation> mLocationsOfInterest;
+    private final IDomain mBaseDomain;
+    private final IFluid mFluid;
+    private final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> mLoopSumFactory;
+    private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
+    private final LoiMode mLoiMode;
 
-	// Interference components
-	private final PrimedDefaultIcfgSymbolTable mPrimedSymbolTable;
-	private final SubsumptionConvergenceCheck mConvergenceStrategy;
-	private final InterferenceOrchestrator mInterferenceAbstraction;
+    // Interference components
+    private final PrimedDefaultIcfgSymbolTable mPrimedSymbolTable;
+    private final SubsumptionConvergenceCheck mConvergenceStrategy;
+    private final InterferenceOrchestrator mInterferenceAbstraction;
+    private final LoiExpansion mLoiExpansion;
 
-	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
-			final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
-			final Collection<IcfgLocation> locationsOfInterest, final IDomain baseDomain, final IFluid fluid,
-			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
-			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
-			final IUltimateServiceProvider services) {
-		mLogger = logger;
-		mTimer = timer;
-		mStats = stats;
-		mTools = tools;
-		mIcfg = icfg;
-		mLocationsOfInterest = locationsOfInterest;
-		mBaseDomain = baseDomain;
-		mFluid = fluid;
-		mLoopSumFactory = loopSumFactory;
-		mCallSumFactory = callSumFactory;
-		// Initialize interference components - collect all thread IDs: main thread + all forked procedures
-		final Set<String> threadIds = new HashSet<>();
-		threadIds.add(icfg.getInitialNodes().iterator().next().getProcedure());
-		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
-			threadIds.add(fork.getNameOfForkedProcedure());
-		}
-		mThreadIds = threadIds;
-		mLogger.info("Discovered threads for thread-modular analysis: " + mThreadIds);
-		mPrimedSymbolTable = new PrimedDefaultIcfgSymbolTable(icfg.getCfgSmtToolkit().getSymbolTable(), mThreadIds,
-				tools.getManagedScript());
+    public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
+            final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
+            final Collection<IcfgLocation> locationsOfInterest, final IDomain baseDomain, final IFluid fluid,
+            final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
+            final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
+            final IUltimateServiceProvider services, final LoiMode loiMode) {
+        mLogger = logger;
+        mTimer = timer;
+        mStats = stats;
+        mTools = tools;
+        mIcfg = icfg;
+        mLocationsOfInterest = locationsOfInterest;
+        mLoiMode = loiMode;
+        mBaseDomain = baseDomain;
+        mFluid = fluid;
+        mLoopSumFactory = loopSumFactory;
+        mCallSumFactory = callSumFactory;
+        mLoiExpansion = new LoiExpansion(mLogger, mLocationsOfInterest, mIcfg, mLoiMode);
 
-		final BasicPredicateFactory primedFactory = new BasicPredicateFactory(services, tools.getManagedScript(),
-				mPrimedSymbolTable);
-		final TransFormulaToPredicate translator = new TransFormulaToPredicate(services, tools.getManagedScript(),
-				primedFactory, mPrimedSymbolTable);
-		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services,
-				tools.getManagedScript(), tools.getFactory(), mPrimedSymbolTable);
+        // Initialize interference components - collect all thread IDs: main thread +
+        // all forked procedures
+        final Set<String> threadIds = new HashSet<>();
+        threadIds.add(icfg.getInitialNodes().iterator().next().getProcedure());
+        for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
+            threadIds.add(fork.getNameOfForkedProcedure());
+        }
+        mThreadIds = threadIds;
+        mLogger.info("Discovered threads for thread-modular analysis: " + mThreadIds);
+        mPrimedSymbolTable = new PrimedDefaultIcfgSymbolTable(icfg.getCfgSmtToolkit().getSymbolTable(), mThreadIds,
+                tools.getManagedScript());
 
-		// Create the shared interference abstraction with default pipeline components
-		final InterferenceCollector collector = new InterferenceCollector(translator);
-		mInterferenceAbstraction = new InterferenceOrchestrator(baseDomain, postcondition, collector,
-				IInterferenceTransformer.identity(), IInterferenceMerger.identity(), mLogger);
-		mConvergenceStrategy = new SubsumptionConvergenceCheck();
-	}
+        final BasicPredicateFactory primedFactory = new BasicPredicateFactory(services, tools.getManagedScript(),
+                mPrimedSymbolTable);
+        final TransFormulaToPredicate translator = new TransFormulaToPredicate(services, tools.getManagedScript(),
+                primedFactory, mPrimedSymbolTable);
+        final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services,
+                tools.getManagedScript(), tools.getFactory(), mPrimedSymbolTable);
 
-	@Override
-	public Map<IcfgLocation, IPredicate> interpret() {
+        // Create the shared interference abstraction with default pipeline components
+        final InterferenceCollector collector = new InterferenceCollector(translator, true, tools.getManagedScript(),
+                primedFactory);
+        mInterferenceAbstraction = new InterferenceOrchestrator(baseDomain, postcondition, collector,
+                IInterferenceTransformer.identity(), IInterferenceMerger.identity(), mLogger);
+        mConvergenceStrategy = new SubsumptionConvergenceCheck();
+    }
 
-		final Map<IcfgLocation, IPredicate> result = new HashMap<>();
-		InterferenceAbstraction previousInterferences = mInterferenceAbstraction.getInterferences();
-		final SifaResultPrinter printer = new SifaResultPrinter(mLogger);
-		int iteration = 0;
+    @Override
+    public Map<IcfgLocation, IPredicate> interpret() {
 
-		// Outer fixpoint loop: iterate until interferences stabilize
-		while (true) {
-			iteration++;
-			mLogger.info("=== Outer Fixpoint Iteration %d ===", iteration);
-			// Store analysis results for all threads
-			final Map<String, ThreadAnalysisInput> analysisResults = new HashMap<>();
-			final Map<String, IIcfg<IcfgLocation>> threadIcfgs = new HashMap<>();
+        final Map<IcfgLocation, IPredicate> result = new HashMap<>();
+        InterferenceAbstraction previousInterferences = mInterferenceAbstraction.getInterferences();
+        final SifaResultPrinter printer = new SifaResultPrinter(mLogger);
+        int iteration = 0;
 
-			// Analyze each thread
-			for (final String threadId : mThreadIds) {
-				mLogger.info(String.format("Analyzing thread: %s", threadId));
-				// Create ConcurrentDomain for this thread with the shared abstraction
-				final ConcurrentDomain concurrentDomain = new ConcurrentDomain(mBaseDomain, mInterferenceAbstraction,
-						threadId);
+        // Outer fixpoint loop: iterate until interferences stabilize
+        while (true) {
+            iteration++;
+            mLogger.info("=== Outer Fixpoint Iteration %d ===", iteration);
+            // Store analysis results for all threads
+            final Map<String, ThreadAnalysisInput> analysisResults = new HashMap<>();
+            final Map<String, IIcfg<IcfgLocation>> threadIcfgs = new HashMap<>();
 
-				final IIcfg<IcfgLocation> threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
-				threadIcfgs.put(threadId, threadIcfg);
+            // Analyze each thread
+            for (final String threadId : mThreadIds) {
+                mLogger.info(String.format("Analyzing thread: %s", threadId));
+                // Create ConcurrentDomain for this thread with the shared abstraction
+                // Pass the REAL fluid to ConcurrentDomain so it can decide when to apply base
+                // abstraction
+                final ConcurrentDomain concurrentDomain = new ConcurrentDomain(mBaseDomain, mInterferenceAbstraction,
+                        threadId);
 
-				// Get LOIs for this thread. If no LOIs exist, use exit node to ensure traversal for interference
-				// collection.
-				final Collection<IcfgLocation> threadLois = getLocationsOfInterestForThread(threadId);
+                final IIcfg<IcfgLocation> threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
+                threadIcfgs.put(threadId, threadIcfg);
 
-				final IcfgInterpreter interpreter = new IcfgInterpreter(mLogger, mTimer, mStats, mTools, threadIcfg,
-						threadLois, concurrentDomain, mFluid, mLoopSumFactory, mCallSumFactory);
-				final Map<IcfgLocation, IPredicate> threadResult = interpreter.interpret();
-				result.putAll(threadResult);
+                // Get LOIs for this thread.
+                final Collection<IcfgLocation> threadLois = mLoiExpansion.getLocationsOfInterestForThread(threadId,
+                        threadIcfg);
 
-				// Store analysis result for interference collection
-				analysisResults.put(threadId, new ThreadAnalysisInput(threadResult, threadIcfg));
-			}
+                // Create an interpreter with a "Force Abstraction" fluid.
+                // This ensures the interpreter ALWAYS calls domain.alpha(), allowing
+                // ConcurrentDomain
+                // to apply interferences at every step.
+                final IFluid forcingFluid = p -> true;
 
-			// Update interferences via the abstraction (runs collect -> transform -> merge pipeline)
-			mInterferenceAbstraction.updateInterferences(analysisResults);
-			final InterferenceAbstraction newInterferences = mInterferenceAbstraction.getInterferences();
+                final IcfgInterpreter interpreter = new IcfgInterpreter(mLogger, mTimer, mStats, mTools, threadIcfg,
+                        threadLois, concurrentDomain, forcingFluid, mLoopSumFactory, mCallSumFactory);
+                final Map<IcfgLocation, IPredicate> threadResult = interpreter.interpret();
+                result.putAll(threadResult);
 
-			// Check fixpoint: are new interferences subsumed by old ones?
-			if (mConvergenceStrategy.hasConverged(newInterferences, previousInterferences, mBaseDomain)) {
-				mLogger.info("=== Fixpoint reached after %d iterations ===", iteration);
-				break;
-			}
-			previousInterferences = newInterferences;
-		}
+                // Store analysis result for interference collection
+                analysisResults.put(threadId, new ThreadAnalysisInput(threadResult, threadIcfg));
+            }
 
-		// Print final results
-//		if (mLogger.isDebugEnabled()) {
-		if (true) {
-			printer.printResults(result);
-		}
+            // Update interferences via the abstraction (runs collect -> transform -> merge
+            // pipeline)
+            mInterferenceAbstraction.updateInterferences(analysisResults);
+            final InterferenceAbstraction newInterferences = mInterferenceAbstraction.getInterferences();
 
-		return result;
-	}
+            // Check fixpoint: are new interferences subsumed by old ones?
+            if (mConvergenceStrategy.hasConverged(newInterferences, previousInterferences, mBaseDomain)) {
+                mLogger.info("=== Fixpoint reached after %d iterations ===", iteration);
+                break;
+            }
+            previousInterferences = newInterferences;
+        }
 
-	/**
-	 * Gets locations of interest for a specific thread. If the thread contains LOIs from the global set, those are
-	 * returned. Otherwise, the thread's exit node is used as a LOI to ensure the thread is fully traversed for
-	 * interference collection.
-	 */
-	private Collection<IcfgLocation> getLocationsOfInterestForThread(final String threadId) {
-		// Filter global LOIs to those in this thread's procedure
-		final Collection<IcfgLocation> threadLois = mLocationsOfInterest.stream()
-				.filter(loc -> threadId.equals(loc.getProcedure())).toList();
+        // Print final results
+        // if (mLogger.isDebugEnabled()) {
+        if (true) {
+            printer.printResults(result);
+        }
 
-		if (!threadLois.isEmpty()) {
-			return threadLois;
-		}
+        // Filter the result to only include the locations of interest requested by the
+        // caller.
+        // We expanded the set of LOIs for the analysis to be sound (path-to-lois),
+        // but we should only report results for the original set to avoid false
+        // positives in the observer.
+        result.keySet().retainAll(mLocationsOfInterest);
+        return result;
+    }
 
-		// No LOIs in this thread - use exit node to ensure full traversal for interference collection
-		final IcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(threadId);
-		if (exitNode != null) {
-			mLogger.debug("Thread %s has no LOIs, using exit node for traversal", threadId);
-			return Set.of(exitNode);
-		}
-
-		// Fallback: use entry node
-		final IcfgLocation entryNode = mIcfg.getProcedureEntryNodes().get(threadId);
-		if (entryNode != null) {
-			mLogger.debug("Thread %s has no LOIs or exit node, using entry node", threadId);
-			return Set.of(entryNode);
-		}
-
-		mLogger.warn("Thread %s has no entry or exit nodes", threadId);
-		return Set.of();
-	}
 }

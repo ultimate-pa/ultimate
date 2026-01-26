@@ -39,11 +39,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.PrimedDefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.LoiMode;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -93,16 +94,17 @@ public class SifaBuilder {
 		final SymbolicTools tools = constructTools(stats, icfg);
 		final IDomain domain = constructStatsDomain(stats, tools, timer);
 		final IFluid fluid = constructStatsFluid(stats);
-		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
-				constructLoopSummarizer(stats, timer, tools, domain, fluid);
-		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
-				constructCallSummarizer(stats, tools, domain);
+		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum = constructLoopSummarizer(
+				stats, timer, tools, domain, fluid);
+		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum = constructCallSummarizer(
+				stats, tools, domain);
 
 		final ISifaInterpreter interpreter;
 		if (IcfgUtils.isConcurrent(icfg)) {
 			mLogger.info("Concurrent program detected, using thread-modular SIFA interpreter");
+			final LoiMode loiMode = LoiMode.PATH_TO_LOIS;
 			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest,
-					domain, fluid, loopSum, callSum);
+					domain, fluid, loopSum, callSum, mServices, loiMode);
 		} else {
 			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
 					loopSum, callSum);
@@ -111,11 +113,12 @@ public class SifaBuilder {
 	}
 
 	private SymbolicTools constructTools(final SifaStats stats, final IIcfg<IcfgLocation> icfg) {
-		final var simplification = mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION);
+		final var simplification = mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION,
+				SifaPreferences.CLASS_SIMPLIFICATION);
 		if (IcfgUtils.isConcurrent(icfg)) {
 			final var toolkit = icfg.getCfgSmtToolkit();
-			final var primedTable = new PrimedDefaultIcfgSymbolTable(toolkit.getSymbolTable(),
-						toolkit.getProcedures(), toolkit.getManagedScript());
+			final var primedTable = new PrimedDefaultIcfgSymbolTable(toolkit.getSymbolTable(), toolkit.getProcedures(),
+					toolkit.getManagedScript());
 			return new SymbolicTools(mServices, stats, icfg, simplification, primedTable);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);
@@ -197,8 +200,8 @@ public class SifaBuilder {
 		}
 	}
 
-	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>>
-			constructCallSummarizer(final SifaStats stats, final SymbolicTools tools, final IDomain domain) {
+	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructCallSummarizer(
+			final SifaStats stats, final SymbolicTools tools, final IDomain domain) {
 		final String prefCallSum = mPrefs.getString(SifaPreferences.LABEL_CALL_SUMMARIZER);
 		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(stats, tools, icfgIpr.procedureResourceCache(),
@@ -214,14 +217,14 @@ public class SifaBuilder {
 		}
 	}
 
-	private static Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>>
-			constructIprCallSummarizer(final SifaStats stats) {
+	private static Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructIprCallSummarizer(
+			final SifaStats stats) {
 		return icfgIpr -> dagIpr -> new InterpretCallSummarizer(stats, icfgIpr.procedureResourceCache(), dagIpr);
 	}
 
 	/**
-	 * Sifa is divided into components – this class stores the main component {@link #getInterpreter()} and gives
-	 * access to some intern components which are useful after interpretation.
+	 * Sifa is divided into components – this class stores the main component {@link #getInterpreter()} and gives access
+	 * to some intern components which are useful after interpretation.
 	 *
 	 * @author schaetzc@tf.uni-freiburg.de
 	 */

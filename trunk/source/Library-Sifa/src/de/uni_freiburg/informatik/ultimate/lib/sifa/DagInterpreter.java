@@ -51,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 
 /**
  * Interprets the DAG of a single procedure or loop.
@@ -89,8 +91,7 @@ public class DagInterpreter {
 	 * marker was not reached.
 	 *
 	 * @return Value of the sink location after interpreting the DAG
-	 * @throws Exception
-	 *             The interpreter reached more than one marker in the overlay
+	 * @throws Exception The interpreter reached more than one marker in the overlay
 	 */
 	public IPredicate interpretForSingleMarker(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
@@ -109,8 +110,8 @@ public class DagInterpreter {
 			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegr) {
 
 		// TODO should we use fluid and IDomain.alpha after join in worklist?
-		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
-				new PriorityWorklist<>(mTopsortCache.topsort(dag), mDomain::join);
+		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist = new PriorityWorklist<>(
+				mTopsortCache.topsort(dag), mDomain::join);
 
 		overlay.sources(dag).forEach(source -> worklist.add(source, initalInput));
 
@@ -207,6 +208,8 @@ public class DagInterpreter {
 			output = ipretCallReturnSummary((CallReturnSummary) trans, input);
 		} else if (trans instanceof IIcfgInternalTransition) {
 			output = ipretInternal((IIcfgInternalTransition<IcfgLocation>) trans, input);
+		} else if (trans instanceof ForkThreadCurrent || trans instanceof JoinThreadCurrent) {
+			output = input;
 		} else {
 			throw new UnsupportedOperationException("Unexpected transition type: " + trans.getClass());
 		}

@@ -42,8 +42,6 @@ public class RelationalPredicatePostcondition {
 	 * Variables in the state predicate that are not mentioned in the relational predicate pass through unchanged.
 	 */
 	public IPredicate strongestPostcondition(final IPredicate statePredicate, final IPredicate relationalPredicate) {
-		final Set<IProgramVar> stateVars = statePredicate.getVars();
-
 		// Build projection set and renaming map by inspecting relational predicate variables
 		final Set<TermVariable> preVarsToProject = new HashSet<>();
 		final Map<Term, Term> primedToUnprimed = new HashMap<>();
@@ -53,22 +51,16 @@ public class RelationalPredicatePostcondition {
 				final IProgramVar baseVar = mSymbolTable.getBaseVar(pv);
 				primedToUnprimed.put(pv.getTermVariable(), baseVar.getTermVariable());
 				preVarsToProject.add(baseVar.getTermVariable());
-			} else {
-				// Unprimed variable: must be in state predicate
-				if (!stateVars.contains(pv)) {
-					throw new IllegalArgumentException("Relational predicate references variable " + pv
-							+ " which is not in the state predicate");
-				}
 			}
 		}
 
 		// Conjoin state predicate with relation predicate
-		final Term conjunction =
-				SmtUtils.and(mManagedScript.getScript(), statePredicate.getFormula(), relationalPredicate.getFormula());
+		final Term conjunction = SmtUtils.and(mManagedScript.getScript(), statePredicate.getFormula(),
+				relationalPredicate.getFormula());
 
 		// Existentially quantify pre-state variables (only those modified by the relation) and eliminate
-		final Term quantified =
-				SmtUtils.quantifier(mManagedScript.getScript(), Script.EXISTS, preVarsToProject, conjunction);
+		final Term quantified = SmtUtils.quantifier(mManagedScript.getScript(), Script.EXISTS, preVarsToProject,
+				conjunction);
 		final Term projected = PartialQuantifierElimination.eliminate(mServices, mManagedScript, quantified,
 				SimplificationTechnique.SIMPLIFY_DDA);
 

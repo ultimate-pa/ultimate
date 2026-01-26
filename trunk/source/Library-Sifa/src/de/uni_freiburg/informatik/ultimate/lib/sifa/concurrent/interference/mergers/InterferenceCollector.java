@@ -60,17 +60,17 @@ public class InterferenceCollector {
 	private Set<IPredicate> collectFromThread(final Map<IcfgLocation, IPredicate> locationStates,
 			final IIcfg<IcfgLocation> icfg) {
 		final Set<IPredicate> result = new HashSet<>();
-		for (final Map<?, IcfgLocation> procPoints : icfg.getProgramPoints().values()) {
-			for (final IcfgLocation loc : procPoints.values()) {
-				final IPredicate preState = locationStates.get(loc);
-//				if (preState == null) {
-//					continue;
-//				}
-				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-					final TransFormula tf = edge.getTransformula();
-					if (tf != null) {
-						result.add(buildInterference(preState, tf));
-					}
+		for (final Map.Entry<IcfgLocation, IPredicate> entry : locationStates.entrySet()) {
+			final IcfgLocation loc = entry.getKey();
+			final IPredicate preState = entry.getValue();
+			// When includePreState is true, skip entries with null predicates
+			if (mIncludePreState && preState == null) {
+				continue;
+			}
+			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+				final TransFormula tf = edge.getTransformula();
+				if (tf != null) {
+					result.add(buildInterference(preState, tf));
 				}
 			}
 		}
