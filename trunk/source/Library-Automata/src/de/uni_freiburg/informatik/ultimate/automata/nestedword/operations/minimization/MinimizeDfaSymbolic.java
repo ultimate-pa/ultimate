@@ -313,7 +313,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		mSmtInterpol = new SMTInterpol();
 
 		// Set logic of solver object.
-		mSmtInterpol.setLogic(Logics.QF_UF);
+		mSmtInterpol.setLogic("QF_UF");
 
 		mBool = mSmtInterpol.sort("Bool");
 		mEmptyArray = new Sort[] {};

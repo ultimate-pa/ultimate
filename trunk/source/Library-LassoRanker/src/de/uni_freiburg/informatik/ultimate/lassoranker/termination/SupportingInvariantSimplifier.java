@@ -79,7 +79,7 @@ class SupportingInvariantSimplifier implements AutoCloseable {
 
 		// Create a new QF_LRA script
 		mScript = SMTSolver.newScript(preferences, "SimplifySIs", services);
-		mScript.setLogic(Logics.QF_LRA);
+		mScript.setLogic("QF_LRA");
 	}
 
 	@Override

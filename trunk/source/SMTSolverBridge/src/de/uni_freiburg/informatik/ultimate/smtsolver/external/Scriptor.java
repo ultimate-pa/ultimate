@@ -82,7 +82,7 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(logic);
-		sendSetupCommand(SmtCommandUtils.SetLogicCommand.buildString(logic.name()));
+		sendSetupCommand(SmtCommandUtils.SetLogicCommand.buildString(logic.getName()));
 	}
 
 	@Override
