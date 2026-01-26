@@ -17,11 +17,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Transformer that removes pre-state constraints from interferences.
- *
- * An interference of the form {@code preState ∧ transition} is transformed to just the transition effect by
- * existentially quantifying the unprimed (pre-state) variables. This makes the interference more general but less
- * precise.
+ * Transformer that removes pre-state constraints from interferences. (Note: THis is not useful if we just get
+ * non-prestate interferences directly during collection, since that would also be more performant.)
  */
 public class PreStateRemovingTransformer implements IInterferenceTransformer {
 

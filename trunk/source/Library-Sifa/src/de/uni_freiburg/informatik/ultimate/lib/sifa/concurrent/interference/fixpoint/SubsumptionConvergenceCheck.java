@@ -11,8 +11,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
  */
 public class SubsumptionConvergenceCheck {
 
-	public boolean hasConverged(final InterferenceAbstraction newInterferences, final InterferenceAbstraction oldInterferences,
-			final IDomain domain) {
+	public static boolean hasConverged(final InterferenceAbstraction newInterferences,
+			final InterferenceAbstraction oldInterferences, final IDomain domain) {
 		for (final String threadId : newInterferences.getThreadIds()) {
 			final Set<IPredicate> newSet = newInterferences.getInterferencesProducedBy(threadId);
 			final Set<IPredicate> oldSet = oldInterferences.getInterferencesProducedBy(threadId);

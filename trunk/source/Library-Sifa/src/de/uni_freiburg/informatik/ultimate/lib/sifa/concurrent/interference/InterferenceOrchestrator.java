@@ -6,11 +6,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.InterferenceCollector;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.InterferenceCollector.ThreadAnalysisInput;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.fixpoint.BasicFixpointStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.fixpoint.IInterferenceFixpointStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers.IInterferenceMerger;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers.InterferenceCollector;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers.InterferenceCollector.ThreadAnalysisInput;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.transformers.IInterferenceTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;

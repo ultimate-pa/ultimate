@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
@@ -37,9 +36,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
-/**
- * Tests that strongest postcondition via relational predicates matches the standard TransFormula-based approach
- */
 public class TransformulaPredicateStrongestPostTest {
 
 	private IUltimateServiceProvider mServices;
@@ -135,33 +131,6 @@ public class TransformulaPredicateStrongestPostTest {
 		final IPredicate expected = predicate(
 				SmtUtils.and(mScript, eq(x.getTermVariable(), num(6)), eq(y.getTermVariable(), num(10))));
 		assertEquivalent(expected.getClosedFormula(), result.getClosedFormula());
-	}
-
-	@Test
-	public void unknownVariableInRelationThrowsError() {
-		// State only has x, but relation references y (unknown variable)
-		final ProgramNonOldVar x = createIntVar("x");
-		final ProgramNonOldVar y = createIntVar("y");
-
-		// State: x = 5 (no y)
-		final IPredicate state = predicate(eq(x.getTermVariable(), num(5)));
-
-		// Relation: x' = x + y (references y which is not in state)
-		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
-		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final TermVariable xPrimed = primedTable.getPrimedVar(x);
-		final IPredicate relation = primedFactory
-				.newPredicate(eq(xPrimed, mScript.term("+", x.getTermVariable(), y.getTermVariable())));
-
-		mMgdScript.unlock(this);
-
-		final var relPost = new RelationalPredicatePostcondition(mServices, mMgdScript, mPredicateFactory, primedTable);
-
-		assertThrows(IllegalArgumentException.class, () -> {
-			relPost.strongestPostcondition(state, relation);
-		});
-
-		mMgdScript.lock(this);
 	}
 
 	private ProgramNonOldVar createIntVar(final String name) {

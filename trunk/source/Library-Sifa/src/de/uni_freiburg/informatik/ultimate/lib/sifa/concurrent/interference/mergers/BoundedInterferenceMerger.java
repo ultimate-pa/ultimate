@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
@@ -45,32 +45,27 @@ public class BoundedInterferenceMerger implements IInterferenceMerger {
 			if (threadItfs.size() <= mMaxPerThread) {
 				result.put(threadId, new HashSet<>(threadItfs));
 			} else {
-				result.put(threadId, mergeIntoBuckets(new ArrayList<>(threadItfs), domain));
+				result.put(threadId, mergeByFolding(threadItfs, domain));
 			}
 		}
 		return InterferenceAbstraction.of(result);
 	}
 
-	private Set<IPredicate> mergeIntoBuckets(final List<IPredicate> itfs, final IDomain domain) {
-		final int total = itfs.size();
-		final Set<IPredicate> result = new HashSet<>();
+	private Set<IPredicate> mergeByFolding(final Set<IPredicate> threadItfs, final IDomain domain) {
+		final List<IPredicate> work = new ArrayList<>(threadItfs);
+		work.sort(Comparator.comparing(IPredicate::toString));
 
-		for (int bucket = 0; bucket < mMaxPerThread; bucket++) {
-			final int start = bucket * total / mMaxPerThread;
-			final int end = (bucket + 1) * total / mMaxPerThread;
-			if (start >= end) {
-				continue;
-			}
+		while (work.size() > mMaxPerThread) {
+			final int last = work.size() - 1;
+			final IPredicate p = work.remove(last);
+			final IPredicate q = work.remove(last - 1);
 
-			IPredicate merged = itfs.get(start);
-			for (int i = start + 1; i < end; i++) {
-				merged = domain.join(merged, itfs.get(i));
-			}
+			IPredicate merged = domain.join(q, p);
 			if (mApplyAlpha) {
 				merged = domain.alpha(merged);
 			}
-			result.add(merged);
+			work.add(merged);
 		}
-		return result;
+		return new HashSet<>(work);
 	}
 }

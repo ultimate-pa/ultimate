@@ -116,7 +116,7 @@ public class SharedVariableTranslationTest {
 
 		mMgdScript.unlock(this);
 
-		// Translate (always projects to global)
+		// Translate (projects to global)
 		final IPredicate globalRelation = translator.translate(tf);
 
 		mMgdScript.lock(this);

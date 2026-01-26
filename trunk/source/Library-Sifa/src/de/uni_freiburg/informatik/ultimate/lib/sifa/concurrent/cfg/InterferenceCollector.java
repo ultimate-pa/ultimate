@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg;
 
 import java.util.HashMap;
 import java.util.HashSet;

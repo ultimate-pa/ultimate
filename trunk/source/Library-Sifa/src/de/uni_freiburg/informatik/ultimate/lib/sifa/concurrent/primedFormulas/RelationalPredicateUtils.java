@@ -25,14 +25,6 @@ public final class RelationalPredicateUtils {
 
 	/**
 	 * Builds identity constraints (x = x') for unchanged variables.
-	 *
-	 * @param unchangedVars
-	 *            variables that are unchanged (need x = x' constraint)
-	 * @param symbolTable
-	 *            provides primed variable mappings
-	 * @param script
-	 *            SMT script
-	 * @return list of equality terms
 	 */
 	public static List<Term> buildIdentityConstraints(final Iterable<IProgramVar> unchangedVars,
 			final PrimedDefaultIcfgSymbolTable symbolTable, final Script script) {
@@ -44,7 +36,7 @@ public final class RelationalPredicateUtils {
 	}
 
 	/**
-	 * Conjoins a formula with identity constraints, or returns the formula unchanged if no constraints.
+	 * Conjoins a formula with identity constraints.
 	 */
 	public static Term conjoinWithIdentities(final Term formula, final List<Term> identities, final Script script) {
 		if (identities.isEmpty()) {
@@ -56,10 +48,6 @@ public final class RelationalPredicateUtils {
 
 	/**
 	 * Existentially projects away the given variables from the formula using quantifier elimination.
-	 *
-	 * @param useLightElimination
-	 *            if true, uses lightweight elimination (faster but may leave quantifiers); if false, uses full
-	 *            elimination
 	 */
 	public static Term existentiallyProject(final Term formula, final Set<TermVariable> varsToProject,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean useLightElimination) {

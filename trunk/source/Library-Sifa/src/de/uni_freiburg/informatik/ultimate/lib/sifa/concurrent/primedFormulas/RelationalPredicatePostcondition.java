@@ -38,8 +38,6 @@ public class RelationalPredicatePostcondition {
 	 *
 	 * The state predicate uses unprimed term variables. The relational predicate uses unprimed term variables for
 	 * pre-state and primed term variables for post-state.
-	 *
-	 * Variables in the state predicate that are not mentioned in the relational predicate pass through unchanged.
 	 */
 	public IPredicate strongestPostcondition(final IPredicate statePredicate, final IPredicate relationalPredicate) {
 		// Build projection set and renaming map by inspecting relational predicate variables

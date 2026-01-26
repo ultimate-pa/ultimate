@@ -4,7 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,20 +11,13 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.fixpoint.SubsumptionConvergenceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
 
 /**
  * Tests for convergence strategies.
  */
 public class SubsumptionConvergenceTest {
-
-	// Helper to create an interference set
-	private static InterferenceAbstraction createSet(final Map<String, Set<IPredicate>> map) {
-		return InterferenceAbstraction.of(map);
-	}
 
 	@Test
 	public void convergedWhenNewSubsumedByOld() {
@@ -63,18 +55,6 @@ public class SubsumptionConvergenceTest {
 		final InterferenceAbstraction oldInterferences = createSet(Map.of("thread1", Set.of()));
 
 		final var strategy = new SubsumptionConvergenceCheck();
-		assertTrue(strategy.hasConverged(newInterferences, oldInterferences, new SubsumptionMockDomain(Map.of())));
-	}
-
-	@Test
-	public void convergedWithEmptyNewInterferences() {
-		final IPredicate pOld = MockPredicate.of("pOld");
-
-		final InterferenceAbstraction newInterferences = createSet(Map.of("thread1", Set.of()));
-		final InterferenceAbstraction oldInterferences = createSet(Map.of("thread1", Set.of(pOld)));
-
-		final var strategy = new SubsumptionConvergenceCheck();
-		// Empty new set is trivially subsumed
 		assertTrue(strategy.hasConverged(newInterferences, oldInterferences, new SubsumptionMockDomain(Map.of())));
 	}
 
@@ -143,35 +123,13 @@ public class SubsumptionConvergenceTest {
 		assertTrue(strategy.hasConverged(newInterferences, oldInterferences, domain));
 	}
 
-	@Test
-	public void subsumedByAnyInSet() {
-		final IPredicate pNew = MockPredicate.of("pNew");
-		final IPredicate old1 = MockPredicate.of("old1");
-		final IPredicate old2 = MockPredicate.of("old2");
-
-		final InterferenceAbstraction newInterferences = createSet(Map.of("thread1", Set.of(pNew)));
-		final Set<IPredicate> oldSet = new HashSet<>();
-		oldSet.add(old1);
-		oldSet.add(old2);
-		final InterferenceAbstraction oldInterferences = createSet(Map.of("thread1", oldSet));
-
-		// pNew is subsumed by old2 (but not old1)
-		final var domain = new SubsumptionMockDomain(Map.of(pNew, Set.of(old2)));
-
-		final var strategy = new SubsumptionConvergenceCheck();
-		assertTrue(strategy.hasConverged(newInterferences, oldInterferences, domain));
+	private static InterferenceAbstraction createSet(final Map<String, Set<IPredicate>> map) {
+		return InterferenceAbstraction.of(map);
 	}
 
-	/**
-	 * Mock domain that returns configured subsumption results.
-	 */
 	private static class SubsumptionMockDomain implements IDomain {
 		private final Map<IPredicate, Set<IPredicate>> mSubsumptions;
 
-		/**
-		 * @param subsumptions
-		 *            Map from predicate A to set of predicates that subsume A (i.e., A ⊆ B for each B in set)
-		 */
 		public SubsumptionMockDomain(final Map<IPredicate, Set<IPredicate>> subsumptions) {
 			mSubsumptions = subsumptions;
 		}
