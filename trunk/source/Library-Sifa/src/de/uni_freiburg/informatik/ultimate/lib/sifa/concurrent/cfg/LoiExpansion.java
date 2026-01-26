@@ -22,8 +22,8 @@ public class LoiExpansion {
     private final IIcfg<IcfgLocation> mIcfg;
     private final LoiMode mLoiMode;
 
-    public LoiExpansion(final ILogger logger, final Collection<IcfgLocation> globalLois,
-            final IIcfg<IcfgLocation> icfg, final LoiMode loiMode) {
+    public LoiExpansion(final ILogger logger, final Collection<IcfgLocation> globalLois, final IIcfg<IcfgLocation> icfg,
+            final LoiMode loiMode) {
         mLogger = logger;
         mGlobalLois = globalLois;
         mIcfg = icfg;
@@ -54,15 +54,7 @@ public class LoiExpansion {
                 mLogger.debug("Thread " + threadId + " has no LOIs, using exit node for traversal");
                 baseLois = Set.of(exitNode);
             } else {
-                // Fallback: use entry node
-                final IcfgLocation entryNode = mIcfg.getProcedureEntryNodes().get(threadId);
-                if (entryNode != null) {
-                    mLogger.debug("Thread " + threadId + " has no LOIs or exit node, using entry node");
-                    baseLois = Set.of(entryNode);
-                } else {
-                    mLogger.warn("Thread " + threadId + " has no entry or exit nodes");
-                    baseLois = Set.of();
-                }
+                throw new IllegalArgumentException("Thread" + threadId + "has no exit location.");
             }
         }
 
@@ -110,27 +102,16 @@ public class LoiExpansion {
 
     private Set<IcfgLocation> locationsOnPathsTo(final IIcfg<IcfgLocation> icfg,
             final Collection<IcfgLocation> targets) {
-        // Forward set: all locations reachable from entry
-        // We use this as a 'universe' for the backward traversal to ensure we filter
-        // out dead code
-        // or code not reachable from entry.
-        final Set<IcfgLocation> forward = allReachableLocations(icfg);
-
-        // Backward set: all locations that can reach the targets (restricted to the
-        // forward set)
-        final Set<IcfgLocation> backward = backwardReachableWithin(forward, targets);
-
-        // Intersection: locations on valid paths from entry to targets
-        forward.retainAll(backward);
-        return forward;
+        // All locations that can reach the targets
+        return backwardReachable(icfg, targets);
     }
 
-    private Set<IcfgLocation> backwardReachableWithin(final Set<IcfgLocation> universe,
+    private Set<IcfgLocation> backwardReachable(final IIcfg<IcfgLocation> icfg,
             final Collection<IcfgLocation> targets) {
         final Set<IcfgLocation> visited = new HashSet<>();
         final Deque<IcfgLocation> work = new ArrayDeque<>();
         for (final IcfgLocation t : targets) {
-            if (t != null && universe.contains(t) && visited.add(t)) {
+            if (t != null && visited.add(t)) {
                 work.add(t);
             }
         }
@@ -138,9 +119,7 @@ public class LoiExpansion {
             final IcfgLocation cur = work.removeFirst();
             for (final IcfgEdge e : cur.getIncomingEdges()) {
                 final IcfgLocation src = e.getSource();
-                // Filter: only traverse if source is in our relevant universe (forward
-                // reachable)
-                if (src != null && universe.contains(src) && visited.add(src)) {
+                if (src != null && visited.add(src)) {
                     work.add(src);
                 }
             }
