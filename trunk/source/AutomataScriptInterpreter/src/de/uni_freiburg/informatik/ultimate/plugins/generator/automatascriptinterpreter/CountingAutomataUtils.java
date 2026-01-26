@@ -105,7 +105,7 @@ public class CountingAutomataUtils {
 			}
 		}
 		final ManagedScript script = new ManagedScript(services, new SMTInterpol());
-		script.getScript().setLogic(Logics.QF_LIA);
+		script.getScript().setLogic("QF_LIA");
 		for (final String counter : caAst.getCounters()) {
 			script.getScript().declareFun(counter, new Sort[0], SmtSortUtils.getIntSort(script));
 		}

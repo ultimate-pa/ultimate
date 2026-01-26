@@ -134,13 +134,13 @@ public class IcfgToChcObserver extends BaseObserver {
 		final boolean hasQuantifiersInConstraints = !termClassifierConstraints.getOccuringQuantifiers().isEmpty();
 
 		if (!hasArrays && hasInts && !hasReals && !hasQuantifiersInConstraints) {
-			return Logics.QF_LIA;
+			return Logics.valueOf("QF_LIA");
 		}
 		if (!hasArrays && !hasInts && hasReals && !hasQuantifiersInConstraints) {
-			return Logics.QF_LRA;
+			return Logics.valueOf("QF_LRA");
 		}
 		if (hasArrays && hasInts && !hasReals && !hasQuantifiersInConstraints) {
-			return Logics.QF_ALIA;
+			return Logics.valueOf("QF_ALIA");
 		}
 		// not a CHC-comp 2019 logic -- we don't care for more details right now
 		return Logics.ALL;

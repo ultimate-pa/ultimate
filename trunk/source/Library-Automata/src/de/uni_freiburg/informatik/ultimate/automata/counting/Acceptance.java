@@ -66,7 +66,7 @@ public class Acceptance<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 		mOperand = operand;
 		mWord = word.asList();
 		mScript = new SMTInterpol();
-		mScript.setLogic(Logics.LIA);
+		mScript.setLogic("LIA");
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
