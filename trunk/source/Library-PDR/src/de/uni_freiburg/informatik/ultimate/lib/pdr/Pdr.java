@@ -1363,7 +1363,7 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		// one to represent the predicates
 		// we extract and one to perform the actual checks
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
-				.setSolverMode(SolverMode.Internal_SMTInterpol).setSolverLogics(Logics.AUFLIRA);
+				.setSolverMode(SolverMode.Internal_SMTInterpol).setSolverLogics(Logics.valueOf("AUFLIRA"));
 		return csToolkit.createFreshManagedScript(services, solverSettings, "PdrSolver");
 	}
 

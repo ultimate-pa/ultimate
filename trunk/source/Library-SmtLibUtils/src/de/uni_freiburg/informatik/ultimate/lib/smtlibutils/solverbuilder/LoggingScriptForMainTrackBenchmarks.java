@@ -148,6 +148,10 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			+ System.lineSeparator() + "    Craig vs. Newton in software model checking. ESEC/SIGSOFT FSE 2017: 487-497"
 			+ System.lineSeparator() + "|";
 
+	private static final String[] LOGIC_CANDIDATES = { "QF_ABV", "QF_ABVFP", "QF_ALIA", "QF_ANIA", "QF_AX", "QF_BV",
+			"QF_BVFP", "QF_BVLRA", "QF_FP", "QF_LIA", "QF_LIRA", "QF_LRA", "QF_NIA", "QF_NIRA", "QF_NRA", "ABV",
+			"ABVFP", "ALIA", "ANIA", "BV", "BVFP", "FP", "LIA", "LRA", "NIA", "NRA" };
+
 	private int mWrittenScriptCounter = 0;
 
 	private final int mBenchmarkTooSimpleThreshold = 10 * 1000;
@@ -244,7 +248,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 	private List<ISmtCommand<?>> buildPreamble(final Logics logic, final LBool sat, final String info) {
 		final List<ISmtCommand<?>> result = new ArrayList<>();
 		result.add(new SetInfoCommand(":smt-lib-version", new BigDecimal("2.6")));
-		result.add(new SetLogicCommand(logic.name()));
+		result.add(new SetLogicCommand(logic.getName()));
 		result.add(new SetInfoCommand(":source", info));
 		result.add(new SetInfoCommand(":license", new QuotedObject("https://creativecommons.org/licenses/by/4.0/")));
 		result.add(new SetInfoCommand(":category", new QuotedObject("industrial")));
@@ -285,26 +289,8 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 
 	private Logics determineLogic(final TermClassifier tc) {
 		final ArrayList<Logics> remainingCandidates = new ArrayList<>();
-		for (final Logics logic : Logics.values()) {
-			if (logic == Logics.ALL) {
-				continue;
-			}
-			if (logic.isString()) {
-				continue;
-			}
-			if (logic.isDifferenceLogic()) {
-				continue;
-			}
-			if (logic.isUF()) {
-				continue;
-			}
-			if (logic.isDatatype()) {
-				continue;
-			}
-			if (logic.isFloatingPoint() && logic.hasReals()) {
-				// Difficult to detect, does not yet occur in Ultimate applications
-				continue;
-			}
+		for (final String logicString : LOGIC_CANDIDATES) {
+			final Logics logic = Logics.valueOf(logicString);
 			if (logic.isNonLinearArithmetic() != tc.hasNonlinearArithmetic()) {
 				continue;
 			}

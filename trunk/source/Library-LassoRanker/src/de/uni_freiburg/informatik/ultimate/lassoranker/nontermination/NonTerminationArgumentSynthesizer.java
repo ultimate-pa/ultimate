@@ -151,18 +151,18 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (!mIntegerMode) {
 			mAnalysisType = mSettings.getAnalysis();
 			if (mAnalysisType.isLinear()) {
-				mScript.setLogic(Logics.QF_LRA);
+				mScript.setLogic("QF_LRA");
 			} else {
-				mScript.setLogic(Logics.QF_NRA);
+				mScript.setLogic("QF_NRA");
 			}
 			mSort = SmtSortUtils.getRealSort(mScript);
 		} else {
 			mLogger.info("Using integer mode.");
 			mAnalysisType = mSettings.getAnalysis();
 			if (mSettings.getAnalysis().isLinear()) {
-				mScript.setLogic(Logics.QF_LIA);
+				mScript.setLogic("QF_LIA");
 			} else {
-				mScript.setLogic(Logics.QF_NIA);
+				mScript.setLogic("QF_NIA");
 			}
 			mSort = SmtSortUtils.getIntSort(mScript);
 		}
