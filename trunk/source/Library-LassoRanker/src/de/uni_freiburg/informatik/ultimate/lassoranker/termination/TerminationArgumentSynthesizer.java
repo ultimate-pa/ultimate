@@ -125,9 +125,9 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 		// Set logic
 		if (mSettings.getAnalysis().isLinear()) {
-			mScript.setLogic(Logics.QF_LRA);
+			mScript.setLogic("QF_LRA");
 		} else {
-			mScript.setLogic(Logics.QF_NRA);
+			mScript.setLogic("QF_NRA");
 		}
 		if (mSettings.getAnalysis() == AnalysisType.LINEAR && !settings.isNonDecreasingInvariants()) {
 			mLogger.warn("Termination analysis type is 'Linear', " + "hence invariants must be non-decreasing!");
