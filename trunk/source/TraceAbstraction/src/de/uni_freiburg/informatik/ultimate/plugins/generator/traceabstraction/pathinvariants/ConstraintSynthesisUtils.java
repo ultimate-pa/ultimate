@@ -44,16 +44,16 @@ public final class ConstraintSynthesisUtils {
 		switch (linearity) {
 		case LINEAR:
 			if (useAlsoIntegers) {
-				result = Logics.QF_LIRA;
+				result = Logics.valueOf("QF_LIRA");
 			} else {
-				result = Logics.QF_LRA;
+				result = Logics.valueOf("QF_LRA");
 			}
 			break;
 		case NONLINEAR:
 			if (useAlsoIntegers) {
-				result = Logics.QF_NIRA;
+				result = Logics.valueOf("QF_NIRA");
 			} else {
-				result = Logics.QF_NRA;
+				result = Logics.valueOf("QF_NRA");
 			}
 			break;
 		default:

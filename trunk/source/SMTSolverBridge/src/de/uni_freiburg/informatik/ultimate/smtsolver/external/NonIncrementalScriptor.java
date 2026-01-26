@@ -142,7 +142,7 @@ public class NonIncrementalScriptor extends NoopScript {
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(logic);
-		addToCurrentAssertionStack(new SetLogicCommand(logic.name()));
+		addToCurrentAssertionStack(new SetLogicCommand(logic.getName()));
 	}
 
 	@Override

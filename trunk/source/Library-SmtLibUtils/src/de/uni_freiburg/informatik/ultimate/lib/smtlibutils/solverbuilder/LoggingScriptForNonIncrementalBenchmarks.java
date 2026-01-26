@@ -175,8 +175,8 @@ public class LoggingScriptForNonIncrementalBenchmarks extends WrapperScript {
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
-		mPw.println("(set-logic " + logic.name() + ")");
-		addToCurrentAssertionStack(new SetLogicCommand(logic.name()));
+		mPw.println("(set-logic " + logic.getName() + ")");
+		addToCurrentAssertionStack(new SetLogicCommand(logic.getName()));
 		mScript.setLogic(logic);
 	}
 

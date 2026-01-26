@@ -70,7 +70,7 @@ public class MSODFormulaOperationsNatTest {
 		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
 		mLogger = mServiceProvider.getLoggingService().getLogger("lol");
 
-		mScript.setLogic(Logics.UFLIA);
+		mScript.setLogic("UFLIA");
 		mScript.declareSort("SetOfInt", 0);
 	}
 

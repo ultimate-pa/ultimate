@@ -52,7 +52,7 @@ public class ModelParserTest {
 
 	@Test
 	public void testSimpleIntModel() {
-		mScript.setLogic(Logics.LIA);
+		mScript.setLogic("LIA");
 		mScript.setOption(SMTLIBConstants.PRODUCE_MODELS, true);
 		mScript.declareFun("x", Script.EMPTY_SORT_ARRAY, mScript.sort("Int"));
 		mScript.assertTerm(mScript.term(">=", mScript.term("x"), mScript.numeral(BigInteger.ZERO)));

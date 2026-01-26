@@ -41,7 +41,7 @@ action code {:
     HashMap<String,Term> variables = new HashMap<String,Term>();
 	Script theory = new NoopScript();
     {
-    	theory.setLogic(Logics.QF_LRA);
+    	theory.setLogic("QF_LRA");
     }
 	Sort realSort = theory.sort("Real");
 
