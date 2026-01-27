@@ -1404,7 +1404,7 @@ public class CfgBuilder {
 							addErrorNode(mCurrentProcedureName, st, Check.getAnnotation(spec), mProcLocNodes);
 					final StatementSequence errorCB = mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt);
 					ModelUtils.copyAnnotations(spec, errorCB);
-					ModelUtils.copyAnnotations(spec, errorLocNode);
+					ModelUtils.copyAnnotationsExcept(spec, errorLocNode, ILocation.class);
 					mEdges.add(errorCB);
 				}
 			}

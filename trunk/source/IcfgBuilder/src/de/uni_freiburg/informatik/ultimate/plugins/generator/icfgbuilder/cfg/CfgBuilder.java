@@ -1285,7 +1285,7 @@ public class CfgBuilder {
 					final StatementSequence errorCB =
 							mCbf.constructStatementSequence(newLocation, errorLocNode, assumeSt);
 					ModelUtils.copyAnnotations(spec, errorCB);
-					ModelUtils.copyAnnotations(spec, errorLocNode);
+					ModelUtils.copyAnnotationsExcept(spec, errorLocNode, ILocation.class);
 					mEdges.add(errorCB);
 				}
 			}
