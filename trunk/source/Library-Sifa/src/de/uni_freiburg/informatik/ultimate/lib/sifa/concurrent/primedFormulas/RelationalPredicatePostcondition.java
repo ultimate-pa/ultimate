@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -59,8 +58,7 @@ public class RelationalPredicatePostcondition {
 		// Existentially quantify pre-state variables (only those modified by the relation) and eliminate
 		final Term quantified = SmtUtils.quantifier(mManagedScript.getScript(), Script.EXISTS, preVarsToProject,
 				conjunction);
-		final Term projected = PartialQuantifierElimination.eliminate(mServices, mManagedScript, quantified,
-				SimplificationTechnique.SIMPLIFY_DDA);
+		final Term projected = PartialQuantifierElimination.eliminateLight(mServices, mManagedScript, quantified);
 
 		// Rename primed variables back to unprimed term variables
 		final Term renamed = Substitution.apply(mManagedScript, primedToUnprimed, projected);

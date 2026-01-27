@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -13,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -56,8 +53,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
     private final LoiMode mLoiMode;
 
     // Interference components
-    private final PrimedDefaultIcfgSymbolTable mPrimedSymbolTable;
-    private final SubsumptionConvergenceCheck mConvergenceStrategy;
     private final InterferenceOrchestrator mInterferenceAbstraction;
     private final LoiExpansion mLoiExpansion;
 
@@ -89,22 +84,19 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
         }
         mThreadIds = threadIds;
         mLogger.info("Discovered threads for thread-modular analysis: " + mThreadIds);
-        mPrimedSymbolTable = new PrimedDefaultIcfgSymbolTable(icfg.getCfgSmtToolkit().getSymbolTable(), mThreadIds,
-                tools.getManagedScript());
+        final PrimedDefaultIcfgSymbolTable primedSymbolTable = (PrimedDefaultIcfgSymbolTable) tools.getSymbolTable();
+        final BasicPredicateFactory factory = tools.getFactory();
 
-        final BasicPredicateFactory primedFactory = new BasicPredicateFactory(services, tools.getManagedScript(),
-                mPrimedSymbolTable);
         final TransFormulaToPredicate translator = new TransFormulaToPredicate(services, tools.getManagedScript(),
-                primedFactory, mPrimedSymbolTable);
+                factory, primedSymbolTable);
         final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services,
-                tools.getManagedScript(), tools.getFactory(), mPrimedSymbolTable);
+                tools.getManagedScript(), factory, primedSymbolTable);
 
         // Create the shared interference abstraction with default pipeline components
         final InterferenceCollector collector = new InterferenceCollector(translator, true, tools.getManagedScript(),
-                primedFactory);
+                factory);
         mInterferenceAbstraction = new InterferenceOrchestrator(baseDomain, postcondition, collector,
                 IInterferenceTransformer.identity(), IInterferenceMerger.identity(), mLogger);
-        mConvergenceStrategy = new SubsumptionConvergenceCheck();
     }
 
     @Override
@@ -160,7 +152,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
             final InterferenceAbstraction newInterferences = mInterferenceAbstraction.getInterferences();
 
             // Check fixpoint: are new interferences subsumed by old ones?
-            if (mConvergenceStrategy.hasConverged(newInterferences, previousInterferences, mBaseDomain)) {
+            if (SubsumptionConvergenceCheck.hasConverged(newInterferences, previousInterferences, mBaseDomain)) {
                 mLogger.info("=== Fixpoint reached after %d iterations ===", iteration);
                 break;
             }

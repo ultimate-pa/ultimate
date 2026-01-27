@@ -72,6 +72,7 @@ public class SymbolicTools {
 	private final IPredicate mBottom;
 	private final SimplificationTechnique mSimplification;
 	private final IUltimateServiceProvider mServices;
+	private final IIcfgSymbolTable mSymbolTable;
 	private final ILogger mPQELogger;
 	private final SifaStats mStats;
 
@@ -85,6 +86,7 @@ public class SymbolicTools {
 		mServices = services;
 		mStats = stats;
 		mIcfg = icfg;
+		mSymbolTable = symbolTable;
 
 		// create PQE logger with custom log level and silence ModelCheckerUtils logger
 		mPQELogger = services.getLoggingService().getLogger(getClass().getName() + ".PQE");
@@ -111,6 +113,10 @@ public class SymbolicTools {
 
 	public BasicPredicateFactory getFactory() {
 		return mFactory;
+	}
+
+	public IIcfgSymbolTable getSymbolTable() {
+		return mSymbolTable;
 	}
 
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {

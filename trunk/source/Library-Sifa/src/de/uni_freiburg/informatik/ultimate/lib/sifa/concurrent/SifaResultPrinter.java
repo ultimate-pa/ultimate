@@ -92,7 +92,7 @@ public final class SifaResultPrinter {
 			return "<null>";
 		}
 
-		final Term term = predicate.getClosedFormula();
+		final Term term = predicate.getFormula();
 		final String formula = String.valueOf(term);
 
 		return formula;

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -89,7 +90,7 @@ public class TransFormulaToPredicate {
 		final List<IProgramVar> unchangedGlobals = new ArrayList<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			final IProgramVar pv = entry.getKey();
-			if (pv.isGlobal() && entry.getValue() == tf.getInVars().get(pv)) {
+			if (pv.isGlobal() && Objects.equals(entry.getValue(), tf.getInVars().get(pv))) {
 				unchangedGlobals.add(pv);
 			}
 		}
