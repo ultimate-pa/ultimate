@@ -23,9 +23,9 @@ This archive also contains binaries for the following theorem provers.
 
 * Bitwuzla (<https://github.com/bitwuzla/bitwuzla>)
   * Linux (bitwuzla)
-    Bitwuzla version 0.6.0-dev-main@2b3d69a7
+    Bitwuzla version 0.9.1
   * Windows (bitwuzla.exe)
-    Bitwuzla version 0.6.0-dev-main@2b3d69a7
+    Bitwuzla version 0.9.1
 
 * MathSAT5 (<http://mathsat.fbk.eu>)  
   * Linux (mathsat)
