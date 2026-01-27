@@ -818,6 +818,8 @@ public final class SolverBuilder {
 		CVC5("cvc5 --incremental --print-success --lang smt",
 				"cvc5 --incremental --print-success --lang smt" + " --tlimit-per=%d", Logics.ALL),
 
+		BITWUZLA("bitwuzla", null, Logics.ALL),
+
 		MATHSAT("mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -unsat_core_generation=3",
 				null, Logics.ALL),
 
