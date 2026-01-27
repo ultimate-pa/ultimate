@@ -19,19 +19,11 @@ This archive also contains binaries for the following theorem provers.
   * Windows (z3.exe)
     Z3 version 4.15.4 - 64 bit build from master 745087e23 (2025-10-29)
 
-* CVC4 (<http://cvc4.cs.nyu.edu/>)
-  * Linux
-    cvc4 is a release version,
-    version 1.8 [git HEAD 52479010]
-    compiled with GCC version 5.4.0 20160609
-    on Aug 25 2020 00:35:00
-  * Windows
-    cvc4.exe is a release version,
-    version 1.8
-    compiled with GCC version 5.3.1 20160211
-    on Aug 25 2020 08:27:39
-    Note that this version does not output the git hash, but it should be
-    the same as the Linux version.
+* Bitwuzla (<https://github.com/bitwuzla/bitwuzla>)
+  * Linux (bitwuzla)
+    Bitwuzla version 0.6.0-dev-main@2b3d69a7
+  * Windows (bitwuzla.exe)
+    Bitwuzla version 0.6.0-dev-main@2b3d69a7
 
 * MathSAT5 (<http://mathsat.fbk.eu>)  
   * Linux (mathsat)
@@ -40,7 +32,7 @@ This archive also contains binaries for the following theorem provers.
     MathSAT5 version 5.6.17 (7c1b8284717f) (Jun  9 2026 17:44:03, gmp 6.3.0, msvc 19.50, 64-bit, reentrant)
 
 For each of these theorem provers, a corresponding license file (z3-LICENSE,
-cvc4-LICENSE, mathsat-LICENSE) can be found in our archive. Please consult
+bitwuzla-LICENSE, mathsat-LICENSE) can be found in our archive. Please consult
 these files for additional restrictions regarding your application. If these
 restrictions apply, you must delete the corresponding binaries. This might not
 necessarily affect your application.
