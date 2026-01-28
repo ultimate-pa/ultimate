@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LoiMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
@@ -102,9 +101,8 @@ public class SifaBuilder {
 		final ISifaInterpreter interpreter;
 		if (IcfgUtils.isConcurrent(icfg)) {
 			mLogger.info("Concurrent program detected, using thread-modular SIFA interpreter");
-			final LoiMode loiMode = LoiMode.PATH_TO_LOIS;
 			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest,
-					domain, fluid, loopSum, callSum, mServices, loiMode);
+					domain, fluid, loopSum, callSum, mServices);
 		} else {
 			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
 					loopSum, callSum);

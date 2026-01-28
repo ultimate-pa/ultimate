@@ -20,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.InterferenceCollector;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LoiExpansion;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LoiMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.SingleThreadIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.InterferenceCollector.ThreadAnalysisInput;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
@@ -50,7 +49,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
     private final IFluid mFluid;
     private final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> mLoopSumFactory;
     private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
-    private final LoiMode mLoiMode;
 
     // Interference components
     private final InterferenceOrchestrator mInterferenceAbstraction;
@@ -61,19 +59,18 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
             final Collection<IcfgLocation> locationsOfInterest, final IDomain baseDomain, final IFluid fluid,
             final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
             final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
-            final IUltimateServiceProvider services, final LoiMode loiMode) {
+            final IUltimateServiceProvider services) {
         mLogger = logger;
         mTimer = timer;
         mStats = stats;
         mTools = tools;
         mIcfg = icfg;
         mLocationsOfInterest = locationsOfInterest;
-        mLoiMode = loiMode;
         mBaseDomain = baseDomain;
         mFluid = fluid;
         mLoopSumFactory = loopSumFactory;
         mCallSumFactory = callSumFactory;
-        mLoiExpansion = new LoiExpansion(mLogger, mLocationsOfInterest, mIcfg, mLoiMode);
+        mLoiExpansion = new LoiExpansion(mLogger);
 
         // Initialize interference components - collect all thread IDs: main thread +
         // all forked procedures
