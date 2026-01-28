@@ -65,12 +65,6 @@
                     <type>jar</type>
                 </dependency>
                 <dependency>
-                    <groupId>org.yaml</groupId>
-                    <artifactId>snakeyaml</artifactId>
-                    <version>2.5</version>
-                    <type>jar</type>
-                </dependency>
-                <dependency>
                     <groupId>xerces</groupId>
                     <artifactId>xercesImpl</artifactId>
                     <version>2.12.2</version>
