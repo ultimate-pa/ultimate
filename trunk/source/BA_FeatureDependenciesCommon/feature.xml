@@ -11,14 +11,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="com.ibm.icu"
-         version="0.0.0"/>
-
-   <plugin
-         id="com.sun.jna"
-         version="0.0.0"/>
-
-   <plugin
          id="com.sun.xml.bind.jaxb-impl"
          version="0.0.0"/>
 
@@ -35,27 +27,11 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.apache.commons.logging"
-         version="0.0.0"/>
-
-   <plugin
          id="org.apache.log4j"
          version="0.0.0"/>
 
    <plugin
          id="org.apache.logging.log4j.api"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xerces"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xml.resolver"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xml.serializer"
          version="0.0.0"/>
 
    <plugin

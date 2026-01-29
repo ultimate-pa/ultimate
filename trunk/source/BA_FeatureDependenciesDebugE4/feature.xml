@@ -63,14 +63,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.apache.xalan"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xmlgraphics"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.core.databinding"
          version="0.0.0"/>
 
