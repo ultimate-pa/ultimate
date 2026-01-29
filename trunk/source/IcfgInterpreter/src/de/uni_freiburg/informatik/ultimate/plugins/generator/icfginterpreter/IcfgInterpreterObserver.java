@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,12 +38,15 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private final ILogger mLogger;
 	private IIcfg<? extends IcfgLocation> mIcfg;
 	private Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> mExecutions = new HashMap<>();
+	private List<IcfgProgramExecution<IcfgEdge>> mAggregateExecutions;
 	private OutputMethod outputMethod;
 
 	private Map<ExecutionTermintionReason, File> outputDirs;
 	private Map<ExecutionTermintionReason, Integer> terminationCount;
 	private Map<IcfgLocation, IResult> mFinalResults;
 	private Set<IcfgLocation> mErrorLocations;
+	private ExecutionTermintionReason aggregateOutputType;
+	private int aggregateOutputCount;
 	private static IcfgInterpreterObserver mInstance = null;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
@@ -78,12 +82,20 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mErrorLocations = Set.copyOf(IcfgUtils.getErrorLocations(mIcfg));
 				mExecutions = new HashMap<>();
 				mFinalResults = new HashMap<>();
+				mAggregateExecutions = new ArrayList<>();
 				IcfgInterpreterPreferences.updatePreferences();
 				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices, mErrorLocations);
 
 				outputMethod = IcfgInterpreterPreferences.getPreferences().getEnum(
 						IcfgInterpreterPreferences.SettingLabel.OUTPUT_METHOD.toString(),
 						IcfgInterpreterPreferences.OutputMethod.class);
+
+				aggregateOutputType = IcfgInterpreterPreferences.getPreferences().getEnum(
+						IcfgInterpreterPreferences.SettingLabel.AGGREGATE_RESULTS_TYPE.toString(),
+						ExecutionTermintionReason.class);
+				aggregateOutputCount = IcfgInterpreterPreferences.getPreferences()
+						.getInt(IcfgInterpreterPreferences.SettingLabel.AGGREGATE_RESULTS_NUMBER.toString());
+
 				terminationCount = new HashMap<>();
 				for (final ExecutionTermintionReason reason : ExecutionTermintionReason.values()) {
 					terminationCount.put(reason, 0);
@@ -108,6 +120,12 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				// Create executions
 				mExecutions = producer.makeExecutions(mLogger,
 						(executions, locations) -> outputBatch(executions, locations));
+
+				// Either no execution of the target type was found, or mExecutions is empty because of batching and
+				// should be supplemented with the batch aggregate.
+				if (!mExecutions.containsKey(aggregateOutputType) || mExecutions.get(aggregateOutputType).isEmpty()) {
+					mExecutions.put(aggregateOutputType, mAggregateExecutions);
+				}
 
 				// Report results of batches
 				for (final IcfgLocation loc : mErrorLocations) {
@@ -155,6 +173,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			for (final Entry<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> entry : executions
 					.entrySet()) {
 				final ExecutionTermintionReason reason = entry.getKey();
+				addBatchToAggregateResult(reason, entry.getValue());
 				final int newExecutions = entry.getValue().size();
 				terminationCount.put(reason, terminationCount.get(reason) + newExecutions);
 				newTotalExecutions += newExecutions;
@@ -165,6 +184,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			for (final Entry<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> entry : executions
 					.entrySet()) {
 				final ExecutionTermintionReason reason = entry.getKey();
+				addBatchToAggregateResult(reason, entry.getValue());
 				final File directory = outputDirs.get(reason);
 				final int newExecutions = entry.getValue().size();
 				terminationCount.put(reason, terminationCount.get(reason) + newExecutions);
@@ -190,6 +210,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			for (final Entry<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> entry : executions
 					.entrySet()) {
 				final ExecutionTermintionReason reason = entry.getKey();
+				addBatchToAggregateResult(reason, entry.getValue());
 
 				final int newExecutions = entry.getValue().size();
 				terminationCount.put(reason, terminationCount.get(reason) + newExecutions);
@@ -205,6 +226,22 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		}
 
 		mLogger.info("Processed batch of %s executions", newTotalExecutions);
+	}
+
+	private void addBatchToAggregateResult(final ExecutionTermintionReason reason,
+			final List<IcfgProgramExecution<IcfgEdge>> executions) {
+		if (aggregateOutputType != reason) {
+			return;
+		}
+
+		int size = mAggregateExecutions.size();
+		for (final IcfgProgramExecution<IcfgEdge> execution : executions) {
+			if (size >= aggregateOutputCount) {
+				break;
+			}
+			mAggregateExecutions.add(execution);
+			size++;
+		}
 	}
 
 	public static IcfgInterpreterObserver getInstance() {
