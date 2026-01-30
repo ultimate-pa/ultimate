@@ -76,8 +76,11 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final var script = tools.getManagedScript();
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable);
 		mPostcondition = new RelationalPredicatePostcondition(services, script, factory, symbolTable);
-		mAbstractor = new DefaultInterferenceAbstractor(translator, mPostcondition, baseDomain, true, script, factory,
-				IInterferenceMerger.identity());
+		final var abstractor = new DefaultInterferenceAbstractor(translator, mPostcondition, baseDomain, true, script,
+				factory, IInterferenceMerger.identity());
+		// Debug logging (removable)
+		abstractor.setLogger(logger);
+		mAbstractor = abstractor;
 		mProofChecker = new ThreadModularProofChecker(logger, icfg.getCfgSmtToolkit(), mPostcondition, baseDomain);
 	}
 
@@ -100,7 +103,10 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	private FixpointResult computeInterferenceFixpoint() {
 		final Map<IcfgLocation, IPredicate> allPredicates = new HashMap<>();
-		IInterferenceAbstraction interferences = DefaultInterferenceAbstraction.empty(mPostcondition);
+		final DefaultInterferenceAbstraction emptyItf = DefaultInterferenceAbstraction.empty(mPostcondition);
+		// Debug logging (removable)
+		emptyItf.setLogger(mLogger);
+		IInterferenceAbstraction interferences = emptyItf;
 		for (int iteration = 1;; iteration++) {
 			mLogger.info("=== Iteration %d ===", iteration);
 

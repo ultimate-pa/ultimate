@@ -6,9 +6,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
  * Maps each thread to its interferences. Handles application with internal fixpoint.
@@ -21,11 +23,22 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final int mWideningThreshold;
 
+	// Debug logging (removable)
+	private ILogger mLogger;
+
 	private DefaultInterferenceAbstraction(final Map<String, Set<IPredicate>> interferences,
 			final RelationalPredicatePostcondition postcondition, final int wideningThreshold) {
 		mInterferencesByThread = new HashMap<>(interferences);
 		mPostcondition = postcondition;
 		mWideningThreshold = wideningThreshold;
+	}
+
+	public void setLogger(final ILogger logger) {
+		mLogger = logger;
+	}
+
+	private static boolean isTrue(final IPredicate pred) {
+		return SmtUtils.isTrueLiteral(pred.getFormula());
 	}
 
 	public static DefaultInterferenceAbstraction empty(final RelationalPredicatePostcondition postcondition) {
@@ -68,8 +81,12 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 
 	@Override
 	public IPredicate applyToState(final IPredicate state, final String threadId, final IDomain domain) {
-		if (isEmpty()) {
+		if (isEmpty() || isTrue(state)) {
 			return state;
+		}
+
+		if (mLogger != null) {
+			mLogger.info("[ITF] Thread %s: starting state = %s", threadId, state.getFormula());
 		}
 
 		IPredicate current = state;
@@ -84,10 +101,19 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 			final IPredicate combined = iteration > mWideningThreshold ? domain.widen(current, postState)
 					: domain.join(current, postState);
 
+			if (mLogger != null) {
+				mLogger.info("[ITF] Thread %s iter %d: after join/widen = %s", threadId, iteration,
+						combined.getFormula());
+			}
+
 			if (!domain.isSubsetEq(combined, current).isTrueForAbstraction()) {
 				current = combined;
 				changed = true;
 			}
+		}
+
+		if (mLogger != null) {
+			mLogger.info("[ITF] Thread %s: final state = %s", threadId, current.getFormula());
 		}
 
 		return current;
@@ -100,9 +126,22 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 		}
 
 		IPredicate joinedPost = null;
+		int itfIndex = 0;
 		for (final IPredicate interference : interferences) {
+			if (isTrue(interference)) {
+				if (mLogger != null) {
+					mLogger.info("[ITF]   skipping itf[%d]: TRUE (no-op)", itfIndex);
+				}
+				itfIndex++;
+				continue;
+			}
 			final IPredicate postState = mPostcondition.strongestPostcondition(state, interference);
+			if (mLogger != null) {
+				mLogger.info("[ITF]   applying itf[%d]: %s", itfIndex, interference.getFormula());
+				mLogger.info("[ITF]   -> SP result: %s", postState.getFormula());
+			}
 			joinedPost = joinedPost == null ? postState : domain.join(joinedPost, postState);
+			itfIndex++;
 		}
 		return joinedPost == null ? state : joinedPost;
 	}

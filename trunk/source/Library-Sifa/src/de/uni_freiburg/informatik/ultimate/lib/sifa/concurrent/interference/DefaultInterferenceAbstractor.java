@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.Re
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -31,6 +32,21 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 	private final IDomain mDomain;
 	private final boolean mIncludePreState;
 	private final IInterferenceMerger mMerger;
+
+	// Debug logging (removable)
+	private ILogger mLogger;
+
+	public void setLogger(final ILogger logger) {
+		mLogger = logger;
+	}
+
+	private static boolean canBeDropped(final IPredicate interference) {
+		return isTrivialInterference(interference);
+	}
+
+	private static boolean isTrivialInterference(final IPredicate pred) {
+		return SmtUtils.isTrueLiteral(pred.getFormula());
+	}
 
 	public DefaultInterferenceAbstractor(final TransFormulaToInterferencePredicate translator,
 			final RelationalPredicatePostcondition postcondition, final IDomain domain, final boolean includePreState,
@@ -64,7 +80,11 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 
 			all.put(threadId, threadInterferences);
 		}
-		return DefaultInterferenceAbstraction.of(all, mPostcondition);
+		final DefaultInterferenceAbstraction result = DefaultInterferenceAbstraction.of(all, mPostcondition);
+		if (mLogger != null) {
+			result.setLogger(mLogger);
+		}
+		return result;
 	}
 
 	private Set<IPredicate> collectFromThread(final Map<IcfgLocation, IPredicate> locationStates) {
@@ -78,7 +98,10 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 				final TransFormula tf = edge.getTransformula();
 				if (tf != null) {
-					result.add(buildInterference(preState, tf));
+					final IPredicate interference = buildInterference(preState, tf);
+					if (!canBeDropped(interference)) {
+						result.add(interference);
+					}
 				}
 			}
 		}
