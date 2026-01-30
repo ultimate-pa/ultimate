@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.sifa;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder.SifaComponents;
@@ -80,7 +82,15 @@ public class SifaObserver extends BaseObserver {
 		mSifaComponents = new SifaBuilder(mServices, mLogger).construct(icfg, mServices.getProgressMonitorService());
 		final Map<IcfgLocation, IPredicate> predicates = mSifaComponents.getInterpreter().interpret();
 		reportStats(mSifaComponents.getStats());
-		reportResults(predicates);
+		reportResults(filterToErrorLocations(predicates, icfg));
+	}
+
+	private static Map<IcfgLocation, IPredicate> filterToErrorLocations(final Map<IcfgLocation, IPredicate> predicates,
+			final IIcfg<IcfgLocation> icfg) {
+		final var errorLocs = IcfgInterpreter.allErrorLocations(icfg);
+		final Map<IcfgLocation, IPredicate> filtered = new HashMap<>(predicates);
+		filtered.keySet().retainAll(errorLocs);
+		return filtered;
 	}
 
 	private void reportStats(final SifaStats stats) {
