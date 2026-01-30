@@ -12,8 +12,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -33,34 +31,23 @@ public class RelationalPredicatePostcondition {
 	}
 
 	/**
-	 * Computes the strongest postcondition of a state predicate with respect to a relational predicate.
-	 *
-	 * The state predicate uses unprimed term variables. The relational predicate uses unprimed term variables for
-	 * pre-state and primed term variables for post-state.
+	 * SP(state, relation) - projects pre-vars and renames primed to unprimed.
 	 */
 	public IPredicate strongestPostcondition(final IPredicate statePredicate, final IPredicate relationalPredicate) {
-		// Build projection set and renaming map by inspecting relational predicate variables
 		final Set<TermVariable> preVarsToProject = new HashSet<>();
 		final Map<Term, Term> primedToUnprimed = new HashMap<>();
 		for (final IProgramVar pv : relationalPredicate.getVars()) {
 			if (mSymbolTable.isPrimedVar(pv)) {
-				// Primed variable: add to renaming map
 				final IProgramVar baseVar = mSymbolTable.getBaseVar(pv);
 				primedToUnprimed.put(pv.getTermVariable(), baseVar.getTermVariable());
 				preVarsToProject.add(baseVar.getTermVariable());
 			}
 		}
 
-		// Conjoin state predicate with relation predicate
 		final Term conjunction = SmtUtils.and(mManagedScript.getScript(), statePredicate.getFormula(),
 				relationalPredicate.getFormula());
-
-		// Existentially quantify pre-state variables (only those modified by the relation) and eliminate
-		final Term quantified = SmtUtils.quantifier(mManagedScript.getScript(), Script.EXISTS, preVarsToProject,
-				conjunction);
-		final Term projected = PartialQuantifierElimination.eliminateLight(mServices, mManagedScript, quantified);
-
-		// Rename primed variables back to unprimed term variables
+		final Term projected = RelationalPredicateUtils.existentiallyProject(conjunction, preVarsToProject, mServices,
+				mManagedScript);
 		final Term renamed = Substitution.apply(mManagedScript, primedToUnprimed, projected);
 		return mPredicateFactory.newPredicate(renamed);
 	}
