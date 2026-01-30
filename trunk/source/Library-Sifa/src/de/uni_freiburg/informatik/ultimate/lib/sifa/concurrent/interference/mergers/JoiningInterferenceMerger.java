@@ -1,17 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 /**
- * Joins all interferences per thread into one predicate.
+ * Joins all interferences into one predicate.
  */
 public class JoiningInterferenceMerger implements IInterferenceMerger {
 
@@ -26,31 +22,24 @@ public class JoiningInterferenceMerger implements IInterferenceMerger {
 	}
 
 	@Override
-	public InterferenceAbstraction merge(final InterferenceAbstraction interferences, final IDomain domain) {
-		final Map<String, Set<IPredicate>> result = new HashMap<>();
-
-		for (final String threadId : interferences.getThreadIds()) {
-			final Set<IPredicate> threadItfs = interferences.getInterferencesProducedBy(threadId);
-			if (threadItfs.isEmpty()) {
-				result.put(threadId, new HashSet<>());
-				continue;
-			}
-
-			IPredicate merged = null;
-			for (final IPredicate itf : threadItfs) {
-				merged = merged == null ? itf : domain.join(merged, itf);
-			}
-			if (mApplyAlpha && merged != null) {
-				merged = domain.alpha(merged);
-			}
-
-			final Set<IPredicate> singleton = new HashSet<>();
-			if (merged != null) {
-				singleton.add(merged);
-			}
-			result.put(threadId, singleton);
+	public Set<IPredicate> merge(final Set<IPredicate> interferences, final IDomain domain) {
+		if (interferences.isEmpty()) {
+			return new HashSet<>();
 		}
 
-		return InterferenceAbstraction.of(result);
+		IPredicate merged = null;
+		for (final IPredicate itf : interferences) {
+			merged = merged == null ? itf : domain.join(merged, itf);
+		}
+
+		if (mApplyAlpha && merged != null) {
+			merged = domain.alpha(merged);
+		}
+
+		final Set<IPredicate> result = new HashSet<>();
+		if (merged != null) {
+			result.add(merged);
+		}
+		return result;
 	}
 }

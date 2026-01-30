@@ -1,14 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers;
 
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 /**
- * Merges/reduces interferences per thread (e.g., join all into one, limit to N).
+ * Reduces interference predicates per thread (e.g., by joining or limiting count).
  */
 public interface IInterferenceMerger {
 
-	InterferenceAbstraction merge(InterferenceAbstraction interferences, IDomain domain);
+	Set<IPredicate> merge(Set<IPredicate> interferences, IDomain domain);
 
 	static IInterferenceMerger identity() {
 		return (interferences, domain) -> interferences;

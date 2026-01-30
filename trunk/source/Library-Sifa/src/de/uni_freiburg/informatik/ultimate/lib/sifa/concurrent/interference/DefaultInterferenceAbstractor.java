@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,59 +11,67 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceAbstraction;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers.IInterferenceMerger;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Collects interferences by walking ICFGs. Building strategy is configurable.
+ * Collects interferences by walking ICFGs, optionally applies merging.
  */
-public class InterferenceCollector {
+public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 
-	private final TransFormulaToPredicate mTranslator;
-	private final boolean mIncludePreState;
+	private final TransFormulaToInterferencePredicate mTranslator;
+	private final RelationalPredicatePostcondition mPostcondition;
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
+	private final IDomain mDomain;
+	private final boolean mIncludePreState;
+	private final IInterferenceMerger mMerger;
 
-	/**
-	 * Creates collector that ignores pre-state (maximal interference).
-	 */
-	public InterferenceCollector(final TransFormulaToPredicate translator) {
-		this(translator, false, null, null);
-	}
-
-	/**
-	 * Creates collector with configurable pre-state inclusion.
-	 */
-	public InterferenceCollector(final TransFormulaToPredicate translator, final boolean includePreState,
-			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory) {
+	public DefaultInterferenceAbstractor(final TransFormulaToInterferencePredicate translator,
+			final RelationalPredicatePostcondition postcondition, final IDomain domain, final boolean includePreState,
+			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
+			final IInterferenceMerger merger) {
 		mTranslator = translator;
+		mPostcondition = postcondition;
+		mDomain = domain;
 		mIncludePreState = includePreState;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
+		mMerger = merger;
 		if (includePreState && (managedScript == null || predicateFactory == null)) {
 			throw new IllegalArgumentException("managedScript and predicateFactory required when includePreState=true");
 		}
 	}
 
-	public InterferenceAbstraction collectFromAllThreads(final Map<String, ThreadAnalysisInput> analysisResults) {
+	@Override
+	public IInterferenceAbstraction abstractTransitionsToInterferenceAbstraction(
+			final Map<String, Map<IcfgLocation, IPredicate>> analysisResults,
+			final Map<String, IIcfg<IcfgLocation>> threadIcfgs) {
 		final Map<String, Set<IPredicate>> all = new HashMap<>();
-		for (final Map.Entry<String, ThreadAnalysisInput> entry : analysisResults.entrySet()) {
-			final ThreadAnalysisInput input = entry.getValue();
-			all.put(entry.getKey(), collectFromThread(input.getLocationStates(), input.getIcfg()));
+		for (final Map.Entry<String, Map<IcfgLocation, IPredicate>> entry : analysisResults.entrySet()) {
+			final String threadId = entry.getKey();
+			final Map<IcfgLocation, IPredicate> locationStates = entry.getValue();
+			Set<IPredicate> threadInterferences = collectFromThread(locationStates);
+
+			if (mMerger != null) {
+				threadInterferences = mMerger.merge(threadInterferences, mDomain);
+			}
+
+			all.put(threadId, threadInterferences);
 		}
-		return InterferenceAbstraction.of(all);
+		return DefaultInterferenceAbstraction.of(all, mPostcondition);
 	}
 
-	private Set<IPredicate> collectFromThread(final Map<IcfgLocation, IPredicate> locationStates,
-			final IIcfg<IcfgLocation> icfg) {
+	private Set<IPredicate> collectFromThread(final Map<IcfgLocation, IPredicate> locationStates) {
 		final Set<IPredicate> result = new HashSet<>();
 		for (final Map.Entry<IcfgLocation, IPredicate> entry : locationStates.entrySet()) {
 			final IcfgLocation loc = entry.getKey();
 			final IPredicate preState = entry.getValue();
-			// When includePreState is true, skip entries with null predicates
 			if (mIncludePreState && preState == null) {
 				continue;
 			}
@@ -85,23 +93,5 @@ public class InterferenceCollector {
 		final Term combined = SmtUtils.and(mManagedScript.getScript(), preState.getFormula(),
 				transitionPred.getFormula());
 		return mPredicateFactory.newPredicate(combined);
-	}
-
-	public static class ThreadAnalysisInput {
-		private final Map<IcfgLocation, IPredicate> mLocationStates;
-		private final IIcfg<IcfgLocation> mIcfg;
-
-		public ThreadAnalysisInput(final Map<IcfgLocation, IPredicate> locationStates, final IIcfg<IcfgLocation> icfg) {
-			mLocationStates = locationStates;
-			mIcfg = icfg;
-		}
-
-		public Map<IcfgLocation, IPredicate> getLocationStates() {
-			return mLocationStates;
-		}
-
-		public IIcfg<IcfgLocation> getIcfg() {
-			return mIcfg;
-		}
 	}
 }
