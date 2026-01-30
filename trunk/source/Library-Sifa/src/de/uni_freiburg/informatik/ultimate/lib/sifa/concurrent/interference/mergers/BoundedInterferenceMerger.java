@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 /**
- * Limits interferences to N by partitioning into buckets and joining.
+ * Limits interferences to N by naively trimming(joining) the back of the Interference List
  */
 public class BoundedInterferenceMerger implements IInterferenceMerger {
 

@@ -1,31 +1,22 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceOrchestrator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 /**
- * Wrapper domain for thread-modular analysis.
- *
- * Applies interference abstraction in the alpha function to account for possible interleavings from other threads.
+ * Wrapper domain that applies interferences in alpha.
  */
 public class ConcurrentDomain implements IDomain {
 
 	private final IDomain mUnderlyingDomain;
-	private final InterferenceOrchestrator mInterferenceOrchestrator;
 	private final String mThreadId;
+	private IInterferenceAbstraction mInterferences;
 
-	/**
-	 * Creates a concurrent domain for analyzing a specific thread.
-	 *
-	 * @param underlyingDomain         The base abstract domain.
-	 * @param interferenceOrchestrator The shared interference abstraction.
-	 * @param threadId                 The thread being analyzed.
-	 */
-	public ConcurrentDomain(final IDomain underlyingDomain, final InterferenceOrchestrator interferenceOrchestrator,
+	public ConcurrentDomain(final IDomain underlyingDomain, final IInterferenceAbstraction interferences,
 			final String threadId) {
 		mUnderlyingDomain = underlyingDomain;
-		mInterferenceOrchestrator = interferenceOrchestrator;
+		mInterferences = interferences;
 		mThreadId = threadId;
 	}
 
@@ -51,16 +42,20 @@ public class ConcurrentDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		final IPredicate itfState = mInterferenceOrchestrator.itfFixpoint(pred, mThreadId);
+		final IPredicate itfState = mInterferences.applyToState(pred, mThreadId, mUnderlyingDomain);
 		return mUnderlyingDomain.alpha(itfState);
+	}
+
+	public void setInterferences(final IInterferenceAbstraction interferences) {
+		mInterferences = interferences;
+	}
+
+	public IInterferenceAbstraction getInterferences() {
+		return mInterferences;
 	}
 
 	public IDomain getUnderlyingDomain() {
 		return mUnderlyingDomain;
-	}
-
-	public InterferenceOrchestrator getInterferenceOrchestrator() {
-		return mInterferenceOrchestrator;
 	}
 
 	public String getThreadId() {

@@ -11,14 +11,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.DefaultInterferenceAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstraction;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public final class SifaResultPrinter {
 
 	private final ILogger mLogger;
+	private final FormulaUnLet mUnletter;
 
 	public SifaResultPrinter(final ILogger logger) {
 		mLogger = logger;
+		mUnletter = new FormulaUnLet();
 	}
 
 	public void printResults(final Map<IcfgLocation, IPredicate> results) {
@@ -50,6 +55,21 @@ public final class SifaResultPrinter {
 		mLogger.info("=== End of SIFA Results ===");
 	}
 
+	public void logInterferences(final IInterferenceAbstraction interferences) {
+		if (interferences.isEmpty()) {
+			mLogger.debug("No interferences collected");
+			return;
+		}
+
+		if (interferences instanceof DefaultInterferenceAbstraction) {
+			final DefaultInterferenceAbstraction def = (DefaultInterferenceAbstraction) interferences;
+			for (final String threadId : def.getThreadIds()) {
+				final var threadInterferences = def.getInterferencesProducedBy(threadId);
+				mLogger.debug("Thread %s: %d interferences", threadId, threadInterferences.size());
+			}
+		}
+	}
+
 	private Map<String, List<Map.Entry<IcfgLocation, IPredicate>>> groupByProcedure(
 			final Map<IcfgLocation, IPredicate> results) {
 
@@ -73,10 +93,11 @@ public final class SifaResultPrinter {
 		if (transformula == null) {
 			return "<null>";
 		}
-		if (transformula.getFormula().toString().equals("true")) {
+		final Term unletted = mUnletter.unlet(transformula.getFormula());
+		if (unletted.toString().equals("true")) {
 			return "skip";
 		}
-		return transformula.getFormula().toString();
+		return unletted.toString();
 	}
 
 	private String sortKey(final IcfgLocation location) {
@@ -92,9 +113,7 @@ public final class SifaResultPrinter {
 			return "<null>";
 		}
 
-		final Term term = predicate.getFormula();
-		final String formula = String.valueOf(term);
-
-		return formula;
+		final Term unletted = mUnletter.unlet(predicate.getFormula());
+		return unletted.toString();
 	}
 }

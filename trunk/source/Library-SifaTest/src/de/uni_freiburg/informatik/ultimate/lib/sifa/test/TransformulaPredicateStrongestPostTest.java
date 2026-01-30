@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -73,7 +73,7 @@ public class TransformulaPredicateStrongestPostTest {
 		// Create relational predicate machinery with symbol table
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final var translator = new TransFormulaToPredicate(mServices, mMgdScript, primedFactory, primedTable);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable);
 		final IPredicate relationPred = translator.translate(tf);
 
 		mMgdScript.unlock(this);

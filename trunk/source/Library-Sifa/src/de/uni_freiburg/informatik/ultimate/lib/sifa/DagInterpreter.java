@@ -209,6 +209,7 @@ public class DagInterpreter {
 		} else if (trans instanceof IIcfgInternalTransition) {
 			output = ipretInternal((IIcfgInternalTransition<IcfgLocation>) trans, input);
 		} else if (trans instanceof ForkThreadCurrent || trans instanceof JoinThreadCurrent) {
+			// TODO comment
 			output = input;
 		} else {
 			throw new UnsupportedOperationException("Unexpected transition type: " + trans.getClass());
