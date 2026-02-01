@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.CallReturnSummary;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ILocationAwareDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.IDagOverlay;
@@ -120,7 +121,7 @@ public class DagInterpreter {
 			logWorklistEntry(worklist);
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> curNode = worklist.getWork();
 			// TODO alternatively abstract outputs before putting them into the worklist
-			final IPredicate curInput = fluidAbstraction(worklist.getInput());
+			final IPredicate curInput = fluidAbstraction(worklist.getInput(), curNode);
 			final IPredicate curOutput = ipretNode(curNode, curInput, loiStorage, enterCallRegr);
 			logWorklistEntryDone(curOutput);
 			if (earlyExitAfterStep(overlay, curNode, curOutput)) {
@@ -233,16 +234,34 @@ public class DagInterpreter {
 		return output;
 	}
 
-	private IPredicate fluidAbstraction(IPredicate pred) {
+	private IPredicate fluidAbstraction(IPredicate pred, final RegexDagNode<IIcfgTransition<IcfgLocation>> node) {
 		logConsiderAbstraction();
 		if (mFluid.shallBeAbstracted(pred)) {
 			logFluidAbstractionYes();
-			pred = mDomain.alpha(pred);
+			if (mDomain instanceof final ILocationAwareDomain locationAwareDomain) {
+				pred = locationAwareDomain.alpha(pred, extractLocation(node));
+			} else {
+				pred = mDomain.alpha(pred);
+			}
 			logFluidAbstractionDone(pred);
 		} else {
 			logFluidAbstractionNo();
 		}
 		return pred;
+	}
+
+	private static IcfgLocation extractLocation(final RegexDagNode<IIcfgTransition<IcfgLocation>> node) {
+		// TODO: cleaner way to get location from node?
+		final IRegex<IIcfgTransition<IcfgLocation>> content = node.getContent();
+		if (content instanceof Literal) {
+			final IIcfgTransition<IcfgLocation> transition = ((Literal<IIcfgTransition<IcfgLocation>>) content)
+					.getLetter();
+			if (transition instanceof LocationMarkerTransition) {
+				return transition.getTarget();
+			}
+			return transition.getSource();
+		}
+		return null;
 	}
 
 	// log messages -------------------------------------------------------------------------------

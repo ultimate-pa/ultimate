@@ -1,17 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
-/**
- * Wrapper domain that applies interferences in alpha.
- */
-public class ConcurrentDomain implements IDomain {
+public class ConcurrentDomain implements ILocationAwareDomain {
 
 	private final IDomain mUnderlyingDomain;
 	private final String mThreadId;
 	private IInterferenceAbstraction mInterferences;
+	private Set<IcfgLocation> mInterferenceLocations;
 
 	public ConcurrentDomain(final IDomain underlyingDomain, final IInterferenceAbstraction interferences,
 			final String threadId) {
@@ -40,10 +41,30 @@ public class ConcurrentDomain implements IDomain {
 		return mUnderlyingDomain.isSubsetEq(subset, superset);
 	}
 
+	public void setInterferenceLocations(final Set<IcfgLocation> locations) {
+		mInterferenceLocations = locations;
+	}
+
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		final IPredicate itfState = mInterferences.applyToState(pred, mThreadId, mUnderlyingDomain);
-		return mUnderlyingDomain.alpha(itfState);
+		return alpha(pred, null);
+	}
+
+	@Override
+	public IPredicate alpha(final IPredicate pred, final IcfgLocation location) {
+		IPredicate state = pred;
+		if (shouldApplyInterferences(location)) {
+			state = mInterferences.applyToState(state, mThreadId, mUnderlyingDomain, location);
+		}
+		// TODO: alpha before or after interference fixpoint?
+		return mUnderlyingDomain.alpha(state);
+	}
+
+	private boolean shouldApplyInterferences(final IcfgLocation location) {
+		if (mInterferenceLocations == null) {
+			return true;
+		}
+		return location != null && mInterferenceLocations.contains(location);
 	}
 
 	public void setInterferences(final IInterferenceAbstraction interferences) {
