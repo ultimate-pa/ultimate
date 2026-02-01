@@ -46,9 +46,12 @@ public class RelationalPredicatePostcondition {
 
 		final Term conjunction = SmtUtils.and(mManagedScript.getScript(), statePredicate.getFormula(),
 				relationalPredicate.getFormula());
+
 		final Term projected = RelationalPredicateUtils.existentiallyProject(conjunction, preVarsToProject, mServices,
 				mManagedScript);
+
 		final Term renamed = Substitution.apply(mManagedScript, primedToUnprimed, projected);
+
 		return mPredicateFactory.newPredicate(renamed);
 	}
 

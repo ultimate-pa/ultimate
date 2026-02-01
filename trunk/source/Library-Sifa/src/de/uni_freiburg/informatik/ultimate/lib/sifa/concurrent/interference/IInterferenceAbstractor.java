@@ -6,11 +6,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
-/**
- * Creates interference abstractions from thread analysis results.
- */
 public interface IInterferenceAbstractor {
 
-	IInterferenceAbstraction abstractTransitionsToInterferenceAbstraction(Map<String, Map<IcfgLocation, IPredicate>> analysisResults,
-			Map<String, IIcfg<IcfgLocation>> threadIcfgs);
+	IInterferenceAbstraction abstractTransitionsToInterferenceAbstraction(
+			Map<String, Map<IcfgLocation, IPredicate>> analysisResults, Map<String, IIcfg<IcfgLocation>> threadIcfgs);
 }

@@ -16,9 +16,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-/**
- * Translates TransFormulas to relational predicates (unprimed pre, primed post, locals projected away).
- */
 public class TransFormulaToInterferencePredicate {
 
 	private final IUltimateServiceProvider mServices;
@@ -41,7 +38,6 @@ public class TransFormulaToInterferencePredicate {
 
 		Term formula = applySubstitution(tf.getFormula(), substitution);
 		formula = projectAwayLocals(formula, localVars);
-
 		return mPredicateFactory.newPredicate(formula);
 	}
 
@@ -52,7 +48,6 @@ public class TransFormulaToInterferencePredicate {
 		return substitution;
 	}
 
-	/** invars(can be newly generated term vars) -> unique unprimed term vars, locals collected for later projection. */
 	private static void addInVarSubstitutions(final TransFormula tf, final Map<Term, Term> substitution,
 			final Set<TermVariable> localVars) {
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
@@ -65,7 +60,6 @@ public class TransFormulaToInterferencePredicate {
 		}
 	}
 
-	/** outvars(can be newly generated term vars) -> unique primed term vars, locals collected for later projection. */
 	private void addOutVarSubstitutions(final TransFormula tf, final Map<Term, Term> substitution,
 			final Set<TermVariable> localVars) {
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {

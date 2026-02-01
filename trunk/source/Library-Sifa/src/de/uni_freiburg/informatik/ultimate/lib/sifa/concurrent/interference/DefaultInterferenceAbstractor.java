@@ -16,13 +16,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.Re
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-/**
- * Collects interferences by walking ICFGs, optionally applies merging.
- */
 public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 
 	private final TransFormulaToInterferencePredicate mTranslator;
@@ -33,19 +29,16 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 	private final boolean mIncludePreState;
 	private final IInterferenceMerger mMerger;
 
-	// Debug logging (removable)
-	private ILogger mLogger;
-
-	public void setLogger(final ILogger logger) {
-		mLogger = logger;
-	}
-
 	private static boolean canBeDropped(final IPredicate interference) {
-		return isTrivialInterference(interference);
+		return isTrivialPredicate(interference);
 	}
 
-	private static boolean isTrivialInterference(final IPredicate pred) {
-		return SmtUtils.isTrueLiteral(pred.getFormula());
+	private static boolean isTrivialPredicate(final IPredicate pred) {
+		return SmtUtils.isTrueLiteral(pred.getFormula()) || SmtUtils.isFalseLiteral(pred.getFormula());
+	}
+
+	private static boolean modifiesGlobals(final TransFormula tf) {
+		return tf.getAssignedVars().stream().anyMatch(pv -> pv.isGlobal());
 	}
 
 	public DefaultInterferenceAbstractor(final TransFormulaToInterferencePredicate translator,
@@ -80,11 +73,7 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 
 			all.put(threadId, threadInterferences);
 		}
-		final DefaultInterferenceAbstraction result = DefaultInterferenceAbstraction.of(all, mPostcondition);
-		if (mLogger != null) {
-			result.setLogger(mLogger);
-		}
-		return result;
+		return DefaultInterferenceAbstraction.of(all, mPostcondition);
 	}
 
 	private Set<IPredicate> collectFromThread(final Map<IcfgLocation, IPredicate> locationStates) {
@@ -97,10 +86,10 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 			}
 			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 				final TransFormula tf = edge.getTransformula();
-				if (tf != null) {
+				if (tf != null && modifiesGlobals(tf)) {
 					final IPredicate interference = buildInterference(preState, tf);
 					if (!canBeDropped(interference)) {
-						result.add(interference);
+						addIfNotRedundant(result, interference);
 					}
 				}
 			}
@@ -108,11 +97,29 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 		return result;
 	}
 
+	private void addIfNotRedundant(final Set<IPredicate> existing, final IPredicate candidate) {
+		if (!hasSameFormula(existing, candidate)) {
+			existing.add(candidate);
+		}
+	}
+
+	private static boolean hasSameFormula(final Set<IPredicate> existing, final IPredicate candidate) {
+		final Term candidateFormula = candidate.getFormula();
+		for (final IPredicate p : existing) {
+			if (p.getFormula().equals(candidateFormula)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private IPredicate buildInterference(final IPredicate preState, final TransFormula tf) {
 		final IPredicate transitionPred = mTranslator.translate(tf);
+
 		if (!mIncludePreState) {
 			return transitionPred;
 		}
+
 		final Term combined = SmtUtils.and(mManagedScript.getScript(), preState.getFormula(),
 				transitionPred.getFormula());
 		return mPredicateFactory.newPredicate(combined);
