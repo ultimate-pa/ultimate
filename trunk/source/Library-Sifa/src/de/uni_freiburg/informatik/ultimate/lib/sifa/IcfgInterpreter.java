@@ -62,6 +62,7 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 	private final SymbolicTools mTools;
 	private final ProcedureResourceCache mProcResCache;
 	private final DagInterpreter mDagInterpreter;
+	private final IPredicate mInitialState;
 
 	/**
 	 * Creates a new interpreter for manually specified locations of interest.
@@ -77,11 +78,22 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 			final Collection<IcfgLocation> locationsOfInterest, final IDomain domain, final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory) {
+		this(logger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid, loopSumFactory, callSumFactory,
+				null);
+	}
+
+	public IcfgInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
+			final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
+			final Collection<IcfgLocation> locationsOfInterest, final IDomain domain, final IFluid fluid,
+			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
+			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
+			final IPredicate initialState) {
 		mStats = stats;
 		mStats.start(SifaStats.Key.OVERALL_TIME);
 		mLogger = logger;
 		mTools = tools;
 		mLocsOfInterest = locationsOfInterest;
+		mInitialState = initialState;
 		logStartingSifa(locationsOfInterest);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
@@ -100,8 +112,8 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 	}
 
 	private void enqueInitial() {
-		final IPredicate top = mTools.top();
-		mCallGraph.initialProceduresOfInterest().stream().forEach(proc -> mEnterCallWorklist.add(proc, top));
+		final IPredicate initial = mInitialState != null ? mInitialState : mTools.top();
+		mCallGraph.initialProceduresOfInterest().stream().forEach(proc -> mEnterCallWorklist.add(proc, initial));
 	}
 
 	/**
