@@ -98,8 +98,6 @@ public class ThreadModularProofChecker {
 				}
 			}
 		}
-
-		mLogger.info("Proof check: %s", valid ? "PASSED" : "FAILED");
 		return valid;
 	}
 

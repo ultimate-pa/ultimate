@@ -106,8 +106,7 @@ public final class SifaResultPrinter {
 		if (interferences instanceof DefaultInterferenceAbstraction) {
 			final DefaultInterferenceAbstraction def = (DefaultInterferenceAbstraction) interferences;
 			for (final String threadId : def.getThreadIds()) {
-				final Set<IPredicate> threadInterferences = def.getInterferencesProducedBy(threadId);
-				mLogger.debug("Thread %s: %d interferences", threadId, threadInterferences.size());
+				mLogger.debug("Thread %s: %d interferences", threadId, def.getInterferenceCount(threadId));
 			}
 		}
 	}

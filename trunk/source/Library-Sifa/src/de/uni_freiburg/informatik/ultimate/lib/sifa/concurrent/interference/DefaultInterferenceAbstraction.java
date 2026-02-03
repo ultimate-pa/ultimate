@@ -17,11 +17,11 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 
 	private static final int DEFAULT_WIDENING_THRESHOLD = 3;
 
-	private final Map<String, Set<IPredicate>> mInterferencesByThread;
+	private final Map<String, Map<IcfgLocation, IPredicate>> mInterferencesByThread;
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final int mWideningThreshold;
 
-	private DefaultInterferenceAbstraction(final Map<String, Set<IPredicate>> interferences,
+	private DefaultInterferenceAbstraction(final Map<String, Map<IcfgLocation, IPredicate>> interferences,
 			final RelationalPredicatePostcondition postcondition, final int wideningThreshold) {
 		mInterferencesByThread = new HashMap<>(interferences);
 		mPostcondition = postcondition;
@@ -44,21 +44,25 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 		return new DefaultInterferenceAbstraction(new HashMap<>(), postcondition, DEFAULT_WIDENING_THRESHOLD);
 	}
 
-	public static DefaultInterferenceAbstraction of(final Map<String, Set<IPredicate>> interferences,
+	public static DefaultInterferenceAbstraction of(final Map<String, Map<IcfgLocation, IPredicate>> interferences,
 			final RelationalPredicatePostcondition postcondition) {
 		return new DefaultInterferenceAbstraction(interferences, postcondition, DEFAULT_WIDENING_THRESHOLD);
 	}
 
-	public Set<IPredicate> getInterferencesProducedBy(final String threadId) {
-		return mInterferencesByThread.getOrDefault(threadId, Collections.emptySet());
+	public Map<IcfgLocation, IPredicate> getInterferencesProducedBy(final String threadId) {
+		return mInterferencesByThread.getOrDefault(threadId, Collections.emptyMap());
+	}
+
+	public int getInterferenceCount(final String threadId) {
+		return getInterferencesProducedBy(threadId).size();
 	}
 
 	@Override
 	public Set<IPredicate> getInterferencesForOtherThreads(final String excludeThread) {
 		final Set<IPredicate> result = new HashSet<>();
-		for (final Map.Entry<String, Set<IPredicate>> entry : mInterferencesByThread.entrySet()) {
+		for (final Map.Entry<String, Map<IcfgLocation, IPredicate>> entry : mInterferencesByThread.entrySet()) {
 			if (!entry.getKey().equals(excludeThread)) {
-				result.addAll(entry.getValue());
+				result.addAll(entry.getValue().values());
 			}
 		}
 		return result;
@@ -70,17 +74,11 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 
 	@Override
 	public boolean isEmpty() {
-		return mInterferencesByThread.isEmpty() || mInterferencesByThread.values().stream().allMatch(Set::isEmpty);
+		return mInterferencesByThread.isEmpty() || mInterferencesByThread.values().stream().allMatch(Map::isEmpty);
 	}
 
 	@Override
 	public IPredicate applyToState(final IPredicate state, final String threadId, final IDomain domain) {
-		return applyToState(state, threadId, domain, null);
-	}
-
-	@Override
-	public IPredicate applyToState(final IPredicate state, final String threadId, final IDomain domain,
-			final IcfgLocation location) {
 		if (isEmpty() || isTrue(state)) {
 			return state;
 		}
@@ -140,14 +138,18 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 		final DefaultInterferenceAbstraction prev = (DefaultInterferenceAbstraction) previous;
 
 		for (final String threadId : mInterferencesByThread.keySet()) {
-			final Set<IPredicate> newSet = getInterferencesProducedBy(threadId);
-			final Set<IPredicate> oldSet = prev.getInterferencesProducedBy(threadId);
+			final Map<IcfgLocation, IPredicate> newMap = getInterferencesProducedBy(threadId);
+			final Map<IcfgLocation, IPredicate> oldMap = prev.getInterferencesProducedBy(threadId);
 
-			for (final IPredicate newItf : newSet) {
-				if (!isSubsumedByAny(newItf, oldSet, domain)) {
+			for (final Map.Entry<IcfgLocation, IPredicate> entry : newMap.entrySet()) {
+				final IcfgLocation loc = entry.getKey();
+				final IPredicate newItf = entry.getValue();
+				final IPredicate oldItf = oldMap.get(loc);
+
+				if (oldItf == null || !domain.isSubsetEq(newItf, oldItf).isTrueForAbstraction()) {
 					if (logger != null) {
-						logger.info("  Thread %s: interference not subsumed: %s", threadId, newItf.getFormula());
-						logger.info("    Old set size: %d, New set size: %d", oldSet.size(), newSet.size());
+						logger.info("  Thread %s at %s: interference not subsumed: %s", threadId, loc,
+								newItf.getFormula());
 					}
 					return false;
 				}
@@ -156,16 +158,60 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 		return true;
 	}
 
-	private static boolean isSubsumedByAny(final IPredicate pred, final Set<IPredicate> set, final IDomain domain) {
-		for (final IPredicate candidate : set) {
-			if (domain.isSubsetEq(pred, candidate).isTrueForAbstraction()) {
-				return true;
-			}
-		}
+	public static DefaultInterferenceAbstraction ofForTesting(
+			final Map<String, Map<IcfgLocation, IPredicate>> interferences) {
+		return new DefaultInterferenceAbstraction(interferences, null, DEFAULT_WIDENING_THRESHOLD);
+	}
+
+	@Override
+	public boolean canApply(final IPredicate state, final String threadId, final IDomain domain) {
 		return false;
 	}
 
-	public static DefaultInterferenceAbstraction ofForTesting(final Map<String, Set<IPredicate>> interferences) {
-		return new DefaultInterferenceAbstraction(interferences, null, DEFAULT_WIDENING_THRESHOLD);
+	@Override
+	public IInterferenceAbstraction widen(final IInterferenceAbstraction other, final IDomain domain) {
+		if (!(other instanceof DefaultInterferenceAbstraction)) {
+			throw new UnsupportedOperationException("Can only widen with DefaultInterferenceAbstraction");
+		}
+		final DefaultInterferenceAbstraction otherDefault = (DefaultInterferenceAbstraction) other;
+		final Map<String, Map<IcfgLocation, IPredicate>> widenedInterferences = new HashMap<>();
+
+		final Set<String> allThreads = new HashSet<>(mInterferencesByThread.keySet());
+		allThreads.addAll(otherDefault.mInterferencesByThread.keySet());
+
+		for (final String threadId : allThreads) {
+			final Map<IcfgLocation, IPredicate> thisMap = mInterferencesByThread.getOrDefault(threadId, Map.of());
+			final Map<IcfgLocation, IPredicate> otherMap = otherDefault.mInterferencesByThread.getOrDefault(threadId,
+					Map.of());
+
+			final Map<IcfgLocation, IPredicate> widenedMap = new HashMap<>();
+
+			final Set<IcfgLocation> allLocs = new HashSet<>(thisMap.keySet());
+			allLocs.addAll(otherMap.keySet());
+
+			for (final IcfgLocation loc : allLocs) {
+				final IPredicate thisPred = thisMap.get(loc);
+				final IPredicate otherPred = otherMap.get(loc);
+
+				final IPredicate widened;
+				if (thisPred == null) {
+					widened = otherPred;
+				} else if (otherPred == null) {
+					widened = thisPred;
+				} else {
+					widened = domain.widen(thisPred, otherPred);
+				}
+
+				if (!isTrivial(widened)) {
+					widenedMap.put(loc, widened);
+				}
+			}
+
+			if (!widenedMap.isEmpty()) {
+				widenedInterferences.put(threadId, widenedMap);
+			}
+		}
+
+		return new DefaultInterferenceAbstraction(widenedInterferences, mPostcondition, mWideningThreshold);
 	}
 }

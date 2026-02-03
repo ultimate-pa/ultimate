@@ -52,7 +52,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		final IPredicate postState = super.post(input, transition);
 		if (mInterferences != null && mCurrentThreadId != null) {
 			// TODO: post: exists loc post(phi, st) AND loc = alpha(loc')
-			return mInterferences.applyToState(postState, mCurrentThreadId, mDomain, transition.getTarget());
+			return mInterferences.applyToState(postState, mCurrentThreadId, mDomain);
 		}
 		return postState;
 	}

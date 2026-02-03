@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -23,7 +23,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Defa
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.DefaultInterferenceAbstractor;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstractor;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers.IInterferenceMerger;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
@@ -78,8 +77,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final var script = tools.getManagedScript();
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable);
 		mPostcondition = new RelationalPredicatePostcondition(services, script, factory, symbolTable);
-		mAbstractor = new DefaultInterferenceAbstractor(translator, mPostcondition, baseDomain, true, script, factory,
-				IInterferenceMerger.identity());
+		mAbstractor = new DefaultInterferenceAbstractor(translator, mPostcondition, baseDomain, true, script, factory);
 		mProofChecker = new ThreadModularProofChecker(logger, icfg.getCfgSmtToolkit(), mPostcondition, translator,
 				baseDomain);
 		mConcurrentTools = (ConcurrentSymbolicTools) tools;
@@ -118,8 +116,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			if (newInterferences instanceof DefaultInterferenceAbstraction) {
 				final DefaultInterferenceAbstraction def = (DefaultInterferenceAbstraction) newInterferences;
 				for (final String threadId : def.getThreadIds()) {
-					mLogger.info("  Thread %s: %d interferences", threadId,
-							def.getInterferencesProducedBy(threadId).size());
+					mLogger.info("  Thread %s: %d interferences", threadId, def.getInterferenceCount(threadId));
 				}
 			}
 
@@ -133,7 +130,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	private IterationResult analyzeAllThreads(final IInterferenceAbstraction interferences,
 			final Map<IcfgLocation, IPredicate> currentPredicates) {
-		final Map<IcfgLocation, IPredicate> combined = new HashMap<>();
+		final Map<IcfgLocation, IPredicate> combined = new HashMap<>(currentPredicates);
 		final Map<String, Map<IcfgLocation, IPredicate>> perThread = new HashMap<>();
 		final Map<String, IIcfg<IcfgLocation>> icfgs = new HashMap<>();
 
@@ -141,7 +138,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			final IIcfg<IcfgLocation> threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
 			icfgs.put(threadId, threadIcfg);
 
-			mConcurrentTools.configureForThread(threadId, interferences, currentPredicates, mBaseDomain);
+			mConcurrentTools.configureForThread(threadId, interferences, combined, mBaseDomain);
 			final IPredicate initialState = mConcurrentTools.getInitialStatePredicate(threadId);
 
 			final Map<IcfgLocation, IPredicate> threadResult = analyzeSingleThread(threadId, threadIcfg, initialState);
@@ -166,7 +163,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	}
 
 	private Set<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
-		final Set<String> ids = new HashSet<>();
+		final Set<String> ids = new LinkedHashSet<>();
 		ids.add(MAIN_THREAD);
 		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
 			ids.add(fork.getNameOfForkedProcedure());
