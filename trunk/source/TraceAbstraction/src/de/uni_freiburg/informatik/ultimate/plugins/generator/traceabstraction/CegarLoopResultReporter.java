@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NotAnalyzedResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
@@ -104,8 +105,8 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			case UNSAFE -> reportCounterexampleResult(errorLoc, localResult.getProgramExecution());
 			case TIMEOUT, USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM ->
 					reportLimitResult(errorLoc, localResult);
-			case UNKNOWN -> reportUnproveableResult(errorLoc, localResult.getProgramExecution(),
-					localResult.getUnprovabilityReasons());
+			case UNKNOWN -> reportUnknownResult(localResult.getUnprovabilityReasons(), errorLoc,
+					localResult.getProgramExecution());
 			}
 		}
 	}
@@ -157,6 +158,15 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	private void reportLimitResult(final IcfgLocation errorLoc, final CegarLoopLocalResult<L> result) {
 		final IResult res = constructLimitResult(mServices, result, errorLoc);
 		mReportFunction.accept(errorLoc, res);
+	}
+
+	private void reportUnknownResult(final List<UnprovabilityReason> unprovabilityReasons, final IcfgLocation errorLoc,
+			final IProgramExecution<L, Term> programExecution) {
+		if (unprovabilityReasons.isEmpty()) {
+			mReportFunction.accept(errorLoc, new NotAnalyzedResult<>(mPluginId, errorLoc));
+		} else {
+			reportUnproveableResult(errorLoc, programExecution, unprovabilityReasons);
+		}
 	}
 
 	private void reportUnproveableResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe,
