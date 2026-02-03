@@ -26,10 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -50,13 +52,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -97,18 +99,21 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	}
 
 	public void reportCegarLoopResult(final CegarLoopResult<L> clres) {
+		final List<Pair<IcfgLocation, IResult>> successfulfulResults = new ArrayList<>();
 		for (final Entry<IcfgLocation, CegarLoopLocalResult<L>> entry : clres.getResults().entrySet()) {
 			final CegarLoopLocalResult<L> localResult = entry.getValue();
 			final IcfgLocation errorLoc = entry.getKey();
 			switch (localResult.getResult()) {
-			case SAFE -> reportPositiveResult(errorLoc);
-			case UNSAFE -> reportCounterexampleResult(errorLoc, localResult.getProgramExecution());
+			case SAFE -> successfulfulResults.add(new Pair<>(errorLoc, getPositiveResult(errorLoc)));
+			case UNSAFE -> getCounterexampleResult(errorLoc, localResult.getProgramExecution())
+					.ifPresent(x -> successfulfulResults.add(new Pair<>(errorLoc, x)));
 			case TIMEOUT, USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM ->
-					reportLimitResult(errorLoc, localResult);
-			case UNKNOWN -> reportUnknownResult(localResult.getUnprovabilityReasons(), errorLoc,
-					localResult.getProgramExecution());
+					mReportFunction.accept(errorLoc, getLimitResult(localResult, errorLoc));
+			case UNKNOWN -> mReportFunction.accept(errorLoc, getUnknownResult(localResult.getUnprovabilityReasons(),
+					errorLoc, localResult.getProgramExecution()));
 			}
 		}
+		successfulfulResults.forEach(x -> mReportFunction.accept(x.getFirst(), x.getSecond()));
 	}
 
 	public void reportAllSafeResultIfNecessary(final CegarLoopResult<L> clres, final int numberOfErrorLocs) {
@@ -128,22 +133,20 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		mServices.getResultService().reportResult(mPluginId, res);
 	}
 
-	private void reportPositiveResult(final IcfgLocation errorLoc) {
-		final PositiveResult<IIcfgElement> pResult =
-				new PositiveResult<>(mPluginName, errorLoc, mServices.getBacktranslationService());
-		mReportFunction.accept(errorLoc, pResult);
+	private IResult getPositiveResult(final IcfgLocation errorLoc) {
+		return new PositiveResult<>(mPluginName, errorLoc, mServices.getBacktranslationService());
 	}
 
-	private void reportCounterexampleResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
+	private Optional<IResult> getCounterexampleResult(final IcfgLocation errorLoc,
+			final IProgramExecution<L, Term> pe) {
 		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
 		if (!upreasons.isEmpty()) {
-			reportUnproveableResult(errorLoc, pe, upreasons);
-			return;
+			return Optional.of(getUnproveableResult(errorLoc, pe, upreasons));
 		}
 		assert pe == null || errorLoc == getErrorPP(pe);
 		if (isAngelicallySafe(pe)) {
 			mLogger.info("Ignoring angelically safe counterexample for %s", errorLoc);
-			return;
+			return Optional.empty();
 		}
 		final Check check = Check.getAnnotation(errorLoc);
 		IResult cexResult;
@@ -152,33 +155,25 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		} else {
 			cexResult = new CounterExampleResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);
 		}
-		mReportFunction.accept(errorLoc, cexResult);
+		return Optional.of(cexResult);
 	}
 
-	private void reportLimitResult(final IcfgLocation errorLoc, final CegarLoopLocalResult<L> result) {
-		final IResult res = constructLimitResult(mServices, result, errorLoc);
-		mReportFunction.accept(errorLoc, res);
-	}
-
-	private void reportUnknownResult(final List<UnprovabilityReason> unprovabilityReasons, final IcfgLocation errorLoc,
+	private IResult getUnknownResult(final List<UnprovabilityReason> unprovabilityReasons, final IcfgLocation errorLoc,
 			final IProgramExecution<L, Term> programExecution) {
 		if (unprovabilityReasons.isEmpty()) {
-			mReportFunction.accept(errorLoc, new NotAnalyzedResult<>(mPluginId, errorLoc));
-		} else {
-			reportUnproveableResult(errorLoc, programExecution, unprovabilityReasons);
+			return new NotAnalyzedResult<>(mPluginId, errorLoc);
 		}
+		return getUnproveableResult(errorLoc, programExecution, unprovabilityReasons);
 	}
 
-	private void reportUnproveableResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe,
+	private IResult getUnproveableResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe,
 			final List<UnprovabilityReason> unprovabilityReasons) {
 		assert pe == null || errorLoc == getErrorPP(pe);
-		final IResult res = new UnprovableResult<>(mPluginName, errorLoc, mServices.getBacktranslationService(), pe,
+		return new UnprovableResult<>(mPluginName, errorLoc, mServices.getBacktranslationService(), pe,
 				unprovabilityReasons);
-		mReportFunction.accept(errorLoc, res);
 	}
 
-	private IResult constructLimitResult(final IUltimateServiceProvider services, final CegarLoopLocalResult<L> result,
-			final IcfgLocation errorIpp) {
+	private IResult getLimitResult(final CegarLoopLocalResult<L> result, final IcfgLocation errorIpp) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Unable to prove that ");
 		sb.append(Check.getAnnotation(errorIpp).getPositiveMessage());
@@ -194,11 +189,11 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		final Result resultCategory = result.getResult();
 		final IResult res;
 		if (resultCategory == Result.TIMEOUT) {
-			res = new TimeoutResultAtElement<>(errorIpp, mPluginName, services.getBacktranslationService(),
+			res = new TimeoutResultAtElement<>(errorIpp, mPluginName, mServices.getBacktranslationService(),
 					sb.toString());
 		} else {
 			res = new UserSpecifiedLimitReachedResultAtElement<IElement>(resultCategory.toString(), errorIpp,
-					mPluginName, services.getBacktranslationService(), result.getProgramExecution(), sb.toString());
+					mPluginName, mServices.getBacktranslationService(), result.getProgramExecution(), sb.toString());
 		}
 		return res;
 	}
