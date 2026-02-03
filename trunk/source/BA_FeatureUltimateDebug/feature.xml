@@ -9,8 +9,6 @@
 
    <requires>
       <import feature="BA_FeatureDependenciesDebugE4"/>
-      <import feature="BA_FeatureDependenciesCommon"/>
-      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin

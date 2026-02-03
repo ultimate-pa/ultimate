@@ -36,8 +36,6 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureDependenciesCommon"/>
-      <feature id="BA_FeatureUltimateCommon"/>
       <feature id="BA_FeatureWebBackend"/>
    </features>
 

@@ -48,8 +48,6 @@
 
    <features>
       <feature id="BA_FeatureUltimateDeltaDebugger"/>
-      <feature id="BA_FeatureUltimateCommon"/>
-      <feature id="BA_FeatureDependenciesCommon"/>
    </features>
 
    <configurations>
