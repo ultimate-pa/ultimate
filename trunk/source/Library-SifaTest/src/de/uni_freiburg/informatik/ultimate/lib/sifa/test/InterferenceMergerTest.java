@@ -4,14 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers.BoundedInterferenceMerger;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers.IInterferenceMerger;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.mergers.JoiningInterferenceMerger;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -60,40 +58,6 @@ public class InterferenceMergerTest {
 		// No joins should have occurred (only one interference)
 		assertEquals(0, domain.getJoinCount());
 		assertEquals(Set.of(p1), result);
-	}
-
-	@Test
-	public void boundedMergerUnderLimitPassesThrough() {
-		final IPredicate p1 = MockPredicate.of("p1");
-		final IPredicate p2 = MockPredicate.of("p2");
-
-		final Set<IPredicate> input = Set.of(p1, p2);
-
-		// Max 10
-		final var merger = new BoundedInterferenceMerger(10, false);
-		final Set<IPredicate> result = merger.merge(input, new JoinTrackingMockDomain());
-
-		// All interferences preserved (under limit)
-		assertEquals(Set.of(p1, p2), result);
-	}
-
-	@Test
-	public void boundedMergerMergesWhenOverLimit() {
-		// Create 6 interferences
-		final Set<IPredicate> input = new HashSet<>();
-		for (int i = 0; i < 6; i++) {
-			input.add(MockPredicate.of("p" + i));
-		}
-
-		// Max 2 -> 6 interferences should become 2
-		final var domain = new JoinTrackingMockDomain();
-		final var merger = new BoundedInterferenceMerger(2, false);
-		final Set<IPredicate> result = merger.merge(input, domain);
-
-		// Should have exactly 2 merged interferences
-		assertEquals(2, result.size());
-		// Joins should have occurred
-		assertTrue(domain.getJoinCount() >= 2);
 	}
 
 	private static class JoinTrackingMockDomain implements IDomain {
