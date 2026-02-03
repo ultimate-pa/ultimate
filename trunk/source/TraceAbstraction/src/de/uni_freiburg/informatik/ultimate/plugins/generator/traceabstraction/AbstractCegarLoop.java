@@ -814,10 +814,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 					unprovabilityReasons.addAll(UnprovabilityReason.getUnprovabilityReasons(programExecution));
 				}
 
-				if (unprovabilityReasons.isEmpty()) {
-					unprovabilityReasons.add(new UnprovabilityReason("Not analyzed"));
-				}
-
 			} else {
 				unprovabilityReasons = null;
 				assert reasonUnknown == null;
