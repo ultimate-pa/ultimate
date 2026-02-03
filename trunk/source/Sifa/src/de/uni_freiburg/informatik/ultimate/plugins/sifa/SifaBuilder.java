@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
@@ -117,7 +118,7 @@ public class SifaBuilder {
 			final var toolkit = icfg.getCfgSmtToolkit();
 			final var primedTable = new PrimedDefaultIcfgSymbolTable(toolkit.getSymbolTable(), toolkit.getProcedures(),
 					toolkit.getManagedScript());
-			return new SymbolicTools(mServices, stats, icfg, simplification, primedTable);
+			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);
 	}
