@@ -54,6 +54,8 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 						ExecutionTermintionReason.values()),
 				new UltimatePreferenceItem<>(SettingLabel.AGGREGATE_RESULTS_NUMBER.text(), 50, PreferenceType.Integer,
 						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+				new UltimatePreferenceItem<>(SettingLabel.STOP_AFTER_AGGREGARE_FULL.text(), true,
+						PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(SettingLabel.MIN_BITS.text(), 64, PreferenceType.Integer,
 						new IntegerValidator(4, 2048)),
@@ -82,12 +84,14 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 				+ " The executions are always passed to the next plug-in regardless of choice."),
 		PARTIAL_RESULTS_COUNT(
 				"Number of finished executions per output batch." + " (0 to output all executions at the end)"),
-		PARTIAL_RESULTS_STORE("If true, finished executions will be discarded after the batch is processed."
+		PARTIAL_RESULTS_STORE("If enabled, finished executions will be discarded after the batch is processed."
 				+ " They will not be passed to the next plug-in."),
 		AGGREGATE_RESULTS_TYPE("For batches that are discarded after printing,"
 				+ " some executions of this type will instead be stored and passed to the next plug-in."),
 		AGGREGATE_RESULTS_NUMBER("The maximum number of executions of the chosen type to pass to the next plug-in"
 				+ " if batches are discared after printing."),
+		STOP_AFTER_AGGREGARE_FULL("If enabled, "
+				+ "the plug-in will terminate as soon as the specified number of target executions is generated."),
 		MIN_BITS("Havoc numbers are between 0 and -2^x + 1. (Bounds of the ICFG take priority over this setting.)"),
 		MAX_BITS("Havoc numbers are between 0 and 2^x - 1. (Bounds of the ICFG take priority over this setting.)");
 

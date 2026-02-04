@@ -60,6 +60,7 @@ public class ExecutionProducer {
 	private int batchSize;
 	private final Set<IcfgLocation> mErrorLocations;
 	private boolean deleteBatch;
+	private boolean endIfAggregateFull;
 
 	public ExecutionProducer(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services,
 			final Set<IcfgLocation> errorLocations) {
@@ -118,6 +119,9 @@ public class ExecutionProducer {
 
 		deleteBatch = IcfgInterpreterPreferences.getPreferences()
 				.getBoolean(IcfgInterpreterPreferences.SettingLabel.PARTIAL_RESULTS_STORE.toString());
+
+		endIfAggregateFull = IcfgInterpreterPreferences.getPreferences()
+				.getBoolean(IcfgInterpreterPreferences.SettingLabel.STOP_AFTER_AGGREGARE_FULL.toString());
 
 		final int seed = IcfgInterpreterPreferences.getPreferences()
 				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTION_SEED.toString());
@@ -556,6 +560,11 @@ public class ExecutionProducer {
 	public void makeExecutions(final NonDeterministicChoice ndc, final IcfgLocation source,
 			final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> out,
 			final BiConsumer<Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>>, Set<IcfgLocation>> outMethod) {
+		// Do not create new executions if we have reached the required number
+		if (endIfAggregateFull && IcfgInterpreterObserver.getInstance().isAggregateFull()) {
+			return;
+		}
+
 		final ArrayDeque<PartialExecution> executions = new ArrayDeque<>();
 		executions.add(new PartialExecution(source, List.of(), List.of(makeState()), new HashMap<>(), null));
 
@@ -564,7 +573,10 @@ public class ExecutionProducer {
 			final Map<TermVariable, Value> state = execution.getCurrentState();
 
 			if (executionMaxLength != 0 && execution.edges.size() >= executionMaxLength) {
-				finalizeExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out, outMethod);
+				if (finalizeExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out, outMethod)
+						&& endIfAggregateFull) {
+					return;
+				}
 				continue;
 			}
 
@@ -573,13 +585,19 @@ public class ExecutionProducer {
 
 			final IcfgLocation currentLocation = execution.currentLocation;
 			if (mErrorMap.getOrDefault(currentLocation.getProcedure(), new HashSet<>()).contains(currentLocation)) {
-				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_ERROR), out, outMethod);
+				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_ERROR), out, outMethod)
+						&& endIfAggregateFull) {
+					return;
+				}
 				continue;
 			}
 
 			if (nextEdges.size() == 0) {
 				// No edges exist from the current vertex
-				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod);
+				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod)
+						&& endIfAggregateFull) {
+					return;
+				}
 				continue;
 			}
 
@@ -611,8 +629,10 @@ public class ExecutionProducer {
 					} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
 						unsupportedFound = true;
 						final PartialExecution failedExecution = execution.addStep(nextEdge, Map.of(), Map.of());
-						finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out,
-								outMethod);
+						if (finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED),
+								out, outMethod) && endIfAggregateFull) {
+							return;
+						}
 					}
 				}
 			}
@@ -635,14 +655,26 @@ public class ExecutionProducer {
 
 			// no more edges can be taken, and it was not because an edge could not be translated
 			if (((nextEdges.size() == 0 || !anyGuardTrue) && !unsupportedFound) && unsupportedFound) {
-				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod);
+				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod)
+						&& endIfAggregateFull) {
+					return;
+				}
 			}
 		}
 	}
 
 	private int storedFinalizedExecutions;
 
-	private void finalizeExecution(final PartialExecution execution,
+	/**
+	 * Cast Execution to IcfgProgramExecution and add it to output. May process the gathered IcfgProgramExecution batch
+	 * of outMap via the outMethod
+	 *
+	 * @param execution The execution to finalize
+	 * @param outMap    Maps TerminationReason to List of found Executions
+	 * @param outMethod Method with which to process a full batch
+	 * @return True if the required number of executions was found
+	 */
+	private boolean finalizeExecution(final PartialExecution execution,
 			final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> outMap,
 			final BiConsumer<Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>>, Set<IcfgLocation>> outMethod) {
 		// Execution must be finished
@@ -668,7 +700,11 @@ public class ExecutionProducer {
 			if (deleteBatch) {
 				outMap.forEach((x, list) -> list.clear());
 			}
+			if (IcfgInterpreterObserver.getInstance().isAggregateFull()) {
+				return true;
+			}
 		}
+		return false;
 	}
 
 	private record PartialExecution(IcfgLocation currentLocation, List<InterpretedIcfgEdge> edges,

@@ -47,6 +47,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private Set<IcfgLocation> mErrorLocations;
 	private ExecutionTermintionReason aggregateOutputType;
 	private int aggregateOutputCount;
+	private boolean mIsAggregateFull;
 	private static IcfgInterpreterObserver mInstance = null;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
@@ -82,6 +83,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mErrorLocations = Set.copyOf(IcfgUtils.getErrorLocations(mIcfg));
 				mExecutions = new HashMap<>();
 				mFinalResults = new HashMap<>();
+				mIsAggregateFull = false;
 				mAggregateExecutions = new ArrayList<>();
 				IcfgInterpreterPreferences.updatePreferences();
 				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices, mErrorLocations);
@@ -150,6 +152,10 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			}
 		}
 		return false;
+	}
+
+	public boolean isAggregateFull() {
+		return mIsAggregateFull;
 	}
 
 	private void outputBatch(final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> executions,
@@ -230,7 +236,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 
 	private void addBatchToAggregateResult(final ExecutionTermintionReason reason,
 			final List<IcfgProgramExecution<IcfgEdge>> executions) {
-		if (aggregateOutputType != reason) {
+		if (aggregateOutputType != reason || mIsAggregateFull) {
 			return;
 		}
 
@@ -241,6 +247,10 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			}
 			mAggregateExecutions.add(execution);
 			size++;
+		}
+		// We do not set this on the break condition because the loop may end exactly when the aggregate becomes full.
+		if (size == aggregateOutputCount) {
+			mIsAggregateFull = true;
 		}
 	}
 
