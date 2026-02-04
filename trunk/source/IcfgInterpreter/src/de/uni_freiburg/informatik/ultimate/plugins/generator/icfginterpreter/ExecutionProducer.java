@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
@@ -61,10 +62,12 @@ public class ExecutionProducer {
 	private final Set<IcfgLocation> mErrorLocations;
 	private boolean deleteBatch;
 	private boolean endIfAggregateFull;
+	private final IUltimateServiceProvider mServices;
 
 	public ExecutionProducer(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services,
 			final Set<IcfgLocation> errorLocations) {
 		mIcfg = icfg;
+		mServices = services;
 
 		final Set<? extends IcfgLocation> initialNodes = mIcfg.getInitialNodes();
 		mngScript = mIcfg.getCfgSmtToolkit().getManagedScript();
@@ -568,7 +571,11 @@ public class ExecutionProducer {
 		final ArrayDeque<PartialExecution> executions = new ArrayDeque<>();
 		executions.add(new PartialExecution(source, List.of(), List.of(makeState()), new HashMap<>(), null));
 
+		final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 		while (!executions.isEmpty()) {
+			if (!progmon.continueProcessing()) {
+				break;
+			}
 			final PartialExecution execution = executions.pop();
 			final Map<TermVariable, Value> state = execution.getCurrentState();
 
