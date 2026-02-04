@@ -116,7 +116,8 @@ public class IcfgDuplicator {
 			newIcfg.addLocation(newLoc, originalIcfg.getInitialNodes().contains(oldLoc), isError,
 					oldLoc.equals(originalIcfg.getProcedureEntryNodes().get(proc)),
 					oldLoc.equals(originalIcfg.getProcedureExitNodes().get(proc)),
-					originalIcfg.getLoopLocations().contains(oldLoc));
+					originalIcfg.getLoopLocations().contains(oldLoc),
+					originalIcfg.getLocationsOfInterest().contains(oldLoc));
 			mOld2NewLocationMap.put(oldLoc, newLoc);
 		}
 

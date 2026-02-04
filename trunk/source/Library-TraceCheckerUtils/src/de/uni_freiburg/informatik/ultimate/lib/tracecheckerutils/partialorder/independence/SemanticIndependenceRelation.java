@@ -109,6 +109,15 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 
+	// Dominik 2025-04-24: We globally disable auxvar elimination for now, as the overhead is quite horrible.
+	// The elimination was disabled before (in commit b1b9470223) but ignorantly enabled again (in commit 0918a82cb).
+	// The consequences can be seen in the significant CPU time increase for GemCutter from SV-COMP'24 to '25.
+	// Before enabling this again, please benchmark the impact, and don't forget to update this comment.
+	//
+	// Introducing this constant as a global switch allows us to preserve the logic below that is based on
+	// considerations about when elimination is at all worthwhile, in case it is ever enabled again.
+	private static final boolean ENABLE_AUXVAR_ELIMINATION = false;
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
@@ -278,10 +287,10 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		// Compose the two transition formulas in both orders.
 		// For the composition a*b, only spend time eliminating auxVars if it might be used on the right-hand side of an
 		// inclusion check, as auxVars on the left-hand side can be skolemized anyway.
-		final UnmodifiableTransFormula transFormulaAB = compose(tfA, tfB, mSymmetric);
-		// For the composition b*a, always try to eliminate auxVars, because it always appears on the right-hand side of
-		// an inclusion check.
-		final UnmodifiableTransFormula transFormulaBA = compose(tfB, tfA, true);
+		final UnmodifiableTransFormula transFormulaAB = compose(tfA, tfB, mSymmetric && ENABLE_AUXVAR_ELIMINATION);
+		// For the composition b*a, always try to eliminate auxVars (if elimination is globally enabled), because it
+		// always appears on the right-hand side of an inclusion check.
+		final UnmodifiableTransFormula transFormulaBA = compose(tfB, tfA, ENABLE_AUXVAR_ELIMINATION);
 
 		return new Pair<>(transFormulaAB, transFormulaBA);
 	}

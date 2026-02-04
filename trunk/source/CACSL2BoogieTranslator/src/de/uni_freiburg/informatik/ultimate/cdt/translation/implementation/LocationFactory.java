@@ -80,29 +80,22 @@ public class LocationFactory {
 	}
 
 	public static CACSLLocation createLocation(final CACSLLocation loc) {
-		if (loc instanceof ACSLLocation) {
-			final ACSLLocation realLoc = (ACSLLocation) loc;
-			return new ACSLLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation());
-		} else if (loc instanceof CLocation) {
-			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), realLoc.ignoreDuringBacktranslation(),
-					realLoc.getLineDirectiveMapping(), realLoc.getLineOffsetComputer());
-		} else {
-			throw new UnsupportedOperationException();
+		if (loc instanceof final ACSLLocation acsl) {
+			return new ACSLLocation(acsl.getNode(), acsl.ignoreDuringBacktranslation());
+		} else if (loc instanceof final CLocation cloc) {
+			return cloc.copy();
 		}
+		throw new UnsupportedOperationException();
 	}
 
 	public static CACSLLocation createIgnoreLocation(final ILocation loc) {
-		if (loc instanceof ACSLLocation) {
-			final ACSLLocation realLoc = (ACSLLocation) loc;
+		if (loc instanceof final ACSLLocation realLoc) {
 			return new ACSLLocation(realLoc.getNode(), true);
-		} else if (loc instanceof CLocation) {
-			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), true, realLoc.getLineDirectiveMapping(),
-					realLoc.getLineOffsetComputer());
-		} else {
-			throw new UnsupportedOperationException();
 		}
+		if (loc instanceof final CLocation cloc) {
+			return cloc.createIgnoreCopy();
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	/**

@@ -142,10 +142,10 @@ public class HybridIcfgGenerator {
 
 		// root location of the ICFG, to this root location each sub-icfg will
 		// be connected.
-		icfg.addLocation(mRootLocation, true, false, true, false, false);
+		icfg.addLocation(mRootLocation, true, false, true, false, false, false);
 
 		// error location
-		icfg.addLocation(mErrorLocation, false, true, false, true, false);
+		icfg.addLocation(mErrorLocation, false, true, false, true, false, false);
 
 		// push the remaining locations into the icfg
 		mCfgComponents.forEach((id, comp) -> {
@@ -459,13 +459,13 @@ public class HybridIcfgGenerator {
 		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, IcfgLocation.class);
 
 		final IcfgLocation startLoc = new IcfgLocation(new StringDebugIdentifier("start"), "MAIN");
-		icfg.addLocation(startLoc, true, false, true, false, false);
+		icfg.addLocation(startLoc, true, false, true, false, false, false);
 
 		final IcfgLocation middleLoc = new IcfgLocation(new StringDebugIdentifier("middle"), "MAIN");
-		icfg.addLocation(middleLoc, false, false, false, false, false);
+		icfg.addLocation(middleLoc, false, false, false, false, false, false);
 
 		final IcfgLocation endLoc = new IcfgLocation(new StringDebugIdentifier("error"), "MAIN");
-		icfg.addLocation(endLoc, false, true, false, true, false);
+		icfg.addLocation(endLoc, false, true, false, true, false, false);
 
 		// Every procedure must have a unique entry and a unique exit. It is not
 		// allowed to have more than one exit (or

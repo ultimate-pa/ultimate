@@ -182,11 +182,9 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				continue;
 			}
 
-			try {
-				final String[] command = { "python", mScriptFile.getPath(), "-o",
-						mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + j + mOutputFileExtension };
-
-				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
+			final String[] command = { "python", mScriptFile.getPath(), "-o",
+					mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + j + mOutputFileExtension };
+			try (final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices)) {
 				final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 				writer.write(jsonString(mPatternName + "_" + mScopeName, observables));
 				writer.close();

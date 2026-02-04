@@ -274,9 +274,10 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 		final boolean isProcExit = oldLoc.equals(icfg.getProcedureExitNodes().get(proc));
 		final boolean isLoopLocation = icfg.getLoopLocations().contains(oldLoc);
 		final boolean isInitial = icfg.getInitialNodes().contains(oldLoc);
+		final boolean isLocationsOfInterest = icfg.getLocationsOfInterest().contains(oldLoc);
 
 		// add fresh location to resultIcfg
-		icfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+		icfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation, isLocationsOfInterest);
 
 		return freshLoc;
 	}

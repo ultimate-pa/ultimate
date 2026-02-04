@@ -148,10 +148,6 @@ public final class SFO {
 	 */
 	public static final String OFFSET = "#offset~";
 	/**
-	 * Identifier for the sizeof-pointer-constant.
-	 */
-	public static final String SIZEOF_POINTER_ID = SFO.SIZEOF + SFO.POINTER;
-	/**
 	 * Identifier for function pointers.
 	 */
 	public static final String FUNCTION_ADDRESS = "#funAddr~";
@@ -163,6 +159,15 @@ public final class SFO {
 	 * Prefix for all auxiliary functions that we add to the Boogie program, e.g., bitwise and will be ~bvand.
 	 */
 	public static final String AUXILIARY_FUNCTION_PREFIX = "~";
+
+	/**
+	 * The "~size" variable identifier.
+	 */
+	public static final String SIZE = "~size";
+	/**
+	 * The "~addr" variable identifier.
+	 */
+	public static final String ADDR = "~addr";
 
 	/**
 	 * combined SFOs for memory arrays:
@@ -222,6 +227,14 @@ public final class SFO {
 	public static final String VARARGS = "#varArgs";
 
 	public static final String GHOST = "#ghost~";
+
+	public static final String STACK_HEAP_BARRIER = "#StackHeapBarrier";
+
+	public static final String INITIAL_ALLOCATIONS = "#InitialAllocations";
+
+	public static final String STACK_ALLOCATIONS = "#StackAllocations";
+
+	public static final String HEAP_ALLOCATIONS = "#HeapAllocations";
 
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.

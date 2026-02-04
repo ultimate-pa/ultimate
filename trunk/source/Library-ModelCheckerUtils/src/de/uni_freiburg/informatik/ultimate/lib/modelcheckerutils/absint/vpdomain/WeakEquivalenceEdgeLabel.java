@@ -40,6 +40,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
@@ -464,9 +465,9 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 		assert !inplace || !isFrozen();
 
 		WeakEquivalenceEdgeLabel<NODE> originalThis = null;
-		if (WeqCcManager.areAssertsEnabled() && inplace) {
+		if (VMUtils.areAssertionsEnabled() && inplace) {
 			originalThis = mWeqCcManager.copy(this, true, true);
-		} else if (WeqCcManager.areAssertsEnabled() && !inplace) {
+		} else if (VMUtils.areAssertionsEnabled() && !inplace) {
 			originalThis = this;
 		}
 

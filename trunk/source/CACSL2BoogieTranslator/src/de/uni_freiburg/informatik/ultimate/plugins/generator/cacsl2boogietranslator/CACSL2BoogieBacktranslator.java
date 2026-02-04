@@ -28,7 +28,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,8 +66,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
@@ -76,8 +73,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer1D;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointer2D;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
@@ -100,8 +99,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslate
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BacktranslatedACSLValue.BacktranslatedExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BacktranslatedACSLValue.FakePointer;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -126,10 +123,11 @@ public class CACSL2BoogieBacktranslator extends
 	private boolean mGenerateBacktranslationWarnings;
 	private boolean mBacktranslationWarned;
 	private final Boogie2ACSL mBoogie2ACSL;
+	private final IBacktranslationPointer mBacktranslationPointer;
 
 	public CACSL2BoogieBacktranslator(final IUltimateServiceProvider services, final TypeSizes typeSizes,
 			final CACSL2BoogieBacktranslatorMapping mapping, final LocationFactory locationFactory,
-			final FlatSymbolTable symbolTable) {
+			final FlatSymbolTable symbolTable, final IMemoryPointer pointer) {
 		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, BacktranslatedACSLValue.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -137,6 +135,15 @@ public class CACSL2BoogieBacktranslator extends
 		mGenerateBacktranslationWarnings = true;
 		mBacktranslationWarned = false;
 		mLocationFactory = locationFactory;
+
+		if (pointer instanceof MemoryPointer1D) {
+			mBacktranslationPointer = new BacktranslationPointer1D(this);
+		} else if (pointer instanceof MemoryPointer2D) {
+			mBacktranslationPointer = new BacktranslationPointer2D(this);
+		} else {
+			throw new UnsupportedOperationException("Unknown pointer type: " + pointer.getClass());
+		}
+
 		mBoogie2ACSL = new Boogie2ACSL(typeSizes, mapping, symbolTable, this::reportUnfinishedBacktranslation);
 	}
 
@@ -570,7 +577,7 @@ public class CACSL2BoogieBacktranslator extends
 			// cannot translate nothin'
 			return null;
 		}
-		final Map<Expression, Collection<ExpressionOrPointer>> compressedProgramState =
+		final Map<Expression, Collection<IExpressionOrPointer>> compressedProgramState =
 				compressProgramState(programState);
 
 		// Suppress backtranslation warnings for program states
@@ -589,7 +596,7 @@ public class CACSL2BoogieBacktranslator extends
 
 	}
 
-	private void translateProgramStateEntry(final Map.Entry<Expression, Collection<ExpressionOrPointer>> entry,
+	private void translateProgramStateEntry(final Map.Entry<Expression, Collection<IExpressionOrPointer>> entry,
 			final Map<BacktranslatedACSLValue, Collection<BacktranslatedACSLValue>> translatedStateMap) {
 		// first, translate name
 		final BacktranslatedExpression newVarName = translateExpression(entry.getKey());
@@ -599,7 +606,7 @@ public class CACSL2BoogieBacktranslator extends
 
 		// then, translate values
 		final Collection<BacktranslatedACSLValue> newVarValues = new ArrayList<>();
-		for (final ExpressionOrPointer varValue : entry.getValue()) {
+		for (final IExpressionOrPointer varValue : entry.getValue()) {
 			final BacktranslatedACSLValue newVarValue = translateExpressionForProgramState(varValue);
 			if (newVarValue != null) {
 				newVarValues.add(newVarValue);
@@ -616,40 +623,35 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	/**
-	 * Replace separate values for base and offset of a pointer with one {@link PointerValue}
+	 * Replace separate values for pointers with a single one.
 	 *
 	 * @param programState
 	 *            May not be null
 	 */
-	private Map<Expression, Collection<ExpressionOrPointer>>
+	private Map<Expression, Collection<IExpressionOrPointer>>
 			compressProgramState(final ProgramState<Expression> programState) {
 		final List<Pair<Expression, Collection<Expression>>> oldEntries = new ArrayList<>();
-		final List<Pair<Expression, Collection<ExpressionOrPointer>>> newEntries = new ArrayList<>();
 
 		for (final Expression var : programState.getVariables()) {
 			final Pair<Expression, Collection<Expression>> entry = new Pair<>(var, programState.getValues(var));
 			oldEntries.add(entry);
 		}
 
-		// collect all pointers
-		var extractedPointer = extractTemporaryPointerExpression(oldEntries);
-		while (extractedPointer != null) {
-			newEntries.add(extractedPointer);
-			extractedPointer = extractTemporaryPointerExpression(oldEntries);
-		}
+		final List<Pair<Expression, Collection<IExpressionOrPointer>>> newEntries =
+				mBacktranslationPointer.collectAllPointers(oldEntries);
 
 		// wrap non-pointers
 		for (final var oldEntry : oldEntries) {
 			final var wrappedValues =
-					oldEntry.getValue().stream().<ExpressionOrPointer> map(WrappedExpression::new).toList();
+					oldEntry.getValue().stream().<IExpressionOrPointer> map(WrappedExpression::new).toList();
 			newEntries.add(new Pair<>(oldEntry.getFirst(), wrappedValues));
 		}
 
 		// merge duplicates and collect everything in a Map
-		final Map<Expression, Collection<ExpressionOrPointer>> map = new HashMap<>();
-		for (final Pair<Expression, Collection<ExpressionOrPointer>> entry : newEntries) {
-			final Collection<ExpressionOrPointer> newValues = entry.getSecond();
-			final Collection<ExpressionOrPointer> oldValues = map.put(entry.getFirst(), entry.getSecond());
+		final Map<Expression, Collection<IExpressionOrPointer>> map = new HashMap<>();
+		for (final Pair<Expression, Collection<IExpressionOrPointer>> entry : newEntries) {
+			final Collection<IExpressionOrPointer> newValues = entry.getSecond();
+			final Collection<IExpressionOrPointer> oldValues = map.put(entry.getFirst(), entry.getSecond());
 			if (oldValues != null) {
 				newValues.addAll(oldValues);
 			}
@@ -658,73 +660,12 @@ public class CACSL2BoogieBacktranslator extends
 		return map;
 	}
 
-	private Pair<Expression, Collection<ExpressionOrPointer>>
-			extractTemporaryPointerExpression(final List<Pair<Expression, Collection<Expression>>> oldEntries) {
-		// Find pointer base expressions in oldEntries, merge them with matching pointer offset expressions,
-		// and move the combined expression to newEntries.
-		// (We do a reversed by-index iteration over oldEntries so we can safely call remove() for the index.)
-		for (int i = oldEntries.size() - 1; i >= 0; i--) {
-			final Pair<Expression, Collection<Expression>> entry = oldEntries.get(i);
-
-			// Check if the current entry is the base of a pointer struct
-			final var pointerVariable = PointerVariable.fromBaseExpression(entry.getFirst());
-			if (pointerVariable == null) {
-				continue;
-			}
-
-			// Find a matching offset expression for the same pointer struct.
-			// (We do a reversed by-index iteration over oldEntries so we can safely call remove() for the offset.)
-			for (int j = oldEntries.size() - 1; j >= 0; j--) {
-				final Pair<Expression, Collection<Expression>> otherentry = oldEntries.get(j);
-				if (!pointerVariable.isMatchingPointerOffset(otherentry.getFirst())) {
-					continue;
-				}
-
-				if (entry.getSecond().size() != 1 || otherentry.getSecond().size() != 1) {
-					reportUnfinishedBacktranslation("Pointers with multiple values");
-				}
-				final var valueBase = DataStructureUtils.getOneAndOnly(entry.getSecond(), "pointer base");
-				final var valueOffset = DataStructureUtils.getOneAndOnly(otherentry.getSecond(), "pointer offset");
-				final var pointerValue = new PointerValue(valueBase, valueOffset);
-
-				// Remove the now obsolete entries.
-				oldEntries.remove(entry);
-				oldEntries.remove(otherentry);
-
-				// must be a mutable list, so do not use List.of(pointerValue) here
-				final var values = new ArrayList<ExpressionOrPointer>();
-				values.add(pointerValue);
-				return new Pair<>(pointerVariable.toExpression(), values);
-			}
-		}
-		return null;
-	}
-
-	private BacktranslatedACSLValue translateExpressionForProgramState(final ExpressionOrPointer expression) {
+	private BacktranslatedACSLValue translateExpressionForProgramState(final IExpressionOrPointer expression) {
 		return switch (expression) {
-		case final PointerValue pointer -> translatePointer(pointer);
+		case final IPointerValue pointer -> mBacktranslationPointer.translatePointer(pointer);
 		case WrappedExpression(final var expr) -> translateExpression(expr);
+		default -> throw new IllegalArgumentException("Unexpected value: " + expression);
 		};
-	}
-
-	private FakePointer translatePointer(final PointerValue pointer) {
-		final BacktranslatedExpression base = translateExpression(pointer.base());
-		if (!base.range().isSingleton()) {
-			reportUnfinishedBacktranslation("Pointer with non-unique base value");
-			return null;
-		}
-		final BigInteger baseValue = base.range().getMinValue();
-
-		final BacktranslatedExpression offset = translateExpression(pointer.offset());
-		if (!offset.range().isSingleton()) {
-			reportUnfinishedBacktranslation("Pointer with non-unique base value");
-			return null;
-		}
-		final BigInteger offsetValue = offset.range().getMinValue();
-
-		// Create a value like {base:offset}
-		// This is not a real ACSL expression, so we wrap it into FakePointer.
-		return new FakePointer(baseValue, offsetValue);
 	}
 
 	@Override
@@ -734,8 +675,8 @@ public class CACSL2BoogieBacktranslator extends
 		// printCFG(cfg, mLogger::info);
 		final boolean oldValue = mGenerateBacktranslationWarnings;
 		mGenerateBacktranslationWarnings = false;
-		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, this::translateCFGEdge,
-				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger, mServices));
+		IBacktranslatedCFG<String, CACSLLocation> translated =
+				translateCFG(cfg, this::translateCFGEdge, (a, b, c) -> new CACSLBacktranslatedCFG(a, b, c));
 		translated = reduceCFGs(translated);
 		// mLogger.info("################# Output: " + translated.getClass().getSimpleName());
 		// printHondas(translated, mLogger::info);
@@ -920,7 +861,7 @@ public class CACSL2BoogieBacktranslator extends
 		return translateExpressionWithContext(expression, null);
 	}
 
-	private void reportUnfinishedBacktranslation(final String message) {
+	public void reportUnfinishedBacktranslation(final String message) {
 		if (DEBUG_ERROR_FOR_UNFINISHED_BACKTRANSLATION) {
 			throw new AssertionError(UNFINISHED_BACKTRANSLATION + ": " + message);
 		}
@@ -1080,73 +1021,23 @@ public class CACSL2BoogieBacktranslator extends
 		}
 	}
 
-	/**
-	 * Represents a pointer struct variable in Boogie.
-	 *
-	 * This class is only used to represent variables (keys in the program state). For values of pointer structs, use
-	 * {@link PointerValue} instead.
-	 */
-	private record PointerVariable(ILocation loc, IdentifierExpression rawPointer, boolean isOld) {
-		/**
-		 * Checks if the given expression is the base of a pointer struct and returns the corresponding
-		 * {@link PointerVariable} if so. Otherwise, returns {@code null}.
-		 */
-		private static PointerVariable fromBaseExpression(final Expression expr) {
-			if (expr instanceof final IdentifierExpression id && id.getIdentifier().endsWith(SFO.POINTER_BASE)) {
-				final String baseName = id.getIdentifier();
-				final String pointerName = baseName.substring(0, baseName.length() - SFO.POINTER_BASE.length() - 1);
-				final var pointer = new IdentifierExpression(id.getLoc(), id.getType(), pointerName,
-						id.getDeclarationInformation());
-				return new PointerVariable(pointer.getLoc(), pointer, false);
-			}
-			if (expr instanceof final UnaryExpression unary && unary.getOperator() == Operator.OLD) {
-				final var underlying = fromBaseExpression(unary.getExpr());
-				if (underlying != null) {
-					return new PointerVariable(unary.getLoc(), underlying.rawPointer(), true);
-				}
-			}
-			return null;
-		}
-
-		/**
-		 * Checks if the given expression is a variable representing an offset for this pointer variable.
-		 */
-		private boolean isMatchingPointerOffset(final Expression expr) {
-			if (isOld() && expr instanceof final UnaryExpression uExpr) {
-				return uExpr.getOperator() == Operator.OLD && asNonOld().isMatchingPointerOffset(uExpr.getExpr());
-			}
-			if (!isOld() && expr instanceof final IdentifierExpression idExpr) {
-				final var identifier = idExpr.getIdentifier();
-				return identifier.startsWith(rawPointer().getIdentifier()) && identifier.endsWith(SFO.POINTER_OFFSET);
-			}
-			return false;
-		}
-
-		private Expression toExpression() {
-			if (isOld) {
-				return new UnaryExpression(loc, Operator.OLD, rawPointer);
-			}
-			return rawPointer;
-		}
-
-		private PointerVariable asNonOld() {
-			return new PointerVariable(rawPointer.getLoc(), rawPointer, false);
-		}
-	}
-
-	private sealed interface ExpressionOrPointer permits WrappedExpression, PointerValue {
+	public interface IExpressionOrPointer {
 		// empty
 	}
 
-	private record WrappedExpression(Expression expr) implements ExpressionOrPointer {
+	private record WrappedExpression(Expression expr) implements IExpressionOrPointer {
 		// empty
 	}
 
-	/**
-	 * Represents a pair of values forming a pointer struct in Boogie.
-	 */
 	// TODO Shouldn't this already be reassembled in BoogiePreprocessor backtranslation?
-	private record PointerValue(Expression base, Expression offset) implements ExpressionOrPointer {
+	public interface IPointerValue extends IExpressionOrPointer {
 		// empty
+	}
+
+	public interface IBacktranslationPointer {
+		List<Pair<Expression, Collection<IExpressionOrPointer>>>
+				collectAllPointers(List<Pair<Expression, Collection<Expression>>> oldEntries);
+
+		BacktranslatedACSLValue translatePointer(final IPointerValue pointer);
 	}
 }

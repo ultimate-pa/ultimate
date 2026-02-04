@@ -35,13 +35,13 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
-import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -169,10 +169,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CCharacterConstant;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
@@ -180,7 +181,27 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AssertLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AtomicLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FunctionModelHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.GccBuiltinLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LimitsLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LinuxLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.MathLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.PthreadLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.SetjmpLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.SocketLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StdboolLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StdintLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StdioLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StdlibLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StringLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.SvcompLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.TimeLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.VariadicLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -237,7 +258,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -291,7 +312,7 @@ public class CHandler {
 	private final ILogger mLogger;
 
 	private final List<LTLExpressionExtractor> mGlobAcslExtractors;
-	private final StandardFunctionHandler mStandardFunctionHandler;
+	private final LibraryModelHandler mLibraryModelHandler;
 
 	private final ITypeHandler mTypeHandler;
 
@@ -386,6 +407,8 @@ public class CHandler {
 	private boolean mIsConcurrent;
 	private boolean mHasThreadLocalVars;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -400,7 +423,8 @@ public class CHandler {
 			final LocationFactory locationFactory, final TypeSizes typeSizes,
 			final Set<IASTDeclaration> reachableDeclarations, final ITypeHandler typeHandler,
 			final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final StaticObjectsHandler staticObjectsHandler, final Set<String> functions) {
+			final StaticObjectsHandler staticObjectsHandler, final Set<String> functions,
+			final IMemoryPointer pointer) {
 		mExpressionTranslation = exprTrans;
 		mIsPrerun = true;
 
@@ -416,6 +440,7 @@ public class CHandler {
 		mNameHandler = nameHandler;
 		mStaticObjectsHandler = staticObjectsHandler;
 		mFunctionTable = functionTable;
+		mMemoryPointer = pointer;
 
 		mFunctions = new LinkedHashSet<>(functions);
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -437,32 +462,31 @@ public class CHandler {
 
 		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, mProcedureManager);
 		mMemoryHandler = new MemoryHandler(mTypeSizes, mNameHandler, settings.useSmtBoolArrayWorkaround(), mTypeHandler,
-				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings);
+				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings,
+				mMemoryPointer);
 
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
 						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
-								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), true)
+								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations())
 						: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, mProcedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
-				mExprResultTransformer, mVariablesOnHeap);
+				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
-				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
-
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
-				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
-		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, functionTable, mAuxVarInfoBuilder, mNameHandler,
-				mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, mProcedureManager, mReporter, mTypeSizes,
-				mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler, mCExpressionTranslator,
-				mDataRaceChecker);
+				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mMemoryPointer);
+		mLibraryModelHandler = new LibraryModelHandler(mLogger, functionTable, mSymbolTable,
+				mSettings.checkErrorFunction(), mLocationFactory, getLibraryModels());
+		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
@@ -506,6 +530,7 @@ public class CHandler {
 		mFunctions = prerunCHandler.mFunctions;
 		mBacktranslator = prerunCHandler.mBacktranslator;
 		mLocationFactory = prerunCHandler.mLocationFactory;
+		mMemoryPointer = prerunCHandler.mMemoryPointer;
 
 		// reuse these parts of the old CHandler that do not have state that was created
 		// during the prerun
@@ -539,29 +564,28 @@ public class CHandler {
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
 						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
-								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), false)
+								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations())
 						: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, procedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
-				mExprResultTransformer, mVariablesOnHeap);
+				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
-				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
-				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
-		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, prerunCHandler.mFunctionTable,
-				mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler, mTypeSizeComputer,
-				procedureManager, mReporter, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer,
-				mLocationFactory, mTypeHandler, mCExpressionTranslator, mDataRaceChecker);
+				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mMemoryPointer);
+		mLibraryModelHandler = new LibraryModelHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable,
+				mSettings.checkErrorFunction(), mLocationFactory, getLibraryModels());
+		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
-		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryMethod());
+		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryFunction());
 		copyGlobalsFromPrerun(prerunCHandler.mSymbolTable);
 	}
 
@@ -589,6 +613,40 @@ public class CHandler {
 			}
 			mSymbolTable.storeCSymbol(hook, id, stv);
 		}
+	}
+
+	private List<ILibraryModel> getLibraryModels() {
+		final FunctionModelHelper helper =
+				new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
+						mTypeHandler, mSettings.getFunctionsCheckedForMemoryNeutrality().contains("main"),
+						mSettings.isSvcompMemtrackCompatibilityMode(), mMemoryPointer);
+
+		return List.of(new AssertLibraryModel(helper, mExprResultTransformer, mSettings.checkAssertions()),
+				new AtomicLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
+				new FenvLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
+				new GccBuiltinLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder,
+						mMemoryHandler, mTypeSizeComputer),
+				new LinuxLibraryModel(helper, mAuxVarInfoBuilder, mExprResultTransformer, mTypeSizes,
+						mExpressionTranslation),
+				new MathLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mCExpressionTranslator,
+						mNameHandler, mAuxVarInfoBuilder),
+				new PthreadLibraryModel(helper, mSymbolTable, mAuxVarInfoBuilder, mExprResultTransformer,
+						mExpressionTranslation, mMemoryHandler, mTypeHandler, mTypeSizes, mProcedureManager,
+						mMemoryPointer),
+				new SetjmpLibraryModel(helper, mExpressionTranslation), new SocketLibraryModel(helper),
+				new StdioLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mExpressionTranslation,
+						mTypeSizes, mMemoryHandler, mDataRaceChecker, mTypeHandler),
+				new StdlibLibraryModel(helper, mExprResultTransformer, mTypeSizes, mTypeSizeComputer,
+						mExpressionTranslation, mAuxVarInfoBuilder, mMemoryHandler, mProcedureManager, mNameHandler,
+						mSettings.checkSignedIntegerBounds()),
+				new StringLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
+						mProcedureManager, mExpressionTranslation, mTypeSizeComputer, mMemoryPointer),
+				new SvcompLibraryModel(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,
+						mSettings.checkErrorFunction(), mExprResultTransformer),
+				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
+				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
+						mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
+				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper));
 	}
 
 	/**
@@ -657,7 +715,6 @@ public class CHandler {
 
 		// (alex:) new function pointers
 		int offset = 0;
-		final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 		for (final String f : mFunctions) {
 			final String funcId = SFO.FUNCTION_ADDRESS + f;
 			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
@@ -668,10 +725,11 @@ public class CHandler {
 					mTypeHandler.getBoogiePointerType(), funcId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 			final BigInteger offsetValue = BigInteger.valueOf(offset);
+			final var funcPtr = mMemoryHandler.createFunctionPointer(loc, offsetValue);
+
 			mDeclarations.add(new Axiom(loc, new Attribute[0],
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, funcIdExpr,
-							mExpressionTranslation.constructPointerForIntegerValues(loc,
-									functionPointerPointerBaseValue, offsetValue))));
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, funcIdExpr, funcPtr)));
+
 			offset++;
 		}
 
@@ -687,15 +745,14 @@ public class CHandler {
 		// constants for initializations
 		mDeclarations.addAll(mTypeSizeComputer.getConstants());
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
-		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, mDataRaceChecker));
-		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure());
+		mDeclarations.addAll(mMemoryHandler.declareMemoryStructureInfrastructure(this, loc, mDataRaceChecker));
+
 		if (mDataRaceChecker != null) {
 			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
 		}
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
-		mDeclarations.addAll(
-				((TypeHandler) mTypeHandler).constructTranslationDefinedDeclarations(loc, mExpressionTranslation));
+		mDeclarations.add(mMemoryPointer.getTypeDeclaration(loc));
 
 		/**
 		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}. Short
@@ -705,8 +762,8 @@ public class CHandler {
 		 * <li>now we recompute the declarations, in order to give them correct modifies clauses and insert them into
 		 * the Boogie program
 		 *
-		 * have to block this in prerun, because there, memory model is not declared which may cause problems with the
-		 * call graph computation
+		 * have to block this in prerun, because there, Memory Structure is not declared which may cause problems with
+		 * the call graph computation
 		 */
 		if (!mIsPrerun) {
 			// handle proc. declaration & resolve their transitive modified globals
@@ -1066,15 +1123,15 @@ public class CHandler {
 		exprWithType = mExprResultTransformer.makeRepresentationReadyForConversion(exprWithType, loc, newCType, node);
 		checkUnsupportedPointerCast(exprWithType, loc, newCType);
 
-		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts() && mIsPrerun) {
-			checkIfNecessaryMemoryModelAdaption(loc, newCType, exprWithType);
+		if (mSettings.isAdaptMemoryStructureResolutionOnPointerCasts() && mIsPrerun) {
+			checkIfNecessaryMemoryStructureAdaption(loc, newCType, exprWithType);
 		}
 
 		exprWithType = mExprResultTransformer.rexBoolToInt(exprWithType, loc);
 		return mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
 	}
 
-	private void checkIfNecessaryMemoryModelAdaption(final ILocation loc, final ICType castTargetType,
+	private void checkIfNecessaryMemoryStructureAdaption(final ILocation loc, final ICType castTargetType,
 			final ExpressionResult operand) {
 		final ICType operandType = operand.getLrValue().getCType().getUnderlyingType();
 		if (!(operandType instanceof CArray) && !(operandType instanceof CPointer)
@@ -1147,12 +1204,12 @@ public class CHandler {
 		final BigInteger requiredByteSize = castTargetByteSize.min(operandTypeByteSize);
 
 		final String msg;
-		if (mSettings.getMemoryModelPreference() == MemoryModel.HoenickeLindenmann_Original) {
+		if (mSettings.getMemoryStructurePreference() == MemoryStructure.HoenickeLindenmann_Original) {
 			// memory model has no resolution and the operand is
 			// cast to a type of a different size
 			msg = "Found a cast between two array/pointer types of different sizes while using memory model "
-					+ MemoryModel.HoenickeLindenmann_Original;
-		} else if (BigInteger.valueOf(mSettings.getMemoryModelPreference().getByteSize())
+					+ MemoryStructure.HoenickeLindenmann_Original;
+		} else if (BigInteger.valueOf(mSettings.getMemoryStructurePreference().getByteSize())
 				.compareTo(requiredByteSize) > 0) {
 			// memory model resolution is strictly bigger than the minimum of the size of
 			// the operand and the target
@@ -1166,12 +1223,12 @@ public class CHandler {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(msg);
 			mLogger.debug(" at location: " + loc);
-			mLogger.debug(" current memory model: " + mSettings.getMemoryModelPreference());
+			mLogger.debug(" current memory model: " + mSettings.getMemoryStructurePreference());
 		}
 		// signal a restart of the translation with a memory model precise
 		// enough for the operands
 		signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(loc, msg,
-				MemoryModel.getPreciseEnoughMemoryModelFor(requiredByteSize.intValueExact())));
+				MemoryStructure.getPreciseEnoughMemoryStructureFor(requiredByteSize.intValueExact())));
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {
@@ -1281,11 +1338,10 @@ public class CHandler {
 		final String declName;
 		final ICType cType;
 		ResultWithSideEffects sideEffects = null;
-		if (node instanceof IASTArrayDeclarator) {
-			final IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
-
-			// the innermost type is the value type..
+		if (node instanceof final IASTArrayDeclarator arrDecl) {
+			// the innermost type is the value type.
 			ICType arrayType = resType.getCType();
+			final CPrimitive boundType = mExpressionTranslation.getCTypeOfPointerComponents();
 
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
@@ -1294,16 +1350,15 @@ public class CHandler {
 					Arrays.asList(arrDecl.getArrayModifiers()).listIterator(arrDecl.getArrayModifiers().length);
 			while (it.hasPrevious()) {
 				final IASTArrayModifier am = it.previous();
-				final RValue sizeFactor;
+				final Expression bound;
 				if (am.getConstantExpression() != null) {
 					// case where we have a number between the brackets,
 					// e.g., a[23] or a[n+1]
 					final ExpressionResult dispatched = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					final ExpressionResult switched = mExprResultTransformer.switchToRValue(dispatched, loc, node);
-					final ExpressionResult converted =
-							mExpressionTranslation.convertIntToInt(loc, switched, mTypeSizes.getSizeT());
+					final ExpressionResult converted = mExpressionTranslation.convertIntToInt(loc, switched, boundType);
 					expressionResults.add(converted);
-					sizeFactor = (RValue) converted.getLrValue();
+					bound = converted.getLrValue().getValue();
 				} else if (am.getConstantExpression() == null
 						&& arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
 					// the innermost array modifier may be empty, if there is an initializer; like
@@ -1314,6 +1369,8 @@ public class CHandler {
 							throw new UnsupportedOperationException("expected IASTEqualsInitializer");
 						}
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) arrDecl.getInitializer());
+						bound = mTypeSizes.constructLiteralForIntegerType(loc, boundType,
+								BigInteger.valueOf(intSizeFactor));
 					} else if (resType.getCType() instanceof CFunction) {
 						// if we have an array of function pointers,
 						// the initializer is stored in the parent node
@@ -1326,26 +1383,18 @@ public class CHandler {
 							throw new UnsupportedOperationException("expected initializer");
 						}
 						intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) fundecl.getInitializer());
+						bound = mTypeSizes.constructLiteralForIntegerType(loc, boundType,
+								BigInteger.valueOf(intSizeFactor));
 					} else {
 						// we have an incomplete array type without an initializer --
-						// this may happen in a function parameter..
-						intSizeFactor = CArray.INCOMPLETE_ARRY_MAGIC_NUMBER;
+						// this may happen in a function parameter or as a flexible array in structs
+						bound = null;
 					}
-					// Index type of the array. All C expressions that access the array are
-					// converted to this type.
-					// In the past we wanted a type that is large enough for the
-					// CArray.INCOMPLETE_ARRY_MAGIC_NUMBER.
-					// If we work with an unsigned type for pointer components we have to rethink
-					// the use of the magic number.
-					final CPrimitive arrayIndexCtype = mTypeSizes.getSizeT();
-					final Expression sizeExpression = mTypeSizes.constructLiteralForIntegerType(loc, arrayIndexCtype,
-							BigInteger.valueOf(intSizeFactor));
-					sizeFactor = new RValue(sizeExpression, arrayIndexCtype, false, false);
 
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-				arrayType = new CArray(sizeFactor, arrayType);
+				arrayType = new CArray(bound, boundType, arrayType);
 			}
 			final ExpressionResult allResults = new ExpressionResultBuilder()
 					.addAllExceptLrValue(expressionResults.toArray(new ExpressionResult[expressionResults.size()]))
@@ -1353,10 +1402,9 @@ public class CHandler {
 			cType = arrayType;
 			declName = getNonFunctionDeclaratorName(node);
 			sideEffects = allResults;
-		} else if (node instanceof IASTStandardFunctionDeclarator) {
+		} else if (node instanceof final IASTStandardFunctionDeclarator funcDecl) {
 			// functions as well as function pointers can have
 			// IASTStandardFunctionDeclarator
-			final IASTStandardFunctionDeclarator funcDecl = (IASTStandardFunctionDeclarator) node;
 			final IASTParameterDeclaration[] paramDecls = funcDecl.getParameters();
 			CDeclaration[] paramsParsed = new CDeclaration[paramDecls.length];
 			for (int i = 0; i < paramDecls.length; i++) {
@@ -1394,21 +1442,42 @@ public class CHandler {
 						"Cannot extract function type from binding " + binding.getClass());
 			}
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
-		} else if (node instanceof ICASTKnRFunctionDeclarator) {
-			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
-
-			assert funcDecl.getParameterDeclarations().length == funcDecl.getParameterNames().length
+		} else if (node instanceof final ICASTKnRFunctionDeclarator funcDecl) {
+			// Check that each parameter has a declarator.
+			// (Simply comparing the lengths of the arrays is insufficient, as multiple parameter names may have a
+			// common declarator when using K&R-style function definitions.)
+			assert Arrays.stream(funcDecl.getParameterNames())
+					.allMatch(name -> funcDecl.getDeclaratorForParameterName(name) != null)
 					: "implicit int declarations are forbidden from C99 on, this is one, right?";
 
-			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
-			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
-				final DeclarationResult paramDeclRes =
-						(DeclarationResult) main.dispatch(funcDecl.getParameterDeclarations()[i]);
-				assert paramDeclRes.getDeclarations().size() == 1;
-				paramsParsed[i] = paramDeclRes.getDeclarations().get(0);
+			// Dispatch each IASTDeclaration.
+			// In the case of K&R-style function declarations, these may declare multiple parameters, and occur in a
+			// different order than in the parameter list.
+			final var decl2Result = new HashMap<IASTDeclarator, CDeclaration>();
+			for (final IASTDeclaration astDecl : funcDecl.getParameterDeclarations()) {
+				final DeclarationResult paramDeclRes = (DeclarationResult) main.dispatch(astDecl);
+				final IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) astDecl;
+				assert paramDeclRes.getDeclarations().size() == simpleDecl.getDeclarators().length;
+
+				for (int i = 0; i < simpleDecl.getDeclarators().length; ++i) {
+					final IASTDeclarator declarator = simpleDecl.getDeclarators()[i];
+					final CDeclaration cdecl = paramDeclRes.getDeclarations().get(i);
+
+					assert declarator.getName().toString().equals(cdecl.getName()) : "mismatch in parameter names";
+					decl2Result.put(declarator, cdecl);
+				}
 			}
+
+			// For each parameter, as ordered by the parameter list, find the translated CDeclaration.
+			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterNames().length];
+			for (int i = 0; i < funcDecl.getParameterNames().length; ++i) {
+				final IASTDeclarator decl = funcDecl.getDeclaratorForParameterName(funcDecl.getParameterNames()[i]);
+				paramsParsed[i] = decl2Result.get(decl);
+				assert paramsParsed[i] != null;
+			}
+
 			cType = CFunction.createCFunction(resType.getCType(), paramsParsed,
-					(IFunction) funcDecl.getName().getBinding());
+					(IFunction) funcDecl.getName().resolveBinding());
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
 		} else {
 			cType = resType.getCType();
@@ -1643,21 +1712,18 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (functionName instanceof IASTIdExpression) {
-			// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent
-			// program
-			if ("pthread_create".equals(((IASTIdExpression) functionName).getName().toString())) {
-				mIsConcurrent = true;
-				// Only crash for thread local variable in concurrent programs
-				if (mHasThreadLocalVars) {
-					throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
-				}
+		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent
+		// program
+		if (functionName instanceof final IASTIdExpression id && "pthread_create".equals(id.getName().toString())) {
+			// Only crash for thread local variable in concurrent programs
+			mIsConcurrent = true;
+			if (mHasThreadLocalVars) {
+				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
 			}
-			final Result standardFunction =
-					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
-			if (standardFunction != null) {
-				return standardFunction;
-			}
+		}
+		final Result standardFunction = mLibraryModelHandler.translateStandardFunction(main, node);
+		if (standardFunction != null) {
+			return standardFunction;
 		}
 		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments(),
 				mMemoryHandler);
@@ -1699,24 +1765,12 @@ public class CHandler {
 		final String cId = node.getName().toString();
 
 		// deal with builtin constants
-		if ("NULL".equals(cId)) {
-			return new ExpressionResult(
-					new RValue(mExpressionTranslation.constructNullPointer(loc), CPointer.voidPointer()));
-
-		}
-		if (List.of("__PRETTY_FUNCTION__", "__FUNCTION__", "__func__").contains(cId)) {
-			final ICType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, SFO.AUXVAR.NONDET);
-			final RValue rvalue = new RValue(auxvar.getExp(), returnType);
-			return new ExpressionResult(List.of(), rvalue, List.of(auxvar.getVarDec()), Set.of(auxvar));
-		}
 		final String cIdMp = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), cId);
-		if (!mSymbolTable.containsCSymbol(node, cIdMp) && List.of("NAN", "INFINITY", "inf").contains(cId)) {
-			return mExpressionTranslation.createNanOrInfinity(loc, cId);
-		}
-		if (mExpressionTranslation.isNumberClassificationMacro(cId)) {
-			final RValue rvalue = mExpressionTranslation.handleNumberClassificationMacro(loc, cId);
-			return new ExpressionResult(rvalue);
+		if (!mSymbolTable.containsCSymbol(node, cIdMp)) {
+			final var libraryConstant = mLibraryModelHandler.getConstantModels().get(cId);
+			if (libraryConstant != null) {
+				return libraryConstant.handleConstant(loc);
+			}
 		}
 
 		final String bId;
@@ -1880,11 +1934,20 @@ public class CHandler {
 		final CDeclaration cDeclaration = declaratorResult.getDeclaration();
 		assert !cDeclaration.hasInitializer() : "unexpected, inspect this case";
 		assert !cDeclaration.isOnHeap() : "unexpected, inspect this case";
-		final ICType cType = cDeclaration.getType().getUnderlyingType();
+		ICType cType = cDeclaration.getType().getUnderlyingType();
 
 		// translate initializer
 		final IASTInitializer initializer = node.getInitializer();
 		final InitializerResult ir = (InitializerResult) main.dispatch(initializer);
+
+		if (cType instanceof final CArray cArray && cType.isIncomplete()) {
+			// C11 6.7.9.22:
+			// If an array of unknown size is initialized, its size is determined by the largest indexed element with an
+			// explicit initializer. The array type is completed at the end of its initializer list.
+			cType = new CArray(mExpressionTranslation.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(ir.getList().size())),
+					cArray.getBoundType(), cArray.getValueType());
+		}
 
 		final boolean isAddressTaken = node.getParent() instanceof IASTUnaryExpression
 				&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
@@ -1931,7 +1994,6 @@ public class CHandler {
 		 * declarator: (e.g. (int [])): then the size depends on the initializer - otherwise: the size is given by the
 		 * CType
 		 */
-		mTypeSizeComputer.constructBytesizeExpression(loc, cType);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
@@ -2108,13 +2170,13 @@ public class CHandler {
 		final Expression sizeInBytesExpr = mTypeSizes.constructLiteralForIntegerType(actualLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(sizeInBytes));
 
-		final RValue dimension = new RValue(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents());
-		final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
+		final CArray arrayType = new CArray(sizeInBytesExpr, mExpressionTranslation.getCTypeOfPointerComponents(),
+				new CPrimitive(CPrimitives.CHAR));
 		final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 
 		final RValue addressRValue;
 		final CallStatement ultimateAllocCall;
-		if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
+		if (mSettings.fixedAddressesForInitialization()) {
 			final Pair<RValue, CallStatement> pair = mMemoryHandler.getUltimateMemAllocInitCall(actualLoc, arrayType);
 
 			addressRValue = pair.getFirst();
@@ -2537,14 +2599,8 @@ public class CHandler {
 				throw new UnsupportedOperationException("Not yet implemented " + preS.toString());
 			}
 		}
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (!mIsPrerun) {
-			try {
-				mAcsl = main.nextACSLStatement();
-			} catch (final ParseException e1) {
-				final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-				mReporter.unsupportedSyntax(loc, msg);
-			}
+		if (!mIsPrerun && mSettings.checkAcsl()) {
+			mAcsl = main.nextACSLStatement();
 
 			final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();
 			// TODO(thrax): Check if decl should be passed as null or not.
@@ -2623,7 +2679,7 @@ public class CHandler {
 		case IASTUnaryExpression.op_not:
 		case IASTUnaryExpression.op_plus:
 		case IASTUnaryExpression.op_tilde: {
-			final ExpressionResult rop = mExprResultTransformer.switchToRValue(operand, loc, node);
+			final ExpressionResult rop = mExprResultTransformer.transformDecaySwitch(operand, loc, node);
 			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, node.getOperator(), rop);
 		}
 		case IASTUnaryExpression.op_postFixIncr:
@@ -2672,7 +2728,10 @@ public class CHandler {
 		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		final List<Statement> bodyBlock = new ArrayList<>();
 		if (hasContinue) {
-			bodyBlock.add(BoogieUtils.constuctAuxiliaryLabel(loc, loopLabel));
+			// If there is a continue, we need to insert an additional label to jump to.
+			// We insert this label right before the actual loop in order to produce the correct invariant and to check
+			// an existing invariant correctly (if any).
+			resultBuilder.addStatement(BoogieUtils.constuctAuxiliaryLabel(loc, loopLabel));
 		}
 		final ExpressionResult cond = dispatchLoopCondition(main, node.getCondition(), loc);
 		final Expression loopCond;
@@ -3115,10 +3174,10 @@ public class CHandler {
 			if (cType.isIncomplete() && !cType.isVoidType()) {
 				final ICType underlying = cType.getUnderlyingType();
 				final String identifier;
-				if (underlying instanceof CStructOrUnion) {
-					identifier = ((CStructOrUnion) underlying).getName();
-				} else if (underlying instanceof CEnum) {
-					identifier = ((CEnum) underlying).getName();
+				if (underlying instanceof final CStructOrUnion structOrUnion) {
+					identifier = structOrUnion.getName();
+				} else if (underlying instanceof final CEnum enumType) {
+					identifier = enumType.getName();
 				} else {
 					throw new AssertionError("missing support for global incomplete " + cType);
 				}
@@ -3225,7 +3284,7 @@ public class CHandler {
 		return result;
 	}
 
-	private Result skipOrSideEffects(final ResultWithSideEffects result) {
+	private static Result skipOrSideEffects(final ResultWithSideEffects result) {
 		if (result.hasNoSideEffects()) {
 			return new SkipResult();
 		}
@@ -3430,13 +3489,7 @@ public class CHandler {
 					final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
 					extractor.run(globAcsl);
 					mGlobAcslExtractors.add(extractor);
-					try {
-						mAcsl = main.nextACSLStatement();
-					} catch (final ParseException e1) {
-						final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-						final ILocation loc = mLocationFactory.createCLocation(parent);
-						mReporter.unsupportedSyntax(loc, msg);
-					}
+					mAcsl = main.nextACSLStatement();
 				}
 				if (globAcsl instanceof CodeAnnotStmt) {
 					final CodeStatement codeStmt = ((CodeAnnotStmt) globAcsl).getCodeStmt();
@@ -3480,14 +3533,7 @@ public class CHandler {
 					resultBuilder.addStatements(
 							CTranslationUtil.createHavocsForAuxVars(((ExpressionResult) acslResult).getAuxVars()));
 				}
-
-				try {
-					mAcsl = main.nextACSLStatement();
-				} catch (final ParseException e1) {
-					final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-					final ILocation loc = mLocationFactory.createCLocation(parent);
-					mReporter.unsupportedSyntax(loc, msg);
-				}
+				mAcsl = main.nextACSLStatement();
 			}
 
 			// ELSE:
@@ -3522,14 +3568,7 @@ public class CHandler {
 					mContract.add(acslNode);
 				}
 			}
-			try {
-				mAcsl = main.nextACSLStatement();
-			} catch (final ParseException e1) {
-				final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-				final ILocation loc = mLocationFactory.createCLocation(parent);
-				mReporter.unsupportedSyntax(loc, msg);
-			}
-
+			mAcsl = main.nextACSLStatement();
 		}
 	}
 

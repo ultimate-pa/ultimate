@@ -60,13 +60,12 @@ public class TypeCheckHelper {
 	public static <T> BoogieType typeCheckArrayAccessExpressionOrLhs(final BoogieType arrayType,
 			final List<BoogieType> indicesTypes, final ITypeErrorReporter<T> typeErrorReporter) {
 		BoogieType resultType;
-		if (!(arrayType instanceof BoogieArrayType)) {
+		if (!(arrayType instanceof final BoogieArrayType arr)) {
 			if (!BoogieType.TYPE_ERROR.equals(arrayType)) {
 				typeErrorReporter.report(exp -> "Type check failed (not an array): " + exp);
 			}
 			resultType = BoogieType.TYPE_ERROR;
 		} else {
-			final BoogieArrayType arr = (BoogieArrayType) arrayType;
 			final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 			if (indicesTypes.size() != arr.getIndexCount()) {
 				typeErrorReporter.report(exp -> "Type check failed (wrong number of indices): " + exp);
@@ -286,14 +285,13 @@ public class TypeCheckHelper {
 			final List<BoogieType> indicesTypes, final BoogieType valueType,
 			final ITypeErrorReporter<T> typeErrorReporter) {
 		BoogieType resultType;
-		if (!(arrayType instanceof BoogieArrayType)) {
+		if (!(arrayType instanceof final BoogieArrayType arr)) {
 			if (!BoogieType.TYPE_ERROR.equals(arrayType)) {
 				// typeError(expr, "Type check failed (not an array): " + expr);
 				typeErrorReporter.report(exp -> "Type check failed (not an array): " + exp);
 			}
 			resultType = BoogieType.TYPE_ERROR;
 		} else {
-			final BoogieArrayType arr = (BoogieArrayType) arrayType;
 			final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 			if (indicesTypes.size() != arr.getIndexCount()) {
 				// typeError(expr, "Type check failed (wrong number of indices): " + expr);
@@ -318,15 +316,15 @@ public class TypeCheckHelper {
 		return resultType;
 	}
 
+	// TODO Similar functionality also implemented in DataRaceChecker::getRootLhs
 	public static String getLeftHandSideIdentifier(LeftHandSide lhs) {
 		while (lhs instanceof ArrayLHS || lhs instanceof StructLHS) {
-			if (lhs instanceof ArrayLHS) {
-				lhs = ((ArrayLHS) lhs).getArray();
-			} else if (lhs instanceof StructLHS) {
-				lhs = ((StructLHS) lhs).getStruct();
+			if (lhs instanceof final ArrayLHS array) {
+				lhs = array.getArray();
+			} else if (lhs instanceof final StructLHS struct) {
+				lhs = struct.getStruct();
 			}
 		}
 		return ((VariableLHS) lhs).getIdentifier();
 	}
-
 }

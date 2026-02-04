@@ -102,7 +102,6 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	private final TAPreferences mTaPrefs;
 	private final TaCheckAndRefinementPreferences<L> mPrefs;
 	private final ILogger mLogger;
-	private final IIcfg<?> mInitialIcfg;
 	private final PredicateFactory mPredicateFactory;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolAut;
 	private final PathProgramCache<L> mPathProgramCache;
@@ -113,14 +112,22 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			final TaCheckAndRefinementPreferences<L> prefs, final IIcfg<?> initialIcfg,
 			final PredicateFactory predicateFactory,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz) {
+		this(logger, taPrefsForInterpolantConsolidation, prefs, initialIcfg.getCfgSmtToolkit(), predicateFactory,
+				predicateFactoryInterpolAut, transitionClazz, new PathProgramCache<>(logger));
+	}
+
+	public StrategyFactory(final ILogger logger, final TAPreferences taPrefsForInterpolantConsolidation,
+			final TaCheckAndRefinementPreferences<L> prefs, final CfgSmtToolkit cfgSmtTollkit,
+			final PredicateFactory predicateFactory,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz,
+			final PathProgramCache<L> programCache) {
 		mLogger = logger;
 		mTaPrefs = taPrefsForInterpolantConsolidation;
 		mPrefs = prefs;
-		mInitialIcfg = initialIcfg;
-		mCfgSmtToolkit = initialIcfg.getCfgSmtToolkit();
+		mCfgSmtToolkit = cfgSmtTollkit;
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolAut = predicateFactoryInterpolAut;
-		mPathProgramCache = new PathProgramCache<>(mLogger);
+		mPathProgramCache = programCache;
 		mTransitionClazz = transitionClazz;
 	}
 
@@ -141,6 +148,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	 * @param abstraction
 	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
 	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
+	 * @param strategyType
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
@@ -151,6 +159,22 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
 		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
 				predicateUnifier, precondition, postcondition, mPrefs.getRefinementStrategy());
+	}
+
+	/**
+	 * Construct Strategy with a RefinementStrategy given as parameter.
+	 *
+	 */
+	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
+			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
+			final RefinementStrategy strategyType) {
+		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
+		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
+		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
+		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
+				predicateUnifier, precondition, postcondition, strategyType);
 	}
 
 	/**
@@ -242,7 +266,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 	private IPredicateUnifier constructPredicateUnifier(final IUltimateServiceProvider services) {
 		final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
-		final IIcfgSymbolTable symbolTable = mInitialIcfg.getCfgSmtToolkit().getSymbolTable();
+		final IIcfgSymbolTable symbolTable = mPrefs.getCfgSmtToolkit().getSymbolTable();
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {
 			return new BPredicateUnifier(services, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}

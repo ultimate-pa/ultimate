@@ -699,7 +699,7 @@ extern int matherr (struct exception *__exc);
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int();
   int a4 = -89;
   int a29 = -127;
   int a2 = 1;

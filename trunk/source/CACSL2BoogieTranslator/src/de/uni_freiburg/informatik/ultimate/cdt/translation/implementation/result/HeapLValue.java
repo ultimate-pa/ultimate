@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 
 public class HeapLValue extends LRValue {
 
+	private final Expression mAddress;
 	private final BitfieldInformation mBitfieldInformation;
 
 	/**
@@ -59,14 +60,12 @@ public class HeapLValue extends LRValue {
 	public HeapLValue(final Expression address, final ICType cType, final boolean isIntFromPtr,
 			final BitfieldInformation bi) {
 		super(cType, false, isIntFromPtr);
-		this.address = address;
+		mAddress = address;
 		mBitfieldInformation = bi;
 	}
 
-	Expression address;
-
 	public Expression getAddress() {
-		return address;
+		return mAddress;
 	}
 
 	@Override
@@ -79,11 +78,10 @@ public class HeapLValue extends LRValue {
 	}
 
 	public RValue getAddressAsPointerRValue(final BoogieType pointerType) {
-		return new RValue(address, new CPointer(getCType()));
+		return new RValue(mAddress, new CPointer(getCType()));
 	}
 
 	public LRValue getAddressAsPointerRValue(final ITypeHandler typeHandler) {
 		return getAddressAsPointerRValue(typeHandler.getBoogiePointerType());
 	}
-
 }

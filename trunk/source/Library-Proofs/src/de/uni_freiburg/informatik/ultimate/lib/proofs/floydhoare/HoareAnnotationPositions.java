@@ -53,7 +53,7 @@ public enum HoareAnnotationPositions {
 			hoareAnnotationLocs.addAll(root.getLoopLocations());
 			hoareAnnotationLocs.addAll(IcfgUtils.getCallerAndCalleePoints(root));
 			hoareAnnotationLocs.addAll(IcfgUtils.getReturnPredecessorPoints(root));
-			hoareAnnotationLocs.addAll(IcfgUtils.getPotentialCycleProgramPoints(root));
+			hoareAnnotationLocs.addAll(root.getLocationsOfInterest());
 			break;
 		case LoopHeads:
 			hoareAnnotationLocs.addAll(root.getLoopLocations());

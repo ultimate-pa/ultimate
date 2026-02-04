@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -52,7 +53,7 @@ public class Call extends CodeBlock implements IIcfgCallTransition<IcfgLocation>
 	protected CallStatement mCallStatement;
 	protected String mPrettyPrintedStatements;
 
-	Call(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+	public Call(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CallStatement st, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;
@@ -86,5 +87,8 @@ public class Call extends CodeBlock implements IIcfgCallTransition<IcfgLocation>
 	protected int getNumberOfOpenCalls() {
 		return 1;
 	}
-
+	
+	public void setPayload(IPayload payload) {
+		mPayload = payload;
+	}
 }

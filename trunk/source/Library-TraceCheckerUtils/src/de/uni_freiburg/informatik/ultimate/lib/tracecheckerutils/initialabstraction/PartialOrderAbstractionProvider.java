@@ -104,8 +104,8 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public NestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
-			final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
+	public <LOC extends IcfgLocation> NestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<LOC> icfg,
+			final Set<LOC> errorLocs) throws AutomataLibraryException {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input =
 				mUnderlying.getInitialAbstraction(icfg, errorLocs);
 

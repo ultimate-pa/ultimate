@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -82,30 +81,20 @@ public abstract class ExpressionTranslation {
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
 	protected final ITypeHandler mTypeHandler;
-	protected final IPointerIntegerConversion mPointerIntegerConversion;
 	protected final FlatSymbolTable mSymboltable;
+	protected final IMemoryPointer mMemoryPointer;
 
 	protected final TranslationSettings mSettings;
 
 	public ExpressionTranslation(final TypeSizes typeSizes, final TranslationSettings translationSettings,
-			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
+			final ITypeHandler typeHandler, final FlatSymbolTable symboltable, final IMemoryPointer memoryPointer) {
 
 		mSettings = translationSettings;
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		mSymboltable = symboltable;
-		mFunctionDeclarations = new FunctionDeclarations(mTypeHandler, mTypeSizes);
-
-		mPointerIntegerConversion = switch (mSettings.getPointerIntegerCastMode()) {
-		case IdentityAxiom:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
-		case NonBijectiveMapping:
-			yield new NonBijectiveMapping(this, mTypeSizes);
-		case NutzBijection:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
-		case Overapproximate:
-			yield new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
-		};
+		mFunctionDeclarations = new FunctionDeclarations(typeHandler);
+		mMemoryPointer = memoryPointer;
 	}
 
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator,
@@ -291,16 +280,6 @@ public abstract class ExpressionTranslation {
 	 */
 	public abstract CPrimitive getCTypeOfPointerComponents();
 
-	public final ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
-			final CPrimitive newType) {
-		return mPointerIntegerConversion.convertPointerToInt(loc, rexp, newType);
-	}
-
-	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
-			final CPointer newType) {
-		return mPointerIntegerConversion.convertIntToPointer(loc, rexp, newType);
-	}
-
 	public ExpressionResult convertFloatToInt(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		if (newType.getType() == CPrimitives.BOOL) {
@@ -332,10 +311,9 @@ public abstract class ExpressionTranslation {
 		if (underlyingType instanceof CPointer) {
 			isZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
 					expr.getLrValue().getValue(), zeroInputType);
-		} else if (underlyingType instanceof CPrimitive) {
+		} else if (underlyingType instanceof final CPrimitive cPrimitive) {
 			isZero = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
-					expr.getLrValue().getValue(), (CPrimitive) underlyingType, zeroInputType,
-					(CPrimitive) underlyingType);
+					expr.getLrValue().getValue(), cPrimitive, zeroInputType, cPrimitive);
 		} else {
 			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
 		}
@@ -365,31 +343,18 @@ public abstract class ExpressionTranslation {
 	public abstract Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr,
 			final ICType cType);
 
-	public Expression constructNullPointer(final ILocation loc) {
-		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
-	}
-
-	public Expression constructPointerForIntegerValues(final ILocation loc, final BigInteger baseValue,
-			final BigInteger offsetValue) {
-		final Expression base =
-				mTypeSizes.constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), baseValue);
-		final Expression offset =
-				mTypeSizes.constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), offsetValue);
-		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
-	}
-
 	public Expression constructZero(final ILocation loc, final ICType cType) {
-		if (cType instanceof CPrimitive) {
-			return switch (((CPrimitive) cType).getGeneralType()) {
+		if (cType instanceof final CPrimitive cPrimitive) {
+			return switch (cPrimitive.getGeneralType()) {
 			case FLOATTYPE:
-				yield constructLiteralForFloatingType(loc, (CPrimitive) cType, BigDecimal.ZERO);
+				yield constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
 			case INTTYPE:
-				yield mTypeSizes.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO);
+				yield mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
 			case VOID:
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
 			};
 		} else if (cType instanceof CPointer || cType instanceof CArray) {
-			return constructNullPointer(loc);
+			return mMemoryPointer.constructNullPointer(loc, getCTypeOfPointerComponents());
 		}
 		throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
 	}
@@ -412,39 +377,7 @@ public abstract class ExpressionTranslation {
 
 	public abstract Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter);
 
-	public abstract ExpressionResult createNanOrInfinity(ILocation loc, String name);
-
-	public ExpressionResult createNan(final ILocation loc, final CPrimitive cPrimitive) {
-		if (!cPrimitive.isFloatingType()) {
-			throw new IllegalArgumentException("can only create NaN for floating types");
-		}
-		final String s;
-		switch (cPrimitive.getType()) {
-		case FLOAT: {
-			s = "nanf";
-			break;
-		}
-		case DOUBLE: {
-			s = "nan";
-			break;
-		}
-		case LONGDOUBLE: {
-			s = "nanl";
-			break;
-		}
-		default:
-			throw new IllegalArgumentException("can only create NaN for floating types");
-		}
-		return createNanOrInfinity(loc, s);
-	}
-
 	public abstract Expression getCurrentRoundingMode();
-
-	public abstract RValue constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction,
-			RValue argument);
-
-	public abstract RValue constructOtherBinaryFloatOperation(ILocation loc, FloatFunction floatFunction, RValue first,
-			RValue second);
 
 	public abstract void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type);
 
@@ -476,44 +409,6 @@ public abstract class ExpressionTranslation {
 	 */
 	private static String makeBoogieIdentifierSuffix(final String val) {
 		return val;
-	}
-
-	/**
-	 * Check if id is number classification macro according to 7.12.6 of C11.
-	 */
-	public boolean isNumberClassificationMacro(final String cId) {
-		return cId.equals("FP_NAN") || cId.equals("FP_INFINITE") || cId.equals("FP_ZERO") || cId.equals("FP_SUBNORMAL")
-				|| cId.equals("FP_NORMAL");
-	}
-
-	/**
-	 * Translate number classification macros according to 7.12.6 of C11. Although the standard allows any distinct
-	 * integers, we take 0,1,2,3,4 because gcc on Matthias' Linux system uses these numbers.
-	 */
-	public RValue handleNumberClassificationMacro(final ILocation loc, final String cId) {
-		final int number;
-		switch (cId) {
-		case "FP_NAN":
-			number = 0;
-			break;
-		case "FP_INFINITE":
-			number = 1;
-			break;
-		case "FP_ZERO":
-			number = 2;
-			break;
-		case "FP_SUBNORMAL":
-			number = 3;
-			break;
-		case "FP_NORMAL":
-			number = 4;
-			break;
-		default:
-			throw new IllegalArgumentException("no number classification macro " + cId);
-		}
-		final CPrimitive type = new CPrimitive(CPrimitives.INT);
-		final Expression expr = mTypeSizes.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(number));
-		return new RValue(expr, type);
 	}
 
 	/**
@@ -549,7 +444,7 @@ public abstract class ExpressionTranslation {
 			// Avoid the creation of trivial statements
 			return;
 		}
-		if (mSettings.checkSignedIntegerBounds() == CheckMode.ASSERTandASSUME) {
+		if (mSettings.checkSignedIntegerBounds() == CheckMode.CHECK) {
 			final AssertStatement assertSt = new AssertStatement(loc, condition);
 			new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
 			erb.addStatement(assertSt);
@@ -623,7 +518,10 @@ public abstract class ExpressionTranslation {
 		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		new Overapprox(reason, loc).annotate(assertFalse);
 		new Check(Spec.UNSUPPORTED_FEATURE).annotate(assertFalse);
-		return new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
-				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
+		return new WhileStatement(LocationFactory.createIgnoreLocation(loc),
+				ExpressionFactory.createBooleanLiteral(loc, true), new LoopInvariantSpecification[0],
+				new Statement[] { assertFalse });
 	}
+
+	public abstract IFloatingPointHandler getFloatingPointHandler();
 }

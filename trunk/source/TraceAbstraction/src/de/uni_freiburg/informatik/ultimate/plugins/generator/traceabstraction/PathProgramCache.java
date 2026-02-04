@@ -48,11 +48,12 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 public class PathProgramCache<LETTER> {
 
 	private final ILogger mLogger;
-	private final Map<Set<LETTER>, Integer> mKnownPathPrograms;
-	private final List<Integer> mTraceHashes;
+	private Map<Set<LETTER>, Integer> mKnownPathPrograms;
+	private List<Integer> mTraceHashes;
 
 	public PathProgramCache(final ILogger logger) {
 		mLogger = logger;
+		// for safety reasons these are thread save, i (max) did not encounter any issues when they were not.
 		mKnownPathPrograms = new HashMap<>();
 		mTraceHashes = new ArrayList<>();
 	}
@@ -105,6 +106,24 @@ public class PathProgramCache<LETTER> {
 	public List<Integer> computeSortedHistrogram() {
 		final Integer[] visualizationArray = HistogramOfIterable.generateVisualizationArray(mKnownPathPrograms);
 		return Collections.unmodifiableList(Arrays.asList(visualizationArray));
+	}
+
+	public void setPathProgramCount(final Word<LETTER> counterexample, final int count) {
+		final Set<LETTER> pathProgramRepresentative = counterexample.asSet();
+		mKnownPathPrograms.put(pathProgramRepresentative, count);
+	}
+
+	public void copyProgramCache(final PathProgramCache<LETTER> programCache) {
+		mKnownPathPrograms = programCache.getKnownPathPrograms();
+		mTraceHashes = programCache.getTraceHashes();
+	}
+
+	private List<Integer> getTraceHashes() {
+		return mTraceHashes;
+	}
+
+	private Map<Set<LETTER>, Integer> getKnownPathPrograms() {
+		return mKnownPathPrograms;
 	}
 
 }

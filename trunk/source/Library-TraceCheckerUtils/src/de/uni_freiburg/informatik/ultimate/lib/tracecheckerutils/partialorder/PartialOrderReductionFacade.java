@@ -312,7 +312,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case SLEEP_NEW_STATES -> buildSleepTraversal(underlying);
 		case PERSISTENT_SETS -> new PersistentSetTraversal<>(mPersistent, underlying);
 		case PERSISTENT_SLEEP_NEW_STATES, PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER ->
-				buildSleepTraversal(new PersistentSetTraversal<>(mPersistent, underlying));
+				new CompatibilityEnsuringTraversal<>(mPersistent,
+						buildSleepTraversal(new PersistentSetTraversal<>(mPersistent, underlying)));
 		};
 	}
 
@@ -327,6 +328,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	}
 
 	private interface ITraversal<L, S> {
+		// TODO clarify role of order: is it the DFS order or the preference order?
 		void traverse(INwaOutgoingLetterAndTransitionProvider<L, S> automaton, IDfsOrder<L, S> order,
 				IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException;
 	}
@@ -361,6 +363,17 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	// We need this extra layer such that compatibility is ensured before the order reaches SleepTraversal.
+	private record CompatibilityEnsuringTraversal<L, S>(IPersistentSetChoice<L, S> persistent,
+			ITraversal<L, S> underlying) implements ITraversal<L, S> {
+		@Override
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, S> automaton, final IDfsOrder<L, S> order,
+				final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+			final var compatibleOrder = PersistentSetReduction.ensureCompatibility(persistent, order);
+			underlying.traverse(automaton, compatibleOrder, visitor);
+		}
+	}
+
 	// TODO Support changing state type from S to reduction state type R
 	private record SleepMapTraversal<L, S>(List<IIndependenceRelation<S, L>> independenceRelations,
 			ISleepMapStateFactory<L, S, S> sleepMapFactory,
@@ -384,9 +397,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		@Override
 		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, S> automaton, final IDfsOrder<L, S> order,
 				final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
-			final var combinedOrder = PersistentSetReduction.ensureCompatibility(persistent, order);
 			final var reduced = new PersistentSetReduction<>(automaton, persistent);
-			underlying.traverse(reduced, combinedOrder, visitor);
+			underlying.traverse(reduced, order, visitor);
 		}
 	}
 

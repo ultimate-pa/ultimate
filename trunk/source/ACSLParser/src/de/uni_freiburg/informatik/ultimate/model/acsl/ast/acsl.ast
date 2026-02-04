@@ -261,3 +261,6 @@ ACSLType ::=
 Declaration ::=
 	type : ACSLType
 	name : String;
+
+ACSLProblemNode ::=
+	errorMessage : String;

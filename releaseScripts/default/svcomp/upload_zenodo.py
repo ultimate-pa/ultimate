@@ -68,7 +68,7 @@ def parse_args():
         "--svcomp",
         dest="year",
         metavar="<year>",
-        help=f"Which SVCOMP version should be updated in the YAML files. Default: {datetime.datetime.today().year+1}",
+        help=f"Which SVCOMP version should be updated in the YAML files. Default: {datetime.datetime.today().year + 1}",
         default=str(datetime.datetime.today().year + 1),
     )
 
@@ -239,7 +239,7 @@ def retry_request(fun, desc: str, max_retries=3, init_sleep=5):
     while response is None and retries < max_retries:
         if retries > 0:
             logger.warning(
-                f"{desc}: Retrying up to {max_retries-retries} more times, using {sleep}s back-off"
+                f"{desc}: Retrying up to {max_retries - retries} more times, using {sleep}s back-off"
             )
         if sleep > 0:
             time.sleep(sleep)
@@ -282,7 +282,7 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
     if bucket is None:
         raise ValueError(f"No bucket in response. Got: {res_deposition_json}")
 
-    logger.info("uploading files to bucket %s", bucket)
+    logger.info("Uploading files to bucket %s", bucket)
     self._upload_files(bucket=bucket, paths=paths)
 
     deposition_id = res_deposition_json["id"]
@@ -369,7 +369,7 @@ def upload_tools(args, tools):
         paths = [
             new_path,
         ]
-        data = create_metadata(toolname=tool, version=version)
+        data = create_metadata(toolname=tool, version=version, svcomp_year=args.year)
         result = log_request_error(
             lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
         )
@@ -388,11 +388,11 @@ def upload_tools(args, tools):
     return tool_to_doi
 
 
-def create_metadata(toolname: str, version: str) -> Metadata:
+def create_metadata(toolname: str, version: str, svcomp_year: str) -> Metadata:
     return Metadata(
-        title=f"Ultimate {toolname} SV-COMP 2025",
+        title=f"Ultimate {toolname} SV-COMP {svcomp_year}",
         upload_type="software",
-        description=f"""This is Ultimate {toolname}'s competition version for SV-COMP 2025. Visit <a href="https://github.com/ultimate-pa/ultimate">our Github repository</a> for the latest version or <a href="https://ultimate-pa.org">our website</a> to try it for yourself.""",
+        description=f"""This is Ultimate {toolname}'s competition version for SV-COMP {svcomp_year}. Visit <a href="https://github.com/ultimate-pa/ultimate">our Github repository</a> for the latest version or <a href="https://ultimate-pa.org">our website</a> to try it for yourself.""",
         creators=[
             creator(
                 name="Dietsch, Daniel",
@@ -426,7 +426,11 @@ def create_metadata(toolname: str, version: str) -> Metadata:
 
 def tool_zip(tool: str):
     """.zip of tool"""
-    return f"/storage/repos/ultimate-2/releaseScripts/default/Ultimate{tool}-linux.zip"
+    return (
+        (Path(__file__).parent.parent / f"Ultimate{tool}-linux.zip")
+        .resolve()
+        .as_posix()
+    )
 
 
 def tool_yaml(tool: str):
@@ -474,7 +478,7 @@ if args.fmtools_path:
                 if target_ver in version["version"]:
                     new = version
                     new["doi"] = tool_to_doi[tool]
-                    logger.info(f'Updated {tool} {version["version"]} to {new["doi"]}')
+                    logger.info(f"Updated {tool} {version['version']} to {new['doi']}")
                     dump_yaml = True
                     return new
                 return version

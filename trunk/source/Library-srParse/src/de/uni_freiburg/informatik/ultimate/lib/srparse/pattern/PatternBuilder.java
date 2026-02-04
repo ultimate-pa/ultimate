@@ -68,7 +68,7 @@ public class PatternBuilder {
 			DurationBoundLPattern.class, PersistencePattern.class, PrecedenceChain12Pattern.class,
 			PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
 			ResponsePattern.class, UniversalityPattern.class, UniversalityDelayPattern.class,
-			InvarianceDelayPattern.class };
+			InvarianceDelayPattern.class, ConditionalResponseBoundL1Pattern.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 

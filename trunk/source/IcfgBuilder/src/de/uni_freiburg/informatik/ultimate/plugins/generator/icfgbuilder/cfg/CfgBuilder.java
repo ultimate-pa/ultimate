@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
@@ -335,6 +336,13 @@ public class CfgBuilder {
 		ModelUtils.copyAnnotations(unit, icfg);
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 
+		mLogger.info(
+				"Constructed ICFG has %d procedures, %d locations, %d edges, %d initial locations, %d loop locations, "
+						+ "and %d error locations.",
+				icfg.getProcedureEntryNodes().size(), IcfgUtils.getNumberOfLocations(icfg),
+				IcfgUtils.getNumberOfEdges(icfg), icfg.getInitialNodes().size(), icfg.getLoopLocations().size(),
+				IcfgUtils.getErrorLocations(icfg).size());
+
 		return icfg;
 	}
 
@@ -570,6 +578,16 @@ public class CfgBuilder {
 	private final class ProcedureCfgBuilder {
 
 		/**
+		 * Merge nodes even if both are LOIs. <br>
+		 * TODO 2025-11-12 Matthias: Problem: we do not report invariants for both LOIs. See
+		 * examples/witness-generation-validation/regression/inductive/loi02.c However, maybe we have to rethink our
+		 * strategy for merging nodes anyway since we might report wrong line numbers for counterexamples. Maybe we can
+		 * still merge IcfgLocations. But we carefully have to think about the order and must not merge (but replace)
+		 * ILocations.
+		 */
+		private static final boolean AGGRESSIVE_NODE_MERGING = true;
+
+		/**
 		 * Maps a position identifier to the LocNode that represents this position in the CFG.
 		 */
 		private Map<DebugIdentifier, BoogieIcfgLocation> mProcLocNodes;
@@ -754,7 +772,7 @@ public class CfgBuilder {
 						continue;
 					} else if (gotoTarget == 1 && i > 0 && codeblock[i - 1] instanceof final GotoStatement goSt
 							&& goSt.getLabels().length == 1 && goSt.getLabels()[0].equals(laSt.getName())) {
-						// only target of a got in the line before. Skip both, goto and label
+						// only target of a goto in the line before. Skip both, goto and label
 						i--;
 						continue;
 					}
@@ -839,7 +857,7 @@ public class CfgBuilder {
 				mEdges.add(newStatementSequence);
 				mProcLocNodes.remove(endLoc.getDebugIdentifier());
 				ModelUtils.copyAnnotations(edgeBefore, newStatementSequence);
-				ModelUtils.copyAnnotationsExcept(edgeAfter, newStatementSequence, ILocation.class);
+				ModelUtils.copyAnnotations(edgeAfter, newStatementSequence);
 				edgeAfter.disconnectTarget();
 				edgeBefore.disconnectSource();
 				mEdges.remove(edgeAfter);
@@ -1025,7 +1043,7 @@ public class CfgBuilder {
 			final BoogieIcfgLocation srcLoc = buildNewIcfgLocation(origin);
 			ModelUtils.copyAnnotations(origin, condNotError);
 			ModelUtils.copyAnnotations(origin, condError);
-			buildBranching(condNotError, currentElement, condError, error, srcLoc);
+			buildBranching(condError, error, condNotError, currentElement, srcLoc);
 			return srcLoc;
 		}
 
@@ -1067,35 +1085,48 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation buildBreak(final BoogieIcfgLocation currentLocation, final BreakStatement st) {
-			ModelUtils.copyAnnotations(st, mWhileExits.peek());
+			ModelUtils.copyAnnotationsExcept(st, mWhileExits.peek(), ILocation.class);
 			new LoopExitAnnotation(LoopExitType.BREAK).annotate(mWhileExits.peek());
 			return mWhileExits.peek();
 		}
 
 		private BoogieIcfgLocation buildLabel(final IIcfgElement currentElement, final Label st) {
-			final BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
-			final BoogieIcfgLocation resultLocation;
+			final BoogieIcfgLocation newLoc = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
+			final BoogieIcfgLocation resultLoc;
 			if (currentElement instanceof BoogieIcfgLocation) {
 				// We do not want to introduce a new program point for this label but
 				// merge the just constructed BoogieIcfgLocation with currentElement.
 				// A merge in the other direction is not possible, because currentElement
 				// might be a the successor of an if-then-else. If we replace currentElement
 				// here, we also would have to replace it for the other branches.
-				mergeLocNodes(newLocation, (BoogieIcfgLocation) currentElement, true);
-				resultLocation = (BoogieIcfgLocation) currentElement;
+				mergeLocNodes(newLoc, (BoogieIcfgLocation) currentElement, true);
+				resultLoc = (BoogieIcfgLocation) currentElement;
 			} else {
-				endStatementSequence((StatementSequence) currentElement, newLocation);
-				if (!isAuxiliaryLabel(st)) {
-					// TODO: add to labels of CFG after we have labels in the CFG
-				}
-				resultLocation = newLocation;
+				endStatementSequence((StatementSequence) currentElement, newLoc);
+				resultLoc = newLoc;
 			}
-			return resultLocation;
+			if (!isAuxiliaryLabel(st)) {
+				mIcfg.getLocationsOfInterest().add(resultLoc);
+			}
+			return resultLoc;
 		}
 
-		// TODO Implement support for the attribute
+		/**
+		 * Auxiliary labels identified by an {@link NamedAttribute}.
+		 */
 		private boolean isAuxiliaryLabel(final Label st) {
-			return true;
+			if (st.getAttributes() == null) {
+				return false;
+			}
+			for (final NamedAttribute attr : st.getAttributes()) {
+				if (attr.getName().equals(BoogieUtils.AUXILIARY_LABEL)) {
+					if (attr.getValues().length != 0) {
+						throw new AssertionError("Attribut must not have values");
+					}
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private BoogieIcfgLocation buildGoto(final BoogieIcfgLocation currentLocation, final GotoStatement st) {
@@ -1426,8 +1457,13 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
-				final boolean childIsLoopEntry = LoopEntryAnnotation.getAnnotation(child) != null;
-				if (childIsLoopEntry) {
+				final boolean childMustBePreserved = isLoopLocationOrLoi(child);
+				if (childMustBePreserved) {
+					final boolean motherMustBePreserved = isLoopLocationOrLoi(mother);
+					if (!AGGRESSIVE_NODE_MERGING && motherMustBePreserved) {
+						// TODO 2025-11-12 Matthias: Maybe we can just report false and do not merge these nodes.
+						throw new AssertionError(String.format("Can neither remove %s nor %s.", child, mother));
+					}
 					mergeLocNodes(mother, child, false);
 					mLogger.debug(mother + " gets absorbed by " + child);
 				} else {
@@ -1463,6 +1499,10 @@ public class CfgBuilder {
 				return true;
 			}
 			return false;
+		}
+
+		private boolean isLoopLocationOrLoi(final BoogieIcfgLocation loc) {
+			return mIcfg.getLoopLocations().contains(loc) || mIcfg.getLocationsOfInterest().contains(loc);
 		}
 
 		/**
@@ -1672,8 +1712,12 @@ public class CfgBuilder {
 				mIcfg.getProcedureEntryNodes().put(mCurrentProcedureName, newLocNode);
 			}
 			if (mIcfg.getLoopLocations().remove(oldLocNode)) {
-				// if the old location was a loop location, the new one is also
+				// if the old location was a loop location, the new one is also a loop location
 				mIcfg.getLoopLocations().add(newLocNode);
+			}
+			if (mIcfg.getLocationsOfInterest().remove(oldLocNode)) {
+				// if the old location was a LOI, the new one is also a LOI
+				mIcfg.getLocationsOfInterest().add(newLocNode);
 			}
 			if (copyAllAnnotations) {
 				ModelUtils.copyAnnotations(oldLocNode, newLocNode);

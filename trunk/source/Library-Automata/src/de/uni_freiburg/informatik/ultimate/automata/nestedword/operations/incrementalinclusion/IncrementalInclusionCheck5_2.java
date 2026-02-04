@@ -180,7 +180,6 @@ public class IncrementalInclusionCheck5_2<LETTER, STATE> extends AbstractIncreme
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void run() throws AutomataLibraryException {
 		result = null;
 		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> B : local_mB) {
@@ -629,7 +628,6 @@ public class IncrementalInclusionCheck5_2<LETTER, STATE> extends AbstractIncreme
 		return hasChildren;
 	}
 
-	@SuppressWarnings("unchecked")
 	private ArrayList<STATE> NestedRunStates(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn,
 			final Leaf<LETTER, STATE> targetLeaf, final STATE edgeState) {
 		Iterable<OutgoingInternalTransition<LETTER, STATE>> nextStaSet;

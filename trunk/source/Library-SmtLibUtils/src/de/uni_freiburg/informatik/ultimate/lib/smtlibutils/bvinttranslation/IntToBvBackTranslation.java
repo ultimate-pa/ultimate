@@ -101,7 +101,7 @@ public class IntToBvBackTranslation extends TermTransformer {
 
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
-		final HashSet<TermVariable> newTermVars = new HashSet();
+		final HashSet<TermVariable> newTermVars = new HashSet<>();
 		if (newBody != old.getSubformula()) {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (mVariableMap.containsKey(old.getVariables()[i])) {

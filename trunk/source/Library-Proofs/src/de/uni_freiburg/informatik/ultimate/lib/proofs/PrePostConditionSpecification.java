@@ -95,6 +95,25 @@ public class PrePostConditionSpecification<S> implements ISpecification {
 		mPostcondition = Objects.requireNonNull(postcondition);
 	}
 
+	/**
+	 * Factory method for the most common specification used for ICFGs:
+	 *
+	 * <ul>
+	 * <li>The precondition at each initial location is the trivial one: {@code true}, resp. the equality of all
+	 * modifiable global variables and their old variables, if the location's procedure can modify any global
+	 * variables.</li>
+	 * <li>The final states are the error locations.</li>
+	 * <li>The postcondition is {@code false}</li>
+	 * </ul>
+	 *
+	 * @param <LOC>
+	 *            the type of ICFG locations
+	 * @param icfg
+	 *            the control flow graph for which a specification is created
+	 * @param unifier
+	 *            A predicate unifier used to create the precondition and postcondition predicates
+	 * @return the specification as described above
+	 */
 	public static <LOC extends IcfgLocation> PrePostConditionSpecification<LOC> forIcfg(final IIcfg<LOC> icfg,
 			final IPredicateUnifier unifier) {
 		final var modGlobTable = icfg.getCfgSmtToolkit().getModifiableGlobalsTable();
@@ -106,6 +125,25 @@ public class PrePostConditionSpecification<S> implements ISpecification {
 		return forIcfg(icfg, initials, unifier.getFalsePredicate());
 	}
 
+	/**
+	 * Factory method to create a custom specification for an ICFG:
+	 *
+	 * <ul>
+	 * <li>The precondition at each initial location is given as a parameter.</li>
+	 * <li>The final states are the error locations.</li>
+	 * <li>The postcondition is given as a parameter.</li>
+	 * </ul>
+	 *
+	 * @param <LOC>
+	 *            the type of ICFG locations
+	 * @param icfg
+	 *            the control flow graph for which a specification is created
+	 * @param initialStates
+	 *            a map from initial states to the respective precondition that may be assumed to hold
+	 * @param postcondition
+	 *            the postcondition that must hold at error locations
+	 * @return the specification as described above
+	 */
 	public static <LOC extends IcfgLocation> PrePostConditionSpecification<LOC> forIcfg(final IIcfg<LOC> icfg,
 			final Map<LOC, IPredicate> initialStates, final IPredicate postcondition) {
 		return new PrePostConditionSpecification<>(initialStates, l -> IcfgUtils.isErrorLocation(icfg, l),
@@ -128,6 +166,11 @@ public class PrePostConditionSpecification<S> implements ISpecification {
 		return mPostcondition;
 	}
 
+	/**
+	 * Determines whether this specification specifies unreachability of its final states.
+	 *
+	 * @return {@code true} if the postcondition of this specification is the formula {@code false}
+	 */
 	public boolean isUnreachabilitySpecification() {
 		return SmtUtils.isFalseLiteral(mPostcondition.getFormula());
 	}

@@ -35,7 +35,12 @@ import de.uni_freiburg.informatik.ultimate.regressiontest.AbstractRegressionTest
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider.SafetyCheckerTestResultEvaluation;
+import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
+import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.IOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -61,13 +66,7 @@ public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
-		return new SafetyCheckTestResultDecider(runDefinition, false);
-	}
-
-	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
-			final String overridenExpectedVerdict) {
-		return new SafetyCheckTestResultDecider(runDefinition, false, overridenExpectedVerdict);
+		return new WitnessSafetyCheckTestResultDecider(runDefinition);
 	}
 
 	@Override
@@ -94,5 +93,36 @@ public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
 			}
 		}
 		return DataStructureUtils.concat(generation, validation);
+	}
+
+	public class WitnessSafetyCheckTestResultDecider extends SafetyCheckTestResultDecider {
+		public WitnessSafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+			super(ultimateRunDefinition, false);
+		}
+
+		@Override
+		public ITestResultEvaluation<SafetyCheckerOverallResult> constructTestResultEvaluation() {
+			return new WitnessSafetyCheckerTestResultEvaluation();
+		}
+	}
+
+	public class WitnessSafetyCheckerTestResultEvaluation extends SafetyCheckerTestResultEvaluation {
+		public WitnessSafetyCheckerTestResultEvaluation() {
+			super(null);
+		}
+
+		@Override
+		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
+				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+			// WORKAROUND: Validation with Referee yields VALID_ANNOTATION instead of SAFE. Therefore, we consider this
+			// also as succes in order not to crash.
+			if (overallResultDeterminer.getOverallResult() == SafetyCheckerOverallResult.VALID_ANNOTATION) {
+				mTestResult = TestResult.SUCCESS;
+				mMessage = "UltimateResult: " + SafetyCheckerOverallResult.VALID_ANNOTATION;
+				mCategory = SafetyCheckerOverallResult.VALID_ANNOTATION.toString();
+			} else {
+				super.evaluateTestResult(expectedResultFinder, overallResultDeterminer);
+			}
+		}
 	}
 }

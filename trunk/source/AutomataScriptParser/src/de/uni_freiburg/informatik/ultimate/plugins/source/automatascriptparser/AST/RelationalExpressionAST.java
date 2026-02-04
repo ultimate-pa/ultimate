@@ -63,23 +63,15 @@ public class RelationalExpressionAST extends AtsASTNode {
 		return "RelationalExpression [Operator: " + operatorToString(moperator) + "]";
 	}
 
-	private String operatorToString(final RelationalOperatorAST ro) {
-		switch (ro) {
-		case LESSTHAN:
-			return " < ";
-		case LESS_EQ_THAN:
-			return " <= ";
-		case GREATERTHAN:
-			return " > ";
-		case GREATER_EQ_THAN:
-			return " >= ";
-		case EQ:
-			return " == ";
-		case NOT_EQ:
-			return " != ";
-		default:
-			return "";
-		}
+	private static String operatorToString(final RelationalOperatorAST ro) {
+		return switch (ro) {
+		case LESSTHAN -> " < ";
+		case LESS_EQ_THAN -> " <= ";
+		case GREATERTHAN -> " > ";
+		case GREATER_EQ_THAN -> " >= ";
+		case EQ -> " == ";
+		case NOT_EQ -> " != ";
+		};
 	}
 
 	public String getOperatorAsString() {
@@ -90,9 +82,8 @@ public class RelationalExpressionAST extends AtsASTNode {
 	public String getAsString() {
 		if (mChildren.size() == 2) {
 			return mChildren.get(0).getAsString() + operatorToString(moperator) + mChildren.get(1).getAsString();
-		} else {
-			return "";
 		}
+		return "";
 	}
 
 }

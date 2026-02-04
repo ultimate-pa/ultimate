@@ -43,13 +43,38 @@ import de.uni_freiburg.informatik.ultimate.core.model.IController;
  */
 public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem {
 
+	/**
+	 * The Level is a property of a setting.
+	 */
+	public enum Level {
+		/**
+		 * Basic settings should be made visible even to inexperienced users and are essential for defining which output
+		 * we want to obtain from the tool. E.g., the specification that is checked or assumptions about the input. All
+		 * combinations of values from basic settings should be compatible to each other.
+		 */
+		BASIC,
+
+		/**
+		 * Expert settings are only meant for experienced users. These settings often have an effect of the performance
+		 * of a tool, might reduce the soundness of the tool and combinations of different values may not always make
+		 * sense.
+		 */
+		EXPERT,
+
+		/**
+		 * EXPERIMENTAL settings enable features that have not yet been tested sufficiently, may be immature and might
+		 * get removed from the tool.
+		 */
+		EXPERIMENTAL,
+	}
+
 	private final String mLabel;
 	private final T mDefaultValue;
 	private final PreferenceType mType;
 	private final T[] mChoices;
 	private final IUltimatePreferenceItemValidator<T> mPreferenceValidator;
 	private final String mDescription;
-	private final boolean mIsExperimental;
+	private final Level mLevel;
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type) {
 		this(label, defaultValue, type, null, null);
@@ -70,9 +95,9 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		this(label, defaultValue, type, description, choices, null);
 	}
 
-	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
-			final boolean isExperimental, final PreferenceType type, final T[] choices) {
-		this(label, defaultValue, type, description, isExperimental, choices, null);
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description, final Level level,
+			final PreferenceType type, final T[] choices) {
+		this(label, defaultValue, type, description, level, choices, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
@@ -85,9 +110,9 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		this(label, defaultValue, type, description, null, null);
 	}
 
-	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
-			final boolean isExperimental, final PreferenceType type) {
-		this(label, defaultValue, type, description, isExperimental, null, null);
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String description, final Level level,
+			final PreferenceType type) {
+		this(label, defaultValue, type, description, level, null, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final String description,
@@ -98,12 +123,23 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final String description, final T[] choices,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, description, description == null || description.isEmpty(), choices,
+		this(label, defaultValue, type, description, getLevelFromDescription(description), choices,
 				preferenceValidator);
 	}
 
+	/**
+	 * Workaround for settings where we did not (yet) specify a level. The setting is EXPERIMENTAL if it does not have a
+	 * description.
+	 */
+	private static Level getLevelFromDescription(final String description) {
+		if (description == null || description.isEmpty()) {
+			return Level.EXPERIMENTAL;
+		}
+		return Level.EXPERT;
+	}
+
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final String description, final boolean isExperimental, final T[] choices,
+			final String description, final Level level, final T[] choices,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
@@ -111,7 +147,7 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		mChoices = choices;
 		mPreferenceValidator = preferenceValidator;
 		mDescription = description;
-		mIsExperimental = isExperimental;
+		mLevel = level;
 
 		if ((mType == PreferenceType.Radio || mType == PreferenceType.Combo) && (mChoices == null)) {
 			throw new IllegalArgumentException("You have to supply choices if you use PreferenceType Radio or Combo ");
@@ -165,8 +201,8 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		return returnList;
 	}
 
-	public boolean isExperimental() {
-		return mIsExperimental;
+	public Level getLevel() {
+		return mLevel;
 	}
 
 	public interface IUltimatePreferenceItemValidator<T> {

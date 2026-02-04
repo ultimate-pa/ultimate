@@ -6,9 +6,6 @@
 	</launcherArgs>
 	<locations>
 		<location includeAllPlatforms="true" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
-			<repository id="ultimate-dependencies" location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
-		</location>
-		<location includeAllPlatforms="true" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
 			<repository id="eclipse-releases" location="https://download.eclipse.org/releases/2024-06"/>
 			<unit id="org.eclipse.cdt.feature.group" version="11.6.0.202406041555"/>
 			<unit id="org.eclipse.cdt.sdk.feature.group" version="11.6.0.202406041555"/>

@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -75,10 +76,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private static final String NOT_IMPLEMENTED = "Operation is not yet implemented in non-bitprecise translation.";
 
 	private final BitabsTranslation mBitabsTranslation;
+	private final IFloatingPointHandler mFloatingPointHandler = new UnsupportedFloatingPointHandler();
 
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
-			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
-		super(typeSizeConstants, settings, typeHandler, symboltable);
+			final ITypeHandler typeHandler, final FlatSymbolTable symboltable, final IMemoryPointer pointer) {
+		super(typeSizeConstants, settings, typeHandler, symboltable, pointer);
 		mBitabsTranslation = new BitabsTranslation(typeSizeConstants);
 	}
 
@@ -588,9 +590,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
-		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {
+		if (type1 instanceof final CPrimitive primitive1 && type2 instanceof final CPrimitive primitive2) {
 			final Pair<Expression, Expression> wrapped =
-					applyWraparoundsIfNecessary(loc, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
+					applyWraparoundsIfNecessary(loc, exp1, primitive1, exp2, primitive2);
 			leftExpr = wrapped.getFirst();
 			rightExpr = wrapped.getSecond();
 		}
@@ -612,27 +614,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult createNanOrInfinity(final ILocation loc, final String name) {
-		throw new UnsupportedOperationException("createNanOrInfinity is unsupported in non-bitprecise translation");
-	}
-
-	@Override
 	public Expression getCurrentRoundingMode() {
 		throw new UnsupportedOperationException("getRoundingMode is unsupported in non-bitprecise translation");
-	}
-
-	@Override
-	public RValue constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue argument) {
-		throw new UnsupportedOperationException("floating point operation not supported in non-bitprecise translation: "
-				+ floatFunction.getFunctionName());
-	}
-
-	@Override
-	public RValue constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue first, final RValue second) {
-		throw new UnsupportedOperationException("floating point operation not supported in non-bitprecise translation: "
-				+ floatFunction.getFunctionName());
 	}
 
 	@Override
@@ -801,5 +784,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
 			final ExpressionResult exprResult) {
 		return constructOverflowCheck(loc, resultType, exprResult.getLrValue().getValue());
+	}
+
+	@Override
+	public IFloatingPointHandler getFloatingPointHandler() {
+		return mFloatingPointHandler;
 	}
 }

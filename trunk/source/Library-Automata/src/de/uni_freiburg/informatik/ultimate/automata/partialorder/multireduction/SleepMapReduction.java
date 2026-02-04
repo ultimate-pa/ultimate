@@ -102,6 +102,8 @@ public class SleepMapReduction<L, S, R> implements INwaOutgoingLetterAndTransiti
 		mBudgetFunction = getBudget.apply(this);
 	}
 
+	@SuppressWarnings("deprecation")
+	@Deprecated
 	@Override
 	public IStateFactory<R> getStateFactory() {
 		return mStateFactory;

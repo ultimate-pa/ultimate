@@ -71,19 +71,15 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            letter type
  */
 public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
-	// Determines after how many occurrences of the same path program a commutativity condition will be synthesized.
-	private static final int CONDITIONAL_COMMUTATIVITY_THRESHOLD = 2;
-
-	// How often we retry a check if the returned proof was imperfect.
-	// Currently, we do not retry at all, but this may change if we handle loop unrolling specially (see TODO below).
-	private static final int IMPERFECT_PROOF_RETRIES = 0;
-
 	private final ILogger mLogger;
 	private final IDfsOrder<L, IPredicate> mDfsOrder;
 	private final ConditionalCommutativityChecker<L> mChecker;
 
 	private final ISleepSetStateFactory<L, IPredicate, IPredicate> mSleepSetFactory;
 	private final Function<Word<L>, IIpAbStrategyModule<L>> mAutomatonBuilderFactory;
+
+	private final int mPathProgramThreshold;
+	private final int mImperfectProofRetries;
 
 	// We approximate path programs by looking at the set of control configurations.
 	private final Map<Set<?>, Integer> mPreviouslySeenPathPrograms = new HashMap<>();
@@ -104,13 +100,18 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 	 *            Used to find and prove sufficient conditions for commutativity.
 	 * @param automatonBuilderFactory
 	 *            Used to construct interpolant automata from proofs of commutativity along a trace.
-	 * @param statistics
-	 *            collects statistics
+	 * @param pathProgramThreshold
+	 *            The threshold for repetition of the same path program at which to start commutativity condition
+	 *            synthesis
+	 * @param imperfectProofRetries
+	 *            The number of retries for proving commutativity at the same point of non-minimality, if previous
+	 *            attempts failed due to imperfect proofs.
 	 */
 	public ConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
 			final IDfsOrder<L, IPredicate> dfsOrder, final ConditionalCommutativityChecker<L> conComChecker,
 			final ISleepSetStateFactory<L, IPredicate, IPredicate> sleepSetFactory,
-			final Function<Word<L>, IIpAbStrategyModule<L>> automatonBuilderFactory) {
+			final Function<Word<L>, IIpAbStrategyModule<L>> automatonBuilderFactory, final int pathProgramThreshold,
+			final int imperfectProofRetries) {
 		mLogger = services.getLoggingService().getLogger(ConditionalCommutativityCounterexampleChecker.class);
 
 		mDfsOrder = dfsOrder;
@@ -118,6 +119,9 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		mSleepSetFactory = Objects.requireNonNull(sleepSetFactory);
 		mAutomatonBuilderFactory = automatonBuilderFactory;
 		mStatistics = new Statistics(conComChecker);
+
+		mPathProgramThreshold = pathProgramThreshold;
+		mImperfectProofRetries = imperfectProofRetries;
 	}
 
 	/**
@@ -137,9 +141,9 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 		mPreviouslySeenPathPrograms.put(pathProgram, occurrence);
 
 		mLogger.info("Examining path program with hash %d, occurence #%d", pathProgram.hashCode(), occurrence);
-		if (occurrence < CONDITIONAL_COMMUTATIVITY_THRESHOLD) {
+		if (occurrence < mPathProgramThreshold) {
 			mLogger.info("Commutativity condition synthesis is only active after more than %d occurrences. Skipping...",
-					CONDITIONAL_COMMUTATIVITY_THRESHOLD);
+					mPathProgramThreshold);
 			return null;
 		}
 		mLogger.info("Trying to synthesize and prove commutativity condition.");
@@ -177,7 +181,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			case UNKNOWN_CHECK:
 			case CONDITION_NOT_SATISFIED:
 				// Cache as hopeless and avoid any repeated checks.
-				mLogger.info("Commutativity condition check vielded %s. Marking as hopeless.", checkResult.getType());
+				mLogger.info("Commutativity condition check yielded %s. Marking as hopeless.", checkResult.getType());
 				mHopelessConditionChecks.add(triple);
 				break;
 
@@ -193,8 +197,8 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			case PROOF_IMPERFECT:
 				final int repetition = mFailedConditionChecks.getOrDefault(triple, 0) + 1;
 				mLogger.info("Commutativity condition check failed due to imperfect proof (attempt %d of %d).",
-						repetition, IMPERFECT_PROOF_RETRIES + 1);
-				if (repetition <= IMPERFECT_PROOF_RETRIES) {
+						repetition, mImperfectProofRetries + 1);
+				if (repetition <= mImperfectProofRetries) {
 					mFailedConditionChecks.put(triple, repetition);
 				} else {
 					mFailedConditionChecks.remove(triple);

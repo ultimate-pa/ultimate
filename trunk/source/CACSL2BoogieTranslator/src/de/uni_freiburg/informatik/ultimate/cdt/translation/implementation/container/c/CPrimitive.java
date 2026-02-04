@@ -151,10 +151,18 @@ public final class CPrimitive implements ICType {
 	 */
 	private final CPrimitiveCategory mGeneralType;
 
-	public CPrimitive(final CPrimitives type) {
+	private CPrimitive(final CPrimitives type, final boolean isAtomic) {
 		mType = type;
-		mGeneralType = getGeneralType(type);
-		mIsAtomic = false;
+		mGeneralType = type.getPrimitiveCategory();
+		mIsAtomic = isAtomic;
+	}
+
+	public CPrimitive(final CPrimitives type) {
+		this(type, false);
+	}
+
+	public static CPrimitive constructAtomicType(final CPrimitives type) {
+		return new CPrimitive(type, true);
 	}
 
 	/**
@@ -168,7 +176,7 @@ public final class CPrimitive implements ICType {
 			throw new IllegalArgumentException("Unknown C Declaration!");
 		}
 		mType = getType(cDeclSpec);
-		mGeneralType = getGeneralType(mType);
+		mGeneralType = mType.getPrimitiveCategory();
 		mIsAtomic = CTranslationUtil.hasAttribute(cDeclSpec, "atomic");
 	}
 
@@ -247,39 +255,6 @@ public final class CPrimitive implements ICType {
 		default:
 			throw new IllegalArgumentException("Unknown C Declaration!");
 		}
-	}
-
-	private static CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
-		return switch (type) {
-		case COMPLEX_FLOAT:
-		case COMPLEX_DOUBLE:
-		case COMPLEX_LONGDOUBLE:
-		case FLOAT:
-		case DOUBLE:
-		case LONGDOUBLE:
-		case FLOAT128:
-			yield CPrimitiveCategory.FLOATTYPE;
-		case BOOL:
-		case UCHAR:
-		case UINT:
-		case ULONG:
-		case ULONGLONG:
-		case UINT128:
-		case USHORT:
-		case CHAR:
-			// case CHAR16:
-			// case CHAR32:
-		case INT:
-		case LONG:
-		case LONGLONG:
-		case INT128:
-		case SCHAR:
-		case SHORT:
-			// case WCHAR:
-			yield CPrimitiveCategory.INTTYPE;
-		case VOID:
-			yield CPrimitiveCategory.VOID;
-		};
 	}
 
 	public CPrimitives getType() {

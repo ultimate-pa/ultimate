@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.ToIntFunction;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -60,7 +59,6 @@ public class Abducer {
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 
 	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final ToIntFunction<TermVariable> mCost;
 	private final Set<TermVariable> mForbiddenVars;
@@ -154,7 +152,6 @@ public class Abducer {
 			final ToIntFunction<TermVariable> cost, final Set<TermVariable> forbiddenVars,
 			final boolean strongQuantifierElimination) {
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Abducer.class);
 		mScript = script;
 		mCost = cost;
 		mForbiddenVars = forbiddenVars;

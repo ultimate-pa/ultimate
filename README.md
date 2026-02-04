@@ -8,7 +8,7 @@ The [official website](https://ultimate-pa.org/) includes a web interface which 
 
 The available documentation can be found in [our wiki](https://github.com/ultimate-pa/ultimate/wiki).
 
-You can download the [latest release from GitHub's release page](https://github.com/ultimate-pa/ultimate/releases/latest) or try our [nightly builds](https://struebli.informatik.uni-freiburg.de/ultimate-nightly/).
+You can download the [latest release from GitHub's release page](https://github.com/ultimate-pa/ultimate/releases/latest) or try our [nightly builds](https://ultimate-pa.org/nightly/).
 
 ## Developers
 
@@ -147,6 +147,7 @@ To cite:
 }
 ```
 
+* _Counterexample-Guided Commutativity_. Ebbinghaus, Klumpp and Podelski, CAV 2025. <https://doi.org/10.1007/978-3-031-98682-6_18>
 * _Stratified Commutativity in Verification Algorithms for Concurrent Programs_. Farzan, Klumpp and Podelski, POPL 2023, <https://doi.org/10.1145/3571242>
 * _Sound Sequentialization for Concurrent Program Verification_. Farzan, Klumpp and Podelski, PLDI 2022, <https://doi.org/10.1145/3519939.3523727>
 * _Ultimate GemCutter and the Axes of Generalization - (Competition Contribution)_. Klumpp, Dietsch, Heizmann, Schüssele, Ebbinghaus, Farzan and Podelski, TACAS (SV-COMP) 2022, <https://doi.org/10.1007/978-3-030-99527-0_35>

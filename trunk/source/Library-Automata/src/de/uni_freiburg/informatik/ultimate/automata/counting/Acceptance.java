@@ -140,16 +140,17 @@ public class Acceptance<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 				step++;
 			} else {
 				mLogger.log(LogLevel.INFO, "state: " + stateVisited.get(step));
-				final Transition t = ca.getTransitions().get(stateVisited.get(step)).get(pathTaken[step]);
+				final Transition<LETTER, STATE> t =
+						ca.getTransitions().get(stateVisited.get(step)).get(pathTaken[step]);
 				mLogger.log(LogLevel.INFO, "checking transition to " + t.getSucState());
 				final LETTER a = mWord.get(step - 1);
-				final LETTER b = (LETTER) t.getLetter();
+				final LETTER b = t.getLetter();
 				mLogger.log(LogLevel.INFO, "required letter: '" + a + "', letter in transition: '" + b + "'");
 				if (a.equals(b)) {
 					mLogger.log(LogLevel.INFO, "found transition. going on");
 					conditions[step + 1] = mScript.term("and", conditions[step], dnfToFormula(t.getGuards(), step),
 							updateToFormula(t.getUpdates(), ca.getCounter(), step));
-					stateVisited.set(step + 1, (STATE) t.getSucState());
+					stateVisited.set(step + 1, t.getSucState());
 					pathTaken[step + 1] = 0;
 					step++;
 				} else {

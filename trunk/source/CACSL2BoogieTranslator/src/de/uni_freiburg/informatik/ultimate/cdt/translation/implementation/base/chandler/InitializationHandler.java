@@ -35,11 +35,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -51,28 +49,21 @@ import org.eclipse.cdt.core.dom.ast.c.ICASTFieldDesignator;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.StructExpanderUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CompatibleTypes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ConstantArrayUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -162,15 +153,15 @@ public class InitializationHandler {
 
 	private final ExpressionResultTransformer mExprResultTransformer;
 
-	private final RequiredInitializationFeatures mRequiredInitializationFeatures;
-
 	private final boolean mUseConstantArrays;
+
+	private final IMemoryPointer mMemoryPointer;
 
 	public InitializationHandler(final TranslationSettings settings, final MemoryHandler memoryHandler,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final TypeSizes typeSizes, final CHandler chandler,
-			final ExpressionResultTransformer exprResultTransformer) {
+			final TypeSizes typeSizes, final CHandler chandler, final ExpressionResultTransformer exprResultTransformer,
+			final IMemoryPointer memoryPointer) {
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
@@ -181,7 +172,7 @@ public class InitializationHandler {
 		mExprResultTransformer = exprResultTransformer;
 		mUseConstantArrays = settings.useConstantArrays();
 		mUseSelectForArrayCellInitIfPossible = !settings.useStoreChains();
-		mRequiredInitializationFeatures = new RequiredInitializationFeatures();
+		mMemoryPointer = memoryPointer;
 	}
 
 	/**
@@ -339,9 +330,9 @@ public class InitializationHandler {
 			// unions are handled along with structs here
 			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap,
 					usingOnHeapInitializationViaConstArray, hook);
-		} else if (targetCType instanceof CArray) {
-			return initCArray(loc, lhsIfAny, (CArray) targetCType, initInfoIfAny, onHeap,
-					usingOnHeapInitializationViaConstArray, outermostNestedArray, hook);
+		} else if (targetCType instanceof final CArray array) {
+			return initCArray(loc, lhsIfAny, array, initInfoIfAny, onHeap, usingOnHeapInitializationViaConstArray,
+					outermostNestedArray, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case for CType");
 		}
@@ -545,9 +536,6 @@ public class InitializationHandler {
 		 * Iterate over all array indices and assign the corresponding array cell; In the sophisticated case, only cells
 		 * explicitly mentioned by the initializer are updated here. Otherwise all cells are updated
 		 */
-		if (CTranslationUtil.isToplevelVarlengthArray(cArrayType, mTypeSizes)) {
-			throw new UnsupportedOperationException("handling varlength arrays not implemented for this case");
-		}
 		final int bound = CTranslationUtil.getConstantFirstDimensionOfArray(cArrayType, mTypeSizes);
 
 		for (int i = 0; i < bound; i++) {
@@ -833,8 +821,8 @@ public class InitializationHandler {
 		final LocalLValue arrayLhsToInitialize = lhsToInit;
 
 		ICType innerMostValueType = cArrayType.getValueType().getUnderlyingType();
-		while (innerMostValueType instanceof CArray) {
-			innerMostValueType = ((CArray) innerMostValueType).getValueType().getUnderlyingType();
+		while (innerMostValueType instanceof final CArray array) {
+			innerMostValueType = array.getValueType().getUnderlyingType();
 		}
 
 		final List<List<Integer>> allIndicesToInitialize = CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
@@ -859,13 +847,10 @@ public class InitializationHandler {
 
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
-		final BoogieType boogieArrayType = mTypeHandler.getBoogieTypeForCType(cArrayType);
+		final BoogieArrayType boogieArrayType = (BoogieArrayType) mTypeHandler.getBoogieTypeForCType(cArrayType);
+		final Expression constantArray =
+				ConstantArrayUtil.getZeroArray(mExpressionTranslation.getFunctionDeclarations(), loc, boogieArrayType);
 
-		mRequiredInitializationFeatures.reportRequiresConstantArray((BoogieArrayType) boogieArrayType);
-
-		final Expression constantArray = ExpressionFactory.constructFunctionApplication(loc,
-				mRequiredInitializationFeatures.getNameOfConstantArrayFunction(boogieArrayType), new Expression[] {},
-				boogieArrayType);
 		final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
 				new LeftHandSide[] { lhsToInit.getLhs() }, new Expression[] { constantArray });
 
@@ -939,12 +924,6 @@ public class InitializationHandler {
 		}
 	}
 
-	public List<Declaration> declareInitializationInfrastructure() {
-		// declarations are stored in FunctionDeclarations, their creation is triggered by the below method call
-		mRequiredInitializationFeatures.constructAndRegisterDeclarations();
-		return Collections.emptyList();
-	}
-
 	/**
 	 * Construct assignment statements that make sure that "lhs" gets the value "initializationValue".
 	 */
@@ -973,8 +952,7 @@ public class InitializationHandler {
 
 	private Expression getDefaultValueForSimpleType(final ILocation loc, final ICType cTypeRaw) {
 		final ICType cType = cTypeRaw.getUnderlyingType();
-		if (cType instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) cType;
+		if (cType instanceof final CPrimitive cPrimitive) {
 			return switch (cPrimitive.getGeneralType()) {
 			case INTTYPE -> mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
 			case FLOATTYPE -> mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
@@ -983,7 +961,7 @@ public class InitializationHandler {
 		} else if (cType instanceof CEnum) {
 			return mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		} else if (cType instanceof CPointer) {
-			return mExpressionTranslation.constructNullPointer(loc);
+			return mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}
@@ -1043,14 +1021,13 @@ public class InitializationHandler {
 			return Arrays.stream(((CStructOrUnion) cType).getFieldTypes())
 					.map(t -> countNumberOfPrimitiveElementInType(t, hook)).reduce(BigInteger.ZERO, BigInteger::add);
 		}
-		if (cType instanceof CArray) {
+		if (cType instanceof final CArray cArray) {
 			if (cType.isIncomplete()) {
 				// An incomplete array can be the last member of a struct. It is not copied, so we return 0 here.
 				return BigInteger.ZERO;
 			}
-			final CArray cArray = (CArray) cType;
 			final BigInteger innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), hook);
-			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound());
+			final BigInteger bound = mTypeSizes.extractIntegerValue(cArray.getBound(), cArray.getBoundType());
 			return innerCount.multiply(bound);
 		}
 		throw new AssertionError("Cannot count the primitive elements in type " + cType.getClass().getSimpleName());
@@ -1072,13 +1049,8 @@ public class InitializationHandler {
 		final Expression flatCellNumber =
 				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, new BigInteger(Integer.toString(product)));
 
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
-		final Expression cellOffset =
-				mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cArrayType.getValueType(), flatCellNumber, sizeT);
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, sizeT, cellOffset, sizeT);
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		final var newPointer = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, loc,
+				arrayBaseAddress.getAddress(), new RValue(flatCellNumber, sizeT), cArrayType.getValueType(), sizeT);
 
 		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cArrayType.getValueType(), null);
 	}
@@ -1094,39 +1066,28 @@ public class InitializationHandler {
 
 		/* do a conversion so the expression has boogie pointer type */
 		final RValue addressRVal = arrayBaseAddress.getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
-		// final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(addressRVal.getValue(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(addressRVal.getValue(), loc);
 
 		final ICType cellType = cArrayType.getValueType();
 
-		final Expression cellOffset =
-				mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cellType, flatCellNumber, pointerComponentType);
+		// final var newPointer = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
+		// addressRVal.getValue(), new RValue(flatCellNumber, pointerComponentType), cellType);
 
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, pointerComponentType, cellOffset, pointerComponentType);
-
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		final var newPointer = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, loc,
+				addressRVal.getValue(), new RValue(flatCellNumber, pointerComponentType), cArrayType.getValueType(),
+				pointerComponentType);
 
 		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cellType, null);
+
 	}
 
 	public HeapLValue constructAddressForStructField(final ILocation loc, final HeapLValue baseAddress,
 			final int fieldIndex) {
+
 		final CStructOrUnion cStructType = (CStructOrUnion) baseAddress.getCType().getUnderlyingType();
+		final var fieldOffset = mTypeSetAndOffsetComputer.constructOffsetForField(loc, cStructType, fieldIndex);
 
-		final CPrimitive sizeT = mTypeSetAndOffsetComputer.getSizeT();
-
-		final Offset fieldOffset = mTypeSetAndOffsetComputer.constructOffsetForField(loc, cStructType, fieldIndex);
-		if (fieldOffset.isBitfieldOffset()) {
-			throw new UnsupportedOperationException("Bitfield initialization");
-		}
-
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress.getAddress(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress.getAddress(), loc);
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, baseAddress.getAddress(),
+				fieldOffset, mTypeSetAndOffsetComputer.getSizeT());
 
 		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cStructType.getFieldTypes()[fieldIndex],
 				null);
@@ -1152,15 +1113,13 @@ public class InitializationHandler {
 			 * We are initializing through an (possibly aggregate-type) expression (not through a list of expressions).
 			 */
 
-			if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
+			if (initializerResult.getRootExpressionResult() instanceof final StringLiteralResult slr
 					&& targetCTypeRaw instanceof CArray) {
 				/*
 				 * Case like 'char a[] = "bla"' in C, initialization would copy the char array contents to a position on
 				 * the stack we create an InitializerInfo that corresponds to the initializer { 'b', 'l', 'a', '\0' }.
 				 * (For this purpose, StringLiteralResult holds the original string contents.)
 				 */
-
-				final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
 
 				final List<Overapprox> overapproxList;
 				if (!slr.getOverapprs().isEmpty()) {
@@ -1255,12 +1214,9 @@ public class InitializationHandler {
 
 		final int bound;
 		ICType cellType = null;
-		if (targetCType instanceof CArray) {
-			cellType = ((CArray) targetCType).getValueType();
-			bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType, mTypeSizes);
-			if (CTranslationUtil.isToplevelVarlengthArray((CArray) targetCType, mTypeSizes)) {
-				throw new UnsupportedOperationException("varlenght not yet supported here");
-			}
+		if (targetCType instanceof final CArray array) {
+			cellType = array.getValueType();
+			bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
 		} else {
 			bound = ((CStructOrUnion) targetCType).getFieldCount();
 		}
@@ -1273,24 +1229,15 @@ public class InitializationHandler {
 		Deque<InitializerResult> rest = new ArrayDeque<>(initializerResults);
 		int currentCellIndex = -1;
 		while (!rest.isEmpty() && (currentCellIndex < bound - 1 || rest.peekFirst().hasRootDesignator())) {
-			if (rest.peekFirst().hasRootDesignator()) {
-				final Designator designator = rest.peekFirst().getRootDesignator();
-				if (designator instanceof ArrayDesignator) {
-					assert targetCType instanceof CArray;
-					currentCellIndex = ((ArrayDesignator) designator).getArrayCellId();
-				} else if (designator instanceof StructDesignator) {
-					assert targetCType instanceof CStructOrUnion;
-					currentCellIndex = CTranslationUtil.findIndexOfStructField((CStructOrUnion) targetCType,
-							((StructDesignator) designator).getStructFieldId());
-				} else {
-					throw new AssertionError("missing case (designator)?");
-				}
+			final InitializerResult firstOfRest = rest.peekFirst();
+			if (firstOfRest.hasRootDesignator()) {
+				currentCellIndex = getCellIndex(targetCType, firstOfRest.getRootDesignator());
 			} else {
 				currentCellIndex++;
 			}
 
-			if (targetCType instanceof CStructOrUnion) {
-				cellType = ((CStructOrUnion) targetCType).getFieldTypes()[currentCellIndex];
+			if (targetCType instanceof final CStructOrUnion structOrUnion) {
+				cellType = structOrUnion.getFieldTypes()[currentCellIndex];
 			}
 
 			/*
@@ -1299,15 +1246,21 @@ public class InitializationHandler {
 			 * union type. In the latter case, the initial value of the object, including unnamed members, is that of
 			 * the expression.
 			 */
-			if (rest.peekFirst().isInitializerList() || (
-			// TODO: make a more general compatibility check, for example for array and pointer
-			rest.peekFirst().hasRootExpressionResult() && TypeHandler.isCompatibleType(cellType,
-					rest.peekFirst().getRootExpressionResult().getLrValue().getCType()))) {
+			if (firstOfRest.isInitializerList()
+					|| (firstOfRest.hasRootExpressionResult() && areCompatibleStructOrUnionTypes(cellType,
+							firstOfRest.getRootExpressionResult().getLrValue().getCType()))
+					|| (firstOfRest.getRootExpressionResult() instanceof StringLiteralResult
+							&& TypeHandler.isCharArray(cellType))) {
 				/*
-				 * case "{", i.e. one more brace opens Then the cell is initialized with the list belonging to that
-				 * brace (until the matching brace). No residue is taken over if too many elements are left.
+				 * first case: "{", i.e. one more brace opens (initializer list). Then the cell is initialized with the
+				 * list belonging to that brace (until the matching brace). No residue is taken over if too many
+				 * elements are left.
 				 *
-				 * other case: first list entry has a compatible struct or union type
+				 * second case: first list entry has a compatible struct or union type
+				 *
+				 * third case (C11 6.7.9 §21): If there are [...] fewer characters in a string literal used to
+				 * initialize an array of known size than there are elements in the array, the remainder of the
+				 * aggregate shall be initialized implicitly the same as objects that have static storage duration.
 				 */
 
 				final InitializerResult first = rest.pollFirst();
@@ -1329,6 +1282,32 @@ public class InitializationHandler {
 			}
 		}
 		return new InitializerInfo(indexInitInfos, new ArrayList<>(rest));
+	}
+
+	private static int getCellIndex(final ICType cType, final Designator designator) {
+		return switch (designator) {
+		case final ArrayDesignator ad -> {
+			assert cType instanceof CArray
+					: "Expected CArray, but got " + cType.getClass().getSimpleName() + " (" + cType + ")";
+			yield ad.getArrayCellId();
+		}
+		case final StructDesignator sd -> {
+			assert cType instanceof CStructOrUnion
+					: "Expected CStructOrUnion, but got " + cType.getClass().getSimpleName() + " (" + cType + ")";
+			yield CTranslationUtil.findIndexOfStructField((CStructOrUnion) cType, sd.getStructFieldId());
+		}
+		};
+	}
+
+	/**
+	 * Checks if type1 and type2 have "compatible structure or union type", as in C11 6.7.9.13:
+	 *
+	 * <quote>The initializer for a structure or union object that has automatic storage duration shall be either an
+	 * initializer list as described below, or a single expression that has compatible structure or union type.</quote>
+	 */
+	private static boolean areCompatibleStructOrUnionTypes(final ICType type1, final ICType type2) {
+		return type1.getUnderlyingType() instanceof CStructOrUnion
+				&& type2.getUnderlyingType() instanceof CStructOrUnion && CompatibleTypes.areCompatible(type1, type2);
 	}
 
 	/**
@@ -1362,104 +1341,6 @@ public class InitializationHandler {
 		}
 		final InitializerResult initializerResult = stringInitResBuilder.build();
 		return constructInitializerInfo(loc, initializerResult, cType, hook);
-	}
-
-	// TODO (Dominik 2021-11-10) Once ConstantArrayUtil is stable, use that class and remove most of the class below.
-	private class RequiredInitializationFeatures {
-
-		private boolean mIsFinished;
-		private final Set<BoogieArrayType> mTypesForWhichConstantArraysAreRequired = new HashSet<>();
-
-		public void reportRequiresConstantArray(final BoogieArrayType boogieType) {
-			assert !mIsFinished;
-			mTypesForWhichConstantArraysAreRequired.add(boogieType);
-		}
-
-		private void constructAndRegisterDeclaration(final BoogieArrayType boogieType) {
-			final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-
-			final BoogieType ft = StructExpanderUtil.flattenType(boogieType, new HashMap<>(), new HashMap<>());
-
-			final List<Attribute> attributeList = new ArrayList<>();
-
-			if (ft instanceof BoogieStructType) {
-				final BoogieStructType bst = (BoogieStructType) ft;
-
-				for (int fieldNr = 0; fieldNr < bst.getFieldCount(); fieldNr++) {
-
-					// add expand attribute
-					final NamedAttribute expandAttribute =
-							new NamedAttribute(ignoreLoc, StructExpanderUtil.ATTRIBUTE_EXPAND_STRUCT, new Expression[] {
-									ExpressionFactory.createStringLiteral(ignoreLoc, bst.getFieldIds()[fieldNr]) });
-					attributeList.add(expandAttribute);
-
-					// add smtdefined attribute
-					final String smtDefinition =
-							getSmtConstantArrayStringForBoogieType((BoogieArrayType) bst.getFieldType(fieldNr));
-
-					final NamedAttribute smtdefinedAttribute = new NamedAttribute(ignoreLoc,
-							FunctionDeclarations.SMTDEFINED_IDENTIFIER,
-							new Expression[] { ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition) });
-					attributeList.add(smtdefinedAttribute);
-				}
-			} else {
-				// build something like "((as const (Array (Array Int Int))) ((as const (Array Int Int)) 0))";
-				final String smtDefinition = getSmtConstantArrayStringForBoogieType(boogieType);
-
-				final NamedAttribute namedAttribute =
-						new NamedAttribute(ignoreLoc, FunctionDeclarations.SMTDEFINED_IDENTIFIER,
-								new Expression[] { ExpressionFactory.createStringLiteral(ignoreLoc, smtDefinition) });
-				attributeList.add(namedAttribute);
-			}
-
-			final Attribute[] attributes = attributeList.toArray(new Attribute[attributeList.size()]);
-
-			// register the FunctionDeclaration so it will be added at the end of translation
-			mExpressionTranslation.getFunctionDeclarations().declareFunction(ignoreLoc,
-					getNameOfConstantArrayFunction(boogieType),
-					// new Attribute[] { namedAttribute},
-					attributes, boogieType.toASTType(ignoreLoc));
-
-		}
-
-		private String getSmtConstantArrayStringForBoogieType(final BoogieArrayType boogieArrayType) {
-			String currentArray;
-			if (boogieArrayType.getValueType() instanceof BoogieArrayType) {
-				currentArray = getSmtConstantArrayStringForBoogieType((BoogieArrayType) boogieArrayType.getValueType());
-			} else {
-				currentArray = CTranslationUtil.getSmtZeroStringForBoogieType(boogieArrayType.getValueType());
-			}
-			String currentTypeString = CTranslationUtil.getSmtSortStringForBoogieType(boogieArrayType.getValueType());
-			for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
-				currentTypeString = String.format("(Array %s %s)",
-						CTranslationUtil.getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
-						currentTypeString);
-				currentArray = String.format("((as const %s) %s)", currentTypeString, currentArray);
-			}
-			return currentArray;
-		}
-
-		public void constructAndRegisterDeclarations() {
-			mIsFinished = true;
-			for (final BoogieArrayType boogieType : mTypesForWhichConstantArraysAreRequired) {
-				constructAndRegisterDeclaration(boogieType);
-			}
-		}
-
-		public String getNameOfConstantArrayFunction(final BoogieType boogieArrayType) {
-			if (!mTypesForWhichConstantArraysAreRequired.contains(boogieArrayType)) {
-				throw new AssertionError("type should have been reported as required first");
-			}
-			/*
-			 * "~RB~" stands for "right bracket", "~RC~" stands for "right curly brace", "~COM~" stands for "comma",
-			 * "~COL~" stands for "colon", if there is a nicer naming that still avoids name clashes, that naming should
-			 * be used.
-			 */
-			final String sanitizedTypeName = boogieArrayType.toString().replace(":", "~COL~").replace(", ", "~COM~")
-					.replace("{ ", "~LC~").replace(" }", "~RC~").replace("]", "~RB~").replace("[", "~LB~");
-			return SFO.AUXILIARY_FUNCTION_PREFIX + "const~array~" + sanitizedTypeName;
-		}
-
 	}
 
 	/**
@@ -1613,45 +1494,41 @@ public class InitializationHandler {
 	public Result handleDesignatedInitializer(final IDispatcher main, final LocationFactory locationFactory,
 			final ICASTDesignatedInitializer node) {
 		final ILocation loc = locationFactory.createCLocation(node);
-		if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof ICASTFieldDesignator)) {
+		if (node.getDesignators().length == 1
+				&& (node.getDesignators()[0] instanceof final ICASTFieldDesignator fieldDesignator)) {
 			// a field designator, as in "struct field"
-			final ICASTFieldDesignator fieldDesignator = (ICASTFieldDesignator) node.getDesignators()[0];
 			final String fieldDesignatorName = fieldDesignator.getName().toString();
 			final Result innerInitializerResult = main.dispatch(node.getOperand());
-			if (innerInitializerResult instanceof InitializerResult) {
-
-				final InitializerResult initializerResult = (InitializerResult) innerInitializerResult;
+			if (innerInitializerResult instanceof final InitializerResult initializerResult) {
 				assert !initializerResult.hasRootDesignator();
 
 				final InitializerResultBuilder irBuilder = new InitializerResultBuilder(initializerResult);
 				irBuilder.setRootDesignator(fieldDesignatorName);
 
 				return irBuilder.build();
-			} else if (innerInitializerResult instanceof ExpressionResult) {
-				return new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) innerInitializerResult)
+			} else if (innerInitializerResult instanceof final ExpressionResult exprResult) {
+				return new InitializerResultBuilder().setRootExpressionResult(exprResult)
 						.setRootDesignator(fieldDesignatorName).build();
 			} else {
 				throw new UnsupportedSyntaxException(loc, "Unexpected result");
 			}
-		} else if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof ICASTArrayDesignator)) {
+		} else if (node.getDesignators().length == 1
+				&& (node.getDesignators()[0] instanceof final ICASTArrayDesignator arrayDesignator)) {
 			// designator denotes some field in an array;
 			// one designator means a one-dimensional array "access" (I think)
-			final ICASTArrayDesignator arrayDesignator = (ICASTArrayDesignator) node.getDesignators()[0];
 			final int arrayCellNr = getArrayCellNrFromArrayDesignator(main, loc, arrayDesignator, node);
 
 			final Result innerInitializerResult = main.dispatch(node.getOperand());
-			if (innerInitializerResult instanceof InitializerResult) {
-
-				final InitializerResult initializerResult = (InitializerResult) innerInitializerResult;
+			if (innerInitializerResult instanceof final InitializerResult initializerResult) {
 				assert !initializerResult.hasRootDesignator();
 
 				final InitializerResultBuilder irBuilder = new InitializerResultBuilder(initializerResult);
 				irBuilder.setRootDesignator(arrayCellNr);
 
 				return irBuilder.build();
-			} else if (innerInitializerResult instanceof ExpressionResult) {
-				return new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) innerInitializerResult)
-						.setRootDesignator(arrayCellNr).build();
+			} else if (innerInitializerResult instanceof final ExpressionResult exprResult) {
+				return new InitializerResultBuilder().setRootExpressionResult(exprResult).setRootDesignator(arrayCellNr)
+						.build();
 			} else {
 				throw new UnsupportedSyntaxException(loc, "Unexpected result");
 			}
@@ -1664,14 +1541,11 @@ public class InitializationHandler {
 	private int getArrayCellNrFromArrayDesignator(final IDispatcher main, final ILocation loc,
 			final ICASTArrayDesignator arrayDesignator, final ICASTDesignatedInitializer hook) {
 		final Result subscriptExpressionResult = main.dispatch(arrayDesignator.getSubscriptExpression());
-		if (!(subscriptExpressionResult instanceof ExpressionResult)) {
+		if (!(subscriptExpressionResult instanceof final ExpressionResult exprResult)) {
 			throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple "
 					+ "designators are currently unsupported: " + hook.getRawSignature());
 		}
-		final ExpressionResult expressionResultSwitched =
-				mExprResultTransformer.switchToRValue((ExpressionResult) subscriptExpressionResult, loc, hook);
-
+		final ExpressionResult expressionResultSwitched = mExprResultTransformer.switchToRValue(exprResult, loc, hook);
 		return mTypeSizes.extractIntegerValue((RValue) expressionResultSwitched.getLrValue()).intValueExact();
 	}
-
 }

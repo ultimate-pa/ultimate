@@ -30,7 +30,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.text.ParseException;
 import java.util.List;
 import java.util.Set;
 
@@ -89,7 +88,7 @@ public interface IDispatcher {
 
 	IASTNode getAcslHook();
 
-	NextACSL nextACSLStatement() throws ParseException;
+	NextACSL nextACSLStatement();
 
 	List<ACSLNode> getFunctionContractFromWitness(IASTNode node);
 

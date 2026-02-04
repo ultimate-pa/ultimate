@@ -62,7 +62,7 @@ modifies g;
 	
 	// We try to join some thread that has id 23 (and this time we do not assign any 
 	// return value). However, at this location there can be never a running thread
-	// this this ID.
+	// with this ID.
     join 23;
 	
 	// The following statement would always fail, however since the execution cannot

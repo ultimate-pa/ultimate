@@ -104,8 +104,8 @@ public class CCharacterConstant {
 		mRepresentingValue = computeRepresentingValue(mNumericalValue, signednessOfChar, mSignednessOfRepresentingType);
 	}
 
-	private BigInteger computeRepresentingValue(final BigInteger numericalValue, final Signedness signednessOfChar,
-			final Signedness signednessOfRepresentingType) {
+	private static BigInteger computeRepresentingValue(final BigInteger numericalValue,
+			final Signedness signednessOfChar, final Signedness signednessOfRepresentingType) {
 		BigInteger result;
 		if (signednessOfChar == Signedness.SIGNED && signednessOfRepresentingType == Signedness.SIGNED) {
 			if (numericalValue.compareTo(BigInteger.valueOf(255)) <= 0) {

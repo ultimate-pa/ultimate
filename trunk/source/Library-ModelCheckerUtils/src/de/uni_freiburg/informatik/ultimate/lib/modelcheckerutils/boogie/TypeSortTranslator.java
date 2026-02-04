@@ -272,5 +272,4 @@ public class TypeSortTranslator {
 		mType2Sort.put(boogieType, result);
 		mSort2Type.put(result, boogieType);
 	}
-
 }

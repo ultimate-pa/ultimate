@@ -49,6 +49,8 @@ known_exceptions:
   "overapproximation of bitwiseAnd":
   "overapproximation of shiftLeft":
   "overapproximation of memtrack":
+  "overapproximation of sign of NaN":
+  "Omit memory slicing because it failed with the following exception:":
   "There is insufficient memory for the Java Runtime Environment to continue":
   "UnsupportedOperationException: Shadow problem":
   "UnsupportedSyntaxResult":

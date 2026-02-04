@@ -132,6 +132,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  *
+ * @param <L>
+ *            the type of transitions in the analysed program
  * @param <A>
  *            The type of abstraction refined by the CEGAR loop
  */
@@ -164,14 +166,12 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs);
 		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
-
 		InterpolationTechnique interpolation = taPrefs.interpolation();
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
 				&& interpolation == InterpolationTechnique.FPandBP) {
 			mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
 			interpolation = InterpolationTechnique.ForwardPredicates;
 		}
-
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),

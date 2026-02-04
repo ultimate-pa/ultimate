@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.Level;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
@@ -205,6 +206,21 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
 			"Strategy used to check whether (and prove that) a synthesized commutativity condition holds.";
 	private static final RefinementStrategy DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY = RefinementStrategy.SMTINTERPOL;
+
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD =
+			"Path program threshold for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD =
+			"If commutativity condition synthesis is enabled, it is applied only to traces whose path program "
+					+ "has been encountered at least n times (where n is the value of this setting).";
+	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD = 2;
+
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_RETRIES =
+			"Maximum retries for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_RETRIES =
+			"If commutativity condition synthesis fails due to an imperfect proof, "
+					+ "future iterations may retry synthesizing a commutativity condition "
+					+ "for the same point of redundancy/non-minimality, up to the given number of attempts.";
+	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_RETRIES = 0;
 
 	// Settings for PetriAutomizer
 	// ========================================================================
@@ -511,6 +527,30 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
 
+	// Parallel Trace Abstraction
+	// ========================================================================
+	public static final String LABEL_PARALLEL_CEGAR_LOOP = "Use CEGAR loop for Parallel Trace Abstraction";
+	private static final boolean DEF_PARALLEL_CEGAR_LOOP = false;
+
+	public static final String LABEL_THREADLIMIT = "Threadlimit for Parallel CEGAR";
+	private static final Integer DEF_THREADLIMIT = 1;
+
+	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
+			"Minimize Abstraction every time a worker is done";
+	private static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = true;
+	private static final String DESC_MINIMIZE_ABSTRACTION_PER_WORKER =
+			"Minimize the abstraction everytime a worker is done, or only once per CEGAR iteration.";
+	// Parallel CEGAR counterexample search stragies
+	// ========================================================================
+	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
+	private static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = true;
+	private static final String DESC_PARALLELSEARCH_ACTIVE_CEX_ONLY =
+			"IsEmptyParallel must diverge from any previous counterexample (false) or only from counterexamples activley analysed by a worker. ";
+	public static final String LABEL_SEARCH_LOOP_BOUND = "search loop bound";
+	private static final String DESC_SEARCH_LOOP_BOUND =
+			"Limits how often the IsEmptyParallel search is allowed to visit the same transition letter pair. Default -1 means infinetly often";
+	private static final int DEF_SEARCH_LOOP_BOUND = -1;
+
 	/**
 	 * Constructor.
 	 */
@@ -562,7 +602,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS, PreferenceType.Combo,
 						HoareAnnotationPositions.values()),
 				new UltimatePreferenceItem<>(LABEL_COMPUTE_PROCEDURE_CONTRACTS, DEF_COMPUTE_PROCEDURE_CONTRACTS,
-						DESC_COMPUTE_PROCEDURE_CONTRACTS, true, PreferenceType.Boolean),
+						DESC_COMPUTE_PROCEDURE_CONTRACTS, Level.EXPERIMENTAL, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
 						DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER, DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
@@ -696,7 +736,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN, 0, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_STOP_MODE, PathProgramDumpStop.AFTER_FIRST_DUMP,
 						PreferenceType.Combo, PathProgramDumpStop.values()),
-				getConcurrencySettings() };
+				getConcurrencySettings(), getParallelCegarSettings() };
 	}
 
 	private static UltimatePreferenceItemContainer getConcurrencySettings() {
@@ -746,6 +786,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
 						DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY, DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
 						PreferenceType.Combo, RefinementStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD,
+						DEF_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD, DESC_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD,
+						Level.EXPERIMENTAL, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_RETRIES,
+						DEF_COMMUTATIVITY_COND_SYNTHESIS_RETRIES, DESC_COMMUTATIVITY_COND_SYNTHESIS_RETRIES,
+						Level.EXPERIMENTAL, PreferenceType.Integer),
 
 				getIndependenceSettings(0),
 
@@ -789,6 +835,21 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, index),
 						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer));
+	}
+
+	public static UltimatePreferenceItemContainer getParallelCegarSettings() {
+		return new UltimatePreferenceItemContainer("Parallel Trace Abstraction",
+				new UltimatePreferenceItem<>(LABEL_PARALLEL_CEGAR_LOOP, DEF_PARALLEL_CEGAR_LOOP,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, DESC_SEARCH_LOOP_BOUND,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
+						DESC_PARALLELSEARCH_ACTIVE_CEX_ONLY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
+						DESC_MINIMIZE_ABSTRACTION_PER_WORKER, PreferenceType.Boolean));
+
 	}
 
 	public static String getSuffixedLabel(final String label, final int index) {
