@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="120s" hardtimelimit="120s" memlimit="8 GB" cpuCores="2">
+
+  <resultfiles></resultfiles>
+  <option name="--force-no-wrapper"/>
+
+  <rundefinition name="IcfgInterpreter">
+    <option name="-tc">../../../trunk/examples/toolchains/IcfgInterpreterC.xml</option>
+    <option name="--icfgbuilder.size.of.a.code.block">OneNontrivialStatement</option>
+  </rundefinition>
+
+  <tasks name="canary">
+    <include>../../../trunk/examples/svcomp/loops/array-2.yml</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+  </tasks>
+
+  <tasks name="loops">
+    <includesfile>../../../trunk/examples/svcomp/Loops.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+  </tasks>
+</benchmark>
