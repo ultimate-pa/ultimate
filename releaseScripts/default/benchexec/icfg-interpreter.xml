@@ -8,6 +8,7 @@
   <rundefinition name="IcfgInterpreter">
     <option name="-tc">../../../trunk/examples/toolchains/IcfgInterpreterC.xml</option>
     <option name="--icfgbuilder.size.of.a.code.block">OneNontrivialStatement</option>
+    <option name="--procedureinliner.ignore.calls.to.procedures.called.more.than.once">NEVER</option>
   </rundefinition>
 
   <tasks name="canary">
