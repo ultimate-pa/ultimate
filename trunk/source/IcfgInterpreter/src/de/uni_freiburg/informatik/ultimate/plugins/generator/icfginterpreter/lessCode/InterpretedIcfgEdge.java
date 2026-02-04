@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
@@ -161,6 +162,7 @@ public class InterpretedIcfgEdge {
 				final TermVariable termVar;
 				final ArrayValue array;
 				final List<Value> keyValues;
+				final Sort baseSort;
 				if (term instanceof final TermVariable tv) {
 					if (state.containsKey(term) || !required.contains(term)) {
 						completedTerms.add(term);
@@ -184,6 +186,7 @@ public class InterpretedIcfgEdge {
 						continue;
 					}
 					array = (ArrayValue) state.get(termVar);
+
 					if ((array).hasKey(keyValues)) {
 						completedTerms.add(term);
 						continue;

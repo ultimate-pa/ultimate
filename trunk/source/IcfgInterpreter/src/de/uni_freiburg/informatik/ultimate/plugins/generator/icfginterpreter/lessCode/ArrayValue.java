@@ -30,7 +30,13 @@ public class ArrayValue implements Value {
 		mValue = value;
 		mArrayVar = arrayVar;
 		mSort = mArrayVar.getSort();
-		mValueSort = mSort.getArguments()[1];
+		// While arraySort is (Array Key Value), set arraySort := Value
+		// In the end, we will have found the Sort of the stored values
+		Sort arraySort = mSort;
+		while (arraySort.isArraySort()) {
+			arraySort = arraySort.getArguments()[1];
+		}
+		mValueSort = arraySort;
 	}
 
 	public ArrayValue store(final List<Value> key, final Value value) {
