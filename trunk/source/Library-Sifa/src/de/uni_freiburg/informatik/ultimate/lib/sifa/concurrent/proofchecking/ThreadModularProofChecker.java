@@ -85,7 +85,8 @@ public class ThreadModularProofChecker {
 					for (final var otherLoc : otherEntry.getValue().keySet()) {
 						for (final IcfgEdge edge : otherLoc.getOutgoingEdges()) {
 							if (modifiesGlobals(edge.getTransformula())) {
-								final IPredicate itfPred = mTranslator.translate(edge.getTransformula());
+								final IPredicate itfPred = mTranslator.translateForInterference(
+										edge.getTransformula(), otherEntry.getKey(), otherLoc, edge.getTarget());
 								final IPredicate postState = mPostcondition.strongestPostcondition(pred, itfPred);
 								if (!mDomain.isSubsetEq(postState, pred).isTrueForAbstraction()) {
 									mLogger.error("Unstable %s under edge %s->%s: P=%s", location, edge.getSource(),

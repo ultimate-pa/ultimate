@@ -3,12 +3,12 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
@@ -20,37 +20,70 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 
+	private final ManagedScript mManagedScript;
 	private final Map<IProgramVar, TermVariable> mPrimedVars = new HashMap<>();
+	private final Set<IProgramVar> mGhostVars = new HashSet<>();
 
 	public PrimedDefaultIcfgSymbolTable(final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ManagedScript managedScript) {
 		super(symbolTable, procedures);
+		mManagedScript = managedScript;
 		addPrimedMappings(procedures, managedScript);
 		finishConstruction();
+	}
+
+	/** Registers a ghost variable as a global, with primed mapping and constants. */
+	public void registerGhostVariable(final IProgramVar ghostVar) {
+		mGhostVars.add(ghostVar);
+		mTermVariable2ProgramVar.put(ghostVar.getTermVariable(), ghostVar);
+
+		final TermVariable primedTv = mManagedScript.constructFreshTermVariable(
+				ghostVar.getGloballyUniqueId() + "_primed", ghostVar.getTermVariable().getSort());
+		mTermVariable2ProgramVar.put(primedTv, new PrimedProgramVar(ghostVar, primedTv));
+		mPrimedVars.put(ghostVar, primedTv);
+
+		// Required for closed-formula computation
+		addDefaultConstant(ghostVar);
+		addPrimedConstant(ghostVar);
+	}
+
+	@Override
+	public Set<ApplicationTerm> computeAllDefaultConstants() {
+		final Set<ApplicationTerm> rtr = new LinkedHashSet<>(super.computeAllDefaultConstants());
+		mGhostVars.stream().map(IProgramVar::getDefaultConstant).forEachOrdered(rtr::add);
+		return rtr;
 	}
 
 	public Map<IProgramVar, TermVariable> getPrimedVars() {
 		return Collections.unmodifiableMap(mPrimedVars);
 	}
 
-	/**
-	 * Returns the primed term variable for the given program variable, or null if not found.
-	 */
+	/** All global base variables (non-old, non-primed), including ghost variables. */
+	public Set<IProgramVar> getAllGlobalBaseVars() {
+		final Set<IProgramVar> result = new HashSet<>();
+		for (final IProgramVar pv : mTermVariable2ProgramVar.values()) {
+			if (!pv.isGlobal()) {
+				continue;
+			}
+			if (pv.isOldvar()) {
+				continue;
+			}
+			if (isPrimedVar(pv)) {
+				continue;
+			}
+			result.add(pv);
+		}
+		return result;
+	}
+
 	public TermVariable getPrimedVar(final IProgramVar var) {
 		return mPrimedVars.get(var);
 	}
 
-	/**
-	 * Checks if the given program variable is a primed variable (created by this symbol table).
-	 */
 	public boolean isPrimedVar(final IProgramVar var) {
 		return var instanceof PrimedProgramVar;
 	}
 
-	/**
-	 * If the given variable is a primed variable, returns the underlying base variable. Otherwise returns the variable
-	 * itself.
-	 */
 	public IProgramVar getBaseVar(final IProgramVar var) {
 		if (var instanceof PrimedProgramVar) {
 			return ((PrimedProgramVar) var).mBase;
@@ -62,14 +95,12 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		final Set<IProgramVar> vars = new HashSet<>();
 		vars.addAll(getGlobals());
 		for (final String procedure : procedures) {
-			for (final ILocalProgramVar local : getLocals(procedure)) {
-				vars.add(local);
-			}
+			vars.addAll(getLocals(procedure));
 		}
 
 		for (final IProgramVar var : vars) {
-			final TermVariable primedVar = managedScript.constructFreshTermVariable(
-					var.getGloballyUniqueId() + "_primed", var.getTermVariable().getSort());
+			final TermVariable primedVar = managedScript
+					.constructFreshTermVariable(var.getGloballyUniqueId() + "_primed", var.getTermVariable().getSort());
 			mTermVariable2ProgramVar.put(primedVar, new PrimedProgramVar(var, primedVar));
 			mPrimedVars.put(var, primedVar);
 			addDefaultConstant(var);
@@ -94,7 +125,8 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		if (mFunSym2ProgramFunction.containsKey(funSym)) {
 			return;
 		}
-		final IProgramConst primedConst = new ProgramConst(var.getGloballyUniqueId() + "_primed", primedConstant, false);
+		final IProgramConst primedConst = new ProgramConst(var.getGloballyUniqueId() + "_primed", primedConstant,
+				false);
 		mFunSym2ProgramFunction.put(funSym, primedConst);
 		mConstants.add(primedConst);
 	}

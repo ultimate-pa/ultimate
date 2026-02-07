@@ -41,6 +41,10 @@ public class RelationalPredicatePostcondition {
 				final IProgramVar baseVar = mSymbolTable.getBaseVar(pv);
 				primedToUnprimed.put(pv.getTermVariable(), baseVar.getTermVariable());
 				preVarsToProject.add(baseVar.getTermVariable());
+			} else if (mSymbolTable.getPrimedVar(pv) != null) {
+				// Havoc case: primed var absent means no constraint on post-value,
+				// but pre-value must still be projected away.
+				preVarsToProject.add(pv.getTermVariable());
 			}
 		}
 

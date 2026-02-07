@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -77,6 +78,10 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 		return mInterferencesByThread.isEmpty() || mInterferencesByThread.values().stream().allMatch(Map::isEmpty);
 	}
 
+	/**
+	 * Repeatedly applies interferences until the state stabilizes.
+	 * Switches from join to widen after {@link #mWideningThreshold} iterations to ensure termination.
+	 */
 	@Override
 	public IPredicate applyToState(final IPredicate state, final String threadId, final IDomain domain) {
 		if (isEmpty() || isTrue(state)) {
@@ -130,6 +135,7 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 		return hasConverged(previous, domain, null);
 	}
 
+	/** Converged iff every new interference is subsumed by the corresponding old one. */
 	public boolean hasConverged(final IInterferenceAbstraction previous, final IDomain domain,
 			final de.uni_freiburg.informatik.ultimate.core.model.services.ILogger logger) {
 		if (!(previous instanceof DefaultInterferenceAbstraction)) {
@@ -176,8 +182,8 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 		final DefaultInterferenceAbstraction otherDefault = (DefaultInterferenceAbstraction) other;
 		final Map<String, Map<IcfgLocation, IPredicate>> widenedInterferences = new HashMap<>();
 
-		final Set<String> allThreads = new HashSet<>(mInterferencesByThread.keySet());
-		allThreads.addAll(otherDefault.mInterferencesByThread.keySet());
+		final Set<String> allThreads = DataStructureUtils.union(mInterferencesByThread.keySet(),
+				otherDefault.mInterferencesByThread.keySet());
 
 		for (final String threadId : allThreads) {
 			final Map<IcfgLocation, IPredicate> thisMap = mInterferencesByThread.getOrDefault(threadId, Map.of());
@@ -186,8 +192,7 @@ public class DefaultInterferenceAbstraction implements IInterferenceAbstraction 
 
 			final Map<IcfgLocation, IPredicate> widenedMap = new HashMap<>();
 
-			final Set<IcfgLocation> allLocs = new HashSet<>(thisMap.keySet());
-			allLocs.addAll(otherMap.keySet());
+			final Set<IcfgLocation> allLocs = DataStructureUtils.union(thisMap.keySet(), otherMap.keySet());
 
 			for (final IcfgLocation loc : allLocs) {
 				final IPredicate thisPred = thisMap.get(loc);

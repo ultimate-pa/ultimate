@@ -26,11 +26,7 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 	private final boolean mIncludePreState;
 
 	private static boolean canBeDropped(final IPredicate interference) {
-		return isTrivialPredicate(interference);
-	}
-
-	private static boolean isTrivialPredicate(final IPredicate pred) {
-		return SmtUtils.isTrueLiteral(pred.getFormula()) || SmtUtils.isFalseLiteral(pred.getFormula());
+		return SmtUtils.isTrueLiteral(interference.getFormula()) || SmtUtils.isFalseLiteral(interference.getFormula());
 	}
 
 	private static boolean modifiesGlobals(final TransFormula tf) {
@@ -59,13 +55,14 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 		for (final Map.Entry<String, Map<IcfgLocation, IPredicate>> entry : analysisResults.entrySet()) {
 			final String threadId = entry.getKey();
 			final Map<IcfgLocation, IPredicate> locationStates = entry.getValue();
-			final Map<IcfgLocation, IPredicate> threadInterferences = collectFromThread(locationStates);
+			final Map<IcfgLocation, IPredicate> threadInterferences = collectFromThread(threadId, locationStates);
 			all.put(threadId, threadInterferences);
 		}
 		return DefaultInterferenceAbstraction.of(all, mPostcondition);
 	}
 
-	private Map<IcfgLocation, IPredicate> collectFromThread(final Map<IcfgLocation, IPredicate> locationStates) {
+	private Map<IcfgLocation, IPredicate> collectFromThread(final String threadId,
+			final Map<IcfgLocation, IPredicate> locationStates) {
 		final Map<IcfgLocation, IPredicate> result = new HashMap<>();
 		for (final Map.Entry<IcfgLocation, IPredicate> entry : locationStates.entrySet()) {
 			final IcfgLocation loc = entry.getKey();
@@ -76,9 +73,9 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 				final TransFormula tf = edge.getTransformula();
 				if (tf != null && modifiesGlobals(tf)) {
-					final IPredicate interference = buildInterference(preState, tf);
+					final IPredicate interference = buildInterference(threadId, preState, tf, loc, edge.getTarget());
 					if (!canBeDropped(interference)) {
-						// Join interferences at same location
+						// Join multiple edges from same location into one interference
 						final IPredicate existing = result.get(loc);
 						if (existing == null) {
 							result.put(loc, interference);
@@ -92,8 +89,12 @@ public class DefaultInterferenceAbstractor implements IInterferenceAbstractor {
 		return result;
 	}
 
-	private IPredicate buildInterference(final IPredicate preState, final TransFormula tf) {
-		final IPredicate transitionPred = mTranslator.translate(tf);
+	// Conjoining with pre-state makes the interference context-sensitive:
+	// it can only fire from states the thread actually reaches.
+	private IPredicate buildInterference(final String threadId, final IPredicate preState, final TransFormula tf,
+			final IcfgLocation sourceLocation, final IcfgLocation targetLocation) {
+		final IPredicate transitionPred = mTranslator.translateForInterference(tf, threadId, sourceLocation,
+				targetLocation);
 
 		if (!mIncludePreState) {
 			return transitionPred;

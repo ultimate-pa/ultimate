@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.DefaultInterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -103,11 +102,8 @@ public final class SifaResultPrinter {
 			return;
 		}
 
-		if (interferences instanceof DefaultInterferenceAbstraction) {
-			final DefaultInterferenceAbstraction def = (DefaultInterferenceAbstraction) interferences;
-			for (final String threadId : def.getThreadIds()) {
-				mLogger.debug("Thread %s: %d interferences", threadId, def.getInterferenceCount(threadId));
-			}
+		for (final String threadId : interferences.getThreadIds()) {
+			mLogger.debug("Thread %s: %d interferences", threadId, interferences.getInterferenceCount(threadId));
 		}
 	}
 
@@ -136,6 +132,9 @@ public final class SifaResultPrinter {
 		if (predicate == null) {
 			return "<null>";
 		}
-		return predicate.getFormula().toStringDirect();
+		final String s = predicate.getFormula().toStringDirect();
+		// ManagedScript prefixes term variables with "v_". Strip this for our ghost location vars
+		// to keep the debug output readable.
+		return s.replace("v_loc_", "loc_");
 	}
 }

@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -72,9 +73,10 @@ public class SharedVariableTranslationTest {
 		// Translate both
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable);
-		final IPredicate rel1 = translator.translate(tf1);
-		final IPredicate rel2 = translator.translate(tf2);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable,
+				new ThreadModularSifaSettings(false), null);
+		final IPredicate rel1 = translator.translateForInterference(tf1, null, null, null);
+		final IPredicate rel2 = translator.translateForInterference(tf2, null, null, null);
 
 		// Both should contain the same canonical term variables
 		final TermVariable tv_x = x.getTermVariable();
@@ -112,12 +114,13 @@ public class SharedVariableTranslationTest {
 
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Set.of("testProc"), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable,
+				new ThreadModularSifaSettings(false), null);
 
 		mMgdScript.unlock(this);
 
 		// Translate (projects to global)
-		final IPredicate globalRelation = translator.translate(tf);
+		final IPredicate globalRelation = translator.translateForInterference(tf, null, null, null);
 
 		mMgdScript.lock(this);
 

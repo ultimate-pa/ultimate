@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LoiExpansion;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.SingleThreadIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.DefaultInterferenceAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.DefaultInterferenceAbstractor;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstraction;
@@ -71,16 +72,27 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mThreadIds = discoverThreadIds(icfg);
 		mLoiExpansion = new LoiExpansion(logger);
 		mResultPrinter = new SifaResultPrinter(logger);
+		mConcurrentTools = (ConcurrentSymbolicTools) tools;
 
+		final var settings = mConcurrentTools.getSettings();
 		final var symbolTable = (PrimedDefaultIcfgSymbolTable) tools.getSymbolTable();
 		final var factory = tools.getFactory();
 		final var script = tools.getManagedScript();
-		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable);
+
+		GhostVariableManager ghostVars = null;
+		if (settings.useGhostLocations()) {
+			final Map<IcfgLocation, Integer> locationIds = assignLocationIds(icfg);
+			ghostVars = GhostVariableManager.create(script, locationIds, mThreadIds, symbolTable);
+			mConcurrentTools.setGhostVariableManager(ghostVars);
+			mLogger.info("Ghost location variables enabled for threads: %s", mThreadIds);
+		}
+
+		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable, settings,
+				ghostVars);
 		mPostcondition = new RelationalPredicatePostcondition(services, script, factory, symbolTable);
 		mAbstractor = new DefaultInterferenceAbstractor(translator, mPostcondition, baseDomain, true, script, factory);
 		mProofChecker = new ThreadModularProofChecker(logger, icfg.getCfgSmtToolkit(), mPostcondition, translator,
 				baseDomain);
-		mConcurrentTools = (ConcurrentSymbolicTools) tools;
 	}
 
 	@Override
@@ -100,6 +112,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			Map<String, Map<IcfgLocation, IPredicate>> threadPredicates) {
 	}
 
+	/** Iterates: analyze all threads, extract interferences, repeat until stable. */
 	private FixpointResult computeInterferenceFixpoint() {
 		final Map<IcfgLocation, IPredicate> allPredicates = new HashMap<>();
 		IInterferenceAbstraction interferences = DefaultInterferenceAbstraction.empty(mPostcondition);
@@ -113,14 +126,12 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 					iterResult.perThreadPredicates, iterResult.threadIcfgs);
 			mResultPrinter.logInterferences(newInterferences);
 
-			if (newInterferences instanceof DefaultInterferenceAbstraction) {
-				final DefaultInterferenceAbstraction def = (DefaultInterferenceAbstraction) newInterferences;
-				for (final String threadId : def.getThreadIds()) {
-					mLogger.info("  Thread %s: %d interferences", threadId, def.getInterferenceCount(threadId));
-				}
+			for (final String threadId : newInterferences.getThreadIds()) {
+				mLogger.info("  Thread %s: %d interferences", threadId,
+						newInterferences.getInterferenceCount(threadId));
 			}
 
-			if (((DefaultInterferenceAbstraction) newInterferences).hasConverged(interferences, mBaseDomain, mLogger)) {
+			if (newInterferences.hasConverged(interferences, mBaseDomain, mLogger)) {
 				mLogger.info("=== Fixpoint reached after %d iterations ===", iteration);
 				return new FixpointResult(allPredicates, iterResult.perThreadPredicates);
 			}
@@ -128,6 +139,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		}
 	}
 
+	// Threads are analyzed sequentially; each thread sees results from previous threads in this iteration.
 	private IterationResult analyzeAllThreads(final IInterferenceAbstraction interferences,
 			final Map<IcfgLocation, IPredicate> currentPredicates) {
 		final Map<IcfgLocation, IPredicate> combined = new HashMap<>(currentPredicates);
@@ -172,4 +184,18 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		return ids;
 	}
 
+	/** Per-procedure IDs for ghost location abstraction. Entry = 1. */
+	static Map<IcfgLocation, Integer> assignLocationIds(final IIcfg<IcfgLocation> icfg) {
+		// Must use getProgramPoints(), not IcfgLocationIterator: the iterator only visits
+		// locations reachable from initial nodes, missing forked procedures' locations.
+		final Map<IcfgLocation, Integer> result = new HashMap<>();
+		final Map<String, Integer> procCounters = new HashMap<>();
+		for (final var procEntry : icfg.getProgramPoints().entrySet()) {
+			for (final IcfgLocation loc : procEntry.getValue().values()) {
+				final int id = procCounters.merge(loc.getProcedure(), 1, (old, v) -> old + 1);
+				result.put(loc, id);
+			}
+		}
+		return result;
+	}
 }
