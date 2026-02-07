@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ArrayValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor;
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.les
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge.InterpretedIcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge.UntranslatableIcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.TermEvaluator.UnsopportedTermError;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.TermEvaluator.UnsupportedTermError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.AssignmentUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
@@ -628,22 +629,28 @@ public class ExecutionProducer {
 					try {
 						final Map<TermVariable, Value> nextState = new HashMap<>(execution.getCurrentState());
 						final HashMap<Term, Restriction<?>> newBounds = new HashMap<>(execution.havocBounds);
-						if (!nextEdge.guard(nextState, ndc, newBounds)) {
+
+						final Pair<Boolean, Map<TermVariable, Value>> result = nextEdge.guard(nextState, ndc,
+								newBounds);
+						final Map<TermVariable, Value> havocedVars = result.b();
+
+						if (!result.a()) {
 							continue;
 						}
 						anyGuardTrue = true;
 
-						nextEdge.update(nextState, ndc, newBounds);
+						havocedVars.putAll(nextEdge.update(nextState, ndc, newBounds));
 
 						List<PartialExecution> newExecutionsOfEdge = newExecutions.get(nextEdge);
 						if (newExecutionsOfEdge == null) {
 							newExecutionsOfEdge = new ArrayList<>();
 							newExecutions.put(nextEdge, newExecutionsOfEdge);
 						}
-						newExecutionsOfEdge.add(execution.addStep(nextEdge, nextState, newBounds));
-					} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
+						newExecutionsOfEdge.add(execution.addStep(nextEdge, nextState, newBounds, havocedVars));
+					} catch (final UnsupportedTermError | EdgeUntranslatableError unsupported) {
 						unsupportedFound = true;
-						final PartialExecution failedExecution = execution.addStep(nextEdge, Map.of(), Map.of());
+						final PartialExecution failedExecution = execution.addStep(nextEdge, Map.of(), Map.of(),
+								Map.of());
 						if (finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED),
 								out, outMethod) && endIfAggregateFull) {
 							return;
@@ -734,7 +741,7 @@ public class ExecutionProducer {
 		}
 
 		public PartialExecution addStep(final InterpretedIcfgEdge nextEdge, final Map<TermVariable, Value> nextState,
-				final Map<Term, Restriction<?>> newBounds) {
+				final Map<Term, Restriction<?>> newBounds, final Map<TermVariable, Value> havocedVars) {
 			if (status != null) {
 				throw new AssertionError("Cannot add steps to finished Execution.");
 			}
@@ -747,6 +754,8 @@ public class ExecutionProducer {
 
 			Map<TermVariable, Value> previousState = newStates.get(index);
 			final Set<TermVariable> currentVars = new HashSet<>(nextState.keySet());
+			currentVars.addAll(havocedVars.keySet());
+
 			nextEdge.removeSafe(currentVars);
 
 			// Propagate havoced variables backwards
@@ -774,7 +783,7 @@ public class ExecutionProducer {
 						finishedVars.add(variable);
 					}
 					// Variable was havoced in this state, add known value
-					previousState.put(variable, nextState.get(variable));
+					previousState.put(variable, havocedVars.get(variable));
 				}
 				currentVars.removeAll(finishedVars);
 

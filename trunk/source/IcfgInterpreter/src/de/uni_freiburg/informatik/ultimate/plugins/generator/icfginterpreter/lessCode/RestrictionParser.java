@@ -226,7 +226,7 @@ public class RestrictionParser {
 
 			return new IntegerRestriction(inEqualInts, minimum, maximum);
 		default:
-			return null;
+			throw new TermEvaluator.UnsupportedTermError("Unsupported DataType: " + returnSort);
 		}
 	}
 

@@ -12,11 +12,13 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class TermEvaluator {
@@ -32,8 +34,12 @@ public class TermEvaluator {
 			return value;
 		case final ConstantTerm ct:
 			return evaluateConstantTerm(ct);
+		case final QuantifiedFormula qf:
+			IcfgInterpreterObserver.getLogger()
+					.error("This plug-in does not handle quantified formulas.\n" + "Formula: " + qf.toStringDirect());
+			//$FALL-THROUGH$
 		default:
-			throw new AssertionError();
+			throw new UnsupportedTermError();
 		}
 	}
 
@@ -59,7 +65,7 @@ public class TermEvaluator {
 			final int length = Integer.parseInt(sort.getIndices()[0]);
 			return new BitVecValue((BigInteger) valueUnparsed, length);
 		default:
-			throw new AssertionError();
+			throw new UnsupportedTermError();
 		}
 	}
 
@@ -206,11 +212,18 @@ public class TermEvaluator {
 			return condition.getValue() ? a : b;
 
 		default:
-			throw new UnsopportedTermError();
+			throw new UnsupportedTermError();
 		}
 	}
 
-	public static class UnsopportedTermError extends AssertionError {
+	public static class UnsupportedTermError extends AssertionError {
+		public UnsupportedTermError(final String string) {
+			super(string);
+		}
+
+		public UnsupportedTermError() {
+		}
+
 		private static final long serialVersionUID = 1L;
 
 	}

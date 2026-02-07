@@ -125,15 +125,13 @@ public class InterpretedIcfgEdge {
 		return mHavocedVars;
 	}
 
-	public void update(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
+	public Map<TermVariable, Value> update(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions) {
+		final Map<TermVariable, Value> havocedVars = new HashMap<>();
 		for (final Update update : mUpdates) {
-			// havoc variables that are not in the state
-			// havocNeeded(state, ndc, havocRestrictions, update.getFreeVars(), false);
-
-			// havoc read array entries that don't exist yet
-			// havocArrayReads(state, ndc, havocRestrictions, update.getArrayReads(), false);
-			havocOrdered(state, ndc, havocRestrictions, update.getFreeVars(), update.getArrayReads(), false);
+			// havoc variables and read array entries that aren't in the state
+			havocedVars.putAll(
+					havocOrdered(state, ndc, havocRestrictions, update.getFreeVars(), update.getArrayReads(), false));
 
 			update.update(state, ndc, havocRestrictions);
 		}
@@ -141,6 +139,8 @@ public class InterpretedIcfgEdge {
 		for (final TermVariable auxVar : mAuxVars) {
 			state.remove(auxVar);
 		}
+
+		return havocedVars;
 	}
 
 	public boolean containsHavoc(final Map<TermVariable, Value> state) {
@@ -149,13 +149,14 @@ public class InterpretedIcfgEdge {
 		return mHavocedAndReadVars.size() > 0 || !state.keySet().containsAll(mReadVars);
 	}
 
-	public void havocOrdered(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
+	public Map<TermVariable, Value> havocOrdered(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions, final Set<TermVariable> required,
 			final Map<Term, Pair<TermVariable, List<Term>>> arrayReads, final boolean useGuardRestrictions) {
 
 		final HashSet<Term> remainingRequired = new HashSet<>(required);
 		remainingRequired.addAll(arrayReads.keySet());
 		final Set<Term> completedTerms = new HashSet<>();
+		final Map<TermVariable, Value> havocedVars = new HashMap<>();
 
 		while (!remainingRequired.isEmpty()) {
 			for (final Term term : remainingRequired) {
@@ -222,10 +223,13 @@ public class InterpretedIcfgEdge {
 				}
 
 				if (array == null) {
-					state.put(termVar, ndc.havoc(termVar.getSort(), restriction));
+					final Value havocResult = ndc.havoc(termVar.getSort(), restriction);
+					state.put(termVar, havocResult);
+					havocedVars.put(termVar, havocResult);
 					completedTerms.add(term);
 				} else {
 					state.put(termVar, array.store(keyValues, ndc.havoc(array.getValueSort(), restriction)));
+					// Arrays are not havoced as a whole, neither are their entries.
 					completedTerms.add(termVar);
 				}
 				havocRestrictions.remove(term);
@@ -233,6 +237,8 @@ public class InterpretedIcfgEdge {
 			remainingRequired.removeAll(completedTerms);
 			completedTerms.clear();
 		}
+
+		return havocedVars;
 	}
 
 	/**
@@ -249,13 +255,12 @@ public class InterpretedIcfgEdge {
 		currentVars.removeAll(mAssignedVars);
 	}
 
-	public boolean guard(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
-			final Map<Term, Restriction<?>> havocRestrictions) {
-		havocOrdered(state, ndc, havocRestrictions, mGuardVars, mGuardArrayReads, true);
-		// havocNeeded(state, ndc, havocRestrictions, mGuardVars, true);
-		// havocArrayReads(state, ndc, havocRestrictions, mGuardArrayReads, true);
+	public Pair<Boolean, Map<TermVariable, Value>> guard(final Map<TermVariable, Value> state,
+			final NonDeterministicChoice ndc, final Map<Term, Restriction<?>> havocRestrictions) {
+		final Map<TermVariable, Value> havocedVars = havocOrdered(state, ndc, havocRestrictions, mGuardVars,
+				mGuardArrayReads, true);
 
-		return ((BoolValue) TermEvaluator.evaluate(state, mGuard)).getValue();
+		return new Pair<>(((BoolValue) TermEvaluator.evaluate(state, mGuard)).getValue(), havocedVars);
 	}
 
 	@Override
@@ -292,13 +297,13 @@ public class InterpretedIcfgEdge {
 		}
 
 		@Override
-		public boolean guard(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
-				final Map<Term, Restriction<?>> havocRestrictions) {
+		public Pair<Boolean, Map<TermVariable, Value>> guard(final Map<TermVariable, Value> state,
+				final NonDeterministicChoice ndc, final Map<Term, Restriction<?>> havocRestrictions) {
 			throw new EdgeUntranslatableError();
 		}
 
 		@Override
-		public void update(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
+		public Map<TermVariable, Value> update(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
 			throw new EdgeUntranslatableError();
 		}
