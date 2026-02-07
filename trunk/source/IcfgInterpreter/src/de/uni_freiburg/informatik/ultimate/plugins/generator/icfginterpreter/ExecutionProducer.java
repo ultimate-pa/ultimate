@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -79,8 +80,18 @@ public class ExecutionProducer {
 
 		while (next.size() > 0) {
 			final IcfgLocation source = next.remove(0);
+			final ArrayList<InterpretedIcfgEdge> allOutEdges = new ArrayList<>();
+			mOutEdges.put(source, allOutEdges);
 
 			for (final IcfgEdge edge : source.getOutgoingEdges()) {
+				if (!(edge instanceof IIcfgInternalTransition)) {
+					IcfgInterpreterObserver.getLogger()
+							.error("This plug-in does not handle Call or Return statements.\n"
+									+ "Inline methods or avoid using them.");
+					allOutEdges.add(new UntranslatableIcfgEdge(edge));
+					continue;
+				}
+
 				final IcfgLocation target = edge.getTarget();
 
 				if (!visited.contains(target)) {
@@ -103,9 +114,7 @@ public class ExecutionProducer {
 					mSymbolTable.put(programVar.getValue(), programVar.getKey());
 				}
 
-				final ArrayList<InterpretedIcfgEdge> allOutEdges = mOutEdges.getOrDefault(source, new ArrayList<>());
 				allOutEdges.addAll(extractEdges(formula, edge, script, services));
-				mOutEdges.put(source, allOutEdges);
 			}
 		}
 
@@ -587,8 +596,7 @@ public class ExecutionProducer {
 				continue;
 			}
 
-			final List<InterpretedIcfgEdge> nextEdges = mOutEdges.getOrDefault(execution.currentLocation,
-					new ArrayList<>());
+			final List<InterpretedIcfgEdge> nextEdges = mOutEdges.get(execution.currentLocation);
 
 			final IcfgLocation currentLocation = execution.currentLocation;
 			if (mErrorMap.getOrDefault(currentLocation.getProcedure(), new HashSet<>()).contains(currentLocation)) {
