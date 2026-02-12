@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -120,8 +121,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				}
 
 				// Create executions
-				mExecutions = producer.makeExecutions(mLogger,
-						(executions, locations) -> outputBatch(executions, locations));
+				mExecutions =
+						producer.makeExecutions(mLogger, (executions, locations) -> outputBatch(executions, locations));
 
 				// Either no execution of the target type was found, or mExecutions is empty because of batching and
 				// should be supplemented with the batch aggregate.
@@ -160,16 +161,25 @@ public class IcfgInterpreterObserver extends BaseObserver {
 
 	private void outputBatch(final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> executions,
 			final Set<IcfgLocation> errorLocations) {
-		final Map<IcfgLocation, IcfgProgramExecution<IcfgEdge>> locs2ErrorExecutions = executions
-				.getOrDefault(ExecutionTermintionReason.REACHED_ERROR, List.of()).stream().collect(Collectors
+		final Map<IcfgLocation, IcfgProgramExecution<IcfgEdge>> locs2ErrorExecutions =
+				executions.getOrDefault(ExecutionTermintionReason.REACHED_ERROR, List.of()).stream().collect(Collectors
 						.toMap(x -> x.getTraceElement(x.getLength() - 1).getStep().getTarget(), x -> x, (x, y) -> x));
 
 		for (final IcfgLocation loc : errorLocations) {
 			final IcfgProgramExecution<IcfgEdge> errorExecution = locs2ErrorExecutions.get(loc);
 
 			if (errorExecution != null && mFinalResults.get(loc) instanceof UnprovableResult) {
-				mFinalResults.put(loc, new CounterExampleResult<>(loc, Activator.PLUGIN_ID,
-						mServices.getBacktranslationService(), errorExecution));
+				final List<UnprovabilityReason> unprovabilityReasons =
+						UnprovabilityReason.getUnprovabilityReasons(errorExecution);
+				final IResult newResult;
+				if (unprovabilityReasons.isEmpty()) {
+					newResult = new CounterExampleResult<>(loc, Activator.PLUGIN_ID,
+							mServices.getBacktranslationService(), errorExecution);
+				} else {
+					newResult = new UnprovableResult<>(Activator.PLUGIN_ID, loc, mServices.getBacktranslationService(),
+							errorExecution, unprovabilityReasons);
+				}
+				mFinalResults.put(loc, newResult);
 			}
 		}
 
@@ -202,8 +212,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 					i++;
 					try {
 						outputFile.createNewFile();
-						final BufferedWriter out = new BufferedWriter(
-								new OutputStreamWriter(new FileOutputStream(outputFile)));
+						final BufferedWriter out =
+								new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile)));
 						out.write("Ended because of " + reason + "\n" + e);
 						out.close();
 					} catch (final IOException e1) {
