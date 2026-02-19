@@ -167,7 +167,11 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		if (condition == null) {
 			return new Result<>(ResultType.NO_CONDITION_FOUND);
 		}
-
+		/*
+		 * TODO: Here we can implement the prefix simplification algorithm The simplified prefix and
+		 * controlConfigurations can then be given to proveCommutativityCondition, but we need to map the proof back to
+		 * the original trace, i.e. we have to edit the proof s.t. it is a proof for the original trace
+		 */
 		return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
 	}
 
@@ -229,6 +233,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> original) {
 		final var tpMap = new HashMap<QualifiedTracePredicates, QualifiedTracePredicates>();
 
+		// TODO: Map the proof for the simplified prefix back to the original trace
 		final var tracePredicates = new ArrayList<QualifiedTracePredicates>();
 		for (final var qtp : original.getInfeasibilityProof()) {
 			final var newQtp = tpMap.computeIfAbsent(qtp, ConditionalCommutativityChecker::postProcessPredicates);
@@ -247,6 +252,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	}
 
 	private static QualifiedTracePredicates postProcessPredicates(final QualifiedTracePredicates qtp) {
+		// TODO: Probably we can map the proof for the simplified prefix back to the original trace here
 		final int numOfPreds = qtp.getPredicates().size();
 		final IPredicate newPost = qtp.getPredicates().get(numOfPreds - 1);
 		final List<IPredicate> newPredicates = new ArrayList<>(qtp.getPredicates().subList(0, numOfPreds - 1));
