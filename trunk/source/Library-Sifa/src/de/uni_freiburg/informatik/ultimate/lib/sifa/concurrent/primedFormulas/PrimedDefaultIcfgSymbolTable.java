@@ -32,7 +32,6 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		finishConstruction();
 	}
 
-	/** Registers a ghost variable as a global, with primed mapping and constants. */
 	public void registerGhostVariable(final IProgramVar ghostVar) {
 		mGhostVars.add(ghostVar);
 		mTermVariable2ProgramVar.put(ghostVar.getTermVariable(), ghostVar);
@@ -58,7 +57,6 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		return Collections.unmodifiableMap(mPrimedVars);
 	}
 
-	/** All global base variables (non-old, non-primed), including ghost variables. */
 	public Set<IProgramVar> getAllGlobalBaseVars() {
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramVar pv : mTermVariable2ProgramVar.values()) {

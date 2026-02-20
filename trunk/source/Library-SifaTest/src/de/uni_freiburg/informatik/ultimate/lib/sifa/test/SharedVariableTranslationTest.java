@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.After;
@@ -12,6 +13,8 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -21,13 +24,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaSettings;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -73,8 +78,8 @@ public class SharedVariableTranslationTest {
 		// Translate both
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable,
-				new ThreadModularSifaSettings(false), null);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
+				primedTable, null);
 		final IPredicate rel1 = translator.translateForInterference(tf1, null, null, null);
 		final IPredicate rel2 = translator.translateForInterference(tf2, null, null, null);
 
@@ -114,8 +119,8 @@ public class SharedVariableTranslationTest {
 
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Set.of("testProc"), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable,
-				new ThreadModularSifaSettings(false), null);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
+				primedTable, null);
 
 		mMgdScript.unlock(this);
 
@@ -131,6 +136,108 @@ public class SharedVariableTranslationTest {
 		assertFalse("result should not contain l", hasVar(globalRelation, l));
 		// Should not contain the original TransFormula variables either
 		assertFalse("result should not contain lIn", containsSubterm(globalRelation.getFormula(), lIn));
+	}
+
+	@Test
+	public void forkInterferenceIncrementsAffectedCounter() {
+		final ProgramNonOldVar x = createGlobalIntVar("x");
+		final UnmodifiableTransFormula tf = createIncrement(x, 1);
+		final IcfgLocation mainSource = location("main", "mainSource");
+		final IcfgLocation mainTarget = location("main", "mainTarget");
+		final IcfgLocation workerEntry = location("worker", "workerEntry");
+
+		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
+		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
+		final GhostVariableManager ghostVars = createGhostVariables(
+				Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
+				Map.of("main", mainSource, "worker", workerEntry), primedTable);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
+				primedTable, ghostVars);
+
+		final IPredicate rel = translator.translateForInterferenceWithFork(tf, "main", mainSource, mainTarget, "worker",
+				workerEntry);
+		final TermVariable workerLoc = ghostVars.getLocationTermVar("worker");
+		final TermVariable workerLocPrimed = getPrimedVarFor(workerLoc, primedTable);
+
+		final Term sat = SmtUtils.and(mScript, rel.getFormula(), eq(workerLocPrimed, num(20)));
+		final Term unsat = SmtUtils.and(mScript, rel.getFormula(), eq(workerLocPrimed, num(21)));
+
+		assertTrue("fork relation should set worker location to entry",
+				SmtUtils.checkSatTerm(mScript, sat) == LBool.SAT);
+		assertTrue("fork relation should forbid other worker target locations",
+				SmtUtils.checkSatTerm(mScript, unsat) == LBool.UNSAT);
+	}
+
+	@Test
+	public void nonForkInterferenceKeepsCounterIdentity() {
+		final ProgramNonOldVar x = createGlobalIntVar("x");
+		final UnmodifiableTransFormula tf = createIncrement(x, 1);
+		final IcfgLocation mainSource = location("main", "mainSource");
+		final IcfgLocation mainTarget = location("main", "mainTarget");
+		final IcfgLocation workerEntry = location("worker", "workerEntry");
+
+		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
+		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
+		final GhostVariableManager ghostVars = createGhostVariables(
+				Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
+				Map.of("main", mainSource, "worker", workerEntry), primedTable);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
+				primedTable, ghostVars);
+
+		final IPredicate rel = translator.translateForInterference(tf, "main", mainSource, mainTarget);
+		final TermVariable workerLoc = ghostVars.getLocationTermVar("worker");
+		final TermVariable workerLocPrimed = getPrimedVarFor(workerLoc, primedTable);
+
+		final Term sat = SmtUtils.and(mScript, rel.getFormula(), eq(workerLoc, num(2)), eq(workerLocPrimed, num(2)));
+		final Term unsat = SmtUtils.and(mScript, rel.getFormula(), eq(workerLoc, num(2)), eq(workerLocPrimed, num(3)));
+
+		assertTrue("non-fork relation should keep worker location unchanged",
+				SmtUtils.checkSatTerm(mScript, sat) == LBool.SAT);
+		assertTrue("non-fork relation should forbid worker location changes",
+				SmtUtils.checkSatTerm(mScript, unsat) == LBool.UNSAT);
+	}
+
+	@Test
+	public void interferenceRequiresActiveInterferingThread() {
+		final ProgramNonOldVar x = createGlobalIntVar("x");
+		final UnmodifiableTransFormula tf = createIncrement(x, 1);
+		final IcfgLocation mainSource = location("main", "mainSource");
+		final IcfgLocation mainTarget = location("main", "mainTarget");
+		final IcfgLocation workerEntry = location("worker", "workerEntry");
+
+		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
+		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
+		final GhostVariableManager ghostVars = createGhostVariables(
+				Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
+				Map.of("main", mainSource, "worker", workerEntry), primedTable);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
+				primedTable, ghostVars);
+
+		final IPredicate rel = translator.translateForInterferenceWithFork(tf, "main", mainSource, mainTarget, "worker",
+				workerEntry);
+		final TermVariable mainLoc = ghostVars.getLocationTermVar("main");
+
+		final Term inactive = SmtUtils.and(mScript, rel.getFormula(), eq(mainLoc, num(0)));
+		final Term active = SmtUtils.and(mScript, rel.getFormula(), eq(mainLoc, num(10)));
+
+		assertTrue("inactive interfering thread should not produce interference",
+				SmtUtils.checkSatTerm(mScript, inactive) == LBool.UNSAT);
+		assertTrue("active interfering thread should be allowed", SmtUtils.checkSatTerm(mScript, active) == LBool.SAT);
+	}
+
+	private IcfgLocation location(final String procedure, final String id) {
+		return new IcfgLocation(new StringDebugIdentifier(id), procedure);
+	}
+
+	private GhostVariableManager createGhostVariables(final Map<IcfgLocation, Integer> locationIds,
+			final Set<String> threadIds, final Map<String, IcfgLocation> entryLocations,
+			final PrimedDefaultIcfgSymbolTable primedTable) {
+		mMgdScript.unlock(this);
+		try {
+			return GhostVariableManager.create(mMgdScript, locationIds, threadIds, entryLocations, primedTable, true);
+		} finally {
+			mMgdScript.lock(this);
+		}
 	}
 
 	private static boolean hasVar(final IPredicate pred, final IProgramVar var) {
@@ -174,5 +281,20 @@ public class SharedVariableTranslationTest {
 		builder.setFormula(formula);
 		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		return builder.finishConstruction(mMgdScript);
+	}
+
+	private TermVariable getPrimedVarFor(final TermVariable baseTv, final PrimedDefaultIcfgSymbolTable primedTable) {
+		final IProgramVar baseVar = primedTable.getAllGlobalBaseVars().stream()
+				.filter(v -> v.getTermVariable().equals(baseTv)).findFirst()
+				.orElseThrow(() -> new AssertionError("Missing base variable for " + baseTv));
+		return primedTable.getPrimedVar(baseVar);
+	}
+
+	private Term eq(final Term lhs, final Term rhs) {
+		return mScript.term("=", lhs, rhs);
+	}
+
+	private Term num(final int value) {
+		return mScript.numeral(String.valueOf(value));
 	}
 }

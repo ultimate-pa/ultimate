@@ -245,7 +245,14 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		/** Sum of number of nodes in processed RegexDags before compression. */
 		DAG_COMPRESSION_PROCESSED_NODES(KeyType.COUNTER),
 		/** Sum of number of nodes in processed RegexDags after compression. */
-		DAG_COMPRESSION_RETAINED_NODES(KeyType.COUNTER),;
+		DAG_COMPRESSION_RETAINED_NODES(KeyType.COUNTER),
+
+		/** Domain joins that collapsed disjuncts after hitting max parallel states */
+		DOMAIN_MAX_DISJUNCTS_JOINS(KeyType.COUNTER),
+		/** Inner interference fixpoint iterations that used widening */
+		INTERFERENCE_INNER_WIDENINGS(KeyType.COUNTER),
+		/** Outer interference fixpoint iterations that used widening */
+		INTERFERENCE_OUTER_WIDENINGS(KeyType.COUNTER),;
 
 		private final KeyType mType;
 

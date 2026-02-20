@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -10,17 +12,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 
-/**
- * A delegating wrapper around an {@link IIcfg} that restricts {@link #getInitialNodes()} to a single thread's entry
- * point. Additionally, maps/sets keyed by procedure are filtered to the procedures reachable from that entry point.
- *
- * This allows using the standard {@link de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter} and
- * {@link de.uni_freiburg.informatik.ultimate.lib.sifa.CallGraph} for analyzing a single thread in isolation.
- */
 public class SingleThreadIcfg implements IIcfg<IcfgLocation> {
 
 	private static final long serialVersionUID = 1L;
@@ -36,12 +33,6 @@ public class SingleThreadIcfg implements IIcfg<IcfgLocation> {
 	private final Set<IcfgLocation> mFilteredLocationsOfInterest;
 	private final Set<IcfgLocation> mFilteredLoopLocations;
 
-	/**
-	 * Creates a wrapper that restricts initial nodes to the entry point of the specified thread.
-	 *
-	 * @param delegate             the underlying ICFG
-	 * @param threadEntryProcedure the procedure name of the thread's entry point
-	 */
 	public SingleThreadIcfg(final IIcfg<IcfgLocation> delegate, final String threadEntryProcedure) {
 		mDelegate = delegate;
 		final IcfgLocation entryNode = delegate.getProcedureEntryNodes().get(threadEntryProcedure);
@@ -50,7 +41,7 @@ public class SingleThreadIcfg implements IIcfg<IcfgLocation> {
 		}
 		mFilteredInitialNodes = Set.of(entryNode);
 
-		mReachableLocations = Set.copyOf(IcfgLocationIterator.asStream(this).collect(Collectors.toSet()));
+		mReachableLocations = Set.copyOf(computeIntraThreadReachable(entryNode));
 		mReachableProcedures = Set
 				.copyOf(mReachableLocations.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet()));
 
@@ -122,6 +113,27 @@ public class SingleThreadIcfg implements IIcfg<IcfgLocation> {
 
 	private Set<IcfgLocation> filterLocationSet(final Set<IcfgLocation> locs) {
 		return locs.stream().filter(mReachableLocations::contains).collect(Collectors.toUnmodifiableSet());
+	}
+
+	private static Set<IcfgLocation> computeIntraThreadReachable(final IcfgLocation entry) {
+		final Set<IcfgLocation> visited = new LinkedHashSet<>();
+		final ArrayDeque<IcfgLocation> worklist = new ArrayDeque<>();
+		visited.add(entry);
+		worklist.add(entry);
+		while (!worklist.isEmpty()) {
+			final IcfgLocation current = worklist.removeFirst();
+			for (final IcfgEdge edge : current.getOutgoingEdges()) {
+				if (edge instanceof IIcfgForkTransitionThreadOther<?>
+						|| edge instanceof IIcfgJoinTransitionThreadOther<?>) {
+					continue;
+				}
+				final IcfgLocation target = edge.getTarget();
+				if (target != null && visited.add(target)) {
+					worklist.add(target);
+				}
+			}
+		}
+		return visited;
 	}
 
 	@Override

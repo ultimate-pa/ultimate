@@ -8,9 +8,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-/**
- * A ghost program variable, used for tracking analysis state like control locations or thread counters.
- */
 public final class GhostProgramVar implements IProgramVar {
 
 	private static final long serialVersionUID = 1L;

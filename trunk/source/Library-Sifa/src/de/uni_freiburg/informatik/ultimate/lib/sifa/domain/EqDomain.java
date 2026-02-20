@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.FormulaToEqDisjunctiveConstraintConverter.StoreChainSquisher;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.WeqSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -60,7 +61,12 @@ public class EqDomain extends StateBasedDomain<EqState> {
 
 	public EqDomain(final SymbolicTools tools, final int maxDisjuncts, final IUltimateServiceProvider services,
 			final ILogger logger, final Supplier<IProgressAwareTimer> timeout) {
-		super(tools, maxDisjuncts, logger, timeout, new EqStateProvider(services, tools.getManagedScript()));
+		this(tools, maxDisjuncts, services, logger, timeout, null);
+	}
+
+	public EqDomain(final SymbolicTools tools, final int maxDisjuncts, final IUltimateServiceProvider services,
+			final ILogger logger, final Supplier<IProgressAwareTimer> timeout, final SifaStats stats) {
+		super(tools, maxDisjuncts, logger, timeout, new EqStateProvider(services, tools.getManagedScript()), stats);
 	}
 
 	private static class EqStateProvider implements IStateProvider<EqState> {

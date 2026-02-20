@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -14,15 +15,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public final class SifaResultPrinter {
 
 	private final ILogger mLogger;
+	private final Map<IcfgLocation, Integer> mAbstractLocationIds;
+	private final ThreadActivityPreanalysis mActivityPreanalysis;
 
-	public SifaResultPrinter(final ILogger logger) {
+	public SifaResultPrinter(final ILogger logger, final Map<IcfgLocation, Integer> abstractLocationIds,
+			final ThreadActivityPreanalysis activityPreanalysis) {
 		mLogger = logger;
+		mAbstractLocationIds = Map.copyOf(abstractLocationIds);
+		mActivityPreanalysis = activityPreanalysis;
 	}
 
 	public void printResults(final Map<IcfgLocation, IPredicate> results, final IIcfg<IcfgLocation> icfg) {
@@ -48,15 +54,24 @@ public final class SifaResultPrinter {
 				continue;
 			}
 
-			mLogger.info("procedure %s() {", proc);
+			printThreadHeader(proc);
 			for (final IcfgLocation loc : procLocations) {
-				printAnnotatedLocation(loc, results.get(loc));
+				printAnnotatedLocation(loc, proc, results.get(loc));
 			}
 			mLogger.info("}");
 			mLogger.info("");
 		}
 
 		mLogger.info("=== End of SIFA Results ===");
+	}
+
+	private void printThreadHeader(final String proc) {
+		final boolean selfInterference = mActivityPreanalysis.getMultiForkedThreads().contains(proc);
+		if (selfInterference) {
+			mLogger.info("procedure %s() { // multi-forked, applies self-interference", proc);
+		} else {
+			mLogger.info("procedure %s() {", proc);
+		}
 	}
 
 	private List<IcfgLocation> getLocationsInProcedure(final IcfgLocation entry, final String procedure,
@@ -86,24 +101,38 @@ public final class SifaResultPrinter {
 		return ordered;
 	}
 
-	private void printAnnotatedLocation(final IcfgLocation location, final IPredicate predicate) {
+	private void printAnnotatedLocation(final IcfgLocation location, final String ownerThread,
+			final IPredicate predicate) {
+		printAbstractLocation(location);
+		printActiveThreads(location, ownerThread);
 		mLogger.info("  // State: %s", formatPredicate(predicate));
 		for (final IcfgEdge edge : location.getOutgoingEdges()) {
 			final String code = formatSourceCode(edge);
 			if (!code.equals("[skip]") && !code.equals("[<null>]")) {
-				mLogger.info("  %s", code.substring(1, code.length() - 1)); // remove [ ]
+				mLogger.info("  %s", code.substring(1, code.length() - 1));
 			}
 		}
 	}
 
-	public void logInterferences(final IInterferenceAbstraction interferences) {
-		if (interferences.isEmpty()) {
-			mLogger.debug("No interferences collected");
-			return;
+	private void printActiveThreads(final IcfgLocation location, final String ownerThread) {
+		final Set<String> active = mActivityPreanalysis.getActiveThreadsAt(location);
+		final Set<String> others = new TreeSet<>();
+		for (final String threadId : active) {
+			if (!threadId.equals(ownerThread)) {
+				others.add(threadId);
+			}
 		}
+		if (others.isEmpty()) {
+			mLogger.info("  // active: (none)");
+		} else {
+			mLogger.info("  // active: %s", String.join(", ", others));
+		}
+	}
 
-		for (final String threadId : interferences.getThreadIds()) {
-			mLogger.debug("Thread %s: %d interferences", threadId, interferences.getInterferenceCount(threadId));
+	private void printAbstractLocation(final IcfgLocation location) {
+		final Integer absLoc = mAbstractLocationIds.get(location);
+		if (absLoc != null) {
+			mLogger.info("  // %s abs-loc: [%d, %d]", location.getProcedure(), absLoc, absLoc);
 		}
 	}
 
@@ -133,8 +162,6 @@ public final class SifaResultPrinter {
 			return "<null>";
 		}
 		final String s = predicate.getFormula().toStringDirect();
-		// ManagedScript prefixes term variables with "v_". Strip this for our ghost location vars
-		// to keep the debug output readable.
 		return s.replace("v_loc_", "loc_");
 	}
 }

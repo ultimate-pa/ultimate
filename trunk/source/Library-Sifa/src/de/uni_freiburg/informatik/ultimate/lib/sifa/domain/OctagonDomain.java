@@ -39,6 +39,7 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.RewriteEqualityTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.OctagonRelation;
@@ -61,7 +62,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 public class OctagonDomain extends StateBasedDomain<OctagonState> {
 	public OctagonDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
-		super(tools, maxDisjuncts, logger, timeout, new OctagonStateProvider(tools.getScript()));
+		this(logger, tools, maxDisjuncts, timeout, null);
+	}
+
+	public OctagonDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
+			final Supplier<IProgressAwareTimer> timeout, final SifaStats stats) {
+		super(tools, maxDisjuncts, logger, timeout, new OctagonStateProvider(tools.getScript()), stats);
 	}
 
 	private static class OctagonStateProvider implements IStateProvider<OctagonState> {

@@ -1,23 +1,28 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
-import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceAbstraction;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.InitialStateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -27,147 +32,202 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class ConcurrentSymbolicTools extends SymbolicTools {
 
-	private static final String MAIN_THREAD = "ULTIMATE.start";
-
-	private final IIcfg<IcfgLocation> mIcfg;
 	private final IUltimateServiceProvider mServices;
 	private final ThreadModularSifaSettings mSettings;
+	private final InitialStateFactory mInitialStateFactory;
 	private GhostVariableManager mGhostVariables;
-
-	private String mCurrentThreadId;
-	private IInterferenceAbstraction mInterferences;
-	private Map<IcfgLocation, IPredicate> mLocationPredicates;
-	private IDomain mDomain;
+	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
+	private ThreadAnalysisContext mThreadContext;
 
 	public ConcurrentSymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
 			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
 			final IIcfgSymbolTable symbolTable, final ThreadModularSifaSettings settings) {
 		super(services, stats, icfg, simplification, symbolTable);
-		mIcfg = icfg;
 		mServices = services;
 		mSettings = settings;
+		mInitialStateFactory = new InitialStateFactory(this, icfg);
 	}
 
 	public ThreadModularSifaSettings getSettings() {
 		return mSettings;
 	}
 
-	public void setGhostVariableManager(final GhostVariableManager ghostVariables) {
-		mGhostVariables = ghostVariables;
+	public GhostVariableManager getGhostVariables() {
+		return mGhostVariables;
 	}
 
-	// Mutable per-thread config: set before each thread's analysis in the fixpoint loop.
-	public void configureForThread(final String threadId, final IInterferenceAbstraction interferences,
-			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain) {
-		mCurrentThreadId = threadId;
-		mInterferences = interferences;
-		mLocationPredicates = locationPredicates;
-		mDomain = domain;
+	public ThreadActivityPreanalysis getThreadActivityPreanalysis() {
+		return mThreadActivityPreanalysis;
+	}
+
+	public void configureStaticAnalysis(final GhostVariableManager ghostVariables,
+			final ThreadActivityPreanalysis activityPreanalysis) {
+		mGhostVariables = ghostVariables;
+		mThreadActivityPreanalysis = Objects.requireNonNull(activityPreanalysis);
+		mInitialStateFactory.configureStaticAnalysis(ghostVariables);
+	}
+
+	public void configureForThread(final String threadId, final InterferenceCollection interferences,
+			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain analysisDomain,
+			final IDomain interferenceDomain, final RelationalPredicatePostcondition postcondition) {
+		mThreadContext = new ThreadAnalysisContext(Objects.requireNonNull(threadId),
+				Objects.requireNonNull(interferences), Objects.requireNonNull(interferenceDomain),
+				Objects.requireNonNull(postcondition));
+		mInitialStateFactory.configureForThread(Objects.requireNonNull(locationPredicates),
+				Objects.requireNonNull(analysisDomain));
 	}
 
 	@Override
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		final IPredicate basePostState = super.post(input, transition);
-		return applyInterferencesIfAny(addLocationUpdate(basePostState, transition));
+		final IPredicate spResult = super.post(input, transition);
+		return updateGhostvarsAndApplyInterferences(spResult, transition);
 	}
 
 	@Override
 	public IPredicate postCall(final IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
-		final IPredicate basePostState = super.postCall(input, transition);
-		return applyInterferencesIfAny(addLocationUpdate(basePostState, transition));
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public IPredicate postReturn(final IPredicate inputBeforeCall, final IPredicate inputBeforeReturn,
 			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTransition) {
-		final IPredicate basePostState = super.postReturn(inputBeforeCall, inputBeforeReturn, returnTransition);
-		return applyInterferencesIfAny(addLocationUpdate(basePostState, returnTransition));
+		throw new UnsupportedOperationException();
 	}
 
 	public IPredicate postNoOpTransition(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		return applyInterferencesIfAny(addLocationUpdate(input, transition));
+		if (transition instanceof LocationMarkerTransition) {
+			return input;
+		}
+		return updateGhostvarsAndApplyInterferences(input, transition);
 	}
 
-	private IPredicate applyInterferencesIfAny(final IPredicate state) {
-		if (mInterferences == null || mCurrentThreadId == null) {
+	public IPredicate applyInterferences(final IPredicate state, final IcfgLocation location) {
+		final InterferenceCollection interferences = mThreadContext.interferences();
+		if (interferences.isEmpty()) {
 			return state;
 		}
-		return mInterferences.applyToState(state, mCurrentThreadId, mDomain);
+		if (SmtUtils.isTrueLiteral(state.getFormula()) || SmtUtils.isFalseLiteral(state.getFormula())) {
+			return state;
+		}
+
+		final String threadId = mThreadContext.threadId();
+		final IDomain domain = mThreadContext.interferenceDomain();
+		final RelationalPredicatePostcondition postcondition = mThreadContext.postcondition();
+		final boolean includeSelf = mThreadActivityPreanalysis.getMultiForkedThreads().contains(threadId);
+
+		final java.util.List<String> sortedThreadIds = new java.util.ArrayList<>(interferences.getThreadIds());
+		java.util.Collections.sort(sortedThreadIds);
+		final java.util.List<IInterference> applicableInterferences = new java.util.ArrayList<>();
+		for (final String otherThreadId : sortedThreadIds) {
+			if (otherThreadId.equals(threadId) && !includeSelf) {
+				continue;
+			}
+			if (!mThreadActivityPreanalysis.mayBeActiveAt(location, otherThreadId)) {
+				continue;
+			}
+			final IInterference itf = interferences.getInterferenceForThread(otherThreadId);
+			if (itf == null || itf.isTrivial()) {
+				continue;
+			}
+			applicableInterferences.add(itf);
+		}
+		if (applicableInterferences.isEmpty()) {
+			return state;
+		}
+
+		IPredicate current = state;
+		for (;;) {
+			final IPredicate roundStart = current;
+			for (final IInterference itf : applicableInterferences) {
+				current = itf.applyUntilFixpoint(current, domain, postcondition, mGhostVariables, getManagedScript(),
+						getFactory(), mSettings.innerWideningThreshold(), getStats());
+			}
+			if (domain.isSubsetEq(current, roundStart).isTrueForAbstraction()) {
+				return roundStart;
+			}
+		}
 	}
 
-	// TODO: handle fork mechanics with thread counters
 	private IPredicate addLocationUpdate(final IPredicate postState, final IIcfgTransition<IcfgLocation> transition) {
-		if (!mSettings.useGhostLocations() || mCurrentThreadId == null) {
+		return addLocationUpdateForThread(postState, mThreadContext.threadId(), transition.getTarget());
+	}
+
+	public IPredicate addLocationUpdateForThread(final IPredicate postState, final String threadId,
+			final IcfgLocation targetLocation) {
+		if (mGhostVariables == null) {
+			return postState;
+		}
+		if (SmtUtils.isFalseLiteral(postState.getFormula())) {
 			return postState;
 		}
 
-		final TermVariable currentLocTv = mGhostVariables.getLocationTermVar(mCurrentThreadId);
+		final TermVariable currentLocTv = mGhostVariables.getLocationTermVar(threadId);
 		if (currentLocTv == null) {
 			return postState;
 		}
+		final Term locConstraint = mGhostVariables.createLocationConstraint(threadId, targetLocation);
+		if (SmtUtils.isTrueLiteral(postState.getFormula())) {
+			return predicate(locConstraint);
+		}
+		if (!containsFreeVar(postState.getFormula(), currentLocTv)) {
+			return predicate(SmtUtils.and(getScript(), postState.getFormula(), locConstraint));
+		}
 
-		// Project away old location value, then assert the new one
 		final Term projected = RelationalPredicateUtils.existentiallyProject(postState.getFormula(),
-				Set.of(currentLocTv), mServices, getManagedScript());
-		final Term combined = SmtUtils.and(getScript(), projected,
-				mGhostVariables.createLocationConstraint(mCurrentThreadId, transition.getTarget()));
+				Set.of(currentLocTv), mServices, getManagedScript(), mSettings.quantifierEliminationMode());
+		final Term combined = SmtUtils.and(getScript(), projected, locConstraint);
 		return predicate(combined);
+	}
+
+	private IPredicate updateGhostvarsAndApplyInterferences(final IPredicate state,
+			final IIcfgTransition<IcfgLocation> transition) {
+		IPredicate updated = addLocationUpdate(state, transition);
+		if (transition instanceof final IIcfgForkTransitionThreadCurrent<?> fork && mGhostVariables != null) {
+			final String forkedThreadId = fork.getNameOfForkedProcedure();
+			final IcfgLocation forkedEntry = mGhostVariables.getEntryLocation(forkedThreadId);
+			updated = addLocationUpdateForThread(updated, forkedThreadId, forkedEntry);
+		}
+		if (!transitionTouchesGlobals(transition)) {
+			return updated;
+		}
+		return applyInterferences(updated, transition.getTarget());
+	}
+
+	private static boolean transitionTouchesGlobals(final IIcfgTransition<IcfgLocation> transition) {
+		final var tf = transition.getTransformula();
+		if (tf == null) {
+			return false;
+		}
+		if (transition instanceof IIcfgForkTransitionThreadCurrent<?>) {
+			return true;
+		}
+		for (final var pv : tf.getInVars().keySet()) {
+			if (pv.isGlobal()) {
+				return true;
+			}
+		}
+		for (final var pv : tf.getOutVars().keySet()) {
+			if (pv.isGlobal()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public IPredicate getInitialStatePredicate(final String threadId) {
-		if (threadId.equals(MAIN_THREAD)) {
-			return applyInterferencesIfAny(getMainThreadInitialState());
-		}
-		// Thread starts from the state at its fork point(s); unreachable if never forked
-		final Set<IPredicate> forkStates = collectForkStates(threadId);
-		if (forkStates.isEmpty()) {
-			return bottom();
-		}
-		IPredicate result = null;
-		for (final IPredicate pred : forkStates) {
-			result = result == null ? pred : mDomain.join(result, pred);
-		}
-		return applyInterferencesIfAny(result);
+		return mInitialStateFactory.getInitialStatePredicate(threadId);
 	}
 
-	private IPredicate getMainThreadInitialState() {
-		if (!mSettings.useGhostLocations()) {
-			return top();
+	private static boolean containsFreeVar(final Term formula, final TermVariable variable) {
+		for (final TermVariable freeVar : formula.getFreeVars()) {
+			if (freeVar == variable) {
+				return true;
+			}
 		}
-		return predicate(mGhostVariables.createAllLocationsAtEntry());
+		return false;
 	}
 
-	private Set<IPredicate> collectForkStates(final String threadId) {
-		final Set<IPredicate> states = new HashSet<>();
-		if (mLocationPredicates == null) {
-			return states;
-		}
-		final ConcurrencyInformation concInfo = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
-		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : concInfo.getThreadInstanceMap().keySet()) {
-			if (!fork.getNameOfForkedProcedure().equals(threadId)) {
-				continue;
-			}
-			final IPredicate forkState = mLocationPredicates.get(fork.getSource());
-			if (forkState != null) {
-				if (mSettings.useGhostLocations()) {
-					final String forkingTid = fork.getSource().getProcedure();
-					states.add(overrideLoc(forkState, forkingTid, fork.getTarget()));
-				} else {
-					states.add(forkState);
-				}
-			}
-		}
-		return states;
-	}
-	
-	// Replace the forking thread's ghost location with the fork target location.
-	// Data state from pre-fork is preserved; only the location variable changes.
-	private IPredicate overrideLoc(final IPredicate state, final String threadId, final IcfgLocation newLoc) {
-		final TermVariable locTv = mGhostVariables.getLocationTermVar(threadId);
-		final Term projected = RelationalPredicateUtils.existentiallyProject(
-				state.getFormula(), Set.of(locTv), mServices, getManagedScript());
-		final Term combined = SmtUtils.and(getScript(), projected,
-				mGhostVariables.createLocationConstraint(threadId, newLoc));
-		return predicate(combined);
+	private static record ThreadAnalysisContext(String threadId, InterferenceCollection interferences,
+			IDomain interferenceDomain, RelationalPredicatePostcondition postcondition) {
 	}
 }

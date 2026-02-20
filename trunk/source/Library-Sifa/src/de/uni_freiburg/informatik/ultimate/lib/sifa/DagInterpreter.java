@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Joi
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class DagInterpreter {
-
 	private final ILogger mLogger;
 	private final SifaStats mStats;
 	private final SymbolicTools mTools;

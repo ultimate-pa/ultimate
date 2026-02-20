@@ -40,6 +40,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeMode;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.QuantifierEliminationMode;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -68,6 +73,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder;
  */
 public class SifaPreferences extends UltimatePreferenceInitializer {
 
+	public enum ConcurrentAnalysisMode {
+		THREAD_MODULAR_FIXPOINT,
+		SINGLE_PASS_BASELINE
+	}
+
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
 	private static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
 	private static final String[] VALUES_ABSTRACT_DOMAIN = { ExplicitValueDomain.class.getSimpleName(),
@@ -85,7 +95,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_FLUID = "Fluid";
 	private static final String TOOLTIP_FLUID = "Decides when to apply abstraction";
-	private static final String DEFAULT_FLUID = SizeLimitFluid.class.getSimpleName();
+	private static final String DEFAULT_FLUID = AlwaysFluid.class.getSimpleName();
 	private static final String[] VALUES_FLUID =
 			{ NeverFluid.class.getSimpleName(), SizeLimitFluid.class.getSimpleName(), AlwaysFluid.class.getSimpleName(),
 					LogSizeWrapperFluid.class.getSimpleName(), };
@@ -95,15 +105,62 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final SimplificationTechnique[] VALUES_SIMPLIFICATION = SimplificationTechnique.values();
 	public static final Class<SimplificationTechnique> CLASS_SIMPLIFICATION = SimplificationTechnique.class;
 
+	// concurrent / thread-modular settings
+	public static final String LABEL_LOCATION_TRACKING_MODE = "Location Tracking Mode";
+	private static final LocationTrackingMode DEFAULT_LOCATION_TRACKING_MODE = LocationTrackingMode.GHOST_VARIABLES;
+	private static final LocationTrackingMode[] VALUES_LOCATION_TRACKING_MODE = LocationTrackingMode.values();
+	public static final Class<LocationTrackingMode> CLASS_LOCATION_TRACKING_MODE = LocationTrackingMode.class;
+
+	public static final String LABEL_INTERFERENCE_MERGE_MODE = "Interference Merge Mode";
+	private static final InterferenceMergeMode DEFAULT_INTERFERENCE_MERGE_MODE = InterferenceMergeMode.JOIN;
+	private static final InterferenceMergeMode[] VALUES_INTERFERENCE_MERGE_MODE = InterferenceMergeMode.values();
+	public static final Class<InterferenceMergeMode> CLASS_INTERFERENCE_MERGE_MODE = InterferenceMergeMode.class;
+
+	public static final String LABEL_INTERFERENCE_TYPE = "Interference Type";
+	private static final InterferenceType DEFAULT_INTERFERENCE_TYPE =
+			InterferenceType.PER_THREAD_JOINED_ABSTRACT_LOCATIONS;
+	private static final InterferenceType[] VALUES_INTERFERENCE_TYPE = InterferenceType.values();
+	public static final Class<InterferenceType> CLASS_INTERFERENCE_TYPE = InterferenceType.class;
+
+	public static final String LABEL_CONCURRENT_ANALYSIS_MODE = "Concurrent Analysis Mode";
+	private static final ConcurrentAnalysisMode DEFAULT_CONCURRENT_ANALYSIS_MODE =
+			ConcurrentAnalysisMode.THREAD_MODULAR_FIXPOINT;
+	private static final ConcurrentAnalysisMode[] VALUES_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.values();
+	public static final Class<ConcurrentAnalysisMode> CLASS_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.class;
+
+	public static final String LABEL_QUANTIFIER_ELIMINATION_MODE = "Quantifier Elimination Mode";
+	private static final QuantifierEliminationMode DEFAULT_QUANTIFIER_ELIMINATION_MODE =
+			QuantifierEliminationMode.LIGHT;
+	private static final QuantifierEliminationMode[] VALUES_QUANTIFIER_ELIMINATION_MODE =
+			QuantifierEliminationMode.values();
+	public static final Class<QuantifierEliminationMode> CLASS_QUANTIFIER_ELIMINATION_MODE =
+			QuantifierEliminationMode.class;
+
+	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction";
+	private static final LocationAbstractionType DEFAULT_LOCATION_ABSTRACTION =
+			LocationAbstractionType.SPLIT_AT_GUARDS;
+	private static final LocationAbstractionType[] VALUES_LOCATION_ABSTRACTION = LocationAbstractionType.values();
+	public static final Class<LocationAbstractionType> CLASS_LOCATION_ABSTRACTION = LocationAbstractionType.class;
+
+	public static final String LABEL_OUTER_WIDENING_THRESHOLD = "Outer Interference Widening Threshold";
+	private static final String TOOLTIP_OUTER_WIDENING_THRESHOLD =
+			"Number of outer interference fixpoint iterations before widening";
+	private static final int DEFAULT_OUTER_WIDENING_THRESHOLD = 3;
+
+	public static final String LABEL_INNER_WIDENING_THRESHOLD = "Inner Interference Widening Threshold";
+	private static final String TOOLTIP_INNER_WIDENING_THRESHOLD =
+			"Number of inner interference application iterations before widening";
+	private static final int DEFAULT_INNER_WIDENING_THRESHOLD = 2;
+
 	// ---- settings in containers ----
 
 	// settings specific to ExplicitValueDomain
 	public static final String LABEL_EXPLVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Explicit Values";
-	private static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 2;
+	private static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 4;
 
 	// settings specific to IntervalDomain
 	public static final String LABEL_INTERVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Intervals";
-	private static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 2;
+	private static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 1;
 
 	// settings specific to OctagonDomain
 	public static final String LABEL_OCTAGONDOM_MAX_PARALLEL_STATES = "Max. Parallel Octagon";
@@ -207,6 +264,25 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DISJUNCTS,
 				TOOLTIP_SIZELIMITFLUID_MAX_DISJUNCTS, DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS));
 
+		final UltimatePreferenceItemContainer containerConcurrent =
+				new UltimatePreferenceItemContainer("Thread-Modular");
+		containerConcurrent.addItem(combo(LABEL_LOCATION_TRACKING_MODE, DEFAULT_LOCATION_TRACKING_MODE,
+				VALUES_LOCATION_TRACKING_MODE));
+		containerConcurrent.addItem(combo(LABEL_CONCURRENT_ANALYSIS_MODE, DEFAULT_CONCURRENT_ANALYSIS_MODE,
+				VALUES_CONCURRENT_ANALYSIS_MODE));
+		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_MERGE_MODE, DEFAULT_INTERFERENCE_MERGE_MODE,
+				VALUES_INTERFERENCE_MERGE_MODE));
+		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_TYPE, DEFAULT_INTERFERENCE_TYPE,
+				VALUES_INTERFERENCE_TYPE));
+		containerConcurrent.addItem(combo(LABEL_QUANTIFIER_ELIMINATION_MODE, DEFAULT_QUANTIFIER_ELIMINATION_MODE,
+				VALUES_QUANTIFIER_ELIMINATION_MODE));
+		containerConcurrent.addItem(combo(LABEL_LOCATION_ABSTRACTION, DEFAULT_LOCATION_ABSTRACTION,
+				VALUES_LOCATION_ABSTRACTION));
+		containerConcurrent.addItem(integer(LABEL_OUTER_WIDENING_THRESHOLD, TOOLTIP_OUTER_WIDENING_THRESHOLD,
+				DEFAULT_OUTER_WIDENING_THRESHOLD));
+		containerConcurrent.addItem(integer(LABEL_INNER_WIDENING_THRESHOLD, TOOLTIP_INNER_WIDENING_THRESHOLD,
+				DEFAULT_INNER_WIDENING_THRESHOLD));
+
 		return new BaseUltimatePreferenceItem[] {
 				combo(LABEL_ABSTRACT_DOMAIN, DEFAULT_ABSTRACT_DOMAIN, VALUES_ABSTRACT_DOMAIN),
 				combo(LABEL_LOOP_SUMMARIZER, DEFAULT_LOOP_SUMMARIZER, VALUES_LOOP_SUMMARIZER),
@@ -216,7 +292,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
 				//
 				containerExplValDom, containerIntervalDom, containerOctagonDom, containerEqDom, containerCompoundDom,
-				containerLogFluid, containerSizeLimitFluid };
+				containerLogFluid, containerSizeLimitFluid, containerConcurrent };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
@@ -250,11 +326,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static UltimatePreferenceItem<String> string(final String label, final String tooltip,
 			final String defaultValue, final IUltimatePreferenceItemValidator<String> validator) {
 		return new UltimatePreferenceItem<>(label, defaultValue, tooltip, PreferenceType.String, validator);
-	}
-
-	private static UltimatePreferenceItem<Boolean> bool(final String label, final String tooltip,
-			final boolean defaultValue) {
-		return new UltimatePreferenceItem<>(label, defaultValue, tooltip, PreferenceType.Boolean);
 	}
 
 	private static String[] filter(final String[] array, final Predicate<String> keep) {

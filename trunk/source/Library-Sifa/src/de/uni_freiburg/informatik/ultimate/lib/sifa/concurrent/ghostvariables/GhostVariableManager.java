@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -18,30 +19,40 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-// TODO Threadcounters
-/** Manages ghost location variables for thread-modular analysis. */
 public class GhostVariableManager {
 
 	private static final String LOCATION_VAR_PREFIX = "loc_";
 
 	private final ManagedScript mManagedScript;
 	private final Map<IcfgLocation, Integer> mLocationIds;
+	private final Map<String, IcfgLocation> mEntryLocations;
 	private final Map<String, GhostProgramVar> mLocationVars = new HashMap<>();
 
-	private GhostVariableManager(final ManagedScript managedScript, final Map<IcfgLocation, Integer> locationIds) {
+	private GhostVariableManager(final ManagedScript managedScript, final Map<IcfgLocation, Integer> locationIds,
+			final Map<String, IcfgLocation> entryLocations) {
 		mManagedScript = managedScript;
 		mLocationIds = locationIds;
+		mEntryLocations = entryLocations;
 	}
 
 	public static GhostVariableManager create(final ManagedScript managedScript,
 			final Map<IcfgLocation, Integer> locationIds, final Set<String> threadIds,
-			final PrimedDefaultIcfgSymbolTable symbolTable) {
-		final GhostVariableManager manager = new GhostVariableManager(managedScript, locationIds);
-		manager.initializeVariables(threadIds, symbolTable);
+			final Map<String, IcfgLocation> entryLocations, final PrimedDefaultIcfgSymbolTable symbolTable,
+			final boolean createLocations) {
+		final GhostVariableManager manager = new GhostVariableManager(managedScript, locationIds, entryLocations);
+		if (createLocations) {
+			managedScript.lock(manager);
+			try {
+				manager.initializeLocationVariables(threadIds, symbolTable);
+			} finally {
+				managedScript.unlock(manager);
+			}
+		}
 		return manager;
 	}
 
-	private void initializeVariables(final Set<String> threadIds, final PrimedDefaultIcfgSymbolTable symbolTable) {
+	private void initializeLocationVariables(final Set<String> threadIds,
+			final PrimedDefaultIcfgSymbolTable symbolTable) {
 		final Sort intSort = SmtSortUtils.getIntSort(mManagedScript.getScript());
 		for (final String threadId : threadIds) {
 			final String name = LOCATION_VAR_PREFIX + threadId;
@@ -64,34 +75,44 @@ public class GhostVariableManager {
 		return result;
 	}
 
-	/** loc_threadId = alpha(location) */
 	public Term createLocationConstraint(final String threadId, final IcfgLocation location) {
 		return createLocationEquality(mLocationVars.get(threadId).getTermVariable(), location);
 	}
 
-	/** loc_threadId' = alpha(location) */
 	public Term createPrimedLocationConstraint(final String threadId, final IcfgLocation targetLocation,
 			final PrimedDefaultIcfgSymbolTable symbolTable) {
 		final TermVariable primedTv = symbolTable.getPrimedVar(mLocationVars.get(threadId));
 		return createLocationEquality(primedTv, targetLocation);
 	}
 
-	/** loc_thread = 1 (entry location) for all threads. */
-	public Term createAllLocationsAtEntry() {
+	public Term createInitialLocationState(final String mainThreadId) {
 		final Script script = mManagedScript.getScript();
-		final Term one = script.numeral(BigInteger.ONE);
 		final List<Term> conjuncts = new ArrayList<>();
-		for (final GhostProgramVar locVar : mLocationVars.values()) {
-			conjuncts.add(SmtUtils.binaryEquality(script, locVar.getTermVariable(), one));
+		for (final Entry<String, GhostProgramVar> entry : mLocationVars.entrySet()) {
+			final int locId;
+			if (entry.getKey().equals(mainThreadId)) {
+				locId = getAbstractLocation(mEntryLocations.get(entry.getKey()));
+			} else {
+				locId = 0; // not yet forked
+			}
+			final Term locTerm = script.numeral(BigInteger.valueOf(locId));
+			conjuncts.add(SmtUtils.binaryEquality(script, entry.getValue().getTermVariable(), locTerm));
 		}
 		return SmtUtils.and(script, conjuncts);
+	}
+
+	public IcfgLocation getEntryLocation(final String threadId) {
+		return mEntryLocations.get(threadId);
 	}
 
 	private Term createLocationEquality(final TermVariable locVar, final IcfgLocation location) {
 		final int abstractLoc = getAbstractLocation(location);
 		final Script script = mManagedScript.getScript();
-		final Term abstractLocTerm = script.numeral(BigInteger.valueOf(abstractLoc));
-		return SmtUtils.binaryEquality(script, locVar, abstractLocTerm);
+		return SmtUtils.binaryEquality(script, locVar, script.numeral(BigInteger.valueOf(abstractLoc)));
+	}
+
+	public boolean hasSameAbstractLocation(final IcfgLocation first, final IcfgLocation second) {
+		return getAbstractLocation(first) == getAbstractLocation(second);
 	}
 
 	private int getAbstractLocation(final IcfgLocation location) {
@@ -100,5 +121,13 @@ public class GhostVariableManager {
 			throw new IllegalStateException("Unknown ICFG location: " + location);
 		}
 		return id;
+	}
+
+	public Integer getAbstractLocationIdOrNull(final IcfgLocation location) {
+		return mLocationIds.get(location);
+	}
+
+	public Map<IcfgLocation, Integer> getAbstractLocationIds() {
+		return Map.copyOf(mLocationIds);
 	}
 }

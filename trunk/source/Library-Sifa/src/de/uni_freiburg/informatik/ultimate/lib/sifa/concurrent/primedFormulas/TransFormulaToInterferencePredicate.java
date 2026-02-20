@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -14,8 +15,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.QuantifierEliminationMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -28,46 +29,79 @@ public class TransFormulaToInterferencePredicate {
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final PrimedDefaultIcfgSymbolTable mSymbolTable;
-	private final ThreadModularSifaSettings mSettings;
 	private final GhostVariableManager mGhostVariables;
+	private final Map<IcfgLocation, Integer> mAbstractLocationIds;
+	private final Map<String, IcfgLocation> mEntryLocations;
+	private final QuantifierEliminationMode mEliminationMode;
 
 	public TransFormulaToInterferencePredicate(final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final PrimedDefaultIcfgSymbolTable symbolTable, final ThreadModularSifaSettings settings,
-			final GhostVariableManager ghostVariables) {
+			final PrimedDefaultIcfgSymbolTable symbolTable, final GhostVariableManager ghostVariables) {
+		this(services, managedScript, predicateFactory, symbolTable, ghostVariables, Map.of(), Map.of(),
+				QuantifierEliminationMode.LIGHT);
+	}
+
+	public TransFormulaToInterferencePredicate(final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
+			final PrimedDefaultIcfgSymbolTable symbolTable, final GhostVariableManager ghostVariables,
+			final QuantifierEliminationMode eliminationMode) {
+		this(services, managedScript, predicateFactory, symbolTable, ghostVariables, Map.of(), Map.of(),
+				eliminationMode);
+	}
+
+	public TransFormulaToInterferencePredicate(final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
+			final PrimedDefaultIcfgSymbolTable symbolTable, final GhostVariableManager ghostVariables,
+			final Map<IcfgLocation, Integer> abstractLocationIds, final Map<String, IcfgLocation> entryLocations,
+			final QuantifierEliminationMode eliminationMode) {
 		mServices = services;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mSymbolTable = symbolTable;
-		mSettings = settings;
 		mGhostVariables = ghostVariables;
+		mAbstractLocationIds = Map.copyOf(Objects.requireNonNull(abstractLocationIds));
+		mEntryLocations = Map.copyOf(Objects.requireNonNull(entryLocations));
+		mEliminationMode = eliminationMode;
 	}
 
 	public IPredicate translateForInterference(final TransFormula tf, final String interferingThread,
 			final IcfgLocation sourceLocation, final IcfgLocation targetLocation) {
+		return translateForInterferenceInternal(tf, interferingThread, sourceLocation, targetLocation, null, null);
+	}
+
+	public IPredicate translateForInterferenceWithFork(final TransFormula tf, final String interferingThread,
+			final IcfgLocation sourceLocation, final IcfgLocation targetLocation, final String forkedThreadId,
+			final IcfgLocation forkedEntry) {
+		return translateForInterferenceInternal(tf, interferingThread, sourceLocation, targetLocation, forkedThreadId,
+				forkedEntry);
+	}
+
+	private IPredicate translateForInterferenceInternal(final TransFormula tf, final String interferingThread,
+			final IcfgLocation sourceLocation, final IcfgLocation targetLocation, final String forkedThreadId,
+			final IcfgLocation forkedEntry) {
 		final Term baseTerm = translateBase(tf);
 
 		final var script = mManagedScript.getScript();
 		Term combined = baseTerm;
 
-		// Identity constraints for unchanged globals (always, not just for ghost mode)
-		final Term unchanged = createIdentityConstraintsForUnchangedGlobals(tf, interferingThread);
+		final Term unchanged = createIdentityConstraintsForUnchangedGlobals(tf, interferingThread, forkedThreadId);
 		combined = SmtUtils.and(script, combined, unchanged);
 
-		if (mSettings.useGhostLocations()) {
-			// loc_interferingThread = alpha(sourceLocation)
+		if (mGhostVariables != null) {
 			combined = SmtUtils.and(script, combined,
 					mGhostVariables.createLocationConstraint(interferingThread, sourceLocation));
-			// loc_interferingThread' = alpha(targetLocation)
 			combined = SmtUtils.and(script, combined,
 					mGhostVariables.createPrimedLocationConstraint(interferingThread, targetLocation, mSymbolTable));
-			// loc_other' = loc_other is already covered by identity constraints above
+
+			if (forkedThreadId != null && forkedEntry != null) {
+				combined = SmtUtils.and(script, combined,
+						mGhostVariables.createPrimedLocationConstraint(forkedThreadId, forkedEntry, mSymbolTable));
+			}
 		}
 
 		return mPredicateFactory.newPredicate(combined);
 	}
 
-	/** Renames globals to unprimed/primed TermVariables and projects away locals. */
 	private Term translateBase(final TransFormula tf) {
 		final Set<TermVariable> localVars = new HashSet<>();
 		final Map<Term, Term> substitution = buildSubstitution(tf, localVars);
@@ -77,19 +111,25 @@ public class TransFormulaToInterferencePredicate {
 		return formula;
 	}
 
-	private Term createIdentityConstraintsForUnchangedGlobals(final TransFormula tf, final String interferingThread) {
+	private Term createIdentityConstraintsForUnchangedGlobals(final TransFormula tf, final String interferingThread,
+			final String forkedThreadId) {
 		final var script = mManagedScript.getScript();
 		final Set<IProgramVar> modified = tf.getOutVars().keySet();
-		final TermVariable interferingLoc = mSettings.useGhostLocations()
-				? mGhostVariables.getLocationTermVar(interferingThread) : null;
+		final TermVariable interferingLoc = mGhostVariables == null ? null
+				: mGhostVariables.getLocationTermVar(interferingThread);
+		final TermVariable forkedLoc = mGhostVariables == null || forkedThreadId == null ? null
+				: mGhostVariables.getLocationTermVar(forkedThreadId);
 
 		final List<Term> conjuncts = new ArrayList<>();
 		for (final IProgramVar pv : mSymbolTable.getAllGlobalBaseVars()) {
 			if (modified.contains(pv)) {
 				continue;
 			}
-			if (interferingLoc != null && pv.getTermVariable().equals(interferingLoc)) {
-				// this thread's location is updated explicitly via ghost constraints
+			final TermVariable tv = pv.getTermVariable();
+			if (interferingLoc != null && tv.equals(interferingLoc)) {
+				continue;
+			}
+			if (forkedLoc != null && tv.equals(forkedLoc)) {
 				continue;
 			}
 			final TermVariable primed = mSymbolTable.getPrimedVar(pv);
@@ -108,8 +148,6 @@ public class TransFormulaToInterferencePredicate {
 		return substitution;
 	}
 
-	// Globals: inVar -> unprimed TermVariable (pre-state value)
-	// Locals: collected for existential projection
 	private static void addInVarSubstitutions(final TransFormula tf, final Map<Term, Term> substitution,
 			final Set<TermVariable> localVars) {
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
@@ -122,7 +160,6 @@ public class TransFormulaToInterferencePredicate {
 		}
 	}
 
-	// Globals: outVar -> primed TermVariable (post-state value)
 	private void addOutVarSubstitutions(final TransFormula tf, final Map<Term, Term> substitution,
 			final Set<TermVariable> localVars) {
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
@@ -140,10 +177,46 @@ public class TransFormulaToInterferencePredicate {
 	}
 
 	private Term projectAwayLocals(final Term formula, final Set<TermVariable> localVars) {
-		return RelationalPredicateUtils.existentiallyProject(formula, localVars, mServices, mManagedScript);
+		return RelationalPredicateUtils.existentiallyProject(formula, localVars, mServices, mManagedScript,
+				mEliminationMode);
 	}
 
 	public PrimedDefaultIcfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
+	}
+
+	public boolean isLocationStutterStep(final IcfgLocation sourceLocation, final IcfgLocation targetLocation) {
+		final Integer sourceAbs = mAbstractLocationIds.get(sourceLocation);
+		final Integer targetAbs = mAbstractLocationIds.get(targetLocation);
+		if (sourceAbs == null || targetAbs == null) {
+			return false;
+		}
+		return sourceAbs.equals(targetAbs);
+	}
+
+	public Integer getAbstractLocationIdOrNull(final IcfgLocation location) {
+		return mAbstractLocationIds.get(location);
+	}
+
+	public boolean hasAbstractLocationIds() {
+		return !mAbstractLocationIds.isEmpty();
+	}
+
+	public IcfgLocation getEntryLocation(final String threadId) {
+		final IcfgLocation entry = mEntryLocations.get(threadId);
+		if (entry != null) {
+			return entry;
+		}
+		if (mGhostVariables != null) {
+			return mGhostVariables.getEntryLocation(threadId);
+		}
+		return null;
+	}
+
+	public TermVariable getLocationTermVarOrNull(final String threadId) {
+		if (mGhostVariables == null) {
+			return null;
+		}
+		return mGhostVariables.getLocationTermVar(threadId);
 	}
 }

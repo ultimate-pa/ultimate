@@ -43,8 +43,14 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.SinglePassConcurrentBaselineInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaSettings;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeMode;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.QuantifierEliminationMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
@@ -67,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.InterpretCallSum
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ReUseSupersetCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferences.ConcurrentAnalysisMode;
 
 /**
  * Constructs a new sifa interpreter using the settings from {@link SifaPreferences}.
@@ -102,9 +109,16 @@ public class SifaBuilder {
 
 		final ISifaInterpreter interpreter;
 		if (IcfgUtils.isConcurrent(icfg)) {
-			mLogger.info("Concurrent program detected, using thread-modular SIFA interpreter");
-			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest,
-					domain, fluid, loopSum, callSum, mServices);
+			final ConcurrentAnalysisMode concurrentMode =
+					mPrefs.getEnum(SifaPreferences.LABEL_CONCURRENT_ANALYSIS_MODE,
+							SifaPreferences.CLASS_CONCURRENT_ANALYSIS_MODE);
+			if (concurrentMode == ConcurrentAnalysisMode.SINGLE_PASS_BASELINE) {
+				interpreter = new SinglePassConcurrentBaselineInterpreter(mLogger, timer, stats, tools, icfg,
+						locationsOfInterest, domain, fluid, loopSum, callSum, mServices);
+			} else {
+				interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg,
+						locationsOfInterest, domain, fluid, loopSum, callSum, mServices);
+			}
 		} else {
 			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
 					loopSum, callSum);
@@ -119,8 +133,24 @@ public class SifaBuilder {
 			final var toolkit = icfg.getCfgSmtToolkit();
 			final var primedTable = new PrimedDefaultIcfgSymbolTable(toolkit.getSymbolTable(), toolkit.getProcedures(),
 					toolkit.getManagedScript());
-			// TODO: back settings by SifaPreferences
-			final var settings = new ThreadModularSifaSettings(true);
+			final LocationTrackingMode locationTrackingMode = mPrefs.getEnum(
+					SifaPreferences.LABEL_LOCATION_TRACKING_MODE, SifaPreferences.CLASS_LOCATION_TRACKING_MODE);
+			final LocationAbstractionType locationAbstraction = mPrefs.getEnum(
+					SifaPreferences.LABEL_LOCATION_ABSTRACTION, SifaPreferences.CLASS_LOCATION_ABSTRACTION);
+			final InterferenceMergeMode mergeMode = mPrefs.getEnum(SifaPreferences.LABEL_INTERFERENCE_MERGE_MODE,
+					SifaPreferences.CLASS_INTERFERENCE_MERGE_MODE);
+			final InterferenceType interferenceType = mPrefs.getEnum(SifaPreferences.LABEL_INTERFERENCE_TYPE,
+					SifaPreferences.CLASS_INTERFERENCE_TYPE);
+			final QuantifierEliminationMode eliminationMode =
+					mPrefs.getEnum(SifaPreferences.LABEL_QUANTIFIER_ELIMINATION_MODE,
+							SifaPreferences.CLASS_QUANTIFIER_ELIMINATION_MODE);
+			final int outerWideningThreshold =
+					mPrefs.getInt(SifaPreferences.LABEL_OUTER_WIDENING_THRESHOLD);
+			final int innerWideningThreshold =
+					mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD);
+			final var settings = new ThreadModularSifaSettings(
+					locationTrackingMode, locationAbstraction, mergeMode, interferenceType, eliminationMode,
+					outerWideningThreshold, innerWideningThreshold);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);
@@ -128,38 +158,39 @@ public class SifaBuilder {
 
 	private IDomain constructStatsDomain(final SifaStats stats, final SymbolicTools tools,
 			final IProgressAwareTimer timer) {
-		return new StatsWrapperDomain(stats, constructDomain(tools, timer));
+		return new StatsWrapperDomain(stats, constructDomain(stats, tools, timer));
 	}
 
-	private IDomain constructDomain(final SymbolicTools tools, final IProgressAwareTimer timer) {
+	private IDomain constructDomain(final SifaStats stats, final SymbolicTools tools,
+			final IProgressAwareTimer timer) {
 		final String prefDomain = mPrefs.getString(SifaPreferences.LABEL_ABSTRACT_DOMAIN);
 		if (CompoundDomain.class.getSimpleName().equals(prefDomain)) {
 			final List<IDomain> subdomains = SifaPreferences.SubdomainValidator
 					.subdomains(mPrefs.getString(SifaPreferences.LABEL_COMPOUNDDOM_SUBDOM))
-					.map(subDomName -> constructNonCompoundDomain(subDomName, tools, timer))
+					.map(subDomName -> constructNonCompoundDomain(subDomName, stats, tools, timer))
 					.collect(Collectors.toList());
 			return new CompoundDomain(tools, subdomains);
 
 		} else {
-			return constructNonCompoundDomain(prefDomain, tools, timer);
+			return constructNonCompoundDomain(prefDomain, stats, tools, timer);
 		}
 	}
 
-	private IDomain constructNonCompoundDomain(final String domainName, final SymbolicTools tools,
-			final IProgressAwareTimer timer) {
+	private IDomain constructNonCompoundDomain(final String domainName, final SifaStats stats,
+			final SymbolicTools tools, final IProgressAwareTimer timer) {
 		final IDomain domain;
 		if (ExplicitValueDomain.class.getSimpleName().equals(domainName)) {
 			domain = new ExplicitValueDomain(tools,
 					mPrefs.getInt(SifaPreferences.LABEL_EXPLVALDOM_MAX_PARALLEL_STATES));
 		} else if (IntervalDomain.class.getSimpleName().equals(domainName)) {
 			domain = new IntervalDomain(mLogger, tools,
-					mPrefs.getInt(SifaPreferences.LABEL_INTERVALDOM_MAX_PARALLEL_STATES), () -> timer);
+					mPrefs.getInt(SifaPreferences.LABEL_INTERVALDOM_MAX_PARALLEL_STATES), () -> timer, stats);
 		} else if (OctagonDomain.class.getSimpleName().equals(domainName)) {
 			domain = new OctagonDomain(mLogger, tools,
-					mPrefs.getInt(SifaPreferences.LABEL_OCTAGONDOM_MAX_PARALLEL_STATES), () -> timer);
+					mPrefs.getInt(SifaPreferences.LABEL_OCTAGONDOM_MAX_PARALLEL_STATES), () -> timer, stats);
 		} else if (EqDomain.class.getSimpleName().equals(domainName)) {
 			domain = new EqDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES), mServices,
-					mLogger, () -> timer);
+					mLogger, () -> timer, stats);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
 		}

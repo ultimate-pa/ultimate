@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
@@ -60,7 +62,13 @@ public class IntervalDomain extends StateBasedDomain<NonrelationalState<Interval
 
 	public IntervalDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> timeout) {
-		super(tools, maxDisjuncts, logger, timeout, new IntervalStateProvider(timeout, logger, tools.getScript()));
+		this(logger, tools, maxDisjuncts, timeout, null);
+	}
+
+	public IntervalDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
+			final Supplier<IProgressAwareTimer> timeout, final SifaStats stats) {
+		super(tools, maxDisjuncts, logger, timeout, new IntervalStateProvider(timeout, logger, tools.getScript()),
+				stats);
 	}
 
 	private static class IntervalStateProvider implements IStateProvider<NonrelationalState<Interval>> {
@@ -189,8 +197,11 @@ public class IntervalDomain extends StateBasedDomain<NonrelationalState<Interval
 
 		CompareNumberOfFreeVariablesInRhs(final Collection<SolvedBinaryRelation> relations) {
 			// pre-compute values since each .getFreeVars() would traverse the whole term again
-			mNumberOfFreeVarsInRhs = relations.stream()
-					.collect(Collectors.toMap(key -> key, key -> key.getRightHandSide().getFreeVars().length));
+			// Duplicates can occur in relation sets; cache by object identity to avoid duplicate-key failures.
+			mNumberOfFreeVarsInRhs = new IdentityHashMap<>();
+			for (final SolvedBinaryRelation relation : relations) {
+				mNumberOfFreeVarsInRhs.put(relation, relation.getRightHandSide().getFreeVars().length);
+			}
 		}
 
 		@Override

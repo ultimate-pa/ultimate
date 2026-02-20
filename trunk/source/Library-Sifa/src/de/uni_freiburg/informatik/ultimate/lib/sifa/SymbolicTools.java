@@ -119,6 +119,10 @@ public class SymbolicTools {
 		return mSymbolTable;
 	}
 
+	protected SifaStats getStats() {
+		return mStats;
+	}
+
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		mStats.start(SifaStats.Key.TOOLS_POST_TIME);
 		mStats.increment(SifaStats.Key.TOOLS_POST_APPLICATIONS);
