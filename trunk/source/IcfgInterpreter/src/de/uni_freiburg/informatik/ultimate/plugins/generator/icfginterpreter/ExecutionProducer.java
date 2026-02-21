@@ -305,7 +305,7 @@ public class ExecutionProducer {
 					neededInVarsGlobal.entrySet().stream().filter(entry -> !updatedVars.contains(entry.getKey()))
 							.flatMap(entry -> entry.getValue().stream()).toList());
 
-			// get vars that can be updated because all needed outvars are already updated
+			// get variables that can be updated because all needed outvars are already updated
 			final Stream<TermVariable> updatableVars = neededOutVarsGlobal.entrySet().stream()
 					.filter(entry -> !updatedVars.contains(entry.getKey()) && updatedVars.containsAll(entry.getValue()))
 					.map(entry -> entry.getKey());
@@ -355,10 +355,9 @@ public class ExecutionProducer {
 		final Set<TermVariable> formulaAuxVars = formula.getAuxVars();
 
 		for (final SolvedEquation equation : equationList) {
-			final List<TermVariable> inVars = neededInVars.getOrDefault(equation, new ArrayList<>());
-			final List<TermVariable> outVars = neededOutVars.getOrDefault(equation, new ArrayList<>());
-			final TermVariable updatedVar = (TermVariable) equation.getLhs();// lookupSymbolTableSafe((TermVariable)
-																				// equation.getLhs(), formula);
+			final TermVariable updatedVar = (TermVariable) equation.getLhs();
+			final List<TermVariable> inVars = neededInVars.getOrDefault(updatedVar, new ArrayList<>());
+			final List<TermVariable> outVars = neededOutVars.getOrDefault(updatedVar, new ArrayList<>());
 
 			for (final TermVariable usedVar : equation.getRhs().getFreeVars()) {
 				// final TermVariable globalVar = lookupSymbolTableSafe(usedVar, formula);
