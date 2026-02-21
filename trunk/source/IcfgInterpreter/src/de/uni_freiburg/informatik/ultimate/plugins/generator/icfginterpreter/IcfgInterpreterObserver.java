@@ -121,8 +121,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				}
 
 				// Create executions
-				mExecutions =
-						producer.makeExecutions(mLogger, (executions, locations) -> outputBatch(executions, locations));
+				mExecutions = producer.makeExecutions(mLogger,
+						(executions, locations) -> outputBatch(executions, locations));
 
 				// Either no execution of the target type was found, or mExecutions is empty because of batching and
 				// should be supplemented with the batch aggregate.
@@ -161,16 +161,16 @@ public class IcfgInterpreterObserver extends BaseObserver {
 
 	private void outputBatch(final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> executions,
 			final Set<IcfgLocation> errorLocations) {
-		final Map<IcfgLocation, IcfgProgramExecution<IcfgEdge>> locs2ErrorExecutions =
-				executions.getOrDefault(ExecutionTermintionReason.REACHED_ERROR, List.of()).stream().collect(Collectors
+		final Map<IcfgLocation, IcfgProgramExecution<IcfgEdge>> locs2ErrorExecutions = executions
+				.getOrDefault(ExecutionTermintionReason.REACHED_ERROR, List.of()).stream().collect(Collectors
 						.toMap(x -> x.getTraceElement(x.getLength() - 1).getStep().getTarget(), x -> x, (x, y) -> x));
 
 		for (final IcfgLocation loc : errorLocations) {
 			final IcfgProgramExecution<IcfgEdge> errorExecution = locs2ErrorExecutions.get(loc);
 
 			if (errorExecution != null && mFinalResults.get(loc) instanceof UnprovableResult) {
-				final List<UnprovabilityReason> unprovabilityReasons =
-						UnprovabilityReason.getUnprovabilityReasons(errorExecution);
+				final List<UnprovabilityReason> unprovabilityReasons = UnprovabilityReason
+						.getUnprovabilityReasons(errorExecution);
 				final IResult newResult;
 				if (unprovabilityReasons.isEmpty()) {
 					newResult = new CounterExampleResult<>(loc, Activator.PLUGIN_ID,
@@ -212,9 +212,12 @@ public class IcfgInterpreterObserver extends BaseObserver {
 					i++;
 					try {
 						outputFile.createNewFile();
-						final BufferedWriter out =
-								new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile)));
-						out.write("Ended because of " + reason + "\n" + e);
+						final BufferedWriter out = new BufferedWriter(
+								new OutputStreamWriter(new FileOutputStream(outputFile)));
+
+						final String executionSimplified = mServices.getBacktranslationService()
+								.translateProgramExecution(e).toString();
+						out.write("Ended because of " + reason + "\n" + e + "\n" + executionSimplified);
 						out.close();
 					} catch (final IOException e1) {
 						e1.printStackTrace();
@@ -233,7 +236,11 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				newTotalExecutions += newExecutions;
 
 				for (final var e : entry.getValue()) {
-					mLogger.info("Ended because of %s\n\n%s", reason, e);
+
+					final String executionSimplified = mServices.getBacktranslationService()
+							.translateProgramExecution(e).toString();
+
+					mLogger.info("Ended because of %s\n\n%s\n\n%s", reason, e, executionSimplified);
 				}
 			}
 			break;

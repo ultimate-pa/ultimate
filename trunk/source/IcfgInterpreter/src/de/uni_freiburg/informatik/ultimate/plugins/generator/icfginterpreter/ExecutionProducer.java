@@ -753,8 +753,7 @@ public class ExecutionProducer {
 			int index = newStates.size() - 1;
 
 			Map<TermVariable, Value> previousState = newStates.get(index);
-			final Set<TermVariable> currentVars = new HashSet<>(nextState.keySet());
-			currentVars.addAll(havocedVars.keySet());
+			final Set<TermVariable> currentVars = new HashSet<>(havocedVars.keySet());
 
 			nextEdge.removeSafe(currentVars);
 

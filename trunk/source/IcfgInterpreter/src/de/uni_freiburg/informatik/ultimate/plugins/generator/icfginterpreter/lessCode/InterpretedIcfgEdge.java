@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
@@ -31,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.les
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.AssignmentUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
 
 public class InterpretedIcfgEdge {
@@ -47,12 +45,6 @@ public class InterpretedIcfgEdge {
 	private final Set<TermVariable> mHavocedVars;
 	/** Variables that were havoced or assumed on this edge and then read on this edge */
 	private final Set<TermVariable> mHavocedAndReadVars;
-	/** Variables that were assigned before they were read on this edge */
-	private final Set<TermVariable> mAssignedVars;
-	/**
-	 * For each variable defined in the guard, a havoc update that can be used to narrow the restriction such that a
-	 * variable havoced in
-	 */
 	private final Map<Term, RestrictionParser> mGuardRestrictions;
 	private final ArrayList<Term> mAllVars;
 
@@ -73,7 +65,6 @@ public class InterpretedIcfgEdge {
 		final List<TermVariable> havocedVars = new ArrayList<>();
 		final Set<TermVariable> readVars = new HashSet<>(mGuardVars);
 		final List<TermVariable> havocedAndReadVars = new ArrayList<>();
-		final List<TermVariable> assignedVars = new ArrayList<>();
 
 		for (final Update update : mUpdates) {
 			readVars.addAll(update.getFreeVars());
@@ -82,11 +73,6 @@ public class InterpretedIcfgEdge {
 			case final HavocUpdate hu:
 				havocedVars.add(hu.getVariable());
 
-				break;
-			case final AssignmentUpdate au:
-				if (!readVars.contains(au.getVariable())) {
-					assignedVars.add(au.getVariable());
-				}
 				break;
 			default:
 				break;
@@ -103,7 +89,6 @@ public class InterpretedIcfgEdge {
 		mHavocedVars = Set.copyOf(havocedVars);
 		readVars.removeAll(mAuxVars);
 		mReadVars = Set.copyOf(readVars);
-		mAssignedVars = Set.copyOf(assignedVars);
 		mAllVars = new ArrayList<>();
 		mAllVars.addAll(mReadVars);
 		mAllVars.addAll(mAuxVars);
@@ -163,7 +148,7 @@ public class InterpretedIcfgEdge {
 				final TermVariable termVar;
 				final ArrayValue array;
 				final List<Value> keyValues;
-				final Sort baseSort;
+
 				if (term instanceof final TermVariable tv) {
 					if (state.containsKey(term) || !required.contains(term)) {
 						completedTerms.add(term);
@@ -242,17 +227,16 @@ public class InterpretedIcfgEdge {
 	}
 
 	/**
-	 * Removes all variables that were not havoced on this edge for the purposes of propagating havocs to earlier
-	 * states.
+	 * Removes all variables that were havoced on this edge for the purposes of propagating the value to the state where
+	 * the variable was initially havoced.
 	 *
 	 * @param currentVars
 	 */
 	public void removeSafe(final Set<TermVariable> currentVars) {
 		/*
-		 * Assigned variables may have been havoced (and possibly read after the havoc update) on this edge after being
-		 * assigned, but they do not need to be propagated back to earlier states if this is the case, so this is fine.
+		 * If a variable was havoced and then read on this edge, then it should not be propagated to earlier states.
 		 */
-		currentVars.removeAll(mAssignedVars);
+		currentVars.removeAll(mHavocedAndReadVars);
 	}
 
 	public Pair<Boolean, Map<TermVariable, Value>> guard(final Map<TermVariable, Value> state,
