@@ -12,6 +12,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -103,12 +104,25 @@ public class TransFormulaToInterferencePredicate {
 	}
 
 	private Term translateBase(final TransFormula tf) {
-		final Set<TermVariable> localVars = new HashSet<>();
-		final Map<Term, Term> substitution = buildSubstitution(tf, localVars);
+		final Set<TermVariable> projectedVars = new HashSet<>();
+		final Map<Term, Term> substitution = buildSubstitution(tf, projectedVars);
 
-		Term formula = applySubstitution(tf.getFormula(), substitution);
-		formula = projectAwayLocals(formula, localVars);
-		return formula;
+		final Term formula = applySubstitution(tf.getFormula(), substitution);
+		addProjectedTransitionVars(tf, formula, projectedVars);
+		return projectAwayLocals(formula, projectedVars);
+	}
+
+	private void addProjectedTransitionVars(final TransFormula tf, final Term formula,
+			final Set<TermVariable> projectedVars) {
+		projectedVars.addAll(tf.getAuxVars());
+		if (tf instanceof final UnmodifiableTransFormula utf) {
+			projectedVars.addAll(utf.getBranchEncoders());
+		}
+		for (final TermVariable freeVar : formula.getFreeVars()) {
+			if (mSymbolTable.getProgramVar(freeVar) == null) {
+				projectedVars.add(freeVar);
+			}
+		}
 	}
 
 	private Term createIdentityConstraintsForUnchangedGlobals(final TransFormula tf, final String interferingThread,
