@@ -1,43 +1,40 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import java.util.function.Supplier;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public class CongruenceDomain implements IDomain {
-	private final SymbolicTools mTools;
+public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 
-	public CongruenceDomain(final SymbolicTools tools) {
-		mTools = tools;
+	public CongruenceDomain(final SymbolicTools tools, final int maxDisjuncts, final ILogger logger,
+			final Supplier<IProgressAwareTimer> timeout) {
+		super(tools, maxDisjuncts, logger, timeout, new CongruenceStateProvider());
+		// TODO Auto-generated constructor stub
 	}
 
-	@Override
-	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
-		return widen(lhs, rhs);
+	private static class CongruenceStateProvider implements IStateProvider<CongruenceState> {
+
+		@Override
+		public CongruenceState toState(final Term[] conjuncts) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public CongruenceState getTopState() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Term preprocessTerm(final Term term) {
+			// TODO Auto-generated method stub
+			return term;
+		}
+
 	}
 
-	@Override
-	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
-		return mTools.top();
-	}
-
-	@Override
-	public ResultForAlteredInputs isEqBottom(final IPredicate pred) {
-		final ResultForAlteredInputs result = new ResultForAlteredInputs(mTools.top(), mTools.bottom());
-		result.mResult = false;
-		result.mAbstracted = true;
-		return result;
-	}
-
-	@Override
-	public ResultForAlteredInputs isSubsetEq(final IPredicate subset, final IPredicate superset) {
-		final ResultForAlteredInputs result = new ResultForAlteredInputs(mTools.top(), mTools.top());
-		result.mResult = true;
-		result.mAbstracted = true;
-		return result;
-	}
-
-	@Override
-	public IPredicate alpha(final IPredicate pred) {
-		return pred;
-	}
 }

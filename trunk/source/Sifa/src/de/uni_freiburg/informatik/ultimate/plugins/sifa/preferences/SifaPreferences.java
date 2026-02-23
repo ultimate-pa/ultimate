@@ -40,7 +40,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IntervalDomain;
@@ -58,10 +60,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.sifa.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder;
 
 /**
- * Description, values, and default values for sifa settings. Use {@link SifaBuilder} to create a sifa interpreter using
- * these settings.
+ * Description, values, and default values for sifa settings. Use
+ * {@link SifaBuilder} to create a sifa interpreter using these settings.
  * <p>
- * When adding settings to this class you also have to adapt the methods in {@link SifaBuilder}.
+ * When adding settings to this class you also have to adapt the methods in
+ * {@link SifaBuilder}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
@@ -72,7 +75,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
 	private static final String[] VALUES_ABSTRACT_DOMAIN = { ExplicitValueDomain.class.getSimpleName(),
 			IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), EqDomain.class.getSimpleName(),
-			CompoundDomain.class.getSimpleName() };
+			CompoundDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(),
+			ArrayDomain.class.getSimpleName() };
 
 	public static final String LABEL_LOOP_SUMMARIZER = "Loop Summarizer";
 	private static final String DEFAULT_LOOP_SUMMARIZER = FixpointLoopSummarizer.class.getSimpleName();
@@ -86,9 +90,9 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_FLUID = "Fluid";
 	private static final String TOOLTIP_FLUID = "Decides when to apply abstraction";
 	private static final String DEFAULT_FLUID = SizeLimitFluid.class.getSimpleName();
-	private static final String[] VALUES_FLUID =
-			{ NeverFluid.class.getSimpleName(), SizeLimitFluid.class.getSimpleName(), AlwaysFluid.class.getSimpleName(),
-					LogSizeWrapperFluid.class.getSimpleName(), };
+	private static final String[] VALUES_FLUID = { NeverFluid.class.getSimpleName(),
+			SizeLimitFluid.class.getSimpleName(), AlwaysFluid.class.getSimpleName(),
+			LogSizeWrapperFluid.class.getSimpleName(), };
 
 	public static final String LABEL_SIMPLIFICATION = "Simplification Technique";
 	private static final SimplificationTechnique DEFAULT_SIMPLIFICATION = SimplificationTechnique.NONE;
@@ -115,12 +119,12 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	// settings specific to CompoundDomain
 	public static final String LABEL_COMPOUNDDOM_SUBDOM = "CompoundDomain Intern Domains";
-	private static final String DEFAULT_COMPOUNDDOM_SUBDOM =
-			ExplicitValueDomain.class.getSimpleName() + ";" + IntervalDomain.class.getSimpleName();
-	private static final String[] CHOICES_COMPOUNDDOM_SUBDOM =
-			filter(VALUES_ABSTRACT_DOMAIN, value -> !CompoundDomain.class.getSimpleName().equals(value));
-	private static final String TOOLTIP_COMPOUNDDOM_SUBDOM =
-			"List subdomains separated by `;`. Valid subdomains are\n" + String.join("\n", CHOICES_COMPOUNDDOM_SUBDOM);
+	private static final String DEFAULT_COMPOUNDDOM_SUBDOM = ExplicitValueDomain.class.getSimpleName() + ";"
+			+ IntervalDomain.class.getSimpleName();
+	private static final String[] CHOICES_COMPOUNDDOM_SUBDOM = filter(VALUES_ABSTRACT_DOMAIN,
+			value -> !CompoundDomain.class.getSimpleName().equals(value));
+	private static final String TOOLTIP_COMPOUNDDOM_SUBDOM = "List subdomains separated by `;`. Valid subdomains are\n"
+			+ String.join("\n", CHOICES_COMPOUNDDOM_SUBDOM);
 
 	public static class SubdomainValidator implements IUltimatePreferenceItemValidator<String> {
 		public static Stream<String> subdomains(final String setting) {
@@ -147,18 +151,18 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	// settings specific to LogSizeWrapperFluid
 	public static final String LABEL_LOGFLUID_INTERN_FLUID = "LogSizeWrapperFluid Intern Fluid";
 	private static final String DEFAULT_LOGFLUID_INTERN_FLUID = DEFAULT_FLUID;
-	private static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES =
-			filter(VALUES_FLUID, value -> !LogSizeWrapperFluid.class.getSimpleName().equals(value));
+	private static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES = filter(VALUES_FLUID,
+			value -> !LogSizeWrapperFluid.class.getSimpleName().equals(value));
 
 	// settings specific to SizeLimitFluid
 	public static final String LABEL_SIZELIMITFLUID_MAX_DAGSIZE = "SizeLimitFluid Max. DAG Size";
-	public static final String TOOLTIP_SIZELIMITFLUID_MAX_DAGSIZE =
-			"Abstract when formula's dag size exceeds\n" + "(negative numbers disable this limit)";
+	public static final String TOOLTIP_SIZELIMITFLUID_MAX_DAGSIZE = "Abstract when formula's dag size exceeds\n"
+			+ "(negative numbers disable this limit)";
 	private static final int DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE = -1;
 
 	public static final String LABEL_SIZELIMITFLUID_MAX_DISJUNCTS = "SizeLimitFluid Max. Disjunctions";
-	public static final String TOOLTIP_SIZELIMITFLUID_MAX_DISJUNCTS =
-			"Abstract when formula has more disjuncts than\n" + "(negative numbers disable this limit)";
+	public static final String TOOLTIP_SIZELIMITFLUID_MAX_DISJUNCTS = "Abstract when formula has more disjuncts than\n"
+			+ "(negative numbers disable this limit)";
 	private static final int DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS = 8;
 
 	// ↑ Members ----- ↓ Methods ---------------------------------------------
@@ -170,38 +174,38 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 
-		final UltimatePreferenceItemContainer containerExplValDom =
-				new UltimatePreferenceItemContainer(ExplicitValueDomain.class.getSimpleName());
+		final UltimatePreferenceItemContainer containerExplValDom = new UltimatePreferenceItemContainer(
+				ExplicitValueDomain.class.getSimpleName());
 		containerExplValDom.addItem(integer(LABEL_EXPLVALDOM_MAX_PARALLEL_STATES,
 				DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
 
-		final UltimatePreferenceItemContainer containerIntervalDom =
-				new UltimatePreferenceItemContainer(IntervalDomain.class.getSimpleName());
+		final UltimatePreferenceItemContainer containerIntervalDom = new UltimatePreferenceItemContainer(
+				IntervalDomain.class.getSimpleName());
 		containerIntervalDom.addItem(integer(LABEL_INTERVALDOM_MAX_PARALLEL_STATES,
 				DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
 
-		final UltimatePreferenceItemContainer containerOctagonDom =
-				new UltimatePreferenceItemContainer(OctagonDomain.class.getSimpleName());
+		final UltimatePreferenceItemContainer containerOctagonDom = new UltimatePreferenceItemContainer(
+				OctagonDomain.class.getSimpleName());
 		containerOctagonDom.addItem(integer(LABEL_OCTAGONDOM_MAX_PARALLEL_STATES,
 				DEFAULT_OCTAGONDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
 
-		final UltimatePreferenceItemContainer containerEqDom =
-				new UltimatePreferenceItemContainer(EqDomain.class.getSimpleName());
+		final UltimatePreferenceItemContainer containerEqDom = new UltimatePreferenceItemContainer(
+				EqDomain.class.getSimpleName());
 		containerEqDom.addItem(
 				integer(LABEL_EQDOM_MAX_PARALLEL_STATES, DEFAULT_EQDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
 
-		final UltimatePreferenceItemContainer containerCompoundDom =
-				new UltimatePreferenceItemContainer(CompoundDomain.class.getSimpleName());
+		final UltimatePreferenceItemContainer containerCompoundDom = new UltimatePreferenceItemContainer(
+				CompoundDomain.class.getSimpleName());
 		containerCompoundDom.addItem(string(LABEL_COMPOUNDDOM_SUBDOM, TOOLTIP_COMPOUNDDOM_SUBDOM,
 				DEFAULT_COMPOUNDDOM_SUBDOM, new SubdomainValidator()));
 
-		final UltimatePreferenceItemContainer containerLogFluid =
-				new UltimatePreferenceItemContainer(LogSizeWrapperFluid.class.getSimpleName());
+		final UltimatePreferenceItemContainer containerLogFluid = new UltimatePreferenceItemContainer(
+				LogSizeWrapperFluid.class.getSimpleName());
 		containerLogFluid.addItem(
 				combo(LABEL_LOGFLUID_INTERN_FLUID, DEFAULT_LOGFLUID_INTERN_FLUID, VALUES_LOGFLUID_INTERN_FLUID_VALUES));
 
-		final UltimatePreferenceItemContainer containerSizeLimitFluid =
-				new UltimatePreferenceItemContainer(SizeLimitFluid.class.getSimpleName());
+		final UltimatePreferenceItemContainer containerSizeLimitFluid = new UltimatePreferenceItemContainer(
+				SizeLimitFluid.class.getSimpleName());
 		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DAGSIZE, TOOLTIP_SIZELIMITFLUID_MAX_DAGSIZE,
 				DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE));
 		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DISJUNCTS,
