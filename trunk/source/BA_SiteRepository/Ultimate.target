@@ -107,6 +107,12 @@
                     <version>2.12.2</version>
                     <type>jar</type>
                 </dependency>
+                <dependency>
+                    <groupId>org.ojalgo</groupId>
+                    <artifactId>ojalgo</artifactId>
+                    <version>56.2.1</version>
+                    <type>jar</type>
+                </dependency>
             </dependencies>
         </location>
     </locations>
