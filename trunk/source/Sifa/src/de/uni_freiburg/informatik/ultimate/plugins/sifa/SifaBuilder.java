@@ -47,10 +47,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.SinglePassConcurr
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.QuantifierEliminationMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
@@ -137,20 +135,14 @@ public class SifaBuilder {
 					SifaPreferences.LABEL_LOCATION_TRACKING_MODE, SifaPreferences.CLASS_LOCATION_TRACKING_MODE);
 			final LocationAbstractionType locationAbstraction = mPrefs.getEnum(
 					SifaPreferences.LABEL_LOCATION_ABSTRACTION, SifaPreferences.CLASS_LOCATION_ABSTRACTION);
-			final InterferenceMergeMode mergeMode = mPrefs.getEnum(SifaPreferences.LABEL_INTERFERENCE_MERGE_MODE,
-					SifaPreferences.CLASS_INTERFERENCE_MERGE_MODE);
 			final InterferenceType interferenceType = mPrefs.getEnum(SifaPreferences.LABEL_INTERFERENCE_TYPE,
 					SifaPreferences.CLASS_INTERFERENCE_TYPE);
-			final QuantifierEliminationMode eliminationMode =
-					mPrefs.getEnum(SifaPreferences.LABEL_QUANTIFIER_ELIMINATION_MODE,
-							SifaPreferences.CLASS_QUANTIFIER_ELIMINATION_MODE);
 			final int outerWideningThreshold =
-					mPrefs.getInt(SifaPreferences.LABEL_OUTER_WIDENING_THRESHOLD);
+					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_OUTER_WIDENING_THRESHOLD));
 			final int innerWideningThreshold =
-					mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD);
-			final var settings = new ThreadModularSifaSettings(
-					locationTrackingMode, locationAbstraction, mergeMode, interferenceType, eliminationMode,
-					outerWideningThreshold, innerWideningThreshold);
+					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD));
+			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
+					interferenceType, outerWideningThreshold, innerWideningThreshold);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);

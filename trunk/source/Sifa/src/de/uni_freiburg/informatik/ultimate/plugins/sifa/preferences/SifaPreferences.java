@@ -40,10 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.QuantifierEliminationMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
@@ -111,14 +109,9 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final LocationTrackingMode[] VALUES_LOCATION_TRACKING_MODE = LocationTrackingMode.values();
 	public static final Class<LocationTrackingMode> CLASS_LOCATION_TRACKING_MODE = LocationTrackingMode.class;
 
-	public static final String LABEL_INTERFERENCE_MERGE_MODE = "Interference Merge Mode";
-	private static final InterferenceMergeMode DEFAULT_INTERFERENCE_MERGE_MODE = InterferenceMergeMode.JOIN;
-	private static final InterferenceMergeMode[] VALUES_INTERFERENCE_MERGE_MODE = InterferenceMergeMode.values();
-	public static final Class<InterferenceMergeMode> CLASS_INTERFERENCE_MERGE_MODE = InterferenceMergeMode.class;
-
 	public static final String LABEL_INTERFERENCE_TYPE = "Interference Type";
 	private static final InterferenceType DEFAULT_INTERFERENCE_TYPE =
-			InterferenceType.PER_THREAD_JOINED_ABSTRACT_LOCATIONS;
+			InterferenceType.PER_ABSTRACT_LOCATION;
 	private static final InterferenceType[] VALUES_INTERFERENCE_TYPE = InterferenceType.values();
 	public static final Class<InterferenceType> CLASS_INTERFERENCE_TYPE = InterferenceType.class;
 
@@ -128,17 +121,9 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final ConcurrentAnalysisMode[] VALUES_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.values();
 	public static final Class<ConcurrentAnalysisMode> CLASS_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.class;
 
-	public static final String LABEL_QUANTIFIER_ELIMINATION_MODE = "Quantifier Elimination Mode";
-	private static final QuantifierEliminationMode DEFAULT_QUANTIFIER_ELIMINATION_MODE =
-			QuantifierEliminationMode.LIGHT;
-	private static final QuantifierEliminationMode[] VALUES_QUANTIFIER_ELIMINATION_MODE =
-			QuantifierEliminationMode.values();
-	public static final Class<QuantifierEliminationMode> CLASS_QUANTIFIER_ELIMINATION_MODE =
-			QuantifierEliminationMode.class;
-
 	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction";
 	private static final LocationAbstractionType DEFAULT_LOCATION_ABSTRACTION =
-			LocationAbstractionType.SPLIT_AT_GUARDS;
+			LocationAbstractionType.SPLIT_AT_GUARD_AND_EXIT;
 	private static final LocationAbstractionType[] VALUES_LOCATION_ABSTRACTION = LocationAbstractionType.values();
 	public static final Class<LocationAbstractionType> CLASS_LOCATION_ABSTRACTION = LocationAbstractionType.class;
 
@@ -266,22 +251,21 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 		final UltimatePreferenceItemContainer containerConcurrent =
 				new UltimatePreferenceItemContainer("Thread-Modular");
-		containerConcurrent.addItem(combo(LABEL_LOCATION_TRACKING_MODE, DEFAULT_LOCATION_TRACKING_MODE,
-				VALUES_LOCATION_TRACKING_MODE));
-		containerConcurrent.addItem(combo(LABEL_CONCURRENT_ANALYSIS_MODE, DEFAULT_CONCURRENT_ANALYSIS_MODE,
-				VALUES_CONCURRENT_ANALYSIS_MODE));
-		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_MERGE_MODE, DEFAULT_INTERFERENCE_MERGE_MODE,
-				VALUES_INTERFERENCE_MERGE_MODE));
 		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_TYPE, DEFAULT_INTERFERENCE_TYPE,
 				VALUES_INTERFERENCE_TYPE));
-		containerConcurrent.addItem(combo(LABEL_QUANTIFIER_ELIMINATION_MODE, DEFAULT_QUANTIFIER_ELIMINATION_MODE,
-				VALUES_QUANTIFIER_ELIMINATION_MODE));
 		containerConcurrent.addItem(combo(LABEL_LOCATION_ABSTRACTION, DEFAULT_LOCATION_ABSTRACTION,
 				VALUES_LOCATION_ABSTRACTION));
 		containerConcurrent.addItem(integer(LABEL_OUTER_WIDENING_THRESHOLD, TOOLTIP_OUTER_WIDENING_THRESHOLD,
-				DEFAULT_OUTER_WIDENING_THRESHOLD));
+				DEFAULT_OUTER_WIDENING_THRESHOLD, 1, Integer.MAX_VALUE));
 		containerConcurrent.addItem(integer(LABEL_INNER_WIDENING_THRESHOLD, TOOLTIP_INNER_WIDENING_THRESHOLD,
-				DEFAULT_INNER_WIDENING_THRESHOLD));
+				DEFAULT_INNER_WIDENING_THRESHOLD, 1, Integer.MAX_VALUE));
+
+		final UltimatePreferenceItemContainer containerConcurrentTesting =
+				new UltimatePreferenceItemContainer("Thread-Modular Testing");
+		containerConcurrentTesting.addItem(combo(LABEL_LOCATION_TRACKING_MODE, DEFAULT_LOCATION_TRACKING_MODE,
+				VALUES_LOCATION_TRACKING_MODE));
+		containerConcurrentTesting.addItem(combo(LABEL_CONCURRENT_ANALYSIS_MODE, DEFAULT_CONCURRENT_ANALYSIS_MODE,
+				VALUES_CONCURRENT_ANALYSIS_MODE));
 
 		return new BaseUltimatePreferenceItem[] {
 				combo(LABEL_ABSTRACT_DOMAIN, DEFAULT_ABSTRACT_DOMAIN, VALUES_ABSTRACT_DOMAIN),
@@ -292,7 +276,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
 				//
 				containerExplValDom, containerIntervalDom, containerOctagonDom, containerEqDom, containerCompoundDom,
-				containerLogFluid, containerSizeLimitFluid, containerConcurrent };
+				containerLogFluid, containerSizeLimitFluid, containerConcurrent, containerConcurrentTesting };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
@@ -321,6 +305,12 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static UltimatePreferenceItem<Integer> integer(final String label, final String tooltip,
 			final int defaultValue) {
 		return new UltimatePreferenceItem<>(label, defaultValue, tooltip, PreferenceType.Integer);
+	}
+
+	private static UltimatePreferenceItem<Integer> integer(final String label, final String tooltip,
+			final int defaultValue, final int min, final int max) {
+		return new UltimatePreferenceItem<>(label, defaultValue, tooltip, PreferenceType.Integer,
+				new IUltimatePreferenceItemValidator.IntegerValidator(min, max));
 	}
 
 	private static UltimatePreferenceItem<String> string(final String label, final String tooltip,
