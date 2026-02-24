@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Inte
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerThreadInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeMode;
+
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -221,7 +221,7 @@ public class InterferencePrecisionRegressionTest {
 				writerUnlock().getFormula(), unreachableOtherThreadWriteOne().getFormula()));
 		final IPredicate asPredicate = predicate(all);
 		return InterferenceCollection
-				.of(Map.of(INTERFERING_THREAD_ID, new PerThreadInterference(asPredicate, InterferenceMergeMode.JOIN)));
+				.of(Map.of(INTERFERING_THREAD_ID, new PerThreadInterference(asPredicate)));
 	}
 
 	private IPredicate applyUntilFixpointWithExactOr(final IPredicate state, final InterferenceCollection interferences,

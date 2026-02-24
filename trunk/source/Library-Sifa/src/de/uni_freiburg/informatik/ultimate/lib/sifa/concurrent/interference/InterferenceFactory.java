@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -30,7 +29,6 @@ public class InterferenceFactory {
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IDomain mDomain;
-	private final InterferenceMergeMode mMergeMode;
 	private final InterferenceType mInterferenceType;
 
 	private static boolean modifiesGlobals(final TransFormula tf) {
@@ -41,32 +39,29 @@ public class InterferenceFactory {
 		return SmtUtils.isTrueLiteral(predicate.getFormula()) || SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 
+	public record EdgePredicate(IcfgLocation source, IcfgLocation target, IPredicate predicate) {
+	}
+
 	private static record EdgeInterferenceData(IcfgLocation target, TransFormula tf, String forkedThreadId) {
 	}
 
 	public InterferenceFactory(final TransFormulaToInterferencePredicate translator, final IDomain domain,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final InterferenceMergeMode mergeMode, final InterferenceType interferenceType) {
+			final InterferenceType interferenceType) {
 		mTranslator = Objects.requireNonNull(translator);
 		mDomain = Objects.requireNonNull(domain);
 		mManagedScript = Objects.requireNonNull(managedScript);
 		mPredicateFactory = Objects.requireNonNull(predicateFactory);
-		mMergeMode = Objects.requireNonNull(mergeMode);
 		mInterferenceType = Objects.requireNonNull(interferenceType);
 	}
 
 	public IInterference createBuilder() {
 		final IPredicate falsePredicate = falsePredicate();
 		return switch (mInterferenceType) {
-		case PER_THREAD -> new PerThreadInterference(falsePredicate, mMergeMode);
-		case PER_ABSTRACT_LOCATION -> new AbstractLocationInterference(Map.of(), mMergeMode);
-		case PER_THREAD_JOINED_ABSTRACT_LOCATIONS ->
-			new AbstractLocationJoinThenOrInterference(falsePredicate, Set.of(), Set.of(), 0, mMergeMode);
+		case PER_THREAD -> new PerThreadInterference(falsePredicate);
+		case PER_EDGE -> new PerEdgeInterference(Map.of());
+		case PER_ABSTRACT_LOCATION -> new PerAbstractLocationInterference(Map.of());
 		};
-	}
-
-	InterferenceMergeMode getMergeMode() {
-		return mMergeMode;
 	}
 
 	boolean hasAbstractLocationIds() {
@@ -79,6 +74,10 @@ public class InterferenceFactory {
 
 	IPredicate falsePredicate() {
 		return mPredicateFactory.newPredicate(mManagedScript.getScript().term("false"));
+	}
+
+	IPredicate join(final IPredicate left, final IPredicate right) {
+		return mDomain.join(left, right);
 	}
 
 	List<EdgePredicate> collectEdgePredicates(final String threadId,
@@ -119,19 +118,6 @@ public class InterferenceFactory {
 			nextId++;
 		}
 		return partition;
-	}
-
-	IPredicate merge(final IPredicate left, final IPredicate right) {
-		if (mMergeMode == InterferenceMergeMode.OR) {
-			return mPredicateFactory
-					.newPredicate(SmtUtils.or(mManagedScript.getScript(), left.getFormula(), right.getFormula()));
-		}
-		return mDomain.join(left, right);
-	}
-
-	<K> void mergeInto(final Map<K, IPredicate> targetMap, final K key, final IPredicate predicate) {
-		final IPredicate existing = targetMap.get(key);
-		targetMap.put(key, existing == null ? predicate : merge(existing, predicate));
 	}
 
 	<K> void mergeIntoWithOr(final Map<K, IPredicate> targetMap, final K key, final IPredicate predicate) {
