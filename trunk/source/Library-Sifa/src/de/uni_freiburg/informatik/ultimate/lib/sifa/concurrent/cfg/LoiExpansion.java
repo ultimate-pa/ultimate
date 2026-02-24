@@ -13,15 +13,31 @@ public class LoiExpansion {
 	}
 
 	public Collection<IcfgLocation> getLocationsOfInterestForThread(final String threadId,
-			final IIcfg<IcfgLocation> threadIcfg) {
-		return allLocationsFromProgramPoints(threadIcfg);
+			final IIcfg<IcfgLocation> threadIcfg, final Collection<IcfgLocation> requestedLois) {
+		return getRequestedWithEntryExitFallback(threadId, threadIcfg, requestedLois);
 	}
 
-	private static Set<IcfgLocation> allLocationsFromProgramPoints(final IIcfg<IcfgLocation> icfg) {
-		final Set<IcfgLocation> result = new LinkedHashSet<>();
-		for (final var procedureLocs : icfg.getProgramPoints().values()) {
-			result.addAll(procedureLocs.values());
+	private static Collection<IcfgLocation> getRequestedWithEntryExitFallback(final String threadId,
+			final IIcfg<IcfgLocation> threadIcfg, final Collection<IcfgLocation> requestedLois) {
+		final Set<IcfgLocation> filtered = new LinkedHashSet<>();
+		if (requestedLois != null) {
+			for (final IcfgLocation loi : requestedLois) {
+				if (loi != null && threadId.equals(loi.getProcedure())) {
+					filtered.add(loi);
+				}
+			}
 		}
-		return result;
+		if (!filtered.isEmpty()) {
+			return filtered;
+		}
+		final IcfgLocation entry = threadIcfg.getProcedureEntryNodes().get(threadId);
+		if (entry != null) {
+			filtered.add(entry);
+		}
+		final IcfgLocation exit = threadIcfg.getProcedureExitNodes().get(threadId);
+		if (exit != null) {
+			filtered.add(exit);
+		}
+		return filtered;
 	}
 }
