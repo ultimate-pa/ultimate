@@ -66,6 +66,10 @@ public final class InitialStateFactory {
 		return mTools.predicate(mGhostVariables.createInitialLocationState(MAIN_THREAD));
 	}
 
+	/*
+	 * We model the initial state of a non-main thread by joining the state of all locations of other threads where this
+	 * thread is forked
+	 */
 	private Set<IPredicate> collectForkStates(final String threadId) {
 		final Set<IPredicate> states = new HashSet<>();
 		final ConcurrencyInformation concInfo = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
@@ -82,6 +86,12 @@ public final class InitialStateFactory {
 		return states;
 	}
 
+	/*
+	 * The initial state should see a thread that forks it at the position after the fork. However if we just take the
+	 * state of that position, that state will already be open to interferences, including from this thread. so we need
+	 * to model the atomic update of being forked without any other interferences happening. this is achieved by just
+	 * taking the source state of the fork transition and updating the fork threads location
+	 */
 	private IPredicate applyForkEffects(final IPredicate forkState,
 			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork) {
 		if (mGhostVariables == null) {

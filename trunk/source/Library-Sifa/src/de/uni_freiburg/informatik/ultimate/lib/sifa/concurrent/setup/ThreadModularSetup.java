@@ -49,11 +49,11 @@ public final class ThreadModularSetup {
 		concurrentTools.configureStaticAnalysis(ghostVars, activityPreanalysis);
 		final IDomain analysisDomain = baseDomain;
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
-				ghostVars, locationIds, icfg.getProcedureEntryNodes(), settings.quantifierEliminationMode());
+				ghostVars, locationIds, icfg.getProcedureEntryNodes());
 		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services, script,
-				factory, symbolTable, true, settings.quantifierEliminationMode());
+				factory, symbolTable, true);
 		final InterferenceFactory interferenceFactory = new InterferenceFactory(translator, analysisDomain, script,
-				factory, settings.interferenceMergeMode(), settings.interferenceType());
+				factory, settings.interferenceType());
 		final IInterference interferenceBuilder = interferenceFactory.createBuilder();
 
 		final boolean ghostInstrumentationEnabled = ghostVars != null;
