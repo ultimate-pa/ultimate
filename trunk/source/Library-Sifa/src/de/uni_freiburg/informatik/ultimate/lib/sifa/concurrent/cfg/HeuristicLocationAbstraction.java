@@ -34,6 +34,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final Map<TermVariable, IProgramVar> mTermToGlobalMap;
 	private final IUltimateServiceProvider mServices;
 	private final Map<LOC, Integer> mMutexVarSplitMapWithExitMarked;
+	private final Map<LOC, Integer> mMutexVarSplitMapWithoutExitMarked;
 	private final Map<LOC, Integer> mMutexVarSplitMapWithAllVarLinesMarked;
 
 	@SuppressWarnings("unchecked")
@@ -45,10 +46,15 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		mTermToGlobalMap = mGlobals.stream().collect(Collectors.toMap(IProgramVar::getTermVariable, v -> v));
 		mServices = services;
 		mMutexVarSplitMapWithExitMarked = threePhaseMutexSplitting();
+		mMutexVarSplitMapWithoutExitMarked = collapseExitPhase(mMutexVarSplitMapWithExitMarked);
 		mMutexVarSplitMapWithAllVarLinesMarked = splitAtGuardsAndWrites(computeFoundationalBaseMapping());
 	}
 
-	public StaticAbstractLocationMap<LOC> entryExitSplitting() {
+	public StaticAbstractLocationMap<LOC> guardSplitting() {
+		return new StaticAbstractLocationMap<>(this::entryOnlyMarked, mIcfg);
+	}
+
+	public StaticAbstractLocationMap<LOC> guardAndExitSplitting() {
 		return new StaticAbstractLocationMap<>(this::entryExitMarked, mIcfg);
 	}
 
@@ -60,8 +66,21 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return mMutexVarSplitMapWithExitMarked.get(loc);
 	}
 
+	private int entryOnlyMarked(final LOC loc) {
+		return mMutexVarSplitMapWithoutExitMarked.get(loc);
+	}
+
 	private int allVarOccurrencesMarked(final LOC loc) {
 		return mMutexVarSplitMapWithAllVarLinesMarked.get(loc);
+	}
+
+	private Map<LOC, Integer> collapseExitPhase(final Map<LOC, Integer> mapWithExitPhase) {
+		// TODO: hack that presumes one guarded section
+		final Map<LOC, Integer> collapsedMap = new HashMap<>();
+		for (final var entry : mapWithExitPhase.entrySet()) {
+			collapsedMap.put(entry.getKey(), entry.getValue() == 3 ? 2 : entry.getValue());
+		}
+		return collapsedMap;
 	}
 
 	private Map<LOC, Set<IProgramVar>> computeMutexVars(final boolean fullyPrecise) {

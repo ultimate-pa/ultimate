@@ -19,8 +19,9 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 			final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
 		return switch (type) {
-		case SINGLETON -> new StaticAbstractLocationMap<>((l -> 1), icfg);
-		case SPLIT_AT_GUARDS -> mHeuristicLocationAbstraction.entryExitSplitting();
+		case SINGLETON -> new StaticAbstractLocationMap<>((l -> 0), icfg);
+		case SPLIT_AT_GUARD -> mHeuristicLocationAbstraction.guardSplitting();
+		case SPLIT_AT_GUARD_AND_EXIT -> mHeuristicLocationAbstraction.guardAndExitSplitting();
 		case SPLIT_AT_GUARDS_AND_WRITES -> mHeuristicLocationAbstraction.allVarOccurrencesSplit();
 		case SPLIT_AT_EVERY_LOCATION -> new StaticAbstractLocationMap<>(
 				l -> mLocId.computeIfAbsent(l, __ -> getAndIncrementThreadLocationCounter(l.getProcedure())), icfg);

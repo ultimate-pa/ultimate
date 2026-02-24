@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class GhostVariableManager {
 
 	private static final String LOCATION_VAR_PREFIX = "loc_";
+	private static final int NOT_FORKED_LOCATION_ID = -1;
 
 	private final ManagedScript mManagedScript;
 	private final Map<IcfgLocation, Integer> mLocationIds;
@@ -93,7 +94,7 @@ public class GhostVariableManager {
 			if (entry.getKey().equals(mainThreadId)) {
 				locId = getAbstractLocation(mEntryLocations.get(entry.getKey()));
 			} else {
-				locId = 0; // not yet forked
+				locId = NOT_FORKED_LOCATION_ID;
 			}
 			final Term locTerm = script.numeral(BigInteger.valueOf(locId));
 			conjuncts.add(SmtUtils.binaryEquality(script, entry.getValue().getTermVariable(), locTerm));
