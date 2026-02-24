@@ -24,19 +24,18 @@ public final class ThreadActivityPreanalysis {
 	}
 
 	public static ThreadActivityPreanalysis compute(final IIcfg<IcfgLocation> icfg, final Set<String> threadIds) {
-		final Map<IcfgLocation, Set<String>> active = new HashMap<>();
-		final Set<String> multiForked = new HashSet<>();
-		final Set<String> forkTargetsSeen = new HashSet<>();
-		final ArrayDeque<IcfgLocation> worklist = new ArrayDeque<>();
+		final Map<IcfgLocation, Set<String>> activeThreadsByLocation = new HashMap<>();
+		final Set<String> selfForkingThreads = new HashSet<>();
+		final ArrayDeque<IcfgLocation> pendingLocations = new ArrayDeque<>();
 
 		for (final IcfgLocation initial : icfg.getInitialNodes()) {
-			active.put(initial, new HashSet<>(Set.of(initial.getProcedure())));
-			worklist.add(initial);
+			activeThreadsByLocation.put(initial, new HashSet<>(Set.of(initial.getProcedure())));
+			pendingLocations.add(initial);
 		}
-
-		while (!worklist.isEmpty()) {
-			final IcfgLocation source = worklist.removeFirst();
-			final Set<String> sourceActive = active.get(source);
+		// TODO: join transitions are ignored for now
+		while (!pendingLocations.isEmpty()) {
+			final IcfgLocation source = pendingLocations.removeFirst();
+			final Set<String> activeAtSource = activeThreadsByLocation.get(source);
 
 			for (final IcfgEdge edge : source.getOutgoingEdges()) {
 				final IcfgLocation target = edge.getTarget();
@@ -45,47 +44,107 @@ public final class ThreadActivityPreanalysis {
 				}
 
 				final String forkedThread = getForkedThread(edge);
-				Set<String> transferred = sourceActive;
+				Set<String> activeAfterEdge = activeAtSource;
 				if (forkedThread != null) {
-					forkTargetsSeen.add(forkedThread);
-					if (sourceActive.contains(forkedThread)) {
-						multiForked.add(forkedThread);
+					if (activeAtSource.contains(forkedThread)) {
+						selfForkingThreads.add(forkedThread);
 					}
-					transferred = new HashSet<>(sourceActive);
-					transferred.add(forkedThread);
+					activeAfterEdge = new HashSet<>(activeAtSource);
+					activeAfterEdge.add(forkedThread);
+
+					final IcfgLocation forkedEntry = icfg.getProcedureEntryNodes().get(forkedThread);
+					propagate(activeThreadsByLocation, pendingLocations, forkedEntry, activeAfterEdge);
 				}
 
-				final Set<String> existing = active.get(target);
-				if (existing == null) {
-					active.put(target, new HashSet<>(transferred));
-					worklist.add(target);
-				} else if (existing.addAll(transferred)) {
-					worklist.add(target);
+				propagate(activeThreadsByLocation, pendingLocations, target, activeAfterEdge);
+			}
+		}
+
+		final Map<String, Set<String>> forkReachabilityByThread = computeForkReachabilityByThread(icfg, threadIds);
+		final Map<IcfgLocation, Set<String>> finalizedActiveThreads = new HashMap<>();
+		for (final var entry : activeThreadsByLocation.entrySet()) {
+			final IcfgLocation location = entry.getKey();
+			final String ownerThread = location.getProcedure();
+			final Set<String> activeThreads = restrictToConfiguredThreads(entry.getValue(), threadIds);
+			final Set<String> closedActiveThreads = new HashSet<>(activeThreads);
+			for (final String activeThread : activeThreads) {
+				if (activeThread.equals(ownerThread) && !selfForkingThreads.contains(ownerThread)) {
+					continue;
+				}
+				closedActiveThreads.addAll(forkReachabilityByThread.getOrDefault(activeThread, Set.of()));
+			}
+			if (!activeThreads.isEmpty()) {
+				finalizedActiveThreads.put(entry.getKey(), Set.copyOf(closedActiveThreads));
+			}
+		}
+		return new ThreadActivityPreanalysis(Map.copyOf(finalizedActiveThreads), Set.copyOf(selfForkingThreads));
+	}
+
+	private static void propagate(final Map<IcfgLocation, Set<String>> active, final ArrayDeque<IcfgLocation> worklist,
+			final IcfgLocation target, final Set<String> transferredActiveThreads) {
+		if (target == null) {
+			return;
+		}
+		final Set<String> existing = active.get(target);
+		if (existing == null) {
+			active.put(target, new HashSet<>(transferredActiveThreads));
+			worklist.add(target);
+		} else if (existing.addAll(transferredActiveThreads)) {
+			worklist.add(target);
+		}
+	}
+
+	private static Map<String, Set<String>> computeForkReachabilityByThread(final IIcfg<IcfgLocation> icfg,
+			final Set<String> threadIds) {
+		final Map<String, Set<String>> directForkTargets = new HashMap<>();
+		for (final var procedurePoints : icfg.getProgramPoints().entrySet()) {
+			final String threadId = procedurePoints.getKey();
+			for (final IcfgLocation location : procedurePoints.getValue().values()) {
+				for (final IcfgEdge edge : location.getOutgoingEdges()) {
+					final String forkedThread = getForkedThread(edge);
+					if (forkedThread == null) {
+						continue;
+					}
+					directForkTargets.computeIfAbsent(threadId, key -> new HashSet<>()).add(forkedThread);
 				}
 			}
 		}
 
-		// Conservative: once forked on a reachable path, a thread may run anywhere
-		final Set<String> globallyMayBeActive = new HashSet<>(forkTargetsSeen);
-		for (final IcfgLocation initial : icfg.getInitialNodes()) {
-			globallyMayBeActive.add(initial.getProcedure());
-		}
+		final Set<String> candidateThreads = new HashSet<>(icfg.getProgramPoints().keySet());
+		candidateThreads.addAll(directForkTargets.keySet());
 		if (threadIds != null) {
-			globallyMayBeActive.retainAll(threadIds);
+			candidateThreads.retainAll(threadIds);
 		}
 
-		final Map<IcfgLocation, Set<String>> immutable = new HashMap<>();
-		for (final var entry : active.entrySet()) {
-			final Set<String> conservative = new HashSet<>(entry.getValue());
-			conservative.addAll(globallyMayBeActive);
-			immutable.put(entry.getKey(), Set.copyOf(conservative));
-		}
-		for (final var procEntry : icfg.getProgramPoints().values()) {
-			for (final IcfgLocation loc : procEntry.values()) {
-				immutable.computeIfAbsent(loc, key -> Set.copyOf(globallyMayBeActive));
+		final Map<String, Set<String>> transitiveForkTargets = new HashMap<>();
+		for (final String threadId : candidateThreads) {
+			final Set<String> reachableForkTargets = new HashSet<>();
+			final ArrayDeque<String> pendingForkTargets = new ArrayDeque<>(
+					directForkTargets.getOrDefault(threadId, Set.of()));
+			while (!pendingForkTargets.isEmpty()) {
+				final String forkTarget = pendingForkTargets.removeFirst();
+				if (!reachableForkTargets.add(forkTarget)) {
+					continue;
+				}
+				for (final String nestedTarget : directForkTargets.getOrDefault(forkTarget, Set.of())) {
+					pendingForkTargets.addLast(nestedTarget);
+				}
 			}
+			if (threadIds != null) {
+				reachableForkTargets.retainAll(threadIds);
+			}
+			transitiveForkTargets.put(threadId, Set.copyOf(reachableForkTargets));
 		}
-		return new ThreadActivityPreanalysis(Map.copyOf(immutable), Set.copyOf(multiForked));
+		return Map.copyOf(transitiveForkTargets);
+	}
+
+	private static Set<String> restrictToConfiguredThreads(final Set<String> threads, final Set<String> threadIds) {
+		if (threadIds == null) {
+			return new HashSet<>(threads);
+		}
+		final Set<String> restrictedThreads = new HashSet<>(threads);
+		restrictedThreads.retainAll(threadIds);
+		return restrictedThreads;
 	}
 
 	private static String getForkedThread(final IcfgEdge edge) {
@@ -101,12 +160,18 @@ public final class ThreadActivityPreanalysis {
 
 	/** Threads that may be active at this location */
 	public Set<String> getActiveThreadsAt(final IcfgLocation location) {
+		if (location == null) {
+			return Set.of();
+		}
 		final Set<String> result = mActiveByLocation.get(location);
 		return result != null ? result : Set.of();
 	}
 
 	/** Whether a thread may be active at this location */
 	public boolean mayBeActiveAt(final IcfgLocation location, final String threadId) {
+		if (location == null) {
+			return true;
+		}
 		final Set<String> result = mActiveByLocation.get(location);
 		return result == null || result.contains(threadId);
 	}
