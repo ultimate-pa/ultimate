@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -38,6 +39,7 @@ public class SinglePassConcurrentBaselineInterpreter implements ISifaInterpreter
 	private final IFluid mFluid;
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> mLoopSumFactory;
 	private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
+	private final Collection<IcfgLocation> mRequestedLocationsOfInterest;
 
 	private final Set<String> mThreadIds;
 	private final LoiExpansion mLoiExpansion;
@@ -58,6 +60,7 @@ public class SinglePassConcurrentBaselineInterpreter implements ISifaInterpreter
 		mFluid = fluid;
 		mLoopSumFactory = loopSumFactory;
 		mCallSumFactory = callSumFactory;
+		mRequestedLocationsOfInterest = locationsOfInterest == null ? Set.of() : Set.copyOf(locationsOfInterest);
 
 		mLoiExpansion = new LoiExpansion();
 		mConcurrentTools = (ConcurrentSymbolicTools) tools;
@@ -75,14 +78,17 @@ public class SinglePassConcurrentBaselineInterpreter implements ISifaInterpreter
 
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
-		final Map<IcfgLocation, IPredicate> combined = new java.util.HashMap<>();
+		final Map<IcfgLocation, IPredicate> combined = new HashMap<>();
 		final InterferenceCollection interferences = InterferenceCollection.empty();
 		for (final String threadId : mThreadIds) {
 			final IIcfg<IcfgLocation> threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
 			mConcurrentTools.configureForThread(threadId, interferences, combined, mAnalysisDomain, mAnalysisDomain,
 					mPostcondition);
 			final IPredicate initialState = mConcurrentTools.getInitialStatePredicate(threadId);
+			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
+			mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
 			final Map<IcfgLocation, IPredicate> threadResult = analyzeSingleThread(threadId, threadIcfg, initialState);
+			combined.putAll(mConcurrentTools.getObservedThreadLocationStates());
 			combined.putAll(threadResult);
 		}
 		mResultPrinter.printResults(combined, mIcfg);
@@ -91,7 +97,8 @@ public class SinglePassConcurrentBaselineInterpreter implements ISifaInterpreter
 
 	private Map<IcfgLocation, IPredicate> analyzeSingleThread(final String threadId,
 			final IIcfg<IcfgLocation> threadIcfg, final IPredicate initialState) {
-		final Collection<IcfgLocation> lois = mLoiExpansion.getLocationsOfInterestForThread(threadId, threadIcfg);
+		final Collection<IcfgLocation> lois = mLoiExpansion.getLocationsOfInterestForThread(threadId, threadIcfg,
+				mRequestedLocationsOfInterest);
 		final IcfgInterpreter interpreter = new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg,
 				lois, mAnalysisDomain, mFluid, mLoopSumFactory, mCallSumFactory, initialState);
 		return interpreter.interpret();

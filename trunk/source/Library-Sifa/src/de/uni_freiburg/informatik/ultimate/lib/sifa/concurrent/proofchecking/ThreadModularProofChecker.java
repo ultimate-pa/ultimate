@@ -97,6 +97,10 @@ public class ThreadModularProofChecker {
 		return valid;
 	}
 
+	public boolean isCheckingEnabled() {
+		return !mGhostInstrumentationEnabled;
+	}
+
 	private IPredicate withSourcePreState(final IPredicate sourcePreState, final IPredicate edgeInterference) {
 		final var script = mPostcondition.getManagedScript().getScript();
 		return mPostcondition.getPredicateFactory()
