@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.QuantifierEliminationMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -33,28 +32,17 @@ public class TransFormulaToInterferencePredicate {
 	private final GhostVariableManager mGhostVariables;
 	private final Map<IcfgLocation, Integer> mAbstractLocationIds;
 	private final Map<String, IcfgLocation> mEntryLocations;
-	private final QuantifierEliminationMode mEliminationMode;
 
 	public TransFormulaToInterferencePredicate(final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
 			final PrimedDefaultIcfgSymbolTable symbolTable, final GhostVariableManager ghostVariables) {
-		this(services, managedScript, predicateFactory, symbolTable, ghostVariables, Map.of(), Map.of(),
-				QuantifierEliminationMode.LIGHT);
+		this(services, managedScript, predicateFactory, symbolTable, ghostVariables, Map.of(), Map.of());
 	}
 
 	public TransFormulaToInterferencePredicate(final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
 			final PrimedDefaultIcfgSymbolTable symbolTable, final GhostVariableManager ghostVariables,
-			final QuantifierEliminationMode eliminationMode) {
-		this(services, managedScript, predicateFactory, symbolTable, ghostVariables, Map.of(), Map.of(),
-				eliminationMode);
-	}
-
-	public TransFormulaToInterferencePredicate(final IUltimateServiceProvider services,
-			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final PrimedDefaultIcfgSymbolTable symbolTable, final GhostVariableManager ghostVariables,
-			final Map<IcfgLocation, Integer> abstractLocationIds, final Map<String, IcfgLocation> entryLocations,
-			final QuantifierEliminationMode eliminationMode) {
+			final Map<IcfgLocation, Integer> abstractLocationIds, final Map<String, IcfgLocation> entryLocations) {
 		mServices = services;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
@@ -62,7 +50,6 @@ public class TransFormulaToInterferencePredicate {
 		mGhostVariables = ghostVariables;
 		mAbstractLocationIds = Map.copyOf(Objects.requireNonNull(abstractLocationIds));
 		mEntryLocations = Map.copyOf(Objects.requireNonNull(entryLocations));
-		mEliminationMode = eliminationMode;
 	}
 
 	public IPredicate translateForInterference(final TransFormula tf, final String interferingThread,
@@ -191,8 +178,7 @@ public class TransFormulaToInterferencePredicate {
 	}
 
 	private Term projectAwayLocals(final Term formula, final Set<TermVariable> localVars) {
-		return RelationalPredicateUtils.existentiallyProject(formula, localVars, mServices, mManagedScript,
-				mEliminationMode);
+		return RelationalPredicateUtils.existentiallyProject(formula, localVars, mServices, mManagedScript);
 	}
 
 	public PrimedDefaultIcfgSymbolTable getSymbolTable() {

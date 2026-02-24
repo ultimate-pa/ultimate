@@ -9,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.QuantifierEliminationMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -31,31 +30,22 @@ public class RelationalPredicatePostcondition {
 	private final BasicPredicateFactory mPredicateFactory;
 	private final PrimedDefaultIcfgSymbolTable mSymbolTable;
 	private final boolean mProjectAllGlobalPreVars;
-	private final QuantifierEliminationMode mEliminationMode;
 	private final Set<TermVariable> mAllGlobalPreVarsToProject;
 	private final Map<Term, Term> mAllGlobalPrimedToUnprimed;
 
 	public RelationalPredicatePostcondition(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final BasicPredicateFactory predicateFactory, final PrimedDefaultIcfgSymbolTable symbolTable) {
-		this(services, managedScript, predicateFactory, symbolTable, false, QuantifierEliminationMode.LIGHT);
+		this(services, managedScript, predicateFactory, symbolTable, false);
 	}
 
 	public RelationalPredicatePostcondition(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final BasicPredicateFactory predicateFactory, final PrimedDefaultIcfgSymbolTable symbolTable,
 			final boolean projectAllGlobalPreVars) {
-		this(services, managedScript, predicateFactory, symbolTable, projectAllGlobalPreVars,
-				QuantifierEliminationMode.LIGHT);
-	}
-
-	public RelationalPredicatePostcondition(final IUltimateServiceProvider services, final ManagedScript managedScript,
-			final BasicPredicateFactory predicateFactory, final PrimedDefaultIcfgSymbolTable symbolTable,
-			final boolean projectAllGlobalPreVars, final QuantifierEliminationMode eliminationMode) {
 		mServices = services;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mSymbolTable = symbolTable;
 		mProjectAllGlobalPreVars = projectAllGlobalPreVars;
-		mEliminationMode = eliminationMode;
 		mAllGlobalPreVarsToProject = new HashSet<>();
 		mAllGlobalPrimedToUnprimed = new HashMap<>();
 		for (final IProgramVar pv : mSymbolTable.getAllGlobalBaseVars()) {
@@ -90,16 +80,43 @@ public class RelationalPredicatePostcondition {
 	}
 
 	public IPredicate strongestPostcondition(final IPredicate statePredicate, final PreparedRelation preparedRelation) {
+		if (SmtUtils.isFalseLiteral(statePredicate.getFormula())
+				|| SmtUtils.isFalseLiteral(preparedRelation.relation().getFormula())) {
+			return mPredicateFactory.newPredicate(mManagedScript.getScript().term("false"));
+		}
 		final Term conjunction = SmtUtils.and(mManagedScript.getScript(), statePredicate.getFormula(),
 				preparedRelation.relation().getFormula());
+		if (SmtUtils.isFalseLiteral(conjunction)) {
+			return mPredicateFactory.newPredicate(conjunction);
+		}
 
-		final Term projected = RelationalPredicateUtils.existentiallyProject(conjunction,
-				preparedRelation.preVarsToProject(), mServices, mManagedScript, mEliminationMode);
+		final Set<TermVariable> preVarsToProject = preparedRelation.preVarsToProject();
+		final Term projected;
+		if (preVarsToProject.isEmpty() || !hasFreeVarIn(conjunction, preVarsToProject)) {
+			projected = conjunction;
+		} else {
+			projected = RelationalPredicateUtils.existentiallyProject(conjunction, preVarsToProject, mServices,
+					mManagedScript);
+		}
 
-		final Term renamed = preparedRelation.primedToUnprimed().isEmpty() ? projected
-				: Substitution.apply(mManagedScript, preparedRelation.primedToUnprimed(), projected);
+		final Map<Term, Term> primedToUnprimed = preparedRelation.primedToUnprimed();
+		final Term renamed;
+		if (primedToUnprimed.isEmpty() || !hasFreeVarIn(projected, primedToUnprimed.keySet())) {
+			renamed = projected;
+		} else {
+			renamed = Substitution.apply(mManagedScript, primedToUnprimed, projected);
+		}
 
 		return mPredicateFactory.newPredicate(renamed);
+	}
+
+	private static boolean hasFreeVarIn(final Term term, final Set<? extends Term> candidates) {
+		for (final TermVariable freeVar : term.getFreeVars()) {
+			if (candidates.contains(freeVar)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public IUltimateServiceProvider getServices() {
