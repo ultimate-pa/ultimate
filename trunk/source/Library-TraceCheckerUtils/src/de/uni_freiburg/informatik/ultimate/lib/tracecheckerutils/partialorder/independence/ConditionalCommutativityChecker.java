@@ -172,6 +172,10 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		 * controlConfigurations can then be given to proveCommutativityCondition, but we need to map the proof back to
 		 * the original trace, i.e. we have to edit the proof s.t. it is a proof for the original trace
 		 */
+
+		final ContextSimplifier contextSimplifier = new ContextSimplifier(trace, controlConfigurations, condition);
+		contextSimplifier.getSimpleTrace();
+
 		return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
 	}
 
