@@ -71,16 +71,6 @@ public class PerAbstractLocationInterference implements IInterference {
 	}
 
 	@Override
-	public Set<Integer> getSourceAbsLocations() {
-		return mSourceAbstractLocations;
-	}
-
-	@Override
-	public Set<Integer> getTargetAbsLocations() {
-		return mTargetAbstractLocations;
-	}
-
-	@Override
 	public Collection<IPredicate> getPredicates() {
 		return mRelationPredicates.values();
 	}

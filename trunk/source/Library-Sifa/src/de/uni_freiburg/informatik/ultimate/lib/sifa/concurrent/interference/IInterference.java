@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -25,14 +24,6 @@ public interface IInterference {
 	IInterference widen(IInterference other, IDomain domain);
 
 	int size();
-
-	default Set<Integer> getSourceAbsLocations() {
-		return Set.of();
-	}
-
-	default Set<Integer> getTargetAbsLocations() {
-		return Set.of();
-	}
 
 	/** Apply this interference relation until a local fixpoint */
 	IPredicate applyUntilFixpoint(IPredicate state, IDomain domain, RelationalPredicatePostcondition postcondition,

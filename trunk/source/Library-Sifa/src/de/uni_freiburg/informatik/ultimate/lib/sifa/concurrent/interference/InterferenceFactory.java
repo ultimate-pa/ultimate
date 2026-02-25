@@ -39,6 +39,7 @@ public class InterferenceFactory {
 		return SmtUtils.isTrueLiteral(predicate.getFormula()) || SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 
+	// TODO rname
 	public record EdgePredicate(IcfgLocation source, IcfgLocation target, IPredicate predicate) {
 	}
 

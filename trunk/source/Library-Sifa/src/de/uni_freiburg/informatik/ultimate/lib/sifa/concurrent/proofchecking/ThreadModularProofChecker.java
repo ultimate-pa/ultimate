@@ -30,6 +30,7 @@ public class ThreadModularProofChecker {
 			final RelationalPredicatePostcondition postcondition, final TransFormulaToInterferencePredicate translator,
 			final IDomain domain, final boolean ghostInstrumentationEnabled,
 			final boolean includeInterferencePreState) {
+		// mit ghostvars
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
 		mPostcondition = postcondition;
 		mTranslator = translator;

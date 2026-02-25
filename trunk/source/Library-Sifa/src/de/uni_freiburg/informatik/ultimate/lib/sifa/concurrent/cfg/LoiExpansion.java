@@ -22,7 +22,7 @@ public class LoiExpansion {
 		final Set<IcfgLocation> filtered = new LinkedHashSet<>();
 		if (requestedLois != null) {
 			for (final IcfgLocation loi : requestedLois) {
-				if (loi != null && threadId.equals(loi.getProcedure())) {
+				if (loi != null && containsLocation(threadIcfg, loi)) {
 					filtered.add(loi);
 				}
 			}
@@ -39,5 +39,16 @@ public class LoiExpansion {
 			filtered.add(exit);
 		}
 		return filtered;
+	}
+
+	private static boolean containsLocation(final IIcfg<IcfgLocation> icfg, final IcfgLocation location) {
+		for (final var procedurePoints : icfg.getProgramPoints().values()) {
+			for (final IcfgLocation candidate : procedurePoints.values()) {
+				if (location.equals(candidate)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }
