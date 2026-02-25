@@ -1,14 +1,20 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Context simplifier takes a trace, controlConfigurations and condition to simplify the trace and
@@ -53,11 +59,47 @@ public class ContextSimplifier<L extends IAction> {
 
 					// update relevant variables by adding all input variables
 					relevant.remove(var);
-					relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
-					break;
+
+					// where all input variables become relevant:
+					// relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
+
+					/*
+					 * for atomics where only one code line is relevant and only variables in the computation become
+					 * relevant by: in mOutVars we look up to what TermVariable var is set, we call this value then for
+					 * value we look up which other TermVariables were in its computation in mParameters and for all
+					 * these TermVariables we look up their variable in mInVars
+					 */
+
+					final TermVariable value = currentLetter.getSymbol(0).getTransformula().getOutVars().get(var);
+					if (value != null) {
+
+						// all the type casts are because getter only exist for subclasses of Term
+						final Term currentFormula = currentLetter.getSymbol(0).getTransformula().getFormula();
+						if (currentFormula instanceof final ApplicationTerm appTerm) {
+							for (final Term parameter : appTerm.getParameters()) {
+								if ((parameter instanceof final ApplicationTerm relevantParameter)
+										&& Arrays.asList(relevantParameter.getFreeVars()).contains(value)) {
+									for (final TermVariable termVar : relevantParameter.getFreeVars()) {
+										if (termVar != value) {
+											for (final Map.Entry<IProgramVar, TermVariable> entry : currentLetter
+													.getSymbol(0).getTransformula().getInVars().entrySet()) {
+												if (Objects.equals(entry.getValue(), termVar)) {
+													final IProgramVar computationTermVar = entry.getKey();
+													if (computationTermVar != null) {
+														relevant.add(computationTermVar);
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		}
+
 		// the very first controlConfiguration is still missing
 		mTempControlConfigurations.add(0, mLongControlConfigurations.get(0));
 		mSimpleControlConfigurations = mTempControlConfigurations;
