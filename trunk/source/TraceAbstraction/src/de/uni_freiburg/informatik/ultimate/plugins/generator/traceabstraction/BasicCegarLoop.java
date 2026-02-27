@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -519,6 +520,13 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 					}
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError(e);
+				}
+				// Remove all epsilon transitions for states that don't exist in the automaton.
+				final Set<IPredicate> states = backingNestedWordAutomaton.getStates();
+				for (final var pair : new HashSet<>(outgoingEpsilonTransitions.getSetOfPairs())) {
+					if (!states.contains(pair.getKey()) || !states.contains(pair.getValue())) {
+						outgoingEpsilonTransitions.removePair(pair.getKey(), pair.getValue());
+					}
 				}
 				printedAutomaton =
 						new EpsilonNestedWordAutomaton<>(backingNestedWordAutomaton, outgoingEpsilonTransitions);
