@@ -1,6 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -8,53 +12,81 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class ThreadModularProofChecker {
 
 	private final MonolithicHoareTripleChecker mHoareTripleChecker;
 	private final RelationalPredicatePostcondition mPostcondition;
-	private final TransFormulaToInterferencePredicate mTranslator;
 	private final IDomain mDomain;
-	private final boolean mGhostInstrumentationEnabled;
-	private final boolean mIncludeInterferencePreState;
+	private final Set<TermVariable> mGhostLocationVariables;
+	private final ProofEdgeInterferenceTranslator mProofInterferenceTranslator;
+	private final ThreadActivityPreanalysis mThreadActivityPreanalysis;
+	private final Set<String> mSelfInterferingThreads;
 
 	public ThreadModularProofChecker(final CfgSmtToolkit cfgSmtToolkit,
 			final RelationalPredicatePostcondition postcondition, final TransFormulaToInterferencePredicate translator,
-			final IDomain domain, final boolean ghostInstrumentationEnabled,
+			final IDomain domain, final GhostVariableManager ghostVariables,
+			final ThreadActivityPreanalysis threadActivityPreanalysis, final Set<String> selfInterferingThreads,
 			final boolean includeInterferencePreState) {
-		// mit ghostvars
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
 		mPostcondition = postcondition;
-		mTranslator = translator;
 		mDomain = domain;
-		mGhostInstrumentationEnabled = ghostInstrumentationEnabled;
-		mIncludeInterferencePreState = includeInterferencePreState;
+		mGhostLocationVariables =
+				ghostVariables == null ? Set.of() : Set.copyOf(new HashSet<>(ghostVariables.getLocationTermVariables()));
+		mProofInterferenceTranslator =
+				new ProofEdgeInterferenceTranslator(translator, postcondition, ghostVariables, includeInterferencePreState);
+		mThreadActivityPreanalysis = Objects.requireNonNull(threadActivityPreanalysis);
+		mSelfInterferingThreads = Set.copyOf(Objects.requireNonNull(selfInterferingThreads));
+	}
+
+	public static record CheckReport(boolean overallValid, boolean hoareChecksValid, boolean interferenceChecksValid,
+			int checkedHoareTriples, int invalidHoareTriples, int checkedInterferenceTriples,
+			int invalidInterferenceTriples) {
 	}
 
 	public boolean checkAll(final IIcfg<IcfgLocation> icfg, final Map<IcfgLocation, IPredicate> locPreds,
 			final Map<String, Map<IcfgLocation, IPredicate>> threadPreds) {
-		boolean valid = true;
-		if (mGhostInstrumentationEnabled) {
-			// Hoare checks use uninstrumented edges and ignore ghost updates
-			return true;
-		}
+		return checkAllDetailed(icfg, locPreds, threadPreds).overallValid();
+	}
+
+	public CheckReport checkAllDetailed(final IIcfg<IcfgLocation> icfg, final Map<IcfgLocation, IPredicate> locPreds,
+			final Map<String, Map<IcfgLocation, IPredicate>> threadPreds) {
+		boolean hoareChecksValid = true;
+		boolean interferenceChecksValid = true;
+		int checkedHoareTriples = 0;
+		int invalidHoareTriples = 0;
+		int checkedInterferenceTriples = 0;
+		int invalidInterferenceTriples = 0;
+		final Map<IPredicate, IPredicate> hoareProjectionCache = new HashMap<>();
 
 		// Check 1: edge-local Hoare triples
 		for (final var entry : locPreds.entrySet()) {
 			final var pre = entry.getValue();
+			if (pre == null) {
+				continue;
+			}
 			for (final IcfgEdge edge : entry.getKey().getOutgoingEdges()) {
 				final var post = locPreds.get(edge.getTarget());
-				if (post != null && edge instanceof IIcfgInternalTransition<?>
-						&& mHoareTripleChecker.checkInternal(pre, (IInternalAction) edge, post) == Validity.INVALID) {
-					valid = false;
+				if (post == null || !(edge instanceof IIcfgInternalTransition<?>)) {
+					continue;
+				}
+				checkedHoareTriples++;
+				if (mHoareTripleChecker.checkInternal(projectAwayGhostLocations(pre, hoareProjectionCache),
+						(IInternalAction) edge,
+						projectAwayGhostLocations(post, hoareProjectionCache)) == Validity.INVALID) {
+					hoareChecksValid = false;
+					invalidHoareTriples++;
 				}
 			}
 		}
@@ -62,53 +94,85 @@ public class ThreadModularProofChecker {
 		// Check 2: predicate stability under interferences
 		for (final var threadEntry : threadPreds.entrySet()) {
 			final String threadId = threadEntry.getKey();
+			final Map<IcfgLocation, IPredicate> targetThreadStates = threadEntry.getValue();
+			if (targetThreadStates == null) {
+				continue;
+			}
 
-			for (final var locEntry : threadEntry.getValue().entrySet()) {
-				final var location = locEntry.getKey();
-				final var pred = locEntry.getValue();
-
-				for (final var otherEntry : threadPreds.entrySet()) {
-					if (otherEntry.getKey().equals(threadId)) {
+				for (final var locEntry : targetThreadStates.entrySet()) {
+					final IcfgLocation location = locEntry.getKey();
+					final var pred = locEntry.getValue();
+					if (pred == null) {
 						continue;
 					}
-					for (final var otherLocEntry : otherEntry.getValue().entrySet()) {
-						final IcfgLocation otherLoc = otherLocEntry.getKey();
-						final IPredicate otherLocPred = otherLocEntry.getValue();
-						if (mIncludeInterferencePreState && otherLocPred == null) {
-							// Mirrors extraction behavior when includePreState=true.
+
+					for (final var otherEntry : threadPreds.entrySet()) {
+						final String otherThreadId = otherEntry.getKey();
+						if (otherThreadId.equals(threadId) && !mSelfInterferingThreads.contains(threadId)) {
 							continue;
 						}
+						if (!mThreadActivityPreanalysis.mayBeActiveAt(location, otherThreadId)) {
+							continue;
+						}
+						final Map<IcfgLocation, IPredicate> otherThreadStates = otherEntry.getValue();
+						if (otherThreadStates == null) {
+							continue;
+						}
+					for (final var otherLocEntry : otherThreadStates.entrySet()) {
+						final IcfgLocation otherLoc = otherLocEntry.getKey();
+						final IPredicate otherLocPred = otherLocEntry.getValue();
 						for (final IcfgEdge edge : otherLoc.getOutgoingEdges()) {
-							if (modifiesGlobals(edge.getTransformula())) {
-								IPredicate itfPred = mTranslator.translateForInterference(edge.getTransformula(),
-										otherEntry.getKey(), otherLoc, edge.getTarget());
-								if (mIncludeInterferencePreState && otherLocPred != null) {
-									itfPred = withSourcePreState(otherLocPred, itfPred);
-								}
-								final IPredicate postState = mPostcondition.strongestPostcondition(pred, itfPred);
-								if (!mDomain.isSubsetEq(postState, pred).isTrueForAbstraction()) {
-									valid = false;
-								}
+							final IPredicate itfPred = mProofInterferenceTranslator.tryTranslateInterferenceEdge(
+									otherThreadId, otherLoc, otherLocPred, edge);
+							if (itfPred == null) {
+								continue;
+							}
+							checkedInterferenceTriples++;
+							final IPredicate postState = mPostcondition.strongestPostcondition(pred, itfPred);
+							if (!mDomain.isSubsetEq(postState, pred).isTrueForAbstraction()) {
+								interferenceChecksValid = false;
+								invalidInterferenceTriples++;
 							}
 						}
 					}
 				}
 			}
 		}
-		return valid;
+		final boolean valid = hoareChecksValid && interferenceChecksValid;
+		return new CheckReport(valid, hoareChecksValid, interferenceChecksValid, checkedHoareTriples,
+				invalidHoareTriples, checkedInterferenceTriples, invalidInterferenceTriples);
 	}
 
 	public boolean isCheckingEnabled() {
-		return !mGhostInstrumentationEnabled;
+		return true;
 	}
 
-	private IPredicate withSourcePreState(final IPredicate sourcePreState, final IPredicate edgeInterference) {
-		final var script = mPostcondition.getManagedScript().getScript();
-		return mPostcondition.getPredicateFactory()
-				.newPredicate(SmtUtils.and(script, sourcePreState.getFormula(), edgeInterference.getFormula()));
+	private IPredicate projectAwayGhostLocations(final IPredicate predicate,
+			final Map<IPredicate, IPredicate> projectionCache) {
+		if (mGhostLocationVariables.isEmpty()) {
+			return predicate;
+		}
+		final IPredicate cached = projectionCache.get(predicate);
+		if (cached != null) {
+			return cached;
+		}
+		if (!containsAnyGhostLocationVariable(predicate.getFormula())) {
+			projectionCache.put(predicate, predicate);
+			return predicate;
+		}
+		final Term projected = RelationalPredicateUtils.existentiallyProject(predicate.getFormula(),
+				mGhostLocationVariables, mPostcondition.getServices(), mPostcondition.getManagedScript());
+		final IPredicate result = mPostcondition.getPredicateFactory().newPredicate(projected);
+		projectionCache.put(predicate, result);
+		return result;
 	}
 
-	private static boolean modifiesGlobals(final TransFormula tf) {
-		return tf != null && tf.getAssignedVars().stream().anyMatch(pv -> pv.isGlobal());
+	private boolean containsAnyGhostLocationVariable(final Term formula) {
+		for (final TermVariable freeVar : formula.getFreeVars()) {
+			if (mGhostLocationVariables.contains(freeVar)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

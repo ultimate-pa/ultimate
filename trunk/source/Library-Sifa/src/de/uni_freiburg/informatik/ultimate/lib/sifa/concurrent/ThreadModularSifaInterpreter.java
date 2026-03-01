@@ -58,6 +58,16 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final ConcurrentSymbolicTools mConcurrentTools;
 	private final int mOuterWideningThreshold;
 
+	// Kept so existing callers and tests still work with the old constructor.
+	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
+			final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
+			final Collection<IcfgLocation> locationsOfInterest, final IDomain baseDomain, final IFluid fluid,
+			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
+			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory) {
+		this(logger, timer, stats, tools, icfg, locationsOfInterest, baseDomain, fluid, loopSumFactory, callSumFactory,
+				extractServices(tools));
+	}
+
 	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
 			final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
 			final Collection<IcfgLocation> locationsOfInterest, final IDomain baseDomain, final IFluid fluid,
@@ -91,14 +101,22 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		prepareThreadIcfgsAndLois();
 		final var ghostVars = mConcurrentTools.getGhostVariables();
 		final var absLocIds = ghostVars != null ? ghostVars.getAbstractLocationIds() : Map.<IcfgLocation, Integer>of();
-		mResultPrinter = new SifaResultPrinter(logger, absLocIds, mConcurrentTools.getThreadActivityPreanalysis());
+			mResultPrinter = new SifaResultPrinter(logger, absLocIds, mConcurrentTools.getThreadActivityPreanalysis());
+	}
+
+	private static IUltimateServiceProvider extractServices(final SymbolicTools tools) {
+		if (tools instanceof ConcurrentSymbolicTools concurrentTools) {
+			return concurrentTools.getServices();
+		}
+		throw new IllegalArgumentException(
+				"ThreadModularSifaInterpreter requires ConcurrentSymbolicTools when using the legacy constructor");
 	}
 
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
 		final FixpointResult fixpoint = computeOuterInterferenceFixpoint();
-		verifyProof(fixpoint);
 		mResultPrinter.printResults(fixpoint.locationPredicates, mIcfg);
+		verifyProof(fixpoint);
 		return fixpoint.locationPredicates;
 	}
 
@@ -194,16 +212,27 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	}
 
 	private void verifyProof(final FixpointResult fixpoint) {
-		if (!mProofChecker.isCheckingEnabled()) {
-			mLogger.info("Thread-modular proof checking skipped because ghostvars cant be handled yet");
-			return;
-		}
-		final boolean isValid = mProofChecker.checkAll(mIcfg, fixpoint.locationPredicates, fixpoint.threadPredicates);
-		if (!isValid) {
+		mLogger.info("Thread-modular proof checking started");
+		final ThreadModularProofChecker.CheckReport report =
+				mProofChecker.checkAllDetailed(mIcfg, fixpoint.locationPredicates, fixpoint.threadPredicates);
+		logProofSubcheck("Hoare edge checks", report.hoareChecksValid(), report.checkedHoareTriples(),
+				report.invalidHoareTriples());
+		logProofSubcheck("Interference stability checks", report.interferenceChecksValid(),
+				report.checkedInterferenceTriples(), report.invalidInterferenceTriples());
+
+		if (!report.overallValid()) {
 			mLogger.error("Thread-modular proof checking failed");
-			// throw new IllegalStateException("Thread-modular proof checking failed");
+			throw new IllegalStateException("Thread-modular proof checking failed");
 		}
 		mLogger.info("Thread-modular proof checking passed");
+	}
+
+	private void logProofSubcheck(final String checkName, final boolean valid, final int checked, final int invalid) {
+		if (valid) {
+			mLogger.info("Proof check '%s': SUCCESS (%d checked, %d invalid)", checkName, checked, invalid);
+			return;
+		}
+		mLogger.error("Proof check '%s': FAILED (%d checked, %d invalid)", checkName, checked, invalid);
 	}
 
 	private void logOuterFixpointIteration(final int iteration) {
@@ -214,5 +243,12 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		for (final String threadId : mThreadIds) {
 			mLogger.info("  Thread %s: %d interferences", threadId, interferences.getInterferenceCount(threadId));
 		}
+	}
+
+	private static String oneLine(final String text) {
+		if (text == null) {
+			return "<null>";
+		}
+		return text.replace('\n', ' ').replace('\r', ' ');
 	}
 }

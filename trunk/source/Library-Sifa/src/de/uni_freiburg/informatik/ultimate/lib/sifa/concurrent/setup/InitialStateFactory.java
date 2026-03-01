@@ -9,10 +9,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.Concurrency
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InitialStateFactory {
 
@@ -67,8 +70,7 @@ public final class InitialStateFactory {
 	}
 
 	/*
-	 * We model the initial state of a non-main thread by joining the state of all locations of other threads where this
-	 * thread is forked
+	 * For a non-main thread, start from every place where some other thread can fork it and join those states.
 	 */
 	private Set<IPredicate> collectForkStates(final String threadId) {
 		final Set<IPredicate> states = new HashSet<>();
@@ -87,21 +89,35 @@ public final class InitialStateFactory {
 	}
 
 	/*
-	 * The initial state should see a thread that forks it at the position after the fork. However if we just take the
-	 * state of that position, that state will already be open to interferences, including from this thread. so we need
-	 * to model the atomic update of being forked without any other interferences happening. this is achieved by just
-	 * taking the source state of the fork transition and updating the fork threads location
+	 * The new thread should start right after the fork.
+	 * We cannot just use the post-state at the fork target, because that may already contain interferences, even from
+	 * the freshly forked thread itself. So we use the fork source state and only apply the fork-local location updates.
 	 */
 	private IPredicate applyForkEffects(final IPredicate forkState,
 			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork) {
+		final IPredicate sharedForkState = projectToSharedState(forkState);
 		if (mGhostVariables == null) {
-			return forkState;
+			return sharedForkState;
 		}
 		final String forkedThreadId = fork.getNameOfForkedProcedure();
 		final String forkingTid = fork.getSource().getProcedure();
 		final IcfgLocation forkedEntry = mGhostVariables.getEntryLocation(forkedThreadId);
 
-		final IPredicate updated = mTools.addLocationUpdateForThread(forkState, forkingTid, fork.getTarget());
+		final IPredicate updated = mTools.addLocationUpdateForThread(sharedForkState, forkingTid, fork.getTarget());
 		return mTools.addLocationUpdateForThread(updated, forkedThreadId, forkedEntry);
+	}
+
+	private IPredicate projectToSharedState(final IPredicate predicate) {
+		final Set<TermVariable> localVarsToProject = new HashSet<>();
+		for (final IProgramVar var : predicate.getVars()) {
+			if (!var.isGlobal()) {
+				localVarsToProject.add(var.getTermVariable());
+			}
+		}
+		if (localVarsToProject.isEmpty()) {
+			return predicate;
+		}
+		return mTools.predicate(RelationalPredicateUtils.existentiallyProject(predicate.getFormula(), localVarsToProject,
+				mTools.getServices(), mTools.getManagedScript()));
 	}
 }

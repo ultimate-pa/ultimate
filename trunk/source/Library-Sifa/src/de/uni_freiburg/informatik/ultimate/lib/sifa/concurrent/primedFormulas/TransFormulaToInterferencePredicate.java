@@ -54,25 +54,42 @@ public class TransFormulaToInterferencePredicate {
 
 	public IPredicate translateForInterference(final TransFormula tf, final String interferingThread,
 			final IcfgLocation sourceLocation, final IcfgLocation targetLocation) {
-		return translateForInterferenceInternal(tf, interferingThread, sourceLocation, targetLocation, null, null);
+		return translateForInterference(tf, interferingThread, sourceLocation, targetLocation, Set.of());
+	}
+
+	public IPredicate translateForInterference(final TransFormula tf, final String interferingThread,
+			final IcfgLocation sourceLocation, final IcfgLocation targetLocation,
+			final Set<IProgramVar> additionallyModifiedGlobals) {
+		return translateForInterferenceInternal(tf, interferingThread, sourceLocation, targetLocation, null, null,
+				additionallyModifiedGlobals);
 	}
 
 	public IPredicate translateForInterferenceWithFork(final TransFormula tf, final String interferingThread,
 			final IcfgLocation sourceLocation, final IcfgLocation targetLocation, final String forkedThreadId,
 			final IcfgLocation forkedEntry) {
+		return translateForInterferenceWithFork(tf, interferingThread, sourceLocation, targetLocation, forkedThreadId,
+				forkedEntry, Set.of());
+	}
+
+	public IPredicate translateForInterferenceWithFork(final TransFormula tf, final String interferingThread,
+			final IcfgLocation sourceLocation, final IcfgLocation targetLocation, final String forkedThreadId,
+			final IcfgLocation forkedEntry, final Set<IProgramVar> additionallyModifiedGlobals) {
 		return translateForInterferenceInternal(tf, interferingThread, sourceLocation, targetLocation, forkedThreadId,
-				forkedEntry);
+				forkedEntry, additionallyModifiedGlobals);
 	}
 
 	private IPredicate translateForInterferenceInternal(final TransFormula tf, final String interferingThread,
 			final IcfgLocation sourceLocation, final IcfgLocation targetLocation, final String forkedThreadId,
-			final IcfgLocation forkedEntry) {
+			final IcfgLocation forkedEntry, final Set<IProgramVar> additionallyModifiedGlobals) {
+		final Set<IProgramVar> extraModified =
+				additionallyModifiedGlobals == null ? Set.of() : Set.copyOf(additionallyModifiedGlobals);
 		final Term baseTerm = translateBase(tf);
 
 		final var script = mManagedScript.getScript();
 		Term combined = baseTerm;
 
-		final Term unchanged = createIdentityConstraintsForUnchangedGlobals(tf, interferingThread, forkedThreadId);
+		final Term unchanged =
+				createIdentityConstraintsForUnchangedGlobals(tf, interferingThread, forkedThreadId, extraModified);
 		combined = SmtUtils.and(script, combined, unchanged);
 
 		if (mGhostVariables != null) {
@@ -113,9 +130,10 @@ public class TransFormulaToInterferencePredicate {
 	}
 
 	private Term createIdentityConstraintsForUnchangedGlobals(final TransFormula tf, final String interferingThread,
-			final String forkedThreadId) {
+			final String forkedThreadId, final Set<IProgramVar> additionallyModifiedGlobals) {
 		final var script = mManagedScript.getScript();
-		final Set<IProgramVar> modified = tf.getOutVars().keySet();
+		final Set<IProgramVar> modified = new HashSet<>(tf.getOutVars().keySet());
+		modified.addAll(additionallyModifiedGlobals);
 		final TermVariable interferingLoc = mGhostVariables == null ? null
 				: mGhostVariables.getLocationTermVar(interferingThread);
 		final TermVariable forkedLoc = mGhostVariables == null || forkedThreadId == null ? null
@@ -218,5 +236,20 @@ public class TransFormulaToInterferencePredicate {
 			return null;
 		}
 		return mGhostVariables.getLocationTermVar(threadId);
+	}
+
+	public IPredicate projectPreStateToSharedState(final IPredicate preState) {
+		final Set<TermVariable> localsToProject = new HashSet<>();
+		for (final IProgramVar var : preState.getVars()) {
+			if (!var.isGlobal()) {
+				localsToProject.add(var.getTermVariable());
+			}
+		}
+		if (localsToProject.isEmpty()) {
+			return preState;
+		}
+		final Term projected = RelationalPredicateUtils.existentiallyProject(preState.getFormula(), localsToProject,
+				mServices, mManagedScript);
+		return mPredicateFactory.newPredicate(projected);
 	}
 }

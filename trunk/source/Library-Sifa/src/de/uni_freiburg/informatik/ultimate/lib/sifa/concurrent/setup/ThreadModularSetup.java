@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -40,6 +41,7 @@ public final class ThreadModularSetup {
 		final PrimedDefaultIcfgSymbolTable symbolTable = (PrimedDefaultIcfgSymbolTable) tools.getSymbolTable();
 		final var factory = tools.getFactory();
 		final ManagedScript script = tools.getManagedScript();
+		final ILogger logger = services.getLoggingService().getLogger(InterferenceFactory.class);
 		final Set<String> threadIds = discoverThreadIds(icfg);
 		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg);
 
@@ -53,13 +55,13 @@ public final class ThreadModularSetup {
 		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services, script,
 				factory, symbolTable, true);
 		final InterferenceFactory interferenceFactory = new InterferenceFactory(translator, analysisDomain, script,
-				factory, settings.interferenceType());
+				factory, settings.interferenceType(), logger);
 		final IInterference interferenceBuilder = interferenceFactory.createBuilder();
 
-		final boolean ghostInstrumentationEnabled = ghostVars != null;
 		final boolean includeInterferencePreState = true;
 		final ThreadModularProofChecker proofChecker = new ThreadModularProofChecker(icfg.getCfgSmtToolkit(),
-				postcondition, translator, analysisDomain, ghostInstrumentationEnabled, includeInterferencePreState);
+				postcondition, translator, analysisDomain, ghostVars, activityPreanalysis,
+				activityPreanalysis.getMultiForkedThreads(), includeInterferencePreState);
 
 		return new SetupResult(threadIds, analysisDomain, defaultLoopSumFactory, interferenceFactory,
 				interferenceBuilder, postcondition, proofChecker);

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
@@ -56,6 +58,10 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	public ThreadModularSifaSettings getSettings() {
 		return mSettings;
+	}
+
+	public IUltimateServiceProvider getServices() {
+		return mServices;
 	}
 
 	public GhostVariableManager getGhostVariables() {
@@ -103,7 +109,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		mObservedStateRecorder.recordTransitionInputState(transition, input);
 		final IPredicate spResult = super.post(input, transition);
-		return updateGhostvarsAndApplyInterferences(spResult, transition);
+		final IPredicate joinAdjusted = overapproximateJoinAssignment(spResult, transition);
+		return updateGhostvarsAndApplyInterferences(joinAdjusted, transition);
 	}
 
 	@Override
@@ -118,11 +125,34 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	}
 
 	public IPredicate postNoOpTransition(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		mObservedStateRecorder.recordTransitionInputState(transition, input);
 		if (transition instanceof LocationMarkerTransition) {
+			mObservedStateRecorder.recordTransitionInputState(transition, input);
 			return applyInterferences(input, transition.getTarget());
 		}
-		return updateGhostvarsAndApplyInterferences(input, transition);
+		return post(input, transition);
+	}
+
+	private IPredicate overapproximateJoinAssignment(final IPredicate state,
+			final IIcfgTransition<IcfgLocation> transition) {
+		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> joinCurrent)) {
+			return state;
+		}
+		final List<IProgramVar> assignmentLhs = joinCurrent.getJoinSmtArguments().getAssignmentLhs();
+		if (assignmentLhs.isEmpty() || SmtUtils.isFalseLiteral(state.getFormula()) || SmtUtils.isTrueLiteral(state.getFormula())) {
+			return state;
+		}
+		final Set<TermVariable> assignedTermVars = new HashSet<>();
+		for (final IProgramVar lhs : assignmentLhs) {
+			if (lhs != null) {
+				assignedTermVars.add(lhs.getTermVariable());
+			}
+		}
+		if (assignedTermVars.isEmpty()) {
+			return state;
+		}
+		final Term projected = RelationalPredicateUtils.existentiallyProject(state.getFormula(), assignedTermVars,
+				mServices, getManagedScript());
+		return predicate(projected);
 	}
 
 	public IPredicate applyInterferences(final IPredicate state, final IcfgLocation location) {
@@ -260,9 +290,6 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (SmtUtils.isTrueLiteral(postState.getFormula())) {
 			return predicate(locConstraint);
 		}
-		if (!containsFreeVar(postState.getFormula(), currentLocTv)) {
-			return predicate(SmtUtils.and(getScript(), postState.getFormula(), locConstraint));
-		}
 
 		final Term projected = RelationalPredicateUtils.existentiallyProject(postState.getFormula(),
 				Set.of(currentLocTv), mServices, getManagedScript());
@@ -296,12 +323,4 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		return mInitialStateFactory.getInitialStatePredicate(threadId);
 	}
 
-	private static boolean containsFreeVar(final Term formula, final TermVariable variable) {
-		for (final TermVariable freeVar : formula.getFreeVars()) {
-			if (freeVar == variable) {
-				return true;
-			}
-		}
-		return false;
-	}
 }
