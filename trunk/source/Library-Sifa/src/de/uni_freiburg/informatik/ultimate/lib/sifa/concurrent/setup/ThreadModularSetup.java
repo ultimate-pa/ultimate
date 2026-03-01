@@ -44,10 +44,10 @@ public final class ThreadModularSetup {
 		final ILogger logger = services.getLoggingService().getLogger(InterferenceFactory.class);
 		final Set<String> threadIds = discoverThreadIds(icfg);
 		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg);
+		final ThreadActivityPreanalysis activityPreanalysis = ThreadActivityPreanalysis.compute(icfg, threadIds);
 
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
-				icfg, locationIds);
-		final ThreadActivityPreanalysis activityPreanalysis = ThreadActivityPreanalysis.compute(icfg, threadIds);
+				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		concurrentTools.configureStaticAnalysis(ghostVars, activityPreanalysis);
 		final IDomain analysisDomain = baseDomain;
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
@@ -88,12 +88,13 @@ public final class ThreadModularSetup {
 
 	private static GhostVariableManager createGhostVariablesIfEnabled(final ThreadModularSifaSettings settings,
 			final ManagedScript script, final PrimedDefaultIcfgSymbolTable symbolTable, final Set<String> threadIds,
-			final IIcfg<IcfgLocation> icfg, final Map<IcfgLocation, Integer> locationIds) {
+			final IIcfg<IcfgLocation> icfg, final Map<IcfgLocation, Integer> locationIds,
+			final Set<String> impreciseLocationThreads) {
 		if (!settings.useGhostLocations()) {
 			return null;
 		}
 		return GhostVariableManager.create(script, locationIds, threadIds, icfg.getProcedureEntryNodes(), symbolTable,
-				true);
+				impreciseLocationThreads, true);
 	}
 
 	public static record SetupResult(Set<String> threadIds, IDomain analysisDomain,

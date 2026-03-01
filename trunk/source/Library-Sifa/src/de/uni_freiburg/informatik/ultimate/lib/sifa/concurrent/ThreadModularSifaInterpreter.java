@@ -221,6 +221,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 				report.checkedInterferenceTriples(), report.invalidInterferenceTriples());
 
 		if (!report.overallValid()) {
+			logInvalidProofDetails("Hoare edge checks", report.invalidHoareDetails());
+			logInvalidProofDetails("Interference stability checks", report.invalidInterferenceDetails());
 			mLogger.error("Thread-modular proof checking failed");
 			throw new IllegalStateException("Thread-modular proof checking failed");
 		}
@@ -237,6 +239,12 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	private void logOuterFixpointIteration(final int iteration) {
 		mLogger.info("Iteration %d", iteration);
+	}
+
+	private void logInvalidProofDetails(final String checkName, final List<String> details) {
+		for (final String detail : details) {
+			mLogger.error("  %s: %s", checkName, detail);
+		}
 	}
 
 	private void logInterferenceCounts(final InterferenceCollection interferences) {

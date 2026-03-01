@@ -281,6 +281,9 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (!hasGhostLocationTracking()) {
 			return postState;
 		}
+		if (!mGhostVariables.tracksLocationPrecisely(threadId)) {
+			return postState;
+		}
 		if (SmtUtils.isFalseLiteral(postState.getFormula())) {
 			return postState;
 		}

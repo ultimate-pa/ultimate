@@ -27,20 +27,23 @@ public class GhostVariableManager {
 	private final ManagedScript mManagedScript;
 	private final Map<IcfgLocation, Integer> mLocationIds;
 	private final Map<String, IcfgLocation> mEntryLocations;
+	private final Set<String> mImpreciseLocationThreads;
 	private final Map<String, GhostProgramVar> mLocationVars = new HashMap<>();
 
 	private GhostVariableManager(final ManagedScript managedScript, final Map<IcfgLocation, Integer> locationIds,
-			final Map<String, IcfgLocation> entryLocations) {
+			final Map<String, IcfgLocation> entryLocations, final Set<String> impreciseLocationThreads) {
 		mManagedScript = managedScript;
 		mLocationIds = locationIds;
 		mEntryLocations = entryLocations;
+		mImpreciseLocationThreads = Set.copyOf(impreciseLocationThreads);
 	}
 
 	public static GhostVariableManager create(final ManagedScript managedScript,
 			final Map<IcfgLocation, Integer> locationIds, final Set<String> threadIds,
 			final Map<String, IcfgLocation> entryLocations, final PrimedDefaultIcfgSymbolTable symbolTable,
-			final boolean createLocations) {
-		final GhostVariableManager manager = new GhostVariableManager(managedScript, locationIds, entryLocations);
+			final Set<String> impreciseLocationThreads, final boolean createLocations) {
+		final GhostVariableManager manager =
+				new GhostVariableManager(managedScript, locationIds, entryLocations, impreciseLocationThreads);
 		if (createLocations) {
 			managedScript.lock(manager);
 			try {
@@ -77,11 +80,17 @@ public class GhostVariableManager {
 	}
 
 	public Term createLocationConstraint(final String threadId, final IcfgLocation location) {
+		if (!tracksLocationPrecisely(threadId)) {
+			return mManagedScript.getScript().term("true");
+		}
 		return createLocationEquality(mLocationVars.get(threadId).getTermVariable(), location);
 	}
 
 	public Term createPrimedLocationConstraint(final String threadId, final IcfgLocation targetLocation,
 			final PrimedDefaultIcfgSymbolTable symbolTable) {
+		if (!tracksLocationPrecisely(threadId)) {
+			return mManagedScript.getScript().term("true");
+		}
 		final TermVariable primedTv = symbolTable.getPrimedVar(mLocationVars.get(threadId));
 		return createLocationEquality(primedTv, targetLocation);
 	}
@@ -90,6 +99,9 @@ public class GhostVariableManager {
 		final Script script = mManagedScript.getScript();
 		final List<Term> conjuncts = new ArrayList<>();
 		for (final Entry<String, GhostProgramVar> entry : mLocationVars.entrySet()) {
+			if (!tracksLocationPrecisely(entry.getKey())) {
+				continue;
+			}
 			final int locId;
 			if (entry.getKey().equals(mainThreadId)) {
 				locId = getAbstractLocation(mEntryLocations.get(entry.getKey()));
@@ -130,5 +142,9 @@ public class GhostVariableManager {
 
 	public Map<IcfgLocation, Integer> getAbstractLocationIds() {
 		return Map.copyOf(mLocationIds);
+	}
+
+	public boolean tracksLocationPrecisely(final String threadId) {
+		return mLocationVars.containsKey(threadId) && !mImpreciseLocationThreads.contains(threadId);
 	}
 }

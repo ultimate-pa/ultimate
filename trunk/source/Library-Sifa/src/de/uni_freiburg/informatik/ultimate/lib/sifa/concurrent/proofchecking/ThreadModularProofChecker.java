@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -52,7 +54,7 @@ public class ThreadModularProofChecker {
 
 	public static record CheckReport(boolean overallValid, boolean hoareChecksValid, boolean interferenceChecksValid,
 			int checkedHoareTriples, int invalidHoareTriples, int checkedInterferenceTriples,
-			int invalidInterferenceTriples) {
+			int invalidInterferenceTriples, List<String> invalidHoareDetails, List<String> invalidInterferenceDetails) {
 	}
 
 	public boolean checkAll(final IIcfg<IcfgLocation> icfg, final Map<IcfgLocation, IPredicate> locPreds,
@@ -68,6 +70,8 @@ public class ThreadModularProofChecker {
 		int invalidHoareTriples = 0;
 		int checkedInterferenceTriples = 0;
 		int invalidInterferenceTriples = 0;
+		final List<String> invalidHoareDetails = new ArrayList<>();
+		final List<String> invalidInterferenceDetails = new ArrayList<>();
 		final Map<IPredicate, IPredicate> hoareProjectionCache = new HashMap<>();
 
 		// Check 1: edge-local Hoare triples
@@ -87,6 +91,7 @@ public class ThreadModularProofChecker {
 						projectAwayGhostLocations(post, hoareProjectionCache)) == Validity.INVALID) {
 					hoareChecksValid = false;
 					invalidHoareTriples++;
+					invalidHoareDetails.add(formatInvalidHoareTriple(edge, pre, post));
 				}
 			}
 		}
@@ -132,6 +137,8 @@ public class ThreadModularProofChecker {
 							if (!mDomain.isSubsetEq(postState, pred).isTrueForAbstraction()) {
 								interferenceChecksValid = false;
 								invalidInterferenceTriples++;
+								invalidInterferenceDetails.add(formatInvalidInterferenceCheck(threadId, location, pred,
+										otherThreadId, otherLoc, otherLocPred, edge, itfPred, postState));
 							}
 						}
 					}
@@ -140,7 +147,8 @@ public class ThreadModularProofChecker {
 		}
 		final boolean valid = hoareChecksValid && interferenceChecksValid;
 		return new CheckReport(valid, hoareChecksValid, interferenceChecksValid, checkedHoareTriples,
-				invalidHoareTriples, checkedInterferenceTriples, invalidInterferenceTriples);
+				invalidHoareTriples, checkedInterferenceTriples, invalidInterferenceTriples, invalidHoareDetails,
+				invalidInterferenceDetails);
 	}
 
 	public boolean isCheckingEnabled() {
@@ -174,5 +182,21 @@ public class ThreadModularProofChecker {
 			}
 		}
 		return false;
+	}
+
+	private static String formatInvalidHoareTriple(final IcfgEdge edge, final IPredicate pre, final IPredicate post) {
+		return String.format(
+				"Invalid Hoare triple: src=%s tgt=%s edge=%s pre=%s post=%s",
+				edge.getSource(), edge.getTarget(), edge, pre, post);
+	}
+
+	private static String formatInvalidInterferenceCheck(final String targetThreadId, final IcfgLocation targetLocation,
+			final IPredicate targetPredicate, final String sourceThreadId, final IcfgLocation sourceLocation,
+			final IPredicate sourcePredicate, final IcfgEdge edge, final IPredicate interferencePredicate,
+			final IPredicate postState) {
+		return String.format(
+				"Invalid interference check: targetThread=%s targetLoc=%s targetPred=%s sourceThread=%s sourceLoc=%s sourcePred=%s edge=%s itf=%s post=%s",
+				targetThreadId, targetLocation, targetPredicate, sourceThreadId, sourceLocation, sourcePredicate, edge,
+				interferencePredicate, postState);
 	}
 }
