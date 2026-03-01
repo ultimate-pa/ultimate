@@ -244,11 +244,4 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			mLogger.info("  Thread %s: %d interferences", threadId, interferences.getInterferenceCount(threadId));
 		}
 	}
-
-	private static String oneLine(final String text) {
-		if (text == null) {
-			return "<null>";
-		}
-		return text.replace('\n', ' ').replace('\r', ' ');
-	}
 }

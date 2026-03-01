@@ -98,10 +98,8 @@ public class InterferenceFactory {
 				final IPredicate transitionPredicate = buildTransitionPredicate(threadId, source, data, edge);
 				final IPredicate predicate = combineWithPreState(preState, transitionPredicate);
 				if (isTrivialPredicate(predicate)) {
-					logInterferenceEdge(threadId, source, data.target(), edge, "SKIP_TRIVIAL_PREDICATE");
 					continue;
 				}
-				logInterferenceEdge(threadId, source, data.target(), edge, "INCLUDE");
 				predicates.add(new EdgePredicate(source, data.target(), predicate));
 			}
 		}
@@ -203,12 +201,10 @@ public class InterferenceFactory {
 			final IcfgEdge edge) {
 		final IcfgLocation target = edge.getTarget();
 		if (target == null) {
-			logInterferenceEdge(threadId, source, null, edge, "SKIP_NO_TARGET");
 			return null;
 		}
 		final TransFormula tf = edge.getTransformula();
 		if (tf == null) {
-			logInterferenceEdge(threadId, source, target, edge, "SKIP_NO_TRANSFORMULA");
 			return null;
 		}
 		final String forkedThreadId = InterferenceEdgeSemantics.getForkedThreadOrNull(edge);
@@ -216,23 +212,8 @@ public class InterferenceFactory {
 				|| InterferenceEdgeSemantics.isJoinAssigningGlobal(edge);
 		final boolean locationStutter = mTranslator.isLocationStutterStep(source, target) && forkedThreadId == null;
 		if (!interferenceRelevant && locationStutter) {
-			logInterferenceEdge(threadId, source, target, edge, "SKIP_LOCAL_STUTTER");
 			return null;
 		}
 		return new EdgeInterferenceData(target, tf, forkedThreadId);
-	}
-
-	private void logInterferenceEdge(final String threadId, final IcfgLocation source, final IcfgLocation target,
-			final IcfgEdge edge, final String decision) {
-		// Always print interference extraction decisions to simplify debugging unsound cases.
-		mLogger.info("Interference edge [%s] thread=%s src=%s tgt=%s kind=%s edge=%s", decision, threadId, source,
-				target, edge.getClass().getSimpleName(), oneLine(edge.toString()));
-	}
-
-	private static String oneLine(final String text) {
-		if (text == null) {
-			return "<null>";
-		}
-		return text.replace('\n', ' ').replace('\r', ' ');
 	}
 }
