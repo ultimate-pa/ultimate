@@ -234,7 +234,8 @@ public class SharedVariableTranslationTest {
 			final PrimedDefaultIcfgSymbolTable primedTable) {
 		mMgdScript.unlock(this);
 		try {
-			return GhostVariableManager.create(mMgdScript, locationIds, threadIds, entryLocations, primedTable, true);
+			return GhostVariableManager.create(mMgdScript, locationIds, threadIds, entryLocations, primedTable,
+					Set.of(), true);
 		} finally {
 			mMgdScript.lock(this);
 		}
