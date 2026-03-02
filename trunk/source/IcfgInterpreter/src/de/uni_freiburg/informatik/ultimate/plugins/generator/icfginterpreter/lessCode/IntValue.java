@@ -4,9 +4,9 @@ import java.math.BigInteger;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 
 public class IntValue implements Value {
 	private final BigInteger mValue;
@@ -27,21 +27,11 @@ public class IntValue implements Value {
 	}
 
 	public IntValue div(final IntValue other) {
-		final BigInteger n = other.mValue;
-		final Rational div = Rational.valueOf(mValue, n);
-		if (n.compareTo(BigInteger.ZERO) > 0) {
-			// n > 0, (div m n) = floor(m/n)
-			return new IntValue(div.floor().numerator());
-		}
-		// n < 0, (div m n) = ceil(m/n)
-		return new IntValue(div.ceil().numerator());
+		return new IntValue(ArithmeticUtils.euclideanDiv(mValue, other.mValue));
 	}
 
 	public IntValue mod(final IntValue other) {
-		// i == ((i / j) * j) + (i % j)
-		// i % j == i - ((i / j) * j)
-		final BigInteger div = div(other).mValue;
-		return new IntValue(mValue.subtract(div.multiply(other.mValue)));
+		return new IntValue(ArithmeticUtils.euclideanMod(mValue, other.mValue));
 	}
 
 	public IntValue subtract(final IntValue other) {
