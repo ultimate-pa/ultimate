@@ -63,11 +63,13 @@ public class ExecutionProducer {
 	private boolean deleteBatch;
 	private boolean endIfAggregateFull;
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
 	public ExecutionProducer(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services,
-			final Set<IcfgLocation> errorLocations) {
+			final Set<IcfgLocation> errorLocations, final ILogger logger) {
 		mIcfg = icfg;
 		mServices = services;
+		mLogger = logger;
 
 		final Set<? extends IcfgLocation> initialNodes = mIcfg.getInitialNodes();
 		mngScript = mIcfg.getCfgSmtToolkit().getManagedScript();
@@ -84,9 +86,8 @@ public class ExecutionProducer {
 
 			for (final IcfgEdge edge : source.getOutgoingEdges()) {
 				if (!(edge instanceof IIcfgInternalTransition)) {
-					IcfgInterpreterObserver.getLogger()
-							.error("This plug-in does not handle Call or Return statements.\n"
-									+ "Inline methods or avoid using them.");
+					mLogger.error("This plug-in does not handle Call or Return statements.\n"
+							+ "Inline methods or avoid using them.");
 					allOutEdges.add(new UntranslatableIcfgEdge(edge));
 					continue;
 				}
@@ -122,8 +123,8 @@ public class ExecutionProducer {
 	}
 
 	public Map<ExecutionTermintionReason, List<PartialExecution>> makeExecutions(final ILogger logger,
-			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod)
-			throws Exception {
+			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod,
+			final boolean isAggregateFull) throws Exception {
 
 		batchSize = IcfgInterpreterPreferences.getPreferences()
 				.getInt(IcfgInterpreterPreferences.SettingLabel.PARTIAL_RESULTS_COUNT.toString());
@@ -171,7 +172,7 @@ public class ExecutionProducer {
 		final long startTime = System.nanoTime();
 		for (final IcfgLocation node : initialNodes) {
 			for (int i = 0; i < testExecutionCount; i++) {
-				makeExecutions(ndc, node, executions, outMethod);
+				makeExecutions(ndc, node, executions, outMethod, isAggregateFull);
 			}
 		}
 
@@ -232,7 +233,7 @@ public class ExecutionProducer {
 			// (The formula contains no OutVar that is assigned)
 
 			try {
-				final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
+				final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars, mLogger)
 						.addUpdates(extractUpdates(formula, script, script.getTheory().mTrue))
 						.makeGuardUnchanged(services, mngScript, formula).finish();
 
@@ -246,15 +247,14 @@ public class ExecutionProducer {
 
 		if (formula.getFormula() instanceof final ApplicationTerm app
 				&& app.getFunction().getName().equals(SMTLIBConstants.OR)) {
-			IcfgInterpreterObserver.getLogger()
-					.error("This plug-in does not handle or terms that encode different paths of a program.\n"
-							+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
-							+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+			mLogger.error("This plug-in does not handle or terms that encode different paths of a program.\n"
+					+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
+					+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
 			return List.of(new UntranslatableIcfgEdge(edge));
 		}
 
 		try {
-			final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
+			final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars, mLogger)
 					.addUpdates(extractUpdates(formula, script, formula.getFormula()))
 					.makeGuardUnchanged(services, mngScript, formula).finish();
 
@@ -268,7 +268,7 @@ public class ExecutionProducer {
 	}
 
 	private Update[] extractUpdates(final UnmodifiableTransFormula formula, final Script script, final Term term) {
-		final Equations equations = EqualityExtractor.extract(term, script, formula);
+		final Equations equations = EqualityExtractor.extract(term, script, formula, mLogger);
 		final Set<SolvedEquation> solvedEquationsB = equations.solveForRelevantVars(script, formula);
 		return makeUpdates(solvedEquationsB, formula);
 	}
@@ -561,9 +561,10 @@ public class ExecutionProducer {
 
 	public void makeExecutions(final NonDeterministicChoice ndc, final IcfgLocation source,
 			final Map<ExecutionTermintionReason, List<PartialExecution>> out,
-			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod) {
+			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod,
+			final boolean isAggregateFull) {
 		// Do not create new executions if we have reached the required number
-		if (endIfAggregateFull && IcfgInterpreterObserver.getInstance().isAggregateFull()) {
+		if (endIfAggregateFull && isAggregateFull) {
 			return;
 		}
 
@@ -579,8 +580,8 @@ public class ExecutionProducer {
 			final Map<TermVariable, Value> state = execution.getCurrentState();
 
 			if (executionMaxLength != 0 && execution.edges.size() >= executionMaxLength) {
-				if (finalizeExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out, outMethod)
-						&& endIfAggregateFull) {
+				if (finalizeExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out, outMethod,
+						isAggregateFull) && endIfAggregateFull) {
 					return;
 				}
 				continue;
@@ -590,8 +591,8 @@ public class ExecutionProducer {
 
 			final IcfgLocation currentLocation = execution.currentLocation;
 			if (mErrorMap.getOrDefault(currentLocation.getProcedure(), new HashSet<>()).contains(currentLocation)) {
-				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_ERROR), out, outMethod)
-						&& endIfAggregateFull) {
+				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_ERROR), out, outMethod,
+						isAggregateFull) && endIfAggregateFull) {
 					return;
 				}
 				continue;
@@ -599,8 +600,8 @@ public class ExecutionProducer {
 
 			if (nextEdges.size() == 0) {
 				// No edges exist from the current vertex
-				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod)
-						&& endIfAggregateFull) {
+				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod,
+						isAggregateFull) && endIfAggregateFull) {
 					return;
 				}
 				continue;
@@ -641,7 +642,7 @@ public class ExecutionProducer {
 						final PartialExecution failedExecution =
 								execution.addStep(nextEdge, Map.of(), Map.of(), Map.of());
 						if (finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED),
-								out, outMethod) && endIfAggregateFull) {
+								out, outMethod, isAggregateFull) && endIfAggregateFull) {
 							return;
 						}
 					}
@@ -666,8 +667,8 @@ public class ExecutionProducer {
 
 			// no more edges can be taken, and it was not because an edge could not be translated
 			if (((nextEdges.size() == 0 || !anyGuardTrue) && !unsupportedFound) && unsupportedFound) {
-				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod)
-						&& endIfAggregateFull) {
+				if (finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out, outMethod,
+						isAggregateFull) && endIfAggregateFull) {
 					return;
 				}
 			}
@@ -686,11 +687,13 @@ public class ExecutionProducer {
 	 *            Maps TerminationReason to List of found Executions
 	 * @param outMethod
 	 *            Method with which to process a full batch
+	 * @param isAggregateFull
 	 * @return True if the required number of executions was found
 	 */
 	private boolean finalizeExecution(final PartialExecution execution,
 			final Map<ExecutionTermintionReason, List<PartialExecution>> outMap,
-			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod) {
+			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod,
+			final boolean isAggregateFull) {
 		// Execution must be finished
 		assert execution.status != null;
 		// Report if the exit location was an error location
@@ -708,7 +711,7 @@ public class ExecutionProducer {
 			if (deleteBatch) {
 				outMap.forEach((x, list) -> list.clear());
 			}
-			if (IcfgInterpreterObserver.getInstance().isAggregateFull()) {
+			if (isAggregateFull) {
 				return true;
 			}
 		}

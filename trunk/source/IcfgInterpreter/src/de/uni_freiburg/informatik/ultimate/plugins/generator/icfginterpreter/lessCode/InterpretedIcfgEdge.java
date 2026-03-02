@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -299,11 +300,13 @@ public class InterpretedIcfgEdge {
 		private final IcfgEdge mGraphEdge;
 		private final Set<TermVariable> mAuxVariables;
 		private Map<Term, RestrictionParser> mGuardRestrictions;
+		private final ILogger mLogger;
 		// private Term[] mHavocOrder;
 
-		public InterpretedIcfgEdgeBuilder(final IcfgEdge edge, final Set<TermVariable> auxVars) {
+		public InterpretedIcfgEdgeBuilder(final IcfgEdge edge, final Set<TermVariable> auxVars, final ILogger logger) {
 			mGraphEdge = edge;
 			mAuxVariables = auxVars;
+			mLogger = logger;
 		}
 
 		public InterpretedIcfgEdgeBuilder addUpdates(final Update[] updates) {
@@ -339,7 +342,7 @@ public class InterpretedIcfgEdge {
 		}
 
 		private void calculateGuardRestrictions(final Script script, final UnmodifiableTransFormula formula) {
-			final Equations equations = EqualityExtractor.extract(mGuardTerm, script, formula);
+			final Equations equations = EqualityExtractor.extract(mGuardTerm, script, formula, mLogger);
 			final List<SolvedEquation> solvedEquations = new ArrayList<>(equations.solveForAllVars(script));
 
 			final Map<Term, RestrictionParser> guardRestrictions = new HashMap<>();

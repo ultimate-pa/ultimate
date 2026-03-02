@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -12,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 
 public class EqualityExtractor {
@@ -88,10 +88,11 @@ public class EqualityExtractor {
 		}
 	}
 
-	public static Equations extract(final Term term, final Script script, final UnmodifiableTransFormula formula) {
+	public static Equations extract(final Term term, final Script script, final UnmodifiableTransFormula formula,
+			final ILogger logger) {
 		switch (term) {
 		case final ApplicationTerm at:
-			return extractApplicationTerm(at, script, formula);
+			return extractApplicationTerm(at, script, formula, logger);
 		case final TermVariable tv:
 			if (tv.getSort().getName().equals(SMTLIBConstants.BOOL)) {
 				return new Equations(new Equation(RelationSymbol.EQ, tv, script.getTheory().mTrue));
@@ -108,7 +109,7 @@ public class EqualityExtractor {
 	}
 
 	public static Equations extractApplicationTerm(final ApplicationTerm term, final Script script,
-			final UnmodifiableTransFormula formula) {
+			final UnmodifiableTransFormula formula, final ILogger logger) {
 		Equations out;
 		switch (term.getFunction().getName()) {
 		case SMTLIBConstants.OR:
@@ -119,10 +120,9 @@ public class EqualityExtractor {
 
 			if (Arrays.asList(term.getFreeVars()).stream().anyMatch((var) -> outVars.contains(var))) {
 				// This term contains information that is needed in updates.
-				IcfgInterpreterObserver.getLogger()
-						.error("This plug-in does not handle or terms nested in other terms.\n"
-								+ "Try using SingleStatement in your Icfg / Cfg Builder settings.\nOffending Term:\n"
-								+ term.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+				logger.error("This plug-in does not handle or terms nested in other terms.\n"
+						+ "Try using SingleStatement in your Icfg / Cfg Builder settings.\nOffending Term:\n"
+						+ term.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
 				throw new EdgeUntranslatableError();
 			}
 			// It's just guards, continue operation
@@ -136,7 +136,7 @@ public class EqualityExtractor {
 				if (booleanEq != null) {
 					out.and(booleanEq, script);
 				} else {
-					out.and(extract(subTerm, script, formula));
+					out.and(extract(subTerm, script, formula, logger));
 				}
 			}
 			break;
@@ -156,7 +156,7 @@ public class EqualityExtractor {
 			out = addEquations(term.getParameters(), RelationSymbol.GREATER, script);
 			break;
 		case SMTLIBConstants.NOT:
-			final Set<Equation> eqs = extract(term.getParameters()[0], script, formula).getEquations();
+			final Set<Equation> eqs = extract(term.getParameters()[0], script, formula, logger).getEquations();
 			if (eqs.size() == 1) {
 				final Equation equation = eqs.iterator().next().negate();
 				out = new Equations(equation);

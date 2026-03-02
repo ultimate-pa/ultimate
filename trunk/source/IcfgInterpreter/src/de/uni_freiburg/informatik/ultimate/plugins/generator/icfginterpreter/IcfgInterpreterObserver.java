@@ -50,16 +50,10 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private ExecutionTermintionReason aggregateOutputType;
 	private int aggregateOutputCount;
 	private boolean mIsAggregateFull;
-	private static IcfgInterpreterObserver mInstance = null;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mInstance = this;
-	}
-
-	public static ILogger getLogger() {
-		return mInstance == null ? null : mInstance.mLogger;
 	}
 
 	@Override
@@ -89,7 +83,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mAggregateExecutions = new ArrayList<>();
 
 				IcfgInterpreterPreferences.updatePreferences();
-				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices, mErrorLocations);
+				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices, mErrorLocations, mLogger);
 
 				outputMethod = IcfgInterpreterPreferences.getPreferences().getEnum(
 						IcfgInterpreterPreferences.SettingLabel.OUTPUT_METHOD.toString(),
@@ -123,8 +117,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				}
 
 				// Create executions
-				mExecutions =
-						producer.makeExecutions(mLogger, (executions, locations) -> outputBatch(executions, locations));
+				mExecutions = producer.makeExecutions(mLogger,
+						(executions, locations) -> outputBatch(executions, locations), mIsAggregateFull);
 
 				// Either no execution of the target type was found, or mExecutions is empty because of batching and
 				// should be supplemented with the batch aggregate.
@@ -272,10 +266,6 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		if (size == aggregateOutputCount) {
 			mIsAggregateFull = true;
 		}
-	}
-
-	public static IcfgInterpreterObserver getInstance() {
-		return mInstance;
 	}
 
 	public IElement getExecutions() {
