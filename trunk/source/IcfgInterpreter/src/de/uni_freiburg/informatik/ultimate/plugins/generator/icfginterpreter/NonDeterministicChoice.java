@@ -8,6 +8,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
@@ -52,7 +53,7 @@ public class NonDeterministicChoice {
 		case SMTLIBConstants.INT:
 			return havocInt((IntegerRestriction) possibleValues);
 		case SMTLIBConstants.BITVEC:
-			final int length = Util.getBitVecLength(sort);
+			final int length = SmtSortUtils.getBitvectorLength(sort);
 			return havocBitVector(length, (IntegerRestriction) possibleValues);
 		case SMTLIBConstants.BOOL:
 			return havocBool((BooleanRestriction) possibleValues);

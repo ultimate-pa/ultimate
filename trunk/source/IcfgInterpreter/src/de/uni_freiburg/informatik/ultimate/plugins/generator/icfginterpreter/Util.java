@@ -6,19 +6,11 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class Util {
-	public static int getBitVecLength(final Sort sort) {
-		if (!sort.isBitVecSort()) {
-			return -1;
-		}
-		return Integer.parseInt(sort.getIndices()[0]);
-	}
-
 	public static List<ApplicationTerm> extractSelects(final Term term) {
 		final List<ApplicationTerm> out = new ArrayList<>();
 		final ArrayDeque<Term> terms = new ArrayDeque<>();
