@@ -62,17 +62,6 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			if (mIcfg != null) {
 				throw new UnsupportedOperationException("Multiple CFGs are not supported.");
 			}
-			// TODO: Extract executions from mIcfg (mServices will be also needed for some operations)
-			// This should be probably moved to a separate class
-
-			// Useful methods:
-			// * mIcfg.getCfgSmtToolkit().getManagedScript()
-			// (also .getScript() if the Script instead of the ManagedScript is needed)
-			// * mIcfg.getInitialNodes()
-			// * TransFormulaUtils.computeGuard
-			// * SmtUtils.getConjuncts
-			// * SmtUtils.toDnf
-			// * mLogger can be used for output (e.g., for debugging)
 			try {
 				// initiate / reset all variables
 				mIcfg = icfg;
