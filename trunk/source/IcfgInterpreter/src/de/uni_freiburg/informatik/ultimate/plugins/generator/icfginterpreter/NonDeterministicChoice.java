@@ -5,9 +5,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -145,19 +142,4 @@ public class NonDeterministicChoice {
 		// can be false or true (either both allowed or neither)
 		return new BoolValue(mRandom.nextBoolean());
 	}
-
-	public UltimatePreferenceItemGroup getImplementationSettings() {
-		return new UltimatePreferenceItemGroup(getClass().getSimpleName(),
-				new UltimatePreferenceItem<>(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE, MAX_INT_HAVOC_HINT,
-						PreferenceType.Integer),
-				new UltimatePreferenceItem<>(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE, MIN_INT_HAVOC_HINT,
-						PreferenceType.Integer));
-	}
-
-	public static String MAX_INT_HAVOC_LABEL = "Maximum havoc integer value";
-	public static String MAX_INT_HAVOC_HINT =
-			"Any value between Integer.MIN_VALUE and Integer.MAX_VALUE." + "\nHas to be more than the minimum option.";
-	public static String MIN_INT_HAVOC_LABEL = "Minimum havoc integer value";
-	public static String MIN_INT_HAVOC_HINT =
-			"Any value between Integer.MIN_VALUE and Integer.MAX_VALUE." + "\nHas to be less than the maximum option.";
 }

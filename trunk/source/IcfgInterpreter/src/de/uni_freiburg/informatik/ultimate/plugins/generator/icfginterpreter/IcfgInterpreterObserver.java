@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -70,19 +71,15 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mFinalResults = new HashMap<>();
 				mIsAggregateFull = false;
 				mAggregateExecutions = new ArrayList<>();
-
-				IcfgInterpreterPreferences.updatePreferences();
 				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices, mErrorLocations, mLogger);
 
-				outputMethod = IcfgInterpreterPreferences.getPreferences().getEnum(
-						IcfgInterpreterPreferences.SettingLabel.OUTPUT_METHOD.toString(),
+				final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+				outputMethod = prefs.getEnum(IcfgInterpreterPreferences.OUTPUT_METHOD,
 						IcfgInterpreterPreferences.OutputMethod.class);
 
-				aggregateOutputType = IcfgInterpreterPreferences.getPreferences().getEnum(
-						IcfgInterpreterPreferences.SettingLabel.AGGREGATE_RESULTS_TYPE.toString(),
+				aggregateOutputType = prefs.getEnum(IcfgInterpreterPreferences.AGGREGATE_RESULTS_TYPE,
 						ExecutionTermintionReason.class);
-				aggregateOutputCount = IcfgInterpreterPreferences.getPreferences()
-						.getInt(IcfgInterpreterPreferences.SettingLabel.AGGREGATE_RESULTS_NUMBER.toString());
+				aggregateOutputCount = prefs.getInt(IcfgInterpreterPreferences.AGGREGATE_RESULTS_NUMBER);
 
 				terminationCount = new HashMap<>();
 				for (final ExecutionTermintionReason reason : ExecutionTermintionReason.values()) {

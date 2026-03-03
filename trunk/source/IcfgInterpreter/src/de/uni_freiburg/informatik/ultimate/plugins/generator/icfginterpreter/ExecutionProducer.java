@@ -14,6 +14,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -125,36 +126,29 @@ public class ExecutionProducer {
 	public Map<ExecutionTermintionReason, List<PartialExecution>> makeExecutions(final ILogger logger,
 			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod,
 			final boolean isAggregateFull) throws Exception {
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		batchSize = IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.PARTIAL_RESULTS_COUNT.toString());
+		batchSize = prefs.getInt(IcfgInterpreterPreferences.PARTIAL_RESULTS_COUNT.toString());
 
-		deleteBatch = IcfgInterpreterPreferences.getPreferences()
-				.getBoolean(IcfgInterpreterPreferences.SettingLabel.PARTIAL_RESULTS_STORE.toString());
+		batchSize = prefs.getInt(IcfgInterpreterPreferences.PARTIAL_RESULTS_COUNT);
 
-		endIfAggregateFull = IcfgInterpreterPreferences.getPreferences()
-				.getBoolean(IcfgInterpreterPreferences.SettingLabel.STOP_AFTER_AGGREGARE_FULL.toString());
+		deleteBatch = prefs.getBoolean(IcfgInterpreterPreferences.PARTIAL_RESULTS_STORE);
 
-		final int seed = IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTION_SEED.toString());
+		endIfAggregateFull = prefs.getBoolean(IcfgInterpreterPreferences.STOP_AFTER_AGGREGARE_FULL);
 
-		final int testExecutionCount = Math.max(1, IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTIONS_PER_ENTRYPOINT.toString()));
+		final int seed = prefs.getInt(IcfgInterpreterPreferences.EXECUTION_SEED);
 
-		variantsPerHavoc = Math.max(1, IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.VARIANTS_PER_HAVOC_EDGE.toString()));
+		final int testExecutionCount = Math.max(1, prefs.getInt(IcfgInterpreterPreferences.EXECUTIONS_PER_ENTRYPOINT));
 
-		unfinishedMaxStored = Math.max(1, IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTIONS_QUEUED.toString()));
+		variantsPerHavoc = Math.max(1, prefs.getInt(IcfgInterpreterPreferences.VARIANTS_PER_HAVOC_EDGE));
 
-		executionMaxLength = Math.max(0, IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTION_MAX_LENGTH.toString()));
+		unfinishedMaxStored = Math.max(1, prefs.getInt(IcfgInterpreterPreferences.EXECUTIONS_QUEUED));
 
-		final int minBits = Math.max(4, IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.MIN_BITS.toString()));
+		executionMaxLength = Math.max(0, prefs.getInt(IcfgInterpreterPreferences.EXECUTION_MAX_LENGTH));
 
-		final int maxBits = Math.max(4, IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.MAX_BITS.toString()));
+		final int minBits = Math.max(4, prefs.getInt(IcfgInterpreterPreferences.MIN_BITS));
+
+		final int maxBits = Math.max(4, prefs.getInt(IcfgInterpreterPreferences.MAX_BITS));
 
 		logger.info("Creating " + testExecutionCount + " executions per initial node.");
 
