@@ -62,7 +62,7 @@ public class ArrayValue implements Value {
 		if (other instanceof final ArrayValue av) {
 			return new BoolValue(!mValue.equals(av.mValue));
 		}
-		return BoolValue.mTrue;
+		return BoolValue.TRUE;
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class ArrayValue implements Value {
 		if (other instanceof final ArrayValue av) {
 			return new BoolValue(mValue.equals(av.mValue));
 		}
-		return BoolValue.mFalse;
+		return BoolValue.FALSE;
 	}
 
 	@Override

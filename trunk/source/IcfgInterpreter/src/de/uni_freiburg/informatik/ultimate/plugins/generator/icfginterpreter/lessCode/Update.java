@@ -41,8 +41,7 @@ public interface Update {
 			mFreeVars = Set.of(value.getFreeVars());
 
 			final List<ApplicationTerm> selected = Util.extractSelects(value);
-			mArrayReads = selected.stream()
-					.collect(Collectors.toMap((select -> (Term) select), (select -> Util.selectToKeyPair(select))));
+			mArrayReads = selected.stream().collect(Collectors.toMap(Term.class::cast, Util::selectToKeyPair));
 			mValue = value;
 		}
 
@@ -131,7 +130,7 @@ public interface Update {
 			final Restriction<?> existingRestriction = havocRestrictions.remove(mUpdatedTerm);
 			final Restriction<?> restriction;
 
-			final Restriction<?> newRestriction = mRestrictionParser.getRestriction(state, ndc);
+			final Restriction<?> newRestriction = mRestrictionParser.getRestriction(state);
 			if (existingRestriction != null && !mRemovePrevious) {
 				restriction = existingRestriction.combine(newRestriction);
 			} else {

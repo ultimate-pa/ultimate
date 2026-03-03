@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
@@ -107,7 +106,7 @@ public class RestrictionParser {
 		mArrayReads = Map.copyOf(arrayReads);
 	}
 
-	public Restriction<?> getRestriction(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc) {
+	public Restriction<?> getRestriction(final Map<TermVariable, Value> state) {
 		if (mInEqual.size() + mLessEq.size() + mGreaterEq.size() == 0 && mEqual == null) {
 			return new IntegerRestriction(Set.of(), null, null);
 		}
@@ -119,7 +118,7 @@ public class RestrictionParser {
 			returnSort = mFullTerm.getSort().getName();
 		}
 
-		if (mEqual.size() > 0) {
+		if (!mEqual.isEmpty()) {
 			// Try to get equivalent term
 			for (final Term equals : mEqual) {
 				final Value value;
@@ -159,7 +158,7 @@ public class RestrictionParser {
 		case SMTLIBConstants.INT:
 		case SMTLIBConstants.BITVEC:
 			IntValue maximum = null;
-			if (mLessEq.size() > 0) {
+			if (!mLessEq.isEmpty()) {
 				final Iterator<Term> lessEqlIter = mLessEq.iterator();
 				while (maximum == null && lessEqlIter.hasNext()) {
 					try {
@@ -184,7 +183,7 @@ public class RestrictionParser {
 			}
 
 			IntValue minimum = null;
-			if (mGreaterEq.size() > 0) {
+			if (!mGreaterEq.isEmpty()) {
 				final Iterator<Term> greaterEqlIter = mGreaterEq.iterator();
 
 				while (minimum == null && greaterEqlIter.hasNext()) {

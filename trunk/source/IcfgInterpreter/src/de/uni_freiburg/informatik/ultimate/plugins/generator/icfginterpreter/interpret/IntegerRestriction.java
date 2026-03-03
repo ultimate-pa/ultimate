@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.IntValue;
 
@@ -46,7 +46,7 @@ public class IntegerRestriction extends Restriction<IntValue> {
 	@Override
 	public String toString() {
 		final StringBuilder inEqual = new StringBuilder();
-		if (mInequal.size() > 0) {
+		if (!mInequal.isEmpty()) {
 			final Iterator<IntValue> iter = mInequal.iterator();
 			inEqual.append(", n != {").append(iter.next());
 			while (iter.hasNext()) {
@@ -65,9 +65,9 @@ public class IntegerRestriction extends Restriction<IntValue> {
 	 *
 	 * @return
 	 */
-	private static <T> T compareNull(final T a, final T b, final BiFunction<T, T, Boolean> comparator) {
+	private static <T> T compareNull(final T a, final T b, final BiPredicate<T, T> comparator) {
 		if (a != null && b != null) {
-			return comparator.apply(a, b) ? a : b;
+			return comparator.test(a, b) ? a : b;
 		}
 
 		return (a != null) ? a : b;

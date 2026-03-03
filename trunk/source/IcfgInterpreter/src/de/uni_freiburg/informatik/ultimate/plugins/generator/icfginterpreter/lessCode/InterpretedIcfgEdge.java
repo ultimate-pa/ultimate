@@ -82,8 +82,7 @@ public class InterpretedIcfgEdge {
 			/*
 			 * Updates are in order, so we only need to check the variables that have been havoced up to this point
 			 */
-			havocedAndReadVars
-					.addAll(update.getFreeVars().stream().filter(termVar -> havocedVars.contains(termVar)).toList());
+			havocedAndReadVars.addAll(update.getFreeVars().stream().filter(havocedVars::contains).toList());
 		}
 
 		mHavocedAndReadVars = Set.copyOf(havocedAndReadVars);
@@ -132,7 +131,7 @@ public class InterpretedIcfgEdge {
 	public boolean containsHavoc(final Map<TermVariable, Value> state) {
 		// Havoc happens if a variable undergoes an havoc update and is then read on this edge
 		// OR when a variable underwent a havoc update in a previous state and is read on this edge.
-		return mHavocedAndReadVars.size() > 0 || !state.keySet().containsAll(mReadVars);
+		return !mHavocedAndReadVars.isEmpty() || !state.keySet().containsAll(mReadVars);
 	}
 
 	public Map<TermVariable, Value> havocOrdered(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc,
@@ -192,9 +191,9 @@ public class InterpretedIcfgEdge {
 				} else {
 					try {
 						if (existingRestriction != null) {
-							restriction = existingRestriction.combine(guardRestriction.getRestriction(state, ndc));
+							restriction = existingRestriction.combine(guardRestriction.getRestriction(state));
 						} else {
-							restriction = guardRestriction.getRestriction(state, ndc);
+							restriction = guardRestriction.getRestriction(state);
 						}
 					} catch (final EmptyRangeException a) {
 						// The new range contains no values.
@@ -301,7 +300,6 @@ public class InterpretedIcfgEdge {
 		private final Set<TermVariable> mAuxVariables;
 		private Map<Term, RestrictionParser> mGuardRestrictions;
 		private final ILogger mLogger;
-		// private Term[] mHavocOrder;
 
 		public InterpretedIcfgEdgeBuilder(final IcfgEdge edge, final Set<TermVariable> auxVars, final ILogger logger) {
 			mGraphEdge = edge;
@@ -325,9 +323,8 @@ public class InterpretedIcfgEdge {
 		public InterpretedIcfgEdgeBuilder makeGuardFromTerm(final IUltimateServiceProvider services,
 				final ManagedScript mngScript, final UnmodifiableTransFormula formula, final Term term) {
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(formula.getInVars(), formula.getOutVars(),
-					formula.getNonTheoryConsts().size() == 0, formula.getNonTheoryConsts(),
-					formula.getBranchEncoders().size() == 0, formula.getBranchEncoders(),
-					formula.getAuxVars().size() == 0);
+					formula.getNonTheoryConsts().isEmpty(), formula.getNonTheoryConsts(),
+					formula.getBranchEncoders().isEmpty(), formula.getBranchEncoders(), formula.getAuxVars().isEmpty());
 			for (final TermVariable auxVar : formula.getAuxVars()) {
 				tfb.addAuxVar(auxVar);
 			}
@@ -346,13 +343,11 @@ public class InterpretedIcfgEdge {
 			final List<SolvedEquation> solvedEquations = new ArrayList<>(equations.solveForAllVars(script));
 
 			final Map<Term, RestrictionParser> guardRestrictions = new HashMap<>();
-			final List<Term> occuringTerms = new ArrayList<>();
 
 			final ArrayDeque<Term> havocOrder = new ArrayDeque<>();
 
 			while (!solvedEquations.isEmpty()) {
 				final Term solvedFor = solvedEquations.get(0).getLhs();
-				occuringTerms.add(solvedFor);
 
 				// Havoc InVars before AuxVars
 				if (formula.getInVars().containsValue(solvedFor)) {

@@ -172,7 +172,7 @@ public class BitVecValue implements Value {
 		if (other instanceof final BitVecValue bvv) {
 			return new BoolValue(!mValue.equals(bvv.mValue));
 		}
-		return BoolValue.mTrue;
+		return BoolValue.TRUE;
 	}
 
 	@Override
@@ -201,7 +201,7 @@ public class BitVecValue implements Value {
 		if (other instanceof final BitVecValue bvv) {
 			return new BoolValue(mValue.equals(bvv.mValue));
 		}
-		return BoolValue.mFalse;
+		return BoolValue.FALSE;
 	}
 
 	@Override

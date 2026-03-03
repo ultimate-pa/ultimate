@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -36,8 +37,8 @@ public class EqualityExtractor {
 			mEquations.addAll(equationsB.mEquations);
 		}
 
-		public void and(final Equation newEquation, final Script script) {
-			mEquations.add(newEquation);// .addAll(newEquation.solveForVars(script));
+		public void and(final Equation newEquation) {
+			mEquations.add(newEquation);
 		}
 
 		public Set<SolvedEquation> solveForAllVars(final Script script) {
@@ -66,7 +67,7 @@ public class EqualityExtractor {
 				// Solve the equation for all out variables that can change / are not constant
 				outData.addAll(equation.solveForVars(script, assignableOutVars));
 				final Set<TermVariable> freeVars = equation.getFreeVars();
-				if (!assignableOutVars.stream().anyMatch((var) -> freeVars.contains(var))) {
+				if (assignableOutVars.stream().noneMatch(freeVars::contains)) {
 					// We also solve for aux vars if no assignable out var is contained. ()
 					outData.addAll(equation.solveForVars(script, auxVars));
 				}
@@ -115,10 +116,9 @@ public class EqualityExtractor {
 		case SMTLIBConstants.OR:
 
 			final List<TermVariable> outVars = formula.getOutVars().entrySet().stream()
-					.filter((entry) -> formula.getAssignedVars().contains(entry.getKey()))
-					.map((entry) -> entry.getValue()).toList();
+					.filter(entry -> formula.getAssignedVars().contains(entry.getKey())).map(Entry::getValue).toList();
 
-			if (Arrays.asList(term.getFreeVars()).stream().anyMatch((var) -> outVars.contains(var))) {
+			if (Arrays.asList(term.getFreeVars()).stream().anyMatch(outVars::contains)) {
 				// This term contains information that is needed in updates.
 				logger.error("This plug-in does not handle or terms nested in other terms.\n"
 						+ "Try using SingleStatement in your Icfg / Cfg Builder settings.\nOffending Term:\n"
@@ -134,26 +134,26 @@ public class EqualityExtractor {
 			for (final Term subTerm : term.getParameters()) {
 				final Equation booleanEq = getBooleanEquivalence(subTerm);
 				if (booleanEq != null) {
-					out.and(booleanEq, script);
+					out.and(booleanEq);
 				} else {
 					out.and(extract(subTerm, script, formula, logger));
 				}
 			}
 			break;
 		case SMTLIBConstants.EQUALS:
-			out = addEquations(term.getParameters(), RelationSymbol.EQ, script);
+			out = addEquations(term.getParameters(), RelationSymbol.EQ);
 			break;
 		case SMTLIBConstants.LEQ:
-			out = addEquations(term.getParameters(), RelationSymbol.LEQ, script);
+			out = addEquations(term.getParameters(), RelationSymbol.LEQ);
 			break;
 		case SMTLIBConstants.LT:
-			out = addEquations(term.getParameters(), RelationSymbol.LESS, script);
+			out = addEquations(term.getParameters(), RelationSymbol.LESS);
 			break;
 		case SMTLIBConstants.GEQ:
-			out = addEquations(term.getParameters(), RelationSymbol.GEQ, script);
+			out = addEquations(term.getParameters(), RelationSymbol.GEQ);
 			break;
 		case SMTLIBConstants.GT:
-			out = addEquations(term.getParameters(), RelationSymbol.GREATER, script);
+			out = addEquations(term.getParameters(), RelationSymbol.GREATER);
 			break;
 		case SMTLIBConstants.NOT:
 			final Set<Equation> eqs = extract(term.getParameters()[0], script, formula, logger).getEquations();
@@ -196,11 +196,11 @@ public class EqualityExtractor {
 		return null;
 	}
 
-	private static Equations addEquations(final Term[] subTerms, final RelationSymbol relation, final Script script) {
-		final Equations out = new Equations();// new Equation(relation, subTerms[0], subTerms[1]));
+	private static Equations addEquations(final Term[] subTerms, final RelationSymbol relation) {
+		final Equations out = new Equations();
 
 		for (int i = 1; i < subTerms.length; i++) {
-			out.and(new Equation(relation, subTerms[i - 1], subTerms[i]), script);
+			out.and(new Equation(relation, subTerms[i - 1], subTerms[i]));
 		}
 
 		return out;

@@ -137,7 +137,7 @@ public class NonDeterministicChoice {
 	public BoolValue havocBool(final BooleanRestriction values) {
 		if (values != null && values.getInequal().size() == 1) {
 			// can only be the value that is not in the inequalities
-			return new BoolValue(values.getInequal().contains(BoolValue.mFalse));
+			return new BoolValue(values.getInequal().contains(BoolValue.FALSE));
 		}
 		// can be false or true (either both allowed or neither)
 		return new BoolValue(mRandom.nextBoolean());

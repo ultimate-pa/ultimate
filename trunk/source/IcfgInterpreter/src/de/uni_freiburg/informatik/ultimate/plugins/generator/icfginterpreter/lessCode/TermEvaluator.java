@@ -103,8 +103,6 @@ public class TermEvaluator {
 			return resultSelect.a().select(resultSelect.b());
 		}
 
-		// final Stream<Value> params = Arrays.stream(aTerm.getParameters()).map(x -> evaluate(state, x));
-
 		final Term[] paramTerms = aTerm.getParameters();
 		final Value[] params = new Value[paramTerms.length];
 		for (int i = 0; i < paramTerms.length; i++) {
@@ -149,20 +147,20 @@ public class TermEvaluator {
 			// single param term
 			return ((IntValue) params[0]).abs();
 		case "<=":
-			return compareTo(params, (a, b) -> a.leq(b));
+			return compareTo(params, IntValue::leq);
 		case "<":
-			return compareTo(params, (a, b) -> a.lss(b));
+			return compareTo(params, IntValue::lss);
 		case ">=":
-			return compareTo(params, (a, b) -> a.geq(b));
+			return compareTo(params, IntValue::geq);
 		case ">":
-			return compareTo(params, (a, b) -> a.gtr(b));
+			return compareTo(params, IntValue::gtr);
 
 		/**** ------ Bool ------ ****/
 
 		case "true":
-			return BoolValue.mTrue;
+			return BoolValue.TRUE;
 		case "false":
-			return BoolValue.mFalse;
+			return BoolValue.FALSE;
 		case "not":
 			// single param term
 			return ((BoolValue) params[0]).not();
@@ -199,21 +197,22 @@ public class TermEvaluator {
 			value = params[0];
 			for (int i = 1; i < params.length; i++) {
 				if (!value.equals(params[i]).getValue()) {
-					return BoolValue.mFalse;
+					return BoolValue.FALSE;
 				}
 			}
-			return BoolValue.mTrue;
+			return BoolValue.TRUE;
 		case "distinct":
+
 			// pairwise
 			final HashSet<Object> distinctValues = new HashSet<>();
 
 			for (final Value param : params) {
 				if (distinctValues.contains(param.getValue())) {
-					return BoolValue.mFalse;
+					return BoolValue.FALSE;
 				}
 				distinctValues.add(param.getValue());
 			}
-			return BoolValue.mTrue;
+			return BoolValue.TRUE;
 		case "ite":
 			// three param term
 			final BoolValue condition = (BoolValue) params[0];
@@ -245,11 +244,11 @@ public class TermEvaluator {
 		for (int i = 1; i < params.length; i++) {
 			final IntValue nextValue = (IntValue) params[i];
 			if (!comparison.apply(value, nextValue).getValue()) {
-				return BoolValue.mFalse;
+				return BoolValue.FALSE;
 			}
 			value = nextValue;
 		}
 
-		return BoolValue.mTrue;
+		return BoolValue.TRUE;
 	}
 }

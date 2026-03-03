@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -12,8 +13,8 @@ public class BoolValue implements Value {
 		mValue = value;
 	}
 
-	public final static BoolValue mTrue = new BoolValue(true);
-	public final static BoolValue mFalse = new BoolValue(false);
+	public static final BoolValue TRUE = new BoolValue(true);
+	public static final BoolValue FALSE = new BoolValue(false);
 
 	public BoolValue not() {
 		return new BoolValue(!mValue);
@@ -38,7 +39,7 @@ public class BoolValue implements Value {
 	@Override
 	public BoolValue distinct(final Value other) {
 		if (other instanceof final BoolValue bv) {
-			return new BoolValue(mValue != bv.mValue);
+			return new BoolValue(!Objects.equals(mValue, bv.mValue));
 		}
 		return new BoolValue(true);
 	}
@@ -61,7 +62,7 @@ public class BoolValue implements Value {
 	@Override
 	public BoolValue equals(final Value other) {
 		if (other instanceof final BoolValue bv) {
-			return new BoolValue(mValue == bv.mValue);
+			return new BoolValue(Objects.equals(mValue, bv.mValue));
 		}
 		return new BoolValue(false);
 	}

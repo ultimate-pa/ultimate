@@ -16,7 +16,7 @@ public class Util {
 		final ArrayDeque<Term> terms = new ArrayDeque<>();
 		terms.add(term);
 
-		while (terms.size() > 0) {
+		while (!terms.isEmpty()) {
 			final Term subTerm = terms.pop();
 			if (subTerm instanceof final ApplicationTerm at) {
 				if (at.getFunction().getName().equals(SMTLIBConstants.SELECT)) {

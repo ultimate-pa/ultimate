@@ -47,8 +47,7 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		final IntegerValidator validatePositive = IUltimatePreferenceItemValidator.ONLY_POSITIVE_NON_ZERO;
-
-		final BaseUltimatePreferenceItem[] mainPrefs = {
+		return new BaseUltimatePreferenceItem[] {
 				new UltimatePreferenceItem<>(OUTPUT_METHOD, OutputMethod.DONT_PRINT, PreferenceType.Radio,
 						OutputMethod.values()),
 				new UltimatePreferenceItem<>(EXECUTIONS_PER_ENTRYPOINT, 5, PreferenceType.Integer, validatePositive),
@@ -69,8 +68,6 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 
 				new UltimatePreferenceItem<>(MIN_BITS, 64, PreferenceType.Integer, new IntegerValidator(4, 2048)),
 				new UltimatePreferenceItem<>(MAX_BITS, 64, PreferenceType.Integer, new IntegerValidator(4, 2048)), };
-
-		return mainPrefs;
 	}
 
 	public enum OutputMethod {

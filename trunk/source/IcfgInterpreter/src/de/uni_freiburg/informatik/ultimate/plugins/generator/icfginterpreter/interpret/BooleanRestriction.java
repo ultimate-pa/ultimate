@@ -14,7 +14,7 @@ public class BooleanRestriction extends Restriction<BoolValue> {
 	@Override
 	public String toString() {
 		final StringBuilder inEqual = new StringBuilder();
-		if (mInequal.size() > 0) {
+		if (!mInequal.isEmpty()) {
 			final Iterator<BoolValue> iter = mInequal.iterator();
 			inEqual.append("b != {").append(iter.next());
 			while (iter.hasNext()) {

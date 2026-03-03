@@ -10,9 +10,9 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 
 public class IntValue implements Value {
 	private final BigInteger mValue;
-	public final static IntValue ZERO = new IntValue(BigInteger.ZERO);
-	public final static IntValue ONE = new IntValue(BigInteger.ONE);
-	public final static IntValue TWO = new IntValue(BigInteger.TWO);
+	public static final IntValue ZERO = new IntValue(BigInteger.ZERO);
+	public static final IntValue ONE = new IntValue(BigInteger.ONE);
+	public static final IntValue TWO = new IntValue(BigInteger.TWO);
 
 	public IntValue(final BigInteger value) {
 		mValue = value;
@@ -67,7 +67,7 @@ public class IntValue implements Value {
 		if (other instanceof final IntValue iv) {
 			return new BoolValue(!mValue.equals(iv.mValue));
 		}
-		return BoolValue.mTrue;
+		return BoolValue.TRUE;
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public class IntValue implements Value {
 		if (other instanceof final IntValue iv) {
 			return new BoolValue(mValue.equals(iv.mValue));
 		}
-		return BoolValue.mFalse;
+		return BoolValue.FALSE;
 	}
 
 	@Override

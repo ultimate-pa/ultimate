@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
@@ -95,13 +96,13 @@ public class Equation implements ITermProvider {
 		return selects;
 	}
 
-	public ArrayList<SolvedEquation> solveForAllVars(final Script script) {
+	public List<SolvedEquation> solveForAllVars(final Script script) {
 		final Set<Term> freeVars = new HashSet<>(getFreeVars());
 		freeVars.addAll(getSelects());
 		return solveForVars(script, freeVars);
 	}
 
-	public ArrayList<SolvedEquation> solveForVars(final Script script, final Collection<Term> variables) {
+	public List<SolvedEquation> solveForVars(final Script script, final Collection<Term> variables) {
 		final ArrayList<SolvedEquation> out = new ArrayList<>();
 
 		for (final Term termVar : variables) {

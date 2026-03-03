@@ -40,14 +40,13 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private IIcfg<? extends IcfgLocation> mIcfg;
-	private Map<ExecutionTermintionReason, List<PartialExecution>> mExecutions = new HashMap<>();
+	private Map<ExecutionTermintionReason, List<PartialExecution>> mExecutions;
 	private List<PartialExecution> mAggregateExecutions;
 	private OutputMethod outputMethod;
 
 	private Map<ExecutionTermintionReason, File> outputDirs;
 	private Map<ExecutionTermintionReason, Integer> terminationCount;
 	private Map<IcfgLocation, IResult> mFinalResults;
-	private Set<IcfgLocation> mErrorLocations;
 	private ExecutionTermintionReason aggregateOutputType;
 	private int aggregateOutputCount;
 	private boolean mIsAggregateFull;
@@ -66,7 +65,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			try {
 				// initiate / reset all variables
 				mIcfg = icfg;
-				mErrorLocations = Set.copyOf(IcfgUtils.getErrorLocations(mIcfg));
+				final Set<IcfgLocation> mErrorLocations = Set.copyOf(IcfgUtils.getErrorLocations(mIcfg));
 				mExecutions = new HashMap<>();
 				mFinalResults = new HashMap<>();
 				mIsAggregateFull = false;
@@ -103,8 +102,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				}
 
 				// Create executions
-				mExecutions = producer.makeExecutions(mLogger,
-						(executions, locations) -> outputBatch(executions, locations), mIsAggregateFull);
+				mExecutions = producer.makeExecutions(mLogger, this::outputBatch, mIsAggregateFull);
 
 				// Either no execution of the target type was found, or mExecutions is empty because of batching and
 				// should be supplemented with the batch aggregate.
@@ -181,7 +179,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			}
 			break;
 		case PRINT_TO_FILE:
-			final String nameBase = "Execution_" + String.valueOf(System.currentTimeMillis()) + "_";
+			final String nameBase = "Execution_" + System.currentTimeMillis() + "_";
 			for (final Entry<ExecutionTermintionReason, List<PartialExecution>> entry : executions.entrySet()) {
 				final ExecutionTermintionReason reason = entry.getKey();
 				addBatchToAggregateResult(reason, entry.getValue());
@@ -210,7 +208,9 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			}
 			break;
 		case PRINT_TO_TERMINAL:
-			for (final Entry<ExecutionTermintionReason, List<PartialExecution>> entry : executions.entrySet()) {
+			for (
+
+			final Entry<ExecutionTermintionReason, List<PartialExecution>> entry : executions.entrySet()) {
 				final ExecutionTermintionReason reason = entry.getKey();
 				addBatchToAggregateResult(reason, entry.getValue());
 
