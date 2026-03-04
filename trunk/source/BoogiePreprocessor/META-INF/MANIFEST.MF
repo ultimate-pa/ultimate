@@ -9,9 +9,11 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.core,
- de.uni_freiburg.informatik.ultimate.boogie.parser
+ de.uni_freiburg.informatik.ultimate.boogie.parser,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.boogie.symboltable
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.boogie.preprocessor
+Import-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie
