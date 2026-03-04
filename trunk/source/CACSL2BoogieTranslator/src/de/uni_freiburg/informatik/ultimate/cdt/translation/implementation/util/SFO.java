@@ -398,6 +398,11 @@ public final class SFO {
 		 */
 		BITWISE("bitwise"),
 
+		/**
+		 * Auxiliary variable used to model a boolean lock
+		 */
+		LOCK("lock"),
+
 		;
 
 		private final String mId;

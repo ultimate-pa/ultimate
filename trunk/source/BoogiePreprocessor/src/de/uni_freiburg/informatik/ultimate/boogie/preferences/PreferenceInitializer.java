@@ -48,6 +48,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_USE_MEMORY_SLICER = "Use memory slicer";
 	public static final String LABEL_REPLACE_WHILE_AND_CONDITIONAL =
 			"Replace while statements and if-then-else statements";
+	public static final String LABEL_REPLACE_ATOMICS = "Replace atomic blocks with locks";
 
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -61,6 +62,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_EMIT_BACKTRANSLATION_WARNINGS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_SIMPLIFIER, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_MEMORY_SLICER, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_REPLACE_WHILE_AND_CONDITIONAL, false, PreferenceType.Boolean), };
+				new UltimatePreferenceItem<>(LABEL_REPLACE_WHILE_AND_CONDITIONAL, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REPLACE_ATOMICS, false, PreferenceType.Boolean), };
 	}
 }
