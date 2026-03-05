@@ -173,7 +173,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		 * the original trace, i.e. we have to edit the proof s.t. it is a proof for the original trace
 		 */
 
-		final ContextSimplifier<L> contextSimplifier = new ContextSimplifier(trace, controlConfigurations, condition);
+		final ContextSimplifier<L> contextSimplifier = new ContextSimplifier<>(trace, controlConfigurations, condition);
 		contextSimplifier.getSimpleTrace();
 
 		return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
