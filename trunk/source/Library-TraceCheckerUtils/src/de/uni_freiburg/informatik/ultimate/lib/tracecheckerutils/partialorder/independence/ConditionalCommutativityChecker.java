@@ -173,7 +173,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		 * the original trace, i.e. we have to edit the proof s.t. it is a proof for the original trace
 		 */
 
-		final ContextSimplifier contextSimplifier = new ContextSimplifier(trace, controlConfigurations, condition);
+		final ContextSimplifier<L> contextSimplifier = new ContextSimplifier(trace, controlConfigurations, condition);
 		contextSimplifier.getSimpleTrace();
 
 		return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
@@ -220,14 +220,14 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 		mStatistics.reportTraceCheck(result);
 		return switch (result.getCounterexampleFeasibility()) {
-		case UNKNOWN -> new Result<>(ResultType.UNKNOWN_CHECK);
-		case SAT -> new Result<>(ResultType.CONDITION_NOT_SATISFIED);
-		case UNSAT -> {
-			if (!result.somePerfectSequenceFound()) {
-				yield new Result<>(ResultType.PROOF_IMPERFECT);
+			case UNKNOWN -> new Result<>(ResultType.UNKNOWN_CHECK);
+			case SAT -> new Result<>(ResultType.CONDITION_NOT_SATISFIED);
+			case UNSAT -> {
+				if (!result.somePerfectSequenceFound()) {
+					yield new Result<>(ResultType.PROOF_IMPERFECT);
+				}
+				yield new Result<>(postProcessRefinementResult(result));
 			}
-			yield new Result<>(postProcessRefinementResult(result));
-		}
 		};
 	}
 
