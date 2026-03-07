@@ -12,6 +12,13 @@ public final class ProgramExecutions<L extends IAction> extends BasePayloadConta
 	private static final long serialVersionUID = -5577390430583256394L;
 
 	public record Pair<A, B>(A a, B b) {
+		@Override
+		public boolean equals(final Object other) {
+			if (other instanceof final Pair p) {
+				return a == p.a() && b == p.b();
+			}
+			return false;
+		}
 	}
 
 	public record Triple<A, B, C>(A a, B b, C c) {

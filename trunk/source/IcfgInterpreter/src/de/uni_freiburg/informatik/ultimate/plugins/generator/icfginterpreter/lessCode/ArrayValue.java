@@ -5,12 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
 
 public class ArrayValue implements Value {
 	private final TermVariable mArrayVar;
@@ -93,11 +92,7 @@ public class ArrayValue implements Value {
 
 			final Term valueTerm = entry.getValue().toTerm(script, var).get(var);
 
-			final Term[] keyList = new Term[entry.getKey().size()];
-			for (int i = 0; i < keyList.length; i++) {
-				keyList[i] = entry.getKey().get(i).toTerm(script, var).get(var);
-			}
-			final Term select = SmtUtils.multiDimensionalSelect(script, var, new ArrayIndex(keyList));
+			final Term select = IcfgInterpreterObserver.getValueStorage().getSelect(script, var, entry.getKey());
 
 			out.put(select, valueTerm);
 		}

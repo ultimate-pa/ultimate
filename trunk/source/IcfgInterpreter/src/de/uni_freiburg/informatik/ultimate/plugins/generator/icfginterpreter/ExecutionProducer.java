@@ -746,8 +746,7 @@ public class ExecutionProducer {
 			}
 
 			final List<InterpretedIcfgEdge> newEdges = new ArrayList<>(edges());
-			final List<Map<TermVariable, Value>> newStates = new ArrayList<>(
-					states().stream().map(map -> new HashMap<>(map)).toList());
+			final List<Map<TermVariable, Value>> newStates = new ArrayList<>(states());
 
 			int index = newStates.size() - 1;
 
@@ -757,7 +756,7 @@ public class ExecutionProducer {
 			nextEdge.removeSafe(currentVars);
 
 			// Propagate havoced variables backwards
-			while (!previousState.keySet().containsAll(currentVars)) {
+			while (!currentVars.isEmpty()) {
 				// Set of variables that were havoced / removed from state on the edge leading to this state
 				Set<TermVariable> havocedToThisState;
 				if (index > 0) {
@@ -768,6 +767,10 @@ public class ExecutionProducer {
 				}
 
 				final Set<TermVariable> finishedVars = new HashSet<>();
+
+				// Make a copy of the state, as changing it would otherwise affect other executions.
+				// This is preferable to blindly cloning every state in the trace at every step.
+				newStates.set(index, new HashMap<>(previousState));
 
 				for (final TermVariable variable : currentVars) {
 					if (previousState.containsKey(variable)) {

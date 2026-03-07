@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ValueToTermStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences.OutputMethod;
 
@@ -50,6 +51,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private int aggregateOutputCount;
 	private boolean mIsAggregateFull;
 	private static IcfgInterpreterObserver mInstance = null;
+	private static ValueToTermStorage mValueStorage;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -59,6 +61,10 @@ public class IcfgInterpreterObserver extends BaseObserver {
 
 	public static ILogger getLogger() {
 		return mInstance == null ? null : mInstance.mLogger;
+	}
+
+	public static ValueToTermStorage getValueStorage() {
+		return mValueStorage;
 	}
 
 	@Override
@@ -86,6 +92,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mFinalResults = new HashMap<>();
 				mIsAggregateFull = false;
 				mAggregateExecutions = new ArrayList<>();
+				mValueStorage = new ValueToTermStorage();
 				IcfgInterpreterPreferences.updatePreferences();
 				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices, mErrorLocations);
 

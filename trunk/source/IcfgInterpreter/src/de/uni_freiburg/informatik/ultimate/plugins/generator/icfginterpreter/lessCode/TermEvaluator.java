@@ -1,21 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
-import java.math.BigInteger;
-import java.util.ArrayDeque;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
@@ -33,7 +27,7 @@ public class TermEvaluator {
 			}
 			return value;
 		case final ConstantTerm ct:
-			return evaluateConstantTerm(ct);
+			return IcfgInterpreterObserver.getValueStorage().getConstant(ct);
 		case final QuantifiedFormula qf:
 			IcfgInterpreterObserver.getLogger()
 					.error("This plug-in does not handle quantified formulas.\n" + "Formula: " + qf.toStringDirect());
@@ -43,42 +37,15 @@ public class TermEvaluator {
 		}
 	}
 
-	private static Value evaluateConstantTerm(final ConstantTerm termConst) {
-		final Object valueUnparsed = termConst.getValue();
-		final Sort sort = termConst.getSort();
-
-		switch (sort.getName()) {
-		case SMTLIBConstants.INT:
-			BigInteger value;
-			if (valueUnparsed instanceof final Rational rat && rat.denominator().equals(BigInteger.ONE)) {
-				value = rat.numerator();
-			} else if (valueUnparsed instanceof final BigInteger bi) {
-				value = bi;
-			} else {
-				throw new AssertionError();
-			}
-			return new IntValue(value);
-		case SMTLIBConstants.BOOL:
-			return new BoolValue((boolean) valueUnparsed);
-
-		case SMTLIBConstants.BITVEC:
-			final int length = Integer.parseInt(sort.getIndices()[0]);
-			return new BitVecValue((BigInteger) valueUnparsed, length);
-		default:
-			throw new UnsupportedTermError();
-		}
-	}
-
-	private static Pair<ArrayValue, ArrayDeque<Value>> unpackSelect(final Map<TermVariable, Value> state,
-			final Term term) {
-		final ArrayDeque<Value> keys = new ArrayDeque<>();
+	private static Pair<ArrayValue, List<Value>> unpackSelect(final Map<TermVariable, Value> state, final Term term) {
+		final List<Value> keys = new ArrayList<>();
 		Term arrayTerm = term;
 		while (arrayTerm instanceof final ApplicationTerm at
 				&& at.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
 			arrayTerm = at.getParameters()[0];
 
 			final Term selectKey = at.getParameters()[1];
-			keys.push(evaluate(state, selectKey));
+			keys.add(evaluate(state, selectKey));
 		}
 		if (evaluate(state, arrayTerm) instanceof final ArrayValue av) {
 			return new Pair<>(av, keys);
@@ -88,8 +55,8 @@ public class TermEvaluator {
 
 	private static Value evaluateApplicationTerm(final Map<TermVariable, Value> state, final ApplicationTerm aTerm) {
 		Value value;
-		final Iterator<Value> iter;
 		IntValue intValue;
+		BoolValue boolValue;
 		final String operation = aTerm.getFunction().getName();
 
 		/**** ------ ArraysEx ------ ****/
@@ -103,50 +70,61 @@ public class TermEvaluator {
 			// If the underlying array is not 1 dimensional, then arrayT_1 is (select arrayT_2 key_2)
 			// this continues until we have an array term that is a TermVariable.
 			// we then do arrayT_N[key_N][key_N-1]...[key_1] = value_1
-			final Pair<ArrayValue, ArrayDeque<Value>> resultSubSelect = unpackSelect(state, arrayTerm);
-			final ArrayDeque<Value> keysPartial = resultSubSelect.b();
+			final Pair<ArrayValue, List<Value>> resultSubSelect = unpackSelect(state, arrayTerm);
+			final List<Value> keysPartial = resultSubSelect.b();
 			keysPartial.addLast(lastKey);
-			return resultSubSelect.a().store(List.copyOf(keysPartial), value);
+			return resultSubSelect.a().store(keysPartial, value);
 
 		case "select":
-			final Pair<ArrayValue, ArrayDeque<Value>> resultSelect = unpackSelect(state, aTerm);
-			return resultSelect.a().select(List.copyOf(resultSelect.b()));
+			final Pair<ArrayValue, List<Value>> resultSelect = unpackSelect(state, aTerm);
+			return resultSelect.a().select(resultSelect.b());
 		}
 
-		final Stream<Value> params = Arrays.stream(aTerm.getParameters()).map(x -> evaluate(state, x));
+		// final Stream<Value> params = Arrays.stream(aTerm.getParameters()).map(x -> evaluate(state, x));
+
+		final Term[] paramTerms = aTerm.getParameters();
+		final Value[] params = new Value[paramTerms.length];
+		for (int i = 0; i < paramTerms.length; i++) {
+			params[i] = evaluate(state, paramTerms[i]);
+		}
 
 		switch (operation) {
 		/**** ------ Ints ------ ****/
 		case "-":
-			iter = params.iterator();
-			intValue = (IntValue) iter.next();
-			if (!iter.hasNext()) {
+			intValue = (IntValue) params[0];
+			if (params.length == 1) {
 				// case of negation, return -X
 				return intValue.negate();
 			}
 			// case of subtraction return X - Y - Z - ...
-			while (iter.hasNext()) {
-				intValue = intValue.subtract((IntValue) iter.next());
+			for (int i = 1; i < params.length; i++) {
+				intValue = intValue.subtract((IntValue) params[i]);
 			}
 			return intValue;
 		case "+":
-			return params.reduce(IntValue.ZERO, (x, y) -> ((IntValue) x).add((IntValue) y));
+			intValue = (IntValue) params[0];
+			for (int i = 1; i < params.length; i++) {
+				intValue = intValue.add((IntValue) params[i]);
+			}
+			return intValue;
 		case "*":
-			return params.reduce(IntValue.ONE, (x, y) -> ((IntValue) x).multiply((IntValue) y));
+			intValue = (IntValue) params[0];
+			for (int i = 1; i < params.length; i++) {
+				intValue = intValue.multiply((IntValue) params[i]);
+			}
+			return intValue;
 		case "div":
-			iter = params.iterator();
-			intValue = (IntValue) iter.next();
-			while (iter.hasNext()) {
-				intValue = intValue.div((IntValue) iter.next());
+			intValue = (IntValue) params[0];
+			for (int i = 1; i < params.length; i++) {
+				intValue = intValue.div((IntValue) params[i]);
 			}
 			return intValue;
 		case "mod":
 			// not chainable / left/right-associative
-			iter = params.iterator();
-			return ((IntValue) iter.next()).mod((IntValue) iter.next());
+			return ((IntValue) params[0]).mod((IntValue) params[1]);
 		case "abs":
 			// single param term
-			return ((IntValue) params.iterator().next()).abs();
+			return ((IntValue) params[0]).abs();
 		case "<=":
 			return compareTo(params, (a, b) -> a.leq(b));
 		case "<":
@@ -164,30 +142,40 @@ public class TermEvaluator {
 			return BoolValue.mFalse;
 		case "not":
 			// single param term
-			return ((BoolValue) params.iterator().next()).not();
+			return ((BoolValue) params[0]).not();
 		case "=>":
 			// right associative, params [a, b, c, d] means (a => (b => (c => d)))
-			final List<Value> paramList = params.toList();
-			BoolValue rightSideElement = (BoolValue) paramList.getLast();
-			for (int i = paramList.size() - 2; 0 <= i; i--) {
-				rightSideElement = ((BoolValue) paramList.get(i)).implies(rightSideElement);
+			BoolValue rightSideElement = (BoolValue) params[params.length - 1];
+			for (int i = params.length - 2; 0 <= i; i--) {
+				rightSideElement = ((BoolValue) params[i]).implies(rightSideElement);
 			}
 			return rightSideElement;
 		case "and":
-			return params.reduce(BoolValue.mTrue, (x, y) -> ((BoolValue) x).and((BoolValue) y));
+			boolValue = (BoolValue) params[0];
+			for (int i = 1; i < params.length; i++) {
+				boolValue = boolValue.and((BoolValue) params[i]);
+			}
+			return boolValue;
 		case "or":
-			return params.reduce(BoolValue.mFalse, (x, y) -> ((BoolValue) x).or((BoolValue) y));
+			boolValue = (BoolValue) params[0];
+			for (int i = 1; i < params.length; i++) {
+				boolValue = boolValue.or((BoolValue) params[i]);
+			}
+			return boolValue;
 		case "xor":
-			return params.reduce(BoolValue.mFalse, (x, y) -> ((BoolValue) x).xor((BoolValue) y));
+			boolValue = (BoolValue) params[0];
+			for (int i = 1; i < params.length; i++) {
+				boolValue = boolValue.xor((BoolValue) params[i]);
+			}
+			return boolValue;
 
 		/**** ------ Generic ------ ****/
 
 		case "=":
 			// chainable
-			iter = params.iterator();
-			value = iter.next();
-			while (iter.hasNext()) {
-				if (!value.equals(iter.next()).getValue()) {
+			value = params[0];
+			for (int i = 1; i < params.length; i++) {
+				if (!value.equals(params[i]).getValue()) {
 					return BoolValue.mFalse;
 				}
 			}
@@ -196,7 +184,7 @@ public class TermEvaluator {
 			// pairwise
 			final HashSet<Object> distinctValues = new HashSet<>();
 
-			for (final Value param : params.toList()) {
+			for (final Value param : params) {
 				if (distinctValues.contains(param.getValue())) {
 					return BoolValue.mFalse;
 				}
@@ -205,10 +193,9 @@ public class TermEvaluator {
 			return BoolValue.mTrue;
 		case "ite":
 			// three param term
-			iter = params.iterator();
-			final BoolValue condition = (BoolValue) iter.next();
-			final Value a = iter.next();
-			final Value b = iter.next();
+			final BoolValue condition = (BoolValue) params[0];
+			final Value a = params[1];
+			final Value b = params[2];
 			return condition.getValue() ? a : b;
 
 		default:
@@ -228,17 +215,18 @@ public class TermEvaluator {
 
 	}
 
-	private static final BoolValue compareTo(final Stream<Value> params,
+	private static final BoolValue compareTo(final Value[] params,
 			final BiFunction<IntValue, IntValue, BoolValue> comparison) {
-		final Iterator<Value> iter = params.iterator();
-		IntValue value = (IntValue) iter.next();
-		while (iter.hasNext()) {
-			final IntValue nextValue = (IntValue) iter.next();
+		IntValue value = (IntValue) params[0];
+
+		for (int i = 1; i < params.length; i++) {
+			final IntValue nextValue = (IntValue) params[i];
 			if (!comparison.apply(value, nextValue).getValue()) {
 				return BoolValue.mFalse;
 			}
 			value = nextValue;
 		}
+
 		return BoolValue.mTrue;
 	}
 }
