@@ -92,7 +92,7 @@ public final class SifaResultPrinter {
 
 			for (final IcfgEdge edge : current.getOutgoingEdges()) {
 				final IcfgLocation target = edge.getTarget();
-				if (target.getProcedure().equals(procedure) && visited.add(target)) {
+				if (target != null && target.getProcedure().equals(procedure) && visited.add(target)) {
 					worklist.add(target);
 				}
 			}
