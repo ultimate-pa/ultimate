@@ -5,7 +5,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition.PreparedRelation;
@@ -14,9 +21,39 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
-final class InterferenceUtils {
+public final class InterferenceUtils {
 
 	private InterferenceUtils() {
+	}
+
+	public static boolean modifiesGlobals(final TransFormula tf) {
+		return tf.getAssignedVars().stream().anyMatch(IProgramVar::isGlobal);
+	}
+
+	public static String getForkedThreadOrNull(final IcfgEdge edge) {
+		if (edge instanceof final IIcfgForkTransitionThreadCurrent<?> forkEdge) {
+			return forkEdge.getNameOfForkedProcedure();
+		}
+		return null;
+	}
+
+	public static boolean isJoinAssigningGlobal(final IcfgEdge edge) {
+		if (edge instanceof final IIcfgJoinTransitionThreadCurrent<?> joinCurrent) {
+			return joinCurrent.getJoinSmtArguments().getAssignmentLhs().stream().anyMatch(IProgramVar::isGlobal);
+		}
+		if (edge instanceof final IIcfgJoinTransitionThreadOther<?> joinOther) {
+			return modifiesGlobals(joinOther.getAssignmentOfJoin());
+		}
+		return false;
+	}
+
+	public static Set<IProgramVar> getJoinAssignedGlobals(final IcfgEdge edge) {
+		if (!(edge instanceof final IIcfgJoinTransitionThreadCurrent<?> joinCurrent)) {
+			return Set.of();
+		}
+		final List<IProgramVar> globals =
+				joinCurrent.getJoinSmtArguments().getAssignmentLhs().stream().filter(IProgramVar::isGlobal).toList();
+		return globals.isEmpty() ? Set.of() : Set.copyOf(globals);
 	}
 
 	static List<PreparedRelation> prepareNonFalseRelations(final Collection<IPredicate> relations,
@@ -33,6 +70,7 @@ final class InterferenceUtils {
 	static IPredicate applyUntilFixpoint(final IPredicate state, final List<PreparedRelation> preparedRelations,
 			final IDomain domain, final RelationalPredicatePostcondition postcondition, final int wideningThreshold,
 			final SifaStats stats) {
+		// opt: nothing to apply
 		if (preparedRelations.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
@@ -45,6 +83,7 @@ final class InterferenceUtils {
 			IPredicate generated = current;
 			for (final PreparedRelation prepared : preparedRelations) {
 				final IPredicate post = postcondition.strongestPostcondition(frontier, prepared);
+				// opt: false SP contributes nothing
 				if (SmtUtils.isFalseLiteral(post.getFormula())) {
 					continue;
 				}

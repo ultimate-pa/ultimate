@@ -1,17 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceFactory.EdgePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -37,29 +34,6 @@ public class PerAbstractLocationInterference implements IInterference {
 		}
 		mSourceAbstractLocations = Set.copyOf(sourceAbstractLocations);
 		mTargetAbstractLocations = Set.copyOf(targetAbstractLocations);
-	}
-
-	@Override
-	public IInterference build(final String threadId, final Map<IcfgLocation, IPredicate> locationStates,
-			final InterferenceFactory factory) {
-		if (!factory.hasAbstractLocationIds()) {
-			return new PerThreadInterference(factory.falsePredicate()).build(threadId, locationStates, factory);
-		}
-		final Map<AbstractLocationRelation, IPredicate> relationPredicates = new HashMap<>();
-		final Map<IcfgLocation, Integer> sourceLocationPartitions = factory
-				.computeSourcePartitionsForSingletonWithForks(locationStates);
-		for (final EdgePredicate edgePred : factory.collectEdgePredicates(threadId, locationStates)) {
-			final Integer sourceAbstractLocation = factory.getAbstractLocationIdOrNull(edgePred.source());
-			final Integer targetAbstractLocation = factory.getAbstractLocationIdOrNull(edgePred.target());
-			if (sourceAbstractLocation == null || targetAbstractLocation == null) {
-				continue;
-			}
-			final int sourceLocationPartition = sourceLocationPartitions.getOrDefault(edgePred.source(), 0);
-			final AbstractLocationRelation relation = new AbstractLocationRelation(sourceAbstractLocation,
-					targetAbstractLocation, sourceLocationPartition);
-			factory.mergeIntoWithJoin(relationPredicates, relation, edgePred.predicate());
-		}
-		return new PerAbstractLocationInterference(relationPredicates);
 	}
 
 	public Set<AbstractLocationRelation> getAbstractLocationRelations() {
@@ -115,6 +89,7 @@ public class PerAbstractLocationInterference implements IInterference {
 			final RelationalPredicatePostcondition postcondition, final GhostVariableManager ghostVars,
 			final ManagedScript managedScript, final BasicPredicateFactory factory, final int wideningThreshold,
 			final SifaStats stats) {
+		// opt: trivial (no relations)
 		if (isTrivial()) {
 			return state;
 		}

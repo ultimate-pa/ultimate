@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -41,7 +42,7 @@ public class SinglePassConcurrentBaselineInterpreter implements ISifaInterpreter
 	private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
 	private final Collection<IcfgLocation> mRequestedLocationsOfInterest;
 
-	private final Set<String> mThreadIds;
+	private final List<String> mThreadIds;
 	private final LoiExpansion mLoiExpansion;
 	private final SifaResultPrinter mResultPrinter;
 	private final RelationalPredicatePostcondition mPostcondition;

@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Collection;
-import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
@@ -14,8 +12,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 public interface IInterference {
 	Collection<IPredicate> getPredicates();
-
-	IInterference build(String threadId, Map<IcfgLocation, IPredicate> locationStates, InterferenceFactory factory);
 
 	boolean isTrivial();
 

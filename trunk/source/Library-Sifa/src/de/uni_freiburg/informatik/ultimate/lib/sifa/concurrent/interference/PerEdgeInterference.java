@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -9,7 +8,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceFactory.EdgePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -17,25 +15,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 public class PerEdgeInterference implements IInterference {
 
-	private record EdgeKey(IcfgLocation source, IcfgLocation target) {
+	record EdgeKey(IcfgLocation source, IcfgLocation target) {
 	}
 
 	private final Map<EdgeKey, IPredicate> mEdgePredicates;
 
 	public PerEdgeInterference(final Map<EdgeKey, IPredicate> edgePredicates) {
 		mEdgePredicates = Map.copyOf(edgePredicates);
-	}
-
-	@Override
-	public IInterference build(final String threadId, final Map<IcfgLocation, IPredicate> locationStates,
-			final InterferenceFactory factory) {
-		final Map<EdgeKey, IPredicate> edgePredicates = new HashMap<>();
-		for (final EdgePredicate edgePred : factory.collectEdgePredicates(threadId, locationStates)) {
-			// edges between distinct location pairs are kept separate; same-pair edges (rare) are joined
-			factory.mergeIntoWithJoin(edgePredicates, new EdgeKey(edgePred.source(), edgePred.target()),
-					edgePred.predicate());
-		}
-		return new PerEdgeInterference(edgePredicates);
 	}
 
 	@Override
@@ -82,6 +68,7 @@ public class PerEdgeInterference implements IInterference {
 			final RelationalPredicatePostcondition postcondition, final GhostVariableManager ghostVars,
 			final ManagedScript managedScript, final BasicPredicateFactory factory, final int wideningThreshold,
 			final SifaStats stats) {
+		// opt: trivial (no edges)
 		if (isTrivial()) {
 			return state;
 		}

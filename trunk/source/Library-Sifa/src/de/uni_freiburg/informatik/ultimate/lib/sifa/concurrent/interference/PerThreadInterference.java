@@ -2,13 +2,10 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceFactory.EdgePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -21,19 +18,6 @@ public class PerThreadInterference implements IInterference {
 
 	public PerThreadInterference(final IPredicate predicate) {
 		mPredicate = predicate;
-	}
-
-	@Override
-	public IInterference build(final String threadId, final Map<IcfgLocation, IPredicate> locationStates,
-			final InterferenceFactory factory) {
-		IPredicate merged = null;
-		for (final EdgePredicate edgePred : factory.collectEdgePredicates(threadId, locationStates)) {
-			merged = merged == null ? edgePred.predicate() : factory.join(merged, edgePred.predicate());
-		}
-		if (merged == null) {
-			merged = factory.falsePredicate();
-		}
-		return new PerThreadInterference(merged);
 	}
 
 	@Override
@@ -73,6 +57,7 @@ public class PerThreadInterference implements IInterference {
 			final RelationalPredicatePostcondition postcondition, final GhostVariableManager ghostVars,
 			final ManagedScript managedScript, final BasicPredicateFactory factory, final int wideningThreshold,
 			final SifaStats stats) {
+		// opt: trivial (false predicate)
 		if (isTrivial()) {
 			return state;
 		}

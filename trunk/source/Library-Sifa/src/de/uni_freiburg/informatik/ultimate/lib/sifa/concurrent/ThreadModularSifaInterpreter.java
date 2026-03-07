@@ -20,8 +20,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LoiExpansion;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.SingleThreadIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
@@ -47,9 +47,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final Map<String, Collection<IcfgLocation>> mThreadLois;
 	private final Map<String, IcfgInterpreter> mThreadInterpreters;
 
-	private final Set<String> mThreadIds;
-	private final InterferenceFactory mInterferenceFactory;
-	private final IInterference mInterferenceAbstraction;
+	private final List<String> mThreadIds;
+	private final IInterferenceFactory mInterferenceFactory;
 	private final LoiExpansion mLoiExpansion;
 	private final SifaResultPrinter mResultPrinter;
 	private final ThreadModularProofChecker mProofChecker;
@@ -92,7 +91,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mAnalysisDomain = setup.analysisDomain();
 		mLoopSumFactory = setup.loopSumFactory();
 		mInterferenceFactory = setup.interferenceFactory();
-		mInterferenceAbstraction = setup.interferenceBuilder();
 		mPostcondition = setup.postcondition();
 		mProofChecker = setup.proofChecker();
 		mThreadIcfgs = new HashMap<>();
@@ -157,8 +155,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			if (locationStates == null) {
 				continue;
 			}
-			final IInterference rebuilt = mInterferenceAbstraction.build(threadId, locationStates,
-					mInterferenceFactory);
+			final IInterference rebuilt = mInterferenceFactory.buildFromStates(threadId, locationStates);
+			// opt: trivial interference has no effect
 			if (!rebuilt.isTrivial()) {
 				rebuiltInterferences.put(threadId, rebuilt);
 			}
@@ -207,8 +205,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private IcfgInterpreter createThreadInterpreter(final String threadId) {
 		final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
 		final Collection<IcfgLocation> lois = mThreadLois.get(threadId);
-		return new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg, lois, mAnalysisDomain, mFluid,
-				mLoopSumFactory, mCallSumFactory, null);
+		return new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg, lois, mAnalysisDomain,
+				mFluid, mLoopSumFactory, mCallSumFactory, null);
 	}
 
 	private void verifyProof(final FixpointResult fixpoint) {

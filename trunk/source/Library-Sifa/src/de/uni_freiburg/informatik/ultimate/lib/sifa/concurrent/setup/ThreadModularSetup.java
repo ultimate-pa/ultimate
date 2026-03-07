@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -15,8 +18,11 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerAbstractLocationInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerEdgeInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerThreadInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
@@ -41,10 +47,11 @@ public final class ThreadModularSetup {
 		final PrimedDefaultIcfgSymbolTable symbolTable = (PrimedDefaultIcfgSymbolTable) tools.getSymbolTable();
 		final var factory = tools.getFactory();
 		final ManagedScript script = tools.getManagedScript();
-		final ILogger logger = services.getLoggingService().getLogger(InterferenceFactory.class);
-		final Set<String> threadIds = discoverThreadIds(icfg);
+		final ILogger logger = services.getLoggingService().getLogger(InterferenceEdgeCollector.class);
+		final List<String> threadIds = discoverThreadIds(icfg);
 		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg);
-		final ThreadActivityPreanalysis activityPreanalysis = ThreadActivityPreanalysis.compute(icfg, threadIds);
+		final ThreadActivityPreanalysis activityPreanalysis =
+				ThreadActivityPreanalysis.compute(icfg, new LinkedHashSet<>(threadIds));
 
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
@@ -54,9 +61,13 @@ public final class ThreadModularSetup {
 				ghostVars, locationIds, icfg.getProcedureEntryNodes());
 		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services, script,
 				factory, symbolTable, true);
-		final InterferenceFactory interferenceFactory = new InterferenceFactory(translator, analysisDomain, script,
-				factory, settings.interferenceType(), logger);
-		final IInterference interferenceBuilder = interferenceFactory.createBuilder();
+		final InterferenceEdgeCollector edgeCollector = new InterferenceEdgeCollector(translator, analysisDomain,
+				script, factory, logger);
+		final IInterferenceFactory interferenceFactory = switch (settings.interferenceType()) {
+		case PER_THREAD -> new PerThreadInterferenceFactory(edgeCollector);
+		case PER_EDGE -> new PerEdgeInterferenceFactory(edgeCollector);
+		case PER_ABSTRACT_LOCATION -> new PerAbstractLocationInterferenceFactory(edgeCollector);
+		};
 
 		final boolean includeInterferencePreState = true;
 		final ThreadModularProofChecker proofChecker = new ThreadModularProofChecker(icfg.getCfgSmtToolkit(),
@@ -64,16 +75,41 @@ public final class ThreadModularSetup {
 				activityPreanalysis.getMultiForkedThreads(), includeInterferencePreState);
 
 		return new SetupResult(threadIds, analysisDomain, defaultLoopSumFactory, interferenceFactory,
-				interferenceBuilder, postcondition, proofChecker);
+				postcondition, proofChecker);
 	}
 
-	private static Set<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
-		final Set<String> ids = new LinkedHashSet<>();
-		ids.add(MAIN_THREAD);
+	/** Thread IDs in topological fork order: forking thread before any it forks. */
+	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
+		// fork graph: forker -> forked threads
+		final Map<String, Set<String>> forksByThread = new HashMap<>();
 		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
-			ids.add(fork.getNameOfForkedProcedure());
+			final String forkingThread = fork.getSource().getProcedure();
+			final String forkedThread = fork.getNameOfForkedProcedure();
+			forksByThread.computeIfAbsent(forkingThread, k -> new LinkedHashSet<>()).add(forkedThread);
 		}
-		return ids;
+		// BFS from MAIN_THREAD gives topological order
+		final List<String> ordered = new ArrayList<>();
+		final Set<String> visited = new LinkedHashSet<>();
+		ordered.add(MAIN_THREAD);
+		visited.add(MAIN_THREAD);
+		for (int i = 0; i < ordered.size(); i++) {
+			final String current = ordered.get(i);
+			final Set<String> forked = forksByThread.get(current);
+			if (forked != null) {
+				for (final String child : forked) {
+					if (visited.add(child)) {
+						ordered.add(child);
+					}
+				}
+			}
+		}
+		// threads not reachable via fork edges (shouldn't happen, but be safe)
+		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
+			if (visited.add(fork.getNameOfForkedProcedure())) {
+				ordered.add(fork.getNameOfForkedProcedure());
+			}
+		}
+		return ordered;
 	}
 
 	private static Map<IcfgLocation, Integer> computeLocationIds(final ThreadModularSifaSettings settings,
@@ -87,19 +123,20 @@ public final class ThreadModularSetup {
 	}
 
 	private static GhostVariableManager createGhostVariablesIfEnabled(final ThreadModularSifaSettings settings,
-			final ManagedScript script, final PrimedDefaultIcfgSymbolTable symbolTable, final Set<String> threadIds,
+			final ManagedScript script, final PrimedDefaultIcfgSymbolTable symbolTable, final List<String> threadIds,
 			final IIcfg<IcfgLocation> icfg, final Map<IcfgLocation, Integer> locationIds,
 			final Set<String> impreciseLocationThreads) {
 		if (!settings.useGhostLocations()) {
 			return null;
 		}
-		return GhostVariableManager.create(script, locationIds, threadIds, icfg.getProcedureEntryNodes(), symbolTable,
+		return GhostVariableManager.create(script, locationIds, new LinkedHashSet<>(threadIds),
+				icfg.getProcedureEntryNodes(), symbolTable,
 				impreciseLocationThreads, true);
 	}
 
-	public static record SetupResult(Set<String> threadIds, IDomain analysisDomain,
+	public static record SetupResult(List<String> threadIds, IDomain analysisDomain,
 			Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
-			InterferenceFactory interferenceFactory, IInterference interferenceBuilder,
+			IInterferenceFactory interferenceFactory,
 			RelationalPredicatePostcondition postcondition, ThreadModularProofChecker proofChecker) {
 	}
 }
