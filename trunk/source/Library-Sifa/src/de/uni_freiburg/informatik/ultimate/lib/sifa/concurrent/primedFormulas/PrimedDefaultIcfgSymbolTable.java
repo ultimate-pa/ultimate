@@ -171,6 +171,7 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 
 		@Override
 		public ApplicationTerm getDefaultConstant() {
+			// primed var's default constant is the primed constant (post-state view)
 			return mBase.getPrimedConstant();
 		}
 

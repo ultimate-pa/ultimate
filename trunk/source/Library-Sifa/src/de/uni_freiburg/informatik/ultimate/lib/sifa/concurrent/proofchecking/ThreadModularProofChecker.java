@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -82,7 +82,10 @@ public class ThreadModularProofChecker {
 			}
 			for (final IcfgEdge edge : entry.getKey().getOutgoingEdges()) {
 				final var post = locPreds.get(edge.getTarget());
-				if (post == null || !(edge instanceof IIcfgInternalTransition<?>)) {
+				if (post == null) {
+					continue;
+				}
+				if (!(edge instanceof IIcfgInternalTransition<?>)) {
 					continue;
 				}
 				checkedHoareTriples++;

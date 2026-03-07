@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeSemantics;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -39,15 +39,12 @@ public final class ProofEdgeInterferenceTranslator {
 			return null;
 		}
 
-		final String forkedThreadId = InterferenceEdgeSemantics.getForkedThreadOrNull(edge);
+		final String forkedThreadId = InterferenceUtils.getForkedThreadOrNull(edge);
 		final boolean locationChanges = mGhostVariables != null
 				&& !mTranslator.isLocationStutterStep(sourceLocation, targetLocation);
-		final boolean isInterferenceRelevant = InterferenceEdgeSemantics.modifiesGlobals(tf)
-				|| InterferenceEdgeSemantics.isJoinAssigningGlobal(edge) || forkedThreadId != null || locationChanges;
-		if (!isInterferenceRelevant) {
-			return null;
-		}
-		if (mIncludeInterferencePreState && sourcePreState == null) {
+		final boolean isInterferenceRelevant = InterferenceUtils.modifiesGlobals(tf)
+				|| InterferenceUtils.isJoinAssigningGlobal(edge) || forkedThreadId != null || locationChanges;
+		if (!isInterferenceRelevant || (mIncludeInterferencePreState && sourcePreState == null)) {
 			return null;
 		}
 
@@ -64,7 +61,7 @@ public final class ProofEdgeInterferenceTranslator {
 
 	private IPredicate createTransitionPredicate(final String interferingThread, final IcfgLocation sourceLocation,
 			final IcfgLocation targetLocation, final TransFormula tf, final String forkedThreadId, final IcfgEdge edge) {
-		final Set<IProgramVar> additionallyModifiedGlobals = InterferenceEdgeSemantics.getJoinAssignedGlobals(edge);
+		final Set<IProgramVar> additionallyModifiedGlobals = InterferenceUtils.getJoinAssignedGlobals(edge);
 		if (forkedThreadId != null) {
 			final IcfgLocation forkedEntry = mTranslator.getEntryLocation(forkedThreadId);
 			if (forkedEntry == null) {
