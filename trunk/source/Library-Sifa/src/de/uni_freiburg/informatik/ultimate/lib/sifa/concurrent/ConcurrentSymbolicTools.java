@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
@@ -109,7 +110,28 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		mObservedStateRecorder.recordTransitionInputState(transition, input);
 		final IPredicate spResult = super.post(input, transition);
-		return updateGhostvarsAndApplyInterferences(spResult, transition);
+		final IPredicate joinProjected = projectJoinAssignedVars(spResult, transition);
+		return updateGhostvarsAndApplyInterferences(joinProjected, transition);
+	}
+
+	private IPredicate projectJoinAssignedVars(final IPredicate state,
+			final IIcfgTransition<IcfgLocation> transition) {
+		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> joinCurrent)
+				|| SmtUtils.isFalseLiteral(state.getFormula()) || SmtUtils.isTrueLiteral(state.getFormula())) {
+			return state;
+		}
+		final Set<TermVariable> assigned = new java.util.HashSet<>();
+		for (final IProgramVar lhs : joinCurrent.getJoinSmtArguments().getAssignmentLhs()) {
+			if (lhs != null) {
+				assigned.add(lhs.getTermVariable());
+			}
+		}
+		if (assigned.isEmpty()) {
+			return state;
+		}
+		final Term projected = RelationalPredicateUtils.existentiallyProject(state.getFormula(), assigned, mServices,
+				getManagedScript());
+		return predicate(projected);
 	}
 
 	@Override
