@@ -382,12 +382,12 @@ public class ExecutionProducer {
 
 		for (final Entry<IProgramVar, TermVariable> inVar : formula.getInVars().entrySet()) {
 			// A variable is freely havoced if it has an InVar but no OutVar
-			if (formula.getOutVars().containsKey(inVar.getKey())) {
+			// Arrays are not havoced.
+			if (inVar.getValue().getSort().isArraySort() || formula.getOutVars().containsKey(inVar.getKey())) {
 				continue;
 			}
 
 			final TermVariable localVar = inVar.getValue();
-			// final TermVariable globalVar = lookupSymbolTableSafe(localVar, formula);
 
 			final SolvedEquation havocEquation = new SolvedEquation(null, localVar, null);
 			equationList.add(havocEquation);
@@ -397,12 +397,12 @@ public class ExecutionProducer {
 
 		for (final Entry<IProgramVar, TermVariable> outVar : formula.getOutVars().entrySet()) {
 			// A variable is freely havoced if it has an OutVar but isn't defined in the transition and not an InVar
-			if (formula.getInVars().containsKey(outVar.getKey())
+			// Arrays are not havoced.
+			if (outVar.getValue().getSort().isArraySort() || formula.getInVars().containsKey(outVar.getKey())
 					|| equationList.stream().anyMatch(equation -> equation.getLhs().equals(outVar.getValue()))) {
 				continue;
 			}
 			final TermVariable localVar = outVar.getValue();
-			// final TermVariable globalVar = lookupSymbolTableSafe(localVar, formula);
 			final SolvedEquation havocEquation = new SolvedEquation(null, localVar, null);
 			equationList.add(havocEquation);
 			neededInVars.put(localVar, new ArrayList<>());
@@ -411,7 +411,9 @@ public class ExecutionProducer {
 
 		for (final TermVariable auxVar : formula.getAuxVars()) {
 			// An aux variable is freely havoced if it isn't defined in the transition
-			if (equationList.stream().anyMatch(equation -> equation.getLhs().equals(auxVar))) {
+			// Arrays are not havoced.
+			if (auxVar.getSort().isArraySort()
+					|| equationList.stream().anyMatch(equation -> equation.getLhs().equals(auxVar))) {
 				continue;
 			}
 			final SolvedEquation havocEquation = new SolvedEquation(null, auxVar, null);

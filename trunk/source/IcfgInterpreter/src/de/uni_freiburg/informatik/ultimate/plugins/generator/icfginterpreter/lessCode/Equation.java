@@ -122,6 +122,11 @@ public class Equation implements ITermProvider {
 
 			switch (base.getRelation()) {
 			case DISTINCT:
+				if (base.getRhs().getSort().getName().equals(SMTLIBConstants.BOOL)) {
+					// x != y for bools is equal to x = not(y)
+					base = new Equation(RelationSymbol.EQ, base.getLhs(), SmtUtils.not(script, base.getRhs()));
+				}
+				//$FALL-THROUGH$
 			case EQ:
 				SolvedEquation solvedEq;
 				if (base.getLhs().getSort().isNumericSort()) {

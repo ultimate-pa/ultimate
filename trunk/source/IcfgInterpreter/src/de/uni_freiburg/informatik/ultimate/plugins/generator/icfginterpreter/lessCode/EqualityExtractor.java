@@ -92,9 +92,15 @@ public class EqualityExtractor {
 		switch (term) {
 		case final ApplicationTerm at:
 			return extractApplicationTerm(at, script, formula);
+		case final TermVariable tv:
+			if (tv.getSort().getName().equals(SMTLIBConstants.BOOL)) {
+				return new Equations(new Equation(RelationSymbol.EQ, tv, script.getTheory().mTrue));
+			}
+			break;
 		default:
-			return new Equations();
+			break;
 		}
+		return new Equations();
 	}
 
 	public static class EdgeUntranslatableError extends AssertionError {
