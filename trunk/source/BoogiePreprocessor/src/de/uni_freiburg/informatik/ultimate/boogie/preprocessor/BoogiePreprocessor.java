@@ -106,6 +106,9 @@ public class BoogiePreprocessor implements IAnalysis {
 		final boolean replaceWhileAndConditional = mServices.getPreferenceProvider(getPluginID())
 				.getBoolean(PreferenceInitializer.LABEL_REPLACE_WHILE_AND_CONDITIONAL);
 
+		final boolean replaceAtomics =
+				mServices.getPreferenceProvider(getPluginID()).getBoolean(PreferenceInitializer.LABEL_REPLACE_ATOMICS);
+
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		final BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
@@ -128,6 +131,10 @@ public class BoogiePreprocessor implements IAnalysis {
 		observers.add(new LTLStepAnnotator());
 		if (useSimplifier) {
 			observers.add(new Simplifier(backTranslator));
+		}
+
+		if (replaceAtomics) {
+			observers.add(new AtomicsToLocks(backTranslator, mServices));
 		}
 		observers.add(symb);
 		return observers;
