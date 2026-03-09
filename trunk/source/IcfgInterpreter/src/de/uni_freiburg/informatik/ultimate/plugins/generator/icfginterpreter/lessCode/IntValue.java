@@ -6,7 +6,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
 
 public class IntValue implements Value {
 	private final BigInteger mValue;
@@ -90,9 +89,11 @@ public class IntValue implements Value {
 		return mValue.toString();
 	}
 
+	private static ValueToTermStorage cache = ValueToTermStorage.getInstance();
+
 	@Override
 	public Map<Term, Term> toTerm(final Script script, final Term var) {
-		return Map.of(var, IcfgInterpreterObserver.getValueStorage().getInteger(script, this));
+		return Map.of(var, cache.getInteger(script, this));
 	}
 
 	@Override

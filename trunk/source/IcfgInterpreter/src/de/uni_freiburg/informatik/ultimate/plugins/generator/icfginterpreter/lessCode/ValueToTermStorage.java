@@ -14,9 +14,35 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.TermEvaluator.UnsupportedTermError;
 
 public class ValueToTermStorage {
+	private static ValueToTermStorage instance = null;
+
+	public static ValueToTermStorage getInstance() {
+		if (instance == null) {
+			instance = new ValueToTermStorage();
+		}
+		return instance;
+	}
+
+	public static void emptyCache() {
+		if (instance == null) {
+			instance = new ValueToTermStorage();
+			return;
+		}
+		instance.mTranslatedInts.clear();
+		instance.mTranslatedSelects.clear();
+		instance.mTranslatedConstants.clear();
+		instance.mTranslatedBitVecs.clear();
+		instance.mBVSorts.clear();
+	}
+
+	private ValueToTermStorage() {
+	}
+
 	private final HashMap<BigInteger, Term> mTranslatedInts = new HashMap<>();
 	private final HashMap<Term, HashMap<List<Value>, Term>> mTranslatedSelects = new HashMap<>();
-	private final HashMap<ConstantTerm, Value> constantStorage = new HashMap<>();
+	private final HashMap<ConstantTerm, Value> mTranslatedConstants = new HashMap<>();
+	private final HashMap<BitVecValue, Term> mTranslatedBitVecs = new HashMap<>();
+	private final HashMap<Integer, Sort> mBVSorts = new HashMap<>();
 
 	public Term getInteger(final Script script, final IntValue intValue) {
 		final BigInteger value = intValue.getValue();
@@ -43,16 +69,31 @@ public class ValueToTermStorage {
 			}
 
 			keyMap.put(keyList, selectTerm);
-		} else {
-
-			return selectTerm;
 		}
 
 		return selectTerm;
 	}
 
+	public Term getBitVec(final Script script, final BitVecValue bvValue) {
+		Term bitVecTerm = mTranslatedBitVecs.get(bvValue);
+
+		if (bitVecTerm == null) {
+			final int length = bvValue.getLength();
+			Sort sort = mBVSorts.get(length);
+
+			if (sort == null) {
+				sort = script.getTheory().getSort(SMTLIBConstants.BITVEC, new String[] { String.valueOf(length) });
+				mBVSorts.put(length, sort);
+			}
+
+			bitVecTerm = script.getTheory().constant(Rational.valueOf(bvValue.getValue(), BigInteger.ONE), sort);
+		}
+
+		return bitVecTerm;
+	}
+
 	public Value getConstant(final ConstantTerm termConst) {
-		Value result = constantStorage.get(termConst);
+		Value result = mTranslatedConstants.get(termConst);
 		if (result != null) {
 			return result;
 		}
@@ -83,7 +124,7 @@ public class ValueToTermStorage {
 			throw new UnsupportedTermError();
 		}
 
-		constantStorage.put(termConst, result);
+		mTranslatedConstants.put(termConst, result);
 		return result;
 	}
 }

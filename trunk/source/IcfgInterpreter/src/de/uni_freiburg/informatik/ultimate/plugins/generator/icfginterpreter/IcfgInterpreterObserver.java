@@ -49,7 +49,6 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private int aggregateOutputCount;
 	private boolean mIsAggregateFull;
 	private static IcfgInterpreterObserver mInstance = null;
-	private static ValueToTermStorage mValueStorage;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -59,10 +58,6 @@ public class IcfgInterpreterObserver extends BaseObserver {
 
 	public static ILogger getLogger() {
 		return mInstance == null ? null : mInstance.mLogger;
-	}
-
-	public static ValueToTermStorage getValueStorage() {
-		return mValueStorage;
 	}
 
 	@Override
@@ -90,7 +85,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mFinalResults = new HashMap<>();
 				mIsAggregateFull = false;
 				mAggregateExecutions = new ArrayList<>();
-				mValueStorage = new ValueToTermStorage();
+				ValueToTermStorage.emptyCache();
 				IcfgInterpreterPreferences.updatePreferences();
 				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices, mErrorLocations);
 

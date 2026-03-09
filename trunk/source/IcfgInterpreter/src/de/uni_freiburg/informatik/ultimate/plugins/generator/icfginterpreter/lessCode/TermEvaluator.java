@@ -16,6 +16,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Icf
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class TermEvaluator {
+	private static ValueToTermStorage cache = ValueToTermStorage.getInstance();
+
 	public static Value evaluate(final Map<TermVariable, Value> state, final Term term) {
 		switch (term) {
 		case final ApplicationTerm a:
@@ -27,7 +29,7 @@ public class TermEvaluator {
 			}
 			return value;
 		case final ConstantTerm ct:
-			return IcfgInterpreterObserver.getValueStorage().getConstant(ct);
+			return cache.getConstant(ct);
 		case final QuantifiedFormula qf:
 			IcfgInterpreterObserver.getLogger()
 					.error("This plug-in does not handle quantified formulas.\n" + "Formula: " + qf.toStringDirect());

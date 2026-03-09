@@ -9,11 +9,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
 
 public class ArrayValue implements Value {
 	private final TermVariable mArrayVar;
-	private final Map<List<Value>, Value> mValue;
+	private final HashMap<List<Value>, Value> mValue;
 	private final Sort mSort;
 	private final Sort mValueSort;
 
@@ -25,7 +24,7 @@ public class ArrayValue implements Value {
 		}
 	}
 
-	public ArrayValue(final Map<List<Value>, Value> value, final TermVariable arrayVar) {
+	public ArrayValue(final HashMap<List<Value>, Value> value, final TermVariable arrayVar) {
 		mValue = value;
 		mArrayVar = arrayVar;
 		mSort = mArrayVar.getSort();
@@ -39,16 +38,18 @@ public class ArrayValue implements Value {
 	}
 
 	public ArrayValue store(final List<Value> key, final Value value) {
-		final HashMap<List<Value>, Value> out = new HashMap<>(mValue);
+		@SuppressWarnings("unchecked")
+		final HashMap<List<Value>, Value> out = (HashMap<List<Value>, Value>) mValue.clone();
 		out.put(key, value);
 		return new ArrayValue(out, mArrayVar);
 	}
 
 	public Value select(final List<Value> key) {
-		if (mValue.containsKey(key)) {
-			return mValue.get(key);
+		final Value value = mValue.get(key);
+		if (value == null) {
+			throw new EmptyArrayEntryException("Array does not contain key " + key.toString());
 		}
-		throw new EmptyArrayEntryException("Array does not contain key " + key.toString());
+		return value;
 	}
 
 	public boolean hasKey(final List<Value> key) {
@@ -85,6 +86,8 @@ public class ArrayValue implements Value {
 		return builder.append("}").toString();
 	}
 
+	private static ValueToTermStorage cache = ValueToTermStorage.getInstance();
+
 	@Override
 	public Map<Term, Term> toTerm(final Script script, final Term var) {
 		final Map<Term, Term> out = new HashMap<>();
@@ -92,7 +95,7 @@ public class ArrayValue implements Value {
 
 			final Term valueTerm = entry.getValue().toTerm(script, var).get(var);
 
-			final Term select = IcfgInterpreterObserver.getValueStorage().getSelect(script, var, entry.getKey());
+			final Term select = cache.getSelect(script, var, entry.getKey());
 
 			out.put(select, valueTerm);
 		}
