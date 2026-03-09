@@ -20,11 +20,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -214,25 +212,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			if (newInvs != invs || newBody != body) {
 				newStatement = new WhileStatement(whilestmt.getLocation(), cond, newInvs, newBody);
 			}
-		} else if (statement instanceof final ForkStatement forkstmt) {
-			final Expression[] threadId = forkstmt.getThreadID();
-			final String procName = forkstmt.getProcedureName();
-			final Expression[] arguments = forkstmt.getArguments();
-			final Expression[] newThreadId = processExpressions(threadId);
-			final Expression[] newArguments = processExpressions(arguments);
-			if (newThreadId != threadId || newArguments != arguments) {
-				newStatement = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
-			}
-		} else if (statement instanceof final JoinStatement joinstmt) {
-			final Expression[] threadId = joinstmt.getThreadID();
-			final VariableLHS[] lhs = joinstmt.getLhs();
-			final Expression[] newThreadId = processExpressions(threadId);
-			final VariableLHS[] newLhs = processVariableLHSs(lhs);
-			if (newThreadId != threadId || newLhs != lhs) {
-				newStatement = new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
-			}
-		}
-		if (newStatement == null) {
+		} else {
 			/* No recursion for label, havoc, break, return and goto */
 			return statement;
 		}
@@ -247,9 +227,47 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final var compareAndSet = new AtomicStatement(DummyVarDeclarationBuilder.getDummyLocation(),
 				new Statement[] { compareLock, setLock });
 		lockedStatements.add(compareAndSet);
-		lockedStatements.addAll(Arrays.asList(atomicStatement.getBody()));
+		final var noNestedAtomics = removeAtomics(atomicStatement.getBody());
+		lockedStatements.addAll(noNestedAtomics);
 		lockedStatements.add(getLockAssignment(false));
 		return lockedStatements;
+	}
+
+	private List<Statement> removeAtomics(final Statement[] statements) {
+		final List<Statement> statementList = new ArrayList<>();
+		for (final Statement statement : statements) {
+			statementList.addAll(removeAtomics(statement));
+		}
+		return statementList;
+	}
+
+	private List<Statement> removeAtomics(final Statement statement) {
+		Statement newStatement = null;
+		if (statement instanceof final IfStatement ifstmt) {
+			final Expression cond = ifstmt.getCondition();
+			final Statement[] thens = ifstmt.getThenPart();
+			final Statement[] newThens = removeAtomics(thens).toArray(new Statement[0]);
+			final Statement[] elses = ifstmt.getElsePart();
+			final Statement[] newElses = removeAtomics(elses).toArray(new Statement[0]);
+			if (newThens != thens || newElses != elses) {
+				newStatement = new IfStatement(ifstmt.getLocation(), cond, newThens, newElses);
+			}
+		} else if (statement instanceof final WhileStatement whilestmt) {
+			final Expression cond = whilestmt.getCondition();
+			final LoopInvariantSpecification[] invs = whilestmt.getInvariants();
+			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(invs);
+			final Statement[] body = whilestmt.getBody();
+			final Statement[] newBody = removeAtomics(body).toArray(new Statement[0]);
+			if (newInvs != invs || newBody != body) {
+				newStatement = new WhileStatement(whilestmt.getLocation(), cond, newInvs, newBody);
+			}
+		} else if (statement instanceof final AtomicStatement atomicStatement) {
+			return removeAtomics(atomicStatement.getBody());
+		} else {
+			return List.of(statement);
+		}
+		ModelUtils.copyAnnotations(statement, newStatement);
+		return List.of(newStatement);
 	}
 
 	private boolean atomicContainsLoop(final AtomicStatement atomicBlock) {
