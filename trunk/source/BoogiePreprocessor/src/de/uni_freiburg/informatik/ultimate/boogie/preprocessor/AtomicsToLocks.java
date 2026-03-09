@@ -9,10 +9,25 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -21,11 +36,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -36,12 +53,15 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private final BoogiePreprocessorBacktranslator mTranslator;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final DummyVarDeclarationBuilder mDeclarationBuilder;
+	private Statement mInitStatement;
 
 	protected AtomicsToLocks(final BoogiePreprocessorBacktranslator translator,
 			final IUltimateServiceProvider services) {
 		mTranslator = translator;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mDeclarationBuilder = constructDeclarationBuilder();
 	}
 
 	/**
@@ -52,19 +72,16 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	public boolean process(final IElement root) {
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
-			final String typeName = "bool";
-			final NamedType astType = new NamedType(null, BoogieType.TYPE_BOOL, typeName, new ASTType[0]);
-			final var decBuilder = new DummyVarDeclarationBuilder(astType);
-			final VariableDeclaration declaration = decBuilder.getDeclaration();
-			initializeLockInUnit(unit, decBuilder);
+			final VariableDeclaration declaration = mDeclarationBuilder.getDeclaration();
+			initializeLockInUnit(unit);
 			final List<Declaration> newDeclarations = new ArrayList<>();
 			newDeclarations.add(declaration);
 			for (final Declaration decl : unit.getDeclarations()) {
 				if (decl instanceof Procedure) {
 					Procedure proc = (Procedure) decl;
 					if (proc.getBody() != null) {
-						replaceAtomics(proc, declaration);
-						proc = addLockToSpecification(proc, decBuilder.getLhs());
+						replaceAtomics(proc);
+						proc = addLockToSpecification(proc, mDeclarationBuilder.getLhs());
 					}
 					newDeclarations.add(proc);
 				} else {
@@ -77,7 +94,14 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return true;
 	}
 
-	private void initializeLockInUnit(final Unit unit, final DummyVarDeclarationBuilder declarationBuilder) {
+	private DummyVarDeclarationBuilder constructDeclarationBuilder() {
+		final String typeName = "bool";
+		final NamedType astType = new NamedType(null, BoogieType.TYPE_BOOL, typeName, new ASTType[0]);
+		final var decBuilder = new DummyVarDeclarationBuilder(astType);
+		return decBuilder;
+	}
+
+	private void initializeLockInUnit(final Unit unit) {
 		final var numDec = unit.getDeclarations().length;
 		final var declarations = Arrays.copyOf(unit.getDeclarations(), numDec);
 		for (int i = 0; i < numDec; i++) {
@@ -86,21 +110,21 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				final var startProc = (Procedure) decl;
 				final var body = startProc.getBody();
 				final var block = body.getBlock();
-				final var newBlock = addInitStatement(block, declarationBuilder);
+				final var newBlock = addInitStatement(block);
 				body.setBlock(newBlock);
 			}
 		}
 	}
 
-	private Statement[] addInitStatement(final Statement[] blockStatements,
-			final DummyVarDeclarationBuilder declarationBuilder) {
+	private Statement[] addInitStatement(final Statement[] blockStatements) {
 		final int numStmt = blockStatements.length;
 		final Statement[] newStatements = new Statement[numStmt + 1];
 		final Expression falseExpression = ExpressionFactory.createBooleanLiteral(null, false);
-		final LeftHandSide[] lhs = { declarationBuilder.getLhs() };
-		newStatements[0] = blockStatements[0];
-		newStatements[1] = StatementFactory.constructAssignmentStatement(DummyVarDeclarationBuilder.getDummyLocation(),
+		final LeftHandSide[] lhs = { mDeclarationBuilder.getLhs() };
+		mInitStatement = StatementFactory.constructAssignmentStatement(DummyVarDeclarationBuilder.getDummyLocation(),
 				lhs, new Expression[] { falseExpression });
+		newStatements[0] = blockStatements[0];
+		newStatements[1] = mInitStatement;
 		for (int i = 1; i < numStmt; i++) {
 			newStatements[i + 1] = blockStatements[i];
 		}
@@ -118,8 +142,111 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return newProc;
 	}
 
-	private void replaceAtomics(final Procedure procedure, final VariableDeclaration lockDeclaration) {
+	private void replaceAtomics(final Procedure proc) {
+		final Body body = proc.getBody();
 
+		final var newStatements = processStatements(body.getBlock());
+
+		body.setBlock(newStatements);
+	}
+
+	@Override
+	protected Statement[] processStatements(final Statement[] statements) {
+		final var assume = getAssumeStatement();
+		final List<Statement> statementList = new ArrayList<>();
+		for (final Statement statement : statements) {
+			if (!(statement instanceof final Label) && (statement != mInitStatement)) {
+				statementList.add(assume);
+			}
+			statementList.add(processStatement(statement));
+		}
+		return statementList.toArray(new Statement[statementList.size()]);
+	}
+
+	private AssumeStatement getAssumeStatement() {
+		final var falseLiteral =
+				new BooleanLiteral(DummyVarDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL, false);
+		final var lockFalse =
+				ExpressionFactory.newBinaryExpression(DummyVarDeclarationBuilder.getDummyLocation(), Operator.COMPEQ,
+						new IdentifierExpression(DummyVarDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL,
+								DummyVarDeclarationBuilder.IDENTIFIER, DeclarationInformation.DECLARATIONINFO_GLOBAL),
+						falseLiteral);
+		return new AssumeStatement(DummyVarDeclarationBuilder.getDummyLocation(), lockFalse);
+	}
+
+	@Override
+	protected Statement processStatement(final Statement statement) {
+		Statement newStatement = null;
+		if (statement instanceof final AssertStatement assertStmt) {
+			newStatement = statement;
+		} else if (statement instanceof final AssignmentStatement assign) {
+			newStatement = statement;
+		} else if (statement instanceof final AssumeStatement assumeStmt) {
+			newStatement = statement;
+		} else if (statement instanceof final HavocStatement havoc) {
+			newStatement = statement;
+		} else if (statement instanceof final CallStatement call) {
+			newStatement = statement;
+		} else if (statement instanceof final IfStatement ifstmt) {
+			final Expression cond = ifstmt.getCondition();
+			final Expression newCond = processExpression(cond);
+			final Statement[] thens = ifstmt.getThenPart();
+			final Statement[] newThens = processStatements(thens);
+			final Statement[] elses = ifstmt.getElsePart();
+			final Statement[] newElses = processStatements(elses);
+			if (newCond != cond || newThens != thens || newElses != elses) {
+				newStatement = new IfStatement(ifstmt.getLocation(), newCond, newThens, newElses);
+			}
+		} else if (statement instanceof final WhileStatement whilestmt) {
+			final Expression cond = whilestmt.getCondition();
+			final Expression newCond = processExpression(cond);
+			final LoopInvariantSpecification[] invs = whilestmt.getInvariants();
+			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(invs);
+			final Statement[] body = whilestmt.getBody();
+			final Statement[] newBody = processStatements(body);
+			if (newCond != cond || newInvs != invs || newBody != body) {
+				newStatement = new WhileStatement(whilestmt.getLocation(), newCond, newInvs, newBody);
+			}
+		} else if (statement instanceof final ForkStatement forkstmt) {
+			final Expression[] threadId = forkstmt.getThreadID();
+			final String procName = forkstmt.getProcedureName();
+			final Expression[] arguments = forkstmt.getArguments();
+			final Expression[] newThreadId = processExpressions(threadId);
+			final Expression[] newArguments = processExpressions(arguments);
+			if (newThreadId != threadId || newArguments != arguments) {
+				newStatement = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
+			}
+		} else if (statement instanceof final JoinStatement joinstmt) {
+			final Expression[] threadId = joinstmt.getThreadID();
+			final VariableLHS[] lhs = joinstmt.getLhs();
+			final Expression[] newThreadId = processExpressions(threadId);
+			final VariableLHS[] newLhs = processVariableLHSs(lhs);
+			if (newThreadId != threadId || newLhs != lhs) {
+				newStatement = new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
+			}
+		} else if (statement instanceof final AtomicStatement atomicstmt) {
+			return atomicstmt;
+		}
+		if (newStatement == null) {
+			/* No recursion for label, havoc, break, return and goto */
+			return statement;
+		}
+		ModelUtils.copyAnnotations(statement, newStatement);
+		return newStatement;
+	}
+
+	private boolean atomicContainsLoop(final AtomicStatement atomicBlock) {
+		final var body = atomicBlock.getBody();
+		for (final Statement statement : body) {
+			if (containsLoop(statement)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean containsLoop(final Statement statement) {
+		return false;
 	}
 
 	@Override
