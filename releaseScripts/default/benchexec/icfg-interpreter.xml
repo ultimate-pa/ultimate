@@ -30,4 +30,20 @@
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
   </tasks>
+
+  <tasks name="Overflows-small">
+    <includesfile>../../../trunk/examples/svcomp/Arrays.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ControlFlow.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ECA.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/Heap.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/Heap-Termination.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/LinkedLists.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/Loops.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ProductLines.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/Sequentialized.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/VerifyThis-Loops.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/XCSP.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Overflow-32bit-Automizer_Default.epf</option>
+  </tasks>
 </benchmark>
