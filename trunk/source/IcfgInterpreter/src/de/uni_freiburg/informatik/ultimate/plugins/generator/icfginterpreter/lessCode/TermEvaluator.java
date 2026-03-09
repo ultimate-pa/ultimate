@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,15 +10,15 @@ import java.util.function.BiFunction;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class TermEvaluator {
-	private static ValueToTermStorage cache = ValueToTermStorage.getInstance();
-
 	public static Value evaluate(final Map<TermVariable, Value> state, final Term term) {
 		switch (term) {
 		case final ApplicationTerm a:
@@ -29,11 +30,38 @@ public class TermEvaluator {
 			}
 			return value;
 		case final ConstantTerm ct:
-			return cache.getConstant(ct);
+			return evaluateConstantTerm(ct);
+
 		case final QuantifiedFormula qf:
 			IcfgInterpreterObserver.getLogger()
 					.error("This plug-in does not handle quantified formulas.\n" + "Formula: " + qf.toStringDirect());
 			//$FALL-THROUGH$
+		default:
+			throw new UnsupportedTermError();
+		}
+	}
+
+	private static Value evaluateConstantTerm(final ConstantTerm termConst) {
+		final Object valueUnparsed = termConst.getValue();
+		final Sort sort = termConst.getSort();
+
+		switch (sort.getName()) {
+		case SMTLIBConstants.INT:
+			BigInteger value;
+			if (valueUnparsed instanceof final Rational rat && rat.denominator().equals(BigInteger.ONE)) {
+				value = rat.numerator();
+			} else if (valueUnparsed instanceof final BigInteger bi) {
+				value = bi;
+			} else {
+				throw new AssertionError();
+			}
+			return new IntValue(value);
+		case SMTLIBConstants.BOOL:
+			return new BoolValue((boolean) valueUnparsed);
+
+		case SMTLIBConstants.BITVEC:
+			final int length = Integer.parseInt(sort.getIndices()[0]);
+			return new BitVecValue((BigInteger) valueUnparsed, length);
 		default:
 			throw new UnsupportedTermError();
 		}

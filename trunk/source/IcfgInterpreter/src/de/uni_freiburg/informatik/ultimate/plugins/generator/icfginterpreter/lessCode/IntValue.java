@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 import java.math.BigInteger;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -89,11 +90,9 @@ public class IntValue implements Value {
 		return mValue.toString();
 	}
 
-	private static ValueToTermStorage cache = ValueToTermStorage.getInstance();
-
 	@Override
 	public Map<Term, Term> toTerm(final Script script, final Term var) {
-		return Map.of(var, cache.getInteger(script, this));
+		return Map.of(var, SmtUtils.constructIntValue(script, mValue));
 	}
 
 	@Override

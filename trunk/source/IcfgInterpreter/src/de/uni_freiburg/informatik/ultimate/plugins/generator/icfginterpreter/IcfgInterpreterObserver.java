@@ -29,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.PartialExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ValueToTermStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences.OutputMethod;
 
@@ -85,7 +84,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mFinalResults = new HashMap<>();
 				mIsAggregateFull = false;
 				mAggregateExecutions = new ArrayList<>();
-				ValueToTermStorage.emptyCache();
+
 				IcfgInterpreterPreferences.updatePreferences();
 				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices, mErrorLocations);
 

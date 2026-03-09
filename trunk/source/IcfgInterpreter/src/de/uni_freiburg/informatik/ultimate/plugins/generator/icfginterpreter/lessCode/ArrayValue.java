@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -86,8 +87,6 @@ public class ArrayValue implements Value {
 		return builder.append("}").toString();
 	}
 
-	private static ValueToTermStorage cache = ValueToTermStorage.getInstance();
-
 	@Override
 	public Map<Term, Term> toTerm(final Script script, final Term var) {
 		final Map<Term, Term> out = new HashMap<>();
@@ -95,7 +94,10 @@ public class ArrayValue implements Value {
 
 			final Term valueTerm = entry.getValue().toTerm(script, var).get(var);
 
-			final Term select = cache.getSelect(script, var, entry.getKey());
+			Term select = var;
+			for (final Value key : entry.getKey()) {
+				select = SmtUtils.select(script, select, key.toTerm(script, var).get(var));
+			}
 
 			out.put(select, valueTerm);
 		}
