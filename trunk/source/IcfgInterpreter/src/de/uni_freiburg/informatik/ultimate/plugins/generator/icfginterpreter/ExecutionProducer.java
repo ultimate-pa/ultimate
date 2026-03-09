@@ -17,8 +17,6 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -123,8 +121,8 @@ public class ExecutionProducer {
 		mErrorLocations = errorLocations;
 	}
 
-	public Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> makeExecutions(final ILogger logger,
-			final BiConsumer<Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>>, Set<IcfgLocation>> outMethod)
+	public Map<ExecutionTermintionReason, List<PartialExecution>> makeExecutions(final ILogger logger,
+			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod)
 			throws Exception {
 
 		batchSize = IcfgInterpreterPreferences.getPreferences()
@@ -163,7 +161,7 @@ public class ExecutionProducer {
 
 		final NonDeterministicChoice ndc = new NonDeterministicChoice(seed, minBits, maxBits);
 
-		final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> executions = new HashMap<>();
+		final Map<ExecutionTermintionReason, List<PartialExecution>> executions = new HashMap<>();
 
 		for (final ExecutionTermintionReason reason : ExecutionTermintionReason.values()) {
 			executions.put(reason, new ArrayList<>());
@@ -546,16 +544,6 @@ public class ExecutionProducer {
 		}
 	}
 
-	private Map<Term, Term> castMap(final Map<TermVariable, Value> state) {
-		final HashMap<Term, Term> out = new HashMap<>();
-
-		for (final Entry<TermVariable, Value> entry : state.entrySet()) {
-			out.putAll(entry.getValue().toTerm(mngScript.getScript(), entry.getKey()));
-		}
-
-		return out;
-	}
-
 	private HashMap<TermVariable, Value> makeState() {
 		final HashMap<TermVariable, Value> state = new HashMap<>();
 
@@ -572,8 +560,8 @@ public class ExecutionProducer {
 	}
 
 	public void makeExecutions(final NonDeterministicChoice ndc, final IcfgLocation source,
-			final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> out,
-			final BiConsumer<Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>>, Set<IcfgLocation>> outMethod) {
+			final Map<ExecutionTermintionReason, List<PartialExecution>> out,
+			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod) {
 		// Do not create new executions if we have reached the required number
 		if (endIfAggregateFull && IcfgInterpreterObserver.getInstance().isAggregateFull()) {
 			return;
@@ -698,8 +686,8 @@ public class ExecutionProducer {
 	 * @return True if the required number of executions was found
 	 */
 	private boolean finalizeExecution(final PartialExecution execution,
-			final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> outMap,
-			final BiConsumer<Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>>, Set<IcfgLocation>> outMethod) {
+			final Map<ExecutionTermintionReason, List<PartialExecution>> outMap,
+			final BiConsumer<Map<ExecutionTermintionReason, List<PartialExecution>>, Set<IcfgLocation>> outMethod) {
 		// Execution must be finished
 		assert execution.status != null;
 		// Report if the exit location was an error location
@@ -708,13 +696,7 @@ public class ExecutionProducer {
 		 * .error("Execution successfully ended at error location " + execution.currentLocation.toString()); }
 		 */
 
-		final List<Map<Term, Term>> statesCast = execution.states.stream().map(stateUncast -> castMap(stateUncast))
-				.toList();
-		final List<IcfgEdge> edgesCast = execution.edges.stream().map(intEdge -> intEdge.getEdge()).toList();
-
-		final IcfgProgramExecution<IcfgEdge> out = createExecution(edgesCast, statesCast);
-
-		outMap.get(execution.status).add(out);
+		outMap.get(execution.status).add(execution);
 		storedFinalizedExecutions++;
 
 		if (batchSize > 0 && batchSize <= storedFinalizedExecutions) {
@@ -730,7 +712,7 @@ public class ExecutionProducer {
 		return false;
 	}
 
-	private record PartialExecution(IcfgLocation currentLocation, List<InterpretedIcfgEdge> edges,
+	public record PartialExecution(IcfgLocation currentLocation, List<InterpretedIcfgEdge> edges,
 			List<Map<TermVariable, Value>> states, Map<Term, Restriction<?>> havocBounds,
 			ExecutionTermintionReason status) {
 		public Map<TermVariable, Value> getCurrentState() {
@@ -802,22 +784,5 @@ public class ExecutionProducer {
 
 			return new PartialExecution(nextEdge.getTarget(), newEdges, newStates, newBounds, status);
 		}
-	}
-
-	private static IcfgProgramExecution<IcfgEdge> createExecution(final List<IcfgEdge> trace,
-			final List<Map<Term, Term>> states) {
-		if (trace.isEmpty()) {
-			return IcfgProgramExecution.create(IcfgEdge.class);
-		}
-		final Map<Integer, ProgramState<Term>> stateMapping = new HashMap<>();
-		for (int i = 0; i < states.size(); i++) {
-			stateMapping
-					.put(i - 1,
-							new ProgramState<>(
-									states.get(i).entrySet().stream()
-											.collect(Collectors.toMap(x -> x.getKey(), x -> List.of(x.getValue()))),
-									Term.class));
-		}
-		return IcfgProgramExecution.create(trace, stateMapping);
 	}
 }

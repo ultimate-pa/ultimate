@@ -19,17 +19,15 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.PartialExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ValueToTermStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
@@ -39,8 +37,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private IIcfg<? extends IcfgLocation> mIcfg;
-	private Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> mExecutions = new HashMap<>();
-	private List<IcfgProgramExecution<IcfgEdge>> mAggregateExecutions;
+	private Map<ExecutionTermintionReason, List<PartialExecution>> mExecutions = new HashMap<>();
+	private List<PartialExecution> mAggregateExecutions;
 	private OutputMethod outputMethod;
 
 	private Map<ExecutionTermintionReason, File> outputDirs;
@@ -166,35 +164,29 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		return mIsAggregateFull;
 	}
 
-	private void outputBatch(final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> executions,
+	private void outputBatch(final Map<ExecutionTermintionReason, List<PartialExecution>> executions,
 			final Set<IcfgLocation> errorLocations) {
-		final Map<IcfgLocation, IcfgProgramExecution<IcfgEdge>> locs2ErrorExecutions = executions
-				.getOrDefault(ExecutionTermintionReason.REACHED_ERROR, List.of()).stream().collect(Collectors
-						.toMap(x -> x.getTraceElement(x.getLength() - 1).getStep().getTarget(), x -> x, (x, y) -> x));
+
+		final Map<IcfgLocation, PartialExecution> locs2ErrorExecutions = executions
+				.getOrDefault(ExecutionTermintionReason.REACHED_ERROR, List.of()).stream()
+				.collect(Collectors.toMap(x -> x.currentLocation(), x -> x, (x, y) -> x));
 
 		for (final IcfgLocation loc : errorLocations) {
-			final IcfgProgramExecution<IcfgEdge> errorExecution = locs2ErrorExecutions.get(loc);
+			final PartialExecution errorExecution = locs2ErrorExecutions.get(loc);
 
 			if (errorExecution != null && mFinalResults.get(loc) instanceof UnprovableResult) {
-				final List<UnprovabilityReason> unprovabilityReasons = UnprovabilityReason
-						.getUnprovabilityReasons(errorExecution);
-				final IResult newResult;
-				if (unprovabilityReasons.isEmpty()) {
-					newResult = new CounterExampleResult<>(loc, Activator.PLUGIN_ID,
-							mServices.getBacktranslationService(), errorExecution);
-				} else {
-					newResult = new UnprovableResult<>(Activator.PLUGIN_ID, loc, mServices.getBacktranslationService(),
-							errorExecution, unprovabilityReasons);
-				}
-				mFinalResults.put(loc, newResult);
+				// We have a counter example, and there is no previous counter example for this location.
+				final IResult result = new CounterExampleResult<>(loc, Activator.PLUGIN_ID,
+						mServices.getBacktranslationService(), ProgramExecutions.translateExecution(errorExecution,
+								mIcfg.getCfgSmtToolkit().getManagedScript()));
+				mFinalResults.put(loc, result);
 			}
 		}
 
 		int newTotalExecutions = 0;
 		switch (outputMethod) {
 		case DONT_PRINT:
-			for (final Entry<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> entry : executions
-					.entrySet()) {
+			for (final Entry<ExecutionTermintionReason, List<PartialExecution>> entry : executions.entrySet()) {
 				final ExecutionTermintionReason reason = entry.getKey();
 				addBatchToAggregateResult(reason, entry.getValue());
 				final int newExecutions = entry.getValue().size();
@@ -204,8 +196,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			break;
 		case PRINT_TO_FILE:
 			final String nameBase = "Execution_" + String.valueOf(System.currentTimeMillis()) + "_";
-			for (final Entry<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> entry : executions
-					.entrySet()) {
+			for (final Entry<ExecutionTermintionReason, List<PartialExecution>> entry : executions.entrySet()) {
 				final ExecutionTermintionReason reason = entry.getKey();
 				addBatchToAggregateResult(reason, entry.getValue());
 				final File directory = outputDirs.get(reason);
@@ -222,9 +213,9 @@ public class IcfgInterpreterObserver extends BaseObserver {
 						final BufferedWriter out = new BufferedWriter(
 								new OutputStreamWriter(new FileOutputStream(outputFile)));
 
-						final String executionSimplified = mServices.getBacktranslationService()
-								.translateProgramExecution(e).toString();
-						out.write("Ended because of " + reason + "\n" + e + "\n" + executionSimplified);
+						// final String executionSimplified = mServices.getBacktranslationService()
+						// .translateProgramExecution(e).toString();
+						out.write("Ended because of " + reason + "\n" + e /* + "\n" + executionSimplified */);
 						out.close();
 					} catch (final IOException e1) {
 						e1.printStackTrace();
@@ -233,8 +224,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			}
 			break;
 		case PRINT_TO_TERMINAL:
-			for (final Entry<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> entry : executions
-					.entrySet()) {
+			for (final Entry<ExecutionTermintionReason, List<PartialExecution>> entry : executions.entrySet()) {
 				final ExecutionTermintionReason reason = entry.getKey();
 				addBatchToAggregateResult(reason, entry.getValue());
 
@@ -244,10 +234,10 @@ public class IcfgInterpreterObserver extends BaseObserver {
 
 				for (final var e : entry.getValue()) {
 
-					final String executionSimplified = mServices.getBacktranslationService()
-							.translateProgramExecution(e).toString();
+					// final String executionSimplified = mServices.getBacktranslationService()
+					// .translateProgramExecution(e).toString();
 
-					mLogger.info("Ended because of %s\n\n%s\n\n%s", reason, e, executionSimplified);
+					mLogger.info("Ended because of %s\n\n%s\n\n%s", reason, e/* , executionSimplified */);
 				}
 			}
 			break;
@@ -259,13 +249,13 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	}
 
 	private void addBatchToAggregateResult(final ExecutionTermintionReason reason,
-			final List<IcfgProgramExecution<IcfgEdge>> executions) {
+			final List<PartialExecution> executions) {
 		if (aggregateOutputType != reason || mIsAggregateFull) {
 			return;
 		}
 
 		int size = mAggregateExecutions.size();
-		for (final IcfgProgramExecution<IcfgEdge> execution : executions) {
+		for (final PartialExecution execution : executions) {
 			if (size >= aggregateOutputCount) {
 				break;
 			}
@@ -283,6 +273,6 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	}
 
 	public IElement getExecutions() {
-		return new ProgramExecutions<>(new HashMap<>(mExecutions));
+		return new ProgramExecutions(new HashMap<>(mExecutions));
 	}
 }
