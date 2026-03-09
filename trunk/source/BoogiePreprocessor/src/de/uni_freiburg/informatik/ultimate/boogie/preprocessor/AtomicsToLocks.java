@@ -119,10 +119,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private Statement[] addInitStatement(final Statement[] blockStatements) {
 		final int numStmt = blockStatements.length;
 		final Statement[] newStatements = new Statement[numStmt + 1];
-		final Expression falseExpression = ExpressionFactory.createBooleanLiteral(null, false);
-		final LeftHandSide[] lhs = { mDeclarationBuilder.getLhs() };
-		mInitStatement = StatementFactory.constructAssignmentStatement(DummyVarDeclarationBuilder.getDummyLocation(),
-				lhs, new Expression[] { falseExpression });
+		mInitStatement = getLockAssignment(false);
 		newStatements[0] = blockStatements[0];
 		newStatements[1] = mInitStatement;
 		for (int i = 1; i < numStmt; i++) {
@@ -155,6 +152,11 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final var assume = getAssumeStatement();
 		final List<Statement> statementList = new ArrayList<>();
 		for (final Statement statement : statements) {
+			if (statement instanceof final AtomicStatement atomicstmt) {
+				final var lockedSection = processAtomic(atomicstmt);
+				statementList.addAll(lockedSection);
+				continue;
+			}
 			if (!(statement instanceof final Label) && (statement != mInitStatement)) {
 				statementList.add(assume);
 			}
@@ -174,6 +176,13 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return new AssumeStatement(DummyVarDeclarationBuilder.getDummyLocation(), lockFalse);
 	}
 
+	private Statement getLockAssignment(final boolean val) {
+		final Expression assignment = ExpressionFactory.createBooleanLiteral(null, val);
+		final LeftHandSide[] lhs = { mDeclarationBuilder.getLhs() };
+		return StatementFactory.constructAssignmentStatement(DummyVarDeclarationBuilder.getDummyLocation(), lhs,
+				new Expression[] { assignment });
+	}
+
 	@Override
 	protected Statement processStatement(final Statement statement) {
 		Statement newStatement = null;
@@ -189,23 +198,21 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			newStatement = statement;
 		} else if (statement instanceof final IfStatement ifstmt) {
 			final Expression cond = ifstmt.getCondition();
-			final Expression newCond = processExpression(cond);
 			final Statement[] thens = ifstmt.getThenPart();
 			final Statement[] newThens = processStatements(thens);
 			final Statement[] elses = ifstmt.getElsePart();
 			final Statement[] newElses = processStatements(elses);
-			if (newCond != cond || newThens != thens || newElses != elses) {
-				newStatement = new IfStatement(ifstmt.getLocation(), newCond, newThens, newElses);
+			if (newThens != thens || newElses != elses) {
+				newStatement = new IfStatement(ifstmt.getLocation(), cond, newThens, newElses);
 			}
 		} else if (statement instanceof final WhileStatement whilestmt) {
 			final Expression cond = whilestmt.getCondition();
-			final Expression newCond = processExpression(cond);
 			final LoopInvariantSpecification[] invs = whilestmt.getInvariants();
 			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(invs);
 			final Statement[] body = whilestmt.getBody();
 			final Statement[] newBody = processStatements(body);
-			if (newCond != cond || newInvs != invs || newBody != body) {
-				newStatement = new WhileStatement(whilestmt.getLocation(), newCond, newInvs, newBody);
+			if (newInvs != invs || newBody != body) {
+				newStatement = new WhileStatement(whilestmt.getLocation(), cond, newInvs, newBody);
 			}
 		} else if (statement instanceof final ForkStatement forkstmt) {
 			final Expression[] threadId = forkstmt.getThreadID();
@@ -224,8 +231,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			if (newThreadId != threadId || newLhs != lhs) {
 				newStatement = new JoinStatement(joinstmt.getLoc(), newThreadId, newLhs);
 			}
-		} else if (statement instanceof final AtomicStatement atomicstmt) {
-			return atomicstmt;
 		}
 		if (newStatement == null) {
 			/* No recursion for label, havoc, break, return and goto */
@@ -233,6 +238,18 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		}
 		ModelUtils.copyAnnotations(statement, newStatement);
 		return newStatement;
+	}
+
+	private List<Statement> processAtomic(final AtomicStatement atomicStatement) {
+		final List<Statement> lockedStatements = new ArrayList<>();
+		final var compareLock = getAssumeStatement();
+		final var setLock = getLockAssignment(true);
+		final var compareAndSet = new AtomicStatement(DummyVarDeclarationBuilder.getDummyLocation(),
+				new Statement[] { compareLock, setLock });
+		lockedStatements.add(compareAndSet);
+		lockedStatements.addAll(Arrays.asList(atomicStatement.getBody()));
+		lockedStatements.add(getLockAssignment(false));
+		return lockedStatements;
 	}
 
 	private boolean atomicContainsLoop(final AtomicStatement atomicBlock) {
