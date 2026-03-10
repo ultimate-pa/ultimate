@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -37,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer.MemorySliceUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -52,7 +52,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private final BoogiePreprocessorBacktranslator mTranslator;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final DummyVarDeclarationBuilder mDeclarationBuilder;
+	private DummyVarDeclarationBuilder mDeclarationBuilder;
 	private Statement mInitStatement;
 
 	protected AtomicsToLocks(final BoogiePreprocessorBacktranslator translator,
@@ -60,7 +60,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		mTranslator = translator;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mDeclarationBuilder = constructDeclarationBuilder();
 	}
 
 	/**
@@ -71,6 +70,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	public boolean process(final IElement root) {
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
+			mDeclarationBuilder = constructDeclarationBuilder(unit);
 			final VariableDeclaration declaration = mDeclarationBuilder.getDeclaration();
 			initializeLockInUnit(unit);
 			final List<Declaration> newDeclarations = new ArrayList<>();
@@ -93,10 +93,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return true;
 	}
 
-	private DummyVarDeclarationBuilder constructDeclarationBuilder() {
+	private DummyVarDeclarationBuilder constructDeclarationBuilder(final Unit unit) {
 		final String typeName = "bool";
 		final NamedType astType = new NamedType(null, BoogieType.TYPE_BOOL, typeName, new ASTType[0]);
-		return new DummyVarDeclarationBuilder(astType);
+		return new DummyVarDeclarationBuilder(astType, unit);
 	}
 
 	private void initializeLockInUnit(final Unit unit) {
@@ -128,8 +128,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	private Procedure addLockToSpecification(final Procedure proc, final VariableLHS lhs) {
 		final var spec = proc.getSpecification();
-		final var modifiesLockSpec = new ModifiesSpecification(DummyVarDeclarationBuilder.getDummyLocation(), false,
-				new VariableLHS[] { lhs });
+		final var modifiesLockSpec =
+				new ModifiesSpecification(mDeclarationBuilder.getDummyLocation(), false, new VariableLHS[] { lhs });
 		final var newSpecification = Arrays.copyOf(spec, spec.length + 1);
 		newSpecification[spec.length] = modifiesLockSpec;
 		return new Procedure(proc.getLoc(), proc.getAttributes(), proc.getIdentifier(), proc.getTypeParams(),
@@ -164,18 +164,18 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	private AssumeStatement getAssumeStatement() {
 		final var falseLiteral =
-				new BooleanLiteral(DummyVarDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL, false);
-		final var negatedLock = ExpressionFactory.constructUnaryExpression(
-				DummyVarDeclarationBuilder.getDummyLocation(), Operator.LOGICNEG,
-				new IdentifierExpression(DummyVarDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL,
-						mDeclarationBuilder.getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL));
-		return new AssumeStatement(DummyVarDeclarationBuilder.getDummyLocation(), negatedLock);
+				new BooleanLiteral(mDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL, false);
+		final var negatedLock =
+				ExpressionFactory.constructUnaryExpression(mDeclarationBuilder.getDummyLocation(), Operator.LOGICNEG,
+						new IdentifierExpression(mDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL,
+								mDeclarationBuilder.getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL));
+		return new AssumeStatement(mDeclarationBuilder.getDummyLocation(), negatedLock);
 	}
 
 	private Statement getLockAssignment(final boolean val) {
 		final Expression assignment = ExpressionFactory.createBooleanLiteral(null, val);
 		final LeftHandSide[] lhs = { mDeclarationBuilder.getLhs() };
-		return StatementFactory.constructAssignmentStatement(DummyVarDeclarationBuilder.getDummyLocation(), lhs,
+		return StatementFactory.constructAssignmentStatement(mDeclarationBuilder.getDummyLocation(), lhs,
 				new Expression[] { assignment });
 	}
 
@@ -222,8 +222,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final List<Statement> lockedStatements = new ArrayList<>();
 		final var compareLock = getAssumeStatement();
 		final var setLock = getLockAssignment(true);
-		final var compareAndSet = new AtomicStatement(DummyVarDeclarationBuilder.getDummyLocation(),
-				new Statement[] { compareLock, setLock });
+		final var compareAndSet =
+				new AtomicStatement(mDeclarationBuilder.getDummyLocation(), new Statement[] { compareLock, setLock });
 		lockedStatements.add(compareAndSet);
 		final var noNestedAtomics = removeAtomics(atomicStatement.getBody());
 		lockedStatements.addAll(noNestedAtomics);
@@ -300,7 +300,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	private static final class DummyVarDeclarationBuilder {
 		// TODO Construct unique identifier
-		private static final String IDENTIFIER = "lock";
+		private static final String IDENTIFIER = "atomic_lock";
 		private static int SUFFIX = 0;
 
 		private static BoogieType BOOL = BoogieType.TYPE_BOOL;
@@ -309,9 +309,11 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		private final VariableDeclaration mVariableDeclaration;
 		private final ASTType mAstType;
 		private final VariableLHS mLhs;
+		private final Unit mUnit;
 
-		public DummyVarDeclarationBuilder(final ASTType astType) {
+		public DummyVarDeclarationBuilder(final ASTType astType, final Unit unit) {
 			mAstType = astType;
+			mUnit = unit;
 			mIdentifier = constructIdentifier();
 			mVariableDeclaration = constructDeclaration();
 			mLhs = setLhs(mVariableDeclaration.getLoc());
@@ -327,8 +329,9 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			return IDENTIFIER + MemorySliceUtils.constructMemorySliceSuffix(SUFFIX);
 		}
 
-		public static ILocation getDummyLocation() {
-			return new DefaultLocation();
+		public ILocation getDummyLocation() {
+			final var fileName = mUnit.getLoc().getFileName();
+			return new BoogieLocation(fileName, -1, -1, -1, -1);
 		}
 
 		private VariableLHS setLhs(final ILocation loc) {
