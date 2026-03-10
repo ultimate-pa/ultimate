@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer.MemorySliceUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -95,8 +96,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private DummyVarDeclarationBuilder constructDeclarationBuilder() {
 		final String typeName = "bool";
 		final NamedType astType = new NamedType(null, BoogieType.TYPE_BOOL, typeName, new ASTType[0]);
-		final var decBuilder = new DummyVarDeclarationBuilder(astType);
-		return decBuilder;
+		return new DummyVarDeclarationBuilder(astType);
 	}
 
 	private void initializeLockInUnit(final Unit unit) {
@@ -132,9 +132,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				new VariableLHS[] { lhs });
 		final var newSpecification = Arrays.copyOf(spec, spec.length + 1);
 		newSpecification[spec.length] = modifiesLockSpec;
-		final var newProc = new Procedure(proc.getLoc(), proc.getAttributes(), proc.getIdentifier(),
-				proc.getTypeParams(), proc.getInParams(), proc.getOutParams(), newSpecification, proc.getBody());
-		return newProc;
+		return new Procedure(proc.getLoc(), proc.getAttributes(), proc.getIdentifier(), proc.getTypeParams(),
+				proc.getInParams(), proc.getOutParams(), newSpecification, proc.getBody());
 	}
 
 	private void replaceAtomics(final Procedure proc) {
@@ -169,7 +168,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final var lockFalse =
 				ExpressionFactory.newBinaryExpression(DummyVarDeclarationBuilder.getDummyLocation(), Operator.COMPEQ,
 						new IdentifierExpression(DummyVarDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL,
-								DummyVarDeclarationBuilder.IDENTIFIER, DeclarationInformation.DECLARATIONINFO_GLOBAL),
+								mDeclarationBuilder.getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL),
 						falseLiteral);
 		return new AssumeStatement(DummyVarDeclarationBuilder.getDummyLocation(), lockFalse);
 	}
@@ -303,7 +302,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private static final class DummyVarDeclarationBuilder {
 		// TODO Construct unique identifier
 		private static final String IDENTIFIER = "lock";
+		private static int SUFFIX = 0;
+
 		private static BoogieType BOOL = BoogieType.TYPE_BOOL;
+		private final String mIdentifier;
 
 		private final VariableDeclaration mVariableDeclaration;
 		private final ASTType mAstType;
@@ -311,6 +313,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 		public DummyVarDeclarationBuilder(final ASTType astType) {
 			mAstType = astType;
+			mIdentifier = constructIdentifier();
 			mVariableDeclaration = constructDeclaration();
 			mLhs = setLhs(mVariableDeclaration.getLoc());
 		}
@@ -318,15 +321,19 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		private VariableDeclaration constructDeclaration() {
 			final var loc = getDummyLocation();
 			return new VariableDeclaration(loc, new Attribute[0],
-					new VarList[] { new VarList(loc, new String[] { IDENTIFIER }, mAstType) });
+					new VarList[] { new VarList(loc, new String[] { mIdentifier }, mAstType) });
+		}
+
+		private String constructIdentifier() {
+			return IDENTIFIER + MemorySliceUtils.constructMemorySliceSuffix(SUFFIX);
 		}
 
 		public static ILocation getDummyLocation() {
 			return new DefaultLocation();
 		}
 
-		private static VariableLHS setLhs(final ILocation loc) {
-			return ExpressionFactory.constructVariableLHS(loc, BOOL, IDENTIFIER,
+		private VariableLHS setLhs(final ILocation loc) {
+			return ExpressionFactory.constructVariableLHS(loc, BOOL, mIdentifier,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		}
 
@@ -336,6 +343,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 		public VariableLHS getLhs() {
 			return mLhs;
+		}
+
+		public String getIdentifier() {
+			return mIdentifier;
 		}
 	}
 }
