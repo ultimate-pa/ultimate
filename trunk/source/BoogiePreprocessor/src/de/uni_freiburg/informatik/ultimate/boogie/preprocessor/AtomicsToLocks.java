@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -30,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -165,12 +165,11 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private AssumeStatement getAssumeStatement() {
 		final var falseLiteral =
 				new BooleanLiteral(DummyVarDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL, false);
-		final var lockFalse =
-				ExpressionFactory.newBinaryExpression(DummyVarDeclarationBuilder.getDummyLocation(), Operator.COMPEQ,
-						new IdentifierExpression(DummyVarDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL,
-								mDeclarationBuilder.getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL),
-						falseLiteral);
-		return new AssumeStatement(DummyVarDeclarationBuilder.getDummyLocation(), lockFalse);
+		final var negatedLock = ExpressionFactory.constructUnaryExpression(
+				DummyVarDeclarationBuilder.getDummyLocation(), Operator.LOGICNEG,
+				new IdentifierExpression(DummyVarDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL,
+						mDeclarationBuilder.getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL));
+		return new AssumeStatement(DummyVarDeclarationBuilder.getDummyLocation(), negatedLock);
 	}
 
 	private Statement getLockAssignment(final boolean val) {
