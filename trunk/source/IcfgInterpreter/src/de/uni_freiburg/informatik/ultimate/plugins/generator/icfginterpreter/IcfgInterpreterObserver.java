@@ -19,13 +19,16 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.PartialExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
@@ -166,13 +169,22 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				.collect(Collectors.toMap(x -> x.currentLocation(), x -> x, (x, y) -> x));
 
 		for (final IcfgLocation loc : errorLocations) {
-			final PartialExecution errorExecution = locs2ErrorExecutions.get(loc);
+			final PartialExecution partialExecution = locs2ErrorExecutions.get(loc);
 
-			if (errorExecution != null && mFinalResults.get(loc) instanceof UnprovableResult) {
+			if (partialExecution != null && mFinalResults.get(loc) instanceof UnprovableResult) {
 				// We have a counter example, and there is no previous counter example for this location.
-				final IResult result = new CounterExampleResult<>(loc, Activator.PLUGIN_ID,
-						mServices.getBacktranslationService(), ProgramExecutions.translateExecution(errorExecution,
-								mIcfg.getCfgSmtToolkit().getManagedScript()));
+				final IcfgProgramExecution<IcfgEdge> errorExecution = ProgramExecutions
+						.translateExecution(partialExecution, mIcfg.getCfgSmtToolkit().getManagedScript());
+				final List<UnprovabilityReason> unprovabilityReasons =
+						UnprovabilityReason.getUnprovabilityReasons(errorExecution);
+				final IResult result;
+				if (unprovabilityReasons.isEmpty()) {
+					result = new CounterExampleResult<>(loc, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
+							errorExecution);
+				} else {
+					result = new UnprovableResult<>(Activator.PLUGIN_ID, loc, mServices.getBacktranslationService(),
+							errorExecution, unprovabilityReasons);
+				}
 				mFinalResults.put(loc, result);
 			}
 		}
