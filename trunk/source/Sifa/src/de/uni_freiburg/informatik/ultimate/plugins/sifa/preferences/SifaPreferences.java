@@ -137,6 +137,11 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			"Number of inner interference application iterations before widening";
 	private static final int DEFAULT_INNER_WIDENING_THRESHOLD = 2;
 
+	public static final String LABEL_JOIN_PRECISION = "Join Precision";
+	private static final String TOOLTIP_JOIN_PRECISION =
+			"Give exit locations of joined threads unique abstract location IDs for precise join semantics";
+	private static final boolean DEFAULT_JOIN_PRECISION = true;
+
 	// ---- settings in containers ----
 
 	// settings specific to ExplicitValueDomain
@@ -259,6 +264,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				DEFAULT_OUTER_WIDENING_THRESHOLD, 1, Integer.MAX_VALUE));
 		containerConcurrent.addItem(integer(LABEL_INNER_WIDENING_THRESHOLD, TOOLTIP_INNER_WIDENING_THRESHOLD,
 				DEFAULT_INNER_WIDENING_THRESHOLD, 1, Integer.MAX_VALUE));
+		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_JOIN_PRECISION, DEFAULT_JOIN_PRECISION,
+				TOOLTIP_JOIN_PRECISION, PreferenceType.Boolean));
 
 		final UltimatePreferenceItemContainer containerConcurrentTesting =
 				new UltimatePreferenceItemContainer("Thread-Modular Testing");

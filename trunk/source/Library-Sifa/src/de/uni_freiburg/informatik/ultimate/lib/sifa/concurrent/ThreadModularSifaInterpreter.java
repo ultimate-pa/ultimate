@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +49,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final Map<String, IcfgInterpreter> mThreadInterpreters;
 
 	private final List<String> mThreadIds;
+	private final Set<String> mJoinedThreads;
 	private final IInterferenceFactory mInterferenceFactory;
 	private final LoiExpansion mLoiExpansion;
 	private final SifaResultPrinter mResultPrinter;
@@ -88,6 +90,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final var setup = ThreadModularSetup.initialize(services, icfg, baseDomain, fluid, tools, mConcurrentTools,
 				loopSumFactory);
 		mThreadIds = setup.threadIds();
+		mJoinedThreads = setup.joinedThreads();
 		mAnalysisDomain = setup.analysisDomain();
 		mLoopSumFactory = setup.loopSumFactory();
 		mInterferenceFactory = setup.interferenceFactory();
@@ -196,8 +199,19 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		for (final String threadId : mThreadIds) {
 			final IIcfg<IcfgLocation> threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
 			mThreadIcfgs.put(threadId, threadIcfg);
-			final Collection<IcfgLocation> lois = mLoiExpansion.getLocationsOfInterestForThread(threadId, threadIcfg,
-					mRequestedLocationsOfInterest);
+			final Collection<IcfgLocation> baseLois = mLoiExpansion.getLocationsOfInterestForThread(threadId,
+					threadIcfg, mRequestedLocationsOfInterest);
+			final Collection<IcfgLocation> lois;
+			if (mJoinedThreads.contains(threadId)) {
+				final Set<IcfgLocation> withExit = new LinkedHashSet<>(baseLois);
+				final IcfgLocation exit = threadIcfg.getProcedureExitNodes().get(threadId);
+				if (exit != null) {
+					withExit.add(exit);
+				}
+				lois = withExit;
+			} else {
+				lois = baseLois;
+			}
 			mThreadLois.put(threadId, List.copyOf(lois));
 		}
 	}

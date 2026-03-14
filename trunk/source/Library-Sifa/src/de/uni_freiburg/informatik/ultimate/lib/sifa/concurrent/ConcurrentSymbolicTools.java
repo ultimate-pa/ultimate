@@ -227,7 +227,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	private IPredicate assumeJoinedThreadAtExit(final IPredicate state,
 			final IIcfgTransition<IcfgLocation> transition) {
-		if (!hasGhostLocationTracking() || !(transition instanceof IIcfgJoinTransitionThreadCurrent<?>)) {
+		if (!mSettings.joinPrecision() || !hasGhostLocationTracking()
+				|| !(transition instanceof IIcfgJoinTransitionThreadCurrent<?>)) {
 			return state;
 		}
 		@SuppressWarnings("unchecked")

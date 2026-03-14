@@ -11,6 +11,7 @@ public class PerEdgeInterferenceFactory implements IInterferenceFactory {
 
 	private final InterferenceEdgeCollector mCollector;
 
+	// TODO: inline private iinterfaces
 	public PerEdgeInterferenceFactory(final InterferenceEdgeCollector collector) {
 		mCollector = collector;
 	}
@@ -21,8 +22,7 @@ public class PerEdgeInterferenceFactory implements IInterferenceFactory {
 	}
 
 	@Override
-	public IInterference buildFromStates(final String threadId,
-			final Map<IcfgLocation, IPredicate> locationStates) {
+	public IInterference buildFromStates(final String threadId, final Map<IcfgLocation, IPredicate> locationStates) {
 		final Map<EdgeKey, IPredicate> edgePredicates = new HashMap<>();
 		for (final PredicateWithSrcAndTrgt edgePred : mCollector.collectEdgePredicates(threadId, locationStates)) {
 			mCollector.mergeIntoWithJoin(edgePredicates, new EdgeKey(edgePred.source(), edgePred.target()),

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,8 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
@@ -49,9 +52,10 @@ public final class ThreadModularSetup {
 		final ManagedScript script = tools.getManagedScript();
 		final ILogger logger = services.getLoggingService().getLogger(InterferenceEdgeCollector.class);
 		final List<String> threadIds = discoverThreadIds(icfg);
-		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg);
-		final ThreadActivityPreanalysis activityPreanalysis =
-				ThreadActivityPreanalysis.compute(icfg, new LinkedHashSet<>(threadIds));
+		final Set<String> joinedThreads = settings.joinPrecision() ? identifyJoinedThreads(icfg) : Set.of();
+		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg, joinedThreads);
+		final ThreadActivityPreanalysis activityPreanalysis = ThreadActivityPreanalysis.compute(icfg,
+				new LinkedHashSet<>(threadIds));
 
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
@@ -74,8 +78,8 @@ public final class ThreadModularSetup {
 				postcondition, translator, analysisDomain, ghostVars, activityPreanalysis,
 				activityPreanalysis.getMultiForkedThreads(), includeInterferencePreState);
 
-		return new SetupResult(threadIds, analysisDomain, defaultLoopSumFactory, interferenceFactory,
-				postcondition, proofChecker);
+		return new SetupResult(threadIds, analysisDomain, defaultLoopSumFactory, interferenceFactory, postcondition,
+				proofChecker, joinedThreads);
 	}
 
 	/** Thread IDs in topological fork order: forking thread before any it forks. */
@@ -112,14 +116,61 @@ public final class ThreadModularSetup {
 		return ordered;
 	}
 
+	private static Set<String> identifyJoinedThreads(final IIcfg<IcfgLocation> icfg) {
+		final Set<String> joined = new HashSet<>();
+		for (final var procLocs : icfg.getProgramPoints().values()) {
+			for (final IcfgLocation loc : procLocs.values()) {
+				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+					if (edge instanceof IIcfgJoinTransitionThreadOther<?>) {
+						joined.add(loc.getProcedure());
+					}
+				}
+			}
+		}
+		return joined;
+	}
+
 	private static Map<IcfgLocation, Integer> computeLocationIds(final ThreadModularSifaSettings settings,
-			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
+			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg, final Set<String> joinedThreads) {
 		if (settings.locationTrackingMode() == LocationTrackingMode.NONE) {
 			return Map.of();
 		}
 		final var locationAbstraction = new LocationAbstraction<>();
-		return locationAbstraction.computeLocationAbstraction(settings.locationAbstractionType(), services, icfg)
-				.toMap();
+		final Map<IcfgLocation, Integer> ids = new HashMap<>(locationAbstraction
+				.computeLocationAbstraction(settings.locationAbstractionType(), services, icfg).toMap());
+		if (!joinedThreads.isEmpty()) {
+			separateExitLocations(ids, joinedThreads, icfg);
+		}
+		return ids;
+	}
+
+	private static void separateExitLocations(final Map<IcfgLocation, Integer> locationIds,
+			final Set<String> joinedThreads, final IIcfg<IcfgLocation> icfg) {
+		for (final String threadId : joinedThreads) {
+			final IcfgLocation exit = icfg.getProcedureExitNodes().get(threadId);
+			if (exit == null || !locationIds.containsKey(exit)) {
+				continue;
+			}
+			final int exitId = locationIds.get(exit);
+			boolean shared = false;
+			for (final var entry : locationIds.entrySet()) {
+				if (entry.getKey() != exit && threadId.equals(entry.getKey().getProcedure())
+						&& entry.getValue() == exitId) {
+					shared = true;
+					break;
+				}
+			}
+			if (!shared) {
+				continue;
+			}
+			int maxId = 0;
+			for (final var entry : locationIds.entrySet()) {
+				if (threadId.equals(entry.getKey().getProcedure())) {
+					maxId = Math.max(maxId, entry.getValue());
+				}
+			}
+			locationIds.put(exit, maxId + 1);
+		}
 	}
 
 	private static GhostVariableManager createGhostVariablesIfEnabled(final ThreadModularSifaSettings settings,
@@ -130,13 +181,12 @@ public final class ThreadModularSetup {
 			return null;
 		}
 		return GhostVariableManager.create(script, locationIds, new LinkedHashSet<>(threadIds),
-				icfg.getProcedureEntryNodes(), symbolTable,
-				impreciseLocationThreads, true);
+				icfg.getProcedureEntryNodes(), symbolTable, impreciseLocationThreads, true);
 	}
 
 	public static record SetupResult(List<String> threadIds, IDomain analysisDomain,
 			Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
-			IInterferenceFactory interferenceFactory,
-			RelationalPredicatePostcondition postcondition, ThreadModularProofChecker proofChecker) {
+			IInterferenceFactory interferenceFactory, RelationalPredicatePostcondition postcondition,
+			ThreadModularProofChecker proofChecker, Set<String> joinedThreads) {
 	}
 }

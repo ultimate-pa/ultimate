@@ -4,7 +4,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstr
 
 public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMode,
 		LocationAbstractionType locationAbstractionType, InterferenceType interferenceType, int outerWideningThreshold,
-		int innerWideningThreshold) {
+		int innerWideningThreshold, boolean joinPrecision) {
 
 	public enum LocationTrackingMode {
 		GHOST_VARIABLES, NONE
@@ -22,6 +22,6 @@ public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMod
 			final LocationAbstractionType locationAbstractionType, final InterferenceType interferenceType,
 			final int outerWideningThreshold, final int innerWideningThreshold) {
 		this(useGhostLocations ? LocationTrackingMode.GHOST_VARIABLES : LocationTrackingMode.NONE,
-				locationAbstractionType, interferenceType, outerWideningThreshold, innerWideningThreshold);
+				locationAbstractionType, interferenceType, outerWideningThreshold, innerWideningThreshold, true);
 	}
 }

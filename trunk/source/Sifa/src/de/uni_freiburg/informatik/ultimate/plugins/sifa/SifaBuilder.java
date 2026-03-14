@@ -141,8 +141,9 @@ public class SifaBuilder {
 					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_OUTER_WIDENING_THRESHOLD));
 			final int innerWideningThreshold =
 					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD));
+			final boolean joinPrecision = mPrefs.getBoolean(SifaPreferences.LABEL_JOIN_PRECISION);
 			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
-					interferenceType, outerWideningThreshold, innerWideningThreshold);
+					interferenceType, outerWideningThreshold, innerWideningThreshold, joinPrecision);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);
