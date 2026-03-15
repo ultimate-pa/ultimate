@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
@@ -55,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -71,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
 	private static final String ULTIMATE_START = "ULTIMATE.start";
@@ -80,6 +85,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private final ILogger mLogger;
 	private DummyVarDeclarationBuilder mDeclarationBuilder;
 	private Statement mInitStatement;
+	private final HashRelation<Procedure, Procedure> mImplToProc = new HashRelation<>();
+	private BoogieDeclarations mBoogieDeclarations;
+	private boolean mContainsAtomic;
+	private final Set<String> mModifiesLock = new HashSet<>();
 
 	protected AtomicsToLocks(final BoogiePreprocessorBacktranslator translator,
 			final IUltimateServiceProvider services) {
@@ -96,27 +105,50 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	public boolean process(final IElement root) {
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
+			mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 			mDeclarationBuilder = constructDeclarationBuilder(unit);
 			final VariableDeclaration declaration = mDeclarationBuilder.getDeclaration();
-			initializeLockInUnit(unit);
 			final List<Declaration> newDeclarations = new ArrayList<>();
 			newDeclarations.add(declaration);
 			for (final Declaration decl : unit.getDeclarations()) {
-				if (decl instanceof Procedure) {
-					Procedure proc = (Procedure) decl;
-					if (proc.getBody() != null) {
-						replaceAtomics(proc);
-						proc = addLockToSpecification(proc, mDeclarationBuilder.getLhs());
-					}
-					newDeclarations.add(proc);
-				} else {
+				if (!(decl instanceof Procedure)) {
 					newDeclarations.add(decl);
+					continue;
 				}
+				final var proc = (Procedure) decl;
+				final var identifier = (proc).getIdentifier();
+				final var impl = mBoogieDeclarations.getProcImplementation().get(identifier);
+				if (impl == null) {
+					newDeclarations.add(proc);
+					continue;
+				}
+				if (!impl.equals(proc)) {
+					newDeclarations.add(proc);
+					continue;
+				}
+				if (proc.getBody() != null) {
+					replaceAtomics(proc);
+				}
+				newDeclarations.add(proc);
+
 			}
+			initializeLockInUnit();
+			getNewSpecifications(newDeclarations);
 			unit.setDeclarations(newDeclarations.toArray(new Declaration[newDeclarations.size()]));
 			return false;
 		}
 		return true;
+	}
+
+	private void getNewSpecifications(final List<Declaration> declarations) {
+		for (final String procId : mModifiesLock) {
+			final var procSpec = mBoogieDeclarations.getProcSpecification().get(procId);
+			assert procSpec != null : "There exists no specification of procedure " + procId;
+			final var newSpec = addLockToSpecification(procSpec, mDeclarationBuilder.getLhs());
+			final var specIdx = declarations.indexOf(procSpec);
+			assert specIdx > -1 : "Declaration of the procedure " + procId + " is missing!";
+			declarations.set(specIdx, newSpec);
+		}
 	}
 
 	private DummyVarDeclarationBuilder constructDeclarationBuilder(final Unit unit) {
@@ -125,17 +157,14 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return new DummyVarDeclarationBuilder(astType, unit);
 	}
 
-	private void initializeLockInUnit(final Unit unit) {
-		final var numDec = unit.getDeclarations().length;
-		final var declarations = Arrays.copyOf(unit.getDeclarations(), numDec);
-		for (int i = 0; i < numDec; i++) {
-			final Declaration decl = declarations[i];
-			if (decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals(ULTIMATE_START)) {
-				final var startProc = (Procedure) decl;
-				final var body = startProc.getBody();
+	private void initializeLockInUnit() {
+		for (final Procedure procedure : mBoogieDeclarations.getProcImplementation().values()) {
+			if (procedure.getIdentifier().equals(ULTIMATE_START)) {
+				final var body = procedure.getBody();
 				final var block = body.getBlock();
 				final var newBlock = addInitStatement(block);
 				body.setBlock(newBlock);
+				mModifiesLock.add(procedure.getIdentifier());
 			}
 		}
 	}
@@ -144,9 +173,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final int numStmt = blockStatements.length;
 		final Statement[] newStatements = new Statement[numStmt + 1];
 		mInitStatement = getLockAssignment(false);
-		newStatements[0] = blockStatements[0];
-		newStatements[1] = mInitStatement;
-		for (int i = 1; i < numStmt; i++) {
+		newStatements[0] = mInitStatement;
+		for (int i = 0; i < numStmt; i++) {
 			newStatements[i + 1] = blockStatements[i];
 		}
 		return newStatements;
@@ -156,8 +184,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final var spec = proc.getSpecification();
 		final var modifiesLockSpec =
 				new ModifiesSpecification(mDeclarationBuilder.getDummyLocation(), false, new VariableLHS[] { lhs });
-		final var newSpecification = Arrays.copyOf(spec, spec.length + 1);
-		newSpecification[spec.length] = modifiesLockSpec;
+		final var newSpecification =
+				spec != null ? Arrays.copyOf(spec, spec.length + 1) : new Specification[] { modifiesLockSpec };
+		final var l = spec != null ? spec.length : 0;
+		newSpecification[l] = modifiesLockSpec;
 		return new Procedure(proc.getLoc(), proc.getAttributes(), proc.getIdentifier(), proc.getTypeParams(),
 				proc.getInParams(), proc.getOutParams(), newSpecification, proc.getBody());
 	}
@@ -165,7 +195,12 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private void replaceAtomics(final Procedure proc) {
 		final Body body = proc.getBody();
 
+		mContainsAtomic = false;
 		final var newStatements = processStatements(body.getBlock());
+		if (mContainsAtomic) {
+			mModifiesLock.add(proc.getIdentifier());
+			mContainsAtomic = false;
+		}
 
 		body.setBlock(newStatements);
 	}
@@ -178,6 +213,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			if (statement instanceof final AtomicStatement atomicstmt) {
 				final var lockedSection = processAtomic(atomicstmt);
 				statementList.addAll(lockedSection);
+				mContainsAtomic = true;
 				continue;
 			}
 			if (!(statement instanceof final Label) && (statement != mInitStatement)) {
