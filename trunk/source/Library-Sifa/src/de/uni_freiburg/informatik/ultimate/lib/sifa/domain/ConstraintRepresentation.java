@@ -1,0 +1,162 @@
+package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.ojalgo.matrix.MatrixQ128;
+import org.ojalgo.scalar.RationalNumber;
+
+public class ConstraintRepresentation {
+	final private MatrixQ128 mEqualityMatrix;
+	final private MatrixQ128 mCongruenceMatrix;
+
+	final private boolean mIsMinimal;
+
+	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
+			final boolean isMinimal) {
+		mEqualityMatrix = CongruenceState.getMatrixFromRows(equalities);
+		mCongruenceMatrix = CongruenceState.getMatrixFromRows(congruences);
+		mIsMinimal = isMinimal;
+	}
+
+	public MatrixQ128 getEqualityMatrix() {
+		return mEqualityMatrix;
+	}
+
+	public MatrixQ128 getCongruenceMatrix() {
+		return mCongruenceMatrix;
+	}
+
+	public List<MatrixQ128> getEqualities() {
+		return CongruenceState.getRowsFromMatrix(mEqualityMatrix);
+	}
+
+	public List<MatrixQ128> getCongruences() {
+		return CongruenceState.getRowsFromMatrix(mCongruenceMatrix);
+	}
+
+	public boolean isMinimal() {
+		return mIsMinimal;
+	}
+
+	@Override
+	public String toString() {
+		return "ConstraintRepresentation [mEqualityMatrix=" + mEqualityMatrix + ", mCongruenceMatrix="
+				+ mCongruenceMatrix + ", mIsMinimal=" + mIsMinimal + "]";
+	}
+
+	public boolean isUnsat() {
+		final ConstraintRepresentation minimalConstraints = getMinimalForm();
+		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
+		final List<MatrixQ128> congruences = minimalConstraints.getCongruences();
+
+		if (equalities.size() == 1 && congruences.size() == 0) {
+			final var equality = equalities.get(0);
+
+			if (equality.equals(ConstraintRepresentation.unsatVector(equality.size()))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static MatrixQ128 unsatVector(final int length) {
+		final List<Integer> list = new ArrayList<>(Collections.nCopies(length, 0));
+		list.set(0, -1);
+		return CongruenceState.getRowVectorFromIntList(list);
+	}
+
+	public ConstraintRepresentation getMinimalForm() {
+		if (mIsMinimal) {
+			return this;
+		}
+
+		final List<MatrixQ128> equalities = getEqualities();
+		final List<MatrixQ128> congruences = getCongruences();
+
+		final List<Integer> equalitiesToDelete = new ArrayList<>();
+		final List<Integer> congruencesToDelete = new ArrayList<>();
+
+		// Making the equality pivots unique
+		for (int i = 0; i < equalities.size(); i++) {
+			final MatrixQ128 equality = equalities.get(i);
+			final int pivot = CongruenceState.lastPivot(equality);
+
+			if (pivot == -1) {
+				// vector is empty, can be deleted
+				equalitiesToDelete.add(i);
+			} else if (pivot == 0) {
+				// equality is unsatisfiable and so is the whole system
+				return new ConstraintRepresentation(List.of(unsatVector(equality.size())), List.of(), true);
+
+			} else {
+				// Make pivotValue positive
+				final RationalNumber pivotValue = equality.get(0, pivot);
+				if (CongruenceState.getNumerator(pivotValue) < 0) {
+					equalities.set(i, equality.multiply((-1)));
+				}
+
+				// Eliminate the pivot field from the following equalities
+				for (int j = i + 1; j < equalities.size(); j++) {
+					final MatrixQ128 other = equalities.get(j);
+					equalities.set(j, CongruenceState.eliminateField(other, equality, pivot));
+				}
+
+				// Eliminate the pivot field from the following congruence's
+				for (int j = 0; j < congruences.size(); j++) {
+					final MatrixQ128 other = congruences.get(j);
+					congruences.set(j, CongruenceState.eliminateField(other, equality, pivot));
+				}
+
+			}
+		}
+
+		// Making the equality pivots unique
+		for (int i = 0; i < congruences.size(); i++) {
+			final MatrixQ128 congruence = congruences.get(i);
+			final int pivot = CongruenceState.lastPivot(congruence);
+
+			if (pivot == -1) {
+				// vector is empty, can be deleted
+				congruencesToDelete.add(i);
+			} else if (pivot == 0 && CongruenceState.getDenominator(congruence.get(0, pivot)) == 1) {
+				// congruence is unsatisfiable and so is the whole system
+				// First entry has to be 0 modulo 1 which is exactly the case when the
+				// pivotValue is a whole number
+				return new ConstraintRepresentation(List.of(unsatVector(congruence.size())), List.of(), true);
+			} else {
+				// Make pivotValue positive
+				final var pivotValue = congruence.get(0, pivot);
+				if (CongruenceState.getNumerator(pivotValue) < 0) {
+					congruences.set(i, congruence.multiply((-1)));
+				}
+
+				// Eliminate the pivot field from the following congruence's
+				// We can't eliminate it from the equalities, since adding a congruence to an
+				// equality doesn't conserve the equality
+				for (int j = i + 1; j < congruences.size(); j++) {
+					final MatrixQ128 other = congruences.get(j);
+					congruences.set(j, CongruenceState.eliminateField(other, congruence, pivot));
+				}
+			}
+		}
+		for (final int i : equalitiesToDelete.reversed()) {
+			equalities.remove(i);
+		}
+		for (final int i : congruencesToDelete.reversed()) {
+			congruences.remove(i);
+		}
+
+		return new ConstraintRepresentation(equalities, congruences, true);
+	}
+
+	public ConstraintRepresentation convertToStrongMinimalForm() {
+		// TODO
+		return null;
+	}
+
+	public GeneratorRepresentation computeGeneratorRepresentation() {
+		return null;
+	}
+}
