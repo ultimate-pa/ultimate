@@ -140,7 +140,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_JOIN_PRECISION = "Join Precision";
 	private static final String TOOLTIP_JOIN_PRECISION =
 			"Give exit locations of joined threads unique abstract location IDs for precise join semantics";
-	private static final boolean DEFAULT_JOIN_PRECISION = true;
+	private static final boolean DEFAULT_JOIN_PRECISION = false;
 
 	// ---- settings in containers ----
 

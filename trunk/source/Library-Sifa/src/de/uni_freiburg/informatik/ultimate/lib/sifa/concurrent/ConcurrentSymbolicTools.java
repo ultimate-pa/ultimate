@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +15,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -49,8 +48,9 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
 	private ThreadAnalysisContext mThreadContext;
 	private ObservedThreadStateRecorder mObservedStateRecorder;
-	// join-current -> join-other edges (one per thread instance)
-	private final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, List<IIcfgJoinTransitionThreadOther<IcfgLocation>>> mJoinOtherByJoinCurrent;
+	// join-current edge -> procedure name of the joined thread
+	private final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> mJoinedThreadByJoinCurrent;
+	private final Map<String, IcfgLocation> mProcedureExitNodes;
 
 	public ConcurrentSymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
 			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
@@ -60,7 +60,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mServices = services;
 		mSettings = settings;
 		mInitialStateFactory = new InitialStateFactory(this, icfg);
-		mJoinOtherByJoinCurrent = buildJoinOtherMap(icfg);
+		mJoinedThreadByJoinCurrent = buildJoinToThreadMap(icfg);
+		mProcedureExitNodes = icfg.getProcedureExitNodes();
 	}
 
 	public ThreadModularSifaSettings getSettings() {
@@ -159,18 +160,20 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		return post(input, transition);
 	}
 
-	private static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, List<IIcfgJoinTransitionThreadOther<IcfgLocation>>> buildJoinOtherMap(
+	/** Match join-current to fork edges via thread ID terms to find the joined procedure. */
+	private static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> buildJoinToThreadMap(
 			final IIcfg<IcfgLocation> icfg) {
-		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, List<IIcfgJoinTransitionThreadOther<IcfgLocation>>> map = new HashMap<>();
-		for (final var procLocs : icfg.getProgramPoints().values()) {
-			for (final IcfgLocation loc : procLocs.values()) {
-				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-					if (edge instanceof IIcfgJoinTransitionThreadOther) {
-						final IIcfgJoinTransitionThreadOther<IcfgLocation> joinOther = (IIcfgJoinTransitionThreadOther<IcfgLocation>) edge;
-						final IIcfgJoinTransitionThreadCurrent<IcfgLocation> joinCurrent = joinOther
-								.getCorrespondingIIcfgJoinTransitionCurrentThread();
-						map.computeIfAbsent(joinCurrent, k -> new ArrayList<>()).add(joinOther);
-					}
+		final var concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
+		final var forks = concurrency.getThreadInstanceMap().keySet();
+		final var joins = concurrency.getJoinTransitions();
+		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> map = new HashMap<>();
+		for (final var join : joins) {
+			final var joinIdTerms = join.getJoinSmtArguments().getThreadIdArguments().terms();
+			for (final var fork : forks) {
+				final var forkIdTerms = fork.getForkSmtArguments().getThreadIdArguments().terms();
+				if (Arrays.equals(forkIdTerms, joinIdTerms)) {
+					map.put(join, fork.getNameOfForkedProcedure());
+					break;
 				}
 			}
 		}
@@ -233,21 +236,19 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		}
 		@SuppressWarnings("unchecked")
 		final IIcfgJoinTransitionThreadCurrent<IcfgLocation> joinCurrent = (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) transition;
-		IPredicate result = state;
-		for (final IIcfgJoinTransitionThreadOther<IcfgLocation> joinOther : mJoinOtherByJoinCurrent
-				.getOrDefault(joinCurrent, List.of())) {
-			if (SmtUtils.isFalseLiteral(result.getFormula())) {
-				return result;
-			}
-			final IcfgLocation joinedExit = joinOther.getSource();
-			final String joinedThread = joinedExit.getProcedure();
-			if (!mGhostVariables.tracksLocationPrecisely(joinedThread)) {
-				continue;
-			}
-			final Term exitConstraint = mGhostVariables.createLocationConstraint(joinedThread, joinedExit);
-			result = predicate(SmtUtils.and(getScript(), result.getFormula(), exitConstraint));
+		final String joinedThread = mJoinedThreadByJoinCurrent.get(joinCurrent);
+		if (joinedThread == null || !mGhostVariables.tracksLocationPrecisely(joinedThread)) {
+			return state;
 		}
-		return result;
+		if (SmtUtils.isFalseLiteral(state.getFormula())) {
+			return state;
+		}
+		final IcfgLocation joinedExit = mProcedureExitNodes.get(joinedThread);
+		if (joinedExit == null) {
+			return state;
+		}
+		final Term exitConstraint = mGhostVariables.createLocationConstraint(joinedThread, joinedExit);
+		return predicate(SmtUtils.and(getScript(), state.getFormula(), exitConstraint));
 	}
 
 	private IPredicate addLocationUpdate(final IPredicate postState, final IIcfgTransition<IcfgLocation> transition) {

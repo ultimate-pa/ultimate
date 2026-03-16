@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -12,8 +13,6 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
@@ -53,6 +52,7 @@ public final class ThreadModularSetup {
 		final ILogger logger = services.getLoggingService().getLogger(InterferenceEdgeCollector.class);
 		final List<String> threadIds = discoverThreadIds(icfg);
 		final Set<String> joinedThreads = settings.joinPrecision() ? identifyJoinedThreads(icfg) : Set.of();
+		logger.info("Join precision: %s, joined threads: %s", settings.joinPrecision(), joinedThreads);
 		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg, joinedThreads);
 		final ThreadActivityPreanalysis activityPreanalysis = ThreadActivityPreanalysis.compute(icfg,
 				new LinkedHashSet<>(threadIds));
@@ -116,14 +116,18 @@ public final class ThreadModularSetup {
 		return ordered;
 	}
 
+	/** Match join-current to fork edges via thread ID terms to find joined procedures. */
 	private static Set<String> identifyJoinedThreads(final IIcfg<IcfgLocation> icfg) {
+		final var concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
+		final var forks = concurrency.getThreadInstanceMap().keySet();
+		final var joins = concurrency.getJoinTransitions();
 		final Set<String> joined = new HashSet<>();
-		for (final var procLocs : icfg.getProgramPoints().values()) {
-			for (final IcfgLocation loc : procLocs.values()) {
-				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-					if (edge instanceof IIcfgJoinTransitionThreadOther<?>) {
-						joined.add(loc.getProcedure());
-					}
+		for (final var join : joins) {
+			final var joinIdTerms = join.getJoinSmtArguments().getThreadIdArguments().terms();
+			for (final var fork : forks) {
+				final var forkIdTerms = fork.getForkSmtArguments().getThreadIdArguments().terms();
+				if (Arrays.equals(forkIdTerms, joinIdTerms)) {
+					joined.add(fork.getNameOfForkedProcedure());
 				}
 			}
 		}
@@ -139,37 +143,37 @@ public final class ThreadModularSetup {
 		final Map<IcfgLocation, Integer> ids = new HashMap<>(locationAbstraction
 				.computeLocationAbstraction(settings.locationAbstractionType(), services, icfg).toMap());
 		if (!joinedThreads.isEmpty()) {
-			separateExitLocations(ids, joinedThreads, icfg);
+			final ILogger logger = services.getLoggingService().getLogger(ThreadModularSetup.class);
+			separateExitLocations(ids, joinedThreads, icfg, logger);
 		}
 		return ids;
 	}
 
 	private static void separateExitLocations(final Map<IcfgLocation, Integer> locationIds,
-			final Set<String> joinedThreads, final IIcfg<IcfgLocation> icfg) {
+			final Set<String> joinedThreads, final IIcfg<IcfgLocation> icfg, final ILogger logger) {
 		for (final String threadId : joinedThreads) {
 			final IcfgLocation exit = icfg.getProcedureExitNodes().get(threadId);
-			if (exit == null || !locationIds.containsKey(exit)) {
+			if (exit == null) {
 				continue;
 			}
-			final int exitId = locationIds.get(exit);
-			boolean shared = false;
-			for (final var entry : locationIds.entrySet()) {
-				if (entry.getKey() != exit && threadId.equals(entry.getKey().getProcedure())
-						&& entry.getValue() == exitId) {
-					shared = true;
-					break;
-				}
-			}
-			if (!shared) {
-				continue;
-			}
+			// Exit node may not be in locationIds if the location abstraction didn't reach it
 			int maxId = 0;
+			boolean exitInMap = locationIds.containsKey(exit);
+			boolean shared = false;
 			for (final var entry : locationIds.entrySet()) {
 				if (threadId.equals(entry.getKey().getProcedure())) {
 					maxId = Math.max(maxId, entry.getValue());
+					if (entry.getKey() != exit && exitInMap && entry.getValue() == locationIds.get(exit)) {
+						shared = true;
+					}
 				}
 			}
-			locationIds.put(exit, maxId + 1);
+			if (!exitInMap || shared) {
+				final int freshId = maxId + 1;
+				logger.info("Join precision: thread %s exit gets fresh abstract location %d (was %s)",
+						threadId, freshId, exitInMap ? locationIds.get(exit) : "absent");
+				locationIds.put(exit, freshId);
+			}
 		}
 	}
 
