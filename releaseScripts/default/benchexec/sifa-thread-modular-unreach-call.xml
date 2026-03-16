@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90" hardtimelimit="90" cpuCores="2">
+  <resultfiles></resultfiles>
+  <option name="--force-no-wrapper" />
+  <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
+  <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+
+  <rundefinition name="per-location-2">
+    <option name="--sifa.max.parallel.explicit.values">2</option>
+    <option name="--sifa.max.parallel.intervals">2</option>
+    <option name="--sifa.interference.type">PER_ABSTRACT_LOCATION</option>
+  </rundefinition>
+  
+  <rundefinition name="per-location-4">
+    <option name="--sifa.max.parallel.explicit.values">4</option>
+    <option name="--sifa.max.parallel.intervals">4</option>
+    <option name="--sifa.interference.type">PER_ABSTRACT_LOCATION</option>
+  </rundefinition>
+  
+  <rundefinition name="per-thread-2">
+    <option name="--sifa.max.parallel.explicit.values">2</option>
+    <option name="--sifa.max.parallel.intervals">2</option>
+    <option name="--sifa.interference.type">PER_THREAD</option>
+  </rundefinition>
+  
+  <rundefinition name="per-thread-4">
+    <option name="--sifa.max.parallel.explicit.values">4</option>
+    <option name="--sifa.max.parallel.intervals">4</option>
+    <option name="--sifa.interference.type">PER_THREAD</option>
+  </rundefinition>
+  
+  <rundefinition name="per-edge-2">
+    <option name="--sifa.max.parallel.explicit.values">2</option>
+    <option name="--sifa.max.parallel.intervals">2</option>
+    <option name="--sifa.interference.type">PER_EDGE</option>
+  </rundefinition>
+  
+  <rundefinition name="per-edge-4">
+    <option name="--sifa.max.parallel.explicit.values">4</option>
+    <option name="--sifa.max.parallel.intervals">4</option>
+    <option name="--sifa.interference.type">PER_EDGE</option>
+  </rundefinition>
+
+  <tasks name="SVCOMP-Concurrency">
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <!-- Exclude pthread-wmm to speedup evaluation -->
+    <exclude>${benchmark_path}/../../../trunk/examples/svcomp/pthread-wmm/*.yml</exclude>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+</benchmark>
