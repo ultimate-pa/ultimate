@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -161,6 +160,9 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		boolean verifierAtomicStarted = false;
 		for (final Statement statement : statements) {
 			if (statement instanceof final AtomicStatement atomicstmt) {
+				assert !verifierAtomicStarted
+						: "Nested __VERIFIER_atomic calls are not supported by the translation of atomics "
+								+ "into lock-based blocks in the BoogiePreprocessor!";
 				final var lockedSection = processAtomic(atomicstmt);
 				statementList.addAll(lockedSection);
 				mContainsAtomic = true;
@@ -303,8 +305,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	private AssumeStatement getAssumeStatement() {
-		final var falseLiteral =
-				new BooleanLiteral(mDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL, false);
 		final var negatedLock =
 				ExpressionFactory.constructUnaryExpression(mDeclarationBuilder.getDummyLocation(), Operator.LOGICNEG,
 						new IdentifierExpression(mDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL,
