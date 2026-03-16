@@ -78,11 +78,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private static final String ULTIMATE_INIT = "ULTIMATE.init";
-	private static String ATOMIC_BEGIN = "__VERIFIER_atomic_begin";
-	private static String ATOMIC_END = "__VERIFIER_atomic_end";
+	private static final String ATOMIC_BEGIN = "__VERIFIER_atomic_begin";
+	private static final String ATOMIC_END = "__VERIFIER_atomic_end";
 
-	private final BoogiePreprocessorBacktranslator mTranslator;
-	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private DummyVarDeclarationBuilder mDeclarationBuilder;
 	private Statement mInitStatement;
@@ -92,8 +90,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	protected AtomicsToLocks(final BoogiePreprocessorBacktranslator translator,
 			final IUltimateServiceProvider services) {
-		mTranslator = translator;
-		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
@@ -103,8 +99,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 */
 	@Override
 	public boolean process(final IElement root) {
-		if (root instanceof Unit) {
-			final Unit unit = (Unit) root;
+		if (root instanceof final Unit unit) {
 			mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 			mDeclarationBuilder = constructDeclarationBuilder(unit);
 			final VariableDeclaration declaration = mDeclarationBuilder.getDeclaration();
@@ -118,11 +113,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				final var proc = (Procedure) decl;
 				final var identifier = (proc).getIdentifier();
 				final var impl = mBoogieDeclarations.getProcImplementation().get(identifier);
-				if (impl == null) {
-					newDeclarations.add(proc);
-					continue;
-				}
-				if (!impl.equals(proc)) {
+				if (impl == null || !impl.equals(proc)) {
 					newDeclarations.add(proc);
 					continue;
 				}
@@ -140,6 +131,12 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return true;
 	}
 
+	/**
+	 * Recursively search for atomic blocks in the procedure and replace them by locks
+	 *
+	 * @param proc
+	 *            Procedure in which atomics should be replaced
+	 */
 	private void replaceAtomics(final Procedure proc) {
 		final Body body = proc.getBody();
 
@@ -160,6 +157,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		boolean verifierAtomicStarted = false;
 		for (final Statement statement : statements) {
 			if (statement instanceof final AtomicStatement atomicstmt) {
+				// TODO: First check if the atomic block contains loops
 				assert !verifierAtomicStarted
 						: "Nested __VERIFIER_atomic calls are not supported by the translation of atomics "
 								+ "into lock-based blocks in the BoogiePreprocessor!";
@@ -169,6 +167,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				continue;
 			}
 			if (isAtomicBegin(statement)) {
+				// TODO: Remove nested atomics
 				assert !verifierAtomicStarted
 						: "Nested __VERIFIER_atomic calls are not supported by the translation of atomics "
 								+ "into lock-based blocks in the BoogiePreprocessor!";
@@ -180,8 +179,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			}
 			if (!(statement instanceof final Label) && (statement != mInitStatement) && !isAtomic(statement)
 					&& !verifierAtomicStarted) {
+				// TODO: Only add assume statements to the actual program and not to procedures added by Ultimate
 				statementList.add(assume);
 			}
+			// TODO: If statement is not an if-then-else or while, construct an atomic block with assume and statement
 			statementList.add(processStatement(statement));
 		}
 		return statementList.toArray(new Statement[statementList.size()]);
@@ -190,13 +191,13 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	@Override
 	protected Statement processStatement(final Statement statement) {
 		Statement newStatement = null;
-		if (statement instanceof final AssertStatement assertStmt) {
+		if (statement instanceof AssertStatement) {
 			newStatement = statement;
-		} else if (statement instanceof final AssignmentStatement assign) {
+		} else if (statement instanceof AssignmentStatement) {
 			newStatement = statement;
-		} else if (statement instanceof final AssumeStatement assumeStmt) {
+		} else if (statement instanceof AssumeStatement) {
 			newStatement = statement;
-		} else if (statement instanceof final HavocStatement havoc) {
+		} else if (statement instanceof HavocStatement) {
 			newStatement = statement;
 		} else if (statement instanceof final CallStatement call) {
 			if (call.getMethodName().equals(ATOMIC_BEGIN)) {
@@ -235,6 +236,12 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return newStatement;
 	}
 
+	/**
+	 * Adjust the specifications of all procedures that modify the lock variable
+	 *
+	 * @param declarations
+	 *            All declarations of Unit
+	 */
 	private void getNewSpecifications(final List<Declaration> declarations) {
 		for (final String procId : mModifiesLock) {
 			final var procSpec = mBoogieDeclarations.getProcSpecification().get(procId);
@@ -246,12 +253,37 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		}
 	}
 
+	/**
+	 * Adds a ModifiesSpecification for the variable left-hand-side to the procedure
+	 *
+	 * @param proc
+	 *            Procedure that modifies the variable
+	 * @param lhs
+	 *            Left-Hand-Side of the variable
+	 * @return Procedure with modified specification
+	 */
+	private Procedure addLockToSpecification(final Procedure proc, final VariableLHS lhs) {
+		final var spec = proc.getSpecification();
+		final var modifiesLockSpec =
+				new ModifiesSpecification(mDeclarationBuilder.getDummyLocation(), false, new VariableLHS[] { lhs });
+		final var newSpecification =
+				spec != null ? Arrays.copyOf(spec, spec.length + 1) : new Specification[] { modifiesLockSpec };
+		final var l = spec != null ? spec.length : 0;
+		newSpecification[l] = modifiesLockSpec;
+		return new Procedure(proc.getLoc(), proc.getAttributes(), proc.getIdentifier(), proc.getTypeParams(),
+				proc.getInParams(), proc.getOutParams(), newSpecification, proc.getBody());
+	}
+
 	private DummyVarDeclarationBuilder constructDeclarationBuilder(final Unit unit) {
 		final String typeName = "bool";
 		final NamedType astType = new NamedType(null, BoogieType.TYPE_BOOL, typeName, new ASTType[0]);
 		return new DummyVarDeclarationBuilder(astType, unit);
 	}
 
+	/**
+	 * Initializes the lock variable in the program with root unit if there exists a procedure named ULTIMATE.init or
+	 * ULTIMATE.start in the list of declarations.
+	 */
 	private void initializeLockInUnit() {
 		Procedure initProc = null;
 		Procedure startProc = null;
@@ -273,6 +305,12 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		}
 	}
 
+	/**
+	 * Initializes the lock variable in procedure to the boolean value false
+	 *
+	 * @param procedure
+	 *            Procedure in which the lock should be initialized
+	 */
 	private void initializeLockInProc(final Procedure procedure) {
 		final var body = procedure.getBody();
 		final var block = body.getBlock();
@@ -281,6 +319,13 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		mModifiesLock.add(procedure.getIdentifier());
 	}
 
+	/**
+	 * Add assignment of the lock variable to false to the list of statements on index 0
+	 *
+	 * @param blockStatements
+	 *            List of statements in which the assignment should be added
+	 * @return List with additional assignment of lock
+	 */
 	private Statement[] addInitStatement(final Statement[] blockStatements) {
 		final int numStmt = blockStatements.length;
 		final Statement[] newStatements = new Statement[numStmt + 1];
@@ -290,18 +335,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			newStatements[i + 1] = blockStatements[i];
 		}
 		return newStatements;
-	}
-
-	private Procedure addLockToSpecification(final Procedure proc, final VariableLHS lhs) {
-		final var spec = proc.getSpecification();
-		final var modifiesLockSpec =
-				new ModifiesSpecification(mDeclarationBuilder.getDummyLocation(), false, new VariableLHS[] { lhs });
-		final var newSpecification =
-				spec != null ? Arrays.copyOf(spec, spec.length + 1) : new Specification[] { modifiesLockSpec };
-		final var l = spec != null ? spec.length : 0;
-		newSpecification[l] = modifiesLockSpec;
-		return new Procedure(proc.getLoc(), proc.getAttributes(), proc.getIdentifier(), proc.getTypeParams(),
-				proc.getInParams(), proc.getOutParams(), newSpecification, proc.getBody());
 	}
 
 	private AssumeStatement getAssumeStatement() {
@@ -319,6 +352,11 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				new Expression[] { assignment });
 	}
 
+	/**
+	 * Converts an atomic statement into a block containing the body of the atomic statement enclosed by assignments of
+	 * the lock variable, first to true and at the end of the block to false. All nested atomics get removed from the
+	 * body of the original statement
+	 */
 	private List<Statement> processAtomic(final AtomicStatement atomicStatement) {
 		final List<Statement> lockedStatements = new ArrayList<>();
 		final var compareLock = getAssumeStatement();
@@ -340,7 +378,11 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return statementList;
 	}
 
+	/**
+	 * Recursively remove atomic blocks from the statement and replace them with their bodies
+	 */
 	private List<Statement> removeAtomics(final Statement statement) {
+		// TODO: Also remove calls to __VERIFIER_atomic
 		Statement newStatement = null;
 		if (statement instanceof final IfStatement ifstmt) {
 			final Expression cond = ifstmt.getCondition();
@@ -392,14 +434,14 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private boolean atomicContainsLoop(final AtomicStatement atomicBlock) {
 		final var body = atomicBlock.getBody();
 		for (final Statement statement : body) {
-			if (containsLoop(statement)) {
+			if (containsLoop()) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private boolean containsLoop(final Statement statement) {
+	private boolean containsLoop() {
 		return false;
 	}
 
@@ -422,9 +464,9 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private static final class DummyVarDeclarationBuilder {
 		// TODO Construct unique identifier
 		private static final String IDENTIFIER = "atomic_lock";
-		private static int SUFFIX = 0;
+		private static final int SUFFIX = 0;
 
-		private static BoogieType BOOL = BoogieType.TYPE_BOOL;
+		private static final BoogieType BOOL = BoogieType.TYPE_BOOL;
 		private final String mIdentifier;
 
 		private final VariableDeclaration mVariableDeclaration;
