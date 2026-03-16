@@ -75,17 +75,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
 	private static final String ULTIMATE_START = "ULTIMATE.start";
+	private static final String ULTIMATE_INIT = "ULTIMATE.init";
+	private static String ATOMIC_BEGIN = "__VERIFIER_atomic_begin";
+	private static String ATOMIC_END = "__VERIFIER_atomic_end";
 
 	private final BoogiePreprocessorBacktranslator mTranslator;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private DummyVarDeclarationBuilder mDeclarationBuilder;
 	private Statement mInitStatement;
-	private final HashRelation<Procedure, Procedure> mImplToProc = new HashRelation<>();
 	private BoogieDeclarations mBoogieDeclarations;
 	private boolean mContainsAtomic;
 	private final Set<String> mModifiesLock = new HashSet<>();
@@ -140,6 +141,98 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return true;
 	}
 
+	private void replaceAtomics(final Procedure proc) {
+		final Body body = proc.getBody();
+
+		mContainsAtomic = false;
+		final var newStatements = processStatements(body.getBlock());
+		if (mContainsAtomic) {
+			mModifiesLock.add(proc.getIdentifier());
+			mContainsAtomic = false;
+		}
+
+		body.setBlock(newStatements);
+	}
+
+	@Override
+	protected Statement[] processStatements(final Statement[] statements) {
+		final var assume = getAssumeStatement();
+		final List<Statement> statementList = new ArrayList<>();
+		boolean verifierAtomicStarted = false;
+		for (final Statement statement : statements) {
+			if (statement instanceof final AtomicStatement atomicstmt) {
+				final var lockedSection = processAtomic(atomicstmt);
+				statementList.addAll(lockedSection);
+				mContainsAtomic = true;
+				continue;
+			}
+			if (isAtomicBegin(statement)) {
+				assert !verifierAtomicStarted
+						: "Nested __VERIFIER_atomic calls are not supported by the translation of atomics "
+								+ "into lock-based blocks in the BoogiePreprocessor!";
+				verifierAtomicStarted = true;
+				mContainsAtomic = true;
+			}
+			if (isAtomicEnd(statement)) {
+				verifierAtomicStarted = false;
+			}
+			if (!(statement instanceof final Label) && (statement != mInitStatement) && !isAtomic(statement)
+					&& !verifierAtomicStarted) {
+				statementList.add(assume);
+			}
+			statementList.add(processStatement(statement));
+		}
+		return statementList.toArray(new Statement[statementList.size()]);
+	}
+
+	@Override
+	protected Statement processStatement(final Statement statement) {
+		Statement newStatement = null;
+		if (statement instanceof final AssertStatement assertStmt) {
+			newStatement = statement;
+		} else if (statement instanceof final AssignmentStatement assign) {
+			newStatement = statement;
+		} else if (statement instanceof final AssumeStatement assumeStmt) {
+			newStatement = statement;
+		} else if (statement instanceof final HavocStatement havoc) {
+			newStatement = statement;
+		} else if (statement instanceof final CallStatement call) {
+			if (call.getMethodName().equals(ATOMIC_BEGIN)) {
+				final var compareLock = getAssumeStatement();
+				final var setLock = getLockAssignment(true);
+				newStatement = new AtomicStatement(mDeclarationBuilder.getDummyLocation(),
+						new Statement[] { compareLock, setLock });
+			} else if (call.getMethodName().equals(ATOMIC_END)) {
+				newStatement = getLockAssignment(false);
+			} else {
+				newStatement = statement;
+			}
+		} else if (statement instanceof final IfStatement ifstmt) {
+			final Expression cond = ifstmt.getCondition();
+			final Statement[] thens = ifstmt.getThenPart();
+			final Statement[] newThens = processStatements(thens);
+			final Statement[] elses = ifstmt.getElsePart();
+			final Statement[] newElses = processStatements(elses);
+			if (newThens != thens || newElses != elses) {
+				newStatement = new IfStatement(ifstmt.getLocation(), cond, newThens, newElses);
+			}
+		} else if (statement instanceof final WhileStatement whilestmt) {
+			final Expression cond = whilestmt.getCondition();
+			final LoopInvariantSpecification[] invs = whilestmt.getInvariants();
+			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(invs);
+			final Statement[] body = whilestmt.getBody();
+			final Statement[] newBody = processStatements(body);
+			if (newInvs != invs || newBody != body) {
+				newStatement = new WhileStatement(whilestmt.getLocation(), cond, newInvs, newBody);
+			}
+		} else {
+			/* No recursion for label, havoc, break, return and goto */
+			return statement;
+		}
+		ModelUtils.copyAnnotations(statement, newStatement);
+		return newStatement;
+	}
+
 	private void getNewSpecifications(final List<Declaration> declarations) {
 		for (final String procId : mModifiesLock) {
 			final var procSpec = mBoogieDeclarations.getProcSpecification().get(procId);
@@ -158,15 +251,32 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	private void initializeLockInUnit() {
+		Procedure initProc = null;
+		Procedure startProc = null;
 		for (final Procedure procedure : mBoogieDeclarations.getProcImplementation().values()) {
+			if (procedure.getIdentifier().equals(ULTIMATE_INIT)) {
+				initProc = procedure;
+				break;
+			}
 			if (procedure.getIdentifier().equals(ULTIMATE_START)) {
-				final var body = procedure.getBody();
-				final var block = body.getBlock();
-				final var newBlock = addInitStatement(block);
-				body.setBlock(newBlock);
-				mModifiesLock.add(procedure.getIdentifier());
+				startProc = procedure;
 			}
 		}
+		assert (initProc != null) || (startProc != null)
+				: "The setting replace atomics requires a procedure named " + ULTIMATE_INIT + " or " + ULTIMATE_START;
+		if (initProc != null) {
+			initializeLockInProc(initProc);
+		} else {
+			initializeLockInProc(startProc);
+		}
+	}
+
+	private void initializeLockInProc(final Procedure procedure) {
+		final var body = procedure.getBody();
+		final var block = body.getBlock();
+		final var newBlock = addInitStatement(block);
+		body.setBlock(newBlock);
+		mModifiesLock.add(procedure.getIdentifier());
 	}
 
 	private Statement[] addInitStatement(final Statement[] blockStatements) {
@@ -192,38 +302,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				proc.getInParams(), proc.getOutParams(), newSpecification, proc.getBody());
 	}
 
-	private void replaceAtomics(final Procedure proc) {
-		final Body body = proc.getBody();
-
-		mContainsAtomic = false;
-		final var newStatements = processStatements(body.getBlock());
-		if (mContainsAtomic) {
-			mModifiesLock.add(proc.getIdentifier());
-			mContainsAtomic = false;
-		}
-
-		body.setBlock(newStatements);
-	}
-
-	@Override
-	protected Statement[] processStatements(final Statement[] statements) {
-		final var assume = getAssumeStatement();
-		final List<Statement> statementList = new ArrayList<>();
-		for (final Statement statement : statements) {
-			if (statement instanceof final AtomicStatement atomicstmt) {
-				final var lockedSection = processAtomic(atomicstmt);
-				statementList.addAll(lockedSection);
-				mContainsAtomic = true;
-				continue;
-			}
-			if (!(statement instanceof final Label) && (statement != mInitStatement)) {
-				statementList.add(assume);
-			}
-			statementList.add(processStatement(statement));
-		}
-		return statementList.toArray(new Statement[statementList.size()]);
-	}
-
 	private AssumeStatement getAssumeStatement() {
 		final var falseLiteral =
 				new BooleanLiteral(mDeclarationBuilder.getDummyLocation(), BoogieType.TYPE_BOOL, false);
@@ -239,45 +317,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final LeftHandSide[] lhs = { mDeclarationBuilder.getLhs() };
 		return StatementFactory.constructAssignmentStatement(mDeclarationBuilder.getDummyLocation(), lhs,
 				new Expression[] { assignment });
-	}
-
-	@Override
-	protected Statement processStatement(final Statement statement) {
-		Statement newStatement = null;
-		if (statement instanceof final AssertStatement assertStmt) {
-			newStatement = statement;
-		} else if (statement instanceof final AssignmentStatement assign) {
-			newStatement = statement;
-		} else if (statement instanceof final AssumeStatement assumeStmt) {
-			newStatement = statement;
-		} else if (statement instanceof final HavocStatement havoc) {
-			newStatement = statement;
-		} else if (statement instanceof final CallStatement call) {
-			newStatement = statement;
-		} else if (statement instanceof final IfStatement ifstmt) {
-			final Expression cond = ifstmt.getCondition();
-			final Statement[] thens = ifstmt.getThenPart();
-			final Statement[] newThens = processStatements(thens);
-			final Statement[] elses = ifstmt.getElsePart();
-			final Statement[] newElses = processStatements(elses);
-			if (newThens != thens || newElses != elses) {
-				newStatement = new IfStatement(ifstmt.getLocation(), cond, newThens, newElses);
-			}
-		} else if (statement instanceof final WhileStatement whilestmt) {
-			final Expression cond = whilestmt.getCondition();
-			final LoopInvariantSpecification[] invs = whilestmt.getInvariants();
-			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(invs);
-			final Statement[] body = whilestmt.getBody();
-			final Statement[] newBody = processStatements(body);
-			if (newInvs != invs || newBody != body) {
-				newStatement = new WhileStatement(whilestmt.getLocation(), cond, newInvs, newBody);
-			}
-		} else {
-			/* No recursion for label, havoc, break, return and goto */
-			return statement;
-		}
-		ModelUtils.copyAnnotations(statement, newStatement);
-		return newStatement;
 	}
 
 	private List<Statement> processAtomic(final AtomicStatement atomicStatement) {
@@ -328,6 +367,26 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		}
 		ModelUtils.copyAnnotations(statement, newStatement);
 		return List.of(newStatement);
+	}
+
+	private boolean isAtomic(final Statement statement) {
+		return isAtomicBegin(statement) || isAtomicEnd(statement);
+	}
+
+	private boolean isAtomicBegin(final Statement statement) {
+		if (!(statement instanceof CallStatement)) {
+			return false;
+		}
+		final var call = (CallStatement) statement;
+		return call.getMethodName().equals(ATOMIC_BEGIN);
+	}
+
+	private boolean isAtomicEnd(final Statement statement) {
+		if (!(statement instanceof CallStatement)) {
+			return false;
+		}
+		final var call = (CallStatement) statement;
+		return call.getMethodName().equals(ATOMIC_END);
 	}
 
 	private boolean atomicContainsLoop(final AtomicStatement atomicBlock) {
