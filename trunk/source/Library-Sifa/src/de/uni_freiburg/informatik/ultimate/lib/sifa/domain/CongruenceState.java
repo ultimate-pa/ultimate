@@ -11,6 +11,7 @@ import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.matrix.store.GenericStore;
 import org.ojalgo.scalar.RationalNumber;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -144,8 +145,29 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		return matrix;
 	}
 
+	public static MatrixQ128 getMatrixFromRationalList(final List<Rational> entries, final int rowCount,
+			final int columnCount) {
+		final GenericStore<RationalNumber> protoMatrix = GenericStore.Q128.make(rowCount, columnCount);
+
+		for (int i = 0; i < rowCount; i++) {
+			for (int j = 0; j < columnCount; j++) {
+				final Rational rational = entries.get(i * columnCount + j);
+				final RationalNumber rationalEntry = RationalNumber.of(rational.numerator().longValueExact(),
+						rational.denominator().longValueExact());
+				protoMatrix.set(i, j, rationalEntry);
+			}
+		}
+
+		final var matrix = MatrixQ128.FACTORY.copy(protoMatrix);
+		return matrix;
+	}
+
 	public static MatrixQ128 getRowVectorFromIntList(final List<Integer> entries) {
 		return getMatrixFromIntList(entries, 1, entries.size());
+	}
+
+	public static MatrixQ128 getRowVectorFromRationalList(final List<Rational> entries) {
+		return getMatrixFromRationalList(entries, 1, entries.size());
 	}
 
 	public static long getNumerator(final RationalNumber num) {
