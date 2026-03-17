@@ -12,12 +12,14 @@ public class ConstraintRepresentation {
 	final private MatrixQ128 mCongruenceMatrix;
 
 	final private boolean mIsMinimal;
+	final private boolean mIsStrongMinimal;
 
 	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
-			final boolean isMinimal) {
+			final boolean isMinimal, final boolean isStrongMinimal) {
 		mEqualityMatrix = CongruenceState.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceState.getMatrixFromRows(congruences);
 		mIsMinimal = isMinimal;
+		mIsStrongMinimal = isStrongMinimal;
 	}
 
 	public MatrixQ128 getEqualityMatrix() {
@@ -38,6 +40,10 @@ public class ConstraintRepresentation {
 
 	public boolean isMinimal() {
 		return mIsMinimal;
+	}
+
+	public boolean isStrongMinimal() {
+		return mIsStrongMinimal;
 	}
 
 	@Override
@@ -88,7 +94,7 @@ public class ConstraintRepresentation {
 				equalitiesToDelete.add(i);
 			} else if (pivot == 0) {
 				// equality is unsatisfiable and so is the whole system
-				return new ConstraintRepresentation(List.of(unsatVector(equality.size())), List.of(), true);
+				return new ConstraintRepresentation(List.of(unsatVector(equality.size())), List.of(), true, true);
 
 			} else {
 				// Make pivotValue positive
@@ -124,7 +130,7 @@ public class ConstraintRepresentation {
 				// congruence is unsatisfiable and so is the whole system
 				// First entry has to be 0 modulo 1 which is exactly the case when the
 				// pivotValue is a whole number
-				return new ConstraintRepresentation(List.of(unsatVector(congruence.size())), List.of(), true);
+				return new ConstraintRepresentation(List.of(unsatVector(congruence.size())), List.of(), true, true);
 			} else {
 				// Make pivotValue positive
 				final var pivotValue = congruence.get(0, pivot);
@@ -148,7 +154,7 @@ public class ConstraintRepresentation {
 			congruences.remove(i);
 		}
 
-		return new ConstraintRepresentation(equalities, congruences, true);
+		return new ConstraintRepresentation(equalities, congruences, true, false);
 	}
 
 	public ConstraintRepresentation convertToStrongMinimalForm() {
