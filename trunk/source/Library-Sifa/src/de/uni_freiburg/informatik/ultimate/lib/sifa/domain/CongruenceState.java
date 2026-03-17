@@ -15,13 +15,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class CongruenceState implements IAbstractState<CongruenceState> {
+	public static final CongruenceState TOP = new CongruenceState(Map.of(),
+			new ConstraintRepresentation(List.of(), List.of(), true));
 
 	Map<Term, Integer> mVarToIndex;
 
 	ConstraintRepresentation mConstraints;
 	GeneratorRepresentation mGenerators;
-
-	// TODO: Change list of vectors to matrix and then read out the rows when needed
 
 	public CongruenceState(final Map<Term, Integer> varToIndex, final ConstraintRepresentation constraints) {
 		final Map<Term, Integer> mVarToIndex = varToIndex;
@@ -188,8 +188,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 	@Override
 	public boolean isBottom() {
-		// TODO Auto-generated method stub
-		return false;
+		final ConstraintRepresentation constraints = getConstraintRepresentation();
+		return constraints.isUnsat();
 	}
 
 }

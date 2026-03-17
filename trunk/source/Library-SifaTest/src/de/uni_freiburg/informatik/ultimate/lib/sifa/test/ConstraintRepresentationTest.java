@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ConstraintRepresentat
 
 public class ConstraintRepresentationTest {
 	@Test
-	public void testConstraintRepresentationGetMinimalForm() {
+	public void testGetMinimalForm() {
 		final List<MatrixQ128> equalities1 = new ArrayList<>();
 		equalities1.add(CongruenceState.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
 		equalities1.add(CongruenceState.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
@@ -27,7 +27,7 @@ public class ConstraintRepresentationTest {
 		// System.out.println(constraints1);
 		// System.out.println(minimalConstraints1);
 
-		Assert.assertTrue(constraintRepresentationHasMinimalForm(minimalConstraints1));
+		Assert.assertTrue(hasMinimalForm(minimalConstraints1));
 
 		final List<MatrixQ128> equalities2 = new ArrayList<>();
 		equalities2.add(CongruenceState.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
@@ -43,10 +43,10 @@ public class ConstraintRepresentationTest {
 		// System.out.println(constraints2);
 		// System.out.println(minimalConstraints2);
 
-		Assert.assertTrue(constraintRepresentationHasMinimalForm(minimalConstraints2));
+		Assert.assertTrue(hasMinimalForm(minimalConstraints2));
 	}
 
-	public boolean constraintRepresentationHasMinimalForm(final ConstraintRepresentation constraints) {
+	public boolean hasMinimalForm(final ConstraintRepresentation constraints) {
 		if (!constraints.isMinimal()) {
 			return false;
 		}

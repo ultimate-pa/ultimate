@@ -25,8 +25,7 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 
 		@Override
 		public CongruenceState getTopState() {
-			// TODO Auto-generated method stub
-			return null;
+			return CongruenceState.TOP;
 		}
 
 		@Override
