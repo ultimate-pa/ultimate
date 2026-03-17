@@ -25,6 +25,7 @@ public class EqualityRelation implements ICongruenceRelation {
 		mVarToFactor = lhsZeroConstant.getVariable2Coefficient();
 	}
 
+	@Override
 	public Set<Term> getVars() {
 		return mVarToFactor.keySet();
 	}
