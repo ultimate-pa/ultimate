@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import org.ojalgo.array.Array1D;
@@ -13,12 +12,12 @@ public class TestMatrix {
 		// See https://www.ojalgo.org/code-examples/ for more examples
 		final var x = MatrixQ128.FACTORY.make(10, 10);
 		final RationalNumber y = x.get(0, 0);
-		final Method m = y.getClass().getDeclaredMethod("getNumenator");
-		m.setAccessible(true);
-		final var z = y.getNumerator();
+		// final Method m = y.getClass().getDeclaredMethod("getNumenator");
+		// m.setAccessible(true);
+		// final var z = y.getNumerator();
 
 		final List<Array1D<RationalNumber>> rows;
-		final MatrixQ128 matrix = MatrixQ128.FACTORY.row(rows);
+		// final MatrixQ128 matrix = MatrixQ128.FACTORY.row(rows);
 
 		final int n1 = 3; // rows
 		final int m1 = 3; // columns
