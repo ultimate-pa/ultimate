@@ -22,7 +22,7 @@ public class ConstraintRepresentationTest {
 		congruences1.add(CongruenceState.getRowVectorFromIntList(List.of(0, 1, 1, -2, 0)));
 		congruences1.add(CongruenceState.getRowVectorFromIntList(List.of(0, 0, 0, 0, 1)));
 
-		final var constraints1 = new ConstraintRepresentation(equalities1, congruences1, false);
+		final var constraints1 = new ConstraintRepresentation(equalities1, congruences1, false, false);
 		final var minimalConstraints1 = constraints1.getMinimalForm();
 		// System.out.println(constraints1);
 		// System.out.println(minimalConstraints1);
@@ -38,7 +38,7 @@ public class ConstraintRepresentationTest {
 		congruences2.add(CongruenceState.getRowVectorFromIntList(List.of(0, 1, 1, -2, 0)));
 		congruences2.add(CongruenceState.getRowVectorFromIntList(List.of(1, 0, 0, 0, 1)));
 
-		final var constraints2 = new ConstraintRepresentation(equalities2, congruences2, false);
+		final var constraints2 = new ConstraintRepresentation(equalities2, congruences2, false, false);
 		final var minimalConstraints2 = constraints2.getMinimalForm();
 		// System.out.println(constraints2);
 		// System.out.println(minimalConstraints2);
