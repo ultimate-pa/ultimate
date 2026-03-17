@@ -85,10 +85,7 @@ public final class SifaResultPrinter {
 
 		while (!worklist.isEmpty()) {
 			final IcfgLocation current = worklist.removeFirst();
-
-			if (results.containsKey(current)) {
-				ordered.add(current);
-			}
+			ordered.add(current);
 
 			for (final IcfgEdge edge : current.getOutgoingEdges()) {
 				final IcfgLocation target = edge.getTarget();
@@ -105,7 +102,11 @@ public final class SifaResultPrinter {
 			final IPredicate predicate) {
 		printAbstractLocation(location);
 		printActiveThreads(location, ownerThread);
-		mLogger.info("  // State: %s", formatPredicate(predicate));
+		if (predicate != null) {
+			mLogger.info("  // State: %s", formatPredicate(predicate));
+		} else {
+			mLogger.info("  // State: <not tracked>");
+		}
 		for (final IcfgEdge edge : location.getOutgoingEdges()) {
 			final String code = formatSourceCode(edge);
 			if (!code.equals("[skip]") && !code.equals("[<null>]")) {
