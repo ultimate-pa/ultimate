@@ -38,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -47,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
@@ -74,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
 	private static final String ULTIMATE_START = "ULTIMATE.start";
@@ -115,13 +113,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				final var impl = mBoogieDeclarations.getProcImplementation().get(identifier);
 				if (impl == null || !impl.equals(proc)) {
 					newDeclarations.add(proc);
-					continue;
-				}
-				if (proc.getBody() != null) {
+				} else if (proc.getBody() != null) {
 					replaceAtomics(proc);
+					newDeclarations.add(proc);
 				}
-				newDeclarations.add(proc);
-
 			}
 			initializeLockInUnit();
 			getNewSpecifications(newDeclarations);
@@ -138,6 +133,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 *            Procedure in which atomics should be replaced
 	 */
 	private void replaceAtomics(final Procedure proc) {
+		// TODO: Only add assume statements to the actual program and not to procedures added by Ultimate (start, init)?
 		final Body body = proc.getBody();
 
 		mContainsAtomic = false;
@@ -154,36 +150,26 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	protected Statement[] processStatements(final Statement[] statements) {
 		final var assume = getAssumeStatement();
 		final List<Statement> statementList = new ArrayList<>();
-		boolean verifierAtomicStarted = false;
-		for (final Statement statement : statements) {
+		for (int i = 0; i < statements.length; i++) {
+			final var statement = statements[i];
 			if (statement instanceof final AtomicStatement atomicstmt) {
 				// TODO: First check if the atomic block contains loops
-				assert !verifierAtomicStarted
-						: "Nested __VERIFIER_atomic calls are not supported by the translation of atomics "
-								+ "into lock-based blocks in the BoogiePreprocessor!";
-				final var lockedSection = processAtomic(atomicstmt);
+				final var lockedSection = atomicToLocked(atomicstmt.getBody());
 				statementList.addAll(lockedSection);
 				mContainsAtomic = true;
-				continue;
-			}
-			if (isAtomicBegin(statement)) {
-				// TODO: Remove nested atomics
-				assert !verifierAtomicStarted
-						: "Nested __VERIFIER_atomic calls are not supported by the translation of atomics "
-								+ "into lock-based blocks in the BoogiePreprocessor!";
-				verifierAtomicStarted = true;
+			} else if (isAtomicBegin(statement)) {
 				mContainsAtomic = true;
+				statementList.addAll(computeAtomicBlock(Arrays.copyOfRange(statements, i, statements.length)));
+				break;
+			} else {
+				if (!(statement instanceof final Label) && (statement != mInitStatement)) {
+					statementList.add(assume);
+				}
+				// TODO: If statement is not an if-then-else or while, construct an atomic block with assume and
+				// statement
+				statementList.add(processStatement(statement));
 			}
-			if (isAtomicEnd(statement)) {
-				verifierAtomicStarted = false;
-			}
-			if (!(statement instanceof final Label) && (statement != mInitStatement) && !isAtomic(statement)
-					&& !verifierAtomicStarted) {
-				// TODO: Only add assume statements to the actual program and not to procedures added by Ultimate
-				statementList.add(assume);
-			}
-			// TODO: If statement is not an if-then-else or while, construct an atomic block with assume and statement
-			statementList.add(processStatement(statement));
+
 		}
 		return statementList.toArray(new Statement[statementList.size()]);
 	}
@@ -191,20 +177,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	@Override
 	protected Statement processStatement(final Statement statement) {
 		Statement newStatement = null;
-		if (statement instanceof AssertStatement) {
-			newStatement = statement;
-		} else if (statement instanceof AssignmentStatement) {
-			newStatement = statement;
-		} else if (statement instanceof AssumeStatement) {
-			newStatement = statement;
-		} else if (statement instanceof HavocStatement) {
-			newStatement = statement;
-		} else if (statement instanceof final CallStatement call) {
+		// TODO: What about assert, assignment, havoc?
+		if (statement instanceof final CallStatement call) {
 			if (call.getMethodName().equals(ATOMIC_BEGIN)) {
-				final var compareLock = getAssumeStatement();
-				final var setLock = getLockAssignment(true);
-				newStatement = new AtomicStatement(mDeclarationBuilder.getDummyLocation(),
-						new Statement[] { compareLock, setLock });
+				newStatement = getAtomicCompareAndSet(true);
 			} else if (call.getMethodName().equals(ATOMIC_END)) {
 				newStatement = getLockAssignment(false);
 			} else {
@@ -357,23 +333,30 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 * the lock variable, first to true and at the end of the block to false. All nested atomics get removed from the
 	 * body of the original statement
 	 */
-	private List<Statement> processAtomic(final AtomicStatement atomicStatement) {
+	private List<Statement> atomicToLocked(final Statement[] atomicBlock) {
 		final List<Statement> lockedStatements = new ArrayList<>();
-		final var compareLock = getAssumeStatement();
-		final var setLock = getLockAssignment(true);
-		final var compareAndSet =
-				new AtomicStatement(mDeclarationBuilder.getDummyLocation(), new Statement[] { compareLock, setLock });
+		final var compareAndSet = getAtomicCompareAndSet(true);
 		lockedStatements.add(compareAndSet);
-		final var noNestedAtomics = removeAtomics(atomicStatement.getBody());
+		final var noNestedAtomics = removeAtomics(atomicBlock);
 		lockedStatements.addAll(noNestedAtomics);
 		lockedStatements.add(getLockAssignment(false));
 		return lockedStatements;
 	}
 
+	private AtomicStatement getAtomicCompareAndSet(final boolean val) {
+		final var compareLock = getAssumeStatement();
+		final var setLock = getLockAssignment(val);
+		return new AtomicStatement(mDeclarationBuilder.getDummyLocation(), new Statement[] { compareLock, setLock });
+	}
+
 	private List<Statement> removeAtomics(final Statement[] statements) {
 		final List<Statement> statementList = new ArrayList<>();
 		for (final Statement statement : statements) {
-			statementList.addAll(removeAtomics(statement));
+			final var noNestedAtomics = removeAtomics(statement);
+			if (noNestedAtomics == null) {
+				continue;
+			}
+			statementList.addAll(noNestedAtomics);
 		}
 		return statementList;
 	}
@@ -382,7 +365,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 * Recursively remove atomic blocks from the statement and replace them with their bodies
 	 */
 	private List<Statement> removeAtomics(final Statement statement) {
-		// TODO: Also remove calls to __VERIFIER_atomic
 		Statement newStatement = null;
 		if (statement instanceof final IfStatement ifstmt) {
 			final Expression cond = ifstmt.getCondition();
@@ -402,6 +384,11 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			if (newInvs != invs || newBody != body) {
 				newStatement = new WhileStatement(whilestmt.getLocation(), cond, newInvs, newBody);
 			}
+		} else if (statement instanceof final CallStatement callStatement) {
+			// Remove nested calls to __VERIFIER_atomic
+			if (isAtomic(callStatement)) {
+				return null;
+			}
 		} else if (statement instanceof final AtomicStatement atomicStatement) {
 			return removeAtomics(atomicStatement.getBody());
 		} else {
@@ -409,6 +396,84 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		}
 		ModelUtils.copyAnnotations(statement, newStatement);
 		return List.of(newStatement);
+	}
+
+	private List<Statement> computeAtomicBlock(final Statement[] statements) {
+		assert isAtomicBegin(statements[0]) : "Block is not atomic";
+		final List<Statement> atomicBlock = new ArrayList<>();
+		final List<Statement> remainingStatements = new ArrayList<>();
+		int atomicEndIdx = -1;
+		for (int i = 0; i < statements.length; i++) {
+			final var statement = statements[i];
+			if (isAtomicBegin(statement)) {
+				// TODO: Remove nested atomics
+				assert i == 0 : "Nested __VERIFIER_atomic calls are not supported by the translation of atomics "
+						+ "into lock-based blocks in the BoogiePreprocessor!";
+			}
+			if (containsAtomicEnd(statement)) {
+				atomicBlock.add(statement);
+				atomicEndIdx = i;
+				break;
+			} else {
+				atomicBlock.add(statement);
+			}
+		}
+		assert atomicEndIdx != -1 : ATOMIC_END + " call is missing after a " + ATOMIC_BEGIN + " call!";
+		// Add all remaining statements after the atomic ends
+		for (int j = atomicEndIdx + 1; j < statements.length; j++) {
+			remainingStatements.add(statements[j]);
+		}
+		// TODO: Maybe just call this for the "end" Statement and replace start manually in this function?
+		final var replacedBlock = replaceVerifierAtomics(atomicBlock, false).getFirst();
+		replacedBlock.addAll(Arrays.asList(processStatements(remainingStatements.toArray(new Statement[0]))));
+		return replacedBlock;
+	}
+
+	private Pair<List<Statement>, Boolean> replaceVerifierAtomics(final List<Statement> block, boolean atomicEnded) {
+		final List<Statement> newStatements = new ArrayList<>();
+		final var compareAndSet = getAtomicCompareAndSet(true);
+		final var lockToFalse = getLockAssignment(false);
+		final var assume = getAssumeStatement();
+		for (final Statement statement : block) {
+			Statement newStatement = statement;
+			if (atomicEnded) {
+				newStatements.add(assume);
+			} else if (statement instanceof final CallStatement callStatement) {
+				if (isAtomicBegin(callStatement)) {
+					newStatement = compareAndSet;
+				} else if (isAtomicEnd(callStatement)) {
+					newStatement = lockToFalse;
+					atomicEnded = true;
+				} else {
+					newStatement = statement;
+				}
+			} else if (statement instanceof final WhileStatement whileStatement) {
+				final var oldBody = Arrays.asList(whileStatement.getBody());
+				final Pair<List<Statement>, Boolean> bodyPair = replaceVerifierAtomics(oldBody, atomicEnded);
+				final var newBody = bodyPair.getFirst();
+				atomicEnded = bodyPair.getSecond();
+				if (oldBody != newBody) {
+					newStatement = new WhileStatement(whileStatement.getLoc(), whileStatement.getCondition(),
+							whileStatement.getInvariants(), newBody.toArray(new Statement[0]));
+				}
+			} else if (statement instanceof final IfStatement ifStatement) {
+				final Expression cond = ifStatement.getCondition();
+				final Statement[] thens = ifStatement.getThenPart();
+				final Pair<List<Statement>, Boolean> thenPair =
+						replaceVerifierAtomics(Arrays.asList(thens), atomicEnded);
+				final Statement[] newThens = thenPair.getFirst().toArray(new Statement[0]);
+				final Statement[] elses = ifStatement.getElsePart();
+				final Pair<List<Statement>, Boolean> elsePair =
+						replaceVerifierAtomics(Arrays.asList(elses), atomicEnded);
+				final Statement[] newElses = elsePair.getFirst().toArray(new Statement[0]);
+				atomicEnded = thenPair.getSecond() || elsePair.getSecond();
+				if (newThens != thens || newElses != elses) {
+					newStatement = new IfStatement(ifStatement.getLocation(), cond, newThens, newElses);
+				}
+			}
+			newStatements.add(newStatement);
+		}
+		return new Pair<>(newStatements, atomicEnded);
 	}
 
 	private boolean isAtomic(final Statement statement) {
@@ -429,6 +494,28 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		}
 		final var call = (CallStatement) statement;
 		return call.getMethodName().equals(ATOMIC_END);
+	}
+
+	private boolean containsAtomicEnd(final Statement[] statements) {
+		for (final Statement statement : statements) {
+			if (containsAtomicEnd(statement)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean containsAtomicEnd(final Statement statement) {
+		if (isAtomicEnd(statement)) {
+			return true;
+		} else if (statement instanceof final WhileStatement whileStatement) {
+			return containsAtomicEnd(whileStatement.getBody());
+		} else if (statement instanceof final IfStatement ifStatement) {
+			final var then = ifStatement.getThenPart();
+			final var elsePart = ifStatement.getElsePart();
+			return containsAtomicEnd(then) || containsAtomicEnd(elsePart);
+		}
+		return false;
 	}
 
 	private boolean atomicContainsLoop(final AtomicStatement atomicBlock) {
