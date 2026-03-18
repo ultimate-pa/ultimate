@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
@@ -153,10 +154,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		for (int i = 0; i < statements.length; i++) {
 			final var statement = statements[i];
 			if (statement instanceof final AtomicStatement atomicstmt) {
-				// TODO: First check if the atomic block contains loops
 				final var lockedSection = atomicToLocked(atomicstmt.getBody());
 				statementList.addAll(lockedSection);
-				mContainsAtomic = true;
 			} else if (isAtomicBegin(statement)) {
 				mContainsAtomic = true;
 				statementList.addAll(computeAtomicBlock(Arrays.copyOfRange(statements, i, statements.length)));
@@ -334,6 +333,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 * body of the original statement
 	 */
 	private List<Statement> atomicToLocked(final Statement[] atomicBlock) {
+		if (!atomicContainsLoop(atomicBlock)) {
+			return Arrays.asList(atomicBlock);
+		}
+		mContainsAtomic = true;
 		final List<Statement> lockedStatements = new ArrayList<>();
 		final var compareAndSet = getAtomicCompareAndSet(true);
 		lockedStatements.add(compareAndSet);
@@ -353,9 +356,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final List<Statement> statementList = new ArrayList<>();
 		for (final Statement statement : statements) {
 			final var noNestedAtomics = removeAtomics(statement);
-			if (noNestedAtomics == null) {
-				continue;
-			}
 			statementList.addAll(noNestedAtomics);
 		}
 		return statementList;
@@ -365,7 +365,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 * Recursively remove atomic blocks from the statement and replace them with their bodies
 	 */
 	private List<Statement> removeAtomics(final Statement statement) {
-		Statement newStatement = null;
+		Statement newStatement = statement;
 		if (statement instanceof final IfStatement ifstmt) {
 			final Expression cond = ifstmt.getCondition();
 			final Statement[] thens = ifstmt.getThenPart();
@@ -387,7 +387,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		} else if (statement instanceof final CallStatement callStatement) {
 			// Remove nested calls to __VERIFIER_atomic
 			if (isAtomic(callStatement)) {
-				return null;
+				return List.of();
 			}
 		} else if (statement instanceof final AtomicStatement atomicStatement) {
 			return removeAtomics(atomicStatement.getBody());
@@ -518,17 +518,16 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return false;
 	}
 
-	private boolean atomicContainsLoop(final AtomicStatement atomicBlock) {
-		final var body = atomicBlock.getBody();
+	private boolean atomicContainsLoop(final Statement[] body) {
 		for (final Statement statement : body) {
-			if (containsLoop()) {
+			if (statement instanceof WhileStatement || statement instanceof GotoStatement) {
 				return true;
+			} else if (statement instanceof final IfStatement ifStatement) {
+				final var thens = ifStatement.getThenPart();
+				final var elses = ifStatement.getElsePart();
+				return atomicContainsLoop(thens) || atomicContainsLoop(elses);
 			}
 		}
-		return false;
-	}
-
-	private boolean containsLoop() {
 		return false;
 	}
 
