@@ -87,6 +87,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 	private final Statistics mStatistics = new Statistics();
 
+	// only applies to last checked trace
+	private ContextSimplifier<L> mContextSimplifier;
+
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
 	 *
@@ -173,10 +176,11 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		 * the original trace, i.e. we have to edit the proof s.t. it is a proof for the original trace
 		 */
 
-		final ContextSimplifier contextSimplifier = new ContextSimplifier(trace, controlConfigurations, condition);
-		contextSimplifier.getSimpleTrace();
+		mContextSimplifier = new ContextSimplifier<>(trace, controlConfigurations, condition);
+		final Word<L> newTrace = mContextSimplifier.getSimpleTrace();
+		final List<?> newControl = mContextSimplifier.getSimpleControlConfigurations();
 
-		return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
+		return proveCommutativityCondition(newTrace, newControl, letter1, condition);
 	}
 
 	private IPredicate generateCondition(final IPredicate context, final L letter1, final L letter2) {
@@ -240,13 +244,39 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		// TODO: Map the proof for the simplified prefix back to the original trace
 		final var tracePredicates = new ArrayList<QualifiedTracePredicates>();
 		for (final var qtp : original.getInfeasibilityProof()) {
-			final var newQtp = tpMap.computeIfAbsent(qtp, ConditionalCommutativityChecker::postProcessPredicates);
+
+			// map proof back
+
+			final List<IPredicate> longPredicates = mContextSimplifier.mapProof(qtp.getPredicates());
+
+			final TracePredicates tp = new TracePredicates(qtp.getTracePredicates().getPrecondition(),
+					qtp.getTracePredicates().getPostcondition(), longPredicates);
+
+			final QualifiedTracePredicates intermediateQtp =
+					new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
+			// till here
+
+			final var newQtp =
+					tpMap.computeIfAbsent(intermediateQtp, ConditionalCommutativityChecker::postProcessPredicates);
+
 			tracePredicates.add(newQtp);
 		}
 
 		final var usedTracePredicates = new ArrayList<QualifiedTracePredicates>();
 		for (final var qtp : original.getUsedTracePredicates()) {
-			final var newQtp = tpMap.computeIfAbsent(qtp, ConditionalCommutativityChecker::postProcessPredicates);
+
+			// map proof back
+
+			final List<IPredicate> longPredicates = mContextSimplifier.mapProof(qtp.getPredicates());
+
+			final TracePredicates tp = new TracePredicates(qtp.getTracePredicates().getPrecondition(),
+					qtp.getTracePredicates().getPostcondition(), longPredicates);
+
+			final QualifiedTracePredicates intermediateQtp =
+					new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
+
+			final var newQtp =
+					tpMap.computeIfAbsent(intermediateQtp, ConditionalCommutativityChecker::postProcessPredicates);
 			usedTracePredicates.add(newQtp);
 		}
 

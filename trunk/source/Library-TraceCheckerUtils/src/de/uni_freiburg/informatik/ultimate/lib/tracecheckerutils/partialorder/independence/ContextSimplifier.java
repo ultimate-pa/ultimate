@@ -75,13 +75,13 @@ public class ContextSimplifier<L extends IAction> {
 				// if mFormula.mFunction.mName is not "and", the statements consists of only one sub statements
 				if (!"and".equals(formula.getFunction().getName())) {
 					assert (currentLetter.getSymbol(0).getTransformula().getAssignedVars().size() == 1);
-					final IProgramVar var =
+					final IProgramVar singleAssignedVar =
 							currentLetter.getSymbol(0).getTransformula().getAssignedVars().iterator().next();
-					if (relevant.contains(var)) {
+					if (relevant.contains(singleAssignedVar)) {
 						// the only assigned variable is relevant
 						mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
 						mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
-						relevant.remove(var);
+						relevant.remove(singleAssignedVar);
 						relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
 					}
 					mAllRelevants.add(new HashSet<>(relevant));
@@ -181,6 +181,28 @@ public class ContextSimplifier<L extends IAction> {
 		assert (mSimpleControlConfigurations.size() == mSimpleTrace.length() + 1);
 		assert (mLongControlConfigurations.size() == mAllRelevants.size());
 
+	}
+
+	public List<IPredicate> mapProof(final List<IPredicate> shortPredicates) {
+		assert (shortPredicates.size() == mSimpleTrace.length());
+
+		final List<IPredicate> longPredicates = new ArrayList<>();
+		int shortIndex = 0;
+		int longIndex = 0;
+
+		while (longIndex < mLongTrace.length()) {
+			if (mLongTrace.getSymbol(longIndex) == mSimpleTrace.getSymbol(shortIndex)) {
+				longPredicates.add(shortPredicates.get(shortIndex));
+				longIndex = longIndex + 1;
+				shortIndex = shortIndex + 1;
+			} else {
+				longPredicates.add(shortPredicates.get(shortIndex));
+				longIndex = longIndex + 1;
+			}
+		}
+
+		assert (longPredicates.size() == mLongTrace.length());
+		return longPredicates;
 	}
 
 	public Word<L> getSimpleTrace() {
