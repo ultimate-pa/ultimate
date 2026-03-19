@@ -75,6 +75,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
+	private static final Boolean ATOMIC_GUARD_STATEMENTS = false;
+	private static final Boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
+
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private static final String ULTIMATE_INIT = "ULTIMATE.init";
 	private static final String ATOMIC_BEGIN = "__VERIFIER_atomic_begin";
@@ -161,16 +164,29 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				statementList.addAll(computeAtomicBlock(Arrays.copyOfRange(statements, i, statements.length)));
 				break;
 			} else {
-				if (!(statement instanceof final Label) && (statement != mInitStatement)) {
-					statementList.add(assume);
-				}
-				// TODO: If statement is not an if-then-else or while, construct an atomic block with assume and
-				// statement
-				statementList.add(processStatement(statement));
+				final var processedStatement = processStatement(statement);
+				statementList.addAll(getGuardedStatement(processedStatement, assume));
 			}
 
 		}
 		return statementList.toArray(new Statement[statementList.size()]);
+	}
+
+	private List<Statement> getGuardedStatement(final Statement statement, final AssumeStatement assumeStatement) {
+		final var guardedStmt = new ArrayList<Statement>();
+		if ((statement instanceof final Label) || (statement == mInitStatement)) {
+			// We don't need an assume infront of a label or the initial lock assignment
+			guardedStmt.add(statement);
+		} else if (statement instanceof IfStatement || statement instanceof WhileStatement
+				|| !ATOMIC_GUARD_STATEMENTS) {
+			guardedStmt.add(assumeStatement);
+			guardedStmt.add(statement);
+		} else {
+			final var atomicGuard = new AtomicStatement(mDeclarationBuilder.getDummyLocation(),
+					new Statement[] { assumeStatement, statement });
+			guardedStmt.add(atomicGuard);
+		}
+		return guardedStmt;
 	}
 
 	@Override
@@ -333,7 +349,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 * body of the original statement
 	 */
 	private List<Statement> atomicToLocked(final Statement[] atomicBlock) {
-		if (!atomicContainsLoop(atomicBlock)) {
+		if (!atomicContainsLoop(atomicBlock) && OMIT_ATOMICS_WITHOUT_LOOP) {
 			return Arrays.asList(atomicBlock);
 		}
 		mContainsAtomic = true;
