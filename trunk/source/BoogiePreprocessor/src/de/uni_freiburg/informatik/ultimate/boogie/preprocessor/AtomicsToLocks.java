@@ -75,8 +75,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
-	private static final Boolean ATOMIC_GUARD_STATEMENTS = false;
-	private static final Boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
+	private static final boolean ATOMIC_GUARD_STATEMENTS = false;
+	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private static final String ULTIMATE_INIT = "ULTIMATE.init";
@@ -430,9 +430,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				atomicBlock.add(statement);
 				atomicEndIdx = i;
 				break;
-			} else {
-				atomicBlock.add(statement);
 			}
+			atomicBlock.add(statement);
 		}
 		assert atomicEndIdx != -1 : ATOMIC_END + " call is missing after a " + ATOMIC_BEGIN + " call!";
 		// Add all remaining statements after the atomic ends
@@ -440,7 +439,13 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			remainingStatements.add(statements[j]);
 		}
 		// TODO: Maybe just call this for the "end" Statement and replace start manually in this function?
-		final var replacedBlock = replaceVerifierAtomics(atomicBlock, false).getFirst();
+		final List<Statement> replacedBlock = new ArrayList<>();
+		if (atomicContainsLoop(atomicBlock.toArray(new Statement[0])) && OMIT_ATOMICS_WITHOUT_LOOP) {
+			replacedBlock.addAll(replaceVerifierAtomics(atomicBlock, false).getFirst());
+		} else {
+			replacedBlock.add(getAssumeStatement());
+			replacedBlock.addAll(atomicBlock);
+		}
 		replacedBlock.addAll(Arrays.asList(processStatements(remainingStatements.toArray(new Statement[0]))));
 		return replacedBlock;
 	}
