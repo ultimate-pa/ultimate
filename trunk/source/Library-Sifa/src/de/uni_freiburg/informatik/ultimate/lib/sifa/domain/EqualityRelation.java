@@ -18,11 +18,9 @@ public class EqualityRelation implements ICongruenceRelation {
 	final Map<Term, Rational> mVarToFactor;
 	final Rational mResult;
 
-	public EqualityRelation(final AffineTerm lhs, final Rational rhs) {
-		mResult = rhs.sub(lhs.getConstant());
-		final AffineTerm lhsZeroConstant = lhs.add(lhs.getConstant().negate());
-
-		mVarToFactor = lhsZeroConstant.getVariable2Coefficient();
+	public EqualityRelation(final AffineTerm term) {
+		mVarToFactor = term.getVariable2Coefficient();
+		mResult = term.getConstant();
 	}
 
 	@Override
@@ -30,8 +28,7 @@ public class EqualityRelation implements ICongruenceRelation {
 		return mVarToFactor.keySet();
 	}
 
-	@Override
-	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
+	public List<Rational> getProtoVector(final Map<Term, Integer> varToIndex) {
 		final int n = varToIndex.size() + 1;
 		final List<Rational> list = new ArrayList<>(Collections.nCopies(n, Rational.ZERO));
 		list.set(0, mResult.negate());
@@ -42,8 +39,13 @@ public class EqualityRelation implements ICongruenceRelation {
 			final int i = varToIndex.get(variable);
 			list.set(i, factor);
 		}
+		return list;
+	}
 
-		return CongruenceState.getRowVectorFromRationalList(list);
+	@Override
+	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
+		final List<Rational> protoVector = getProtoVector(varToIndex);
+		return CongruenceState.getRowVectorFromRationalList(protoVector);
 	}
 
 }
