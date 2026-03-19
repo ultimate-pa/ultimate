@@ -222,6 +222,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "for the same point of redundancy/non-minimality, up to the given number of attempts.";
 	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_RETRIES = 0;
 
+	public static final String LABEL_COMMUTATIVITY_COND_SIMPLIFIER =
+			"Apply context simplification for conditional commutativity";
+	private static final boolean DEF_COMMUTATIVITY_COND_SIMPLIFIER = false;
+
 	// Settings for PetriAutomizer
 	// ========================================================================
 
@@ -792,6 +796,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_RETRIES,
 						DEF_COMMUTATIVITY_COND_SYNTHESIS_RETRIES, DESC_COMMUTATIVITY_COND_SYNTHESIS_RETRIES,
 						Level.EXPERIMENTAL, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SIMPLIFIER, DEF_COMMUTATIVITY_COND_SIMPLIFIER,
+						PreferenceType.Boolean),
 
 				getIndependenceSettings(0),
 

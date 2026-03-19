@@ -89,7 +89,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 	// only applies to last checked trace
 	private ContextSimplifier<L> mContextSimplifier;
-	private final boolean mSimplifyContext = true;
+	private final boolean mSimplifyContext;
 
 	/**
 	 * Constructs a new instance of ConditionalCommutativityChecker.
@@ -112,7 +112,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	public ConditionalCommutativityChecker(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIndependenceRelation<IPredicate, L> independenceRelation,
 			final Function<Counterexample<L>, IRefinementStrategy<L>> buildStrategy,
-			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory) {
+			final PredicateFactory predicateFactory, final ICopyActionFactory<L> copyFactory,
+			final boolean useSimplifier) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mManagedScript = mgdScript;
@@ -128,6 +129,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		mBuildStrategy = buildStrategy;
 		mPredicateFactory = predicateFactory;
 		mCopyFactory = copyFactory;
+		mSimplifyContext = useSimplifier;
 	}
 
 	/**

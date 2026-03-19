@@ -5,8 +5,8 @@
  * Similar to SimpleContextParallelIncrementDecrement extends parallelIncrementDecrementConCom.bpl
  * by irrelevant context for the condition, but in a way the current ContextSimplifier can't remove it
  * but a fine tuned version could
- *// this makes l relevant when y is relevant, fine tune wouldn't, g stays irrelevant
- * // context simplifier does not remove this (except when this appears after the last - g := y + l -), but fine tune could
+ * this makes l relevant when y is relevant, fine tune wouldn't, g stays irrelevant
+ * context simplifier does not remove this (except when this appears after the last - g := y + l -), but fine tune could
  */
 var i, j, n, x, y, k, l, g: int;
 

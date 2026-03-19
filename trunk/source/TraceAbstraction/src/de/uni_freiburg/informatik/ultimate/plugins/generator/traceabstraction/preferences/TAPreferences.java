@@ -586,6 +586,10 @@ public final class TAPreferences {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS_RETRIES);
 	}
 
+	public boolean useContextSimplifier() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SIMPLIFIER);
+	}
+
 	public HoareProofSettings getHoareSettings() {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
 	}

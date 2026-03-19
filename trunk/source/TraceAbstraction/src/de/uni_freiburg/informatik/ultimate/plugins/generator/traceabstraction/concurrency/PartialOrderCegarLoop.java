@@ -299,7 +299,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	@Override
 	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException {
-
 		// Apply conditional commutativity checking if enabled
 		if (mPref.useConditionalCommutativityChecker()) {
 			mLogger.info("Trying commutativity condition synthesis.");
@@ -526,7 +525,7 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		}
 
 		final var conComChecker = new ConditionalCommutativityChecker<>(mServices, mCsToolkit.getManagedScript(),
-				relation, createStrategy, mPredicateFactory, copyFactory);
+				relation, createStrategy, mPredicateFactory, copyFactory, mPref.useContextSimplifier());
 
 		// This is the automaton builder used by our most common refinement strategies (e.g. CAMEL).
 		// The constructed automata should be enhanced through #enhanceInterpolantAutomaton(...) to be really useful.
