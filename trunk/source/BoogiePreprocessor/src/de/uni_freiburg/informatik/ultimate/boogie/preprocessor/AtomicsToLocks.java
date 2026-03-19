@@ -433,11 +433,14 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		final List<Statement> newStatements = new ArrayList<>();
 		final var compareAndSet = getAtomicCompareAndSet(true);
 		final var lockToFalse = getLockAssignment(false);
-		final var assume = getAssumeStatement();
-		for (final Statement statement : block) {
+		for (int i = 0; i < block.size(); i++) {
+			final var statement = block.get(i);
 			Statement newStatement = statement;
 			if (atomicEnded) {
-				newStatements.add(assume);
+				final var remainingStatements = block.subList(i, block.size()).toArray(new Statement[0]);
+				final var processedStatements = processStatements(remainingStatements);
+				newStatements.addAll(Arrays.asList(processedStatements));
+				break;
 			} else if (statement instanceof final CallStatement callStatement) {
 				if (isAtomicBegin(callStatement)) {
 					newStatement = compareAndSet;
@@ -452,10 +455,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				final Pair<List<Statement>, Boolean> bodyPair = replaceVerifierAtomics(oldBody, atomicEnded);
 				final var newBody = bodyPair.getFirst();
 				atomicEnded = bodyPair.getSecond();
-				if (oldBody != newBody) {
-					newStatement = new WhileStatement(whileStatement.getLoc(), whileStatement.getCondition(),
-							whileStatement.getInvariants(), newBody.toArray(new Statement[0]));
-				}
+				newStatement = new WhileStatement(whileStatement.getLoc(), whileStatement.getCondition(),
+						whileStatement.getInvariants(), newBody.toArray(new Statement[0]));
 			} else if (statement instanceof final IfStatement ifStatement) {
 				final Expression cond = ifStatement.getCondition();
 				final Statement[] thens = ifStatement.getThenPart();
@@ -467,9 +468,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 						replaceVerifierAtomics(Arrays.asList(elses), atomicEnded);
 				final Statement[] newElses = elsePair.getFirst().toArray(new Statement[0]);
 				atomicEnded = thenPair.getSecond() || elsePair.getSecond();
-				if (newThens != thens || newElses != elses) {
-					newStatement = new IfStatement(ifStatement.getLocation(), cond, newThens, newElses);
-				}
+				newStatement = new IfStatement(ifStatement.getLocation(), cond, newThens, newElses);
 			}
 			newStatements.add(newStatement);
 		}
