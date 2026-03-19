@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,9 +17,9 @@ public class ModuloRelation implements ICongruenceRelation {
 	final EqualityRelation mEqualityRelation;
 	final Rational mMod;
 
-	public ModuloRelation(final AffineTerm term, final Rational mod) {
+	public ModuloRelation(final AffineTerm term, final BigInteger finalMod) {
 		mEqualityRelation = new EqualityRelation(term);
-		mMod = mod;
+		mMod = Rational.valueOf(finalMod, BigInteger.ONE);
 	}
 
 	@Override

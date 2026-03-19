@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -31,6 +32,7 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 	private static class CongruenceStateProvider implements IStateProvider<CongruenceState> {
 
 		private final Script mScript;
+		public BigInteger MAX_NEG_MOD_COUNT = BigInteger.valueOf(5);
 
 		public CongruenceStateProvider(final Script script) {
 			mScript = script;
@@ -83,12 +85,6 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 					nonmodSide = lhs;
 				}
 
-				if (!relationSymbol.equals(RelationSymbol.EQ)) {
-					// For the start we only support modulo equalities
-					// TODO: Add sth for inequalities
-					return List.of();
-				}
-
 				final Term finalLhs = nonmodSide;
 				final Term finalRhs = modSide.getDivident();
 				final Term mod = modSide.getDivisor();
@@ -106,16 +102,35 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 				// TODO: Make sure that this does not crash
 				final Rational rationalMod = SmtUtils.toRational(constantMod);
 
-				final Rational finalMod = Rational.valueOf(rationalMod.numerator(), BigInteger.ONE);
+				final BigInteger finalMod = rationalMod.numerator();
 				final Rational multiplier = Rational.valueOf(rationalMod.denominator(), BigInteger.ONE);
 
 				PolynomialRelation polynomialRelation = PolynomialRelation.of(mScript, relationSymbol, finalLhs,
 						finalRhs);
 				polynomialRelation = polynomialRelation.mul(mScript, multiplier);
-
 				final AffineTerm affineTerm = toAffineTerm(polynomialRelation);
-				final ModuloRelation moduloRelation = new ModuloRelation(affineTerm, finalMod);
-				return List.of(moduloRelation);
+
+				if (relationSymbol.equals(RelationSymbol.EQ)) {
+					// Modulo equality
+					final ModuloRelation moduloRelation = new ModuloRelation(affineTerm, finalMod);
+					return List.of(moduloRelation);
+				} else if (relationSymbol.equals(RelationSymbol.DISTINCT)
+						&& finalMod.compareTo(MAX_NEG_MOD_COUNT) <= 0) {
+					// Have an inequality with a mod value that's small enough
+					final List<ICongruenceRelation> list = new ArrayList<>();
+
+					for (int i = 1; i < finalMod.intValue(); i++) {
+						final AffineTerm offsetAffineTerm = affineTerm
+								.add(Rational.valueOf(BigInteger.valueOf(i), BigInteger.ONE));
+						final ModuloRelation moduloRelation = new ModuloRelation(offsetAffineTerm, finalMod);
+						list.add(moduloRelation);
+					}
+					return list;
+				} else {
+					// Can't handle the other cases
+					// TODO: Overthink these cases again
+					return List.of();
+				}
 
 			} else if (modRhs != null && modLhs != null) {
 				// We have modulo on both sides
