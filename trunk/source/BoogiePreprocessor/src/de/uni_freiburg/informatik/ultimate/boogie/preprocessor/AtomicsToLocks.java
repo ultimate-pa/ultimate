@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -75,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
-	private static final boolean ATOMIC_GUARD_STATEMENTS = false;
+	private static final boolean ATOMIC_GUARD_STATEMENTS = true;
 	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
@@ -178,6 +179,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			// We don't need an assume infront of a label or the initial lock assignment
 			guardedStmt.add(statement);
 		} else if (statement instanceof IfStatement || statement instanceof WhileStatement
+				|| statement instanceof CallStatement || statement instanceof ForkStatement
 				|| !ATOMIC_GUARD_STATEMENTS) {
 			guardedStmt.add(assumeStatement);
 			guardedStmt.add(statement);
@@ -440,7 +442,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		}
 		// TODO: Maybe just call this for the "end" Statement and replace start manually in this function?
 		final List<Statement> replacedBlock = new ArrayList<>();
-		if (atomicContainsLoop(atomicBlock.toArray(new Statement[0])) && OMIT_ATOMICS_WITHOUT_LOOP) {
+		if (!OMIT_ATOMICS_WITHOUT_LOOP || atomicContainsLoop(atomicBlock.toArray(new Statement[0]))) {
 			replacedBlock.addAll(replaceVerifierAtomics(atomicBlock, false).getFirst());
 		} else {
 			replacedBlock.add(getAssumeStatement());
