@@ -76,8 +76,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
+	// Options result in different outputs
 	private static final boolean ATOMIC_GUARD_STATEMENTS = true;
-	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
+	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = true;
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private static final String ULTIMATE_INIT = "ULTIMATE.init";
@@ -117,6 +118,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				final var identifier = (proc).getIdentifier();
 				final var impl = mBoogieDeclarations.getProcImplementation().get(identifier);
 				if (impl == null || !impl.equals(proc)) {
+					// If there is no implementation or proc is the specification nothing needs to be replaced
 					newDeclarations.add(proc);
 				} else if (proc.getBody() != null) {
 					replaceAtomics(proc);
@@ -178,9 +180,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		if ((statement instanceof final Label) || (statement == mInitStatement)) {
 			// We don't need an assume infront of a label or the initial lock assignment
 			guardedStmt.add(statement);
-		} else if (statement instanceof IfStatement || statement instanceof WhileStatement
-				|| statement instanceof CallStatement || statement instanceof ForkStatement
-				|| !ATOMIC_GUARD_STATEMENTS) {
+		} else if (statement instanceof IfStatement || isLoop(statement) || !ATOMIC_GUARD_STATEMENTS) {
 			guardedStmt.add(assumeStatement);
 			guardedStmt.add(statement);
 		} else {
@@ -195,15 +195,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	protected Statement processStatement(final Statement statement) {
 		Statement newStatement = null;
 		// TODO: What about assert, assignment, havoc?
-		if (statement instanceof final CallStatement call) {
-			if (call.getMethodName().equals(ATOMIC_BEGIN)) {
-				newStatement = getAtomicCompareAndSet(true);
-			} else if (call.getMethodName().equals(ATOMIC_END)) {
-				newStatement = getLockAssignment(false);
-			} else {
-				newStatement = statement;
-			}
-		} else if (statement instanceof final IfStatement ifstmt) {
+		if (statement instanceof final IfStatement ifstmt) {
 			final Expression cond = ifstmt.getCondition();
 			final Statement[] thens = ifstmt.getThenPart();
 			final Statement[] newThens = processStatements(thens);
@@ -370,6 +362,9 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return new AtomicStatement(mDeclarationBuilder.getDummyLocation(), new Statement[] { compareLock, setLock });
 	}
 
+	/**
+	 * Remove all atomic blocks (atomic{...} and __VERIFIER_ATOMIC calls) from the statements
+	 */
 	private List<Statement> removeAtomics(final Statement[] statements) {
 		final List<Statement> statementList = new ArrayList<>();
 		for (final Statement statement : statements) {
@@ -416,6 +411,14 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return List.of(newStatement);
 	}
 
+	/**
+	 * Compute the list of statements between two calls of __VERIFIER_atomic_begin() and __VERIFIER_atomic_end(). Fails
+	 * if multiple of such calls are nested.
+	 *
+	 * @param statements
+	 *            List of statements that contains calls to __VERIFIER_atomic_begin() and __VERIFIER_atomic_end()
+	 * @return New list of statements where the atomic block is replaced with assignments to lock
+	 */
 	private List<Statement> computeAtomicBlock(final Statement[] statements) {
 		assert isAtomicBegin(statements[0]) : "Block is not atomic";
 		final List<Statement> atomicBlock = new ArrayList<>();
@@ -440,10 +443,10 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		for (int j = atomicEndIdx + 1; j < statements.length; j++) {
 			remainingStatements.add(statements[j]);
 		}
-		// TODO: Maybe just call this for the "end" Statement and replace start manually in this function?
 		final List<Statement> replacedBlock = new ArrayList<>();
 		if (!OMIT_ATOMICS_WITHOUT_LOOP || atomicContainsLoop(atomicBlock.toArray(new Statement[0]))) {
-			replacedBlock.addAll(replaceVerifierAtomics(atomicBlock, false).getFirst());
+			final var replaced = replaceVerifierAtomics(atomicBlock, false).getFirst();
+			replacedBlock.addAll(replaced);
 		} else {
 			replacedBlock.add(getAssumeStatement());
 			replacedBlock.addAll(atomicBlock);
@@ -503,19 +506,19 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	private boolean isAtomicBegin(final Statement statement) {
-		if (!(statement instanceof CallStatement)) {
-			return false;
-		}
-		final var call = (CallStatement) statement;
-		return call.getMethodName().equals(ATOMIC_BEGIN);
+		return isCallTo(statement, ATOMIC_BEGIN);
 	}
 
 	private boolean isAtomicEnd(final Statement statement) {
+		return isCallTo(statement, ATOMIC_END);
+	}
+
+	private boolean isCallTo(final Statement statement, final String name) {
 		if (!(statement instanceof CallStatement)) {
 			return false;
 		}
 		final var call = (CallStatement) statement;
-		return call.getMethodName().equals(ATOMIC_END);
+		return call.getMethodName().equals(name);
 	}
 
 	private boolean containsAtomicEnd(final Statement[] statements) {
@@ -542,7 +545,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	private boolean atomicContainsLoop(final Statement[] body) {
 		for (final Statement statement : body) {
-			if (statement instanceof WhileStatement || statement instanceof GotoStatement) {
+			if (isLoop(statement)) {
 				return true;
 			} else if (statement instanceof final IfStatement ifStatement) {
 				final var thens = ifStatement.getThenPart();
@@ -551,6 +554,11 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			}
 		}
 		return false;
+	}
+
+	private boolean isLoop(final Statement statement) {
+		return (statement instanceof WhileStatement || statement instanceof CallStatement
+				|| statement instanceof ForkStatement || statement instanceof GotoStatement);
 	}
 
 	@Override
