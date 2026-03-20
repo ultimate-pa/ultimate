@@ -45,7 +45,7 @@ public class EqualityRelation implements ICongruenceRelation {
 	@Override
 	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = getProtoVector(varToIndex);
-		return CongruenceState.getRowVectorFromRationalList(protoVector);
+		return CongruenceUtil.getRowVectorFromRationalList(protoVector);
 	}
 
 }

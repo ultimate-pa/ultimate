@@ -34,7 +34,7 @@ public class ModuloRelation implements ICongruenceRelation {
 		final List<Rational> divProtoVector = protoVector.stream().map(rational -> rational.div(mMod))
 				.collect(Collectors.toList());
 
-		return CongruenceState.getRowVectorFromRationalList(divProtoVector);
+		return CongruenceUtil.getRowVectorFromRationalList(divProtoVector);
 	}
 
 }

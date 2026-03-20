@@ -30,11 +30,11 @@ public class GeneratorRepresentation {
 	}
 
 	public List<MatrixQ128> getLines() {
-		return CongruenceState.getRowsFromMatrix(mLineMatrix);
+		return CongruenceUtil.getRowsFromMatrix(mLineMatrix);
 	}
 
 	public List<MatrixQ128> getParameters() {
-		return CongruenceState.getRowsFromMatrix(mParameterMatrix);
+		return CongruenceUtil.getRowsFromMatrix(mParameterMatrix);
 	}
 
 	public GeneratorRepresentation convertToMinimalForm() {
