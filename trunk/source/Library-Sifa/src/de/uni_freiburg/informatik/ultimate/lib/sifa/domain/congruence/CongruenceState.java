@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IAbstractState;
@@ -8,8 +7,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class CongruenceState implements IAbstractState<CongruenceState> {
-	public static final CongruenceState TOP = new CongruenceState(Map.of(),
-			new ConstraintRepresentation(List.of(), List.of(), true, true));
+	public static final CongruenceState TOP = new CongruenceState(Map.of(), ConstraintRepresentation.EMPTY);
 
 	Map<Term, Integer> mVarToIndex;
 

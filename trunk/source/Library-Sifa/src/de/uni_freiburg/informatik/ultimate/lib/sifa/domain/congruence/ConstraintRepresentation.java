@@ -8,6 +8,8 @@ import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.scalar.RationalNumber;
 
 public class ConstraintRepresentation {
+	public static ConstraintRepresentation EMPTY = new ConstraintRepresentation(List.of(), List.of(), true, true);
+
 	final private MatrixQ128 mEqualityMatrix;
 	final private MatrixQ128 mCongruenceMatrix;
 
@@ -17,7 +19,18 @@ public class ConstraintRepresentation {
 	final private boolean mIsMinimal;
 	final private boolean mIsStrongMinimal;
 
-	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
+	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences) {
+		// TODO: Think if I cant initiate the bools smarter
+		// TODO: REplace bools with for example mMinimalRepresenation != null
+		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
+		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
+		mIsMinimal = false;
+		mIsStrongMinimal = false;
+		mMinimalRepresenation = null;
+		mStrongMinimalRepresenation = null;
+	}
+
+	private ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
 			final boolean isMinimal, final boolean isStrongMinimal) {
 		// TODO: Make constructor with both booleans just false
 		// TODO: Think if I cant initiate the bools smarter

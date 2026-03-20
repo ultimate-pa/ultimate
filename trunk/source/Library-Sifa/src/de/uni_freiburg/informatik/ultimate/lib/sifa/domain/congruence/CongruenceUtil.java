@@ -13,7 +13,6 @@ import org.ojalgo.scalar.RationalNumber;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class CongruenceUtil {
-	// TODO: Make Congruence relation to encapsulate equalities and congruence's
 	public static MatrixQ128 equalityToVector(final int[] poliArray, final int result) {
 		final List<Integer> list = new ArrayList<>(List.of(-result));
 		for (final int item : poliArray) {
