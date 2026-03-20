@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.OctagonDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.AlwaysFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.NeverFluid;

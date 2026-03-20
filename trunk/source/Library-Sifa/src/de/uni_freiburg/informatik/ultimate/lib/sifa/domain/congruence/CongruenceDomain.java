@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.StateBasedDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ModTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -48,6 +49,7 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 		}
 
 		public List<ICongruenceRelation> toCongruenceRelation(final Term term) {
+			// TODO: Change into two things: One for equalities, one for congruences
 			final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
 			if (bnr == null) {
 				return List.of();
@@ -60,6 +62,8 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 			final ModTerm modRhs = ModTerm.of(rhs);
 			final ModTerm modLhs = ModTerm.of(lhs);
 
+			// TODO: VERY IMPORTANT: We can only handle other stuff see notes
+
 			if (modRhs == null && modLhs == null) {
 				if (!relationSymbol.equals(RelationSymbol.EQ)) {
 					return List.of();
@@ -68,9 +72,9 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 
 				final PolynomialRelation polynomialRelation = PolynomialRelation.of(mScript, relationSymbol, lhs, rhs);
 				final AffineTerm affineTerm = toAffineTerm(polynomialRelation);
+				// TODO: Handle affineTerm == null
 				final EqualityRelation equalityRelation = new EqualityRelation(affineTerm);
 				return List.of(equalityRelation);
-
 			}
 			if ((modRhs == null && modLhs != null) || (modRhs != null && modLhs == null)) {
 				// We have a modulo on only one side
@@ -95,12 +99,13 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 
 				final ConstantTerm constantMod = (ConstantTerm) mod;
 				if (!SmtSortUtils.isIntSort(constantMod.getSort())) {
-					// TODO: Ask Frank what this is
-					throw new UnsupportedOperationException();
+					return List.of();
 				}
 
 				// TODO: Make sure that this does not crash
 				final Rational rationalMod = SmtUtils.toRational(constantMod);
+				// TODO: rationalMod will always have denuminator == 1, since we checked if its
+				// an int, this simplifies a bunch of stuff
 
 				final BigInteger finalMod = rationalMod.numerator();
 				final Rational multiplier = Rational.valueOf(rationalMod.denominator(), BigInteger.ONE);
@@ -109,6 +114,8 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 						finalRhs);
 				polynomialRelation = polynomialRelation.mul(mScript, multiplier);
 				final AffineTerm affineTerm = toAffineTerm(polynomialRelation);
+
+				// TODO: Check if affineTerm == null
 
 				if (relationSymbol.equals(RelationSymbol.EQ)) {
 					// Modulo equality
@@ -135,6 +142,7 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 			} else if (modRhs != null && modLhs != null) {
 				// We have modulo on both sides
 				// TODO Figure out if this can be handled
+				// Maybe with limit to same mod on each side
 				return List.of();
 			}
 

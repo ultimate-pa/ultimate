@@ -1,9 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,57 +11,15 @@ import org.ojalgo.matrix.store.GenericStore;
 import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public class CongruenceState implements IAbstractState<CongruenceState> {
-	public static final CongruenceState TOP = new CongruenceState(Map.of(),
-			new ConstraintRepresentation(List.of(), List.of(), true, true));
-
-	Map<Term, Integer> mVarToIndex;
-
-	ConstraintRepresentation mConstraints;
-	GeneratorRepresentation mGenerators;
-
-	public CongruenceState(final Map<Term, Integer> varToIndex, final ConstraintRepresentation constraints) {
-		final Map<Term, Integer> mVarToIndex = varToIndex;
-		final ConstraintRepresentation mConstraints = constraints;
-		final GeneratorRepresentation mGenerators = null;
-
-		// Init, Aint it ?
-
-	}
-
-	public CongruenceState(final Map<Term, Integer> varToIndex, final GeneratorRepresentation generators) {
-		final Map<Term, Integer> mVarToIndex = varToIndex;
-		final ConstraintRepresentation mConstraints = null;
-		final GeneratorRepresentation mGenerators = generators;
-
-		// Init, Aint it ?
-
-	}
-
-	public ConstraintRepresentation getConstraintRepresentation() {
-		if (mConstraints == null) {
-			return mGenerators.computeConstraintRepresentation();
-		}
-		return mConstraints;
-	}
-
-	public GeneratorRepresentation getGeneratorRepresentation() {
-		if (mGenerators == null) {
-			return mConstraints.computeGeneratorRepresentation();
-		}
-		return mGenerators;
-	}
-
+public class CongruenceUtil {
 	// TODO: Make Congruence relation to encapsulate equalities and congruence's
 	public static MatrixQ128 equalityToVector(final int[] poliArray, final int result) {
 		final List<Integer> list = new ArrayList<>(List.of(-result));
 		for (final int item : poliArray) {
 			list.add(item);
 		}
-		return CongruenceState.getRowVectorFromIntList(list);
+		return getRowVectorFromIntList(list);
 	}
 
 	public static MatrixQ128 CongruenceToVector(final int[] poliArray, final int result, final int mod) {
@@ -71,10 +28,10 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		return equalityToVector(modPoliArray, modResult).divide(mod);
 	}
 
-	public static int firstPivot(final MatrixQ128 vector) {
-		final var k = (int) vector.countColumns();
+	public static long firstPivot(final MatrixQ128 vector) {
+		final long k = vector.countColumns();
 
-		for (int i = 0; i < k; i++) {
+		for (long i = 0; i < k; i++) {
 			if (!vector.get(0, i).isZero()) {
 				return i;
 			}
@@ -82,10 +39,10 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		return k;
 	}
 
-	public static int lastPivot(final MatrixQ128 vector) {
-		final var k = (int) vector.countColumns();
+	public static long lastPivot(final MatrixQ128 vector) {
+		final var k = vector.countColumns();
 
-		for (int i = k - 1; i >= 0; i--) {
+		for (long i = k - 1; i >= 0; i--) {
 			if (!vector.get(0, i).isZero()) {
 				return i;
 			}
@@ -96,9 +53,9 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	/*
 	 * Eliminates the field in v1 by subtracting a multiple of v2
 	 */
-	public static MatrixQ128 eliminateField(final MatrixQ128 v1, final MatrixQ128 v2, final int field) {
-		final var v1Value = v1.get(0, field);
-		final var v2Value = v2.get(0, field);
+	public static MatrixQ128 eliminateField(final MatrixQ128 v1, final MatrixQ128 v2, final long pivot) {
+		final var v1Value = v1.get(0, pivot);
+		final var v2Value = v2.get(0, pivot);
 		final var factor = v1Value.divide(v2Value);
 		return v1.subtract(v2.multiply(factor));
 	}
@@ -109,7 +66,6 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 			final var row = matrix.select(new int[] { i }, null);
 			rows.add(row);
 		}
-
 		return rows;
 	}
 
@@ -171,6 +127,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	}
 
 	public static long getNumerator(final RationalNumber num) {
+		// TODO: Replace with new ojalgo release by internal methods
 		final Pattern pattern = Pattern.compile("\\(\\s*(-?\\d+)\\s*/\\s*\\d+\\s*\\)");
 		final Matcher matcher = pattern.matcher(num.toString());
 
@@ -181,6 +138,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	}
 
 	public static long getDenominator(final RationalNumber num) {
+		// TODO: Replace with new ojalgo release by internal methods
 		final Pattern pattern = Pattern.compile("\\(\\s*-?\\d+\\s*/\\s*(\\d+)\\s*\\)");
 		final Matcher matcher = pattern.matcher(num.toString());
 
@@ -189,29 +147,4 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		}
 		throw new IllegalArgumentException("Invalid format: " + num);
 	}
-
-	@Override
-	public Term toTerm(final Script script) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public CongruenceState join(final CongruenceState other) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public CongruenceState widen(final CongruenceState other) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isBottom() {
-		final ConstraintRepresentation constraints = getConstraintRepresentation();
-		return constraints.isUnsat();
-	}
-
 }

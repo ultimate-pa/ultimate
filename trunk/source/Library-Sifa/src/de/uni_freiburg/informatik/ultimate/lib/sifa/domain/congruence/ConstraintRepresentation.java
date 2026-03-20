@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,15 +11,23 @@ public class ConstraintRepresentation {
 	final private MatrixQ128 mEqualityMatrix;
 	final private MatrixQ128 mCongruenceMatrix;
 
+	private final ConstraintRepresentation mMinimalRepresenation;
+	private final ConstraintRepresentation mStrongMinimalRepresenation;
+
 	final private boolean mIsMinimal;
 	final private boolean mIsStrongMinimal;
 
 	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
 			final boolean isMinimal, final boolean isStrongMinimal) {
-		mEqualityMatrix = CongruenceState.getMatrixFromRows(equalities);
-		mCongruenceMatrix = CongruenceState.getMatrixFromRows(congruences);
+		// TODO: Make constructor with both booleans just false
+		// TODO: Think if I cant initiate the bools smarter
+		// TODO: REplace bools with for example mMinimalRepresenation != null
+		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
+		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = isMinimal;
 		mIsStrongMinimal = isStrongMinimal;
+		mMinimalRepresenation = null;
+		mStrongMinimalRepresenation = null;
 	}
 
 	public MatrixQ128 getEqualityMatrix() {
@@ -31,11 +39,11 @@ public class ConstraintRepresentation {
 	}
 
 	public List<MatrixQ128> getEqualities() {
-		return CongruenceState.getRowsFromMatrix(mEqualityMatrix);
+		return CongruenceUtil.getRowsFromMatrix(mEqualityMatrix);
 	}
 
 	public List<MatrixQ128> getCongruences() {
-		return CongruenceState.getRowsFromMatrix(mCongruenceMatrix);
+		return CongruenceUtil.getRowsFromMatrix(mCongruenceMatrix);
 	}
 
 	public boolean isMinimal() {
@@ -70,7 +78,7 @@ public class ConstraintRepresentation {
 	private static MatrixQ128 unsatVector(final int length) {
 		final List<Integer> list = new ArrayList<>(Collections.nCopies(length, 0));
 		list.set(0, -1);
-		return CongruenceState.getRowVectorFromIntList(list);
+		return CongruenceUtil.getRowVectorFromIntList(list);
 	}
 
 	public ConstraintRepresentation getMinimalForm() {
@@ -87,7 +95,7 @@ public class ConstraintRepresentation {
 		// Making the equality pivots unique
 		for (int i = 0; i < equalities.size(); i++) {
 			final MatrixQ128 equality = equalities.get(i);
-			final int pivot = CongruenceState.lastPivot(equality);
+			final long pivot = CongruenceUtil.lastPivot(equality);
 
 			if (pivot == -1) {
 				// vector is empty, can be deleted
@@ -99,20 +107,20 @@ public class ConstraintRepresentation {
 			} else {
 				// Make pivotValue positive
 				final RationalNumber pivotValue = equality.get(0, pivot);
-				if (CongruenceState.getNumerator(pivotValue) < 0) {
+				if (CongruenceUtil.getNumerator(pivotValue) < 0) {
 					equalities.set(i, equality.multiply((-1)));
 				}
 
 				// Eliminate the pivot field from the following equalities
 				for (int j = i + 1; j < equalities.size(); j++) {
 					final MatrixQ128 other = equalities.get(j);
-					equalities.set(j, CongruenceState.eliminateField(other, equality, pivot));
+					equalities.set(j, CongruenceUtil.eliminateField(other, equality, pivot));
 				}
 
 				// Eliminate the pivot field from the following congruence's
 				for (int j = 0; j < congruences.size(); j++) {
 					final MatrixQ128 other = congruences.get(j);
-					congruences.set(j, CongruenceState.eliminateField(other, equality, pivot));
+					congruences.set(j, CongruenceUtil.eliminateField(other, equality, pivot));
 				}
 
 			}
@@ -121,12 +129,12 @@ public class ConstraintRepresentation {
 		// Making the equality pivots unique
 		for (int i = 0; i < congruences.size(); i++) {
 			final MatrixQ128 congruence = congruences.get(i);
-			final int pivot = CongruenceState.lastPivot(congruence);
+			final long pivot = CongruenceUtil.lastPivot(congruence);
 
 			if (pivot == -1) {
 				// vector is empty, can be deleted
 				congruencesToDelete.add(i);
-			} else if (pivot == 0 && CongruenceState.getDenominator(congruence.get(0, pivot)) == 1) {
+			} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) == 1) {
 				// congruence is unsatisfiable and so is the whole system
 				// First entry has to be 0 modulo 1 which is exactly the case when the
 				// pivotValue is a whole number
@@ -134,7 +142,7 @@ public class ConstraintRepresentation {
 			} else {
 				// Make pivotValue positive
 				final var pivotValue = congruence.get(0, pivot);
-				if (CongruenceState.getNumerator(pivotValue) < 0) {
+				if (CongruenceUtil.getNumerator(pivotValue) < 0) {
 					congruences.set(i, congruence.multiply((-1)));
 				}
 
@@ -143,7 +151,7 @@ public class ConstraintRepresentation {
 				// equality doesn't conserve the equality
 				for (int j = i + 1; j < congruences.size(); j++) {
 					final MatrixQ128 other = congruences.get(j);
-					congruences.set(j, CongruenceState.eliminateField(other, congruence, pivot));
+					congruences.set(j, CongruenceUtil.eliminateField(other, congruence, pivot));
 				}
 			}
 		}

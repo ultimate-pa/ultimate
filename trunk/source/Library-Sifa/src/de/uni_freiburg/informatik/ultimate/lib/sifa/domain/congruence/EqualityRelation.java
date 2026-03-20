@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
 import java.util.Collections;

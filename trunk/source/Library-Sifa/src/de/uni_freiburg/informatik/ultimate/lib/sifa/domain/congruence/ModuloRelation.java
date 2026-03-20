@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -29,11 +29,12 @@ public class ModuloRelation implements ICongruenceRelation {
 
 	@Override
 	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
-		List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
-		protoVector = protoVector.stream().map(rational -> rational.div(mMod)).collect(Collectors.toList());
-		// TODO: Maybe add a modulo to everything
+		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
+		// TODO: Maybe add a modulo to everything before dividing
+		final List<Rational> divProtoVector = protoVector.stream().map(rational -> rational.div(mMod))
+				.collect(Collectors.toList());
 
-		return CongruenceState.getRowVectorFromRationalList(protoVector);
+		return CongruenceState.getRowVectorFromRationalList(divProtoVector);
 	}
 
 }
