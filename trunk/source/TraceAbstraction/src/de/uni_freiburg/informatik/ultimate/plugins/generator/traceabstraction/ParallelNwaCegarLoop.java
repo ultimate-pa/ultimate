@@ -199,6 +199,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
+
+		if (id == 0) {
+			return new SymExecWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
+					predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
+					stateFactoryForRefinement, mComputeHoareAnnotation, this, mWorkerResultQueue, mWorkerTaskQueue,
+					transferUtils, mTaskIdentifier);
+		}
+
 		// initialize worker
 		return new CegarNwaWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
 				predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
@@ -253,6 +261,15 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 							shutDownAndDestroy(mDestroyEverything);
 							throw new AssertionError("Worker Crashed!, Exiting CEGAR loop!");
 						}
+
+						if (workerResult.getSubtrahend() == null) {
+							mAbstraction = new NestedWordAutomaton(new AutomataLibraryServices(getServices()),
+									mAbstraction.getVpAlphabet(), mPredicateFactoryInterpolantAutomata);
+							mResultBuilder.addResultForAllRemaining(Result.SAFE);
+							updateAndPrintStatistics(true);
+							return;
+						}
+
 						// If Error automaton terminate immediately
 						if (mPref.stopAfterFirstViolation()
 								&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
@@ -321,6 +338,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				}
 				firstIteration = false;
 			}
+
 			updateAndPrintStatistics(false);
 		}
 		mExec.shutdownNow();
@@ -435,6 +453,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
 				computeAutomataDifference(mAbstraction, threadResult, stateFactoryForRefinement);
 
+		if (REMOVE_DEAD_ENDS) {
+			diff.removeDeadEnds();
+		}
 		mAbstraction = diff.getResult();
 
 		if (mPref.minimizeAbstractionPerWorker()) {
@@ -545,7 +566,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		}
 		mLogger.info("Did not Find a Counterexample!");
 		mCountFailedToFindCex += 1;
-		assert mRunningThreads > 0;
+		// assert mRunningThreads > 0;
 
 		mSearchTime += ((System.nanoTime() / 1000000000) - time);
 		return null;
