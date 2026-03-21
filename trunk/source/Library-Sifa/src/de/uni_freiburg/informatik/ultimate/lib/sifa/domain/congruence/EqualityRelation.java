@@ -9,8 +9,11 @@ import java.util.Set;
 
 import org.ojalgo.matrix.MatrixQ128;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class EqualityRelation implements ICongruenceRelation {
@@ -21,6 +24,27 @@ public class EqualityRelation implements ICongruenceRelation {
 	public EqualityRelation(final AffineTerm term) {
 		mVarToFactor = term.getVariable2Coefficient();
 		mResult = term.getConstant();
+	}
+
+	// TODO: Ask Frank if I can move this to the PolynomialRelation.
+	public static AffineTerm getAffineTerm(final PolynomialRelation polynomialRelation) {
+		final AbstractGeneralizedAffineTerm<?> polynomialTerm = polynomialRelation.getPolynomialTerm();
+		if (!polynomialTerm.isAffine()) {
+			return null;
+		}
+		return (AffineTerm) polynomialTerm;
+	}
+
+	public static EqualityRelation of(final Term term, final Script script) {
+		final PolynomialRelation polynomialRelation = PolynomialRelation.of(script, term);
+		if (polynomialRelation == null) {
+			return null;
+		}
+		final AffineTerm affineTerm = getAffineTerm(polynomialRelation);
+		if (affineTerm == null) {
+			return null;
+		}
+		return new EqualityRelation(affineTerm);
 	}
 
 	@Override
