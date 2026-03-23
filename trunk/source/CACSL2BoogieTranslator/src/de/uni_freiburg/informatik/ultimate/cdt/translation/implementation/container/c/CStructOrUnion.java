@@ -122,6 +122,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		mIsStructOrUnion = isStructOrUnion;
 		mStructName = Objects.requireNonNull(name);
 		mMembers = new ArrayList<>(members);
+		mIsComplete = true;
 	}
 
 	@Override
