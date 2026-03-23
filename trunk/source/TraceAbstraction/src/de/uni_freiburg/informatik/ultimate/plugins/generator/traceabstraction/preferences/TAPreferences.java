@@ -98,6 +98,13 @@ public final class TAPreferences {
 	private final IndependenceSettings[] mPorIndependenceSettings;
 	private final IndependenceSettings mLbeIndependenceSettings;
 
+	// Parallel Trace Abstraction Settings
+	private final int mThreadLimit;
+	private final boolean mParallelCegarLoop;
+	private final boolean mConsiderOnlyActiveCounterexamplesInIsEmptyParallel;
+	private final boolean mMinimizeAbstractionPerWorker;
+	private final int mSearchLoopBound;
+
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
 	}
@@ -200,6 +207,14 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
 				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
+
+		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
+		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
+		mConsiderOnlyActiveCounterexamplesInIsEmptyParallel =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
+		mMinimizeAbstractionPerWorker =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
+		mSearchLoopBound = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEARCH_LOOP_BOUND);
 	}
 
 	/**
@@ -583,5 +598,25 @@ public final class TAPreferences {
 						OwickiGriesComputation.class),
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OG_HITTING_SET_OPTIMIZATION),
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OG_COVERING_SIMPLIFICATION));
+	}
+
+	public int getThreadLimit() {
+		return mThreadLimit;
+	}
+
+	public boolean isParallelCegarLoop() {
+		return mParallelCegarLoop;
+	}
+
+	public boolean minimizeAbstractionPerWorker() {
+		return mMinimizeAbstractionPerWorker;
+	}
+
+	public boolean considerOnlyActiveCounterexamplesInIsEmptyParallel() {
+		return mConsiderOnlyActiveCounterexamplesInIsEmptyParallel;
+	}
+
+	public int getSearchLoopBound() {
+		return mSearchLoopBound;
 	}
 }

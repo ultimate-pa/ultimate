@@ -19,4 +19,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  org.glassfish.hk2.osgi-resource-locator
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.core
-Import-Package: org.glassfish.jaxb.core.v2
+Import-Package: org.glassfish.jaxb.runtime.v2

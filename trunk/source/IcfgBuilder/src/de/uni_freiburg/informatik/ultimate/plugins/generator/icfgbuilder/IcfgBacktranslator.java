@@ -283,6 +283,10 @@ public class IcfgBacktranslator extends
 		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
 				: "callstack of initial program execution already broken";
 
+		if (icfgProgramExecution.getOriginCfgScript() != null) {
+			mTerm2Expression.setOriginCfgScript(icfgProgramExecution.getOriginCfgScript().getScript());
+		}
+
 		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
 		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();
 

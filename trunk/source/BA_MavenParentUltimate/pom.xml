@@ -20,23 +20,23 @@
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
-		<tycho-version>4.0.9</tycho-version>
+		<tycho-version>5.0.0</tycho-version>
 		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
-		<sonar-version>5.0.0.4389</sonar-version>
+		<sonar-version>5.2.0.4988</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
-		<jacoco-version>0.8.12</jacoco-version>
+		<jacoco-version>0.8.14</jacoco-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
-		<maven-clean-version>3.4.0</maven-clean-version>
+		<maven-clean-version>3.5.0</maven-clean-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
-		<maven-antrun-version>3.1.0</maven-antrun-version>
+		<maven-antrun-version>3.2.0</maven-antrun-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-war-plugin -->
-		<maven-war-version>3.4.0</maven-war-version>
+		<maven-war-version>3.5.0</maven-war-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
 		<maven-assembly-version>3.7.1</maven-assembly-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-resources-plugin -->
 		<maven-resources-version>3.3.1</maven-resources-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
-		<maven-compiler-version>3.13.0</maven-compiler-version>
+		<maven-compiler-version>3.14.1</maven-compiler-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -187,7 +187,7 @@
 				<configuration>
 					<executionEnvironmentDefault>JavaSE-21</executionEnvironmentDefault>
 					<target>
-						<file>../BA_SiteRepository/Ultimate_E4.32_Java21.target</file>
+						<file>../BA_SiteRepository/Ultimate.target</file>
 					</target>
 					<environments>
 						<environment>
@@ -233,7 +233,7 @@
 					<dependency>
 						<groupId>org.eclipse.jdt</groupId>
 						<artifactId>ecj</artifactId>
-						<version>3.41.0</version>
+						<version>3.43.0</version>
 					</dependency>
 				</dependencies>
 			</plugin>
@@ -390,7 +390,7 @@
 						<version>${tycho-version}</version>
 						<configuration>
 							<skipTests>false</skipTests>
-							<providerHint>junit47</providerHint>
+							<providerHint>junit4</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
 							<showEclipseLog>true</showEclipseLog>
@@ -511,7 +511,7 @@
 						<version>${tycho-version}</version>
 						<configuration>
 							<skipTests>false</skipTests>
-							<providerHint>junit47</providerHint>
+							<providerHint>junit4</providerHint>
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
 							<showEclipseLog>true</showEclipseLog>

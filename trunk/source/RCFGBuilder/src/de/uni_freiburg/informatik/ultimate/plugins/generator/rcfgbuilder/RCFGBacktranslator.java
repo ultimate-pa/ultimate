@@ -242,11 +242,15 @@ public class RCFGBacktranslator extends
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
-
 			translateProgramExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution) {
 		if (!(programExecution instanceof final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> rcfgProgramExecution)) {
 			throw new IllegalArgumentException();
 		}
+
+		if (rcfgProgramExecution.getOriginCfgScript() != null) {
+			mTerm2Expression.setOriginCfgScript(rcfgProgramExecution.getOriginCfgScript().getScript());
+		}
+
 		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
 				: "callstack of initial program execution already broken";
 

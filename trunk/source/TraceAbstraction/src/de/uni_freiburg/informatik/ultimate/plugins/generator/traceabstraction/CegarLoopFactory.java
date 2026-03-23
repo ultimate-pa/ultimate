@@ -238,8 +238,14 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		case LAZY_IN_ORDER -> new LazyReuseCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
 				errorLocs, proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
 				mTransitionClazz, stateFactoryForRefinement);
-		case NONE -> new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-				proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+		case NONE -> {
+			if (mPrefs.isParallelCegarLoop() && !IcfgUtils.isConcurrent(root)) {
+				yield new ParallelNwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
+						errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+			}
+			yield new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+		}
 		};
 	}
 

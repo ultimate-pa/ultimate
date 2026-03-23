@@ -728,7 +728,7 @@ public class RelevantVariables<L extends IAction> {
 
 	private static boolean isHavoced(final UnmodifiableTransFormula globalVarAssignment,
 			final UnmodifiableTransFormula oldVarAssignment, final IProgramVar bv) {
-		if (bv instanceof GlobalProgramVar) {
+		if (bv.isGlobal()) {
 			boolean result;
 			if (bv instanceof IProgramOldVar) {
 				result = oldVarAssignment.isHavocedOut(bv);

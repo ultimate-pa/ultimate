@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonterminatingLassoResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NotAnalyzedResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -102,6 +103,9 @@ public class UltimateResultConverter {
 		} else if (r instanceof UnprovableResult) {
 			type = "unprovable";
 			logLvl = LVL_WARNING;
+		} else if (r instanceof NotAnalyzedResult) {
+			type = "notAnalyzed";
+			logLvl = LVL_INFO;
 		} else if (r instanceof SyntaxErrorResult) {
 			type = "syntaxError";
 			logLvl = LVL_ERROR;

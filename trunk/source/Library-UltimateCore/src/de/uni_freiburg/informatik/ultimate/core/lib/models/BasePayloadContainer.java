@@ -47,7 +47,7 @@ public abstract class BasePayloadContainer implements IElement {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private IPayload mPayload;
+	protected IPayload mPayload;
 
 	protected BasePayloadContainer() {
 		this(null);
