@@ -180,11 +180,13 @@ public class ContextSimplifier<L extends IAction> {
 		Collections.reverse(mAllRelevants);
 		assert (mSimpleControlConfigurations.size() == mSimpleTrace.length() + 1);
 		assert (mLongControlConfigurations.size() == mAllRelevants.size());
-
 	}
 
 	public List<IPredicate> mapProof(final List<IPredicate> shortPredicates) {
-		assert (shortPredicates.size() == mSimpleTrace.length());
+		if (shortPredicates.size() != mSimpleTrace.length()) {
+			throw new IllegalArgumentException("SimpleTrace size" + mSimpleTrace.length() + "and predicates size"
+					+ shortPredicates.size() + "need to be equal");
+		}
 
 		final List<IPredicate> longPredicates = new ArrayList<>();
 		int shortIndex = 0;
