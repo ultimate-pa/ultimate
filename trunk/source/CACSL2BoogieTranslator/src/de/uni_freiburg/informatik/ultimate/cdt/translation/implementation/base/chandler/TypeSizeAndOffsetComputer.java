@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.Member;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -242,10 +243,11 @@ public class TypeSizeAndOffsetComputer {
 		if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
 			final SizeTValue[] fieldTypeSizes = new SizeTValue[fieldCount];
 			for (int i = 0; i < fieldCount; i++) {
-				final ICType fieldType = cStruct.getFieldTypes()[i];
+				final Member member = cStruct.getMember(i);
+				final ICType fieldType = member.type();
 				final int bitsize;
 				if (mBitPreciseBitfields) {
-					bitsize = cStruct.getBitFieldWidths().get(i);
+					bitsize = member.bitFieldWidth();
 				} else {
 					bitsize = -1;
 				}
@@ -261,9 +263,10 @@ public class TypeSizeAndOffsetComputer {
 			return new SizeTValueAggregatorMax().aggregate(loc, Arrays.asList(fieldTypeSizes));
 		}
 		for (int i = 0; i < fieldCount; i++) {
+			final Member member = cStruct.getMember(i);
 			final int bitsize;
 			if (mBitPreciseBitfields) {
-				bitsize = cStruct.getBitFieldWidths().get(i);
+				bitsize = member.bitFieldWidth();
 			} else {
 				bitsize = -1;
 			}
