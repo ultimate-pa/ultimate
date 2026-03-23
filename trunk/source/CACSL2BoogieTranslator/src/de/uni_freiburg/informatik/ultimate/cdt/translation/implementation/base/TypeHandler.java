@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -702,10 +703,8 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CFunction) {
 			return getBoogiePointerType();
 		} else if (cType instanceof final CStructOrUnion cStructType) {
-			final BoogieType[] boogieFieldTypes = new BoogieType[cStructType.getFieldCount()];
-			for (int i = 0; i < cStructType.getFieldCount(); i++) {
-				boogieFieldTypes[i] = getBoogieTypeForCType(cStructType.getFieldTypes()[i]);
-			}
+			final BoogieType[] boogieFieldTypes = Arrays.stream(cStructType.getFieldTypes())
+					.map(this::getBoogieTypeForCType).toArray(BoogieType[]::new);
 			return BoogieType.createStructType(cStructType.getFieldIds(), boogieFieldTypes);
 		} else {
 			throw new AssertionError("unknown type " + cType);

@@ -61,6 +61,8 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		ICType type();
 
 		int bitFieldWidth();
+
+		List<NamedMember> flatten();
 	}
 
 	/**
@@ -86,6 +88,11 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		public NamedMember(final String name, final ICType type) {
 			this(name, type, -1);
 		}
+
+		@Override
+		public List<NamedMember> flatten() {
+			return List.of(this);
+		}
 	}
 
 	/**
@@ -99,6 +106,11 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		@Override
 		public int bitFieldWidth() {
 			return -1;
+		}
+
+		@Override
+		public List<NamedMember> flatten() {
+			return type.getFlattenedMembers().toList();
 		}
 	}
 
@@ -128,15 +140,6 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	@Override
 	public boolean isIncomplete() {
 		return !mIsComplete;
-	}
-
-	/**
-	 * Get the number of fields in this struct.
-	 *
-	 * @return the number of fields.
-	 */
-	public int getFieldCount() {
-		return mMembers.size();
 	}
 
 	private Optional<Member> lookupMember(final String id) {

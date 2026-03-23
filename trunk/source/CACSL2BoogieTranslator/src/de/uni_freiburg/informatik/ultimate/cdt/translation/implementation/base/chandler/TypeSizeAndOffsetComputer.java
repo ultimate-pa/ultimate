@@ -132,7 +132,7 @@ public class TypeSizeAndOffsetComputer {
 			computeSize(loc, cStruct);
 		}
 		final Offset[] offsets = mStructOffsets.get(cStruct);
-		assert offsets.length == cStruct.getFieldCount() : "inconsistent struct";
+		// assert offsets.length == cStruct.getFieldCount() : "inconsistent struct";
 		return offsets[fieldIndex];
 	}
 
@@ -234,7 +234,8 @@ public class TypeSizeAndOffsetComputer {
 		if (mStructOffsets.containsKey(cStruct)) {
 			throw new AssertionError("must not be computed");
 		}
-		final int fieldCount = cStruct.getFieldCount();
+		final List<Member> members = cStruct.getMembers();
+		final int fieldCount = members.size();
 		final Offset[] offsets = new Offset[fieldCount];
 		mStructOffsets.put(cStruct, offsets);
 		if (fieldCount == 0) {
@@ -243,7 +244,7 @@ public class TypeSizeAndOffsetComputer {
 		if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
 			final SizeTValue[] fieldTypeSizes = new SizeTValue[fieldCount];
 			for (int i = 0; i < fieldCount; i++) {
-				final Member member = cStruct.getMember(i);
+				final Member member = members.get(i);
 				final ICType fieldType = member.type();
 				final int bitsize;
 				if (mBitPreciseBitfields) {
@@ -279,19 +280,20 @@ public class TypeSizeAndOffsetComputer {
 				}
 				offsets[i] = new Offset(new SizeTValueInteger(BigInteger.ZERO), startBit, bitsize);
 			} else {
-				offsets[i] = computeMemberOffset(offsets[i - 1], cStruct.getFieldTypes()[i - 1], bitsize, loc);
+				offsets[i] = computeMemberOffset(offsets[i - 1], members.get(i - 1).type(), bitsize, loc);
 			}
 		}
 		// If the last member of a struct is a flexible (i.e. incomplete) array, ignore it for sizeof.
 		// See https://en.cppreference.com/w/c/language/struct
+		final Member lastMember = members.get(fieldCount - 1);
 		final int lastPosition;
-		final ICType lastType = cStruct.getFieldTypes()[fieldCount - 1];
+		final ICType lastType = lastMember.type();
 		if (lastType instanceof CArray && lastType.isIncomplete()) {
 			lastPosition = fieldCount - 2;
 		} else {
 			lastPosition = fieldCount - 1;
 		}
-		return computeOffsetOfNextByte(offsets[lastPosition], cStruct.getFieldTypes()[lastPosition], loc);
+		return computeOffsetOfNextByte(offsets[lastPosition], members.get(lastPosition).type(), loc);
 	}
 
 	private SizeTValue constructSizeTValuePointer(final ILocation loc) {

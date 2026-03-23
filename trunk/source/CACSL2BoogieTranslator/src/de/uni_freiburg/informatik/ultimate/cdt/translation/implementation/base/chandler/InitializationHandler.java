@@ -73,6 +73,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.Member;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.NamedMember;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -405,54 +407,57 @@ public class InitializationHandler {
 		final LRValue structBaseLhsToInitialize =
 				obtainLhsToInitialize(loc, lhsIfAny, cStructType, onHeap, initialization);
 
-		for (int i = 0; i < cStructType.getFieldCount(); i++) {
-			final ICType currentFieldUnderlyingType = cStructType.getFieldTypes()[i].getUnderlyingType();
-			if (currentFieldUnderlyingType instanceof CArray && currentFieldUnderlyingType.isIncomplete()) {
-				continue;
-			}
-
-			if (CStructOrUnion.isUnion(cStructType) && onHeap && !initInfo.hasInitInfoForIndex(i)) {
-				// in on-heap case: skip assignments to fields of unions except for the one that is really written
-				continue;
-			}
-
-			final LRValue currentFieldLhs;
-			if (onHeap) {
-				assert lhsIfAny instanceof HeapLValue;
-				currentFieldLhs = constructAddressForStructField(loc, (HeapLValue) structBaseLhsToInitialize, i);
-			} else if (lhsIfAny != null) {
-				currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs(loc,
-						(LocalLValue) structBaseLhsToInitialize, i);
-			} else {
-				currentFieldLhs = null;
-			}
-
-			final ExpressionResult currentFieldInitialization;
-			{
-				final InitializerInfo currentFieldInitializerRawIfAny =
-						initInfo.hasInitInfoForIndex(i) ? initInfo.getInitInfoForIndex(i) : null;
-
-				if (CStructOrUnion.isUnion(cStructType) && !initInfo.hasInitInfoForIndex(i)) {
-					assert !onHeap;
-					currentFieldInitialization = makeDefaultOrNondetInitialization(loc, currentFieldLhs,
-							currentFieldUnderlyingType, onHeap, true, hook);
-				} else {
-					// normal case intitalize recursively with or without intitializer..
-					currentFieldInitialization =
-							initRec(loc, currentFieldUnderlyingType, currentFieldInitializerRawIfAny, onHeap,
-									usingOnHeapInitializationViaConstArray, currentFieldLhs, true, hook);
+		final List<Member> members = cStructType.getMembers();
+		for (int i = 0; i < members.size(); i++) {
+			for (final NamedMember m : members.get(i).flatten()) {
+				final ICType currentFieldUnderlyingType = m.type().getUnderlyingType();
+				if (currentFieldUnderlyingType instanceof CArray && currentFieldUnderlyingType.isIncomplete()) {
+					continue;
 				}
-			}
-			// add the initialization code
-			initialization.addAllExceptLrValue(currentFieldInitialization);
 
-			if (currentFieldInitialization.getLrValue() != null) {
-				fieldLrValues.add(currentFieldInitialization.getLrValue());
-			}
+				if (CStructOrUnion.isUnion(cStructType) && onHeap && !initInfo.hasInitInfoForIndex(i)) {
+					// in on-heap case: skip assignments to fields of unions except for the one that is really written
+					continue;
+				}
 
-			if (CStructOrUnion.isUnion(cStructType) && onHeap && initInfo.hasInitInfoForIndex(i)) {
-				// only the first field of a union is initialized
-				break;
+				final LRValue currentFieldLhs;
+				if (onHeap) {
+					assert lhsIfAny instanceof HeapLValue;
+					currentFieldLhs = constructAddressForStructField(loc, (HeapLValue) structBaseLhsToInitialize, i);
+				} else if (lhsIfAny != null) {
+					currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs(loc,
+							(LocalLValue) structBaseLhsToInitialize, i);
+				} else {
+					currentFieldLhs = null;
+				}
+
+				final ExpressionResult currentFieldInitialization;
+				{
+					final InitializerInfo currentFieldInitializerRawIfAny =
+							initInfo.hasInitInfoForIndex(i) ? initInfo.getInitInfoForIndex(i) : null;
+
+					if (CStructOrUnion.isUnion(cStructType) && !initInfo.hasInitInfoForIndex(i)) {
+						assert !onHeap;
+						currentFieldInitialization = makeDefaultOrNondetInitialization(loc, currentFieldLhs,
+								currentFieldUnderlyingType, onHeap, true, hook);
+					} else {
+						// normal case intitalize recursively with or without intitializer..
+						currentFieldInitialization =
+								initRec(loc, currentFieldUnderlyingType, currentFieldInitializerRawIfAny, onHeap,
+										usingOnHeapInitializationViaConstArray, currentFieldLhs, true, hook);
+					}
+				}
+				// add the initialization code
+				initialization.addAllExceptLrValue(currentFieldInitialization);
+
+				if (currentFieldInitialization.getLrValue() != null) {
+					fieldLrValues.add(currentFieldInitialization.getLrValue());
+				}
+
+				if (CStructOrUnion.isUnion(cStructType) && onHeap && initInfo.hasInitInfoForIndex(i)) {
+					// only the first field of a union is initialized
+					break;
+				}
 			}
 		}
 
@@ -714,36 +719,37 @@ public class InitializationHandler {
 
 			final ArrayList<LRValue> fieldLrValues = new ArrayList<>();
 
-			for (int i = 0; i < cStructType.getFieldCount(); i++) {
-
-				final LocalLValue fieldLhs;
-				{
-					if (lhsToInitIfAny == null) {
-						fieldLhs = null;
-					} else {
-						final String fieldName = cStructType.getFieldIds()[i];
-						final LeftHandSide lhs =
-								ExpressionFactory.constructStructAccessLhs(loc, lhsToInitIfAny.getLhs(), fieldName);
-						fieldLhs = new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
+			final List<Member> members = cStructType.getMembers();
+			for (int i = 0; i < members.size(); i++) {
+				for (final NamedMember m : members.get(i).flatten()) {
+					final LocalLValue fieldLhs;
+					{
+						if (lhsToInitIfAny == null) {
+							fieldLhs = null;
+						} else {
+							final LeftHandSide lhs =
+									ExpressionFactory.constructStructAccessLhs(loc, lhsToInitIfAny.getLhs(), m.name());
+							fieldLhs = new LocalLValue(lhs, m.type(), null);
+						}
 					}
-				}
 
-				final ExpressionResult fieldDefaultInit;
-				if (CStructOrUnion.isUnion(cType) && i != 0) {
-					/*
-					 * In case of a union, all fields not mentioned in the initializer are havocced, thus their default
-					 * initialization is a fresh auxiliary variable. However there is one exception: the first field is
-					 * default-inititalized.
-					 */
-					fieldDefaultInit = makeOffHeapDefaultOrNondetInitializationForType(loc,
-							cStructType.getFieldTypes()[i], fieldLhs, true, hook);
-				} else {
-					fieldDefaultInit = makeOffHeapDefaultOrNondetInitializationForType(loc,
-							cStructType.getFieldTypes()[i], fieldLhs, nondet, hook);
-				}
+					final ExpressionResult fieldDefaultInit;
+					if (CStructOrUnion.isUnion(cType) && i != 0) {
+						/*
+						 * In case of a union, all fields not mentioned in the initializer are havocced, thus their
+						 * default initialization is a fresh auxiliary variable. However there is one exception: the
+						 * first field is default-inititalized.
+						 */
+						fieldDefaultInit =
+								makeOffHeapDefaultOrNondetInitializationForType(loc, m.type(), fieldLhs, true, hook);
+					} else {
+						fieldDefaultInit =
+								makeOffHeapDefaultOrNondetInitializationForType(loc, m.type(), fieldLhs, nondet, hook);
+					}
 
-				initialization.addAllExceptLrValue(fieldDefaultInit);
-				fieldLrValues.add(fieldDefaultInit.getLrValue());
+					initialization.addAllExceptLrValue(fieldDefaultInit);
+					fieldLrValues.add(fieldDefaultInit.getLrValue());
+				}
 			}
 
 			if (lhsToInitIfAny == null) {
@@ -1218,7 +1224,7 @@ public class InitializationHandler {
 			cellType = array.getValueType();
 			bound = CTranslationUtil.getConstantFirstDimensionOfArray(array, mTypeSizes);
 		} else {
-			bound = ((CStructOrUnion) targetCType).getFieldCount();
+			bound = ((CStructOrUnion) targetCType).getMembers().size();
 		}
 
 		/*
