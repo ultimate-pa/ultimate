@@ -208,8 +208,11 @@ public final class CompatibleTypes {
 			return true;
 		}
 
+		final String[] fieldIds1 = structOrUnion1.getFieldIds();
+		final String[] fieldIds2 = structOrUnion2.getFieldIds();
+
 		// C11 6.2.7 §1: [...] there shall be a one-to-one correspondence between their members such that [...]
-		if (structOrUnion1.getFieldCount() != structOrUnion2.getFieldCount()) {
+		if (fieldIds1.length != fieldIds2.length) {
 			return false;
 		}
 
@@ -219,7 +222,7 @@ public final class CompatibleTypes {
 				structOrUnion1.isStructOrUnion() == StructOrUnion.STRUCT ? makeStructFieldLookup(structOrUnion2)
 						: makeUnionFieldLookup(structOrUnion2);
 
-		for (int index1 = 0; index1 < structOrUnion1.getFieldCount(); ++index1) {
+		for (int index1 = 0; index1 < fieldIds1.length; ++index1) {
 			final String id = structOrUnion1.getFieldIds()[index1];
 			final OptionalInt index2 = lookup.apply(index1, id);
 			if (index2.isEmpty()) {
@@ -244,8 +247,9 @@ public final class CompatibleTypes {
 
 	private static BiFunction<Integer, String, OptionalInt> makeStructFieldLookup(final CStructOrUnion structType) {
 		assert structType.isStructOrUnion() == StructOrUnion.STRUCT;
+		final String[] fieldIds = structType.getFieldIds();
 		return (index, id) -> {
-			if (index >= structType.getFieldCount() || !Objects.equals(id, structType.getFieldIds()[index])) {
+			if (index >= fieldIds.length || !Objects.equals(id, fieldIds[index])) {
 				return OptionalInt.empty();
 			}
 			return OptionalInt.of(index);
@@ -254,15 +258,16 @@ public final class CompatibleTypes {
 
 	private static BiFunction<Integer, String, OptionalInt> makeUnionFieldLookup(final CStructOrUnion unionType) {
 		assert unionType.isStructOrUnion() == StructOrUnion.UNION;
+		final String[] fieldIds = unionType.getFieldIds();
 		return (index, id) -> {
-			if (index >= unionType.getFieldCount()) {
+			if (index >= fieldIds.length) {
 				return OptionalInt.empty();
 			}
-			if (Objects.equals(id, unionType.getFieldIds()[index])) {
+			if (Objects.equals(id, fieldIds[index])) {
 				// Shortcut for efficiency
 				return OptionalInt.of(index);
 			}
-			final int actualIndex = Arrays.asList(unionType.getFieldIds()).indexOf(id);
+			final int actualIndex = Arrays.asList(fieldIds).indexOf(id);
 			return actualIndex == -1 ? OptionalInt.empty() : OptionalInt.of(actualIndex);
 		};
 	}

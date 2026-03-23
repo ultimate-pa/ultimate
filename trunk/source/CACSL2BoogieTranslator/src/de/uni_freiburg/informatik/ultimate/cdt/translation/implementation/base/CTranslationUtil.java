@@ -65,6 +65,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.Member;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.NamedMember;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
@@ -214,9 +216,12 @@ public class CTranslationUtil {
 	}
 
 	public static int findIndexOfStructField(final CStructOrUnion targetCType, final String rootDesignator) {
-		for (int i = 0; i < targetCType.getFieldCount(); i++) {
-			if (targetCType.getFieldIds()[i].equals(rootDesignator)) {
-				return i;
+		final List<Member> members = targetCType.getMembers();
+		for (int i = 0; i < members.size(); i++) {
+			for (final NamedMember m : members.get(i).flatten()) {
+				if (m.name().equals(rootDesignator)) {
+					return i;
+				}
 			}
 		}
 		throw new AssertionError(
