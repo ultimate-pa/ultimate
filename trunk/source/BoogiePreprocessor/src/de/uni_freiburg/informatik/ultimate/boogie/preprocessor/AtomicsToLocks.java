@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -177,7 +178,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	private List<Statement> getGuardedStatement(final Statement statement, final AssumeStatement assumeStatement) {
 		final var guardedStmt = new ArrayList<Statement>();
-		if ((statement instanceof final Label) || (statement == mInitStatement)) {
+		if ((statement instanceof final Label) || (statement == mInitStatement)
+				|| (statement instanceof BreakStatement)) {
 			// We don't need an assume infront of a label or the initial lock assignment
 			guardedStmt.add(statement);
 		} else if (statement instanceof IfStatement || isLoop(statement) || !ATOMIC_GUARD_STATEMENTS) {
@@ -550,7 +552,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	private boolean atomicContainsLoop(final Statement[] body) {
 		for (final Statement statement : body) {
-			if (isLoop(statement)) {
+			if (!isAtomic(statement) && isLoop(statement)) {
 				return true;
 			} else if (statement instanceof final IfStatement ifStatement) {
 				final var thens = ifStatement.getThenPart();
