@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
 	// Options result in different outputs
 	private static final boolean ATOMIC_GUARD_STATEMENTS = true;
-	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = true;
+	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private static final String ULTIMATE_INIT = "ULTIMATE.init";
@@ -431,14 +431,16 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				assert i == 0 : "Nested __VERIFIER_atomic calls are not supported by the translation of atomics "
 						+ "into lock-based blocks in the BoogiePreprocessor!";
 			}
-			if (containsAtomicEnd(statement)) {
+			if (isEndOfAtomicBlock(statement)) {
 				atomicBlock.add(statement);
 				atomicEndIdx = i;
 				break;
 			}
 			atomicBlock.add(statement);
 		}
-		assert atomicEndIdx != -1 : ATOMIC_END + " call is missing after a " + ATOMIC_BEGIN + " call!";
+		// Assume implicit atomic end at the end of the code block
+		atomicEndIdx = atomicEndIdx == -1 ? statements.length : atomicEndIdx;
+
 		// Add all remaining statements after the atomic ends
 		for (int j = atomicEndIdx + 1; j < statements.length; j++) {
 			remainingStatements.add(statements[j]);
@@ -493,7 +495,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				final Pair<List<Statement>, Boolean> elsePair =
 						replaceVerifierAtomics(Arrays.asList(elses), atomicEnded);
 				final Statement[] newElses = elsePair.getFirst().toArray(new Statement[0]);
-				atomicEnded = thenPair.getSecond() || elsePair.getSecond();
+				atomicEnded = thenPair.getSecond() && elsePair.getSecond();
 				newStatement = new IfStatement(ifStatement.getLocation(), cond, newThens, newElses);
 			}
 			newStatements.add(newStatement);
@@ -521,24 +523,27 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		return call.getMethodName().equals(name);
 	}
 
-	private boolean containsAtomicEnd(final Statement[] statements) {
+	private boolean isEndOfAtomicBlock(final Statement[] statements) {
 		for (final Statement statement : statements) {
-			if (containsAtomicEnd(statement)) {
+			if (isEndOfAtomicBlock(statement)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private boolean containsAtomicEnd(final Statement statement) {
+	private boolean isEndOfAtomicBlock(final Statement statement) {
 		if (isAtomicEnd(statement)) {
 			return true;
 		} else if (statement instanceof final WhileStatement whileStatement) {
-			return containsAtomicEnd(whileStatement.getBody());
+			return isEndOfAtomicBlock(whileStatement.getBody());
 		} else if (statement instanceof final IfStatement ifStatement) {
 			final var then = ifStatement.getThenPart();
 			final var elsePart = ifStatement.getElsePart();
-			return containsAtomicEnd(then) || containsAtomicEnd(elsePart);
+			final var thenContainsEnd = isEndOfAtomicBlock(then);
+			final var elseContainsEnd = isEndOfAtomicBlock(elsePart);
+			// Atomic block only ends if then-part and else-part both contain an atomic end
+			return thenContainsEnd && elseContainsEnd;
 		}
 		return false;
 	}
