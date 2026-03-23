@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.AnonymousMember;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.Member;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.NamedMember;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
@@ -421,7 +422,8 @@ public class TypeHandler implements ITypeHandler {
 							declaration.getBitfieldSize()));
 				}
 			} else if (r instanceof SkipResult) { // skip ;)
-			} else if (r instanceof TypesResult) { // TODO
+			} else if (r instanceof final TypesResult tr && tr.getCType() instanceof final CStructOrUnion su) {
+				members.add(new AnonymousMember(su));
 			} else {
 				final String msg = "Unexpected syntax in struct declaration!";
 				throw new UnsupportedSyntaxException(loc, msg);
