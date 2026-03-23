@@ -569,13 +569,13 @@ public class TypeHandler implements ITypeHandler {
 			// // return null;
 			// throw new UnsupportedOperationException("No Boogie because C type is incomplete: " + cType);
 			// }
-			final VarList[] fields = new VarList[cstruct.getFieldCount()];
-			final String[] fieldNames = new String[cstruct.getFieldCount()];
-			final BoogieType[] fieldBoogieTypes = new BoogieType[cstruct.getFieldCount()];
-			for (int i = 0; i < cstruct.getFieldCount(); i++) {
-				final ASTType fieldType = cType2AstType(loc, cstruct.getFieldTypes()[i]);
-				fields[i] = new VarList(loc, new String[] { cstruct.getFieldIds()[i] }, fieldType);
-				fieldNames[i] = cstruct.getFieldIds()[i];
+			final String[] fieldNames = cstruct.getFieldIds();
+			final ICType[] fieldTypes = cstruct.getFieldTypes();
+			final VarList[] fields = new VarList[fieldNames.length];
+			final BoogieType[] fieldBoogieTypes = new BoogieType[fieldNames.length];
+			for (int i = 0; i < fieldNames.length; i++) {
+				final ASTType fieldType = cType2AstType(loc, fieldTypes[i]);
+				fields[i] = new VarList(loc, new String[] { fieldNames[i] }, fieldType);
 				fieldBoogieTypes[i] = (BoogieType) fieldType.getBoogieType();
 			}
 			final BoogieStructType boogieType = BoogieType.createStructType(fieldNames, fieldBoogieTypes);
