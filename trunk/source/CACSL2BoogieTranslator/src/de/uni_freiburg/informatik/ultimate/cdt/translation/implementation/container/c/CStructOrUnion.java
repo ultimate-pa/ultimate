@@ -29,10 +29,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Struct / Union type (see C11 6.2.5.20.2/3)
@@ -46,58 +48,80 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		STRUCT, UNION,
 	}
 
+	/**
+	 * A single member of a struct or union. A member is either a named field ({@link NamedMember}) or an anonymous
+	 * nested struct/union ({@link AnonymousMember}).
+	 *
+	 * <p>
+	 * C11 6.7.2.1.13 allows a struct/union member to have no declarator and no tag, in which case its own members are
+	 * promoted into the enclosing struct/union's namespace. Those are represented by {@link AnonymousMember}.
+	 */
+	public sealed interface Member permits NamedMember, AnonymousMember {
+		/** The C type of this member. */
+		ICType type();
+
+		int bitFieldWidth();
+	}
+
+	/**
+	 * A regular, named struct/union field, optionally with a bitfield width.
+	 *
+	 * @param name
+	 *            field name; never {@code null} or empty.
+	 * @param type
+	 *            field type; never {@code null}.
+	 * @param bitfieldWidth
+	 *            number of bits if this is a bitfield, otherwise {@code -1}.
+	 */
+	public record NamedMember(String name, ICType type, int bitFieldWidth) implements Member {
+		public NamedMember {
+			Objects.requireNonNull(name);
+			Objects.requireNonNull(type);
+			if (name.isEmpty()) {
+				throw new IllegalArgumentException("NamedMember name must not be empty");
+			}
+		}
+
+		/** Convenience constructor for non-bitfield members. */
+		public NamedMember(final String name, final ICType type) {
+			this(name, type, -1);
+		}
+	}
+
+	/**
+	 * An anonymous nested struct or union member (no declarator, no tag). Its own members are merged into the enclosing
+	 * struct/union's namespace at the C level, but we keep the nesting explicit here.
+	 *
+	 * @param type
+	 *            the nested, anonymous {@link CStructOrUnion}
+	 */
+	public record AnonymousMember(CStructOrUnion type) implements Member {
+		@Override
+		public int bitFieldWidth() {
+			return -1;
+		}
+	}
+
 	private final StructOrUnion mIsStructOrUnion;
-	/**
-	 * Field names.
-	 */
-	private String[] mFieldNames;
-	/**
-	 * Field types.
-	 */
-	private ICType[] mFieldTypes;
+
+	private List<Member> mMembers;
 
 	private final String mStructName;
 
-	private List<Integer> mBitFieldWidths;
-
 	private boolean mIsComplete;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param fNames
-	 *            field names.
-	 * @param fTypes
-	 *            field types.
-	 * @param bitFieldWidths
-	 * @param cDeclSpec
-	 *            the C declaration used.
-	 */
-	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<String> fNames,
-			final List<ICType> fTypes, final List<Integer> bitFieldWidths) {
-		this(isStructOrUnion, name, fNames.toArray(String[]::new), fTypes.toArray(ICType[]::new), bitFieldWidths);
-	}
-
-	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
-			final ICType[] fTypes, final List<Integer> bitFieldWidths) {
-		assert name != null;
-		assert fNames.length == bitFieldWidths.size();
-		mIsStructOrUnion = isStructOrUnion;
-		mFieldNames = fNames;
-		mFieldTypes = fTypes;
-		mBitFieldWidths = Collections.unmodifiableList(bitFieldWidths);
-		mStructName = Objects.requireNonNull(name);
-		mIsComplete = true;
-	}
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
 		assert name != null && !name.isEmpty();
 		mIsStructOrUnion = isStructOrUnion;
-		mFieldNames = new String[0];
-		mFieldTypes = new ICType[0];
-		mBitFieldWidths = Collections.emptyList();
+		mMembers = List.of();
 		mStructName = Objects.requireNonNull(name);
 		mIsComplete = false;
+	}
+
+	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<Member> members) {
+		mIsStructOrUnion = isStructOrUnion;
+		mStructName = Objects.requireNonNull(name);
+		mMembers = new ArrayList<>(members);
 	}
 
 	@Override
@@ -111,7 +135,27 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * @return the number of fields.
 	 */
 	public int getFieldCount() {
-		return mFieldNames.length;
+		return mMembers.size();
+	}
+
+	private Optional<Member> lookupMember(final String id) {
+		assert !isIncomplete() : "Cannot get a field in an incomplete struct type.";
+		for (final Member m : mMembers) {
+			switch (m) {
+			case final NamedMember named:
+				if (named.name().equals(id)) {
+					return Optional.of(named);
+				}
+				break;
+			case final AnonymousMember anon:
+				final Optional<Member> recLookup = anon.type().lookupMember(id);
+				if (recLookup.isPresent()) {
+					return recLookup;
+				}
+				break;
+			}
+		}
+		return Optional.empty();
 	}
 
 	/**
@@ -122,12 +166,11 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * @return the field type.
 	 */
 	public ICType getFieldType(final String id) {
-		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
-		final int idx = Arrays.asList(mFieldNames).indexOf(id);
-		if (idx < 0) {
+		final Optional<Member> member = lookupMember(id);
+		if (member.isEmpty()) {
 			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
-		return mFieldTypes[idx];
+		return member.get().type();
 	}
 
 	/**
@@ -136,7 +179,28 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * @return the types of this strut's fields.
 	 */
 	public ICType[] getFieldTypes() {
-		return mFieldTypes;
+		return getFlattenedMembers().map(NamedMember::type).toArray(ICType[]::new);
+	}
+
+	private Stream<NamedMember> getFlattenedMembers() {
+		return mMembers.stream().flatMap(CStructOrUnion::flatten);
+	}
+
+	private static Stream<NamedMember> flatten(final Member member) {
+		switch (member) {
+		case final NamedMember nm:
+			return Stream.of(nm);
+		case final AnonymousMember am:
+			return am.type().getFlattenedMembers();
+		}
+	}
+
+	public List<Member> getMembers() {
+		return Collections.unmodifiableList(mMembers);
+	}
+
+	public Member getMember(final int index) {
+		return mMembers.get(index);
 	}
 
 	/**
@@ -145,7 +209,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * @return the set of fields in this struct.
 	 */
 	public String[] getFieldIds() {
-		return mFieldNames.clone();
+		return getFlattenedMembers().map(NamedMember::name).toArray(String[]::new);
 	}
 
 	@Override
@@ -168,11 +232,11 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		sb.append(structOrUnionPrefix);
 		sb.append('~');
 		sb.append(getName());
-		for (int i = 0; i < getFieldCount(); i++) {
+		for (final Member m : mMembers) {
 			sb.append("?");
-			sb.append(mFieldNames[i]);
+			sb.append(m instanceof final NamedMember nm ? nm.name() : "ANON");
 			sb.append("~");
-			sb.append(mFieldTypes[i].toString());
+			sb.append(m.type());
 		}
 		sb.append("#");
 		return sb.toString();
@@ -183,9 +247,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		if (!isIncomplete()) {
 			throw new AssertionError("only incomplete structs can be completed");
 		}
-		assert cvar.mFieldNames.length == cvar.getBitFieldWidths().size();
-		return new CStructOrUnion(cvar.isStructOrUnion(), mStructName, cvar.mFieldNames, cvar.mFieldTypes,
-				cvar.getBitFieldWidths());
+		return new CStructOrUnion(cvar.isStructOrUnion(), mStructName, cvar.mMembers);
 	}
 
 	/**
@@ -198,17 +260,9 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * @param bitfieldWidths
 	 *            the widths of the bitfields to be completed.
 	 */
-	public void complete(final List<String> memberNames, final List<ICType> memberTypes,
-			final List<Integer> bitfieldWidths) {
-		assert memberNames.size() == bitfieldWidths.size();
-		mFieldNames = memberNames.toArray(String[]::new);
-		mFieldTypes = memberTypes.toArray(ICType[]::new);
-		mBitFieldWidths = bitfieldWidths;
+	public void complete(final List<Member> members) {
+		mMembers = new ArrayList<>(members);
 		mIsComplete = true;
-	}
-
-	public List<Integer> getBitFieldWidths() {
-		return mBitFieldWidths;
 	}
 
 	/**
@@ -216,15 +270,11 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * returns -1.
 	 */
 	public int getBitfieldWidth(final String id) {
-		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
-		final int idx = Arrays.asList(mFieldNames).indexOf(id);
-		if (idx < 0) {
+		final Optional<Member> member = lookupMember(id);
+		if (member.isEmpty()) {
 			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
-		if (getBitFieldWidths().size() < idx) {
-			return -1;
-		}
-		return getBitFieldWidths().get(idx);
+		return member.get().bitFieldWidth();
 	}
 
 	public static boolean isUnion(final ICType cType) {

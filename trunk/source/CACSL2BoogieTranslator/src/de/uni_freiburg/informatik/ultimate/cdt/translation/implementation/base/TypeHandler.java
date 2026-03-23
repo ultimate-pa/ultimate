@@ -88,6 +88,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.Member;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.NamedMember;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -409,17 +411,14 @@ public class TypeHandler implements ITypeHandler {
 	public Result visit(final IDispatcher main, final IASTCompositeTypeSpecifier node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		// TODO : include inactives? what are inactives?
-		final ArrayList<String> fNames = new ArrayList<>();
-		final ArrayList<ICType> fTypes = new ArrayList<>();
-		final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
+		final List<Member> members = new ArrayList<>();
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
 			final Result r = main.dispatch(dec);
 			if (r instanceof DeclarationResult) {
 				final DeclarationResult rdec = (DeclarationResult) r;
 				for (final CDeclaration declaration : rdec.getDeclarations()) {
-					fNames.add(declaration.getName());
-					fTypes.add(declaration.getType());
-					bitFieldWidths.add(declaration.getBitfieldSize());
+					members.add(new NamedMember(declaration.getName(), declaration.getType(),
+							declaration.getBitfieldSize()));
 				}
 			} else if (r instanceof SkipResult) { // skip ;)
 			} else if (r instanceof TypesResult) { // TODO
@@ -444,7 +443,7 @@ public class TypeHandler implements ITypeHandler {
 
 		if (mIncompleteCStructOrUnionObjects.containsKey(rslvName)) {
 			final CStructOrUnion structOrUnion = mIncompleteCStructOrUnionObjects.get(rslvName);
-			structOrUnion.complete(fNames, fTypes, bitFieldWidths);
+			structOrUnion.complete(members);
 			mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
 			final TypesResult typeResult = mDefinedTypes.get(rslvName);
 			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
@@ -456,7 +455,7 @@ public class TypeHandler implements ITypeHandler {
 			mIncompleteCStructOrUnionObjects.remove(rslvName);
 		}
 
-		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, fNames, fTypes, bitFieldWidths);
+		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, members);
 
 		// TODO : boogie type
 		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, identifier, new ASTType[0]);

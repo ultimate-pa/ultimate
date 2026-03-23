@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.NamedMember;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -471,9 +472,10 @@ public class StdioLibraryModel implements ILibraryModel {
 		final var intType = new CPrimitive(CPrimitives.INT);
 		// We just chose the same definition as GCC for now
 		return new CStructOrUnion(StructOrUnion.STRUCT, "FILE",
-				List.of("_ptr", "_cnt", "_base", "_flag", "_file", "_charbuf", "_bufsiz", "_tmpfname"),
-				List.of(charPointer, intType, charPointer, intType, intType, intType, intType, charPointer),
-				List.of(-1, -1, -1, -1, -1, -1, -1, -1));
+				List.of(new NamedMember("_ptr", charPointer), new NamedMember("_cnt", intType),
+						new NamedMember("_base", charPointer), new NamedMember("_flag", intType),
+						new NamedMember("_file", intType), new NamedMember("_charbuf", intType),
+						new NamedMember("_bufsiz", intType), new NamedMember("_tmpfname", charPointer)));
 	}
 
 	@Override
