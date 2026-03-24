@@ -712,6 +712,16 @@ def extract_vacuity_run_z3(args, tmp_smt_filename):
     return relevant_lines
 
 
+@lru_cache(maxsize=1)
+def get_launcher_jar():
+    candidates = glob.glob("plugins/org.eclipse.equinox.launcher_*.jar")
+    if not candidates:
+        raise RuntimeError("Could not find any launcher JAR.")
+    if len(candidates) > 1:
+        raise RuntimeError("Found multiple launcher JARs: " + ", ".join(candidates))
+    return candidates[0]
+
+
 def create_common_ultimate_cli_args(args, toolchain, settings, input_file):
     return [
         "java",
@@ -719,7 +729,7 @@ def create_common_ultimate_cli_args(args, toolchain, settings, input_file):
         "-Xmx100G",
         "-Xss4m",
         "-jar",
-        "plugins/org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar",
+        get_launcher_jar(),
         "-tc",
         toolchain,
         "-s",

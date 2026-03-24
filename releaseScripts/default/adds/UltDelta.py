@@ -52,6 +52,16 @@ def check_string_contains(strings, words):
     return False
 
 
+@lru_cache(maxsize=1)
+def get_launcher_jar():
+    candidates = glob.glob(os.path.join(ultimatedir, "plugins", "org.eclipse.equinox.launcher_*.jar"))
+    if not candidates:
+        raise RuntimeError("Could not find any launcher JAR.")
+    if len(candidates) > 1:
+        raise RuntimeError("Found multiple launcher JARs: " + ", ".join(candidates))
+    return candidates[0]
+
+
 def get_binary():
     ultimate_bin = [
         "java",
@@ -65,10 +75,7 @@ def get_binary():
 
     ultimate_bin = ultimate_bin + [
         "-jar",
-        os.path.join(
-            ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar",
-        ),
+        get_launcher_jar(),
         "-data",
         datadir,
     ]
