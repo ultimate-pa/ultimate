@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -426,7 +427,7 @@ public class HornClauseParserScript extends HistoryRecordingScript implements IN
 		return new Model() {
 
 			@Override
-			public Term getFunctionDefinition(final String func, final TermVariable[] args) {
+			public LambdaTerm getFunctionDefinition(final FunctionSymbol fs) {
 				throw new UnsupportedOperationException();
 			}
 

@@ -208,7 +208,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 			final var pred = backtranslator.translatePredicate(entry.getKey());
 			final var ctx = new PredicateContext(mScript, pred);
 			final var body = backtranslator.translateFormula(entry.getValue(), ctx);
-			translatedDefs.add(new FunctionDefinition(pred.getFunctionSymbol(), ctx.getParameters(), body));
+			translatedDefs.add(new FunctionDefinition(pred.getFunctionSymbol(), ctx.getParameters(), body, mScript));
 		}
 		return new ModelDescription(translatedDefs);
 	}
