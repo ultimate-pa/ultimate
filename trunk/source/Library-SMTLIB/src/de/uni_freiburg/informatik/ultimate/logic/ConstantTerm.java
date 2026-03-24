@@ -79,26 +79,30 @@ public class ConstantTerm extends Term {
 
 	@Override
 	public String toString() {
-		if (mSort.isBitVecSort() && mValue instanceof BigInteger) {
-			return "(_ bv" + mValue.toString() + " " + mSort.getIndices()[0] + ")";
-		}
 		if (mValue instanceof BigInteger) {
-			final BigInteger value = (BigInteger) mValue;
-			String result = value.abs().toString();
-			if (value.signum() < 0) {
-				result = "(- " + result + ")";
+			if (mSort.isBitVecSort() && mValue instanceof BigInteger) {
+				return "(_ bv" + mValue.toString() + " " + mSort.getIndices()[0] + ")";
+			} else {
+				/* used for numerals in Real logics without integers. */
+				assert mSort.getName() == SMTLIBConstants.REAL;
+				final BigInteger value = (BigInteger) mValue;
+				String result = value.abs().toString();
+				if (value.signum() < 0) {
+					result = "(- " + result + ")";
+				}
+				return result;
 			}
-			return result;
 		}
 		if (mValue instanceof BigDecimal) {
+			assert mSort.getName() == SMTLIBConstants.REAL;
+			/* used for decimals that don't end with .0 */
 			final BigDecimal decimal = (BigDecimal) mValue;
-			String result = decimal.abs().toPlainString();
-			if (decimal.signum() < 0) {
-				result = "(- " + result + ")";
-			}
+			assert decimal.signum() >= 0;
+			String result = decimal.toPlainString();
 			return result;
 		}
 		if (mValue instanceof Rational) {
+			assert mSort.getName() == SMTLIBConstants.REAL || mSort.getName() == SMTLIBConstants.INT;
 			final Rational rat = (Rational) mValue;
 			String result = rat.numerator().abs().toString();
 			if (getSort().getName() == "Real") {

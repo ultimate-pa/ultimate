@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -707,17 +706,19 @@ public class ArrayTheory implements ITheory {
 	}
 
 	@Override
-	public Clause computeConflictClause() {
-		final Clause conflict = checkpoint();
-		if (conflict != null) {
-			return conflict;
-		}
-		if (mPropClauses.isEmpty()) {
-			final boolean foundLemma = computeWeakeqExt();
-			if (foundLemma) {
-				mArrayModels = null;
+	public Clause finalCheck() {
+		do {
+			final Clause conflict = checkpoint();
+			if (conflict != null) {
+				return conflict;
 			}
-		}
+			if (mPropClauses.isEmpty()) {
+				final boolean foundLemma = computeWeakeqExt();
+				if (foundLemma) {
+					mArrayModels = null;
+				}
+			}
+		} while (mCongRoots == null);
 		return null;
 	}
 
@@ -904,6 +905,7 @@ public class ArrayTheory implements ITheory {
 	}
 
 	public void fillInModel(final ModelBuilder builder, final List<CCTerm> ccArrayTerms) {
+		assert mArrayModels != null;
 		final Sort arraySort = ccArrayTerms.get(0).getFlatTerm().getSort();
 		assert arraySort.isArraySort();
 		final Sort valueSort = arraySort.getArguments()[1];
@@ -928,22 +930,19 @@ public class ArrayTheory implements ITheory {
 				// constant array or
 				// it's not weakly equivalent to one.
 				if (node.mConstTerm != null) {
-					final Term value = builder.getModelValue(getValueFromConst(node.mConstTerm).getRepresentative());
-					if (value == null) {
-						// the const is probably an array that we build later.
-						assert getValueFromConst(node.mConstTerm).getFlatTerm().getSort().isArraySort();
-						todoQueue.addLast(node);
-						continue;
-					}
-					final FunctionSymbol constFunc = t.getFunctionWithResult(SMTLIBConstants.CONST, null, arraySort,
-							valueSort);
-					final Term nodeValue = t.term(constFunc, value);
+					final CCTerm value = getValueFromConst(node.mConstTerm).getRepresentative();
+					final Term nodeValue = t.term(SMTLIBConstants.CONST, null, arraySort, builder.getModelValue(value));
 					builder.setModelValue(node.mTerm, nodeValue);
 				} else {
-					// this is not a weakly related to a constant array. Use some fresh array.
-					Term nodeValue = hasFiniteIndexSort(arraySort)
-							? model.getSomeValue(arraySort)
-							: model.extendFresh(arraySort);
+					Term nodeValue;
+					if (hasFiniteIndexSort(node.mTerm.getFlatTerm().getSort())) {
+						// the array is based on a certain const value, see computeWeakEqExt()
+						final CCTerm value = (CCTerm) mArrayModels.get(node).get(null);
+						nodeValue = t.term(SMTLIBConstants.CONST, null, arraySort, builder.getModelValue(value));
+					} else {
+						// this is not a weakly related to a constant array. Use some fresh array.
+						nodeValue = model.extendFresh(arraySort);
+					}
 					// change all indices to the right select value
 					for (final Entry<CCTerm, CCAppTerm> indexValuePairs : node.mSelects.entrySet()) {
 						final CCTerm index = indexValuePairs.getKey();
@@ -1460,6 +1459,7 @@ public class ArrayTheory implements ITheory {
 		 * fact mSelects is empty since we removed them).
 		 */
 		mArrayModels = new LinkedHashMap<>();
+		final HashMap<Sort, CCTerm> defaultValue = new HashMap<>();
 		final HashMap<Map<CCTerm, Object>, ArrayNode> inverse = new HashMap<>();
 		final HashSet<SymmetricPair<ArrayNode>> propEqualities = new LinkedHashSet<>();
 		final ArrayDeque<ArrayNode> todoQueue = new ArrayDeque<>(mCongRoots.values());
@@ -1473,25 +1473,47 @@ public class ArrayTheory implements ITheory {
 				todoQueue.addFirst(node.mPrimaryEdge);
 				continue;
 			}
+			final Sort arraySort = node.mTerm.getFlatTerm().getSort();
 			todoQueue.removeFirst();
 			final HashMap<CCTerm, Object> nodeMapping = new LinkedHashMap<>();
-			CCTerm constRep = null;
 			final ArrayNode weakRep = node.getWeakRepresentative();
-			if (weakRep.mConstTerm != null) {
-				constRep = getValueFromConst(weakRep.mConstTerm).getRepresentative();
-			}
 			if (node == weakRep) {
-				if (mNeedDiffIndexLevel >= 0 || hasFiniteIndexSort(node.mTerm.getFlatTerm().getSort())) {
+				CCTerm constRep = null;
+				if (weakRep.mConstTerm != null) {
+					constRep = getValueFromConst(weakRep.mConstTerm).getRepresentative();
+					nodeMapping.put(null, constRep);
+				} else if (hasFiniteIndexSort(arraySort)) {
+					// For finite index sorts, we cannot just assume a fresh array. We need
+					// to start with some const array.
+					constRep = defaultValue.get(arraySort);
+					if (constRep == null) {
+						// we set the constRep to the first select term. If there is no select term, we
+						// create one.
+						if (weakRep.mSelects.isEmpty()) {
+							// just create the (select a (diff a a)) term
+							final Term array = weakRep.mTerm.getFlatTerm();
+							final Theory theory = array.getTheory();
+							final Term diffTerm = theory.term(SMTInterpolConstants.DIFF, array, array);
+							final Term selectTerm = theory.term(SMTLIBConstants.SELECT, array, diffTerm);
+							mClausifier.addTermAxioms(selectTerm, new SourceAnnotation("", null));
+							assert mCongRoots == null;
+							return true;
+						}
+						constRep = weakRep.mSelects.values().iterator().next().getRepresentative();
+					}
+					defaultValue.put(arraySort, constRep);
+					nodeMapping.put(null, constRep);
+				} else if (mNeedDiffIndexLevel >= 0) {
 					// If we have quantified array indices, we need to handle extensionality for
 					// arrays that are not weakly equivalent. Unless the arrays have different
-					// sorts.
-					nodeMapping.put(null, node.mTerm.getFlatTerm().getSort());
+					// sorts. So we cannot just assume they are different if they are in different
+					// weak equality classes.
+					nodeMapping.put(null, node.mTerm.mFlatTerm.getSort());
 				} else {
 					nodeMapping.put(null, node);
 				}
 				for (final Entry<CCTerm, CCAppTerm> e : node.mSelects.entrySet()) {
 					final CCTerm value = e.getValue().getRepresentative();
-					assert constRep == null || value == constRep;
 					if (value != constRep) {
 						nodeMapping.put(e.getKey(), value);
 					}
@@ -1499,6 +1521,7 @@ public class ArrayTheory implements ITheory {
 			} else {
 				final CCTerm storeIndex = getIndexFromStore(node.mPrimaryStore).getRepresentative();
 				nodeMapping.putAll(mArrayModels.get(node.mPrimaryEdge));
+				final Object constRep = nodeMapping.get(null);
 				nodeMapping.remove(storeIndex);
 				final ArrayNode weakiRep = node.getWeakIRepresentative(storeIndex);
 				final CCTerm value = weakiRep.mSelects.get(storeIndex);

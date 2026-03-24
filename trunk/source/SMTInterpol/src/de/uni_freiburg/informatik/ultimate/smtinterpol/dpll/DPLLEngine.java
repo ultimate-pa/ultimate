@@ -1046,7 +1046,7 @@ public class DPLLEngine {
 		}
 		mLogger.debug("DPLL: final check");
 		for (final ITheory t : mTheories) {
-			final Clause conflict = t.computeConflictClause();
+			final Clause conflict = t.finalCheck();
 			if (conflict != null) {
 				return conflict;
 			}
@@ -1130,6 +1130,10 @@ public class DPLLEngine {
 		if (mUnsatClause != null) {
 			mLogger.debug("Using cached unsatisfiability");
 			return false;
+		}
+		if (mCompleteness == INCOMPLETE_CANCELLED) {
+			// this can happen if an assert timed out before.
+			return true;
 		}
 		try {
 			if (Config.INITIAL_PHASE_BIAS_JW) {

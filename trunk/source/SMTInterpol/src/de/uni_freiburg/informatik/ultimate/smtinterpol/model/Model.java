@@ -18,23 +18,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.DataType;
-import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
@@ -81,8 +75,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			}
 		}
 		// Extract Boolean model
-		final FunctionValue trueValue = new FunctionValue(theory.mTrue);
-		final FunctionValue falseValue = new FunctionValue(theory.mFalse);
+		final FunctionValue trueValue = new FunctionValue(theory.mTrue.getFunction(), theory.mTrue);
+		final FunctionValue falseValue = new FunctionValue(theory.mFalse.getFunction(), theory.mFalse);
 		for (final BooleanVarAtom atom : clausifier.getBooleanVars()) {
 			final ApplicationTerm at = (ApplicationTerm) atom.getSMTFormula(theory);
 			FunctionValue value;
@@ -192,75 +186,18 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return Collections.unmodifiableSet(mFuncVals.keySet());
 	}
 
-	Term generateCondition(final Index index, final TermVariable[] vars) {
-		final Term[] idx = index.toArray();
-		assert vars.length == idx.length;
-		final Term[] conj = new Term[vars.length];
-		for (int i = 0; i < vars.length; ++i) {
-			conj[i] = mTheory.equals(vars[i], idx[i]);
-		}
-		return mTheory.and(conj);
-	}
-
-	private static boolean isDivision(final FunctionSymbol fs) {
-		final String name = fs.getName();
-		return fs.isIntern() && (name == "/" || name == "div" || name == "mod");
-	}
-
-	public Term getFunctionDefinition(final FunctionSymbol fs, final TermVariable[] vars) {
+	public LambdaTerm getFunctionDefinition(final FunctionSymbol fs) {
 		final FunctionValue value = mFuncVals.get(fs);
 		if (value == null) {
 			throw new IllegalArgumentException("No model for " + fs);
 		}
-		if (fs.getParameterSorts().length != vars.length) {
-			throw new IllegalArgumentException("Wrong number of variables");
-		}
-		final Term defaultVal = value.getDefault();
-		Term definition = defaultVal;
-		for (final Entry<Index, Term> me : value.values().entrySet()) {
-			if (me.getValue() != defaultVal) {
-				final Term cond = generateCondition(me.getKey(), vars);
-				definition = mTheory.ifthenelse(cond, me.getValue(), definition);
-			}
-		}
-		if (fs.isSelector()) {
-			assert vars.length == 1;
-			final Sort sort = fs.getParameterSorts()[0];
-			final DataType datatype = (DataType) sort.getSortSymbol();
-			Constructor constr = null;
-			for (final Constructor c : datatype.getConstructors()) {
-				if (Arrays.asList(c.getSelectors()).contains(fs.getName())) {
-					constr = c;
-				}
-			}
-			final Term tester = mTheory.term(SMTLIBConstants.IS, new String[] { constr.getName() }, null, vars[0]);
-			definition = mTheory.ifthenelse(tester, mTheory.term(fs, vars[0]), definition);
-		}
-		if (isDivision(fs)) {
-			final Term isZero = mTheory.term(SMTLIBConstants.EQUALS, vars[1], Rational.ZERO.toTerm(vars[1].getSort()));
-			definition = mTheory.ifthenelse(mTheory.term(SMTLIBConstants.NOT, isZero),
-					mTheory.term(fs, vars[0], vars[1]), definition);
-		}
-		return definition;
-	}
-
-	@Override
-	public Term getFunctionDefinition(final String func, final TermVariable[] args) {
-		final Sort[] argTypes = new Sort[args.length];
-		for (int i = 0; i < args.length; i++) {
-			argTypes[i] = args[i].getSort();
-		}
-		final FunctionSymbol fs = mTheory.getFunction(func, argTypes);
-		if (fs == null) {
-			throw new IllegalArgumentException("Function " + func + " not defined.");
-		}
-		return getFunctionDefinition(fs, args);
+		return value.getDefinition();
 	}
 
 	public FunctionValue map(final FunctionSymbol fs, final Term value) {
 		FunctionValue res = mFuncVals.get(fs);
 		if (res == null) {
-			res = new FunctionValue(value);
+			res = new FunctionValue(fs, value);
 			mFuncVals.put(fs, res);
 		}
 		assert res.getDefault() == value;
@@ -271,7 +208,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		assert fs.getParameterSorts().length == args.length;
 		FunctionValue val = mFuncVals.get(fs);
 		if (val == null) {
-			val = new FunctionValue(value);
+			val = new FunctionValue(fs, value);
 			mFuncVals.put(fs, val);
 		}
 		val.put(value, args);
@@ -303,12 +240,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		for (final Map.Entry<FunctionSymbol, FunctionValue> me : mFuncVals.entrySet()) {
 			final FunctionSymbol fs = me.getKey();
 			if (!fs.isIntern() || fs.getDefinition() == null) {
-				final Sort[] paramSorts = fs.getParameterSorts();
-				final TermVariable[] vars = new TermVariable[paramSorts.length];
-				for (int i = 0; i < vars.length; ++i) {
-					vars[i] = mTheory.createTermVariable("@p" + i, paramSorts[i]);
-				}
-				mf.appendValue(fs, vars, getFunctionDefinition(fs, vars));
+				final LambdaTerm definition = getFunctionDefinition(fs);
+				mf.appendValue(fs, definition.getVariables(), definition.getSubterm());
 			}
 		}
 		return mf.finish();

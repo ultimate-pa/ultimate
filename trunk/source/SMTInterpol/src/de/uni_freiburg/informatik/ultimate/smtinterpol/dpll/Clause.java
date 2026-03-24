@@ -22,10 +22,10 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.ProofLiteral;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.ProofRules;
 
 /**
  * This class represents a clause. It basically consists of an array of

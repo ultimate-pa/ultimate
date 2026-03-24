@@ -19,6 +19,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.bitvector;
 
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVMUL;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVNEGO;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVSADDO;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVSDIVO;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVSMULO;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVSSUBO;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVSUB;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVUADDO;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVUMULO;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.BVUSUBO;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.SBV_TO_INT;
+import static de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants.UBV_TO_INT;
+
 import java.math.BigInteger;
 
 import org.junit.After;
@@ -1058,6 +1071,130 @@ public class BitvectorTest {
 		mSolver.resetAssertions();
 		final Term input = mSolver.term("and", mSolver.term("=", mSolver.term("bvneg", p4), mSolver.binary("#b1111")),
 				mSolver.term("=", p4, mSolver.binary("#b0001")));
+		mSolver.assertTerm(input);
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.SAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvnego() {
+		mSolver.resetAssertions();
+		final Term input = mSolver.term("not",
+				mSolver.term("=", mSolver.term(BVNEGO, p4), mSolver.term("=", p4, mSolver.binary("#b1000"))));
+		mSolver.assertTerm(input);
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.UNSAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvuaddo() {
+		mSolver.resetAssertions();
+		final Term input =
+				mSolver.term("not",
+						mSolver.term("=", mSolver.term(BVUADDO, p8, q8), mSolver.term("distinct",
+								mSolver.term(UBV_TO_INT, mSolver.term("bvadd", p8, q8)),
+								mSolver.term("+", mSolver.term(UBV_TO_INT, p8), mSolver.term(UBV_TO_INT, q8)))));
+		mSolver.assertTerm(input);
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.UNSAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvusubo() {
+		mSolver.resetAssertions();
+		final Term input =
+				mSolver.term("not",
+						mSolver.term("=", mSolver.term(BVUSUBO, p8, q8), mSolver.term("distinct",
+								mSolver.term(UBV_TO_INT, mSolver.term(BVSUB, p8, q8)),
+								mSolver.term("-", mSolver.term(UBV_TO_INT, p8), mSolver.term(UBV_TO_INT, q8)))));
+		mSolver.assertTerm(input);
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.UNSAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvumulo() {
+		mSolver.resetAssertions();
+		final Term input =
+				mSolver.term("not",
+						mSolver.term("=", mSolver.term(BVUMULO, p8, q8), mSolver.term("distinct",
+								mSolver.term(UBV_TO_INT, mSolver.term(BVMUL, p8, q8)),
+								mSolver.term("*", mSolver.term(UBV_TO_INT, p8), mSolver.term(UBV_TO_INT, q8)))));
+		mSolver.assertTerm(input);
+		mSolver.assertTerm(mSolver.term("<=", mSolver.numeral("0"),
+				mSolver.term("*", mSolver.term(UBV_TO_INT, p8), mSolver.term(UBV_TO_INT, q8))));
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.UNSAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvsaddo() {
+		mSolver.resetAssertions();
+		final Term input =
+				mSolver.term("not",
+						mSolver.term("=", mSolver.term(BVSADDO, p8, q8), mSolver.term("distinct",
+								mSolver.term(SBV_TO_INT, mSolver.term("bvadd", p8, q8)),
+								mSolver.term("+", mSolver.term(SBV_TO_INT, p8), mSolver.term(SBV_TO_INT, q8)))));
+		mSolver.assertTerm(input);
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.UNSAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvssubo() {
+		mSolver.resetAssertions();
+		final Term input =
+				mSolver.term("not",
+						mSolver.term("=", mSolver.term(BVSSUBO, p8, q8), mSolver.term("distinct",
+								mSolver.term(SBV_TO_INT, mSolver.term(BVSUB, p8, q8)),
+								mSolver.term("-", mSolver.term(SBV_TO_INT, p8), mSolver.term(SBV_TO_INT, q8)))));
+		mSolver.assertTerm(input);
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.UNSAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvsmulo() {
+		mSolver.resetAssertions();
+		final Term input =
+				mSolver.term("not",
+						mSolver.term("=", mSolver.term(BVSMULO, p8, q8), mSolver.term("distinct",
+								mSolver.term(SBV_TO_INT, mSolver.term(BVMUL, p8, q8)),
+								mSolver.term("*", mSolver.term(SBV_TO_INT, p8), mSolver.term(SBV_TO_INT, q8)))));
+		mSolver.assertTerm(input);
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.UNSAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvsdivo() {
+		mSolver.resetAssertions();
+		final Term input = mSolver.term("not",
+				mSolver.term("=", mSolver.term(BVSDIVO, p8, q8),
+						mSolver.term("and", mSolver.term("=", p8, mSolver.binary("#b10000000")),
+								mSolver.term("=", q8, mSolver.binary("#b11111111")))));
+		mSolver.assertTerm(input);
+		final LBool isUnSat = mSolver.checkSat();
+		Assert.assertSame(LBool.UNSAT, isUnSat);
+		mSolver.reset();
+	}
+
+	@Test
+	public void bbBvsdivosat() {
+		mSolver.resetAssertions();
+		final Term input =
+				mSolver.term("and", mSolver.term(BVSDIVO, mSolver.binary("#b1000"), mSolver.binary("#b1111")),
+						mSolver.term("not", mSolver.term(BVSDIVO, mSolver.binary("#b1000"), mSolver.binary("#b0000"))),
+						mSolver.term("not", mSolver.term(BVSDIVO, mSolver.binary("#b1000"), mSolver.binary("#b0010"))),
+						mSolver.term("not", mSolver.term(BVSDIVO, mSolver.binary("#b0111"), mSolver.binary("#b1111"))));
 		mSolver.assertTerm(input);
 		final LBool isUnSat = mSolver.checkSat();
 		Assert.assertSame(LBool.SAT, isUnSat);

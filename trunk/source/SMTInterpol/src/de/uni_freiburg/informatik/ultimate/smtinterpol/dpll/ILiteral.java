@@ -22,6 +22,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 /**
+ * The ILiteral is an interface that all literals should implement. It is also
+ * used for quantified literals outside the DPLL engine.
+ *
  * @author Tanja Schindler
  */
 public interface ILiteral {

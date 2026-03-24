@@ -3,7 +3,7 @@
 
 (set-info :status sat)
 
-(set-logic QF_UFBV)
+(set-logic QF_UFBVLIA)
 
 (declare-fun f ((_ BitVec 8)) (_ BitVec 8))
 (declare-const b (_ BitVec 8))

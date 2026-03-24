@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.BitVectorInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
@@ -262,6 +263,8 @@ public class ModelBuilder {
 		} else if (isDivision(fs)) {
 			// A division by zero is undefined
 			return NumericSortInterpretation.toRational(args.getLast()) == Rational.ZERO;
+		} else if (fs.getName() == Interpolator.EQ) {
+			return true;
 		}
 		return false;
 	}
