@@ -69,7 +69,7 @@ public class MutableAffineTerm {
 		return this;
 	}
 
-	private void addMap(final Rational c, final Map<LinVar, Rational> linterm) {
+	public void addMap(final Rational c, final Map<LinVar, Rational> linterm) {
 		for (final Map.Entry<LinVar, Rational> summand : linterm.entrySet()) {
 			addSimple(c.mul(summand.getValue()), summand.getKey());
 		}

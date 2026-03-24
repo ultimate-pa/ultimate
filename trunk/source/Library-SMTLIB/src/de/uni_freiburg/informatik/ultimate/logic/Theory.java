@@ -495,18 +495,20 @@ public class Theory {
 	}
 
 	public Term numeral(final BigInteger num) {
-		if (mLogic.isBitVector() && mLogic.hasReals() && !mLogic.hasIntegers()) {
-			// The curious case of BVLRA logics. We treat this as decimals, since we
+		if (!mLogic.hasIntegers() && !mLogic.hasReals()) {
+			throw new SMTLIBException("Numerals without arithmetic");
+		}
+		if (mNumericSort != mRealSort) {
+			// For integer sort, always use Rational constants for numerals.
+			//
+			// The curious case arises in BVLRA logics. We treat this as decimals, since we
 			// internally use LIRA logic, but the benchmark does not.
 			// This means that this is one instance where we apply transformations in the
 			// parser and these aren't tracked at all. There is no way around this,
 			// since our proof is in LIRA and thus uses a different semantics for
 			// NUMERAL than the benchmark.
-			return constant(Rational.valueOf(num, BigInteger.ONE), mRealSort);
-		}
-		if (mNumericSort != mRealSort) {
-			// For integer sort, always use Rational constants for numerals.
-			return constant(Rational.valueOf(num, BigInteger.ONE), mNumericSort);
+			return constant(Rational.valueOf(num, BigInteger.ONE),
+				mLogic.isBitVector() && !mLogic.hasIntegers() ? mRealSort : mNumericSort);
 		}
 		// For real arithmetic using Rational would convert to decimal, which we want to avoid.
 		// positive and negated numerals are represented as constants of BigInteger type
@@ -667,6 +669,13 @@ public class Theory {
 		}
 
 		@Override
+		public Term getDefinition(String[] indices, final TermVariable[] tvs, final Sort resultSort) {
+			final Term divisor = Rational.valueOf(new BigInteger(indices[0]), BigInteger.ONE).toTerm(tvs[0].getSort());
+			return term(SMTLIBConstants.EQUALS, tvs[0],
+					term(SMTLIBConstants.MUL, divisor, term(SMTLIBConstants.DIV, tvs[0], divisor)));
+		}
+
+		@Override
 		public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 			return indices != null && indices.length == 1 && toNumeral(indices[0]).signum() > 0
 					&& paramSorts.length == 1 && paramSorts[0] == mNumericSort && resultSort == null ? mBooleanSort
@@ -800,8 +809,9 @@ public class Theory {
 				if (indices == null || indices.length != 1) {
 					throw new IllegalArgumentException("BitVec needs one index");
 				}
-				if (toNumeral(indices[0]).signum() <= 0) {
-					throw new IllegalArgumentException("BitVec index must be positive");
+				final BigInteger bitLength = toNumeral(indices[0]);
+				if (bitLength.signum() <= 0 || bitLength.bitCount() > 32) {
+					throw new IllegalArgumentException("BitVec index must be positive and below 2^31");
 				}
 				if (arity != 0) {
 					throw new IllegalArgumentException("BitVec has no parameters");

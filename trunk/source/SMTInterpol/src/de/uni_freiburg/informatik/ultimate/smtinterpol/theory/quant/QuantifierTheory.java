@@ -263,7 +263,7 @@ public class QuantifierTheory implements ITheory {
 	}
 
 	@Override
-	public Clause computeConflictClause() {
+	public Clause finalCheck() {
 		long time;
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();

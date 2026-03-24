@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Version;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SExpression;
 
 /**
  * Main class for checking lowlevel proofs.
@@ -127,13 +128,16 @@ public final class Main {
 		final String proofFilename = param[paramctr++];
 
 		final OptionMap options = new OptionMap(logger, true);
-		final Script solver = new CheckingScript(logger, proofFilename);
+		final Script solver = new CheckingScript(options, proofFilename);
 		for (final Option opt : optionList) {
 			solver.setOption(opt.getName(), opt.getValue());
 		}
 		final ParseEnvironment parseEnv = new ParseEnvironment(solver, options)  {
 			@Override
 			public void printResponse(final Object response) {
+				if (response instanceof SExpression) {
+					super.printResponse(response);
+				}
 			}
 		};
 		parseEnv.parseScript(scriptFilename);

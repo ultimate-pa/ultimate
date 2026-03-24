@@ -356,7 +356,7 @@ public class DataTypeTheory implements ITheory {
 	}
 
 	@Override
-	public Clause computeConflictClause() {
+	public Clause finalCheck() {
 
 		// Get list of all data types. This prevents a concurrent modification error.
 		final List<CCTerm> dataTypeTerms = new ArrayList<>();
