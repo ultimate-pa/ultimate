@@ -816,7 +816,7 @@ public class CClosure implements ITheory {
 	}
 
 	@Override
-	public Clause computeConflictClause() {
+	public Clause finalCheck() {
 		Clause res = checkpoint();
 		if (res == null) {
 			res = checkpoint();

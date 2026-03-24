@@ -22,8 +22,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.logic.DataType;
+import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class FunctionValue {
 
@@ -59,15 +69,15 @@ public class FunctionValue {
 		}
 	}
 
+	private final FunctionSymbol mFunc;
 	private Map<Index, Term> mValues;
 
 	private Term mDefault;
 
-	public FunctionValue() {
-		mDefault = null;
-	}
+	private LambdaTerm mDefinition;
 
-	public FunctionValue(final Term defaultValue) {
+	public FunctionValue(FunctionSymbol fs, final Term defaultValue) {
+		mFunc = fs;
 		mDefault = defaultValue;
 	}
 
@@ -89,6 +99,62 @@ public class FunctionValue {
 		}
 		final Term res = mValues.get(new Index(idx));
 		return res == null ? mDefault : res;
+	}
+
+	Term generateCondition(final Index index, final Term[] vars) {
+		final Theory theory = mDefault.getTheory();
+		final Term[] idx = index.toArray();
+		assert vars.length == idx.length;
+		final Term[] conj = new Term[vars.length];
+		for (int i = 0; i < vars.length; ++i) {
+			conj[i] = theory.term(SMTLIBConstants.EQUALS, vars[i], idx[i]);
+		}
+		return theory.and(conj);
+	}
+
+	private static boolean isDivision(final FunctionSymbol fs) {
+		final String name = fs.getName();
+		return fs.isIntern() && (name == "/" || name == "div" || name == "mod");
+	}
+
+	public LambdaTerm getDefinition() {
+		if (mDefinition != null) {
+			return mDefinition;
+		}
+		final Theory theory = mFunc.getTheory();
+		final Sort[] paramSorts = mFunc.getParameterSorts();
+		final TermVariable[] vars = new TermVariable[paramSorts.length];
+		for (int i = 0; i < vars.length; ++i) {
+			vars[i] = theory.createTermVariable("@p" + i, paramSorts[i]);
+		}
+		final Term defaultVal = getDefault();
+		Term definition = defaultVal;
+		for (final Entry<Index, Term> me : values().entrySet()) {
+			if (me.getValue() != defaultVal) {
+				final Term cond = generateCondition(me.getKey(), vars);
+				definition = theory.ifthenelse(cond, me.getValue(), definition);
+			}
+		}
+		if (mFunc.isSelector()) {
+			assert vars.length == 1;
+			final Sort sort = mFunc.getParameterSorts()[0];
+			final DataType datatype = (DataType) sort.getSortSymbol();
+			Constructor constr = null;
+			for (final Constructor c : datatype.getConstructors()) {
+				if (Arrays.asList(c.getSelectors()).contains(mFunc.getName())) {
+					constr = c;
+				}
+			}
+			final Term tester = theory.term(SMTLIBConstants.IS, new String[] { constr.getName() }, null, vars[0]);
+			definition = theory.ifthenelse(tester, theory.term(mFunc, vars[0]), definition);
+		}
+		if (isDivision(mFunc)) {
+			final Term isZero = theory.term(SMTLIBConstants.EQUALS, vars[1], Rational.ZERO.toTerm(vars[1].getSort()));
+			definition = theory.ifthenelse(theory.term(SMTLIBConstants.NOT, isZero),
+					theory.term(mFunc, vars[0], vars[1]), definition);
+		}
+		mDefinition = (LambdaTerm) theory.lambda(vars, definition);
+		return mDefinition;
 	}
 
 	public Term getDefault() {

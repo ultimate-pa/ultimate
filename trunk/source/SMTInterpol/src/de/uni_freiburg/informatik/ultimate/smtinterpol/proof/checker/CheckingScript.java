@@ -31,21 +31,52 @@ import com.github.jhoenicke.javacup.runtime.Scanner;
 import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.MinimalProofChecker;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.MinimalProofChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 
 public class CheckingScript extends NoopScript {
 	private final String mProofFile;
 	private final LogProxy mLogger;
+	private final OptionMap mOptions;
 	private final ScopedArrayList<Term> mAssertions = new ScopedArrayList<>();
 	final SimpleSymbolFactory mSymfactory = new SimpleSymbolFactory();
 
 	private LBool mLastCheckSat;
 	private SExprLexer mLexer;
+
+	private static class TheoryExtensionSetup extends Theory.SolverSetup {
+
+		public TheoryExtensionSetup() {
+		}
+
+		@Override
+		public void setLogic(final Theory theory, final Logics logic) {
+			if (logic.isBitVector()) {
+				declareBitVectorExtensions(theory);
+			}
+		}
+
+		private static final void declareBitVectorExtensions(final Theory theory) {
+			final Sort intSort = theory.getSort(SMTLIBConstants.INT, EMPTY_SORT_ARRAY);
+			final Sort[] intSort1 = new Sort[] { intSort };
+			final Sort[] intSort2 = new Sort[] { intSort, intSort };
+			declareInternalFunction(theory, SMTInterpolConstants.INTAND, intSort2, intSort, FunctionSymbol.LEFTASSOC);
+			declareInternalFunction(theory, SMTInterpolConstants.INTPOW2, intSort1, intSort, 0);
+			declareInternalFunction(theory, SMTInterpolConstants.INTLOG2, intSort1, intSort, 0);
+		}
+	}
+
 
 	public class SExprLexer implements Scanner {
 		private final Scanner mLexer;
@@ -81,16 +112,29 @@ public class CheckingScript extends NoopScript {
 		}
 	}
 
-	public CheckingScript(final LogProxy logger, final String proofFile) {
-		mLogger = logger;
+	public CheckingScript(final OptionMap options, final String proofFile) {
+		mOptions = options;
+		mLogger = options.getLogProxy();
 		mProofFile = proofFile;
 		setProofReader(openProofReader(proofFile));
 	}
 
-	public CheckingScript(final LogProxy logger, final String proofFile, final Reader proofReader) {
-		mLogger = logger;
+	public CheckingScript(final OptionMap options, final String proofFile, final Reader proofReader) {
+		mOptions = options;
+		mLogger = options.getLogProxy();
 		mProofFile = proofFile;
 		setProofReader(proofReader);
+	}
+
+	@Override
+	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
+		mSolverSetup = new TheoryExtensionSetup();
+		super.setLogic(logic);
+	}
+
+	@Override
+	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
+		mOptions.set(opt, value);
 	}
 
 	public void setProofReader(final Reader proofReader) {
@@ -181,7 +225,7 @@ public class CheckingScript extends NoopScript {
 	@Override
 	public Term getProof() {
 		mLexer.clearEOF();
-		if (mLastCheckSat == LBool.UNSAT) {
+		if (mLastCheckSat == LBool.UNSAT || mLastCheckSat == LBool.SAT) {
 			final ProofParser proofParser = new ProofParser(mLexer, mSymfactory);
 			proofParser.setFileName(mProofFile);
 			proofParser.setScript(this);
@@ -192,11 +236,17 @@ public class CheckingScript extends NoopScript {
 				throw new RuntimeException("Unexpected exception", ex);
 			}
 			final MinimalProofChecker checker = new MinimalProofChecker(this, mLogger);
-			if (checker.check(proof)) {
+			final boolean checkresult = mLastCheckSat == LBool.UNSAT ? checker.check(proof)
+					: checker.checkModelProof(proof);
+			if (checkresult) {
 				final int numberOfHoles = checker.getNumberOfHoles();
 				printResult(numberOfHoles > 0 ? "holey" : "valid");
-				printResult("holes=" + numberOfHoles);
-				printResult("assertions=" + checker.getNumberOfAssertions());
+				if (numberOfHoles > 0) {
+					printResult("holes=" + numberOfHoles);
+				}
+				if (mLastCheckSat == LBool.UNSAT) {
+					printResult("assertions=" + checker.getNumberOfAssertions());
+				}
 				printResult("definefuns=" + checker.getNumberOfDefineFun());
 				printResult("axioms=" + checker.getNumberOfAxioms());
 				printResult("resolutions=" + checker.getNumberOfResolutions());

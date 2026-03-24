@@ -135,7 +135,7 @@ public class ArraySortInterpretation implements SortInterpretation {
 			mDiffMap.put(fstArray, subMap);
 		}
 		final Term old = subMap.put(sndArray, index);
-		assert old == null;
+		assert old == null || old == index;
 	}
 
 	public Term computeDiff(final Term fstArray, final Term sndArray, final Sort indexSort) {
