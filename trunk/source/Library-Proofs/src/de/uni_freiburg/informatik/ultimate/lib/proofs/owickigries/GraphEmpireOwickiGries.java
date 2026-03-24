@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -58,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Disjunc
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -77,6 +75,7 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 	private final IUnionStateFactory<IPredicate> mUnionFactory;
 	private final Statistics mStatistics;
 
+	private IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 	private BranchingProcess<L, P> mRefinedUnfolding;
 	private Function<Transition<L, P>, Transition<L, P>> mDiff2OriginalTransition = Function.identity();
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProofProduct;
@@ -106,8 +105,15 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 	}
 
 	@Override
+	public void initialize(final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
+		mPossibleInterferences = possibleInterferences;
+	}
+
+	@Override
 	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
+		assert mPossibleInterferences != null : getClass().getSimpleName() + " was not initialized";
+
 		mDiff2OriginalTransition = mDiff2OriginalTransition.compose(transitionBacktranslation::get);
 		if (mProofProduct == null) {
 			mProofProduct = interpolantAutomaton;
@@ -146,9 +152,6 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 
 	@Override
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
-		final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
-		final var htc = new MonolithicHoareTripleChecker(mMgdScript, mModifiableGlobals);
-
 		final var computation = getEmpireComputation();
 		final var empire = computation.getEmpire();
 		mLogger.debug("Constructed Empire Annotation:\n%s", empire);
@@ -191,10 +194,8 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 			getOwickiGriesAnnotation(final EmpireAnnotation<P> empire) {
 		mStatistics.startOwickiGriesComputation();
 		try {
-			final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
-					mProgram.getPlaces(), mDiff2OriginalTransition);
 			final EmpireToOwickiGries<L, P> empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript,
-					mProgram, mSymbolTable, mProcedures, empire, possibleInterferences);
+					mProgram, mSymbolTable, mProcedures, empire, mPossibleInterferences);
 			final var annotation = empireToOwickiGries.getAnnotation();
 			mStatistics.reportOwickiGries(annotation);
 			return annotation;

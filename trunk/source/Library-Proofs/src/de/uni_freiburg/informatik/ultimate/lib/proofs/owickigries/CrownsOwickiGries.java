@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown.CrownsEm
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -76,6 +75,7 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 
 	private final Statistics mStatistics;
 
+	private IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 	private BranchingProcess<L, P> mRefinedUnfolding;
 	private Set<Condition<L, P>> mOriginalConditions;
 	private Set<Condition<L, P>> mAssertionConditions;
@@ -105,6 +105,11 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 		mAssertionPlace2Assertion = assertionPlace2Assertion;
 
 		mStatistics = new Statistics(mLogger);
+	}
+
+	@Override
+	public void initialize(final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
+		mPossibleInterferences = possibleInterferences;
 	}
 
 	@Override
@@ -185,10 +190,8 @@ public class CrownsOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 			getOwickiGriesAnnotation(final EmpireAnnotation<P> empire) {
 		mStatistics.startOwickiGriesComputation();
 		try {
-			final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
-					mProgram.getPlaces(), mDiff2OriginalTransition);
 			final EmpireToOwickiGries<L, P> empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript,
-					mProgram, mSymbolTable, mProcedures, empire, possibleInterferences);
+					mProgram, mSymbolTable, mProcedures, empire, mPossibleInterferences);
 			final var annotation = empireToOwickiGries.getAnnotation();
 			mStatistics.reportOwickiGries(annotation);
 			return annotation;

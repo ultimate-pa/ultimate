@@ -187,12 +187,14 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 			final EventOrderEnum eventOrder = mPref.eventOrder();
 
+			final boolean collectPossibleInterferences =
+					getIteration() == 0 && (DUMP_OWICKI_GRIES_TEST || mProofProducer != null);
+
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
 			final PetriNetUnfolder<L, IPredicate> unf;
 			try {
-				final boolean stopIfAcceptingRunFound = !DUMP_OWICKI_GRIES_TEST || getIteration() != 0;
 				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(getServices()), mAbstraction, eventOrder,
-						cutOffSameTrans, stopIfAcceptingRunFound);
+						cutOffSameTrans, !collectPossibleInterferences);
 			} catch (final PetriNetNot1SafeException e) {
 				throw new UnsupportedOperationException(e.getMessage());
 			} finally {
@@ -203,8 +205,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 					finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo();
 			mCounterexample = unf.getAcceptingRun();
 
-			if (DUMP_OWICKI_GRIES_TEST && getIteration() == 0) {
+			if (collectPossibleInterferences) {
 				mPossibleInterferences = IPossibleInterferences.fromUnfolding(finPrefix);
+				if (mProofProducer != null) {
+					mProofProducer.initialize(IPossibleInterferences.fromRelation(mPossibleInterferences));
+				}
 			}
 		}
 		if (mCounterexample == null) {

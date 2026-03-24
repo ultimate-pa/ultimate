@@ -185,6 +185,11 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		}
 
 		@Override
+		public void initialize(final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
+			// nothing to do here
+		}
+
+		@Override
 		public void refine(final IPredicateUnifier unifier,
 				final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 				final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {

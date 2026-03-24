@@ -41,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 
 public interface IPetriNetProofProducer<L extends IAction, P>
 		extends IProofProducer<IPetriNet<L, P>, OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>> {
+	void initialize(IPossibleInterferences<Transition<L, P>, P> possibleInterferences);
+
 	void refine(final IPredicateUnifier unifier, INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation);
 

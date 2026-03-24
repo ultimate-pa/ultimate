@@ -77,23 +77,24 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 	private final IIcfgSymbolTable mSymbolTable;
 	private final Set<String> mProcedures;
 	private final ModifiableGlobalsTable mModifiableGlobals;
-	private final IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 
 	private final Statistics mStatistics;
+
 	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofs = new ArrayList<>();
+	private IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
+
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGries;
 	private INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, ProductState<L, P>> mProduct;
 
 	public DirectedLegalFocusOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit, final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
+			final CfgSmtToolkit csToolkit) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
-				csToolkit.getModifiableGlobalsTable(), possibleInterferences);
+				csToolkit.getModifiableGlobalsTable());
 	}
 
 	public DirectedLegalFocusOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals,
-			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
+			final ModifiableGlobalsTable modifiableGlobals) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mProgram = program;
@@ -101,13 +102,19 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		mSymbolTable = symbolTable;
 		mProcedures = procedures;
 		mModifiableGlobals = modifiableGlobals;
-		mPossibleInterferences = possibleInterferences;
 		mStatistics = new Statistics(mLogger);
+	}
+
+	@Override
+	public void initialize(final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
+		mPossibleInterferences = possibleInterferences;
 	}
 
 	@Override
 	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
+		assert mPossibleInterferences != null : getClass().getSimpleName() + " was not initialized";
+
 		final var initialTrueState =
 				DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
 		final var totalizedProof = new TotalizeNwa<>(interpolantAutomaton, initialTrueState, false);

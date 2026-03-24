@@ -82,12 +82,13 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	private final IIcfgSymbolTable mSymbolTable;
 	private final Set<String> mProcedures;
 	private final ModifiableGlobalsTable mModifiableGlobals;
-	private final IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 
 	private final BasicPredicateFactory mFactory;
 	private final FocusComputation mFocusComputation;
 
 	private final ConjunctiveUnionFactory mProofUnionFactory;
+
+	private IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProofProduct;
 	private int mNumProofs = 0;
 
@@ -95,16 +96,14 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	private final Statistics mStatistics;
 
 	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit, final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
-			final PredicateFactory factory, final FocusComputation focusComputation) {
+			final CfgSmtToolkit csToolkit, final PredicateFactory factory, final FocusComputation focusComputation) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
-				csToolkit.getModifiableGlobalsTable(), possibleInterferences, factory, focusComputation);
+				csToolkit.getModifiableGlobalsTable(), factory, focusComputation);
 	}
 
 	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals,
-			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences, final PredicateFactory factory,
+			final ModifiableGlobalsTable modifiableGlobals, final PredicateFactory factory,
 			final FocusComputation focusComputation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -114,7 +113,6 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		mSymbolTable = symbolTable;
 		mProcedures = procedures;
 		mModifiableGlobals = modifiableGlobals;
-		mPossibleInterferences = possibleInterferences;
 
 		mFactory = factory;
 		mFocusComputation = focusComputation;
@@ -125,10 +123,19 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	@Override
+	public void initialize(final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
+		assert mPossibleInterferences == null : "already initialized";
+		assert possibleInterferences != null : "did not provide possible interferences";
+
+		mPossibleInterferences = possibleInterferences;
+	}
+
+	@Override
 	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
-		mNumProofs++;
+		assert mPossibleInterferences != null : getClass().getSimpleName() + " was not initialized";
 
+		mNumProofs++;
 		final var initialTrueState =
 				DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
 		final var totalizedProof = new TotalizeNwa<>(interpolantAutomaton, initialTrueState, false);
@@ -163,7 +170,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 
 		final ILegalFocusFunction<State<L, P>, P> legalFocus = computeFocus(empireAutomaton);
 
-		mOwickiGries = computeOwickiGriesAnnotation(mPossibleInterferences, empireAutomaton, legalFocus);
+		mOwickiGries = computeOwickiGriesAnnotation(empireAutomaton, legalFocus);
 		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
 
 		return mOwickiGries;
@@ -215,14 +222,13 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> computeOwickiGriesAnnotation(
-			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
 			final IExplicitEmpireAutomaton<L, P, State<L, P>> empire,
 			final ILegalFocusFunction<State<L, P>, P> legalFocus) {
 		mLogger.info("Converting empire automaton to Owicki-Gries annotation...");
 		mStatistics.startOwickiGriesComputation();
 		try {
 			final var construction = new EmpireToOG<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures,
-					empire, possibleInterferences, legalFocus);
+					empire, mPossibleInterferences, legalFocus);
 			return construction.getAnnotation();
 		} finally {
 			mStatistics.stopOwickiGriesComputation();
