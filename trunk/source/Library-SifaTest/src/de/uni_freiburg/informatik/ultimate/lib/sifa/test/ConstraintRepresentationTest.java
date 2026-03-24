@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.ojalgo.matrix.MatrixQ128;
+import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceUtil;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.ConstraintRepresentation;
@@ -112,6 +113,16 @@ public class ConstraintRepresentationTest {
 
 	}
 
+	@Test
+	public void testGetStrongMinimalForm() {
+		for (final ConstraintRepresentation constraints : TEST_CONSTRAINTS) {
+			final var strongMinimalConstraints = constraints.getStrongMinimalForm();
+			// System.out.println(constraints);
+			// System.out.println(strongMinimalConstraints);
+			Assert.assertTrue(hasStrongMinimalForm(strongMinimalConstraints));
+		}
+	}
+
 	public boolean hasMinimalForm(final ConstraintRepresentation constraints) {
 		if (!constraints.isMinimal()) {
 			return false;
@@ -149,4 +160,42 @@ public class ConstraintRepresentationTest {
 		}
 		return true;
 	}
+
+	public boolean hasStrongMinimalForm(final ConstraintRepresentation constraints) {
+		if (!hasMinimalForm(constraints)) {
+			return false;
+		}
+
+		if (!constraints.isStrongMinimal()) {
+			return false;
+		}
+
+		final List<MatrixQ128> congruences = constraints.getCongruences();
+
+		for (int i = 0; i < congruences.size(); i++) {
+			final MatrixQ128 congruence = congruences.get(i);
+			final long pivot = CongruenceUtil.lastPivot(congruence);
+			final RationalNumber pivotElement = congruence.get(0, pivot);
+
+			for (int j = 0; j < congruences.size(); j++) {
+				if (i == j) {
+					continue;
+				}
+				final MatrixQ128 other = congruences.get(j);
+				final RationalNumber otherElement = other.get(0, pivot);
+				final RationalNumber otherElement2 = otherElement.multiply(RationalNumber.TWO);
+
+				// Test if: -pivotElement < 2 * otherElement <= pivotElement
+				if (!(pivotElement.negate().compareTo(otherElement2) < 0)) {
+					return false;
+				}
+				if (!(otherElement2.compareTo(pivotElement) <= 0)) {
+					return false;
+				}
+
+			}
+		}
+		return true;
+	}
+
 }

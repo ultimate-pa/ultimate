@@ -67,7 +67,7 @@ public class ConstraintRepresentation {
 	@Override
 	public String toString() {
 		return "ConstraintRepresentation [mEqualityMatrix=" + mEqualityMatrix + ", mCongruenceMatrix="
-				+ mCongruenceMatrix + ", mIsMinimal=" + mIsMinimal + "]";
+				+ mCongruenceMatrix + ", mIsMinimal=" + mIsMinimal + ", mIsStrongMinimal=" + mIsStrongMinimal + "]";
 	}
 
 	public boolean isUnsat() {
@@ -175,9 +175,26 @@ public class ConstraintRepresentation {
 		return new ConstraintRepresentation(equalities, congruences, true, false);
 	}
 
-	public ConstraintRepresentation convertToStrongMinimalForm() {
-		// TODO
-		return null;
+	public ConstraintRepresentation getStrongMinimalForm() {
+		if (isStrongMinimal()) {
+			return this;
+		}
+
+		final ConstraintRepresentation minimalConstraints = getMinimalForm();
+
+		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
+		final List<MatrixQ128> congruences = minimalConstraints.getCongruences();
+
+		for (int i = congruences.size() - 1; i >= 0; i--) {
+			final MatrixQ128 congruence = congruences.get(i);
+			final long pivot = CongruenceUtil.lastPivot(congruence);
+
+			for (int j = i - 1; j >= 0; j--) {
+				final MatrixQ128 other = congruences.get(j);
+				congruences.set(j, CongruenceUtil.eliminateField(other, congruence, pivot));
+			}
+		}
+		return new ConstraintRepresentation(equalities, congruences, true, true);
 	}
 
 	public GeneratorRepresentation computeGeneratorRepresentation() {
