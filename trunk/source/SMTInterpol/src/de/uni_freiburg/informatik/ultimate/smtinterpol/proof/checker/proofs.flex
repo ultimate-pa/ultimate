@@ -121,6 +121,7 @@ Keyword = ":" {SMTLetterDigit}+
   "assume"               { return symbol(ProofSymbols.ASSUME, yytext()); }
   "res"                  { return symbol(ProofSymbols.RES, yytext()); }
   "let-proof"            { return symbol(ProofSymbols.LETPROOF, yytext()); }
+  "refine-fun"           { return symbol(ProofSymbols.REFINEFUN, yytext()); }
   "define-fun"           { return symbol(ProofSymbols.DEFINEFUN, yytext()); }
   "declare-fun"          { return symbol(ProofSymbols.DECLAREFUN, yytext()); }
   "oracle"               { return symbol(ProofSymbols.ORACLE, yytext()); }
@@ -162,9 +163,6 @@ Keyword = ":" {SMTLetterDigit}+
   "del!"                 { return symbol(ProofSymbols.DELANNOT, yytext()); }
 
   /* Arithmetic */
-  "divisible-def"        { return symbol(ProofSymbols.DIVISIBLEDEF, yytext()); }
-  ">def"                 { return symbol(ProofSymbols.GTDEF, yytext()); }
-  ">=def"                { return symbol(ProofSymbols.GEQDEF, yytext()); }
   "trichotomy"           { return symbol(ProofSymbols.TRICHOTOMY, yytext()); }
   "total"                { return symbol(ProofSymbols.TOTAL, yytext()); }
   "total-int"            { return symbol(ProofSymbols.TOTALINT, yytext()); }
@@ -172,7 +170,6 @@ Keyword = ":" {SMTLetterDigit}+
   "mulpos"               { return symbol(ProofSymbols.MULPOS, yytext()); }
   "to_int-high"          { return symbol(ProofSymbols.TOINTHIGH, yytext()); }
   "to_int-low"           { return symbol(ProofSymbols.TOINTLOW, yytext()); }
-  "-def"                 { return symbol(ProofSymbols.MINUSDEF, yytext()); }
   "/def"                 { return symbol(ProofSymbols.DIVIDEDEF, yytext()); }
   "poly+"                { return symbol(ProofSymbols.POLYADD, yytext()); }
   "poly*"                { return symbol(ProofSymbols.POLYMUL, yytext()); }
@@ -201,6 +198,7 @@ Keyword = ":" {SMTLetterDigit}+
   "bvliteral"            { return symbol(ProofSymbols.BVLITERAL, yytext()); }
   "ubv2int2bv"           { return symbol(ProofSymbols.UBV2INT2BV, yytext()); }
   "int2ubv2int"          { return symbol(ProofSymbols.INT2UBV2INT, yytext()); }
+  "int2sbv2int"          { return symbol(ProofSymbols.INT2SBV2INT, yytext()); }
 
   /* Predefined Keywords */
   ":named"               { return symbol(ProofSymbols.CNAMED, yytext()); }

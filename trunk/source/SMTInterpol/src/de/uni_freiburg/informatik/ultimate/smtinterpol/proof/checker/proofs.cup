@@ -20,8 +20,8 @@
 
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof.checker;
 import de.uni_freiburg.informatik.ultimate.logic.*;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofLiteral;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.ProofLiteral;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedLinkedHashMap;
 import java.math.BigInteger;
 import java.math.BigDecimal;
@@ -443,27 +443,21 @@ action code {:
 		return parser.getProofRules().defineFun(funcSym, theory.lambda(vars, definition), subProof);
 	}
 
+	public Term refineFun(String funcName, TermVariable[] vars, Term definition, Term subProof) {
+		final Theory theory = parser.getScript().getTheory();
+		final Sort[] varSorts = new Sort[vars.length];
+		for (int i = 0; i < vars.length; i++) {
+			varSorts[i] = vars[i].getSort();
+		}
+		final FunctionSymbol funcSym = theory.getFunction(funcName, varSorts);
+		return parser.getProofRules().refineFun(funcSym, theory.lambda(vars, definition), subProof);
+	}
+
 	public Term declareFun(String funcName, Sort[] paramSorts, Sort resultSort, Term subProof) {
 		Theory theory = parser.getScript().getTheory();
 		FunctionSymbol funcSym = theory.getFunctionSymbol(funcName);
 		parser.getScript().pop(1);
 		return parser.getProofRules().declareFun(funcSym, subProof);
-	}
-
-	public FunctionSymbol checkCongFunction(final QualIdentifier fun1, final Term[] args1, final QualIdentifier fun2, final Term[] args2) {
-		if (!fun1.toString().equals(fun2.toString()) || args1.length != args2.length) {
-			parser.report_error("congruence needs same function symbol");
-			return null;
-		}
-		final Sort[] paramSorts = new Sort[args1.length];
-		for (int i = 0; i < args1.length; i++) {
-			paramSorts[i] = args1[i].getSort();
-			if (paramSorts[i] != args2[i].getSort()) {
-				parser.report_error("congruence doesn't type check");
-				return null;
-			}
-		}
-		return parser.getScript().getTheory().getFunctionWithResult(fun1.getIdentifier(), fun1.getIndices(), fun1.getSort(), paramSorts);
 	}
 :}
 
@@ -475,15 +469,15 @@ scan with {: return getScanner().next_token(); :}
 terminal String UNDERSCORE, BANG,
          AS, CHOOSE, EXISTS, FORALL, LET, MATCH,
          PLUS, MINUS,
-         ASSUME, RES, LETPROOF, ORACLE, DECLAREFUN, DEFINEFUN, PAR,
+         ASSUME, RES, LETPROOF, ORACLE, DECLAREFUN, DEFINEFUN, REFINEFUN, PAR,
          FALSEE, TRUEI, NOTI, NOTE, ORI, ORE, ANDI, ANDE, IMPI, IMPE,
          IFFI1, IFFI2, IFFE1, IFFE2, XORI, XORE, FORALLI, FORALLE, EXISTSI, EXISTSE,
          EQI, EQE, DISTINCTI, DISTINCTE, ITE1, ITE2, REFL, SYMM, TRANS, CONG, EXPAND, DELANNOT,
-         DIVISIBLEDEF, GTDEF, GEQDEF, TRICHOTOMY, TOTAL, TOTALINT, FARKAS, MULPOS, TOINTHIGH, TOINTLOW,
-         MINUSDEF, DIVIDEDEF, POLYADD, POLYMUL, TOREALDEF, DIVLOW, DIVHIGH, MODDEF,
+         TRICHOTOMY, TOTAL, TOTALINT, FARKAS, MULPOS, TOINTHIGH, TOINTLOW,
+         DIVIDEDEF, POLYADD, POLYMUL, TOREALDEF, DIVLOW, DIVHIGH, MODDEF,
          SELECTSTORE1, SELECTSTORE2, EXTDIFF, CONST,
          DT_PROJECT, DT_CONS, DT_TESTI, DT_TESTE, DT_EXHAUST, DT_ACYCLIC, DT_MATCH,
-         BVCONST, BVLITERAL, UBV2INT2BV, INT2UBV2INT;
+         BVCONST, BVLITERAL, UBV2INT2BV, INT2UBV2INT, INT2SBV2INT;
 
 /* Predefined Keywords */
 terminal String /* attribute */
@@ -750,35 +744,27 @@ axiom ::= FALSEE {: RESULT = parser.getProofRules().falseElim(); :}
           {: RESULT = parser.getProofRules().symm(t1, t2); :}
         | LPAR TRANS term*:ts RPAR
           {: RESULT = parser.getProofRules().trans(ts); :}
-        | LPAR CONG LPAR qualIdentifier:fun1 term+:args1 RPAR LPAR qualIdentifier:fun2 term+:args2 RPAR RPAR
-          {: FunctionSymbol fsym = checkCongFunction(fun1, args1, fun2, args2);
-             RESULT = parser.getProofRules().cong(fsym, args1, args2); :}
+        | LPAR CONG term:t1 term:t2 RPAR
+          {: RESULT = parser.getProofRules().cong(t1, t2); :}
         | LPAR EXPAND term:t RPAR
           {: RESULT = parser.getProofRules().expand(t); :}
         | LPAR ITE1 term:t RPAR {: RESULT = parser.getProofRules().ite1(t); :}
         | LPAR ITE2 term:t RPAR {: RESULT = parser.getProofRules().ite2(t); :}
         | LPAR DELANNOT term:t RPAR
-          {: RESULT = parser.getProofRules().delAnnot((AnnotatedTerm) t); :}
-        | LPAR DIVISIBLEDEF NUMERAL:d term:t RPAR
-          {: RESULT = parser.getProofRules().divisible(d, t); :}
-        | LPAR GTDEF term:t1 term:t2 RPAR
-          {: RESULT = parser.getProofRules().gtDef(parser.getScript().term(SMTLIBConstants.GT, t1, t2)); :}
-        | LPAR GEQDEF term:t1 term:t2 RPAR
-          {: RESULT = parser.getProofRules().geqDef(parser.getScript().term(SMTLIBConstants.GEQ, t1, t2)); :}
+          {: RESULT = parser.getProofRules().delAnnot(t); :}
         | LPAR TRICHOTOMY term:t1 term:t2 RPAR
           {: RESULT = parser.getProofRules().trichotomy(t1, t2); :}
         | LPAR TOTAL term:t1 term:t2 RPAR
           {: RESULT = parser.getProofRules().total(t1, t2); :}
         | LPAR TOTALINT term:t1 integer:c2 RPAR
-          {: RESULT = parser.getProofRules().totalInt(t1, c2); :}
+          {: RESULT = parser.getProofRules().totalInt(t1, Rational.valueOf(c2, BigInteger.ONE)); :}
         | LPAR FARKAS coeffTerm*:coeffTerms RPAR
-          {: BigInteger[] coeffs = new BigInteger[coeffTerms.length];
-             Term[] terms = new Term[coeffTerms.length];
+          {: Object[] params = new Object[2*coeffTerms.length];
              for (int i = 0; i < coeffTerms.length; i++) {
-                 coeffs[i] = coeffTerms[i].getCoeff();
-                 terms[i] = coeffTerms[i].getTerm();
+                 params[2 * i] = coeffTerms[i].getCoeff();
+                 params[2 * i + 1] = coeffTerms[i].getTerm();
              }
-             RESULT = parser.getProofRules().farkas(terms, coeffs); :}
+             RESULT = parser.getProofRules().farkas(params); :}
         | LPAR MULPOS term*:ineqs RPAR
           {: RESULT = parser.getProofRules().mulPos(ineqs); :}
         | LPAR POLYADD term:plusTerm term:result RPAR
@@ -786,11 +772,9 @@ axiom ::= FALSEE {: RESULT = parser.getProofRules().falseElim(); :}
         | LPAR POLYMUL term:mulTerm term:result RPAR
           {: RESULT = parser.getProofRules().polyMul(mulTerm, result); :}
         | LPAR TOREALDEF term:t RPAR
-          {: RESULT = parser.getProofRules().toRealDef(parser.getScript().term(SMTLIBConstants.TO_REAL, t)); :}
+          {: RESULT = parser.getProofRules().toRealDef(t); :}
         | LPAR DIVIDEDEF term*:ts RPAR
-          {: RESULT = parser.getProofRules().divideDef(parser.getScript().term(SMTLIBConstants.DIVIDE, ts)); :}
-        | LPAR MINUSDEF term*:ts RPAR
-          {: RESULT = parser.getProofRules().minusDef(parser.getScript().term(SMTLIBConstants.MINUS, ts)); :}
+          {: RESULT = parser.getProofRules().divideDef(ts); :}
         | LPAR TOINTLOW term:t RPAR
           {: RESULT = parser.getProofRules().toIntLow(t); :}
         | LPAR TOINTHIGH term:t RPAR
@@ -835,6 +819,8 @@ axiom ::= FALSEE {: RESULT = parser.getProofRules().falseElim(); :}
           {: RESULT = parser.getProofRules().ubv2int2bv(t); :}
         | LPAR INT2UBV2INT NUMERAL:bitLength term:t RPAR
           {: RESULT = parser.getProofRules().int2ubv2int(bitLength, t); :}
+        | LPAR INT2SBV2INT NUMERAL:bitLength term:t RPAR
+          {: RESULT = parser.getProofRules().int2sbv2int(bitLength, t); :}
         | LPAR BANG proof:p attribute+:attr RPAR
           {: RESULT = p; :}
         ;
@@ -881,6 +867,9 @@ proof ::= axiom:ax {: RESULT = ax; :}
              beginFunction(fun, varSorts, definition.getSort()); :}
              proof:subproof RPAR
           {: RESULT = defineFun(fun, vars, definition, subproof); :}
+        | LPAR LPAR REFINEFUN symbol:fun LPAR sortedVar*:vars RPAR term:definition RPAR
+             proof:subproof RPAR
+          {: RESULT = refineFun(fun, vars, definition, subproof); :}
         | LPAR LPAR DECLAREFUN symbol:fun LPAR sort*:param RPAR sort:result RPAR
           {: beginFunction(fun, param, result); :}
              proof:subproof RPAR
@@ -894,8 +883,8 @@ symbol ::= SYMBOL
          | FALSEE | TRUEI | NOTI | NOTE | ORI | ORE | ANDI | ANDE | IMPI | IMPE
          | IFFI1 | IFFI2 | IFFE1 | IFFE2 | XORI | XORE | FORALLI | FORALLE | EXISTSI | EXISTSE
          | EQI | EQE | DISTINCTI | DISTINCTE | ITE1 | ITE2 | REFL | SYMM | TRANS | CONG | EXPAND | DELANNOT
-         | DIVISIBLEDEF | GTDEF | GEQDEF | TRICHOTOMY | TOTAL | TOTALINT | FARKAS | TOINTHIGH | TOINTLOW
-         | MINUSDEF | DIVIDEDEF | POLYADD | POLYMUL | TOREALDEF | DIVLOW | DIVHIGH | MODDEF
+         | TRICHOTOMY | TOTAL | TOTALINT | FARKAS | TOINTHIGH | TOINTLOW
+         | DIVIDEDEF | POLYADD | POLYMUL | TOREALDEF | DIVLOW | DIVHIGH | MODDEF
          | SELECTSTORE1 | SELECTSTORE2 | EXTDIFF | CONST
          | DT_PROJECT | DT_CONS | DT_TESTI | DT_TESTE | DT_EXHAUST | DT_ACYCLIC | DT_MATCH;
 
@@ -905,8 +894,8 @@ symbol_not_axiom ::= SYMBOL
          | NOTI | NOTE | ORI | ORE | ANDI | ANDE | IMPI | IMPE
          | IFFI1 | IFFI2 | IFFE1 | IFFE2 | XORI | XORE | FORALLI | FORALLE | EXISTSI | EXISTSE
          | EQI | EQE | DISTINCTI | DISTINCTE | ITE1 | ITE2 | REFL | SYMM | TRANS | CONG | EXPAND | DELANNOT
-         | DIVISIBLEDEF | GTDEF | GEQDEF | TRICHOTOMY | TOTAL | TOTALINT | FARKAS | TOINTHIGH | TOINTLOW
-         | MINUSDEF | DIVIDEDEF | POLYADD | POLYMUL | TOREALDEF | DIVLOW | DIVHIGH | MODDEF
+         | TRICHOTOMY | TOTAL | TOTALINT | FARKAS | TOINTHIGH | TOINTLOW
+         | DIVIDEDEF | POLYADD | POLYMUL | TOREALDEF | DIVLOW | DIVHIGH | MODDEF
          | SELECTSTORE1 | SELECTSTORE2 | EXTDIFF | CONST
          | DT_PROJECT | DT_CONS | DT_TESTI | DT_TESTE | DT_EXHAUST | DT_ACYCLIC | DT_MATCH;
 

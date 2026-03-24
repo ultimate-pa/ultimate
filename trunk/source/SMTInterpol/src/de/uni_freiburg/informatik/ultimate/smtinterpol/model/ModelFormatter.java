@@ -70,7 +70,8 @@ public class ModelFormatter {
 		mIndent += Config.INDENTATION;
 		newline();
 		final Sort[] paramSorts = f.getParameterSorts();
-		mString.append("(define-fun ").append(PrintTerm.quoteIdentifier(f.getName())).append(" (");
+		mString.append(f.isIntern() ? "(refine-fun " : "(define-fun ").append(PrintTerm.quoteIdentifier(f.getName()))
+				.append(" (");
 		for (int i = 0; i < vars.length; ++i) {
 			mString.append('(').append(vars[i]).append(' ').append(paramSorts[i]).append(')');
 		}

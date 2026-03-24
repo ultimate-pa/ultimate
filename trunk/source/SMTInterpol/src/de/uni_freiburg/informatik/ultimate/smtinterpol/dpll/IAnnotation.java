@@ -19,7 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.ProofRules;
 
 public interface IAnnotation {
 	/**
