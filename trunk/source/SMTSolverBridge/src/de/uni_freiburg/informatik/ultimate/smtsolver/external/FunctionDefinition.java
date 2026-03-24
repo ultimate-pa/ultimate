@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -42,11 +44,14 @@ public class FunctionDefinition {
 	private final FunctionSymbol mName;
 	private final TermVariable[] mParams;
 	private final Term mBody;
+	private final Script mScript;
 
-	public FunctionDefinition(final FunctionSymbol name, final TermVariable[] params, final Term body) {
+	public FunctionDefinition(final FunctionSymbol name, final TermVariable[] params, final Term body,
+			final Script script) {
 		mName = name;
 		mParams = params;
 		mBody = body;
+		mScript = script;
 	}
 
 	public FunctionSymbol getName() {
@@ -83,5 +88,9 @@ public class FunctionDefinition {
 		builder.append(mBody);
 		builder.append(")");
 		return builder.toString();
+	}
+
+	public LambdaTerm toLambdaTerm() {
+		return (LambdaTerm) mScript.lambda(mParams, mBody);
 	}
 }
