@@ -117,7 +117,7 @@ public class ConstraintRepresentation {
 			} else {
 				// Make pivotValue positive
 				final RationalNumber pivotValue = equality.get(0, pivot);
-				if (CongruenceUtil.getNumerator(pivotValue) < 0) {
+				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
 					equalities.set(i, equality.multiply((-1)));
 				}
 
@@ -136,7 +136,7 @@ public class ConstraintRepresentation {
 			}
 		}
 
-		// Making the equality pivots unique
+		// Making the congruence pivots unique
 		for (int i = 0; i < congruences.size(); i++) {
 			final MatrixQ128 congruence = congruences.get(i);
 			final long pivot = CongruenceUtil.lastPivot(congruence);
