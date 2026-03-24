@@ -62,7 +62,8 @@ public interface Model {
 	public Set<FunctionSymbol> getDefinedFunctions();
 
 	/**
-	 * Get the definition of a function. This is a term that can be used as last parameter in a
+	 * Get the definition of a function. This is a term that can be used as last
+	 * parameter in a
 	 *
 	 * <pre>
 	 * (define-fun ...)
@@ -70,12 +71,8 @@ public interface Model {
 	 *
 	 * command.
 	 *
-	 * @param func
-	 *            the name of the function
-	 * @param args
-	 *            the variables that should be used in the returned term to refer to the arguments. Their sort must
-	 *            match the function arguments of the function.
-	 * @return The defining term.
+	 * @param func the function symbol
+	 * @return The definition of the function symbol in form of a lambda term.
 	 */
-	public Term getFunctionDefinition(String func, TermVariable[] args);
+	public LambdaTerm getFunctionDefinition(FunctionSymbol fs);
 }

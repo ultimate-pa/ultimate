@@ -517,6 +517,17 @@ public class ModelEvaluator extends TermTransformer {
 			return Rational.valueOf(value, BigInteger.ONE).toTerm(fs.getReturnSort());
 		}
 
+		case SMTLIBConstants.SBV_TO_INT: {
+			assert args.length == 1;
+			BigInteger value = bitvectorValue(args[0]);
+			final int bitlength = getBitVecSize(args[0].getSort());
+			final BigInteger signBit = BigInteger.ONE.shiftLeft(bitlength - 1);
+			if (value.compareTo(signBit) >= 0) {
+				value = value.subtract(BigInteger.ONE.shiftLeft(bitlength));
+			}
+			return Rational.valueOf(value, BigInteger.ONE).toTerm(fs.getReturnSort());
+		}
+
 		case SMTLIBConstants.BVADD: {
 			final BigInteger mask = getBVModulo(fs.getReturnSort()).subtract(BigInteger.ONE);
 			BigInteger value = bitvectorValue(args[0]);
@@ -622,6 +633,60 @@ public class ModelEvaluator extends TermTransformer {
 				value = value.add(modulo).subtract(arg);
 			}
 			return createBitvectorTerm(value, fs.getReturnSort());
+		}
+
+		case SMTLIBConstants.BVNEGO: {
+			assert args.length == 1;
+			final BigInteger signBit = BigInteger.ONE.shiftLeft(getBitVecSize(args[0].getSort()) - 1);
+			final BigInteger value = bitvectorValue(args[0]);
+			return value.equals(signBit) ? theory.mTrue : theory.mFalse;
+		}
+
+		case SMTLIBConstants.BVUADDO: {
+			assert args.length == 2;
+			final BigInteger value = bitvectorValue(args[0]).add(bitvectorValue(args[1]));
+			return value.compareTo(getBVModulo(args[0].getSort())) >= 0 ? theory.mTrue : theory.mFalse;
+		}
+
+		case SMTLIBConstants.BVUMULO: {
+			assert args.length == 2;
+			final BigInteger value = bitvectorValue(args[0]).multiply(bitvectorValue(args[1]));
+			return value.compareTo(getBVModulo(args[0].getSort())) >= 0 ? theory.mTrue : theory.mFalse;
+		}
+
+		case SMTLIBConstants.BVUSUBO: {
+			assert args.length == 2;
+			final BigInteger value = bitvectorValue(args[0]).subtract(bitvectorValue(args[1]));
+			return value.signum() < 0 ? theory.mTrue : theory.mFalse;
+		}
+
+		case SMTLIBConstants.BVSADDO: {
+			assert args.length == 2;
+			final BigInteger value = signedBitvectorValue(args[0]).add(signedBitvectorValue(args[1]));
+			return value.bitLength() >= getBitVecSize(args[0].getSort()) ? theory.mTrue : theory.mFalse;
+		}
+
+		case SMTLIBConstants.BVSMULO: {
+			assert args.length == 2;
+			final BigInteger value = signedBitvectorValue(args[0]).multiply(signedBitvectorValue(args[1]));
+			return value.bitLength() >= getBitVecSize(args[0].getSort()) ? theory.mTrue : theory.mFalse;
+		}
+
+		case SMTLIBConstants.BVSSUBO: {
+			assert args.length == 2;
+			final BigInteger value = signedBitvectorValue(args[0]).subtract(signedBitvectorValue(args[1]));
+			return value.bitLength() >= getBitVecSize(args[0].getSort()) ? theory.mTrue : theory.mFalse;
+		}
+
+		case SMTLIBConstants.BVSDIVO: {
+			assert args.length == 2;
+			final BigInteger divisor = signedBitvectorValue(args[1]);
+			// division by zero is not an overflow!
+			if (divisor.signum() == 0) {
+				return theory.mFalse;
+			}
+			final BigInteger value = signedBitvectorValue(args[0]).divide(divisor);
+			return value.bitLength() >= getBitVecSize(args[0].getSort()) ? theory.mTrue : theory.mFalse;
 		}
 
 		case SMTLIBConstants.BVNOT: {
@@ -819,16 +884,17 @@ public class ModelEvaluator extends TermTransformer {
 			assert args.length == 2;
 			final BigInteger shiftArg = bitvectorValue(args[1]);
 			BigInteger value = bitvectorValue(args[0]);
-			if (shiftArg.compareTo(BigInteger.valueOf(size)) < 0) {
-				assert shiftArg.bitLength() <= 32;
-				final int shiftInt = shiftArg.intValue();
-				final BigInteger signBits = value.testBit(size - 1)
-						? BigInteger.ONE.shiftLeft(size - shiftInt).subtract(BigInteger.ONE).shiftLeft(shiftInt)
-						: BigInteger.ZERO;
-				value = value.shiftRight(shiftInt).or(signBits);
-			} else {
-				value = value.testBit(size - 1) ? BigInteger.ONE.shiftLeft(size).subtract(BigInteger.ONE)
-						: BigInteger.ZERO;
+			final BigInteger pow2 = BigInteger.ONE.shiftLeft(size);
+			if (value.testBit(size - 1)) {
+				// interpret as negative number
+				value = value.subtract(pow2);
+			}
+			// cap shift to bit size (to keep it integer).
+			final int shiftInt = shiftArg.compareTo(BigInteger.valueOf(size)) < 0 ? shiftArg.intValue() : size;
+			value = value.shiftRight(shiftInt);
+			if (value.signum() < 0) {
+				// convert back to positive number
+				value = value.add(pow2);
 			}
 			return createBitvectorTerm(value, fs.getReturnSort());
 		}
@@ -916,6 +982,13 @@ public class ModelEvaluator extends TermTransformer {
 
 	private BigInteger bitvectorValue(Term t) {
 		return (BigInteger) ((ConstantTerm) t).getValue();
+	}
+
+	private BigInteger signedBitvectorValue(Term t) {
+		final Sort sort = t.getSort();
+		final BigInteger value = bitvectorValue(t);
+		return value.testBit(getBitVecSize(sort) - 1) ?
+			value.subtract(getBVModulo(sort)) : value;
 	}
 
 	private Term createBitvectorTerm(BigInteger value, Sort sort) {

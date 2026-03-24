@@ -65,7 +65,7 @@ public class TermCompilerTest {
 		mCompiler = new TermCompiler();
 		final IProofTracker tracker = new NoopProofTracker();
 		mCompiler.setProofTracker(tracker, new LogicSimplifier(tracker),
-				new BvToIntUtils(mSolver.getTheory(), tracker, true));
+				new BvToIntUtils(mSolver.getTheory(), tracker, true, mCompiler));
 	}
 
 	@Test

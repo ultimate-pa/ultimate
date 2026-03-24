@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -178,6 +179,21 @@ public final class Polynomial {
 
 		for (final Map.Entry<Map<Term, Integer>, Rational> entry : mSummands.entrySet()) {
 			entry.setValue(entry.getValue().mul(factor));
+		}
+	}
+
+	public void mod(Rational factor) {
+		assert factor.signum() > 0;
+		final Iterator<Map.Entry<Map<Term, Integer>, Rational>> iter = mSummands.entrySet().iterator();
+		while (iter.hasNext()) {
+			final Map.Entry<Map<Term, Integer>, Rational> entry = iter.next();
+			final Rational value = entry.getValue();
+			final Rational modValue = value.sub(factor.mul(value.div(factor).floor()));
+			if (modValue.signum() == 0) {
+				iter.remove();
+			} else {
+				entry.setValue(modValue);
+			}
 		}
 	}
 

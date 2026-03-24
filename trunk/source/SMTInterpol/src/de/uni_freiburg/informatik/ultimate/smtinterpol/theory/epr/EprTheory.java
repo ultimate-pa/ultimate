@@ -247,7 +247,7 @@ public class EprTheory implements ITheory {
 	}
 
 	@Override
-	public Clause computeConflictClause() {
+	public Clause finalCheck() {
 		if (EprTheorySettings.FullInstatiationMode) {
 			return null;
 		}

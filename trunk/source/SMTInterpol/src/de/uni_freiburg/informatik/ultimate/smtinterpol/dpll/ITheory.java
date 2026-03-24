@@ -60,14 +60,16 @@ public interface ITheory {
 	public Clause checkpoint();
 
 	/**
-	 * Generates a conflict clause that follows directly from the underlying
-	 * theory. All literals in this clause must have been decided to false.
+	 * Checks whether the theory has a model given the following settings. This is
+	 * called after we the Boolean part of the formula is satisfied. It can return a
+	 * conflict clause, or suggest or propagate new literals.
 	 *
-	 * If this returns null, the theory is consistent with the set literals.
+	 * If this returns null and getPropagatedLiteral and getSuggestion() also
+	 * returns null afterwards, then the theory is consistent with the set literals.
 	 *
 	 * @return a conflict clause or null iff there is no conflict.
 	 */
-	public Clause computeConflictClause();
+	public Clause finalCheck();
 
 	/**
 	 * Computes a literal that follows from the other literals that

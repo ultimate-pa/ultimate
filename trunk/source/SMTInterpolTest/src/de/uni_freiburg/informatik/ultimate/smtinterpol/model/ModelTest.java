@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -346,6 +345,7 @@ public class ModelTest implements SMTLIBConstants {
 		final Term y = script.term("y");
 		final Term fx = script.term("f", x);
 		final Term fx5 = script.term("f", script.term("+", x, script.numeral("5")));
+		final FunctionSymbol fs = ((ApplicationTerm) fx).getFunction();
 		final Rational five = Rational.valueOf(5, 1);// NOCHECKSTYLE
 		script.assertTerm(script.term("=", fx, script.numeral("0")));
 		script.assertTerm(script.term("=", fx5, x));
@@ -364,9 +364,9 @@ public class ModelTest implements SMTLIBConstants {
 						script.term("f", script.term("+", x, script.term("-", y), yvalminus5.toTerm(intSort))))
 						.getValue());
 		Assert.assertEquals(five, getConstantTerm(model, script.term("f", script.numeral(BigInteger.TEN))).getValue());
-		final TermVariable[] args = new TermVariable[] { script.variable("@x", intSort) };
-		final String funcdef = model.getFunctionDefinition("f", args).toString();
-		Assert.assertTrue(funcdef.equals("(ite (= @x 10) 5 0)") || funcdef.equals("(ite (= @x 5) 0 5)"));
+		final String funcdef = model.getFunctionDefinition(fs).toString();
+		Assert.assertTrue(funcdef.equals("(lambda ((@p0 Int)) (ite (= @p0 10) 5 0))")
+				|| funcdef.equals("(lambda ((@p0 Int)) (ite (= @p0 5) 0 5))"));
 	}
 
 	@Test
@@ -447,18 +447,20 @@ public class ModelTest implements SMTLIBConstants {
 		Assert.assertEquals(valZ, model.evaluate(z1));
 		final Term z2 = script.term("z2");
 		Assert.assertEquals(valZ, model.evaluate(z2));
-		final TermVariable[] args = new TermVariable[] { script.variable("@x", u) };
 		final Set<FunctionSymbol> funcs = new HashSet<>();
-		funcs.add(((ApplicationTerm) fx).getFunction());
-		funcs.add(((ApplicationTerm) script.term("g", x)).getFunction());
-		funcs.add(((ApplicationTerm) x).getFunction());
+		final FunctionSymbol symbF = ((ApplicationTerm) fx).getFunction();
+		final FunctionSymbol symbG = ((ApplicationTerm) script.term("g", x)).getFunction();
+		final FunctionSymbol symbX = ((ApplicationTerm) x).getFunction();
+		funcs.add(symbF);
+		funcs.add(symbG);
+		funcs.add(symbX);
 		funcs.add(((ApplicationTerm) script.term("y")).getFunction());
 		funcs.add(((ApplicationTerm) z1).getFunction());
 		funcs.add(((ApplicationTerm) z2).getFunction());
 		Assert.assertEquals(funcs, model.getDefinedFunctions());
-		Assert.assertEquals(valX, model.getFunctionDefinition("x", new TermVariable[0]));
-		Assert.assertEquals(valX, model.getFunctionDefinition("f", args));
-		Assert.assertEquals(valX, model.getFunctionDefinition("g", args));
+		Assert.assertEquals(valX, model.getFunctionDefinition(symbX).getSubterm());
+		Assert.assertEquals(valX, model.getFunctionDefinition(symbF).getSubterm());
+		Assert.assertEquals(valX, model.getFunctionDefinition(symbG).getSubterm());
 	}
 
 	@Test

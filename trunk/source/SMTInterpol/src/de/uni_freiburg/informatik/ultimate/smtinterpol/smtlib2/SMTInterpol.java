@@ -60,17 +60,18 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ModelProver;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap.CopyMode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.MinimalProofChecker;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofSimplifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofTermGenerator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.PropProofChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.UnsatCoreCollector;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.MinimalProofChecker;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.ProofRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ErrorCallback.ErrorReason;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ResourceLimit;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
@@ -97,7 +98,9 @@ public class SMTInterpol extends NoopScript {
 		FULL {
 			@Override
 			boolean check(final DPLLEngine engine) {
-				engine.setCompleteness(DPLLEngine.COMPLETE);
+				if (engine.getCompleteness() != DPLLEngine.INCOMPLETE_CANCELLED) {
+					engine.setCompleteness(DPLLEngine.COMPLETE);
+				}
 				return engine.solve();
 			}
 		},
@@ -148,6 +151,9 @@ public class SMTInterpol extends NoopScript {
 			if (logic.isArray()) {
 				declareArraySymbols(theory);
 			}
+			if (logic.isBitVector()) {
+				declareBitVectorExtensions(theory);
+			}
 		}
 
 		private static final void declareArraySymbols(final Theory theory) {
@@ -156,6 +162,15 @@ public class SMTInterpol extends NoopScript {
 			final Sort array = theory.getSort("Array", vars);
 			declareInternalPolymorphicFunction(theory, SMTInterpolConstants.DIFF, vars, new Sort[] { array, array },
 					vars[0], FunctionSymbol.UNINTERPRETEDINTERNAL);
+		}
+
+		private static final void declareBitVectorExtensions(final Theory theory) {
+			final Sort intSort = theory.getSort(SMTLIBConstants.INT, EMPTY_SORT_ARRAY);
+			final Sort[] intSort1 = new Sort[] { intSort };
+			final Sort[] intSort2 = new Sort[] { intSort, intSort };
+			declareInternalFunction(theory, SMTInterpolConstants.INTAND, intSort2, intSort, FunctionSymbol.LEFTASSOC);
+			declareInternalFunction(theory, SMTInterpolConstants.INTPOW2, intSort1, intSort, 0);
+			declareInternalFunction(theory, SMTInterpolConstants.INTLOG2, intSort1, intSort, 0);
 		}
 	}
 
@@ -379,6 +394,7 @@ public class SMTInterpol extends NoopScript {
 		if (mAssertions != null) {
 			mAssertions.clear();
 		}
+		mEngine.setCompleteness(DPLLEngine.COMPLETE);
 		setupClausifier(getTheory().getLogic());
 	}
 
@@ -464,19 +480,20 @@ public class SMTInterpol extends NoopScript {
 			mResourceLimit.setResourceLimit(resouceLimit);
 		}
 
-		LBool result = LBool.UNKNOWN;
 		mReasonUnknown = ReasonUnknown.INCOMPLETE;
 		mEngine.setRandomSeed(mSolverOptions.getRandomSeed());
+		boolean isConsistent;
 		try {
-			result = mSolverOptions.getCheckType().check(mEngine) ? LBool.SAT : LBool.UNSAT;
+			isConsistent = mSolverOptions.getCheckType().check(mEngine);
 		} catch (final RuntimeException eUnknown) {
 			if (mErrorCallback != null) {
 				mErrorCallback.notifyError(ErrorReason.EXCEPTION_ON_CHECKSAT);
 			}
 			throw eUnknown;
 		}
-		if (result == LBool.SAT) {
+		if (isConsistent) {
 			if (mEngine.hasModel()) {
+				mStatus = LBool.SAT;
 				if (mSolverOptions.isModelCheckModeActive()) {
 					try {
 						mModel = new de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(mClausifier,
@@ -506,7 +523,7 @@ public class SMTInterpol extends NoopScript {
 								if (mErrorCallback != null) {
 									mErrorCallback.notifyError(ErrorReason.INVALID_MODEL);
 								}
-								result = LBool.UNKNOWN;
+								mStatus = LBool.UNKNOWN;
 								mReasonUnknown = ReasonUnknown.CRASHED;
 							}
 						}
@@ -517,7 +534,7 @@ public class SMTInterpol extends NoopScript {
 					}
 				}
 			} else {
-				result = LBool.UNKNOWN;
+				mStatus = LBool.UNKNOWN;
 				switch (mEngine.getCompleteness()) {
 				case DPLLEngine.COMPLETE:
 					if (mSolverOptions.getCheckType() == CheckType.FULL) {
@@ -550,6 +567,7 @@ public class SMTInterpol extends NoopScript {
 				mLogger.debug("Got %s as reason to return unknown", mEngine.getCompletenessReason());
 			}
 		} else {
+			mStatus = LBool.UNSAT;
 			if (mSolverOptions.isProofCheckModeActive()) {
 				final MinimalProofChecker proofchecker = new MinimalProofChecker(this, getLogger());
 				if (!proofchecker.check(getProof())) {
@@ -561,9 +579,8 @@ public class SMTInterpol extends NoopScript {
 				}
 			}
 		}
-		mStatus = result;
-		if (Config.CHECK_STATUS_SET && isStatusSet() && result != LBool.UNKNOWN && !result.equals(mStatusInfo)) {
-			mLogger.warn("Status differs: User said %s but we got %s", mStatusInfo, result);
+		if (Config.CHECK_STATUS_SET && isStatusSet() && mStatus != LBool.UNKNOWN && !mStatus.equals(mStatusInfo)) {
+			mLogger.warn("Status differs: User said %s but we got %s", mStatusInfo, mStatus);
 			if (mErrorCallback != null) {
 				mErrorCallback.notifyError(ErrorReason.CHECKSAT_STATUS_DIFFERS);
 			}
@@ -571,7 +588,7 @@ public class SMTInterpol extends NoopScript {
 		mStatusInfo = LBool.UNKNOWN;
 		mTimeout.clearTimeout();
 		mResourceLimit.clearResourceLimit();
-		return result;
+		return mStatus;
 	}
 
 	private final boolean isStatusSet() {
@@ -783,21 +800,32 @@ public class SMTInterpol extends NoopScript {
 			throw new SMTLIBException("No logic set!");
 		}
 		checkAssertionStackModified();
-		final Clause unsat = retrieveProof();
-		if (Config.CHECK_PROP_PROOF) {
-			final PropProofChecker ppc = new PropProofChecker();
-			final boolean correct = ppc.check(unsat);
-			assert correct;
-		}
-		try {
-			final ProofTermGenerator generator = new ProofTermGenerator(new ProofRules(getTheory()));
-			Term res = generator.convert(unsat);
-			if (proofMode == ProofMode.LOWLEVEL) {
-				res = new ProofSimplifier(this).transformProof(res);
+		if (mStatus == LBool.UNSAT) {
+			final Clause unsat = retrieveProof();
+			if (Config.CHECK_PROP_PROOF) {
+				final PropProofChecker ppc = new PropProofChecker();
+				final boolean correct = ppc.check(unsat);
+				assert correct;
 			}
-			return res;
-		} catch (final Exception exc) {
-			throw new SMTLIBException(exc.getMessage() == null ? exc.toString() : exc.getMessage());
+			try {
+				final ProofTermGenerator generator = new ProofTermGenerator(new ProofRules(getTheory()));
+				Term res = generator.convert(unsat);
+				if (proofMode == ProofMode.LOWLEVEL) {
+					res = new ProofSimplifier(this).transformProof(res);
+				}
+				return res;
+			} catch (final Exception exc) {
+				throw new SMTLIBException(exc.getMessage() == null ? exc.toString() : exc.getMessage());
+			}
+		} else if (mStatus == LBool.SAT) {
+			buildModel();
+			final ModelProver modelProver = new ModelProver(mModel);
+			return modelProver.buildModelProof(mAssertions);
+		} else {
+			if (mErrorCallback != null) {
+				mErrorCallback.notifyError(ErrorReason.GET_PROOF_BUT_UNKNOWN);
+			}
+			throw new SMTLIBException("status is unknown");
 		}
 	}
 
@@ -805,6 +833,12 @@ public class SMTInterpol extends NoopScript {
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree) {
 		if (getProofMode() == ProofMode.NONE || mAssertions == null) {
 			throw new SMTLIBException("Option :produce-interpolants not set to true");
+		}
+		if (mStatus != LBool.UNSAT) {
+			if (mErrorCallback != null) {
+				mErrorCallback.notifyError(ErrorReason.GET_INTERPOLANTS_BUT_NOT_UNSAT);
+			}
+			throw new SMTLIBException("get-interpolants: status is " + mStatus);
 		}
 		return getInterpolants(partition, startOfSubtree, getProof(ProofMode.CLAUSES));
 	}
@@ -1165,7 +1199,7 @@ public class SMTInterpol extends NoopScript {
 		final Clause unsat = mEngine.getProof();
 		if (unsat == null) {
 			if (mErrorCallback != null) {
-				mErrorCallback.notifyError(ErrorReason.GET_PROOF_BUT_SAT);
+				mErrorCallback.notifyError(ErrorReason.GET_PROOF_BUT_UNKNOWN);
 			}
 			throw new SMTLIBException("Logical context not inconsistent!");
 		}

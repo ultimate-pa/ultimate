@@ -93,10 +93,21 @@ public class APITest {
 		Assert.assertSame(LBool.UNKNOWN, isSat);
 		final ReasonUnknown ru = (ReasonUnknown) solver.getInfo(":reason-unknown");
 		Assert.assertSame(ReasonUnknown.CANCELLED, ru);
+		solver.pop(1);
 		// Calling sat retry with a new resource limit
 		tc.setStop(false);
+		solver.push(1);
+		solver.assertTerm(solver.term("or", solver.term("P"), solver.term("Q")));
+		solver.assertTerm(solver.term("or", solver.term("P"), solver.term("R")));
+		solver.assertTerm(
+				solver.term("or", solver.term("not", solver.term("P")), solver.term("not", solver.term("Q"))));
+		solver.assertTerm(
+				solver.term("or", solver.term("not", solver.term("P")), solver.term("not", solver.term("R"))));
+		solver.assertTerm(solver.term("or", solver.term("not", solver.term("P")), solver.term("Q"), solver.term("R")));
+		solver.assertTerm(solver.term("or", solver.term("P"), solver.term("not", solver.term("Q")),
+				solver.term("not", solver.term("R"))));
 		isSat = solver.checkSat();
-		Assert.assertSame(LBool.SAT, isSat);
+		Assert.assertSame(LBool.UNSAT, isSat);
 		solver.pop(1);
 		isSat = solver.checkSat();
 		Assert.assertSame(LBool.SAT, isSat);
@@ -388,8 +399,10 @@ public class APITest {
 		final SMTInterpol solver = new SMTInterpol(new DefaultLogger());
 		solver.setLogic("QF_LIA");
 		randomWalk(solver, 5);
+		solver.push(1);
 		solver.setOption(":reproducible-resource-limit", 10);
 		Assert.assertSame("check-sat with limit 10", LBool.UNKNOWN, solver.checkSat());
+		solver.pop(1);
 		solver.setOption(":reproducible-resource-limit", 0);
 		Assert.assertSame("check-sat with limit 0", LBool.UNSAT, solver.checkSat());
 	}
