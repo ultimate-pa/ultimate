@@ -205,8 +205,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				ProofAnnotation.addProof(icfg, proof);
 			}
 
-			// Currently, we can only work with Floyd-Hoare annotations.
-			// In the future, e.g. Owicki-Gries annotations may be supported as well.
+			// Currently, we support Floyd-Hoare annotations and Owicki-Gries annotations.
 			if (proof instanceof IFloydHoareAnnotation<?>) {
 				final var annotation = (IFloydHoareAnnotation<IcfgLocation>) proof;
 				assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true,
@@ -224,12 +223,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 				// write to Icfg
 				final Set<IProgramVar> failedGhosts = new HashSet<>();
-				final var ghostsInits = new HashMap<String, String>();
+				final var ghostsInits = new HashMap<String, Object>();
 				for (final var entry : annotation.getGhostAssignment().entrySet()) {
 					final var ghost = entry.getKey();
 					final var expr = entry.getValue();
 
-					final var initialValue = backTranslatorService.translateExpressionToString(expr, Term.class);
+					final var initialValue = backTranslatorService.translateExpression(expr, Term.class);
 					if (initialValue == null) {
 						failedGhosts.add(ghost);
 						continue;
@@ -238,13 +237,13 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					backTranslatorService.declareAndTranslateAuxiliaryVariable(ghost.getTerm());
 					ghostsInits.put(ghost.getGloballyUniqueId(), initialValue);
 				}
-				new WitnessGhostDeclaration(ghostsInits).annotate(icfg);
+				new WitnessGhostDeclaration<>(ghostsInits).annotate(icfg);
 
 				for (final var entry : annotation.getAssignmentMapping().entrySet()) {
 					final var edge = (IIcfgTransition<?>) entry.getKey();
 					final GhostUpdate update = entry.getValue();
 
-					final Map<String, String> ghostUpdate = new HashMap<>();
+					final Map<String, Object> ghostUpdate = new HashMap<>();
 					for (final var ghost : update.getAssignedVariables()) {
 						if (failedGhosts.contains(ghost)) {
 							continue;
@@ -253,7 +252,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						final var context = ILocation.getAnnotation(edge.getSource());
 						final var term = update.getExpressionFor(ghost);
 						final var expression =
-								backTranslatorService.translateExpressionWithContextToString(term, context, Term.class);
+								backTranslatorService.translateExpressionWithContext(term, context, Term.class);
 						if (expression == null) {
 							mLogger.warn("Could not translate assignment to ghost variable %s: %s", ghost, term);
 							failedGhosts.add(ghost);
@@ -261,7 +260,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 							ghostUpdate.put(ghost.getGloballyUniqueId(), expression);
 						}
 					}
-					new WitnessGhostUpdate(ghostUpdate).annotate(edge);
+					new WitnessGhostUpdate<>(ghostUpdate).annotate(edge);
 				}
 
 				final var failedGhostTvs =
@@ -288,7 +287,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						mLogger.warn("Invariant contains ghost variable that was not properly backtranslated. "
 								+ "Invariant: %s. Ghost variable: %s", invariant, failedGhost.get());
 					}
-					new WitnessInvariant(invariant).annotate(loc);
+					new WitnessInvariant<>(invariant).annotate(loc);
 				}
 			} else if (result.getProof() != null) {
 				mLogger.warn("Unknown type of proof: " + result.getProof().getClass());

@@ -38,19 +38,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  */
-public class WitnessGhostDeclaration extends ModernAnnotations {
+public class WitnessGhostDeclaration<E> extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
 	private static final String KEY = WitnessGhostDeclaration.class.getName();
 
 	@Visualizable
-	private final Map<String, String> mGhostsAndInitialValues;
+	private final Map<String, E> mGhostsAndInitialValues;
 
-	public WitnessGhostDeclaration(final Map<String, String> ghostsAndInitialValues) {
+	public WitnessGhostDeclaration(final Map<String, E> ghostsAndInitialValues) {
 		mGhostsAndInitialValues = ghostsAndInitialValues;
 	}
 
-	public Map<String, String> getGhostAndInitialValues() {
+	public Map<String, E> getGhostAndInitialValues() {
 		return mGhostsAndInitialValues;
 	}
 
@@ -61,7 +61,7 @@ public class WitnessGhostDeclaration extends ModernAnnotations {
 		}
 	}
 
-	public static WitnessGhostDeclaration getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessGhostDeclaration) a);
+	public static <E> WitnessGhostDeclaration<E> getAnnotation(final IElement node) {
+		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessGhostDeclaration<E>) a);
 	}
 }
