@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.CrownsOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries.FocusComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GraphEmpireOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
@@ -122,21 +124,30 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	}
 
 	public IPetriNetProofProducer<L, IPredicate> getProofProducer(final OwickiGriesSettings settings) {
-		switch (settings.computationMode()) {
-		case NAIVE:
-			return new NaiveOwickiGries<>(mServices, mPredicateFactory, mIcfg.getCfgSmtToolkit(), mAbstraction,
-					settings).createProofProducer(Function.identity());
-		case CROWN:
-			return new CrownsOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory,
-					Function.identity());
-		case SYMBOLIC_EXECUTION:
-			return new GraphEmpireOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory);
-		case NONE:
-			return null;
-		default:
-			throw new UnsupportedOperationException(
-					"Unsupported Owicki-Gries computation mode: " + settings.computationMode());
-		}
+		return switch (settings.computationMode()) {
+		// Naive computation (primarily as baseline for comparison)
+		case NAIVE ->
+				new NaiveOwickiGries<>(mServices, mPredicateFactory, mIcfg.getCfgSmtToolkit(), mAbstraction, settings)
+						.createProofProducer(Function.identity());
+
+		// Outdated approaches (to be removed)
+		case CROWN -> new CrownsOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory,
+				Function.identity());
+		case SYMBOLIC_EXECUTION ->
+				new GraphEmpireOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory);
+
+		// Current state-of-the-art (as of POPL'26 paper)
+		case AUTOMATA -> new EmpireAutomataOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(),
+				mPredicateFactory, FocusComputation.UNFOCUSED);
+		case LEGAL_FOCUS -> new EmpireAutomataOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(),
+				mPredicateFactory, FocusComputation.MODULAR);
+
+		// Unfinished future work
+		case DIR_LEGAL_FOCUS ->
+				throw new UnsupportedOperationException("Unimplemented case: " + settings.computationMode());
+
+		case NONE -> null;
+		};
 	}
 
 	public OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>> backtranslateProof(
