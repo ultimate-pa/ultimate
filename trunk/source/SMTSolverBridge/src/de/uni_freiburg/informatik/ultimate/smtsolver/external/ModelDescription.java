@@ -26,18 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.LambdaTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * An SMT model extracted from a (get-model) response.
@@ -46,11 +44,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class ModelDescription implements Model {
-	private final Map<String, FunctionDefinition> mDefinitions;
+	private final Map<FunctionSymbol, FunctionDefinition> mDefinitions;
 
 	public ModelDescription(final Set<FunctionDefinition> definitions) {
-		mDefinitions =
-				definitions.stream().collect(Collectors.toMap(def -> def.getName().getName(), Function.identity()));
+		mDefinitions = definitions.stream().collect(Collectors.toMap(def -> def.getName(), Function.identity()));
 	}
 
 	@Override
@@ -69,24 +66,10 @@ public class ModelDescription implements Model {
 	}
 
 	@Override
-	public Term getFunctionDefinition(final String func, final TermVariable[] args) {
-		final var def = getFunctionDefinition(func);
-		final var params = def.getParams();
-		assert params.length == args.length : "Number of parameters does not match arity of " + func;
-
-		final var substitution = new HashMap<TermVariable, Term>();
-		for (int i = 0; i < args.length; ++i) {
-			assert Objects.equals(params[i].getSort(), args[i].getSort());
-			substitution.put(params[i], args[i]);
-		}
-
-		final var unletter = new FormulaUnLet();
-		unletter.addSubstitutions(substitution);
-		return unletter.transform(def.getBody());
-	}
-
-	private FunctionDefinition getFunctionDefinition(final String func) {
-		return mDefinitions.get(func);
+	public LambdaTerm getFunctionDefinition(final FunctionSymbol fs) {
+		return Objects
+				.requireNonNull(mDefinitions.get(fs), "No function definition for %s found.".formatted(fs.getName()))
+				.toLambdaTerm();
 	}
 
 	@Override
