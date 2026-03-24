@@ -43,6 +43,7 @@ public class GeneratorRepresentation {
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
+		// TODO
 		return null;
 	}
 }

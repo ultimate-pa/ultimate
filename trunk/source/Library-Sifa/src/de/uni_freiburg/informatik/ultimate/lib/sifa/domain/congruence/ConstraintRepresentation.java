@@ -20,7 +20,6 @@ public class ConstraintRepresentation {
 	final private boolean mIsStrongMinimal;
 
 	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences) {
-		// TODO: Think if I cant initiate the bools smarter
 		// TODO: REplace bools with for example mMinimalRepresenation != null
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
@@ -32,8 +31,6 @@ public class ConstraintRepresentation {
 
 	private ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
 			final boolean isMinimal, final boolean isStrongMinimal) {
-		// TODO: Make constructor with both booleans just false
-		// TODO: Think if I cant initiate the bools smarter
 		// TODO: REplace bools with for example mMinimalRepresenation != null
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
@@ -184,6 +181,7 @@ public class ConstraintRepresentation {
 	}
 
 	public GeneratorRepresentation computeGeneratorRepresentation() {
+		// TODO
 		return null;
 	}
 }
