@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -55,10 +56,11 @@ public class ModelParserTest {
 		mScript.setLogic("LIA");
 		mScript.setOption(SMTLIBConstants.PRODUCE_MODELS, true);
 		mScript.declareFun("x", Script.EMPTY_SORT_ARRAY, mScript.sort("Int"));
-		mScript.assertTerm(mScript.term(">=", mScript.term("x"), mScript.numeral(BigInteger.ZERO)));
+		final ApplicationTerm x = (ApplicationTerm) mScript.term("x");
+		mScript.assertTerm(mScript.term(">=", x, mScript.numeral(BigInteger.ZERO)));
 		mScript.checkSat();
 		final var model = mScript.getModel();
-		final var term = model.getFunctionDefinition("x", new TermVariable[0]);
+		final var term = model.getFunctionDefinition(x.getFunction()).getSubterm();
 
 		assert term instanceof ConstantTerm;
 		final var constant = (ConstantTerm) term;
@@ -77,18 +79,19 @@ public class ModelParserTest {
 		mScript.declareFun("P", new Sort[] { mScript.sort("Int") }, mScript.sort("Bool"));
 
 		final var x = mScript.variable("x", mScript.sort("Int"));
+		final var p = (ApplicationTerm) mScript.term("P", x);
 		// x = 0 -> P(x)
 		mScript.assertTerm(mScript.quantifier(QuantifiedFormula.FORALL, new TermVariable[] { x },
-				mScript.term("=>", mScript.term("=", x, mScript.numeral(BigInteger.ZERO)), mScript.term("P", x))));
+				mScript.term("=>", mScript.term("=", x, mScript.numeral(BigInteger.ZERO)), p)));
 		// P(x) /\ x >= 1 -> false
-		mScript.assertTerm(mScript.quantifier(QuantifiedFormula.FORALL, new TermVariable[] { x }, mScript.term("=>",
-				mScript.term("and", mScript.term("P", x), mScript.term(">=", x, mScript.numeral(BigInteger.ONE))),
-				mScript.term("false"))));
+		mScript.assertTerm(mScript.quantifier(QuantifiedFormula.FORALL, new TermVariable[] { x },
+				mScript.term("=>", mScript.term("and", p, mScript.term(">=", x, mScript.numeral(BigInteger.ONE))),
+						mScript.term("false"))));
 		mScript.checkSat();
 		final var model = mScript.getModel();
 
-		final var app = model.getFunctionDefinition("P", new TermVariable[] { x });
-		assert "(= x 0)".equals(app.toString());
+		final var app = model.getFunctionDefinition(p.getFunction()).getSubterm();
+		assert "(= x!0 0)".equals(app.toString());
 	}
 
 	@Test
@@ -99,25 +102,27 @@ public class ModelParserTest {
 		mScript.declareFun("Q", new Sort[] { mScript.sort("Int") }, mScript.sort("Bool"));
 
 		final var x = mScript.variable("x", mScript.sort("Int"));
+		final var p = (ApplicationTerm) mScript.term("P", x);
+		final var q = (ApplicationTerm) mScript.term("Q", x);
+
 		// x >= 0 -> P(x)
 		mScript.assertTerm(mScript.quantifier(QuantifiedFormula.FORALL, new TermVariable[] { x },
-				mScript.term("=>", mScript.term(">=", x, mScript.numeral(BigInteger.ZERO)), mScript.term("P", x))));
+				mScript.term("=>", mScript.term(">=", x, mScript.numeral(BigInteger.ZERO)), p)));
 		// x <= 0 -> Q(x)
 		mScript.assertTerm(mScript.quantifier(QuantifiedFormula.FORALL, new TermVariable[] { x },
-				mScript.term("=>", mScript.term("<=", x, mScript.numeral(BigInteger.ZERO)), mScript.term("Q", x))));
+				mScript.term("=>", mScript.term("<=", x, mScript.numeral(BigInteger.ZERO)), q)));
 		// P(x) /\ Q(x) /\ x =/= 0 -> false
 		mScript.assertTerm(mScript.quantifier(QuantifiedFormula.FORALL, new TermVariable[] { x },
 				mScript.term("=>",
-						mScript.term("and", mScript.term("P", x), mScript.term("Q", x),
-								mScript.term("distinct", x, mScript.numeral(BigInteger.ZERO))),
+						mScript.term("and", p, q, mScript.term("distinct", x, mScript.numeral(BigInteger.ZERO))),
 						mScript.term("false"))));
 		mScript.checkSat();
 		final var model = mScript.getModel();
 
-		final var appP = model.getFunctionDefinition("P", new TermVariable[] { x });
-		assert "(>= x 0)".equals(appP.toString());
+		final var appP = model.getFunctionDefinition(p.getFunction()).getSubterm();
+		assert "(>= x!0 0)".equals(appP.toString());
 
-		final var appQ = model.getFunctionDefinition("Q", new TermVariable[] { x });
-		assert "(<= x 0)".equals(appQ.toString());
+		final var appQ = model.getFunctionDefinition(q.getFunction()).getSubterm();
+		assert "(<= x!0 0)".equals(appQ.toString());
 	}
 }
