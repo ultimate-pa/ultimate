@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,6 +70,10 @@ public class CongruenceUtil {
 		return rows;
 	}
 
+	public static List<MatrixQ128> getColumnsFromMatrix(final MatrixQ128 matrix) {
+		return getRowsFromMatrix(matrix.transpose());
+	}
+
 	public static MatrixQ128 getMatrixFromRows(final List<MatrixQ128> rows) {
 		final var n = rows.size();
 		long m = 0;
@@ -83,6 +89,10 @@ public class CongruenceUtil {
 		}
 
 		return MatrixQ128.FACTORY.copy(protoMatrix);
+	}
+
+	public static MatrixQ128 getMatrixFromColumns(final List<MatrixQ128> columns) {
+		return getMatrixFromRows(columns).transpose();
 	}
 
 	public static MatrixQ128 getMatrixFromIntList(final List<Integer> entries, final int rowCount,
@@ -123,6 +133,24 @@ public class CongruenceUtil {
 
 	public static MatrixQ128 getRowVectorFromRationalList(final List<Rational> entries) {
 		return getMatrixFromRationalList(entries, 1, entries.size());
+	}
+
+	public static MatrixQ128 getZeroMatrix(final int rowCount, final int columnCount) {
+		final List<Rational> list = new ArrayList<>(Collections.nCopies(rowCount * columnCount, Rational.ZERO));
+		return getMatrixFromRationalList(list, rowCount, columnCount);
+	}
+
+	public static MatrixQ128 reorderByColumns(final Map<Integer, Integer> map, final int resultColumnCount,
+			final MatrixQ128 matrix) {
+		final List<MatrixQ128> columns = getColumnsFromMatrix(matrix);
+		final List<MatrixQ128> resultColumns = getColumnsFromMatrix(
+				getZeroMatrix(matrix.getRowDim(), resultColumnCount));
+
+		for (int i = 0; i < columns.size(); i++) {
+			resultColumns.set(map.get(i), columns.get(i));
+		}
+
+		return getMatrixFromColumns(resultColumns);
 	}
 
 	public static long getNumerator(final RationalNumber num) {

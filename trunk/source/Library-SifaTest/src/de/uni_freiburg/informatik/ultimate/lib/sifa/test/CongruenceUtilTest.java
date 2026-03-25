@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -131,6 +132,26 @@ public class CongruenceUtilTest {
 		final var num4 = RationalNumber.of(1, -2);
 		Assert.assertEquals(-1, CongruenceUtil.getNumerator(num4));
 		Assert.assertEquals(2, CongruenceUtil.getDenominator(num4));
+	}
+
+	@Test
+	public void testReorderByColumns() {
+		final var matrix = CongruenceUtil.getMatrixFromIntList(List.of(1, 2, 3, 4, 5, 6), 2, 3);
+		// System.out.println(matrix);
+
+		final Map<Integer, Integer> map1 = Map.of(0, 1, 1, 2, 2, 0);
+		final var matrix1 = CongruenceUtil.getMatrixFromIntList(List.of(3, 1, 2, 6, 4, 5), 2, 3);
+		final var matrixReorder1 = CongruenceUtil.reorderByColumns(map1, 3, matrix);
+		// System.out.println(matrix1);
+		// System.out.println(matrixReorder1);
+		Assert.assertTrue(matrix1.equals(matrixReorder1));
+
+		final Map<Integer, Integer> map2 = Map.of(0, 1, 1, 2, 2, 3);
+		final var matrix2 = CongruenceUtil.getMatrixFromIntList(List.of(0, 1, 2, 3, 0, 4, 5, 6), 2, 4);
+		final var matrixReorder2 = CongruenceUtil.reorderByColumns(map2, 4, matrix);
+		// System.out.println(matrix2);
+		// System.out.println(matrixReorder2);
+		Assert.assertTrue(matrix2.equals(matrixReorder2));
 	}
 
 }
