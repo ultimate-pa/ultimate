@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.scalar.RationalNumber;
@@ -16,6 +17,13 @@ public class GeneratorRepresentation {
 		mLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
 		mParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
 		mIsMinimal = false;
+	}
+
+	public GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix,
+			final boolean isMinimal) {
+		mLineMatrix = lineMatrix;
+		mParameterMatrix = parameterMatrix;
+		mIsMinimal = isMinimal;
 	}
 
 	public GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters,
@@ -111,6 +119,15 @@ public class GeneratorRepresentation {
 		}
 		return new GeneratorRepresentation(newLines, newParameters, true);
 
+	}
+
+	public GeneratorRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
+			final int resultColumnCount) {
+		final MatrixQ128 reorderedLineMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
+				mLineMatrix);
+		final MatrixQ128 reorderedParameterMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
+				mParameterMatrix);
+		return new GeneratorRepresentation(reorderedLineMatrix, reorderedParameterMatrix, mIsMinimal);
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {

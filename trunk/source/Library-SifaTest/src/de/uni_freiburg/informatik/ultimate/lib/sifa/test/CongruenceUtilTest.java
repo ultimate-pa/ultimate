@@ -190,4 +190,19 @@ public class CongruenceUtilTest {
 		Assert.assertTrue(testMergedMapsHelper(map1, map3, mergedMap13));
 	}
 
+	@Test
+	public void testGetReorderForMaps() {
+		final Map<String, Integer> map1 = Map.of("a", 0, "b", 1, "c", 2);
+		final Map<String, Integer> map2 = Map.of("a", 2, "b", 1, "c", 0, "e", 4, "f", 5);
+		final Map<Integer, Integer> map12 = Map.of(0, 2, 1, 1, 2, 0);
+		final Map<Integer, Integer> reorderMap12 = CongruenceUtil.getReorderForMaps(map1, map2);
+		Assert.assertTrue(map12.equals(reorderMap12));
+
+		final Map<String, Integer> map3 = Map.of("a", 2, "b", 5, "c", 0);
+		final Map<Integer, Integer> map13 = Map.of(0, 2, 1, 5, 2, 0);
+		final Map<Integer, Integer> reorderMap13 = CongruenceUtil.getReorderForMaps(map1, map3);
+		Assert.assertTrue(map13.equals(reorderMap13));
+
+	}
+
 }

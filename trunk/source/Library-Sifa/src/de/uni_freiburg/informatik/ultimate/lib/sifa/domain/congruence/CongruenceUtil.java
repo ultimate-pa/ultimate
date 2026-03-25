@@ -193,4 +193,20 @@ public class CongruenceUtil {
 		}
 		return newMap;
 	}
+
+	/**
+	 * Constructs a map that corresponds to targetMap o originMap^-1
+	 */
+	public static <K> Map<Integer, Integer> getReorderForMaps(final Map<K, Integer> originMap,
+			final Map<K, Integer> targetMap) {
+		final Map<Integer, Integer> newMap = new HashMap<>();
+
+		for (final K key : originMap.keySet()) {
+			final Integer originInteger = originMap.get(key);
+			final Integer targetInteger = targetMap.get(key);
+			newMap.put(originInteger, targetInteger);
+		}
+		return newMap;
+	}
+
 }
