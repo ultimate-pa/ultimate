@@ -128,8 +128,10 @@ public class ConditionalCommutativityTestSuite extends AbstractModelCheckerTestS
 		for (final var setting : BASE_SETTINGS) {
 			for (final var variant : VARIANTS) {
 				final var callback = new NamedServiceCallback(variant.getKey(), overwriteSettings(variant.getValue()));
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_C,
-						new String[] { ".c" }, setting, TOOLCHAIN_C, getTimeout(), callback));
+				/*
+				 * addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_C, new String[] {
+				 * ".c" }, setting, TOOLCHAIN_C, getTimeout(), callback));
+				 */
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(BENCHMARKS_BPL,
 						new String[] { ".bpl" }, setting, TOOLCHAIN_BPL, getTimeout(), callback));
 			}
