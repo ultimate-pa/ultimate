@@ -19,26 +19,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.dat
 public final class ExecutionResult extends BasePayloadContainer {
 	private static final long serialVersionUID = -5577390430583256394L;
 
-	public record Pair<A, B>(A a, B b) {
-		@Override
-		public boolean equals(final Object other) {
-			if (other instanceof final Pair p) {
-				return a == p.a() && b == p.b();
-			}
-			return false;
-		}
-	}
-
-	public record Triple<A, B, C>(A a, B b, C c) {
-		@Override
-		public boolean equals(final Object other) {
-			if (other instanceof final Triple t) {
-				return a == t.a() && b == t.b() && c == t.c();
-			}
-			return false;
-		}
-	}
-
 	public enum ExecutionTermintionReason {
 		/** Execution arrived at location where no next edge of ICFG can be taken, it is not an error location */
 		REACHED_EXIT,

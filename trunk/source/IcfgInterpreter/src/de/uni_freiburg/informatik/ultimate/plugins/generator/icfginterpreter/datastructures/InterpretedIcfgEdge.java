@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Equ
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor.Equations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionResult.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.RestrictionParser;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.TermEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
@@ -34,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.dat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Equation.SolvedEquation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Restriction.EmptyRangeException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Update.HavocUpdate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class InterpretedIcfgEdge {
 	private final Term mGuard;
@@ -164,10 +164,10 @@ public class InterpretedIcfgEdge {
 					if (data == null) {
 						continue;
 					}
-					termVar = data.a();
+					termVar = data.getFirst();
 					try {
 						keyValues = new ArrayList<>();
-						for (final Term key : data.b()) {
+						for (final Term key : data.getSecond()) {
 							keyValues.add(TermEvaluator.evaluate(state, key));
 						}
 					} catch (final Error e) {

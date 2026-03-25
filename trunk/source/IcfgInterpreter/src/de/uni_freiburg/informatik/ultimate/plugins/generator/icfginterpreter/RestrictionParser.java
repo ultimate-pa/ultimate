@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionResult.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BitVecValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BoolValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BooleanRestriction;
@@ -25,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.dat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Value;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class RestrictionParser {
 	private final HashSet<Term> mLessEq;

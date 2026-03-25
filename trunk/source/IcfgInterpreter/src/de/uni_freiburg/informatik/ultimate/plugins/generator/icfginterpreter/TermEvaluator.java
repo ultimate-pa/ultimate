@@ -14,12 +14,12 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionResult.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.ArrayValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BitVecValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BoolValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.IntValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Value;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class TermEvaluator {
 	public static Value evaluate(final Map<TermVariable, Value> state, final Term term) {
@@ -99,13 +99,13 @@ public class TermEvaluator {
 			// this continues until we have an array term that is a TermVariable.
 			// we then do arrayT_N[key_N][key_N-1]...[key_1] = value_1
 			final Pair<ArrayValue, List<Value>> resultSubSelect = unpackSelect(state, arrayTerm);
-			final List<Value> keysPartial = resultSubSelect.b();
+			final List<Value> keysPartial = resultSubSelect.getSecond();
 			keysPartial.addLast(lastKey);
-			return resultSubSelect.a().store(keysPartial, value);
+			return resultSubSelect.getFirst().store(keysPartial, value);
 
 		case "select":
 			final Pair<ArrayValue, List<Value>> resultSelect = unpackSelect(state, aTerm);
-			return resultSelect.a().select(resultSelect.b());
+			return resultSelect.getFirst().select(resultSelect.getSecond());
 		}
 
 		final Term[] paramTerms = aTerm.getParameters();

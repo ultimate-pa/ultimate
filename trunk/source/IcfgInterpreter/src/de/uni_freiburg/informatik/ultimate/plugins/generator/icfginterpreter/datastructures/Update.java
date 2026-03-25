@@ -9,11 +9,11 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionResult.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.RestrictionParser;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.TermEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Equation.SolvedEquation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public interface Update {
 	void update(Map<TermVariable, Value> state, NonDeterministicChoice ndc,

@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor.Equations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionResult.ExecutionTermintionReason;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionResult.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.TermEvaluator.UnsupportedTermError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.ArrayValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Equation.SolvedEquation;
@@ -47,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.dat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Update.AssignmentUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Update.HavocUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Value;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ExecutionProducer {
 	private final HashMap<String, Set<IcfgLocation>> mErrorMap;
@@ -614,9 +614,9 @@ public class ExecutionProducer {
 
 						final Pair<Boolean, Map<TermVariable, Value>> result =
 								nextEdge.guard(nextState, ndc, newBounds);
-						final Map<TermVariable, Value> havocedVars = result.b();
+						final Map<TermVariable, Value> havocedVars = result.getSecond();
 
-						if (!result.a()) {
+						if (!result.getFirst()) {
 							continue;
 						}
 						anyGuardTrue = true;
