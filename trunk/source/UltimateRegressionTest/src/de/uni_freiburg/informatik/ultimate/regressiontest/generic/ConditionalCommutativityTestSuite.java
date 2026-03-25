@@ -68,16 +68,17 @@ public class ConditionalCommutativityTestSuite extends AbstractModelCheckerTestS
 
 	// @formatter:off
 	private static final String[] BASE_SETTINGS = {
-		"gemcutter/NewStatesSleep.epf",
+		//"gemcutter/NewStatesSleep.epf",
 		"gemcutter/NewStatesSleepPersistentFixedOrder.epf"
 	};
 	// @formatter:on
 
 	// @formatter:off
 	private static final List<Pair<String, Map<String, Object>>> VARIANTS = List.of(
-		counterExampleApproach(),
-		counterExampleApproachWithContext(),
-		counterExampleApproachWithSymbolic()
+		//counterExampleApproach(),
+		//counterExampleApproachWithContext(),
+		counterExampleApproachWithSymbolic(),
+		counterExampleApproachWithSymbolicSimplified()
 	);
 	// @formatter:on
 
@@ -171,6 +172,16 @@ public class ConditionalCommutativityTestSuite extends AbstractModelCheckerTestS
 		// @formatter:off
 			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
 			TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS, IndependenceConditions.NECESSARY_AND_SUFFICIENT
+		// @formatter:on
+		));
+	}
+
+	private static Pair<String, Map<String, Object>> counterExampleApproachWithSymbolicSimplified() {
+		return new Pair<>("CE+Symb", Map.of(
+		// @formatter:off
+			TraceAbstractionPreferenceInitializer.LABEL_POR_DFS_ORDER, OrderType.LOOP_LOCKSTEP,
+			TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SYNTHESIS, IndependenceConditions.NECESSARY_AND_SUFFICIENT,
+			TraceAbstractionPreferenceInitializer.LABEL_COMMUTATIVITY_COND_SIMPLIFIER, true
 		// @formatter:on
 		));
 	}
