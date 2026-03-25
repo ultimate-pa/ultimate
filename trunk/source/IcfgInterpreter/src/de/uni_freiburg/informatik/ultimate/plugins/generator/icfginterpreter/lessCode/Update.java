@@ -99,9 +99,12 @@ public interface Update {
 		}
 
 		/**
-		 * @param termVar        Variable to receive a non-deterministic value
-		 * @param equations      List of equation restricting the variable's value
-		 * @param removePrevious True if this update removes previous restrictions (the variable was not an InVar)
+		 * @param termVar
+		 *            Variable to receive a non-deterministic value
+		 * @param equations
+		 *            List of equation restricting the variable's value
+		 * @param removePrevious
+		 *            True if this update removes previous restrictions (the variable was not an InVar)
 		 */
 		public HavocUpdate(final TermVariable termVar, final List<SolvedEquation> equations,
 				final boolean removePrevious) {

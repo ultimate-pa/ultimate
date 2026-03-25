@@ -241,8 +241,8 @@ public class InterpretedIcfgEdge {
 
 	public Pair<Boolean, Map<TermVariable, Value>> guard(final Map<TermVariable, Value> state,
 			final NonDeterministicChoice ndc, final Map<Term, Restriction<?>> havocRestrictions) {
-		final Map<TermVariable, Value> havocedVars = havocOrdered(state, ndc, havocRestrictions, mGuardVars,
-				mGuardArrayReads, true);
+		final Map<TermVariable, Value> havocedVars =
+				havocOrdered(state, ndc, havocRestrictions, mGuardVars, mGuardArrayReads, true);
 
 		return new Pair<>(((BoolValue) TermEvaluator.evaluate(state, mGuard)).getValue(), havocedVars);
 	}
@@ -358,8 +358,8 @@ public class InterpretedIcfgEdge {
 					havocOrder.addLast(solvedFor);
 				}
 
-				final List<SolvedEquation> varEquations = solvedEquations.stream()
-						.filter(eq -> eq.getLhs().equals(solvedFor)).toList();
+				final List<SolvedEquation> varEquations =
+						solvedEquations.stream().filter(eq -> eq.getLhs().equals(solvedFor)).toList();
 				solvedEquations.removeAll(varEquations);
 
 				RestrictionParser parser;

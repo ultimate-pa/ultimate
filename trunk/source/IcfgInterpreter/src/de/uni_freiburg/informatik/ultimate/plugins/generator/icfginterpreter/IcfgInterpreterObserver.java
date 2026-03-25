@@ -123,8 +123,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				}
 
 				// Create executions
-				mExecutions = producer.makeExecutions(mLogger,
-						(executions, locations) -> outputBatch(executions, locations));
+				mExecutions =
+						producer.makeExecutions(mLogger, (executions, locations) -> outputBatch(executions, locations));
 
 				// Either no execution of the target type was found, or mExecutions is empty because of batching and
 				// should be supplemented with the batch aggregate.
@@ -164,9 +164,9 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private void outputBatch(final Map<ExecutionTermintionReason, List<PartialExecution>> executions,
 			final Set<IcfgLocation> errorLocations) {
 
-		final Map<IcfgLocation, PartialExecution> locs2ErrorExecutions = executions
-				.getOrDefault(ExecutionTermintionReason.REACHED_ERROR, List.of()).stream()
-				.collect(Collectors.toMap(x -> x.currentLocation(), x -> x, (x, y) -> x));
+		final Map<IcfgLocation, PartialExecution> locs2ErrorExecutions =
+				executions.getOrDefault(ExecutionTermintionReason.REACHED_ERROR, List.of()).stream()
+						.collect(Collectors.toMap(x -> x.currentLocation(), x -> x, (x, y) -> x));
 
 		for (final IcfgLocation loc : errorLocations) {
 			final PartialExecution partialExecution = locs2ErrorExecutions.get(loc);
@@ -216,8 +216,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 					i++;
 					try {
 						outputFile.createNewFile();
-						final BufferedWriter out = new BufferedWriter(
-								new OutputStreamWriter(new FileOutputStream(outputFile)));
+						final BufferedWriter out =
+								new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile)));
 
 						// final String executionSimplified = mServices.getBacktranslationService()
 						// .translateProgramExecution(e).toString();

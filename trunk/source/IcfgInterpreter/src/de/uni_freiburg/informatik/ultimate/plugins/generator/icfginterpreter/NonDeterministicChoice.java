@@ -106,8 +106,10 @@ public class NonDeterministicChoice {
 	/**
 	 * Generates a random BigInteger from [0, maximum).
 	 *
-	 * @param length  The number of bits, optimally this is maximum.bitLength()
-	 * @param maximum The random value generated is at most maximum - 1.
+	 * @param length
+	 *            The number of bits, optimally this is maximum.bitLength()
+	 * @param maximum
+	 *            The random value generated is at most maximum - 1.
 	 * @return
 	 */
 	private BigInteger randomBigInt(final int length, final BigInteger maximum) {
@@ -152,9 +154,9 @@ public class NonDeterministicChoice {
 	}
 
 	public static String MAX_INT_HAVOC_LABEL = "Maximum havoc integer value";
-	public static String MAX_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
-			+ "\nHas to be more than the minimum option.";
+	public static String MAX_INT_HAVOC_HINT =
+			"Any value between Integer.MIN_VALUE and Integer.MAX_VALUE." + "\nHas to be more than the minimum option.";
 	public static String MIN_INT_HAVOC_LABEL = "Minimum havoc integer value";
-	public static String MIN_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
-			+ "\nHas to be less than the maximum option.";
+	public static String MIN_INT_HAVOC_HINT =
+			"Any value between Integer.MIN_VALUE and Integer.MAX_VALUE." + "\nHas to be less than the maximum option.";
 }

@@ -67,8 +67,8 @@ public final class ProgramExecutions extends BasePayloadContainer {
 		// Execution must be finished
 		assert execution.status() != null;
 
-		final List<Map<Term, Term>> states = execution.states().stream()
-				.map(stateUncast -> castMap(stateUncast, script)).toList();
+		final List<Map<Term, Term>> states =
+				execution.states().stream().map(stateUncast -> castMap(stateUncast, script)).toList();
 		final List<IcfgEdge> trace = execution.edges().stream().map(intEdge -> intEdge.getEdge()).toList();
 
 		if (trace.isEmpty()) {

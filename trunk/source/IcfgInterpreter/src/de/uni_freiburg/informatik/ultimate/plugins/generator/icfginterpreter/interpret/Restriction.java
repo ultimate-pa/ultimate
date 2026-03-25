@@ -12,9 +12,12 @@ public abstract class Restriction<T> {
 	}
 
 	/**
-	 * @param inequal  All specific values that the variable cannot take
-	 * @param minimum  The smallest value a variable can take
-	 * @param maximuum The biggest value a variable can take
+	 * @param inequal
+	 *            All specific values that the variable cannot take
+	 * @param minimum
+	 *            The smallest value a variable can take
+	 * @param maximuum
+	 *            The biggest value a variable can take
 	 */
 	public Restriction(final Set<T> inequal, final T minimum, final T maximum) {
 

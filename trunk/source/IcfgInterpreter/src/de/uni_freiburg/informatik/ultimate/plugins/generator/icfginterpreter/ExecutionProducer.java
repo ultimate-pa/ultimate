@@ -208,8 +208,8 @@ public class ExecutionProducer {
 		return executions;
 	}
 
-	private static <LOC extends IcfgLocation> HashMap<String, Set<IcfgLocation>> getErrorLocations(
-			final IIcfg<LOC> icfg) {
+	private static <LOC extends IcfgLocation> HashMap<String, Set<IcfgLocation>>
+			getErrorLocations(final IIcfg<LOC> icfg) {
 		final HashMap<String, Set<IcfgLocation>> out = new HashMap<>();
 
 		for (final Entry<String, Set<LOC>> entry : icfg.getProcedureErrorNodes().entrySet()) {
@@ -309,8 +309,8 @@ public class ExecutionProducer {
 					.map(entry -> entry.getKey());
 
 			// only keep those updates that are not needed as InVars any more
-			final List<TermVariable> safeUpdates = new ArrayList<>(
-					updatableVars.filter(var -> !neededInVarsTotal.contains(var)).toList());
+			final List<TermVariable> safeUpdates =
+					new ArrayList<>(updatableVars.filter(var -> !neededInVarsTotal.contains(var)).toList());
 
 			// These are interchangeable. Sort by variable name for consistency
 			safeUpdates.sort(Comparator.comparing(TermVariable::getName));
@@ -330,8 +330,8 @@ public class ExecutionProducer {
 		assignableVars.addAll(formula.getOutVars().values().stream().filter((outVar) -> {
 			return !formula.getInVars().containsValue(outVar);
 		}).toList());
-		final ArrayList<SolvedEquation> equationList = new ArrayList<>(
-				equations.stream().filter((eq) -> assignableVars.contains(eq.getLhs())).toList());
+		final ArrayList<SolvedEquation> equationList =
+				new ArrayList<>(equations.stream().filter((eq) -> assignableVars.contains(eq.getLhs())).toList());
 
 		// TODO make havoc updates that execute "assume array[index] < value" etc
 		final List<SolvedEquation> arrayEquations = equations.stream().filter(eq -> eq.isSelect()).toList();
@@ -426,9 +426,9 @@ public class ExecutionProducer {
 				.copyOf(equationList.stream().map(eq -> (TermVariable) eq.getLhs()).toList())) {
 			final TermVariable globalVar = lookupSymbolTableSafe(definedVar, formula);
 
-			final List<SolvedEquation> definitions = equationList.stream()
-					.filter((eq) -> eq.getLhs().equals(definedVar))
-					/* .filter((eq) -> formulaAuxVars.contains(eq.getLhs()) && ) */.toList();
+			final List<SolvedEquation> definitions =
+					equationList.stream().filter((eq) -> eq.getLhs().equals(definedVar))
+							/* .filter((eq) -> formulaAuxVars.contains(eq.getLhs()) && ) */.toList();
 
 			if (definitions.size() == 1 && definitions.get(0).getRelation() == null) {
 				// This is freely havoced
@@ -619,8 +619,8 @@ public class ExecutionProducer {
 						final Map<TermVariable, Value> nextState = new HashMap<>(execution.getCurrentState());
 						final HashMap<Term, Restriction<?>> newBounds = new HashMap<>(execution.havocBounds);
 
-						final Pair<Boolean, Map<TermVariable, Value>> result = nextEdge.guard(nextState, ndc,
-								newBounds);
+						final Pair<Boolean, Map<TermVariable, Value>> result =
+								nextEdge.guard(nextState, ndc, newBounds);
 						final Map<TermVariable, Value> havocedVars = result.b();
 
 						if (!result.a()) {
@@ -638,8 +638,8 @@ public class ExecutionProducer {
 						newExecutionsOfEdge.add(execution.addStep(nextEdge, nextState, newBounds, havocedVars));
 					} catch (final UnsupportedTermError | EdgeUntranslatableError unsupported) {
 						unsupportedFound = true;
-						final PartialExecution failedExecution = execution.addStep(nextEdge, Map.of(), Map.of(),
-								Map.of());
+						final PartialExecution failedExecution =
+								execution.addStep(nextEdge, Map.of(), Map.of(), Map.of());
 						if (finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED),
 								out, outMethod) && endIfAggregateFull) {
 							return;
@@ -680,9 +680,12 @@ public class ExecutionProducer {
 	 * Cast Execution to IcfgProgramExecution and add it to output. May process the gathered IcfgProgramExecution batch
 	 * of outMap via the outMethod
 	 *
-	 * @param execution The execution to finalize
-	 * @param outMap    Maps TerminationReason to List of found Executions
-	 * @param outMethod Method with which to process a full batch
+	 * @param execution
+	 *            The execution to finalize
+	 * @param outMap
+	 *            Maps TerminationReason to List of found Executions
+	 * @param outMethod
+	 *            Method with which to process a full batch
 	 * @return True if the required number of executions was found
 	 */
 	private boolean finalizeExecution(final PartialExecution execution,

@@ -58,8 +58,8 @@ public class EqualityExtractor {
 			final Set<SolvedEquation> outData = new HashSet<>();
 			final Set<Term> outVars = Set.copyOf(formula.getOutVars().values());
 			final Set<Term> inVars = Set.copyOf(formula.getInVars().values());
-			final Set<Term> assignableOutVars = Set
-					.copyOf(outVars.stream().filter(outVar -> !inVars.contains(outVar)).toList());
+			final Set<Term> assignableOutVars =
+					Set.copyOf(outVars.stream().filter(outVar -> !inVars.contains(outVar)).toList());
 			final Set<Term> auxVars = Set.copyOf(formula.getAuxVars());
 
 			for (final Equation equation : mEquations) {
