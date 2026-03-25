@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -32,6 +33,7 @@ public class RelationalPredicatePostcondition {
 	private final boolean mProjectAllGlobalPreVars;
 	private final Set<TermVariable> mAllGlobalPreVarsToProject;
 	private final Map<Term, Term> mAllGlobalPrimedToUnprimed;
+	private SifaStats mStats;
 
 	public RelationalPredicatePostcondition(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final BasicPredicateFactory predicateFactory, final PrimedDefaultIcfgSymbolTable symbolTable) {
@@ -55,6 +57,10 @@ public class RelationalPredicatePostcondition {
 				mAllGlobalPrimedToUnprimed.put(primed, pv.getTermVariable());
 			}
 		}
+	}
+
+	public void setStats(final SifaStats stats) {
+		mStats = stats;
 	}
 
 	public IPredicate strongestPostcondition(final IPredicate statePredicate, final IPredicate relationalPredicate) {
@@ -96,7 +102,7 @@ public class RelationalPredicatePostcondition {
 			projected = conjunction;
 		} else {
 			projected = RelationalPredicateUtils.existentiallyProject(conjunction, preVarsToProject, mServices,
-					mManagedScript);
+					mManagedScript, mStats);
 		}
 
 		final Map<Term, Term> primedToUnprimed = preparedRelation.primedToUnprimed();

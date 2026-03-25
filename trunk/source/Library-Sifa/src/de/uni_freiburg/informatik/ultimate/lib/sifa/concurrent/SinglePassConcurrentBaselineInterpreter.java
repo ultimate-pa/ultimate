@@ -71,6 +71,7 @@ public class SinglePassConcurrentBaselineInterpreter implements ISifaInterpreter
 		mAnalysisDomain = setup.analysisDomain();
 		mLoopSumFactory = setup.loopSumFactory();
 		mPostcondition = setup.postcondition();
+		mPostcondition.setStats(mStats);
 		final var ghostVars = mConcurrentTools.getGhostVariables();
 		final var absLocIds = ghostVars != null ? ghostVars.getAbstractLocationIds() : Map.<IcfgLocation, Integer>of();
 		mResultPrinter = new SifaResultPrinter(logger, absLocIds, mConcurrentTools.getThreadActivityPreanalysis());

@@ -47,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.SinglePassConcurr
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
@@ -137,13 +139,20 @@ public class SifaBuilder {
 					SifaPreferences.LABEL_LOCATION_ABSTRACTION, SifaPreferences.CLASS_LOCATION_ABSTRACTION);
 			final InterferenceType interferenceType = mPrefs.getEnum(SifaPreferences.LABEL_INTERFERENCE_TYPE,
 					SifaPreferences.CLASS_INTERFERENCE_TYPE);
+			final InterferenceRepresentation interferenceRepresentation = mPrefs.getEnum(
+					SifaPreferences.LABEL_INTERFERENCE_REPRESENTATION,
+					SifaPreferences.CLASS_INTERFERENCE_REPRESENTATION);
 			final int outerWideningThreshold =
 					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_OUTER_WIDENING_THRESHOLD));
 			final int innerWideningThreshold =
 					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD));
 			final boolean joinPrecision = mPrefs.getBoolean(SifaPreferences.LABEL_JOIN_PRECISION);
+			final InterferenceMergeDomain mergeDomain = mPrefs.getEnum(
+					SifaPreferences.LABEL_INTERFERENCE_MERGE_DOMAIN,
+					SifaPreferences.CLASS_INTERFERENCE_MERGE_DOMAIN);
 			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
-					interferenceType, outerWideningThreshold, innerWideningThreshold, joinPrecision);
+					interferenceType, interferenceRepresentation, outerWideningThreshold, innerWideningThreshold,
+					joinPrecision, mergeDomain);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);

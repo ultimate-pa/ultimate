@@ -116,7 +116,9 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		final IDagOverlay<IIcfgTransition<IcfgLocation>> fullOverlay = new FullOverlay<>();
 		IPredicate preState = starAndInput.getSecond();
 		IPredicate postState = null;
+		int loopIter = 0;
 		while (true) {
+			loopIter++;
 			if (!timer.continueProcessing()) {
 				mLogger.warn("Timeout while computing loop summary. Using TOP as summary.");
 				return mTools.top();
@@ -132,7 +134,8 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			if (postSubsetEqPre.isTrueForAbstraction()) {
 				break;
 			}
-			preState = mDomain.widen(preState, postState);
+			final IPredicate widened = mDomain.widen(preState, postState);
+			preState = widened;
 		}
 
 		mStats.stop(SifaStats.Key.LOOP_SUMMARIZER_NEW_COMPUTATION_TIME);

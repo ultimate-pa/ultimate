@@ -3,30 +3,30 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 public class PerEdgeInterference implements IInterference {
 
 	record EdgeKey(IcfgLocation source, IcfgLocation target) {
 	}
 
-	private final Map<EdgeKey, IPredicate> mEdgePredicates;
+	private final Map<EdgeKey, GuardedPredicate> mEdgePredicates;
+	private final IInterferenceApplicator mApplicator;
 
-	public PerEdgeInterference(final Map<EdgeKey, IPredicate> edgePredicates) {
+	public PerEdgeInterference(final Map<EdgeKey, GuardedPredicate> edgePredicates,
+			final IInterferenceApplicator applicator) {
 		mEdgePredicates = Map.copyOf(edgePredicates);
+		mApplicator = applicator;
 	}
 
 	@Override
 	public Collection<IPredicate> getPredicates() {
-		return mEdgePredicates.values();
+		return mEdgePredicates.values().stream().map(GuardedPredicate::effect).collect(Collectors.toList());
 	}
 
 	@Override
@@ -39,9 +39,16 @@ public class PerEdgeInterference implements IInterference {
 		if (!(other instanceof final PerEdgeInterference otherEdge)) {
 			return false;
 		}
-		for (final Entry<EdgeKey, IPredicate> entry : mEdgePredicates.entrySet()) {
-			final IPredicate otherPred = otherEdge.mEdgePredicates.get(entry.getKey());
-			if (otherPred == null || !domain.isSubsetEq(entry.getValue(), otherPred).isTrueForAbstraction()) {
+		for (final Entry<EdgeKey, GuardedPredicate> entry : mEdgePredicates.entrySet()) {
+			final GuardedPredicate otherGp = otherEdge.mEdgePredicates.get(entry.getKey());
+			if (otherGp == null) {
+				return false;
+			}
+			if (!domain.isSubsetEq(entry.getValue().effect(), otherGp.effect()).isTrueForAbstraction()) {
+				return false;
+			}
+			if (entry.getValue().hasGuard() && otherGp.hasGuard()
+					&& !domain.isSubsetEq(entry.getValue().guard(), otherGp.guard()).isTrueForAbstraction()) {
 				return false;
 			}
 		}
@@ -55,7 +62,7 @@ public class PerEdgeInterference implements IInterference {
 					"Cannot widen PerEdgeInterference with " + other.getClass().getSimpleName());
 		}
 		return new PerEdgeInterference(
-				InterferenceUtils.widenBuckets(mEdgePredicates, otherEdge.mEdgePredicates, domain));
+				InterferenceUtils.widenGuardedBuckets(mEdgePredicates, otherEdge.mEdgePredicates, domain), mApplicator);
 	}
 
 	@Override
@@ -64,16 +71,11 @@ public class PerEdgeInterference implements IInterference {
 	}
 
 	@Override
-	public IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain,
-			final RelationalPredicatePostcondition postcondition, final GhostVariableManager ghostVars,
-			final ManagedScript managedScript, final BasicPredicateFactory factory, final int wideningThreshold,
+	public IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain, final int wideningThreshold,
 			final SifaStats stats) {
-		// opt: trivial (no edges)
 		if (isTrivial()) {
 			return state;
 		}
-		return InterferenceUtils.applyUntilFixpoint(state,
-				InterferenceUtils.prepareNonFalseRelations(mEdgePredicates.values(), postcondition), domain,
-				postcondition, wideningThreshold, stats);
+		return mApplicator.apply(state, mEdgePredicates.values(), domain, wideningThreshold, stats);
 	}
 }

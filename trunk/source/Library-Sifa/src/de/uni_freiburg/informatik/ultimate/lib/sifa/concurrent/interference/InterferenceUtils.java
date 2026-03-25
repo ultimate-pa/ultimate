@@ -3,9 +3,12 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
@@ -79,10 +82,14 @@ public final class InterferenceUtils {
 		IPredicate current = state;
 		IPredicate frontier = state;
 		for (int iteration = 1;; iteration++) {
+			stats.increment(Key.INTERFERENCE_INNER_ITERATIONS);
 			boolean hasGenerated = false;
 			IPredicate generated = current;
 			for (final PreparedRelation prepared : preparedRelations) {
+				stats.increment(Key.INTERFERENCE_SP_APPLICATIONS);
+				stats.start(Key.INTERFERENCE_SP_TIME);
 				final IPredicate post = postcondition.strongestPostcondition(frontier, prepared);
+				stats.stop(Key.INTERFERENCE_SP_TIME);
 				// opt: false SP contributes nothing
 				if (SmtUtils.isFalseLiteral(post.getFormula())) {
 					continue;
@@ -126,5 +133,45 @@ public final class InterferenceUtils {
 			widened.putIfAbsent(key, right.get(key));
 		}
 		return widened;
+	}
+
+	static <K> Map<K, GuardedPredicate> widenGuardedBuckets(final Map<K, GuardedPredicate> left,
+			final Map<K, GuardedPredicate> right, final IDomain domain) {
+		final Map<K, GuardedPredicate> widened = new HashMap<>();
+		for (final K key : left.keySet()) {
+			final GuardedPredicate thisGp = left.get(key);
+			final GuardedPredicate otherGp = right.get(key);
+			if (otherGp == null) {
+				widened.put(key, thisGp);
+			} else {
+				widened.put(key, widenGuardedPredicate(thisGp, otherGp, domain));
+			}
+		}
+		for (final K key : right.keySet()) {
+			widened.putIfAbsent(key, right.get(key));
+		}
+		return widened;
+	}
+
+	static GuardedPredicate widenGuardedPredicate(final GuardedPredicate left, final GuardedPredicate right,
+			final IDomain domain) {
+		final IPredicate widenedEffect = domain.widen(left.effect(), right.effect());
+		final IPredicate widenedGuard;
+		if (left.hasGuard() && right.hasGuard()) {
+			widenedGuard = domain.widen(left.guard(), right.guard());
+		} else {
+			widenedGuard = null;
+		}
+		return new GuardedPredicate(widenedGuard, widenedEffect, mergeModifiedGlobals(left, right));
+	}
+
+	/** Merge modified globals sets: union if both present, null otherwise. */
+	static Set<TermVariable> mergeModifiedGlobals(final GuardedPredicate left, final GuardedPredicate right) {
+		if (!left.hasModifiedGlobals() || !right.hasModifiedGlobals()) {
+			return null;
+		}
+		final Set<TermVariable> merged = new HashSet<>(left.modifiedGlobals());
+		merged.addAll(right.modifiedGlobals());
+		return Set.copyOf(merged);
 	}
 }

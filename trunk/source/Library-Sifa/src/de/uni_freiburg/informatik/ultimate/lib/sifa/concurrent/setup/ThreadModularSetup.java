@@ -8,32 +8,45 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceApplicator;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerAbstractLocationInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerEdgeInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerThreadInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PostStateInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.RelationalLightInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.RelationalQeInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.SyntacticPreciseInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.SyntacticInterferenceApplicator;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 public final class ThreadModularSetup {
 	private static final String MAIN_THREAD = "ULTIMATE.start";
@@ -65,12 +78,21 @@ public final class ThreadModularSetup {
 				ghostVars, locationIds, icfg.getProcedureEntryNodes());
 		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services, script,
 				factory, symbolTable, true);
+		final IDomain mergeDomain = createMergeDomainOrNull(settings, tools, services);
 		final InterferenceEdgeCollector edgeCollector = new InterferenceEdgeCollector(translator, analysisDomain,
-				script, factory, logger);
+				mergeDomain, script, factory, logger);
+		if (mergeDomain != null) {
+			logger.info("Interference merge domain: %s", mergeDomain.getClass().getSimpleName());
+		}
+		final IInterferenceApplicator applicator = createApplicator(settings, postcondition, factory, script, services);
+		logger.info("Interference representation: %s, applicator: %s", settings.interferenceRepresentation(),
+				applicator.getClass().getSimpleName());
+		final BiFunction<IPredicate, IPredicate, GuardedPredicate> converter =
+				createPredicateConverter(settings, postcondition, factory, script);
 		final IInterferenceFactory interferenceFactory = switch (settings.interferenceType()) {
-		case PER_THREAD -> new PerThreadInterferenceFactory(edgeCollector);
-		case PER_EDGE -> new PerEdgeInterferenceFactory(edgeCollector);
-		case PER_ABSTRACT_LOCATION -> new PerAbstractLocationInterferenceFactory(edgeCollector);
+		case PER_THREAD -> new PerThreadInterferenceFactory(edgeCollector, applicator, converter);
+		case PER_EDGE -> new PerEdgeInterferenceFactory(edgeCollector, applicator, converter);
+		case PER_ABSTRACT_LOCATION -> new PerAbstractLocationInterferenceFactory(edgeCollector, applicator, converter);
 		};
 
 		final boolean includeInterferencePreState = true;
@@ -186,6 +208,86 @@ public final class ThreadModularSetup {
 		}
 		return GhostVariableManager.create(script, locationIds, new LinkedHashSet<>(threadIds),
 				icfg.getProcedureEntryNodes(), symbolTable, impreciseLocationThreads, true);
+	}
+
+	private static IDomain createMergeDomainOrNull(final ThreadModularSifaSettings settings,
+			final SymbolicTools tools, final IUltimateServiceProvider services) {
+		if (settings.interferenceMergeDomain() == InterferenceMergeDomain.SAME_AS_ANALYSIS) {
+			return null;
+		}
+		final ILogger logger = services.getLoggingService().getLogger(ThreadModularSetup.class);
+		// Non-cancellable timer for merge-only domain (joins are fast, no timeout needed)
+		final IProgressAwareTimer neverExpires = new IProgressAwareTimer() {
+			@Override
+			public boolean continueProcessing() {
+				return true;
+			}
+
+			@Override
+			public IProgressAwareTimer getChildTimer(final long timeout) {
+				return this;
+			}
+
+			@Override
+			public IProgressAwareTimer getChildTimer(final double percentage) {
+				return this;
+			}
+
+			@Override
+			public IProgressAwareTimer getTimer(final long timeout) {
+				return this;
+			}
+
+			@Override
+			public IProgressAwareTimer getParent() {
+				return null;
+			}
+
+			@Override
+			public long getDeadline() {
+				return -1;
+			}
+
+			@Override
+			public long remainingTime() {
+				return -1;
+			}
+		};
+		return switch (settings.interferenceMergeDomain()) {
+		case OCTAGON -> new OctagonDomain(logger, tools, 2, () -> neverExpires);
+		default -> throw new IllegalArgumentException("Unknown merge domain: " + settings.interferenceMergeDomain());
+		};
+	}
+
+	private static IInterferenceApplicator createApplicator(final ThreadModularSifaSettings settings,
+			final RelationalPredicatePostcondition postcondition, final BasicPredicateFactory factory,
+			final ManagedScript script, final IUltimateServiceProvider services) {
+		return switch (settings.interferenceRepresentation()) {
+		case POST_STATE -> new PostStateInterferenceApplicator();
+		case SYNTACTIC -> new SyntacticInterferenceApplicator(script, factory);
+		case SYNTACTIC_PRECISE -> new SyntacticPreciseInterferenceApplicator(script, factory);
+		case RELATIONAL_LIGHT -> new RelationalLightInterferenceApplicator(postcondition, services, script, factory);
+		case RELATIONAL_QE -> new RelationalQeInterferenceApplicator(postcondition);
+		};
+	}
+
+	private static BiFunction<IPredicate, IPredicate, GuardedPredicate> createPredicateConverter(
+			final ThreadModularSifaSettings settings, final RelationalPredicatePostcondition postcondition,
+			final BasicPredicateFactory factory, final ManagedScript script) {
+		return switch (settings.interferenceRepresentation()) {
+		case RELATIONAL_LIGHT, RELATIONAL_QE -> (relational, guard) -> GuardedPredicate.unguarded(relational);
+		case POST_STATE -> (relational, guard) -> {
+			final var prepared = postcondition.prepareRelation(relational);
+			final var truePred = factory.newPredicate(script.getScript().term("true"));
+			return GuardedPredicate.unguarded(postcondition.strongestPostcondition(truePred, prepared));
+		};
+		case SYNTACTIC, SYNTACTIC_PRECISE -> (relational, guard) -> {
+			final var prepared = postcondition.prepareRelation(relational);
+			final var truePred = factory.newPredicate(script.getScript().term("true"));
+			final IPredicate effect = postcondition.strongestPostcondition(truePred, prepared);
+			return new GuardedPredicate(guard, effect);
+		};
+		};
 	}
 
 	public static record SetupResult(List<String> threadIds, IDomain analysisDomain,

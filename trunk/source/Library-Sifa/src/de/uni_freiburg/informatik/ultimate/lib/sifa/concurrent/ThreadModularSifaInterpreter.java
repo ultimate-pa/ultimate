@@ -95,6 +95,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mLoopSumFactory = setup.loopSumFactory();
 		mInterferenceFactory = setup.interferenceFactory();
 		mPostcondition = setup.postcondition();
+		mPostcondition.setStats(mStats);
 		mProofChecker = setup.proofChecker();
 		mThreadIcfgs = new HashMap<>();
 		mThreadLois = new HashMap<>();
@@ -201,18 +202,14 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			mThreadIcfgs.put(threadId, threadIcfg);
 			final Collection<IcfgLocation> baseLois = mLoiExpansion.getLocationsOfInterestForThread(threadId,
 					threadIcfg, mRequestedLocationsOfInterest);
-			final Collection<IcfgLocation> lois;
+			final Set<IcfgLocation> expandedLois = new LinkedHashSet<>(baseLois);
 			if (mJoinedThreads.contains(threadId)) {
-				final Set<IcfgLocation> withExit = new LinkedHashSet<>(baseLois);
 				final IcfgLocation exit = threadIcfg.getProcedureExitNodes().get(threadId);
 				if (exit != null) {
-					withExit.add(exit);
+					expandedLois.add(exit);
 				}
-				lois = withExit;
-			} else {
-				lois = baseLois;
 			}
-			mThreadLois.put(threadId, List.copyOf(lois));
+			mThreadLois.put(threadId, List.copyOf(expandedLois));
 		}
 	}
 

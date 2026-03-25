@@ -41,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
@@ -113,6 +115,14 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final InterferenceType[] VALUES_INTERFERENCE_TYPE = InterferenceType.values();
 	public static final Class<InterferenceType> CLASS_INTERFERENCE_TYPE = InterferenceType.class;
 
+	public static final String LABEL_INTERFERENCE_REPRESENTATION = "Interference Representation";
+	private static final InterferenceRepresentation DEFAULT_INTERFERENCE_REPRESENTATION =
+			InterferenceRepresentation.RELATIONAL_LIGHT;
+	private static final InterferenceRepresentation[] VALUES_INTERFERENCE_REPRESENTATION =
+			InterferenceRepresentation.values();
+	public static final Class<InterferenceRepresentation> CLASS_INTERFERENCE_REPRESENTATION =
+			InterferenceRepresentation.class;
+
 	public static final String LABEL_CONCURRENT_ANALYSIS_MODE = "Concurrent Analysis Mode";
 	private static final ConcurrentAnalysisMode DEFAULT_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.THREAD_MODULAR_FIXPOINT;
 	private static final ConcurrentAnalysisMode[] VALUES_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.values();
@@ -134,6 +144,15 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_JOIN_PRECISION = "Join Precision";
 	private static final String TOOLTIP_JOIN_PRECISION = "Give exit locations of joined threads unique abstract location IDs for precise join semantics";
 	private static final boolean DEFAULT_JOIN_PRECISION = true;
+
+	public static final String LABEL_INTERFERENCE_MERGE_DOMAIN = "Interference Merge Domain";
+	private static final String TOOLTIP_INTERFERENCE_MERGE_DOMAIN = "Domain used for joining interference predicates during build phase. OCTAGON uses OctagonDomain for merging while keeping the analysis domain for states";
+	private static final InterferenceMergeDomain DEFAULT_INTERFERENCE_MERGE_DOMAIN =
+			InterferenceMergeDomain.SAME_AS_ANALYSIS;
+	private static final InterferenceMergeDomain[] VALUES_INTERFERENCE_MERGE_DOMAIN =
+			InterferenceMergeDomain.values();
+	public static final Class<InterferenceMergeDomain> CLASS_INTERFERENCE_MERGE_DOMAIN =
+			InterferenceMergeDomain.class;
 
 	// ---- settings in containers ----
 
@@ -251,6 +270,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				"Thread-Modular");
 		containerConcurrent
 				.addItem(combo(LABEL_INTERFERENCE_TYPE, DEFAULT_INTERFERENCE_TYPE, VALUES_INTERFERENCE_TYPE));
+		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_REPRESENTATION, DEFAULT_INTERFERENCE_REPRESENTATION,
+				VALUES_INTERFERENCE_REPRESENTATION));
 		containerConcurrent
 				.addItem(combo(LABEL_LOCATION_ABSTRACTION, DEFAULT_LOCATION_ABSTRACTION, VALUES_LOCATION_ABSTRACTION));
 		containerConcurrent.addItem(integer(LABEL_OUTER_WIDENING_THRESHOLD, TOOLTIP_OUTER_WIDENING_THRESHOLD,
@@ -259,6 +280,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				DEFAULT_INNER_WIDENING_THRESHOLD, 1, Integer.MAX_VALUE));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_JOIN_PRECISION, DEFAULT_JOIN_PRECISION,
 				TOOLTIP_JOIN_PRECISION, PreferenceType.Boolean));
+		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_MERGE_DOMAIN, TOOLTIP_INTERFERENCE_MERGE_DOMAIN,
+				DEFAULT_INTERFERENCE_MERGE_DOMAIN, VALUES_INTERFERENCE_MERGE_DOMAIN));
 
 		final UltimatePreferenceItemContainer containerConcurrentTesting = new UltimatePreferenceItemContainer(
 				"Thread-Modular Testing");

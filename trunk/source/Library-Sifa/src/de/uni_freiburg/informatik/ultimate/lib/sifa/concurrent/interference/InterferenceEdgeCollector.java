@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -30,6 +31,7 @@ public class InterferenceEdgeCollector {
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IDomain mDomain;
+	private final IDomain mMergeDomain;
 	private final ILogger mLogger;
 
 	private static boolean optShouldSkipTrivialPredicate(final IPredicate predicate) {
@@ -42,8 +44,15 @@ public class InterferenceEdgeCollector {
 	public InterferenceEdgeCollector(final TransFormulaToInterferencePredicate translator, final IDomain domain,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
 			final ILogger logger) {
+		this(translator, domain, null, managedScript, predicateFactory, logger);
+	}
+
+	public InterferenceEdgeCollector(final TransFormulaToInterferencePredicate translator, final IDomain domain,
+			final IDomain mergeDomain, final ManagedScript managedScript,
+			final BasicPredicateFactory predicateFactory, final ILogger logger) {
 		mTranslator = Objects.requireNonNull(translator);
 		mDomain = Objects.requireNonNull(domain);
+		mMergeDomain = mergeDomain != null ? mergeDomain : domain;
 		mManagedScript = Objects.requireNonNull(managedScript);
 		mPredicateFactory = Objects.requireNonNull(predicateFactory);
 		mLogger = Objects.requireNonNull(logger);
@@ -62,7 +71,7 @@ public class InterferenceEdgeCollector {
 	}
 
 	IPredicate join(final IPredicate left, final IPredicate right) {
-		return mDomain.join(left, right);
+		return mMergeDomain.join(left, right);
 	}
 
 	List<PredicateWithSrcAndTrgt> collectEdgePredicates(final String threadId,
@@ -74,21 +83,53 @@ public class InterferenceEdgeCollector {
 			if (preState == null) {
 				continue;
 			}
+			final IPredicate sharedPreState = mTranslator.projectPreStateToSharedState(preState);
 			for (final IcfgEdge edge : source.getOutgoingEdges()) {
 				final EdgeInterferenceData data = collectEdgeInterferenceData(threadId, source, edge);
 				if (data == null) {
 					continue;
 				}
-				final IPredicate transitionPredicate = buildTransitionPredicate(threadId, source, data, edge);
-				final IPredicate predicate = combineWithPreState(preState, transitionPredicate);
+				final Set<IProgramVar> additionallyModifiedGlobals = InterferenceUtils.getJoinAssignedGlobals(edge);
+				final IPredicate transitionPredicate =
+						buildTransitionPredicate(threadId, source, data, additionallyModifiedGlobals);
+				final IPredicate predicate = combineWithPreState(sharedPreState, transitionPredicate);
 				// opt: skip trivially false/true predicates
 				if (optShouldSkipTrivialPredicate(predicate)) {
 					continue;
 				}
-				predicates.add(new PredicateWithSrcAndTrgt(source, data.target(), predicate));
+				final Set<TermVariable> modifiedGlobals =
+						computeModifiedGlobals(data.tf(), threadId, data.forkedThreadId(), additionallyModifiedGlobals);
+				predicates.add(new PredicateWithSrcAndTrgt(source, data.target(), predicate, sharedPreState,
+						modifiedGlobals));
 			}
 		}
 		return predicates;
+	}
+
+	private Set<TermVariable> computeModifiedGlobals(final TransFormula tf, final String interferingThread,
+			final String forkedThreadId, final Set<IProgramVar> additionallyModifiedGlobals) {
+		final Set<TermVariable> modified = new HashSet<>();
+		for (final IProgramVar pv : tf.getOutVars().keySet()) {
+			if (pv.isGlobal()) {
+				modified.add(pv.getTermVariable());
+			}
+		}
+		for (final IProgramVar pv : additionallyModifiedGlobals) {
+			modified.add(pv.getTermVariable());
+		}
+		// Ghost location var for interfering thread always changes
+		final TermVariable interferingLoc = mTranslator.getLocationTermVarOrNull(interferingThread);
+		if (interferingLoc != null) {
+			modified.add(interferingLoc);
+		}
+		// Ghost location var for forked thread changes on fork
+		if (forkedThreadId != null) {
+			final TermVariable forkedLoc = mTranslator.getLocationTermVarOrNull(forkedThreadId);
+			if (forkedLoc != null) {
+				modified.add(forkedLoc);
+			}
+		}
+		return Set.copyOf(modified);
 	}
 
 	Map<IcfgLocation, Integer> computeSourcePartitionsForSingletonWithForks(
@@ -109,7 +150,7 @@ public class InterferenceEdgeCollector {
 
 	<K> void mergeIntoWithJoin(final Map<K, IPredicate> targetMap, final K key, final IPredicate predicate) {
 		final IPredicate existing = targetMap.get(key);
-		targetMap.put(key, existing == null ? predicate : mDomain.join(existing, predicate));
+		targetMap.put(key, existing == null ? predicate : mMergeDomain.join(existing, predicate));
 	}
 
 	private boolean hasForkEdge(final Map<IcfgLocation, IPredicate> locationStates) {
@@ -137,16 +178,14 @@ public class InterferenceEdgeCollector {
 		return absIds.size() == 1;
 	}
 
-	private IPredicate combineWithPreState(final IPredicate preState, final IPredicate transitionPredicate) {
-		final IPredicate sharedPreState = mTranslator.projectPreStateToSharedState(preState);
+	private IPredicate combineWithPreState(final IPredicate sharedPreState, final IPredicate transitionPredicate) {
 		final Term combined = SmtUtils.andWithExtendedLocalSimplification(mManagedScript.getScript(),
 				sharedPreState.getFormula(), transitionPredicate.getFormula());
 		return mPredicateFactory.newPredicate(combined);
 	}
 
 	private IPredicate buildTransitionPredicate(final String threadId, final IcfgLocation sourceLocation,
-			final EdgeInterferenceData data, final IcfgEdge edge) {
-		final Set<IProgramVar> additionallyModifiedGlobals = InterferenceUtils.getJoinAssignedGlobals(edge);
+			final EdgeInterferenceData data, final Set<IProgramVar> additionallyModifiedGlobals) {
 		if (data.forkedThreadId() != null) {
 			final IcfgLocation forkedEntry = mTranslator.getEntryLocation(data.forkedThreadId());
 			return mTranslator.translateForInterferenceWithFork(data.tf(), threadId, sourceLocation, data.target(),

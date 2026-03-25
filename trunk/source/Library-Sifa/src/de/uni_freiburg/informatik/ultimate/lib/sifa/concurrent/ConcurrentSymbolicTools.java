@@ -194,14 +194,13 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	private IPredicate applyInterferenceRounds(final IPredicate state, final List<IInterference> interferences) {
 		final IDomain domain = mThreadContext.interferenceDomain();
-		final RelationalPredicatePostcondition postcondition = mThreadContext.postcondition();
 		IPredicate current = state;
 		while (true) {
 			final IPredicate roundStart = current;
 			boolean changed = false;
 			for (final IInterference itf : interferences) {
-				final IPredicate next = itf.applyUntilFixpoint(current, domain, postcondition, mGhostVariables,
-						getManagedScript(), getFactory(), mSettings.innerWideningThreshold(), getStats());
+				final IPredicate next = itf.applyUntilFixpoint(current, domain,
+						mSettings.innerWideningThreshold(), getStats());
 				if (Optimizations.noGrowth(domain, next, current)) {
 					continue;
 				}

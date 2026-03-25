@@ -5,14 +5,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 public class PerAbstractLocationInterference implements IInterference {
 
@@ -20,11 +17,13 @@ public class PerAbstractLocationInterference implements IInterference {
 			int sourceLocationPartition) {
 	}
 
-	private final Map<AbstractLocationRelation, IPredicate> mRelationPredicates;
+	private final Map<AbstractLocationRelation, GuardedPredicate> mRelationPredicates;
 	private final Set<Integer> mSourceAbstractLocations;
 	private final Set<Integer> mTargetAbstractLocations;
+	private final IInterferenceApplicator mApplicator;
 
-	public PerAbstractLocationInterference(final Map<AbstractLocationRelation, IPredicate> relationPredicates) {
+	public PerAbstractLocationInterference(final Map<AbstractLocationRelation, GuardedPredicate> relationPredicates,
+			final IInterferenceApplicator applicator) {
 		mRelationPredicates = Map.copyOf(relationPredicates);
 		final Set<Integer> sourceAbstractLocations = new HashSet<>();
 		final Set<Integer> targetAbstractLocations = new HashSet<>();
@@ -34,19 +33,20 @@ public class PerAbstractLocationInterference implements IInterference {
 		}
 		mSourceAbstractLocations = Set.copyOf(sourceAbstractLocations);
 		mTargetAbstractLocations = Set.copyOf(targetAbstractLocations);
+		mApplicator = applicator;
 	}
 
 	public Set<AbstractLocationRelation> getAbstractLocationRelations() {
 		return mRelationPredicates.keySet();
 	}
 
-	public Map<AbstractLocationRelation, IPredicate> getPredicatesByAbstractLocationRelation() {
+	public Map<AbstractLocationRelation, GuardedPredicate> getGuardedPredicatesByAbstractLocationRelation() {
 		return mRelationPredicates;
 	}
 
 	@Override
 	public Collection<IPredicate> getPredicates() {
-		return mRelationPredicates.values();
+		return mRelationPredicates.values().stream().map(GuardedPredicate::effect).collect(Collectors.toList());
 	}
 
 	@Override
@@ -59,9 +59,16 @@ public class PerAbstractLocationInterference implements IInterference {
 		if (!(other instanceof final PerAbstractLocationInterference partitioned)) {
 			return false;
 		}
-		for (final Entry<AbstractLocationRelation, IPredicate> entry : mRelationPredicates.entrySet()) {
-			final IPredicate otherPred = partitioned.mRelationPredicates.get(entry.getKey());
-			if (otherPred == null || !domain.isSubsetEq(entry.getValue(), otherPred).isTrueForAbstraction()) {
+		for (final Entry<AbstractLocationRelation, GuardedPredicate> entry : mRelationPredicates.entrySet()) {
+			final GuardedPredicate otherGp = partitioned.mRelationPredicates.get(entry.getKey());
+			if (otherGp == null) {
+				return false;
+			}
+			if (!domain.isSubsetEq(entry.getValue().effect(), otherGp.effect()).isTrueForAbstraction()) {
+				return false;
+			}
+			if (entry.getValue().hasGuard() && otherGp.hasGuard()
+					&& !domain.isSubsetEq(entry.getValue().guard(), otherGp.guard()).isTrueForAbstraction()) {
 				return false;
 			}
 		}
@@ -74,9 +81,9 @@ public class PerAbstractLocationInterference implements IInterference {
 			throw new IllegalArgumentException(
 					"Cannot widen PerAbstractLocationInterference with " + other.getClass().getSimpleName());
 		}
-		final Map<AbstractLocationRelation, IPredicate> widened = InterferenceUtils.widenBuckets(mRelationPredicates,
-				partitioned.mRelationPredicates, domain);
-		return new PerAbstractLocationInterference(widened);
+		final Map<AbstractLocationRelation, GuardedPredicate> widened = InterferenceUtils
+				.widenGuardedBuckets(mRelationPredicates, partitioned.mRelationPredicates, domain);
+		return new PerAbstractLocationInterference(widened, mApplicator);
 	}
 
 	@Override
@@ -85,16 +92,11 @@ public class PerAbstractLocationInterference implements IInterference {
 	}
 
 	@Override
-	public IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain,
-			final RelationalPredicatePostcondition postcondition, final GhostVariableManager ghostVars,
-			final ManagedScript managedScript, final BasicPredicateFactory factory, final int wideningThreshold,
+	public IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain, final int wideningThreshold,
 			final SifaStats stats) {
-		// opt: trivial (no relations)
 		if (isTrivial()) {
 			return state;
 		}
-		return InterferenceUtils.applyUntilFixpoint(state,
-				InterferenceUtils.prepareNonFalseRelations(mRelationPredicates.values(), postcondition), domain,
-				postcondition, wideningThreshold, stats);
+		return mApplicator.apply(state, mRelationPredicates.values(), domain, wideningThreshold, stats);
 	}
 }
