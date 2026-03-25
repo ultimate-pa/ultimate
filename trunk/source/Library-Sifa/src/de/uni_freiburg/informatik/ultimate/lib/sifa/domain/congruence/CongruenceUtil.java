@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -173,5 +174,23 @@ public class CongruenceUtil {
 			return Long.parseLong(matcher.group(1));
 		}
 		throw new IllegalArgumentException("Invalid format: " + num);
+	}
+
+	public static <K> Map<K, Integer> mergeMaps(final Map<K, Integer> map1, final Map<K, Integer> map2) {
+		final Map<K, Integer> newMap = new HashMap<>();
+
+		Integer freeIndex = 1;
+		for (final K var : map1.keySet()) {
+			newMap.put(var, freeIndex);
+			freeIndex++;
+		}
+
+		for (final K var : map2.keySet()) {
+			if (!newMap.containsKey(var)) {
+				newMap.put(var, freeIndex);
+				freeIndex++;
+			}
+		}
+		return newMap;
 	}
 }

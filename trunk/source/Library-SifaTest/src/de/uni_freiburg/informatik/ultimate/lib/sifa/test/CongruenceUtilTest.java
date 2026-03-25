@@ -154,4 +154,40 @@ public class CongruenceUtilTest {
 		Assert.assertTrue(matrix2.equals(matrixReorder2));
 	}
 
+	private static boolean testMergedMapsHelper(final Map<String, Integer> map1, final Map<String, Integer> map2,
+			final Map<String, Integer> mergedMap) {
+		for (final String s : map1.keySet()) {
+			if (!mergedMap.containsKey(s)) {
+				return false;
+			}
+		}
+		for (final String s : map2.keySet()) {
+			if (!mergedMap.containsKey(s)) {
+				return false;
+			}
+		}
+		for (final String s1 : mergedMap.keySet()) {
+			for (final String s2 : mergedMap.keySet()) {
+				if (!s1.equals(s2) && mergedMap.get(s1).equals(mergedMap.get(s2))) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	@Test
+	public void testMergeMaps() {
+		final Map<String, Integer> map1 = Map.of("a", 0, "b", 1, "c", 2);
+		final Map<String, Integer> map2 = Map.of("d", 0, "e", 1, "f", 2);
+		final Map<String, Integer> mergedMap12 = CongruenceUtil.mergeMaps(map1, map2);
+		// System.out.println(mergedMap12);
+		Assert.assertTrue(testMergedMapsHelper(map1, map2, mergedMap12));
+
+		final Map<String, Integer> map3 = Map.of("a", 2, "b", 5, "d", 1);
+		final Map<String, Integer> mergedMap13 = CongruenceUtil.mergeMaps(map1, map3);
+		// System.out.println(mergedMap13);
+		Assert.assertTrue(testMergedMapsHelper(map1, map3, mergedMap13));
+	}
+
 }
