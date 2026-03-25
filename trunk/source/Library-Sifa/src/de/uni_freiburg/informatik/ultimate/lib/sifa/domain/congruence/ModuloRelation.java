@@ -25,11 +25,11 @@ public class ModuloRelation implements ICongruenceRelation {
 	public static BigInteger MAX_NEG_MOD_COUNT = BigInteger.valueOf(5);
 
 	final EqualityRelation mEqualityRelation;
-	final Rational mMod;
+	final BigInteger mMod;
 
 	public ModuloRelation(final AffineTerm term, final BigInteger finalMod) {
 		mEqualityRelation = new EqualityRelation(term);
-		mMod = Rational.valueOf(finalMod, BigInteger.ONE);
+		mMod = finalMod;
 	}
 
 	private static ModuloRelation getUnsatModuloRelation(final Script script) {
@@ -155,7 +155,7 @@ public class ModuloRelation implements ICongruenceRelation {
 			if (modLhsInt == null || modRhsInt == null) {
 				return List.of();
 			}
-			if (!modLhsInt.equals(modTermRhs)) {
+			if (!modLhsInt.equals(modRhsInt)) {
 				return List.of();
 			}
 
@@ -171,11 +171,21 @@ public class ModuloRelation implements ICongruenceRelation {
 		return mEqualityRelation.getVars();
 	}
 
+	private static Rational modRational(final Rational rational, final BigInteger mod) {
+		if (rational.denominator().equals(BigInteger.ONE)) {
+			final BigInteger newNumerator = rational.numerator().mod(mod);
+			return Rational.valueOf(newNumerator, BigInteger.ONE);
+		}
+		return rational;
+	}
+
 	@Override
 	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
-		// TODO: Maybe add a modulo to everything before dividing
-		final List<Rational> divProtoVector = protoVector.stream().map(rational -> rational.div(mMod))
+		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mMod))
+				.collect(Collectors.toList());
+		final Rational rationalMod = Rational.valueOf(mMod, BigInteger.ONE);
+		final List<Rational> divProtoVector = modProtoVector.stream().map(rational -> rational.div(rationalMod))
 				.collect(Collectors.toList());
 
 		return CongruenceUtil.getRowVectorFromRationalList(divProtoVector);
