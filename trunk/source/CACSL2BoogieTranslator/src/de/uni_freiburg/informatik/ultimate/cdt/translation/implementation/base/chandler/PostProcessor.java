@@ -108,7 +108,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Markus Lindenmann
  * @date 12.10.2012
  */
-public class PostProcessor {
+public class PostProcessor implements IPostProcessor {
 
 	private final ILogger mLogger;
 
@@ -176,6 +176,7 @@ public class PostProcessor {
 	 *
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
+	@Override
 	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
