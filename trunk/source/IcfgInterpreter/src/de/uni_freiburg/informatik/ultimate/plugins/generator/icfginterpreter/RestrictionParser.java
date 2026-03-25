@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -17,11 +17,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BitVecValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BoolValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BooleanRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Equation.SolvedEquation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.IntValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.IntegerRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Restriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Value;
 
 public class RestrictionParser {
 	private final HashSet<Term> mLessEq;

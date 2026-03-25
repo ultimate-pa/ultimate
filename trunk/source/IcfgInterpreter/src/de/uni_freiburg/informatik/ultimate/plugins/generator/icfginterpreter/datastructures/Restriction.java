@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures;
 
 import java.util.Set;
 

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
@@ -6,7 +6,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator.IntegerValidator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
 
 public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {

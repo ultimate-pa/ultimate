@@ -8,13 +8,13 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BitVecValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BoolValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.IntValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Value;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BitVecValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BoolValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BooleanRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.IntValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.IntegerRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Restriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Value;
 
 /**
  * This class should be deterministic for its seed. This ensures that the same "non-deterministic" values appear when

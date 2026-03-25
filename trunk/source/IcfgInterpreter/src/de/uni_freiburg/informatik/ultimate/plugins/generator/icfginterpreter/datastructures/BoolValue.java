@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures;
 
 import java.util.Map;
 import java.util.Objects;

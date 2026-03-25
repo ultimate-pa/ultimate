@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -22,16 +22,18 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor.EdgeUntranslatableError;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor.Equations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.RestrictionParser;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.TermEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction.EmptyRangeException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ArrayValue.EmptyArrayEntryException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.ArrayValue.EmptyArrayEntryException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Equation.SolvedEquation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Restriction.EmptyRangeException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Update.HavocUpdate;
 
 public class InterpretedIcfgEdge {
 	private final Term mGuard;

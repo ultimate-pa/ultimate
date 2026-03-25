@@ -1,12 +1,10 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures;
 
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.BiPredicate;
-
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.IntValue;
 
 public class IntegerRestriction extends Restriction<IntValue> {
 	private final IntValue mValidValueCount;

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures;
 
 import java.util.List;
 import java.util.Map;
@@ -10,9 +10,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.RestrictionParser;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.TermEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Equation.SolvedEquation;
 
 public interface Update {
 	void update(Map<TermVariable, Value> state, NonDeterministicChoice ndc,

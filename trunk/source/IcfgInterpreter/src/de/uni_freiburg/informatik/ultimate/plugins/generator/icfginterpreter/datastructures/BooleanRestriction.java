@@ -1,10 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BoolValue;
 
 public class BooleanRestriction extends Restriction<BoolValue> {
 	public BooleanRestriction(final Set<BoolValue> inequal) {

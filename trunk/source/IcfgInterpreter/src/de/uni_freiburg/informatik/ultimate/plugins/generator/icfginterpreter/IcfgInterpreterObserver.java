@@ -32,9 +32,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.PartialExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterPreferences.OutputMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences.OutputMethod;
 
 public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;

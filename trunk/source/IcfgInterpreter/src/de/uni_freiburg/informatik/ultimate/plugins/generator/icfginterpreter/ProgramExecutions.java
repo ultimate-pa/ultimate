@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.PartialExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Value;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Value;
 
 // TODO: Better name?
 public final class ProgramExecutions extends BasePayloadContainer {

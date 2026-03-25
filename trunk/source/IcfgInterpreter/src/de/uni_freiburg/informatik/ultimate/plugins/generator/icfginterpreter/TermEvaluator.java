@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -15,6 +15,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.ArrayValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BitVecValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.BoolValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.IntValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Value;
 
 public class TermEvaluator {
 	public static Value evaluate(final Map<TermVariable, Value> state, final Term term) {
