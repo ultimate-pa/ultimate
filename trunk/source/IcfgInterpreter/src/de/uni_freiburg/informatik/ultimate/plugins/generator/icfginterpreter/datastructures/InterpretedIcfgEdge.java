@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Equ
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.EqualityExtractor.Equations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionResult.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.RestrictionParser;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.TermEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;

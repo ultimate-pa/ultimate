@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.PartialExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterPreferences.OutputMethod;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionResult.ExecutionTermintionReason;
 
 public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
@@ -150,7 +150,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 
 			if (partialExecution != null && mFinalResults.get(loc) instanceof UnprovableResult) {
 				// We have a counter example, and there is no previous counter example for this location.
-				final IcfgProgramExecution<IcfgEdge> errorExecution = ProgramExecutions
+				final IcfgProgramExecution<IcfgEdge> errorExecution = ExecutionResult
 						.translateExecution(partialExecution, mIcfg.getCfgSmtToolkit().getManagedScript());
 				final List<UnprovabilityReason> unprovabilityReasons =
 						UnprovabilityReason.getUnprovabilityReasons(errorExecution);
@@ -254,6 +254,6 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	}
 
 	public IElement getExecutions() {
-		return new ProgramExecutions(new HashMap<>(mExecutions));
+		return new ExecutionResult(new HashMap<>(mExecutions));
 	}
 }

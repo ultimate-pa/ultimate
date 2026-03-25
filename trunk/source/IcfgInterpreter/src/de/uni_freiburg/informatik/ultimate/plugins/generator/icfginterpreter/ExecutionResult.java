@@ -16,8 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.PartialExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datastructures.Value;
 
-// TODO: Better name?
-public final class ProgramExecutions extends BasePayloadContainer {
+public final class ExecutionResult extends BasePayloadContainer {
 	private static final long serialVersionUID = -5577390430583256394L;
 
 	public record Pair<A, B>(A a, B b) {
@@ -51,10 +50,9 @@ public final class ProgramExecutions extends BasePayloadContainer {
 		EXECUTION_TOO_LONG
 	}
 
-	// TODO: Also include the reason why the executions ended (no outgoing transitions, error, unsupported feature...)
 	private final Map<ExecutionTermintionReason, List<PartialExecution>> mExecutions;
 
-	public ProgramExecutions(final Map<ExecutionTermintionReason, List<PartialExecution>> executions) {
+	public ExecutionResult(final Map<ExecutionTermintionReason, List<PartialExecution>> executions) {
 		mExecutions = executions;
 	}
 
