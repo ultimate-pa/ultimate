@@ -34,9 +34,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerThreadInterference;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.RelationalLightInterferenceApplicator;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 
@@ -163,8 +165,7 @@ public class InterferencePrecisionRegressionTest {
 		mManagedScript.unlock(this);
 		final PerThreadInterference itf = (PerThreadInterference) interferences
 				.getInterferenceForThread(INTERFERING_THREAD_ID);
-		final IPredicate fixedJoin = itf.applyUntilFixpoint(state, mIntervalDomain, mRelationalPost, null,
-				mManagedScript, mPredicateFactory, 20, mStats);
+		final IPredicate fixedJoin = itf.applyUntilFixpoint(state, mIntervalDomain, 20, mStats);
 		final IPredicate fixedOr = applyUntilFixpointWithExactOr(state, interferences, MAIN_THREAD_ID, false);
 		mManagedScript.lock(this);
 
@@ -186,8 +187,7 @@ public class InterferencePrecisionRegressionTest {
 		final IPredicate post = mTools.post(state, transition);
 		final PerThreadInterference itf = (PerThreadInterference) interferences
 				.getInterferenceForThread(INTERFERING_THREAD_ID);
-		final IPredicate fixedJoin = itf.applyUntilFixpoint(post, mIntervalDomain, mRelationalPost, null,
-				mManagedScript, mPredicateFactory, 20, mStats);
+		final IPredicate fixedJoin = itf.applyUntilFixpoint(post, mIntervalDomain, 20, mStats);
 		final IPredicate fixedOr = applyUntilFixpointWithExactOr(post, interferences, MAIN_THREAD_ID, false);
 		mManagedScript.lock(this);
 
@@ -220,8 +220,9 @@ public class InterferencePrecisionRegressionTest {
 		final Term all = SmtUtils.orWithExtendedLocalSimplification(mScript, List.of(writerWriteRaceZero().getFormula(),
 				writerUnlock().getFormula(), unreachableOtherThreadWriteOne().getFormula()));
 		final IPredicate asPredicate = predicate(all);
-		return InterferenceCollection
-				.of(Map.of(INTERFERING_THREAD_ID, new PerThreadInterference(asPredicate)));
+		final var applicator = new RelationalLightInterferenceApplicator(mRelationalPost);
+		return InterferenceCollection.of(
+				Map.of(INTERFERING_THREAD_ID, new PerThreadInterference(GuardedPredicate.unguarded(asPredicate), applicator)));
 	}
 
 	private IPredicate applyUntilFixpointWithExactOr(final IPredicate state, final InterferenceCollection interferences,

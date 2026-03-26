@@ -266,7 +266,7 @@ public final class ThreadModularSetup {
 		case POST_STATE -> new PostStateInterferenceApplicator();
 		case SYNTACTIC -> new SyntacticInterferenceApplicator(script, factory);
 		case SYNTACTIC_PRECISE -> new SyntacticPreciseInterferenceApplicator(script, factory);
-		case RELATIONAL_LIGHT -> new RelationalLightInterferenceApplicator(postcondition, services, script, factory);
+		case RELATIONAL_LIGHT -> new RelationalLightInterferenceApplicator(postcondition);
 		case RELATIONAL_QE -> new RelationalQeInterferenceApplicator(postcondition);
 		};
 	}
