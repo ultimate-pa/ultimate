@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -238,21 +237,27 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private ArrayList<Procedure> constructThreadGpioProc() {
+		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
 		final var procedures = new ArrayList<Procedure>();
-		final var isrGpios = mISR.getISRMap().entrySet();
-		for (final Entry<Integer, Procedure> entry : isrGpios) {
-			final var irq = entry.getKey();
-			final var isr = entry.getValue();
-			final var procId = isr.getIdentifier();
-			final var idExpression = mIdExpressions.get(irq);
-			assert idExpression != null : "There exists no identifier expression for the IRQ: " + irq;
-			procedures.add(constructThreadGpioProc(procId, idExpression, irq));
+		if (mTranslationMode == InterruptTranslationMode.REALIZATION_1) {
+			final var isrGpios = mISR.getISRMap().entrySet();
+			for (final Entry<Integer, Procedure> entry : isrGpios) {
+				final var irq = entry.getKey();
+				final var isr = entry.getValue();
+				final var procId = isr.getIdentifier();
+				final var idExpression = mIdExpressions.get(irq);
+				assert idExpression != null : "There exists no identifier expression for the IRQ: " + irq;
+				procedures.add(constructOneInterruptThreadGpioProc(procId, idExpression, irq));
+			}
+		} else {
+			procedures.add(constructAllInterruptsThreadGpioProc());
 		}
 		return procedures;
 	}
 
-	private Procedure constructThreadGpioProc(final String identifier, final IdentifierExpression threadEnabledId,
-			final Integer irq) {
+	// Realization 1
+	private Procedure constructOneInterruptThreadGpioProc(final String identifier,
+			final IdentifierExpression threadEnabledId, final Integer irq) {
 		final var procName = constructThreadGpioID(irq);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], null, null);
@@ -268,18 +273,64 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 				null, body);
 	}
 
+	// Realization 2
+
+	private Procedure constructAllInterruptsThreadGpioProc() {
+		final var procName = constructThreadGpioID(0);
+		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
+				new VarList[0], null, null);
+		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, SFO.INIT, declaration);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final var whileStmt = constructAllIsrWhileLoop();
+		builder.addStatement(whileStmt);
+		final var body = mProcedureManager.constructBody(mIgnoreLoc,
+				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
+				builder.getStatements().toArray(new Statement[builder.getStatements().size()]), procName);
+		mProcedureManager.endCustomProcedure(mCHandler, SFO.INIT);
+		return new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0],
+				null, body);
+	}
+
 	private Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId) {
 		// TODO: Maybe this needs to be registered in ProcedureManager
-		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
-				new Expression[0]);
-		final var enabledExpr =
-				ExpressionFactory.constructUnaryExpression(mIgnoreLoc, Operator.LOGICNEG, threadEnabledId);
-		final var ifStmt =
-				StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then }, null);
+		final var ifStmt = getIfStatement(identifier, threadEnabledId, false);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStmt));
 		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
 		return new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0],
 				new Statement[] { atomic });
+	}
+
+	private Statement constructAllIsrWhileLoop() {
+		final var ifStatements = new ArrayList<Statement>();
+		for (final Entry<Integer, Procedure> entry : mISR.getISRMap().entrySet()) {
+			final var irq = entry.getKey();
+			final var identifier = entry.getValue().getIdentifier();
+			final var threadEnabledId = mIdExpressions.get(irq);
+			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ: " + irq;
+			ifStatements.add(getIfStatement(identifier, threadEnabledId, true));
+		}
+		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements);
+		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
+		return new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0],
+				new Statement[] { atomic });
+	}
+
+	private Statement getIfStatement(final String identifier, final IdentifierExpression threadEnabledId,
+			final boolean andWildcard) {
+		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
+				new Expression[0]);
+		final var enabledExpr = getEnabledExpression(threadEnabledId, andWildcard);
+		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then }, null);
+	}
+
+	private Expression getEnabledExpression(final IdentifierExpression threadEnabledId, final boolean andWildcard) {
+		if (andWildcard) {
+			return threadEnabledId;
+		}
+		final var wildCard = ExpressionFactory.constructBooleanWildCardExpression(mIgnoreLoc);
+		return ExpressionFactory.newBinaryExpression(mIgnoreLoc,
+				de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator.LOGICAND, threadEnabledId,
+				wildCard);
 	}
 
 	private String constructThreadGpioID(final Integer irq) {
