@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,12 +39,16 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
@@ -54,39 +60,25 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationResultReporter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IPostProcessor;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ThreadIdManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class IdpToTbpMultipleThreadsProcessor implements IPostProcessor {
+public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private final ILogger mLogger;
-
-	private final ExpressionTranslation mExpressionTranslation;
-	private final CTranslationResultReporter mReporter;
-
-	/*
-	 * Decides if the PostProcessor declares the special function that we use for converting Boogie-Real to a
-	 * Boogie-Int. This is needed when we do a cast from float to int in C.
-	 */
-	private final boolean mDeclareToIntFunction = false;
-
-	private final ITypeHandler mTypeHandler;
-
-	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
 	private final FlatSymbolTable mSymboltable;
 
@@ -98,40 +90,30 @@ public class IdpToTbpMultipleThreadsProcessor implements IPostProcessor {
 
 	private final TypeSizes mTypeSize;
 
-	private final StaticObjectsHandler mStaticObjectsHandler;
-
-	private final InitializationHandler mInitHandler;
-
 	private final TranslationSettings mSettings;
 
 	private final FunctionHandler mFunctionhandler;
 
-	private final Set<String> mFunctions;
-
 	private final ILocation mIgnoreLoc = LocationFactory.createIgnoreCLocation();
 
-	public IdpToTbpMultipleThreadsProcessor(final ILogger logger, final ExpressionTranslation expressionTranslation,
-			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final Set<String> functions, final TypeSizes typeSizes,
-			final FlatSymbolTable symbolTable, final StaticObjectsHandler staticObjectsHandler,
+	private final ThreadIdManager mThreadIdManager;
+
+	public InterruptDrivenToThreadBasedProcessor(final ILogger logger,
+			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizes typeSizes, final FlatSymbolTable symbolTable,
 			final TranslationSettings settings, final ProcedureManager procedureManager,
-			final MemoryHandler memoryHandler, final InitializationHandler initHandler,
-			final FunctionHandler functionhandler, final CHandler chandler) {
+			final MemoryHandler memoryHandler, final FunctionHandler functionhandler, final CHandler chandler,
+			final ExpressionResultTransformer expressionResultTransformer) {
 		mLogger = logger;
-		mExpressionTranslation = expressionTranslation;
-		mReporter = reporter;
-		mTypeHandler = typeHandler;
-		mAuxVarInfoBuilder = auxVarInfoBuilder;
-		mFunctions = functions;
 		mTypeSize = typeSizes;
 		mSymboltable = symbolTable;
-		mStaticObjectsHandler = staticObjectsHandler;
 		mSettings = settings;
 		mProcedureManager = procedureManager;
 		mMemoryHandler = memoryHandler;
-		mInitHandler = initHandler;
 		mFunctionhandler = functionhandler;
 		mCHandler = chandler;
+		mThreadIdManager = new ThreadIdManager(auxVarInfoBuilder, expressionResultTransformer, expressionTranslation,
+				mMemoryHandler, typeHandler, mTypeSize, null /* TODO */, symbolTable);
 	}
 
 	@Override
@@ -141,7 +123,35 @@ public class IdpToTbpMultipleThreadsProcessor implements IPostProcessor {
 		return null;
 	}
 
-	Map<Integer, IdentifierExpression> constructIntEnabledExpressions(final List<Integer> identifiers) {
+	private void addForksToProcedure(final Procedure mainProcedure, final Set<Procedure> threadGpioProcedures) {
+		final List<Statement> newBlock = constructForkStatements(threadGpioProcedures);
+		final var body = mainProcedure.getBody();
+		newBlock.addAll(Arrays.asList(body.getBlock()));
+		body.setBlock(newBlock.toArray(new Statement[0]));
+	}
+
+	private List<Statement> constructForkStatements(final Set<Procedure> threadGpioProcedures) {
+		final var forkStatements = new ArrayList<Statement>();
+		for (final Procedure procedure : threadGpioProcedures) {
+			final var fs =
+					new ForkStatement(mIgnoreLoc, new Expression[0], procedure.getIdentifier(), new Expression[0]);
+			forkStatements.add(fs);
+		}
+		return forkStatements;
+	}
+
+	private Set<Declaration> constructIntEnableDeclarations(final List<IdentifierExpression> identifierExpressions) {
+		final var declarations = new HashSet<Declaration>();
+		final var astType = new NamedType(mIgnoreLoc, BoogieType.TYPE_BOOL, "bool", new ASTType[0]);
+		for (final IdentifierExpression identifierExpression : identifierExpressions) {
+			final var decl = new VariableDeclaration(mIgnoreLoc, new Attribute[0], new VarList[] {
+					new VarList(mIgnoreLoc, new String[] { identifierExpression.getIdentifier() }, astType) });
+			declarations.add(decl);
+		}
+		return declarations;
+	}
+
+	private Map<Integer, IdentifierExpression> constructIntEnabledExpressions(final List<Integer> identifiers) {
 		final var idExpressions = new HashMap<Integer, IdentifierExpression>();
 		for (final Integer irq : identifiers) {
 			final var id = "gpio_int" + irq + "_enabled";
@@ -152,7 +162,7 @@ public class IdpToTbpMultipleThreadsProcessor implements IPostProcessor {
 		return idExpressions;
 	}
 
-	Statement constructIntEnabledInitializations(final List<VariableLHS> leftHandSides) {
+	private Statement constructIntEnabledInitializations(final List<VariableLHS> leftHandSides) {
 		final Expression assignment = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, false);
 		final Expression[] assignments = new Expression[leftHandSides.size()];
 		Arrays.fill(assignments, assignment);
@@ -160,8 +170,7 @@ public class IdpToTbpMultipleThreadsProcessor implements IPostProcessor {
 				assignments);
 	}
 
-	void modifyIntEnableProcedure(final Procedure intEnableProcedure, final VariableLHS intEnabledLhs) {
-		// TODO: Modify Specification
+	private void modifyIntEnableProcedure(final Procedure intEnableProcedure, final VariableLHS intEnabledLhs) {
 		final var body = intEnableProcedure.getBody();
 		final var block = body.getBlock();
 		final var assignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc, intEnabledLhs,
@@ -172,7 +181,18 @@ public class IdpToTbpMultipleThreadsProcessor implements IPostProcessor {
 		body.setBlock(new Statement[] { atomic });
 	}
 
-	Declaration constructThreadGpioProc(final String identifier, final IdentifierExpression threadEnabledId,
+	private Procedure addIntEnabledToSpecification(final Procedure intEnableSpec, final VariableLHS intEnabledLhs) {
+		// Adjust modify specification
+		final var oldSpec = intEnableSpec.getSpecification();
+		final var modifiesSpec = new ModifiesSpecification(mIgnoreLoc, false, new VariableLHS[] { intEnabledLhs });
+		final var newSpec = Arrays.copyOf(oldSpec, oldSpec.length + 1);
+		newSpec[oldSpec.length] = modifiesSpec;
+		return new Procedure(intEnableSpec.getLoc(), intEnableSpec.getAttributes(), intEnableSpec.getIdentifier(),
+				intEnableSpec.getTypeParams(), intEnableSpec.getInParams(), intEnableSpec.getOutParams(), newSpec,
+				intEnableSpec.getBody());
+	}
+
+	private Procedure constructThreadGpioProc(final String identifier, final IdentifierExpression threadEnabledId,
 			final Integer irq) {
 		final var procName = constructThreadGpioID(irq);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
@@ -189,7 +209,8 @@ public class IdpToTbpMultipleThreadsProcessor implements IPostProcessor {
 				null, body);
 	}
 
-	Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId) {
+	private Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId) {
+		// TODO: Maybe this needs to be registered in ProcedureManager
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
 		final var enabledExpr =
@@ -202,7 +223,7 @@ public class IdpToTbpMultipleThreadsProcessor implements IPostProcessor {
 				new Statement[] { atomic });
 	}
 
-	String constructThreadGpioID(final Integer irq) {
+	private String constructThreadGpioID(final Integer irq) {
 		return "thr_gpio" + irq;
 	}
 }

@@ -32,7 +32,7 @@ import java.util.Map;
  * Simple struct that contains information about the interrupt-service-routines in program. Names of the ISR related
  * functions are stored as Strings.
  */
-public class InterruptServiceRoutines {
+public class ISRInfo {
 	// Map IRQ to ISR Name
 	private Map<Integer, String> mISRMap;
 
@@ -43,7 +43,7 @@ public class InterruptServiceRoutines {
 	private String mSetPriority;
 	private String mGetPriority;
 
-	public InterruptServiceRoutines(final Map<Integer, String> isrMap, final String reqEnable, final String reqDisable,
+	public ISRInfo(final Map<Integer, String> isrMap, final String reqEnable, final String reqDisable,
 			final String setPrio, final String getPrio) {
 		mISRMap = isrMap;
 		mRequestEnable = reqEnable;
