@@ -28,11 +28,14 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -98,12 +101,21 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private final ThreadIdManager mThreadIdManager;
 
+	private final InterruptTranslationMode mTranslationMode;
+
+	private final InterruptServiceRoutines mISR;
+
+	private Map<Integer, IdentifierExpression> mIdExpressions = null;
+
+	private Statement mAdditionalInitializations = null;
+
 	public InterruptDrivenToThreadBasedProcessor(final ILogger logger,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizes typeSizes, final FlatSymbolTable symbolTable,
 			final TranslationSettings settings, final ProcedureManager procedureManager,
 			final MemoryHandler memoryHandler, final FunctionHandler functionhandler, final CHandler chandler,
-			final ExpressionResultTransformer expressionResultTransformer) {
+			final ExpressionResultTransformer expressionResultTransformer,
+			final InterruptTranslationMode translationMode, final InterruptServiceRoutines isrs) {
 		mLogger = logger;
 		mTypeSize = typeSizes;
 		mSymboltable = symbolTable;
@@ -112,25 +124,45 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		mMemoryHandler = memoryHandler;
 		mFunctionhandler = functionhandler;
 		mCHandler = chandler;
+		mTranslationMode = translationMode;
+		mISR = isrs;
 		mThreadIdManager = new ThreadIdManager(auxVarInfoBuilder, expressionResultTransformer, expressionTranslation,
-				mMemoryHandler, typeHandler, mTypeSize, null /* TODO */, symbolTable);
+				mMemoryHandler, typeHandler, mTypeSize, null, symbolTable);
 	}
 
 	@Override
 	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations) {
-		// TODO Auto-generated method stub
-		return null;
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		mIdExpressions = constructIntEnabledExpressions(mISR.getISRMap().keySet());
+
+		// Add interrupt enabled variable declarations
+		decl.addAll(constructIntEnableDeclarations());
+
+		// Add thread gpio procedures
+		final var threadGpioProcedures = constructThreadGpioProc();
+		decl.addAll(threadGpioProcedures);
+
+		// Add fork statements to the main procedure
+		addForksToProcedure(mISR.getMainProcedure(), threadGpioProcedures);
+
+		// Add atomic block and variable assignment to request enabled functions
+		final var lhsMap = getVariableLHSs();
+		modifyIntEnableProcedures(lhsMap);
+
+		mAdditionalInitializations = constructIntEnabledInitializations(lhsMap.values());
+
+		return decl;
 	}
 
-	private void addForksToProcedure(final Procedure mainProcedure, final Set<Procedure> threadGpioProcedures) {
+	private void addForksToProcedure(final Procedure mainProcedure, final List<Procedure> threadGpioProcedures) {
 		final List<Statement> newBlock = constructForkStatements(threadGpioProcedures);
 		final var body = mainProcedure.getBody();
 		newBlock.addAll(Arrays.asList(body.getBlock()));
 		body.setBlock(newBlock.toArray(new Statement[0]));
 	}
 
-	private List<Statement> constructForkStatements(final Set<Procedure> threadGpioProcedures) {
+	private List<Statement> constructForkStatements(final List<Procedure> threadGpioProcedures) {
 		final var forkStatements = new ArrayList<Statement>();
 		for (final Procedure procedure : threadGpioProcedures) {
 			final var fs =
@@ -140,10 +172,10 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		return forkStatements;
 	}
 
-	private Set<Declaration> constructIntEnableDeclarations(final List<IdentifierExpression> identifierExpressions) {
+	private Set<Declaration> constructIntEnableDeclarations() {
 		final var declarations = new HashSet<Declaration>();
 		final var astType = new NamedType(mIgnoreLoc, BoogieType.TYPE_BOOL, "bool", new ASTType[0]);
-		for (final IdentifierExpression identifierExpression : identifierExpressions) {
+		for (final IdentifierExpression identifierExpression : mIdExpressions.values()) {
 			final var decl = new VariableDeclaration(mIgnoreLoc, new Attribute[0], new VarList[] {
 					new VarList(mIgnoreLoc, new String[] { identifierExpression.getIdentifier() }, astType) });
 			declarations.add(decl);
@@ -151,7 +183,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		return declarations;
 	}
 
-	private Map<Integer, IdentifierExpression> constructIntEnabledExpressions(final List<Integer> identifiers) {
+	private Map<Integer, IdentifierExpression> constructIntEnabledExpressions(final Collection<Integer> identifiers) {
 		final var idExpressions = new HashMap<Integer, IdentifierExpression>();
 		for (final Integer irq : identifiers) {
 			final var id = "gpio_int" + irq + "_enabled";
@@ -162,12 +194,25 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		return idExpressions;
 	}
 
-	private Statement constructIntEnabledInitializations(final List<VariableLHS> leftHandSides) {
+	private Statement constructIntEnabledInitializations(final Collection<VariableLHS> leftHandSides) {
 		final Expression assignment = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, false);
 		final Expression[] assignments = new Expression[leftHandSides.size()];
 		Arrays.fill(assignments, assignment);
 		return StatementFactory.constructAssignmentStatement(mIgnoreLoc, leftHandSides.toArray(new LeftHandSide[0]),
 				assignments);
+	}
+
+	private void modifyIntEnableProcedures(final Map<Integer, VariableLHS> lhsMap) {
+		// TODO: Modify Specifications
+		final var specifications = new ArrayList<Procedure>();
+		final var intEnabledProcedures = mISR.getRequestEnable();
+		for (final Entry<Integer, VariableLHS> entry : lhsMap.entrySet()) {
+			final var irq = entry.getKey();
+			final var lhs = entry.getValue();
+			final var intEnableProcedure = intEnabledProcedures.get(irq);
+			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
+			modifyIntEnableProcedure(intEnableProcedure, lhs);
+		}
 	}
 
 	private void modifyIntEnableProcedure(final Procedure intEnableProcedure, final VariableLHS intEnabledLhs) {
@@ -190,6 +235,20 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		return new Procedure(intEnableSpec.getLoc(), intEnableSpec.getAttributes(), intEnableSpec.getIdentifier(),
 				intEnableSpec.getTypeParams(), intEnableSpec.getInParams(), intEnableSpec.getOutParams(), newSpec,
 				intEnableSpec.getBody());
+	}
+
+	private ArrayList<Procedure> constructThreadGpioProc() {
+		final var procedures = new ArrayList<Procedure>();
+		final var isrGpios = mISR.getISRMap().entrySet();
+		for (final Entry<Integer, Procedure> entry : isrGpios) {
+			final var irq = entry.getKey();
+			final var isr = entry.getValue();
+			final var procId = isr.getIdentifier();
+			final var idExpression = mIdExpressions.get(irq);
+			assert idExpression != null : "There exists no identifier expression for the IRQ: " + irq;
+			procedures.add(constructThreadGpioProc(procId, idExpression, irq));
+		}
+		return procedures;
 	}
 
 	private Procedure constructThreadGpioProc(final String identifier, final IdentifierExpression threadEnabledId,
@@ -225,5 +284,14 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private String constructThreadGpioID(final Integer irq) {
 		return "thr_gpio" + irq;
+	}
+
+	private Map<Integer, VariableLHS> getVariableLHSs() {
+		return mIdExpressions.entrySet().stream().collect(
+				Collectors.toMap(Entry::getKey, e -> new VariableLHS(mIgnoreLoc, e.getValue().getIdentifier())));
+	}
+
+	public Statement getAdditionalInitializations() {
+		return mAdditionalInitializations;
 	}
 }
