@@ -90,7 +90,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private Map<Integer, IdentifierExpression> mIdExpressions = null;
 
-	private Statement mAdditionalInitializations = null;
+	private final List<Statement> mAdditionalInitializations = new ArrayList<>();
 
 	public InterruptDrivenToThreadBasedProcessor(final ILogger logger, final FlatSymbolTable symbolTable,
 			final TranslationSettings settings, final ProcedureManager procedureManager, final CHandler chandler,
@@ -124,7 +124,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		final var lhsMap = getVariableLHSs();
 		modifyIntEnableProcedures(lhsMap);
 
-		mAdditionalInitializations = constructIntEnabledInitializations(lhsMap.values());
+		mAdditionalInitializations.add(constructIntEnabledInitializations(lhsMap.values()));
 
 		return decl;
 	}
@@ -317,7 +317,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 				Collectors.toMap(Entry::getKey, e -> new VariableLHS(mIgnoreLoc, e.getValue().getIdentifier())));
 	}
 
-	public Statement getAdditionalInitializations() {
+	public List<Statement> getAdditionalInitializations() {
 		return mAdditionalInitializations;
 	}
 }
