@@ -63,18 +63,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IPostProcessor;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ThreadIdManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -84,21 +76,13 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private final FlatSymbolTable mSymboltable;
 
-	private final MemoryHandler mMemoryHandler;
-
 	private final ProcedureManager mProcedureManager;
 
 	private final CHandler mCHandler;
 
-	private final TypeSizes mTypeSize;
-
 	private final TranslationSettings mSettings;
 
-	private final FunctionHandler mFunctionhandler;
-
 	private final ILocation mIgnoreLoc = LocationFactory.createIgnoreCLocation();
-
-	private final ThreadIdManager mThreadIdManager;
 
 	private final InterruptTranslationMode mTranslationMode;
 
@@ -108,25 +92,16 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private Statement mAdditionalInitializations = null;
 
-	public InterruptDrivenToThreadBasedProcessor(final ILogger logger,
-			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizes typeSizes, final FlatSymbolTable symbolTable,
-			final TranslationSettings settings, final ProcedureManager procedureManager,
-			final MemoryHandler memoryHandler, final FunctionHandler functionhandler, final CHandler chandler,
-			final ExpressionResultTransformer expressionResultTransformer,
+	public InterruptDrivenToThreadBasedProcessor(final ILogger logger, final FlatSymbolTable symbolTable,
+			final TranslationSettings settings, final ProcedureManager procedureManager, final CHandler chandler,
 			final InterruptTranslationMode translationMode, final InterruptServiceRoutines isrs) {
 		mLogger = logger;
-		mTypeSize = typeSizes;
 		mSymboltable = symbolTable;
 		mSettings = settings;
 		mProcedureManager = procedureManager;
-		mMemoryHandler = memoryHandler;
-		mFunctionhandler = functionhandler;
 		mCHandler = chandler;
 		mTranslationMode = translationMode;
 		mISR = isrs;
-		mThreadIdManager = new ThreadIdManager(auxVarInfoBuilder, expressionResultTransformer, expressionTranslation,
-				mMemoryHandler, typeHandler, mTypeSize, null, symbolTable);
 	}
 
 	@Override
