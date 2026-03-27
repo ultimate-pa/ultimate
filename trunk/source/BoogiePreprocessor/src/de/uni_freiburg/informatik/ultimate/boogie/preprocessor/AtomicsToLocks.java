@@ -28,8 +28,11 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -79,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
 	// Options result in different outputs
 	private static final boolean ATOMIC_GUARD_STATEMENTS = true;
-	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
+	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = true;
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private static final String ULTIMATE_INIT = "ULTIMATE.init";
@@ -106,6 +109,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	public boolean process(final IElement root) {
 		if (root instanceof final Unit unit) {
 			mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
+			final Map<Procedure, Statement[]> procedureToNewBlock = new HashMap<>();
 			mDeclarationBuilder = constructDeclarationBuilder(unit);
 			final VariableDeclaration declaration = mDeclarationBuilder.getDeclaration();
 			final List<Declaration> newDeclarations = new ArrayList<>();
@@ -122,10 +126,15 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 					// If there is no implementation or proc is the specification nothing needs to be replaced
 					newDeclarations.add(proc);
 				} else if (proc.getBody() != null) {
-					replaceAtomics(proc);
+					final var newBody = replaceAtomics(proc);
+					procedureToNewBlock.put(proc, newBody);
 					newDeclarations.add(proc);
 				}
 			}
+			if (mModifiesLock.isEmpty()) {
+				return false;
+			}
+			setNewBodies(procedureToNewBlock);
 			initializeLockInUnit();
 			getNewSpecifications(newDeclarations);
 			unit.setDeclarations(newDeclarations.toArray(new Declaration[newDeclarations.size()]));
@@ -140,7 +149,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 * @param proc
 	 *            Procedure in which atomics should be replaced
 	 */
-	private void replaceAtomics(final Procedure proc) {
+	private Statement[] replaceAtomics(final Procedure proc) {
 		// TODO: Only add assume statements to the actual program and not to procedures added by Ultimate (start, init)?
 		final Body body = proc.getBody();
 
@@ -150,8 +159,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			mModifiesLock.add(proc.getIdentifier());
 			mContainsAtomic = false;
 		}
-
-		body.setBlock(newStatements);
+		return newStatements;
+		// body.setBlock(newStatements);
 	}
 
 	@Override
@@ -164,7 +173,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 				final var lockedSection = atomicToLocked(atomicstmt.getBody());
 				statementList.addAll(lockedSection);
 			} else if (isAtomicBegin(statement)) {
-				mContainsAtomic = true;
 				statementList.addAll(computeAtomicBlock(Arrays.copyOfRange(statements, i, statements.length)));
 				break;
 			} else {
@@ -237,6 +245,14 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			final var specIdx = declarations.indexOf(procSpec);
 			assert specIdx > -1 : "Declaration of the procedure " + procId + " is missing!";
 			declarations.set(specIdx, newSpec);
+		}
+	}
+
+	private void setNewBodies(final Map<Procedure, Statement[]> procedureToNewBlock) {
+		for (final Entry<Procedure, Statement[]> entry : procedureToNewBlock.entrySet()) {
+			final var proc = entry.getKey();
+			final var block = entry.getValue();
+			proc.getBody().setBlock(block);
 		}
 	}
 
@@ -449,6 +465,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		}
 		final List<Statement> replacedBlock = new ArrayList<>();
 		if (!OMIT_ATOMICS_WITHOUT_LOOP || atomicContainsLoop(atomicBlock.toArray(new Statement[0]))) {
+			mContainsAtomic = true;
 			final var replaced = replaceVerifierAtomics(atomicBlock, false).getFirst();
 			replacedBlock.addAll(replaced);
 		} else {
