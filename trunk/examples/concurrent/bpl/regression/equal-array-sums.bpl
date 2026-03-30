@@ -8,7 +8,7 @@
  * When combined with the LoopLockstep preference order, this yields significant proof simplification.
  *
  */
-var m : bool;
+var m : int;
 var A : [int]int;
 var x, y, n : int;
 

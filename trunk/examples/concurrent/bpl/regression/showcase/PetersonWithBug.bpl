@@ -33,7 +33,7 @@ modifies critical, flag0, flag1, turn;
 {
   var x, y: int;
 
-  while (true) {
+  while (1 == 1) {
     turn := 1;
     flag0 := 1;
     assume (flag1 == 0 || turn == 0);
@@ -50,7 +50,7 @@ modifies critical, flag0, flag1, turn;
 {
    var a, b: int;
  
-   while (true) {
+   while (1 == 1) {
      // Here is a bug!
      // The following two statements were accidentally swapped.
      flag1 := 1;

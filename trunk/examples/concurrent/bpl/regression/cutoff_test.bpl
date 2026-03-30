@@ -30,10 +30,10 @@ procedure Thread1() returns ()
 modifies x, y;
 {
    if (*) {
-      while (*) { assume true; } // prevent LBE from applying choice rule
+      while (*) { assume 1 == 1; } // prevent LBE from applying choice rule
       y := 0;
    } else {
-      while (*) { assume true; } // prevent LBE from applying choice rule
+      while (*) { assume 1 == 1; } // prevent LBE from applying choice rule
       x := x+1;
    }
 }

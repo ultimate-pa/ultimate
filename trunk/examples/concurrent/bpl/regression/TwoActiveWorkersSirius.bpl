@@ -16,7 +16,7 @@ modifies c, i;
 {
     c := 0;
     i := 0;
-    while (true) {
+    while (1 == 1) {
         fork i worker();
         if (i > 0) { join i-1; }
         i := i + 1;

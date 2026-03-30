@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeDomain;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
@@ -72,10 +72,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder;
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  */
 public class SifaPreferences extends UltimatePreferenceInitializer {
-
-	public enum ConcurrentAnalysisMode {
-		THREAD_MODULAR_FIXPOINT, SINGLE_PASS_BASELINE
-	}
 
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
 	private static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
@@ -115,18 +111,12 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final InterferenceType[] VALUES_INTERFERENCE_TYPE = InterferenceType.values();
 	public static final Class<InterferenceType> CLASS_INTERFERENCE_TYPE = InterferenceType.class;
 
-	public static final String LABEL_INTERFERENCE_REPRESENTATION = "Interference Representation";
-	private static final InterferenceRepresentation DEFAULT_INTERFERENCE_REPRESENTATION =
-			InterferenceRepresentation.RELATIONAL_LIGHT;
-	private static final InterferenceRepresentation[] VALUES_INTERFERENCE_REPRESENTATION =
-			InterferenceRepresentation.values();
-	public static final Class<InterferenceRepresentation> CLASS_INTERFERENCE_REPRESENTATION =
-			InterferenceRepresentation.class;
-
-	public static final String LABEL_CONCURRENT_ANALYSIS_MODE = "Concurrent Analysis Mode";
-	private static final ConcurrentAnalysisMode DEFAULT_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.THREAD_MODULAR_FIXPOINT;
-	private static final ConcurrentAnalysisMode[] VALUES_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.values();
-	public static final Class<ConcurrentAnalysisMode> CLASS_CONCURRENT_ANALYSIS_MODE = ConcurrentAnalysisMode.class;
+	public static final String LABEL_INTERFERENCE_APPLICATOR = "Interference Applicator";
+	private static final InterferenceApplicatorType DEFAULT_INTERFERENCE_APPLICATOR = InterferenceApplicatorType.QE;
+	private static final InterferenceApplicatorType[] VALUES_INTERFERENCE_APPLICATOR =
+			InterferenceApplicatorType.values();
+	public static final Class<InterferenceApplicatorType> CLASS_INTERFERENCE_APPLICATOR =
+			InterferenceApplicatorType.class;
 
 	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction";
 	private static final LocationAbstractionType DEFAULT_LOCATION_ABSTRACTION = LocationAbstractionType.SPLIT_AT_GUARD_AND_EXIT;
@@ -270,8 +260,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				"Thread-Modular");
 		containerConcurrent
 				.addItem(combo(LABEL_INTERFERENCE_TYPE, DEFAULT_INTERFERENCE_TYPE, VALUES_INTERFERENCE_TYPE));
-		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_REPRESENTATION, DEFAULT_INTERFERENCE_REPRESENTATION,
-				VALUES_INTERFERENCE_REPRESENTATION));
+		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_APPLICATOR, DEFAULT_INTERFERENCE_APPLICATOR,
+				VALUES_INTERFERENCE_APPLICATOR));
 		containerConcurrent
 				.addItem(combo(LABEL_LOCATION_ABSTRACTION, DEFAULT_LOCATION_ABSTRACTION, VALUES_LOCATION_ABSTRACTION));
 		containerConcurrent.addItem(integer(LABEL_OUTER_WIDENING_THRESHOLD, TOOLTIP_OUTER_WIDENING_THRESHOLD,
@@ -287,8 +277,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				"Thread-Modular Testing");
 		containerConcurrentTesting.addItem(
 				combo(LABEL_LOCATION_TRACKING_MODE, DEFAULT_LOCATION_TRACKING_MODE, VALUES_LOCATION_TRACKING_MODE));
-		containerConcurrentTesting.addItem(combo(LABEL_CONCURRENT_ANALYSIS_MODE, DEFAULT_CONCURRENT_ANALYSIS_MODE,
-				VALUES_CONCURRENT_ANALYSIS_MODE));
 
 		return new BaseUltimatePreferenceItem[] {
 				combo(LABEL_ABSTRACT_DOMAIN, DEFAULT_ABSTRACT_DOMAIN, VALUES_ABSTRACT_DOMAIN),

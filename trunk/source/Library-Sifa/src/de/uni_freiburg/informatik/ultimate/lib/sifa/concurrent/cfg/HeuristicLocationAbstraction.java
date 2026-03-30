@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -266,10 +267,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			return false;
 		}
 		for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-			if (edge.getTransformula() == null) {
-				continue;
-			}
-			if (edge.getTransformula().getAssignedVars().stream().anyMatch(vars::contains)) {
+			if (InterferenceUtils.writesAnyOf(edge.getTransformula(), vars)) {
 				return true;
 			}
 		}
@@ -290,20 +288,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	}
 
 	private boolean writesRelevantGuardVar(final LOC loc, final Set<IProgramVar> relevantGuardVars) {
-		if (relevantGuardVars.isEmpty()) {
-			return false;
-		}
-		for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-			if (edge.getTransformula() == null) {
-				continue;
-			}
-			final boolean writesRelevantVar = edge.getTransformula().getAssignedVars().stream()
-					.anyMatch(relevantGuardVars::contains);
-			if (writesRelevantVar) {
-				return true;
-			}
-		}
-		return false;
+		return writesAnyOf(loc, relevantGuardVars);
 	}
 
 	private Map<String, Set<LOC>> groupByProcedure(final Set<LOC> locations) {
@@ -349,10 +334,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	}
 
 	private boolean isFoundationalSplitEdge(final IcfgEdge edge) {
-		if (edge.getTransformula() == null) {
-			return false;
-		}
-		return edge.getTransformula().getAssignedVars().stream().anyMatch(IProgramVar::isGlobal);
+		return InterferenceUtils.modifiesGlobals(edge.getTransformula());
 	}
 
 	@SuppressWarnings("unchecked")

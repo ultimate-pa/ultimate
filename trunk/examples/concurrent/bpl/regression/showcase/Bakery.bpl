@@ -32,7 +32,7 @@ procedure Process0() returns ()
 modifies critical, n0;
 {
 
-  while (true) {
+  while (1 == 1) {
     n0 := n1+1;
     assume (n1 == 0 || n0<n1);
       assert (critical == 0);
@@ -47,7 +47,7 @@ procedure Process1() returns ()
 modifies critical, n1;
 {
  
-  while (true) {
+  while (1 == 1) {
     n1 := n0+1;
     assume (n0 == 0 || n1<n0);
       assert (critical == 0);

@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.Re
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
-/** Relational SP with full QE in an inner fixpoint loop. Most precise but expensive. */
+/** Strongest-post via QE in a local fixpoint loop. */
 public final class RelationalQeInterferenceApplicator implements IInterferenceApplicator {
 
 	private final RelationalPredicatePostcondition mPostcondition;

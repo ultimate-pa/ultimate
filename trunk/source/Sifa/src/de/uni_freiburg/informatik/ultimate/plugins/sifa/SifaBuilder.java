@@ -43,12 +43,11 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.SinglePassConcurrentBaselineInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeDomain;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
@@ -73,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.InterpretCallSum
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ReUseSupersetCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferences.ConcurrentAnalysisMode;
 
 /**
  * Constructs a new sifa interpreter using the settings from {@link SifaPreferences}.
@@ -109,16 +107,8 @@ public class SifaBuilder {
 
 		final ISifaInterpreter interpreter;
 		if (IcfgUtils.isConcurrent(icfg)) {
-			final ConcurrentAnalysisMode concurrentMode =
-					mPrefs.getEnum(SifaPreferences.LABEL_CONCURRENT_ANALYSIS_MODE,
-							SifaPreferences.CLASS_CONCURRENT_ANALYSIS_MODE);
-			if (concurrentMode == ConcurrentAnalysisMode.SINGLE_PASS_BASELINE) {
-				interpreter = new SinglePassConcurrentBaselineInterpreter(mLogger, timer, stats, tools, icfg,
-						locationsOfInterest, domain, fluid, loopSum, callSum, mServices);
-			} else {
-				interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg,
-						locationsOfInterest, domain, fluid, loopSum, callSum, mServices);
-			}
+			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest,
+					domain, fluid, loopSum, callSum, mServices);
 		} else {
 			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
 					loopSum, callSum);
@@ -139,9 +129,9 @@ public class SifaBuilder {
 					SifaPreferences.LABEL_LOCATION_ABSTRACTION, SifaPreferences.CLASS_LOCATION_ABSTRACTION);
 			final InterferenceType interferenceType = mPrefs.getEnum(SifaPreferences.LABEL_INTERFERENCE_TYPE,
 					SifaPreferences.CLASS_INTERFERENCE_TYPE);
-			final InterferenceRepresentation interferenceRepresentation = mPrefs.getEnum(
-					SifaPreferences.LABEL_INTERFERENCE_REPRESENTATION,
-					SifaPreferences.CLASS_INTERFERENCE_REPRESENTATION);
+			final InterferenceApplicatorType interferenceApplicator = mPrefs.getEnum(
+					SifaPreferences.LABEL_INTERFERENCE_APPLICATOR,
+					SifaPreferences.CLASS_INTERFERENCE_APPLICATOR);
 			final int outerWideningThreshold =
 					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_OUTER_WIDENING_THRESHOLD));
 			final int innerWideningThreshold =
@@ -151,7 +141,7 @@ public class SifaBuilder {
 					SifaPreferences.LABEL_INTERFERENCE_MERGE_DOMAIN,
 					SifaPreferences.CLASS_INTERFERENCE_MERGE_DOMAIN);
 			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
-					interferenceType, interferenceRepresentation, outerWideningThreshold, innerWideningThreshold,
+					interferenceType, interferenceApplicator, outerWideningThreshold, innerWideningThreshold,
 					joinPrecision, mergeDomain);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}

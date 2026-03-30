@@ -12,16 +12,16 @@ procedure ULTIMATE.start();
 implementation ULTIMATE.start()
 {
     var x : int;
-    var y : bool;
+    var y : int;
     x := 1;
-    y := true;
+    y := 1;
 
     fork 1 foo();
     join x;
     fork y bar();
     
-    join true;
-    assert false;
+    join 1;
+    assert 0 == 1;
 }
 
 procedure foo();

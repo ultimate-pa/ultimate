@@ -183,4 +183,5 @@ public class ExplicitValueDomain implements IDomain {
 		}
 		return Optional.ofNullable(constant);
 	}
+
 }

@@ -42,8 +42,8 @@ public final class ProofEdgeInterferenceTranslator {
 		final String forkedThreadId = InterferenceUtils.getForkedThreadOrNull(edge);
 		final boolean locationChanges = mGhostVariables != null
 				&& !mTranslator.isLocationStutterStep(sourceLocation, targetLocation);
-		final boolean isInterferenceRelevant = InterferenceUtils.modifiesGlobals(tf)
-				|| InterferenceUtils.isJoinAssigningGlobal(edge) || forkedThreadId != null || locationChanges;
+		final boolean isInterferenceRelevant =
+				InterferenceUtils.hasRelevantInterferenceEffect(edge) || locationChanges;
 		if (!isInterferenceRelevant || (mIncludeInterferencePreState && sourcePreState == null)) {
 			return null;
 		}
@@ -61,7 +61,7 @@ public final class ProofEdgeInterferenceTranslator {
 
 	private IPredicate createTransitionPredicate(final String interferingThread, final IcfgLocation sourceLocation,
 			final IcfgLocation targetLocation, final TransFormula tf, final String forkedThreadId, final IcfgEdge edge) {
-		final Set<IProgramVar> additionallyModifiedGlobals = InterferenceUtils.getJoinAssignedGlobals(edge);
+		final Set<IProgramVar> additionallyModifiedGlobals = InterferenceUtils.getAdditionalChangedGlobals(edge);
 		if (forkedThreadId != null) {
 			final IcfgLocation forkedEntry = mTranslator.getEntryLocation(forkedThreadId);
 			if (forkedEntry == null) {

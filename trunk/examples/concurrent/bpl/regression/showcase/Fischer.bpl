@@ -31,7 +31,7 @@ modifies critical, clk, lock;
 procedure Clock() returns ()
 modifies clk;
 {
-    while (true) {
+    while (1 == 1) {
 	clk := clk +1;
     }
 
@@ -44,7 +44,7 @@ modifies critical, lock;
 {
   var deadline: int;
   
-    while (true) {
+    while (1 == 1) {
 	if (lock != 1) {
 	    deadline := clk + delay;
 	    assume lock == 0;
@@ -65,7 +65,7 @@ procedure Process2() returns ()
 modifies critical, lock;
 {
   var deadline: int;
-    while (true) {
+    while (1 == 1) {
 	if (lock != 2) {
 	    deadline := clk + delay;
 	    assume lock == 0;

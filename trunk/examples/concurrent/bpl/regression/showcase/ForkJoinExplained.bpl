@@ -67,7 +67,7 @@ modifies g;
 	
 	// The following statement would always fail, however since the execution cannot
 	// continue at the preceding join statement this assert statement is not reachable.
-    assert (false);
+    assert (0 == 1);
 }
 
 

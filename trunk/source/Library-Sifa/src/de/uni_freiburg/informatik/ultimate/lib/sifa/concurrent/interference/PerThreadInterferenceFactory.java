@@ -1,22 +1,22 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Map;
-import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.HashMap;
+import java.util.Collection;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class PerThreadInterferenceFactory implements IInterferenceFactory {
 
 	private final InterferenceEdgeCollector mCollector;
 	private final IInterferenceApplicator mApplicator;
-	private final BiFunction<IPredicate, IPredicate, GuardedPredicate> mPredicateConverter;
+	private final Function<PredicateWithSrcAndTrgt, Collection<GuardedPredicate>> mPredicateConverter;
 
 	public PerThreadInterferenceFactory(final InterferenceEdgeCollector collector,
 			final IInterferenceApplicator applicator,
-			final BiFunction<IPredicate, IPredicate, GuardedPredicate> predicateConverter) {
+			final Function<PredicateWithSrcAndTrgt, Collection<GuardedPredicate>> predicateConverter) {
 		mCollector = collector;
 		mApplicator = applicator;
 		mPredicateConverter = predicateConverter;
@@ -24,35 +24,23 @@ public class PerThreadInterferenceFactory implements IInterferenceFactory {
 
 	@Override
 	public IInterference createEmpty() {
-		return new PerThreadInterference(GuardedPredicate.unguarded(mCollector.falsePredicate()), mApplicator);
+		return new PerThreadInterference(Map.of(), mApplicator);
 	}
 
 	@Override
 	public IInterference buildFromStates(final String threadId,
 			final Map<IcfgLocation, IPredicate> locationStates) {
-		GuardedPredicate merged = null;
-		for (final PredicateWithSrcAndTrgt edgePred : mCollector.collectEdgePredicates(threadId, locationStates)) {
-			final GuardedPredicate fromConverter = mPredicateConverter.apply(edgePred.predicate(),
-					edgePred.preStateGuard());
-			final GuardedPredicate converted = new GuardedPredicate(fromConverter.guard(), fromConverter.effect(),
-					edgePred.modifiedGlobals());
-			merged = merged == null ? converted : joinGuarded(merged, converted);
+		final Map<InterferenceEdgeKey, GuardedPredicate> predicates = new HashMap<>();
+		final Map<String, Integer> nextIndexByEdge = new HashMap<>();
+		for (final PredicateWithSrcAndTrgt edgePred : mCollector.collectEdgePredicates(threadId, locationStates).stream()
+				.sorted(InterferenceUtils.EDGE_PREDICATE_ORDER).toList()) {
+			for (final GuardedPredicate converted : mPredicateConverter.apply(edgePred)) {
+				final String edgeKey = edgePred.source() + "->" + edgePred.target();
+				final int predicateIndex = nextIndexByEdge.getOrDefault(edgeKey, 0);
+				nextIndexByEdge.put(edgeKey, predicateIndex + 1);
+				predicates.put(new InterferenceEdgeKey(edgePred.source(), edgePred.target(), predicateIndex), converted);
+			}
 		}
-		if (merged == null) {
-			merged = GuardedPredicate.unguarded(mCollector.falsePredicate());
-		}
-		return new PerThreadInterference(merged, mApplicator);
-	}
-
-	private GuardedPredicate joinGuarded(final GuardedPredicate left, final GuardedPredicate right) {
-		final IPredicate joinedEffect = mCollector.join(left.effect(), right.effect());
-		final IPredicate joinedGuard;
-		if (left.hasGuard() && right.hasGuard()) {
-			joinedGuard = mCollector.join(left.guard(), right.guard());
-		} else {
-			joinedGuard = null;
-		}
-		final Set<TermVariable> mergedModified = InterferenceUtils.mergeModifiedGlobals(left, right);
-		return new GuardedPredicate(joinedGuard, joinedEffect, mergedModified);
+		return new PerThreadInterference(predicates, mApplicator);
 	}
 }

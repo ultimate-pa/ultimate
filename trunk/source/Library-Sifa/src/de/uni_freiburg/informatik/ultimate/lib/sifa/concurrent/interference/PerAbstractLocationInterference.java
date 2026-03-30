@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 public class PerAbstractLocationInterference implements IInterference {
 
 	public static record AbstractLocationRelation(int sourceAbstractLocation, int targetAbstractLocation,
-			int sourceLocationPartition) {
+			int sourceLocationPartition, int predicateIndex) {
 	}
 
 	private final Map<AbstractLocationRelation, GuardedPredicate> mRelationPredicates;

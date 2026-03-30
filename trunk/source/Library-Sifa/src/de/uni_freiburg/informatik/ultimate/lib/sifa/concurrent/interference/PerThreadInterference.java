@@ -1,61 +1,69 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 public class PerThreadInterference implements IInterference {
 
-	private final GuardedPredicate mPredicate;
+	private final Map<InterferenceEdgeKey, GuardedPredicate> mPredicates;
 	private final IInterferenceApplicator mApplicator;
 
-	public PerThreadInterference(final GuardedPredicate predicate, final IInterferenceApplicator applicator) {
-		mPredicate = predicate;
+	public PerThreadInterference(final Map<InterferenceEdgeKey, GuardedPredicate> predicates,
+			final IInterferenceApplicator applicator) {
+		mPredicates = Map.copyOf(predicates);
 		mApplicator = applicator;
 	}
 
 	@Override
 	public Collection<IPredicate> getPredicates() {
-		return List.of(mPredicate.effect());
+		return mPredicates.values().stream().map(GuardedPredicate::effect).collect(Collectors.toList());
 	}
 
 	@Override
 	public boolean isTrivial() {
-		return SmtUtils.isFalseLiteral(mPredicate.effect().getFormula());
+		return mPredicates.isEmpty();
 	}
 
 	@Override
 	public boolean isSubsumedBy(final IInterference other, final IDomain domain) {
-		if (!(other instanceof final PerThreadInterference otherFlat)) {
+		if (!(other instanceof final PerThreadInterference otherPerThread)) {
 			return false;
 		}
-		if (!domain.isSubsetEq(mPredicate.effect(), otherFlat.mPredicate.effect()).isTrueForAbstraction()) {
-			return false;
-		}
-		// Guard subsumption: new guard must be subsumed by old guard
-		if (mPredicate.hasGuard() && otherFlat.mPredicate.hasGuard()) {
-			return domain.isSubsetEq(mPredicate.guard(), otherFlat.mPredicate.guard()).isTrueForAbstraction();
+		for (final Entry<InterferenceEdgeKey, GuardedPredicate> entry : mPredicates.entrySet()) {
+			final GuardedPredicate otherGp = otherPerThread.mPredicates.get(entry.getKey());
+			if (otherGp == null) {
+				return false;
+			}
+			if (!domain.isSubsetEq(entry.getValue().effect(), otherGp.effect()).isTrueForAbstraction()) {
+				return false;
+			}
+			if (entry.getValue().hasGuard() && otherGp.hasGuard()
+					&& !domain.isSubsetEq(entry.getValue().guard(), otherGp.guard()).isTrueForAbstraction()) {
+				return false;
+			}
 		}
 		return true;
 	}
 
 	@Override
 	public IInterference widen(final IInterference other, final IDomain domain) {
-		if (!(other instanceof final PerThreadInterference otherFlat)) {
+		if (!(other instanceof final PerThreadInterference otherPerThread)) {
 			throw new IllegalArgumentException(
 					"Cannot widen PerThreadInterference with " + other.getClass().getSimpleName());
 		}
 		return new PerThreadInterference(
-				InterferenceUtils.widenGuardedPredicate(mPredicate, otherFlat.mPredicate, domain), mApplicator);
+				InterferenceUtils.widenGuardedBuckets(mPredicates, otherPerThread.mPredicates, domain), mApplicator);
 	}
 
 	@Override
 	public int size() {
-		return 1;
+		return mPredicates.size();
 	}
 
 	@Override
@@ -64,6 +72,6 @@ public class PerThreadInterference implements IInterference {
 		if (isTrivial()) {
 			return state;
 		}
-		return mApplicator.apply(state, List.of(mPredicate), domain, wideningThreshold, stats);
+		return mApplicator.apply(state, mPredicates.values(), domain, wideningThreshold, stats);
 	}
 }

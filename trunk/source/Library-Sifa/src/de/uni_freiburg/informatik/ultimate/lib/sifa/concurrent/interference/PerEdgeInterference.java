@@ -5,20 +5,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
 public class PerEdgeInterference implements IInterference {
 
-	record EdgeKey(IcfgLocation source, IcfgLocation target) {
-	}
-
-	private final Map<EdgeKey, GuardedPredicate> mEdgePredicates;
+	private final Map<InterferenceEdgeKey, GuardedPredicate> mEdgePredicates;
 	private final IInterferenceApplicator mApplicator;
 
-	public PerEdgeInterference(final Map<EdgeKey, GuardedPredicate> edgePredicates,
+	public PerEdgeInterference(final Map<InterferenceEdgeKey, GuardedPredicate> edgePredicates,
 			final IInterferenceApplicator applicator) {
 		mEdgePredicates = Map.copyOf(edgePredicates);
 		mApplicator = applicator;
@@ -39,7 +35,7 @@ public class PerEdgeInterference implements IInterference {
 		if (!(other instanceof final PerEdgeInterference otherEdge)) {
 			return false;
 		}
-		for (final Entry<EdgeKey, GuardedPredicate> entry : mEdgePredicates.entrySet()) {
+		for (final Entry<InterferenceEdgeKey, GuardedPredicate> entry : mEdgePredicates.entrySet()) {
 			final GuardedPredicate otherGp = otherEdge.mEdgePredicates.get(entry.getKey());
 			if (otherGp == null) {
 				return false;

@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -99,6 +100,7 @@ public class TransFormulaToInterferencePredicate {
 					mGhostVariables.createPrimedLocationConstraint(interferingThread, targetLocation, mSymbolTable));
 
 			if (forkedThreadId != null && forkedEntry != null) {
+				combined = SmtUtils.and(script, combined, mGhostVariables.createNotForkedConstraint(forkedThreadId));
 				combined = SmtUtils.and(script, combined,
 						mGhostVariables.createPrimedLocationConstraint(forkedThreadId, forkedEntry, mSymbolTable));
 			}
@@ -132,8 +134,7 @@ public class TransFormulaToInterferencePredicate {
 	private Term createIdentityConstraintsForUnchangedGlobals(final TransFormula tf, final String interferingThread,
 			final String forkedThreadId, final Set<IProgramVar> additionallyModifiedGlobals) {
 		final var script = mManagedScript.getScript();
-		final Set<IProgramVar> modified = new HashSet<>(tf.getOutVars().keySet());
-		modified.addAll(additionallyModifiedGlobals);
+		final Set<IProgramVar> modified = InterferenceUtils.getChangedGlobals(tf, additionallyModifiedGlobals);
 		final TermVariable interferingLoc = mGhostVariables == null ? null
 				: mGhostVariables.getLocationTermVar(interferingThread);
 		final TermVariable forkedLoc = mGhostVariables == null || forkedThreadId == null ? null
@@ -184,6 +185,10 @@ public class TransFormulaToInterferencePredicate {
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			final IProgramVar pv = entry.getKey();
 			if (pv.isGlobal()) {
+				if (entry.getValue() == tf.getInVars().get(pv)) {
+					// Unchanged: identity constraint x = x' is added by createIdentityConstraintsForUnchangedGlobals
+					continue;
+				}
 				substitution.put(entry.getValue(), mSymbolTable.getPrimedVar(pv));
 			} else {
 				localVars.add(entry.getValue());

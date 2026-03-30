@@ -2,24 +2,23 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.Collection;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerAbstractLocationInterference.AbstractLocationRelation;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class PerAbstractLocationInterferenceFactory implements IInterferenceFactory {
 
 	private final InterferenceEdgeCollector mCollector;
 	private final IInterferenceApplicator mApplicator;
-	private final BiFunction<IPredicate, IPredicate, GuardedPredicate> mPredicateConverter;
+	private final Function<PredicateWithSrcAndTrgt, Collection<GuardedPredicate>> mPredicateConverter;
 	private final PerThreadInterferenceFactory mFallback;
 
 	public PerAbstractLocationInterferenceFactory(final InterferenceEdgeCollector collector,
 			final IInterferenceApplicator applicator,
-			final BiFunction<IPredicate, IPredicate, GuardedPredicate> predicateConverter) {
+			final Function<PredicateWithSrcAndTrgt, Collection<GuardedPredicate>> predicateConverter) {
 		mCollector = collector;
 		mApplicator = applicator;
 		mPredicateConverter = predicateConverter;
@@ -38,41 +37,26 @@ public class PerAbstractLocationInterferenceFactory implements IInterferenceFact
 			return mFallback.buildFromStates(threadId, locationStates);
 		}
 		final Map<AbstractLocationRelation, GuardedPredicate> relationPredicates = new HashMap<>();
+		final Map<String, Integer> nextIndexByRelation = new HashMap<>();
 		final Map<IcfgLocation, Integer> sourceLocationPartitions =
 				mCollector.computeSourcePartitionsForSingletonWithForks(locationStates);
-		for (final PredicateWithSrcAndTrgt edgePred : mCollector.collectEdgePredicates(threadId, locationStates)) {
+		for (final PredicateWithSrcAndTrgt edgePred : mCollector.collectEdgePredicates(threadId, locationStates).stream()
+				.sorted(InterferenceUtils.EDGE_PREDICATE_ORDER).toList()) {
 			final Integer sourceAbsLoc = mCollector.getAbstractLocationIdOrNull(edgePred.source());
 			final Integer targetAbsLoc = mCollector.getAbstractLocationIdOrNull(edgePred.target());
 			if (sourceAbsLoc == null || targetAbsLoc == null) {
 				continue;
 			}
 			final int sourceLocationPartition = sourceLocationPartitions.getOrDefault(edgePred.source(), 0);
-			final AbstractLocationRelation relation =
-					new AbstractLocationRelation(sourceAbsLoc, targetAbsLoc, sourceLocationPartition);
-			final GuardedPredicate fromConverter = mPredicateConverter.apply(edgePred.predicate(),
-					edgePred.preStateGuard());
-			final GuardedPredicate converted = new GuardedPredicate(fromConverter.guard(), fromConverter.effect(),
-					edgePred.modifiedGlobals());
-			mergeIntoWithJoinGuarded(relationPredicates, relation, converted);
+			final String relationKey = sourceAbsLoc + "->" + targetAbsLoc + "#" + sourceLocationPartition;
+			for (final GuardedPredicate converted : mPredicateConverter.apply(edgePred)) {
+				final int predicateIndex = nextIndexByRelation.getOrDefault(relationKey, 0);
+				nextIndexByRelation.put(relationKey, predicateIndex + 1);
+				final AbstractLocationRelation relation =
+						new AbstractLocationRelation(sourceAbsLoc, targetAbsLoc, sourceLocationPartition, predicateIndex);
+				relationPredicates.put(relation, converted);
+			}
 		}
 		return new PerAbstractLocationInterference(relationPredicates, mApplicator);
-	}
-
-	private void mergeIntoWithJoinGuarded(final Map<AbstractLocationRelation, GuardedPredicate> targetMap,
-			final AbstractLocationRelation key, final GuardedPredicate gp) {
-		final GuardedPredicate existing = targetMap.get(key);
-		if (existing == null) {
-			targetMap.put(key, gp);
-		} else {
-			final IPredicate joinedEffect = mCollector.join(existing.effect(), gp.effect());
-			final IPredicate joinedGuard;
-			if (existing.hasGuard() && gp.hasGuard()) {
-				joinedGuard = mCollector.join(existing.guard(), gp.guard());
-			} else {
-				joinedGuard = null;
-			}
-			targetMap.put(key, new GuardedPredicate(joinedGuard, joinedEffect,
-					InterferenceUtils.mergeModifiedGlobals(existing, gp)));
-		}
 	}
 }

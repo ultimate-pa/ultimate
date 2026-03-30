@@ -101,8 +101,17 @@ public class RelationalPredicatePostcondition {
 		if (preVarsToProject.isEmpty() || !hasFreeVarIn(conjunction, preVarsToProject)) {
 			projected = conjunction;
 		} else {
+			if (mStats != null) {
+				mStats.increment(SifaStats.Key.INTERFERENCE_QE_APPLICATIONS);
+				mStats.start(SifaStats.Key.INTERFERENCE_QE_TIME);
+				mStats.startMax(SifaStats.Key.INTERFERENCE_QE_MAX_TIME);
+			}
 			projected = RelationalPredicateUtils.existentiallyProject(conjunction, preVarsToProject, mServices,
 					mManagedScript, mStats);
+			if (mStats != null) {
+				mStats.stop(SifaStats.Key.INTERFERENCE_QE_TIME);
+				mStats.stopMax(SifaStats.Key.INTERFERENCE_QE_MAX_TIME);
+			}
 		}
 
 		final Map<Term, Term> primedToUnprimed = preparedRelation.primedToUnprimed();

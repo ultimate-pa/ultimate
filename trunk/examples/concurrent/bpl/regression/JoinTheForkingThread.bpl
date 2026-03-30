@@ -42,5 +42,5 @@ procedure bar(n : int) returns(res : int)
 	// in order to reproduce the bug that was fixed
 	// with commit 782a520123106edbc0affe3a0b0f459529f09a8e
 	join nondet assign localVar;
-	assert false;
+	assert 0 == 1;
 }

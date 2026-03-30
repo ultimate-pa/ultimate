@@ -95,6 +95,15 @@ public class GhostVariableManager {
 		return createLocationEquality(primedTv, targetLocation);
 	}
 
+	public Term createNotForkedConstraint(final String threadId) {
+		if (!tracksLocationPrecisely(threadId)) {
+			return mManagedScript.getScript().term("true");
+		}
+		final Script script = mManagedScript.getScript();
+		return SmtUtils.binaryEquality(script, mLocationVars.get(threadId).getTermVariable(),
+				script.numeral(BigInteger.valueOf(NOT_FORKED_LOCATION_ID)));
+	}
+
 	public Term createInitialLocationState(final String mainThreadId) {
 		final Script script = mManagedScript.getScript();
 		final List<Term> conjuncts = new ArrayList<>();

@@ -5,10 +5,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-/**
- * Guarded interference effect: guard (pre-condition, nullable), effect (post-values),
- * and optionally the set of modified globals (for SYNTACTIC/SYNTACTIC_PRECISE).
- */
+/** Interference effect with optional guard and modified globals. */
 public record GuardedPredicate(IPredicate guard, IPredicate effect, Set<TermVariable> modifiedGlobals) {
 
 	public static GuardedPredicate unguarded(final IPredicate effect) {
@@ -25,5 +22,9 @@ public record GuardedPredicate(IPredicate guard, IPredicate effect, Set<TermVari
 
 	public boolean hasModifiedGlobals() {
 		return modifiedGlobals != null;
+	}
+
+	public Set<TermVariable> modifiedGlobalsOrEmpty() {
+		return modifiedGlobals == null ? Set.of() : modifiedGlobals;
 	}
 }

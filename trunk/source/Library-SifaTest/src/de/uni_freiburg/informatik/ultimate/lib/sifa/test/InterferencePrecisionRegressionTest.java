@@ -37,8 +37,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerThreadInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.RelationalLightInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.RelationalQeInterferenceApplicator;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 
@@ -220,9 +221,10 @@ public class InterferencePrecisionRegressionTest {
 		final Term all = SmtUtils.orWithExtendedLocalSimplification(mScript, List.of(writerWriteRaceZero().getFormula(),
 				writerUnlock().getFormula(), unreachableOtherThreadWriteOne().getFormula()));
 		final IPredicate asPredicate = predicate(all);
-		final var applicator = new RelationalLightInterferenceApplicator(mRelationalPost);
+		final var applicator = new RelationalQeInterferenceApplicator(mRelationalPost);
+		final var key = new InterferenceEdgeKey(null, null, 0);
 		return InterferenceCollection.of(
-				Map.of(INTERFERING_THREAD_ID, new PerThreadInterference(GuardedPredicate.unguarded(asPredicate), applicator)));
+				Map.of(INTERFERING_THREAD_ID, new PerThreadInterference(Map.of(key, GuardedPredicate.unguarded(asPredicate)), applicator)));
 	}
 
 	private IPredicate applyUntilFixpointWithExactOr(final IPredicate state, final InterferenceCollection interferences,

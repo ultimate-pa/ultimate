@@ -110,7 +110,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Fluid=SizeLimitFluid
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Inner\ Interference\ Widening\ Threshold=3
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Interference\ Mode=PER_ACTION
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/LOI\ Expansion\ Mode=REQUESTED_WITH_ENTRY_EXIT_FALLBACK
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Equality=2
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Intervals=2
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Octagon=2

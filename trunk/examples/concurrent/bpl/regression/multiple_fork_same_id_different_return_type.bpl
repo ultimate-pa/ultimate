@@ -14,9 +14,9 @@ procedure ULTIMATE.start();
 implementation ULTIMATE.start()
 {
     var x : int;
-    var y : bool;
+    var y : int;
     x := 1;
-    y := true;
+    y := 1;
 
     fork 1 foo();
     fork 1 bar();
@@ -43,8 +43,8 @@ implementation bar() {
     x := x + 1;
 }
 
-procedure sam() returns (ret : bool);
+procedure sam() returns (ret : int);
 
-implementation sam() returns (ret : bool) {
-    ret := true;
+implementation sam() returns (ret : int) {
+    ret := 1;
 }

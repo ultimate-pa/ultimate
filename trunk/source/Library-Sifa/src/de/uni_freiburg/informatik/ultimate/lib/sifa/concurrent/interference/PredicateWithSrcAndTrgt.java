@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-/** An interference edge with its source/target locations, combined predicate, guard, and modified globals. */
-record PredicateWithSrcAndTrgt(IcfgLocation source, IcfgLocation target, IPredicate predicate,
+/** Interference predicate with source/target locations, guard, and modified globals. */
+public record PredicateWithSrcAndTrgt(IcfgLocation source, IcfgLocation target, IPredicate predicate,
 		IPredicate preStateGuard, Set<TermVariable> modifiedGlobals) {
 }

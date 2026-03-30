@@ -3,11 +3,12 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
@@ -45,15 +46,11 @@ public final class ObservedThreadStateRecorder {
 		if (transition instanceof LocationMarkerTransition) {
 			return false;
 		}
-		if (transition instanceof IIcfgForkTransitionThreadCurrent<?>) {
+		if (transition instanceof final IcfgEdge edge && InterferenceUtils.hasRelevantInterferenceEffect(edge)) {
 			return true;
 		}
-		final var transformula = transition.getTransformula();
-		if (transformula == null) {
+		if (!(transition instanceof IcfgEdge)) {
 			return false;
-		}
-		if (transformula.getAssignedVars().stream().anyMatch(var -> var.isGlobal())) {
-			return true;
 		}
 		if (mGhostVariables == null) {
 			return true;

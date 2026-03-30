@@ -6,9 +6,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -30,17 +28,9 @@ public final class RelationalPredicateUtils {
 		}
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), Script.EXISTS, varsToProject, formula);
 		final Term lightResult = PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
-		if (QuantifierUtils.isQuantifierFree(lightResult)) {
-			if (stats != null) {
-				stats.increment(SifaStats.Key.INTERFERENCE_QE_LIGHT);
-			}
-			return lightResult;
-		}
-		// light QE didn't eliminate all quantifiers, fall back to full elimination
 		if (stats != null) {
-			stats.increment(SifaStats.Key.INTERFERENCE_QE_FULL);
+			stats.increment(SifaStats.Key.INTERFERENCE_QE_LIGHT);
 		}
-		return PartialQuantifierElimination.eliminate(services, mgdScript, quantified,
-				SimplificationTechnique.SIMPLIFY_DDA2);
+		return lightResult;
 	}
 }

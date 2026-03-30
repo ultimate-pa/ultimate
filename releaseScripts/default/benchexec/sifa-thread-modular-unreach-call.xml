@@ -5,40 +5,25 @@
   <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaCThreadModular.xml</option>
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
 
-  <rundefinition name="per-location-2">
-    <option name="--sifa.max.parallel.explicit.values">2</option>
-    <option name="--sifa.max.parallel.intervals">2</option>
-    <option name="--sifa.interference.type">PER_ABSTRACT_LOCATION</option>
+  <!-- Shared baseline: ExplicitValueDomain, PER_ABSTRACT_LOCATION, parallel=4 -->
+  <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+  <option name="--sifa.max.parallel.explicit.values">4</option>
+  <option name="--sifa.interference.type">PER_ABSTRACT_LOCATION</option>
+
+  <rundefinition name="qe">
+    <option name="--sifa.interference.applicator">QE</option>
   </rundefinition>
-  
-  <rundefinition name="per-location-4">
-    <option name="--sifa.max.parallel.explicit.values">4</option>
-    <option name="--sifa.max.parallel.intervals">4</option>
-    <option name="--sifa.interference.type">PER_ABSTRACT_LOCATION</option>
+
+  <rundefinition name="prepost">
+    <option name="--sifa.interference.applicator">PREPOST</option>
   </rundefinition>
-  
-  <rundefinition name="per-thread-2">
-    <option name="--sifa.max.parallel.explicit.values">2</option>
-    <option name="--sifa.max.parallel.intervals">2</option>
-    <option name="--sifa.interference.type">PER_THREAD</option>
+
+  <rundefinition name="guarded-overwrite">
+    <option name="--sifa.interference.applicator">GUARDED_OVERWRITE</option>
   </rundefinition>
-  
-  <rundefinition name="per-thread-4">
-    <option name="--sifa.max.parallel.explicit.values">4</option>
-    <option name="--sifa.max.parallel.intervals">4</option>
-    <option name="--sifa.interference.type">PER_THREAD</option>
-  </rundefinition>
-  
-  <rundefinition name="per-edge-2">
-    <option name="--sifa.max.parallel.explicit.values">2</option>
-    <option name="--sifa.max.parallel.intervals">2</option>
-    <option name="--sifa.interference.type">PER_EDGE</option>
-  </rundefinition>
-  
-  <rundefinition name="per-edge-4">
-    <option name="--sifa.max.parallel.explicit.values">4</option>
-    <option name="--sifa.max.parallel.intervals">4</option>
-    <option name="--sifa.interference.type">PER_EDGE</option>
+
+  <rundefinition name="post-state">
+    <option name="--sifa.interference.applicator">POST_STATE</option>
   </rundefinition>
 
   <tasks name="SVCOMP-Concurrency">
