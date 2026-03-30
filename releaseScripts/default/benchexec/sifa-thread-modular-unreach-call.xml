@@ -9,6 +9,8 @@
   <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
   <option name="--sifa.max.parallel.explicit.values">4</option>
   <option name="--sifa.interference.type">PER_ABSTRACT_LOCATION</option>
+  <option name="--sifa.join.precision">false</option>
+  <option name="--sifa.fluid">SizeLimitFluid</option>
 
   <rundefinition name="loc-qe">
     <option name="--sifa.interference.applicator">QE</option>
