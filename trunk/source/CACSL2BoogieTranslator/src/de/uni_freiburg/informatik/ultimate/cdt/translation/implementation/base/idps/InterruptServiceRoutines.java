@@ -47,7 +47,8 @@ public class InterruptServiceRoutines {
 	private Procedure mMainProcedure;
 
 	public InterruptServiceRoutines(final Map<Integer, Procedure> isrMap, final Map<Integer, Procedure> reqEnable,
-			final Procedure reqDisable, final Procedure setPrio, final Procedure getPrio, final Procedure mainProcedure) {
+			final Procedure reqDisable, final Procedure setPrio, final Procedure getPrio,
+			final Procedure mainProcedure) {
 		mISRMap = isrMap;
 		mRequestEnable = reqEnable;
 		mRequestDisable = reqDisable;
