@@ -60,6 +60,7 @@ public class GeneratorRepresentation {
 	}
 
 	public GeneratorRepresentation getMinimalForm() {
+		// TODO: Fix to properly work
 		if (isMinimal()) {
 			return this;
 		}

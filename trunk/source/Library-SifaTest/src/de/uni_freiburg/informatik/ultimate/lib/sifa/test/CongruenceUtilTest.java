@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -202,6 +203,28 @@ public class CongruenceUtilTest {
 		final Map<Integer, Integer> map13 = Map.of(0, 2, 1, 5, 2, 0);
 		final Map<Integer, Integer> reorderMap13 = CongruenceUtil.getReorderForMaps(map1, map3);
 		Assert.assertTrue(map13.equals(reorderMap13));
+
+	}
+
+	@Test
+	public void testGcdext() {
+		final BigInteger range = BigInteger.valueOf(20);
+		for (BigInteger x = range.negate(); x.compareTo(range) <= 0; x = x.add(BigInteger.ONE)) {
+			for (BigInteger y = range.negate(); y.compareTo(range) <= 0; y = y.add(BigInteger.ONE)) {
+				final BigInteger[] rst = CongruenceUtil.gcdext(x, y);
+				final BigInteger gcd = rst[0];
+				// System.out.println(x);
+				// System.out.println(y);
+				// System.out.println(gcd);
+				// System.out.println(x.gcd(y));
+				Assert.assertTrue(gcd.abs().equals(x.gcd(y)));
+
+				final BigInteger s = rst[1];
+				final BigInteger t = rst[2];
+				final BigInteger v = x.multiply(s).add(y.multiply(t));
+				Assert.assertTrue(gcd.equals(v));
+			}
+		}
 
 	}
 

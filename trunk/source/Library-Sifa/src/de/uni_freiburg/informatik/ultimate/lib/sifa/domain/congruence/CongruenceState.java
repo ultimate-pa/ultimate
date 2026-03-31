@@ -72,11 +72,13 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		// Compute the reordered forms of the generators
 		final Map<Integer, Integer> selfReorderMap = CongruenceUtil.getReorderForMaps(selfVarToIndex, newVarToIndex);
+		selfReorderMap.put(0, 0);
 		final GeneratorRepresentation selfGenerators = getGeneratorRepresentation();
 		final GeneratorRepresentation selfReorderedGenerators = selfGenerators.getReorderedForm(selfReorderMap,
 				newColumnCount);
 
 		final Map<Integer, Integer> otherReorderMap = CongruenceUtil.getReorderForMaps(otherVarToIndex, newVarToIndex);
+		otherReorderMap.put(0, 0);
 		final GeneratorRepresentation otherGenerators = other.getGeneratorRepresentation();
 		final GeneratorRepresentation otherReorderedGenerators = otherGenerators.getReorderedForm(otherReorderMap,
 				newColumnCount);

@@ -20,7 +20,8 @@ public class ConstraintRepresentation {
 	final private boolean mIsStrongMinimal;
 
 	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences) {
-		// TODO: REplace bools with for example mMinimalRepresenation != null
+		// TODO: Maybe make Equalities and Congruences non final IFF minimal and strong
+		// minimal is equivalent
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = false;
@@ -31,7 +32,6 @@ public class ConstraintRepresentation {
 
 	private ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
 			final boolean isMinimal, final boolean isStrongMinimal) {
-		// TODO: REplace bools with for example mMinimalRepresenation != null
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = isMinimal;
@@ -92,6 +92,7 @@ public class ConstraintRepresentation {
 	}
 
 	public ConstraintRepresentation getMinimalForm() {
+		// TODO: Fix to properly work
 		if (mIsMinimal) {
 			return this;
 		}
@@ -176,6 +177,7 @@ public class ConstraintRepresentation {
 	}
 
 	public ConstraintRepresentation getStrongMinimalForm() {
+		// TODO: Fix to properly work
 		if (isStrongMinimal()) {
 			return this;
 		}

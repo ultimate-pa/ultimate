@@ -26,7 +26,6 @@ public class EqualityRelation implements ICongruenceRelation {
 		mResult = term.getConstant();
 	}
 
-	// TODO: Ask Frank if I can move this to the PolynomialRelation.
 	public static AffineTerm getAffineTerm(final PolynomialRelation polynomialRelation) {
 		final AbstractGeneralizedAffineTerm<?> polynomialTerm = polynomialRelation.getPolynomialTerm();
 		if (!polynomialTerm.isAffine()) {

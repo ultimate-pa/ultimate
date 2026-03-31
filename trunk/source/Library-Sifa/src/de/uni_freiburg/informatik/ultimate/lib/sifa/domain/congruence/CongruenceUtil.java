@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -209,4 +210,34 @@ public class CongruenceUtil {
 		return newMap;
 	}
 
+	private static BigInteger wholeDiv(final BigInteger x, final BigInteger y) {
+		return x.divideAndRemainder(y)[0];
+	}
+
+	public static BigInteger[] gcdext(final BigInteger x, final BigInteger y) {
+		BigInteger oldR = x;
+		BigInteger newR = y;
+		BigInteger oldS = BigInteger.ONE;
+		BigInteger newS = BigInteger.ZERO;
+		BigInteger oldT = BigInteger.ZERO;
+		BigInteger newT = BigInteger.ONE;
+
+		while (!newR.equals(BigInteger.ZERO)) {
+			final BigInteger q = wholeDiv(oldR, newR);
+
+			final BigInteger tempR = oldR;
+			oldR = newR;
+			newR = tempR.subtract(newR.multiply(q));
+
+			final BigInteger tempS = oldS;
+			oldS = newS;
+			newS = tempS.subtract(newS.multiply(q));
+
+			final BigInteger tempT = oldT;
+			oldT = newT;
+			newT = tempT.subtract(newT.multiply(q));
+		}
+
+		return new BigInteger[] { oldR, oldS, oldT };
+	}
 }
