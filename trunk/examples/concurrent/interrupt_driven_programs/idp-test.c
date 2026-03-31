@@ -38,6 +38,7 @@ int main(void)
     int n = 0;
     while (1) {
         assert(!step_in_isr);
+        //@ assert !step_in_isr;
         n++;
         assert(!step_in_isr);
     }

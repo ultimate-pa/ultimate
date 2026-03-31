@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,8 +63,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IPostProcessor;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptServiceRoutines;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -177,8 +177,6 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private void modifyIntEnableProcedures(final Map<Integer, VariableLHS> lhsMap) {
-		// TODO: Modify Specifications
-		final var specifications = new ArrayList<Procedure>();
 		final var intEnabledProcedures = mISR.getRequestEnable();
 		for (final Entry<Integer, VariableLHS> entry : lhsMap.entrySet()) {
 			final var irq = entry.getKey();
@@ -186,6 +184,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 			final var intEnableProcedure = intEnabledProcedures.get(irq);
 			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
 			modifyIntEnableProcedure(intEnableProcedure, lhs);
+			addIntEnabledToSpecification(intEnableProcedure, lhs);
 		}
 	}
 
@@ -200,15 +199,13 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		body.setBlock(new Statement[] { atomic });
 	}
 
-	private Procedure addIntEnabledToSpecification(final Procedure intEnableSpec, final VariableLHS intEnabledLhs) {
-		// Adjust modify specification
-		final var oldSpec = intEnableSpec.getSpecification();
+	private void addIntEnabledToSpecification(final Procedure intEnableSpec, final VariableLHS intEnabledLhs) {
+		mProcedureManager.beginProcedureScope(mCHandler,
+				mProcedureManager.getProcedureInfo(intEnableSpec.getIdentifier()));
 		final var modifiesSpec = new ModifiesSpecification(mIgnoreLoc, false, new VariableLHS[] { intEnabledLhs });
-		final var newSpec = Arrays.copyOf(oldSpec, oldSpec.length + 1);
-		newSpec[oldSpec.length] = modifiesSpec;
-		return new Procedure(intEnableSpec.getLoc(), intEnableSpec.getAttributes(), intEnableSpec.getIdentifier(),
-				intEnableSpec.getTypeParams(), intEnableSpec.getInParams(), intEnableSpec.getOutParams(), newSpec,
-				intEnableSpec.getBody());
+		mProcedureManager.addSpecificationsToCurrentProcedure(List.of(modifiesSpec));
+		mProcedureManager.endProcedureScope(mCHandler);
+
 	}
 
 	private ArrayList<Procedure> constructThreadGpioProc() {
