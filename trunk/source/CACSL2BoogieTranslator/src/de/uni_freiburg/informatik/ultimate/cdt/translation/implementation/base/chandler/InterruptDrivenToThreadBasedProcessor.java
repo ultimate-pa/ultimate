@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -66,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptServiceRoutines;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -193,7 +193,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		final var block = body.getBlock();
 		final var assignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc, intEnabledLhs,
 				ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true));
-		final var newBlock = Arrays.asList(block);
+		final var newBlock = new ArrayList<Statement>(Arrays.asList(block));
 		newBlock.add(assignment);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, newBlock);
 		body.setBlock(new Statement[] { atomic });
@@ -232,15 +232,15 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 			final IdentifierExpression threadEnabledId, final Integer irq) {
 		final var procName = constructThreadGpioID(irq);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
-				new VarList[0], null, null);
-		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, SFO.INIT, declaration);
+				new VarList[0], new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final var whileStmt = constructIsrWhileLoop(identifier, threadEnabledId);
 		builder.addStatement(whileStmt);
 		final var body = mProcedureManager.constructBody(mIgnoreLoc,
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
 				builder.getStatements().toArray(new Statement[builder.getStatements().size()]), procName);
-		mProcedureManager.endCustomProcedure(mCHandler, SFO.INIT);
+		mProcedureManager.endCustomProcedure(mCHandler, procName);
 		return new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0],
 				null, body);
 	}
@@ -251,14 +251,14 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		final var procName = constructThreadGpioID(0);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], null, null);
-		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, SFO.INIT, declaration);
+		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final var whileStmt = constructAllIsrWhileLoop();
 		builder.addStatement(whileStmt);
 		final var body = mProcedureManager.constructBody(mIgnoreLoc,
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
 				builder.getStatements().toArray(new Statement[builder.getStatements().size()]), procName);
-		mProcedureManager.endCustomProcedure(mCHandler, SFO.INIT);
+		mProcedureManager.endCustomProcedure(mCHandler, procName);
 		return new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0],
 				null, body);
 	}
@@ -292,7 +292,8 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
 		final var enabledExpr = getEnabledExpression(threadEnabledId, andWildcard);
-		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then }, null);
+		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then },
+				new Statement[0]);
 	}
 
 	private Expression getEnabledExpression(final IdentifierExpression threadEnabledId, final boolean andWildcard) {
@@ -310,8 +311,10 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private Map<Integer, VariableLHS> getVariableLHSs() {
-		return mIdExpressions.entrySet().stream().collect(
-				Collectors.toMap(Entry::getKey, e -> new VariableLHS(mIgnoreLoc, e.getValue().getIdentifier())));
+		return mIdExpressions.entrySet().stream()
+				.collect(Collectors.toMap(Entry::getKey,
+						e -> ExpressionFactory.constructVariableLHS(mIgnoreLoc, BoogieType.TYPE_BOOL,
+								e.getValue().getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL)));
 	}
 
 	public List<Statement> getAdditionalInitializations() {

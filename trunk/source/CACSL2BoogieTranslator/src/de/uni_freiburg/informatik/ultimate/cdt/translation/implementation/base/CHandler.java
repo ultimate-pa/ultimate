@@ -181,6 +181,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptPostProcessorHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AssertLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AtomicLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
@@ -732,6 +733,9 @@ public class CHandler {
 
 			offset++;
 		}
+		final var interruptPostProcessor = getInterruptPostProcessorHandler();
+		mDeclarations.addAll(interruptPostProcessor.postProcess(loc, globalHook, additionalInitializations));
+		additionalInitializations.addAll(interruptPostProcessor.getAdditionalInitializations());
 
 		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook, additionalInitializations));
 
@@ -802,6 +806,11 @@ public class CHandler {
 				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		propChecks.forEach(x -> x.annotate(boogieUnit));
 		return new CHandlerTranslationResult(boogieUnit, mSymbolTable.getBoogieCIdentifierMapping());
+	}
+
+	private InterruptPostProcessorHandler getInterruptPostProcessorHandler() {
+		return new InterruptPostProcessorHandler(mLogger, mSymbolTable, mSettings, mProcedureManager, this,
+				mDeclarations);
 	}
 
 	private List<Statement> handleWitnessDeclarations(final IDispatcher dispatcher) {
