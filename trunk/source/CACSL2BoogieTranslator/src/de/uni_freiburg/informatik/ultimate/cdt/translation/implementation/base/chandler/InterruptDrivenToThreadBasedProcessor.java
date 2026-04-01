@@ -323,8 +323,9 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private Statement constructAllIsrWhileLoop(final AuxVarInfo auxVarInfo) {
-		final var ifStatements = new ArrayList<Statement>();
+		final var atomicStatements = new ArrayList<Statement>();
 		for (final Entry<Integer, Procedure> entry : mISR.getISRMap().entrySet()) {
+			final var ifStatements = new ArrayList<Statement>();
 			final var boolHavoc = getHavocBoolStatements(auxVarInfo);
 			ifStatements.addAll(boolHavoc);
 			final var irq = entry.getKey();
@@ -333,11 +334,12 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
 			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ: " + irq;
 			ifStatements.add(getIfStatement(identifier, threadEnabledId, enabledExpression));
+			final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements);
+			atomicStatements.add(atomic);
 		}
-		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements);
 		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
 		return new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0],
-				new Statement[] { atomic });
+				atomicStatements.toArray(new Statement[0]));
 	}
 
 	private Statement getIfStatement(final String identifier, final IdentifierExpression threadEnabledId,
