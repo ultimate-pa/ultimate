@@ -38,11 +38,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InterruptDrivenToThreadBasedProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class InterruptPostProcessorHandler {
-	private static final InterruptTranslationMode TRANSLATION_MODE = InterruptTranslationMode.REALIZATION_1;
+	private static final InterruptTranslationMode TRANSLATION_MODE = InterruptTranslationMode.REALIZATION_2;
 
 	private final InterruptDrivenToThreadBasedProcessor mInterruptPostProcessor;
 	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo1();
@@ -50,11 +52,13 @@ public class InterruptPostProcessorHandler {
 
 	public InterruptPostProcessorHandler(final ILogger logger, final FlatSymbolTable symbolTable,
 			final TranslationSettings settings, final ProcedureManager procedureManager, final CHandler chandler,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
 			final List<Declaration> declarations) {
 		final var isrBuilder = new InterruptServiceRoutinesBuilder(declarations, mIsrInfo);
 		mInterruptServiceRoutines = isrBuilder.getInterruptServiceRoutines();
-		mInterruptPostProcessor = new InterruptDrivenToThreadBasedProcessor(logger, symbolTable, settings,
-				procedureManager, chandler, TRANSLATION_MODE, mInterruptServiceRoutines);
+		mInterruptPostProcessor =
+				new InterruptDrivenToThreadBasedProcessor(logger, symbolTable, settings, procedureManager, chandler,
+						auxVarInfoBuilder, expressionTranslation, TRANSLATION_MODE, mInterruptServiceRoutines);
 	}
 
 	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
