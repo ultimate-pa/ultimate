@@ -47,7 +47,7 @@ public class InterruptPostProcessorHandler {
 	private static final InterruptTranslationMode TRANSLATION_MODE = InterruptTranslationMode.REALIZATION_2;
 
 	private final InterruptDrivenToThreadBasedProcessor mInterruptPostProcessor;
-	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo1();
+	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo2();
 	private final InterruptServiceRoutines mInterruptServiceRoutines;
 
 	public InterruptPostProcessorHandler(final ILogger logger, final FlatSymbolTable symbolTable,
@@ -78,6 +78,20 @@ public class InterruptPostProcessorHandler {
 			final var reqEnable = "HAL_GPIO_Enable_Int";
 			final var numToReqEnable = new HashMap<Integer, String>();
 			numToReqEnable.put(1, reqEnable);
+			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
+		}
+
+		public static ISRInfo isrInfo2() {
+			final var isr1 = "isr1_gpio";
+			final var isr2 = "isr2_gpio";
+			final var numToISR = new HashMap<Integer, String>();
+			numToISR.put(1, isr1);
+			numToISR.put(2, isr2);
+			final var reqEnable1 = "HAL_GPIO_Enable_Int1";
+			final var reqEnable2 = "HAL_GPIO_Enable_Int2";
+			final var numToReqEnable = new HashMap<Integer, String>();
+			numToReqEnable.put(1, reqEnable1);
+			numToReqEnable.put(2, reqEnable2);
 			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
 		}
 	}
