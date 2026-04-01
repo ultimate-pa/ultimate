@@ -7,6 +7,8 @@ import java.util.List;
 import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.scalar.RationalNumber;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
 public class ConstraintRepresentation {
 	public static ConstraintRepresentation EMPTY = new ConstraintRepresentation(List.of(), List.of(), true, true);
 
@@ -92,7 +94,6 @@ public class ConstraintRepresentation {
 	}
 
 	public ConstraintRepresentation getMinimalForm() {
-		// TODO: Fix to properly work
 		if (mIsMinimal) {
 			return this;
 		}
@@ -105,7 +106,7 @@ public class ConstraintRepresentation {
 
 		// Making the equality pivots unique
 		for (int i = 0; i < equalities.size(); i++) {
-			final MatrixQ128 equality = equalities.get(i);
+			MatrixQ128 equality = equalities.get(i);
 			final long pivot = CongruenceUtil.lastPivot(equality);
 
 			if (pivot == -1) {
@@ -119,7 +120,8 @@ public class ConstraintRepresentation {
 				// Make pivotValue positive
 				final RationalNumber pivotValue = equality.get(0, pivot);
 				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
-					equalities.set(i, equality.multiply((-1)));
+					equality = equality.multiply((-1));
+					equalities.set(i, equality);
 				}
 
 				// Eliminate the pivot field from the following equalities
@@ -139,30 +141,44 @@ public class ConstraintRepresentation {
 
 		// Making the congruence pivots unique
 		for (int i = 0; i < congruences.size(); i++) {
-			final MatrixQ128 congruence = congruences.get(i);
+			MatrixQ128 congruence = congruences.get(i);
 			final long pivot = CongruenceUtil.lastPivot(congruence);
 
 			if (pivot == -1) {
 				// vector is empty, can be deleted
 				congruencesToDelete.add(i);
-			} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) == 1) {
-				// congruence is unsatisfiable and so is the whole system
-				// First entry has to be 0 modulo 1 which is exactly the case when the
-				// pivotValue is a whole number
+			} else if (pivot == 0) {
+				// We just have a constant
+				if (CongruenceUtil.getDenominator(congruence.get(0, pivot)) == 1) {
+					// The constant is whole and so it's 0 mod 1
+					// We dont need this trivial term further on tho
+					congruencesToDelete.add(i);
+				}
+				// The constant is not 0 mod 1
+				// So the congruence is unsatisfiable and so is the whole system
 				return new ConstraintRepresentation(List.of(unsatVector(congruence.size())), List.of(), true, true);
 			} else {
 				// Make pivotValue positive
 				final var pivotValue = congruence.get(0, pivot);
-				if (CongruenceUtil.getNumerator(pivotValue) < 0) {
-					congruences.set(i, congruence.multiply((-1)));
+				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+					congruence = congruence.multiply((-1));
+					congruences.set(i, congruence);
 				}
 
 				// Eliminate the pivot field from the following congruence's
 				// We can't eliminate it from the equalities, since adding a congruence to an
 				// equality doesn't conserve the equality
+				// We need to use the hermit elimination to preserve congruence's
 				for (int j = i + 1; j < congruences.size(); j++) {
 					final MatrixQ128 other = congruences.get(j);
-					congruences.set(j, CongruenceUtil.gaussEliminateField(other, congruence, pivot));
+					final long otherPivot = CongruenceUtil.lastPivot(other);
+
+					if (pivot == otherPivot) {
+						final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, congruence,
+								pivot);
+						congruences.set(j, pair.getFirst());
+						congruences.set(i, pair.getSecond());
+					}
 				}
 			}
 		}

@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class ConstraintRepresentationTest {
 	List<ConstraintRepresentation> TEST_CONSTRAINTS = List.of(getConstraints1(), getConstraints2(), getConstraints3(),
-			getConstraints4());
+			getConstraints4(), getConstraints5(), getConstraints6());
 
 	public ConstraintRepresentation getConstraints1() {
 		// @formatter:off
@@ -94,12 +94,44 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences);
 	}
 
+	public ConstraintRepresentation getConstraints5() {
+		// @formatter:off
+		/*
+		 * x1 = 0 [2]
+		 * x1 + x2 = 0 [3]
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.valueOf(1, 2), Rational.ZERO)));
+		congruences.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.valueOf(1, 3), Rational.valueOf(1, 3))));
+
+		return new ConstraintRepresentation(equalities, congruences);
+	}
+
+	public ConstraintRepresentation getConstraints6() {
+		// @formatter:off
+		/*
+		 * 1 = 0 [2]
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ZERO)));
+
+		return new ConstraintRepresentation(equalities, congruences);
+	}
+
 	@Test
 	public void testGetMinimalForm() {
 		for (final ConstraintRepresentation constraints : TEST_CONSTRAINTS) {
 			final var minimalConstraints = constraints.getMinimalForm();
-			// System.out.println(constraints);
-			// System.out.println(minimalConstraints);
+			System.out.println("constraints: " + constraints);
+			System.out.println("minimalConstraints: " + minimalConstraints);
 			Assert.assertTrue(hasMinimalForm(minimalConstraints));
 		}
 	}
@@ -110,7 +142,8 @@ public class ConstraintRepresentationTest {
 		Assert.assertTrue(getConstraints2().isUnsat());
 		Assert.assertTrue(getConstraints3().isUnsat());
 		Assert.assertFalse(getConstraints4().isUnsat());
-
+		Assert.assertFalse(getConstraints5().isUnsat());
+		Assert.assertTrue(getConstraints6().isUnsat());
 	}
 
 	@Test
