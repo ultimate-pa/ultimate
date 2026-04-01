@@ -93,7 +93,7 @@ public class GeneratorRepresentation {
 				// Eliminate the pivot field from the following vectors
 				for (int j = i + 1; j < vectors.size(); j++) {
 					final MatrixQ128 other = vectors.get(j);
-					vectors.set(j, CongruenceUtil.eliminateField(other, vector, pivot));
+					vectors.set(j, CongruenceUtil.gaussEliminateField(other, vector, pivot));
 				}
 			}
 		}

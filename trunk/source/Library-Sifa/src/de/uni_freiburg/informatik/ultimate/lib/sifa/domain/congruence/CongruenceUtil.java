@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,6 +14,7 @@ import org.ojalgo.matrix.store.GenericStore;
 import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CongruenceUtil {
 	public static MatrixQ128 equalityToVector(final int[] poliArray, final int result) {
@@ -54,13 +54,62 @@ public class CongruenceUtil {
 	}
 
 	/*
-	 * Eliminates the field in v1 by subtracting a multiple of v2
+	 * Eliminates the field in minuendVector by subtracting a multiple of the
+	 * subtrahendVector and returns the updated minuendVector
 	 */
-	public static MatrixQ128 eliminateField(final MatrixQ128 v1, final MatrixQ128 v2, final long pivot) {
+	public static MatrixQ128 gaussEliminateField(final MatrixQ128 minuendVector, final MatrixQ128 subtrahendVector,
+			final long pivot) {
+		final MatrixQ128 v1 = subtrahendVector;
+		final MatrixQ128 v2 = minuendVector;
 		final var v1Value = v1.get(0, pivot);
 		final var v2Value = v2.get(0, pivot);
-		final var factor = v1Value.divide(v2Value);
-		return v1.subtract(v2.multiply(factor));
+		final var factor = v2Value.divide(v1Value);
+		return v2.subtract(v1.multiply(factor));
+	}
+
+	/*
+	 * Eliminates the field in minuendVector by subtracting a multiple of the
+	 * subtrahendVector in a way that conserves modulo relations and returns the
+	 * updated minuendVector and subtrahendVector
+	 */
+	public static Pair<MatrixQ128, MatrixQ128> hermitEliminateField(final MatrixQ128 minuendVector,
+			final MatrixQ128 subtrahendVector, final long pivot) {
+		final MatrixQ128 v1 = subtrahendVector;
+		final MatrixQ128 v2 = minuendVector;
+
+		final List<RationalNumber> elementList = new ArrayList<>(v1.asList());
+		elementList.addAll(v2.asList());
+		final long commonDenominator = getCommonDenominator(elementList);
+		final RationalNumber commonDenominatorRational = RationalNumber.of(commonDenominator, 1);
+
+		final MatrixQ128 wholeV1 = v1.multiply(commonDenominatorRational);
+		final MatrixQ128 wholeV2 = v2.multiply(commonDenominatorRational);
+
+		final RationalNumber wholePivotElement1Rational = wholeV1.get(0, pivot);
+		final RationalNumber wholePivotElement2Rational = wholeV2.get(0, pivot);
+		final long wholePivotElement1 = getNumerator(wholePivotElement1Rational);
+		final long wholePivotElement2 = getNumerator(wholePivotElement2Rational);
+
+		final long[] rst = gcdext(wholePivotElement1, wholePivotElement2);
+		final long r = rst[0];
+		final RationalNumber rRational = RationalNumber.of(r, 1);
+		final long s = rst[1];
+		final RationalNumber sRational = RationalNumber.of(s, 1);
+		final long t = rst[2];
+		final RationalNumber tRational = RationalNumber.of(t, 1);
+
+		final MatrixQ128 newWholeV1 = wholeV1.multiply(sRational).add(wholeV2.multiply(tRational));
+		final RationalNumber factor1 = wholePivotElement2Rational.negate().divide(rRational);
+		final RationalNumber factor2 = wholePivotElement1Rational.divide(rRational);
+		final MatrixQ128 newWholeV2 = wholeV1.multiply(factor1).add(wholeV2.multiply(factor2));
+
+		final MatrixQ128 newV1 = newWholeV1.divide(commonDenominatorRational);
+		final MatrixQ128 newV2 = newWholeV2.divide(commonDenominatorRational);
+
+		final MatrixQ128 newSubtrahendVector = newV1;
+		final MatrixQ128 newMinuendVector = newV2;
+
+		return new Pair<>(newMinuendVector, newSubtrahendVector);
 	}
 
 	public static List<MatrixQ128> getRowsFromMatrix(final MatrixQ128 matrix) {
@@ -105,6 +154,20 @@ public class CongruenceUtil {
 			for (int j = 0; j < columnCount; j++) {
 				final var rationalEntry = RationalNumber.of(entries.get(i * columnCount + j), 1);
 				protoMatrix.set(i, j, rationalEntry);
+			}
+		}
+
+		final var matrix = MatrixQ128.FACTORY.copy(protoMatrix);
+		return matrix;
+	}
+
+	public static MatrixQ128 getMatrixFromRationalNumberList(final List<RationalNumber> entries, final int rowCount,
+			final int columnCount) {
+		final GenericStore<RationalNumber> protoMatrix = GenericStore.Q128.make(rowCount, columnCount);
+
+		for (int i = 0; i < rowCount; i++) {
+			for (int j = 0; j < columnCount; j++) {
+				protoMatrix.set(i, j, entries.get(i * columnCount + j));
 			}
 		}
 
@@ -210,34 +273,51 @@ public class CongruenceUtil {
 		return newMap;
 	}
 
-	private static BigInteger wholeDiv(final BigInteger x, final BigInteger y) {
-		return x.divideAndRemainder(y)[0];
+	private static long wholeDiv(final long x, final long y) {
+		return Math.floorDiv(x, y);
 	}
 
-	public static BigInteger[] gcdext(final BigInteger x, final BigInteger y) {
-		BigInteger oldR = x;
-		BigInteger newR = y;
-		BigInteger oldS = BigInteger.ONE;
-		BigInteger newS = BigInteger.ZERO;
-		BigInteger oldT = BigInteger.ZERO;
-		BigInteger newT = BigInteger.ONE;
+	public static long[] gcdext(final long x, final long y) {
+		long oldR = x;
+		long newR = y;
+		long oldS = 1;
+		long newS = 0;
+		long oldT = 0;
+		long newT = 1;
 
-		while (!newR.equals(BigInteger.ZERO)) {
-			final BigInteger q = wholeDiv(oldR, newR);
+		while (newR != 0) {
+			final long q = wholeDiv(oldR, newR);
 
-			final BigInteger tempR = oldR;
+			final long tempR = oldR;
 			oldR = newR;
-			newR = tempR.subtract(newR.multiply(q));
+			newR = tempR - q * newR;
 
-			final BigInteger tempS = oldS;
+			final long tempS = oldS;
 			oldS = newS;
-			newS = tempS.subtract(newS.multiply(q));
+			newS = tempS - q * newS;
 
-			final BigInteger tempT = oldT;
+			final long tempT = oldT;
 			oldT = newT;
-			newT = tempT.subtract(newT.multiply(q));
+			newT = tempT - q * newT;
 		}
 
-		return new BigInteger[] { oldR, oldS, oldT };
+		return new long[] { oldR, oldS, oldT };
+	}
+
+	public static long lcm(final long x, final long y) {
+		final long gcd = gcdext(x, y)[0];
+		if (gcd == 0) {
+			return 0;
+		}
+		return Math.abs(Math.divideExact(x, gcd) * y);
+	}
+
+	public static long getCommonDenominator(final List<RationalNumber> list) {
+		long commonDenominator = 1;
+		for (final RationalNumber rationalNumber : list) {
+			final long denominator = getDenominator(rationalNumber);
+			commonDenominator = lcm(denominator, commonDenominator);
+		}
+		return commonDenominator;
 	}
 }

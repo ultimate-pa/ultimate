@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -125,13 +126,13 @@ public class ConstraintRepresentation {
 				// Eliminate the pivot field from the following equalities
 				for (int j = i + 1; j < equalities.size(); j++) {
 					final MatrixQ128 other = equalities.get(j);
-					equalities.set(j, CongruenceUtil.eliminateField(other, equality, pivot));
+					equalities.set(j, CongruenceUtil.gaussEliminateField(other, equality, pivot));
 				}
 
 				// Eliminate the pivot field from the following congruence's
 				for (int j = 0; j < congruences.size(); j++) {
 					final MatrixQ128 other = congruences.get(j);
-					congruences.set(j, CongruenceUtil.eliminateField(other, equality, pivot));
+					congruences.set(j, CongruenceUtil.gaussEliminateField(other, equality, pivot));
 				}
 
 			}
@@ -145,7 +146,7 @@ public class ConstraintRepresentation {
 			if (pivot == -1) {
 				// vector is empty, can be deleted
 				congruencesToDelete.add(i);
-			} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) == 1) {
+			} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)).equals(BigInteger.ONE)) {
 				// congruence is unsatisfiable and so is the whole system
 				// First entry has to be 0 modulo 1 which is exactly the case when the
 				// pivotValue is a whole number
@@ -153,7 +154,7 @@ public class ConstraintRepresentation {
 			} else {
 				// Make pivotValue positive
 				final var pivotValue = congruence.get(0, pivot);
-				if (CongruenceUtil.getNumerator(pivotValue) < 0) {
+				if (CongruenceUtil.getNumerator(pivotValue).compareTo(BigInteger.ZERO) < 0) {
 					congruences.set(i, congruence.multiply((-1)));
 				}
 
@@ -162,7 +163,7 @@ public class ConstraintRepresentation {
 				// equality doesn't conserve the equality
 				for (int j = i + 1; j < congruences.size(); j++) {
 					final MatrixQ128 other = congruences.get(j);
-					congruences.set(j, CongruenceUtil.eliminateField(other, congruence, pivot));
+					congruences.set(j, CongruenceUtil.gaussEliminateField(other, congruence, pivot));
 				}
 			}
 		}
@@ -193,7 +194,7 @@ public class ConstraintRepresentation {
 
 			for (int j = i - 1; j >= 0; j--) {
 				final MatrixQ128 other = congruences.get(j);
-				congruences.set(j, CongruenceUtil.eliminateField(other, congruence, pivot));
+				congruences.set(j, CongruenceUtil.gaussEliminateField(other, congruence, pivot));
 			}
 		}
 		return new ConstraintRepresentation(equalities, congruences, true, true);

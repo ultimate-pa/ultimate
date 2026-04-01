@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +9,7 @@ import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CongruenceUtilTest {
 
@@ -208,24 +208,119 @@ public class CongruenceUtilTest {
 
 	@Test
 	public void testGcdext() {
-		final BigInteger range = BigInteger.valueOf(20);
-		for (BigInteger x = range.negate(); x.compareTo(range) <= 0; x = x.add(BigInteger.ONE)) {
-			for (BigInteger y = range.negate(); y.compareTo(range) <= 0; y = y.add(BigInteger.ONE)) {
-				final BigInteger[] rst = CongruenceUtil.gcdext(x, y);
-				final BigInteger gcd = rst[0];
+		final long range = 20;
+		for (long x = -range; x <= range; x++) {
+			for (long y = -range; y <= range; y++) {
+				final long[] rst = CongruenceUtil.gcdext(x, y);
+				final long gcd = rst[0];
 				// System.out.println(x);
 				// System.out.println(y);
 				// System.out.println(gcd);
 				// System.out.println(x.gcd(y));
-				Assert.assertTrue(gcd.abs().equals(x.gcd(y)));
 
-				final BigInteger s = rst[1];
-				final BigInteger t = rst[2];
-				final BigInteger v = x.multiply(s).add(y.multiply(t));
-				Assert.assertTrue(gcd.equals(v));
+				if (x == 0 && y == 0) {
+					Assert.assertTrue(gcd == 0);
+				} else {
+					Assert.assertTrue(x % gcd == 0);
+					Assert.assertTrue(y % gcd == 0);
+				}
+				final long s = rst[1];
+				final long t = rst[2];
+				final long v = s * x + t * y;
+				Assert.assertTrue(gcd == v);
 			}
 		}
+	}
 
+	@Test
+	public void testLcm() {
+		final long range = 20;
+		for (long x = -range; x <= range; x++) {
+			for (long y = -range; y <= range; y++) {
+				final long lcm = CongruenceUtil.lcm(x, y);
+				final long gcd = CongruenceUtil.gcdext(x, y)[0];
+				final long v1 = Math.abs(gcd * lcm);
+				final long v2 = Math.abs(x * y);
+				// System.out.println("x:" + x);
+				// System.out.println(y);
+				// System.out.println(lcm);
+				// System.out.println(gcd);
+				// System.out.println(v1);
+				// System.out.println(v2);
+				Assert.assertTrue(v1 == v2);
+			}
+		}
+	}
+
+	@Test
+	public void testGaussEliminateField() {
+		// 1, 2/3, 1/2
+		final List<RationalNumber> list1 = List.of(RationalNumber.of(1, 1), RationalNumber.of(2, 3),
+				RationalNumber.of(1, 2));
+		// 2, 1/4, 0
+		final List<RationalNumber> list2 = List.of(RationalNumber.of(2, 1), RationalNumber.of(1, 4),
+				RationalNumber.of(0, 1));
+
+		// 0, -13/12, -1
+		final List<RationalNumber> list3 = List.of(RationalNumber.of(0, 1), RationalNumber.of(-13, 12),
+				RationalNumber.of(-1, 1));
+		// 13/8, 0, -3/16
+		final List<RationalNumber> list4 = List.of(RationalNumber.of(13, 8), RationalNumber.of(0, 1),
+				RationalNumber.of(-3, 16));
+
+		final MatrixQ128 v1 = CongruenceUtil.getMatrixFromRationalNumberList(list1, 1, 3);
+		final MatrixQ128 v2 = CongruenceUtil.getMatrixFromRationalNumberList(list2, 1, 3);
+
+		final MatrixQ128 expected1 = CongruenceUtil.getMatrixFromRationalNumberList(list3, 1, 3);
+		final MatrixQ128 expected2 = CongruenceUtil.getMatrixFromRationalNumberList(list4, 1, 3);
+		final MatrixQ128 expected3 = v2;
+
+		final MatrixQ128 res1 = CongruenceUtil.gaussEliminateField(v2, v1, 0);
+		final MatrixQ128 res2 = CongruenceUtil.gaussEliminateField(v2, v1, 1);
+		final MatrixQ128 res3 = CongruenceUtil.gaussEliminateField(v2, v1, 2);
+
+		Assert.assertTrue(expected1.equals(res1));
+		Assert.assertTrue(expected2.equals(res2));
+		Assert.assertTrue(expected3.equals(res3));
+	}
+
+	@Test
+	public void testHermitEliminateField() {
+		// 1, 2/3, 1/2
+		final List<RationalNumber> list1 = List.of(RationalNumber.of(1, 1), RationalNumber.of(2, 3),
+				RationalNumber.of(1, 2));
+		// 2, 1/4, 0
+		final List<RationalNumber> list2 = List.of(RationalNumber.of(2, 1), RationalNumber.of(1, 4),
+				RationalNumber.of(0, 1));
+
+		// 0, -13/12, -12/12
+		final List<RationalNumber> list3 = List.of(RationalNumber.of(0, 1), RationalNumber.of(-13, 12),
+				RationalNumber.of(-12, 12));
+
+		// 60/12, 1/12, -6/12
+		final List<RationalNumber> list4 = List.of(RationalNumber.of(60, 12), RationalNumber.of(1, 12),
+				RationalNumber.of(-6, 12));
+		// 156/12, 0, -18/12
+		final List<RationalNumber> list5 = List.of(RationalNumber.of(156, 12), RationalNumber.of(0, 1),
+				RationalNumber.of(-18, 12));
+
+		final MatrixQ128 v1 = CongruenceUtil.getMatrixFromRationalNumberList(list1, 1, 3);
+		final MatrixQ128 v2 = CongruenceUtil.getMatrixFromRationalNumberList(list2, 1, 3);
+		final MatrixQ128 v3 = CongruenceUtil.getMatrixFromRationalNumberList(list3, 1, 3);
+		final MatrixQ128 v4 = CongruenceUtil.getMatrixFromRationalNumberList(list4, 1, 3);
+		final MatrixQ128 v5 = CongruenceUtil.getMatrixFromRationalNumberList(list5, 1, 3);
+
+		final Pair<MatrixQ128, MatrixQ128> expected1 = new Pair<>(v3, v1);
+		final Pair<MatrixQ128, MatrixQ128> expected2 = new Pair<>(v5, v4);
+		final Pair<MatrixQ128, MatrixQ128> expected3 = new Pair<>(v2, v1);
+
+		final Pair<MatrixQ128, MatrixQ128> res1 = CongruenceUtil.hermitEliminateField(v2, v1, 0);
+		final Pair<MatrixQ128, MatrixQ128> res2 = CongruenceUtil.hermitEliminateField(v2, v1, 1);
+		final Pair<MatrixQ128, MatrixQ128> res3 = CongruenceUtil.hermitEliminateField(v2, v1, 2);
+
+		Assert.assertTrue(expected1.equals(res1));
+		Assert.assertTrue(expected2.equals(res2));
+		Assert.assertTrue(expected3.equals(res3));
 	}
 
 }
