@@ -6,7 +6,6 @@ extern void __VERIFIER_atomic_begin();
 extern void __VERIFIER_atomic_end();
 
 // Global state
-bool gpio_int_enabled = false;
 
 bool button_state = false;
 
