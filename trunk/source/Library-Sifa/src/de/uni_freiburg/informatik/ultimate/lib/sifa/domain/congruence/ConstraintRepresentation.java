@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -146,7 +145,7 @@ public class ConstraintRepresentation {
 			if (pivot == -1) {
 				// vector is empty, can be deleted
 				congruencesToDelete.add(i);
-			} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)).equals(BigInteger.ONE)) {
+			} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) == 1) {
 				// congruence is unsatisfiable and so is the whole system
 				// First entry has to be 0 modulo 1 which is exactly the case when the
 				// pivotValue is a whole number
@@ -154,7 +153,7 @@ public class ConstraintRepresentation {
 			} else {
 				// Make pivotValue positive
 				final var pivotValue = congruence.get(0, pivot);
-				if (CongruenceUtil.getNumerator(pivotValue).compareTo(BigInteger.ZERO) < 0) {
+				if (CongruenceUtil.getNumerator(pivotValue) < 0) {
 					congruences.set(i, congruence.multiply((-1)));
 				}
 
