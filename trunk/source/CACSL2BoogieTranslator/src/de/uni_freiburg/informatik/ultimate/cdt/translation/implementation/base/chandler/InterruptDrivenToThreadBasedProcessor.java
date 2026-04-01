@@ -130,19 +130,24 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private void addForksToProcedure(final Procedure mainProcedure, final List<Procedure> threadGpioProcedures) {
-		final List<Statement> newBlock = constructForkStatements(threadGpioProcedures);
+		final List<Statement> newBlock = constructForkStatements(mainProcedure, threadGpioProcedures);
 		final var body = mainProcedure.getBody();
 		newBlock.addAll(Arrays.asList(body.getBlock()));
 		body.setBlock(newBlock.toArray(new Statement[0]));
 	}
 
-	private List<Statement> constructForkStatements(final List<Procedure> threadGpioProcedures) {
+	private List<Statement> constructForkStatements(final Procedure mainProcedure,
+			final List<Procedure> threadGpioProcedures) {
+		mProcedureManager.beginProcedureScope(mCHandler,
+				mProcedureManager.getProcedureInfo(mainProcedure.getIdentifier()));
 		final var forkStatements = new ArrayList<Statement>();
 		for (final Procedure procedure : threadGpioProcedures) {
 			final var fs =
 					new ForkStatement(mIgnoreLoc, new Expression[0], procedure.getIdentifier(), new Expression[0]);
 			forkStatements.add(fs);
+			mProcedureManager.registerForkStatement(fs);
 		}
+		mProcedureManager.endProcedureScope(mCHandler);
 		return forkStatements;
 	}
 
@@ -184,19 +189,23 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 			final var intEnableProcedure = intEnabledProcedures.get(irq);
 			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
 			modifyIntEnableProcedure(intEnableProcedure, lhs);
-			addIntEnabledToSpecification(intEnableProcedure, lhs);
 		}
 	}
 
 	private void modifyIntEnableProcedure(final Procedure intEnableProcedure, final VariableLHS intEnabledLhs) {
+		mProcedureManager.beginProcedureScope(mCHandler,
+				mProcedureManager.getProcedureInfo(intEnableProcedure.getIdentifier()));
 		final var body = intEnableProcedure.getBody();
 		final var block = body.getBlock();
 		final var assignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc, intEnabledLhs,
 				ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true));
-		final var newBlock = new ArrayList<Statement>(Arrays.asList(block));
+		final var newBlock = new ArrayList<>(Arrays.asList(block));
 		newBlock.add(assignment);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, newBlock);
-		body.setBlock(new Statement[] { atomic });
+		final var newBody = mProcedureManager.constructBody(mIgnoreLoc, new VariableDeclaration[0],
+				new Statement[] { atomic }, intEnableProcedure.getIdentifier());
+		body.setBlock(newBody.getBlock());
+		mProcedureManager.endProcedureScope(mCHandler);
 	}
 
 	private void addIntEnabledToSpecification(final Procedure intEnableSpec, final VariableLHS intEnabledLhs) {
