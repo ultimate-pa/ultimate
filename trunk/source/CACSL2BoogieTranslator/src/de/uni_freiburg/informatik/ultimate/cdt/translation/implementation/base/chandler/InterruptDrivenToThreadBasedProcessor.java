@@ -42,7 +42,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -51,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -110,9 +109,6 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		mIdExpressions = constructIntEnabledExpressions(mISR.getISRMap().keySet());
 
-		// Add interrupt enabled variable declarations
-		decl.addAll(constructIntEnableDeclarations());
-
 		// Add thread gpio procedures
 		final var threadGpioProcedures = constructThreadGpioProc();
 		decl.addAll(threadGpioProcedures);
@@ -123,6 +119,9 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		// Add atomic block and variable assignment to request enabled functions
 		final var lhsMap = getVariableLHSs();
 		modifyIntEnableProcedures(lhsMap);
+
+		// Add interrupt enabled variable declarations
+		decl.addAll(constructIntEnableDeclarations());
 
 		mAdditionalInitializations.add(constructIntEnabledInitializations(lhsMap.values()));
 
@@ -153,7 +152,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private Set<Declaration> constructIntEnableDeclarations() {
 		final var declarations = new HashSet<Declaration>();
-		final var astType = new NamedType(mIgnoreLoc, BoogieType.TYPE_BOOL, "bool", new ASTType[0]);
+		final var astType = new PrimitiveType(mIgnoreLoc, "bool");
 		for (final IdentifierExpression identifierExpression : mIdExpressions.values()) {
 			final var decl = new VariableDeclaration(mIgnoreLoc, new Attribute[0], new VarList[] {
 					new VarList(mIgnoreLoc, new String[] { identifierExpression.getIdentifier() }, astType) });
@@ -306,7 +305,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private Expression getEnabledExpression(final IdentifierExpression threadEnabledId, final boolean andWildcard) {
-		if (andWildcard) {
+		if (!andWildcard) {
 			return threadEnabledId;
 		}
 		final var wildCard = ExpressionFactory.constructBooleanWildCardExpression(mIgnoreLoc);
