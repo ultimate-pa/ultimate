@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,10 +43,13 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -63,9 +67,15 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptServiceRoutines;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -81,6 +91,10 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private final TranslationSettings mSettings;
 
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+
+	private final ExpressionTranslation mExpressionTranslation;
+
 	private final ILocation mIgnoreLoc = LocationFactory.createIgnoreCLocation();
 
 	private final InterruptTranslationMode mTranslationMode;
@@ -93,12 +107,15 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	public InterruptDrivenToThreadBasedProcessor(final ILogger logger, final FlatSymbolTable symbolTable,
 			final TranslationSettings settings, final ProcedureManager procedureManager, final CHandler chandler,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
 			final InterruptTranslationMode translationMode, final InterruptServiceRoutines isrs) {
 		mLogger = logger;
 		mSymboltable = symbolTable;
 		mSettings = settings;
 		mProcedureManager = procedureManager;
 		mCHandler = chandler;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mExpressionTranslation = expressionTranslation;
 		mTranslationMode = translationMode;
 		mISR = isrs;
 	}
@@ -258,10 +275,11 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	private Procedure constructAllInterruptsThreadGpioProc() {
 		final var procName = constructThreadGpioID(0);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
-				new VarList[0], null, null);
+				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final var whileStmt = constructAllIsrWhileLoop();
+		final var nondetVarInfo = getHavocAuxVar(builder);
+		final var whileStmt = constructAllIsrWhileLoop(nondetVarInfo);
 		builder.addStatement(whileStmt);
 		final var body = mProcedureManager.constructBody(mIgnoreLoc,
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
@@ -271,23 +289,50 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 				null, body);
 	}
 
+	private AuxVarInfo getHavocAuxVar(final ExpressionResultBuilder builder) {
+		final CPrimitive cType = new CPrimitive(CPrimitives.BOOL);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(mIgnoreLoc, cType, SFO.AUXVAR.NONDET);
+		builder.addAuxVarWithDeclaration(auxvarinfo);
+		builder.addStatements(getHavocBoolStatements(auxvarinfo));
+
+		return auxvarinfo;
+	}
+
+	private List<Statement> getHavocBoolStatements(final AuxVarInfo auxvarinfo) {
+		final CPrimitive cType = new CPrimitive(CPrimitives.BOOL);
+		final var statements = new ArrayList<Statement>();
+		statements.add(new HavocStatement(mIgnoreLoc, new VariableLHS[] { auxvarinfo.getLhs() }));
+
+		final Expression isZero =
+				ExpressionFactory.newBinaryExpression(mIgnoreLoc, Operator.COMPEQ, auxvarinfo.getExp(),
+						mExpressionTranslation.constructLiteralForIntegerType(mIgnoreLoc, cType, BigInteger.ZERO));
+		final Expression isOne = ExpressionFactory.newBinaryExpression(mIgnoreLoc, Operator.COMPEQ, auxvarinfo.getExp(),
+				mExpressionTranslation.constructLiteralForIntegerType(mIgnoreLoc, cType, BigInteger.ONE));
+		statements.add(new AssumeStatement(mIgnoreLoc, ExpressionFactory.or(mIgnoreLoc, List.of(isZero, isOne))));
+		return statements;
+	}
+
 	private Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId) {
 		// TODO: Maybe this needs to be registered in ProcedureManager
-		final var ifStmt = getIfStatement(identifier, threadEnabledId, false);
+		final var enabledExpr = threadEnabledId;
+		final var ifStmt = getIfStatement(identifier, threadEnabledId, enabledExpr);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStmt));
 		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
 		return new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0],
 				new Statement[] { atomic });
 	}
 
-	private Statement constructAllIsrWhileLoop() {
+	private Statement constructAllIsrWhileLoop(final AuxVarInfo auxVarInfo) {
 		final var ifStatements = new ArrayList<Statement>();
 		for (final Entry<Integer, Procedure> entry : mISR.getISRMap().entrySet()) {
+			final var boolHavoc = getHavocBoolStatements(auxVarInfo);
+			ifStatements.addAll(boolHavoc);
 			final var irq = entry.getKey();
 			final var identifier = entry.getValue().getIdentifier();
 			final var threadEnabledId = mIdExpressions.get(irq);
+			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
 			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ: " + irq;
-			ifStatements.add(getIfStatement(identifier, threadEnabledId, true));
+			ifStatements.add(getIfStatement(identifier, threadEnabledId, enabledExpression));
 		}
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements);
 		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
@@ -296,22 +341,18 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private Statement getIfStatement(final String identifier, final IdentifierExpression threadEnabledId,
-			final boolean andWildcard) {
+			final Expression enabledExpr) {
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
-		final var enabledExpr = getEnabledExpression(threadEnabledId, andWildcard);
 		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then },
 				new Statement[0]);
 	}
 
-	private Expression getEnabledExpression(final IdentifierExpression threadEnabledId, final boolean andWildcard) {
-		if (!andWildcard) {
-			return threadEnabledId;
-		}
-		final var wildCard = ExpressionFactory.constructBooleanWildCardExpression(mIgnoreLoc);
-		return ExpressionFactory.newBinaryExpression(mIgnoreLoc,
-				de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator.LOGICAND, threadEnabledId,
-				wildCard);
+	private Expression getEnabledExpression(final IdentifierExpression threadEnabledId, final AuxVarInfo auxVarInfo) {
+		final CPrimitive cType = new CPrimitive(CPrimitives.BOOL);
+		final Expression isOne = ExpressionFactory.newBinaryExpression(mIgnoreLoc, Operator.COMPEQ, auxVarInfo.getExp(),
+				mExpressionTranslation.constructLiteralForIntegerType(mIgnoreLoc, cType, BigInteger.ONE));
+		return ExpressionFactory.and(mIgnoreLoc, List.of(threadEnabledId, isOne));
 	}
 
 	private String constructThreadGpioID(final Integer irq) {
