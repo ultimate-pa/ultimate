@@ -7,6 +7,8 @@ import java.util.Map;
 import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.scalar.RationalNumber;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
 public class GeneratorRepresentation {
 	final private MatrixQ128 mLineMatrix;
 	final private MatrixQ128 mParameterMatrix;
@@ -60,7 +62,6 @@ public class GeneratorRepresentation {
 	}
 
 	public GeneratorRepresentation getMinimalForm() {
-		// TODO: Fix to properly work
 		if (isMinimal()) {
 			return this;
 		}
@@ -68,57 +69,73 @@ public class GeneratorRepresentation {
 		final List<MatrixQ128> lines = getLines();
 		final List<MatrixQ128> parameters = getParameters();
 
-		final List<MatrixQ128> vectors = new ArrayList<>(lines);
-		vectors.addAll(parameters);
+		final List<Integer> linesToDelete = new ArrayList<>();
+		final List<Integer> parametersToDelete = new ArrayList<>();
 
-		final int numLines = lines.size();
+		// Making the line pivots unique
+		for (int i = 0; i < lines.size(); i++) {
+			MatrixQ128 line = lines.get(i);
+			final long pivot = CongruenceUtil.firstPivot(line);
 
-		final List<Integer> vectorsToDelete = new ArrayList<>();
-
-		// Making the vector pivots unique
-		for (int i = 0; i < vectors.size(); i++) {
-			final MatrixQ128 vector = vectors.get(i);
-			final long pivot = CongruenceUtil.firstPivot(vector);
-
-			if (pivot == vector.countColumns()) {
-				// vector is empty, can be deleted
-				vectorsToDelete.add(i);
+			if (pivot == line.countColumns()) {
+				// line is empty, can be deleted
+				linesToDelete.add(i);
 			} else {
 				// Make pivotValue positive
-				final RationalNumber pivotValue = vector.get(0, pivot);
+				final RationalNumber pivotValue = line.get(0, pivot);
 				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
-					vectors.set(i, vector.multiply((-1)));
+					line = line.negate();
+					lines.set(i, line);
 				}
 
-				// Eliminate the pivot field from the following vectors
-				for (int j = i + 1; j < vectors.size(); j++) {
-					final MatrixQ128 other = vectors.get(j);
-					vectors.set(j, CongruenceUtil.gaussEliminateField(other, vector, pivot));
+				// Eliminate the pivot field from the following lines
+				for (int j = i + 1; j < lines.size(); j++) {
+					final MatrixQ128 other = lines.get(j);
+					lines.set(j, CongruenceUtil.gaussEliminateField(other, line, pivot));
+				}
+				// Eliminate the pivot field from the parameters
+				for (int j = 0; j < parameters.size(); j++) {
+					final MatrixQ128 other = parameters.get(j);
+					parameters.set(j, CongruenceUtil.gaussEliminateField(other, line, pivot));
 				}
 			}
 		}
 
-		final List<MatrixQ128> newLines = new ArrayList<>();
-		final List<MatrixQ128> newParameters = new ArrayList<>();
+		// Making the parameter pivots unique
+		for (int i = 0; i < parameters.size(); i++) {
+			MatrixQ128 parameter = parameters.get(i);
+			final long pivot = CongruenceUtil.firstPivot(parameter);
 
-		for (int i = 0; i < vectors.size(); i++) {
-			final MatrixQ128 vector = vectors.get(i);
-
-			if (i < numLines) {
-				newLines.add(vector);
+			if (pivot == parameter.countColumns()) {
+				// parameter is empty, can be deleted
+				parametersToDelete.add(i);
 			} else {
-				newParameters.add(vector);
+				// Make pivotValue positive
+				final RationalNumber pivotValue = parameter.get(0, pivot);
+				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+					parameter = parameter.negate();
+					parameters.set(i, parameter);
+				}
+
+				// Eliminate the pivot field from the following parameters
+				for (int j = i; j < parameters.size(); j++) {
+					final MatrixQ128 other = parameters.get(j);
+					final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, parameter,
+							pivot);
+					parameters.set(j, pair.getFirst());
+					parameters.set(i, pair.getSecond());
+				}
 			}
 		}
 
-		for (final int i : vectorsToDelete.reversed()) {
-			if (i < numLines) {
-				newLines.remove(i);
-			} else {
-				newParameters.remove(i - numLines);
-			}
+		for (final int i : linesToDelete.reversed()) {
+			lines.remove(i);
 		}
-		return new GeneratorRepresentation(newLines, newParameters, true);
+		for (final int i : parametersToDelete.reversed()) {
+			parameters.remove(i);
+		}
+
+		return new GeneratorRepresentation(lines, parameters, true);
 
 	}
 

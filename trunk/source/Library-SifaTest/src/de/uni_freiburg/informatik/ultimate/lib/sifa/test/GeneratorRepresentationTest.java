@@ -10,6 +10,7 @@ import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceUtil;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorRepresentation;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class GeneratorRepresentationTest {
 	List<GeneratorRepresentation> TEST_GENERATORS = List.of(getGenerators1(), getGenerators2(), getGenerators3(),
@@ -82,6 +83,26 @@ public class GeneratorRepresentationTest {
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 1, 1, -2, 0)));
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 0, 0, 0, 1)));
+
+		return new GeneratorRepresentation(lines, parameters);
+	}
+
+	public GeneratorRepresentation getGenerators5() {
+		// @formatter:off
+		/*
+		 * L = {}
+		 * Q = {(0, 1/2, 4), (2, 4/3, 5), (7, 13/7, 1/3)}
+		 */
+		// @formatter:on
+		final List<MatrixQ128> lines = new ArrayList<>();
+
+		final List<MatrixQ128> parameters = new ArrayList<>();
+		parameters.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.valueOf(1, 2), Rational.valueOf(4, 1))));
+		parameters.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.TWO, Rational.valueOf(4, 3), Rational.valueOf(5, 1))));
+		parameters.add(CongruenceUtil.getRowVectorFromRationalList(
+				List.of(Rational.valueOf(7, 1), Rational.valueOf(13, 7), Rational.valueOf(1, 3))));
 
 		return new GeneratorRepresentation(lines, parameters);
 	}

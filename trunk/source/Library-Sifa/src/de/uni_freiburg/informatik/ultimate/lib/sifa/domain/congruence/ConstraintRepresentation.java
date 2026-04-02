@@ -120,7 +120,7 @@ public class ConstraintRepresentation {
 				// Make pivotValue positive
 				final RationalNumber pivotValue = equality.get(0, pivot);
 				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
-					equality = equality.multiply((-1));
+					equality = equality.negate();
 					equalities.set(i, equality);
 				}
 
@@ -160,7 +160,7 @@ public class ConstraintRepresentation {
 				// Make pivotValue positive
 				final var pivotValue = congruence.get(0, pivot);
 				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
-					congruence = congruence.multiply((-1));
+					congruence = congruence.negate();
 					congruences.set(i, congruence);
 				}
 
