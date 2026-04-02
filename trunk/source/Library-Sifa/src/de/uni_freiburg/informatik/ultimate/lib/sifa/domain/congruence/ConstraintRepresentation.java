@@ -135,7 +135,6 @@ public class ConstraintRepresentation {
 					final MatrixQ128 other = congruences.get(j);
 					congruences.set(j, CongruenceUtil.gaussEliminateField(other, equality, pivot));
 				}
-
 			}
 		}
 
@@ -193,7 +192,6 @@ public class ConstraintRepresentation {
 	}
 
 	public ConstraintRepresentation getStrongMinimalForm() {
-		// TODO: Fix to properly work
 		if (isStrongMinimal()) {
 			return this;
 		}
@@ -202,14 +200,52 @@ public class ConstraintRepresentation {
 
 		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
 		final List<MatrixQ128> congruences = minimalConstraints.getCongruences();
+		// Sorting the congruence's by last pivot is needed for the rest
+		congruences.sort((v1, v2) -> (CongruenceUtil.lastPivot(v1) < CongruenceUtil.lastPivot(v2)) ? 1 : -1);
 
-		for (int i = congruences.size() - 1; i >= 0; i--) {
-			final MatrixQ128 congruence = congruences.get(i);
-			final long pivot = CongruenceUtil.lastPivot(congruence);
-
-			for (int j = i - 1; j >= 0; j--) {
+		for (int i = 0; i < congruences.size(); i++) {
+			for (int j = 0; j < congruences.size(); j++) {
+				if (i == j) {
+					continue;
+				}
+				final MatrixQ128 congruence = congruences.get(i);
 				final MatrixQ128 other = congruences.get(j);
-				congruences.set(j, CongruenceUtil.gaussEliminateField(other, congruence, pivot));
+				final long index = CongruenceUtil.lastPivot(other);
+
+				final RationalNumber indexValue = congruence.get(0, index);
+				final RationalNumber otherIndexValue = other.get(0, index);
+				final RationalNumber indexValue2 = indexValue.multiply(2);
+
+				if (indexValue2.compareTo(otherIndexValue.negate()) <= 0
+						|| indexValue2.compareTo(otherIndexValue) > 0) {
+					final MatrixQ128 v1 = congruence;
+					final MatrixQ128 v2 = other;
+
+					final long congruenceDenominator = CongruenceUtil.getCommonDenominator(congruence);
+					final long otherDenominator = CongruenceUtil.getCommonDenominator(other);
+					final long commonDenominator = CongruenceUtil.lcm(congruenceDenominator, otherDenominator);
+					final RationalNumber commonDenominatorRational = RationalNumber.of(commonDenominator, 1);
+
+					final MatrixQ128 wholeV1 = v1.multiply(commonDenominatorRational);
+					final MatrixQ128 wholeV2 = v2.multiply(commonDenominatorRational);
+
+					final RationalNumber wholeIndexElement1Rational = wholeV1.get(0, index);
+					final RationalNumber wholeIndexElement2Rational = wholeV2.get(0, index);
+					final long wholeIndexElement1 = CongruenceUtil.getNumerator(wholeIndexElement1Rational);
+					final long wholeIndexElement2 = CongruenceUtil.getNumerator(wholeIndexElement2Rational);
+
+					long factor;
+					if (wholeIndexElement1 % wholeIndexElement2 > wholeIndexElement1 / 2) {
+						factor = Math.ceilDivExact(wholeIndexElement1, wholeIndexElement2);
+					} else {
+						factor = Math.floorDivExact(wholeIndexElement1, wholeIndexElement2);
+					}
+
+					final MatrixQ128 newWholeV1 = wholeV1.subtract(wholeV2.multiply(factor));
+					final MatrixQ128 newCongruence = newWholeV1.divide(commonDenominatorRational);
+					congruences.set(i, newCongruence);
+				}
+
 			}
 		}
 		return new ConstraintRepresentation(equalities, congruences, true, true);

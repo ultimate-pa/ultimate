@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class ConstraintRepresentationTest {
 	List<ConstraintRepresentation> TEST_CONSTRAINTS = List.of(getConstraints1(), getConstraints2(), getConstraints3(),
-			getConstraints4(), getConstraints5(), getConstraints6());
+			getConstraints4(), getConstraints5(), getConstraints6(), getConstraints7());
 
 	public ConstraintRepresentation getConstraints1() {
 		// @formatter:off
@@ -126,12 +126,33 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences);
 	}
 
+	public ConstraintRepresentation getConstraints7() {
+		// @formatter:off
+		/*
+		 * x1 - x2 = 0 [2]
+		 * x1 + x2 = 0 [3]
+		 * x1 + x2 + 2*x3 = 1 [5]
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(
+				List.of(Rational.ZERO, Rational.valueOf(1, 2), Rational.valueOf(-1, 2), Rational.ZERO)));
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(
+				List.of(Rational.ZERO, Rational.valueOf(1, 3), Rational.valueOf(1, 3), Rational.ZERO)));
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.valueOf(-1, 5),
+				Rational.valueOf(1, 5), Rational.valueOf(1, 5), Rational.valueOf(2, 5))));
+
+		return new ConstraintRepresentation(equalities, congruences);
+	}
+
 	@Test
 	public void testGetMinimalForm() {
 		for (final ConstraintRepresentation constraints : TEST_CONSTRAINTS) {
 			final var minimalConstraints = constraints.getMinimalForm();
-			System.out.println("constraints: " + constraints);
-			System.out.println("minimalConstraints: " + minimalConstraints);
+			// System.out.println("constraints: " + constraints);
+			// System.out.println("minimalConstraints: " + minimalConstraints);
 			Assert.assertTrue(hasMinimalForm(minimalConstraints));
 		}
 	}
@@ -148,9 +169,11 @@ public class ConstraintRepresentationTest {
 
 	@Test
 	public void testGetStrongMinimalForm() {
+		// Add more tests for this
 		for (final ConstraintRepresentation constraints : TEST_CONSTRAINTS) {
 			final var strongMinimalConstraints = constraints.getStrongMinimalForm();
 			// System.out.println(constraints);
+			// System.out.println(constraints.getMinimalForm());
 			// System.out.println(strongMinimalConstraints);
 			Assert.assertTrue(hasStrongMinimalForm(strongMinimalConstraints));
 		}
