@@ -109,8 +109,8 @@ public final class ThreadModularSetup {
 		};
 
 		final boolean includeInterferencePreState = true;
-		final ThreadModularProofChecker proofChecker = new ThreadModularProofChecker(icfg.getCfgSmtToolkit(),
-				postcondition, translator, analysisDomain, ghostVars, activityPreanalysis,
+		final ThreadModularProofChecker proofChecker = new ThreadModularProofChecker(postcondition, translator,
+				analysisDomain, ghostVars, activityPreanalysis,
 				activityPreanalysis.getMultiForkedThreads(), includeInterferencePreState);
 
 		return new SetupResult(threadIds, analysisDomain, defaultLoopSumFactory, interferenceFactory, postcondition,

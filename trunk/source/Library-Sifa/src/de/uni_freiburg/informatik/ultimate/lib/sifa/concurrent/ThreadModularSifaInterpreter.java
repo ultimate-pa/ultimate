@@ -235,7 +235,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private void verifyProof(final FixpointResult fixpoint) {
 		mLogger.info("Thread-modular proof checking started");
 		final ThreadModularProofChecker.CheckReport report =
-				mProofChecker.checkAllDetailed(mIcfg, fixpoint.locationPredicates, fixpoint.threadPredicates);
+				mProofChecker.checkAllDetailed(fixpoint.threadPredicates);
 		logProofSubcheck("Hoare edge checks", report.hoareChecksValid(), report.checkedHoareTriples(),
 				report.invalidHoareTriples());
 		logProofSubcheck("Interference stability checks", report.interferenceChecksValid(),
