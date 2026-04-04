@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class InterferenceCollection {
@@ -44,6 +45,7 @@ public class InterferenceCollection {
 		final Set<String> allThreads = DataStructureUtils.union(mInterferencesByThread.keySet(),
 				previous.mInterferencesByThread.keySet());
 		for (final String threadId : allThreads) {
+			configureDomainContext(domain, threadId);
 			final IInterference newItf = mInterferencesByThread.get(threadId);
 			final IInterference oldItf = previous.mInterferencesByThread.get(threadId);
 			if (newItf == null) {
@@ -63,6 +65,7 @@ public class InterferenceCollection {
 		final Map<String, IInterference> widened = new HashMap<>();
 
 		for (final String threadId : allThreads) {
+			configureDomainContext(domain, threadId);
 			final IInterference thisItf = mInterferencesByThread.get(threadId);
 			final IInterference otherItf = other.mInterferencesByThread.get(threadId);
 
@@ -81,5 +84,11 @@ public class InterferenceCollection {
 		}
 
 		return new InterferenceCollection(widened);
+	}
+
+	private static void configureDomainContext(final IDomain domain, final String threadId) {
+		if (domain instanceof final IThreadLocalDomainContext threadLocalDomainContext) {
+			threadLocalDomainContext.setCurrentThreadId(threadId);
+		}
 	}
 }

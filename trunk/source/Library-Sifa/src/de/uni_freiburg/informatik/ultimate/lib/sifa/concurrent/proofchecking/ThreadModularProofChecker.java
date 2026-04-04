@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
@@ -102,30 +103,31 @@ public class ThreadModularProofChecker {
 		// Check 2: predicate stability under interferences
 		for (final var threadEntry : threadPreds.entrySet()) {
 			final String threadId = threadEntry.getKey();
+			configureDomainContext(threadId);
 			final Map<IcfgLocation, IPredicate> targetThreadStates = threadEntry.getValue();
 			if (targetThreadStates == null) {
 				continue;
 			}
 
-				for (final var locEntry : targetThreadStates.entrySet()) {
-					final IcfgLocation location = locEntry.getKey();
-					final var pred = locEntry.getValue();
-					if (pred == null) {
+			for (final var locEntry : targetThreadStates.entrySet()) {
+				final IcfgLocation location = locEntry.getKey();
+				final var pred = locEntry.getValue();
+				if (pred == null) {
+					continue;
+				}
+
+				for (final var otherEntry : threadPreds.entrySet()) {
+					final String otherThreadId = otherEntry.getKey();
+					if (otherThreadId.equals(threadId) && !mSelfInterferingThreads.contains(threadId)) {
 						continue;
 					}
-
-					for (final var otherEntry : threadPreds.entrySet()) {
-						final String otherThreadId = otherEntry.getKey();
-						if (otherThreadId.equals(threadId) && !mSelfInterferingThreads.contains(threadId)) {
-							continue;
-						}
-						if (!mThreadActivityPreanalysis.mayBeActiveAt(location, otherThreadId)) {
-							continue;
-						}
-						final Map<IcfgLocation, IPredicate> otherThreadStates = otherEntry.getValue();
-						if (otherThreadStates == null) {
-							continue;
-						}
+					if (!mThreadActivityPreanalysis.mayBeActiveAt(location, otherThreadId)) {
+						continue;
+					}
+					final Map<IcfgLocation, IPredicate> otherThreadStates = otherEntry.getValue();
+					if (otherThreadStates == null) {
+						continue;
+					}
 					for (final var otherLocEntry : otherThreadStates.entrySet()) {
 						final IcfgLocation otherLoc = otherLocEntry.getKey();
 						final IPredicate otherLocPred = otherLocEntry.getValue();
@@ -152,6 +154,12 @@ public class ThreadModularProofChecker {
 		return new CheckReport(valid, hoareChecksValid, interferenceChecksValid, checkedHoareTriples,
 				invalidHoareTriples, checkedInterferenceTriples, invalidInterferenceTriples, invalidHoareDetails,
 				invalidInterferenceDetails);
+	}
+
+	private void configureDomainContext(final String threadId) {
+		if (mDomain instanceof final IThreadLocalDomainContext threadLocalDomainContext) {
+			threadLocalDomainContext.setCurrentThreadId(threadId);
+		}
 	}
 
 	public boolean isCheckingEnabled() {

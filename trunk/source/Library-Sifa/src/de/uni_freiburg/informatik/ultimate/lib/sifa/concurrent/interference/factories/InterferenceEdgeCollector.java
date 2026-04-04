@@ -1,4 +1,6 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.factories;
+
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -30,6 +33,7 @@ public class InterferenceEdgeCollector {
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IDomain mMergeDomain;
+	private final boolean mUsePrecomputedGuardedPredicates;
 
 	private static boolean optShouldSkipTrivialPredicate(final IPredicate predicate) {
 		return SmtUtils.isTrueLiteral(predicate.getFormula()) || SmtUtils.isFalseLiteral(predicate.getFormula());
@@ -40,17 +44,13 @@ public class InterferenceEdgeCollector {
 	}
 
 	public InterferenceEdgeCollector(final TransFormulaToInterferencePredicate translator, final IDomain domain,
-			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory) {
-		this(translator, domain, null, managedScript, predicateFactory);
-	}
-
-	public InterferenceEdgeCollector(final TransFormulaToInterferencePredicate translator, final IDomain domain,
 			final IDomain mergeDomain, final ManagedScript managedScript,
-			final BasicPredicateFactory predicateFactory) {
+			final BasicPredicateFactory predicateFactory, final boolean usePrecomputedGuardedPredicates) {
 		mTranslator = Objects.requireNonNull(translator);
 		mMergeDomain = mergeDomain != null ? mergeDomain : Objects.requireNonNull(domain);
 		mManagedScript = Objects.requireNonNull(managedScript);
 		mPredicateFactory = Objects.requireNonNull(predicateFactory);
+		mUsePrecomputedGuardedPredicates = usePrecomputedGuardedPredicates;
 	}
 
 	boolean hasAbstractLocationIds() {
@@ -84,25 +84,57 @@ public class InterferenceEdgeCollector {
 				if (data == null) {
 					continue;
 				}
+				final Set<TermVariable> modifiedGlobals = computeModifiedGlobals(source, data, threadId);
+				final GuardedPredicate precomputedGuardedPredicate = mUsePrecomputedGuardedPredicates
+						? tryPrecomputeGuardedPredicate(sharedPreState, threadId, source, data, modifiedGlobals)
+						: null;
+				if (precomputedGuardedPredicate != null) {
+					final IPredicate orderingPredicate = createOrderingPredicate(precomputedGuardedPredicate);
+					if (!optShouldSkipTrivialPredicate(orderingPredicate)) {
+						predicates.add(new PredicateWithSrcAndTrgt(source, data.target(), orderingPredicate,
+								sharedPreState, modifiedGlobals, precomputedGuardedPredicate));
+					}
+					continue;
+				}
 				final IPredicate transitionPredicate = buildTransitionPredicate(threadId, source, data);
 				final IPredicate predicate = combineWithPreState(sharedPreState, transitionPredicate);
-				// opt: skip trivially false/true predicates
 				if (optShouldSkipTrivialPredicate(predicate)) {
 					continue;
 				}
-				final Set<TermVariable> modifiedGlobals = computeModifiedGlobals(data, threadId);
-				predicates.add(new PredicateWithSrcAndTrgt(source, data.target(), predicate, sharedPreState,
-						modifiedGlobals));
+				predicates.add(
+						new PredicateWithSrcAndTrgt(source, data.target(), predicate, sharedPreState, modifiedGlobals));
 			}
 		}
 		return predicates;
 	}
 
-	private Set<TermVariable> computeModifiedGlobals(final EdgeInterferenceData data, final String interferingThread) {
+	private GuardedPredicate tryPrecomputeGuardedPredicate(final IPredicate sharedPreState, final String threadId,
+			final IcfgLocation source, final EdgeInterferenceData data, final Set<TermVariable> modifiedGlobals) {
+		final IcfgLocation forkedEntry = data.forkedThreadId() == null ? null
+				: mTranslator.getEntryLocation(data.forkedThreadId());
+		return mTranslator.translateGuardedExactUpdateOrNull(sharedPreState, data.tf(), threadId, source,
+				data.target(), data.forkedThreadId(), forkedEntry, modifiedGlobals);
+	}
+
+	private IPredicate createOrderingPredicate(final GuardedPredicate predicate) {
+		final Term formula;
+		if (predicate.hasGuard()) {
+			formula = SmtUtils.and(mManagedScript.getScript(), predicate.guard().getFormula(),
+					predicate.effect().getFormula());
+		} else {
+			formula = predicate.effect().getFormula();
+		}
+		return mPredicateFactory.newPredicate(formula);
+	}
+
+	private Set<TermVariable> computeModifiedGlobals(final IcfgLocation source, final EdgeInterferenceData data,
+			final String interferingThread) {
 		final Set<TermVariable> modified =
 				new HashSet<>(InterferenceUtils.getChangedGlobalTermVars(data.tf(), data.additionallyChangedGlobals()));
 		final TermVariable interferingLoc = mTranslator.getLocationTermVarOrNull(interferingThread);
-		if (interferingLoc != null) {
+		final boolean locationChanges =
+				data.forkedThreadId() != null || !mTranslator.isLocationStutterStep(source, data.target());
+		if (interferingLoc != null && locationChanges) {
 			modified.add(interferingLoc);
 		}
 		if (data.forkedThreadId() != null) {
@@ -195,7 +227,6 @@ public class InterferenceEdgeCollector {
 		final String forkedThreadId = InterferenceUtils.getForkedThreadOrNull(edge);
 		final boolean interferenceRelevant = InterferenceUtils.hasRelevantInterferenceEffect(edge);
 		final boolean locationStutter = mTranslator.isLocationStutterStep(source, target) && forkedThreadId == null;
-		// opt: skip non-interfering edges
 		if (optShouldSkipAsNonInterfering(interferenceRelevant, locationStutter)) {
 			return null;
 		}

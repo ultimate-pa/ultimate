@@ -98,6 +98,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	public void configureForThread(final String threadId, final InterferenceCollection interferences,
 			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain analysisDomain,
 			final IDomain interferenceDomain, final RelationalPredicatePostcondition postcondition) {
+		configureDomainContext(analysisDomain, threadId);
+		configureDomainContext(interferenceDomain, threadId);
 		final List<String> sortedInterferenceThreadIds = new ArrayList<>(interferences.getThreadIds());
 		Collections.sort(sortedInterferenceThreadIds);
 		final boolean includeSelfInterference = mThreadActivityPreanalysis.getMultiForkedThreads().contains(threadId);
@@ -105,6 +107,12 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 				includeSelfInterference, List.copyOf(sortedInterferenceThreadIds), new HashMap<>());
 		mObservedStateRecorder = new ObservedThreadStateRecorder(interferenceDomain, mGhostVariables);
 		mInitialStateFactory.configureForThread(locationPredicates, analysisDomain);
+	}
+
+	private static void configureDomainContext(final IDomain domain, final String threadId) {
+		if (domain instanceof final IThreadLocalDomainContext threadLocalDomainContext) {
+			threadLocalDomainContext.setCurrentThreadId(threadId);
+		}
 	}
 
 	@Override

@@ -17,6 +17,5 @@ public interface IInterference {
 
 	int size();
 
-	/** Apply this interference relation until a local fixpoint, using the configured applicator. */
 	IPredicate applyUntilFixpoint(IPredicate state, IDomain domain, int wideningThreshold, SifaStats stats);
 }

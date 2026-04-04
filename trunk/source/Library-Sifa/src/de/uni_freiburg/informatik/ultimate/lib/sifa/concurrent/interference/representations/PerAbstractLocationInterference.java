@@ -1,8 +1,13 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.representations;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;

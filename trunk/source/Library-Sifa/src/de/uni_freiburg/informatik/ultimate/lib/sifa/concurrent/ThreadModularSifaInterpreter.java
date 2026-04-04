@@ -59,7 +59,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final ConcurrentSymbolicTools mConcurrentTools;
 	private final int mOuterWideningThreshold;
 
-	// Kept so existing callers and tests still work with the old constructor.
 	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
 			final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
 			final Collection<IcfgLocation> locationsOfInterest, final IDomain baseDomain, final IFluid fluid,
@@ -103,7 +102,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		prepareThreadIcfgsAndLois();
 		final var ghostVars = mConcurrentTools.getGhostVariables();
 		final var absLocIds = ghostVars != null ? ghostVars.getAbstractLocationIds() : Map.<IcfgLocation, Integer>of();
-			mResultPrinter = new SifaResultPrinter(logger, absLocIds, mConcurrentTools.getThreadActivityPreanalysis());
+		mResultPrinter = new SifaResultPrinter(logger, absLocIds, mConcurrentTools.getThreadActivityPreanalysis());
 	}
 
 	private static IUltimateServiceProvider extractServices(final SymbolicTools tools) {
@@ -160,7 +159,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 				continue;
 			}
 			final IInterference rebuilt = mInterferenceFactory.buildFromStates(threadId, locationStates);
-			// opt: trivial interference has no effect
 			if (!rebuilt.isTrivial()) {
 				rebuiltInterferences.put(threadId, rebuilt);
 			}
@@ -184,10 +182,24 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			final Map<IcfgLocation, IPredicate> observed = mConcurrentTools.getObservedThreadLocationStates();
 			final Map<IcfgLocation, IPredicate> interferenceInput = new HashMap<>(observed);
 			interferenceInput.putAll(threadResult);
-			allPredicates.putAll(observed);
 			allPredicates.putAll(threadResult);
+			for (final var entry : observed.entrySet()) {
+				if (!allPredicates.containsKey(entry.getKey()) || isForkSourceLocation(entry.getKey())) {
+					if (isForkSourceLocation(entry.getKey()) && threadResult.containsKey(entry.getKey())
+							&& !threadResult.get(entry.getKey()).getFormula().equals(entry.getValue().getFormula())) {
+						mLogger.info("Using observed fork-source state at %s for next thread initialization",
+								entry.getKey());
+					}
+					allPredicates.put(entry.getKey(), entry.getValue());
+				}
+			}
 			perThreadPredicates.put(threadId, interferenceInput);
 		}
+	}
+
+	private static boolean isForkSourceLocation(final IcfgLocation location) {
+		return location.getOutgoingEdges().stream()
+				.anyMatch(edge -> edge instanceof de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent<?>);
 	}
 
 	private Map<IcfgLocation, IPredicate> analyzeSingleThread(final String threadId, final IPredicate initialState) {

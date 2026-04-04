@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstr
 public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMode,
 		LocationAbstractionType locationAbstractionType, InterferenceType interferenceType,
 		InterferenceApplicatorType interferenceApplicatorType, int outerWideningThreshold, int innerWideningThreshold,
-		boolean joinPrecision, InterferenceMergeDomain interferenceMergeDomain) {
+		boolean joinPrecision, InterferenceMergeDomain interferenceMergeDomain, boolean guardBucketSplit) {
 
 	public enum LocationTrackingMode {
 		GHOST_VARIABLES, NONE
@@ -18,7 +18,7 @@ public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMod
 
 	/** How collected interference predicates are applied. */
 	public enum InterferenceApplicatorType {
-		QE, PREPOST, GUARDED_OVERWRITE, POST_STATE
+		QE, PREPOST, GUARDED_OVERWRITE, GUARDED_EXACT_UPDATE, POST_STATE
 	}
 
 	/** Domain for joining interference predicates during collection. */
@@ -36,7 +36,7 @@ public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMod
 			final int outerWideningThreshold, final int innerWideningThreshold) {
 		this(useGhostLocations ? LocationTrackingMode.GHOST_VARIABLES : LocationTrackingMode.NONE,
 				locationAbstractionType, interferenceType, InterferenceApplicatorType.QE, outerWideningThreshold,
-				innerWideningThreshold, true, InterferenceMergeDomain.SAME_AS_ANALYSIS);
+				innerWideningThreshold, true, InterferenceMergeDomain.SAME_AS_ANALYSIS, false);
 	}
 
 	public ThreadModularSifaSettings(final LocationTrackingMode locationTrackingMode,
@@ -44,6 +44,6 @@ public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMod
 			final int outerWideningThreshold, final int innerWideningThreshold, final boolean joinPrecision) {
 		this(locationTrackingMode, locationAbstractionType, interferenceType, InterferenceApplicatorType.QE,
 				outerWideningThreshold, innerWideningThreshold, joinPrecision,
-				InterferenceMergeDomain.SAME_AS_ANALYSIS);
+				InterferenceMergeDomain.SAME_AS_ANALYSIS, false);
 	}
 }

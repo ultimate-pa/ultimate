@@ -144,6 +144,11 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final Class<InterferenceMergeDomain> CLASS_INTERFERENCE_MERGE_DOMAIN =
 			InterferenceMergeDomain.class;
 
+	public static final String LABEL_GUARD_BUCKET_SPLIT = "Guard Bucket Split";
+	private static final String TOOLTIP_GUARD_BUCKET_SPLIT =
+			"Preserve separate guard/location buckets in simple two-worker cases";
+	private static final boolean DEFAULT_GUARD_BUCKET_SPLIT = false;
+
 	// ---- settings in containers ----
 
 	// settings specific to ExplicitValueDomain
@@ -272,6 +277,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				TOOLTIP_JOIN_PRECISION, PreferenceType.Boolean));
 		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_MERGE_DOMAIN, TOOLTIP_INTERFERENCE_MERGE_DOMAIN,
 				DEFAULT_INTERFERENCE_MERGE_DOMAIN, VALUES_INTERFERENCE_MERGE_DOMAIN));
+		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_GUARD_BUCKET_SPLIT, DEFAULT_GUARD_BUCKET_SPLIT,
+				TOOLTIP_GUARD_BUCKET_SPLIT, PreferenceType.Boolean));
 
 		final UltimatePreferenceItemContainer containerConcurrentTesting = new UltimatePreferenceItemContainer(
 				"Thread-Modular Testing");

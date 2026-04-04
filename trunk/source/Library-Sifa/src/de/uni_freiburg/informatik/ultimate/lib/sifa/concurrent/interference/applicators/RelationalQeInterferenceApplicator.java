@@ -1,13 +1,15 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.applicators;
 
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
-/** Strongest-post via QE in a local fixpoint loop. */
 public final class RelationalQeInterferenceApplicator implements IInterferenceApplicator {
 
 	private final RelationalPredicatePostcondition mPostcondition;

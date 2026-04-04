@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Guar
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeKey;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerThreadInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.RelationalQeInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.applicators.RelationalQeInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.representations.PerThreadInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 

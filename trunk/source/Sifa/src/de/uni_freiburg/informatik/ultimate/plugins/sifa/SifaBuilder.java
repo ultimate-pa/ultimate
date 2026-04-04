@@ -140,9 +140,10 @@ public class SifaBuilder {
 			final InterferenceMergeDomain mergeDomain = mPrefs.getEnum(
 					SifaPreferences.LABEL_INTERFERENCE_MERGE_DOMAIN,
 					SifaPreferences.CLASS_INTERFERENCE_MERGE_DOMAIN);
+			final boolean guardBucketSplit = mPrefs.getBoolean(SifaPreferences.LABEL_GUARD_BUCKET_SPLIT);
 			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
 					interferenceType, interferenceApplicator, outerWideningThreshold, innerWideningThreshold,
-					joinPrecision, mergeDomain);
+					joinPrecision, mergeDomain, guardBucketSplit);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);

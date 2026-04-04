@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,25 +23,28 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.GuardSplitBucketDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.GuardSplitBucketDomain.GuardBucketPolicy;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceApplicator;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerAbstractLocationInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerEdgeInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerThreadInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PredicateWithSrcAndTrgt;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PrePostInterferenceApplicator;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PostStateInterferenceApplicator;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedOverwriteInterferenceApplicator;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.RelationalQeInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.applicators.GuardedOverwriteInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.applicators.PostStateInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.applicators.PrePostInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.applicators.RelationalQeInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.factories.InterferenceEdgeCollector;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.factories.PerAbstractLocationInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.factories.PerEdgeInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.factories.PerThreadInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.factories.PredicateWithSrcAndTrgt;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -49,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -78,22 +81,27 @@ public final class ThreadModularSetup {
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		concurrentTools.configureStaticAnalysis(ghostVars, activityPreanalysis);
-		final IDomain analysisDomain = baseDomain;
+		final Map<String, GuardBucketPolicy> guardBucketPolicies =
+				computeEnabledGuardBucketPolicies(logger, settings, ghostVars, threadIds, locationIds, icfg);
+		final IDomain analysisDomain = createGuardSplitDomain(baseDomain, tools, guardBucketPolicies);
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
 				ghostVars, locationIds, icfg.getProcedureEntryNodes());
 		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services, script,
 				factory, symbolTable, true);
 		final IDomain mergeDomain = createMergeDomainOrNull(settings, tools, services);
+		final boolean usePrecomputedGuardedPredicates =
+				settings.interferenceApplicatorType() == InterferenceApplicatorType.GUARDED_EXACT_UPDATE;
 		final InterferenceEdgeCollector edgeCollector = new InterferenceEdgeCollector(translator, analysisDomain,
-				mergeDomain, script, factory);
+				mergeDomain, script, factory, usePrecomputedGuardedPredicates);
 		if (mergeDomain != null) {
 			logger.info("Interference merge domain: %s", mergeDomain.getClass().getSimpleName());
 		}
-		final IInterferenceApplicator applicator = createApplicator(settings, postcondition, factory, script);
-		logger.info("Interference applicator: %s (%s)", settings.interferenceApplicatorType(),
-				applicator.getClass().getSimpleName());
+		final IInterferenceApplicator applicator =
+				createApplicator(settings.interferenceApplicatorType(), postcondition, factory, script);
+		logger.info("Interference applicator: %s (%s)",
+				settings.interferenceApplicatorType(), applicator.getClass().getSimpleName());
 		final Function<PredicateWithSrcAndTrgt, Collection<GuardedPredicate>> converter =
-				createPredicateConverter(settings, postcondition, factory, script);
+				createPredicateConverter(settings.interferenceApplicatorType(), postcondition, factory, script);
 		final IInterferenceFactory interferenceFactory = switch (settings.interferenceType()) {
 		case PER_THREAD -> new PerThreadInterferenceFactory(edgeCollector, applicator, converter);
 		case PER_EDGE -> new PerEdgeInterferenceFactory(edgeCollector, applicator, converter);
@@ -109,16 +117,178 @@ public final class ThreadModularSetup {
 				proofChecker, joinedThreads);
 	}
 
-	/** Thread IDs in topological fork order: forking thread before any it forks. */
+	private static Map<String, GuardBucketPolicy> computeEnabledGuardBucketPolicies(final ILogger logger,
+			final ThreadModularSifaSettings settings, final GhostVariableManager ghostVars,
+			final List<String> threadIds, final Map<IcfgLocation, Integer> locationIds, final IIcfg<IcfgLocation> icfg) {
+		if (!settings.guardBucketSplit()) {
+			logger.info("Guard bucket split disabled by settings");
+			return Map.of();
+		}
+		if (ghostVars == null || locationIds.isEmpty()) {
+			return Map.of();
+		}
+		final Map<String, GuardBucketPolicy> policies = computeGuardBucketPolicies(threadIds, locationIds, ghostVars, icfg);
+		if (policies.isEmpty()) {
+			logger.info("Guard bucket split disabled");
+			return Map.of();
+		}
+		for (final var entry : policies.entrySet()) {
+			logger.info("Guard bucket split: thread %s bucketed by %s with buckets %s", entry.getKey(),
+					entry.getValue().peerThreadId(), entry.getValue().bucketToRawValues());
+		}
+		return policies;
+	}
+
+	private static IDomain createGuardSplitDomain(final IDomain baseDomain, final SymbolicTools tools,
+			final Map<String, GuardBucketPolicy> policies) {
+		if (policies.isEmpty()) {
+			return baseDomain;
+		}
+		return new GuardSplitBucketDomain(tools, baseDomain, policies);
+	}
+
+	private static Map<String, GuardBucketPolicy> computeGuardBucketPolicies(final List<String> threadIds,
+			final Map<IcfgLocation, Integer> locationIds, final GhostVariableManager ghostVars,
+			final IIcfg<IcfgLocation> icfg) {
+		final List<String> workerThreads = threadIds.stream().filter(t -> !MAIN_THREAD.equals(t)).sorted().toList();
+		if (workerThreads.size() != 2) {
+			return Map.of();
+		}
+		if (!hasDirectMainTwoWorkerShape(workerThreads, icfg)) {
+			return Map.of();
+		}
+		final Map<String, Set<Integer>> rawIdsByThread = collectRawLocationIdsByThread(locationIds);
+		final String firstWorker = workerThreads.get(0);
+		final String secondWorker = workerThreads.get(1);
+		final Map<String, GuardBucketPolicy> policies = new LinkedHashMap<>();
+
+		final GuardBucketPolicy firstPolicy =
+				createGuardBucketPolicy(secondWorker, rawIdsByThread.get(secondWorker), ghostVars, icfg);
+		if (firstPolicy != null) {
+			policies.put(firstWorker, firstPolicy);
+		}
+
+		final GuardBucketPolicy secondPolicy =
+				createGuardBucketPolicy(firstWorker, rawIdsByThread.get(firstWorker), ghostVars, icfg);
+		if (secondPolicy != null) {
+			policies.put(secondWorker, secondPolicy);
+		}
+		return policies;
+	}
+
+	private static boolean hasDirectMainTwoWorkerShape(final List<String> workerThreads, final IIcfg<IcfgLocation> icfg) {
+		final Map<String, Set<String>> directForkTargets = collectDirectForkTargets(icfg);
+		final Set<String> mainForkTargets = directForkTargets.getOrDefault(MAIN_THREAD, Set.of());
+		if (mainForkTargets.size() != workerThreads.size() || !mainForkTargets.containsAll(workerThreads)) {
+			return false;
+		}
+		for (final String workerThread : workerThreads) {
+			if (!directForkTargets.getOrDefault(workerThread, Set.of()).isEmpty()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static Map<String, Set<String>> collectDirectForkTargets(final IIcfg<IcfgLocation> icfg) {
+		final Map<String, Set<String>> forkTargetsByThread = new LinkedHashMap<>();
+		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
+			forkTargetsByThread.computeIfAbsent(fork.getSource().getProcedure(), __ -> new LinkedHashSet<>())
+					.add(fork.getNameOfForkedProcedure());
+		}
+		return forkTargetsByThread;
+	}
+
+	private static Map<String, Set<Integer>> collectRawLocationIdsByThread(final Map<IcfgLocation, Integer> locationIds) {
+		final Map<String, Set<Integer>> idsByThread = new LinkedHashMap<>();
+		for (final var entry : locationIds.entrySet()) {
+			idsByThread.computeIfAbsent(entry.getKey().getProcedure(), __ -> new LinkedHashSet<>()).add(entry.getValue());
+		}
+		return idsByThread;
+	}
+
+	private static GuardBucketPolicy createGuardBucketPolicy(final String peerThreadId, final Set<Integer> rawIds,
+			final GhostVariableManager ghostVars, final IIcfg<IcfgLocation> icfg) {
+		if (rawIds == null || rawIds.isEmpty()) {
+			return null;
+		}
+		final TermVariable bucketVariable = ghostVars.getLocationTermVar(peerThreadId);
+		if (bucketVariable == null) {
+			return null;
+		}
+		final Integer entryId = ghostVars.getAbstractLocationIdOrNull(ghostVars.getEntryLocation(peerThreadId));
+		final IcfgLocation exitLocation = icfg.getProcedureExitNodes().get(peerThreadId);
+		final Integer exitId = exitLocation == null ? null : ghostVars.getAbstractLocationIdOrNull(exitLocation);
+		final Map<Integer, Integer> rawToBucket = computeRawToBucketMap(rawIds, entryId, exitId);
+		if (rawToBucket == null) {
+			return null;
+		}
+		final Map<Integer, Set<Integer>> bucketToRawValues = new LinkedHashMap<>();
+		for (final var entry : rawToBucket.entrySet()) {
+			bucketToRawValues.computeIfAbsent(entry.getValue(), __ -> new LinkedHashSet<>()).add(entry.getKey());
+		}
+		if (bucketToRawValues.size() <= 1) {
+			return null;
+		}
+		return new GuardBucketPolicy(peerThreadId, bucketVariable, rawToBucket, bucketToRawValues);
+	}
+
+	private static Map<Integer, Integer> computeRawToBucketMap(final Set<Integer> rawIds, final Integer entryId,
+			final Integer exitId) {
+		final List<Integer> orderedIds = rawIds.stream().sorted().toList();
+		final Map<Integer, Integer> rawToBucket = new LinkedHashMap<>();
+		for (final Integer rawId : orderedIds) {
+			rawToBucket.put(rawId, rawId);
+		}
+		if (orderedIds.size() > 3) {
+			if (orderedIds.size() != 4 || exitId == null || !rawToBucket.containsKey(exitId)) {
+				return null;
+			}
+			final Integer collapsedExitBucket = chooseCollapsedExitBucket(orderedIds, entryId, exitId);
+			if (collapsedExitBucket == null) {
+				return null;
+			}
+			rawToBucket.put(exitId, collapsedExitBucket);
+		}
+		if (entryId != null && rawToBucket.containsKey(entryId)) {
+			rawToBucket.put(-1, rawToBucket.get(entryId));
+		}
+		if (new HashSet<>(rawToBucket.values()).size() > 3) {
+			return null;
+		}
+		return rawToBucket;
+	}
+
+	private static Integer chooseCollapsedExitBucket(final List<Integer> orderedIds, final Integer entryId,
+			final Integer exitId) {
+		Integer candidate = null;
+		for (final Integer rawId : orderedIds) {
+			if (rawId.equals(exitId)) {
+				continue;
+			}
+			if (entryId != null && rawId.equals(entryId)) {
+				continue;
+			}
+			candidate = rawId;
+		}
+		if (candidate != null) {
+			return candidate;
+		}
+		for (final Integer rawId : orderedIds) {
+			if (!rawId.equals(exitId)) {
+				return rawId;
+			}
+		}
+		return null;
+	}
+
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
-		// fork graph: forker -> forked threads
 		final Map<String, Set<String>> forksByThread = new HashMap<>();
 		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
 			final String forkingThread = fork.getSource().getProcedure();
 			final String forkedThread = fork.getNameOfForkedProcedure();
 			forksByThread.computeIfAbsent(forkingThread, k -> new LinkedHashSet<>()).add(forkedThread);
 		}
-		// BFS from MAIN_THREAD gives topological order
 		final List<String> ordered = new ArrayList<>();
 		final Set<String> visited = new LinkedHashSet<>();
 		ordered.add(MAIN_THREAD);
@@ -134,7 +304,6 @@ public final class ThreadModularSetup {
 				}
 			}
 		}
-		// threads not reachable via fork edges (shouldn't happen, but be safe)
 		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
 			if (visited.add(fork.getNameOfForkedProcedure())) {
 				ordered.add(fork.getNameOfForkedProcedure());
@@ -143,7 +312,6 @@ public final class ThreadModularSetup {
 		return ordered;
 	}
 
-	/** Match join-current to fork edges via thread ID terms to find joined procedures. */
 	private static Set<String> identifyJoinedThreads(final IIcfg<IcfgLocation> icfg) {
 		final var concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
 		final var forks = concurrency.getThreadInstanceMap().keySet();
@@ -183,7 +351,6 @@ public final class ThreadModularSetup {
 			if (exit == null) {
 				continue;
 			}
-			// Exit node may not be in locationIds if the location abstraction didn't reach it
 			int maxId = 0;
 			boolean exitInMap = locationIds.containsKey(exit);
 			boolean shared = false;
@@ -221,7 +388,6 @@ public final class ThreadModularSetup {
 			return null;
 		}
 		final ILogger logger = services.getLoggingService().getLogger(ThreadModularSetup.class);
-		// Non-cancellable timer for merge-only domain (joins are fast, no timeout needed)
 		final IProgressAwareTimer neverExpires = new IProgressAwareTimer() {
 			@Override
 			public boolean continueProcessing() {
@@ -264,40 +430,38 @@ public final class ThreadModularSetup {
 		};
 	}
 
-	private static IInterferenceApplicator createApplicator(final ThreadModularSifaSettings settings,
+	private static IInterferenceApplicator createApplicator(final InterferenceApplicatorType applicatorType,
 			final RelationalPredicatePostcondition postcondition, final BasicPredicateFactory factory,
 			final ManagedScript script) {
-		return switch (settings.interferenceApplicatorType()) {
+		return switch (applicatorType) {
 		case QE -> new RelationalQeInterferenceApplicator(postcondition);
 		case PREPOST -> new PrePostInterferenceApplicator(script, factory);
 		case GUARDED_OVERWRITE -> new GuardedOverwriteInterferenceApplicator(script, factory);
+		case GUARDED_EXACT_UPDATE -> new GuardedOverwriteInterferenceApplicator(script, factory);
 		case POST_STATE -> new PostStateInterferenceApplicator();
 		};
 	}
 
 	private static Function<PredicateWithSrcAndTrgt, Collection<GuardedPredicate>> createPredicateConverter(
-			final ThreadModularSifaSettings settings, final RelationalPredicatePostcondition postcondition,
+			final InterferenceApplicatorType applicatorType, final RelationalPredicatePostcondition postcondition,
 			final BasicPredicateFactory factory, final ManagedScript script) {
 		final IPredicate truePredicate = factory.newPredicate(script.getScript().term("true"));
-		return switch (settings.interferenceApplicatorType()) {
+		return switch (applicatorType) {
 		case QE -> edgePred -> List.of(GuardedPredicate.unguarded(edgePred.predicate()));
 		case POST_STATE -> edgePred -> {
 			final var prepared = postcondition.prepareRelation(edgePred.predicate());
 			final IPredicate effect = postcondition.strongestPostcondition(truePredicate, prepared);
 			return List.of(GuardedPredicate.unguarded(effect));
 		};
-		case GUARDED_OVERWRITE -> edgePred -> {
-			final var prepared = postcondition.prepareRelation(edgePred.predicate());
-			final IPredicate effect = postcondition.strongestPostcondition(truePredicate, prepared);
-			final IPredicate guard = extractTransitionAwareGuard(edgePred.predicate(),
-					prepared.primedToUnprimed().keySet(), script, factory);
-			return List.of(new GuardedPredicate(guard, effect, edgePred.modifiedGlobals()));
-		};
+		case GUARDED_OVERWRITE -> edgePred -> List
+				.of(createPreparedGuardedPredicate(edgePred, postcondition, truePredicate, factory, script));
+		case GUARDED_EXACT_UPDATE -> edgePred -> List.of(edgePred.precomputedGuardedPredicate() != null
+				? edgePred.precomputedGuardedPredicate()
+				: createPreparedGuardedPredicate(edgePred, postcondition, truePredicate, factory, script));
 		case PREPOST -> edgePred -> {
 			final var prepared = postcondition.prepareRelation(edgePred.predicate());
 			final List<GuardedPredicate> pairs = new ArrayList<>();
-			for (final Term preDisjunctTerm :
-					InterferenceUtils.getTopLevelDisjuncts(edgePred.preStateGuard().getFormula())) {
+			for (final Term preDisjunctTerm : SmtUtils.getDisjuncts(edgePred.preStateGuard().getFormula())) {
 				if (SmtUtils.isFalseLiteral(preDisjunctTerm)) {
 					continue;
 				}
@@ -312,16 +476,20 @@ public final class ThreadModularSetup {
 		};
 	}
 
-	/** Extract conjuncts that only mention unprimed variables as the guard. */
+	private static GuardedPredicate createPreparedGuardedPredicate(final PredicateWithSrcAndTrgt edgePred,
+			final RelationalPredicatePostcondition postcondition, final IPredicate truePredicate,
+			final BasicPredicateFactory factory, final ManagedScript script) {
+		final var prepared = postcondition.prepareRelation(edgePred.predicate());
+		final IPredicate effect = postcondition.strongestPostcondition(truePredicate, prepared);
+		final IPredicate guard =
+				extractTransitionAwareGuard(edgePred.predicate(), prepared.primedToUnprimed().keySet(), script, factory);
+		return new GuardedPredicate(guard, effect, edgePred.modifiedGlobals());
+	}
+
 	private static IPredicate extractTransitionAwareGuard(final IPredicate fullRelation,
 			final Set<? extends Term> primedVars, final ManagedScript script, final BasicPredicateFactory factory) {
 		final Term formula = fullRelation.getFormula();
-		final Term[] conjuncts;
-		if (formula instanceof final ApplicationTerm app && "and".equals(app.getFunction().getName())) {
-			conjuncts = app.getParameters();
-		} else {
-			conjuncts = new Term[] { formula };
-		}
+		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
 		final List<Term> preOnly = new ArrayList<>();
 		for (final Term conjunct : conjuncts) {
 			boolean hasPrimed = false;

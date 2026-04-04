@@ -22,29 +22,28 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition.PreparedRelation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.factories.PredicateWithSrcAndTrgt;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InterferenceUtils {
 
-	static final Comparator<PredicateWithSrcAndTrgt> EDGE_PREDICATE_ORDER =
+	public static final Comparator<PredicateWithSrcAndTrgt> EDGE_PREDICATE_ORDER =
 			Comparator.comparing((PredicateWithSrcAndTrgt p) -> p.source().toString())
 					.thenComparing(p -> p.target().toString())
 					.thenComparing(p -> p.predicate().getFormula().toString());
 
 	@FunctionalInterface
-	interface GuardedTransformer {
+	public interface GuardedTransformer {
 		IPredicate apply(IPredicate frontier, GuardedPredicate predicate);
 	}
 
 	private InterferenceUtils() {
 	}
 
-	/** Over-approximation of the write set: assigned vars + vars with distinct out-variable. */
 	public static Set<IProgramVar> getChangedVars(final TransFormula tf) {
 		if (tf == null) {
 			return Set.of();
@@ -136,7 +135,7 @@ public final class InterferenceUtils {
 		return getForkedThreadOrNull(edge) != null || isJoinAssigningGlobal(edge) || modifiesGlobals(edge.getTransformula());
 	}
 
-	static List<PreparedRelation> prepareNonFalseRelations(final Collection<IPredicate> relations,
+	public static List<PreparedRelation> prepareNonFalseRelations(final Collection<IPredicate> relations,
 			final RelationalPredicatePostcondition postcondition) {
 		final List<PreparedRelation> prepared = new ArrayList<>();
 		for (final IPredicate relation : relations) {
@@ -147,10 +146,9 @@ public final class InterferenceUtils {
 		return prepared;
 	}
 
-	static IPredicate applyUntilFixpoint(final IPredicate state, final List<PreparedRelation> preparedRelations,
+	public static IPredicate applyUntilFixpoint(final IPredicate state, final List<PreparedRelation> preparedRelations,
 			final IDomain domain, final RelationalPredicatePostcondition postcondition, final int wideningThreshold,
 			final SifaStats stats) {
-		// opt: nothing to apply
 		if (preparedRelations.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
@@ -167,7 +165,6 @@ public final class InterferenceUtils {
 				stats.start(Key.INTERFERENCE_SP_TIME);
 				final IPredicate post = postcondition.strongestPostcondition(frontier, prepared);
 				stats.stop(Key.INTERFERENCE_SP_TIME);
-				// opt: false SP contributes nothing
 				if (SmtUtils.isFalseLiteral(post.getFormula())) {
 					continue;
 				}
@@ -198,7 +195,7 @@ public final class InterferenceUtils {
 		}
 	}
 
-	static IPredicate applyUntilFixpoint(final IPredicate state, final Collection<GuardedPredicate> predicates,
+	public static IPredicate applyUntilFixpoint(final IPredicate state, final Collection<GuardedPredicate> predicates,
 			final IDomain domain, final int wideningThreshold, final SifaStats stats,
 			final GuardedTransformer transformer) {
 		if (predicates.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
@@ -258,7 +255,7 @@ public final class InterferenceUtils {
 		return widened;
 	}
 
-	static <K> Map<K, GuardedPredicate> widenGuardedBuckets(final Map<K, GuardedPredicate> left,
+	public static <K> Map<K, GuardedPredicate> widenGuardedBuckets(final Map<K, GuardedPredicate> left,
 			final Map<K, GuardedPredicate> right, final IDomain domain) {
 		final Map<K, GuardedPredicate> widened = new HashMap<>();
 		for (final K key : left.keySet()) {
@@ -297,99 +294,15 @@ public final class InterferenceUtils {
 		return Set.copyOf(merged);
 	}
 
-	public static Term[] getTopLevelDisjuncts(final Term formula) {
-		if (formula instanceof final ApplicationTerm app && "or".equals(app.getFunction().getName())) {
-			return app.getParameters();
-		}
-		return new Term[] { formula };
-	}
-
-	static void collectConjuncts(final Term formula, final List<Term> result) {
-		if (formula instanceof final ApplicationTerm app && "and".equals(app.getFunction().getName())) {
-			for (final Term param : app.getParameters()) {
+	public static void collectConjuncts(final Term formula, final List<Term> result) {
+		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
+		if (conjuncts.length == 1 && conjuncts[0] == formula) {
+			result.add(formula);
+		} else {
+			for (final Term param : conjuncts) {
 				collectConjuncts(param, result);
 			}
-		} else {
-			result.add(formula);
 		}
-	}
-
-	static boolean areSyntacticallyContradictory(final Term left, final Term right) {
-		final List<Term> conjuncts = new ArrayList<>();
-		collectConjuncts(left, conjuncts);
-		collectConjuncts(right, conjuncts);
-		return hasEqualityContradiction(conjuncts);
-	}
-
-	static boolean hasEqualityContradiction(final List<Term> conjuncts) {
-		final Map<TermVariable, Set<Term>> possibleValues = new HashMap<>();
-		for (final Term conjunct : conjuncts) {
-			TermVariable var = null;
-			Set<Term> values = null;
-			if (conjunct instanceof final ApplicationTerm app) {
-				if ("=".equals(app.getFunction().getName()) && app.getParameters().length == 2) {
-					final Term lhs = app.getParameters()[0];
-					final Term rhs = app.getParameters()[1];
-					if (lhs instanceof final TermVariable tv && rhs.getFreeVars().length == 0) {
-						var = tv;
-						values = Set.of(rhs);
-					} else if (rhs instanceof final TermVariable tv && lhs.getFreeVars().length == 0) {
-						var = tv;
-						values = Set.of(lhs);
-					}
-				} else if ("or".equals(app.getFunction().getName())) {
-					final var extracted = extractDisjunctiveEquality(app);
-					if (extracted != null) {
-						var = extracted.getKey();
-						values = extracted.getValue();
-					}
-				}
-			}
-			if (var == null) {
-				continue;
-			}
-			final Set<Term> existing = possibleValues.get(var);
-			if (existing == null) {
-				possibleValues.put(var, new HashSet<>(values));
-			} else {
-				existing.retainAll(values);
-				if (existing.isEmpty()) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	private static Map.Entry<TermVariable, Set<Term>> extractDisjunctiveEquality(final ApplicationTerm or) {
-		TermVariable var = null;
-		final Set<Term> values = new HashSet<>();
-		for (final Term disjunct : or.getParameters()) {
-			if (!(disjunct instanceof final ApplicationTerm eq) || !"=".equals(eq.getFunction().getName())
-					|| eq.getParameters().length != 2) {
-				return null;
-			}
-			final Term lhs = eq.getParameters()[0];
-			final Term rhs = eq.getParameters()[1];
-			TermVariable tv;
-			Term val;
-			if (lhs instanceof TermVariable && rhs.getFreeVars().length == 0) {
-				tv = (TermVariable) lhs;
-				val = rhs;
-			} else if (rhs instanceof TermVariable && lhs.getFreeVars().length == 0) {
-				tv = (TermVariable) rhs;
-				val = lhs;
-			} else {
-				return null;
-			}
-			if (var == null) {
-				var = tv;
-			} else if (!var.equals(tv)) {
-				return null;
-			}
-			values.add(val);
-		}
-		return var == null ? null : Map.entry(var, values);
 	}
 
 	private static Set<IProgramVar> filterGlobals(final Set<IProgramVar> variables) {

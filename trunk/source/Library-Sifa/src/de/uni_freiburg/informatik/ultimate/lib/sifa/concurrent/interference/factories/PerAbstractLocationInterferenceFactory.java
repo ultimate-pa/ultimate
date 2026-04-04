@@ -1,13 +1,19 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.factories;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Collection;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.PerAbstractLocationInterference.AbstractLocationRelation;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceApplicator;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.representations.PerAbstractLocationInterference;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.representations.PerAbstractLocationInterference.AbstractLocationRelation;
 
 public class PerAbstractLocationInterferenceFactory implements IInterferenceFactory {
 
@@ -31,17 +37,16 @@ public class PerAbstractLocationInterferenceFactory implements IInterferenceFact
 	}
 
 	@Override
-	public IInterference buildFromStates(final String threadId,
-			final Map<IcfgLocation, IPredicate> locationStates) {
+	public IInterference buildFromStates(final String threadId, final Map<IcfgLocation, IPredicate> locationStates) {
 		if (!mCollector.hasAbstractLocationIds()) {
 			return mFallback.buildFromStates(threadId, locationStates);
 		}
 		final Map<AbstractLocationRelation, GuardedPredicate> relationPredicates = new HashMap<>();
 		final Map<String, Integer> nextIndexByRelation = new HashMap<>();
-		final Map<IcfgLocation, Integer> sourceLocationPartitions =
-				mCollector.computeSourcePartitionsForSingletonWithForks(locationStates);
-		for (final PredicateWithSrcAndTrgt edgePred : mCollector.collectEdgePredicates(threadId, locationStates).stream()
-				.sorted(InterferenceUtils.EDGE_PREDICATE_ORDER).toList()) {
+		final Map<IcfgLocation, Integer> sourceLocationPartitions = mCollector
+				.computeSourcePartitionsForSingletonWithForks(locationStates);
+		for (final PredicateWithSrcAndTrgt edgePred : mCollector.collectEdgePredicates(threadId, locationStates)
+				.stream().sorted(InterferenceUtils.EDGE_PREDICATE_ORDER).toList()) {
 			final Integer sourceAbsLoc = mCollector.getAbstractLocationIdOrNull(edgePred.source());
 			final Integer targetAbsLoc = mCollector.getAbstractLocationIdOrNull(edgePred.target());
 			if (sourceAbsLoc == null || targetAbsLoc == null) {
@@ -52,8 +57,8 @@ public class PerAbstractLocationInterferenceFactory implements IInterferenceFact
 			for (final GuardedPredicate converted : mPredicateConverter.apply(edgePred)) {
 				final int predicateIndex = nextIndexByRelation.getOrDefault(relationKey, 0);
 				nextIndexByRelation.put(relationKey, predicateIndex + 1);
-				final AbstractLocationRelation relation =
-						new AbstractLocationRelation(sourceAbsLoc, targetAbsLoc, sourceLocationPartition, predicateIndex);
+				final AbstractLocationRelation relation = new AbstractLocationRelation(sourceAbsLoc, targetAbsLoc,
+						sourceLocationPartition, predicateIndex);
 				relationPredicates.put(relation, converted);
 			}
 		}
