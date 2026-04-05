@@ -1,6 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
+
+import org.ojalgo.matrix.MatrixQ128;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -27,8 +36,40 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 
 		@Override
 		public CongruenceState toState(final Term[] conjuncts) {
-			// TODO Auto-generated method stub
-			return null;
+			final List<EqualityRelation> equalityRelations = new ArrayList<>();
+			final List<ModuloRelation> moduloRelations = new ArrayList<>();
+			final Set<Term> vars = new HashSet<>();
+			for (final Term conjunct : conjuncts) {
+				// Test for EqualityRelation
+				final EqualityRelation conjunctEqualityRelation = EqualityRelation.of(conjunct, mScript);
+				if (conjunctEqualityRelation != null) {
+					equalityRelations.add(conjunctEqualityRelation);
+					vars.addAll(conjunctEqualityRelation.getVars());
+
+				}
+				// Otherwise test for ModuloRelation
+				final List<ModuloRelation> conjunctModuloRelations = ModuloRelation.of(conjunct, mScript);
+				if (conjunctModuloRelations != null) {
+					moduloRelations.addAll(conjunctModuloRelations);
+					for (final ModuloRelation conjunctModuloRelation : conjunctModuloRelations) {
+						vars.addAll(conjunctModuloRelation.getVars());
+					}
+				}
+			}
+			final Map<Term, Integer> varToIndex = new HashMap<>();
+			vars.stream().sorted(Comparator.comparing(Term::toString))
+					.forEach(x -> varToIndex.put(x, varToIndex.size()));
+
+			final List<MatrixQ128> equalities = new ArrayList<>();
+			final List<MatrixQ128> congruences = new ArrayList<>();
+			for (final EqualityRelation equalityRelation : equalityRelations) {
+				equalities.add(equalityRelation.getVector(varToIndex));
+			}
+			for (final ModuloRelation moduloRelation : moduloRelations) {
+				congruences.add(moduloRelation.getVector(varToIndex));
+			}
+
+			return new CongruenceState(varToIndex, new ConstraintRepresentation(equalities, congruences));
 		}
 
 		@Override
