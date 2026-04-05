@@ -10,60 +10,61 @@ import org.ojalgo.scalar.RationalNumber;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class GeneratorRepresentation {
-	final private MatrixQ128 mLineMatrix;
-	final private MatrixQ128 mParameterMatrix;
+	// final private MatrixQ128 mLineMatrix;
+	// final private MatrixQ128 mParameterMatrix;
 
-	final private boolean mIsMinimal;
+	final private Pair<MatrixQ128, MatrixQ128> mGenerators;
+	private Pair<MatrixQ128, MatrixQ128> mMinimalGenerators = null;
+
+	// final private boolean mIsMinimal;
 
 	public GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters) {
-		mLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
-		mParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
-		mIsMinimal = false;
+		final MatrixQ128 lineMatrix = CongruenceUtil.getMatrixFromRows(lines);
+		final MatrixQ128 parameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
+		mGenerators = new Pair<>(lineMatrix, parameterMatrix);
+		// mIsMinimal = false;
 	}
 
-	public GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix,
+	private GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix,
 			final boolean isMinimal) {
-		mLineMatrix = lineMatrix;
-		mParameterMatrix = parameterMatrix;
-		mIsMinimal = isMinimal;
-	}
+		// mLineMatrix = lineMatrix;
+		// mParameterMatrix = parameterMatrix;
+		mGenerators = new Pair<>(lineMatrix, parameterMatrix);
 
-	public GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters,
-			final boolean isMinimal) {
-		mLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
-		mParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
-		mIsMinimal = isMinimal;
+		if (isMinimal) {
+			mMinimalGenerators = mGenerators;
+		}
 	}
 
 	@Override
 	public String toString() {
-		return "GeneratorRepresentation [mLineMatrix=" + mLineMatrix + ", mParameterMatrix=" + mParameterMatrix
-				+ ", mIsMinimal=" + mIsMinimal + "]";
+		return "GeneratorRepresentation [mLineMatrix=" + getLineMatrix() + ", mParameterMatrix=" + getParameterMatrix()
+				+ ", mIsMinimal=" + isMinimal() + "]";
 	}
 
 	public MatrixQ128 getLineMatrix() {
-		return mLineMatrix;
+		return mGenerators.getFirst();
 	}
 
 	public MatrixQ128 getParameterMatrix() {
-		return mParameterMatrix;
+		return mGenerators.getSecond();
 	}
 
 	public List<MatrixQ128> getLines() {
-		return CongruenceUtil.getRowsFromMatrix(mLineMatrix);
+		return CongruenceUtil.getRowsFromMatrix(getLineMatrix());
 	}
 
 	public List<MatrixQ128> getParameters() {
-		return CongruenceUtil.getRowsFromMatrix(mParameterMatrix);
+		return CongruenceUtil.getRowsFromMatrix(getParameterMatrix());
 	}
 
 	public boolean isMinimal() {
-		return mIsMinimal;
+		return mMinimalGenerators != null;
 	}
 
 	public GeneratorRepresentation getMinimalForm() {
 		if (isMinimal()) {
-			return this;
+			return new GeneratorRepresentation(mMinimalGenerators.getFirst(), mMinimalGenerators.getSecond(), true);
 		}
 
 		final List<MatrixQ128> lines = getLines();
@@ -135,17 +136,19 @@ public class GeneratorRepresentation {
 			parameters.remove(i);
 		}
 
-		return new GeneratorRepresentation(lines, parameters, true);
-
+		final MatrixQ128 minimalLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
+		final MatrixQ128 minimalParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
+		mMinimalGenerators = new Pair<>(minimalLineMatrix, minimalParameterMatrix);
+		return new GeneratorRepresentation(minimalLineMatrix, minimalParameterMatrix, true);
 	}
 
 	public GeneratorRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
 			final int resultColumnCount) {
 		final MatrixQ128 reorderedLineMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
-				mLineMatrix);
+				getLineMatrix());
 		final MatrixQ128 reorderedParameterMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
-				mParameterMatrix);
-		return new GeneratorRepresentation(reorderedLineMatrix, reorderedParameterMatrix, mIsMinimal);
+				getParameterMatrix());
+		return new GeneratorRepresentation(reorderedLineMatrix, reorderedParameterMatrix, isMinimal());
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {

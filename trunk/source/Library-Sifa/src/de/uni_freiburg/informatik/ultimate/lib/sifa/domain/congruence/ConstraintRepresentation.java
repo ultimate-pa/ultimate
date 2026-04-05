@@ -14,9 +14,9 @@ public class ConstraintRepresentation {
 
 	final private MatrixQ128 mEqualityMatrix;
 	final private MatrixQ128 mCongruenceMatrix;
-
-	private final ConstraintRepresentation mMinimalRepresenation;
-	private final ConstraintRepresentation mStrongMinimalRepresenation;
+	private Pair<MatrixQ128, MatrixQ128> mConstraints;
+	private final Pair<MatrixQ128, MatrixQ128> mMinimalConstraints = null;
+	private final Pair<MatrixQ128, MatrixQ128> mStrongMinimalConstraints = null;
 
 	final private boolean mIsMinimal;
 	final private boolean mIsStrongMinimal;
@@ -28,8 +28,6 @@ public class ConstraintRepresentation {
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = false;
 		mIsStrongMinimal = false;
-		mMinimalRepresenation = null;
-		mStrongMinimalRepresenation = null;
 	}
 
 	private ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
@@ -38,8 +36,6 @@ public class ConstraintRepresentation {
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = isMinimal;
 		mIsStrongMinimal = isStrongMinimal;
-		mMinimalRepresenation = null;
-		mStrongMinimalRepresenation = null;
 	}
 
 	public MatrixQ128 getEqualityMatrix() {

@@ -326,11 +326,4 @@ public class CongruenceUtil {
 		return getCommonDenominator(list);
 	}
 
-	public static List<MatrixQ128> sortForLastPivot(final List<MatrixQ128> list) {
-		if (list.isEmpty()) {
-			return list;
-		}
-		list.sort((v1, v2) -> (lastPivot(v1) < lastPivot(v2)) ? 1 : -1);
-		return list;
-	}
 }
