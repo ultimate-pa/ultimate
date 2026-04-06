@@ -43,6 +43,7 @@ public class BtorExpression {
 		stateName = "";
 	}
 
+//variables??
 	public BtorExpression(final BtorSort sort, final String name, final boolean input) {
 		this.sort = sort;
 		if (input) {

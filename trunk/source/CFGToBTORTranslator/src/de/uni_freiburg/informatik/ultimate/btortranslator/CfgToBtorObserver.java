@@ -103,7 +103,7 @@ public class CfgToBtorObserver extends BaseObserver {
 		final ArrayList<Long> pcList = new ArrayList<>();
 		final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
 		// final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
-		final Pattern p = Pattern.compile("([0-9]+) ([0-9]+) ([a-zA-Z][a-zA-Z0-9_]*)(#[0-9]+)");
+		final Pattern p = Pattern.compile("([0-9]+) ([0-9]+) ([a-zA-Z][a-zA-Z0-9_]*)#([0-9]+)");
 		// ([0-9]+) ([0-9]+) pc#([0-9]+)
 
 		while (!witnessScan.hasNext("sat|unsat|\\.")) {
@@ -167,7 +167,6 @@ public class CfgToBtorObserver extends BaseObserver {
 			final CFGToBTOR processor) {
 		final Scanner witnessScan = new Scanner(btormcWitness);
 		witnessScan.useDelimiter("\n");
-		// System.out.println(witnessScan.next());
 		final ArrayList<AbstractResult> results = new ArrayList<>();
 		while (witnessScan.hasNextLine()) {
 			if (witnessScan.hasNext("sat")) {
@@ -288,6 +287,11 @@ public class CfgToBtorObserver extends BaseObserver {
 				}
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 						AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, 0));
+			} else {
+				// no error states
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						new AllSpecificationsHoldResult(Activator.PLUGIN_ID, "We were not able to verify any"
+								+ " specification because the program does not contain any specification."));
 			}
 		} catch (final IOException e) {
 			// TODO Auto-generated catch block

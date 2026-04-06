@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.btorutils;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,14 +44,21 @@ public class TermToBtorUtil {
 			}
 		} else if (term instanceof ConstantTerm) {
 			// get rational representation of the constant term
-			final Rational rational = (Rational) ((ConstantTerm) term).getValue();
-			assert (rational.isIntegral());
-			return new BtorExpression(new BtorSort(64), rational.numerator().longValue());
+			final Object maybeInteger = ((ConstantTerm) term).getValue();
+			if (maybeInteger instanceof Rational) {
+				final Rational rational = (Rational) maybeInteger;
+				assert (rational.isIntegral());
+				return new BtorExpression(new BtorSort(64), rational.numerator().longValue());
+			} else if (maybeInteger instanceof BigInteger) {
+				final BigInteger integer = (BigInteger) maybeInteger;
+				return new BtorExpression(new BtorSort(64), integer.longValue());
+			} else {
+				throw new UnsupportedOperationException("Non-integral constant.");
+			}
 		} else if (term instanceof QuantifiedFormula) {
 			throw new UnsupportedOperationException("Quantified Formulas not supported by BTOR2 Translation.");
 		}
 		throw new UnsupportedOperationException("Conditional term is of an unsupported instance");
-		// return null;
 	}
 
 	public static BtorExpression convertRhsToBtorExpression(final Term rhs, final TransFormula tf,
@@ -377,7 +385,7 @@ public class TermToBtorUtil {
 				return new BtorExpression(new BtorSort(Integer.parseInt(appTerm.getSort().getIndices()[0])), value);
 			}
 			throw new UnsupportedOperationException(
-					"Converting currently unsupported btor2 expression" + appTerm.getFunction().getName());
+					"Converting currently unsupported btor2 expression " + appTerm.getFunction().getName());
 		// as const
 		// myFunc
 		// return null;

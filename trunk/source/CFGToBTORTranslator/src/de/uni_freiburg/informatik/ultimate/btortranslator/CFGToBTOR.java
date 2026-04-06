@@ -140,7 +140,6 @@ public class CFGToBTOR {
 			System.out.println("locID: " + locID + " pc: " + pc);
 			pc++;
 		}
-		// making a zero, why is btorsort(1) neccesary
 		final BtorExpression zero = new BtorExpression(new BtorSort(64), BtorExpressionType.ZERO, new ArrayList<>());
 		BtorExpression latestITE = zero;
 		// generate next for each location in the form of latest ITE
@@ -155,7 +154,6 @@ public class CFGToBTOR {
 				final BtorExpression guard = updates.get(0).getConditionAsExpression(variableMap);
 				latestUpdate = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE,
 						Arrays.asList(guard, pcMap.get(updates.get(0).getTargetIdentifier()), latestUpdate));
-				// why is this here
 				generateAssignments(locID, updates.get(0).getTransFormula(), updates.get(0).getIcfgEdge(), guard);
 
 			} else if (!updates.isEmpty()) { // multiple updates
@@ -348,7 +346,7 @@ public class CFGToBTOR {
 									BigInteger.valueOf(assignmentMapping.get(varName)));
 							break;
 						case "Bool":
-							if (Long.valueOf(assignmentMapping.get(varName)) == 1) {
+							if (assignmentMapping.get(varName) == 1) {
 								value = mScript.getScript().term("true");
 							} else {
 								value = mScript.getScript().term("false");
@@ -379,19 +377,54 @@ public class CFGToBTOR {
 	}
 
 	public BtorScript generateScript(final IIcfg<BoogieIcfgLocation> icfg) {
-		final BtorExpression pcUpdate = generatePCUpdateExpression();
+		BtorExpression pcUpdate = generatePCUpdateExpression();
 		final Set<BoogieIcfgLocation> initial = icfg.getInitialNodes();
+		if (initial.size() == 0) {
+			throw new UnsupportedOperationException("No initial states");
+		}
+		final BtorExpression initial_pc;
 		if (initial.size() != 1) {
 			// multiple initial states
 			// create an initial state that goes to all the initial states
 
-			// throw new UnsupportedOperationException("Multiple initial states");
+			initial_pc = new BtorExpression(new BtorSort(64), Integer.MAX_VALUE);
+			final BtorExpression intMax = new BtorExpression(new BtorSort(64), Integer.MAX_VALUE);
+
+			final BtorExpression isNewInitialState =
+					new BtorExpression(new BtorSort(1), BtorExpressionType.EQ, Arrays.asList(pcExpression, intMax));
+
+			final BtorExpression initialpcUpdate = new BtorExpression(new BtorSort(64), "text", true);
+			final BtorExpression pcUpdateITE = pcUpdate.getChildren().getLast();
+
+			final BtorExpression zero =
+					new BtorExpression(new BtorSort(64), BtorExpressionType.ZERO, new ArrayList<>());
+			BtorExpression latestITE = zero;
+			int inputValue = 0;
+			for (final BoogieIcfgLocation loc : initial) {
+				final BtorExpression inputValueExpression = new BtorExpression(new BtorSort(64), inputValue);
+				final BtorExpression initialpcEquality = new BtorExpression(new BtorSort(1), BtorExpressionType.EQ,
+						Arrays.asList(inputValueExpression, initialpcUpdate));
+
+				latestITE = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE,
+						Arrays.asList(initialpcEquality,
+								pcMap.get(new SuffixedDebugIdentifier(loc.getDebugIdentifier(), loc.getProcedure())),
+								latestITE));
+				inputValue++;
+			}
+			final BtorExpression isInitialITE = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE,
+					Arrays.asList(isNewInitialState, latestITE, pcUpdateITE));
+
+			pcUpdate = new BtorExpression(new BtorSort(64), BtorExpressionType.NEXT,
+					Arrays.asList(pcExpression, isInitialITE));
+		} else {
+			initial_pc = pcMap.get(new SuffixedDebugIdentifier(initial.iterator().next().getDebugIdentifier(),
+					initial.iterator().next().getProcedure()));
+
 		}
-		final BtorExpression initial_pc =
-				pcMap.get(new SuffixedDebugIdentifier(initial.iterator().next().getDebugIdentifier(),
-						initial.iterator().next().getProcedure()));
+
 		final BtorExpression pc_initialization =
 				new BtorExpression(new BtorSort(64), BtorExpressionType.INIT, Arrays.asList(pcExpression, initial_pc));
+
 		final List<BtorExpression> variableUpdateExpressions = generateVariableUpdateExpressions();
 		final List<BtorExpression> allTopLevelExpressions =
 				new ArrayList<>(Arrays.asList(initial_pc, pc_initialization, pcUpdate));
@@ -400,18 +433,10 @@ public class CFGToBTOR {
 		allTopLevelExpressions.addAll(constraintExpressions);
 		allTopLevelExpressions.addAll(badExpressions);
 		final Set<BtorSort> sorts = new HashSet<>();
-		for (int i = 0; i < allTopLevelExpressions.size(); i++) {
-			sorts.addAll(allTopLevelExpressions.get(i).getRequiredBtorSorts());
+		for (final BtorExpression topLevelExpression : allTopLevelExpressions) {
+			sorts.addAll(topLevelExpression.getRequiredBtorSorts());
 		}
-		// for (final BtorExpression var : variableMap.values()) {
-		// if (var.getSort().isArray()) {
-		// sorts.add(var.getSort().keySort);
-		// sorts.add(var.getSort().valueSort);
-		// }
-		//
-		// sorts.add(var.getSort());
-		//
-		// }
+
 		// Booleans and 64-bit integers are guaranteed for the conditionals and PC respectively
 		sorts.add(new BtorSort(1));
 		sorts.add(new BtorSort(64));
