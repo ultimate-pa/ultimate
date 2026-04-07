@@ -69,6 +69,7 @@ LoopStatement ::=
  */
 Contract ::=
 	contractStmt : ContractStatement[]
+	interruptStmt : ?&InterruptStatement[]
 	behaviors : ?&Behavior[]
 	completeness : ?&Completeness;
  	
@@ -94,8 +95,21 @@ ContractStatement ::=
  		locations : Expression[]
  	| { Assumes }
  		formula : Expression
- 	;	
-	
+ 	;
+
+InterruptStatement ::=
+ 	{ InterruptServiceRoutine }
+ 		identifier : String
+ 	| { InterruptMasking }
+ 		identifier : String
+ 		enabled : Boolean
+ 	| { InterruptPriorityGet }
+ 		identifier : String
+ 	| { InterruptPrioritySet }
+ 		identifier : String
+ 		priority : Expression
+ 	;
+
 /**
  * Invariants (Global/Type)
  *

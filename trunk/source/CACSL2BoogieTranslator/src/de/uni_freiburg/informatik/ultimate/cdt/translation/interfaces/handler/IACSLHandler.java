@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
@@ -169,6 +170,17 @@ public interface IACSLHandler {
 	 * @return a result object
 	 */
 	Result visit(IDispatcher main, Contract node);
+
+	/**
+	 * Translates an InterruptStatement.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(IDispatcher main, InterruptStatement node);
 
 	/**
 	 * Translates an Requires.
