@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public class EqualityRelation implements ICongruenceRelation {
+public class EqualityRelation {
 
 	final Map<Term, Rational> mVarToFactor;
 	final Rational mResult;
@@ -46,7 +46,6 @@ public class EqualityRelation implements ICongruenceRelation {
 		return new EqualityRelation(affineTerm);
 	}
 
-	@Override
 	public Set<Term> getVars() {
 		return mVarToFactor.keySet();
 	}
@@ -65,7 +64,6 @@ public class EqualityRelation implements ICongruenceRelation {
 		return list;
 	}
 
-	@Override
 	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = getProtoVector(varToIndex);
 		return CongruenceUtil.getRowVectorFromRationalList(protoVector);

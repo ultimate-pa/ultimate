@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public class ModuloRelation implements ICongruenceRelation {
+public class ModuloRelation {
 	public static BigInteger MAX_NEG_MOD_COUNT = BigInteger.valueOf(5);
 
 	final EqualityRelation mEqualityRelation;
@@ -166,7 +166,6 @@ public class ModuloRelation implements ICongruenceRelation {
 		return null;
 	}
 
-	@Override
 	public Set<Term> getVars() {
 		return mEqualityRelation.getVars();
 	}
@@ -179,7 +178,6 @@ public class ModuloRelation implements ICongruenceRelation {
 		return rational;
 	}
 
-	@Override
 	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
 		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mMod))
