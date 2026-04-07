@@ -101,7 +101,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private final InterruptServiceRoutines mISR;
 
-	private Map<Integer, IdentifierExpression> mIdExpressions = null;
+	private Map<Integer, IdentifierExpression> mAuxVarExpressions = null;
 
 	private final List<Statement> mAdditionalInitializations = new ArrayList<>();
 
@@ -124,7 +124,9 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
-		mIdExpressions = constructIntEnabledExpressions(mISR.getISRMap().keySet());
+
+		// Get the ghost variables that signal whether an ISR is enabled
+		mAuxVarExpressions = constructAuxVarExpressions(mISR.getISRMap().keySet());
 
 		// Add thread gpio procedures
 		final var threadGpioProcedures = constructThreadGpioProc();
@@ -135,12 +137,12 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 		// Add atomic block and variable assignment to request enabled functions
 		final var lhsMap = getVariableLHSs();
-		modifyIntEnableProcedures(lhsMap);
+		annotateRequestEnableProcedures(lhsMap);
 
 		// Add interrupt enabled variable declarations
-		decl.addAll(constructIntEnableDeclarations());
+		decl.addAll(constructAuxVarEnableDeclarations());
 
-		mAdditionalInitializations.add(constructIntEnabledInitializations(lhsMap.values()));
+		mAdditionalInitializations.add(constructAuxVarEnabledInitializations(lhsMap.values()));
 
 		return decl;
 	}
@@ -167,10 +169,10 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		return forkStatements;
 	}
 
-	private Set<Declaration> constructIntEnableDeclarations() {
+	private Set<Declaration> constructAuxVarEnableDeclarations() {
 		final var declarations = new HashSet<Declaration>();
 		final var astType = new PrimitiveType(mIgnoreLoc, "bool");
-		for (final IdentifierExpression identifierExpression : mIdExpressions.values()) {
+		for (final IdentifierExpression identifierExpression : mAuxVarExpressions.values()) {
 			final var decl = new VariableDeclaration(mIgnoreLoc, new Attribute[0], new VarList[] {
 					new VarList(mIgnoreLoc, new String[] { identifierExpression.getIdentifier() }, astType) });
 			declarations.add(decl);
@@ -178,7 +180,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		return declarations;
 	}
 
-	private Map<Integer, IdentifierExpression> constructIntEnabledExpressions(final Collection<Integer> identifiers) {
+	private Map<Integer, IdentifierExpression> constructAuxVarExpressions(final Collection<Integer> identifiers) {
 		final var idExpressions = new HashMap<Integer, IdentifierExpression>();
 		for (final Integer irq : identifiers) {
 			final var id = "gpio_int" + irq + "_enabled";
@@ -189,7 +191,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		return idExpressions;
 	}
 
-	private Statement constructIntEnabledInitializations(final Collection<VariableLHS> leftHandSides) {
+	private Statement constructAuxVarEnabledInitializations(final Collection<VariableLHS> leftHandSides) {
 		final Expression assignment = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, false);
 		final Expression[] assignments = new Expression[leftHandSides.size()];
 		Arrays.fill(assignments, assignment);
@@ -197,18 +199,18 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 				assignments);
 	}
 
-	private void modifyIntEnableProcedures(final Map<Integer, VariableLHS> lhsMap) {
+	private void annotateRequestEnableProcedures(final Map<Integer, VariableLHS> lhsMap) {
 		final var intEnabledProcedures = mISR.getRequestEnable();
 		for (final Entry<Integer, VariableLHS> entry : lhsMap.entrySet()) {
 			final var irq = entry.getKey();
 			final var lhs = entry.getValue();
 			final var intEnableProcedure = intEnabledProcedures.get(irq);
 			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
-			modifyIntEnableProcedure(intEnableProcedure, lhs);
+			annotateRequestEnableProcedure(intEnableProcedure, lhs);
 		}
 	}
 
-	private void modifyIntEnableProcedure(final Procedure intEnableProcedure, final VariableLHS intEnabledLhs) {
+	private void annotateRequestEnableProcedure(final Procedure intEnableProcedure, final VariableLHS intEnabledLhs) {
 		mProcedureManager.beginProcedureScope(mCHandler,
 				mProcedureManager.getProcedureInfo(intEnableProcedure.getIdentifier()));
 		final var body = intEnableProcedure.getBody();
@@ -242,7 +244,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 				final var irq = entry.getKey();
 				final var isr = entry.getValue();
 				final var procId = isr.getIdentifier();
-				final var idExpression = mIdExpressions.get(irq);
+				final var idExpression = mAuxVarExpressions.get(irq);
 				assert idExpression != null : "There exists no identifier expression for the IRQ: " + irq;
 				procedures.add(constructOneInterruptThreadGpioProc(procId, idExpression, irq));
 			}
@@ -330,7 +332,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 			ifStatements.addAll(boolHavoc);
 			final var irq = entry.getKey();
 			final var identifier = entry.getValue().getIdentifier();
-			final var threadEnabledId = mIdExpressions.get(irq);
+			final var threadEnabledId = mAuxVarExpressions.get(irq);
 			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
 			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ: " + irq;
 			ifStatements.add(getIfStatement(identifier, threadEnabledId, enabledExpression));
@@ -362,7 +364,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private Map<Integer, VariableLHS> getVariableLHSs() {
-		return mIdExpressions.entrySet().stream()
+		return mAuxVarExpressions.entrySet().stream()
 				.collect(Collectors.toMap(Entry::getKey,
 						e -> ExpressionFactory.constructVariableLHS(mIgnoreLoc, BoogieType.TYPE_BOOL,
 								e.getValue().getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL)));
