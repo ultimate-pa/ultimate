@@ -14,9 +14,11 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorR
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class ConstraintRepresentationTest {
-	List<ConstraintRepresentation> TEST_CONSTRAINTS = List.of(getConstraints1(), getConstraints2(), getConstraints3(),
-			getConstraints4(), getConstraints5(), getConstraints6(), getConstraints7(), getConstraints8(),
-			getConstraints9(), getConstraints10(), getConstraints11(), getConstraints12());
+	public List<ConstraintRepresentation> getTestConstraints() {
+		return List.of(getConstraints1(), getConstraints2(), getConstraints3(), getConstraints4(), getConstraints5(),
+				getConstraints6(), getConstraints7(), getConstraints8(), getConstraints9(), getConstraints10(),
+				getConstraints11(), getConstraints12());
+	}
 
 	public ConstraintRepresentation getConstraints1() {
 		// @formatter:off
@@ -226,11 +228,13 @@ public class ConstraintRepresentationTest {
 
 	@Test
 	public void testGetMinimalForm() {
-		for (final ConstraintRepresentation constraints : TEST_CONSTRAINTS) {
-			final var minimalConstraints = constraints.getMinimalForm();
+		for (final ConstraintRepresentation constraints : getTestConstraints()) {
+			// System.out.println("-----------------------");
 			// System.out.println("constraints: " + constraints);
-			// System.out.println("minimalConstraints: " + minimalConstraints);
-			Assert.assertTrue(hasMinimalForm(minimalConstraints));
+			constraints.minimize();
+			// System.out.println("constraints: " + constraints);
+			// System.out.println(hasMinimalForm(constraints));
+			Assert.assertTrue(hasMinimalForm(constraints));
 		}
 	}
 
@@ -247,12 +251,12 @@ public class ConstraintRepresentationTest {
 	@Test
 	public void testGetStrongMinimalForm() {
 		// Add more tests for this
-		for (final ConstraintRepresentation constraints : TEST_CONSTRAINTS) {
-			final var strongMinimalConstraints = constraints.getStrongMinimalForm();
+		for (final ConstraintRepresentation constraints : getTestConstraints()) {
+			constraints.stronglyMinimize();
 			// System.out.println(constraints);
 			// System.out.println(constraints.getMinimalForm());
 			// System.out.println(strongMinimalConstraints);
-			Assert.assertTrue(hasStrongMinimalForm(strongMinimalConstraints));
+			Assert.assertTrue(hasStrongMinimalForm(constraints));
 		}
 	}
 

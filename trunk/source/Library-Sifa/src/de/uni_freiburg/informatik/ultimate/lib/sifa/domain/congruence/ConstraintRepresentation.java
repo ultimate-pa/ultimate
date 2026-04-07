@@ -13,23 +13,16 @@ import org.ojalgo.scalar.RationalNumber;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ConstraintRepresentation {
-	final private MatrixQ128 mEqualityMatrix;
-	final private MatrixQ128 mCongruenceMatrix;
-	// TODO: Change to use convert instead of get
-	// So only have mEqualityMatrix and mCongruenceMatrix and overwrite them
-	private Pair<MatrixQ128, MatrixQ128> mConstraints;
-	private final Pair<MatrixQ128, MatrixQ128> mMinimalConstraints = null;
-	private final Pair<MatrixQ128, MatrixQ128> mStrongMinimalConstraints = null;
+	private MatrixQ128 mEqualityMatrix;
+	private MatrixQ128 mCongruenceMatrix;
 
-	final private boolean mIsMinimal;
-	final private boolean mIsStrongMinimal;
+	private boolean mIsMinimal;
+	private boolean mIsStrongMinimal;
 
 	final private int mVectorLength;
 
 	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
 			final int vectorLength) {
-		// TODO: Maybe make Equalities and Congruences non final IFF minimal and strong
-		// minimal is equivalent
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = false;
@@ -37,7 +30,7 @@ public class ConstraintRepresentation {
 		mVectorLength = vectorLength;
 	}
 
-	private ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
+	ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
 			final int vectorLength, final boolean isMinimal, final boolean isStrongMinimal) {
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
@@ -84,11 +77,17 @@ public class ConstraintRepresentation {
 		return new ConstraintRepresentation(List.of(unsatVector(vectorLength)), List.of(), vectorLength, true, true);
 	}
 
+	private void markAsUnsat() {
+		mEqualityMatrix = unsatVector(mVectorLength);
+		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(List.of());
+		mIsMinimal = true;
+		mIsStrongMinimal = true;
+	}
+
 	public boolean isUnsat() {
-		// TODO: Save the minimal form here
-		final ConstraintRepresentation minimalConstraints = getMinimalForm();
-		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
-		final List<MatrixQ128> congruences = minimalConstraints.getCongruences();
+		minimize();
+		final List<MatrixQ128> equalities = getEqualities();
+		final List<MatrixQ128> congruences = getCongruences();
 
 		if (equalities.size() == 1 && congruences.size() == 0) {
 			final var equality = equalities.get(0);
@@ -106,10 +105,9 @@ public class ConstraintRepresentation {
 		return CongruenceUtil.getRowVectorFromIntList(list);
 	}
 
-	public ConstraintRepresentation getMinimalForm() {
-		// TODO: Change to convert
+	public void minimize() {
 		if (mIsMinimal) {
-			return this;
+			return;
 		}
 
 		final List<MatrixQ128> equalities = getEqualities();
@@ -128,7 +126,8 @@ public class ConstraintRepresentation {
 				equalitiesToDelete.add(i);
 			} else if (pivot == 0) {
 				// equality is unsatisfiable and so is the whole system
-				return getUnsat(mVectorLength);
+				markAsUnsat();
+				return;
 
 			} else {
 				// Make pivotValue positive
@@ -169,7 +168,8 @@ public class ConstraintRepresentation {
 				}
 				// The constant is not 0 mod 1
 				// So the congruence is unsatisfiable and so is the whole system
-				return getUnsat(mVectorLength);
+				markAsUnsat();
+				return;
 			} else {
 				// Make pivotValue positive
 				final var pivotValue = congruence.get(0, pivot);
@@ -202,19 +202,20 @@ public class ConstraintRepresentation {
 			congruences.remove(i);
 		}
 
-		return new ConstraintRepresentation(equalities, congruences, mVectorLength, true, false);
+		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
+		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
+		mIsMinimal = true;
 	}
 
-	public ConstraintRepresentation getStrongMinimalForm() {
-		// TODO: Change to convert
+	public void stronglyMinimize() {
 		if (isStrongMinimal()) {
-			return this;
+			return;
 		}
 
-		final ConstraintRepresentation minimalConstraints = getMinimalForm();
+		minimize();
 
-		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
-		final List<MatrixQ128> congruences = minimalConstraints.getCongruences();
+		final List<MatrixQ128> equalities = getEqualities();
+		final List<MatrixQ128> congruences = getCongruences();
 		// Sorting the congruence's by last pivot is needed for the rest
 		congruences.sort((v1, v2) -> (CongruenceUtil.lastPivot(v1) < CongruenceUtil.lastPivot(v2)) ? 1 : -1);
 
@@ -263,15 +264,16 @@ public class ConstraintRepresentation {
 
 			}
 		}
-		return new ConstraintRepresentation(equalities, congruences, mVectorLength, true, true);
+		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
+		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
+		mIsStrongMinimal = true;
 	}
 
 	public GeneratorRepresentation computeGeneratorRepresentation() {
-		// TODO: store minimal form
-		final ConstraintRepresentation minimalConstraints = getMinimalForm();
-		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
+		minimize();
+		final List<MatrixQ128> equalities = getEqualities();
 		final int equalitiesNum = equalities.size();
-		final List<MatrixQ128> congruences = minimalConstraints.getCongruences();
+		final List<MatrixQ128> congruences = getCongruences();
 		final int congruencesNum = congruences.size();
 
 		final List<MatrixQ128> constraintList = new ArrayList<>(congruences);

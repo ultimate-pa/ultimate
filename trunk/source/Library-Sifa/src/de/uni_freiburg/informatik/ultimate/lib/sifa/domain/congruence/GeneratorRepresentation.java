@@ -13,17 +13,11 @@ public class GeneratorRepresentation {
 	private MatrixQ128 mLineMatrix;
 	private MatrixQ128 mParameterMatrix;
 
-	// TODO: Change mLineMatrix and mParameterMatrix in place
-	// TODO: Use two matrices instead of a pair
-	// final private Pair<MatrixQ128, MatrixQ128> mGenerators;
-	// private Pair<MatrixQ128, MatrixQ128> mMinimalGenerators = null;
-
 	private boolean mIsMinimal;
 
 	public GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters) {
 		mLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
 		mParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
-		// mGenerators = new Pair<>(lineMatrix, parameterMatrix);
 		mIsMinimal = false;
 	}
 
@@ -31,7 +25,6 @@ public class GeneratorRepresentation {
 	GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix, final boolean isMinimal) {
 		mLineMatrix = lineMatrix;
 		mParameterMatrix = parameterMatrix;
-		// mGenerators = new Pair<>(lineMatrix, parameterMatrix);
 		mIsMinimal = isMinimal;
 	}
 
@@ -39,7 +32,6 @@ public class GeneratorRepresentation {
 	GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters, final boolean isMinimal) {
 		mLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
 		mParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
-		// mGenerators = new Pair<>(lineMatrix, parameterMatrix);
 		mIsMinimal = isMinimal;
 	}
 
