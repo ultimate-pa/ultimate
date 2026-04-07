@@ -2,9 +2,9 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import org.ojalgo.matrix.MatrixQ128;
@@ -15,6 +15,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ConstraintRepresentation {
 	final private MatrixQ128 mEqualityMatrix;
 	final private MatrixQ128 mCongruenceMatrix;
+	// TODO: Change to use convert instead of get
+	// So only have mEqualityMatrix and mCongruenceMatrix and overwrite them
 	private Pair<MatrixQ128, MatrixQ128> mConstraints;
 	private final Pair<MatrixQ128, MatrixQ128> mMinimalConstraints = null;
 	private final Pair<MatrixQ128, MatrixQ128> mStrongMinimalConstraints = null;
@@ -83,6 +85,7 @@ public class ConstraintRepresentation {
 	}
 
 	public boolean isUnsat() {
+		// TODO: Save the minimal form here
 		final ConstraintRepresentation minimalConstraints = getMinimalForm();
 		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
 		final List<MatrixQ128> congruences = minimalConstraints.getCongruences();
@@ -104,6 +107,7 @@ public class ConstraintRepresentation {
 	}
 
 	public ConstraintRepresentation getMinimalForm() {
+		// TODO: Change to convert
 		if (mIsMinimal) {
 			return this;
 		}
@@ -202,6 +206,7 @@ public class ConstraintRepresentation {
 	}
 
 	public ConstraintRepresentation getStrongMinimalForm() {
+		// TODO: Change to convert
 		if (isStrongMinimal()) {
 			return this;
 		}
@@ -245,7 +250,7 @@ public class ConstraintRepresentation {
 					final long wholeIndexElement2 = CongruenceUtil.getNumerator(wholeIndexElement2Rational);
 
 					long factor;
-					if (wholeIndexElement1 % wholeIndexElement2 > wholeIndexElement1 / 2) {
+					if ((wholeIndexElement1 % wholeIndexElement2) * 2 > wholeIndexElement1) {
 						factor = Math.ceilDivExact(wholeIndexElement1, wholeIndexElement2);
 					} else {
 						factor = Math.floorDivExact(wholeIndexElement1, wholeIndexElement2);
@@ -262,6 +267,7 @@ public class ConstraintRepresentation {
 	}
 
 	public GeneratorRepresentation computeGeneratorRepresentation() {
+		// TODO: store minimal form
 		final ConstraintRepresentation minimalConstraints = getMinimalForm();
 		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
 		final int equalitiesNum = equalities.size();
@@ -271,8 +277,7 @@ public class ConstraintRepresentation {
 		final List<MatrixQ128> constraintList = new ArrayList<>(congruences);
 		constraintList.addAll(equalities);
 
-		// TODO: Ask Frank about long vs int
-		final Set<Long> missingPivots = new HashSet<>(LongStream.range(0, mVectorLength).boxed().toList());
+		final Set<Long> missingPivots = LongStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
 		for (final MatrixQ128 vector : constraintList) {
 			missingPivots.remove(CongruenceUtil.lastPivot(vector));
 		}

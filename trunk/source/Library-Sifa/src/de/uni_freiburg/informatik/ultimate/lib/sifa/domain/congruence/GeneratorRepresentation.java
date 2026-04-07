@@ -13,6 +13,8 @@ public class GeneratorRepresentation {
 	// final private MatrixQ128 mLineMatrix;
 	// final private MatrixQ128 mParameterMatrix;
 
+	// TODO: Change mLineMatrix and mParameterMatrix in place
+	// TODO: Use two matrices instead of a pair
 	final private Pair<MatrixQ128, MatrixQ128> mGenerators;
 	private Pair<MatrixQ128, MatrixQ128> mMinimalGenerators = null;
 
@@ -25,10 +27,8 @@ public class GeneratorRepresentation {
 		// mIsMinimal = false;
 	}
 
-	// TODO: Ask Frank about this in regards to the conversion from
-	// ConstraintRepresentation
-	public GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix,
-			final boolean isMinimal) {
+	// TODO: Add warning to only put sth minimal here
+	GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix, final boolean isMinimal) {
 		// mLineMatrix = lineMatrix;
 		// mParameterMatrix = parameterMatrix;
 		mGenerators = new Pair<>(lineMatrix, parameterMatrix);
@@ -55,6 +55,19 @@ public class GeneratorRepresentation {
 				+ ", mIsMinimal=" + isMinimal() + "]";
 	}
 
+	public boolean equals(final GeneratorRepresentation other) {
+		if (!getLineMatrix().equals(other.getLineMatrix())) {
+			return false;
+		}
+		if (!getParameterMatrix().equals(other.getParameterMatrix())) {
+			return false;
+		}
+		if (isMinimal() != other.isMinimal()) {
+			return false;
+		}
+		return true;
+	}
+
 	public MatrixQ128 getLineMatrix() {
 		return mGenerators.getFirst();
 	}
@@ -76,6 +89,7 @@ public class GeneratorRepresentation {
 	}
 
 	public GeneratorRepresentation getMinimalForm() {
+		// TODO: Change to convert
 		if (isMinimal()) {
 			return new GeneratorRepresentation(mMinimalGenerators.getFirst(), mMinimalGenerators.getSecond(), true);
 		}

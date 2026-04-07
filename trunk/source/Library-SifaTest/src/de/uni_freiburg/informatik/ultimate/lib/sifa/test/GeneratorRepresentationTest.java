@@ -107,6 +107,90 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(lines, parameters);
 	}
 
+	public static GeneratorRepresentation getGenerators8() {
+		// @formatter:off
+		/*
+		 * L = {(1, 1)}
+		 * Q = {(0, 2)}
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ONE)));
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.TWO)));
+
+		return new GeneratorRepresentation(equalities, congruences, true);
+	}
+
+	public static GeneratorRepresentation getGenerators9() {
+		// @formatter:off
+		/*
+		 * L = {(0, 1)}
+		 * Q = {}
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ONE)));
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+
+		return new GeneratorRepresentation(equalities, congruences, true);
+	}
+
+	public static GeneratorRepresentation getGenerators10() {
+		// @formatter:off
+		/*
+		 * L = {(1, 0), (0, 1)}
+		 * Q = {}
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ZERO)));
+		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ONE)));
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+
+		return new GeneratorRepresentation(equalities, congruences, true);
+	}
+
+	public static GeneratorRepresentation getGenerators11() {
+		// @formatter:off
+		/*
+		 * L = {(1, 0, 4/3), (0, 1, -2/3)}
+		 * Q = {(0, 0, 10/3)}
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+		equalities.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ZERO, Rational.valueOf(4, 3))));
+		equalities.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ONE, Rational.valueOf(-2, 3))));
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(10, 3))));
+
+		return new GeneratorRepresentation(equalities, congruences, true);
+	}
+
+	public static GeneratorRepresentation getGenerators12() {
+		// @formatter:off
+		/*
+		 * L = {(1, 1, 1)}
+		 * Q = {(0, 0, 3)}
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ONE, Rational.ONE)));
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(3, 1))));
+
+		return new GeneratorRepresentation(equalities, congruences, true);
+	}
+
 	@Test
 	public void testGetMinimalForm() {
 		for (final GeneratorRepresentation generators : TEST_GENERATORS) {

@@ -10,11 +10,13 @@ import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceUtil;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.ConstraintRepresentation;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorRepresentation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class ConstraintRepresentationTest {
 	List<ConstraintRepresentation> TEST_CONSTRAINTS = List.of(getConstraints1(), getConstraints2(), getConstraints3(),
-			getConstraints4(), getConstraints5(), getConstraints6(), getConstraints7());
+			getConstraints4(), getConstraints5(), getConstraints6(), getConstraints7(), getConstraints8(),
+			getConstraints9(), getConstraints10(), getConstraints11(), getConstraints12());
 
 	public ConstraintRepresentation getConstraints1() {
 		// @formatter:off
@@ -147,6 +149,81 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 4);
 	}
 
+	public ConstraintRepresentation getConstraints8() {
+		// @formatter:off
+		/*
+		 * x1 = 1 [2]
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(
+				CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.valueOf(-1, 2), Rational.valueOf(1, 2))));
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	public ConstraintRepresentation getConstraints9() {
+		// @formatter:off
+		/*
+		 * 0 = -1
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+		equalities.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 0)));
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	public ConstraintRepresentation getConstraints10() {
+		// @formatter:off
+		/*
+		 * No constraints
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	public ConstraintRepresentation getConstraints11() {
+		// @formatter:off
+		/*
+		 * 2*x1 + 3*x2 = 4 [10]
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(
+				List.of(Rational.valueOf(-4, 10), Rational.valueOf(2, 10), Rational.valueOf(3, 10))));
+
+		return new ConstraintRepresentation(equalities, congruences, 3);
+	}
+
+	public ConstraintRepresentation getConstraints12() {
+		// @formatter:off
+		/*
+		 * x1 = 1
+		 * x1 + x2 = 2 [3]
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+		equalities.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.valueOf(-1, 1), Rational.ONE, Rational.ZERO)));
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(
+				List.of(Rational.valueOf(-2, 3), Rational.valueOf(1, 3), Rational.valueOf(1, 3))));
+
+		return new ConstraintRepresentation(equalities, congruences, 3);
+	}
+
 	@Test
 	public void testGetMinimalForm() {
 		for (final ConstraintRepresentation constraints : TEST_CONSTRAINTS) {
@@ -176,6 +253,23 @@ public class ConstraintRepresentationTest {
 			// System.out.println(constraints.getMinimalForm());
 			// System.out.println(strongMinimalConstraints);
 			Assert.assertTrue(hasStrongMinimalForm(strongMinimalConstraints));
+		}
+	}
+
+	@Test
+	public void testComputeGeneratorRepresentation() {
+		final List<ConstraintRepresentation> constraints = List.of(getConstraints8(), getConstraints9(),
+				getConstraints10(), getConstraints11(), getConstraints12());
+		final List<GeneratorRepresentation> generators = List.of(GeneratorRepresentationTest.getGenerators8(),
+				GeneratorRepresentationTest.getGenerators9(), GeneratorRepresentationTest.getGenerators10(),
+				GeneratorRepresentationTest.getGenerators11(), GeneratorRepresentationTest.getGenerators12());
+
+		for (int i = 0; i < constraints.size(); i++) {
+			final GeneratorRepresentation expected = generators.get(i);
+			final GeneratorRepresentation result = constraints.get(i).computeGeneratorRepresentation();
+			// System.out.println(expected);
+			// System.out.println(result);
+			Assert.assertTrue(expected.equals(result));
 		}
 	}
 
