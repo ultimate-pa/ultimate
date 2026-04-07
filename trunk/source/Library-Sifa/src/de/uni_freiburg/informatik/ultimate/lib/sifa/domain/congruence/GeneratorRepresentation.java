@@ -25,10 +25,23 @@ public class GeneratorRepresentation {
 		// mIsMinimal = false;
 	}
 
-	private GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix,
+	// TODO: Ask Frank about this in regards to the conversion from
+	// ConstraintRepresentation
+	public GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix,
 			final boolean isMinimal) {
 		// mLineMatrix = lineMatrix;
 		// mParameterMatrix = parameterMatrix;
+		mGenerators = new Pair<>(lineMatrix, parameterMatrix);
+
+		if (isMinimal) {
+			mMinimalGenerators = mGenerators;
+		}
+	}
+
+	public GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters,
+			final boolean isMinimal) {
+		final MatrixQ128 lineMatrix = CongruenceUtil.getMatrixFromRows(lines);
+		final MatrixQ128 parameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
 		mGenerators = new Pair<>(lineMatrix, parameterMatrix);
 
 		if (isMinimal) {

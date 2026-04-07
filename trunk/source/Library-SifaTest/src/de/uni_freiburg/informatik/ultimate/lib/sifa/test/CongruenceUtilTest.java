@@ -45,16 +45,17 @@ public class CongruenceUtilTest {
 
 	}
 
-	@Test
-	public void testCongruenceToVector() {
-		final var vector1 = CongruenceUtil.CongruenceToVector(new int[] { 1, 2, -3 }, -4, 5);
-		final var vector2 = CongruenceUtil.getRowVectorFromIntList(List.of(4, 1, 2, -3)).divide(5);
-		Assert.assertTrue(vector1.equals(vector2));
-
-		final var vector3 = CongruenceUtil.CongruenceToVector(new int[] { 1, 2, -3 }, 4, 2);
-		final var vector4 = CongruenceUtil.getRowVectorFromIntList(List.of(0, 1, 0, -1)).divide(2);
-		Assert.assertTrue(vector3.equals(vector4));
-	}
+	// TODO: Remove this
+	/*
+	 * @Test public void testCongruenceToVector() { final var vector1 =
+	 * CongruenceUtil.CongruenceToVector(new int[] { 1, 2, -3 }, -4, 5); final var
+	 * vector2 = CongruenceUtil.getRowVectorFromIntList(List.of(4, 1, 2,
+	 * -3)).divide(5); Assert.assertTrue(vector1.equals(vector2));
+	 * 
+	 * final var vector3 = CongruenceUtil.CongruenceToVector(new int[] { 1, 2, -3 },
+	 * 4, 2); final var vector4 = CongruenceUtil.getRowVectorFromIntList(List.of(0,
+	 * 1, 0, -1)).divide(2); Assert.assertTrue(vector3.equals(vector4)); }
+	 */
 
 	@Test
 	public void testGetRowVectorFromIntList() {
@@ -321,6 +322,19 @@ public class CongruenceUtilTest {
 		Assert.assertTrue(expected1.equals(res1));
 		Assert.assertTrue(expected2.equals(res2));
 		Assert.assertTrue(expected3.equals(res3));
+	}
+
+	@Test
+	public void testGetStandardBasisVector() {
+		final List<RationalNumber> list1 = List.of(RationalNumber.ZERO, RationalNumber.ZERO, RationalNumber.ONE);
+		final MatrixQ128 expected1 = CongruenceUtil.getMatrixFromRationalNumberList(list1, 1, 3);
+		final MatrixQ128 result1 = CongruenceUtil.getStandardBasisVector(2, 3);
+		Assert.assertTrue(result1.equals(expected1));
+
+		final List<RationalNumber> list2 = List.of(RationalNumber.ONE, RationalNumber.ZERO, RationalNumber.ZERO);
+		final MatrixQ128 expected2 = CongruenceUtil.getMatrixFromRationalNumberList(list2, 1, 3);
+		final MatrixQ128 result2 = CongruenceUtil.getStandardBasisVector(0, 3);
+		Assert.assertTrue(result2.equals(expected2));
 	}
 
 }

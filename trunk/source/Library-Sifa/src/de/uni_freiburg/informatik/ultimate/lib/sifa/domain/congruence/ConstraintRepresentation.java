@@ -2,7 +2,10 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.LongStream;
 
 import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.scalar.RationalNumber;
@@ -10,8 +13,6 @@ import org.ojalgo.scalar.RationalNumber;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ConstraintRepresentation {
-	public static ConstraintRepresentation EMPTY = new ConstraintRepresentation(List.of(), List.of(), true, true);
-
 	final private MatrixQ128 mEqualityMatrix;
 	final private MatrixQ128 mCongruenceMatrix;
 	private Pair<MatrixQ128, MatrixQ128> mConstraints;
@@ -21,21 +22,26 @@ public class ConstraintRepresentation {
 	final private boolean mIsMinimal;
 	final private boolean mIsStrongMinimal;
 
-	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences) {
+	final private int mVectorLength;
+
+	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
+			final int vectorLength) {
 		// TODO: Maybe make Equalities and Congruences non final IFF minimal and strong
 		// minimal is equivalent
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = false;
 		mIsStrongMinimal = false;
+		mVectorLength = vectorLength;
 	}
 
 	private ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
-			final boolean isMinimal, final boolean isStrongMinimal) {
+			final int vectorLength, final boolean isMinimal, final boolean isStrongMinimal) {
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = isMinimal;
 		mIsStrongMinimal = isStrongMinimal;
+		mVectorLength = vectorLength;
 	}
 
 	public MatrixQ128 getEqualityMatrix() {
@@ -68,6 +74,14 @@ public class ConstraintRepresentation {
 				+ mCongruenceMatrix + ", mIsMinimal=" + mIsMinimal + ", mIsStrongMinimal=" + mIsStrongMinimal + "]";
 	}
 
+	public static ConstraintRepresentation getEmpty(final int vectorLength) {
+		return new ConstraintRepresentation(List.of(), List.of(), vectorLength, true, true);
+	}
+
+	public static ConstraintRepresentation getUnsat(final int vectorLength) {
+		return new ConstraintRepresentation(List.of(unsatVector(vectorLength)), List.of(), vectorLength, true, true);
+	}
+
 	public boolean isUnsat() {
 		final ConstraintRepresentation minimalConstraints = getMinimalForm();
 		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
@@ -76,7 +90,7 @@ public class ConstraintRepresentation {
 		if (equalities.size() == 1 && congruences.size() == 0) {
 			final var equality = equalities.get(0);
 
-			if (equality.equals(ConstraintRepresentation.unsatVector(equality.size()))) {
+			if (equality.equals(ConstraintRepresentation.unsatVector(mVectorLength))) {
 				return true;
 			}
 		}
@@ -110,7 +124,7 @@ public class ConstraintRepresentation {
 				equalitiesToDelete.add(i);
 			} else if (pivot == 0) {
 				// equality is unsatisfiable and so is the whole system
-				return new ConstraintRepresentation(List.of(unsatVector(equality.size())), List.of(), true, true);
+				return getUnsat(mVectorLength);
 
 			} else {
 				// Make pivotValue positive
@@ -151,7 +165,7 @@ public class ConstraintRepresentation {
 				}
 				// The constant is not 0 mod 1
 				// So the congruence is unsatisfiable and so is the whole system
-				return new ConstraintRepresentation(List.of(unsatVector(congruence.size())), List.of(), true, true);
+				return getUnsat(mVectorLength);
 			} else {
 				// Make pivotValue positive
 				final var pivotValue = congruence.get(0, pivot);
@@ -184,7 +198,7 @@ public class ConstraintRepresentation {
 			congruences.remove(i);
 		}
 
-		return new ConstraintRepresentation(equalities, congruences, true, false);
+		return new ConstraintRepresentation(equalities, congruences, mVectorLength, true, false);
 	}
 
 	public ConstraintRepresentation getStrongMinimalForm() {
@@ -244,11 +258,40 @@ public class ConstraintRepresentation {
 
 			}
 		}
-		return new ConstraintRepresentation(equalities, congruences, true, true);
+		return new ConstraintRepresentation(equalities, congruences, mVectorLength, true, true);
 	}
 
 	public GeneratorRepresentation computeGeneratorRepresentation() {
-		// TODO
-		return null;
+		final ConstraintRepresentation minimalConstraints = getMinimalForm();
+		final List<MatrixQ128> equalities = minimalConstraints.getEqualities();
+		final int equalitiesNum = equalities.size();
+		final List<MatrixQ128> congruences = minimalConstraints.getCongruences();
+		final int congruencesNum = congruences.size();
+
+		final List<MatrixQ128> constraintList = new ArrayList<>(congruences);
+		constraintList.addAll(equalities);
+
+		// TODO: Ask Frank about long vs int
+		final Set<Long> missingPivots = new HashSet<>(LongStream.range(0, mVectorLength).boxed().toList());
+		for (final MatrixQ128 vector : constraintList) {
+			missingPivots.remove(CongruenceUtil.lastPivot(vector));
+		}
+
+		final List<MatrixQ128> fillerList = new ArrayList<>();
+		for (final Long missingPivot : missingPivots) {
+			fillerList.add(CongruenceUtil.getStandardBasisVector(missingPivot.intValue(), mVectorLength));
+		}
+		final int fillerNum = fillerList.size();
+
+		final List<MatrixQ128> vectorList = new ArrayList<>(fillerList);
+		vectorList.addAll(constraintList);
+		final MatrixQ128 constraintMatrix = CongruenceUtil.getMatrixFromRows(vectorList);
+		final MatrixQ128 generatorMatrix = constraintMatrix.invert().transpose();
+		final List<MatrixQ128> generatorList = CongruenceUtil.getRowsFromMatrix(generatorMatrix);
+
+		final List<MatrixQ128> lines = generatorList.subList(0, fillerNum);
+		final List<MatrixQ128> parameters = generatorList.subList(fillerNum, fillerNum + congruencesNum);
+
+		return new GeneratorRepresentation(lines, parameters, true);
 	}
 }

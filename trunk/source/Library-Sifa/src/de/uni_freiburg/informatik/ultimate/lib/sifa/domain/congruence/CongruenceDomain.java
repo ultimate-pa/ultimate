@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,8 +56,11 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 				}
 			}
 			final Map<Term, Integer> varToIndex = new HashMap<>();
-			vars.stream().sorted(Comparator.comparing(Term::toString))
-					.forEach(x -> varToIndex.put(x, varToIndex.size()));
+			int freeIndex = 1;
+			for (final Term var : vars) {
+				varToIndex.put(var, freeIndex);
+				freeIndex++;
+			}
 
 			final List<MatrixQ128> equalities = new ArrayList<>();
 			final List<MatrixQ128> congruences = new ArrayList<>();
@@ -69,7 +71,9 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 				congruences.add(moduloRelation.getVector(varToIndex));
 			}
 
-			return new CongruenceState(varToIndex, new ConstraintRepresentation(equalities, congruences));
+			final var vectorLength = varToIndex.size() + 1;
+
+			return new CongruenceState(varToIndex, new ConstraintRepresentation(equalities, congruences, vectorLength));
 		}
 
 		@Override

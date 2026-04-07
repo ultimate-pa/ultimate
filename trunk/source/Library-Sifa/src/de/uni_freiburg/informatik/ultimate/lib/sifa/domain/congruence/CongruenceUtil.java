@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -17,19 +16,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CongruenceUtil {
-	public static MatrixQ128 equalityToVector(final int[] poliArray, final int result) {
-		final List<Integer> list = new ArrayList<>(List.of(-result));
-		for (final int item : poliArray) {
-			list.add(item);
-		}
-		return getRowVectorFromIntList(list);
-	}
-
-	public static MatrixQ128 CongruenceToVector(final int[] poliArray, final int result, final int mod) {
-		final int[] modPoliArray = Arrays.stream(poliArray).map(n -> n % mod).toArray();
-		final int modResult = result % mod;
-		return equalityToVector(modPoliArray, modResult).divide(mod);
-	}
+	// TODO: Remove this
+	/*
+	 * public static MatrixQ128 equalityToVector(final int[] poliArray, final int
+	 * result) { final List<Integer> list = new ArrayList<>(List.of(-result)); for
+	 * (final int item : poliArray) { list.add(item); } return
+	 * getRowVectorFromIntList(list); }
+	 *
+	 * public static MatrixQ128 CongruenceToVector(final int[] poliArray, final int
+	 * result, final int mod) { final int[] modPoliArray =
+	 * Arrays.stream(poliArray).map(n -> n % mod).toArray(); final int modResult =
+	 * result % mod; return equalityToVector(modPoliArray, modResult).divide(mod); }
+	 */
 
 	public static long firstPivot(final MatrixQ128 vector) {
 		final long k = vector.countColumns();
@@ -216,6 +214,12 @@ public class CongruenceUtil {
 		}
 
 		return getMatrixFromColumns(resultColumns);
+	}
+
+	public static MatrixQ128 getStandardBasisVector(final int index, final int size) {
+		final List<Rational> list = new ArrayList<>(Collections.nCopies(size, Rational.ZERO));
+		list.set(index, Rational.ONE);
+		return getRowVectorFromRationalList(list);
 	}
 
 	public static long getNumerator(final RationalNumber num) {

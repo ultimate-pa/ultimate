@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class CongruenceState implements IAbstractState<CongruenceState> {
-	public static final CongruenceState TOP = new CongruenceState(Map.of(), ConstraintRepresentation.EMPTY);
+	public static final CongruenceState TOP = new CongruenceState(Map.of(), ConstraintRepresentation.getEmpty(0));
 
 	private Map<Term, Integer> mVarToIndex;
 
