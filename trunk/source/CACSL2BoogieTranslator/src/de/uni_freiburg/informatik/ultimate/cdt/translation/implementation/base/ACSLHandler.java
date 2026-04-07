@@ -116,6 +116,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
@@ -692,6 +693,13 @@ public class ACSLHandler implements IACSLHandler {
 			spec.addAll(Arrays.asList(((ContractResult) main.dispatch(stmt, main.getAcslHook())).getSpecs()));
 		}
 
+		if (node.getInterruptStmt() != null) {
+			for (final InterruptStatement stmt : node.getInterruptStmt()) {
+				// TODO: dispatch interrupt stmt
+				final int i = 0;
+			}
+		}
+
 		if (node.getBehaviors() != null && node.getBehaviors().length != 0) {
 			final String msg = "Not yet implemented: Behaviour";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -700,6 +708,12 @@ public class ACSLHandler implements IACSLHandler {
 		// TODO : node.getCompleteness();
 		mSpecType = ACSLHandler.SPEC_TYPE.NOT;
 		return new ContractResult(spec.toArray(new Specification[spec.size()]));
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final InterruptStatement node) {
+		mSpecType = ACSLHandler.SPEC_TYPE.NOT;
+		return null;
 	}
 
 	@Override

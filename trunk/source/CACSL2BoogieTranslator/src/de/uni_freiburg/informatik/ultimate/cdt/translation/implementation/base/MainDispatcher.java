@@ -129,6 +129,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
@@ -320,6 +321,7 @@ public class MainDispatcher implements IDispatcher {
 		case final IfThenElseExpression ite -> mAcslHandler.visit(this, ite);
 		case final QuantifierExpression quantifier -> mAcslHandler.visit(this, quantifier);
 		case final Contract contract -> mAcslHandler.visit(this, contract);
+		case final InterruptStatement interrupt -> mAcslHandler.visit(this, interrupt);
 		case final Requires requires -> mAcslHandler.visit(this, requires);
 		case final Ensures ensures -> mAcslHandler.visit(this, ensures);
 		case final Assigns assigns -> mAcslHandler.visit(this, assigns);

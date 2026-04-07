@@ -237,6 +237,7 @@ terminal TRUE, FALSE, OLD, AT, RESULT, BLOCK_LENGTH, BASE_ADDR;
 terminal VALID, VALID_INDEX, VALID_RANGE, FRESH, DOLLAR;
 terminal QUESTION, MINUS, PLUS, AMP, SLASH, PERCENT, LSQUARE, RSQUARE;
 terminal GLOBAL, INVARIANT, VARIANT, DECREASES, FOR, LABEL, ASSERT, SEMICOLON, NULL, EMPTY, LTL;
+terminal INTERRUPT, SERVICE, ROUTINE, MASKING, ENABLE, DISABLE, PRIORITY, SET, GET;
 terminal REQUIRES, ENSURES, ASSIGNS, LOOP, NOTHING, SLICE, IMPACT, PRAGMA, FROM;
 terminal EXITS, BREAKS, CONTINUES, RETURNS;
 terminal READS, WRITES;
@@ -270,6 +271,7 @@ non terminal List<Requires> requires, ne_requires;
 non terminal Terminates terminates, ne_terminates;
 non terminal Decreases decreases, ne_decreases;
 non terminal List<ContractStatement> simple_clauses, ne_simple_clauses, behavior_body;
+non terminal List<InterruptStatement> interrupts, ne_interrupts;
 non terminal List<Assumes> assumes;
 non terminal List<Behavior> behaviors, ne_behaviors;
 non terminal Completeness complete_or_disjoint, ne_complete_or_disjoint;
@@ -831,7 +833,7 @@ ne_logic_type_list::=
 /*** function and statement contracts ***/
 
 contract::=
-  requires:req terminates:term decreases:de simple_clauses:sim behaviors:be complete_or_disjoint:com {:
+  requires:req terminates:term decreases:de simple_clauses:sim behaviors:be complete_or_disjoint:com interrupts:ints {:
   	ArrayList<ContractStatement> list = new ArrayList<ContractStatement>();
   	list.addAll(req);
   	if (term != null) {
@@ -844,13 +846,13 @@ contract::=
 
   	// use the first symbol that actually matched as left anchor (req$.xleft is null if no requires are specified)
   	Symbol firstSymbol$ = req$;
-  	for (Symbol sym : Arrays.asList(req$, term$, de$, sim$, be$, com$)) {
+  	for (Symbol sym : Arrays.asList(req$, term$, de$, sim$, be$, com$, ints$)) {
   		firstSymbol$ = sym;
   		if (((ComplexSymbol)sym).getLeft() != null) {
   			 break;
   		}
   	}
-  	RESULT = setNodeLocationFromSymbols(new Contract(list.toArray(new ContractStatement[0]), be.toArray(new Behavior[0]), com), firstSymbol$, com$);
+  	RESULT = setNodeLocationFromSymbols(new Contract(list.toArray(new ContractStatement[0]), ints.toArray(new InterruptStatement[0]), be.toArray(new Behavior[0]), com), firstSymbol$, ints$);
   	parser.setAcslNode(RESULT);
   :}
 /* TODO Rest wird nicht gebraucht? */
@@ -1144,6 +1146,44 @@ code_annotation::=
 | GHOST:g type_spec:t IDENTIFIER:i EQUAL lexpr:expr SEMICOLON:s {:
   	RESULT = setNodeLocationFromSymbols(new CodeAnnotStmt(setNodeLocationFromSymbols(new GhostDeclaration(new ACSLType(t), i, expr), t$, expr$)), g$, s$);
   	parser.setAcslNode(RESULT);
+  :}
+;
+
+
+/*** interrupt annotations ***/
+
+interrupts::=
+  /* epsilon */ {: RESULT = new ArrayList<InterruptStatement>(); :}
+| ne_interrupts:interrupts {: 
+    RESULT = interrupts;
+  :}
+;
+
+ne_interrupts::=
+  INTERRUPT:i SERVICE ROUTINE IDENTIFIER:id SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptServiceRoutine(id), i$, s$);
+  	interrupts.add(intStmt);
+  	RESULT = interrupts;
+  :}
+| INTERRUPT:i MASKING ENABLE IDENTIFIER:id SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptMasking(id, true), i$, s$);
+  	interrupts.add(intStmt);
+  	RESULT = interrupts;
+  :}
+| INTERRUPT:i MASKING DISABLE IDENTIFIER:id SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptMasking(id, false), i$, s$);
+  	interrupts.add(intStmt);
+  	RESULT = interrupts;
+  :}
+| INTERRUPT:i PRIORITY GET IDENTIFIER:id SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptPriorityGet(id), i$, s$);
+  	interrupts.add(intStmt);
+  	RESULT = interrupts;
+  :}
+| INTERRUPT:i PRIORITY SET IDENTIFIER:id constant:prio SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptPrioritySet(id, prio), i$, s$);
+  	interrupts.add(intStmt);
+  	RESULT = interrupts;
   :}
 ;
 

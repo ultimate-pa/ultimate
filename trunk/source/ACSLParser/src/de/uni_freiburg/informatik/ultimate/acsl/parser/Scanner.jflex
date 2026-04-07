@@ -81,15 +81,18 @@ WhiteSpace     = {LineTerminator}* | {space}*
 	"continues"		{ return symbol("continues",sym.CONTINUES); }
 	"contract"		{ return symbol("contract",sym.CONTRACT); }
 	"decreases"		{ return symbol("decreases",sym.DECREASES); }
+	"disable"		{ return symbol("disable",sym.DISABLE); }
 	"disjoint"		{ return symbol("disjoint",sym.DISJOINT); }
 	"double"		{ return symbol("double",sym.DOUBLE, yytext()); }
 	"else"			{ return symbol("else",sym.ELSE); }
+	"enable"		{ return symbol("enable",sym.ENABLE); }
 	"ensures"		{ return symbol("ensures",sym.ENSURES); }
 	"enum"			{ return symbol("enum",sym.ENUM); }
 	"exists"		{ return symbol("exists",sym.EXISTS); }
 	"function"		{ return symbol("function",sym.FUNCTION); }
 	"float"			{ return symbol("float",sym.FLOAT, yytext()); }
 	"for"			{ return symbol("for",sym.FOR); }
+	"get"			{ return symbol("get",sym.GET); }
 	"global"		{ return symbol("global",sym.GLOBAL); }
 	"ghost"			{ return symbol("ghost",sym.GHOST); }
 	"ltl"			{ return symbol("global",sym.LTL); }
@@ -98,6 +101,7 @@ WhiteSpace     = {LineTerminator}* | {space}*
 	"inductive"		{ return symbol("inductive",sym.INDUCTIVE); }
 	"include"		{ return symbol("include",sym.INCLUDE); }
 	"int"			{ return symbol("int",sym.INT, yytext()); }
+	"interrupt"		{ return symbol("interrupt",sym.INTERRUPT); }
 	"invariant"		{ return symbol("invariant",sym.INVARIANT); }
 	"label"			{ return symbol("label",sym.LABEL); }
 	"lemma"			{ return symbol("lemma",sym.LEMMA); }
@@ -105,13 +109,18 @@ WhiteSpace     = {LineTerminator}* | {space}*
 	"logic"			{ return symbol("logic",sym.LOGIC); }
 	"long"			{ return symbol("long",sym.LONG, yytext()); }
 	"loop"			{ return symbol("loop",sym.LOOP); }
+	"masking"		{ return symbol("masking",sym.MASKING); }
 	"modelfield"		{ return symbol("modelfield",sym.MODEL); }
 	"module"		{ return symbol("module",sym.MODULE); }
 	"pragma"		{ return symbol("pragma",sym.PRAGMA); }
 	"predicate"		{ return symbol("predicate",sym.PREDICATE); }
+	"priority"		{ return symbol("priority",sym.PRIORITY); }
 	"reads"			{ return symbol("reads",sym.READS); }
 	"requires"		{ return symbol("requires",sym.REQUIRES); }
 	"returns"		{ return symbol("returns",sym.RETURNS); }
+	"routine"		{ return symbol("routine",sym.ROUTINE); }
+	"service"		{ return symbol("service",sym.SERVICE); }
+	"set"			{ return symbol("set",sym.SET); }
 	"short"			{ return symbol("short",sym.SHORT, yytext()); }
 	"signed"		{ return symbol("signed",sym.SIGNED, yytext()); }
 	"sizeof"		{ return symbol("sizeof",sym.SIZEOF); }
