@@ -13,8 +13,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorR
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class GeneratorRepresentationTest {
-	List<GeneratorRepresentation> TEST_GENERATORS = List.of(getGenerators1(), getGenerators2(), getGenerators3(),
-			getGenerators4());
+	public List<GeneratorRepresentation> getTestGenerators() {
+		return List.of(getGenerators1(), getGenerators2(), getGenerators3(), getGenerators4());
+	}
 
 	public GeneratorRepresentation getGenerators1() {
 		// @formatter:off
@@ -120,7 +121,7 @@ public class GeneratorRepresentationTest {
 		final List<MatrixQ128> congruences = new ArrayList<>();
 		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.TWO)));
 
-		return new GeneratorRepresentation(equalities, congruences, true);
+		return new GeneratorRepresentation(equalities, congruences);
 	}
 
 	public static GeneratorRepresentation getGenerators9() {
@@ -135,7 +136,7 @@ public class GeneratorRepresentationTest {
 
 		final List<MatrixQ128> congruences = new ArrayList<>();
 
-		return new GeneratorRepresentation(equalities, congruences, true);
+		return new GeneratorRepresentation(equalities, congruences);
 	}
 
 	public static GeneratorRepresentation getGenerators10() {
@@ -151,7 +152,7 @@ public class GeneratorRepresentationTest {
 
 		final List<MatrixQ128> congruences = new ArrayList<>();
 
-		return new GeneratorRepresentation(equalities, congruences, true);
+		return new GeneratorRepresentation(equalities, congruences);
 	}
 
 	public static GeneratorRepresentation getGenerators11() {
@@ -171,7 +172,7 @@ public class GeneratorRepresentationTest {
 		congruences.add(CongruenceUtil
 				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(10, 3))));
 
-		return new GeneratorRepresentation(equalities, congruences, true);
+		return new GeneratorRepresentation(equalities, congruences);
 	}
 
 	public static GeneratorRepresentation getGenerators12() {
@@ -188,16 +189,16 @@ public class GeneratorRepresentationTest {
 		congruences.add(CongruenceUtil
 				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(3, 1))));
 
-		return new GeneratorRepresentation(equalities, congruences, true);
+		return new GeneratorRepresentation(equalities, congruences);
 	}
 
 	@Test
-	public void testGetMinimalForm() {
-		for (final GeneratorRepresentation generators : TEST_GENERATORS) {
-			final var minimalGenerators = generators.getMinimalForm();
+	public void testMinimize() {
+		for (final GeneratorRepresentation generators : getTestGenerators()) {
+			generators.minimize();
 			// System.out.println(generators);
 			// System.out.println(minimalGenerators);
-			Assert.assertTrue(hasMinimalForm(minimalGenerators));
+			Assert.assertTrue(hasMinimalForm(generators));
 		}
 	}
 
