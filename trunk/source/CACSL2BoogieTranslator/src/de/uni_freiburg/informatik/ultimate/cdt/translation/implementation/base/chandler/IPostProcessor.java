@@ -34,7 +34,18 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Interface for classes that carry out post-processing steps of the translation, such as creating start/initialize
+ * procedures and transforming interrupt-driven programs to thread-based programs and adding additional declarations.
+ */
 public interface IPostProcessor {
+
+	/**
+	 * Start method for the post-processing: Construct additional declarations, add the additional initializations to
+	 * the init procedure, and post process the translated Boogie program
+	 *
+	 * @return List of additional declarations for the translated boogie unit
+	 */
 	List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations);
 }
