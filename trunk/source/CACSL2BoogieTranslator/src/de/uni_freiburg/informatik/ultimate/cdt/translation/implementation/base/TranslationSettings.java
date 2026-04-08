@@ -33,6 +33,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -89,6 +90,8 @@ public final class TranslationSettings {
 	private final boolean mEnforceIfForConditional;
 	private final MemoryAddressing mMemoryAddressing;
 	private final boolean mFixedAddressesForInitialization;
+
+	private final InterruptTranslationMode mInterruptTranslationMode;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -149,6 +152,9 @@ public final class TranslationSettings {
 		mMemoryAddressing = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_ADDRESSING, MemoryAddressing.class);
 		mFixedAddressesForInitialization =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION);
+
+		mInterruptTranslationMode = ups.getEnum(CACSLPreferenceInitializer.LABEL_INTERRUPT_TRANSLATION_MODE,
+				InterruptTranslationMode.class);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -165,7 +171,8 @@ public final class TranslationSettings {
 			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
-			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization) {
+			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization,
+			final InterruptTranslationMode interruptTranslationMode) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -197,6 +204,7 @@ public final class TranslationSettings {
 		mEnforceIfForConditional = enforceIfForConditional;
 		mMemoryAddressing = memoryAddressingPreference;
 		mFixedAddressesForInitialization = fixedAddressesForInitialization;
+		mInterruptTranslationMode = interruptTranslationMode;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -335,6 +343,10 @@ public final class TranslationSettings {
 		return mFixedAddressesForInitialization;
 	}
 
+	public InterruptTranslationMode interruptTranslationMode() {
+		return mInterruptTranslationMode;
+	}
+
 	public TranslationSettings setMemoryStructurePreference(final MemoryStructure memoryStructure) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
@@ -345,7 +357,7 @@ public final class TranslationSettings {
 				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
-				mFixedAddressesForInitialization);
+				mFixedAddressesForInitialization, mInterruptTranslationMode);
 	}
 
 	/**

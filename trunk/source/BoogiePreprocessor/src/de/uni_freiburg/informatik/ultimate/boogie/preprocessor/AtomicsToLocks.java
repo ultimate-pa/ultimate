@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObserver {
 	// Options result in different outputs
 	private static final boolean ATOMIC_GUARD_STATEMENTS = true;
-	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = true;
+	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private static final String ULTIMATE_INIT = "ULTIMATE.init";

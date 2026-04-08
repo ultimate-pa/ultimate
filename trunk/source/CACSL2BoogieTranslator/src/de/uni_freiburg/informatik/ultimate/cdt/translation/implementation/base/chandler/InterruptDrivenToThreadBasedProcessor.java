@@ -108,7 +108,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	public InterruptDrivenToThreadBasedProcessor(final ILogger logger, final FlatSymbolTable symbolTable,
 			final TranslationSettings settings, final ProcedureManager procedureManager, final CHandler chandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
-			final InterruptTranslationMode translationMode, final InterruptServiceRoutines isrs) {
+			final InterruptServiceRoutines isrs) {
 		mLogger = logger;
 		mSymboltable = symbolTable;
 		mSettings = settings;
@@ -116,7 +116,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		mCHandler = chandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mExpressionTranslation = expressionTranslation;
-		mTranslationMode = translationMode;
+		mTranslationMode = settings.interruptTranslationMode();
 		mISR = isrs;
 	}
 
@@ -239,6 +239,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
 		final var procedures = new ArrayList<Procedure>();
 		if (mTranslationMode == InterruptTranslationMode.REALIZATION_1) {
+			mLogger.info("Source-to-source translation of interrupt program with realization 1");
 			final var isrGpios = mISR.getISRMap().entrySet();
 			for (final Entry<Integer, Procedure> entry : isrGpios) {
 				final var irq = entry.getKey();
@@ -249,6 +250,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 				procedures.add(constructOneInterruptThreadGpioProc(procId, idExpression, irq));
 			}
 		} else {
+			mLogger.info("Source-to-source translation of interrupt program with realization 2");
 			procedures.add(constructAllInterruptsThreadGpioProc());
 		}
 		return procedures;
@@ -317,7 +319,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	private Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId) {
 		// TODO: Maybe this needs to be registered in ProcedureManager
 		final var enabledExpr = threadEnabledId;
-		final var ifStmt = getIfStatement(identifier, threadEnabledId, enabledExpr);
+		final var ifStmt = getIfStatement(identifier, enabledExpr);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStmt));
 		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
 		return new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0],
@@ -335,7 +337,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 			final var threadEnabledId = mAuxVarExpressions.get(irq);
 			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
 			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ: " + irq;
-			ifStatements.add(getIfStatement(identifier, threadEnabledId, enabledExpression));
+			ifStatements.add(getIfStatement(identifier, enabledExpression));
 			final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements);
 			atomicStatements.add(atomic);
 		}
@@ -344,8 +346,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 				atomicStatements.toArray(new Statement[0]));
 	}
 
-	private Statement getIfStatement(final String identifier, final IdentifierExpression threadEnabledId,
-			final Expression enabledExpr) {
+	private Statement getIfStatement(final String identifier, final Expression enabledExpr) {
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
 		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then },
