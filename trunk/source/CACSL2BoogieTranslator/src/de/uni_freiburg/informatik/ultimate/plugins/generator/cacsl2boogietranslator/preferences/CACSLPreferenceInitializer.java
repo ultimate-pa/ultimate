@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
@@ -174,6 +175,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String DESC_FIXED_ADDRESSES_FOR_INITIALIZATION =
 			"Whether allocInit should be used to for initial allocations."
 					+ "This speeds up the verification if there is a high amount of allocations that can be made initially.";
+
+	public static final String LABEL_INTERRUPT_TRANSLATION_MODE = "Interrupt-program translation mode";
+	public static final String DESC_INTERRUPT_TRANSLATION_MODE =
+			"If this is set to one of the two realizations, the program is assumed to be an "
+					+ "interrupt-driven program and will be translated to a thread-based program.";
 
 	public enum CheckMode {
 		IGNORE, ASSUME, CHECK
@@ -366,7 +372,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.Integer),
 						new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 								UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
-								PreferenceType.Combo, UndefinedFunctionBehaviour.values())),
+								PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
+						new UltimatePreferenceItem<>(LABEL_INTERRUPT_TRANSLATION_MODE, InterruptTranslationMode.NONE,
+								DESC_INTERRUPT_TRANSLATION_MODE, PreferenceType.Combo,
+								InterruptTranslationMode.values())),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),

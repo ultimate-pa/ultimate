@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -44,10 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class InterruptPostProcessorHandler {
-	private static final InterruptTranslationMode TRANSLATION_MODE = InterruptTranslationMode.REALIZATION_2;
-
 	private final InterruptDrivenToThreadBasedProcessor mInterruptPostProcessor;
-	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo2();
+	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo10();
 	private final InterruptServiceRoutines mInterruptServiceRoutines;
 
 	public InterruptPostProcessorHandler(final ILogger logger, final FlatSymbolTable symbolTable,
@@ -56,9 +55,8 @@ public class InterruptPostProcessorHandler {
 			final List<Declaration> declarations) {
 		final var isrBuilder = new InterruptServiceRoutinesBuilder(declarations, mIsrInfo);
 		mInterruptServiceRoutines = isrBuilder.getInterruptServiceRoutines();
-		mInterruptPostProcessor =
-				new InterruptDrivenToThreadBasedProcessor(logger, symbolTable, settings, procedureManager, chandler,
-						auxVarInfoBuilder, expressionTranslation, TRANSLATION_MODE, mInterruptServiceRoutines);
+		mInterruptPostProcessor = new InterruptDrivenToThreadBasedProcessor(logger, symbolTable, settings,
+				procedureManager, chandler, auxVarInfoBuilder, expressionTranslation, mInterruptServiceRoutines);
 	}
 
 	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
@@ -92,6 +90,20 @@ public class InterruptPostProcessorHandler {
 			final var numToReqEnable = new HashMap<Integer, String>();
 			numToReqEnable.put(1, reqEnable1);
 			numToReqEnable.put(2, reqEnable2);
+			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
+		}
+
+		public static ISRInfo isrInfo10() {
+			final Map<Integer, String> numToISR = new HashMap<>();
+			final Map<Integer, String> numToReqEnable = new HashMap<>();
+
+			for (int i = 1; i <= 6; i++) {
+				final String isrName = "isr" + i + "_gpio";
+				final String reqEnableName = "HAL_GPIO_Enable_Int" + i;
+
+				numToISR.put(i, isrName);
+				numToReqEnable.put(i, reqEnableName);
+			}
 			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
 		}
 	}
