@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * (realization 1) or introducing only one thread that handles all ISR (realization 2). This is done by post-processing
  * the Boogie unit and adding additional declarations and annotating existing procedures with ghost code.
  */
-public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
+public class InterruptPostProcessor implements IPostProcessor {
 
 	private final ILogger mLogger;
 
@@ -109,7 +109,7 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private final List<Statement> mAdditionalInitializations = new ArrayList<>();
 
-	public InterruptDrivenToThreadBasedProcessor(final ILogger logger, final FlatSymbolTable symbolTable,
+	public InterruptPostProcessor(final ILogger logger, final FlatSymbolTable symbolTable,
 			final TranslationSettings settings, final ProcedureManager procedureManager, final CHandler chandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
 			final InterruptServiceRoutines isrs) {
