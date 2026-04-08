@@ -165,6 +165,11 @@ public class BlockEncodingBacktranslator extends
 		return newPe;
 	}
 
+	@Override
+	public List<IIcfgTransition<IcfgLocation>> translateTrace(final List<IIcfgTransition<IcfgLocation>> trace) {
+		return trace.stream().flatMap(edge -> translateBack(edge, null).stream()).toList();
+	}
+
 	/**
 	 * Translate a transition that is the result of arbitrarily nested sequential and choice compositions back to the
 	 * sequence of original transitions.

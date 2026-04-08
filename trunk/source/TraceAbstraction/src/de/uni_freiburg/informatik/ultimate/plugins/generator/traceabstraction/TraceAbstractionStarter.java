@@ -44,6 +44,8 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
@@ -66,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
@@ -219,6 +222,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				}
 			} else if (proof instanceof OwickiGriesAnnotation<?, ?, ?>) {
 				final var annotation = (OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>) proof;
+
+				mLogger.info(annotation);
 				// TODO assert validity of annotation
 
 				// write to Icfg
@@ -243,24 +248,46 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					final var edge = (IIcfgTransition<?>) entry.getKey();
 					final GhostUpdate update = entry.getValue();
 
-					final Map<String, Object> ghostUpdate = new HashMap<>();
+					final Map<Object, Object> ghostUpdate = new HashMap<>();
+					final Map<String, String> ghostUpdate2 = new HashMap<>();
 					for (final var ghost : update.getAssignedVariables()) {
 						if (failedGhosts.contains(ghost)) {
 							continue;
 						}
 
 						final var context = ILocation.getAnnotation(edge.getSource());
+						final var translatedGhost = backTranslatorService
+								.translateExpressionWithContext(ghost.getTerm(), context, Term.class);
+
 						final var term = update.getExpressionFor(ghost);
 						final var expression =
 								backTranslatorService.translateExpressionWithContext(term, context, Term.class);
 						if (expression == null) {
-							mLogger.warn("Could not translate assignment to ghost variable %s: %s", ghost, term);
+							mLogger.warn("Could not translate assignment to ghost variable %s: %s", translatedGhost,
+									term);
 							failedGhosts.add(ghost);
 						} else {
-							ghostUpdate.put(ghost.getGloballyUniqueId(), expression);
+							ghostUpdate.put(translatedGhost, expression);
+							ghostUpdate2.put(backTranslatorService.targetExpressionToString(translatedGhost),
+									backTranslatorService.targetExpressionToString(expression));
 						}
 					}
 					new WitnessGhostUpdate<>(ghostUpdate).annotate(edge);
+
+					final ILocation preLoc = ILocation.getAnnotation(edge.getSource());
+					final ILocation postLoc = ILocation.getAnnotation(edge.getTarget());
+					mLogger.info("ghost update for edge from line %2d (col. %2d) to line %2d (col. %2d) is %s",
+							preLoc.getStartLine(), preLoc.getStartColumn(), postLoc.getStartLine(),
+							postLoc.getStartColumn(), ghostUpdate2);
+
+					try {
+						final var edgeTranslated =
+								backTranslatorService.translateTrace(List.of((IcfgEdge) edge), IcfgEdge.class);
+						mLogger.info("  " + edgeTranslated.stream().map(e -> BoogiePrettyPrinter.print((Statement) e))
+								.collect(Collectors.joining("; ")));
+					} catch (final Throwable e) {
+						mLogger.warn(e.getMessage());
+					}
 				}
 
 				final var failedGhostTvs =

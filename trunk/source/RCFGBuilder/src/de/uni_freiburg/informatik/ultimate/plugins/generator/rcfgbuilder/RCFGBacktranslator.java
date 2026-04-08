@@ -28,11 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
@@ -105,20 +107,24 @@ public class RCFGBacktranslator extends
 
 	@Override
 	public List<BoogieASTNode> translateTrace(final List<IIcfgTransition<IcfgLocation>> trace) {
-		final List<IIcfgTransition<IcfgLocation>> cbTrace = trace;
-		final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<>();
-		for (final IIcfgTransition<IcfgLocation> elem : cbTrace) {
-			if (!(elem instanceof CodeBlock)) {
-				throw new AssertionError(
-						"Transition is not a CodeBlock: " + elem.getClass().getSimpleName() + " " + elem);
-			}
-			addCodeBlock(elem, null, null, null, null, atomicTeList, null);
-		}
-		final List<BoogieASTNode> result = new ArrayList<>();
-		for (final AtomicTraceElement<BoogieASTNode> ate : atomicTeList) {
-			result.add(ate.getTraceElement());
-		}
-		return result;
+		// TODO This causes failures when additional info for trace elements is not available, even if not needed for
+		// the trace.
+		return trace.stream().flatMap(edge -> getStatements(edge)).toList();
+
+		// final List<IIcfgTransition<IcfgLocation>> cbTrace = trace;
+		// final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<>();
+		// for (final IIcfgTransition<IcfgLocation> elem : cbTrace) {
+		// if (!(elem instanceof CodeBlock)) {
+		// throw new AssertionError(
+		// "Transition is not a CodeBlock: " + elem.getClass().getSimpleName() + " " + elem);
+		// }
+		// addCodeBlock(elem, null, null, null, null, atomicTeList, null);
+		// }
+		// final List<BoogieASTNode> result = new ArrayList<>();
+		// for (final AtomicTraceElement<BoogieASTNode> ate : atomicTeList) {
+		// result.add(ate.getTraceElement());
+		// }
+		// return result;
 	}
 
 	private void addCodeBlock(final AtomicTraceElement<IIcfgTransition<IcfgLocation>> ate,
@@ -162,28 +168,27 @@ public class RCFGBacktranslator extends
 			ateBuilder.setJoinedThreadId(joinedThreadId);
 		}
 		ateBuilder.setProcedures(cb.getPrecedingProcedure(), cb.getSucceedingProcedure());
-		if (cb instanceof Call) {
-			final Statement st = ((Call) cb).getCallStatement();
+		if (cb instanceof final Call call) {
+			final Statement st = call.getCallStatement();
 			ateBuilder.setStepAndElement(st);
 			ateBuilder.setStepInfo(StepInfo.PROC_CALL);
-		} else if (cb instanceof Return) {
-			final Statement st = ((Return) cb).getCallStatement();
+		} else if (cb instanceof final Return ret) {
+			final Statement st = ret.getCallStatement();
 			ateBuilder.setStepAndElement(st);
 			ateBuilder.setStepInfo(StepInfo.PROC_RETURN);
-		} else if (cb instanceof ForkThreadCurrent) {
-			final Statement st = ((ForkThreadCurrent) cb).getForkStatement();
+		} else if (cb instanceof final ForkThreadCurrent fork) {
+			final Statement st = fork.getForkStatement();
 			ateBuilder.setStepAndElement(st);
 			ateBuilder.setStepInfo(StepInfo.FORK);
-		} else if (cb instanceof JoinThreadCurrent) {
-			final Statement st = ((JoinThreadCurrent) cb).getJoinStatement();
+		} else if (cb instanceof final JoinThreadCurrent join) {
+			final Statement st = join.getJoinStatement();
 			ateBuilder.setStepAndElement(st);
 			ateBuilder.setStepInfo(StepInfo.JOIN);
-		} else if (cb instanceof Summary) {
-			final Statement st = ((Summary) cb).getCallStatement();
+		} else if (cb instanceof final Summary sum) {
+			final Statement st = sum.getCallStatement();
 			// FIXME: Is summary call, return or something new?
 			ateBuilder.setStepAndElement(st);
-		} else if (cb instanceof StatementSequence) {
-			final StatementSequence ss = (StatementSequence) cb;
+		} else if (cb instanceof final StatementSequence ss) {
 			for (final Statement st : ss.getStatements()) {
 				final BoogieASTNode[] sources = mCodeBlock2Statement.get(st);
 				if (sources != null) {
@@ -198,15 +203,13 @@ public class RCFGBacktranslator extends
 				}
 			}
 			return;
-		} else if (cb instanceof SequentialComposition) {
-			final SequentialComposition seqComp = (SequentialComposition) cb;
+		} else if (cb instanceof final SequentialComposition seqComp) {
 			for (final CodeBlock sccb : seqComp.getCodeBlocks()) {
 				addCodeBlock(sccb, relevanceInformation, threadId, forkedThreadId, joinedThreadId, trace,
 						branchEncoders);
 			}
 			return;
-		} else if (cb instanceof ParallelComposition) {
-			final ParallelComposition parComp = (ParallelComposition) cb;
+		} else if (cb instanceof final ParallelComposition parComp) {
 			final Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
 			if (branchEncoders == null) {
 				final CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
@@ -238,6 +241,29 @@ public class RCFGBacktranslator extends
 			throw new UnsupportedOperationException("Unsupported CodeBlock: " + cb.getClass().getCanonicalName());
 		}
 		trace.add(ateBuilder.build());
+	}
+
+	private Stream<BoogieASTNode> getStatements(final IIcfgTransition<IcfgLocation> cb) {
+		return switch (cb) {
+		case final Call call -> Stream.of(call.getCallStatement());
+		case final Return ret -> Stream.of(ret.getCallStatement());
+		case final ForkThreadCurrent fork -> Stream.of(fork.getForkStatement());
+		case final JoinThreadCurrent join -> Stream.of(join.getJoinStatement());
+		case final Summary sum -> Stream.of(sum.getCallStatement());
+
+		case final StatementSequence ss -> ss.getStatements().stream().flatMap(st -> {
+			final BoogieASTNode[] sources = mCodeBlock2Statement.get(st);
+			return (sources != null) ? Arrays.stream(sources) : Stream.of(st);
+		});
+
+		// TODO StatementSequence
+		// TODO SequentialComposition
+		// TODO ParallelComposition
+		// TODO GotoEdge
+
+		default ->
+				throw new UnsupportedOperationException("Unsupported CodeBlock: " + cb.getClass().getCanonicalName());
+		};
 	}
 
 	@Override

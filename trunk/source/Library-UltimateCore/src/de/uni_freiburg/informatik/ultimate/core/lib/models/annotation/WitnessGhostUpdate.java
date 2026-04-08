@@ -44,13 +44,13 @@ public class WitnessGhostUpdate<E> extends ModernAnnotations {
 	private static final String KEY = WitnessGhostUpdate.class.getName();
 
 	@Visualizable
-	private final Map<String, E> mUpdate;
+	private final Map<E, E> mUpdate;
 
-	public WitnessGhostUpdate(final Map<String, E> update) {
+	public WitnessGhostUpdate(final Map<E, E> update) {
 		mUpdate = update;
 	}
 
-	public Map<String, E> getUpdate() {
+	public Map<E, E> getUpdate() {
 		return mUpdate;
 	}
 
