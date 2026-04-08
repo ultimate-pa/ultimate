@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * Transform an Interrupt-driven program into a thread-based program by either introducing one thread for each ISR
  * (realization 1) or introducing only one thread that handles all ISR (realization 2). This is done by post-processing
- * the Boogie unit and adding additional declarations and annotating existing procedures with ghost code.
+ * the Boogie unit and adding additional declarations and annotating existing procedures with auxiliary code.
  */
 public class InterruptPostProcessor implements IPostProcessor {
 

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class InterruptPostProcessorHandler {
 	private final InterruptPostProcessor mInterruptPostProcessor;
-	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo10();
+	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo1();
 	private final InterruptServiceRoutines mInterruptServiceRoutines;
 
 	public InterruptPostProcessorHandler(final ILogger logger, final FlatSymbolTable symbolTable,
