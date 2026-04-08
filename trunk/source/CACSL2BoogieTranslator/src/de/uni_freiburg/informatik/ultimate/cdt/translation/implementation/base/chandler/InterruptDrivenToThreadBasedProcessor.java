@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
@@ -79,6 +78,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
+/**
+ * Transform an Interrupt-driven program into a thread-based program by either introducing one thread for each ISR
+ * (realization 1) or introducing only one thread that handles all ISR (realization 2). This is done by post-processing
+ * the Boogie unit and adding additional declarations and annotating existing procedures with ghost code.
+ */
 public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 
 	private final ILogger mLogger;
@@ -226,15 +230,6 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 		mProcedureManager.endProcedureScope(mCHandler);
 	}
 
-	private void addIntEnabledToSpecification(final Procedure intEnableSpec, final VariableLHS intEnabledLhs) {
-		mProcedureManager.beginProcedureScope(mCHandler,
-				mProcedureManager.getProcedureInfo(intEnableSpec.getIdentifier()));
-		final var modifiesSpec = new ModifiesSpecification(mIgnoreLoc, false, new VariableLHS[] { intEnabledLhs });
-		mProcedureManager.addSpecificationsToCurrentProcedure(List.of(modifiesSpec));
-		mProcedureManager.endProcedureScope(mCHandler);
-
-	}
-
 	private ArrayList<Procedure> constructThreadGpioProc() {
 		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
 		final var procedures = new ArrayList<Procedure>();
@@ -317,7 +312,6 @@ public class InterruptDrivenToThreadBasedProcessor implements IPostProcessor {
 	}
 
 	private Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId) {
-		// TODO: Maybe this needs to be registered in ProcedureManager
 		final var enabledExpr = threadEnabledId;
 		final var ifStmt = getIfStatement(identifier, enabledExpr);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStmt));
