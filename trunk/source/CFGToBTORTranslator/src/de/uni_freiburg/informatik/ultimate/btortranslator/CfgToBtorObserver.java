@@ -103,7 +103,7 @@ public class CfgToBtorObserver extends BaseObserver {
 		final ArrayList<Long> pcList = new ArrayList<>();
 		final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
 		// final Pattern p = Pattern.compile("([01]+) ([a-zA-Z][a-zA-Z0-9_]*)#(\\d+)");
-		final Pattern p = Pattern.compile("([0-9]+) ([0-9]+) ([a-zA-Z][a-zA-Z0-9_]*)#([0-9]+)");
+		final Pattern p = Pattern.compile("([0-9]+) ([0-9]+) ([a-zA-Z][a-zA-Z0-9_\\(\\)]*)#([0-9]+)");
 		// ([0-9]+) ([0-9]+) pc#([0-9]+)
 
 		while (!witnessScan.hasNext("sat|unsat|\\.")) {
@@ -125,20 +125,6 @@ public class CfgToBtorObserver extends BaseObserver {
 			}
 
 		}
-
-//		while (witnessScan.hasNext(p)) {
-//			final String nextToken = witnessScan.next(p);
-//			final MatchResult m = witnessScan.match();
-//			if (m.group(2).equals("pc")) {
-//				pcList.add(Long.parseLong(m.group(1), 2));
-//			} else {
-//				final long sequenceNumber = Long.parseUnsignedLong(m.group(3));
-//				if (!programStateSequence.containsKey(sequenceNumber)) {
-//					programStateSequence.put(sequenceNumber, new HashMap<>());
-//				}
-//				programStateSequence.get(sequenceNumber).put(m.group(2), Long.parseUnsignedLong(m.group(1), 2));
-//			}
-//		}
 
 		System.out.println(pcList);
 		System.out.println(programStateSequence);
@@ -273,14 +259,6 @@ public class CfgToBtorObserver extends BaseObserver {
 					final ArrayList<AbstractResult> results =
 							parseResults(btormcWitness, errorLocations, icfg, processor);
 					for (final AbstractResult result : results) {
-						// report result;
-						// mServices.getResultService().reportResult(Activator.PLUGIN_ID, AllSpecificationsHoldResult
-						// .createAllSpecificationsHoldResult(Activator.PLUGIN_ID, errorLocations.size()));
-						// for (final IcfgLocation errorLocation : errorLocations) {
-						// final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
-						// errorLocation, mServices.getBacktranslationService());
-						// mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-						// }
 						mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 					}
 

@@ -290,6 +290,9 @@ public class CFGToBTOR {
 		final List<IcfgEdge> edges = new ArrayList<>();
 		final List<BoogieIcfgLocation> locs = new ArrayList<>();
 		final Map<Long, SuffixedDebugIdentifier> pcToDI = new HashMap<>();
+
+		final boolean multipleInitialStates = icfg.getInitialNodes().size() > 1;
+
 		// Invert PC map, unwrapping the btor expressions
 		for (final SuffixedDebugIdentifier ident : pcMap.keySet()) {
 			pcToDI.put(pcMap.get(ident).getConstant(), ident);
@@ -314,7 +317,11 @@ public class CFGToBTOR {
 		}
 
 		// determine outgoing edges taken from each location
-		for (int i = 0; i < locs.size() - 1; i++) {
+		int i = 0;
+		if (multipleInitialStates) {
+			i = 1;
+		}
+		for (; i < locs.size() - 1; i++) {
 			final BoogieIcfgLocation loc = locs.get(i);
 			final BoogieIcfgLocation nextLoc = locs.get(i + 1);
 			final List<IcfgEdge> outgoingEdges = loc.getOutgoingEdges();
@@ -330,7 +337,8 @@ public class CFGToBTOR {
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
 		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = new HashMap<>();
 		for (final long sequenceNumber : programStateSequence.keySet()) {
-			if (sequenceNumber == 0) { // Ultimate does not care about initial state
+			if (sequenceNumber == 0 || (multipleInitialStates && sequenceNumber == 1)) { // Ultimate does not care about
+																							// initial state
 				continue;
 			}
 			final Map<Term, Collection<Term>> programStates = new HashMap<>();
@@ -368,8 +376,10 @@ public class CFGToBTOR {
 				}
 			}
 			final ProgramState<Term> ps = new ProgramState<>(programStates, Term.class);
-			partialProgramStateMapping.put((int) (sequenceNumber - 1), ps); // Convert to Ultimate format, 0 -> program
-																			// state after one transition
+			final int offset = multipleInitialStates ? 2 : 1;
+			partialProgramStateMapping.put((int) (sequenceNumber - offset), ps); // Convert to Ultimate format, 0 ->
+																					// program
+			// state after one transition
 		}
 
 		return IcfgProgramExecution.create(edges, partialProgramStateMapping);
