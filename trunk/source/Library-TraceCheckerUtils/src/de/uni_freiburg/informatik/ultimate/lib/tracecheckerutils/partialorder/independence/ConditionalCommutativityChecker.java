@@ -178,15 +178,26 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		 * controlConfigurations can then be given to proveCommutativityCondition, but we need to map the proof back to
 		 * the original trace, i.e. we have to edit the proof s.t. it is a proof for the original trace
 		 */
+		mStatistics.startProofCommTime();
 		if (mSimplifyContext) {
+			mStatistics.startSimplifyingTime();
 			mContextSimplifier = new ContextSimplifier<>(trace, controlConfigurations, condition);
+			mStatistics.stopSimplifyingTime();
 			final Word<L> newTrace = mContextSimplifier.getSimpleTrace();
 			final List<?> newControl = mContextSimplifier.getSimpleControlConfigurations();
 
-			return proveCommutativityCondition(newTrace, newControl, letter1, condition);
+			try {
+				return proveCommutativityCondition(newTrace, newControl, letter1, condition);
+			} finally {
+				mStatistics.stopProofCommTime();
+			}
 		}
 
-		return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
+		try {
+			return proveCommutativityCondition(trace, controlConfigurations, letter1, condition);
+		} finally {
+			mStatistics.stopProofCommTime();
+		}
 	}
 
 	private IPredicate generateCondition(final IPredicate context, final L letter1, final L letter2) {
@@ -253,12 +264,14 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 			// map proof back
 			if (mSimplifyContext) {
+				mStatistics.startMapTime();
 				final List<IPredicate> longPredicates = mContextSimplifier.mapProof(qtp.getPredicates());
 
 				final TracePredicates tp = new TracePredicates(qtp.getTracePredicates().getPrecondition(),
 						qtp.getTracePredicates().getPostcondition(), longPredicates);
 
 				qtp = new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
+				mStatistics.stopMapTime();
 				// till here
 			}
 			final var newQtp = tpMap.computeIfAbsent(qtp, ConditionalCommutativityChecker::postProcessPredicates);
@@ -270,12 +283,14 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 			// map proof back
 			if (mSimplifyContext) {
+				mStatistics.startMapTime();
 				final List<IPredicate> longPredicates = mContextSimplifier.mapProof(qtp.getPredicates());
 
 				final TracePredicates tp = new TracePredicates(qtp.getTracePredicates().getPrecondition(),
 						qtp.getTracePredicates().getPostcondition(), longPredicates);
 
 				qtp = new QualifiedTracePredicates(tp, qtp.getOrigin(), qtp.isPerfect());
+				mStatistics.stopMapTime();
 			}
 			final var newQtp = tpMap.computeIfAbsent(qtp, ConditionalCommutativityChecker::postProcessPredicates);
 			usedTracePredicates.add(newQtp);
@@ -336,6 +351,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 	private static class Statistics extends AbstractStatisticsDataProvider {
 		private final TimeTracker mOverallTime = new TimeTracker();
 		private final TimeTracker mConditionCalculationTime = new TimeTracker();
+		private final TimeTracker mSimplifyingTime = new TimeTracker();
+		private final TimeTracker mProofCommTime = new TimeTracker();
+		private final TimeTracker mMapTime = new TimeTracker();
 
 		private int mConditionCalculations;
 		private int mQuantifiedConditions;
@@ -347,6 +365,9 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		public Statistics() {
 			declareTimeTracker("CheckTime", mOverallTime);
 			declareTimeTracker("ConditionCalculationTime", mConditionCalculationTime);
+			declareTimeTracker("SimplifyingTime", mSimplifyingTime);
+			declareTimeTracker("ProofCommutativityTime", mProofCommTime);
+			declareTimeTracker("MapTime", mMapTime);
 
 			declareCounter("ConditionCalculations", () -> mConditionCalculations);
 			declareCounter("QuantifiedConditions", () -> mQuantifiedConditions);
@@ -371,6 +392,30 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 
 		private void stopConditionCalculation() {
 			mConditionCalculationTime.stop();
+		}
+
+		private void startSimplifyingTime() {
+			mSimplifyingTime.start();
+		}
+
+		private void stopSimplifyingTime() {
+			mSimplifyingTime.stop();
+		}
+
+		private void startMapTime() {
+			mMapTime.start();
+		}
+
+		private void stopMapTime() {
+			mMapTime.stop();
+		}
+
+		private void startProofCommTime() {
+			mProofCommTime.start();
+		}
+
+		private void stopProofCommTime() {
+			mProofCommTime.stop();
 		}
 
 		private void reportQuantifiedCondition() {
