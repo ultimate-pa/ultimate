@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,12 +17,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -83,111 +80,16 @@ public class TransFormulaToInterferencePredicate {
 				forkedEntry, additionallyModifiedGlobals);
 	}
 
-	public GuardedPredicate translateGuardedExactUpdateOrNull(final IPredicate sharedPreState, final TransFormula tf,
-			final String interferingThread, final IcfgLocation sourceLocation, final IcfgLocation targetLocation,
-			final String forkedThreadId, final IcfgLocation forkedEntry, final Set<TermVariable> modifiedGlobals) {
-		if (!tf.getAuxVars().isEmpty()) {
-			return null;
-		}
-		if (tf instanceof final UnmodifiableTransFormula utf && !utf.getBranchEncoders().isEmpty()) {
-			return null;
-		}
-		final Set<TermVariable> modified =
-				modifiedGlobals == null ? Set.of() : Set.copyOf(modifiedGlobals);
-		final Set<TermVariable> localVars = new HashSet<>();
-		final Map<Term, Term> substitution = buildSubstitution(tf, localVars);
-		final Term substituted = applySubstitution(tf.getFormula(), substitution);
-		final Map<TermVariable, TermVariable> primedToBaseModified = buildPrimedToBaseModifiedMap(modified);
-		if (primedToBaseModified == null) {
-			return null;
-		}
-
-		final List<Term> guardConjuncts = new ArrayList<>();
-		if (sharedPreState != null && !SmtUtils.isTrueLiteral(sharedPreState.getFormula())) {
-			guardConjuncts.add(sharedPreState.getFormula());
-		}
-		final Script script = mManagedScript.getScript();
-		if (mGhostVariables != null) {
-			final Term sourceLocationGuard = mGhostVariables.createLocationConstraint(interferingThread, sourceLocation);
-			if (!SmtUtils.isTrueLiteral(sourceLocationGuard)) {
-				guardConjuncts.add(sourceLocationGuard);
-			}
-			if (forkedThreadId != null) {
-				final Term notForkedGuard = mGhostVariables.createNotForkedConstraint(forkedThreadId);
-				if (!SmtUtils.isTrueLiteral(notForkedGuard)) {
-					guardConjuncts.add(notForkedGuard);
-				}
-			}
-		}
-
-		final Map<TermVariable, Term> exactUpdates = new LinkedHashMap<>();
-		addManualLocationUpdates(exactUpdates, modified, interferingThread, targetLocation, forkedThreadId, forkedEntry, script);
-
-		final List<Term> conjuncts = new ArrayList<>();
-		InterferenceUtils.collectConjuncts(substituted, conjuncts);
-		for (final Term conjunct : conjuncts) {
-			if (SmtUtils.isTrueLiteral(conjunct)) {
-				continue;
-			}
-			final UpdateMatch exactUpdate = extractExactUpdateOrNull(conjunct, primedToBaseModified);
-			if (exactUpdate != null) {
-				final Term previous = exactUpdates.putIfAbsent(exactUpdate.baseVariable(), exactUpdate.updateConstraint());
-				if (previous != null && !previous.equals(exactUpdate.updateConstraint())) {
-					return null;
-				}
-				continue;
-			}
-			if (isExplicitIdentityOnUnchangedGlobal(conjunct, modified)) {
-				continue;
-			}
-			if (isPureUnprimedGlobalConjunct(conjunct)) {
-				guardConjuncts.add(conjunct);
-				continue;
-			}
-			return null;
-		}
-
-		if (!exactUpdates.keySet().containsAll(modified)) {
-			return null;
-		}
-		final IPredicate guard = guardConjuncts.isEmpty() ? null
-				: mPredicateFactory.newPredicate(guardConjuncts.size() == 1 ? guardConjuncts.get(0)
-						: SmtUtils.and(script, guardConjuncts.toArray(new Term[0])));
-		final Term effectFormula = exactUpdates.isEmpty() ? script.term("true")
-				: exactUpdates.size() == 1 ? exactUpdates.values().iterator().next()
-						: SmtUtils.and(script, exactUpdates.values().toArray(new Term[0]));
-		final IPredicate effect = mPredicateFactory.newPredicate(effectFormula);
-		return new GuardedPredicate(guard, effect, modified);
-	}
-
 	private IPredicate translateForInterferenceInternal(final TransFormula tf, final String interferingThread,
 			final IcfgLocation sourceLocation, final IcfgLocation targetLocation, final String forkedThreadId,
 			final IcfgLocation forkedEntry, final Set<IProgramVar> additionallyModifiedGlobals) {
-		final Set<IProgramVar> extraModified =
-				additionallyModifiedGlobals == null ? Set.of() : Set.copyOf(additionallyModifiedGlobals);
-		final Term baseTerm = translateBase(tf);
-
-		final var script = mManagedScript.getScript();
-		Term combined = baseTerm;
-
-		final Term unchanged =
-				createIdentityConstraintsForUnchangedGlobals(tf, interferingThread, forkedThreadId, extraModified);
-		combined = SmtUtils.and(script, combined, unchanged);
-
-		if (mGhostVariables != null) {
-			combined = SmtUtils.and(script, combined,
-					mGhostVariables.createLocationConstraint(interferingThread, sourceLocation));
-			combined = SmtUtils.and(script, combined,
-					mGhostVariables.createPrimedLocationConstraint(interferingThread, targetLocation, mSymbolTable));
-
-			if (forkedThreadId != null && forkedEntry != null) {
-				combined = SmtUtils.and(script, combined, mGhostVariables.createNotForkedConstraint(forkedThreadId));
-				combined = SmtUtils.and(script, combined,
-						mGhostVariables.createPrimedLocationConstraint(forkedThreadId, forkedEntry, mSymbolTable));
-			}
-		}
-
-		return mPredicateFactory.newPredicate(combined);
+		final Set<IProgramVar> extraModified = additionallyModifiedGlobals == null ? Set.of()
+				: Set.copyOf(additionallyModifiedGlobals);
+		final List<Term> conjuncts = new ArrayList<>();
+		conjuncts.add(translateBase(tf));
+		conjuncts.add(createIdentityConstraintsForUnchangedGlobals(tf, interferingThread, forkedThreadId, extraModified));
+		addLocationConstraints(conjuncts, interferingThread, sourceLocation, targetLocation, forkedThreadId, forkedEntry);
+		return mPredicateFactory.newPredicate(SmtUtils.and(mManagedScript.getScript(), conjuncts));
 	}
 
 	private Term translateBase(final TransFormula tf) {
@@ -216,30 +118,42 @@ public class TransFormulaToInterferencePredicate {
 			final String forkedThreadId, final Set<IProgramVar> additionallyModifiedGlobals) {
 		final var script = mManagedScript.getScript();
 		final Set<IProgramVar> modified = InterferenceUtils.getChangedGlobals(tf, additionallyModifiedGlobals);
-		final TermVariable interferingLoc = mGhostVariables == null ? null
-				: mGhostVariables.getLocationTermVar(interferingThread);
-		final TermVariable forkedLoc = mGhostVariables == null || forkedThreadId == null ? null
-				: mGhostVariables.getLocationTermVar(forkedThreadId);
+		final TermVariable interferingLoc = getLocationTermVarOrNull(interferingThread);
+		final TermVariable forkedLoc = getLocationTermVarOrNull(forkedThreadId);
 
 		final List<Term> conjuncts = new ArrayList<>();
 		for (final IProgramVar pv : mSymbolTable.getAllGlobalBaseVars()) {
-			if (modified.contains(pv)) {
-				continue;
+			if (shouldKeepIdentityConstraint(pv, modified, interferingLoc, forkedLoc)) {
+				final TermVariable primed = mSymbolTable.getPrimedVar(pv);
+				if (primed != null) {
+					conjuncts.add(SmtUtils.binaryEquality(script, primed, pv.getTermVariable()));
+				}
 			}
-			final TermVariable tv = pv.getTermVariable();
-			if (interferingLoc != null && tv.equals(interferingLoc)) {
-				continue;
-			}
-			if (forkedLoc != null && tv.equals(forkedLoc)) {
-				continue;
-			}
-			final TermVariable primed = mSymbolTable.getPrimedVar(pv);
-			if (primed == null) {
-				continue;
-			}
-			conjuncts.add(SmtUtils.binaryEquality(script, primed, pv.getTermVariable()));
 		}
 		return SmtUtils.and(script, conjuncts);
+	}
+
+	private void addLocationConstraints(final List<Term> conjuncts, final String interferingThread,
+			final IcfgLocation sourceLocation, final IcfgLocation targetLocation, final String forkedThreadId,
+			final IcfgLocation forkedEntry) {
+		if (mGhostVariables == null) {
+			return;
+		}
+		conjuncts.add(mGhostVariables.createLocationConstraint(interferingThread, sourceLocation));
+		conjuncts.add(mGhostVariables.createPrimedLocationConstraint(interferingThread, targetLocation, mSymbolTable));
+		if (forkedThreadId != null && forkedEntry != null) {
+			conjuncts.add(mGhostVariables.createNotForkedConstraint(forkedThreadId));
+			conjuncts.add(mGhostVariables.createPrimedLocationConstraint(forkedThreadId, forkedEntry, mSymbolTable));
+		}
+	}
+
+	private static boolean shouldKeepIdentityConstraint(final IProgramVar variable, final Set<IProgramVar> modified,
+			final TermVariable interferingLoc, final TermVariable forkedLoc) {
+		if (modified.contains(variable)) {
+			return false;
+		}
+		final TermVariable termVariable = variable.getTermVariable();
+		return !termVariable.equals(interferingLoc) && !termVariable.equals(forkedLoc);
 	}
 
 	private Map<Term, Term> buildSubstitution(final TransFormula tf, final Set<TermVariable> localVars) {
@@ -284,133 +198,24 @@ public class TransFormulaToInterferencePredicate {
 		return RelationalPredicateUtils.existentiallyProject(formula, localVars, mServices, mManagedScript);
 	}
 
-	private Map<TermVariable, TermVariable> buildPrimedToBaseModifiedMap(final Set<TermVariable> modifiedGlobals) {
-		final Map<TermVariable, TermVariable> primedToBase = new HashMap<>();
-		for (final TermVariable modifiedGlobal : modifiedGlobals) {
-			final IProgramVar programVar = mSymbolTable.getProgramVar(modifiedGlobal);
-			if (programVar == null) {
-				return null;
-			}
-			final IProgramVar baseVar = mSymbolTable.getBaseVar(programVar);
-			final TermVariable primedVar = mSymbolTable.getPrimedVar(baseVar);
-			if (primedVar == null) {
-				return null;
-			}
-			primedToBase.put(primedVar, baseVar.getTermVariable());
-		}
-		return primedToBase;
-	}
-
-	private void addManualLocationUpdates(final Map<TermVariable, Term> exactUpdates, final Set<TermVariable> modifiedGlobals,
-			final String interferingThread, final IcfgLocation targetLocation, final String forkedThreadId,
-			final IcfgLocation forkedEntry, final Script script) {
-		if (mGhostVariables == null) {
-			return;
-		}
-		addManualLocationUpdate(exactUpdates, modifiedGlobals, mGhostVariables.getLocationTermVar(interferingThread),
-				interferingThread, targetLocation, script);
-		if (forkedThreadId != null && forkedEntry != null) {
-			addManualLocationUpdate(exactUpdates, modifiedGlobals, mGhostVariables.getLocationTermVar(forkedThreadId),
-					forkedThreadId, forkedEntry, script);
-		}
-	}
-
-	private void addManualLocationUpdate(final Map<TermVariable, Term> exactUpdates, final Set<TermVariable> modifiedGlobals,
-			final TermVariable baseLocationVar, final String threadId, final IcfgLocation targetLocation, final Script script) {
-		if (baseLocationVar == null || !modifiedGlobals.contains(baseLocationVar)) {
-			return;
-		}
-		final IProgramVar programVar = mSymbolTable.getProgramVar(baseLocationVar);
-		if (programVar == null) {
-			return;
-		}
-		final TermVariable primedLocationVar = mSymbolTable.getPrimedVar(mSymbolTable.getBaseVar(programVar));
-		if (primedLocationVar == null) {
-			return;
-		}
-		final Term primedConstraint = mGhostVariables.createPrimedLocationConstraint(threadId, targetLocation, mSymbolTable);
-		final Term renamed = Substitution.apply(mManagedScript, Map.of(primedLocationVar, baseLocationVar), primedConstraint);
-		exactUpdates.put(baseLocationVar, renamed);
-	}
-
-	private UpdateMatch extractExactUpdateOrNull(final Term conjunct, final Map<TermVariable, TermVariable> primedToBaseModified) {
-		if (!(conjunct instanceof final ApplicationTerm app) || !"=".equals(app.getFunction().getName())
-				|| app.getParameters().length != 2) {
-			return null;
-		}
-		final UpdateMatch left = extractExactUpdateOrNull(app.getParameters()[0], app.getParameters()[1], conjunct,
-				primedToBaseModified);
-		if (left != null) {
-			return left;
-		}
-		return extractExactUpdateOrNull(app.getParameters()[1], app.getParameters()[0], conjunct, primedToBaseModified);
-	}
-
-	private UpdateMatch extractExactUpdateOrNull(final Term maybePrimedVar, final Term maybeConstant, final Term fullConjunct,
-			final Map<TermVariable, TermVariable> primedToBaseModified) {
-		if (maybeConstant.getFreeVars().length != 0) {
-			return null;
-		}
-		final TermVariable primedVar = extractSingleFreeVar(maybePrimedVar);
-		if (primedVar == null) {
-			return null;
-		}
-		final TermVariable baseVar = primedToBaseModified.get(primedVar);
-		if (baseVar == null) {
-			return null;
-		}
-		final Term renamed = Substitution.apply(mManagedScript, Map.of(primedVar, baseVar), fullConjunct);
-		return new UpdateMatch(baseVar, renamed);
-	}
-
-	private boolean isExplicitIdentityOnUnchangedGlobal(final Term conjunct, final Set<TermVariable> modifiedGlobals) {
-		if (!(conjunct instanceof final ApplicationTerm app) || !"=".equals(app.getFunction().getName())
-				|| app.getParameters().length != 2) {
-			return false;
-		}
-		final VariableRef left = describeGlobalReference(app.getParameters()[0]);
-		final VariableRef right = describeGlobalReference(app.getParameters()[1]);
-		if (left == null || right == null || left.primed() == right.primed()) {
-			return false;
-		}
-		return left.baseVariable().equals(right.baseVariable()) && !modifiedGlobals.contains(left.baseVariable());
-	}
-
-	private boolean isPureUnprimedGlobalConjunct(final Term conjunct) {
-		for (final TermVariable freeVar : conjunct.getFreeVars()) {
-			final IProgramVar programVar = mSymbolTable.getProgramVar(freeVar);
-			if (programVar == null || !programVar.isGlobal() || mSymbolTable.isPrimedVar(programVar)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private VariableRef describeGlobalReference(final Term term) {
-		final TermVariable freeVar = extractSingleFreeVar(term);
-		if (freeVar == null) {
-			return null;
-		}
-		final IProgramVar programVar = mSymbolTable.getProgramVar(freeVar);
-		if (programVar == null || !programVar.isGlobal()) {
-			return null;
-		}
-		return new VariableRef(mSymbolTable.getBaseVar(programVar).getTermVariable(), mSymbolTable.isPrimedVar(programVar));
-	}
-
-	private static TermVariable extractSingleFreeVar(final Term term) {
-		final TermVariable[] freeVars = term.getFreeVars();
-		return freeVars.length == 1 ? freeVars[0] : null;
-	}
-
-	private static record UpdateMatch(TermVariable baseVariable, Term updateConstraint) {
-	}
-
-	private static record VariableRef(TermVariable baseVariable, boolean primed) {
-	}
-
 	public PrimedDefaultIcfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
+	}
+
+	public IUltimateServiceProvider getServices() {
+		return mServices;
+	}
+
+	public ManagedScript getManagedScript() {
+		return mManagedScript;
+	}
+
+	public BasicPredicateFactory getPredicateFactory() {
+		return mPredicateFactory;
+	}
+
+	public GhostVariableManager getGhostVariables() {
+		return mGhostVariables;
 	}
 
 	public boolean isLocationStutterStep(final IcfgLocation sourceLocation, final IcfgLocation targetLocation) {
@@ -426,35 +231,21 @@ public class TransFormulaToInterferencePredicate {
 		return mAbstractLocationIds.get(location);
 	}
 
-	public boolean hasAbstractLocationIds() {
-		return !mAbstractLocationIds.isEmpty();
-	}
-
 	public IcfgLocation getEntryLocation(final String threadId) {
 		final IcfgLocation entry = mEntryLocations.get(threadId);
-		if (entry != null) {
-			return entry;
-		}
-		if (mGhostVariables != null) {
-			return mGhostVariables.getEntryLocation(threadId);
-		}
-		return null;
+		return entry != null ? entry : mGhostVariables == null ? null : mGhostVariables.getEntryLocation(threadId);
 	}
 
 	public TermVariable getLocationTermVarOrNull(final String threadId) {
-		if (mGhostVariables == null) {
+		if (mGhostVariables == null || threadId == null) {
 			return null;
 		}
 		return mGhostVariables.getLocationTermVar(threadId);
 	}
 
 	public IPredicate projectPreStateToSharedState(final IPredicate preState) {
-		final Set<TermVariable> localsToProject = new HashSet<>();
-		for (final IProgramVar var : preState.getVars()) {
-			if (!var.isGlobal()) {
-				localsToProject.add(var.getTermVariable());
-			}
-		}
+		final Set<TermVariable> localsToProject = preState.getVars().stream().filter(var -> !var.isGlobal())
+				.map(IProgramVar::getTermVariable).collect(java.util.stream.Collectors.toSet());
 		if (localsToProject.isEmpty()) {
 			return preState;
 		}

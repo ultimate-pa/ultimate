@@ -34,12 +34,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GuardedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeKey;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.applicators.RelationalQeInterferenceApplicator;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.representations.PerThreadInterference;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 
@@ -156,7 +154,7 @@ public class InterferencePrecisionRegressionTest {
 	}
 
 	@Test
-	public void interferenceFixpointJoinComparedToExactOr() {
+	public void interferenceFixpointJoinWorks() {
 		initializeAnalysis();
 
 		final IPredicate state = predicate(
@@ -164,19 +162,16 @@ public class InterferencePrecisionRegressionTest {
 		final InterferenceCollection interferences = mutexInterferences();
 
 		mManagedScript.unlock(this);
-		final PerThreadInterference itf = (PerThreadInterference) interferences
-				.getInterferenceForThread(INTERFERING_THREAD_ID);
+		final IInterference itf = interferences.getInterferenceForThread(INTERFERING_THREAD_ID);
 		final IPredicate fixedJoin = itf.applyUntilFixpoint(state, mIntervalDomain, 20, mStats);
-		final IPredicate fixedOr = applyUntilFixpointWithExactOr(state, interferences, MAIN_THREAD_ID, false);
 		mManagedScript.lock(this);
 
-		assertUnsat(and(fixedOr.getFormula(), eq(varTv(mRaceX), num(1))));
-		assertSat(and(fixedOr.getFormula(), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(3))));
-		assertEquals(true, mIntervalDomain.isSubsetEq(fixedOr, fixedJoin).isTrueForAbstraction());
+		assertUnsat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(1))));
+		assertSat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(3))));
 	}
 
 	@Test
-	public void symbolicPostThenFixpointJoinComparedToExactOr() {
+	public void symbolicPostThenFixpointJoinWorks() {
 		initializeAnalysis();
 
 		final IPredicate state = predicate(
@@ -186,15 +181,12 @@ public class InterferencePrecisionRegressionTest {
 
 		mManagedScript.unlock(this);
 		final IPredicate post = mTools.post(state, transition);
-		final PerThreadInterference itf = (PerThreadInterference) interferences
-				.getInterferenceForThread(INTERFERING_THREAD_ID);
+		final IInterference itf = interferences.getInterferenceForThread(INTERFERING_THREAD_ID);
 		final IPredicate fixedJoin = itf.applyUntilFixpoint(post, mIntervalDomain, 20, mStats);
-		final IPredicate fixedOr = applyUntilFixpointWithExactOr(post, interferences, MAIN_THREAD_ID, false);
 		mManagedScript.lock(this);
 
-		assertUnsat(and(fixedOr.getFormula(), eq(varTv(mRaceX), num(1))));
-		assertSat(and(fixedOr.getFormula(), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(3))));
-		assertEquals(true, mIntervalDomain.isSubsetEq(fixedOr, fixedJoin).isTrueForAbstraction());
+		assertUnsat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(1))));
+		assertSat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(3))));
 	}
 
 	private void initializeAnalysis() {
@@ -221,57 +213,16 @@ public class InterferencePrecisionRegressionTest {
 		final Term all = SmtUtils.orWithExtendedLocalSimplification(mScript, List.of(writerWriteRaceZero().getFormula(),
 				writerUnlock().getFormula(), unreachableOtherThreadWriteOne().getFormula()));
 		final IPredicate asPredicate = predicate(all);
-		final var applicator = new RelationalQeInterferenceApplicator(mRelationalPost);
-		final var key = new InterferenceEdgeKey(null, null, 0);
+		final var key = new AbstractLocationPair(0, 0);
+		final var contribution = new StrongestPostconditionInterference.RelationalInterference(asPredicate,
+				mRelationalPost.prepareRelation(asPredicate));
+		final var interference = new StrongestPostconditionInterference(Map.of(key, contribution),
+				mRelationalPost);
 		return InterferenceCollection.of(
-				Map.of(INTERFERING_THREAD_ID, new PerThreadInterference(Map.of(key, GuardedPredicate.unguarded(asPredicate)), applicator)));
+				Map.of(INTERFERING_THREAD_ID, interference));
 	}
 
-	private IPredicate applyUntilFixpointWithExactOr(final IPredicate state, final InterferenceCollection interferences,
-			final String threadId, final boolean includeSelfInterference) {
-		if (interferences.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
-				|| SmtUtils.isFalseLiteral(state.getFormula())) {
-			return state;
-		}
 
-		final List<Term> disjuncts = new ArrayList<>();
-		for (final String otherThreadId : interferences.getThreadIds()) {
-			if (!includeSelfInterference && threadId.equals(otherThreadId)) {
-				continue;
-			}
-			final IInterference interference = interferences.getInterferenceForThread(otherThreadId);
-			if (interference == null) {
-				continue;
-			}
-			for (final IPredicate pred : interference.getPredicates()) {
-				if (!SmtUtils.isFalseLiteral(pred.getFormula())) {
-					disjuncts.add(pred.getFormula());
-				}
-			}
-		}
-		if (disjuncts.isEmpty()) {
-			return state;
-		}
-
-		final IPredicate combinedInterference = predicate(
-				SmtUtils.orWithExtendedLocalSimplification(mScript, disjuncts));
-		IPredicate current = state;
-		final int wideningThreshold = 20;
-		for (int iteration = 1;; iteration++) {
-			final IPredicate postState = mRelationalPost.strongestPostcondition(current, combinedInterference);
-			final IPredicate combined;
-			if (iteration > wideningThreshold) {
-				combined = mIntervalDomain.widen(current, postState);
-			} else {
-				combined = predicate(SmtUtils.orWithExtendedLocalSimplification(mScript,
-						List.of(current.getFormula(), postState.getFormula())));
-			}
-			if (mIntervalDomain.isSubsetEq(combined, current).isTrueForAbstraction()) {
-				return current;
-			}
-			current = combined;
-		}
-	}
 
 	private IPredicate writerWriteRaceZero() {
 		return predicate(and(eq(varTv(mLocWriter), num(1)), eq(primedTv(mLocWriter), num(2)), eq(varTv(mW), num(1)),

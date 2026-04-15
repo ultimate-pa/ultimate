@@ -42,8 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeDomain;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
@@ -106,13 +104,9 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final LocationTrackingMode[] VALUES_LOCATION_TRACKING_MODE = LocationTrackingMode.values();
 	public static final Class<LocationTrackingMode> CLASS_LOCATION_TRACKING_MODE = LocationTrackingMode.class;
 
-	public static final String LABEL_INTERFERENCE_TYPE = "Interference Type";
-	private static final InterferenceType DEFAULT_INTERFERENCE_TYPE = InterferenceType.PER_ABSTRACT_LOCATION;
-	private static final InterferenceType[] VALUES_INTERFERENCE_TYPE = InterferenceType.values();
-	public static final Class<InterferenceType> CLASS_INTERFERENCE_TYPE = InterferenceType.class;
-
 	public static final String LABEL_INTERFERENCE_APPLICATOR = "Interference Applicator";
-	private static final InterferenceApplicatorType DEFAULT_INTERFERENCE_APPLICATOR = InterferenceApplicatorType.QE;
+	private static final InterferenceApplicatorType DEFAULT_INTERFERENCE_APPLICATOR =
+			InterferenceApplicatorType.STRONGEST_POSTCONDITION;
 	private static final InterferenceApplicatorType[] VALUES_INTERFERENCE_APPLICATOR =
 			InterferenceApplicatorType.values();
 	public static final Class<InterferenceApplicatorType> CLASS_INTERFERENCE_APPLICATOR =
@@ -133,21 +127,23 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_JOIN_PRECISION = "Join Precision";
 	private static final String TOOLTIP_JOIN_PRECISION = "Give exit locations of joined threads unique abstract location IDs for precise join semantics";
-	private static final boolean DEFAULT_JOIN_PRECISION = true;
+	private static final boolean DEFAULT_JOIN_PRECISION = false;
 
-	public static final String LABEL_INTERFERENCE_MERGE_DOMAIN = "Interference Merge Domain";
-	private static final String TOOLTIP_INTERFERENCE_MERGE_DOMAIN = "Domain used for joining interference predicates during build phase. OCTAGON uses OctagonDomain for merging while keeping the analysis domain for states";
-	private static final InterferenceMergeDomain DEFAULT_INTERFERENCE_MERGE_DOMAIN =
-			InterferenceMergeDomain.SAME_AS_ANALYSIS;
-	private static final InterferenceMergeDomain[] VALUES_INTERFERENCE_MERGE_DOMAIN =
-			InterferenceMergeDomain.values();
-	public static final Class<InterferenceMergeDomain> CLASS_INTERFERENCE_MERGE_DOMAIN =
-			InterferenceMergeDomain.class;
 
 	public static final String LABEL_GUARD_BUCKET_SPLIT = "Guard Bucket Split";
 	private static final String TOOLTIP_GUARD_BUCKET_SPLIT =
 			"Preserve separate guard/location buckets in simple two-worker cases";
 	private static final boolean DEFAULT_GUARD_BUCKET_SPLIT = false;
+
+	public static final String LABEL_PROOF_CHECK = "Proof Check";
+	private static final String TOOLTIP_PROOF_CHECK =
+			"Run thread-modular proof checking after the analysis fixpoint";
+	private static final boolean DEFAULT_PROOF_CHECK = false;
+
+	public static final String LABEL_RESULT_PRINT = "Result Print";
+	private static final String TOOLTIP_RESULT_PRINT =
+			"Print thread-modular result details after the analysis fixpoint";
+	private static final boolean DEFAULT_RESULT_PRINT = false;
 
 	// ---- settings in containers ----
 
@@ -263,8 +259,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 		final UltimatePreferenceItemContainer containerConcurrent = new UltimatePreferenceItemContainer(
 				"Thread-Modular");
-		containerConcurrent
-				.addItem(combo(LABEL_INTERFERENCE_TYPE, DEFAULT_INTERFERENCE_TYPE, VALUES_INTERFERENCE_TYPE));
 		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_APPLICATOR, DEFAULT_INTERFERENCE_APPLICATOR,
 				VALUES_INTERFERENCE_APPLICATOR));
 		containerConcurrent
@@ -275,10 +269,12 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				DEFAULT_INNER_WIDENING_THRESHOLD, 1, Integer.MAX_VALUE));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_JOIN_PRECISION, DEFAULT_JOIN_PRECISION,
 				TOOLTIP_JOIN_PRECISION, PreferenceType.Boolean));
-		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_MERGE_DOMAIN, TOOLTIP_INTERFERENCE_MERGE_DOMAIN,
-				DEFAULT_INTERFERENCE_MERGE_DOMAIN, VALUES_INTERFERENCE_MERGE_DOMAIN));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_GUARD_BUCKET_SPLIT, DEFAULT_GUARD_BUCKET_SPLIT,
 				TOOLTIP_GUARD_BUCKET_SPLIT, PreferenceType.Boolean));
+		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_PROOF_CHECK, DEFAULT_PROOF_CHECK,
+				TOOLTIP_PROOF_CHECK, PreferenceType.Boolean));
+		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_RESULT_PRINT, DEFAULT_RESULT_PRINT,
+				TOOLTIP_RESULT_PRINT, PreferenceType.Boolean));
 
 		final UltimatePreferenceItemContainer containerConcurrentTesting = new UltimatePreferenceItemContainer(
 				"Thread-Modular Testing");

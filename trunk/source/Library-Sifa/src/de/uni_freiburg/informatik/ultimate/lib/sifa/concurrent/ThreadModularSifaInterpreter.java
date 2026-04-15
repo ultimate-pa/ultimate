@@ -55,6 +55,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final SifaResultPrinter mResultPrinter;
 	private final ThreadModularProofChecker mProofChecker;
 	private final RelationalPredicatePostcondition mPostcondition;
+	private final boolean mResultPrint;
 
 	private final ConcurrentSymbolicTools mConcurrentTools;
 	private final int mOuterWideningThreshold;
@@ -96,13 +97,14 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mPostcondition = setup.postcondition();
 		mPostcondition.setStats(mStats);
 		mProofChecker = setup.proofChecker();
+		mResultPrint = mConcurrentTools.getSettings().resultPrint();
 		mThreadIcfgs = new HashMap<>();
 		mThreadLois = new HashMap<>();
 		mThreadInterpreters = new HashMap<>();
 		prepareThreadIcfgsAndLois();
-		final var ghostVars = mConcurrentTools.getGhostVariables();
-		final var absLocIds = ghostVars != null ? ghostVars.getAbstractLocationIds() : Map.<IcfgLocation, Integer>of();
-		mResultPrinter = new SifaResultPrinter(logger, absLocIds, mConcurrentTools.getThreadActivityPreanalysis());
+		mResultPrinter = mResultPrint
+				? new SifaResultPrinter(logger, setup.abstractLocationIds(), mConcurrentTools.getThreadActivityPreanalysis())
+				: null;
 	}
 
 	private static IUltimateServiceProvider extractServices(final SymbolicTools tools) {
@@ -116,7 +118,11 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
 		final FixpointResult fixpoint = computeOuterInterferenceFixpoint();
-		mResultPrinter.printResults(fixpoint.locationPredicates, mIcfg);
+		if (mResultPrinter != null) {
+			mResultPrinter.printResults(fixpoint.locationPredicates, mIcfg);
+		} else {
+			mLogger.info("Thread-modular result printing disabled");
+		}
 		verifyProof(fixpoint);
 		return fixpoint.locationPredicates;
 	}
@@ -233,6 +239,10 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	}
 
 	private void verifyProof(final FixpointResult fixpoint) {
+		if (mProofChecker == null) {
+			mLogger.info("Thread-modular proof checking disabled");
+			return;
+		}
 		mLogger.info("Thread-modular proof checking started");
 		final ThreadModularProofChecker.CheckReport report =
 				mProofChecker.checkAllDetailed(fixpoint.threadPredicates);

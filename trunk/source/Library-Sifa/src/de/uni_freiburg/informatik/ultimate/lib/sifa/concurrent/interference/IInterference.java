@@ -7,15 +7,14 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
 public interface IInterference {
-	Collection<IPredicate> getPredicates();
 
-	boolean isTrivial();
-
-	boolean isSubsumedBy(IInterference other, IDomain domain);
+	IPredicate applyUntilFixpoint(IPredicate state, IDomain domain, int wideningThreshold, SifaStats stats);
 
 	IInterference widen(IInterference other, IDomain domain);
 
-	int size();
+	boolean isSubsumedBy(IInterference other, IDomain domain);
 
-	IPredicate applyUntilFixpoint(IPredicate state, IDomain domain, int wideningThreshold, SifaStats stats);
+	boolean isTrivial();
+
+	int size();
 }

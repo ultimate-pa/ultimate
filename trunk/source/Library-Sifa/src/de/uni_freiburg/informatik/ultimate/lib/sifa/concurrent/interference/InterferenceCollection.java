@@ -13,11 +13,11 @@ public class InterferenceCollection {
 	private final Map<String, IInterference> mInterferencesByThread;
 
 	private InterferenceCollection(final Map<String, IInterference> interferences) {
-		mInterferencesByThread = new HashMap<>(interferences);
+		mInterferencesByThread = Map.copyOf(interferences);
 	}
 
 	public static InterferenceCollection empty() {
-		return new InterferenceCollection(new HashMap<>());
+		return new InterferenceCollection(Map.of());
 	}
 
 	public static InterferenceCollection of(final Map<String, IInterference> interferences) {
@@ -78,7 +78,7 @@ public class InterferenceCollection {
 				widenedItf = thisItf.widen(otherItf, domain);
 			}
 
-			if (!widenedItf.isTrivial()) {
+			if (widenedItf != null && !widenedItf.isTrivial()) {
 				widened.put(threadId, widenedItf);
 			}
 		}

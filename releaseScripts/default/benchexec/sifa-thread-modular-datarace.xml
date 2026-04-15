@@ -2,43 +2,32 @@
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90" hardtimelimit="90" cpuCores="2">
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper" />
-  <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaCThreadModular.xml</option>
+  <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-DataRace-32bit-Automizer_Default.epf</option>
+  <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+  <option name="--sifa.fluid">SizeLimitFluid</option>
+  <option name="--sifa.max.parallel.explicit.values">2</option>
+  <option name="--sifa.join.precision">false</option>
+  <option name="--sifa.proof.check">false</option>
+  <option name="--sifa.result.print">false</option>
+  <option name="--sifa.guard.bucket.split">false</option>
 
-  <rundefinition name="per-location-2">
-    <option name="--sifa.max.parallel.explicit.values">2</option>
-    <option name="--sifa.max.parallel.intervals">2</option>
-    <option name="--sifa.interference.type">PER_ABSTRACT_LOCATION</option>
+  <rundefinition name="strongestpost">
+    <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
+    <option name="--sifa.guard.bucket.split">true</option>
   </rundefinition>
-  
-  <rundefinition name="per-location-4">
-    <option name="--sifa.max.parallel.explicit.values">4</option>
-    <option name="--sifa.max.parallel.intervals">4</option>
-    <option name="--sifa.interference.type">PER_ABSTRACT_LOCATION</option>
+
+  <rundefinition name="prepost">
+    <option name="--sifa.interference.applicator">PREPOST</option>
   </rundefinition>
-  
-  <rundefinition name="per-thread-2">
-    <option name="--sifa.max.parallel.explicit.values">2</option>
-    <option name="--sifa.max.parallel.intervals">2</option>
-    <option name="--sifa.interference.type">PER_THREAD</option>
+
+  <rundefinition name="guarded-exact-update">
+    <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
+    <option name="--sifa.guard.bucket.split">true</option>
   </rundefinition>
-  
-  <rundefinition name="per-thread-4">
-    <option name="--sifa.max.parallel.explicit.values">4</option>
-    <option name="--sifa.max.parallel.intervals">4</option>
-    <option name="--sifa.interference.type">PER_THREAD</option>
-  </rundefinition>
-  
-  <rundefinition name="per-edge-2">
-    <option name="--sifa.max.parallel.explicit.values">2</option>
-    <option name="--sifa.max.parallel.intervals">2</option>
-    <option name="--sifa.interference.type">PER_EDGE</option>
-  </rundefinition>
-  
-  <rundefinition name="per-edge-4">
-    <option name="--sifa.max.parallel.explicit.values">4</option>
-    <option name="--sifa.max.parallel.intervals">4</option>
-    <option name="--sifa.interference.type">PER_EDGE</option>
+
+  <rundefinition name="post-state">
+    <option name="--sifa.interference.applicator">POST_STATE</option>
   </rundefinition>
 
   <tasks name="SVCOMP-Concurrency">

@@ -85,6 +85,20 @@ public class RelationalPredicatePostcondition {
 		return new PreparedRelation(relationalPredicate, preVarsToProject, primedToUnprimed);
 	}
 
+	public Set<TermVariable> primedVariablesIn(final IPredicate relationalPredicate) {
+		if (mProjectAllGlobalPreVars) {
+			return Set.copyOf(mAllGlobalPrimedToUnprimed.keySet().stream().map(TermVariable.class::cast)
+					.collect(java.util.stream.Collectors.toSet()));
+		}
+		final Set<TermVariable> primedVariables = new HashSet<>();
+		for (final IProgramVar pv : relationalPredicate.getVars()) {
+			if (mSymbolTable.isPrimedVar(pv)) {
+				primedVariables.add(pv.getTermVariable());
+			}
+		}
+		return Set.copyOf(primedVariables);
+	}
+
 	public IPredicate strongestPostcondition(final IPredicate statePredicate, final PreparedRelation preparedRelation) {
 		if (SmtUtils.isFalseLiteral(statePredicate.getFormula())
 				|| SmtUtils.isFalseLiteral(preparedRelation.relation().getFormula())) {

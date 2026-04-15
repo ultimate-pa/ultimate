@@ -47,8 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifa
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceMergeDomain;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
@@ -127,8 +125,6 @@ public class SifaBuilder {
 					SifaPreferences.LABEL_LOCATION_TRACKING_MODE, SifaPreferences.CLASS_LOCATION_TRACKING_MODE);
 			final LocationAbstractionType locationAbstraction = mPrefs.getEnum(
 					SifaPreferences.LABEL_LOCATION_ABSTRACTION, SifaPreferences.CLASS_LOCATION_ABSTRACTION);
-			final InterferenceType interferenceType = mPrefs.getEnum(SifaPreferences.LABEL_INTERFERENCE_TYPE,
-					SifaPreferences.CLASS_INTERFERENCE_TYPE);
 			final InterferenceApplicatorType interferenceApplicator = mPrefs.getEnum(
 					SifaPreferences.LABEL_INTERFERENCE_APPLICATOR,
 					SifaPreferences.CLASS_INTERFERENCE_APPLICATOR);
@@ -137,13 +133,12 @@ public class SifaBuilder {
 			final int innerWideningThreshold =
 					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD));
 			final boolean joinPrecision = mPrefs.getBoolean(SifaPreferences.LABEL_JOIN_PRECISION);
-			final InterferenceMergeDomain mergeDomain = mPrefs.getEnum(
-					SifaPreferences.LABEL_INTERFERENCE_MERGE_DOMAIN,
-					SifaPreferences.CLASS_INTERFERENCE_MERGE_DOMAIN);
 			final boolean guardBucketSplit = mPrefs.getBoolean(SifaPreferences.LABEL_GUARD_BUCKET_SPLIT);
+			final boolean proofCheck = mPrefs.getBoolean(SifaPreferences.LABEL_PROOF_CHECK);
+			final boolean resultPrint = mPrefs.getBoolean(SifaPreferences.LABEL_RESULT_PRINT);
 			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
-					interferenceType, interferenceApplicator, outerWideningThreshold, innerWideningThreshold,
-					joinPrecision, mergeDomain, guardBucketSplit);
+					interferenceApplicator, outerWideningThreshold, innerWideningThreshold,
+					joinPrecision, guardBucketSplit, proofCheck, resultPrint);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);

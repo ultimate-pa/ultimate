@@ -9,10 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BinaryOperator;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -72,57 +73,15 @@ public final class GuardSplitBucketDomain implements IDomain, IThreadLocalDomain
 	@Override
 	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
 		final GuardBucketPolicy policy = currentPolicyOrNull();
-		if (policy == null) {
-			return mInnerDomain.join(lhs, rhs);
-		}
-		final Map<BucketKey, IPredicate> lhsBuckets = splitIntoBuckets(lhs, policy);
-		final Map<BucketKey, IPredicate> rhsBuckets = splitIntoBuckets(rhs, policy);
-		if (lhsBuckets == null || rhsBuckets == null) {
-			return mInnerDomain.join(lhs, rhs);
-		}
-		final Map<BucketKey, IPredicate> joinedBuckets = new LinkedHashMap<>();
-		final Set<BucketKey> allBuckets = new LinkedHashSet<>(lhsBuckets.keySet());
-		allBuckets.addAll(rhsBuckets.keySet());
-		for (final BucketKey bucket : allBuckets) {
-			final IPredicate leftBucket = lhsBuckets.get(bucket);
-			final IPredicate rightBucket = rhsBuckets.get(bucket);
-			if (leftBucket == null) {
-				joinedBuckets.put(bucket, rightBucket);
-			} else if (rightBucket == null) {
-				joinedBuckets.put(bucket, leftBucket);
-			} else {
-				joinedBuckets.put(bucket, mInnerDomain.join(leftBucket, rightBucket));
-			}
-		}
-		return composeBuckets(joinedBuckets, policy);
+		return policy == null ? mInnerDomain.join(lhs, rhs)
+				: combineBuckets(lhs, rhs, policy, mInnerDomain::join, () -> mInnerDomain.join(lhs, rhs));
 	}
 
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
 		final GuardBucketPolicy policy = currentPolicyOrNull();
-		if (policy == null) {
-			return mInnerDomain.widen(old, widenWith);
-		}
-		final Map<BucketKey, IPredicate> oldBuckets = splitIntoBuckets(old, policy);
-		final Map<BucketKey, IPredicate> widenBuckets = splitIntoBuckets(widenWith, policy);
-		if (oldBuckets == null || widenBuckets == null) {
-			return mInnerDomain.widen(old, widenWith);
-		}
-		final Map<BucketKey, IPredicate> widened = new LinkedHashMap<>();
-		final Set<BucketKey> allBuckets = new LinkedHashSet<>(oldBuckets.keySet());
-		allBuckets.addAll(widenBuckets.keySet());
-		for (final BucketKey bucket : allBuckets) {
-			final IPredicate oldBucket = oldBuckets.get(bucket);
-			final IPredicate widenBucket = widenBuckets.get(bucket);
-			if (oldBucket == null) {
-				widened.put(bucket, widenBucket);
-			} else if (widenBucket == null) {
-				widened.put(bucket, oldBucket);
-			} else {
-				widened.put(bucket, mInnerDomain.widen(oldBucket, widenBucket));
-			}
-		}
-		return composeBuckets(widened, policy);
+		return policy == null ? mInnerDomain.widen(old, widenWith)
+				: combineBuckets(old, widenWith, policy, mInnerDomain::widen, () -> mInnerDomain.widen(old, widenWith));
 	}
 
 	@Override
@@ -179,11 +138,7 @@ public final class GuardSplitBucketDomain implements IDomain, IThreadLocalDomain
 		if (buckets == null) {
 			return mInnerDomain.alpha(pred);
 		}
-		final Map<BucketKey, IPredicate> abstractedBuckets = new LinkedHashMap<>();
-		for (final var entry : buckets.entrySet()) {
-			abstractedBuckets.put(entry.getKey(), mInnerDomain.alpha(entry.getValue()));
-		}
-		return composeBuckets(abstractedBuckets, policy);
+		return composeBuckets(transformBuckets(buckets, mInnerDomain::alpha), policy);
 	}
 
 	private GuardBucketPolicy currentPolicyOrNull() {
@@ -220,10 +175,43 @@ public final class GuardSplitBucketDomain implements IDomain, IThreadLocalDomain
 		return buckets;
 	}
 
+	private IPredicate combineBuckets(final IPredicate left, final IPredicate right, final GuardBucketPolicy policy,
+			final BinaryOperator<IPredicate> combiner, final java.util.function.Supplier<IPredicate> fallback) {
+		final Map<BucketKey, IPredicate> leftBuckets = splitIntoBuckets(left, policy);
+		final Map<BucketKey, IPredicate> rightBuckets = splitIntoBuckets(right, policy);
+		if (leftBuckets == null || rightBuckets == null) {
+			return fallback.get();
+		}
+		return composeBuckets(pointwiseCombine(leftBuckets, rightBuckets, combiner), policy);
+	}
+
+	private static Map<BucketKey, IPredicate> pointwiseCombine(final Map<BucketKey, IPredicate> left,
+			final Map<BucketKey, IPredicate> right, final BinaryOperator<IPredicate> combiner) {
+		final Map<BucketKey, IPredicate> combined = new LinkedHashMap<>();
+		final Set<BucketKey> allBuckets = new LinkedHashSet<>(left.keySet());
+		allBuckets.addAll(right.keySet());
+		for (final BucketKey bucket : allBuckets) {
+			final IPredicate leftBucket = left.get(bucket);
+			final IPredicate rightBucket = right.get(bucket);
+			combined.put(bucket, leftBucket == null ? rightBucket
+					: rightBucket == null ? leftBucket : combiner.apply(leftBucket, rightBucket));
+		}
+		return combined;
+	}
+
+	private static Map<BucketKey, IPredicate> transformBuckets(final Map<BucketKey, IPredicate> buckets,
+			final UnaryOperator<IPredicate> transformer) {
+		final Map<BucketKey, IPredicate> transformed = new LinkedHashMap<>();
+		for (final var entry : buckets.entrySet()) {
+			transformed.put(entry.getKey(), transformer.apply(entry.getValue()));
+		}
+		return transformed;
+	}
+
 	private BucketKey determineBucket(final Term disjunct, final GuardBucketPolicy policy) {
 		Integer selectedBucket = null;
 		final List<Term> conjuncts = new ArrayList<>();
-		InterferenceUtils.collectConjuncts(disjunct, conjuncts);
+		FormulaConjunctUtils.collectConjuncts(disjunct, conjuncts);
 		for (final Term conjunct : conjuncts) {
 			final Integer rawValue = extractRawIntEqualityValue(conjunct, policy.bucketVariable());
 			if (rawValue == null) {
@@ -375,10 +363,8 @@ public final class GuardSplitBucketDomain implements IDomain, IThreadLocalDomain
 	private Term createLocationBucketGuard(final GuardBucketPolicy policy, final int bucket) {
 		final Script script = mTools.getScript();
 		final Collection<Integer> rawValues = policy.rawValuesForBucket(bucket);
-		final List<Term> disjuncts = new ArrayList<>(rawValues.size());
-		for (final Integer rawValue : rawValues) {
-			disjuncts.add(SmtUtils.binaryEquality(script, policy.bucketVariable(), script.numeral(BigInteger.valueOf(rawValue))));
-		}
+		final List<Term> disjuncts = rawValues.stream().map(rawValue -> SmtUtils.binaryEquality(script,
+				policy.bucketVariable(), script.numeral(BigInteger.valueOf(rawValue)))).toList();
 		if (disjuncts.isEmpty()) {
 			return script.term("false");
 		}
