@@ -30,6 +30,12 @@ public class ConstraintRepresentation {
 		mVectorLength = vectorLength;
 	}
 
+	/**
+	 * WARNING: Only give isMinimal/isStrongMinimal as True if lineMatrix and
+	 * parameterMatrix are minimal/strongly minimal. Alternatively use the
+	 * constructor without isMinimal/isStrongMinimal and call
+	 * minimize/stronglyMinimize afterwards.
+	 */
 	ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
 			final int vectorLength, final boolean isMinimal, final boolean isStrongMinimal) {
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);

@@ -21,14 +21,22 @@ public class GeneratorRepresentation {
 		mIsMinimal = false;
 	}
 
-	// TODO: Add warning to only put sth minimal here
+	/**
+	 * WARNING: Only give isMinimal as True if lineMatrix and parameterMatrix are
+	 * minimal. Alternatively just use the constructor without isMinimal and call
+	 * minimize afterwards.
+	 */
 	GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix, final boolean isMinimal) {
 		mLineMatrix = lineMatrix;
 		mParameterMatrix = parameterMatrix;
 		mIsMinimal = isMinimal;
 	}
 
-	// TODO: Add warning to only put sth minimal here
+	/**
+	 * WARNING: Only give isMinimal as True if lineMatrix and parameterMatrix are
+	 * minimal. Alternatively use the constructor without isMinimal and call
+	 * minimize afterwards.
+	 */
 	GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters, final boolean isMinimal) {
 		mLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
 		mParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
