@@ -16,22 +16,18 @@ public class ConstraintRepresentation {
 	private MatrixQ128 mEqualityMatrix;
 	private MatrixQ128 mCongruenceMatrix;
 
+	final private int mVectorLength;
+
 	private boolean mIsMinimal;
 	private boolean mIsStrongMinimal;
 
-	final private int mVectorLength;
-
 	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
 			final int vectorLength) {
-		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
-		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
-		mIsMinimal = false;
-		mIsStrongMinimal = false;
-		mVectorLength = vectorLength;
+		this(equalities, congruences, vectorLength, false, false);
 	}
 
 	/**
-	 * WARNING: Only give isMinimal/isStrongMinimal as True if lineMatrix and
+	 * WARNING: Only give isMinimal/isStrongMinimal as true if lineMatrix and
 	 * parameterMatrix are minimal/strongly minimal. Alternatively use the
 	 * constructor without isMinimal/isStrongMinimal and call
 	 * minimize/stronglyMinimize afterwards.
@@ -40,9 +36,9 @@ public class ConstraintRepresentation {
 			final int vectorLength, final boolean isMinimal, final boolean isStrongMinimal) {
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
+		mVectorLength = vectorLength;
 		mIsMinimal = isMinimal;
 		mIsStrongMinimal = isStrongMinimal;
-		mVectorLength = vectorLength;
 	}
 
 	public MatrixQ128 getEqualityMatrix() {
@@ -305,6 +301,6 @@ public class ConstraintRepresentation {
 		final List<MatrixQ128> lines = generatorList.subList(0, fillerNum);
 		final List<MatrixQ128> parameters = generatorList.subList(fillerNum, fillerNum + congruencesNum);
 
-		return new GeneratorRepresentation(lines, parameters, true);
+		return new GeneratorRepresentation(lines, parameters, mVectorLength, true);
 	}
 }

@@ -31,7 +31,7 @@ public class GeneratorRepresentationTest {
 
 		final List<MatrixQ128> parameters = new ArrayList<>();
 
-		return new GeneratorRepresentation(lines, parameters);
+		return new GeneratorRepresentation(lines, parameters, 5);
 	}
 
 	public GeneratorRepresentation getGenerators2() {
@@ -47,7 +47,7 @@ public class GeneratorRepresentationTest {
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 1, 1, -2, 0)));
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 0, 0, 0, 1)));
 
-		return new GeneratorRepresentation(lines, parameters);
+		return new GeneratorRepresentation(lines, parameters, 5);
 	}
 
 	public GeneratorRepresentation getGenerators3() {
@@ -66,7 +66,7 @@ public class GeneratorRepresentationTest {
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 1, 1, -2, 0)));
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 0, 0, 0, 1)));
 
-		return new GeneratorRepresentation(lines, parameters);
+		return new GeneratorRepresentation(lines, parameters, 5);
 	}
 
 	public GeneratorRepresentation getGenerators4() {
@@ -85,7 +85,7 @@ public class GeneratorRepresentationTest {
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
 		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 0, 0, 0, 1)));
 
-		return new GeneratorRepresentation(lines, parameters);
+		return new GeneratorRepresentation(lines, parameters, 5);
 	}
 
 	public GeneratorRepresentation getGenerators5() {
@@ -105,7 +105,7 @@ public class GeneratorRepresentationTest {
 		parameters.add(CongruenceUtil.getRowVectorFromRationalList(
 				List.of(Rational.valueOf(7, 1), Rational.valueOf(13, 7), Rational.valueOf(1, 3))));
 
-		return new GeneratorRepresentation(lines, parameters);
+		return new GeneratorRepresentation(lines, parameters, 3);
 	}
 
 	public static GeneratorRepresentation getGenerators8() {
@@ -121,7 +121,7 @@ public class GeneratorRepresentationTest {
 		final List<MatrixQ128> congruences = new ArrayList<>();
 		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.TWO)));
 
-		return new GeneratorRepresentation(equalities, congruences);
+		return new GeneratorRepresentation(equalities, congruences, 2);
 	}
 
 	public static GeneratorRepresentation getGenerators9() {
@@ -136,7 +136,7 @@ public class GeneratorRepresentationTest {
 
 		final List<MatrixQ128> congruences = new ArrayList<>();
 
-		return new GeneratorRepresentation(equalities, congruences);
+		return new GeneratorRepresentation(equalities, congruences, 2);
 	}
 
 	public static GeneratorRepresentation getGenerators10() {
@@ -152,7 +152,7 @@ public class GeneratorRepresentationTest {
 
 		final List<MatrixQ128> congruences = new ArrayList<>();
 
-		return new GeneratorRepresentation(equalities, congruences);
+		return new GeneratorRepresentation(equalities, congruences, 2);
 	}
 
 	public static GeneratorRepresentation getGenerators11() {
@@ -172,7 +172,7 @@ public class GeneratorRepresentationTest {
 		congruences.add(CongruenceUtil
 				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(10, 3))));
 
-		return new GeneratorRepresentation(equalities, congruences);
+		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
 
 	public static GeneratorRepresentation getGenerators12() {
@@ -189,7 +189,7 @@ public class GeneratorRepresentationTest {
 		congruences.add(CongruenceUtil
 				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(3, 1))));
 
-		return new GeneratorRepresentation(equalities, congruences);
+		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
 
 	@Test

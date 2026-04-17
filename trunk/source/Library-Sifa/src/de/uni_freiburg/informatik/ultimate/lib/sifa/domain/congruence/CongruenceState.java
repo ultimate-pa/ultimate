@@ -90,7 +90,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final List<MatrixQ128> newParameters = selfReorderedGenerators.getParameters();
 		newParameters.addAll(otherReorderedGenerators.getParameters());
 
-		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters);
+		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
+				newColumnCount);
 
 		return new CongruenceState(newVarToIndex, newGenerators);
 	}

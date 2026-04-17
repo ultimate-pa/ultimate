@@ -13,34 +13,37 @@ public class GeneratorRepresentation {
 	private MatrixQ128 mLineMatrix;
 	private MatrixQ128 mParameterMatrix;
 
+	final private int mVectorLength;
+
 	private boolean mIsMinimal;
 
-	public GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters) {
-		mLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
-		mParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
-		mIsMinimal = false;
+	public GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters,
+			final int vectorLength) {
+		this(lines, parameters, vectorLength, false);
 	}
 
 	/**
-	 * WARNING: Only give isMinimal as True if lineMatrix and parameterMatrix are
+	 * WARNING: Only give isMinimal as true if lineMatrix and parameterMatrix are
 	 * minimal. Alternatively just use the constructor without isMinimal and call
 	 * minimize afterwards.
 	 */
-	GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix, final boolean isMinimal) {
+	GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix, final int vectorLength,
+			final boolean isMinimal) {
 		mLineMatrix = lineMatrix;
 		mParameterMatrix = parameterMatrix;
+		mVectorLength = vectorLength;
 		mIsMinimal = isMinimal;
 	}
 
 	/**
-	 * WARNING: Only give isMinimal as True if lineMatrix and parameterMatrix are
+	 * WARNING: Only give isMinimal as true if lineMatrix and parameterMatrix are
 	 * minimal. Alternatively use the constructor without isMinimal and call
 	 * minimize afterwards.
 	 */
-	GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters, final boolean isMinimal) {
-		mLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
-		mParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
-		mIsMinimal = isMinimal;
+	GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters, final int vectorLength,
+			final boolean isMinimal) {
+		this(CongruenceUtil.getMatrixFromRows(lines), CongruenceUtil.getMatrixFromRows(parameters), vectorLength,
+				isMinimal);
 	}
 
 	@Override
@@ -167,7 +170,8 @@ public class GeneratorRepresentation {
 				getLineMatrix());
 		final MatrixQ128 reorderedParameterMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
 				getParameterMatrix());
-		return new GeneratorRepresentation(reorderedLineMatrix, reorderedParameterMatrix, isMinimal());
+		return new GeneratorRepresentation(reorderedLineMatrix, reorderedParameterMatrix, resultColumnCount,
+				isMinimal());
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
