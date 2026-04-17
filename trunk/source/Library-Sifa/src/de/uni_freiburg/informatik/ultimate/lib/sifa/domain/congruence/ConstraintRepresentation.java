@@ -71,6 +71,22 @@ public class ConstraintRepresentation {
 				+ mCongruenceMatrix + ", mIsMinimal=" + mIsMinimal + ", mIsStrongMinimal=" + mIsStrongMinimal + "]";
 	}
 
+	public boolean equals(final ConstraintRepresentation other) {
+		// Two unsat representations might not look the same, but still represent the
+		// same system.
+		if (isUnsat() && other.isUnsat()) {
+			return true;
+		}
+
+		if (!getEqualityMatrix().equals(other.getEqualityMatrix())) {
+			return false;
+		}
+		if (!getCongruenceMatrix().equals(other.getCongruenceMatrix())) {
+			return false;
+		}
+		return true;
+	}
+
 	public static ConstraintRepresentation getEmpty(final int vectorLength) {
 		return new ConstraintRepresentation(List.of(), List.of(), vectorLength, true, true);
 	}
@@ -89,7 +105,7 @@ public class ConstraintRepresentation {
 	public boolean isUnsat() {
 		minimize();
 		for (final MatrixQ128 equality : getEqualities()) {
-			if (equality.equals(ConstraintRepresentation.unsatVector(mVectorLength))) {
+			if (CongruenceUtil.lastPivot(equality) == 0) {
 				return true;
 			}
 		}

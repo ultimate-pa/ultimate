@@ -3,6 +3,9 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.scalar.RationalNumber;
@@ -175,7 +178,37 @@ public class GeneratorRepresentation {
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
-		// TODO
-		return null;
+		minimize();
+
+		final List<MatrixQ128> lines = getLines();
+		final int linesNum = lines.size();
+		final List<MatrixQ128> parameters = getParameters();
+		final int parametersNum = parameters.size();
+
+		final List<MatrixQ128> generatorList = new ArrayList<>(lines);
+		generatorList.addAll(parameters);
+
+		final Set<Long> missingPivots = LongStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
+		for (final MatrixQ128 vector : generatorList) {
+			missingPivots.remove(CongruenceUtil.firstPivot(vector));
+		}
+
+		final List<MatrixQ128> fillerList = new ArrayList<>();
+		for (final Long missingPivot : missingPivots) {
+			fillerList.add(CongruenceUtil.getStandardBasisVector(missingPivot.intValue(), mVectorLength));
+		}
+		final int fillerNum = fillerList.size();
+
+		final List<MatrixQ128> vectorList = new ArrayList<>(generatorList);
+		vectorList.addAll(fillerList);
+		final MatrixQ128 generatorMatrix = CongruenceUtil.getMatrixFromRows(vectorList);
+		final MatrixQ128 constraintMatrix = generatorMatrix.invert().transpose();
+		final List<MatrixQ128> constraintList = CongruenceUtil.getRowsFromMatrix(constraintMatrix);
+
+		final List<MatrixQ128> congruences = constraintList.subList(linesNum, linesNum + parametersNum);
+		final List<MatrixQ128> equalities = constraintList.subList(linesNum + parametersNum,
+				linesNum + parametersNum + fillerNum);
+
+		return new ConstraintRepresentation(equalities, congruences, mVectorLength, true, false);
 	}
 }

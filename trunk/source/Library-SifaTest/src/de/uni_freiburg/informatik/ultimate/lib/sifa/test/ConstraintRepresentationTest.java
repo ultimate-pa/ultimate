@@ -151,7 +151,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 4);
 	}
 
-	public ConstraintRepresentation getConstraints8() {
+	public static ConstraintRepresentation getConstraints8() {
 		// @formatter:off
 		/*
 		 * x1 = 1 [2]
@@ -166,7 +166,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 2);
 	}
 
-	public ConstraintRepresentation getConstraints9() {
+	public static ConstraintRepresentation getConstraints9() {
 		// @formatter:off
 		/*
 		 * 0 = -1
@@ -180,7 +180,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 2);
 	}
 
-	public ConstraintRepresentation getConstraints10() {
+	public static ConstraintRepresentation getConstraints10() {
 		// @formatter:off
 		/*
 		 * No constraints
@@ -193,7 +193,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 2);
 	}
 
-	public ConstraintRepresentation getConstraints11() {
+	public static ConstraintRepresentation getConstraints11() {
 		// @formatter:off
 		/*
 		 * 2*x1 + 3*x2 = 4 [10]
@@ -208,7 +208,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 3);
 	}
 
-	public ConstraintRepresentation getConstraints12() {
+	public static ConstraintRepresentation getConstraints12() {
 		// @formatter:off
 		/*
 		 * x1 = 1
@@ -222,6 +222,21 @@ public class ConstraintRepresentationTest {
 		final List<MatrixQ128> congruences = new ArrayList<>();
 		congruences.add(CongruenceUtil.getRowVectorFromRationalList(
 				List.of(Rational.valueOf(-2, 3), Rational.valueOf(1, 3), Rational.valueOf(1, 3))));
+
+		return new ConstraintRepresentation(equalities, congruences, 3);
+	}
+
+	public static ConstraintRepresentation getConstraints13() {
+		// @formatter:off
+		/*
+		 * 0 = 1
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+		equalities.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.valueOf(-1, 1), Rational.ZERO, Rational.ZERO)));
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
 
 		return new ConstraintRepresentation(equalities, congruences, 3);
 	}

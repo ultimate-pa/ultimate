@@ -9,6 +9,7 @@ import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceUtil;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.ConstraintRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorRepresentation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
@@ -192,6 +193,20 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
 
+	public static GeneratorRepresentation getGenerators13() {
+		// @formatter:off
+		/*
+		 * L = {}
+		 * Q = {}
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+
+		return new GeneratorRepresentation(equalities, congruences, 3);
+	}
+
 	@Test
 	public void testMinimize() {
 		for (final GeneratorRepresentation generators : getTestGenerators()) {
@@ -199,6 +214,26 @@ public class GeneratorRepresentationTest {
 			// System.out.println(generators);
 			// System.out.println(minimalGenerators);
 			Assert.assertTrue(hasMinimalForm(generators));
+		}
+	}
+
+	@Test
+	public void testComputeConstraintRepresentation() {
+		final List<ConstraintRepresentation> constraints = List.of(ConstraintRepresentationTest.getConstraints8(),
+				ConstraintRepresentationTest.getConstraints9(), ConstraintRepresentationTest.getConstraints10(),
+				ConstraintRepresentationTest.getConstraints11(), ConstraintRepresentationTest.getConstraints12(),
+				ConstraintRepresentationTest.getConstraints13());
+		final List<GeneratorRepresentation> generators = List.of(getGenerators8(), getGenerators9(), getGenerators10(),
+				getGenerators11(), getGenerators12(), getGenerators13());
+
+		for (int i = 0; i < constraints.size(); i++) {
+			// System.out.println("------------------------");
+			final ConstraintRepresentation expected = constraints.get(i);
+			expected.minimize();
+			final ConstraintRepresentation result = generators.get(i).computeConstraintRepresentation();
+			// System.out.println(expected);
+			// System.out.println(result);
+			Assert.assertTrue(expected.equals(result));
 		}
 	}
 
