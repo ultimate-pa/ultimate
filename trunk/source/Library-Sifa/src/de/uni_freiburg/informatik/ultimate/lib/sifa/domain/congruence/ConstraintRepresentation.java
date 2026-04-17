@@ -88,12 +88,7 @@ public class ConstraintRepresentation {
 
 	public boolean isUnsat() {
 		minimize();
-		final List<MatrixQ128> equalities = getEqualities();
-		final List<MatrixQ128> congruences = getCongruences();
-
-		if (equalities.size() == 1 && congruences.size() == 0) {
-			final var equality = equalities.get(0);
-
+		for (final MatrixQ128 equality : getEqualities()) {
 			if (equality.equals(ConstraintRepresentation.unsatVector(mVectorLength))) {
 				return true;
 			}
