@@ -9,7 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.FormulaConjunctUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.FormulaConjunctUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;

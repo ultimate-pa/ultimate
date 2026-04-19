@@ -13,11 +13,11 @@ public final class InterferenceGrouping {
 
 	public static AbstractLocationPair keyFor(final TransFormulaToInterferencePredicate translator,
 			final IcfgLocation source, final IcfgLocation target) {
-		return new AbstractLocationPair(requireAbstractLocationId(translator, source),
-				requireAbstractLocationId(translator, target));
+		return new AbstractLocationPair(checkAbstractLocationId(translator, source),
+				checkAbstractLocationId(translator, target));
 	}
 
-	private static int requireAbstractLocationId(final TransFormulaToInterferencePredicate translator,
+	private static int checkAbstractLocationId(final TransFormulaToInterferencePredicate translator,
 			final IcfgLocation location) {
 		final Integer abstractLocationId = translator.getAbstractLocationIdOrNull(location);
 		if (abstractLocationId == null) {

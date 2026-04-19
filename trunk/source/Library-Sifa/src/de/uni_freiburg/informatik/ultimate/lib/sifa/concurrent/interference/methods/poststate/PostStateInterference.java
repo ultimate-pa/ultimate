@@ -1,14 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.poststate;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceMethodHelpers;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 public final class PostStateInterference implements IInterference {
 
@@ -34,25 +34,37 @@ public final class PostStateInterference implements IInterference {
 			throw new IllegalArgumentException(
 					"Cannot widen PostStateInterference with " + other.getClass().getSimpleName());
 		}
-		return new PostStateInterference(InterferenceMethodHelpers.widen(mInterferenceByAbstractLocationPair,
-				typedOther.mInterferenceByAbstractLocationPair, domain::widen));
+		final Map<AbstractLocationPair, IPredicate> widened = new LinkedHashMap<>();
+		for (final Entry<AbstractLocationPair, IPredicate> entry : mInterferenceByAbstractLocationPair.entrySet()) {
+			final IPredicate otherGroup = typedOther.mInterferenceByAbstractLocationPair.get(entry.getKey());
+			final IPredicate widenedGroup = otherGroup == null ? entry.getValue() : domain.widen(entry.getValue(), otherGroup);
+			if (!isFalseLiteral(widenedGroup)) {
+				widened.put(entry.getKey(), widenedGroup);
+			}
+		}
+		for (final Entry<AbstractLocationPair, IPredicate> entry : typedOther.mInterferenceByAbstractLocationPair.entrySet()) {
+			if (!widened.containsKey(entry.getKey()) && !isFalseLiteral(entry.getValue())) {
+				widened.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return widened.isEmpty() ? null : new PostStateInterference(widened);
 	}
 
 	@Override
 	public boolean isSubsumedBy(final IInterference other, final IDomain domain) {
-		return other instanceof final PostStateInterference typedOther && InterferenceMethodHelpers.isSubsumed(
-				mInterferenceByAbstractLocationPair, typedOther.mInterferenceByAbstractLocationPair,
-				(left, right) -> domain.isSubsetEq(left, right).isTrueForAbstraction());
+		if (!(other instanceof final PostStateInterference typedOther)) {
+			return false;
+		}
+		for (final Entry<AbstractLocationPair, IPredicate> entry : mInterferenceByAbstractLocationPair.entrySet()) {
+			final IPredicate otherGroup = typedOther.mInterferenceByAbstractLocationPair.get(entry.getKey());
+			if (otherGroup == null || !domain.isSubsetEq(entry.getValue(), otherGroup).isTrueForAbstraction()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
-	@Override
-	public boolean isTrivial() {
-		return mInterferenceByAbstractLocationPair.isEmpty() || mInterferenceByAbstractLocationPair.values().stream()
-				.allMatch(predicate -> SmtUtils.isFalseLiteral(predicate.getFormula()));
-	}
-
-	@Override
-	public int size() {
-		return mInterferenceByAbstractLocationPair.size();
+	private static boolean isFalseLiteral(final IPredicate predicate) {
+		return de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 }

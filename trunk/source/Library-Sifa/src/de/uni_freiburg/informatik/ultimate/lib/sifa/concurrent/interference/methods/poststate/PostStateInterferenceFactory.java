@@ -8,14 +8,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdge;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeTraverser;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceMethodHelpers;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public final class PostStateInterferenceFactory implements IInterferenceFactory {
 
@@ -40,23 +41,19 @@ public final class PostStateInterferenceFactory implements IInterferenceFactory 
 	}
 
 	@Override
-	public IInterference createEmpty() {
-		return new PostStateInterference(Map.of());
-	}
-
-	@Override
 	public IInterference buildFromStates(final String threadId, final Map<IcfgLocation, IPredicate> locationStates) {
 		final Map<AbstractLocationPair, IPredicate> interferenceByAbstractLocationPair = new LinkedHashMap<>();
 		final Map<IcfgLocation, IPredicate> sharedTargetStates = new LinkedHashMap<>();
-		for (final InterferenceEdge edge : mTraverser.collect(locationStates)) {
+		for (final TranslatedInterferenceOfEdge edge : mTraverser.collect(locationStates)) {
 			final IPredicate sharedTargetState = getSharedTargetState(edge.target(), locationStates, sharedTargetStates);
-			final IPredicate postState = sharedTargetState != null ? sharedTargetState : computeEdgeLocalPostState(edge);
-			if (InterferenceMethodHelpers.shouldSkipTrivialPredicate(postState)) {
+			final IPredicate postState =
+					sharedTargetState != null ? sharedTargetState : computeEdgeLocalPostState(edge, locationStates);
+			if (shouldSkipTrivialPredicate(postState)) {
 				continue;
 			}
 			interferenceByAbstractLocationPair.merge(edge.abstractLocationPair(), postState, mDomain::join);
 		}
-		return new PostStateInterference(interferenceByAbstractLocationPair);
+		return interferenceByAbstractLocationPair.isEmpty() ? null : new PostStateInterference(interferenceByAbstractLocationPair);
 	}
 
 	private IPredicate getSharedTargetState(final IcfgLocation target, final Map<IcfgLocation, IPredicate> locationStates,
@@ -68,14 +65,27 @@ public final class PostStateInterferenceFactory implements IInterferenceFactory 
 		return sharedTargetStates.get(target);
 	}
 
-	private IPredicate computeEdgeLocalPostState(final InterferenceEdge edge) {
-		final IPredicate sharedPreState = mTranslator.projectPreStateToSharedState(edge.sourceState());
-		final IPredicate relationalInterference =
-				InterferenceMethodHelpers.combine(sharedPreState, edge.transitionPredicate(), mManagedScript,
-						mPredicateFactory);
-		if (InterferenceMethodHelpers.shouldSkipTrivialPredicate(relationalInterference)) {
+	private IPredicate computeEdgeLocalPostState(final TranslatedInterferenceOfEdge edge,
+			final Map<IcfgLocation, IPredicate> locationStates) {
+		final IPredicate sourceState = locationStates.get(edge.source());
+		if (sourceState == null) {
+			return null;
+		}
+		final IPredicate sharedPreState = mTranslator.projectPreStateToSharedState(sourceState);
+		final IPredicate relationalInterference = combine(sharedPreState, edge.transitionPredicate());
+		if (shouldSkipTrivialPredicate(relationalInterference)) {
 			return relationalInterference;
 		}
 		return mPostcondition.strongestPostcondition(mTruePredicate, relationalInterference);
+	}
+
+	private IPredicate combine(final IPredicate left, final IPredicate right) {
+		final Term combined = SmtUtils.andWithExtendedLocalSimplification(mManagedScript.getScript(),
+				left.getFormula(), right.getFormula());
+		return mPredicateFactory.newPredicate(combined);
+	}
+
+	private static boolean shouldSkipTrivialPredicate(final IPredicate predicate) {
+		return SmtUtils.isTrueLiteral(predicate.getFormula()) || SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 }

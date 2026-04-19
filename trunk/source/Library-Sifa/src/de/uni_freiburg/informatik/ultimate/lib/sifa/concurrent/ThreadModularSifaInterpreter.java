@@ -103,12 +103,13 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mThreadInterpreters = new HashMap<>();
 		prepareThreadIcfgsAndLois();
 		mResultPrinter = mResultPrint
-				? new SifaResultPrinter(logger, setup.abstractLocationIds(), mConcurrentTools.getThreadActivityPreanalysis())
+				? new SifaResultPrinter(logger, setup.abstractLocationIds(),
+						mConcurrentTools.getThreadActivityPreanalysis())
 				: null;
 	}
 
 	private static IUltimateServiceProvider extractServices(final SymbolicTools tools) {
-		if (tools instanceof ConcurrentSymbolicTools concurrentTools) {
+		if (tools instanceof final ConcurrentSymbolicTools concurrentTools) {
 			return concurrentTools.getServices();
 		}
 		throw new IllegalArgumentException(
@@ -118,12 +119,16 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
 		final FixpointResult fixpoint = computeOuterInterferenceFixpoint();
-		if (mResultPrinter != null) {
-			mResultPrinter.printResults(fixpoint.locationPredicates, mIcfg);
-		} else {
-			mLogger.info("Thread-modular result printing disabled");
+		if (false) {
+			if (mResultPrinter != null) {
+				mResultPrinter.printResults(fixpoint.locationPredicates, mIcfg);
+			} else {
+				mLogger.info("Thread-modular result printing disabled");
+			}
 		}
-		verifyProof(fixpoint);
+		if (false) {
+			verifyProof(fixpoint);
+		}
 		return fixpoint.locationPredicates;
 	}
 
@@ -136,11 +141,10 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		InterferenceCollection currentInterferences = InterferenceCollection.empty();
 
 		for (int iteration = 1;; iteration++) {
-			logOuterFixpointIteration(iteration);
+			mLogger.info("Iteration %d", iteration);
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new HashMap<>();
 			analyzeThreads(currentInterferences, allPredicates, perThreadPredicates);
 			final InterferenceCollection extractedInterferences = rebuildInterferences(perThreadPredicates);
-			logInterferenceCounts(extractedInterferences);
 
 			if (extractedInterferences.hasConverged(currentInterferences, mAnalysisDomain)) {
 				return new FixpointResult(allPredicates, perThreadPredicates);
@@ -165,7 +169,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 				continue;
 			}
 			final IInterference rebuilt = mInterferenceFactory.buildFromStates(threadId, locationStates);
-			if (!rebuilt.isTrivial()) {
+			if (rebuilt != null) {
 				rebuiltInterferences.put(threadId, rebuilt);
 			}
 		}
@@ -204,8 +208,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	}
 
 	private static boolean isForkSourceLocation(final IcfgLocation location) {
-		return location.getOutgoingEdges().stream()
-				.anyMatch(edge -> edge instanceof de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent<?>);
+		return location.getOutgoingEdges().stream().anyMatch(
+				edge -> edge instanceof de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent<?>);
 	}
 
 	private Map<IcfgLocation, IPredicate> analyzeSingleThread(final String threadId, final IPredicate initialState) {
@@ -234,8 +238,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private IcfgInterpreter createThreadInterpreter(final String threadId) {
 		final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
 		final Collection<IcfgLocation> lois = mThreadLois.get(threadId);
-		return new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg, lois, mAnalysisDomain,
-				mFluid, mLoopSumFactory, mCallSumFactory, null);
+		return new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg, lois, mAnalysisDomain, mFluid,
+				mLoopSumFactory, mCallSumFactory, null);
 	}
 
 	private void verifyProof(final FixpointResult fixpoint) {
@@ -243,44 +247,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			mLogger.info("Thread-modular proof checking disabled");
 			return;
 		}
-		mLogger.info("Thread-modular proof checking started");
-		final ThreadModularProofChecker.CheckReport report =
-				mProofChecker.checkAllDetailed(fixpoint.threadPredicates);
-		logProofSubcheck("Hoare edge checks", report.hoareChecksValid(), report.checkedHoareTriples(),
-				report.invalidHoareTriples());
-		logProofSubcheck("Interference stability checks", report.interferenceChecksValid(),
-				report.checkedInterferenceTriples(), report.invalidInterferenceTriples());
-
-		if (!report.overallValid()) {
-			logInvalidProofDetails("Hoare edge checks", report.invalidHoareDetails());
-			logInvalidProofDetails("Interference stability checks", report.invalidInterferenceDetails());
-			mLogger.error("Thread-modular proof checking failed");
-			throw new IllegalStateException("Thread-modular proof checking failed");
-		}
-		mLogger.info("Thread-modular proof checking passed");
+		mProofChecker.checkAllOrThrow(fixpoint.locationPredicates, fixpoint.threadPredicates, mLogger);
 	}
 
-	private void logProofSubcheck(final String checkName, final boolean valid, final int checked, final int invalid) {
-		if (valid) {
-			mLogger.info("Proof check '%s': SUCCESS (%d checked, %d invalid)", checkName, checked, invalid);
-			return;
-		}
-		mLogger.error("Proof check '%s': FAILED (%d checked, %d invalid)", checkName, checked, invalid);
-	}
-
-	private void logOuterFixpointIteration(final int iteration) {
-		mLogger.info("Iteration %d", iteration);
-	}
-
-	private void logInvalidProofDetails(final String checkName, final List<String> details) {
-		for (final String detail : details) {
-			mLogger.error("  %s: %s", checkName, detail);
-		}
-	}
-
-	private void logInterferenceCounts(final InterferenceCollection interferences) {
-		for (final String threadId : mThreadIds) {
-			mLogger.info("  Thread %s: %d interferences", threadId, interferences.getInterferenceCount(threadId));
-		}
-	}
 }

@@ -12,6 +12,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
+/*
+ * Currently a preanalysis computing for each location which other threads can be active.
+ * (replaces/acts as threadcounter ghostvariables in states from theory)
+ */
 public final class ThreadActivityPreanalysis {
 
 	private final Map<IcfgLocation, Set<String>> mActiveByLocation;

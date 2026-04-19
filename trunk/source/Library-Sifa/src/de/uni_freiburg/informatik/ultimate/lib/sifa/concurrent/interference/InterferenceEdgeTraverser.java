@@ -12,44 +12,31 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InterferenceEdgeTraverser {
 
-	private final Map<IcfgLocation, List<PreparedInterferenceEdge>> mPreparedEdgesBySource;
+	private final Map<IcfgLocation, List<TranslatedInterferenceOfEdge>> mPreparedEdgesBySource;
 
 	public InterferenceEdgeTraverser(final IIcfg<IcfgLocation> icfg,
 			final TransFormulaToInterferencePredicate translator) {
 		mPreparedEdgesBySource = prepareEdges(icfg, translator);
 	}
 
-	public List<InterferenceEdge> collect(final Map<IcfgLocation, IPredicate> locationStates) {
-		final List<InterferenceEdge> edges = new ArrayList<>();
-		for (final var entry : locationStates.entrySet()) {
-			final IcfgLocation source = entry.getKey();
-			final IPredicate sourceState = entry.getValue();
-			if (sourceState == null) {
-				continue;
-			}
-			final List<PreparedInterferenceEdge> preparedEdges = mPreparedEdgesBySource.get(source);
-			if (preparedEdges == null) {
-				continue;
-			}
-			for (final PreparedInterferenceEdge preparedEdge : preparedEdges) {
-				edges.add(new InterferenceEdge(preparedEdge, sourceState));
-			}
-		}
-		edges.sort((left, right) -> InterferenceUtils.PREPARED_EDGE_ORDER.compare(left.prepared(), right.prepared()));
-		return List.copyOf(edges);
+	public List<TranslatedInterferenceOfEdge> collect(final Map<IcfgLocation, IPredicate> locationStates) {
+		return locationStates.keySet().stream()
+				.map(mPreparedEdgesBySource::get)
+				.filter(java.util.Objects::nonNull)
+				.flatMap(List::stream)
+				.toList();
 	}
 
-	private static Map<IcfgLocation, List<PreparedInterferenceEdge>> prepareEdges(final IIcfg<IcfgLocation> icfg,
+	private static Map<IcfgLocation, List<TranslatedInterferenceOfEdge>> prepareEdges(final IIcfg<IcfgLocation> icfg,
 			final TransFormulaToInterferencePredicate translator) {
-		final Map<IcfgLocation, List<PreparedInterferenceEdge>> preparedEdgesBySource = new LinkedHashMap<>();
+		final Map<IcfgLocation, List<TranslatedInterferenceOfEdge>> preparedEdgesBySource = new LinkedHashMap<>();
 		IcfgUtils.getAllLocations(icfg).forEach(source -> {
-			final List<PreparedInterferenceEdge> preparedEdges = new ArrayList<>();
+			final List<TranslatedInterferenceOfEdge> preparedEdges = new ArrayList<>();
 			for (final IcfgEdge edge : source.getOutgoingEdges()) {
-				final PreparedInterferenceEdge prepared = prepareEdge(source, edge, translator);
+				final TranslatedInterferenceOfEdge prepared = prepareEdge(source, edge, translator);
 				if (prepared != null) {
 					preparedEdges.add(prepared);
 				}
@@ -62,7 +49,7 @@ public final class InterferenceEdgeTraverser {
 		return Map.copyOf(preparedEdgesBySource);
 	}
 
-	private static PreparedInterferenceEdge prepareEdge(final IcfgLocation source, final IcfgEdge edge,
+	private static TranslatedInterferenceOfEdge prepareEdge(final IcfgLocation source, final IcfgEdge edge,
 			final TransFormulaToInterferencePredicate translator) {
 		final IcfgLocation target = edge.getTarget();
 		if (target == null || edge.getTransformula() == null) {
@@ -81,27 +68,7 @@ public final class InterferenceEdgeTraverser {
 						additionallyChangedGlobals)
 				: translator.translateForInterferenceWithFork(edge.getTransformula(), source.getProcedure(), source, target,
 						forkedThreadId, translator.getEntryLocation(forkedThreadId), additionallyChangedGlobals);
-		return new PreparedInterferenceEdge(source, target, InterferenceGrouping.keyFor(translator, source, target),
-				transitionPredicate,
-				computeModifiedGlobals(source, target, forkedThreadId, edge, translator, additionallyChangedGlobals));
-	}
-
-	private static Set<TermVariable> computeModifiedGlobals(final IcfgLocation source, final IcfgLocation target,
-			final String forkedThreadId, final IcfgEdge edge, final TransFormulaToInterferencePredicate translator,
-			final Set<de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar> additionallyChangedGlobals) {
-		final Set<TermVariable> modified =
-				new java.util.HashSet<>(InterferenceUtils.getChangedGlobalTermVars(edge.getTransformula(), additionallyChangedGlobals));
-		final TermVariable interferingLoc = translator.getLocationTermVarOrNull(source.getProcedure());
-		final boolean locationChanges = forkedThreadId != null || !translator.isLocationStutterStep(source, target);
-		if (interferingLoc != null && locationChanges) {
-			modified.add(interferingLoc);
-		}
-		if (forkedThreadId != null) {
-			final TermVariable forkedLoc = translator.getLocationTermVarOrNull(forkedThreadId);
-			if (forkedLoc != null) {
-				modified.add(forkedLoc);
-			}
-		}
-		return modified.isEmpty() ? Set.of() : Set.copyOf(modified);
+		return new TranslatedInterferenceOfEdge(source, target, InterferenceGrouping.keyFor(translator, source, target),
+				transitionPredicate);
 	}
 }

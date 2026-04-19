@@ -38,4 +38,13 @@ to convey the resulting work.
 	<version>0.3.1</version>
 	<packaging>eclipse-test-plugin</packaging>
 	<artifactId>de.uni_freiburg.informatik.ultimate.lib.sifa.test</artifactId>
+	<dependencies>
+		<dependency>
+			<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+			<artifactId>
+				de.uni_freiburg.informatik.ultimate.lib.sifa
+			</artifactId>
+			<version>0.3.1</version>
+		</dependency>
+	</dependencies>
 </project>

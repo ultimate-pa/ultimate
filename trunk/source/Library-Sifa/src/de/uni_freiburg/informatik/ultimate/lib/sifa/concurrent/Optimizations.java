@@ -56,7 +56,7 @@ final class Optimizations {
 				continue; // known inactive
 			}
 			final IInterference itf = ctx.interferences().getInterferenceForThread(otherId);
-			if (itf == null || itf.isTrivial()) {
+			if (itf == null) {
 				continue; // trivial interference
 			}
 			result.add(itf);

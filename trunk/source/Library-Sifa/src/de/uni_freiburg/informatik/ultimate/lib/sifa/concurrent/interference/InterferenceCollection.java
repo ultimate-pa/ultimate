@@ -28,11 +28,6 @@ public class InterferenceCollection {
 		return Set.copyOf(mInterferencesByThread.keySet());
 	}
 
-	public int getInterferenceCount(final String threadId) {
-		final IInterference itf = mInterferencesByThread.get(threadId);
-		return itf == null ? 0 : itf.size();
-	}
-
 	public boolean isEmpty() {
 		return mInterferencesByThread.isEmpty();
 	}
@@ -78,7 +73,7 @@ public class InterferenceCollection {
 				widenedItf = thisItf.widen(otherItf, domain);
 			}
 
-			if (widenedItf != null && !widenedItf.isTrivial()) {
+			if (widenedItf != null) {
 				widened.put(threadId, widenedItf);
 			}
 		}

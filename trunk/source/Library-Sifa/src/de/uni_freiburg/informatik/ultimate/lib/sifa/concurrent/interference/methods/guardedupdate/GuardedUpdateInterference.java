@@ -1,21 +1,21 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.guardedupdate;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceFixpointUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceMethodHelpers;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -40,21 +40,72 @@ public final class GuardedUpdateInterference implements IInterference {
 		mInterferenceByAbstractLocationPair = Map.copyOf(interferenceByAbstractLocationPair);
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
-		mFalsePredicate = InterferenceMethodHelpers.falsePredicate(predicateFactory, managedScript);
+		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
 	}
 
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain, final int wideningThreshold,
 			final SifaStats stats) {
-		return InterferenceFixpointUtils.applyUntilFixpoint(state, mInterferenceByAbstractLocationPair.values(),
-				(frontier, groupedInterference) -> applyGroupToFrontier(frontier, groupedInterference, domain),
-				domain, wideningThreshold, stats);
+		if (mInterferenceByAbstractLocationPair.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
+				|| SmtUtils.isFalseLiteral(state.getFormula())) {
+			return state;
+		}
+
+		IPredicate current = state;
+		IPredicate frontier = state;
+		for (int iteration = 1;; iteration++) {
+			stats.increment(Key.INTERFERENCE_INNER_ITERATIONS);
+			boolean hasGenerated = false;
+			IPredicate generated = state;
+			for (final GuardedUpdateGroup group : mInterferenceByAbstractLocationPair.values()) {
+				final IPredicate post = applyGroupToFrontier(frontier, group, domain);
+				if (SmtUtils.isFalseLiteral(post.getFormula())) {
+					continue;
+				}
+				if (!hasGenerated) {
+					generated = post;
+					hasGenerated = true;
+				} else {
+					generated = domain.join(generated, post);
+				}
+			}
+			if (!hasGenerated || domain.isSubsetEq(generated, current).isTrueForAbstraction()) {
+				return current;
+			}
+
+			final IPredicate expanded = domain.join(current, generated);
+			final IPredicate next;
+			if (iteration > wideningThreshold) {
+				next = domain.widen(current, expanded);
+				stats.increment(Key.INTERFERENCE_INNER_WIDENINGS);
+			} else {
+				next = expanded;
+			}
+			if (domain.isSubsetEq(next, current).isTrueForAbstraction()) {
+				return current;
+			}
+			current = next;
+			frontier = generated;
+		}
 	}
 
 	private IPredicate applyGroupToFrontier(final IPredicate frontier, final GuardedUpdateGroup groupedInterference,
 			final IDomain domain) {
-		return InterferenceMethodHelpers.applyGroup(groupedInterference.updates(),
-				update -> applyUpdate(frontier, update), domain, mFalsePredicate);
+		boolean hasResult = false;
+		IPredicate result = mFalsePredicate;
+		for (final GuardedUpdate update : groupedInterference.updates()) {
+			final IPredicate post = applyUpdate(frontier, update);
+			if (SmtUtils.isFalseLiteral(post.getFormula())) {
+				continue;
+			}
+			if (!hasResult) {
+				result = post;
+				hasResult = true;
+			} else {
+				result = domain.join(result, post);
+			}
+		}
+		return hasResult ? result : mFalsePredicate;
 	}
 
 	@Override
@@ -63,37 +114,47 @@ public final class GuardedUpdateInterference implements IInterference {
 			throw new IllegalArgumentException(
 					"Cannot widen GuardedUpdateInterference with " + other.getClass().getSimpleName());
 		}
-		return new GuardedUpdateInterference(
-				InterferenceMethodHelpers.widen(mInterferenceByAbstractLocationPair,
-						typedOther.mInterferenceByAbstractLocationPair,
-						(left, right) -> widen(left, right, domain)),
-				mManagedScript, mPredicateFactory);
+		final Map<AbstractLocationPair, GuardedUpdateGroup> widened = new LinkedHashMap<>();
+		for (final Entry<AbstractLocationPair, GuardedUpdateGroup> entry : mInterferenceByAbstractLocationPair.entrySet()) {
+			final GuardedUpdateGroup otherGroup = typedOther.mInterferenceByAbstractLocationPair.get(entry.getKey());
+			final GuardedUpdateGroup widenedGroup =
+					otherGroup == null ? entry.getValue() : widen(entry.getValue(), otherGroup, domain);
+			if (!isTrivialGroup(widenedGroup)) {
+				widened.put(entry.getKey(), widenedGroup);
+			}
+		}
+		for (final Entry<AbstractLocationPair, GuardedUpdateGroup> entry : typedOther.mInterferenceByAbstractLocationPair.entrySet()) {
+			if (!widened.containsKey(entry.getKey()) && !isTrivialGroup(entry.getValue())) {
+				widened.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return widened.isEmpty() ? null : new GuardedUpdateInterference(widened, mManagedScript, mPredicateFactory);
 	}
 
 	@Override
 	public boolean isSubsumedBy(final IInterference other, final IDomain domain) {
-		return other instanceof GuardedUpdateInterference typedOther
-				&& InterferenceMethodHelpers.isSubsumed(mInterferenceByAbstractLocationPair,
-						typedOther.mInterferenceByAbstractLocationPair,
-						(left, right) -> isSubsumed(left, right, domain));
-	}
-
-	@Override
-	public boolean isTrivial() {
-		return mInterferenceByAbstractLocationPair.isEmpty()
-				|| mInterferenceByAbstractLocationPair.values().stream()
-						.allMatch(group -> group.updates().stream().allMatch(GuardedUpdate::hasFalseEffect));
-	}
-
-	@Override
-	public int size() {
-		return mInterferenceByAbstractLocationPair.size();
+		if (!(other instanceof final GuardedUpdateInterference typedOther)) {
+			return false;
+		}
+		for (final Entry<AbstractLocationPair, GuardedUpdateGroup> entry : mInterferenceByAbstractLocationPair.entrySet()) {
+			final GuardedUpdateGroup otherGroup = typedOther.mInterferenceByAbstractLocationPair.get(entry.getKey());
+			if (otherGroup == null || !isSubsumed(entry.getValue(), otherGroup, domain)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static boolean isSubsumed(final GuardedUpdateGroup left, final GuardedUpdateGroup right, final IDomain domain) {
-		return left.updates().size() == right.updates().size()
-				&& IntStream.range(0, left.updates().size())
-						.allMatch(i -> isSubsumed(left.updates().get(i), right.updates().get(i), domain));
+		if (left.updates().size() != right.updates().size()) {
+			return false;
+		}
+		for (int i = 0; i < left.updates().size(); i++) {
+			if (!isSubsumed(left.updates().get(i), right.updates().get(i), domain)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static boolean isSubsumed(final GuardedUpdate left, final GuardedUpdate right, final IDomain domain) {
@@ -172,5 +233,9 @@ public final class GuardedUpdateInterference implements IInterference {
 		}
 		return Stream.concat(left.modifiedGlobalsOrEmpty().stream(), right.modifiedGlobalsOrEmpty().stream())
 				.collect(Collectors.toUnmodifiableSet());
+	}
+
+	private static boolean isTrivialGroup(final GuardedUpdateGroup group) {
+		return group.updates().stream().allMatch(GuardedUpdate::hasFalseEffect);
 	}
 }
