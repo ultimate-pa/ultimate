@@ -30,6 +30,10 @@
     <option name="--sifa.interference.applicator">POST_STATE</option>
   </rundefinition>
 
+  <rundefinition name="none">
+    <option name="--sifa.interference.applicator">NONE</option>
+  </rundefinition>
+
   <tasks name="SVCOMP-Concurrency">
     <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
     <!-- Exclude pthread-wmm to speedup evaluation -->

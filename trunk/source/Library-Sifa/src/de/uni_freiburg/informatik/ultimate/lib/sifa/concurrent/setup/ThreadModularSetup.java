@@ -80,7 +80,7 @@ public final class ThreadModularSetup {
 				settings.interferenceApplicatorType(), icfg, edgeTraverser, translator, postcondition, analysisDomain,
 				factory, script);
 		logger.info("Interference method: %s (%s)", settings.interferenceApplicatorType(),
-				interferenceFactory.getClass().getSimpleName());
+				interferenceFactory == null ? "None" : interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", settings.locationAbstractionType());
 
 		final boolean includeInterferencePreState = true;
@@ -226,6 +226,7 @@ public final class ThreadModularSetup {
 			new GuardedUpdateInterferenceFactory(icfg, translator, postcondition, script, factory);
 		case POST_STATE ->
 			new PostStateInterferenceFactory(edgeTraverser, translator, postcondition, analysisDomain, factory, script);
+		case NONE -> null;
 		};
 	}
 

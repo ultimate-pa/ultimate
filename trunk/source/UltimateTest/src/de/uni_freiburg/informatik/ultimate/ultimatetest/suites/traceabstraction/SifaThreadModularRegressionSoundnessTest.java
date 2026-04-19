@@ -26,13 +26,17 @@
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition.NamedServiceCallback;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
@@ -76,8 +80,44 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	@Override
 	public java.util.Collection<UltimateTestCase> createTestCases() {
 		final List<File> inputFiles = selectInputFiles();
-		addTestCases(resolveToolchainFile(), resolveTrunkOrAbsoluteFile(getSettingsPath()), inputFiles);
+		final File toolchainFile = resolveToolchainFile();
+		final File settingsFile = resolveTrunkOrAbsoluteFile(getSettingsPath());
+
+		final String[] methods =
+				{ "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "NONE" };
+
+		for (final String method : methods) {
+			final UnaryOperator<IUltimateServiceProvider> callback = s -> {
+				final var prefs = s.getPreferenceProvider("de.uni_freiburg.informatik.ultimate.plugins.sifa");
+				prefs.put("Interference Applicator", method);
+
+				// Apply general BenchExec settings
+				prefs.put("Abstract Domain", "ExplicitValueDomain");
+				prefs.put("Fluid", "SizeLimitFluid");
+				prefs.put("Max. Parallel Explicit Values", 1);
+				prefs.put("Join Precision", false);
+				prefs.put("Proof Check", false);
+				prefs.put("Result Print", false);
+
+				// Guard Bucket Split is true only for specific applicators in BenchExec
+				final boolean guardBucketSplit = method.equals("STRONGEST_POSTCONDITION") 
+						|| method.equals("GUARDED_EXACT_UPDATE");
+				prefs.put("Guard Bucket Split", guardBucketSplit);
+				
+				return s;
+			};
+			addTestCases(toolchainFile, settingsFile, inputFiles, method, callback);
+		}
 		return super.createTestCases();
+	}
+
+	private void addTestCases(final File toolchainFile, final File settingsFile, final Collection<File> inputFiles,
+			final String name, final UnaryOperator<IUltimateServiceProvider> callback) {
+		final long timeout = getTimeout();
+		final NamedServiceCallback serviceCallback = new NamedServiceCallback(name, callback);
+		for (final File inputFile : inputFiles) {
+			addTestCase(new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, timeout, serviceCallback));
+		}
 	}
 
 	private static List<File> selectInputFiles() {

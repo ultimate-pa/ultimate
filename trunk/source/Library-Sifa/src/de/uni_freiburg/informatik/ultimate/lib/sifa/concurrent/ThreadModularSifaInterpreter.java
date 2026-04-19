@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Inte
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -139,6 +140,12 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private FixpointResult computeOuterInterferenceFixpoint() {
 		final Map<IcfgLocation, IPredicate> allPredicates = new HashMap<>();
 		InterferenceCollection currentInterferences = InterferenceCollection.empty();
+
+		if (mConcurrentTools.getSettings().interferenceApplicatorType() == InterferenceApplicatorType.NONE) {
+			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new HashMap<>();
+			analyzeThreads(currentInterferences, allPredicates, perThreadPredicates);
+			return new FixpointResult(allPredicates, perThreadPredicates);
+		}
 
 		for (int iteration = 1;; iteration++) {
 			mLogger.info("Iteration %d", iteration);
