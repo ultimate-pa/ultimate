@@ -6,7 +6,7 @@
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
   <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
   <option name="--sifa.fluid">SizeLimitFluid</option>
-  <option name="--sifa.max.parallel.explicit.values">2</option>
+  <option name="--sifa.max.parallel.explicit.values">1</option>
   <option name="--sifa.join.precision">false</option>
   <option name="--sifa.proof.check">false</option>
   <option name="--sifa.result.print">false</option>

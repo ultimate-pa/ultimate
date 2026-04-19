@@ -48,6 +48,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final Map<String, IIcfg<IcfgLocation>> mThreadIcfgs;
 	private final Map<String, Collection<IcfgLocation>> mThreadLois;
 	private final Map<String, IcfgInterpreter> mThreadInterpreters;
+	private final Map<String, Set<IcfgLocation>> mForkSourcesByThread;
 
 	private final List<String> mThreadIds;
 	private final Set<String> mJoinedThreads;
@@ -102,6 +103,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mThreadIcfgs = new HashMap<>();
 		mThreadLois = new HashMap<>();
 		mThreadInterpreters = new HashMap<>();
+		mForkSourcesByThread = collectForkSourcesByThread();
 		prepareThreadIcfgsAndLois();
 		mResultPrinter = mResultPrint
 				? new SifaResultPrinter(logger, setup.abstractLocationIds(),
@@ -120,14 +122,14 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
 		final FixpointResult fixpoint = computeOuterInterferenceFixpoint();
-		if (false) {
+		if (mResultPrint) {
 			if (mResultPrinter != null) {
 				mResultPrinter.printResults(fixpoint.locationPredicates, mIcfg);
 			} else {
 				mLogger.info("Thread-modular result printing disabled");
 			}
 		}
-		if (false) {
+		if (mProofChecker != null) {
 			verifyProof(fixpoint);
 		}
 		return fixpoint.locationPredicates;
@@ -202,11 +204,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			allPredicates.putAll(threadResult);
 			for (final var entry : observed.entrySet()) {
 				if (!allPredicates.containsKey(entry.getKey()) || isForkSourceLocation(entry.getKey())) {
-					if (isForkSourceLocation(entry.getKey()) && threadResult.containsKey(entry.getKey())
-							&& !threadResult.get(entry.getKey()).getFormula().equals(entry.getValue().getFormula())) {
-						mLogger.info("Using observed fork-source state at %s for next thread initialization",
-								entry.getKey());
-					}
 					allPredicates.put(entry.getKey(), entry.getValue());
 				}
 			}
@@ -232,6 +229,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			final Collection<IcfgLocation> baseLois = mLoiExpansion.getLocationsOfInterestForThread(threadId,
 					threadIcfg, mRequestedLocationsOfInterest);
 			final Set<IcfgLocation> expandedLois = new LinkedHashSet<>(baseLois);
+			final Set<IcfgLocation> forkSources = mForkSourcesByThread.getOrDefault(threadId, Set.of());
+			expandedLois.addAll(forkSources);
 			if (mJoinedThreads.contains(threadId)) {
 				final IcfgLocation exit = threadIcfg.getProcedureExitNodes().get(threadId);
 				if (exit != null) {
@@ -255,6 +254,20 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			return;
 		}
 		mProofChecker.checkAllOrThrow(fixpoint.locationPredicates, fixpoint.threadPredicates, mLogger);
+	}
+
+	private Map<String, Set<IcfgLocation>> collectForkSourcesByThread() {
+		final Map<String, Set<IcfgLocation>> result = new java.util.LinkedHashMap<>();
+		for (final var procedurePoints : mIcfg.getProgramPoints().values()) {
+			for (final IcfgLocation location : procedurePoints.values()) {
+				for (final var edge : location.getOutgoingEdges()) {
+					if (edge instanceof de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent<?>) {
+						result.computeIfAbsent(location.getProcedure(), __ -> new java.util.LinkedHashSet<>()).add(location);
+					}
+				}
+			}
+		}
+		return Map.copyOf(result);
 	}
 
 }

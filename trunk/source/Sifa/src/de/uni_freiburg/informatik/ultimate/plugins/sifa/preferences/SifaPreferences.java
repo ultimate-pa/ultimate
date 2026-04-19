@@ -149,7 +149,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	// settings specific to ExplicitValueDomain
 	public static final String LABEL_EXPLVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Explicit Values";
-	private static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 4;
+	private static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 1;
 
 	// settings specific to IntervalDomain
 	public static final String LABEL_INTERVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Intervals";
@@ -157,11 +157,11 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	// settings specific to OctagonDomain
 	public static final String LABEL_OCTAGONDOM_MAX_PARALLEL_STATES = "Max. Parallel Octagon";
-	private static final int DEFAULT_OCTAGONDOM_MAX_PARALLEL_STATES = 2;
+	private static final int DEFAULT_OCTAGONDOM_MAX_PARALLEL_STATES = 1;
 
 	// settings specific to EqDomain
 	public static final String LABEL_EQDOM_MAX_PARALLEL_STATES = "Max. Parallel Equality";
-	private static final int DEFAULT_EQDOM_MAX_PARALLEL_STATES = 2;
+	private static final int DEFAULT_EQDOM_MAX_PARALLEL_STATES = 1;
 
 	// settings specific to CompoundDomain
 	public static final String LABEL_COMPOUNDDOM_SUBDOM = "CompoundDomain Intern Domains";
