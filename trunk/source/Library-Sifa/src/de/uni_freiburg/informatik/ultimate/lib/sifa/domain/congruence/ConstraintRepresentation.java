@@ -122,6 +122,11 @@ public class ConstraintRepresentation {
 		return CongruenceUtil.getRowVectorFromIntList(list);
 	}
 
+	public int getDim() {
+		minimize();
+		return getVectorLength() - getEqualities().size();
+	}
+
 	public void minimize() {
 		if (mIsMinimal) {
 			return;

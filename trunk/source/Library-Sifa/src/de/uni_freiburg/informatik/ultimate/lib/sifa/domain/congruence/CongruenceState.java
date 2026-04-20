@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -102,6 +103,20 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		return SmtUtils.and(script, terms);
 	}
 
+	public CongruenceState getReorderedForm(final Map<Term, Integer> newVarToIndex) {
+		// Compute the required lengths for the vectors.
+		// +1 for the constant in the first place
+		final int newColumnCount = newVarToIndex.size() + 1;
+
+		// Compute the reordered forms of the generators
+		final Map<Integer, Integer> reorderMap = CongruenceUtil.getReorderForMaps(mVarToIndex, newVarToIndex);
+		reorderMap.put(0, 0);
+		final GeneratorRepresentation generators = getGeneratorRepresentation();
+		final GeneratorRepresentation reorderedGenerators = generators.getReorderedForm(reorderMap, newColumnCount);
+
+		return new CongruenceState(newVarToIndex, reorderedGenerators);
+	}
+
 	@Override
 	public CongruenceState join(final CongruenceState other) {
 		// Compute the new VarToIndex
@@ -109,22 +124,11 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final Map<Term, Integer> otherVarToIndex = other.getVarToIndex();
 		final Map<Term, Integer> newVarToIndex = CongruenceUtil.mergeMaps(selfVarToIndex, otherVarToIndex);
 
-		// Compute the required lengths for the vectors.
-		// +1 for the constant in the first place
-		final int newColumnCount = newVarToIndex.size() + 1;
+		final CongruenceState selfReorderedForm = getReorderedForm(newVarToIndex);
+		final CongruenceState otherReorderedForm = other.getReorderedForm(newVarToIndex);
 
-		// Compute the reordered forms of the generators
-		final Map<Integer, Integer> selfReorderMap = CongruenceUtil.getReorderForMaps(selfVarToIndex, newVarToIndex);
-		selfReorderMap.put(0, 0);
-		final GeneratorRepresentation selfGenerators = getGeneratorRepresentation();
-		final GeneratorRepresentation selfReorderedGenerators = selfGenerators.getReorderedForm(selfReorderMap,
-				newColumnCount);
-
-		final Map<Integer, Integer> otherReorderMap = CongruenceUtil.getReorderForMaps(otherVarToIndex, newVarToIndex);
-		otherReorderMap.put(0, 0);
-		final GeneratorRepresentation otherGenerators = other.getGeneratorRepresentation();
-		final GeneratorRepresentation otherReorderedGenerators = otherGenerators.getReorderedForm(otherReorderMap,
-				newColumnCount);
+		final GeneratorRepresentation selfReorderedGenerators = selfReorderedForm.getGeneratorRepresentation();
+		final GeneratorRepresentation otherReorderedGenerators = otherReorderedForm.getGeneratorRepresentation();
 
 		// Combine the generators
 		final List<MatrixQ128> newLines = selfReorderedGenerators.getLines();
@@ -134,15 +138,53 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		newParameters.addAll(otherReorderedGenerators.getParameters());
 
 		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
-				newColumnCount);
+				selfReorderedGenerators.getVectorLength());
 
 		return new CongruenceState(newVarToIndex, newGenerators);
 	}
 
 	@Override
 	public CongruenceState widen(final CongruenceState other) {
-		// TODO Auto-generated method stub
-		return null;
+		final CongruenceState upper = join(other);
+		final var newVarToIndex = upper.getVarToIndex();
+		final CongruenceState lower = other.getReorderedForm(newVarToIndex);
+
+		final ConstraintRepresentation lowerConstraints = lower.getConstraintRepresentation();
+		lowerConstraints.minimize();
+
+		final ConstraintRepresentation upperConstraints = upper.getConstraintRepresentation();
+		upperConstraints.stronglyMinimize();
+
+		if (lowerConstraints.isUnsat() || lowerConstraints.getDim() < upperConstraints.getDim()) {
+			return upper;
+		}
+
+		// CS := {γ ∈ C2 | ∃β ∈ C1 . β ⇑ γ}
+
+		final List<MatrixQ128> lowerVectors = new ArrayList<>(lowerConstraints.getEqualities());
+		lowerVectors.addAll(lowerConstraints.getCongruences());
+
+		final List<MatrixQ128> newEqualities = new ArrayList<>();
+		for (final MatrixQ128 equality : upperConstraints.getEqualities()) {
+			for (final MatrixQ128 lowerVector : lowerVectors) {
+				if (CongruenceUtil.isEqualsInLastNonZero(equality, lowerVector)) {
+					newEqualities.add(equality);
+				}
+			}
+		}
+
+		final List<MatrixQ128> newCongruences = new ArrayList<>();
+		for (final MatrixQ128 congruence : upperConstraints.getCongruences()) {
+			for (final MatrixQ128 lowerVector : lowerVectors) {
+				if (CongruenceUtil.isEqualsInLastNonZero(congruence, lowerVector)) {
+					newCongruences.add(congruence);
+				}
+			}
+		}
+
+		final ConstraintRepresentation newConstraints = new ConstraintRepresentation(newEqualities, newCongruences,
+				upperConstraints.getVectorLength());
+		return new CongruenceState(newVarToIndex, newConstraints);
 	}
 
 	@Override

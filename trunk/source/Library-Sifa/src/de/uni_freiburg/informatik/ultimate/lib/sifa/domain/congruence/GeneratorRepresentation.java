@@ -81,6 +81,10 @@ public class GeneratorRepresentation {
 		return CongruenceUtil.getRowsFromMatrix(getParameterMatrix());
 	}
 
+	public int getVectorLength() {
+		return mVectorLength;
+	}
+
 	public boolean isMinimal() {
 		return mIsMinimal;
 	}

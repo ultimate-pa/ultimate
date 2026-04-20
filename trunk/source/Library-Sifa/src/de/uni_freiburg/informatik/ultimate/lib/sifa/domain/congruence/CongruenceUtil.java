@@ -360,4 +360,19 @@ public class CongruenceUtil {
 		return sum;
 	}
 
+	public static boolean isEqualsInLastNonZero(final MatrixQ128 vector1, final MatrixQ128 vector2) {
+		final long k = lastPivot(vector1);
+		if (k == lastPivot(vector2)) {
+			if (k == 0) {
+				return true;
+			}
+			final RationalNumber value1 = vector1.get(0, k);
+			final RationalNumber value2 = vector2.get(0, k);
+			if (value1.equals(value2)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }
