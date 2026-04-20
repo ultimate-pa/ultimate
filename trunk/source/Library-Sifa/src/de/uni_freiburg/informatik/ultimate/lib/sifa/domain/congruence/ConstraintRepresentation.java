@@ -57,6 +57,10 @@ public class ConstraintRepresentation {
 		return CongruenceUtil.getRowsFromMatrix(mCongruenceMatrix);
 	}
 
+	public int getVectorLength() {
+		return mVectorLength;
+	}
+
 	public boolean isMinimal() {
 		return mIsMinimal;
 	}

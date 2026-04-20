@@ -1,35 +1,40 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ojalgo.matrix.MatrixQ128;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class CongruenceState implements IAbstractState<CongruenceState> {
 	public static final CongruenceState TOP = new CongruenceState(Map.of(), ConstraintRepresentation.getEmpty(0));
 
-	private Map<Term, Integer> mVarToIndex;
+	private final Map<Term, Integer> mVarToIndex;
 
-	private ConstraintRepresentation mConstraints;
-	private GeneratorRepresentation mGenerators;
+	private final ConstraintRepresentation mConstraints;
+	private final GeneratorRepresentation mGenerators;
 
 	public CongruenceState(final Map<Term, Integer> varToIndex, final ConstraintRepresentation constraints) {
-		final Map<Term, Integer> mVarToIndex = varToIndex;
-		final ConstraintRepresentation mConstraints = constraints;
-		final GeneratorRepresentation mGenerators = null;
+		mVarToIndex = varToIndex;
+		mConstraints = constraints;
+		mGenerators = null;
 
 		// Init, Aint it ?
 
 	}
 
 	public CongruenceState(final Map<Term, Integer> varToIndex, final GeneratorRepresentation generators) {
-		final Map<Term, Integer> mVarToIndex = varToIndex;
-		final ConstraintRepresentation mConstraints = null;
-		final GeneratorRepresentation mGenerators = generators;
+		mVarToIndex = varToIndex;
+		mConstraints = null;
+		mGenerators = generators;
 
 		// Init, Aint it ?
 
@@ -53,10 +58,48 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		return mVarToIndex;
 	}
 
+	private Map<Integer, Term> getIndexToVar() {
+		final Map<Integer, Term> indexToVar = new HashMap<>();
+		final Map<Term, Integer> varToIndex = getVarToIndex();
+
+		for (final Term term : varToIndex.keySet()) {
+			final Integer index = varToIndex.get(term);
+			indexToVar.put(index, term);
+		}
+		return indexToVar;
+	}
+
 	@Override
 	public Term toTerm(final Script script) {
-		// TODO Auto-generated method stub
-		return null;
+		final ConstraintRepresentation constraints = getConstraintRepresentation();
+		final List<MatrixQ128> equalities = constraints.getEqualities();
+		final List<MatrixQ128> congruences = constraints.getCongruences();
+
+		final Map<Integer, Term> indexToVar = getIndexToVar();
+
+		final Set<Term> terms = new HashSet<>();
+
+		for (final MatrixQ128 equality : equalities) {
+			final long commonDenominator = CongruenceUtil.getCommonDenominator(equality);
+			final MatrixQ128 wholeEquality = equality.multiply(commonDenominator);
+			final Term sum = CongruenceUtil.getSumTerm(wholeEquality, indexToVar, script);
+			final Term equalityTerm = SmtUtils.binaryEquality(script, sum,
+					SmtUtils.constructIntValue(script, BigInteger.ZERO));
+			terms.add(equalityTerm);
+		}
+
+		for (final MatrixQ128 congruence : congruences) {
+			final long commonDenominator = CongruenceUtil.getCommonDenominator(congruence);
+			final MatrixQ128 wholeCongruence = congruence.multiply(commonDenominator);
+			final Term sum = CongruenceUtil.getSumTerm(wholeCongruence, indexToVar, script);
+			final Term modTerm = SmtUtils.constructIntValue(script, BigInteger.valueOf(commonDenominator));
+			final Term modSum = SmtUtils.mod(script, sum, modTerm);
+			final Term congruenceTerm = SmtUtils.binaryEquality(script, modSum,
+					SmtUtils.constructIntValue(script, BigInteger.ZERO));
+			terms.add(congruenceTerm);
+		}
+
+		return SmtUtils.and(script, terms);
 	}
 
 	@Override
@@ -90,7 +133,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final List<MatrixQ128> newParameters = selfReorderedGenerators.getParameters();
 		newParameters.addAll(otherReorderedGenerators.getParameters());
 
-		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters, newColumnCount);
+		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
+				newColumnCount);
 
 		return new CongruenceState(newVarToIndex, newGenerators);
 	}

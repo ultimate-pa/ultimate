@@ -1,10 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,7 +15,10 @@ import org.ojalgo.matrix.MatrixQ128;
 import org.ojalgo.matrix.store.GenericStore;
 import org.ojalgo.scalar.RationalNumber;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CongruenceUtil {
@@ -328,6 +334,30 @@ public class CongruenceUtil {
 	public static long getCommonDenominator(final MatrixQ128 matrix) {
 		final List<RationalNumber> list = matrix.asList();
 		return getCommonDenominator(list);
+	}
+
+	public static Term getSumTerm(final MatrixQ128 vector, final Map<Integer, Term> indexToVar, final Script script) {
+		final Set<Term> summands = new HashSet<>();
+		for (int i = 0; i <= vector.countColumns(); i++) {
+			final RationalNumber rationalFactor = vector.get(0, i);
+
+			if (rationalFactor.isZero()) {
+				continue;
+			}
+			final long factor = CongruenceUtil.getNumerator(rationalFactor);
+
+			Term term;
+			if (i == 0) {
+				term = SmtUtils.constructIntValue(script, BigInteger.valueOf(factor));
+			} else {
+				final Term var = indexToVar.get(i);
+				term = SmtUtils.mul(script, Rational.valueOf(factor, 1), var);
+			}
+			summands.add(term);
+		}
+		final Term[] summandsArray = (Term[]) summands.toArray();
+		final Term sum = SmtUtils.sum(script, "+", summandsArray);
+		return sum;
 	}
 
 }
