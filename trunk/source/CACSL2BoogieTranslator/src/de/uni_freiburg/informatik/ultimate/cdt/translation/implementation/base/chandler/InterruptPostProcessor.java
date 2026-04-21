@@ -233,7 +233,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private ArrayList<Procedure> constructThreadGpioProc() {
 		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
 		final var procedures = new ArrayList<Procedure>();
-		if (mTranslationMode == InterruptTranslationMode.REALIZATION_1) {
+		if (mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR) {
 			mLogger.info("Source-to-source translation of interrupt program with realization 1");
 			final var isrGpios = mISR.getISRMap().entrySet();
 			for (final Entry<Integer, Procedure> entry : isrGpios) {
