@@ -52,124 +52,14 @@ public class ContextSimplifier<L extends IAction> {
 		mAllRelevants = new ArrayList<>();
 
 		// Set to keep track of relevant variables
-		final Set<IProgramVar> relevant = new HashSet<>(mCondition.getVars());
+		Set<IProgramVar> relevant = new HashSet<>(mCondition.getVars());
 		mAllRelevants.add(new HashSet<>(relevant));
 
 		for (int i = mLongTrace.length() - 1; i >= 0; i--) {
 			final Word<L> currentLetter = new Word<>(mLongTrace.getSymbol(i));
 
-			// if no assignments are done, all sub statements of this statements are if or assume
-			if (currentLetter.getSymbol(0).getTransformula().getAssignedVars().isEmpty()) {
-
-				relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
-				mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
-				mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
-				mAllRelevants.add(new HashSet<>(relevant));
-				continue;
-			}
-
-			// assert to ensure type casting always holds
-			assert (currentLetter.getSymbol(0).getTransformula().getFormula() instanceof ApplicationTerm);
-
-			if (currentLetter.getSymbol(0).getTransformula().getFormula() instanceof final ApplicationTerm formula) {
-				// if mFormula.mFunction.mName is not "and", the statements consists of only one sub statements
-				if (!"and".equals(formula.getFunction().getName())) {
-					assert (currentLetter.getSymbol(0).getTransformula().getAssignedVars().size() == 1);
-					final IProgramVar singleAssignedVar =
-							currentLetter.getSymbol(0).getTransformula().getAssignedVars().iterator().next();
-					if (relevant.contains(singleAssignedVar)) {
-						// the only assigned variable is relevant
-						mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
-						mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
-						relevant.remove(singleAssignedVar);
-						relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
-					}
-					mAllRelevants.add(new HashSet<>(relevant));
-					continue;
-				}
-				// the only not relevant variables, are variables in an assignment which is not relevant
-				// if all mAssignedVars are in relevant, than all input variables are relevant
-				if (relevant.containsAll(currentLetter.getSymbol(0).getTransformula().getAssignedVars())) {
-					mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
-					mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
-					relevant.removeAll(currentLetter.getSymbol(0).getTransformula().getAssignedVars());
-					relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
-					mAllRelevants.add(new HashSet<>(relevant));
-					continue;
-				}
-
-				// for all relevant variables in mAssignedVars, we look at how they were computed and
-				// add all corresponding input variables
-
-				final Queue<TermVariable> queue = new ArrayDeque<>();
-				final Set<TermVariable> lookedAt = new HashSet<>();
-
-				for (final IProgramVar assignment : currentLetter.getSymbol(0).getTransformula().getAssignedVars()) {
-					if (relevant.contains(assignment)) {
-						relevant.remove(assignment);
-						lookedAt.add(currentLetter.getSymbol(0).getTransformula().getOutVars().get(assignment));
-						queue.offer(currentLetter.getSymbol(0).getTransformula().getOutVars().get(assignment));
-					}
-				}
-
-				// if the amount of parameters (therefore sub statements) is different from mAssignedVars.size()
-				// not all sub statements are assignments -> some are assume/if
-				if (formula.getParameters().length != currentLetter.getSymbol(0).getTransformula().getAssignedVars()
-						.size()) {
-					for (final Term baseParameter : formula.getParameters()) {
-						if (baseParameter instanceof final ApplicationTerm parameter
-								&& !"=".equals(parameter.getFunction().getName())) {
-							for (final TermVariable freeVariable : parameter.getFreeVars()) {
-								if (!lookedAt.contains(freeVariable)) {
-									lookedAt.add(freeVariable);
-									queue.offer(freeVariable);
-								}
-							}
-						}
-					}
-				}
-
-				// if lookedAt is not Empty at least one assume/if or assignment to a relevant variable was done
-				if (!lookedAt.isEmpty()) {
-					mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
-					mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
-				}
-
-				while (!queue.isEmpty()) {
-					final TermVariable termVariable = queue.poll();
-					boolean termVarInInput = false;
-					for (final Map.Entry<IProgramVar, TermVariable> entry : currentLetter.getSymbol(0).getTransformula()
-							.getInVars().entrySet()) {
-						if (Objects.equals(entry.getValue(), termVariable)) {
-							final IProgramVar computationTermVar = entry.getKey();
-							if (computationTermVar != null) {
-								relevant.add(computationTermVar);
-								termVarInInput = true;
-								break;
-							}
-						}
-					}
-					// if termVariable is an input, we don't need to look for its computation
-					// and can skip to the next element
-					if (termVarInInput) {
-						continue;
-					}
-
-					// termVariable is not an input, we need to find all variables in its computation
-					for (final Term baseParameter : formula.getParameters()) {
-						if (baseParameter instanceof final ApplicationTerm parameter
-								&& Arrays.asList(parameter.getFreeVars()).contains(termVariable)) {
-							for (final TermVariable freeVariable : parameter.getFreeVars()) {
-								if (!lookedAt.contains(freeVariable)) {
-									lookedAt.add(freeVariable);
-									queue.offer(freeVariable);
-								}
-							}
-						}
-					}
-				}
-				mAllRelevants.add(new HashSet<>(relevant));
-			}
+			statementIteration(currentLetter, relevant, mTempControlConfigurations, i);
+			relevant = new HashSet<>(mAllRelevants.get(mLongTrace.length() - 1 - i));
 		}
 
 		// the very first controlConfiguration is still missing
@@ -180,6 +70,127 @@ public class ContextSimplifier<L extends IAction> {
 		Collections.reverse(mAllRelevants);
 		assert (mSimpleControlConfigurations.size() == mSimpleTrace.length() + 1);
 		assert (mLongControlConfigurations.size() == mAllRelevants.size());
+	}
+
+	private void statementIteration(final Word<L> currentLetter, Set<IProgramVar> relevant,
+			final List<Object> mTempControlConfigurations, final int i) {
+		// if no assignments are done, all sub statements of this statements are if or assume
+		if (currentLetter.getSymbol(0).getTransformula().getAssignedVars().isEmpty()) {
+
+			relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
+			mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
+			mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
+			mAllRelevants.add(new HashSet<>(relevant));
+			return;
+		}
+
+		// assert to ensure type casting always holds
+		assert (currentLetter.getSymbol(0).getTransformula().getFormula() instanceof ApplicationTerm);
+
+		if (currentLetter.getSymbol(0).getTransformula().getFormula() instanceof final ApplicationTerm formula) {
+			// if mFormula.mFunction.mName is not "and", the statements consists of only one sub statements
+			if (!"and".equals(formula.getFunction().getName())) {
+				assert (currentLetter.getSymbol(0).getTransformula().getAssignedVars().size() == 1);
+				final IProgramVar singleAssignedVar =
+						currentLetter.getSymbol(0).getTransformula().getAssignedVars().iterator().next();
+				if (relevant.contains(singleAssignedVar)) {
+					// the only assigned variable is relevant
+					mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
+					mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
+					relevant.remove(singleAssignedVar);
+					relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
+				}
+				mAllRelevants.add(new HashSet<>(relevant));
+				return;
+			}
+			// the only not relevant variables, are variables in an assignment which is not relevant
+			// if all mAssignedVars are in relevant, than all input variables are relevant
+			if (relevant.containsAll(currentLetter.getSymbol(0).getTransformula().getAssignedVars())) {
+				mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
+				mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
+				relevant.removeAll(currentLetter.getSymbol(0).getTransformula().getAssignedVars());
+				relevant.addAll(currentLetter.getSymbol(0).getTransformula().getInVars().keySet());
+				mAllRelevants.add(new HashSet<>(relevant));
+				return;
+			}
+
+			// for all relevant variables in mAssignedVars, we look at how they were computed and
+			// add all corresponding input variables
+
+			final Queue<TermVariable> queue = new ArrayDeque<>();
+			final Set<TermVariable> lookedAt = new HashSet<>();
+
+			for (final IProgramVar assignment : currentLetter.getSymbol(0).getTransformula().getAssignedVars()) {
+				if (relevant.contains(assignment)) {
+					relevant.remove(assignment);
+					lookedAt.add(currentLetter.getSymbol(0).getTransformula().getOutVars().get(assignment));
+					queue.offer(currentLetter.getSymbol(0).getTransformula().getOutVars().get(assignment));
+				}
+			}
+
+			// if the amount of parameters (therefore sub statements) is different from mAssignedVars.size()
+			// not all sub statements are assignments -> some are assume/if
+			if (formula.getParameters().length != currentLetter.getSymbol(0).getTransformula().getAssignedVars()
+					.size()) {
+				for (final Term baseParameter : formula.getParameters()) {
+					if (baseParameter instanceof final ApplicationTerm parameter
+							&& !"=".equals(parameter.getFunction().getName())) {
+						for (final TermVariable freeVariable : parameter.getFreeVars()) {
+							if (!lookedAt.contains(freeVariable)) {
+								lookedAt.add(freeVariable);
+								queue.offer(freeVariable);
+							}
+						}
+					}
+				}
+			}
+
+			// if lookedAt is not Empty at least one assume/if or assignment to a relevant variable was done
+			if (!lookedAt.isEmpty()) {
+				mSimpleTrace = currentLetter.concatenate(mSimpleTrace);
+				mTempControlConfigurations.add(mLongControlConfigurations.get(i + 1));
+				relevant = IterationQueue(queue, lookedAt, relevant, currentLetter, formula);
+			}
+			mAllRelevants.add(new HashSet<>(relevant));
+		}
+	}
+
+	private Set<IProgramVar> IterationQueue(final Queue<TermVariable> queue, final Set<TermVariable> lookedAt,
+			final Set<IProgramVar> relevant, final Word<L> currentLetter, final ApplicationTerm formula) {
+		while (!queue.isEmpty()) {
+			final TermVariable termVariable = queue.poll();
+			boolean termVarInInput = false;
+			for (final Map.Entry<IProgramVar, TermVariable> entry : currentLetter.getSymbol(0).getTransformula()
+					.getInVars().entrySet()) {
+				if (Objects.equals(entry.getValue(), termVariable)) {
+					final IProgramVar computationTermVar = entry.getKey();
+					if (computationTermVar != null) {
+						relevant.add(computationTermVar);
+						termVarInInput = true;
+						break;
+					}
+				}
+			}
+			// if termVariable is an input, we don't need to look for its computation
+			// and can skip to the next element
+			if (termVarInInput) {
+				continue;
+			}
+
+			// termVariable is not an input, we need to find all variables in its computation
+			for (final Term baseParameter : formula.getParameters()) {
+				if (baseParameter instanceof final ApplicationTerm parameter
+						&& Arrays.asList(parameter.getFreeVars()).contains(termVariable)) {
+					for (final TermVariable freeVariable : parameter.getFreeVars()) {
+						if (!lookedAt.contains(freeVariable)) {
+							lookedAt.add(freeVariable);
+							queue.offer(freeVariable);
+						}
+					}
+				}
+			}
+		}
+		return relevant;
 	}
 
 	public List<IPredicate> mapProof(final List<IPredicate> shortPredicates) {
