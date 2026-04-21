@@ -733,9 +733,13 @@ public class CHandler {
 
 			offset++;
 		}
-		final var interruptPostProcessor = getInterruptPostProcessorHandler();
-		mDeclarations.addAll(interruptPostProcessor.postProcess(loc, globalHook, additionalInitializations));
-		additionalInitializations.addAll(interruptPostProcessor.getAdditionalInitializations());
+
+		if (!mIsPrerun) {
+			// S2S transformation of interrupt programs to thread-based programs if enabled
+			final var interruptPostProcessor = getInterruptPostProcessorHandler();
+			mDeclarations.addAll(interruptPostProcessor.postProcess(loc, globalHook, additionalInitializations));
+			additionalInitializations.addAll(interruptPostProcessor.getAdditionalInitializations());
+		}
 
 		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook, additionalInitializations));
 
