@@ -10,7 +10,6 @@
   <option name="--sifa.join.precision">false</option>
   <option name="--sifa.proof.check">false</option>
   <option name="--sifa.result.print">false</option>
-  <option name="--sifa.guard.bucket.split">false</option>
 
   <rundefinition name="strongestpost">
     <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
@@ -19,6 +18,7 @@
 
   <rundefinition name="prepost">
     <option name="--sifa.interference.applicator">PREPOST</option>
+    <option name="--sifa.guard.bucket.split">false</option>
   </rundefinition>
 
   <rundefinition name="guarded-exact-update">
@@ -28,10 +28,12 @@
 
   <rundefinition name="post-state">
     <option name="--sifa.interference.applicator">POST_STATE</option>
+    <option name="--sifa.guard.bucket.split">false</option>
   </rundefinition>
 
   <rundefinition name="none">
     <option name="--sifa.interference.applicator">NONE</option>
+    <option name="--sifa.guard.bucket.split">false</option>
   </rundefinition>
 
   <tasks name="SVCOMP-Concurrency">
