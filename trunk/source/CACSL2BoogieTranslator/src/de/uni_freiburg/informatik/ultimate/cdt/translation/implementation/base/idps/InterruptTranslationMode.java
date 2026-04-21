@@ -27,5 +27,5 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
 public enum InterruptTranslationMode {
-	REALIZATION_1, REALIZATION_2, NONE
+	ONE_THREAD_PER_ISR, ALL_ISR_IN_ONE_THREAD, NONE
 }

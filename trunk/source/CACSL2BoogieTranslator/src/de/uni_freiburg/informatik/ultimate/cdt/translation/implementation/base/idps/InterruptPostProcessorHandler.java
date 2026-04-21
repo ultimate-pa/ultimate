@@ -49,10 +49,13 @@ public class InterruptPostProcessorHandler {
 	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo1();
 	private final InterruptServiceRoutines mInterruptServiceRoutines;
 
+	private final InterruptTranslationMode mTranslationMode;
+
 	public InterruptPostProcessorHandler(final ILogger logger, final FlatSymbolTable symbolTable,
 			final TranslationSettings settings, final ProcedureManager procedureManager, final CHandler chandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
 			final List<Declaration> declarations) {
+		mTranslationMode = settings.interruptTranslationMode();
 		final var isrBuilder = new InterruptServiceRoutinesBuilder(declarations, mIsrInfo);
 		mInterruptServiceRoutines = isrBuilder.getInterruptServiceRoutines();
 		mInterruptPostProcessor = new InterruptPostProcessor(logger, symbolTable, settings, procedureManager, chandler,
@@ -61,6 +64,9 @@ public class InterruptPostProcessorHandler {
 
 	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations) {
+		if (mTranslationMode == InterruptTranslationMode.NONE) {
+			return List.of();
+		}
 		return mInterruptPostProcessor.postProcess(loc, hook, additionalInitializations);
 	}
 
@@ -97,13 +103,23 @@ public class InterruptPostProcessorHandler {
 			final Map<Integer, String> numToISR = new HashMap<>();
 			final Map<Integer, String> numToReqEnable = new HashMap<>();
 
-			for (int i = 1; i <= 6; i++) {
+			for (int i = 1; i <= 10; i++) {
 				final String isrName = "isr" + i + "_gpio";
 				final String reqEnableName = "HAL_GPIO_Enable_Int" + i;
 
 				numToISR.put(i, isrName);
 				numToReqEnable.put(i, reqEnableName);
 			}
+			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
+		}
+
+		public static ISRInfo isrInfoLarge() {
+			final var isr = "HAL_GPIO_EXTI_Callback";
+			final var numToISR = new HashMap<Integer, String>();
+			numToISR.put(1, isr);
+			final var reqEnable = "MX_GPIO_Init";
+			final var numToReqEnable = new HashMap<Integer, String>();
+			numToReqEnable.put(1, reqEnable);
 			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
 		}
 	}
