@@ -2,7 +2,7 @@
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90" hardtimelimit="90" cpuCores="2">
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper" />
-  <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
+  <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaCThreadModular.xml</option>
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Overflow-32bit-Automizer_Default.epf</option>
   <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
   <option name="--sifa.fluid">SizeLimitFluid</option>
