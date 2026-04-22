@@ -79,6 +79,8 @@ public final class SolverBuilder {
 
 		External_MathsatInterpolationMode(true),
 
+		External_BitwuzlaInterpolationMode(true),
+
 		External_ModelsAndUnsatCoreMode(true),
 
 		External_ModelsMode(true),
@@ -280,6 +282,7 @@ public final class SolverBuilder {
 		case External_PrincessInterpolationMode:
 		case External_SMTInterpolInterpolationMode:
 		case External_MathsatInterpolationMode:
+		case External_BitwuzlaInterpolationMode:
 			script.setOption(":produce-models", true);
 			script.setOption(":produce-interpolants", true);
 			if (logic != null) {
@@ -721,6 +724,13 @@ public final class SolverBuilder {
 				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
 				logics = mSolverLogics;
 				break;
+			case External_BitwuzlaInterpolationMode:
+				useExternalSolver = true;
+				timeoutSmtInterpol = -1;
+				externalInterpolator = ExternalInterpolator.BITWUZLA;
+				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
+				logics = mSolverLogics;
+				break;
 			case Internal_SMTInterpol:
 				useExternalSolver = false;
 				timeoutSmtInterpol = -1;
@@ -816,6 +826,8 @@ public final class SolverBuilder {
 				"cvc5 --incremental --print-success --lang smt" + " --tlimit-per=%d", Logics.ALL),
 
 		BITWUZLA("bitwuzla", null, Logics.ALL),
+
+		BITWUZLA_INTERPOLATION("bitwuzla --produce-interpolants", null, Logics.ALL),
 
 		MATHSAT("mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -unsat_core_generation=3",
 				null, Logics.ALL),
