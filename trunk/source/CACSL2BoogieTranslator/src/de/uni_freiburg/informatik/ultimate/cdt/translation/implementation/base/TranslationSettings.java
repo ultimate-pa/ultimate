@@ -33,6 +33,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.CurrentIsrInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -92,6 +93,9 @@ public final class TranslationSettings {
 	private final boolean mFixedAddressesForInitialization;
 
 	private final InterruptTranslationMode mInterruptTranslationMode;
+
+	// TODO: Remove this as soon as Parser form C-File works
+	private final CurrentIsrInfo mCurrentIsrInfo;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -155,6 +159,7 @@ public final class TranslationSettings {
 
 		mInterruptTranslationMode = ups.getEnum(CACSLPreferenceInitializer.LABEL_INTERRUPT_TRANSLATION_MODE,
 				InterruptTranslationMode.class);
+		mCurrentIsrInfo = ups.getEnum(CACSLPreferenceInitializer.LABEL_CURRENT_ISR_INFO, CurrentIsrInfo.class);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -172,7 +177,7 @@ public final class TranslationSettings {
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
 			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization,
-			final InterruptTranslationMode interruptTranslationMode) {
+			final InterruptTranslationMode interruptTranslationMode, final CurrentIsrInfo currentIsrInfo) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -205,6 +210,7 @@ public final class TranslationSettings {
 		mMemoryAddressing = memoryAddressingPreference;
 		mFixedAddressesForInitialization = fixedAddressesForInitialization;
 		mInterruptTranslationMode = interruptTranslationMode;
+		mCurrentIsrInfo = currentIsrInfo;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -347,6 +353,10 @@ public final class TranslationSettings {
 		return mInterruptTranslationMode;
 	}
 
+	public CurrentIsrInfo currentIsrInfo() {
+		return mCurrentIsrInfo;
+	}
+
 	public TranslationSettings setMemoryStructurePreference(final MemoryStructure memoryStructure) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
@@ -357,7 +367,7 @@ public final class TranslationSettings {
 				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
-				mFixedAddressesForInitialization, mInterruptTranslationMode);
+				mFixedAddressesForInitialization, mInterruptTranslationMode, mCurrentIsrInfo);
 	}
 
 	/**

@@ -87,13 +87,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private final ILogger mLogger;
 
-	private final FlatSymbolTable mSymboltable;
-
 	private final ProcedureManager mProcedureManager;
 
 	private final CHandler mCHandler;
-
-	private final TranslationSettings mSettings;
 
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
@@ -114,8 +110,6 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
 			final InterruptServiceRoutines isrs) {
 		mLogger = logger;
-		mSymboltable = symbolTable;
-		mSettings = settings;
 		mProcedureManager = procedureManager;
 		mCHandler = chandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -164,8 +158,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 				mProcedureManager.getProcedureInfo(mainProcedure.getIdentifier()));
 		final var forkStatements = new ArrayList<Statement>();
 		for (final Procedure procedure : threadGpioProcedures) {
-			final var fs =
-					new ForkStatement(mIgnoreLoc, new Expression[0], procedure.getIdentifier(), new Expression[0]);
+			final var threadId = ExpressionFactory.createIntegerLiteral(mIgnoreLoc, "-1");
+			final var fs = new ForkStatement(mIgnoreLoc, new Expression[] { threadId }, procedure.getIdentifier(),
+					new Expression[0]);
 			forkStatements.add(fs);
 			mProcedureManager.registerForkStatement(fs);
 		}
@@ -210,17 +205,29 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final var lhs = entry.getValue();
 			final var intEnableProcedure = intEnabledProcedures.get(irq);
 			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
-			annotateRequestEnableProcedure(intEnableProcedure, lhs);
+			annotateAuxVarAssignment(intEnableProcedure, true, lhs);
 		}
 	}
 
-	private void annotateRequestEnableProcedure(final Procedure intEnableProcedure, final VariableLHS intEnabledLhs) {
+	private void annotateRequestDisableProcedures(final Map<Integer, VariableLHS> lhsMap) {
+		final var intEnabledProcedures = mISR.getRequestDisable();
+		for (final Entry<Integer, VariableLHS> entry : lhsMap.entrySet()) {
+			final var irq = entry.getKey();
+			final var lhs = entry.getValue();
+			final var intEnableProcedure = intEnabledProcedures.get(irq);
+			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
+			annotateAuxVarAssignment(intEnableProcedure, false, lhs);
+		}
+	}
+
+	private void annotateAuxVarAssignment(final Procedure intEnableProcedure, final boolean newValue,
+			final VariableLHS intEnabledLhs) {
 		mProcedureManager.beginProcedureScope(mCHandler,
 				mProcedureManager.getProcedureInfo(intEnableProcedure.getIdentifier()));
 		final var body = intEnableProcedure.getBody();
 		final var block = body.getBlock();
 		final var assignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc, intEnabledLhs,
-				ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true));
+				ExpressionFactory.createBooleanLiteral(mIgnoreLoc, newValue));
 		final var newBlock = new ArrayList<>(Arrays.asList(block));
 		newBlock.add(assignment);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, newBlock);

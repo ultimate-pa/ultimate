@@ -41,13 +41,13 @@ public class InterruptServiceRoutines {
 	// Names of the corresponding functions
 
 	private Map<Integer, Procedure> mRequestEnable;
-	private Procedure mRequestDisable;
+	private Map<Integer, Procedure> mRequestDisable;
 	private Procedure mSetPriority;
 	private Procedure mGetPriority;
 	private Procedure mMainProcedure;
 
 	public InterruptServiceRoutines(final Map<Integer, Procedure> isrMap, final Map<Integer, Procedure> reqEnable,
-			final Procedure reqDisable, final Procedure setPrio, final Procedure getPrio,
+			final Map<Integer, Procedure> reqDisable, final Procedure setPrio, final Procedure getPrio,
 			final Procedure mainProcedure) {
 		mISRMap = isrMap;
 		mRequestEnable = reqEnable;
@@ -65,7 +65,7 @@ public class InterruptServiceRoutines {
 		return mRequestEnable;
 	}
 
-	public Procedure getRequestDisable() {
+	public Map<Integer, Procedure> getRequestDisable() {
 		return mRequestDisable;
 	}
 
@@ -89,7 +89,7 @@ public class InterruptServiceRoutines {
 		mRequestEnable = reqEnable;
 	}
 
-	public void setRequestDisable(final Procedure reqDisable) {
+	public void setRequestDisable(final Map<Integer, Procedure> reqDisable) {
 		mRequestDisable = reqDisable;
 	}
 

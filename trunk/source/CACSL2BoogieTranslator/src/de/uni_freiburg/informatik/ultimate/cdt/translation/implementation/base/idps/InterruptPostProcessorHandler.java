@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class InterruptPostProcessorHandler {
 	private final InterruptPostProcessor mInterruptPostProcessor;
-	private final ISRInfo mIsrInfo = TestISRInfo.isrInfo1();
+	private final ISRInfo mIsrInfo;
 	private final InterruptServiceRoutines mInterruptServiceRoutines;
 
 	private final InterruptTranslationMode mTranslationMode;
@@ -56,6 +56,7 @@ public class InterruptPostProcessorHandler {
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
 			final List<Declaration> declarations) {
 		mTranslationMode = settings.interruptTranslationMode();
+		mIsrInfo = getIsrInfo(settings);
 		final var isrBuilder = new InterruptServiceRoutinesBuilder(declarations, mIsrInfo);
 		mInterruptServiceRoutines = isrBuilder.getInterruptServiceRoutines();
 		mInterruptPostProcessor = new InterruptPostProcessor(logger, symbolTable, settings, procedureManager, chandler,
@@ -72,6 +73,19 @@ public class InterruptPostProcessorHandler {
 
 	public List<Statement> getAdditionalInitializations() {
 		return mInterruptPostProcessor.getAdditionalInitializations();
+	}
+
+	private ISRInfo getIsrInfo(final TranslationSettings settings) {
+		final var currentInfo = settings.currentIsrInfo();
+		if (currentInfo == CurrentIsrInfo.INFO_1) {
+			return TestISRInfo.isrInfo1();
+		} else if (currentInfo == CurrentIsrInfo.INFO_2) {
+			return TestISRInfo.isrInfo2();
+		} else if (currentInfo == CurrentIsrInfo.INFO_10) {
+			return TestISRInfo.isrInfo10();
+		} else {
+			return TestISRInfo.isrInfoLarge();
+		}
 	}
 
 	private static class TestISRInfo {
