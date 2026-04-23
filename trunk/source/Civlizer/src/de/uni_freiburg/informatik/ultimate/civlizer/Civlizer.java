@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -45,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  *
  */
 public class Civlizer implements IAnalysis, IUnmanagedObserver {
-
 	private IUltimateServiceProvider mServices;
+	private ILogger mLogger;
 
 	@Override
 	public String getPluginName() {
@@ -63,12 +64,9 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 		// not needed
 	}
 
-	/**
-	 * I give you every model.
-	 */
 	@Override
 	public ModelQuery getModelQuery() {
-		return ModelQuery.LAST;
+		return ModelQuery.ALL;
 	}
 
 	/**
@@ -108,6 +106,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Civlizer.class);
 	}
 
 	@Override
@@ -118,8 +117,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
 			throws Throwable {
-		// TODO Auto-generated method stub
-
+		// do nothing
 	}
 
 	@Override
@@ -131,7 +129,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws Throwable {
 		if (root instanceof final Unit boogieFile) {
-			System.out.print(boogieFile);
+			mLogger.warn(boogieFile);
 		}
 		return false;
 	}
