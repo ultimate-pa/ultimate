@@ -29,6 +29,11 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -131,8 +136,25 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Throwable {
+		mLogger.warn("TEST TEST TEST"); // temporary
 		if (root instanceof final Unit boogieFile) {
 			mLogger.warn(boogieFile);
+			
+			for (Declaration dec : boogieFile.getDeclarations()) {
+				switch (dec) {
+					case TypeDeclaration x:
+						mLogger.warn(x);
+						break;
+					case ConstDeclaration x:
+						mLogger.warn(x);
+						break;
+					case Axiom x:
+						mLogger.warn(x);
+						break;
+					default:
+						mLogger.warn("DEFAULT DEFAULT DEFAULT");
+				}
+			}
 		}
 		if (root instanceof final BoogieIcfgContainer icfg) {
 			final var proofs = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
