@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer.MemorySliceUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -84,8 +85,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	private static final boolean ATOMIC_GUARD_STATEMENTS = true;
 	private static final boolean OMIT_ATOMICS_WITHOUT_LOOP = false;
 
-	private static final String ULTIMATE_START = "ULTIMATE.start";
-	private static final String ULTIMATE_INIT = "ULTIMATE.init";
 	private static final String ATOMIC_BEGIN = "__VERIFIER_atomic_begin";
 	private static final String ATOMIC_END = "__VERIFIER_atomic_end";
 
@@ -120,9 +119,9 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 					continue;
 				}
 				final var proc = (Procedure) decl;
-				final var identifier = (proc).getIdentifier();
+				final var identifier = proc.getIdentifier();
 				final var impl = mBoogieDeclarations.getProcImplementation().get(identifier);
-				if (impl == null || !impl.equals(proc)) {
+				if (impl == null || !impl.equals(proc) || identifier.equals(SFO.INIT)) {
 					// If there is no implementation or proc is the specification nothing needs to be replaced
 					newDeclarations.add(proc);
 				} else if (proc.getBody() != null) {
@@ -150,7 +149,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 	 *            Procedure in which atomics should be replaced
 	 */
 	private Statement[] replaceAtomics(final Procedure proc) {
-		// TODO: Only add assume statements to the actual program and not to procedures added by Ultimate (start, init)?
 		final Body body = proc.getBody();
 
 		mContainsAtomic = false;
@@ -160,7 +158,6 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 			mContainsAtomic = false;
 		}
 		return newStatements;
-		// body.setBlock(newStatements);
 	}
 
 	@Override
@@ -291,16 +288,16 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 		Procedure initProc = null;
 		Procedure startProc = null;
 		for (final Procedure procedure : mBoogieDeclarations.getProcImplementation().values()) {
-			if (procedure.getIdentifier().equals(ULTIMATE_INIT)) {
+			if (procedure.getIdentifier().equals(SFO.INIT)) {
 				initProc = procedure;
 				break;
 			}
-			if (procedure.getIdentifier().equals(ULTIMATE_START)) {
+			if (procedure.getIdentifier().equals(SFO.START)) {
 				startProc = procedure;
 			}
 		}
 		assert (initProc != null) || (startProc != null)
-				: "The setting replace atomics requires a procedure named " + ULTIMATE_INIT + " or " + ULTIMATE_START;
+				: "The setting replace atomics requires a procedure named " + SFO.INIT + " or " + SFO.START;
 		if (initProc != null) {
 			initializeLockInProc(initProc);
 		} else {
