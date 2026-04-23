@@ -38,6 +38,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * This class initializes the Civlizer.
@@ -130,6 +133,10 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	public boolean process(final IElement root) throws Throwable {
 		if (root instanceof final Unit boogieFile) {
 			mLogger.warn(boogieFile);
+		}
+		if (root instanceof final BoogieIcfgContainer icfg) {
+			final var proofs = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
+			mLogger.warn(proofs);
 		}
 		return false;
 	}
