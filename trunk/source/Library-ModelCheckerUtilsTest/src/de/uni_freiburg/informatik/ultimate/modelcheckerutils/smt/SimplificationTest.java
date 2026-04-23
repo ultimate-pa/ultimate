@@ -74,7 +74,7 @@ public class SimplificationTest {
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 20_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
-	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
+	private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt";
 	// private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:12000 -memory:2024 -smt2 -in";
 	// private static final String SOLVER_COMMAND = "INTERNAL_SMTINTERPOL:10000";
 
