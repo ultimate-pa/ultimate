@@ -276,6 +276,7 @@
 		<module>../ChcSmtPrinter</module>
 		<module>../ChcSolver</module>
 		<module>../ChcToBoogie</module>
+		<module>../Civlizer</module>
 		<module>../CodeCheck</module>
 		<module>../CoreRCP</module>
 		<module>../Crocotta</module>

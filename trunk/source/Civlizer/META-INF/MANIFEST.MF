@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Civlizer
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.civlizer;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.civlizer.Activator
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.boogie.parser
+Bundle-ActivationPolicy: lazy
+Export-Package: de.uni_freiburg.informatik.ultimate.civlizer
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.civlizer

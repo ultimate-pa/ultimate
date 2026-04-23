@@ -289,4 +289,8 @@
          id="de.uni_freiburg.informatik.ultimate.plugins.chcsolver"
          version="0.0.0"/>
 
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.civlizer"
+         version="0.0.0"/>
+
 </feature>
