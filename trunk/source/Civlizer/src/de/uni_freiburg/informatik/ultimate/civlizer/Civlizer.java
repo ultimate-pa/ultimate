@@ -139,22 +139,8 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 		mLogger.warn("TEST TEST TEST"); // temporary
 		if (root instanceof final Unit boogieFile) {
 			mLogger.warn(boogieFile);
-			
-			for (Declaration dec : boogieFile.getDeclarations()) {
-				switch (dec) {
-					case TypeDeclaration x:
-						mLogger.warn(x);
-						break;
-					case ConstDeclaration x:
-						mLogger.warn(x);
-						break;
-					case Axiom x:
-						mLogger.warn(x);
-						break;
-					default:
-						mLogger.warn("DEFAULT DEFAULT DEFAULT");
-				}
-			}
+
+			mLogger.warn(Translator.translate(boogieFile));
 		}
 		if (root instanceof final BoogieIcfgContainer icfg) {
 			final var proofs = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
