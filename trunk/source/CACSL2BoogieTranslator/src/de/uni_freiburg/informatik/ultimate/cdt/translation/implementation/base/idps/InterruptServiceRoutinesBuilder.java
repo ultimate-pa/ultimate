@@ -51,8 +51,10 @@ public class InterruptServiceRoutinesBuilder {
 		Procedure mainProcedure = null;
 		final Map<Integer, Procedure> numToISR = new HashMap<>();
 		final Map<Integer, Procedure> numToReqEnable = new HashMap<>();
+		final Map<Integer, Procedure> numToReqDisable = new HashMap<>();
 		final var isrNames = mIsrInfo.getISRMap().values();
 		final var reqEnableNames = mIsrInfo.getRequestEnable().values();
+		final var reqDisableNames = mIsrInfo.getRequestDisable().values();
 		for (final Declaration declaration : mDeclarations) {
 			if (!(declaration instanceof Procedure)) {
 				continue;
@@ -66,13 +68,17 @@ public class InterruptServiceRoutinesBuilder {
 				addProcToMap(numToReqEnable, mIsrInfo.getRequestEnable(), proc);
 			}
 
+			if (reqDisableNames.contains(procId)) {
+				addProcToMap(numToReqDisable, mIsrInfo.getRequestDisable(), proc);
+			}
+
 			if (procId.equals(SFO.MAIN)) {
 				mainProcedure = proc;
 			}
 
 			// TODO: Implement for request disable and priority functions
 		}
-		return new InterruptServiceRoutines(numToISR, numToReqEnable, null, null, null, mainProcedure);
+		return new InterruptServiceRoutines(numToISR, numToReqEnable, numToReqDisable, null, null, mainProcedure);
 	}
 
 	private void addProcToMap(final Map<Integer, Procedure> intProcMap, final Map<Integer, String> intIdMap,
