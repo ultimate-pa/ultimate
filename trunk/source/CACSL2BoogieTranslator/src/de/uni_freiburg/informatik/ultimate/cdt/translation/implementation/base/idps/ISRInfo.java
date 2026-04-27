@@ -39,12 +39,12 @@ public class ISRInfo {
 	// Names of the corresponding functions
 
 	private Map<Integer, String> mRequestEnable;
-	private String mRequestDisable;
+	private Map<Integer, String> mRequestDisable;
 	private String mSetPriority;
 	private String mGetPriority;
 
-	public ISRInfo(final Map<Integer, String> isrMap, final Map<Integer, String> reqEnable, final String reqDisable,
-			final String setPrio, final String getPrio) {
+	public ISRInfo(final Map<Integer, String> isrMap, final Map<Integer, String> reqEnable,
+			final Map<Integer, String> reqDisable, final String setPrio, final String getPrio) {
 		mISRMap = isrMap;
 		mRequestEnable = reqEnable;
 		mRequestDisable = reqDisable;
@@ -60,7 +60,7 @@ public class ISRInfo {
 		return mRequestEnable;
 	}
 
-	public String getRequestDisable() {
+	public Map<Integer, String> getRequestDisable() {
 		return mRequestDisable;
 	}
 
@@ -80,7 +80,7 @@ public class ISRInfo {
 		mRequestEnable = reqEnable;
 	}
 
-	public void setRequestDisable(final String reqDisable) {
+	public void setRequestDisable(final Map<Integer, String> reqDisable) {
 		mRequestDisable = reqDisable;
 	}
 

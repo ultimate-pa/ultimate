@@ -133,9 +133,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 		// Add fork statements to the main procedure
 		addForksToProcedure(mISR.getMainProcedure(), threadGpioProcedures);
 
-		// Add atomic block and variable assignment to request enabled functions
+		// Add atomic block and variable assignment true to request enabled functions
 		final var lhsMap = getVariableLHSs();
-		annotateRequestEnableProcedures(lhsMap);
+		annotateRequestProcedures(lhsMap, mISR.getRequestEnable(), true);
+		// Add atomic block and variable assignment false to request disabled functions if
+		annotateRequestProcedures(lhsMap, mISR.getRequestDisable(), false);
 
 		// Add interrupt enabled variable declarations
 		decl.addAll(constructAuxVarEnableDeclarations());
@@ -198,30 +200,25 @@ public class InterruptPostProcessor implements IPostProcessor {
 				assignments);
 	}
 
-	private void annotateRequestEnableProcedures(final Map<Integer, VariableLHS> lhsMap) {
-		final var intEnabledProcedures = mISR.getRequestEnable();
-		for (final Entry<Integer, VariableLHS> entry : lhsMap.entrySet()) {
-			final var irq = entry.getKey();
-			final var lhs = entry.getValue();
-			final var intEnableProcedure = intEnabledProcedures.get(irq);
-			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
-			annotateAuxVarAssignment(intEnableProcedure, true, lhs);
+	private void annotateRequestProcedures(final Map<Integer, VariableLHS> lhsMap,
+			final Map<Integer, Procedure> intEnabledProcedures, final boolean enabled) {
+		if (intEnabledProcedures == null) {
+			return;
 		}
-	}
-
-	private void annotateRequestDisableProcedures(final Map<Integer, VariableLHS> lhsMap) {
-		final var intEnabledProcedures = mISR.getRequestDisable();
 		for (final Entry<Integer, VariableLHS> entry : lhsMap.entrySet()) {
 			final var irq = entry.getKey();
 			final var lhs = entry.getValue();
 			final var intEnableProcedure = intEnabledProcedures.get(irq);
 			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
-			annotateAuxVarAssignment(intEnableProcedure, false, lhs);
+			annotateAuxVarAssignment(intEnableProcedure, enabled, lhs);
 		}
 	}
 
 	private void annotateAuxVarAssignment(final Procedure intEnableProcedure, final boolean newValue,
 			final VariableLHS intEnabledLhs) {
+		if (intEnableProcedure == null) {
+			return;
+		}
 		mProcedureManager.beginProcedureScope(mCHandler,
 				mProcedureManager.getProcedureInfo(intEnableProcedure.getIdentifier()));
 		final var body = intEnableProcedure.getBody();
