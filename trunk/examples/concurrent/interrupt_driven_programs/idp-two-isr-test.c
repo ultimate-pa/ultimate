@@ -1,9 +1,7 @@
+//#Safe
+
 #include <stdio.h>
 #include <stdbool.h>
-#include <pthread.h>
-
-extern void __VERIFIER_atomic_begin();
-extern void __VERIFIER_atomic_end();
 
 // Global state
 

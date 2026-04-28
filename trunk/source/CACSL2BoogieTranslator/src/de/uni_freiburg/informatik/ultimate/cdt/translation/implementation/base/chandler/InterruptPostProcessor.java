@@ -184,7 +184,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Map<Integer, IdentifierExpression> constructAuxVarExpressions(final Collection<Integer> identifiers) {
 		final var idExpressions = new HashMap<Integer, IdentifierExpression>();
 		for (final Integer irq : identifiers) {
-			final var id = "gpio_int" + irq + "_enabled";
+			final var id = "#isr_" + irq + "_enabled";
 			final var enabledExpr = ExpressionFactory.constructIdentifierExpression(mIgnoreLoc, BoogieType.TYPE_BOOL,
 					id, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			idExpressions.put(irq, enabledExpr);
@@ -258,7 +258,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	// Realization 1
 	private Procedure constructOneInterruptThreadGpioProc(final String identifier,
 			final IdentifierExpression threadEnabledId, final Integer irq) {
-		final var procName = constructThreadGpioID(irq);
+		final var procName = constructThreadGpioID(identifier, irq);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
@@ -276,7 +276,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	// Realization 2
 
 	private Procedure constructAllInterruptsThreadGpioProc() {
-		final var procName = constructThreadGpioID(0);
+		final var procName = constructThreadGpioID("all", 0);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
@@ -358,8 +358,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return ExpressionFactory.and(mIgnoreLoc, List.of(threadEnabledId, isOne));
 	}
 
-	private String constructThreadGpioID(final Integer irq) {
-		return "thr_gpio" + irq;
+	private String constructThreadGpioID(final String identifier, final Integer irq) {
+		return "#isr_" + irq + "_" + identifier + "_thr";
 	}
 
 	private Map<Integer, VariableLHS> getVariableLHSs() {

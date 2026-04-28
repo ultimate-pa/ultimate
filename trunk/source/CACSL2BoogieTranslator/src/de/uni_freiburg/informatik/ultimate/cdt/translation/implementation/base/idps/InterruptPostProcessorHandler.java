@@ -83,6 +83,8 @@ public class InterruptPostProcessorHandler {
 			return TestISRInfo.isrInfo2();
 		} else if (currentInfo == CurrentIsrInfo.INFO_10) {
 			return TestISRInfo.isrInfo10();
+		} else if (currentInfo == CurrentIsrInfo.INFO_1_DISABLE) {
+			return TestISRInfo.isrInfo1Disable();
 		} else {
 			return TestISRInfo.isrInfoLarge();
 		}
@@ -96,7 +98,20 @@ public class InterruptPostProcessorHandler {
 			final var reqEnable = "HAL_GPIO_Enable_Int";
 			final var numToReqEnable = new HashMap<Integer, String>();
 			numToReqEnable.put(1, reqEnable);
-			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
+			return new ISRInfo(numToISR, numToReqEnable, new HashMap<>(), null, null);
+		}
+
+		public static ISRInfo isrInfo1Disable() {
+			final var isr = "isr_gpio";
+			final var numToISR = new HashMap<Integer, String>();
+			numToISR.put(1, isr);
+			final var reqEnable = "HAL_GPIO_Enable_Int";
+			final var numToReqEnable = new HashMap<Integer, String>();
+			numToReqEnable.put(1, reqEnable);
+			final var reqDisable = "HAL_GPIO_Disable_Int";
+			final var numToReqDisable = new HashMap<Integer, String>();
+			numToReqDisable.put(1, reqDisable);
+			return new ISRInfo(numToISR, numToReqEnable, numToReqDisable, null, null);
 		}
 
 		public static ISRInfo isrInfo2() {
@@ -110,7 +125,7 @@ public class InterruptPostProcessorHandler {
 			final var numToReqEnable = new HashMap<Integer, String>();
 			numToReqEnable.put(1, reqEnable1);
 			numToReqEnable.put(2, reqEnable2);
-			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
+			return new ISRInfo(numToISR, numToReqEnable, new HashMap<>(), null, null);
 		}
 
 		public static ISRInfo isrInfo10() {
@@ -124,7 +139,7 @@ public class InterruptPostProcessorHandler {
 				numToISR.put(i, isrName);
 				numToReqEnable.put(i, reqEnableName);
 			}
-			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
+			return new ISRInfo(numToISR, numToReqEnable, new HashMap<>(), null, null);
 		}
 
 		public static ISRInfo isrInfoLarge() {
