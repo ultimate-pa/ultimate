@@ -57,7 +57,7 @@ public class InterruptPostProcessorHandler {
 			final List<Declaration> declarations) {
 		mTranslationMode = settings.interruptTranslationMode();
 		mIsrInfo = getIsrInfo(settings);
-		final var isrBuilder = new InterruptServiceRoutinesBuilder(declarations, mIsrInfo);
+		final var isrBuilder = new InterruptServiceRoutinesBuilder(declarations, mIsrInfo, logger);
 		mInterruptServiceRoutines = isrBuilder.getInterruptServiceRoutines();
 		mInterruptPostProcessor = new InterruptPostProcessor(logger, symbolTable, settings, procedureManager, chandler,
 				auxVarInfoBuilder, expressionTranslation, mInterruptServiceRoutines);
@@ -98,7 +98,7 @@ public class InterruptPostProcessorHandler {
 			final var reqEnable = "HAL_GPIO_Enable_Int";
 			final var numToReqEnable = new HashMap<Integer, String>();
 			numToReqEnable.put(1, reqEnable);
-			return new ISRInfo(numToISR, numToReqEnable, new HashMap<>(), null, null);
+			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
 		}
 
 		public static ISRInfo isrInfo1Disable() {
@@ -125,7 +125,7 @@ public class InterruptPostProcessorHandler {
 			final var numToReqEnable = new HashMap<Integer, String>();
 			numToReqEnable.put(1, reqEnable1);
 			numToReqEnable.put(2, reqEnable2);
-			return new ISRInfo(numToISR, numToReqEnable, new HashMap<>(), null, null);
+			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
 		}
 
 		public static ISRInfo isrInfo10() {
@@ -139,7 +139,7 @@ public class InterruptPostProcessorHandler {
 				numToISR.put(i, isrName);
 				numToReqEnable.put(i, reqEnableName);
 			}
-			return new ISRInfo(numToISR, numToReqEnable, new HashMap<>(), null, null);
+			return new ISRInfo(numToISR, numToReqEnable, null, null, null);
 		}
 
 		public static ISRInfo isrInfoLarge() {
@@ -151,7 +151,7 @@ public class InterruptPostProcessorHandler {
 			numToReqEnable.put(1, reqEnable);
 			final var reqDisable = "HAL_GPIO_DeInit";
 			final var numToReqDisable = new HashMap<Integer, String>();
-			numToReqDisable.put(1, reqDisable);
+			// numToReqDisable.put(1, reqDisable);
 			return new ISRInfo(numToISR, numToReqEnable, numToReqDisable, null, null);
 		}
 	}
