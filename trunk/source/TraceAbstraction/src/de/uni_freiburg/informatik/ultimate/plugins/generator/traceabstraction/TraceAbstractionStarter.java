@@ -223,6 +223,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 				// write to Icfg
 				final Set<IProgramVar> failedGhosts = new HashSet<>();
+				final Map<IProgramVar, String> declaredGhosts = new HashMap<>();
 				final var ghostsInits = new HashMap<String, Object>();
 				for (final var entry : annotation.getGhostAssignment().entrySet()) {
 					final var ghost = entry.getKey();
@@ -235,8 +236,11 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 						continue;
 					}
 
-					backTranslatorService.declareAndTranslateAuxiliaryVariable(ghost.getTerm());
-					ghostsInits.put(ghost.getGloballyUniqueId(), initialValue);
+					final var declaredGhost =
+							backTranslatorService.declareAndTranslateAuxiliaryVariable(ghost.getTerm());
+					final var declaredGhostName = backTranslatorService.targetExpressionToString(declaredGhost);
+					ghostsInits.put(declaredGhostName, initialValue);
+					declaredGhosts.put(ghost, declaredGhostName);
 				}
 				new WitnessGhostDeclaration<>(ghostsInits).annotate(icfg);
 
@@ -258,7 +262,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 							mLogger.warn("Could not translate assignment to ghost variable %s: %s", ghost, term);
 							failedGhosts.add(ghost);
 						} else {
-							ghostUpdate.put(ghost.getGloballyUniqueId(), expression);
+							ghostUpdate.put(declaredGhosts.get(ghost), expression);
 						}
 					}
 					new WitnessGhostUpdate<>(ghostUpdate).annotate(edge);
