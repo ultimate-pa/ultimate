@@ -254,7 +254,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 							continue;
 						}
 
-						final var context = ILocation.getAnnotation(edge.getSource());
+						final var context = ILocation.getAnnotation(edge);
 						final var term = update.getExpressionFor(ghost);
 						final var expression =
 								backTranslatorService.translateExpressionWithContext(term, context, Term.class);
