@@ -330,20 +330,52 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mResultsPerLocation.clear();
 
 			final var results = analyseProgram(petrifiedIcfg, TraceAbstractionStarter::hasSufficientThreadInstances);
+
 			// Stop if either every in-use error location is unreachable or any other error locations is reachable
 			if (resultsHaveSufficientInstances(results)) {
 				mLogger.info("Analysis of concurrent program completed with " + numberOfThreadInstances
 						+ " thread instances");
 
-				// TODO backtranslate proofs of results over IcfgPetrifier!
-
-				return results;
+				// backtranslate proofs of results over IcfgPetrifier
+				return unpetrifyProofs(results);
 			}
 			assert IcfgUtils.isConcurrent(icfg) : "Insufficient thread instances for sequential program";
 			mLogger.warn(numberOfThreadInstances
 					+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 			numberOfThreadInstances++;
 		}
+	}
+
+	private List<ProvenCegarLoopResult<L>> unpetrifyProofs(final List<ProvenCegarLoopResult<L>> results) {
+		return results.stream().map(r -> new ProvenCegarLoopResult<L>(r, unpetrifyProof(r.getProof()))).toList();
+	}
+
+	private IProof unpetrifyProof(final IProof proof) {
+		if (!(proof instanceof OwickiGriesAnnotation<?, ?, ?>)) {
+			mLogger.warn("Unknown proof type for concurrent program: %s. Unpetrification not supported.",
+					proof.getClass().getSimpleName());
+			return proof;
+		}
+
+		final var petrifiedProof = (OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>) proof;
+
+		// TODO unpetrify IPredicates themselves
+		final var unpetrifiedFormulas = petrifiedProof.getFormulaMapping().entrySet().stream().map(e -> {
+			final var originalLoc = mLocationMap.get(e.getKey());
+			if (originalLoc == null) {
+				mLogger.warn("Unknown original location for %s", e.getKey());
+				return null;
+			}
+			return new Pair<>(originalLoc, e.getValue());
+		}).filter(x -> x != null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+		// TODO unpetrify RHS of updates
+		final var unpetrifiedUpdates = petrifiedProof.getAssignmentMapping().entrySet().stream()
+				.map(e -> new Pair<>(mTransitionMap.get(e.getKey()), e.getValue()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+		return new OwickiGriesAnnotation<>(null /* TODO */, null /* TODO */, null /* TODO */, unpetrifiedFormulas,
+				petrifiedProof.getGhostVariables(), petrifiedProof.getGhostAssignment(), unpetrifiedUpdates);
 	}
 
 	private static <L extends IIcfgTransition<?>> boolean
