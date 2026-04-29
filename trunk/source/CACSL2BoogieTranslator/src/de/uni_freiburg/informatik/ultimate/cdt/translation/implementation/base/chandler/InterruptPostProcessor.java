@@ -126,6 +126,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 		// Get the ghost variables that signal whether an ISR is enabled
 		mAuxVarExpressions = constructAuxVarExpressions(mISR.getISRMap().keySet());
 
+		mLogger.info("Verify IDP with %d ISRs", mAuxVarExpressions.size());
+
 		// Add thread gpio procedures
 		final var threadGpioProcedures = constructThreadGpioProc();
 		decl.addAll(threadGpioProcedures);
@@ -205,11 +207,18 @@ public class InterruptPostProcessor implements IPostProcessor {
 		if (intEnabledProcedures == null) {
 			return;
 		}
+		final String func = enabled ? " enable " : " disable ";
 		for (final Entry<Integer, VariableLHS> entry : lhsMap.entrySet()) {
 			final var irq = entry.getKey();
+
+			mLogger.info("Adding IRQ" + func + "function for ISR " + irq);
+
 			final var lhs = entry.getValue();
 			final var intEnableProcedure = intEnabledProcedures.get(irq);
-			assert intEnableProcedure != null : "There exists no request enable procedure for IRQ: " + irq;
+			if (intEnableProcedure == null) {
+				mLogger.warn("There exists no IRQ" + func + "function for ISR " + irq);
+				continue;
+			}
 			annotateAuxVarAssignment(intEnableProcedure, enabled, lhs);
 		}
 	}
@@ -259,6 +268,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Procedure constructOneInterruptThreadGpioProc(final String identifier,
 			final IdentifierExpression threadEnabledId, final Integer irq) {
 		final var procName = constructThreadGpioID(identifier, irq);
+		mLogger.info("Adding auxilliary ISR-Thread function " + procName);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
@@ -277,6 +287,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private Procedure constructAllInterruptsThreadGpioProc() {
 		final var procName = constructThreadGpioID("all", 0);
+		mLogger.info("Adding auxilliary ISR-Thread function " + procName);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);

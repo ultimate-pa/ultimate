@@ -33,15 +33,19 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class InterruptServiceRoutinesBuilder {
 	private final ISRInfo mIsrInfo;
 	private final List<Declaration> mDeclarations;
+	private final ILogger mLogger;
 
 	private final InterruptServiceRoutines mInterruptServiceRoutines;
 
-	public InterruptServiceRoutinesBuilder(final List<Declaration> declarations, final ISRInfo isrInfo) {
+	public InterruptServiceRoutinesBuilder(final List<Declaration> declarations, final ISRInfo isrInfo,
+			final ILogger logger) {
+		mLogger = logger;
 		mDeclarations = declarations;
 		mIsrInfo = isrInfo;
 		mInterruptServiceRoutines = constructInterruptServiceRoutines();
@@ -52,9 +56,12 @@ public class InterruptServiceRoutinesBuilder {
 		final Map<Integer, Procedure> numToISR = new HashMap<>();
 		final Map<Integer, Procedure> numToReqEnable = new HashMap<>();
 		final Map<Integer, Procedure> numToReqDisable = new HashMap<>();
+
+		assert mIsrInfo.getISRMap() != null;
 		final var isrNames = mIsrInfo.getISRMap().values();
 		final var reqEnableNames = mIsrInfo.getRequestEnable().values();
-		final var reqDisableNames = mIsrInfo.getRequestDisable().values();
+		final var reqDisableNames =
+				mIsrInfo.getRequestDisable() != null ? mIsrInfo.getRequestDisable().values() : List.of();
 		for (final Declaration declaration : mDeclarations) {
 			if (!(declaration instanceof Procedure)) {
 				continue;
@@ -76,7 +83,12 @@ public class InterruptServiceRoutinesBuilder {
 				mainProcedure = proc;
 			}
 
-			// TODO: Implement for request disable and priority functions
+			// TODO: Implement for priority functions
+		}
+		assert mainProcedure != null : "No main procedure found in the program";
+
+		if (numToISR.isEmpty()) {
+			mLogger.warn("There exists no Interrupt-Service-Routine in the program!");
 		}
 		return new InterruptServiceRoutines(numToISR, numToReqEnable, numToReqDisable, null, null, mainProcedure);
 	}
