@@ -230,6 +230,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 					final var initialValue = backTranslatorService.translateExpression(expr, Term.class);
 					if (initialValue == null) {
+						mLogger.warn("Could not translate initial value of ghost variable %s: %s", ghost, initialValue);
 						failedGhosts.add(ghost);
 						continue;
 					}
