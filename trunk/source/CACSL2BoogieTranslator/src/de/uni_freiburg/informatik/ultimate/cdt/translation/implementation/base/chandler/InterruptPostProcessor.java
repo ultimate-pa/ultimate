@@ -268,7 +268,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Procedure constructOneInterruptThreadGpioProc(final String identifier,
 			final IdentifierExpression threadEnabledId, final Integer irq) {
 		final var procName = constructThreadGpioID(identifier, irq);
-		mLogger.info("Adding auxilliary ISR-Thread function " + procName);
+		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for ISR " + identifier);
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
