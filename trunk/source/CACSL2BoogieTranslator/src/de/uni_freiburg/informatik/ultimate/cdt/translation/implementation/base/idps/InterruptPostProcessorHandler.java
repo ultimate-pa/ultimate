@@ -151,7 +151,7 @@ public class InterruptPostProcessorHandler {
 			numToReqEnable.put(1, reqEnable);
 			final var reqDisable = "HAL_GPIO_DeInit";
 			final var numToReqDisable = new HashMap<Integer, String>();
-			// numToReqDisable.put(1, reqDisable);
+			numToReqDisable.put(1, reqDisable);
 			return new ISRInfo(numToISR, numToReqEnable, numToReqDisable, null, null);
 		}
 	}
