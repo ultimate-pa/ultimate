@@ -351,6 +351,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private IProof unpetrifyProof(final IProof proof) {
+		if (proof == null) {
+			return null;
+		}
 		if (!(proof instanceof OwickiGriesAnnotation<?, ?, ?>)) {
 			mLogger.warn("Unknown proof type for concurrent program: %s. Unpetrification not supported.",
 					proof.getClass().getSimpleName());
