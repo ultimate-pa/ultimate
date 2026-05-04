@@ -9,6 +9,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -71,8 +72,11 @@ public class TermToBtorUtil {
 			final ApplicationTerm appTerm = (ApplicationTerm) rhs;
 			return convertApplicationTermToBtorExpression(appTerm, tf, variableMap, boogie2SMT);
 		} else if (rhs instanceof TermVariable) {
-			return variableMap
-					.get(boogie2SMT.getBoogie2SmtSymbolTable().getProgramVar((TermVariable) rhs).getGloballyUniqueId());
+			final IProgramVar programVar = boogie2SMT.getBoogie2SmtSymbolTable().getProgramVar((TermVariable) rhs);
+			if (programVar == null) {
+				throw new UnsupportedOperationException("Rhs cannot be mapped to a variable.");
+			}
+			return variableMap.get(programVar.getGloballyUniqueId());
 		} else if (rhs instanceof ConstantTerm) {
 			// Assume the constant term is an integer
 			final Rational rational = (Rational) ((ConstantTerm) rhs).getValue();

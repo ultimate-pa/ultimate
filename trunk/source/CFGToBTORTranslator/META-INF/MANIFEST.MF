@@ -15,5 +15,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.boogieast
 Export-Package: de.uni_freiburg.informatik.ultimate.btortranslator 
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.btortranslator
-Import-Package: de.uni_freiburg.informatik.ultimate.boogie.ast
+Import-Package: de.uni_freiburg.informatik.ultimate.boogie.ast,
+ de.uni_freiburg.informatik.ultimate.test.util,
+ de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.btortranslator.Activator
