@@ -141,6 +141,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 		// Add atomic block and variable assignment false to request disabled functions if
 		annotateRequestProcedures(lhsMap, mISR.getRequestDisable(), false);
 
+		// Add atomic block and variable assignment true to request enabled functions
+		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
+
 		// Add interrupt enabled variable declarations
 		decl.addAll(constructAuxVarEnableDeclarations());
 
@@ -221,6 +224,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 			}
 			annotateAuxVarAssignment(intEnableProcedure, enabled, List.of(lhs));
 		}
+	}
+
+	private void annotateRequestAllProcedures(final Collection<VariableLHS> lhs, final Procedure intEnabledProcedure,
+			final boolean enabled) {
+		if (intEnabledProcedure == null) {
+			return;
+		}
+		annotateAuxVarAssignment(intEnabledProcedure, enabled, lhs);
 	}
 
 	private void annotateAuxVarAssignment(final Procedure intEnableProcedure, final boolean newValue,
