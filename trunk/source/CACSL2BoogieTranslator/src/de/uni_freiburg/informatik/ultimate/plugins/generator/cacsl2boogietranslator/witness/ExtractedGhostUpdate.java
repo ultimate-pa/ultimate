@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
@@ -157,6 +158,23 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		return result;
 	}
 
+	private static List<Statement> annotateJoin(final ILocation loc, final List<Statement> programStatements,
+			final List<Statement> ghostUpdate) {
+		final List<Statement> result = new ArrayList<>();
+		boolean isAnnotated = false;
+		for (final Statement st : programStatements) {
+			if (!isAnnotated && st instanceof JoinStatement) {
+				isAnnotated = true;
+				result.add(StatementFactory.constructAtomicStatement(loc, ghostUpdate));
+			}
+			result.add(st);
+		}
+		if (!isAnnotated) {
+			throw new UnsupportedOperationException("No statement found to annotate with the expected ghost update");
+		}
+		return result;
+	}
+
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
@@ -207,6 +225,14 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
 					.resetStatements(annotateFork(loc, expressionResult.getStatements(), witness.getStatements()))
 					.build();
+		case "pthread_join":
+			// Make the ghost update itself atomic and insert it just before the join.
+			// TODO: Maybe we should do this atomically, but the CFG builder crashes for that case
+			// We are not sure, if this does have any different semantics.
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
+					.resetStatements(annotateJoin(loc, expressionResult.getStatements(), witness.getStatements()))
+					.build();
+
 		default:
 			throw new UnsupportedOperationException(
 					"The following statement is not yet supported for ghost updates: " + loc);
