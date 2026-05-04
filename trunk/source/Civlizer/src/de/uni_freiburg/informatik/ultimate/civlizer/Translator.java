@@ -4,352 +4,401 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ParentEdge;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Project;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 
-public final class Translator extends GeneratedBoogieAstVisitor {
+public final class Translator extends BoogieVisitor {
 
-    private int mStmtCounter;
-    private StringBuilder mResult;
+	private int mStmtCounter;
+	private StringBuilderWriter mWriter;
+	private BoogieOutput mOutput;
+	private Map<String, List<Integer[]>> mMapToTid;
 
-    private Translator() {
-        super();
-        mResult = new StringBuilder("\n");
-    }
+	private Translator(Unit boogieFile) {
+		mWriter = new StringBuilderWriter();
+		mOutput = new BoogieOutput(mWriter);
+		mMapToTid = ThreadTemplateVisitor.getMapToTid(boogieFile);
+	}
 
-    private void resetStmtCounter() {
-        mStmtCounter = 0;
-    }
+	private void resetStmtCounter() {
+		mStmtCounter = 0;
+	}
 
-    public static String translate(Unit boogieFile) {
-        Translator translation = new Translator();
+	public static String translate(Unit boogieFile) {
+		Translator translation = new Translator(boogieFile);
 
-        boogieFile.accept(translation);
-
-        return translation.toString();
-    }
-
-    @Override
-    public String toString() {
-        return mResult.toString();
-    }
-
-    public boolean visit(NamedAttribute node) {
-        return true;
-    }
-
-    public boolean visit(StructType node) {
-        return true;
-    }
-
-    public boolean visit(LeftHandSide node) {
-        return true;
-    }
-
-    public boolean visit(FunctionApplication node) {
-        return true;
-    }
-
-    public boolean visit(Label node) {
-        return true;
-    }
-
-    public boolean visit(Unit node) {
-        return true;
-    }
-
-    public boolean visit(VarList node) {
-        return true;
-    }
-
-    public boolean visit(ArrayType node) {
-        return true;
-    }
-
-    public boolean visit(IfStatement node) {
-        return true;
-    }
-
-    public boolean visit(ParentEdge node) {
-        return true;
-    }
-
-    public boolean visit(Trigger node) {
-        return true;
-    }
-
-    public boolean visit(BinaryExpression node) {
-        return true;
-    }
-
-    public boolean visit(AssignmentStatement node) {
-        return true;
-    }
-
-    public boolean visit(LoopInvariantSpecification node) {
-        return true;
-    }
-
-    public boolean visit(ReturnStatement node) {
-        return true;
-    }
-
-    public boolean visit(Procedure node) {
-        if (node.getIdentifier() == "ULTIMATE.start") {
-            mResult.append("yield procedure {:layer 1} main({:linear} main_tid : MainTid) {\n")
-                .append("// body TODO\n")
-                .append("}\n\n");
-        }
-        else {
-            mResult.append("yield procedure {:layer 1} ")
-                .append(node.getIdentifier())
-                .append("() {\n")
-                .append("// body TODO\n")
-                .append("}\n\n");
-        }
-        
-        return false;
-    }
-
-    public boolean visit(PrimitiveType node) {
-        return true;
-    }
-
-    public boolean visit(WildcardExpression node) {
-        return true;
-    }
-
-    public boolean visit(Axiom node) {
-        return true;
-    }
-
-    public boolean visit(IntegerLiteral node) {
-        return true;
-    }
-
-    public boolean visit(EnsuresSpecification node) {
-        return true;
-    }
-
-    public boolean visit(StructAccessExpression node) {
-        return true;
-    }
-
-    public boolean visit(ForkStatement node) {
-        // TODO ID ARG
-        mResult.append("call fork_")
-            .append(node.getProcedureName())
-            .append(";\n\n");
-
-        return false;
-    }
-
-    public boolean visit(CallStatement node) {
-        // TODO ERROR 
-
-        return false;
-    }
-
-    public boolean visit(JoinStatement node) {
-        // TODO LHS ID
-        mResult.append("call ID := join;\n\n");
-
-        return false;
-    }
-
-    public boolean visit(VariableLHS node) {
-        return true;
-    }
-
-    public boolean visit(Project node) {
-        return true;
-    }
-
-    public boolean visit(ArrayStoreExpression node) {
-        return true;
-    }
-
-    public boolean visit(StringLiteral node) {
-        return true;
-    }
-
-    public boolean visit(ArrayLHS node) {
-        return true;
-    }
-
-    public boolean visit(AssertStatement node) {
-        return true;
-    }
-
-    public boolean visit(ModifiesSpecification node) {
-        return true;
-    }
-
-    public boolean visit(RequiresSpecification node) {
-        return true;
-    }
-
-    public boolean visit(Attribute node) {
-        return true;
-    }
-
-    public boolean visit(NamedType node) {
-        return true;
-    }
-
-    public boolean visit(BooleanLiteral node) {
-        return true;
-    }
-
-    public boolean visit(UnaryExpression node) {
-        return true;
-    }
-
-    public boolean visit(QuantifierExpression node) {
-        return true;
-    }
-
-    public boolean visit(WhileStatement node) {
-        return true;
-    }
-
-    public boolean visit(StructLHS node) {
-        return true;
-    }
-
-    @Override
-    public boolean visit(ConstDeclaration node) {
-        // TODO handle attributes
-        // improve var stream
-
-        Stream<String> declaration_stream = Arrays.stream(node.getVarList().getIdentifiers());
-
-        if (node.isUnique()) {
-            declaration_stream.forEach(
-                c -> mResult.append("const unique ").append(c).append(";\n\n")
-            );
+		for (Declaration elem : boogieFile.getDeclarations()) {
+			translation.processDeclaration(elem);
         }
 
-        declaration_stream.forEach(
-            c -> mResult.append("const ").append(c).append(";\n\n")
-        );
+		return translation.toString();
+	}
 
-        return true;
-    }
+	@Override
+	public String toString() {
+		return mWriter.toString();
+	}
 
-    public boolean visit(FunctionDeclaration node) {
-        // TODO
+	@Override
+	protected Declaration processDeclaration(final Declaration decl) {
+		switch (decl) {
+			case final Axiom axiom -> mOutput.printAxiom(axiom);
+			case final ConstDeclaration constDecl -> mOutput.printConstDeclaration(constDecl);
+			case final FunctionDeclaration funDecl -> visit(funDecl);
+			case final Procedure proc -> visit(proc);
+			case final TypeDeclaration typeDecl -> visit(typeDecl);
+			case final VariableDeclaration varDecl -> {
+				// this case is already handled by processVariableDeclaration
 
-        return true;
-    }
+				// ???
+				for (VarList varl : varDecl.getVariables()) {
 
-    public boolean visit(RealLiteral node) {
-        return true;
-    }
+					int len = varl.getIdentifiers().length;
+					mResult.append("var {:layer 1,0} ");
 
-    public boolean visit(GotoStatement node) {
-        return true;
-    }
+					for (int i = 0; i < len - 1; i++) {
+						mResult.append(varl.getIdentifiers()[i]).append(", ");
+					}
 
-    @Override
-    public boolean visit(VariableDeclaration node) {
-        // TODO type whereClause
+					mResult.append(varl.getIdentifiers()[len - 1]).append(";\n\n");
+				}
+			}
+		}
+		return super.processDeclaration(decl);
+	}
 
-        for (VarList varl : node.getVariables()) {
+	protected void visit(final FunctionDeclaration decl) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-            int len = varl.getIdentifiers().length;
-            mResult.append("var {:layer 1,0} ");
+	protected void visit(final Procedure decl) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-            for (int i = 0; i < len - 1; i++) {
-                mResult.append(varl.getIdentifiers()[i]).append(", ");
-            }
+	protected void visit(final TypeDeclaration decl) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-            mResult.append(varl.getIdentifiers()[len - 1]).append(";\n\n");
-        }
+	@Override
+	protected ASTType processType(final ASTType type) {
+		switch (type) {
+		case final ArrayType array -> visit(array);
+		case final NamedType named -> visit(named);
+		case final PrimitiveType primitive -> visit(primitive);
+		case final StructType struct -> visit(struct);
+		}
+		return super.processType(type);
+	}
 
-        return false;
-    }
-    
-    @Override
-    public boolean visit(Body node) {
-        // TODO
+	protected void visit(final ArrayType type) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-        return false;
-    }
+	protected void visit(final NamedType type) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    @Override
-    public boolean visit(StructConstructor node) {
-        // TODO 
+	protected void visit(final PrimitiveType type) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-        return false;
-    }
+	protected void visit(final StructType type) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(AtomicStatement node) {
-        return true;
-    }
+	@Override
+	protected Statement processStatement(final Statement statement) {
+		switch (statement) {
+		case final AssertStatement assertStmt -> visit(assertStmt);
+		case final AssignmentStatement assignStmt -> visit(assignStmt);
+		case final AssumeStatement assumeStmt -> visit(assumeStmt);
+		case final AtomicStatement atomicStmt -> visit(atomicStmt);
+		case final BreakStatement breakStmt -> visit(breakStmt);
+		case final CallStatement callStmt -> visit(callStmt);
+		case final ForkStatement forkStmt -> visit(forkStmt);
+		case final GotoStatement gotoStmt -> visit(gotoStmt);
+		case final HavocStatement havocStmt -> visit(havocStmt);
+		case final IfStatement ifStmt -> visit(ifStmt);
+		case final JoinStatement joinStmt -> visit(joinStmt);
+		case final Label label -> visit(label);
+		case final ReturnStatement returnStmt -> visit(returnStmt);
+		case final WhileStatement whileStmt -> visit(whileStmt);
+		}
+		return super.processStatement(statement);
+	}
 
-    public boolean visit(ASTType node) {
-        return true;
-    }
+	protected void visit(final WhileStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(BitvecLiteral node) {
-        return true;
-    }
+	protected void visit(final AtomicStatement statment) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(AssumeStatement node) {
-        return true;
-    }
+	protected void visit(final ReturnStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(Statement node) {
-        return true;
-    }
+	protected void visit(final Label statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(Specification node) {
-        return true;
-    }
+	protected void visit(final IfStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(IfThenElseExpression node) {
-        return true;
-    }
+	protected void visit(final HavocStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(IdentifierExpression node) {
-        return true;
-    }
+	protected void visit(final GotoStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(BreakStatement node) {
-        return true;
-    }
+	protected void visit(final CallStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(Expression node) {
-        return true;
-    }
+	protected void visit(final ForkStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(BitVectorAccessExpression node) {
-        return true;
-    }
+	protected void visit(final JoinStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    @Override
-    public boolean visit(TypeDeclaration node) {
-        // TODO handle attributes
+	protected void visit(final BreakStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-        if (node.isFinite()) {
-            mResult.append("type finite ")
-                .append(node.getIdentifier())
-                .append(";\n\n");
-        }
-        else {
-            mResult.append("type ")
-                .append(node.getIdentifier())
-                .append(";\n\n");
-        }
+	protected void visit(final AssignmentStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-        return false;
-    }
+	protected void visit(final AssumeStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(ArrayAccessExpression node) {
-        return true;
-    }
+	protected void visit(final AssertStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
 
-    public boolean visit(HavocStatement node) {
-        return true;
-    }
+	@Override
+	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
+		switch (lhs) {
+		case final ArrayLHS array -> visit(array);
+		case final StructLHS struct -> visit(struct);
+		case final VariableLHS variable -> visit(variable);
+		}
+		return super.processLeftHandSide(lhs);
+	}
+
+	protected void visit(final VariableLHS lhs) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final StructLHS lhs) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final ArrayLHS lhs) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected Specification processSpecification(final Specification spec) {
+		switch (spec) {
+		case final EnsuresSpecification ensures -> visit(ensures);
+		case final LoopInvariantSpecification loopInvariant -> visit(loopInvariant);
+		case final ModifiesSpecification modifies -> visit(modifies);
+		case final RequiresSpecification requires -> visit(requires);
+		}
+		return super.processSpecification(spec);
+	}
+
+	protected void visit(final RequiresSpecification spec) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final ModifiesSpecification spec) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final LoopInvariantSpecification spec) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final EnsuresSpecification spec) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected <T extends Attribute> T processAttribute(final T attr) {
+		switch (attr) {
+		case final NamedAttribute named -> visit(named);
+		case final Trigger trigger -> visit(trigger);
+		}
+		return super.processAttribute(attr);
+	}
+
+	protected void visit(final NamedAttribute attr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final Trigger attr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected Expression processExpression(final Expression expr) {
+		switch (expr) {
+		case final ArrayAccessExpression arrayAccess -> visit(arrayAccess);
+		case final ArrayStoreExpression arrayStore -> visit(arrayStore);
+		case final BinaryExpression binary -> visit(binary);
+		case final BitvecLiteral bitvec -> visit(bitvec);
+		case final BitVectorAccessExpression bitvecAccess -> visit(bitvecAccess);
+		case final BooleanLiteral booleanLit -> visit(booleanLit);
+		case final FunctionApplication funApp -> visit(funApp);
+		case final IdentifierExpression idExpr -> visit(idExpr);
+		case final IfThenElseExpression ite -> visit(ite);
+		case final IntegerLiteral intLit -> visit(intLit);
+		case final QuantifierExpression quantified -> visit(quantified);
+		case final RealLiteral realLit -> visit(realLit);
+		case final StringLiteral stringLit -> visit(stringLit);
+		case final StructAccessExpression structAccess -> visit(structAccess);
+		case final StructConstructor structConstructor -> visit(structConstructor);
+		case final UnaryExpression unary -> visit(unary);
+		case final WildcardExpression wildcard -> visit(wildcard);
+		}
+		return super.processExpression(expr);
+	}
+
+	protected void visit(final WildcardExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final UnaryExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final StructConstructor expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final StructAccessExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final StringLiteral expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final RealLiteral expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final QuantifierExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final IntegerLiteral expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final IfThenElseExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final IdentifierExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final FunctionApplication expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final BooleanLiteral expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final BitVectorAccessExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final BitvecLiteral expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final BinaryExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final ArrayStoreExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	protected void visit(final ArrayAccessExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
 }
