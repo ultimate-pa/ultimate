@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
 
@@ -25,7 +27,7 @@ public final class InterferenceEdgeTraverser {
 	public List<TranslatedInterferenceOfEdge> collect(final Map<IcfgLocation, IPredicate> locationStates) {
 		return locationStates.keySet().stream()
 				.map(mPreparedEdgesBySource::get)
-				.filter(java.util.Objects::nonNull)
+				.filter(Objects::nonNull)
 				.flatMap(List::stream)
 				.toList();
 	}
@@ -61,14 +63,13 @@ public final class InterferenceEdgeTraverser {
 		if (!interferenceRelevant && locationStutter) {
 			return null;
 		}
-		final Set<de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar> additionallyChangedGlobals =
-				InterferenceUtils.getAdditionalChangedGlobals(edge);
+		final Set<IProgramVar> additionallyChangedGlobals = InterferenceUtils.getAdditionalChangedGlobals(edge);
 		final IPredicate transitionPredicate = forkedThreadId == null
 				? translator.translateForInterference(edge.getTransformula(), source.getProcedure(), source, target,
 						additionallyChangedGlobals)
 				: translator.translateForInterferenceWithFork(edge.getTransformula(), source.getProcedure(), source, target,
 						forkedThreadId, translator.getEntryLocation(forkedThreadId), additionallyChangedGlobals);
 		return new TranslatedInterferenceOfEdge(source, target, InterferenceGrouping.keyFor(translator, source, target),
-				transitionPredicate);
+				transitionPredicate, InterferenceUtils.getChangedGlobals(edge.getTransformula(), additionallyChangedGlobals));
 	}
 }

@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInt
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 public final class PostStateInterference implements IInterference {
 
@@ -65,6 +66,6 @@ public final class PostStateInterference implements IInterference {
 	}
 
 	private static boolean isFalseLiteral(final IPredicate predicate) {
-		return de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.isFalseLiteral(predicate.getFormula());
+		return SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 }

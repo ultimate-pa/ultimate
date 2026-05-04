@@ -6,10 +6,12 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeTraverser;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
@@ -25,19 +27,22 @@ public final class StrongestPostconditionInterferenceFactory implements IInterfe
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final ManagedScript mManagedScript;
+	private final BucketContext mBucketContext;
 
 	public StrongestPostconditionInterferenceFactory(final InterferenceEdgeTraverser traverser,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
-			final BasicPredicateFactory predicateFactory, final ManagedScript managedScript) {
+			final BasicPredicateFactory predicateFactory, final ManagedScript managedScript,
+			final BucketContext bucketContext) {
 		mTraverser = traverser;
 		mTranslator = translator;
 		mPostcondition = postcondition;
 		mPredicateFactory = predicateFactory;
 		mManagedScript = managedScript;
+		mBucketContext = bucketContext;
 	}
 
 	@Override
-	public IInterference buildFromStates(final String threadId, final Map<IcfgLocation, IPredicate> locationStates) {
+	public IInterference buildFromStates(final Map<IcfgLocation, IPredicate> locationStates) {
 		final Map<AbstractLocationPair, StrongestPostconditionInterference.RelationalInterference>
 				interferenceByAbstractLocationPair = new LinkedHashMap<>();
 		for (final TranslatedInterferenceOfEdge edge : mTraverser.collect(locationStates)) {
@@ -47,7 +52,7 @@ public final class StrongestPostconditionInterferenceFactory implements IInterfe
 			}
 			final IPredicate sharedPreState = mTranslator.projectPreStateToSharedState(sourceState);
 			final IPredicate relationalInterference = combine(sharedPreState, edge.transitionPredicate());
-			if (shouldSkipTrivialPredicate(relationalInterference)) {
+			if (InterferenceUtils.shouldSkipTrivialPredicate(relationalInterference)) {
 				continue;
 			}
 			final var relationalInterferenceForEdge = new StrongestPostconditionInterference.RelationalInterference(
@@ -56,7 +61,8 @@ public final class StrongestPostconditionInterferenceFactory implements IInterfe
 					this::mergeRelationalInterferences);
 		}
 		return interferenceByAbstractLocationPair.isEmpty() ? null
-				: new StrongestPostconditionInterference(interferenceByAbstractLocationPair, mPostcondition);
+				: new StrongestPostconditionInterference(interferenceByAbstractLocationPair, mPostcondition,
+						mBucketContext);
 	}
 
 	private StrongestPostconditionInterference.RelationalInterference mergeRelationalInterferences(
@@ -77,9 +83,5 @@ public final class StrongestPostconditionInterferenceFactory implements IInterfe
 	private IPredicate or(final IPredicate left, final IPredicate right) {
 		final Script script = mManagedScript.getScript();
 		return mPredicateFactory.newPredicate(SmtUtils.or(script, left.getFormula(), right.getFormula()));
-	}
-
-	private static boolean shouldSkipTrivialPredicate(final IPredicate predicate) {
-		return SmtUtils.isTrueLiteral(predicate.getFormula()) || SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 }

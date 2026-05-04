@@ -216,8 +216,7 @@ public class InterferencePrecisionRegressionTest {
 		final var key = new AbstractLocationPair(0, 0);
 		final var contribution = new StrongestPostconditionInterference.RelationalInterference(asPredicate,
 				mRelationalPost.prepareRelation(asPredicate));
-		final var interference = new StrongestPostconditionInterference(Map.of(key, contribution),
-				mRelationalPost);
+		final var interference = new StrongestPostconditionInterference(Map.of(key, contribution), mRelationalPost, null);
 		return InterferenceCollection.of(
 				Map.of(INTERFERING_THREAD_ID, interference));
 	}

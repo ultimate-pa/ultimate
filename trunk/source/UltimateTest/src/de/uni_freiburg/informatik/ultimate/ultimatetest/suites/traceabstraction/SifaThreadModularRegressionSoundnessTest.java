@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -60,12 +61,48 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static final String PROP_SETTINGS = "sifa.regression.settings";
 	private static final String PROP_INPUT_DIR = "sifa.regression.inputDir";
 	private static final String PROP_FILE_ENDING = "sifa.regression.fileEnding";
+	private static final String PROP_METHODS = "sifa.regression.methods";
 
 	private static final String TOOLCHAIN = "SifaThreadModular.xml";
 	private static final String SETTINGS = "examples/concurrent/bpl/regression/thread-modular-sifa/testSettings.epf";
 	private static final String INPUT_DIR = "examples/concurrent/bpl/regression";
 	private static final String FILE_ENDING = ".bpl";
 	private static final long TIMEOUT_MS = 30_000L;
+
+	/*
+	 * Central comparison configuration.
+	 *
+	 * Change these constants when you want a different experiment, then rerun
+	 * /Users/dk/run_sifa_comparison.sh.
+	 *
+	 * Useful method sets:
+	 * - Full comparison:
+	 *   { "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "UNARY_GLOBALS", "NONE" }
+	 * - Sound methods only:
+	 *   { "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "UNARY_GLOBALS" }
+	 * - Minimal fast comparison:
+	 *   { "POST_STATE", "UNARY_GLOBALS", "NONE" }
+	 */
+	private static final String[] METHODS =
+			{ "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "UNARY_GLOBALS", "NONE" };
+
+	private static final String ABSTRACT_DOMAIN = "ExplicitValueDomain";
+	// Alternatives:
+	// private static final String ABSTRACT_DOMAIN = "IntervalDomain";
+	// private static final String ABSTRACT_DOMAIN = "EqDomain";
+	// private static final String ABSTRACT_DOMAIN = "OctagonDomain";
+	// private static final String ABSTRACT_DOMAIN = "CompoundDomain";
+	private static final String FLUID = "SizeLimitFluid";
+	private static final int MAX_PARALLEL_EXPLICIT_VALUES = 4;
+	private static final boolean JOIN_PRECISION = true;
+	private static final boolean PROOF_CHECK = false;
+	private static final boolean RESULT_PRINT = false;
+
+	// private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARD_AND_EXIT";
+	// private static final String LOCATION_ABSTRACTION = "SINGLETON";
+	private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARD";
+	// private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARDS_AND_WRITES";
+	// private static final String LOCATION_ABSTRACTION = "SPLIT_AT_EVERY_LOCATION";
 
 	@Override
 	protected long getTimeout() {
@@ -78,32 +115,31 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	}
 
 	@Override
-	public java.util.Collection<UltimateTestCase> createTestCases() {
+	public Collection<UltimateTestCase> createTestCases() {
 		final List<File> inputFiles = selectInputFiles();
 		final File toolchainFile = resolveToolchainFile();
 		final File settingsFile = resolveTrunkOrAbsoluteFile(getSettingsPath());
 
-		final String[] methods =
-				{ "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "NONE" };
-
-		for (final String method : methods) {
+		for (final String method : getMethods()) {
 			final UnaryOperator<IUltimateServiceProvider> callback = s -> {
 				final var prefs = s.getPreferenceProvider("de.uni_freiburg.informatik.ultimate.plugins.sifa");
 				prefs.put("Interference Applicator", method);
 
-				// Apply general BenchExec settings
-				prefs.put("Abstract Domain", "ExplicitValueDomain");
-				prefs.put("Fluid", "SizeLimitFluid");
-				prefs.put("Max. Parallel Explicit Values", 1);
-				prefs.put("Join Precision", false);
-				prefs.put("Proof Check", false);
-				prefs.put("Result Print", false);
+				// Apply common experiment settings. Change the constants above to adjust runs.
+				prefs.put("Abstract Domain", ABSTRACT_DOMAIN);
+				prefs.put("Fluid", FLUID);
+				prefs.put("Max. Parallel Explicit Values", MAX_PARALLEL_EXPLICIT_VALUES);
+				prefs.put("Join Precision", JOIN_PRECISION);
+				prefs.put("Proof Check", PROOF_CHECK);
+				prefs.put("Result Print", RESULT_PRINT);
+				prefs.put("Location Abstraction", LOCATION_ABSTRACTION);
 
-				// Guard Bucket Split is true only for specific applicators in BenchExec
-				final boolean guardBucketSplit = method.equals("STRONGEST_POSTCONDITION") 
-						|| method.equals("GUARDED_EXACT_UPDATE");
-				prefs.put("Guard Bucket Split", guardBucketSplit);
-				
+				// Keep the BenchExec comparison convention unless you intentionally want to change it.
+				final boolean guardBucketSplit = method.equals("STRONGEST_POSTCONDITION")
+						|| method.equals("PREPOST") || method.equals("GUARDED_EXACT_UPDATE");
+				// prefs.put("Guard Bucket Split", guardBucketSplit);
+				prefs.put("Guard Bucket Split", false);
+
 				return s;
 			};
 			addTestCases(toolchainFile, settingsFile, inputFiles, method, callback);
@@ -171,6 +207,15 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 
 	private static String getFileEnding() {
 		return System.getProperty(PROP_FILE_ENDING, FILE_ENDING);
+	}
+
+	private static String[] getMethods() {
+		final String configured = System.getProperty(PROP_METHODS);
+		if (configured == null || configured.isBlank()) {
+			return METHODS;
+		}
+		return Arrays.stream(configured.split(",")).map(String::trim).filter(s -> !s.isEmpty())
+				.toArray(String[]::new);
 	}
 
 	private static final class UnsoundnessOnlySafetyCheckTestResultDecider extends SafetyCheckTestResultDecider {

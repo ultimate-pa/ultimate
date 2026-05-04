@@ -55,6 +55,9 @@ final class Optimizations {
 			if (!preanalysis.mayBeActiveAt(location, otherId)) {
 				continue; // known inactive
 			}
+			if (preanalysis.isDefinitelyJoinedAt(location, otherId)) {
+				continue; // definitely joined before this location
+			}
 			final IInterference itf = ctx.interferences().getInterferenceForThread(otherId);
 			if (itf == null) {
 				continue; // trivial interference

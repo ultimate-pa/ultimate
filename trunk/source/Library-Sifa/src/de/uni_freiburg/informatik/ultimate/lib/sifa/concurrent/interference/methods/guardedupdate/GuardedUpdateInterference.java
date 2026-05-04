@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -34,13 +35,16 @@ public final class GuardedUpdateInterference implements IInterference {
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IPredicate mFalsePredicate;
+	private final BucketContext mBucketContext;
 
 	public GuardedUpdateInterference(final Map<AbstractLocationPair, GuardedUpdateGroup> interferenceByAbstractLocationPair,
-			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory) {
+			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
+			final BucketContext bucketContext) {
 		mInterferenceByAbstractLocationPair = Map.copyOf(interferenceByAbstractLocationPair);
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
+		mBucketContext = bucketContext;
 	}
 
 	@Override
@@ -50,7 +54,10 @@ public final class GuardedUpdateInterference implements IInterference {
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-
+		if (mBucketContext != null && mBucketContext.hasCurrentBuckets()) {
+			return mBucketContext.applyUntilFixpoint(state, domain, wideningThreshold, stats,
+					mInterferenceByAbstractLocationPair, this::applyGroupToFrontier);
+		}
 		IPredicate current = state;
 		IPredicate frontier = state;
 		for (int iteration = 1;; iteration++) {
@@ -128,7 +135,8 @@ public final class GuardedUpdateInterference implements IInterference {
 				widened.put(entry.getKey(), entry.getValue());
 			}
 		}
-		return widened.isEmpty() ? null : new GuardedUpdateInterference(widened, mManagedScript, mPredicateFactory);
+		return widened.isEmpty() ? null
+				: new GuardedUpdateInterference(widened, mManagedScript, mPredicateFactory, mBucketContext);
 	}
 
 	@Override

@@ -2,9 +2,11 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.met
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -36,7 +38,7 @@ public final class GuardedUpdateEdgeTraverser {
 	public List<GuardedUpdateEdge> collect(final Map<IcfgLocation, IPredicate> locationStates) {
 		return locationStates.keySet().stream()
 				.map(mPreparedEdgesBySource::get)
-				.filter(java.util.Objects::nonNull)
+				.filter(Objects::nonNull)
 				.flatMap(List::stream)
 				.toList();
 	}
@@ -86,8 +88,8 @@ public final class GuardedUpdateEdgeTraverser {
 	private static Set<TermVariable> computeModifiedGlobals(final IcfgLocation source, final IcfgLocation target,
 			final String forkedThreadId, final IcfgEdge edge, final TransFormulaToInterferencePredicate translator,
 			final Set<IProgramVar> additionallyChangedGlobals) {
-		final Set<TermVariable> modified =
-				new java.util.HashSet<>(InterferenceUtils.getChangedGlobalTermVars(edge.getTransformula(), additionallyChangedGlobals));
+		final Set<TermVariable> modified = new HashSet<>(
+				InterferenceUtils.getChangedGlobalTermVars(edge.getTransformula(), additionallyChangedGlobals));
 		final TermVariable interferingLoc = translator.getLocationTermVarOrNull(source.getProcedure());
 		final boolean locationChanges = forkedThreadId != null || !translator.isLocationStutterStep(source, target);
 		if (interferingLoc != null && locationChanges) {

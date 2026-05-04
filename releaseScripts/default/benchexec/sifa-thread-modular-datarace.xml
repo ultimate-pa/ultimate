@@ -31,6 +31,10 @@
     <option name="--sifa.guard.bucket.split">false</option>
   </rundefinition>
 
+  <rundefinition name="unary-globals">
+    <option name="--sifa.interference.applicator">UNARY_GLOBALS</option>
+  </rundefinition>
+
   <rundefinition name="none">
     <option name="--sifa.interference.applicator">NONE</option>
     <option name="--sifa.guard.bucket.split">false</option>

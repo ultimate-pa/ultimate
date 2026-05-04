@@ -13,7 +13,7 @@ public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMod
 
 	/** How collected interference predicates are applied. */
 	public enum InterferenceApplicatorType {
-		STRONGEST_POSTCONDITION, PREPOST, GUARDED_EXACT_UPDATE, POST_STATE, NONE
+		STRONGEST_POSTCONDITION, PREPOST, GUARDED_EXACT_UPDATE, POST_STATE, UNARY_GLOBALS, NONE
 	}
 
 	public boolean useGhostLocations() {

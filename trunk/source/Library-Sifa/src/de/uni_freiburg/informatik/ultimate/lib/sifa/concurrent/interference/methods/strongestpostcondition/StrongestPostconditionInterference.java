@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
@@ -22,12 +23,14 @@ public final class StrongestPostconditionInterference implements IInterference {
 
 	private final Map<AbstractLocationPair, RelationalInterference> mInterferenceByAbstractLocationPair;
 	private final RelationalPredicatePostcondition mPostcondition;
+	private final BucketContext mBucketContext;
 
 	public StrongestPostconditionInterference(
 			final Map<AbstractLocationPair, RelationalInterference> interferenceByAbstractLocationPair,
-			final RelationalPredicatePostcondition postcondition) {
+			final RelationalPredicatePostcondition postcondition, final BucketContext bucketContext) {
 		mInterferenceByAbstractLocationPair = Map.copyOf(interferenceByAbstractLocationPair);
 		mPostcondition = postcondition;
+		mBucketContext = bucketContext;
 	}
 
 	@Override
@@ -37,7 +40,10 @@ public final class StrongestPostconditionInterference implements IInterference {
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-
+		if (mBucketContext != null && mBucketContext.hasCurrentBuckets()) {
+			return mBucketContext.applyUntilFixpoint(state, domain, wideningThreshold, stats,
+					mInterferenceByAbstractLocationPair, (frontier, group, __) -> applyGroupToFrontier(frontier, group));
+		}
 		IPredicate current = state;
 		IPredicate frontier = state;
 		for (int iteration = 1;; iteration++) {
@@ -108,7 +114,8 @@ public final class StrongestPostconditionInterference implements IInterference {
 				widened.put(entry.getKey(), entry.getValue());
 			}
 		}
-		return widened.isEmpty() ? null : new StrongestPostconditionInterference(widened, mPostcondition);
+		return widened.isEmpty() ? null
+				: new StrongestPostconditionInterference(widened, mPostcondition, mBucketContext);
 	}
 
 	@Override

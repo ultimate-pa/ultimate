@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -88,7 +89,7 @@ public class RelationalPredicatePostcondition {
 	public Set<TermVariable> primedVariablesIn(final IPredicate relationalPredicate) {
 		if (mProjectAllGlobalPreVars) {
 			return Set.copyOf(mAllGlobalPrimedToUnprimed.keySet().stream().map(TermVariable.class::cast)
-					.collect(java.util.stream.Collectors.toSet()));
+					.collect(Collectors.toSet()));
 		}
 		final Set<TermVariable> primedVariables = new HashSet<>();
 		for (final IProgramVar pv : relationalPredicate.getVars()) {

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -245,7 +246,7 @@ public class TransFormulaToInterferencePredicate {
 
 	public IPredicate projectPreStateToSharedState(final IPredicate preState) {
 		final Set<TermVariable> localsToProject = preState.getVars().stream().filter(var -> !var.isGlobal())
-				.map(IProgramVar::getTermVariable).collect(java.util.stream.Collectors.toSet());
+				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 		if (localsToProject.isEmpty()) {
 			return preState;
 		}

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -24,11 +25,15 @@ public final class PrePostInterference implements IInterference {
 
 	private final Map<AbstractLocationPair, PrePostPair> mInterferenceByAbstractLocationPair;
 	private final ManagedScript mManagedScript;
+	private final BucketContext mBucketContext;
+	private final IPredicate mFalsePredicate;
 
 	public PrePostInterference(final Map<AbstractLocationPair, PrePostPair> interferenceByAbstractLocationPair,
-			final ManagedScript managedScript) {
+			final ManagedScript managedScript, final BucketContext bucketContext, final IPredicate falsePredicate) {
 		mInterferenceByAbstractLocationPair = Map.copyOf(interferenceByAbstractLocationPair);
 		mManagedScript = managedScript;
+		mBucketContext = bucketContext;
+		mFalsePredicate = falsePredicate;
 	}
 
 	@Override
@@ -38,7 +43,11 @@ public final class PrePostInterference implements IInterference {
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-
+		if (mBucketContext != null && mBucketContext.hasCurrentBuckets()) {
+			return mBucketContext.applyUntilFixpoint(state, domain, wideningThreshold, stats,
+					mInterferenceByAbstractLocationPair, (frontier, pair, __) ->
+							intersects(frontier, pair.preState()) ? pair.postState() : mFalsePredicate);
+		}
 		IPredicate current = state;
 		IPredicate frontier = state;
 		final ArrayList<PrePostPair> remaining = new ArrayList<>(mInterferenceByAbstractLocationPair.values());
@@ -102,7 +111,8 @@ public final class PrePostInterference implements IInterference {
 				widened.put(entry.getKey(), entry.getValue());
 			}
 		}
-		return widened.isEmpty() ? null : new PrePostInterference(widened, mManagedScript);
+		return widened.isEmpty() ? null
+				: new PrePostInterference(widened, mManagedScript, mBucketContext, mFalsePredicate);
 	}
 
 	@Override

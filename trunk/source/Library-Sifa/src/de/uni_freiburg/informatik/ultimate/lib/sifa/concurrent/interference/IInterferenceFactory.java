@@ -7,5 +7,5 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 
 public interface IInterferenceFactory {
 	/** Builds an interference from the per-location analysis states of a thread(and its transitions). */
-	IInterference buildFromStates(String threadId, Map<IcfgLocation, IPredicate> locationStates);
+	IInterference buildFromStates(Map<IcfgLocation, IPredicate> locationStates);
 }

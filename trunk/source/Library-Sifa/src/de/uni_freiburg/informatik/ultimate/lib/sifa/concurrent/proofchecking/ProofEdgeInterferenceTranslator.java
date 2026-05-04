@@ -1,12 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking;
 
 import java.util.Objects;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
@@ -61,7 +59,7 @@ public final class ProofEdgeInterferenceTranslator {
 
 	private IPredicate createTransitionPredicate(final String interferingThread, final IcfgLocation sourceLocation,
 			final IcfgLocation targetLocation, final TransFormula tf, final String forkedThreadId, final IcfgEdge edge) {
-		final Set<IProgramVar> additionallyModifiedGlobals = InterferenceUtils.getAdditionalChangedGlobals(edge);
+		final var additionallyModifiedGlobals = InterferenceUtils.getAdditionalChangedGlobals(edge);
 		if (forkedThreadId != null) {
 			final IcfgLocation forkedEntry = mTranslator.getEntryLocation(forkedThreadId);
 			if (forkedEntry == null) {

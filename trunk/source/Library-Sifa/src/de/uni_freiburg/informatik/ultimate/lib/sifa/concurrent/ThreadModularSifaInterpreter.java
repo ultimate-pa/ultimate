@@ -2,22 +2,26 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LoiExpansion;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.SingleThreadIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
@@ -35,12 +39,15 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 
 public class ThreadModularSifaInterpreter implements ISifaInterpreter {
+	private static final int MAX_OUTER_INTERFERENCE_ITERATIONS = 100;
 
 	private final ILogger mLogger;
 	private final IProgressAwareTimer mTimer;
 	private final SifaStats mStats;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final IDomain mAnalysisDomain;
+	private final IDomain mInterferenceDomain;
+	private final BucketContext mBucketContext;
 	private final IFluid mFluid;
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> mLoopSumFactory;
 	private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
@@ -94,6 +101,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mThreadIds = setup.threadIds();
 		mJoinedThreads = setup.joinedThreads();
 		mAnalysisDomain = setup.analysisDomain();
+		mInterferenceDomain = setup.interferenceDomain();
+		mBucketContext = setup.bucketContext();
 		mLoopSumFactory = setup.loopSumFactory();
 		mInterferenceFactory = setup.interferenceFactory();
 		mPostcondition = setup.postcondition();
@@ -150,17 +159,25 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		}
 
 		for (int iteration = 1;; iteration++) {
+			if (!mTimer.continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), "Timeout during outer thread-modular fixpoint");
+			}
+			if (iteration > MAX_OUTER_INTERFERENCE_ITERATIONS) {
+				throw new ToolchainCanceledException(getClass(),
+						"Outer thread-modular fixpoint did not converge after "
+								+ MAX_OUTER_INTERFERENCE_ITERATIONS + " iterations");
+			}
 			mLogger.info("Iteration %d", iteration);
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new HashMap<>();
 			analyzeThreads(currentInterferences, allPredicates, perThreadPredicates);
 			final InterferenceCollection extractedInterferences = rebuildInterferences(perThreadPredicates);
 
-			if (extractedInterferences.hasConverged(currentInterferences, mAnalysisDomain)) {
+			if (extractedInterferences.hasConverged(currentInterferences, mInterferenceDomain)) {
 				return new FixpointResult(allPredicates, perThreadPredicates);
 			}
 			final InterferenceCollection nextInterferences;
 			if (iteration >= mOuterWideningThreshold) {
-				nextInterferences = currentInterferences.widen(extractedInterferences, mAnalysisDomain);
+				nextInterferences = currentInterferences.widen(extractedInterferences, mInterferenceDomain);
 				mStats.increment(Key.INTERFERENCE_OUTER_WIDENINGS);
 			} else {
 				nextInterferences = extractedInterferences;
@@ -172,12 +189,13 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private InterferenceCollection rebuildInterferences(
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates) {
 		final Map<String, IInterference> rebuiltInterferences = new HashMap<>();
+		// TODO: goblint only 1 iinterference globally
 		for (final String threadId : mThreadIds) {
 			final Map<IcfgLocation, IPredicate> locationStates = perThreadPredicates.get(threadId);
 			if (locationStates == null) {
 				continue;
 			}
-			final IInterference rebuilt = mInterferenceFactory.buildFromStates(threadId, locationStates);
+			final IInterference rebuilt = mInterferenceFactory.buildFromStates(locationStates);
 			if (rebuilt != null) {
 				rebuiltInterferences.put(threadId, rebuilt);
 			}
@@ -192,7 +210,10 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
 
 			mConcurrentTools.configureForThread(threadId, interferences, allPredicates, mAnalysisDomain,
-					mAnalysisDomain, mPostcondition);
+					mInterferenceDomain, mPostcondition);
+			if (mBucketContext != null) {
+				mBucketContext.setCurrentThreadId(threadId);
+			}
 			final IPredicate initialState = mConcurrentTools.getInitialStatePredicate(threadId);
 			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
 			mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
@@ -212,8 +233,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	}
 
 	private static boolean isForkSourceLocation(final IcfgLocation location) {
-		return location.getOutgoingEdges().stream().anyMatch(
-				edge -> edge instanceof de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent<?>);
+		return location.getOutgoingEdges().stream()
+				.anyMatch(edge -> edge instanceof IIcfgForkTransitionThreadCurrent<?>);
 	}
 
 	private Map<IcfgLocation, IPredicate> analyzeSingleThread(final String threadId, final IPredicate initialState) {
@@ -257,12 +278,12 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	}
 
 	private Map<String, Set<IcfgLocation>> collectForkSourcesByThread() {
-		final Map<String, Set<IcfgLocation>> result = new java.util.LinkedHashMap<>();
+		final Map<String, Set<IcfgLocation>> result = new LinkedHashMap<>();
 		for (final var procedurePoints : mIcfg.getProgramPoints().values()) {
 			for (final IcfgLocation location : procedurePoints.values()) {
 				for (final var edge : location.getOutgoingEdges()) {
-					if (edge instanceof de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent<?>) {
-						result.computeIfAbsent(location.getProcedure(), __ -> new java.util.LinkedHashSet<>()).add(location);
+					if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
+						result.computeIfAbsent(location.getProcedure(), __ -> new LinkedHashSet<>()).add(location);
 					}
 				}
 			}

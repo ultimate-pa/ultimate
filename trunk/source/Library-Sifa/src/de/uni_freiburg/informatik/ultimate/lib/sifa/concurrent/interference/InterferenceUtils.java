@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InterferenceUtils {
@@ -57,6 +59,11 @@ public final class InterferenceUtils {
 			}
 		}
 		return changedGlobals.isEmpty() ? Set.of() : Set.copyOf(changedGlobals);
+	}
+
+	public static Set<TermVariable> getChangedGlobalTermVars(final TransFormula tf) {
+		return getChangedGlobals(tf).stream().map(IProgramVar::getTermVariable)
+				.collect(Collectors.toUnmodifiableSet());
 	}
 
 	public static Set<TermVariable> getChangedGlobalTermVars(final TransFormula tf,
@@ -104,6 +111,10 @@ public final class InterferenceUtils {
 			return false;
 		}
 		return getForkedThreadOrNull(edge) != null || isJoinAssigningGlobal(edge) || modifiesGlobals(edge.getTransformula());
+	}
+
+	public static boolean shouldSkipTrivialPredicate(final IPredicate predicate) {
+		return predicate == null || SmtUtils.isTrueLiteral(predicate.getFormula()) || SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 
 	private static Set<IProgramVar> filterGlobals(final Set<IProgramVar> variables) {
