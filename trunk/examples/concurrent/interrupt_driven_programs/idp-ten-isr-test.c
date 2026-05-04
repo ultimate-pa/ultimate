@@ -21,21 +21,13 @@ void isr4_gpio(void);  void isr5_gpio(void);  void isr6_gpio(void);
 void isr7_gpio(void);  void isr8_gpio(void);  void isr9_gpio(void);
 void isr10_gpio(void);
 
-void HAL_GPIO_Enable_Int1(void);  void HAL_GPIO_Enable_Int2(void);
-void HAL_GPIO_Enable_Int3(void);  void HAL_GPIO_Enable_Int4(void);
-void HAL_GPIO_Enable_Int5(void);  void HAL_GPIO_Enable_Int6(void);
-void HAL_GPIO_Enable_Int7(void);  void HAL_GPIO_Enable_Int8(void);
-void HAL_GPIO_Enable_Int9(void);  void HAL_GPIO_Enable_Int10(void);
+void HAL_GPIO_Enable_All_Int(void);
 
 int main(void) 
 {
     HAL_GPIO_Init();
     
-    HAL_GPIO_Enable_Int1();  HAL_GPIO_Enable_Int2();
-    HAL_GPIO_Enable_Int3();  HAL_GPIO_Enable_Int4();
-    HAL_GPIO_Enable_Int5();  HAL_GPIO_Enable_Int6();
-    HAL_GPIO_Enable_Int7();  HAL_GPIO_Enable_Int8();
-    HAL_GPIO_Enable_Int9();  HAL_GPIO_Enable_Int10();
+    HAL_GPIO_Enable_All_Int();
 
     int n = 0;
     while (1) {
@@ -129,16 +121,7 @@ void isr10_gpio(void) {
     step_in_isr = false;
 }
 
-void HAL_GPIO_Enable_Int1(void) { /* logic... */ }
-void HAL_GPIO_Enable_Int2(void) { /* logic... */ }
-void HAL_GPIO_Enable_Int3(void) { /* logic...*/ }
-void HAL_GPIO_Enable_Int4(void) { /* logic... */ }
-void HAL_GPIO_Enable_Int5(void) { /* logic... */ }
-void HAL_GPIO_Enable_Int6(void) { /* logic... */ }
-void HAL_GPIO_Enable_Int7(void) { /* logic...*/ }
-void HAL_GPIO_Enable_Int8(void) { /* logic... */ }
-void HAL_GPIO_Enable_Int9(void) { /* logic... */ }
-void HAL_GPIO_Enable_Int10(void) { /* logic... */ }
+void HAL_GPIO_Enable_All_Int(void) { /* logic... */ }
 
 void HAL_GPIO_Init(void) {}
 void HAL_GPIO_Write(int pin, int state) {}

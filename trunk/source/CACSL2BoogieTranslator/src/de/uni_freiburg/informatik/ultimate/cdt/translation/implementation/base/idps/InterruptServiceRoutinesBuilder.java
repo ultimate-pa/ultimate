@@ -53,6 +53,7 @@ public class InterruptServiceRoutinesBuilder {
 
 	private InterruptServiceRoutines constructInterruptServiceRoutines() {
 		Procedure mainProcedure = null;
+		Procedure requestEnableAll = null;
 		final Map<Integer, Procedure> numToISR = new HashMap<>();
 		final Map<Integer, Procedure> numToReqEnable = new HashMap<>();
 		final Map<Integer, Procedure> numToReqDisable = new HashMap<>();
@@ -62,6 +63,7 @@ public class InterruptServiceRoutinesBuilder {
 		final var reqEnableNames = mIsrInfo.getRequestEnable().values();
 		final var reqDisableNames =
 				mIsrInfo.getRequestDisable() != null ? mIsrInfo.getRequestDisable().values() : List.of();
+		final var reqEnableAllName = mIsrInfo.getRequestEnableAll();
 		for (final Declaration declaration : mDeclarations) {
 			if (!(declaration instanceof Procedure)) {
 				continue;
@@ -83,6 +85,10 @@ public class InterruptServiceRoutinesBuilder {
 				mainProcedure = proc;
 			}
 
+			if (reqEnableAllName != null && procId.equals(reqEnableAllName)) {
+				requestEnableAll = proc;
+			}
+
 			// TODO: Implement for priority functions
 		}
 		assert mainProcedure != null : "No main procedure found in the program";
@@ -90,7 +96,8 @@ public class InterruptServiceRoutinesBuilder {
 		if (numToISR.isEmpty()) {
 			mLogger.warn("There exists no Interrupt-Service-Routine in the program!");
 		}
-		return new InterruptServiceRoutines(numToISR, numToReqEnable, numToReqDisable, null, null, mainProcedure);
+		return new InterruptServiceRoutines(numToISR, numToReqEnable, numToReqDisable, requestEnableAll, null, null,
+				mainProcedure);
 	}
 
 	private void addProcToMap(final Map<Integer, Procedure> intProcMap, final Map<Integer, String> intIdMap,
