@@ -219,12 +219,12 @@ public class InterruptPostProcessor implements IPostProcessor {
 				mLogger.warn("There exists no IRQ" + func + "function for ISR " + irq);
 				continue;
 			}
-			annotateAuxVarAssignment(intEnableProcedure, enabled, lhs);
+			annotateAuxVarAssignment(intEnableProcedure, enabled, List.of(lhs));
 		}
 	}
 
 	private void annotateAuxVarAssignment(final Procedure intEnableProcedure, final boolean newValue,
-			final VariableLHS intEnabledLhs) {
+			final Collection<VariableLHS> intEnabledLhs) {
 		if (intEnableProcedure == null) {
 			return;
 		}
@@ -232,10 +232,13 @@ public class InterruptPostProcessor implements IPostProcessor {
 				mProcedureManager.getProcedureInfo(intEnableProcedure.getIdentifier()));
 		final var body = intEnableProcedure.getBody();
 		final var block = body.getBlock();
-		final var assignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc, intEnabledLhs,
-				ExpressionFactory.createBooleanLiteral(mIgnoreLoc, newValue));
+		final var assignments =
+				intEnabledLhs.stream()
+						.map(i -> StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc, i,
+								ExpressionFactory.createBooleanLiteral(mIgnoreLoc, newValue)))
+						.collect(Collectors.toList());
 		final var newBlock = new ArrayList<>(Arrays.asList(block));
-		newBlock.add(assignment);
+		newBlock.addAll(assignments);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, newBlock);
 		final var newBody = mProcedureManager.constructBody(mIgnoreLoc, new VariableDeclaration[0],
 				new Statement[] { atomic }, intEnableProcedure.getIdentifier());
