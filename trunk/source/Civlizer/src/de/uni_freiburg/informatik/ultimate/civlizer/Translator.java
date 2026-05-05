@@ -1,6 +1,11 @@
 
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
+import java.util.Queue;
+import java.util.Map;
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -23,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -66,11 +72,15 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 
 public final class Translator extends BoogieVisitor {
 
 	private int mStmtCounter;
+	private String mCurrentProcedure;
+	private Queue<Statement> mAtomicStatementBuffer;
+
 	private StringBuilderWriter mWriter;
 	private BoogieOutput mOutput;
 	private Map<String, List<Integer[]>> mMapToTid;
@@ -85,8 +95,46 @@ public final class Translator extends BoogieVisitor {
 		mStmtCounter = 0;
 	}
 
+	private void addTidConst(Integer[] tid) {
+		mWriter.print("const unique tid");
+
+		for (Integer i : tid) {
+			mWriter.print("_" + i.toString());
+		}
+		mWriter.println(" : Tid;");
+	}
+
+	private void addTidsType() {
+
+		Set<Integer[]> tids = new HashSet<>();
+		
+		mWriter.println("type MainTid;");
+		mWriter.println("const unique main_tid : MainTid;");
+		mWriter.println("type Tid;");
+
+		for (List<Integer[]> tidList : mMapToTid.values()) {
+			for (Integer[] tid : tidList) {
+				if (tids.contains(tid)) {
+					//throw new Exception("Error no same tid for different thread template at least for now");
+					System.err.println("fatal error");
+					System.exit(1);
+				}
+				tids.add(tid);
+
+				addTidConst(tid);
+			}
+		}
+
+		mWriter.print("\n");
+	}
+
+	/**
+	 * translate the Ultimate boogie Ast into a String representing the resulting Civl program
+	 */
 	public static String translate(Unit boogieFile) {
 		Translator translation = new Translator(boogieFile);
+
+		translation.addTidsType();
 
 		for (Declaration elem : boogieFile.getDeclarations()) {
 			translation.processDeclaration(elem);
@@ -115,25 +163,33 @@ public final class Translator extends BoogieVisitor {
 				for (VarList varl : varDecl.getVariables()) {
 
 					int len = varl.getIdentifiers().length;
-					mResult.append("var {:layer 1,0} ");
+					mWriter.print("var {:layer 0,1} ");
 
 					for (int i = 0; i < len - 1; i++) {
-						mResult.append(varl.getIdentifiers()[i]).append(", ");
+						mWriter.print(varl.getIdentifiers()[i]);
+						mWriter.print(", ");
 					}
 
-					mResult.append(varl.getIdentifiers()[len - 1]).append(";\n\n");
+					mWriter.print(varl.getIdentifiers()[len - 1]);
+					mWriter.print(";\n\n");
 				}
 			}
 		}
 		return super.processDeclaration(decl);
 	}
 
-	protected void visit(final FunctionDeclaration decl) {
-		// empty because it may be overridden (but does not have to)
-	}
-
+	@Override
 	protected void visit(final Procedure decl) {
-		// empty because it may be overridden (but does not have to)
+		mWriter.print("yield procedure {layer 0,2} ");
+		mWriter.print(decl.getIdentifier());
+
+		mWriter.print("(");
+		mOutput.appendVarList(mWriter.getResult(), decl.getInParams());
+		mWriter.print(") returns (");
+		mOutput.appendVarList(mWriter.getResult(), decl.getOutParams());
+		mWriter.print(")");
+
+		mWriter.print("\n");
 	}
 
 	protected void visit(final TypeDeclaration decl) {
