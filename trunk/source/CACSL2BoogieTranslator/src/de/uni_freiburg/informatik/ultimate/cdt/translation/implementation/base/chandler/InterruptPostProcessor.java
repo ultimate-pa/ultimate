@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
@@ -84,6 +85,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * the Boogie unit and adding additional declarations and annotating existing procedures with auxiliary code.
  */
 public class InterruptPostProcessor implements IPostProcessor {
+
+	private static final boolean FORK_JOIN_IN_IRQ_ENABLE = true;
 
 	private final ILogger mLogger;
 
@@ -121,6 +124,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 	@Override
 	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations) {
+		assert !(FORK_JOIN_IN_IRQ_ENABLE && (mTranslationMode == InterruptTranslationMode.ALL_ISR_IN_ONE_THREAD))
+				: "Fork and Join statements in the IRQ enable/disable function are only applicable in the "
+						+ "ONE_ISR_PER_THREAD interrupt-translation mode";
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
 		// Get the ghost variables that signal whether an ISR is enabled
@@ -129,20 +135,37 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mLogger.info("Verify IDP with %d ISRs", mAuxVarExpressions.size());
 
 		// Add thread gpio procedures
-		final var threadGpioProcedures = constructThreadGpioProc();
+		final var threadGpioProcedureMap = constructThreadGpioProc();
+		final var threadGpioProcedures = new ArrayList<>(threadGpioProcedureMap.values());
 		decl.addAll(threadGpioProcedures);
 
 		// Add fork statements to the main procedure
-		addForksToProcedure(mISR.getMainProcedure(), threadGpioProcedures);
+		if (!FORK_JOIN_IN_IRQ_ENABLE) {
+			addForksToProcedure(mISR.getMainProcedure(), threadGpioProcedures);
+		}
 
 		// Add atomic block and variable assignment true to request enabled functions
 		final var lhsMap = getVariableLHSs();
 		annotateRequestProcedures(lhsMap, mISR.getRequestEnable(), true);
+
+		// Add fork statements in request enable procedure instead of the main procedure
+		if (FORK_JOIN_IN_IRQ_ENABLE) {
+			addForksToRequestEnable(mISR.getRequestEnable(), threadGpioProcedureMap);
+		}
 		// Add atomic block and variable assignment false to request disabled functions if
 		annotateRequestProcedures(lhsMap, mISR.getRequestDisable(), false);
 
-		// Add atomic block and variable assignment true to request enabled functions
+		// Add join statements to request disable procedure
+		if (FORK_JOIN_IN_IRQ_ENABLE) {
+			addJoinsToRequestDisable(mISR.getRequestDisable());
+		}
+
+		// Add atomic block and variable assignment true to request enabled all function
 		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
+
+		if (FORK_JOIN_IN_IRQ_ENABLE && (mISR.getRequestEnableAll() != null)) {
+			addForksToProcedure(mISR.getRequestEnableAll(), threadGpioProcedureMap);
+		}
 
 		// Add interrupt enabled variable declarations
 		decl.addAll(constructAuxVarEnableDeclarations());
@@ -153,19 +176,61 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private void addForksToProcedure(final Procedure mainProcedure, final List<Procedure> threadGpioProcedures) {
-		final List<Statement> newBlock = constructForkStatements(mainProcedure, threadGpioProcedures);
+		final List<Statement> newBlock = constructForkStatements(mainProcedure, threadGpioProcedures, -1);
 		final var body = mainProcedure.getBody();
 		newBlock.addAll(Arrays.asList(body.getBlock()));
 		body.setBlock(newBlock.toArray(new Statement[0]));
 	}
 
+	private void addForksToProcedure(final Procedure mainProcedure,
+			final Map<Integer, Procedure> threadGpioProceduresMap) {
+		final var forkStatements = new ArrayList<Statement>();
+		for (final Entry<Integer, Procedure> entry : threadGpioProceduresMap.entrySet()) {
+			final var irq = entry.getKey();
+			final var proc = entry.getValue();
+			forkStatements.addAll(constructForkStatements(mainProcedure, List.of(proc), -irq));
+		}
+		final var body = mainProcedure.getBody();
+		forkStatements.addAll(Arrays.asList(body.getBlock()));
+		body.setBlock(forkStatements.toArray(new Statement[0]));
+	}
+
+	private void addForksToRequestEnable(final Map<Integer, Procedure> intEnabledProcedures,
+			final Map<Integer, Procedure> threadGpioProceduresMap) {
+		for (final Entry<Integer, Procedure> entry : intEnabledProcedures.entrySet()) {
+			final var irq = entry.getKey();
+			final var proc = entry.getValue();
+			final var threadGpioProcedure = threadGpioProceduresMap.get(irq);
+			assert threadGpioProcedure != null;
+			final List<Statement> newBlock = new ArrayList<>();
+			final var body = proc.getBody();
+			newBlock.addAll(Arrays.asList(body.getBlock()));
+			final var thrNum = -irq;
+			newBlock.addAll(constructForkStatements(proc, List.of(threadGpioProcedure), thrNum));
+			body.setBlock(newBlock.toArray(new Statement[0]));
+		}
+	}
+
+	private void addJoinsToRequestDisable(final Map<Integer, Procedure> intDisabledProcedures) {
+		for (final Entry<Integer, Procedure> entry : intDisabledProcedures.entrySet()) {
+			final var irq = entry.getKey();
+			final var proc = entry.getValue();
+			final List<Statement> newBlock = constructJoinStatement(proc, -irq);
+			final var body = proc.getBody();
+			newBlock.addAll(Arrays.asList(body.getBlock()));
+			body.setBlock(newBlock.toArray(new Statement[0]));
+		}
+	}
+
 	private List<Statement> constructForkStatements(final Procedure mainProcedure,
-			final List<Procedure> threadGpioProcedures) {
+			final List<Procedure> threadGpioProcedures, final Integer threadNum) {
 		mProcedureManager.beginProcedureScope(mCHandler,
 				mProcedureManager.getProcedureInfo(mainProcedure.getIdentifier()));
+		assert threadNum <= 0;
 		final var forkStatements = new ArrayList<Statement>();
+		final String threadNumString = String.valueOf(threadNum);
+		final var threadId = ExpressionFactory.createIntegerLiteral(mIgnoreLoc, threadNumString);
 		for (final Procedure procedure : threadGpioProcedures) {
-			final var threadId = ExpressionFactory.createIntegerLiteral(mIgnoreLoc, "-1");
 			final var fs = new ForkStatement(mIgnoreLoc, new Expression[] { threadId }, procedure.getIdentifier(),
 					new Expression[0]);
 			forkStatements.add(fs);
@@ -173,6 +238,19 @@ public class InterruptPostProcessor implements IPostProcessor {
 		}
 		mProcedureManager.endProcedureScope(mCHandler);
 		return forkStatements;
+	}
+
+	private List<Statement> constructJoinStatement(final Procedure mainProcedure, final int threadNum) {
+		mProcedureManager.beginProcedureScope(mCHandler,
+				mProcedureManager.getProcedureInfo(mainProcedure.getIdentifier()));
+		assert threadNum <= 0;
+		final var joinStatements = new ArrayList<Statement>();
+		final String threadNumString = String.valueOf(threadNum);
+		final var threadId = ExpressionFactory.createIntegerLiteral(mIgnoreLoc, threadNumString);
+		final var js = new JoinStatement(mIgnoreLoc, new Expression[] { threadId }, new VariableLHS[0]);
+		joinStatements.add(js);
+		mProcedureManager.endProcedureScope(mCHandler);
+		return joinStatements;
 	}
 
 	private Set<Declaration> constructAuxVarEnableDeclarations() {
@@ -257,9 +335,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mProcedureManager.endProcedureScope(mCHandler);
 	}
 
-	private ArrayList<Procedure> constructThreadGpioProc() {
+	private Map<Integer, Procedure> constructThreadGpioProc() {
 		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
-		final var procedures = new ArrayList<Procedure>();
+		final var procedures = new HashMap<Integer, Procedure>();
 		if (mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR) {
 			mLogger.info("Source-to-source translation of interrupt program with realization 1");
 			final var isrGpios = mISR.getISRMap().entrySet();
@@ -269,11 +347,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 				final var procId = isr.getIdentifier();
 				final var idExpression = mAuxVarExpressions.get(irq);
 				assert idExpression != null : "There exists no identifier expression for the IRQ: " + irq;
-				procedures.add(constructOneInterruptThreadGpioProc(procId, idExpression, irq));
+				procedures.put(irq, constructOneInterruptThreadGpioProc(procId, idExpression, irq));
 			}
 		} else {
 			mLogger.info("Source-to-source translation of interrupt program with realization 2");
-			procedures.add(constructAllInterruptsThreadGpioProc());
+			procedures.put(-1, constructAllInterruptsThreadGpioProc());
 		}
 		return procedures;
 	}
