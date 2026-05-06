@@ -29,13 +29,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
-	private HashMap<String, List<Integer[]>> mMap;
+	private HashMap<String, List<Tid>> mMap;
 
 	private ThreadTemplateVisitor() {
 		mMap = new HashMap<>();
 	}
 
-	static Map<String, List<Integer[]>> getMapToTid(Unit boogieFile) {
+	static Map<String, List<Tid>> getMapToTid(Unit boogieFile) {
 		ThreadTemplateVisitor visitor = new ThreadTemplateVisitor();
 
 		for (Declaration elem : boogieFile.getDeclarations()) {
@@ -51,13 +51,13 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 			case final Procedure proc -> visit(proc);
 			default -> {}
 		}
-		return super.processDeclaration(decl);
+		return decl;
 	}
 
 	@Override
 	protected void visit(final Procedure decl) {
 		if (decl.getIdentifier() != "ULTIMATE.start" && !mMap.containsKey(decl.getIdentifier())) {
-			mMap.put(decl.getIdentifier(), new ArrayList<Integer[]>());
+			mMap.put(decl.getIdentifier(), new ArrayList<>());
 		}
 
 		for (Statement stmt : decl.getBody().getBlock()) {
@@ -79,7 +79,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 			case final WhileStatement whileStmt -> visit(whileStmt);
 			default -> {}
 		}
-		return super.processStatement(statement);
+		return statement;
 	}
 
 	@Override
@@ -110,18 +110,8 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(final ForkStatement statement) {
 
-		Integer[] result = Arrays.stream(statement.getThreadID())
-			.map(
-				x -> {
-					if (!(x instanceof IntegerLiteral)) {
-						// not allow
-					}
-					
-					return Integer.parseInt(((IntegerLiteral)x).getValue());
-				}
-			).toArray(Integer[]::new);
-
-		List<Integer[]> tids = mMap.get(statement.getProcedureName());
+		Tid result = new Tid(statement.getThreadID());
+		List<Tid> tids = mMap.get(statement.getProcedureName());
 
 		if (tids == null) {
 			mMap.put(

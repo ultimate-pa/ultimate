@@ -1,14 +1,13 @@
 
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.util.Queue;
-import java.util.Map;
-import java.util.List;
-import java.util.Set;
 import java.util.HashSet;
-import java.util.Arrays;
-import java.util.stream.Stream;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -23,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -34,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -48,10 +45,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ParentEdge;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Project;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -73,17 +68,15 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 
 public final class Translator extends BoogieVisitor {
 
-	private int mStmtCounter;
 	private String mCurrentProcedure;
 	private Queue<Statement> mAtomicStatementBuffer;
 
 	private StringBuilderWriter mWriter;
 	private BoogieOutput mOutput;
-	private Map<String, List<Integer[]>> mMapToTid;
+	private Map<String, List<Tid>> mMapToTid;
 
 	private Translator(Unit boogieFile) {
 		mWriter = new StringBuilderWriter();
@@ -91,38 +84,35 @@ public final class Translator extends BoogieVisitor {
 		mMapToTid = ThreadTemplateVisitor.getMapToTid(boogieFile);
 	}
 
-	private void resetStmtCounter() {
-		mStmtCounter = 0;
-	}
-
-	private void addTidConst(Integer[] tid) {
-		mWriter.print("const unique tid");
-
-		for (Integer i : tid) {
-			mWriter.print("_" + i.toString());
-		}
+	private void addTidConst(Tid tid) {
+		mWriter.print("const unique ");
+		mWriter.print(tid.toString());
 		mWriter.println(" : Tid;");
 	}
 
 	private void addTidsType() {
 
-		Set<Integer[]> tids = new HashSet<>();
+		Set<Tid> tids = new HashSet<>();
 		
-		mWriter.println("type MainTid;");
+		mWriter.println("\ntype MainTid;");
 		mWriter.println("const unique main_tid : MainTid;");
 		mWriter.println("type Tid;");
 
-		for (List<Integer[]> tidList : mMapToTid.values()) {
-			for (Integer[] tid : tidList) {
+		// issue multiple write TODO
+
+		for (List<Tid> tidList : mMapToTid.values()) {
+			for (Tid tid : tidList) {
 				if (tids.contains(tid)) {
 					//throw new Exception("Error no same tid for different thread template at least for now");
 					System.err.println("fatal error");
 					System.exit(1);
 				}
 				tids.add(tid);
-
-				addTidConst(tid);
 			}
+		}
+
+		for (Tid tid : tids) {
+			addTidConst(tid);
 		}
 
 		mWriter.print("\n");
@@ -175,21 +165,78 @@ public final class Translator extends BoogieVisitor {
 				}
 			}
 		}
-		return super.processDeclaration(decl);
+		return decl;
+	}
+
+	private void addYieldInvariants(String procName, int counter) {
+		mWriter.print("yield invariant {:layer 2} ");
+		mWriter.print("yield_");
+		mWriter.print(procName);
+		mWriter.print("_");
+		mWriter.print(counter); // convert int to string or int not print TODO
+		mWriter.println("();");
+	}
+
+	private void addAtomicStatement(String procName, final Statement statement, int counter) {
+		if (statement instanceof AssertStatement 
+            || statement instanceof AssignmentStatement
+            || statement instanceof AssumeStatement
+            || statement instanceof HavocStatement
+            || statement instanceof AtomicStatement) {
+				mWriter.print("yield procedure {:layer 0} ");
+				mWriter.print(procName);
+				mWriter.print("_stmt_");
+				mWriter.print(counter);
+				mWriter.print("();\n");
+
+				mWriter.print("refines atomic action {:layer 1,2} _ {\n");
+				mOutput.appendStatement(mWriter.getResult(), statement);
+				mWriter.print("}");
+		}
 	}
 
 	@Override
 	protected void visit(final Procedure decl) {
-		mWriter.print("yield procedure {layer 0,2} ");
+		/* Write atomic */
+
+		int counter = 0;
+		addYieldInvariants(decl.getIdentifier(), counter);
+
+		for (Statement statement : decl.getBody().getBlock()) {
+			counter += 1;
+			addAtomicStatement(decl.getIdentifier(), statement, counter);
+			addYieldInvariants(decl.getIdentifier(), counter);
+		}
+
+		/* Write the yield procedure itself */
+		//if (decl.getInParams() != null || decl.getOutParams() != null) {
+		//	System.err.println("fatal procedure take no parameter for now");
+		//	System.exit(1);
+		//}
+	
+		BodyTransformer transformer = new BodyTransformer();
+
+		mWriter.print("yield procedure {:layer 0} ");
 		mWriter.print(decl.getIdentifier());
 
-		mWriter.print("(");
-		mOutput.appendVarList(mWriter.getResult(), decl.getInParams());
-		mWriter.print(") returns (");
-		mOutput.appendVarList(mWriter.getResult(), decl.getOutParams());
-		mWriter.print(")");
 
-		mWriter.print("\n");
+		// improve parameter
+		mWriter.print("("); 
+		if (decl.getIdentifier() == "ULTIMATE.start") {
+			mWriter.print("{:linear} start_tid : StartTid");
+		}
+
+		mWriter.print(");\n");
+
+		mWriter.print("requires yield_");
+		mWriter.print(decl.getIdentifier());
+		mWriter.println("_0;");
+
+		mWriter.println("{");
+		mOutput.printBody(
+			transformer.transformBody(decl.getIdentifier(), decl.getBody())
+		);
+		mWriter.print("}\n\n");
 	}
 
 	protected void visit(final TypeDeclaration decl) {
@@ -204,7 +251,7 @@ public final class Translator extends BoogieVisitor {
 		case final PrimitiveType primitive -> visit(primitive);
 		case final StructType struct -> visit(struct);
 		}
-		return super.processType(type);
+		return type;
 	}
 
 	protected void visit(final ArrayType type) {
@@ -241,7 +288,7 @@ public final class Translator extends BoogieVisitor {
 		case final ReturnStatement returnStmt -> visit(returnStmt);
 		case final WhileStatement whileStmt -> visit(whileStmt);
 		}
-		return super.processStatement(statement);
+		return statement;
 	}
 
 	protected void visit(final WhileStatement statement) {
@@ -307,7 +354,7 @@ public final class Translator extends BoogieVisitor {
 		case final StructLHS struct -> visit(struct);
 		case final VariableLHS variable -> visit(variable);
 		}
-		return super.processLeftHandSide(lhs);
+		return lhs;
 	}
 
 	protected void visit(final VariableLHS lhs) {
@@ -330,7 +377,7 @@ public final class Translator extends BoogieVisitor {
 		case final ModifiesSpecification modifies -> visit(modifies);
 		case final RequiresSpecification requires -> visit(requires);
 		}
-		return super.processSpecification(spec);
+		return spec;
 	}
 
 	protected void visit(final RequiresSpecification spec) {
@@ -355,7 +402,7 @@ public final class Translator extends BoogieVisitor {
 		case final NamedAttribute named -> visit(named);
 		case final Trigger trigger -> visit(trigger);
 		}
-		return super.processAttribute(attr);
+		return attr;
 	}
 
 	protected void visit(final NamedAttribute attr) {
@@ -387,7 +434,7 @@ public final class Translator extends BoogieVisitor {
 		case final UnaryExpression unary -> visit(unary);
 		case final WildcardExpression wildcard -> visit(wildcard);
 		}
-		return super.processExpression(expr);
+		return expr;
 	}
 
 	protected void visit(final WildcardExpression expr) {

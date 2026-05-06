@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.io.PrintWriter;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 
 final class StringBuilderWriter extends PrintWriter {
 
