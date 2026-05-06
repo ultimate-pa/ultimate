@@ -164,7 +164,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
 
 		if (FORK_JOIN_IN_IRQ_ENABLE && (mISR.getRequestEnableAll() != null)) {
-			addForksToProcedure(mISR.getRequestEnableAll(), threadGpioProcedureMap);
+			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadGpioProcedureMap);
 		}
 
 		// Add interrupt enabled variable declarations
@@ -182,17 +182,21 @@ public class InterruptPostProcessor implements IPostProcessor {
 		body.setBlock(newBlock.toArray(new Statement[0]));
 	}
 
-	private void addForksToProcedure(final Procedure mainProcedure,
+	private void addForksToRequestEnableAll(final Procedure mainProcedure,
 			final Map<Integer, Procedure> threadGpioProceduresMap) {
-		final var forkStatements = new ArrayList<Statement>();
+		final var statements = new ArrayList<Statement>();
 		for (final Entry<Integer, Procedure> entry : threadGpioProceduresMap.entrySet()) {
 			final var irq = entry.getKey();
 			final var proc = entry.getValue();
-			forkStatements.addAll(constructForkStatements(mainProcedure, List.of(proc), -irq));
+			final var fork = constructForkStatements(mainProcedure, List.of(proc), -irq);
+			final var idExpr = mAuxVarExpressions.get(irq);
+			assert idExpr != null;
+			final var ifStmt = constructForkIfStatement(idExpr, fork, true);
+			statements.add(ifStmt);
 		}
 		final var body = mainProcedure.getBody();
-		forkStatements.addAll(Arrays.asList(body.getBlock()));
-		body.setBlock(forkStatements.toArray(new Statement[0]));
+		statements.addAll(Arrays.asList(body.getBlock()));
+		body.setBlock(statements.toArray(new Statement[0]));
 	}
 
 	private void addForksToRequestEnable(final Map<Integer, Procedure> intEnabledProcedures,
@@ -202,11 +206,15 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final var proc = entry.getValue();
 			final var threadGpioProcedure = threadGpioProceduresMap.get(irq);
 			assert threadGpioProcedure != null;
-			final List<Statement> newBlock = new ArrayList<>();
+
+			final var thrNum = -irq;
+			final List<Statement> fork = constructForkStatements(proc, List.of(threadGpioProcedure), thrNum);
+
+			final var idExpr = mAuxVarExpressions.get(irq);
+			assert idExpr != null;
+			final var newBlock = new ArrayList<>(List.of(constructForkIfStatement(idExpr, fork, true)));
 			final var body = proc.getBody();
 			newBlock.addAll(Arrays.asList(body.getBlock()));
-			final var thrNum = -irq;
-			newBlock.addAll(constructForkStatements(proc, List.of(threadGpioProcedure), thrNum));
 			body.setBlock(newBlock.toArray(new Statement[0]));
 		}
 	}
@@ -215,7 +223,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 		for (final Entry<Integer, Procedure> entry : intDisabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
 			final var proc = entry.getValue();
-			final List<Statement> newBlock = constructJoinStatement(proc, -irq);
+			final List<Statement> join = constructJoinStatement(proc, -irq);
+			final var idExpr = mAuxVarExpressions.get(irq);
+			assert idExpr != null;
+			final var newBlock = new ArrayList<>(List.of(constructForkIfStatement(idExpr, join, false)));
 			final var body = proc.getBody();
 			newBlock.addAll(Arrays.asList(body.getBlock()));
 			body.setBlock(newBlock.toArray(new Statement[0]));
@@ -251,6 +262,18 @@ public class InterruptPostProcessor implements IPostProcessor {
 		joinStatements.add(js);
 		mProcedureManager.endProcedureScope(mCHandler);
 		return joinStatements;
+	}
+
+	private Statement constructForkIfStatement(final IdentifierExpression idExpr, final List<Statement> statements,
+			final boolean negated) {
+		Expression condition = idExpr;
+		if (negated) {
+			condition = ExpressionFactory.constructUnaryExpression(mIgnoreLoc,
+					de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG,
+					new IdentifierExpression(mIgnoreLoc, BoogieType.TYPE_BOOL, idExpr.getIdentifier(),
+							DeclarationInformation.DECLARATIONINFO_GLOBAL));
+		}
+		return StatementFactory.constructIfStatement(mIgnoreLoc, condition, statements);
 	}
 
 	private Set<Declaration> constructAuxVarEnableDeclarations() {
