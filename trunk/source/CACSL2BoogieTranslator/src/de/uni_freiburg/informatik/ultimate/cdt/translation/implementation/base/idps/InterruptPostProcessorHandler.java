@@ -146,10 +146,10 @@ public class InterruptPostProcessorHandler {
 			final var isr = "HAL_GPIO_EXTI_Callback";
 			final var numToISR = new HashMap<Integer, String>();
 			numToISR.put(1, isr);
-			final var reqEnable = "MX_GPIO_Init";
+			final var reqEnable = "HAL_NVIC_EnableIRQ";
 			final var numToReqEnable = new HashMap<Integer, String>();
 			numToReqEnable.put(1, reqEnable);
-			final var reqDisable = "HAL_GPIO_DeInit";
+			final var reqDisable = "HAL_NVIC_DisableIRQ";
 			final var numToReqDisable = new HashMap<Integer, String>();
 			numToReqDisable.put(1, reqDisable);
 			return new ISRInfo(numToISR, numToReqEnable, numToReqDisable, null, null, null);
