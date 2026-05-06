@@ -3,11 +3,11 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
@@ -72,11 +72,7 @@ public class GhostVariableManager {
 	}
 
 	public Set<TermVariable> getLocationTermVariables() {
-		final Set<TermVariable> result = new HashSet<>();
-		for (final GhostProgramVar pv : mLocationVars.values()) {
-			result.add(pv.getTermVariable());
-		}
-		return result;
+		return mLocationVars.values().stream().map(GhostProgramVar::getTermVariable).collect(Collectors.toSet());
 	}
 
 	public Term createLocationConstraint(final String threadId, final IcfgLocation location) {

@@ -105,12 +105,12 @@ public final class StrongestPostconditionInterference implements IInterference {
 				widenedGroup = new RelationalInterference(widenedRelationalInterference,
 						mPostcondition.prepareRelation(widenedRelationalInterference));
 			}
-			if (!isFalseLiteral(widenedGroup.relationalInterference())) {
+			if (!SmtUtils.isFalseLiteral(widenedGroup.relationalInterference().getFormula())) {
 				widened.put(entry.getKey(), widenedGroup);
 			}
 		}
 		for (final Entry<AbstractLocationPair, RelationalInterference> entry : typedOther.mInterferenceByAbstractLocationPair.entrySet()) {
-			if (!widened.containsKey(entry.getKey()) && !isFalseLiteral(entry.getValue().relationalInterference())) {
+			if (!widened.containsKey(entry.getKey()) && !SmtUtils.isFalseLiteral(entry.getValue().relationalInterference().getFormula())) {
 				widened.put(entry.getKey(), entry.getValue());
 			}
 		}
@@ -133,7 +133,4 @@ public final class StrongestPostconditionInterference implements IInterference {
 		return true;
 	}
 
-	private static boolean isFalseLiteral(final IPredicate predicate) {
-		return SmtUtils.isFalseLiteral(predicate.getFormula());
-	}
 }

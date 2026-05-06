@@ -64,8 +64,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final SifaResultPrinter mResultPrinter;
 	private final ThreadModularProofChecker mProofChecker;
 	private final RelationalPredicatePostcondition mPostcondition;
-	private final boolean mResultPrint;
-
 	private final ConcurrentSymbolicTools mConcurrentTools;
 	private final int mOuterWideningThreshold;
 
@@ -108,13 +106,12 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mPostcondition = setup.postcondition();
 		mPostcondition.setStats(mStats);
 		mProofChecker = setup.proofChecker();
-		mResultPrint = mConcurrentTools.getSettings().resultPrint();
 		mThreadIcfgs = new HashMap<>();
 		mThreadLois = new HashMap<>();
 		mThreadInterpreters = new HashMap<>();
 		mForkSourcesByThread = collectForkSourcesByThread();
 		prepareThreadIcfgsAndLois();
-		mResultPrinter = mResultPrint
+		mResultPrinter = mConcurrentTools.getSettings().resultPrint()
 				? new SifaResultPrinter(logger, setup.abstractLocationIds(),
 						mConcurrentTools.getThreadActivityPreanalysis())
 				: null;
@@ -131,12 +128,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
 		final FixpointResult fixpoint = computeOuterInterferenceFixpoint();
-		if (mResultPrint) {
-			if (mResultPrinter != null) {
-				mResultPrinter.printResults(fixpoint.locationPredicates, mIcfg);
-			} else {
-				mLogger.info("Thread-modular result printing disabled");
-			}
+		if (mResultPrinter != null) {
+			mResultPrinter.printResults(fixpoint.locationPredicates, mIcfg);
 		}
 		if (mProofChecker != null) {
 			verifyProof(fixpoint);
@@ -151,6 +144,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private FixpointResult computeOuterInterferenceFixpoint() {
 		final Map<IcfgLocation, IPredicate> allPredicates = new HashMap<>();
 		InterferenceCollection currentInterferences = InterferenceCollection.empty();
+		final Set<IcfgLocation> joinedExitLocations = computeJoinedExitLocations();
+		boolean rerunWithStableInterferences = false;
 
 		if (mConcurrentTools.getSettings().interferenceApplicatorType() == InterferenceApplicatorType.NONE) {
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new HashMap<>();
@@ -168,13 +163,26 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 								+ MAX_OUTER_INTERFERENCE_ITERATIONS + " iterations");
 			}
 			mLogger.info("Iteration %d", iteration);
+			final Map<IcfgLocation, IPredicate> joinedExitsBefore =
+					joinedExitLocations.isEmpty() ? Map.of() : snapshotLocations(allPredicates, joinedExitLocations);
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new HashMap<>();
 			analyzeThreads(currentInterferences, allPredicates, perThreadPredicates);
 			final InterferenceCollection extractedInterferences = rebuildInterferences(perThreadPredicates);
+			final boolean interferencesHaveConverged =
+					extractedInterferences.hasConverged(currentInterferences, mInterferenceDomain);
 
-			if (extractedInterferences.hasConverged(currentInterferences, mInterferenceDomain)) {
-				return new FixpointResult(allPredicates, perThreadPredicates);
+			if (interferencesHaveConverged) {
+				// Only do an extra iteration when a joined-thread's exit changed this round,
+				// meaning a joiner that ran before it saw a stale exit predicate.
+				if (rerunWithStableInterferences
+						|| joinedExitLocations.isEmpty()
+						|| joinedExitPredicatesUnchanged(allPredicates, joinedExitsBefore)) {
+					return new FixpointResult(allPredicates, perThreadPredicates);
+				}
+				rerunWithStableInterferences = true;
+				continue;
 			}
+			rerunWithStableInterferences = false;
 			final InterferenceCollection nextInterferences;
 			if (iteration >= mOuterWideningThreshold) {
 				nextInterferences = currentInterferences.widen(extractedInterferences, mInterferenceDomain);
@@ -184,6 +192,45 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			}
 			currentInterferences = nextInterferences;
 		}
+	}
+
+	private Set<IcfgLocation> computeJoinedExitLocations() {
+		final Set<IcfgLocation> exits = new LinkedHashSet<>();
+		for (final String threadId : mJoinedThreads) {
+			final IcfgLocation exit = mThreadIcfgs.get(threadId).getProcedureExitNodes().get(threadId);
+			if (exit != null) {
+				exits.add(exit);
+			}
+		}
+		return Set.copyOf(exits);
+	}
+
+	private static Map<IcfgLocation, IPredicate> snapshotLocations(final Map<IcfgLocation, IPredicate> allPredicates,
+			final Set<IcfgLocation> locations) {
+		final Map<IcfgLocation, IPredicate> snapshot = new HashMap<>(locations.size() * 2);
+		for (final IcfgLocation loc : locations) {
+			snapshot.put(loc, allPredicates.get(loc));
+		}
+		return snapshot;
+	}
+
+	private boolean joinedExitPredicatesUnchanged(final Map<IcfgLocation, IPredicate> allPredicates,
+			final Map<IcfgLocation, IPredicate> snapshot) {
+		for (final Map.Entry<IcfgLocation, IPredicate> entry : snapshot.entrySet()) {
+			final IPredicate before = entry.getValue();
+			final IPredicate after = allPredicates.get(entry.getKey());
+			if (before == after) {
+				continue;
+			}
+			if (before == null || after == null) {
+				return false;
+			}
+			if (!mAnalysisDomain.isSubsetEq(before, after).isTrueForAbstraction()
+					|| !mAnalysisDomain.isSubsetEq(after, before).isTrueForAbstraction()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private InterferenceCollection rebuildInterferences(

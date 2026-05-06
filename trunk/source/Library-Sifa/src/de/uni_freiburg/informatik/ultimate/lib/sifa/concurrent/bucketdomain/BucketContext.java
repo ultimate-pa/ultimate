@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
-// TODO: merge into bucketdomain
+// TODO: merge into bucketdomain somehow if possible
 public final class BucketContext implements IThreadLocalDomainContext {
 	private static final String MAIN_THREAD = "ULTIMATE.start";
 

@@ -3,13 +3,11 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -17,11 +15,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
@@ -30,11 +26,14 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.ObservedThrea
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.poststate.PostStateInterference;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.unaryglobals.UnaryGlobalInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.InitialStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -49,6 +48,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final ThreadModularSifaSettings mSettings;
 	private final InitialStateFactory mInitialStateFactory;
+	private final JoinHandler mJoinHandler;
 	private GhostVariableManager mGhostVariables;
 	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
 	private ThreadAnalysisContext mThreadContext;
@@ -63,6 +63,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mIcfg = icfg;
 		mSettings = settings;
 		mInitialStateFactory = new InitialStateFactory(this, icfg);
+		mJoinHandler = new JoinHandler(this, services, icfg);
 	}
 
 	public ThreadModularSifaSettings getSettings() {
@@ -94,13 +95,14 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mGhostVariables = ghostVariables;
 		mThreadActivityPreanalysis = activityPreanalysis;
 		mInitialStateFactory.configureStaticAnalysis(ghostVariables);
+		mJoinHandler.configureStaticAnalysis(ghostVariables);
 	}
 
 	public void configureForThread(final String threadId, final InterferenceCollection interferences,
 			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain analysisDomain,
 			final IDomain interferenceDomain, final RelationalPredicatePostcondition postcondition) {
-		configureDomainContext(analysisDomain, threadId);
-		configureDomainContext(interferenceDomain, threadId);
+		IThreadLocalDomainContext.setIfApplicable(analysisDomain, threadId);
+		IThreadLocalDomainContext.setIfApplicable(interferenceDomain, threadId);
 		final List<String> sortedInterferenceThreadIds = new ArrayList<>(interferences.getThreadIds());
 		Collections.sort(sortedInterferenceThreadIds);
 		final boolean includeSelfInterference = mThreadActivityPreanalysis.getMultiForkedThreads().contains(threadId);
@@ -108,42 +110,16 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 				includeSelfInterference, List.copyOf(sortedInterferenceThreadIds), locationPredicates, new HashMap<>());
 		mObservedStateRecorder = new ObservedThreadStateRecorder(interferenceDomain, mGhostVariables);
 		mInitialStateFactory.configureForThread(locationPredicates, analysisDomain);
+		mJoinHandler.configureForThread(mThreadContext, mThreadActivityPreanalysis);
 	}
 
-	private static void configureDomainContext(final IDomain domain, final String threadId) {
-		if (domain instanceof final IThreadLocalDomainContext threadLocalDomainContext) {
-			threadLocalDomainContext.setCurrentThreadId(threadId);
-		}
-	}
 
 	@Override
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		mObservedStateRecorder.recordTransitionInputState(transition, input);
 		final IPredicate spResult = mapBuckets(input, bucket -> super.post(bucket, transition));
-		final IPredicate joinProjected = projectJoinAssignedVars(spResult, transition);
+		final IPredicate joinProjected = mJoinHandler.projectJoinAssignedVars(spResult, transition);
 		return updateGhostvarsAndApplyInterferences(joinProjected, transition);
-	}
-
-	private IPredicate projectJoinAssignedVars(final IPredicate state, final IIcfgTransition<IcfgLocation> transition) {
-		if (state instanceof BucketPredicate) {
-			return mapBuckets(state, bucket -> projectJoinAssignedVars(bucket, transition));
-		}
-		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> joinCurrent)
-				|| SmtUtils.isFalseLiteral(state.getFormula()) || SmtUtils.isTrueLiteral(state.getFormula())) {
-			return state;
-		}
-		final Set<TermVariable> assigned = new HashSet<>();
-		for (final IProgramVar lhs : joinCurrent.getJoinSmtArguments().getAssignmentLhs()) {
-			if (lhs != null) {
-				assigned.add(lhs.getTermVariable());
-			}
-		}
-		if (assigned.isEmpty()) {
-			return state;
-		}
-		final Term projected = RelationalPredicateUtils.existentiallyProject(state.getFormula(), assigned, mServices,
-				getManagedScript());
-		return predicate(projected);
 	}
 
 	@Override
@@ -185,6 +161,9 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	private IPredicate applyInterferenceRounds(final IPredicate state, final List<IInterference> interferences) {
 		final IDomain domain = mThreadContext.interferenceDomain();
+		if (usesOnePassApplication(interferences)) {
+			return applyInterferencesOnce(state, interferences, domain);
+		}
 		IPredicate current = state;
 		while (true) {
 			final IPredicate roundStart = current;
@@ -204,6 +183,22 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		}
 	}
 
+	private boolean usesOnePassApplication(final List<IInterference> interferences) {
+		return mSettings.interferenceApplicatorType() == InterferenceApplicatorType.UNARY_GLOBALS
+				|| mSettings.interferenceApplicatorType() == InterferenceApplicatorType.POST_STATE
+				|| interferences.stream().allMatch(itf -> itf instanceof UnaryGlobalInterference
+						|| itf instanceof PostStateInterference);
+	}
+
+	private IPredicate applyInterferencesOnce(final IPredicate state, final List<IInterference> interferences,
+			final IDomain domain) {
+		IPredicate current = state;
+		for (final IInterference itf : interferences) {
+			current = itf.applyUntilFixpoint(current, domain, mSettings.innerWideningThreshold(), getStats());
+		}
+		return current;
+	}
+
 	private IPredicate updateGhostvarsAndApplyInterferences(final IPredicate state,
 			final IIcfgTransition<IcfgLocation> transition) {
 		IPredicate updated = addLocationUpdate(state, transition);
@@ -211,83 +206,11 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			updated = addLocationUpdateForThread(updated, fork.getNameOfForkedProcedure(),
 					mGhostVariables.getEntryLocation(fork.getNameOfForkedProcedure()));
 		}
-		updated = importJoinedThreadExitSummary(updated, transition);
+		updated = mJoinHandler.importJoinedThreadExitSummary(updated, transition);
 		if (Optimizations.localTransition(transition)) {
 			return updated;
 		}
 		return applyInterferences(updated, transition.getTarget());
-	}
-
-	private IPredicate importJoinedThreadExitSummary(final IPredicate state,
-			final IIcfgTransition<IcfgLocation> transition) {
-		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> joinCurrent)
-				|| mThreadActivityPreanalysis == null || mThreadContext == null) {
-			return state;
-		}
-		@SuppressWarnings("unchecked")
-		final IIcfgJoinTransitionThreadCurrent<IcfgLocation> typedJoin = (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) joinCurrent;
-		final String joinedThread = mThreadActivityPreanalysis.getJoinedThreadForJoin(typedJoin);
-		if (joinedThread == null) {
-			return state;
-		}
-		final IcfgLocation exitLocation = mIcfg.getProcedureExitNodes().get(joinedThread);
-		if (exitLocation == null) {
-			return state;
-		}
-		final IPredicate exitState = mThreadContext.locationPredicates().get(exitLocation);
-		if (exitState == null || SmtUtils.isTrueLiteral(exitState.getFormula())
-				|| SmtUtils.isFalseLiteral(exitState.getFormula())) {
-			return state;
-		}
-		final IPredicate sharedExitState = projectToJoinExitSummary(exitState, joinedThread);
-		if (SmtUtils.isFalseLiteral(sharedExitState.getFormula())) {
-			return state;
-		}
-		final IPredicate joinedAtExit = addLocationUpdateForThread(state, joinedThread, exitLocation);
-		return mapBuckets(joinedAtExit,
-				bucket -> predicate(SmtUtils.and(getScript(), bucket.getFormula(), sharedExitState.getFormula())));
-	}
-
-//	if (hasLiveOtherThreadAtJoinTarget(transition, joinedThread)) {
-//		return state;
-//	}
-//	final IPredicate joinedAtExit = addLocationUpdateForThread(state, joinedThread, exitLocation);
-//	final IPredicate sharedExitState = projectToJoinExitSummary(exitState, joinedThread);
-//	if (SmtUtils.isFalseLiteral(sharedExitState.getFormula())) {
-//		return joinedAtExit;
-//	}
-//	return mapBuckets(joinedAtExit, bucket -> predicate(SmtUtils.and(getScript(), bucket.getFormula(),
-//			sharedExitState.getFormula())));
-//}
-//
-//private boolean hasLiveOtherThreadAtJoinTarget(final IIcfgTransition<IcfgLocation> transition,
-//		final String joinedThread) {
-//	for (final String threadId : mThreadContext.sortedInterferenceThreadIds()) {
-//		if (threadId.equals(mThreadContext.threadId()) || threadId.equals(joinedThread)) {
-//			continue;
-//		}
-//		if (mThreadActivityPreanalysis.mayBeActiveAt(transition.getTarget(), threadId)) {
-//			return true;
-//		}
-//	}
-//	return false;
-//}
-//
-//
-
-	private IPredicate projectToJoinExitSummary(final IPredicate state, final String joinedThread) {
-		final Set<TermVariable> varsToProject = state.getVars().stream().filter(var -> !var.isGlobal())
-				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-		if (hasGhostLocationTracking()) {
-			varsToProject.addAll(mGhostVariables.getLocationTermVariables());
-			varsToProject.remove(mGhostVariables.getLocationTermVar(joinedThread));
-		}
-		if (varsToProject.isEmpty()) {
-			return state;
-		}
-		final Term projected = RelationalPredicateUtils.existentiallyProject(state.getFormula(), varsToProject,
-				mServices, getManagedScript());
-		return predicate(projected);
 	}
 
 	private IPredicate addLocationUpdate(final IPredicate postState, final IIcfgTransition<IcfgLocation> transition) {
@@ -318,7 +241,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		return predicate(combined);
 	}
 
-	private IPredicate mapBuckets(final IPredicate state, final Function<IPredicate, IPredicate> operation) {
+	IPredicate mapBuckets(final IPredicate state, final Function<IPredicate, IPredicate> operation) {
 		if (!(state instanceof final BucketPredicate buckets)) {
 			return operation.apply(state);
 		}

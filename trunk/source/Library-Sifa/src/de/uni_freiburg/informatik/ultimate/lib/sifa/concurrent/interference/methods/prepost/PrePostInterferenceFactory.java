@@ -67,9 +67,9 @@ public final class PrePostInterferenceFactory implements IInterferenceFactory {
 					mergedPair = mergedPair == null ? nextPair : mergePairs(mergedPair, nextPair);
 				}
 			}
-				if (mergedPair != null) {
-					interferenceByAbstractLocationPair.merge(edge.abstractLocationPair(), mergedPair, this::mergePairs);
-				}
+			if (mergedPair != null) {
+				interferenceByAbstractLocationPair.merge(edge.abstractLocationPair(), mergedPair, this::mergePairs);
+			}
 		}
 		return interferenceByAbstractLocationPair.isEmpty() ? null
 				: new PrePostInterference(interferenceByAbstractLocationPair, mManagedScript, mBucketContext,

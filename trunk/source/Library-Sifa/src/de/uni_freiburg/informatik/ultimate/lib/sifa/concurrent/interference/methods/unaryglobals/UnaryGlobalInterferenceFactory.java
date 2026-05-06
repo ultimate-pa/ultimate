@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.unaryglobals;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -60,11 +61,12 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 				continue;
 			}
 			final IPredicate postState = computeEdgeLocalPostState(edge, locationStates);
-			if (InterferenceUtils.shouldSkipTrivialPredicate(postState)) {
+			if (postState == null || SmtUtils.isFalseLiteral(postState.getFormula())) {
 				continue;
 			}
 			for (final IProgramVar global : edge.changedGlobals()) {
-				final IPredicate unarySummary = projectToSingleGlobal(postState, global);
+				final IPredicate unarySummary =
+						SmtUtils.isTrueLiteral(postState.getFormula()) ? mTruePredicate : projectToSingleGlobal(postState, global);
 				summaryByGlobal.merge(global, unarySummary, mDomain::join);
 			}
 		}
@@ -75,27 +77,25 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 	private IPredicate computeEdgeLocalPostState(final TranslatedInterferenceOfEdge edge,
 			final Map<IcfgLocation, IPredicate> locationStates) {
 		final IPredicate sourceState = locationStates.get(edge.source());
-		if (sourceState == null) {
+		if (sourceState == null || SmtUtils.isFalseLiteral(sourceState.getFormula())) {
 			return mFalsePredicate;
 		}
-		final IPredicate sharedPreState = mTranslator.projectPreStateToSharedState(sourceState);
 		final Term combined = SmtUtils.andWithExtendedLocalSimplification(mManagedScript.getScript(),
-				sharedPreState.getFormula(), edge.transitionPredicate().getFormula());
+				sourceState.getFormula(), edge.transitionPredicate().getFormula());
 		final IPredicate relationalInterference = mPredicateFactory.newPredicate(combined);
-		if (InterferenceUtils.shouldSkipTrivialPredicate(relationalInterference)) {
-			return relationalInterference;
-		}
+		// SP(PreState, Transition) gives the post-state of the edge.
+		// Since PreState already over-approximates interferences, this is sound.
 		return mPostcondition.strongestPostcondition(mTruePredicate, relationalInterference);
 	}
 
 	private IPredicate projectToSingleGlobal(final IPredicate sharedState, final IProgramVar global) {
-		final Set<TermVariable> otherVars = sharedState.getVars().stream().filter(var -> !var.equals(global))
-				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-		if (otherVars.isEmpty() || !containsAny(sharedState.getFormula(), otherVars)) {
-			return sharedState;
-		}
-		final Term projected = RelationalPredicateUtils.existentiallyProject(sharedState.getFormula(), otherVars,
-				mServices, mManagedScript);
+		final Set<TermVariable> varsToForget = new HashSet<>();
+		sharedState.getVars().stream().filter(var -> !var.equals(global)).map(IProgramVar::getTermVariable)
+				.forEach(varsToForget::add);
+		final Term projected = varsToForget.isEmpty() || !containsAny(sharedState.getFormula(), varsToForget)
+				? sharedState.getFormula()
+				: RelationalPredicateUtils.existentiallyProject(sharedState.getFormula(), varsToForget, mServices,
+						mManagedScript);
 		return mPredicateFactory.newPredicate(projected);
 	}
 

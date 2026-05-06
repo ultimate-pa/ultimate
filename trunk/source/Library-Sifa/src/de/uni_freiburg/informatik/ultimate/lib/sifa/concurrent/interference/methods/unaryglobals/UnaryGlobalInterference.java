@@ -42,22 +42,29 @@ public final class UnaryGlobalInterference implements IInterference {
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain, final int wideningThreshold,
 			final SifaStats stats) {
-		if (mSummaryByGlobal.isEmpty() || SmtUtils.isFalseLiteral(state.getFormula())) {
+		if (mSummaryByGlobal.isEmpty()) {
 			return state;
 		}
-		final IPredicate overwritten = overwriteSummarizedGlobals(state);
-		return domain.join(state, overwritten);
+		IPredicate current = state;
+		while (true) {
+			final IPredicate overwritten = overwriteSummarizedGlobals(current);
+			final IPredicate next = domain.join(current, overwritten);
+			if (domain.isSubsetEq(next, current).isTrueForAbstraction()) {
+				return current;
+			}
+			current = next;
+		}
 	}
 
 	private IPredicate overwriteSummarizedGlobals(final IPredicate state) {
 		final Set<TermVariable> varsToForget = mSummaryByGlobal.keySet().stream().map(IProgramVar::getTermVariable)
 				.collect(Collectors.toSet());
-		final Term forgotten = varsToForget.isEmpty() || !hasAnyFreeVarIn(state.getFormula(), varsToForget)
-				? state.getFormula()
-				: RelationalPredicateUtils.existentiallyProject(state.getFormula(), varsToForget, mServices,
-						mManagedScript);
-
 		final Script script = mManagedScript.getScript();
+		final Term forgotten = varsToForget.isEmpty() || !hasAnyFreeVarIn(state.getFormula(), varsToForget)
+						? state.getFormula()
+						: RelationalPredicateUtils.existentiallyProject(state.getFormula(), varsToForget, mServices,
+								mManagedScript);
+
 		Term combined = forgotten;
 		for (final IPredicate unarySummary : mSummaryByGlobal.values()) {
 			combined = SmtUtils.and(script, combined, unarySummary.getFormula());

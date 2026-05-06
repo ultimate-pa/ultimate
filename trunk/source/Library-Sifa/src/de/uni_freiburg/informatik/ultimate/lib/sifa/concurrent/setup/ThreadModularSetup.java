@@ -59,8 +59,8 @@ public final class ThreadModularSetup {
 		final ILogger logger = services.getLoggingService().getLogger(ThreadModularSetup.class);
 		final List<String> threadIds = discoverThreadIds(icfg);
 		final Set<String> joinedThreads = settings.joinPrecision() ? identifyJoinedThreads(icfg) : Set.of();
-		if (settings.joinPrecision() || !joinedThreads.isEmpty()) {
-			logger.info("Join precision: %s, joined threads: %s", settings.joinPrecision(), joinedThreads);
+		if (settings.joinPrecision()) {
+			logger.info("Join precision enabled, joined threads: %s", joinedThreads);
 		}
 		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg, joinedThreads);
 		final ThreadActivityPreanalysis activityPreanalysis = ThreadActivityPreanalysis.compute(icfg,
@@ -86,10 +86,9 @@ public final class ThreadModularSetup {
 				interferenceFactory == null ? "None" : interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", settings.locationAbstractionType());
 
-		final boolean includeInterferencePreState = true;
 		final ThreadModularProofChecker proofChecker = settings.proofCheck()
 				? new ThreadModularProofChecker(icfg, postcondition, translator, interferenceDomain, ghostVars,
-						activityPreanalysis, activityPreanalysis.getMultiForkedThreads(), includeInterferencePreState)
+						activityPreanalysis, activityPreanalysis.getMultiForkedThreads(), true)
 				: null;
 
 		return new SetupResult(threadIds, analysisDomain, interferenceDomain, bucketContext, defaultLoopSumFactory,

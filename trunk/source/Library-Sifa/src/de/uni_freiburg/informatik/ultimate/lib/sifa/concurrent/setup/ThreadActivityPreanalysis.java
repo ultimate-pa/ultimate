@@ -103,8 +103,30 @@ public final class ThreadActivityPreanalysis {
 
 	private static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> computeTrackedJoinMap(
 			final IIcfg<IcfgLocation> icfg, final Set<String> threadIds, final Set<String> selfForkingThreads) {
-		final Set<String> trackedThreads = identifyUniquelyJoinTrackedThreads(icfg, threadIds, selfForkingThreads);
-		return trackedThreads.isEmpty() ? Map.of() : buildTrackedJoinMap(icfg, trackedThreads);
+		final var concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
+		final Map<List<Term>, String> threadByForkId = new LinkedHashMap<>();
+		final Map<String, Integer> forkCount = new HashMap<>();
+		for (final var fork : concurrency.getThreadInstanceMap().keySet()) {
+			final String threadId = fork.getNameOfForkedProcedure();
+			if (threadIds != null && !threadIds.contains(threadId)) {
+				continue;
+			}
+			threadByForkId.put(List.of(fork.getForkSmtArguments().getThreadIdArguments().terms()), threadId);
+			forkCount.merge(threadId, 1, Integer::sum);
+		}
+		final Map<String, Integer> joinCount = new HashMap<>();
+		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> candidates = new LinkedHashMap<>();
+		for (final var join : concurrency.getJoinTransitions()) {
+			final String threadId = threadByForkId.get(List.of(join.getJoinSmtArguments().getThreadIdArguments().terms()));
+			if (threadId != null) {
+				joinCount.merge(threadId, 1, Integer::sum);
+				candidates.put(join, threadId);
+			}
+		}
+		candidates.entrySet().removeIf(e -> forkCount.getOrDefault(e.getValue(), 0) != 1
+				|| joinCount.getOrDefault(e.getValue(), 0) != 1
+				|| selfForkingThreads.contains(e.getValue()));
+		return Map.copyOf(candidates);
 	}
 
 	private static Map<IcfgLocation, Set<String>> computeDefinitelyJoinedByLocation(final IIcfg<IcfgLocation> icfg,
@@ -132,26 +154,7 @@ public final class ThreadActivityPreanalysis {
 					continue;
 				}
 
-				Set<String> joinedAfterEdge = joinedAtSource;
-				if (edge instanceof final IIcfgForkTransitionThreadCurrent<?> forkCurrent) {
-					final String forkedThread = forkCurrent.getNameOfForkedProcedure();
-					if (joinedAtSource.contains(forkedThread)) {
-						joinedAfterEdge = new HashSet<>(joinedAtSource);
-						joinedAfterEdge.remove(forkedThread);
-					}
-				}
-				if (edge instanceof IIcfgJoinTransitionThreadCurrent<?>) {
-					@SuppressWarnings("unchecked")
-					final IIcfgJoinTransitionThreadCurrent<IcfgLocation> joinCurrent =
-							(IIcfgJoinTransitionThreadCurrent<IcfgLocation>) edge;
-					final String joinedThread = joinedThreadByJoin.get(joinCurrent);
-					if (joinedThread != null && !joinedAfterEdge.contains(joinedThread)) {
-						if (joinedAfterEdge == joinedAtSource) {
-							joinedAfterEdge = new HashSet<>(joinedAtSource);
-						}
-						joinedAfterEdge.add(joinedThread);
-					}
-				}
+				final Set<String> joinedAfterEdge = updatedJoinedSet(joinedAtSource, edge, joinedThreadByJoin);
 				propagateMust(definitelyJoinedByLocation, pendingLocations, target, joinedAfterEdge);
 			}
 		}
@@ -165,54 +168,20 @@ public final class ThreadActivityPreanalysis {
 		return finalized;
 	}
 
-	private static Set<String> identifyUniquelyJoinTrackedThreads(final IIcfg<IcfgLocation> icfg,
-			final Set<String> threadIds, final Set<String> selfForkingThreads) {
-		final var concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
-		final Map<List<Term>, String> threadByForkId = new LinkedHashMap<>();
-		final Map<String, Integer> forkCountByThread = new HashMap<>();
-		for (final var fork : concurrency.getThreadInstanceMap().keySet()) {
-			final String threadId = fork.getNameOfForkedProcedure();
-			if (threadIds != null && !threadIds.contains(threadId)) {
-				continue;
-			}
-			threadByForkId.put(List.of(fork.getForkSmtArguments().getThreadIdArguments().terms()), threadId);
-			forkCountByThread.merge(threadId, 1, Integer::sum);
+	private static Set<String> updatedJoinedSet(final Set<String> before, final IcfgEdge edge,
+			final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> joinedThreadByJoin) {
+		Set<String> result = before;
+		if (edge instanceof final IIcfgForkTransitionThreadCurrent<?> fork && before.contains(fork.getNameOfForkedProcedure())) {
+			result = new HashSet<>(before);
+			result.remove(fork.getNameOfForkedProcedure());
 		}
-
-		final Map<String, Integer> joinCountByThread = new HashMap<>();
-		for (final var join : concurrency.getJoinTransitions()) {
-			final String joinedThread = threadByForkId.get(List.of(join.getJoinSmtArguments().getThreadIdArguments().terms()));
-			if (joinedThread != null) {
-				joinCountByThread.merge(joinedThread, 1, Integer::sum);
-			}
-		}
-
-		final Set<String> result = new HashSet<>();
-		for (final var entry : forkCountByThread.entrySet()) {
-			final String threadId = entry.getKey();
-			if (entry.getValue() == 1 && joinCountByThread.getOrDefault(threadId, 0) == 1
-					&& !selfForkingThreads.contains(threadId)) {
-				result.add(threadId);
-			}
-		}
-		return result;
-	}
-
-	private static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> buildTrackedJoinMap(
-			final IIcfg<IcfgLocation> icfg, final Set<String> trackedThreads) {
-		final var concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
-		final Map<List<Term>, String> threadByForkId = new LinkedHashMap<>();
-		for (final var fork : concurrency.getThreadInstanceMap().keySet()) {
-			final String threadId = fork.getNameOfForkedProcedure();
-			if (trackedThreads.contains(threadId)) {
-				threadByForkId.put(List.of(fork.getForkSmtArguments().getThreadIdArguments().terms()), threadId);
-			}
-		}
-		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> result = new LinkedHashMap<>();
-		for (final var join : concurrency.getJoinTransitions()) {
-			final String joinedThread = threadByForkId.get(List.of(join.getJoinSmtArguments().getThreadIdArguments().terms()));
-			if (joinedThread != null) {
-				result.put(join, joinedThread);
+		if (edge instanceof final IIcfgJoinTransitionThreadCurrent<?> join) {
+			final String joinedThread = joinedThreadByJoin.get(join);
+			if (joinedThread != null && !result.contains(joinedThread)) {
+				if (result == before) {
+					result = new HashSet<>(before);
+				}
+				result.add(joinedThread);
 			}
 		}
 		return result;

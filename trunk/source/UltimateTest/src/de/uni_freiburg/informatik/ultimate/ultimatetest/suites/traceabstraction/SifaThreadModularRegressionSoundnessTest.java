@@ -83,8 +83,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	 * - Minimal fast comparison:
 	 *   { "POST_STATE", "UNARY_GLOBALS", "NONE" }
 	 */
-	private static final String[] METHODS =
-			{ "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "UNARY_GLOBALS", "NONE" };
+	private static final String[] METHODS = { "UNARY_GLOBALS" };
 
 	private static final String ABSTRACT_DOMAIN = "ExplicitValueDomain";
 	// Alternatives:

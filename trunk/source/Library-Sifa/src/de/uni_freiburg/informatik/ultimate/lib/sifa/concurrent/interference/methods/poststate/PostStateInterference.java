@@ -39,12 +39,12 @@ public final class PostStateInterference implements IInterference {
 		for (final Entry<AbstractLocationPair, IPredicate> entry : mInterferenceByAbstractLocationPair.entrySet()) {
 			final IPredicate otherGroup = typedOther.mInterferenceByAbstractLocationPair.get(entry.getKey());
 			final IPredicate widenedGroup = otherGroup == null ? entry.getValue() : domain.widen(entry.getValue(), otherGroup);
-			if (!isFalseLiteral(widenedGroup)) {
+			if (!SmtUtils.isFalseLiteral(widenedGroup.getFormula())) {
 				widened.put(entry.getKey(), widenedGroup);
 			}
 		}
 		for (final Entry<AbstractLocationPair, IPredicate> entry : typedOther.mInterferenceByAbstractLocationPair.entrySet()) {
-			if (!widened.containsKey(entry.getKey()) && !isFalseLiteral(entry.getValue())) {
+			if (!widened.containsKey(entry.getKey()) && !SmtUtils.isFalseLiteral(entry.getValue().getFormula())) {
 				widened.put(entry.getKey(), entry.getValue());
 			}
 		}
@@ -65,7 +65,4 @@ public final class PostStateInterference implements IInterference {
 		return true;
 	}
 
-	private static boolean isFalseLiteral(final IPredicate predicate) {
-		return SmtUtils.isFalseLiteral(predicate.getFormula());
-	}
 }

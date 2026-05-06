@@ -52,7 +52,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	}
 
 	public StaticAbstractLocationMap<LOC> guardSplitting() {
-		return new StaticAbstractLocationMap<>(this::entryOnlyMarked, mIcfg);
+		return new StaticAbstractLocationMap<>(this::entryExitMarked, mIcfg);
 	}
 
 	public StaticAbstractLocationMap<LOC> guardAndExitSplitting() {
