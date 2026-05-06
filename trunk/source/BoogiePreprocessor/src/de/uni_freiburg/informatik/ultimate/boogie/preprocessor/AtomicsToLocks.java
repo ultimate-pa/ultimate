@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -579,7 +580,8 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	private boolean isLoop(final Statement statement) {
 		return (statement instanceof WhileStatement || statement instanceof CallStatement
-				|| statement instanceof ForkStatement || statement instanceof GotoStatement);
+				|| statement instanceof ForkStatement || statement instanceof GotoStatement
+				|| statement instanceof JoinStatement);
 	}
 
 	@Override
