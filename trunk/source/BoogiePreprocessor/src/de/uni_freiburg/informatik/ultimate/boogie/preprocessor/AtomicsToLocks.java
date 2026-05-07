@@ -580,8 +580,7 @@ public class AtomicsToLocks extends BoogieTransformer implements IUnmanagedObser
 
 	private boolean isLoop(final Statement statement) {
 		return (statement instanceof WhileStatement || statement instanceof CallStatement
-				|| statement instanceof ForkStatement || statement instanceof GotoStatement
-				|| statement instanceof JoinStatement);
+				|| statement instanceof ForkStatement || statement instanceof GotoStatement || statement instanceof JoinStatement);
 	}
 
 	@Override
