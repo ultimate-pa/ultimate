@@ -1,31 +1,27 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.util.Collections;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.List;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
@@ -43,6 +39,24 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
         }
 
 		return visitor.mMap;
+	}
+
+	static Set<Tid> getValuesFromMap(Map<String, List<Tid>> map) {
+		
+		Set<Tid> tids = new HashSet<>();
+
+		for (List<Tid> tidList : map.values()) {
+			for (Tid tid : tidList) {
+				if (tids.contains(tid)) {
+					//throw new Exception("Error no same tid for different thread template at least for now");
+					System.err.println("fatal error");
+					System.exit(1);
+				}
+				tids.add(tid);
+			}
+		}
+
+		return tids;
 	}
 
 	@Override

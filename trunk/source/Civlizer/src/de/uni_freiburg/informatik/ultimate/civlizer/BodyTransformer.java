@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.Arrays;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -12,20 +14,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -37,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -48,21 +45,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
-
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
-
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePlaceholderType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 final class BodyTransformer extends BoogieTransformer {
 
@@ -253,9 +243,9 @@ final class BodyTransformer extends BoogieTransformer {
 	 * @return processed statements.
 	 */
 	protected Statement[] processStatements(final Statement[] statements) {
-		final Statement[] newStatements = new Statement[2 * statements.length - 2];
+		final Statement[] newStatements = new Statement[2 * statements.length - 4];
 		// we ignore some kind of first Label $Ultimate##0
-		for (int i = 1; i < statements.length; i++) {
+		for (int i = 1; i < statements.length - 1; i++) { // ignore standart return
 			mAtomicStatementCounter += 1;
 			newStatements[2 * i - 2] = processStatement(statements[i]);
 			newStatements[2 * i - 1] = new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
@@ -282,7 +272,7 @@ final class BodyTransformer extends BoogieTransformer {
             || statement instanceof AtomicStatement
             ) {
 		    	newStatement = new CallStatement(statement.getLocation(), new NamedAttribute[0], false,
-			    	new VariableLHS[0], mCurrentProcedure + "_stmt_test_" + mAtomicStatementCounter, new Expression[0]);
+			    	new VariableLHS[0], mCurrentProcedure + "_stmt_" + mAtomicStatementCounter, new Expression[0]);
 
 		} else if (statement instanceof final CallStatement call) {
 			final Expression[] args = call.getArguments();
@@ -321,8 +311,23 @@ final class BodyTransformer extends BoogieTransformer {
 			final Expression[] newThreadId = processExpressions(threadId);
 			final Expression[] newArguments = processExpressions(arguments);
 
+			Expression[] tids = new Expression[] { 
+				new IdentifierExpression(
+					forkstmt.getLoc(), /* maybe to be change TODO or not */
+					BoogieType.createPlaceholderType(0),
+					"{:linear} start_tid : StartTid",
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
+				),
+				new IdentifierExpression(
+					forkstmt.getLoc(), /* maybe to be change TODO or not */
+					BoogieType.createPlaceholderType(0),
+					(new Tid(threadId)).toString(),
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
+				)
+			};
+
             newStatement = new CallStatement(forkstmt.getLoc(), new NamedAttribute[0], false,
-				new VariableLHS[0], "fork_" + procName, new Expression[0]);  // add expression TODO
+				new VariableLHS[0], "fork_" + procName, tids);  // add expression TODO
 
 		} else if (statement instanceof final JoinStatement joinstmt) {
 			final Expression[] threadId = joinstmt.getThreadID();

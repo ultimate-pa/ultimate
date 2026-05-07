@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -71,17 +72,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 
 public final class Translator extends BoogieVisitor {
 
-	private String mCurrentProcedure;
-	private Queue<Statement> mAtomicStatementBuffer;
-
 	private StringBuilderWriter mWriter;
 	private BoogieOutput mOutput;
 	private Map<String, List<Tid>> mMapToTid;
+	private Set<Tid> mTids;
 
 	private Translator(Unit boogieFile) {
 		mWriter = new StringBuilderWriter();
 		mOutput = new BoogieOutput(mWriter);
 		mMapToTid = ThreadTemplateVisitor.getMapToTid(boogieFile);
+		mTids = ThreadTemplateVisitor.getValuesFromMap(mMapToTid);
 	}
 
 	private void addTidConst(Tid tid) {
@@ -91,31 +91,59 @@ public final class Translator extends BoogieVisitor {
 	}
 
 	private void addTidsType() {
-
-		Set<Tid> tids = new HashSet<>();
 		
-		mWriter.println("\ntype MainTid;");
-		mWriter.println("const unique main_tid : MainTid;");
+		mWriter.println("\ntype StartTid;");
+		mWriter.println("const unique start_tid : StartTid;");
 		mWriter.println("type Tid;");
 
-		// issue multiple write TODO
-
-		for (List<Tid> tidList : mMapToTid.values()) {
-			for (Tid tid : tidList) {
-				if (tids.contains(tid)) {
-					//throw new Exception("Error no same tid for different thread template at least for now");
-					System.err.println("fatal error");
-					System.exit(1);
-				}
-				tids.add(tid);
-			}
-		}
-
-		for (Tid tid : tids) {
+		for (Tid tid : mTids) {
 			addTidConst(tid);
 		}
 
 		mWriter.print("\n");
+	}
+
+	private void addFork(String procName) {
+		mWriter.println("yield procedure {:layer 0} fork_" + procName + 
+		"({:linear} start_tid : One StartTid, {:linear_in} tid : One Tid) {}");
+	}
+
+	private void addTerminate() {
+		mWriter.println(
+			"""
+			yield procedure {:layer 0} terminate({:linear} start_tid : One StartTid, {:linear_in} tid : One Tid);
+			refines atomic action {:layer 1} _ {
+				call One_Put(join_pool, tid);
+			}
+			"""
+		);
+	}
+
+	private void addJoin() {
+		mWriter.println(
+			"""
+			yield procedure {:layer 0} join(
+				{:linear} start_tid : One StartTid, 
+				tid : One Tid) returns ({:linear} child_id : One Tid);
+			refines atomic action {:layer 1} _ {
+				child_id := One(tid);
+				assume Set_Contains(join_pool, child_id);
+				call One_Get(join_pool, child_id);
+			}
+			"""
+		);
+	}
+
+	private void addThreadControlFlow() {
+		mWriter.print("\n");
+
+		for (String procName : mMapToTid.keySet()) {
+			addFork(procName);
+			mWriter.print("\n");
+		}
+
+		addTerminate();
+		addJoin();
 	}
 
 	/**
@@ -125,6 +153,10 @@ public final class Translator extends BoogieVisitor {
 		Translator translation = new Translator(boogieFile);
 
 		translation.addTidsType();
+
+		translation.addThreadControlFlow();
+
+		translation.mWriter.println("var {:layer 0,1} {:linear} join_pool : Set (One Tid);\n");
 
 		for (Declaration elem : boogieFile.getDeclarations()) {
 			translation.processDeclaration(elem);
@@ -173,8 +205,55 @@ public final class Translator extends BoogieVisitor {
 		mWriter.print("yield_");
 		mWriter.print(procName);
 		mWriter.print("_");
-		mWriter.print(counter); // convert int to string or int not print TODO
-		mWriter.println("();");
+		mWriter.print(Integer.toString(counter));
+
+		mWriter.print("(");
+		if ("ULTIMATE.start".equals(procName)) {
+			mWriter.print("{:linear} start_tid : One StartTid");
+
+			if (!mTids.isEmpty()) {
+				mWriter.print(", ");
+			}
+		}
+
+		Iterator<Tid> it = mTids.iterator();
+		while (it.hasNext()) {
+			Tid tid = it.next();
+
+			mWriter.print("{:linear_in} ");
+			mWriter.print(tid.toString());
+			mWriter.print(" : One Tid");
+
+			if (it.hasNext()) {
+				mWriter.print(", ");
+			}
+		}
+		mWriter.println(");");
+
+
+		mWriter.print("preserves ");
+		if ("ULTIMATE.start".equals(procName)) {
+			mWriter.print("start_tid->val == start_tid");
+
+			if (!mTids.isEmpty()) {
+				mWriter.print(" && ");
+			}
+		}
+
+		it = mTids.iterator();
+		while (it.hasNext()) {
+			Tid tid = it.next();
+			mWriter.print(tid.toString());
+			mWriter.print("->val == ");
+			mWriter.print(tid.toString());
+
+			if (it.hasNext()) {
+				mWriter.print(" && ");
+			}
+		}
+
+		// add annotation
+		mWriter.print(";\n\n");
 	}
 
 	private void addAtomicStatement(String procName, final Statement statement, int counter) {
@@ -186,19 +265,20 @@ public final class Translator extends BoogieVisitor {
 				mWriter.print("yield procedure {:layer 0} ");
 				mWriter.print(procName);
 				mWriter.print("_stmt_");
-				mWriter.print(counter);
-				mWriter.print("();\n");
+				mWriter.print(Integer.toString(counter));
+				mWriter.println("();");
 
-				mWriter.print("refines atomic action {:layer 1,2} _ {\n");
+				mWriter.println("refines atomic action {:layer 1,2} _ {");
+				mWriter.println("    ");
 				mOutput.appendStatement(mWriter.getResult(), statement);
-				mWriter.print("}");
+				mWriter.println("}");
 		}
 	}
 
 	@Override
 	protected void visit(final Procedure decl) {
-		/* Write atomic */
 
+		/* Write invariant and atomic */
 		int counter = 0;
 		addYieldInvariants(decl.getIdentifier(), counter);
 
@@ -213,26 +293,64 @@ public final class Translator extends BoogieVisitor {
 		//	System.err.println("fatal procedure take no parameter for now");
 		//	System.exit(1);
 		//}
-	
+
+		/* Write Thread template */
 		BodyTransformer transformer = new BodyTransformer();
 
 		mWriter.print("yield procedure {:layer 0} ");
 		mWriter.print(decl.getIdentifier());
 
-
 		// improve parameter
 		mWriter.print("("); 
-		if (decl.getIdentifier() == "ULTIMATE.start") {
-			mWriter.print("{:linear} start_tid : StartTid");
+		if ("ULTIMATE.start".equals(decl.getIdentifier())) {
+			mWriter.print("start_tid");
+
+			if (!mTids.isEmpty()) {
+				mWriter.print(", ");
+			}
 		}
 
-		mWriter.print(");\n");
+		Iterator<Tid> it = mTids.iterator();
+		while (it.hasNext()) {
+			Tid tid = it.next();
+			mWriter.print(tid.toString());
+
+			if (it.hasNext()) {
+				mWriter.print(", ");
+			}
+		}
+		mWriter.println(");");
+
 
 		mWriter.print("requires yield_");
 		mWriter.print(decl.getIdentifier());
 		mWriter.println("_0;");
+		mWriter.println("(");
+		if ("ULTIMATE.start".equals(decl.getIdentifier())) {
+			mWriter.print("start_tid");
+
+			if (!mTids.isEmpty()) {
+				mWriter.print(", ");
+			}
+		}
+
+		it = mTids.iterator();
+		while (it.hasNext()) {
+			Tid tid = it.next();
+			mWriter.print(tid.toString());
+
+			if (it.hasNext()) {
+				mWriter.print(", ");
+			}
+		}
+		mWriter.println(");");
+
 
 		mWriter.println("{");
+		for (VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
+			mOutput.printVarDeclaration(varDecl, "    ");
+		}
+		mWriter.print("\n");
 		mOutput.printBody(
 			transformer.transformBody(decl.getIdentifier(), decl.getBody())
 		);
