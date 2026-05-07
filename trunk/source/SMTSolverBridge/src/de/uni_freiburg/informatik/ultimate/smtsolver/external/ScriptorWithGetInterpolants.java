@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -57,7 +56,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		IZ3, PRINCESS, SMTINTERPOL, MATHSAT, BITWUZLA
 	}
 
-	private final IInterpolationAdapter mInterpolationAdapter;
+	private final InterpolationAdapter mInterpolationAdapter;
 
 	public ScriptorWithGetInterpolants(final String command, final ILogger logger,
 			final IUltimateServiceProvider services, final ExternalInterpolator externalInterpolator, final String name,
@@ -66,7 +65,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		mInterpolationAdapter = createAdapter(externalInterpolator);
 	}
 
-	private IInterpolationAdapter createAdapter(final ExternalInterpolator interpolator) {
+	private InterpolationAdapter createAdapter(final ExternalInterpolator interpolator) {
 		switch (interpolator) {
 		case IZ3:
 			return new Z3Interpolation();
@@ -102,56 +101,55 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		return super.mExecutor;
 	}
 
-	private static void formatTerm(final StringBuilder builder, final Term term) {
-		new PrintTerm().append(builder, term);
-	}
-
-	private static String buildInterpolationCommand(final String initialCommand, final Term[] partition,
-			final BiConsumer<StringBuilder, Term> format) {
-		final StringBuilder command = new StringBuilder();
-		command.append(initialCommand);
-		String sep = "";
-		for (final Term t : partition) {
-			command.append(sep);
-			format.accept(command, t);
-			sep = " ";
-		}
-		command.append(")");
-		return command.toString();
-	}
-
-	private static String buildInterpolationCommand(final String initialCommand, final Term[] partition,
-			final int[] startOfSubtree, final BiConsumer<StringBuilder, Term> format) {
-		final StringBuilder command = new StringBuilder();
-		command.append(initialCommand);
-		format.accept(command, partition[0]);
-		for (int i = 1; i < partition.length; ++i) {
-			int prevStart = startOfSubtree[i - 1];
-			while (startOfSubtree[i] < prevStart) {
-				command.append(')');
-				prevStart = startOfSubtree[prevStart - 1];
-			}
-			command.append(' ');
-			if (startOfSubtree[i] == i) {
-				command.append('(');
-			}
-			format.accept(command, partition[i]);
-		}
-		command.append(')');
-		return command.toString();
-	}
-
-	private interface IInterpolationAdapter {
-		Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException;
-
-		Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
+	private abstract static class InterpolationAdapter {
+		public abstract Term[] getInterpolants(final Term[] partition)
 				throws SMTLIBException, UnsupportedOperationException;
 
-		LBool assertTerm(final Term term) throws SMTLIBException;
+		public abstract Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
+				throws SMTLIBException, UnsupportedOperationException;
 
+		public abstract LBool assertTerm(final Term term) throws SMTLIBException;
+
+		protected void formatTerm(final StringBuilder builder, final Term term) {
+			new PrintTerm().append(builder, term);
+		}
+
+		protected String buildInterpolationCommand(final String initialCommand, final Term[] partition) {
+			final StringBuilder command = new StringBuilder();
+			command.append(initialCommand);
+			String sep = "";
+			for (final Term t : partition) {
+				command.append(sep);
+				formatTerm(command, t);
+				sep = " ";
+			}
+			command.append(")");
+			return command.toString();
+		}
+
+		protected String buildInterpolationCommand(final String initialCommand, final Term[] partition,
+				final int[] startOfSubtree) {
+			final StringBuilder command = new StringBuilder();
+			command.append(initialCommand);
+			formatTerm(command, partition[0]);
+			for (int i = 1; i < partition.length; ++i) {
+				int prevStart = startOfSubtree[i - 1];
+				while (startOfSubtree[i] < prevStart) {
+					command.append(')');
+					prevStart = startOfSubtree[prevStart - 1];
+				}
+				command.append(' ');
+				if (startOfSubtree[i] == i) {
+					command.append('(');
+				}
+				formatTerm(command, partition[i]);
+			}
+			command.append(')');
+			return command.toString();
+		}
 	}
 
-	private final class SmtInterpolInterpolation implements IInterpolationAdapter {
+	private final class SmtInterpolInterpolation extends InterpolationAdapter {
 
 		private static final String CMD = "(get-interpolants ";
 
@@ -173,13 +171,12 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		}
 
 		private void sendInterpolationCommand(final Term[] partition) {
-			final String command = buildInterpolationCommand(CMD, partition, ScriptorWithGetInterpolants::formatTerm);
+			final String command = buildInterpolationCommand(CMD, partition);
 			getExecutor().input(command);
 		}
 
 		private void sendInterpolationCommand(final Term[] partition, final int[] startOfSubtree) {
-			final String command =
-					buildInterpolationCommand(CMD, partition, startOfSubtree, ScriptorWithGetInterpolants::formatTerm);
+			final String command = buildInterpolationCommand(CMD, partition, startOfSubtree);
 			getExecutor().input(command);
 		}
 
@@ -188,7 +185,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		}
 	}
 
-	private final class Z3Interpolation implements IInterpolationAdapter {
+	private final class Z3Interpolation extends InterpolationAdapter {
 
 		private static final String CMD = "(get-interpolant ";
 
@@ -210,13 +207,12 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		}
 
 		private void sendInterpolationCommand(final Term[] partition) {
-			final String command = buildInterpolationCommand(CMD, partition, ScriptorWithGetInterpolants::formatTerm);
+			final String command = buildInterpolationCommand(CMD, partition);
 			getExecutor().input(command);
 		}
 
 		private void sendInterpolationCommand(final Term[] partition, final int[] startOfSubtree) {
-			final String command =
-					buildInterpolationCommand(CMD, partition, startOfSubtree, ScriptorWithGetInterpolants::formatTerm);
+			final String command = buildInterpolationCommand(CMD, partition, startOfSubtree);
 			getExecutor().input(command);
 		}
 
@@ -225,7 +221,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		}
 	}
 
-	private final class MathsatInterpolation implements IInterpolationAdapter {
+	private final class MathsatInterpolation extends InterpolationAdapter {
 
 		private static final String CMD = "(get-interpolant (";
 
@@ -291,8 +287,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		}
 
 		private void sendInterpolationCommand(final Term[] partition, final int[] startOfSubtree) {
-			final String command =
-					buildInterpolationCommand(CMD, partition, startOfSubtree, ScriptorWithGetInterpolants::formatTerm);
+			final String command = buildInterpolationCommand(CMD, partition, startOfSubtree);
 			getExecutor().input(command);
 		}
 
@@ -312,7 +307,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 
 	}
 
-	private final class BitwuzlaInterpolation implements IInterpolationAdapter {
+	private final class BitwuzlaInterpolation extends InterpolationAdapter {
 
 		private static final String CMD = "(get-interpolants ";
 
@@ -336,7 +331,8 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		/**
 		 * Wraps a term in parentheses and flattens any top-level conjunction into space-separated conjuncts.
 		 */
-		private static void formatTerm(final StringBuilder builder, final Term term) {
+		@Override
+		protected void formatTerm(final StringBuilder builder, final Term term) {
 			final PrintTerm pt = new PrintTerm();
 			builder.append('(');
 			if (term instanceof final ApplicationTerm app && "and".equals(app.getFunction().getName())) {
@@ -353,13 +349,12 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		}
 
 		private void sendInterpolationCommand(final Term[] partition) {
-			final String command = buildInterpolationCommand(CMD, partition, BitwuzlaInterpolation::formatTerm);
+			final String command = buildInterpolationCommand(CMD, partition);
 			getExecutor().input(command);
 		}
 
 		private void sendInterpolationCommand(final Term[] partition, final int[] startOfSubtree) {
-			final String command =
-					buildInterpolationCommand(CMD, partition, startOfSubtree, BitwuzlaInterpolation::formatTerm);
+			final String command = buildInterpolationCommand(CMD, partition, startOfSubtree);
 			getExecutor().input(command);
 		}
 
