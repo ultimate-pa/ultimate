@@ -33,8 +33,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -62,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class EmpireToOG<S, L, P> {
 	private static final String GHOST = "ghost";
+
+	private static final boolean USE_STATE_INDISTINCTION = false;
 
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
@@ -101,7 +105,18 @@ public class EmpireToOG<S, L, P> {
 		newSymbolTable.add(mGhostVariable);
 
 		mFactory = new BasicPredicateFactory(services, mManagedScript, newSymbolTable);
-		mStateTerms = getStateTerms();
+
+		final Map<S, Integer> stateIndistinction;
+		if (USE_STATE_INDISTINCTION) {
+			stateIndistinction = new StateIndistinction<>(services, mProgram, mEmpireAutomaton, possibleInterferences)
+					.computePartition();
+		} else {
+			final var stateList = List.copyOf(mEmpireAutomaton.getStates());
+			stateIndistinction = IntStream.range(0, stateList.size()).mapToObj(i -> i)
+					.collect(Collectors.toMap(stateList::get, Function.identity()));
+		}
+		mStateTerms = getStateTerms(stateIndistinction);
+
 		final Map<P, IPredicate> placeAnnotations = computePlaceAnnotations();
 		final Map<Transition<L, P>, GhostUpdate> ghostUpdates = computeGhostUpdateMapping();
 		final Map<IProgramVar, Term> initialGhostValuation = computeInitialGhostValuation();
@@ -202,9 +217,12 @@ public class EmpireToOG<S, L, P> {
 			}
 
 			final S successor = edge.orElseThrow().getSucc();
-			if (state.equals(successor)) {
+			if (mStateTerms.get(state).equals(mStateTerms.get(successor))) {
 				// The edge is a self-loop. Thus, it does not have to be handled explicitly in the ghost update.
 				// Instead, self-loops are handled in the default case of the ghost update's case distinction.
+				//
+				// We compare state terms (not states directly) to also catch the case of updates to a successor that is
+				// not distinguished from the current state.
 				continue;
 			}
 
@@ -232,15 +250,11 @@ public class EmpireToOG<S, L, P> {
 		return updateTerm;
 	}
 
-	private Map<S, Term> getStateTerms() {
+	private Map<S, Term> getStateTerms(final Map<S, Integer> stateIndistinction) {
 		final var stateTerms = new LinkedHashMap<S, Term>();
-
-		var num = 1;
 		for (final S state : mEmpireAutomaton.getStates()) {
-			stateTerms.put(state, mScript.numeral(String.valueOf(num)));
-			num++;
+			stateTerms.put(state, mScript.numeral(String.valueOf(stateIndistinction.get(state))));
 		}
-
 		return stateTerms;
 	}
 
