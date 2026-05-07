@@ -485,7 +485,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private String constructThreadGpioID(final String identifier, final Integer irq) {
-		return "#isr_" + irq + "_" + identifier + "_thr";
+		return "#isr_" + irq + "_" + identifier + "_thread";
 	}
 
 	private Map<Integer, VariableLHS> getVariableLHSs() {

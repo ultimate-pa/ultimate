@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class InterruptServiceRoutinesBuilder {
 	private final ISRInfo mIsrInfo;
@@ -102,12 +102,20 @@ public class InterruptServiceRoutinesBuilder {
 
 	private void addProcToMap(final Map<Integer, Procedure> intProcMap, final Map<Integer, String> intIdMap,
 			final Procedure proc) {
-		final var procIdEntry = DataStructureUtils.getOneAndOnly(
-				intIdMap.entrySet().stream().filter(e -> e.getValue().equals(proc.getIdentifier())).toList(),
-				"Interrupt-Service-Routine");
-		final var interruptNum = procIdEntry.getKey();
-		final var lastVal = intProcMap.put(interruptNum, proc);
-		assert lastVal == null : "ISR with name " + proc.getIdentifier() + " exists already in the Map!";
+		final var procId = proc.getIdentifier();
+		final var procIdEntries =
+				intIdMap.entrySet().stream().filter(e -> e.getValue().equals(proc.getIdentifier())).toList();
+		assert procIdEntries.size() > 0
+				: "No function with identifier " + procId + " is annotated as Interrupt-Service-Routine";
+		if (procIdEntries.size() > 1) {
+			mLogger.info(
+					"There are multiple occurences of Interrupt-Service-Routine function with identifier: " + procId);
+		}
+		for (final Entry<Integer, String> entry : procIdEntries) {
+			final var interruptNum = entry.getKey();
+			final var lastVal = intProcMap.put(interruptNum, proc);
+			assert lastVal == null : "ISR with name " + proc.getIdentifier() + " exists already in the Map!";
+		}
 	}
 
 	public InterruptServiceRoutines getInterruptServiceRoutines() {
