@@ -1,13 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
@@ -15,7 +18,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InterferenceUtils {
@@ -115,6 +121,22 @@ public final class InterferenceUtils {
 
 	public static boolean shouldSkipTrivialPredicate(final IPredicate predicate) {
 		return predicate == null || SmtUtils.isTrueLiteral(predicate.getFormula()) || SmtUtils.isFalseLiteral(predicate.getFormula());
+	}
+
+	public static IPredicate projectToGlobalState(final IPredicate state, final IUltimateServiceProvider services,
+			final ManagedScript script, final Function<Term, IPredicate> wrap) {
+		return projectToGlobalState(state, Set.of(), services, script, wrap);
+	}
+
+	public static IPredicate projectToGlobalState(final IPredicate state, final Set<TermVariable> extraVarsToProject,
+			final IUltimateServiceProvider services, final ManagedScript script, final Function<Term, IPredicate> wrap) {
+		final Set<TermVariable> toProject = state.getVars().stream().filter(v -> !v.isGlobal())
+				.map(IProgramVar::getTermVariable).collect(Collectors.toCollection(HashSet::new));
+		toProject.addAll(extraVarsToProject);
+		if (toProject.isEmpty()) {
+			return state;
+		}
+		return wrap.apply(RelationalPredicateUtils.existentiallyProject(state.getFormula(), toProject, services, script));
 	}
 
 	private static Set<IProgramVar> filterGlobals(final Set<IProgramVar> variables) {

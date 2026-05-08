@@ -83,7 +83,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	 * - Minimal fast comparison:
 	 *   { "POST_STATE", "UNARY_GLOBALS", "NONE" }
 	 */
-	private static final String[] METHODS = { "UNARY_GLOBALS" };
+	private static final String[] METHODS = { "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "UNARY_GLOBALS", "NONE" };
 
 	private static final String ABSTRACT_DOMAIN = "ExplicitValueDomain";
 	// Alternatives:
@@ -94,6 +94,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static final String FLUID = "SizeLimitFluid";
 	private static final int MAX_PARALLEL_EXPLICIT_VALUES = 4;
 	private static final boolean JOIN_PRECISION = true;
+	private static final boolean USE_BUCKETS = true;
 	private static final boolean PROOF_CHECK = false;
 	private static final boolean RESULT_PRINT = false;
 
@@ -129,6 +130,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 				prefs.put("Fluid", FLUID);
 				prefs.put("Max. Parallel Explicit Values", MAX_PARALLEL_EXPLICIT_VALUES);
 				prefs.put("Join Precision", JOIN_PRECISION);
+				prefs.put("Use Buckets", USE_BUCKETS);
 				prefs.put("Proof Check", PROOF_CHECK);
 				prefs.put("Result Print", RESULT_PRINT);
 				prefs.put("Location Abstraction", LOCATION_ABSTRACTION);

@@ -70,8 +70,8 @@ public final class ThreadModularSetup {
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		concurrentTools.configureStaticAnalysis(ghostVars, activityPreanalysis);
 		final BucketContext bucketContext =
-				usesBuckets(settings.interferenceApplicatorType()) ? createBucketContext(logger, settings, tools,
-						threadIds, locationIds, icfg) : null;
+				usesBuckets(settings) ? createBucketContext(logger, settings, tools, threadIds, locationIds, icfg)
+						: null;
 		final IDomain analysisDomain = withBucketsIfUsed(baseDomain, bucketContext);
 		final IDomain interferenceDomain = withBucketsIfUsed(baseDomain, bucketContext);
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
@@ -99,7 +99,11 @@ public final class ThreadModularSetup {
 		return bucketContext == null ? baseDomain : new BucketDomain(baseDomain, bucketContext);
 	}
 
-	private static boolean usesBuckets(final InterferenceApplicatorType type) {
+	private static boolean usesBuckets(final ThreadModularSifaSettings settings) {
+		if (!settings.useBuckets()) {
+			return false;
+		}
+		final InterferenceApplicatorType type = settings.interferenceApplicatorType();
 		return type == InterferenceApplicatorType.STRONGEST_POSTCONDITION || type == InterferenceApplicatorType.PREPOST
 				|| type == InterferenceApplicatorType.GUARDED_EXACT_UPDATE;
 	}

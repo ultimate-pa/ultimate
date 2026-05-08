@@ -110,7 +110,6 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 				includeSelfInterference, List.copyOf(sortedInterferenceThreadIds), locationPredicates, new HashMap<>());
 		mObservedStateRecorder = new ObservedThreadStateRecorder(interferenceDomain, mGhostVariables);
 		mInitialStateFactory.configureForThread(locationPredicates, analysisDomain);
-		mJoinHandler.configureForThread(mThreadContext, mThreadActivityPreanalysis);
 	}
 
 
@@ -206,7 +205,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			updated = addLocationUpdateForThread(updated, fork.getNameOfForkedProcedure(),
 					mGhostVariables.getEntryLocation(fork.getNameOfForkedProcedure()));
 		}
-		updated = mJoinHandler.importJoinedThreadExitSummary(updated, transition);
+		updated = mJoinHandler.extractJoinedThreadGlobalExitState(updated, transition, mThreadContext,
+				mThreadActivityPreanalysis);
 		if (Optimizations.localTransition(transition)) {
 			return updated;
 		}

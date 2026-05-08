@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -26,8 +28,6 @@ class JoinHandler {
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private GhostVariableManager mGhostVariables;
-	private ThreadAnalysisContext mThreadContext;
-	private ThreadActivityPreanalysis mActivityPreanalysis;
 
 	JoinHandler(final ConcurrentSymbolicTools tools, final IUltimateServiceProvider services,
 			final IIcfg<IcfgLocation> icfg) {
@@ -40,26 +40,78 @@ class JoinHandler {
 		mGhostVariables = ghostVariables;
 	}
 
-	void configureForThread(final ThreadAnalysisContext context, final ThreadActivityPreanalysis activityPreanalysis) {
-		mThreadContext = context;
-		mActivityPreanalysis = activityPreanalysis;
+	// Intersect joined threads exit state into our state
+	IPredicate extractJoinedThreadGlobalExitState(final IPredicate state,
+			final IIcfgTransition<IcfgLocation> transition, final ThreadAnalysisContext threadContext,
+			final ThreadActivityPreanalysis activityPreanalysis) {
+		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join)) {
+			return state;
+		}
+		final var typedJoin = (IIcfgJoinTransitionThreadCurrent<IcfgLocation>) join;
+		final String joinedThread = activityPreanalysis.getJoinedThreadForJoin(typedJoin);
+		if (joinedThread == null) {
+			return state;
+		}
+		final IcfgLocation exitLoc = mIcfg.getProcedureExitNodes().get(joinedThread);
+		if (exitLoc == null) {
+			return state;
+		}
+		final IPredicate sharedExit = sharedExitSummary(threadContext, exitLoc, joinedThread);
+		if (sharedExit == null) {
+			return state;
+		}
+		return applyExitSummary(state, joinedThread, exitLoc, sharedExit);
 	}
 
-	// Projects out variables assigned by the join's LHS from the post-state.
+	// Returns the exit state of the joined thread projected to global variables, or null if trivial/absent.
+	private IPredicate sharedExitSummary(final ThreadAnalysisContext threadContext, final IcfgLocation exitLoc,
+			final String joinedThread) {
+		final IPredicate exitState = threadContext.locationPredicates().get(exitLoc);
+		if (exitState == null || isTrivial(exitState)) {
+			return null;
+		}
+		final IPredicate projected = projectToGlobalVars(exitState, joinedThread);
+		return SmtUtils.isFalseLiteral(projected.getFormula()) ? null : projected;
+	}
+
+	private static boolean isTrivial(final IPredicate pred) {
+		return SmtUtils.isTrueLiteral(pred.getFormula()) || SmtUtils.isFalseLiteral(pred.getFormula());
+	}
+
+	private IPredicate applyExitSummary(final IPredicate state, final String joinedThread, final IcfgLocation exitLoc,
+			final IPredicate sharedExit) {
+		final IPredicate atExit = mTools.addLocationUpdateForThread(state, joinedThread, exitLoc);
+		final Term exitFormula = sharedExit.getFormula();
+		return mTools.mapBuckets(atExit,
+				bucket -> mTools.predicate(SmtUtils.and(mTools.getScript(), bucket.getFormula(), exitFormula)));
+	}
+
+	private IPredicate projectToGlobalVars(final IPredicate state, final String joinedThread) {
+		return InterferenceUtils.projectToGlobalState(state, ghostLocVarsToProject(joinedThread),
+				mServices, mTools.getManagedScript(), mTools::predicate);
+	}
+
+	private Set<TermVariable> ghostLocVarsToProject(final String joinedThread) {
+		if (mGhostVariables == null) {
+			return Set.of();
+		}
+		final Set<TermVariable> extra = new HashSet<>(mGhostVariables.getLocationTermVariables());
+		extra.remove(mGhostVariables.getLocationTermVar(joinedThread));
+		return extra;
+	}
+
+	// Special case for join assign edges
 	IPredicate projectJoinAssignedVars(final IPredicate state, final IIcfgTransition<IcfgLocation> transition) {
 		if (state instanceof BucketPredicate) {
 			return mTools.mapBuckets(state, bucket -> projectJoinAssignedVars(bucket, transition));
 		}
-		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join)
-				|| SmtUtils.isFalseLiteral(state.getFormula()) || SmtUtils.isTrueLiteral(state.getFormula())) {
+		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join)) {
 			return state;
 		}
-		final Set<TermVariable> assigned = new HashSet<>();
-		for (final IProgramVar lhs : join.getJoinSmtArguments().getAssignmentLhs()) {
-			if (lhs != null) {
-				assigned.add(lhs.getTermVariable());
-			}
+		if (isTrivial(state)) {
+			return state;
 		}
+		final Set<TermVariable> assigned = collectAssignedTermVars(join);
 		if (assigned.isEmpty()) {
 			return state;
 		}
@@ -68,52 +120,9 @@ class JoinHandler {
 		return mTools.predicate(projected);
 	}
 
-	// Conjoins the joined thread's exit state (projected to shared variables) into the current state.
-	IPredicate importJoinedThreadExitSummary(final IPredicate state, final IIcfgTransition<IcfgLocation> transition) {
-		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join)
-				|| mActivityPreanalysis == null || mThreadContext == null) {
-			return state;
-		}
-		@SuppressWarnings("unchecked")
-		final IIcfgJoinTransitionThreadCurrent<IcfgLocation> typedJoin =
-				(IIcfgJoinTransitionThreadCurrent<IcfgLocation>) join;
-		final String joinedThread = mActivityPreanalysis.getJoinedThreadForJoin(typedJoin);
-		if (joinedThread == null) {
-			return state;
-		}
-		final IcfgLocation exitLoc = mIcfg.getProcedureExitNodes().get(joinedThread);
-		if (exitLoc == null) {
-			return state;
-		}
-		final IPredicate exitState = mThreadContext.locationPredicates().get(exitLoc);
-		if (exitState == null || SmtUtils.isTrueLiteral(exitState.getFormula())
-				|| SmtUtils.isFalseLiteral(exitState.getFormula())) {
-			return state;
-		}
-		final IPredicate sharedExit = projectToSharedExitVars(exitState, joinedThread);
-		if (SmtUtils.isFalseLiteral(sharedExit.getFormula())) {
-			return state;
-		}
-		final IPredicate atExit = mTools.addLocationUpdateForThread(state, joinedThread, exitLoc);
-		final Term sharedExitFormula = sharedExit.getFormula();
-		return mTools.mapBuckets(atExit,
-				bucket -> mTools.predicate(SmtUtils.and(mTools.getScript(), bucket.getFormula(), sharedExitFormula)));
+	private Set<TermVariable> collectAssignedTermVars(final IIcfgJoinTransitionThreadCurrent<?> join) {
+		return join.getJoinSmtArguments().getAssignmentLhs().stream().filter(Objects::nonNull)
+				.map(IProgramVar::getTermVariable).collect(Collectors.toCollection(HashSet::new));
 	}
 
-	private IPredicate projectToSharedExitVars(final IPredicate state, final String joinedThread) {
-		final Set<TermVariable> toProject = state.getVars().stream()
-				.filter(var -> !var.isGlobal())
-				.map(IProgramVar::getTermVariable)
-				.collect(Collectors.toCollection(HashSet::new));
-		if (mGhostVariables != null) {
-			toProject.addAll(mGhostVariables.getLocationTermVariables());
-			toProject.remove(mGhostVariables.getLocationTermVar(joinedThread));
-		}
-		if (toProject.isEmpty()) {
-			return state;
-		}
-		final Term projected = RelationalPredicateUtils.existentiallyProject(state.getFormula(), toProject,
-				mServices, mTools.getManagedScript());
-		return mTools.predicate(projected);
-	}
 }

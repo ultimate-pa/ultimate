@@ -4,8 +4,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstr
 
 public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMode,
 		LocationAbstractionType locationAbstractionType, InterferenceApplicatorType interferenceApplicatorType,
-		int outerWideningThreshold, int innerWideningThreshold, boolean joinPrecision, boolean guardBucketSplit,
-		boolean proofCheck, boolean resultPrint) {
+		int outerWideningThreshold, int innerWideningThreshold, boolean joinPrecision, boolean useBuckets,
+		boolean guardBucketSplit, boolean proofCheck, boolean resultPrint) {
 
 	public enum LocationTrackingMode {
 		GHOST_VARIABLES, NONE
@@ -25,13 +25,13 @@ public record ThreadModularSifaSettings(LocationTrackingMode locationTrackingMod
 			final int innerWideningThreshold) {
 		this(useGhostLocations ? LocationTrackingMode.GHOST_VARIABLES : LocationTrackingMode.NONE,
 				locationAbstractionType, InterferenceApplicatorType.STRONGEST_POSTCONDITION, outerWideningThreshold,
-				innerWideningThreshold, false, false, false, false);
+				innerWideningThreshold, false, true, false, false, false);
 	}
 
 	public ThreadModularSifaSettings(final LocationTrackingMode locationTrackingMode,
 			final LocationAbstractionType locationAbstractionType, final int outerWideningThreshold,
 			final int innerWideningThreshold, final boolean joinPrecision) {
 		this(locationTrackingMode, locationAbstractionType, InterferenceApplicatorType.STRONGEST_POSTCONDITION,
-				outerWideningThreshold, innerWideningThreshold, joinPrecision, false, false, false);
+				outerWideningThreshold, innerWideningThreshold, joinPrecision, true, false, false, false);
 	}
 }

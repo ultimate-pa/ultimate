@@ -133,12 +133,13 @@ public class SifaBuilder {
 			final int innerWideningThreshold =
 					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD));
 			final boolean joinPrecision = mPrefs.getBoolean(SifaPreferences.LABEL_JOIN_PRECISION);
+			final boolean useBuckets = mPrefs.getBoolean(SifaPreferences.LABEL_USE_BUCKETS);
 			final boolean guardBucketSplit = mPrefs.getBoolean(SifaPreferences.LABEL_GUARD_BUCKET_SPLIT);
 			final boolean proofCheck = mPrefs.getBoolean(SifaPreferences.LABEL_PROOF_CHECK);
 			final boolean resultPrint = mPrefs.getBoolean(SifaPreferences.LABEL_RESULT_PRINT);
 			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
 					interferenceApplicator, outerWideningThreshold, innerWideningThreshold,
-					joinPrecision, guardBucketSplit, proofCheck, resultPrint);
+					joinPrecision, useBuckets, guardBucketSplit, proofCheck, resultPrint);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);

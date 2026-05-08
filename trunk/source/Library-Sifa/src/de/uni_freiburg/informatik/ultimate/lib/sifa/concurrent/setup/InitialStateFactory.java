@@ -9,13 +9,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.Concurrency
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InitialStateFactory {
 
@@ -108,16 +106,7 @@ public final class InitialStateFactory {
 	}
 
 	private IPredicate projectToSharedState(final IPredicate predicate) {
-		final Set<TermVariable> localVarsToProject = new HashSet<>();
-		for (final IProgramVar var : predicate.getVars()) {
-			if (!var.isGlobal()) {
-				localVarsToProject.add(var.getTermVariable());
-			}
-		}
-		if (localVarsToProject.isEmpty()) {
-			return predicate;
-		}
-		return mTools.predicate(RelationalPredicateUtils.existentiallyProject(predicate.getFormula(), localVarsToProject,
-				mTools.getServices(), mTools.getManagedScript()));
+		return InterferenceUtils.projectToGlobalState(predicate, mTools.getServices(), mTools.getManagedScript(),
+				mTools::predicate);
 	}
 }
