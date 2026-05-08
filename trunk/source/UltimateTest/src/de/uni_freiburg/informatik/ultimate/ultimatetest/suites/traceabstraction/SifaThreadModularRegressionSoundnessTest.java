@@ -83,7 +83,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	 * - Minimal fast comparison:
 	 *   { "POST_STATE", "UNARY_GLOBALS", "NONE" }
 	 */
-	private static final String[] METHODS = { "STRONGEST_POSTCONDITION" };
+	private static final String[] METHODS = { "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "UNARY_GLOBALS", "NONE" };
 
 	private static final String ABSTRACT_DOMAIN = "ExplicitValueDomain";
 	// Alternatives:
@@ -92,7 +92,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	// private static final String ABSTRACT_DOMAIN = "OctagonDomain";
 	// private static final String ABSTRACT_DOMAIN = "CompoundDomain";
 	private static final String FLUID = "SizeLimitFluid";
-	private static final int MAX_PARALLEL_EXPLICIT_VALUES = 2;
+	private static final int MAX_PARALLEL_EXPLICIT_VALUES = 4;
 	private static final boolean JOIN_PRECISION = true;
 	private static final boolean USE_BUCKETS = false;
 	private static final boolean PROOF_CHECK = false;
@@ -134,12 +134,6 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 				prefs.put("Proof Check", PROOF_CHECK);
 				prefs.put("Result Print", RESULT_PRINT);
 				prefs.put("Location Abstraction", LOCATION_ABSTRACTION);
-
-				// Keep the BenchExec comparison convention unless you intentionally want to change it.
-				final boolean guardBucketSplit = method.equals("STRONGEST_POSTCONDITION")
-						|| method.equals("PREPOST") || method.equals("GUARDED_EXACT_UPDATE");
-				// prefs.put("Guard Bucket Split", guardBucketSplit);
-				prefs.put("Guard Bucket Split", false);
 
 				return s;
 			};

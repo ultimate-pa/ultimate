@@ -134,11 +134,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final String TOOLTIP_USE_BUCKETS = "Partition the abstract state into per-interference buckets (disable to test applicators without bucket overhead)";
 	private static final boolean DEFAULT_USE_BUCKETS = true;
 
-	public static final String LABEL_GUARD_BUCKET_SPLIT = "Guard Bucket Split";
-	private static final String TOOLTIP_GUARD_BUCKET_SPLIT =
-			"Preserve separate guard/location buckets in simple two-worker cases";
-	private static final boolean DEFAULT_GUARD_BUCKET_SPLIT = false;
-
 	public static final String LABEL_PROOF_CHECK = "Proof Check";
 	private static final String TOOLTIP_PROOF_CHECK =
 			"Run thread-modular proof checking after the analysis fixpoint";
@@ -275,8 +270,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				TOOLTIP_JOIN_PRECISION, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_USE_BUCKETS, DEFAULT_USE_BUCKETS,
 				TOOLTIP_USE_BUCKETS, PreferenceType.Boolean));
-		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_GUARD_BUCKET_SPLIT, DEFAULT_GUARD_BUCKET_SPLIT,
-				TOOLTIP_GUARD_BUCKET_SPLIT, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_PROOF_CHECK, DEFAULT_PROOF_CHECK,
 				TOOLTIP_PROOF_CHECK, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_RESULT_PRINT, DEFAULT_RESULT_PRINT,

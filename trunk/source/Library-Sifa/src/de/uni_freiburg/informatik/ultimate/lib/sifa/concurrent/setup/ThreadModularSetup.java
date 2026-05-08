@@ -69,7 +69,7 @@ public final class ThreadModularSetup {
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		concurrentTools.configureStaticAnalysis(ghostVars, activityPreanalysis);
 		final BucketDomain bucketDomain = usesBuckets(settings)
-				? createBucketDomain(logger, settings, tools, threadIds, locationIds, icfg, baseDomain) : null;
+				? createBucketDomain(logger, tools, threadIds, locationIds, icfg, baseDomain) : null;
 		final IDomain domain = bucketDomain != null ? bucketDomain : baseDomain;
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
 				ghostVars, locationIds, icfg.getProcedureEntryNodes());
@@ -101,15 +101,12 @@ public final class ThreadModularSetup {
 				|| type == InterferenceApplicatorType.GUARDED_EXACT_UPDATE;
 	}
 
-	private static BucketDomain createBucketDomain(final ILogger logger, final ThreadModularSifaSettings settings,
-			final SymbolicTools tools, final List<String> threadIds, final Map<IcfgLocation, Integer> locationIds,
+	private static BucketDomain createBucketDomain(final ILogger logger, final SymbolicTools tools,
+			final List<String> threadIds, final Map<IcfgLocation, Integer> locationIds,
 			final IIcfg<IcfgLocation> icfg, final IDomain baseDomain) {
-		if (!settings.guardBucketSplit()) {
-			return null;
-		}
 		final BucketDomain bd = BucketDomain.createIfUseful(baseDomain, tools, threadIds, locationIds, icfg);
 		if (bd != null) {
-			logger.info("Guard bucket split enabled for %d threads: %s", bd.bucketedThreads().size(),
+			logger.info("Bucket domain enabled for %d threads: %s", bd.bucketedThreads().size(),
 					bd.bucketedThreads());
 		}
 		return bd;

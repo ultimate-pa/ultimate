@@ -38,24 +38,6 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 		mInitialBucketByThread = Map.copyOf(initialBucketByThread);
 	}
 
-	public static BucketDomain createIfUseful(final IDomain base, final SymbolicTools tools,
-			final List<String> threadIds, final Map<IcfgLocation, Integer> locationIds,
-			final IIcfg<IcfgLocation> icfg) {
-		final List<String> workers = threadIds.stream().filter(t -> !MAIN_THREAD.equals(t)).sorted().toList();
-		if (workers.size() != 2 || locationIds.isEmpty() || !hasDirectMainTwoWorkerShape(workers, icfg)) {
-			return null;
-		}
-		final Map<String, Integer> entries = new LinkedHashMap<>();
-		for (final String thread : workers) {
-			final Integer peerEntry = locationIds.get(icfg.getProcedureEntryNodes()
-					.get(thread.equals(workers.get(0)) ? workers.get(1) : workers.get(0)));
-			if (peerEntry != null) {
-				entries.put(thread, peerEntry);
-			}
-		}
-		return entries.isEmpty() ? null : new BucketDomain(base, tools, entries);
-	}
-
 	public IDomain baseDomain() {
 		return mUnderlyingDomain;
 	}
@@ -138,38 +120,6 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 		return toPredicate(abstracted);
 	}
 
-	public <T> IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain,
-			final int wideningThreshold, final SifaStats stats,
-			final Map<AbstractLocationPair, T> interferenceByAbstractLocationPair, final BucketTransfer<T> transfer) {
-		Map<Integer, IPredicate> current = bucketsOf(state);
-		Map<Integer, IPredicate> frontier = current;
-		for (int iteration = 1;; iteration++) {
-			stats.increment(Key.INTERFERENCE_INNER_ITERATIONS);
-			final Map<Integer, IPredicate> generated = new LinkedHashMap<>();
-			for (final var entry : interferenceByAbstractLocationPair.entrySet()) {
-				final IPredicate sourceState = frontier.get(entry.getKey().sourceAbstractLocation());
-				if (sourceState != null) {
-					mapMerge(generated, entry.getKey().targetAbstractLocation(),
-							transfer.apply(sourceState, entry.getValue(), mUnderlyingDomain), mUnderlyingDomain);
-				}
-			}
-			if (generated.isEmpty() || mapIsSubsetEq(generated, current)) {
-				return toPredicate(current);
-			}
-			final Map<Integer, IPredicate> expanded = mapCombine(current, generated, mUnderlyingDomain::join);
-			final Map<Integer, IPredicate> next = iteration > wideningThreshold
-					? mapCombine(current, expanded, mUnderlyingDomain::widen) : expanded;
-			if (iteration > wideningThreshold) {
-				stats.increment(Key.INTERFERENCE_INNER_WIDENINGS);
-			}
-			if (mapIsSubsetEq(next, current)) {
-				return toPredicate(current);
-			}
-			current = next;
-			frontier = generated;
-		}
-	}
-
 	private IPredicate bottom() {
 		return mTools.bottom();
 	}
@@ -192,6 +142,39 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 		return null;
 	}
 
+	public <T> IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain, final int wideningThreshold,
+			final SifaStats stats, final Map<AbstractLocationPair, T> interferenceByAbstractLocationPair,
+			final BucketTransfer<T> transfer) {
+		Map<Integer, IPredicate> current = bucketsOf(state);
+		Map<Integer, IPredicate> frontier = current;
+		for (int iteration = 1;; iteration++) {
+			stats.increment(Key.INTERFERENCE_INNER_ITERATIONS);
+			final Map<Integer, IPredicate> generated = new LinkedHashMap<>();
+			for (final var entry : interferenceByAbstractLocationPair.entrySet()) {
+				final IPredicate sourceState = frontier.get(entry.getKey().sourceAbstractLocation());
+				if (sourceState != null) {
+					mapMerge(generated, entry.getKey().targetAbstractLocation(),
+							transfer.apply(sourceState, entry.getValue(), mUnderlyingDomain), mUnderlyingDomain);
+				}
+			}
+			if (generated.isEmpty() || mapIsSubsetEq(generated, current)) {
+				return toPredicate(current);
+			}
+			final Map<Integer, IPredicate> expanded = mapCombine(current, generated, mUnderlyingDomain::join);
+			final Map<Integer, IPredicate> next = iteration > wideningThreshold
+					? mapCombine(current, expanded, mUnderlyingDomain::widen)
+					: expanded;
+			if (iteration > wideningThreshold) {
+				stats.increment(Key.INTERFERENCE_INNER_WIDENINGS);
+			}
+			if (mapIsSubsetEq(next, current)) {
+				return toPredicate(current);
+			}
+			current = next;
+			frontier = generated;
+		}
+	}
+
 	private static void mapMerge(final Map<Integer, IPredicate> buckets, final int bucket, final IPredicate state,
 			final IDomain domain) {
 		if (!SmtUtils.isFalseLiteral(state.getFormula())) {
@@ -209,15 +192,7 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 		return true;
 	}
 
-	private static Map<Integer, IPredicate> mapCombine(final Map<Integer, IPredicate> left,
-			final Map<Integer, IPredicate> right, final BinaryOperator<IPredicate> operation) {
-		final Map<Integer, IPredicate> result = new LinkedHashMap<>(left);
-		right.forEach((bucket, state) -> result.merge(bucket, state, operation));
-		return result;
-	}
-
-	private IPredicate combine(final IPredicate lhs, final IPredicate rhs,
-			final BinaryOperator<IPredicate> operation) {
+	private IPredicate combine(final IPredicate lhs, final IPredicate rhs, final BinaryOperator<IPredicate> operation) {
 		final Map<Integer, IPredicate> left = bucketsOrNull(lhs);
 		final Map<Integer, IPredicate> right = bucketsOrNull(rhs);
 		if (left == null || right == null) {
@@ -226,8 +201,32 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 		return toPredicate(mapCombine(left, right, operation));
 	}
 
-	private static boolean hasDirectMainTwoWorkerShape(final List<String> workerThreads,
+	private static Map<Integer, IPredicate> mapCombine(final Map<Integer, IPredicate> left,
+			final Map<Integer, IPredicate> right, final BinaryOperator<IPredicate> operation) {
+		final Map<Integer, IPredicate> result = new LinkedHashMap<>(left);
+		right.forEach((bucket, state) -> result.merge(bucket, state, operation));
+		return result;
+	}
+
+	public static BucketDomain createIfUseful(final IDomain base, final SymbolicTools tools,
+			final List<String> threadIds, final Map<IcfgLocation, Integer> locationIds,
 			final IIcfg<IcfgLocation> icfg) {
+		final List<String> workers = threadIds.stream().filter(t -> !MAIN_THREAD.equals(t)).sorted().toList();
+		if (workers.size() != 2 || locationIds.isEmpty() || !solvableByBuckets(workers, icfg)) {
+			return null;
+		}
+		final Map<String, Integer> entries = new LinkedHashMap<>();
+		for (final String thread : workers) {
+			final Integer peerEntry = locationIds.get(
+					icfg.getProcedureEntryNodes().get(thread.equals(workers.get(0)) ? workers.get(1) : workers.get(0)));
+			if (peerEntry != null) {
+				entries.put(thread, peerEntry);
+			}
+		}
+		return entries.isEmpty() ? null : new BucketDomain(base, tools, entries);
+	}
+
+	private static boolean solvableByBuckets(final List<String> workerThreads, final IIcfg<IcfgLocation> icfg) {
 		final Map<String, Set<String>> directForkTargets = new LinkedHashMap<>();
 		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
 			directForkTargets.computeIfAbsent(fork.getSource().getProcedure(), __ -> new LinkedHashSet<>())

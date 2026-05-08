@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -14,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeTraverser;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
@@ -29,7 +27,6 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 
 	private final InterferenceEdgeTraverser mTraverser;
 	private final IUltimateServiceProvider mServices;
-	private final TransFormulaToInterferencePredicate mTranslator;
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final IDomain mDomain;
 	private final BasicPredicateFactory mPredicateFactory;
@@ -38,13 +35,11 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 	private final IPredicate mFalsePredicate;
 
 	public UnaryGlobalInterferenceFactory(final InterferenceEdgeTraverser traverser,
-			final IUltimateServiceProvider services,
-			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
-			final IDomain domain,
+			final IUltimateServiceProvider services, final TransFormulaToInterferencePredicate translator,
+			final RelationalPredicatePostcondition postcondition, final IDomain domain,
 			final BasicPredicateFactory predicateFactory, final ManagedScript managedScript) {
 		mTraverser = traverser;
 		mServices = services;
-		mTranslator = translator;
 		mPostcondition = postcondition;
 		mDomain = domain;
 		mPredicateFactory = predicateFactory;
@@ -65,8 +60,8 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 				continue;
 			}
 			for (final IProgramVar global : edge.changedGlobals()) {
-				final IPredicate unarySummary =
-						SmtUtils.isTrueLiteral(postState.getFormula()) ? mTruePredicate : projectToSingleGlobal(postState, global);
+				final IPredicate unarySummary = SmtUtils.isTrueLiteral(postState.getFormula()) ? mTruePredicate
+						: projectToSingleGlobal(postState, global);
 				summaryByGlobal.merge(global, unarySummary, mDomain::join);
 			}
 		}

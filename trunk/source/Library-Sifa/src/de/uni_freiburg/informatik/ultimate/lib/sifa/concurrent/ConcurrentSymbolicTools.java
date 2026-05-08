@@ -204,7 +204,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			updated = addLocationUpdateForThread(updated, fork.getNameOfForkedProcedure(),
 					mGhostVariables.getEntryLocation(fork.getNameOfForkedProcedure()));
 		}
-		updated = mJoinHandler.extractJoinedThreadGlobalExitState(updated, transition, mThreadContext,
+		updated = mJoinHandler.extractJoinedThreadGlobalExitStateAndIntersect(updated, transition, mThreadContext,
 				mThreadActivityPreanalysis);
 		if (Optimizations.localTransition(transition)) {
 			return updated;
