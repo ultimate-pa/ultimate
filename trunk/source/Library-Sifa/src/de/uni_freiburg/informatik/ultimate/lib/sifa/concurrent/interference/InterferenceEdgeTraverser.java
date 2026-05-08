@@ -17,16 +17,16 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.Tr
 
 public final class InterferenceEdgeTraverser {
 
-	private final Map<IcfgLocation, List<TranslatedInterferenceOfEdge>> mPreparedEdgesBySource;
+	private final Map<IcfgLocation, List<TranslatedInterferenceOfEdge>> mInterferenceBySourceLocation;
 
 	public InterferenceEdgeTraverser(final IIcfg<IcfgLocation> icfg,
 			final TransFormulaToInterferencePredicate translator) {
-		mPreparedEdgesBySource = prepareEdges(icfg, translator);
+		mInterferenceBySourceLocation = prepareEdges(icfg, translator);
 	}
 
 	public List<TranslatedInterferenceOfEdge> collect(final Map<IcfgLocation, IPredicate> locationStates) {
 		return locationStates.keySet().stream()
-				.map(mPreparedEdgesBySource::get)
+				.map(mInterferenceBySourceLocation::get)
 				.filter(Objects::nonNull)
 				.flatMap(List::stream)
 				.toList();
@@ -44,7 +44,7 @@ public final class InterferenceEdgeTraverser {
 				}
 			}
 			if (!preparedEdges.isEmpty()) {
-				preparedEdges.sort(InterferenceUtils.PREPARED_EDGE_ORDER);
+				preparedEdges.sort(InterferenceUtils.INTERFERENCE_EDGE_ORDER);
 				preparedEdgesBySource.put(source, List.copyOf(preparedEdges));
 			}
 		});

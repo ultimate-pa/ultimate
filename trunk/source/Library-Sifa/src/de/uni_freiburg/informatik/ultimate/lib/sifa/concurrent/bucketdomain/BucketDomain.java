@@ -1,29 +1,76 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BinaryOperator;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
-	private final IDomain mUnderlyingDomain;
-	private final BucketContext mContext;
+	private static final String MAIN_THREAD = "ULTIMATE.start";
 
-	public BucketDomain(final IDomain base, final BucketContext context) {
+	@FunctionalInterface
+	public interface BucketTransfer<T> {
+		IPredicate apply(IPredicate sourceBucketState, T interference, IDomain domain);
+	}
+
+	private final IDomain mUnderlyingDomain;
+	private final SymbolicTools mTools;
+	private final Map<String, Integer> mInitialBucketByThread;
+	private String mCurrentThreadId;
+
+	private BucketDomain(final IDomain base, final SymbolicTools tools,
+			final Map<String, Integer> initialBucketByThread) {
 		mUnderlyingDomain = base;
-		mContext = context;
+		mTools = tools;
+		mInitialBucketByThread = Map.copyOf(initialBucketByThread);
+	}
+
+	public static BucketDomain createIfUseful(final IDomain base, final SymbolicTools tools,
+			final List<String> threadIds, final Map<IcfgLocation, Integer> locationIds,
+			final IIcfg<IcfgLocation> icfg) {
+		final List<String> workers = threadIds.stream().filter(t -> !MAIN_THREAD.equals(t)).sorted().toList();
+		if (workers.size() != 2 || locationIds.isEmpty() || !hasDirectMainTwoWorkerShape(workers, icfg)) {
+			return null;
+		}
+		final Map<String, Integer> entries = new LinkedHashMap<>();
+		for (final String thread : workers) {
+			final Integer peerEntry = locationIds.get(icfg.getProcedureEntryNodes()
+					.get(thread.equals(workers.get(0)) ? workers.get(1) : workers.get(0)));
+			if (peerEntry != null) {
+				entries.put(thread, peerEntry);
+			}
+		}
+		return entries.isEmpty() ? null : new BucketDomain(base, tools, entries);
 	}
 
 	public IDomain baseDomain() {
 		return mUnderlyingDomain;
 	}
 
+	public Set<String> bucketedThreads() {
+		return mInitialBucketByThread.keySet();
+	}
+
+	public boolean hasCurrentBuckets() {
+		return mInitialBucketByThread.containsKey(mCurrentThreadId);
+	}
+
 	@Override
 	public void setCurrentThreadId(final String threadId) {
-		mContext.setCurrentThreadId(threadId);
+		mCurrentThreadId = threadId;
 		if (mUnderlyingDomain instanceof final IThreadLocalDomainContext threadLocal) {
 			threadLocal.setCurrentThreadId(threadId);
 		}
@@ -54,7 +101,7 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 			allBottom &= result.isTrueForAbstraction();
 			abstracted |= result.wasAbstracted();
 		}
-		return new ResultForAlteredInputs(mContext.toPredicate(checked), mContext.bottom(), allBottom, abstracted);
+		return new ResultForAlteredInputs(toPredicate(checked), bottom(), allBottom, abstracted);
 	}
 
 	@Override
@@ -69,15 +116,15 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 		boolean isSubset = true;
 		boolean abstracted = false;
 		for (final var entry : subsetBuckets.entrySet()) {
-			final IPredicate bucketSuperset = supersetBuckets.getOrDefault(entry.getKey(), mContext.bottom());
+			final IPredicate bucketSuperset = supersetBuckets.getOrDefault(entry.getKey(), bottom());
 			final ResultForAlteredInputs result = mUnderlyingDomain.isSubsetEq(entry.getValue(), bucketSuperset);
 			checkedSubset.put(entry.getKey(), result.getLhs());
 			checkedSuperset.put(entry.getKey(), result.getRhs());
 			isSubset &= result.isTrueForAbstraction();
 			abstracted |= result.wasAbstracted();
 		}
-		return new ResultForAlteredInputs(mContext.toPredicate(checkedSubset), mContext.toPredicate(checkedSuperset),
-				isSubset, abstracted);
+		return new ResultForAlteredInputs(toPredicate(checkedSubset), toPredicate(checkedSuperset), isSubset,
+				abstracted);
 	}
 
 	@Override
@@ -88,7 +135,85 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 		}
 		final Map<Integer, IPredicate> abstracted = new LinkedHashMap<>();
 		buckets.forEach((bucket, state) -> abstracted.put(bucket, mUnderlyingDomain.alpha(state)));
-		return mContext.toPredicate(abstracted);
+		return toPredicate(abstracted);
+	}
+
+	public <T> IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain,
+			final int wideningThreshold, final SifaStats stats,
+			final Map<AbstractLocationPair, T> interferenceByAbstractLocationPair, final BucketTransfer<T> transfer) {
+		Map<Integer, IPredicate> current = bucketsOf(state);
+		Map<Integer, IPredicate> frontier = current;
+		for (int iteration = 1;; iteration++) {
+			stats.increment(Key.INTERFERENCE_INNER_ITERATIONS);
+			final Map<Integer, IPredicate> generated = new LinkedHashMap<>();
+			for (final var entry : interferenceByAbstractLocationPair.entrySet()) {
+				final IPredicate sourceState = frontier.get(entry.getKey().sourceAbstractLocation());
+				if (sourceState != null) {
+					mapMerge(generated, entry.getKey().targetAbstractLocation(),
+							transfer.apply(sourceState, entry.getValue(), mUnderlyingDomain), mUnderlyingDomain);
+				}
+			}
+			if (generated.isEmpty() || mapIsSubsetEq(generated, current)) {
+				return toPredicate(current);
+			}
+			final Map<Integer, IPredicate> expanded = mapCombine(current, generated, mUnderlyingDomain::join);
+			final Map<Integer, IPredicate> next = iteration > wideningThreshold
+					? mapCombine(current, expanded, mUnderlyingDomain::widen) : expanded;
+			if (iteration > wideningThreshold) {
+				stats.increment(Key.INTERFERENCE_INNER_WIDENINGS);
+			}
+			if (mapIsSubsetEq(next, current)) {
+				return toPredicate(current);
+			}
+			current = next;
+			frontier = generated;
+		}
+	}
+
+	private IPredicate bottom() {
+		return mTools.bottom();
+	}
+
+	private IPredicate toPredicate(final Map<Integer, IPredicate> buckets) {
+		return BucketPredicate.of(mTools, buckets);
+	}
+
+	private Map<Integer, IPredicate> bucketsOf(final IPredicate state) {
+		if (state instanceof final BucketPredicate buckets) {
+			return new LinkedHashMap<>(buckets.buckets());
+		}
+		return new LinkedHashMap<>(Map.of(mInitialBucketByThread.get(mCurrentThreadId), state));
+	}
+
+	private Map<Integer, IPredicate> bucketsOrNull(final IPredicate pred) {
+		if (pred instanceof BucketPredicate || hasCurrentBuckets()) {
+			return bucketsOf(pred);
+		}
+		return null;
+	}
+
+	private static void mapMerge(final Map<Integer, IPredicate> buckets, final int bucket, final IPredicate state,
+			final IDomain domain) {
+		if (!SmtUtils.isFalseLiteral(state.getFormula())) {
+			buckets.merge(bucket, state, domain::join);
+		}
+	}
+
+	private boolean mapIsSubsetEq(final Map<Integer, IPredicate> subset, final Map<Integer, IPredicate> superset) {
+		for (final var entry : subset.entrySet()) {
+			final IPredicate supersetBucket = superset.getOrDefault(entry.getKey(), bottom());
+			if (!mUnderlyingDomain.isSubsetEq(entry.getValue(), supersetBucket).isTrueForAbstraction()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static Map<Integer, IPredicate> mapCombine(final Map<Integer, IPredicate> left,
+			final Map<Integer, IPredicate> right, final BinaryOperator<IPredicate> operation) {
+		final Map<Integer, IPredicate> result = new LinkedHashMap<>(left);
+		right.forEach((bucket, state) -> result.merge(bucket, state, operation));
+		return result;
 	}
 
 	private IPredicate combine(final IPredicate lhs, final IPredicate rhs,
@@ -98,15 +223,18 @@ public final class BucketDomain implements IDomain, IThreadLocalDomainContext {
 		if (left == null || right == null) {
 			return operation.apply(lhs, rhs);
 		}
-		final Map<Integer, IPredicate> result = new LinkedHashMap<>(left);
-		right.forEach((bucket, state) -> result.merge(bucket, state, operation));
-		return mContext.toPredicate(result);
+		return toPredicate(mapCombine(left, right, operation));
 	}
 
-	private Map<Integer, IPredicate> bucketsOrNull(final IPredicate pred) {
-		if (pred instanceof BucketPredicate || mContext.hasCurrentBuckets()) {
-			return mContext.bucketsOf(pred);
+	private static boolean hasDirectMainTwoWorkerShape(final List<String> workerThreads,
+			final IIcfg<IcfgLocation> icfg) {
+		final Map<String, Set<String>> directForkTargets = new LinkedHashMap<>();
+		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
+			directForkTargets.computeIfAbsent(fork.getSource().getProcedure(), __ -> new LinkedHashSet<>())
+					.add(fork.getNameOfForkedProcedure());
 		}
-		return null;
+		final Set<String> mainForkTargets = directForkTargets.getOrDefault(MAIN_THREAD, Set.of());
+		return mainForkTargets.size() == workerThreads.size() && mainForkTargets.containsAll(workerThreads)
+				&& workerThreads.stream().allMatch(t -> directForkTargets.getOrDefault(t, Set.of()).isEmpty());
 	}
 }

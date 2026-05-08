@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LoiExpansion;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.SingleThreadIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
@@ -45,9 +44,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final IProgressAwareTimer mTimer;
 	private final SifaStats mStats;
 	private final IIcfg<IcfgLocation> mIcfg;
-	private final IDomain mAnalysisDomain;
-	private final IDomain mInterferenceDomain;
-	private final BucketContext mBucketContext;
+	private final IDomain mDomain;
 	private final IFluid mFluid;
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> mLoopSumFactory;
 	private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
@@ -98,9 +95,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 				loopSumFactory);
 		mThreadIds = setup.threadIds();
 		mJoinedThreads = setup.joinedThreads();
-		mAnalysisDomain = setup.analysisDomain();
-		mInterferenceDomain = setup.interferenceDomain();
-		mBucketContext = setup.bucketContext();
+		mDomain = setup.domain();
 		mLoopSumFactory = setup.loopSumFactory();
 		mInterferenceFactory = setup.interferenceFactory();
 		mPostcondition = setup.postcondition();
@@ -169,7 +164,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			analyzeThreads(currentInterferences, allPredicates, perThreadPredicates);
 			final InterferenceCollection extractedInterferences = rebuildInterferences(perThreadPredicates);
 			final boolean interferencesHaveConverged =
-					extractedInterferences.hasConverged(currentInterferences, mInterferenceDomain);
+					extractedInterferences.hasConverged(currentInterferences, mDomain);
 
 			if (interferencesHaveConverged) {
 				// Only do an extra iteration when a joined-thread's exit changed this round,
@@ -185,7 +180,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			rerunWithStableInterferences = false;
 			final InterferenceCollection nextInterferences;
 			if (iteration >= mOuterWideningThreshold) {
-				nextInterferences = currentInterferences.widen(extractedInterferences, mInterferenceDomain);
+				nextInterferences = currentInterferences.widen(extractedInterferences, mDomain);
 				mStats.increment(Key.INTERFERENCE_OUTER_WIDENINGS);
 			} else {
 				nextInterferences = extractedInterferences;
@@ -225,8 +220,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			if (before == null || after == null) {
 				return false;
 			}
-			if (!mAnalysisDomain.isSubsetEq(before, after).isTrueForAbstraction()
-					|| !mAnalysisDomain.isSubsetEq(after, before).isTrueForAbstraction()) {
+			if (!mDomain.isSubsetEq(before, after).isTrueForAbstraction()
+					|| !mDomain.isSubsetEq(after, before).isTrueForAbstraction()) {
 				return false;
 			}
 		}
@@ -256,11 +251,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		for (final String threadId : mThreadIds) {
 			final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
 
-			mConcurrentTools.configureForThread(threadId, interferences, allPredicates, mAnalysisDomain,
-					mInterferenceDomain, mPostcondition);
-			if (mBucketContext != null) {
-				mBucketContext.setCurrentThreadId(threadId);
-			}
+			mConcurrentTools.configureForThread(threadId, interferences, allPredicates, mDomain, mPostcondition);
 			final IPredicate initialState = mConcurrentTools.getInitialStatePredicate(threadId);
 			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
 			mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
@@ -312,7 +303,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private IcfgInterpreter createThreadInterpreter(final String threadId) {
 		final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
 		final Collection<IcfgLocation> lois = mThreadLois.get(threadId);
-		return new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg, lois, mAnalysisDomain, mFluid,
+		return new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg, lois, mDomain, mFluid,
 				mLoopSumFactory, mCallSumFactory, null);
 	}
 

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
@@ -23,14 +23,14 @@ public final class StrongestPostconditionInterference implements IInterference {
 
 	private final Map<AbstractLocationPair, RelationalInterference> mInterferenceByAbstractLocationPair;
 	private final RelationalPredicatePostcondition mPostcondition;
-	private final BucketContext mBucketContext;
+	private final BucketDomain mBucketDomain;
 
 	public StrongestPostconditionInterference(
 			final Map<AbstractLocationPair, RelationalInterference> interferenceByAbstractLocationPair,
-			final RelationalPredicatePostcondition postcondition, final BucketContext bucketContext) {
+			final RelationalPredicatePostcondition postcondition, final BucketDomain bucketDomain) {
 		mInterferenceByAbstractLocationPair = Map.copyOf(interferenceByAbstractLocationPair);
 		mPostcondition = postcondition;
-		mBucketContext = bucketContext;
+		mBucketDomain = bucketDomain;
 	}
 
 	@Override
@@ -40,8 +40,8 @@ public final class StrongestPostconditionInterference implements IInterference {
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-		if (mBucketContext != null && mBucketContext.hasCurrentBuckets()) {
-			return mBucketContext.applyUntilFixpoint(state, domain, wideningThreshold, stats,
+		if (mBucketDomain != null && mBucketDomain.hasCurrentBuckets()) {
+			return mBucketDomain.applyUntilFixpoint(state, domain, wideningThreshold, stats,
 					mInterferenceByAbstractLocationPair, (frontier, group, __) -> applyGroupToFrontier(frontier, group));
 		}
 		IPredicate current = state;
@@ -115,7 +115,7 @@ public final class StrongestPostconditionInterference implements IInterference {
 			}
 		}
 		return widened.isEmpty() ? null
-				: new StrongestPostconditionInterference(widened, mPostcondition, mBucketContext);
+				: new StrongestPostconditionInterference(widened, mPostcondition, mBucketDomain);
 	}
 
 	@Override

@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
@@ -28,19 +28,19 @@ public final class GuardedUpdateInterferenceFactory implements IInterferenceFact
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IPredicate mTruePredicate;
-	private final BucketContext mBucketContext;
+	private final BucketDomain mBucketDomain;
 
 	public GuardedUpdateInterferenceFactory(final IIcfg<IcfgLocation> icfg,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final BucketContext bucketContext) {
+			final BucketDomain bucketDomain) {
 		mTraverser = new GuardedUpdateEdgeTraverser(icfg, translator);
 		mTranslator = translator;
 		mPostcondition = postcondition;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mTruePredicate = predicateFactory.newPredicate(managedScript.getScript().term("true"));
-		mBucketContext = bucketContext;
+		mBucketDomain = bucketDomain;
 	}
 
 	@Override
@@ -64,7 +64,7 @@ public final class GuardedUpdateInterferenceFactory implements IInterferenceFact
 		interferenceByAbstractLocationPair.forEach((abstractLocationPair, updates) -> merged.put(abstractLocationPair,
 				new GuardedUpdateInterference.GuardedUpdateGroup(updates)));
 		return merged.isEmpty() ? null
-				: new GuardedUpdateInterference(merged, mManagedScript, mPredicateFactory, mBucketContext);
+				: new GuardedUpdateInterference(merged, mManagedScript, mPredicateFactory, mBucketDomain);
 	}
 
 	private GuardedUpdate tryCreateUpdate(final GuardedUpdateEdgeTraverser.GuardedUpdateEdge edge,

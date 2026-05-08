@@ -9,7 +9,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.FormulaConjunctUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -45,7 +44,7 @@ public class InterferenceUtilsTest {
 				mScript.term("and", eq(loc, num(1)), mScript.term("and", eq(x, num(2)), eq(y, num(3))));
 		final List<Term> conjuncts = new ArrayList<>();
 
-		FormulaConjunctUtils.collectConjuncts(nested, conjuncts);
+		collectConjuncts(nested, conjuncts);
 
 		assertEquals(3, conjuncts.size());
 	}
@@ -56,6 +55,17 @@ public class InterferenceUtilsTest {
 		final Term nested = mScript.term("or", eq(loc, num(1)), mScript.term("or", eq(loc, num(2)), eq(loc, num(3))));
 
 		assertEquals(2, SmtUtils.getDisjuncts(nested).length);
+	}
+
+	private static void collectConjuncts(final Term formula, final List<Term> result) {
+		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
+		if (conjuncts.length == 1 && conjuncts[0] == formula) {
+			result.add(formula);
+			return;
+		}
+		for (final Term conjunct : conjuncts) {
+			collectConjuncts(conjunct, result);
+		}
 	}
 
 	private Term eq(final Term lhs, final Term rhs) {

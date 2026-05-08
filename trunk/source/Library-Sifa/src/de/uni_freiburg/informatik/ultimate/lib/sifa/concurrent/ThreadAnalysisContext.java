@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Inte
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
-record ThreadAnalysisContext(String threadId, InterferenceCollection interferences, IDomain interferenceDomain,
+record ThreadAnalysisContext(String threadId, InterferenceCollection interferences, IDomain domain,
 		RelationalPredicatePostcondition postcondition, boolean includeSelfInterference,
 		List<String> sortedInterferenceThreadIds, Map<IcfgLocation, IPredicate> locationPredicates,
 		Map<IcfgLocation, List<IInterference>> applicableInterferencesByLocation) {

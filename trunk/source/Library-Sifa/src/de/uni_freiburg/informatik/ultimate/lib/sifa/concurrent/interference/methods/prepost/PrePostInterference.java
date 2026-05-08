@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -25,14 +25,14 @@ public final class PrePostInterference implements IInterference {
 
 	private final Map<AbstractLocationPair, PrePostPair> mInterferenceByAbstractLocationPair;
 	private final ManagedScript mManagedScript;
-	private final BucketContext mBucketContext;
+	private final BucketDomain mBucketDomain;
 	private final IPredicate mFalsePredicate;
 
 	public PrePostInterference(final Map<AbstractLocationPair, PrePostPair> interferenceByAbstractLocationPair,
-			final ManagedScript managedScript, final BucketContext bucketContext, final IPredicate falsePredicate) {
+			final ManagedScript managedScript, final BucketDomain bucketDomain, final IPredicate falsePredicate) {
 		mInterferenceByAbstractLocationPair = Map.copyOf(interferenceByAbstractLocationPair);
 		mManagedScript = managedScript;
-		mBucketContext = bucketContext;
+		mBucketDomain = bucketDomain;
 		mFalsePredicate = falsePredicate;
 	}
 
@@ -43,8 +43,8 @@ public final class PrePostInterference implements IInterference {
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-		if (mBucketContext != null && mBucketContext.hasCurrentBuckets()) {
-			return mBucketContext.applyUntilFixpoint(state, domain, wideningThreshold, stats,
+		if (mBucketDomain != null && mBucketDomain.hasCurrentBuckets()) {
+			return mBucketDomain.applyUntilFixpoint(state, domain, wideningThreshold, stats,
 					mInterferenceByAbstractLocationPair, (frontier, pair, __) ->
 							intersects(frontier, pair.preState()) ? pair.postState() : mFalsePredicate);
 		}
@@ -112,7 +112,7 @@ public final class PrePostInterference implements IInterference {
 			}
 		}
 		return widened.isEmpty() ? null
-				: new PrePostInterference(widened, mManagedScript, mBucketContext, mFalsePredicate);
+				: new PrePostInterference(widened, mManagedScript, mBucketDomain, mFalsePredicate);
 	}
 
 	@Override

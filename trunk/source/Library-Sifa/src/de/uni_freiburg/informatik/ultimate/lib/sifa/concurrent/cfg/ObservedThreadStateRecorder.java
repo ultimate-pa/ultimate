@@ -14,12 +14,12 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 public final class ObservedThreadStateRecorder {
 
-	private final IDomain mInterferenceDomain;
+	private final IDomain mDomain;
 	private final GhostVariableManager mGhostVariables;
 	private final Map<IcfgLocation, IPredicate> mObservedLocationStates = new HashMap<>();
 
-	public ObservedThreadStateRecorder(final IDomain interferenceDomain, final GhostVariableManager ghostVariables) {
-		mInterferenceDomain = interferenceDomain;
+	public ObservedThreadStateRecorder(final IDomain domain, final GhostVariableManager ghostVariables) {
+		mDomain = domain;
 		mGhostVariables = ghostVariables;
 	}
 
@@ -39,7 +39,7 @@ public final class ObservedThreadStateRecorder {
 	}
 
 	public void recordObservedState(final IcfgLocation location, final IPredicate state) {
-		mObservedLocationStates.merge(location, state, mInterferenceDomain::join);
+		mObservedLocationStates.merge(location, state, mDomain::join);
 	}
 
 	private boolean shouldCaptureTransitionInputForInterference(final IIcfgTransition<IcfgLocation> transition) {

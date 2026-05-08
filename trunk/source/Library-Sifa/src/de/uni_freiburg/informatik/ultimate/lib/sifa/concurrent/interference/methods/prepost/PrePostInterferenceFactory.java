@@ -6,7 +6,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeTraverser;
@@ -27,18 +27,18 @@ public final class PrePostInterferenceFactory implements IInterferenceFactory {
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
-	private final BucketContext mBucketContext;
+	private final BucketDomain mBucketDomain;
 
 	public PrePostInterferenceFactory(final InterferenceEdgeTraverser traverser,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final BucketContext bucketContext) {
+			final BucketDomain bucketDomain) {
 		mTraverser = traverser;
 		mTranslator = translator;
 		mPostcondition = postcondition;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
-		mBucketContext = bucketContext;
+		mBucketDomain = bucketDomain;
 	}
 
 	@Override
@@ -72,7 +72,7 @@ public final class PrePostInterferenceFactory implements IInterferenceFactory {
 			}
 		}
 		return interferenceByAbstractLocationPair.isEmpty() ? null
-				: new PrePostInterference(interferenceByAbstractLocationPair, mManagedScript, mBucketContext,
+				: new PrePostInterference(interferenceByAbstractLocationPair, mManagedScript, mBucketDomain,
 						mPredicateFactory.newPredicate(mManagedScript.getScript().term("false")));
 	}
 

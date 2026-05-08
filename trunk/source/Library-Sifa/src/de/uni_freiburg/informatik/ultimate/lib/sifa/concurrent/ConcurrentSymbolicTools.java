@@ -99,17 +99,16 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	}
 
 	public void configureForThread(final String threadId, final InterferenceCollection interferences,
-			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain analysisDomain,
-			final IDomain interferenceDomain, final RelationalPredicatePostcondition postcondition) {
-		IThreadLocalDomainContext.setIfApplicable(analysisDomain, threadId);
-		IThreadLocalDomainContext.setIfApplicable(interferenceDomain, threadId);
+			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain,
+			final RelationalPredicatePostcondition postcondition) {
+		IThreadLocalDomainContext.setIfApplicable(domain, threadId);
 		final List<String> sortedInterferenceThreadIds = new ArrayList<>(interferences.getThreadIds());
 		Collections.sort(sortedInterferenceThreadIds);
 		final boolean includeSelfInterference = mThreadActivityPreanalysis.getMultiForkedThreads().contains(threadId);
-		mThreadContext = new ThreadAnalysisContext(threadId, interferences, interferenceDomain, postcondition,
+		mThreadContext = new ThreadAnalysisContext(threadId, interferences, domain, postcondition,
 				includeSelfInterference, List.copyOf(sortedInterferenceThreadIds), locationPredicates, new HashMap<>());
-		mObservedStateRecorder = new ObservedThreadStateRecorder(interferenceDomain, mGhostVariables);
-		mInitialStateFactory.configureForThread(locationPredicates, analysisDomain);
+		mObservedStateRecorder = new ObservedThreadStateRecorder(domain, mGhostVariables);
+		mInitialStateFactory.configureForThread(locationPredicates, domain);
 	}
 
 
@@ -159,7 +158,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	}
 
 	private IPredicate applyInterferenceRounds(final IPredicate state, final List<IInterference> interferences) {
-		final IDomain domain = mThreadContext.interferenceDomain();
+		final IDomain domain = mThreadContext.domain();
 		if (usesOnePassApplication(interferences)) {
 			return applyInterferencesOnce(state, interferences, domain);
 		}

@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
@@ -69,34 +68,28 @@ public final class ThreadModularSetup {
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		concurrentTools.configureStaticAnalysis(ghostVars, activityPreanalysis);
-		final BucketContext bucketContext =
-				usesBuckets(settings) ? createBucketContext(logger, settings, tools, threadIds, locationIds, icfg)
-						: null;
-		final IDomain analysisDomain = withBucketsIfUsed(baseDomain, bucketContext);
-		final IDomain interferenceDomain = withBucketsIfUsed(baseDomain, bucketContext);
+		final BucketDomain bucketDomain = usesBuckets(settings)
+				? createBucketDomain(logger, settings, tools, threadIds, locationIds, icfg, baseDomain) : null;
+		final IDomain domain = bucketDomain != null ? bucketDomain : baseDomain;
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
 				ghostVars, locationIds, icfg.getProcedureEntryNodes());
 		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services, script,
 				factory, symbolTable, true);
 		final InterferenceEdgeTraverser edgeTraverser = new InterferenceEdgeTraverser(icfg, translator);
 		final IInterferenceFactory interferenceFactory = createInterferenceFactory(
-				settings.interferenceApplicatorType(), icfg, edgeTraverser, translator, postcondition, interferenceDomain,
-				factory, script, bucketContext);
+				settings.interferenceApplicatorType(), icfg, edgeTraverser, translator, postcondition, domain, factory,
+				script, bucketDomain);
 		logger.info("Interference method: %s (%s)", settings.interferenceApplicatorType(),
 				interferenceFactory == null ? "None" : interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", settings.locationAbstractionType());
 
 		final ThreadModularProofChecker proofChecker = settings.proofCheck()
-				? new ThreadModularProofChecker(icfg, postcondition, translator, interferenceDomain, ghostVars,
+				? new ThreadModularProofChecker(icfg, postcondition, translator, domain, ghostVars,
 						activityPreanalysis, activityPreanalysis.getMultiForkedThreads(), true)
 				: null;
 
-		return new SetupResult(threadIds, analysisDomain, interferenceDomain, bucketContext, defaultLoopSumFactory,
-				interferenceFactory, postcondition, proofChecker, joinedThreads, locationIds);
-	}
-
-	private static IDomain withBucketsIfUsed(final IDomain baseDomain, final BucketContext bucketContext) {
-		return bucketContext == null ? baseDomain : new BucketDomain(baseDomain, bucketContext);
+		return new SetupResult(threadIds, domain, defaultLoopSumFactory, interferenceFactory, postcondition,
+				proofChecker, joinedThreads, locationIds);
 	}
 
 	private static boolean usesBuckets(final ThreadModularSifaSettings settings) {
@@ -108,18 +101,18 @@ public final class ThreadModularSetup {
 				|| type == InterferenceApplicatorType.GUARDED_EXACT_UPDATE;
 	}
 
-	private static BucketContext createBucketContext(final ILogger logger, final ThreadModularSifaSettings settings,
+	private static BucketDomain createBucketDomain(final ILogger logger, final ThreadModularSifaSettings settings,
 			final SymbolicTools tools, final List<String> threadIds, final Map<IcfgLocation, Integer> locationIds,
-			final IIcfg<IcfgLocation> icfg) {
+			final IIcfg<IcfgLocation> icfg, final IDomain baseDomain) {
 		if (!settings.guardBucketSplit()) {
 			return null;
 		}
-		final BucketContext context = BucketContext.createIfUseful(tools, threadIds, locationIds, icfg);
-		if (context != null) {
-			logger.info("Guard bucket split enabled for %d threads: %s", context.bucketedThreads().size(),
-					context.bucketedThreads());
+		final BucketDomain bd = BucketDomain.createIfUseful(baseDomain, tools, threadIds, locationIds, icfg);
+		if (bd != null) {
+			logger.info("Guard bucket split enabled for %d threads: %s", bd.bucketedThreads().size(),
+					bd.bucketedThreads());
 		}
-		return context;
+		return bd;
 	}
 
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
@@ -185,28 +178,26 @@ public final class ThreadModularSetup {
 	private static IInterferenceFactory createInterferenceFactory(final InterferenceApplicatorType applicatorType,
 			final IIcfg<IcfgLocation> icfg, final InterferenceEdgeTraverser edgeTraverser,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
-			final IDomain interferenceDomain, final BasicPredicateFactory factory, final ManagedScript script,
-			final BucketContext bucketContext) {
+			final IDomain domain, final BasicPredicateFactory factory, final ManagedScript script,
+			final BucketDomain bucketDomain) {
 		return switch (applicatorType) {
 		case STRONGEST_POSTCONDITION ->
 			new StrongestPostconditionInterferenceFactory(edgeTraverser, translator, postcondition, factory, script,
-					bucketContext);
+					bucketDomain);
 		case PREPOST ->
-			new PrePostInterferenceFactory(edgeTraverser, translator, postcondition, script, factory, bucketContext);
+			new PrePostInterferenceFactory(edgeTraverser, translator, postcondition, script, factory, bucketDomain);
 		case GUARDED_EXACT_UPDATE ->
-			new GuardedUpdateInterferenceFactory(icfg, translator, postcondition, script, factory, bucketContext);
+			new GuardedUpdateInterferenceFactory(icfg, translator, postcondition, script, factory, bucketDomain);
 		case POST_STATE ->
-			new PostStateInterferenceFactory(edgeTraverser, translator, postcondition, interferenceDomain, factory,
-					script);
+			new PostStateInterferenceFactory(edgeTraverser, translator, postcondition, domain, factory, script);
 		case UNARY_GLOBALS ->
 			new UnaryGlobalInterferenceFactory(edgeTraverser, translator.getServices(), translator, postcondition,
-					interferenceDomain, factory, script);
+					domain, factory, script);
 		case NONE -> null;
 		};
 	}
 
-	public static record SetupResult(List<String> threadIds, IDomain analysisDomain, IDomain interferenceDomain,
-			BucketContext bucketContext,
+	public static record SetupResult(List<String> threadIds, IDomain domain,
 			Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			IInterferenceFactory interferenceFactory, RelationalPredicatePostcondition postcondition,
 			ThreadModularProofChecker proofChecker, Set<String> joinedThreads,
