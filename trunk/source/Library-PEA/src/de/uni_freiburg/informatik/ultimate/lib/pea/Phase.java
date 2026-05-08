@@ -77,7 +77,7 @@ public class Phase implements Comparable<Phase> {
 	}
 
 	public Phase(final String name, final CDD stateInv, final CDD clockInv) {
-		this(name, stateInv, clockInv, new SimpleSet<String>(0));
+		this(name, stateInv, clockInv, new SimpleSet<>(0));
 	}
 
 	public Phase(final String name, final CDD stateInv) {
@@ -124,6 +124,11 @@ public class Phase implements Comparable<Phase> {
 		return mTransitions;
 	}
 
+	// added for minimization procedure
+	public List<Transition> getIncomingTransitions() {
+		return mIncomming;
+	}
+
 	public Transition getOutgoingTransition(final Phase dest) {
 		Transition result = null;
 
@@ -139,11 +144,7 @@ public class Phase implements Comparable<Phase> {
 
 	/** @return the transition added or modified */
 	public Transition addTransition(final Phase dest, final CDD guard, final String[] resets) {
-		final Iterator<Transition> it = getTransitions().iterator();
-
-		while (it.hasNext()) {
-			final Transition t = it.next();
-
+		for (final Transition t : getTransitions()) {
 			if (t.getDest() == dest && Arrays.equals(t.getResets(), resets)) {
 				t.setGuard(t.getGuard().or(guard));
 
@@ -200,10 +201,7 @@ public class Phase implements Comparable<Phase> {
 		System.out
 				.println("  " + mName + " [ label = \"" + getStateInv() + "\\n" + getClockInv() + "\" shape=ellipse ]");
 
-		final Iterator<Transition> it = getTransitions().iterator();
-
-		while (it.hasNext()) {
-			final Transition t = it.next();
+		for (final Transition t : getTransitions()) {
 			System.out.println(
 					"  " + t.getSrc().mName + " -> " + t.getDest().mName + " [ label = \"" + t.getGuard() + "\" ]");
 		}
