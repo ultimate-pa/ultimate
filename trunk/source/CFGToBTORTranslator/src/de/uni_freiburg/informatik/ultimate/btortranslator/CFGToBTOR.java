@@ -10,12 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.btorutils.AssignmentRule;
-import de.uni_freiburg.informatik.ultimate.btorutils.BtorExpression;
-import de.uni_freiburg.informatik.ultimate.btorutils.BtorExpressionType;
-import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
-import de.uni_freiburg.informatik.ultimate.btorutils.BtorSort;
-import de.uni_freiburg.informatik.ultimate.btorutils.UpdateRule;
+import de.uni_freiburg.informatik.ultimate.btor.AssignmentRule;
+import de.uni_freiburg.informatik.ultimate.btor.BtorExpressionType;
+import de.uni_freiburg.informatik.ultimate.btor.BtorScript;
+import de.uni_freiburg.informatik.ultimate.btor.BtorSort;
+import de.uni_freiburg.informatik.ultimate.btor.UpdateRule;
+import de.uni_freiburg.informatik.ultimate.btor.expression.BtorExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;

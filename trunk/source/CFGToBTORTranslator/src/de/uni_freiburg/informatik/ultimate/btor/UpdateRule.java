@@ -1,7 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.btorutils;
+package de.uni_freiburg.informatik.ultimate.btor;
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.btor.expression.BtorExpression;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;

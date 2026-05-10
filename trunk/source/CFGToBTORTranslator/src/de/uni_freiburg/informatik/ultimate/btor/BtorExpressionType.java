@@ -1,27 +1,27 @@
-package de.uni_freiburg.informatik.ultimate.btorutils;
+package de.uni_freiburg.informatik.ultimate.btor;
 
 public enum BtorExpressionType {
-	STATE,
+	STATE, //
 
-	INIT,
+	INIT, //
 
-	CONSTD,
+	CONSTD, //
 
-	ONE,
+	ONE, //
 
-	ZERO,
+	ZERO, //
 
-	INPUT,
+	INPUT, //
 
-	NEXT,
+	NEXT, //
 
-	BAD,
+	BAD, //
 
-	CONSTRAINT,
+	CONSTRAINT, // todo
 
-	FAIR,
+	FAIR, // todo
 
-	JUSTICE,
+	JUSTICE, // todo
 
 	SEXT,
 

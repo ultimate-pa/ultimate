@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.btorutils;
+package de.uni_freiburg.informatik.ultimate.btor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.btor.expression.BtorExpression;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -26,20 +27,23 @@ public class AssignmentRule {
 	public TransFormula tf;
 	public BtorExpression guard;
 	Boogie2SMT boogie2SMT;
+	public BtorScript script;
 
 	public AssignmentRule(final DebugIdentifier assignmentLocationIdentifier, final IProgramVar lhs,
-			final Expression rhs, final TransFormula tf, final BtorExpression guard, final Boogie2SMT boogie2SMT) {
+			final Expression rhs, final TransFormula tf, final BtorExpression guard, final Boogie2SMT boogie2SMT,
+			final BtorScript script) {
 		this.assignmentLocationIdentifier = assignmentLocationIdentifier;
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.tf = tf;
 		this.guard = guard;
 		this.boogie2SMT = boogie2SMT;
+		this.script = script;
 	}
 
 	public static List<AssignmentRule> getAssignmentsFromTransition(final DebugIdentifier assignmentLocationIdentifier,
 			final IcfgEdge icfgEdge, final ManagedScript script, final BtorExpression guard,
-			final Boogie2SMT boogie2SMT) {
+			final Boogie2SMT boogie2SMT, final BtorScript btorScript) {
 		final List<AssignmentRule> assignmentRules = new ArrayList<>();
 		// extract statements from edge
 		if (icfgEdge instanceof StatementSequence) {
@@ -58,7 +62,7 @@ public class AssignmentRule {
 							final IProgramVar assignedVar = boogie2SMT.getBoogie2SmtSymbolTable()
 									.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false);
 							assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar,
-									rightHandSides[i], icfgEdge.getTransformula(), guard, boogie2SMT));
+									rightHandSides[i], icfgEdge.getTransformula(), guard, boogie2SMT, btorScript));
 						}
 					}
 				} else if (statement instanceof HavocStatement) {
@@ -71,7 +75,7 @@ public class AssignmentRule {
 							final IProgramVar assignedVar = boogie2SMT.getBoogie2SmtSymbolTable()
 									.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false);
 							assignmentRules.add(new AssignmentRule(assignmentLocationIdentifier, assignedVar, null,
-									icfgEdge.getTransformula(), guard, boogie2SMT));
+									icfgEdge.getTransformula(), guard, boogie2SMT, btorScript));
 						}
 					}
 				}
@@ -90,8 +94,8 @@ public class AssignmentRule {
 					boogie2SMT.createConstOnlyIdentifierTranslator() };
 			// first convert expression to SMT term, then use TermToBtorUtil to obtain the btor expression
 			final BtorExpression btorexpression = TermToBtorUtil.convertRhsToBtorExpression(
-					boogie2SMT.getExpression2Term().translateToTerm(its, rhs).term(), tf, variableMap, sort,
-					boogie2SMT);
+					boogie2SMT.getExpression2Term().translateToTerm(its, rhs).term(), tf, variableMap, sort, boogie2SMT,
+					script);
 			return btorexpression;
 		} else {
 			// null rhs assignement rules are havoc statements and thus have btor expression type INPUT

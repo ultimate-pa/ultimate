@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
-import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
+import de.uni_freiburg.informatik.ultimate.btor.BtorScript;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;

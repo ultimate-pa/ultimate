@@ -1,9 +1,9 @@
-package de.uni_freiburg.informatik.ultimate.btorutils;
+package de.uni_freiburg.informatik.ultimate.btor;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 public class BtorSort {
-	int size; // if > 0, number of bits. if = 0, represents an array sort
+	public int size; // if > 0, number of bits. if = 0, represents an array sort
 	public BtorSort keySort; // null if bitvector, otherwise is the sort of the key of the array
 	public BtorSort valueSort; // null if bitvector, otherwise is the sort of the value of the array
 
