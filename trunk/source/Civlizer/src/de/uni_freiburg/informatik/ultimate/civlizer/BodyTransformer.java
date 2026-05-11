@@ -53,13 +53,25 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 
 final class BodyTransformer extends BoogieTransformer {
 
+	private ProgramAndProof mProgramAndProof;
     private String mCurrentProcedure;
 	private int mAtomicStatementCounter;
 
-    BodyTransformer() {
+    BodyTransformer(ProgramAndProof programAndProof) {
+		mProgramAndProof = programAndProof;
+		for (OwickiGriesAnnotation o : programAndProof.getProof()) {
+			//System.out.println("TEST TEST :" + o.getFormulaMapping());
+			for (var key : o.getFormulaMapping().keySet()) {
+				System.out.println(key);
+			}
+			System.out.println();
+			System.out.println();
+		}
+
         mCurrentProcedure = null;
         mAtomicStatementCounter = 0;
     }
@@ -244,12 +256,42 @@ final class BodyTransformer extends BoogieTransformer {
 	 */
 	protected Statement[] processStatements(final Statement[] statements) {
 		final Statement[] newStatements = new Statement[2 * statements.length - 4];
+
+		int size = mProgramAndProof.getTids().size() + (mCurrentProcedure == "ULTIMATE.start" ? 1 : 0);
+		Expression[] tids = new Expression[size];
+
+		int i = 0;
+
+		if (mCurrentProcedure == "ULTIMATE.start") {
+			tids[i++] = new IdentifierExpression(
+				null,
+				BoogieType.createPlaceholderType(0),
+				"start_tid",
+				new DeclarationInformation(
+					DeclarationInformation.StorageClass.GLOBAL,
+					null
+				)
+			);
+		}
+
+		for (Tid tid : mProgramAndProof.getTids()) {
+			tids[i++] = new IdentifierExpression(
+				null,
+				BoogieType.createPlaceholderType(0),
+				tid.toString(),
+				new DeclarationInformation(
+					DeclarationInformation.StorageClass.GLOBAL,
+					null
+				)
+			);
+		}
+		
 		// we ignore some kind of first Label $Ultimate##0
-		for (int i = 1; i < statements.length - 1; i++) { // ignore standart return
+		for (i = 1; i < statements.length - 1; i++) { // ignore standart return
 			mAtomicStatementCounter += 1;
 			newStatements[2 * i - 2] = processStatement(statements[i]);
 			newStatements[2 * i - 1] = new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
-			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, new Expression[0]);
+			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids);
 		}
 
 		return newStatements;
@@ -315,12 +357,6 @@ final class BodyTransformer extends BoogieTransformer {
 				new IdentifierExpression(
 					forkstmt.getLoc(), /* maybe to be change TODO or not */
 					BoogieType.createPlaceholderType(0),
-					"{:linear} start_tid : StartTid",
-					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
-				),
-				new IdentifierExpression(
-					forkstmt.getLoc(), /* maybe to be change TODO or not */
-					BoogieType.createPlaceholderType(0),
 					(new Tid(threadId)).toString(),
 					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
 				)
@@ -337,7 +373,7 @@ final class BodyTransformer extends BoogieTransformer {
 
 			// variable out to define TODO
 
-			Expression[] tid = new Expression[] { 
+			Expression[] tid = new Expression[] {
 				new IdentifierExpression(
 					joinstmt.getLoc(), /* maybe to be change TODO or not */
 					BoogieType.createPlaceholderType(0),

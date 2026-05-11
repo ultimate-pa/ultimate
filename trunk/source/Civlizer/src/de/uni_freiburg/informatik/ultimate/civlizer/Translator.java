@@ -1,11 +1,6 @@
 
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
 import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
@@ -62,26 +57,46 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 
 public final class Translator extends BoogieVisitor {
 
+	private ProgramAndProof mProgramAndProof;
 	private StringBuilderWriter mWriter;
 	private BoogieOutput mOutput;
-	private Map<String, List<Tid>> mMapToTid;
-	private Set<Tid> mTids;
 
-	private Translator(Unit boogieFile) {
+	Translator(ProgramAndProof programAndProof) {
+		programAndProof.preprocess();
+		mProgramAndProof = programAndProof;
 		mWriter = new StringBuilderWriter();
 		mOutput = new BoogieOutput(mWriter);
-		mMapToTid = ThreadTemplateVisitor.getMapToTid(boogieFile);
-		mTids = ThreadTemplateVisitor.getValuesFromMap(mMapToTid);
+	}
+
+	/**
+	 * translate the Ultimate boogie Ast into a String representing the resulting Civl program
+	 */
+	public static String translate(ProgramAndProof programAndProof) {
+		Translator translation = new Translator(programAndProof);
+
+		translation.addTidsType();
+
+		translation.addGhostVar();
+
+		translation.addThreadControlFlow();
+
+		translation.mWriter.println("var {:layer 0,1} {:linear} join_pool : Set (One Tid);\n");
+
+		for (Declaration elem : programAndProof.getBoogieAst().getDeclarations()) {
+			translation.processDeclaration(elem);
+        }
+
+		return translation.toString();
 	}
 
 	private void addTidConst(Tid tid) {
@@ -96,11 +111,22 @@ public final class Translator extends BoogieVisitor {
 		mWriter.println("const unique start_tid : StartTid;");
 		mWriter.println("type Tid;");
 
-		for (Tid tid : mTids) {
+		for (Tid tid : mProgramAndProof.getTids()) {
 			addTidConst(tid);
 		}
 
 		mWriter.print("\n");
+	}
+
+	private void addGhostVar() {
+		for (OwickiGriesAnnotation proof : mProgramAndProof.getProof()) {
+			for (var var : proof.getGhostVariables()) {
+				System.out.println("GHOST GHOST");
+				System.out.println(var.getClass().getName());
+				mWriter.print("var {:layer 1,2} " + var.toString());
+				mWriter.print(" : ???;\n\n"); // TODO
+			}
+		}
 	}
 
 	private void addFork(String procName) {
@@ -137,32 +163,13 @@ public final class Translator extends BoogieVisitor {
 	private void addThreadControlFlow() {
 		mWriter.print("\n");
 
-		for (String procName : mMapToTid.keySet()) {
+		for (String procName : mProgramAndProof.getMapToTid().keySet()) {
 			addFork(procName);
 			mWriter.print("\n");
 		}
 
 		addTerminate();
 		addJoin();
-	}
-
-	/**
-	 * translate the Ultimate boogie Ast into a String representing the resulting Civl program
-	 */
-	public static String translate(Unit boogieFile) {
-		Translator translation = new Translator(boogieFile);
-
-		translation.addTidsType();
-
-		translation.addThreadControlFlow();
-
-		translation.mWriter.println("var {:layer 0,1} {:linear} join_pool : Set (One Tid);\n");
-
-		for (Declaration elem : boogieFile.getDeclarations()) {
-			translation.processDeclaration(elem);
-        }
-
-		return translation.toString();
 	}
 
 	@Override
@@ -211,12 +218,12 @@ public final class Translator extends BoogieVisitor {
 		if ("ULTIMATE.start".equals(procName)) {
 			mWriter.print("{:linear} start_tid : One StartTid");
 
-			if (!mTids.isEmpty()) {
+			if (!mProgramAndProof.getTids().isEmpty()) {
 				mWriter.print(", ");
 			}
 		}
 
-		Iterator<Tid> it = mTids.iterator();
+		Iterator<Tid> it = mProgramAndProof.getTids().iterator();
 		while (it.hasNext()) {
 			Tid tid = it.next();
 
@@ -235,12 +242,12 @@ public final class Translator extends BoogieVisitor {
 		if ("ULTIMATE.start".equals(procName)) {
 			mWriter.print("start_tid->val == start_tid");
 
-			if (!mTids.isEmpty()) {
+			if (!mProgramAndProof.getTids().isEmpty()) {
 				mWriter.print(" && ");
 			}
 		}
 
-		it = mTids.iterator();
+		it = mProgramAndProof.getTids().iterator();
 		while (it.hasNext()) {
 			Tid tid = it.next();
 			mWriter.print(tid.toString());
@@ -295,7 +302,7 @@ public final class Translator extends BoogieVisitor {
 		//}
 
 		/* Write Thread template */
-		BodyTransformer transformer = new BodyTransformer();
+		BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
 
 		mWriter.print("yield procedure {:layer 0} ");
 		mWriter.print(decl.getIdentifier());
@@ -305,12 +312,12 @@ public final class Translator extends BoogieVisitor {
 		if ("ULTIMATE.start".equals(decl.getIdentifier())) {
 			mWriter.print("start_tid");
 
-			if (!mTids.isEmpty()) {
+			if (!mProgramAndProof.getTids().isEmpty()) {
 				mWriter.print(", ");
 			}
 		}
 
-		Iterator<Tid> it = mTids.iterator();
+		Iterator<Tid> it = mProgramAndProof.getTids().iterator();
 		while (it.hasNext()) {
 			Tid tid = it.next();
 			mWriter.print(tid.toString());
@@ -322,19 +329,19 @@ public final class Translator extends BoogieVisitor {
 		mWriter.println(");");
 
 
-		mWriter.print("requires yield_");
+		mWriter.print("requires call yield_");
 		mWriter.print(decl.getIdentifier());
-		mWriter.println("_0;");
-		mWriter.println("(");
+		mWriter.print("_0;");
+		mWriter.print("(");
 		if ("ULTIMATE.start".equals(decl.getIdentifier())) {
 			mWriter.print("start_tid");
 
-			if (!mTids.isEmpty()) {
+			if (!mProgramAndProof.getTids().isEmpty()) {
 				mWriter.print(", ");
 			}
 		}
 
-		it = mTids.iterator();
+		it = mProgramAndProof.getTids().iterator();
 		while (it.hasNext()) {
 			Tid tid = it.next();
 			mWriter.print(tid.toString());

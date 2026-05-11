@@ -51,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
+	
+	private ProgramAndProof mProgramAndProof;
 
 	@Override
 	public String getPluginName() {
@@ -65,6 +67,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	@Override
 	public void init() {
 		// not needed
+		mProgramAndProof = new ProgramAndProof();
 	}
 
 	@Override
@@ -132,14 +135,21 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws Throwable {
 
-		if (root instanceof final Unit boogieFile && root instanceof final BoogieIcfgContainer icfg) {
+		if (root instanceof final Unit boogieFile) {
+			mProgramAndProof.setBoogieAst(boogieFile);
+			mLogger.warn(boogieFile);
+		}
 
-			mLogger.warn(Translator.translate(boogieFile));
+		if (root instanceof final BoogieIcfgContainer icfg) {
+			List<OwickiGriesAnnotation> proof = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
+			mLogger.warn(proof);
 
-			// not working not printed
+			mProgramAndProof.setProof(proof);
+		}
+
+		if (mProgramAndProof.isFull()) {
 			mLogger.warn("TEST TEST TEST");
-			final var proofs = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
-			mLogger.warn(proofs);
+			mLogger.warn(Translator.translate(mProgramAndProof));
 			mLogger.warn("TEST TEST TEST");
 		}
 
