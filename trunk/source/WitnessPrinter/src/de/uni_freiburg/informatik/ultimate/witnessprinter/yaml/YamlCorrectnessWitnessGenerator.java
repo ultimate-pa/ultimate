@@ -108,7 +108,7 @@ public class YamlCorrectnessWitnessGenerator {
 			}
 
 			for (final var assignment : update.getUpdate().entrySet()) {
-				result.add(new GhostUpdate(assignment.getKey(), assignment.getValue().toString(), "C",
+				result.add(new GhostUpdate(assignment.getKey().toString(), assignment.getValue().toString(), "C",
 						getWitnessLocation(loc)));
 			}
 		}
