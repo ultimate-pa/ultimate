@@ -258,7 +258,7 @@ public final class Translator extends BoogieVisitor {
 				mWriter.print(" && ");
 			}
 		}
-
+		
 		// add annotation
 		mWriter.print(";\n\n");
 	}
@@ -354,6 +354,18 @@ public final class Translator extends BoogieVisitor {
 
 
 		mWriter.println("{");
+
+		/* Local variable declaration */
+
+		it = mProgramAndProof.getTids().iterator();
+		while (it.hasNext()) {
+			Tid tid = it.next();
+			mWriter.print("    var {:linear_in} out");
+			mWriter.print(tid.toString().substring(3));
+			mWriter.println(" : One Tid;");
+		}
+
+
 		for (VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
 			mOutput.printVarDeclaration(varDecl, "    ");
 		}

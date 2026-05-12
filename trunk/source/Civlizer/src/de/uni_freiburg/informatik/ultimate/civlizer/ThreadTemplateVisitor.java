@@ -25,10 +25,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
-	private HashMap<String, List<Tid>> mMap;
+	private String mCurrentProcedure;
+	private HashMap<String, List<Tid>> mAssiociationTidMap;
+	private HashMap<String, List<Tid>> mUsedTidMap;
 
 	private ThreadTemplateVisitor() {
-		mMap = new HashMap<>();
+		mCurrentProcedure = null;
+		mAssiociationTidMap = new HashMap<>();
+		mUsedTidMap = new HashMap<>();
 	}
 
 	static Map<String, List<Tid>> getMapToTid(Unit boogieFile) {
@@ -38,7 +42,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 			visitor.processDeclaration(elem);
         }
 
-		return visitor.mMap;
+		return visitor.mAssiociationTidMap;
 	}
 
 	static Set<Tid> getValuesFromMap(Map<String, List<Tid>> map) {
@@ -70,8 +74,10 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	@Override
 	protected void visit(final Procedure decl) {
-		if (decl.getIdentifier() != "ULTIMATE.start" && !mMap.containsKey(decl.getIdentifier())) {
-			mMap.put(decl.getIdentifier(), new ArrayList<>());
+		mCurrentProcedure = decl.getIdentifier();
+
+		if (mCurrentProcedure != "ULTIMATE.start" && !mAssiociationTidMap.containsKey(mCurrentProcedure)) {
+			mAssiociationTidMap.put(mCurrentProcedure, new ArrayList<>());
 		}
 
 		for (Statement stmt : decl.getBody().getBlock()) {
@@ -125,10 +131,10 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	protected void visit(final ForkStatement statement) {
 
 		Tid result = new Tid(statement.getThreadID());
-		List<Tid> tids = mMap.get(statement.getProcedureName());
+		List<Tid> tids = mAssiociationTidMap.get(statement.getProcedureName());
 
 		if (tids == null) {
-			mMap.put(
+			mAssiociationTidMap.put(
 				statement.getProcedureName(),
 				new ArrayList<>(Collections.singletonList(result))
 			);
@@ -136,5 +142,34 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		else {
 			tids.add(result);
 		}
+
+		tids = mUsedTidMap.get(statement.getProcedureName());
+
+		if (tids == null) {
+			mUsedTidMap.put(
+				mCurrentProcedure,
+				new ArrayList<>(Collections.singletonList(result))
+			);
+		}
+		else {
+			tids.add(result);
+		}
 	}
+
+	/*@Override
+	protected void visit(final JoinStatement statement) {
+
+		Tid result = new Tid(statement.getThreadID());
+		List<Tid> tids = mAssiociationTidMap.get(statement.getProcedureName());
+
+		if (tids == null) {
+			mAssiociationTidMap.put(
+				mCurrentProcedure),
+				new ArrayList<>(Collections.singletonList(result))
+			);
+		}
+		else {
+			tids.add(result);
+		}
+	}*/
 }
