@@ -187,37 +187,47 @@ public class ConstraintRepresentation {
 		}
 
 		// Making the congruence pivots unique
-		for (int i = 0; i < congruences.size(); i++) {
-			final MatrixQ128 congruence = congruences.get(i);
-			final long pivot = CongruenceUtil.lastPivot(congruence);
+		for (int index = mVectorLength - 1; index >= 0; index--) {
+			// Find a congruence with pivot == index
+			int i;
+			long pivot = mVectorLength;
+			MatrixQ128 congruence = null;
+			for (i = 0; i < congruences.size(); i++) {
+				congruence = congruences.get(i);
+				pivot = CongruenceUtil.lastPivot(congruence);
 
-			if (pivot == -1) {
-				// vector is empty, can be deleted
-				// We do that later though
-			} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) != 1) {
-				// We just have a constant
-				// The constant is not whole and so it's not 0 mod 1
-				// So the congruence is unsatisfiable and so is the whole system
-				markAsUnsat();
-				return;
-			} else {
-				// Eliminate the pivot field from the following congruence's
-				// We can't eliminate it from the equalities, since adding a congruence to an
-				// equality doesn't conserve the equality
-				// We need to use the hermit elimination to preserve congruence's
-				for (int j = 0; j < congruences.size(); j++) {
-					if (i == j) {
-						continue;
-					}
-					final MatrixQ128 other = congruences.get(j);
-					final long otherPivot = CongruenceUtil.lastPivot(other);
+				if (pivot == index) {
+					break;
+				}
 
-					if (pivot == otherPivot) {
-						final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, congruence,
-								pivot);
-						congruences.set(j, pair.getFirst());
-						congruences.set(i, pair.getSecond());
-					}
+				if (pivot == -1) {
+					// vector is empty, can be deleted
+					// We do that later though
+				} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) != 1) {
+					// We just have a constant
+					// The constant is not whole and so it's not 0 mod 1
+					// So the congruence is unsatisfiable and so is the whole system
+					markAsUnsat();
+					return;
+				}
+			}
+
+			// If no such congruence is found i is already so large that there is no rest we
+			// have to look through
+
+			// Eliminate the pivot field from the following congruence's
+			// We can't eliminate it from the equalities, since adding a congruence to an
+			// equality doesn't conserve the equality
+			// We need to use the hermit elimination to preserve congruence's
+			for (int j = i + 1; j < congruences.size(); j++) {
+				final MatrixQ128 other = congruences.get(j);
+				final long otherPivot = CongruenceUtil.lastPivot(other);
+
+				if (pivot == otherPivot) {
+					final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, congruence,
+							pivot);
+					congruences.set(j, pair.getFirst());
+					congruences.set(i, pair.getSecond());
 				}
 			}
 		}
@@ -252,6 +262,10 @@ public class ConstraintRepresentation {
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
 		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
 		mIsMinimal = true;
+
+		if (equalities.size() + congruences.size() > mVectorLength) {
+			throw new AssertionError();
+		}
 	}
 
 	public void stronglyMinimize() {
@@ -340,6 +354,11 @@ public class ConstraintRepresentation {
 		final List<MatrixQ128> vectorList = new ArrayList<>(fillerList);
 		vectorList.addAll(constraintList);
 		final MatrixQ128 constraintMatrix = CongruenceUtil.getMatrixFromRows(vectorList);
+
+		if (!constraintMatrix.isSquare()) {
+			throw new AssertionError();
+		}
+
 		final MatrixQ128 generatorMatrix = constraintMatrix.invert().transpose();
 		final List<MatrixQ128> generatorList = CongruenceUtil.getRowsFromMatrix(generatorMatrix);
 

@@ -138,26 +138,33 @@ public class GeneratorRepresentation {
 		}
 
 		// Making the parameter pivots unique
-		for (int i = 0; i < parameters.size(); i++) {
-			final MatrixQ128 parameter = parameters.get(i);
-			final long pivot = CongruenceUtil.firstPivot(parameter);
+		for (int index = 0; index < mVectorLength; index++) {
+			// Find a parameter with pivot == index
+			int i;
+			long pivot = mVectorLength;
+			MatrixQ128 parameter = null;
+			for (i = 0; i < parameters.size(); i++) {
+				parameter = parameters.get(i);
+				pivot = CongruenceUtil.firstPivot(parameter);
 
-			if (pivot != parameter.countColumns()) {
-				// Parameter is not empty
-				// Eliminate the pivot field from the following parameters
-				for (int j = 0; j < parameters.size(); j++) {
-					if (i == j) {
-						continue;
-					}
-					final MatrixQ128 other = parameters.get(j);
-					final long otherPivot = CongruenceUtil.firstPivot(other);
+				if (pivot == index) {
+					break;
+				}
+			}
 
-					if (pivot == otherPivot) {
-						final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, parameter,
-								pivot);
-						parameters.set(j, pair.getFirst());
-						parameters.set(i, pair.getSecond());
-					}
+			// If no such parameter is found i is already so large that there is no rest we
+			// have to look through
+
+			// Eliminate the pivot field from the following parameters
+			for (int j = i + 1; j < parameters.size(); j++) {
+				final MatrixQ128 other = parameters.get(j);
+				final long otherPivot = CongruenceUtil.firstPivot(other);
+
+				if (pivot == otherPivot) {
+					final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, parameter,
+							pivot);
+					parameters.set(j, pair.getFirst());
+					parameters.set(i, pair.getSecond());
 				}
 			}
 		}
@@ -239,6 +246,11 @@ public class GeneratorRepresentation {
 		final List<MatrixQ128> vectorList = new ArrayList<>(generatorList);
 		vectorList.addAll(fillerList);
 		final MatrixQ128 generatorMatrix = CongruenceUtil.getMatrixFromRows(vectorList);
+
+		if (!generatorMatrix.isSquare()) {
+			throw new AssertionError();
+		}
+
 		final MatrixQ128 constraintMatrix = generatorMatrix.invert().transpose();
 		final List<MatrixQ128> constraintList = CongruenceUtil.getRowsFromMatrix(constraintMatrix);
 
