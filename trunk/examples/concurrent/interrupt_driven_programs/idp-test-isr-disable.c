@@ -30,7 +30,10 @@ int main(void)
     HAL_GPIO_Enable_Int();
 
     int n = 0;
-    while (n < 1000) {
+    
+    // Verification time grows drastically if the number of iterations is higher, e.g. 200. Then Ultimate does not find a counterexample even for "trivial"
+    // errors such as "assert false"
+    while (n < 5) {
         assert(!step_in_isr);
         n++;
         assert(!step_in_isr);
