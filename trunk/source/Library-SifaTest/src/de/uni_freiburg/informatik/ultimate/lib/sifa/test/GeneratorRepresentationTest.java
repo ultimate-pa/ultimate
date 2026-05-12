@@ -15,7 +15,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class GeneratorRepresentationTest {
 	public List<GeneratorRepresentation> getTestGenerators() {
-		return List.of(getGenerators1(), getGenerators2(), getGenerators3(), getGenerators4());
+		return List.of(getGenerators1(), getGenerators2(), getGenerators3(), getGenerators4(), getGenerators5(),
+				getGenerators8(), getGenerators9(), getGenerators10(), getGenerators11(), getGenerators12(),
+				getGenerators13(), getGenerators14());
 	}
 
 	public GeneratorRepresentation getGenerators1() {
@@ -207,12 +209,35 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
 
+	public static GeneratorRepresentation getGenerators14() {
+		// @formatter:off
+		/*
+		 * L = {}
+		 * Q = {(0, 4/3, 0), (1, 0, 1), (0, 2, 1), (1, 0, -1)}
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil
+				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.valueOf(4, 3), Rational.ZERO)));
+		congruences.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 0, 1)));
+		congruences.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 2, 1)));
+		congruences.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 0, -1)));
+
+		return new GeneratorRepresentation(equalities, congruences, 3);
+	}
+
 	@Test
 	public void testMinimize() {
+		final var sth = getGenerators14();
+		sth.minimize();
+		Assert.assertTrue(hasMinimalForm(sth));
+
 		for (final GeneratorRepresentation generators : getTestGenerators()) {
+			// System.out.println(generators);
 			generators.minimize();
 			// System.out.println(generators);
-			// System.out.println(minimalGenerators);
 			Assert.assertTrue(hasMinimalForm(generators));
 		}
 	}

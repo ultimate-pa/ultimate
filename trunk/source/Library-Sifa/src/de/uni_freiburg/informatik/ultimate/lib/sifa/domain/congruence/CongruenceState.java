@@ -71,6 +71,36 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	}
 
 	@Override
+	public String toString() {
+		final ConstraintRepresentation constraints = getConstraintRepresentation();
+		final List<MatrixQ128> equalities = constraints.getEqualities();
+		final List<MatrixQ128> congruences = constraints.getCongruences();
+
+		final Map<Integer, Term> indexToVar = getIndexToVar();
+
+		final StringBuilder constraintsString = new StringBuilder();
+
+		for (final MatrixQ128 equality : equalities) {
+			final long commonDenominator = CongruenceUtil.getCommonDenominator(equality);
+			final MatrixQ128 wholeEquality = equality.multiply(commonDenominator);
+			final String[] vectorStrings = CongruenceUtil.getVectorStrings(wholeEquality, indexToVar);
+			final String equalityString = vectorStrings[0] + " = " + vectorStrings[1];
+			constraintsString.append(equalityString).append(";\n");
+		}
+
+		for (final MatrixQ128 congruence : congruences) {
+			final long commonDenominator = CongruenceUtil.getCommonDenominator(congruence);
+			final MatrixQ128 wholeCongruence = congruence.multiply(commonDenominator);
+			final String[] vectorStrings = CongruenceUtil.getVectorStrings(wholeCongruence, indexToVar);
+			final String congruenceString = vectorStrings[0] + " ≡" + commonDenominator + " " + vectorStrings[1];
+			constraintsString.append(congruenceString).append(";\n");
+		}
+
+		return "CongruenceState [mVarToIndex=" + mVarToIndex + ", mConstraints= \n"
+				+ constraintsString.append("]").toString();
+	}
+
+	@Override
 	public Term toTerm(final Script script) {
 		final ConstraintRepresentation constraints = getConstraintRepresentation();
 		final List<MatrixQ128> equalities = constraints.getEqualities();
@@ -140,11 +170,19 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
 				selfReorderedGenerators.getVectorLength());
 
+		final var sth = new CongruenceState(newVarToIndex, newGenerators);
+		final var sthElse = sth.getConstraintRepresentation();
 		return new CongruenceState(newVarToIndex, newGenerators);
 	}
 
 	@Override
 	public CongruenceState widen(final CongruenceState other) {
+		final var sth = this;
+
+		/*
+		 * if (isBottom()) { return other; } if (other.isBottom()) { return this; }
+		 */
+
 		final CongruenceState upper = join(other);
 		final var newVarToIndex = upper.getVarToIndex();
 		final CongruenceState lower = other.getReorderedForm(newVarToIndex);
@@ -184,6 +222,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		final ConstraintRepresentation newConstraints = new ConstraintRepresentation(newEqualities, newCongruences,
 				upperConstraints.getVectorLength());
+		final var sthelse = new CongruenceState(newVarToIndex, newConstraints);
 		return new CongruenceState(newVarToIndex, newConstraints);
 	}
 

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,21 +40,23 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 			final List<ModuloRelation> moduloRelations = new ArrayList<>();
 			final Set<Term> vars = new HashSet<>();
 			for (final Term conjunct : conjuncts) {
-				// Test for EqualityRelation
-				final EqualityRelation conjunctEqualityRelation = EqualityRelation.of(conjunct, mScript);
-				if (conjunctEqualityRelation != null) {
-					equalityRelations.add(conjunctEqualityRelation);
-					vars.addAll(conjunctEqualityRelation.getVars());
 
-				}
-				// Otherwise test for ModuloRelation
+				// Test for ModuloRelation
 				final List<ModuloRelation> conjunctModuloRelations = ModuloRelation.of(conjunct, mScript);
 				if (conjunctModuloRelations != null) {
 					moduloRelations.addAll(conjunctModuloRelations);
 					for (final ModuloRelation conjunctModuloRelation : conjunctModuloRelations) {
 						vars.addAll(conjunctModuloRelation.getVars());
 					}
+				} else {
+					// Otherwise test for EqualityRelation
+					final EqualityRelation conjunctEqualityRelation = EqualityRelation.of(conjunct, mScript);
+					if (conjunctEqualityRelation != null) {
+						equalityRelations.add(conjunctEqualityRelation);
+						vars.addAll(conjunctEqualityRelation.getVars());
+					}
 				}
+
 			}
 			final Map<Term, Integer> varToIndex = new HashMap<>();
 			int freeIndex = 1;
@@ -72,6 +75,11 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 			}
 
 			final var vectorLength = varToIndex.size() + 1;
+
+			// Add that 1 % 1 = 0
+			final List<Integer> list = new ArrayList<>(Collections.nCopies(vectorLength, 0));
+			list.set(0, -1);
+			congruences.add(CongruenceUtil.getRowVectorFromIntList(list));
 
 			return new CongruenceState(varToIndex, new ConstraintRepresentation(equalities, congruences, vectorLength));
 		}

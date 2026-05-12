@@ -53,7 +53,8 @@ public class EqualityRelation {
 	public List<Rational> getProtoVector(final Map<Term, Integer> varToIndex) {
 		final int n = varToIndex.size() + 1;
 		final List<Rational> list = new ArrayList<>(Collections.nCopies(n, Rational.ZERO));
-		list.set(0, mResult.negate());
+		// TODO: list.set(0, mResult.negate());
+		list.set(0, mResult);
 
 		for (final Entry<Term, Rational> entry : mVarToFactor.entrySet()) {
 			final Term variable = entry.getKey();

@@ -70,7 +70,7 @@ public class ModuloRelation {
 			// Have an inequality with a mod value that's small enough
 			final List<ModuloRelation> list = new ArrayList<>();
 
-			for (final BigInteger i = BigInteger.ONE; i.compareTo(modInt) < 0; i.add(BigInteger.ONE)) {
+			for (BigInteger i = BigInteger.ONE; i.compareTo(modInt) < 0; i = i.add(BigInteger.ONE)) {
 				final AffineTerm offsetAffineTerm = affineTerm.add(Rational.valueOf(i, BigInteger.ONE));
 				final ModuloRelation moduloRelation = new ModuloRelation(offsetAffineTerm, modInt);
 				list.add(moduloRelation);

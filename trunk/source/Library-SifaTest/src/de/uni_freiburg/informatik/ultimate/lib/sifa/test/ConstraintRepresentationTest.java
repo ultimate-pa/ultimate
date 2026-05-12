@@ -17,7 +17,7 @@ public class ConstraintRepresentationTest {
 	public List<ConstraintRepresentation> getTestConstraints() {
 		return List.of(getConstraints1(), getConstraints2(), getConstraints3(), getConstraints4(), getConstraints5(),
 				getConstraints6(), getConstraints7(), getConstraints8(), getConstraints9(), getConstraints10(),
-				getConstraints11(), getConstraints12());
+				getConstraints11(), getConstraints12(), getConstraints13(), getConstraints14());
 	}
 
 	public ConstraintRepresentation getConstraints1() {
@@ -125,7 +125,7 @@ public class ConstraintRepresentationTest {
 		final List<MatrixQ128> equalities = new ArrayList<>();
 
 		final List<MatrixQ128> congruences = new ArrayList<>();
-		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ZERO)));
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.valueOf(-1, 2), Rational.ZERO)));
 
 		return new ConstraintRepresentation(equalities, congruences, 2);
 	}
@@ -241,6 +241,20 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 3);
 	}
 
+	public static ConstraintRepresentation getConstraints14() {
+		// @formatter:off
+		/*
+		 * 1 = 0 [1]
+		 */
+		// @formatter:on
+		final List<MatrixQ128> equalities = new ArrayList<>();
+
+		final List<MatrixQ128> congruences = new ArrayList<>();
+		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.valueOf(-1, 1), Rational.ZERO)));
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
 	@Test
 	public void testGetMinimalForm() {
 		for (final ConstraintRepresentation constraints : getTestConstraints()) {
@@ -256,11 +270,12 @@ public class ConstraintRepresentationTest {
 	@Test
 	public void testIsUnsat() {
 		Assert.assertFalse(getConstraints1().isUnsat());
-		Assert.assertTrue(getConstraints2().isUnsat());
+		Assert.assertFalse(getConstraints2().isUnsat());
 		Assert.assertTrue(getConstraints3().isUnsat());
 		Assert.assertFalse(getConstraints4().isUnsat());
 		Assert.assertFalse(getConstraints5().isUnsat());
 		Assert.assertTrue(getConstraints6().isUnsat());
+		Assert.assertFalse(getConstraints14().isUnsat());
 	}
 
 	@Test

@@ -110,9 +110,18 @@ public class ConstraintRepresentation {
 		minimize();
 		for (final MatrixQ128 equality : getEqualities()) {
 			if (CongruenceUtil.lastPivot(equality) == 0) {
+				// markAsUnsat();
 				return true;
 			}
 		}
+		for (final MatrixQ128 congruence : getCongruences()) {
+			final long pivot = CongruenceUtil.lastPivot(congruence);
+			if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) != 1) {
+				// markAsUnsat();
+				return true;
+			}
+		}
+
 		return false;
 	}
 
@@ -172,39 +181,34 @@ public class ConstraintRepresentation {
 				}
 			}
 		}
+		// Deleter empty equalities
+		for (final int i : equalitiesToDelete.reversed()) {
+			equalities.remove(i);
+		}
 
 		// Making the congruence pivots unique
 		for (int i = 0; i < congruences.size(); i++) {
-			MatrixQ128 congruence = congruences.get(i);
+			final MatrixQ128 congruence = congruences.get(i);
 			final long pivot = CongruenceUtil.lastPivot(congruence);
 
 			if (pivot == -1) {
 				// vector is empty, can be deleted
-				congruencesToDelete.add(i);
-			} else if (pivot == 0) {
+				// We do that later though
+			} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) != 1) {
 				// We just have a constant
-				if (CongruenceUtil.getDenominator(congruence.get(0, pivot)) == 1) {
-					// The constant is whole and so it's 0 mod 1
-					// We dont need this trivial term further on tho
-					congruencesToDelete.add(i);
-				}
-				// The constant is not 0 mod 1
+				// The constant is not whole and so it's not 0 mod 1
 				// So the congruence is unsatisfiable and so is the whole system
 				markAsUnsat();
 				return;
 			} else {
-				// Make pivotValue positive
-				final var pivotValue = congruence.get(0, pivot);
-				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
-					congruence = congruence.negate();
-					congruences.set(i, congruence);
-				}
-
 				// Eliminate the pivot field from the following congruence's
 				// We can't eliminate it from the equalities, since adding a congruence to an
 				// equality doesn't conserve the equality
 				// We need to use the hermit elimination to preserve congruence's
-				for (int j = i + 1; j < congruences.size(); j++) {
+				for (int j = 0; j < congruences.size(); j++) {
+					if (i == j) {
+						continue;
+					}
 					final MatrixQ128 other = congruences.get(j);
 					final long otherPivot = CongruenceUtil.lastPivot(other);
 
@@ -217,11 +221,32 @@ public class ConstraintRepresentation {
 				}
 			}
 		}
-		for (final int i : equalitiesToDelete.reversed()) {
-			equalities.remove(i);
+
+		// Scan for empty congruence's
+		for (int i = 0; i < congruences.size(); i++) {
+			final MatrixQ128 congruence = congruences.get(i);
+			final long pivot = CongruenceUtil.lastPivot(congruence);
+
+			if (pivot == -1) {
+				// parameter is empty, can be deleted
+				congruencesToDelete.add(i);
+			}
 		}
+
+		// Remove empty congruence's
 		for (final int i : congruencesToDelete.reversed()) {
 			congruences.remove(i);
+		}
+
+		// Make pivot values for congruence's positive
+		for (int i = 0; i < congruences.size(); i++) {
+			MatrixQ128 congruence = congruences.get(i);
+			final long pivot = CongruenceUtil.lastPivot(congruence);
+			final var pivotValue = congruence.get(0, pivot);
+			if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+				congruence = congruence.negate();
+				congruences.set(i, congruence);
+			}
 		}
 
 		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
@@ -233,7 +258,7 @@ public class ConstraintRepresentation {
 		if (isStrongMinimal()) {
 			return;
 		}
-
+		final var sth = this;
 		minimize();
 
 		final List<MatrixQ128> equalities = getEqualities();

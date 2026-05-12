@@ -94,6 +94,9 @@ public class GeneratorRepresentation {
 			return;
 		}
 
+		final var one = getLines();
+		final var two = getParameters();
+
 		final List<MatrixQ128> lines = getLines();
 		final List<MatrixQ128> parameters = getParameters();
 
@@ -129,38 +132,61 @@ public class GeneratorRepresentation {
 			}
 		}
 
+		// Delete the empty lines
+		for (final int i : linesToDelete.reversed()) {
+			lines.remove(i);
+		}
+
 		// Making the parameter pivots unique
 		for (int i = 0; i < parameters.size(); i++) {
-			MatrixQ128 parameter = parameters.get(i);
+			final MatrixQ128 parameter = parameters.get(i);
+			final long pivot = CongruenceUtil.firstPivot(parameter);
+
+			if (pivot != parameter.countColumns()) {
+				// Parameter is not empty
+				// Eliminate the pivot field from the following parameters
+				for (int j = 0; j < parameters.size(); j++) {
+					if (i == j) {
+						continue;
+					}
+					final MatrixQ128 other = parameters.get(j);
+					final long otherPivot = CongruenceUtil.firstPivot(other);
+
+					if (pivot == otherPivot) {
+						final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, parameter,
+								pivot);
+						parameters.set(j, pair.getFirst());
+						parameters.set(i, pair.getSecond());
+					}
+				}
+			}
+		}
+
+		// Scan for empty parameters
+		for (int i = 0; i < parameters.size(); i++) {
+			final MatrixQ128 parameter = parameters.get(i);
 			final long pivot = CongruenceUtil.firstPivot(parameter);
 
 			if (pivot == parameter.countColumns()) {
 				// parameter is empty, can be deleted
 				parametersToDelete.add(i);
-			} else {
-				// Make pivotValue positive
-				final RationalNumber pivotValue = parameter.get(0, pivot);
-				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
-					parameter = parameter.negate();
-					parameters.set(i, parameter);
-				}
-
-				// Eliminate the pivot field from the following parameters
-				for (int j = i; j < parameters.size(); j++) {
-					final MatrixQ128 other = parameters.get(j);
-					final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, parameter,
-							pivot);
-					parameters.set(j, pair.getFirst());
-					parameters.set(i, pair.getSecond());
-				}
 			}
 		}
 
-		for (final int i : linesToDelete.reversed()) {
-			lines.remove(i);
-		}
+		// Delete the empty parameters
 		for (final int i : parametersToDelete.reversed()) {
 			parameters.remove(i);
+		}
+
+		// Make pivot values for parameters positive
+		for (int i = 0; i < parameters.size(); i++) {
+			MatrixQ128 parameter = parameters.get(i);
+			final long pivot = CongruenceUtil.firstPivot(parameter);
+			final var pivotValue = parameter.get(0, pivot);
+			if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+				parameter = parameter.negate();
+				parameters.set(i, parameter);
+			}
 		}
 
 		final MatrixQ128 minimalLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
@@ -169,6 +195,11 @@ public class GeneratorRepresentation {
 		mLineMatrix = minimalLineMatrix;
 		mParameterMatrix = minimalParameterMatrix;
 		mIsMinimal = true;
+
+		if (lines.size() + parameters.size() > mVectorLength) {
+			throw new AssertionError();
+		}
+
 	}
 
 	public GeneratorRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
@@ -183,6 +214,8 @@ public class GeneratorRepresentation {
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
 		minimize();
+
+		final var sth = this;
 
 		final List<MatrixQ128> lines = getLines();
 		final int linesNum = lines.size();

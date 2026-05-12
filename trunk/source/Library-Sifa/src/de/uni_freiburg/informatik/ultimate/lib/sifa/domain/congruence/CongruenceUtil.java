@@ -338,7 +338,7 @@ public class CongruenceUtil {
 
 	public static Term getSumTerm(final MatrixQ128 vector, final Map<Integer, Term> indexToVar, final Script script) {
 		final Set<Term> summands = new HashSet<>();
-		for (int i = 0; i <= vector.countColumns(); i++) {
+		for (int i = 0; i < vector.countColumns(); i++) {
 			final RationalNumber rationalFactor = vector.get(0, i);
 
 			if (rationalFactor.isZero()) {
@@ -355,9 +355,54 @@ public class CongruenceUtil {
 			}
 			summands.add(term);
 		}
-		final Term[] summandsArray = (Term[]) summands.toArray();
+		final Term[] summandsArray = summands.toArray(Term[]::new);
+		if (summandsArray.length == 0) {
+			return SmtUtils.constructIntValue(script, BigInteger.ZERO);
+		}
+
+		if (summandsArray.length == 1) {
+			return summandsArray[0];
+		}
 		final Term sum = SmtUtils.sum(script, "+", summandsArray);
 		return sum;
+	}
+
+	public static String[] getVectorStrings(final MatrixQ128 vector, final Map<Integer, Term> indexToVar) {
+		String resultString = "0";
+		final Set<String> summands = new HashSet<>();
+		for (int i = 0; i < vector.countColumns(); i++) {
+			final RationalNumber rationalFactor = vector.get(0, i);
+
+			if (rationalFactor.isZero()) {
+				continue;
+			}
+			final long factor = CongruenceUtil.getNumerator(rationalFactor);
+
+			String term;
+			if (i == 0) {
+				resultString = BigInteger.valueOf(factor).negate().toString();
+			} else {
+				final Term var = indexToVar.get(i);
+				if (factor == 1) {
+					term = var.toString();
+				} else {
+					term = factor + " * " + var;
+				}
+				summands.add(term);
+			}
+
+		}
+		final String[] summandsArray = summands.toArray(String[]::new);
+		if (summandsArray.length == 0) {
+			return new String[] { "0", resultString };
+		}
+
+		StringBuilder sum = new StringBuilder();
+		for (final String element : summandsArray) {
+			sum.append(" + ").append(element);
+		}
+		sum = sum.delete(0, 2);
+		return new String[] { sum.toString(), resultString };
 	}
 
 	public static boolean isEqualsInLastNonZero(final MatrixQ128 vector1, final MatrixQ128 vector2) {
