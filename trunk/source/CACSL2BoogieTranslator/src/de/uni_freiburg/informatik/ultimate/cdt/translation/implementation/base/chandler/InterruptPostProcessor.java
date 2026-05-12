@@ -445,8 +445,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final var enabledExpr = threadEnabledId;
 		final var ifStmt = getIfStatement(identifier, enabledExpr);
 		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStmt));
-		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
-		return new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0],
+		final var while_condition =
+				FORK_JOIN_IN_IRQ_ENABLE ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
+		return new WhileStatement(mIgnoreLoc, while_condition, new LoopInvariantSpecification[0],
 				new Statement[] { atomic });
 	}
 
