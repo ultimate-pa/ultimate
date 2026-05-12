@@ -101,6 +101,10 @@ public class PEAMinimizationTest {
 		phases[2].addTransition(phases[1], clkGuard, noreset);
 		phases[2].addTransition(phases[0], s, noreset);
 
+		// initial transitions
+		phases[0].setInitialTransition(new InitialTransition(CDD.TRUE, phases[0]));
+		phases[1].setInitialTransition(new InitialTransition(CDD.TRUE, phases[1]));
+
 		return new PhaseEventAutomata("ResponseDelayGlobally", Arrays.asList(phases),
 				Arrays.asList(new InitialTransition(CDD.TRUE, phases[0]), new InitialTransition(CDD.TRUE, phases[1])),
 				clocks, variables, Collections.emptyList());

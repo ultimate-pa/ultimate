@@ -27,12 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -52,6 +54,7 @@ public class PEAMinimization {
 	UnionFind<Phase> mEquivalenceClasses;
 	// Key: Equivalence Class Representative, Value: merged locations
 	private static HashMap<Phase, Phase> mMergedLocations;
+	List<InitialTransition> mMergedInitialTransitions;
 
 	public PEAMinimization(final PhaseEventAutomata peaToMinimize) {
 		mPEAtoMinimize = peaToMinimize;
@@ -59,8 +62,11 @@ public class PEAMinimization {
 		mPEAComplement = new PEAComplement(mPEAtoMinimize);
 		mTotalisedPEA = mPEAComplement.getTotalisedPEA();
 		mPartitionByClockInv = new HashMap<>();
+		mMergedLocations = new HashMap<>();
 		createPartitionByClockInv(mTotalisedPEA.getPhases());
+		mMergedInitialTransitions = new ArrayList<>();
 		mMinimizedPEA = minimize(mTotalisedPEA);
+
 	}
 
 	private static void createPartitionByClockInv(final List<Phase> phases) {
@@ -75,83 +81,54 @@ public class PEAMinimization {
 		}
 	}
 
+	private static HashMap<Phase, Set<Transition>> computeOutgoingTransitions(final Set<Phase> phaseSet) {
+		final HashMap<Phase, Set<Transition>> outgoingTransitions = new HashMap<>();
+		for (final Phase location : phaseSet) {
+			for (final Transition transition : location.getTransitions()) {
+				final Phase destination = transition.getDest();
+				// not an internal transition
+				if (phaseSet.contains(destination)) {
+					continue;
+				}
+				Set<Transition> set = outgoingTransitions.get(destination);
+				if (set == null) {
+					set = new HashSet<>();
+					outgoingTransitions.put(destination, set);
+				}
+				set.add(transition);
+			}
+		}
+		return outgoingTransitions;
+	}
+
 	public static Boolean isMergable(final Phase location1, final Phase location2) {
 		// check if the two locations are successor equivalent
-		final List<Transition> transitionsLocation1 = location1.getTransitions();
-		final List<Transition> transitionsLocation2 = location2.getTransitions();
+		final Set<Phase> locations = new HashSet<>();
+		locations.add(location1);
+		locations.add(location2);
 
-		// if location1 and location2 are mergeable, both should have a transition to a destination location
-		// we need this HashMap to check if those transitions are enabled under the same circumstances
-		final HashMap<Phase, Set<Transition>> transitionsByDestination = new HashMap<>();
+		HashMap<Phase, Set<Transition>> transitionsByDestination = new HashMap<>();
 
-		// these are the destinations of the outgoing transitions of location1 and location2
-		// location1 and location2 are only mergeable if they are successor equivalent, as in:
-		// they have the same "destinations"
-		final Set<Phase> destinations1 = new HashSet<>();
-		final Set<Phase> destinations2 = new HashSet<>();
+		transitionsByDestination = computeOutgoingTransitions(locations);
 
-		// here we collect the destinations of outgoing transitions of location1 and location2, to later compare them
-		// to check if they are successor equivalent
-		for (final Transition t : transitionsLocation1) {
-			final Phase destination = t.getDest();
-			// use the representative of the equivalence class of the destination
-			// final Phase destinationRepresentative = uf.find(destination);
-
-			destinations1.add(destination);
-
-			Set<Transition> set = transitionsByDestination.get(destination);
-			if (set == null) {
-				set = new HashSet<>();
-				transitionsByDestination.put(destination, set);
+		for (final Set<Transition> transitionSet : transitionsByDestination.values()) {
+			if (transitionSet.size() != 2) {
+				return false;
 			}
-			set.add(t);
-		}
-
-		for (final Transition t : transitionsLocation2) {
-			final Phase destination = t.getDest();
-			// use the representative of the equivalence class of the destination
-			// final Phase destinationRepresentative = uf.find(destination);
-
-			destinations2.add(destination);
-
-			Set<Transition> set = transitionsByDestination.get(destination);
-			if (set == null) {
-				set = new HashSet<>();
-				transitionsByDestination.put(destination, set);
-			}
-			set.add(t);
-		}
-
-		// if the two locations are not successor equivalent, they cant be merged
-		if (!destinations1.equals(destinations2)) {
-			return false;
-		}
-		// if they are, we check if the guards and invariants (of the two locations) imply each other
-
-		for (final HashMap.Entry<Phase, Set<Transition>> entry : transitionsByDestination.entrySet()) {
-
-			final Phase destination = entry.getKey();
-
-			final List<Transition> transitions = new ArrayList<>(entry.getValue());
-
-			// I assume that no PEA-location has more than 1 transition to a destination location
-			// so in total, for each destination we have two transitions
-			assert (transitions.size() == 2);
-
+			final List<Transition> transitions = new ArrayList<>(transitionSet);
 			final Transition transition1 = transitions.get(0);
 			final Transition transition2 = transitions.get(1);
 
-			final CDD formula1 =
-					transition1.getGuard().and(destination.getStateInvariant().and(destination.getClockInvariant()));
-			final CDD formula2 =
-					transition2.getGuard().and(destination.getStateInvariant().and(destination.getClockInvariant()));
+			final CDD guard1 = transition1.getGuard();
+			final CDD guard2 = transition2.getGuard();
 
-			if (!(formula1.implies(formula2) && (formula2.implies(formula1)))) {
+			if (!(guard1.implies(guard2) && (guard2.implies(guard1)))) {
 				return false;
 			}
-
 		}
+
 		return true;
+
 	}
 
 	public HashMap<CDD, Set<Phase>> getPartitionByClockInv() {
@@ -165,12 +142,16 @@ public class PEAMinimization {
 			assert (equivalenceClass.size() >= 1);
 			final Phase rep = equivalenceClassList.get(0);
 
-			final Phase mergedLocation = new Phase(rep.getName(), CDD.FALSE, rep.getClockInv());
+			final Phase mergedLocation = new Phase(rep.getName() + "_merged", CDD.FALSE, rep.getClockInv());
 
 			for (final Phase location : equivalenceClass) {
 				// generate state invariant
 				final CDD mergedStateInv = mergedLocation.getStateInv();
 				mergedLocation.setStateInv(mergedStateInv.or(location.getStateInv()));
+
+				if (location.isInit()) {
+					mergedLocation.setInit(true);
+				}
 
 			}
 			if (!rep.getTerminal()) {
@@ -212,19 +193,59 @@ public class PEAMinimization {
 
 	private void mergeIncomingTransitions() {
 		for (final Phase rep : mMergedLocations.keySet()) {
-			final HashSet<Phase> addedSources = new HashSet<>();
-			final Phase mergedLocation = mMergedLocations.get(rep);
-			for (final Transition incomingTransition : rep.getIncomingTransitions()) {
-				final Phase source = incomingTransition.getSrc();
-				final Phase sourceRep = mEquivalenceClasses.find(source);
 
-				// skip if transition is "internal" to the equivalence class
-				if (rep == sourceRep) {
-					continue;
+			final ImmutableSet<Phase> equivalenceClass = mEquivalenceClasses.getEquivalenceClassMembers(rep);
+			// key: source, value: set of transitions leading to this source
+			final HashMap<Phase, Set<Transition>> incomingTransitions = new HashMap<>();
+			final HashSet<InitialTransition> initialTransitions = new HashSet<>();
+
+			final Phase mergedLocation = mMergedLocations.get(rep);
+			for (final Phase location : equivalenceClass) {
+				if (location.isInit()) {
+					final InitialTransition initialTransition = location.getInitialTransition();
+					initialTransitions.add(initialTransition);
+					mergedLocation.setInit(true);
 				}
-				if (!addedSources.add(sourceRep)) {
-					// TODO
+				for (final Transition incomingTransition : location.getIncomingTransitions()) {
+					final Phase source = incomingTransition.getSrc();
+					final Phase sourceRep = mEquivalenceClasses.find(source);
+					final Phase mergedSource = mMergedLocations.get(sourceRep);
+					// skip if transition is "internal" to the equivalence class
+					if (rep == sourceRep) {
+						continue;
+					}
+					Set<Transition> set = incomingTransitions.get(mergedSource);
+					if (set == null) {
+						set = new HashSet<>();
+						incomingTransitions.put(mergedSource, set);
+					}
+					set.add(incomingTransition);
 				}
+			}
+			// build new transitions
+			for (final HashMap.Entry<Phase, Set<Transition>> entry : incomingTransitions.entrySet()) {
+				CDD guard = CDD.FALSE;
+				final List<String> clockResets = new ArrayList<>();
+				final Phase mergedSource = entry.getKey();
+				for (final Transition incomingTransition : entry.getValue()) {
+					guard = guard.or(incomingTransition.getGuard());
+					// clockResets.add(incomingTransition.getResets());
+
+					Collections.addAll(clockResets, incomingTransition.getResets());
+				}
+				final String[] clockResetsStrings = clockResets.toArray(new String[0]);
+				mergedSource.addTransition(mergedLocation, guard, clockResetsStrings);
+
+			}
+			if (mergedLocation.isInit()) {
+				CDD initialGuard = CDD.FALSE;
+				for (final InitialTransition initialTransition : initialTransitions) {
+					initialGuard = initialGuard
+							.or(initialTransition.getGuard().and(initialTransition.getDest().getStateInv()));
+				}
+				final InitialTransition mergedInitialTransition = new InitialTransition(initialGuard, mergedLocation);
+				mergedLocation.setInitialTransition(mergedInitialTransition);
+				mMergedInitialTransitions.add(mergedInitialTransition);
 			}
 		}
 	}
@@ -238,7 +259,7 @@ public class PEAMinimization {
 				mEquivalenceClasses.makeEquivalenceClass(location);
 			}
 
-			// compute equivalence class
+			// compute equivalence classes
 			boolean changed;
 			do {
 				changed = false;
@@ -249,11 +270,7 @@ public class PEAMinimization {
 						final Phase location1 = locations.get(i);
 						final Phase location2 = locations.get(j);
 
-						if (mEquivalenceClasses.find(location1).equals(mEquivalenceClasses.find(location2))) {
-							continue;
-						}
-
-						if (isMergable(location1, location2) && mEquivalenceClasses.union(location1, location2)) {
+						if (mEquivalenceClasses.union(location1, location2) && isMergable(location1, location2)) {
 							changed = true;
 						}
 					}
@@ -264,10 +281,10 @@ public class PEAMinimization {
 
 		mergeLocations();
 		mergeOutgoingTransitions();
+		mergeIncomingTransitions();
 
-		// TODO add initial locations
 		final PhaseEventAutomata minimizedPEA = new PhaseEventAutomata(sourcePea.getName() + MIN_POSTFIX,
-				new ArrayList<>(mMergedLocations.values()), null);
+				new ArrayList<>(mMergedLocations.values()), mMergedInitialTransitions);
 		return minimizedPEA;
 	}
 
