@@ -228,6 +228,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 				// write to Icfg
 				final Set<IProgramVar> failedGhosts = new HashSet<>();
+				final Map<IProgramVar, String> declaredGhosts = new HashMap<>();
 				final var ghostsInits = new HashMap<String, Object>();
 				for (final var entry : annotation.getGhostAssignment().entrySet()) {
 					final var ghost = entry.getKey();
@@ -235,12 +236,16 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 					final var initialValue = backTranslatorService.translateExpression(expr, Term.class);
 					if (initialValue == null) {
+						mLogger.warn("Could not translate initial value of ghost variable %s: %s", ghost, initialValue);
 						failedGhosts.add(ghost);
 						continue;
 					}
 
-					backTranslatorService.declareAndTranslateAuxiliaryVariable(ghost.getTerm());
-					ghostsInits.put(ghost.getGloballyUniqueId(), initialValue);
+					final var declaredGhost =
+							backTranslatorService.declareAndTranslateAuxiliaryVariable(ghost.getTerm());
+					final var declaredGhostName = backTranslatorService.targetExpressionToString(declaredGhost);
+					ghostsInits.put(declaredGhostName, initialValue);
+					declaredGhosts.put(ghost, declaredGhostName);
 				}
 				new WitnessGhostDeclaration<>(ghostsInits).annotate(icfg);
 
@@ -255,7 +260,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 							continue;
 						}
 
-						final var context = ILocation.getAnnotation(edge.getSource());
+						final var context = ILocation.getAnnotation(edge);
 						final var translatedGhost = backTranslatorService
 								.translateExpressionWithContext(ghost.getTerm(), context, Term.class);
 
@@ -267,7 +272,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 									term);
 							failedGhosts.add(ghost);
 						} else {
-							ghostUpdate.put(translatedGhost, expression);
+							ghostUpdate.put(declaredGhosts.get(ghost), expression);
 							ghostUpdate2.put(backTranslatorService.targetExpressionToString(translatedGhost),
 									backTranslatorService.targetExpressionToString(expression));
 						}
@@ -352,20 +357,55 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mResultsPerLocation.clear();
 
 			final var results = analyseProgram(petrifiedIcfg, TraceAbstractionStarter::hasSufficientThreadInstances);
+
 			// Stop if either every in-use error location is unreachable or any other error locations is reachable
 			if (resultsHaveSufficientInstances(results)) {
 				mLogger.info("Analysis of concurrent program completed with " + numberOfThreadInstances
 						+ " thread instances");
 
-				// TODO backtranslate proofs of results over IcfgPetrifier!
-
-				return results;
+				// backtranslate proofs of results over IcfgPetrifier
+				return unpetrifyProofs(results);
 			}
 			assert IcfgUtils.isConcurrent(icfg) : "Insufficient thread instances for sequential program";
 			mLogger.warn(numberOfThreadInstances
 					+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 			numberOfThreadInstances++;
 		}
+	}
+
+	private List<ProvenCegarLoopResult<L>> unpetrifyProofs(final List<ProvenCegarLoopResult<L>> results) {
+		return results.stream().map(r -> new ProvenCegarLoopResult<L>(r, unpetrifyProof(r.getProof()))).toList();
+	}
+
+	private IProof unpetrifyProof(final IProof proof) {
+		if (proof == null) {
+			return null;
+		}
+		if (!(proof instanceof OwickiGriesAnnotation<?, ?, ?>)) {
+			mLogger.warn("Unknown proof type for concurrent program: %s. Unpetrification not supported.",
+					proof.getClass().getSimpleName());
+			return proof;
+		}
+
+		final var petrifiedProof = (OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>) proof;
+
+		// TODO unpetrify IPredicates themselves
+		final var unpetrifiedFormulas = petrifiedProof.getFormulaMapping().entrySet().stream().map(e -> {
+			final var originalLoc = mLocationMap.get(e.getKey());
+			if (originalLoc == null) {
+				mLogger.warn("Unknown original location for %s", e.getKey());
+				return null;
+			}
+			return new Pair<>(originalLoc, e.getValue());
+		}).filter(x -> x != null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+		// TODO unpetrify RHS of updates
+		final var unpetrifiedUpdates = petrifiedProof.getAssignmentMapping().entrySet().stream()
+				.map(e -> new Pair<>(mTransitionMap.get(e.getKey()), e.getValue()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+		return new OwickiGriesAnnotation<>(null /* TODO */, null /* TODO */, null /* TODO */, unpetrifiedFormulas,
+				petrifiedProof.getGhostVariables(), petrifiedProof.getGhostAssignment(), unpetrifiedUpdates);
 	}
 
 	private static <L extends IIcfgTransition<?>> boolean

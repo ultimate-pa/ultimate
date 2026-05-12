@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="600" hardtimelimit="620" cpuCores="2">
-  <resultfiles></resultfiles>
+  <resultfiles>*.yml</resultfiles>
 
-  <option name="--force-no-wrapper" />
+  <?ignore
+    <option name="--force-no-wrapper" />
+  ?>
+  <option name="--full-output" />
 
   <!-- === No Partial Order Reduction === -->
   <!-- ================================== -->
@@ -23,22 +26,28 @@
     <option name="-s">../../../trunk/examples/settings/gemcutter/None.epf</option>
   </rundefinition-->
 
-	<rundefinition name="Automizer PN+OG:Iterative">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-OGIterative.epf</option>
-	</rundefinition>
+	<rundefinition name="Automizer_PN+OG">
+		<?ignore
+		  <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+		?>
 
-	<rundefinition name="Automizer PN+OG:Iterative-Simpl">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-OGIterative-CovSimpl.epf</option>
-	</rundefinition>
+		<option name="--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+		<option name="--rcfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
 
-	<rundefinition name="Automizer PN+OG:Iterative-Hitting">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-OGIterative-Hitting.epf</option>
-	</rundefinition>
+		<option name="--traceabstraction.automaton.type.used.in.concurrency.analysis">PETRI_NET</option>
+		<option name="--traceabstraction.owicki-gries.proof.computation.algorithm">LEGAL_FOCUS</option>
 
-	<rundefinition name="Automizer PN+OG:Iterative-Simpl-Hitting">
-		<option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-OGIterative-CovSimpl-Hitting.epf</option>
+		<option name="--witnessprinter.generate.graphml.witnesses">false</option>
+		<option name="--witnessprinter.generate.yaml.witnesses">true</option>
+		<option name="--witnessprinter.yaml.format.version">2.1</option>
 	</rundefinition>
+  <rundefinition name="AutomizerValidator">
+		<option name="--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+		<option name="--rcfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
 
+    <option name="--witness-type">correctness_witness</option>
+    <option name="--validate">./results/concurrency.2026-05-04_12-55-51.files/Automizer_PN+OG/${taskdef_name}/witness.yml</option>
+  </rundefinition>
 
   <!-- === Cassez/Ziegler-style: single-shot up-front reduction, then normal verification === -->
   <!-- ====================================================================================== -->
@@ -493,6 +502,16 @@
   <!-- =============================================================================================================== -->
   <!-- ==================================================== TASKS ==================================================== -->
   <!-- =============================================================================================================== -->
+
+  <tasks name="ogwitness-canary">
+    <include>../../../trunk/examples/svcomp/pthread-atomic/dekker.yml</include>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+  <tasks name="ogwitness-atomic">
+    <include expectedverdict="true">../../../trunk/examples/svcomp/pthread-atomic/*.yml</include>
+    <exclude>../../../trunk/examples/svcomp/pthread-atomic/*-witness.yml</exclude>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
 
   <tasks name="POPL2023">
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
