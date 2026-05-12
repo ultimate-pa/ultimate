@@ -67,6 +67,13 @@ final class BodyTransformer extends BoogieTransformer {
 			//System.out.println("TEST TEST :" + o.getFormulaMapping());
 			for (var key : o.getFormulaMapping().keySet()) {
 				System.out.println(key);
+				System.out.println(o.getFormulaMapping().get(key));
+			}
+			System.out.println();
+
+			for (var key : o.getAssignmentMapping().keySet()) {
+				System.out.println(key);
+				System.out.println(o.getAssignmentMapping().get(key));
 			}
 			System.out.println();
 			System.out.println();
@@ -287,7 +294,7 @@ final class BodyTransformer extends BoogieTransformer {
 		}
 		
 		// we ignore some kind of first Label $Ultimate##0
-		for (i = 1; i < statements.length - 1; i++) { // ignore standart return
+		for (i = 1; i < statements.length - 1; i++) { // ignore standard return
 			mAtomicStatementCounter += 1;
 			newStatements[2 * i - 2] = processStatement(statements[i]);
 			newStatements[2 * i - 1] = new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
