@@ -29,9 +29,14 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -51,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
-	
+
 	private ProgramAndProof mProgramAndProof;
 
 	@Override
@@ -141,10 +146,22 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 		}
 
 		if (root instanceof final BoogieIcfgContainer icfg) {
-			List<OwickiGriesAnnotation> proof = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
+			final List<OwickiGriesAnnotation> proof = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
 			mLogger.warn(proof);
 
 			mProgramAndProof.setProof(proof);
+
+			// TODO Below is demo code showing how to access invariants and ghosts. Remove it once no longer needed.
+			// get ghost declarations including initial values
+			mLogger.fatal("declared ghosts and initial values: %s",
+					WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
+
+			// access invariant and code location of an ICFG location
+			final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
+			final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
+			final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
+			mLogger.fatal("Annotation at %s is %s", codeLocation, invariant);
+
 		}
 
 		if (mProgramAndProof.isFull()) {
