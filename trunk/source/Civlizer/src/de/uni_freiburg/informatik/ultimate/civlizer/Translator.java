@@ -2,6 +2,10 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -64,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public final class Translator extends BoogieVisitor {
 
@@ -99,6 +104,10 @@ public final class Translator extends BoogieVisitor {
 		return translation.toString();
 	}
 
+	private void addStringList(List<String> list, String sep) {
+		mWriter.print(String.join(sep, list));
+	}
+
 	private void addTidConst(Tid tid) {
 		mWriter.print("const unique ");
 		mWriter.print(tid.toString());
@@ -111,7 +120,7 @@ public final class Translator extends BoogieVisitor {
 		mWriter.println("const unique start_tid : StartTid;");
 		mWriter.println("type Tid;");
 
-		for (Tid tid : mProgramAndProof.getTids()) {
+		for (Tid tid : mProgramAndProof.getTemplateVisitor().getTids()) {
 			addTidConst(tid);
 		}
 
@@ -120,11 +129,10 @@ public final class Translator extends BoogieVisitor {
 
 	private void addGhostVar() {
 		for (OwickiGriesAnnotation proof : mProgramAndProof.getProof()) {
-			for (var var : proof.getGhostVariables()) {
-				System.out.println("GHOST GHOST");
-				System.out.println(var.getClass().getName());
-				mWriter.print("var {:layer 1,2} " + var.toString());
-				mWriter.print(" : ???;\n\n"); // TODO
+			for (int i = 0; i < proof.getGhostVariables().size(); i++) {
+				mWriter.print("var {:layer 1,2} ~ghost~");
+				mWriter.print(String.valueOf(i));
+				mWriter.print(" : int;\n\n"); // ??? TODO
 			}
 		}
 	}
@@ -163,7 +171,7 @@ public final class Translator extends BoogieVisitor {
 	private void addThreadControlFlow() {
 		mWriter.print("\n");
 
-		for (String procName : mProgramAndProof.getMapToTid().keySet()) {
+		for (String procName : mProgramAndProof.getTemplateVisitor().getAssociationTidMap().keySet()) {
 			addFork(procName);
 			mWriter.print("\n");
 		}
@@ -207,7 +215,7 @@ public final class Translator extends BoogieVisitor {
 		return decl;
 	}
 
-	private void addYieldInvariants(String procName, int counter) {
+	private void addYieldInvariants(String procName, Expression annotation, final Statement statement, int counter) {
 		mWriter.print("yield invariant {:layer 2} ");
 		mWriter.print("yield_");
 		mWriter.print(procName);
@@ -215,52 +223,62 @@ public final class Translator extends BoogieVisitor {
 		mWriter.print(Integer.toString(counter));
 
 		mWriter.print("(");
-		if ("ULTIMATE.start".equals(procName)) {
-			mWriter.print("{:linear} start_tid : One StartTid");
-
-			if (!mProgramAndProof.getTids().isEmpty()) {
-				mWriter.print(", ");
-			}
+		List<String> tids = new ArrayList<>();
+		if ("ULTIMATE.start" == procName) {
+			tids.add("{:linear} start_tid : One StartTid");
 		}
 
-		Iterator<Tid> it = mProgramAndProof.getTids().iterator();
-		while (it.hasNext()) {
-			Tid tid = it.next();
-
-			mWriter.print("{:linear_in} ");
-			mWriter.print(tid.toString());
-			mWriter.print(" : One Tid");
-
-			if (it.hasNext()) {
-				mWriter.print(", ");
-			}
+		for (Tid tid : mProgramAndProof
+			.getTemplateVisitor()
+			.getAssociationTidMap()
+			.getOrDefault(procName, Collections.emptyList()))
+		{
+			tids.add("{:linear}" + tid.toString() + " : One Tid");
 		}
+
+		for (Tid tid : mProgramAndProof
+			.getTemplateVisitor()
+			.getUsedTidMap()
+			.getOrDefault(procName, Collections.emptyList()))
+		{
+			tids.add("{:linear_in}" + tid.toString() + " : One Tid");
+		}
+		addStringList(tids, ", ");
 		mWriter.println(");");
 
 
 		mWriter.print("preserves ");
-		if ("ULTIMATE.start".equals(procName)) {
-			mWriter.print("start_tid->val == start_tid");
-
-			if (!mProgramAndProof.getTids().isEmpty()) {
-				mWriter.print(" && ");
-			}
-		}
-
-		it = mProgramAndProof.getTids().iterator();
-		while (it.hasNext()) {
-			Tid tid = it.next();
-			mWriter.print(tid.toString());
-			mWriter.print("->val == ");
-			mWriter.print(tid.toString());
-
-			if (it.hasNext()) {
-				mWriter.print(" && ");
-			}
+		tids = new ArrayList<>();
+		if ("ULTIMATE.start" == procName) {
+			tids.add("start_tid->val == start_tid");
 		}
 		
+		for (Tid tid : mProgramAndProof
+			.getTemplateVisitor()
+			.getAllTidMap()
+			.getOrDefault(procName, Collections.emptyList()))
+		{
+			tids.add(tid.toString() + "->val == " + tid.toString());
+		}
+		addStringList(tids, " && ");
+		mWriter.print(";\n");
+		// test
+		//final var initialLoc = mProgramAndProof.getIcfg().getProcedureEntryNodes().getOrDefault("ULTIMAT, Collections.emptyList().)start");
+		//final var invariant = (Expression) WitnessInvariant.getAnnotation(statement).getInvariant();
+		
+		//final var invariant = (WitnessInvariant.getAnnotation(statement) != null) ? (Expression) WitnessInvariant.getAnnotation(statement).getInvariant() : null;
+		//final var codeLocation = (BoogieLocation) ILocation.getAnnotation(statement);
+		//System.out.println(invariant);
+		//System.out.println(codeLocation);
+		//mOutput.appendExpression(mWriter.getResult(), invariant);
 		// add annotation
-		mWriter.print(";\n\n");
+		if (annotation != null) {
+			mWriter.print("preserves ");
+			mOutput.appendExpression(mWriter.getResult(), annotation);
+			mWriter.print(";\n");
+		}
+
+		mWriter.print("\n");
 	}
 
 	private void addAtomicStatement(String procName, final Statement statement, int counter) {
@@ -284,15 +302,23 @@ public final class Translator extends BoogieVisitor {
 
 	@Override
 	protected void visit(final Procedure decl) {
-
+		
+		Map<ILocation, Expression> annotationMap = mProgramAndProof.getAnnotation(decl.getIdentifier());
 		/* Write invariant and atomic */
 		int counter = 0;
-		addYieldInvariants(decl.getIdentifier(), counter);
+		addYieldInvariants(decl.getIdentifier(), null, decl.getBody().getBlock()[0], counter);
 
 		for (Statement statement : decl.getBody().getBlock()) {
 			counter += 1;
+			System.out.println("LOC LOC LOC : " + statement.getLoc());
 			addAtomicStatement(decl.getIdentifier(), statement, counter);
-			addYieldInvariants(decl.getIdentifier(), counter);
+
+			if (annotationMap.containsKey(statement.getLoc())) {
+				addYieldInvariants(decl.getIdentifier(), annotationMap.get(statement.getLoc()), statement, counter);
+			}
+			else {
+				addYieldInvariants(decl.getIdentifier(), null, statement, counter);
+			}
 		}
 
 		/* Write the yield procedure itself */
@@ -309,61 +335,43 @@ public final class Translator extends BoogieVisitor {
 
 		// improve parameter
 		mWriter.print("("); 
-		if ("ULTIMATE.start".equals(decl.getIdentifier())) {
-			mWriter.print("start_tid");
-
-			if (!mProgramAndProof.getTids().isEmpty()) {
-				mWriter.print(", ");
-			}
+		List<String> tids = new ArrayList<>();
+		if ("ULTIMATE.start" == decl.getIdentifier()) {
+			tids.add("start_tid");
 		}
 
-		Iterator<Tid> it = mProgramAndProof.getTids().iterator();
-		while (it.hasNext()) {
-			Tid tid = it.next();
-			mWriter.print(tid.toString());
-
-			if (it.hasNext()) {
-				mWriter.print(", ");
-			}
+		for (Tid tid : mProgramAndProof
+			.getTemplateVisitor()
+			.getAllTidMap()
+			.getOrDefault(decl.getIdentifier(), Collections.emptyList()))
+		{
+			tids.add(tid.toString());
 		}
+		addStringList(tids, ", ");
 		mWriter.println(");");
-
 
 		mWriter.print("requires call yield_");
 		mWriter.print(decl.getIdentifier());
 		mWriter.print("_0;");
 		mWriter.print("(");
-		if ("ULTIMATE.start".equals(decl.getIdentifier())) {
-			mWriter.print("start_tid");
-
-			if (!mProgramAndProof.getTids().isEmpty()) {
-				mWriter.print(", ");
-			}
-		}
-
-		it = mProgramAndProof.getTids().iterator();
-		while (it.hasNext()) {
-			Tid tid = it.next();
-			mWriter.print(tid.toString());
-
-			if (it.hasNext()) {
-				mWriter.print(", ");
-			}
-		}
+		addStringList(tids, ", ");
 		mWriter.println(");");
 
 
 		mWriter.println("{");
 
 		/* Local variable declaration */
-
-		it = mProgramAndProof.getTids().iterator();
-		while (it.hasNext()) {
-			Tid tid = it.next();
-			mWriter.print("    var {:linear_in} out");
-			mWriter.print(tid.toString().substring(3));
-			mWriter.println(" : One Tid;");
+		tids = new ArrayList<>();
+		for (Tid tid : mProgramAndProof
+			.getTemplateVisitor()
+			.getUsedTidMap()
+			.getOrDefault(decl.getIdentifier(), Collections.emptyList()))
+		{
+			tids.add("    var {:linear_in} out" 
+				+ tid.toString().substring(3)
+				+ " : One Tid;\n");
 		}
+		addStringList(tids, "");
 
 
 		for (VariableDeclaration varDecl : decl.getBody().getLocalVars()) {

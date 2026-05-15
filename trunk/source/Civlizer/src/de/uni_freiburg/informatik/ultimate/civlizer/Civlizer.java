@@ -149,13 +149,16 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			final List<OwickiGriesAnnotation> proof = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
 			mLogger.warn(proof);
 
+			mProgramAndProof.setIcfg(icfg);
 			mProgramAndProof.setProof(proof);
 
 			// TODO Below is demo code showing how to access invariants and ghosts. Remove it once no longer needed.
 			// get ghost declarations including initial values
 			mLogger.fatal("declared ghosts and initial values: %s",
 					WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
-
+			
+			// icfg -> location
+			// scan icfg and keep track of the location map ?
 			// access invariant and code location of an ICFG location
 			final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
 			final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
@@ -165,9 +168,12 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 		}
 
 		if (mProgramAndProof.isFull()) {
-			mLogger.warn("TEST TEST TEST");
+			
+			//mLogger.warn("TEST TEST TEST");
+			//mLogger.warn("Annotation at %s", (Expression) WitnessInvariant.getAnnotation(mProgramAndProof.getBoogieAst()).getInvariant());
+			//mLogger.warn("TEST TEST TEST");
+
 			mLogger.warn(Translator.translate(mProgramAndProof));
-			mLogger.warn("TEST TEST TEST");
 		}
 
 		return false;

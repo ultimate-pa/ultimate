@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -90,6 +92,18 @@ final class BodyTransformer extends BoogieTransformer {
         }
     }
 
+	private static List<Expression> tidListToArrayExpression(List<Tid> tidList) {
+		return tidList.stream().map(
+			tid ->
+			(Expression) new IdentifierExpression(
+				null, /* maybe to be change TODO or not */
+				BoogieType.createPlaceholderType(0),
+				tid.toString(),
+				new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
+			)
+		).toList();
+	}
+
     Body transformBody(String name, Body body) {
         setCurrentProcedure(name);
         // TO BE improved
@@ -98,7 +112,7 @@ final class BodyTransformer extends BoogieTransformer {
 
     Statement[] transformStatements(Statement[] statements) {
         return processStatements(statements);
-    }
+	}
 
 	/**
 	 * Process an array of AST type. This implementation calls processType on all elements
@@ -262,9 +276,13 @@ final class BodyTransformer extends BoogieTransformer {
 	 * @return processed statements.
 	 */
 	protected Statement[] processStatements(final Statement[] statements) {
-		final Statement[] newStatements = new Statement[2 * statements.length - 4];
-
-		int size = mProgramAndProof.getTids().size() + (mCurrentProcedure == "ULTIMATE.start" ? 1 : 0);
+		List<Statement> newStatements = new ArrayList<>();
+		
+		int size = mProgramAndProof
+			.getTemplateVisitor()
+			.getAllTidMap()
+			.get(mCurrentProcedure)
+			.size() + (mCurrentProcedure == "ULTIMATE.start" ? 1 : 0);
 		Expression[] tids = new Expression[size];
 
 		int i = 0;
@@ -281,7 +299,11 @@ final class BodyTransformer extends BoogieTransformer {
 			);
 		}
 
-		for (Tid tid : mProgramAndProof.getTids()) {
+		for (Tid tid : mProgramAndProof
+			.getTemplateVisitor()
+			.getAllTidMap()
+			.get(mCurrentProcedure)) 
+		{
 			tids[i++] = new IdentifierExpression(
 				null,
 				BoogieType.createPlaceholderType(0),
@@ -296,12 +318,17 @@ final class BodyTransformer extends BoogieTransformer {
 		// we ignore some kind of first Label $Ultimate##0
 		for (i = 1; i < statements.length - 1; i++) { // ignore standard return
 			mAtomicStatementCounter += 1;
-			newStatements[2 * i - 2] = processStatement(statements[i]);
-			newStatements[2 * i - 1] = new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
-			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids);
+			newStatements.add(processStatement(statements[i]));
+			newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
+			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
+		}
+		
+		if (mCurrentProcedure != "ULTIMATE.start") {
+			newStatements.add(new CallStatement(null, new NamedAttribute[0], false,
+			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
 		}
 
-		return newStatements;
+		return newStatements.toArray(Statement[]::new);
 	}
 
 	/**
@@ -389,8 +416,12 @@ final class BodyTransformer extends BoogieTransformer {
 				)
 			};
 
+			VariableLHS[] out = new VariableLHS[] {
+				new VariableLHS(joinstmt.getLoc(), "out" + ((new Tid(threadId)).toString()).substring(3))
+			};
+
             newStatement = new CallStatement(joinstmt.getLoc(), new NamedAttribute[0], false,
-				new VariableLHS[0], "join", tid); // LHS TODO
+				out, "join", tid); // LHS TODO
 		
 		}
 
