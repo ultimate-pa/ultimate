@@ -17,6 +17,10 @@ public class NextExpression extends BtorExpression {
 		this.nextVal = nextVal;
 	}
 
+	public BtorExpression getNextVal() {
+		return nextVal;
+	}
+
 	@Override
 	public boolean equalFields(final BtorExpression other) {
 		if ((((NextExpression) other).state == state) && (((NextExpression) other).nextVal == nextVal)) {

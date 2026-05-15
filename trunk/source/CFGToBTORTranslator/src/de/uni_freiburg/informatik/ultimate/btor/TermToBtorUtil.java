@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.btor;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -11,10 +10,31 @@ import de.uni_freiburg.informatik.ultimate.btor.expression.AndExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.BtorExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.ConcatExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.EqExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.ITEExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.MulExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.NegExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.NotExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.OrExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.ReadExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SdivExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SgtExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SgteExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SllExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SltExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SlteExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SmodExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SraExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SremExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SrlExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.StateExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SubExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.UdivExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.UgtExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.UgteExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.UltExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.UlteExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.UremExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.WriteExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.XorExpression;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
@@ -32,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class TermToBtorUtil {
 
 	public static BtorExpression convertConditionalToBtorExpression(final Term term, final TransFormula tf,
-			final Map<String, BtorExpression> variableMap, final Boogie2SMT boogie2SMT, final BtorScript script) {
+			final Map<String, StateExpression> variableMap, final Boogie2SMT boogie2SMT, final BtorScript script) {
 		if (SmtUtils.isTrueLiteral(term)) {
 			// true literal is a 1-bit one
 			return script.createOneExpression(new BtorSort(1));
@@ -73,7 +93,7 @@ public class TermToBtorUtil {
 	}
 
 	public static BtorExpression convertRhsToBtorExpression(final Term rhs, final TransFormula tf,
-			final Map<String, BtorExpression> variableMap, final BtorSort lhsSort, final Boogie2SMT boogie2SMT,
+			final Map<String, StateExpression> variableMap, final BtorSort lhsSort, final Boogie2SMT boogie2SMT,
 			final BtorScript script) {
 		if (SmtUtils.isTrueLiteral(rhs)) {
 			// literal true, not havoc
@@ -97,7 +117,7 @@ public class TermToBtorUtil {
 	}
 
 	public static BtorExpression convertApplicationTermToBtorExpression(final ApplicationTerm appTerm,
-			final TransFormula tf, final Map<String, BtorExpression> variableMap, final Boogie2SMT boogie2SMT,
+			final TransFormula tf, final Map<String, StateExpression> variableMap, final Boogie2SMT boogie2SMT,
 			final BtorScript script) {
 		BtorExpression lhs;
 		BtorExpression rhs;
@@ -114,11 +134,11 @@ public class TermToBtorUtil {
 
 		// case sign_extend:
 		// case zero_extend:
-		case "sign_extend":
-			final BtorExpression ext =
-					convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
-			sort = ext.getSort();
-			return new BtorExpression(sort, BtorExpressionType.SEXT, Arrays.asList(ext));
+//		case "sign_extend":
+//			final BtorExpression ext =
+//					convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
+//			sort = ext.getSort();
+//			return new BtorExpression(sort, BtorExpressionType.SEXT, Arrays.asList(ext));
 
 		// case extract: (slice)
 		case "bvnot":
@@ -140,45 +160,45 @@ public class TermToBtorUtil {
 		case ">":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(new BtorSort(1), BtorExpressionType.SGT, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SgtExpression.class, lhs, rhs);
 
 		case "bvugt":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(new BtorSort(1), BtorExpressionType.UGT, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(UgtExpression.class, lhs, rhs);
 
 		case "bvsge":
 		case ">=":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(new BtorSort(1), BtorExpressionType.SGTE, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SgteExpression.class, lhs, rhs);
 
 		case "bvuge":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(new BtorSort(1), BtorExpressionType.UGTE, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(UgteExpression.class, lhs, rhs);
 
 		case "bvslt":
 		case "<":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(new BtorSort(1), BtorExpressionType.SLT, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SltExpression.class, lhs, rhs);
 
 		case "bvult":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(new BtorSort(1), BtorExpressionType.ULT, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(UltExpression.class, lhs, rhs);
 
 		case "bvsle":
 		case "<=":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(new BtorSort(1), BtorExpressionType.SLTE, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SlteExpression.class, lhs, rhs);
 
 		case "bvule":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(new BtorSort(1), BtorExpressionType.ULTE, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(UlteExpression.class, lhs, rhs);
 
 		case "bvand":
 		case "and":
@@ -229,17 +249,17 @@ public class TermToBtorUtil {
 		case "bvshl":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(lhs.getSort(), BtorExpressionType.SLL, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SllExpression.class, lhs, rhs);
 
 		case "bvashr":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(lhs.getSort(), BtorExpressionType.SRA, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SraExpression.class, lhs, rhs);
 
 		case "bvlshr":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
-			return new BtorExpression(lhs.getSort(), BtorExpressionType.SRL, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SrlExpression.class, lhs, rhs);
 
 		case "bvadd":
 		case "+":
@@ -264,13 +284,13 @@ public class TermToBtorUtil {
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
-			return new BtorExpression(sort, BtorExpressionType.SDIV, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SdivExpression.class, lhs, rhs);
 		case "bvudiv":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
-			return new BtorExpression(sort, BtorExpressionType.UDIV, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(UdivExpression.class, lhs, rhs);
 
 		case "bvsmod":
 		case "mod":
@@ -278,21 +298,21 @@ public class TermToBtorUtil {
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
-			return new BtorExpression(sort, BtorExpressionType.SMOD, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SmodExpression.class, lhs, rhs);
 
 		case "bvsrem":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
-			return new BtorExpression(sort, BtorExpressionType.SREM, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SremExpression.class, lhs, rhs);
 
 		case "bvurem":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
-			return new BtorExpression(sort, BtorExpressionType.UREM, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(UremExpression.class, lhs, rhs);
 
 		case "bvsub":
 		case "-":
@@ -300,7 +320,7 @@ public class TermToBtorUtil {
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
-			return new BtorExpression(sort, BtorExpressionType.SUB, Arrays.asList(lhs, rhs));
+			return script.createBinaryExpression(SubExpression.class, lhs, rhs);
 
 		case "concat":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
@@ -325,8 +345,7 @@ public class TermToBtorUtil {
 			while (i < idxs.size()) {
 				final BtorExpression nextIndex =
 						convertConditionalToBtorExpression(idxs.get(i), tf, variableMap, boogie2SMT, script);
-				index = new BtorExpression(new BtorSort(index.getSort().size + nextIndex.getSort().size),
-						BtorExpressionType.CONCAT, Arrays.asList(index, nextIndex));
+				index = script.createBinaryExpression(ConcatExpression.class, index, nextIndex);
 				i++;
 			}
 
@@ -334,7 +353,7 @@ public class TermToBtorUtil {
 			assert (array.getSort().keySort != null);
 			assert (array.getSort().keySort.equals(index.getSort()));
 			// Apply `read` with concatenated indices
-			return new BtorExpression(array.getSort().valueSort, BtorExpressionType.READ, Arrays.asList(array, index));
+			return script.createBinaryExpression(ReadExpression.class, array, index);
 
 		case "ite":
 			final BtorExpression iteIf =
@@ -344,8 +363,7 @@ public class TermToBtorUtil {
 			final BtorExpression iteElse =
 					convertConditionalToBtorExpression(appTerm.getParameters()[2], tf, variableMap, boogie2SMT, script);
 			assert (iteThen.getSort().equals(iteElse.getSort()));
-			return new BtorExpression(iteThen.getSort(), BtorExpressionType.ITE,
-					Arrays.asList(iteIf, iteThen, iteElse));
+			return script.createTernaryExpression(ITEExpression.class, iteIf, iteThen, iteElse);
 
 		case "store":
 			params = appTerm.getParameters();
@@ -368,16 +386,14 @@ public class TermToBtorUtil {
 			while (i < idxs.size()) {
 				final BtorExpression nextindex =
 						convertConditionalToBtorExpression(idxs.get(i), tf, variableMap, boogie2SMT, script);
-				index = new BtorExpression(new BtorSort(index.getSort().size + nextindex.getSort().size),
-						BtorExpressionType.CONCAT, Arrays.asList(index, nextindex));
+				index = script.createBinaryExpression(ConcatExpression.class, index, nextindex);
 				i++;
 			}
 			assert (array.getSort().keySort != null);
 			assert (array.getSort().keySort.equals(index.getSort()));
 			assert (array.getSort().valueSort.equals(arrayValue.getSort()));
 			// Apply `write` with concatenated indices
-			return new BtorExpression(array.getSort(), BtorExpressionType.WRITE,
-					Arrays.asList(array, index, arrayValue));
+			return script.createTernaryExpression(WriteExpression.class, array, index, arrayValue);
 
 		case "true":
 			return script.createOneExpression(new BtorSort(1));
@@ -388,7 +404,7 @@ public class TermToBtorUtil {
 		default:
 			if (BitvectorUtils.isBitvectorConstant(appTerm.getFunction())) {
 				final long value = Long.parseLong(appName.substring(2));
-				return new BtorExpression(new BtorSort(Integer.parseInt(appTerm.getSort().getIndices()[0])), value);
+				script.createConstdExpression(new BtorSort(Integer.parseInt(appTerm.getSort().getIndices()[0])), value);
 			}
 			throw new UnsupportedOperationException(
 					"Converting currently unsupported btor2 expression " + appTerm.getFunction().getName());

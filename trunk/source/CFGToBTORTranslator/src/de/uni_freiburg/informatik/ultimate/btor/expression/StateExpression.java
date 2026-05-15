@@ -17,7 +17,7 @@ public class StateExpression extends BtorExpression {
 
 	@Override
 	public boolean equalFields(final BtorExpression other) {
-		if (((StateExpression) other).name == name) {
+		if (((StateExpression) other).name.equals(name)) {
 			return true;
 		}
 		return false;

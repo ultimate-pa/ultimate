@@ -11,13 +11,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.btor.expression.BtorExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.StateExpression;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class AssignmentRule {
@@ -42,8 +42,8 @@ public class AssignmentRule {
 	}
 
 	public static List<AssignmentRule> getAssignmentsFromTransition(final DebugIdentifier assignmentLocationIdentifier,
-			final IcfgEdge icfgEdge, final ManagedScript script, final BtorExpression guard,
-			final Boogie2SMT boogie2SMT, final BtorScript btorScript) {
+			final IcfgEdge icfgEdge, final BtorExpression guard, final Boogie2SMT boogie2SMT,
+			final BtorScript btorScript) {
 		final List<AssignmentRule> assignmentRules = new ArrayList<>();
 		// extract statements from edge
 		if (icfgEdge instanceof StatementSequence) {
@@ -86,7 +86,7 @@ public class AssignmentRule {
 	}
 
 	// convert rhs of an assignment rule to a btor expression
-	public BtorExpression getRHSAsExpression(final Map<String, BtorExpression> variableMap) {
+	public BtorExpression getRHSAsExpression(final Map<String, StateExpression> variableMap) {
 		final BtorSort sort = new BtorSort(lhs.getSort());
 
 		if (rhs != null) {
@@ -99,8 +99,8 @@ public class AssignmentRule {
 			return btorexpression;
 		} else {
 			// null rhs assignement rules are havoc statements and thus have btor expression type INPUT
-			return new BtorExpression(sort, "havoc_" + assignmentLocationIdentifier + "_" + lhs.getGloballyUniqueId(),
-					true);
+			return script.createInputExpression(sort,
+					"havoc_" + assignmentLocationIdentifier + "_" + lhs.getGloballyUniqueId());
 		}
 
 	}

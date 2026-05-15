@@ -226,7 +226,7 @@ public class CfgToBtorObserver extends BaseObserver {
 			final Process process = processBuilder.start();
 			final StringBuilder btormcOutput = new StringBuilder();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			final boolean finished = process.waitFor(5, TimeUnit.SECONDS);
+			final boolean finished = process.waitFor(50, TimeUnit.SECONDS);
 			String line;
 			while (finished && (line = reader.readLine()) != null) {
 				btormcOutput.append(line + "\n");

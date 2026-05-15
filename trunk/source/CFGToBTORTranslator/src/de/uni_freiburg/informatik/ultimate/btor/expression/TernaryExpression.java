@@ -22,6 +22,10 @@ public abstract class TernaryExpression extends BtorExpression {
 
 	public abstract String name();
 
+	public BtorExpression getThird() {
+		return third;
+	}
+
 	@Override
 	public boolean equalFields(final BtorExpression other) {
 		if ((((TernaryExpression) other).first == first) && (((TernaryExpression) other).second == second)

@@ -15,6 +15,10 @@ public class ConstdExpression extends BtorExpression {
 		this.constant = constant;
 	}
 
+	public long getConstant() {
+		return constant;
+	}
+
 	@Override
 	public boolean equalFields(final BtorExpression other) {
 		if (((ConstdExpression) other).constant == constant) {
@@ -40,4 +44,5 @@ public class ConstdExpression extends BtorExpression {
 		writer.flush();
 		return currentLine + 1;
 	}
+
 }

@@ -34,8 +34,9 @@ public class InitExpression extends BtorExpression {
 	@Override
 	public int dumpExpression(int currentLine, final OutputStreamWriter writer,
 			final HashMap<BtorSort, Integer> sortMap) throws IOException {
-		currentLine = state.dumpExpression(currentLine, writer, sortMap);
 		currentLine = initVal.dumpExpression(currentLine, writer, sortMap);
+		currentLine = state.dumpExpression(currentLine, writer, sortMap);
+
 		if (!assignnid(currentLine)) {
 			return currentLine;
 		}

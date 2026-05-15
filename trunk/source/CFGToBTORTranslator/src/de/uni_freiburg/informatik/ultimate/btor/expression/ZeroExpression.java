@@ -29,7 +29,7 @@ public class ZeroExpression extends BtorExpression {
 		if (!assignnid(currentLine)) {
 			return currentLine;
 		}
-		writer.write(String.valueOf(nid) + " state " + String.valueOf(sortMap.get(sort)) + "\n");
+		writer.write(String.valueOf(nid) + " zero " + String.valueOf(sortMap.get(sort)) + "\n");
 		writer.flush();
 		return currentLine + 1;
 	}

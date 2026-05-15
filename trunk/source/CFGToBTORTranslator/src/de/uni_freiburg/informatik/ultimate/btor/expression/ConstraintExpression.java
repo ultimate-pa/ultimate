@@ -6,18 +6,18 @@ import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.btor.BtorSort;
 
-public class BadExpression extends BtorExpression {
+public class ConstraintExpression extends BtorExpression {
 
-	BtorExpression bad;
+	BtorExpression constraint;
 
-	public BadExpression(final BtorExpression bad) {
+	public ConstraintExpression(final BtorExpression constraint) {
 		super(new BtorSort(1));
-		this.bad = bad;
+		this.constraint = constraint;
 	}
 
 	@Override
 	public boolean equalFields(final BtorExpression other) {
-		if (((BadExpression) other).bad == bad) {
+		if (((ConstraintExpression) other).constraint == constraint) {
 			return true;
 		}
 		return false;
@@ -25,18 +25,18 @@ public class BadExpression extends BtorExpression {
 
 	@Override
 	public int hashCode() {
-		final int hash = "bad".hashCode();
-		return hash * bad.hashCode();
+		final int hash = "constraint".hashCode();
+		return hash * constraint.hashCode();
 	}
 
 	@Override
 	public int dumpExpression(int currentLine, final OutputStreamWriter writer,
 			final HashMap<BtorSort, Integer> sortMap) throws IOException {
-		currentLine = bad.dumpExpression(currentLine, writer, sortMap);
+		currentLine = constraint.dumpExpression(currentLine, writer, sortMap);
 		if (!assignnid(currentLine)) {
 			return currentLine;
 		}
-		writer.write(String.valueOf(nid) + " bad " + String.valueOf(bad.nid) + "\n");
+		writer.write(String.valueOf(nid) + " constraint " + String.valueOf(constraint.nid) + "\n");
 		writer.flush();
 		return currentLine + 1;
 	}

@@ -4,24 +4,28 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.btor.expression.BadExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.BtorExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.ConstdExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.ConstraintExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.InitExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.InputExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.NextExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.OneExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.StateExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.TernaryExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.ZeroExpression;
 
 public class BtorScript {
 
-	private final List<BtorSort> sortList;
 	private int currentLine;
 	private final HashMap<BtorSort, Integer> sortMap;
 	private final StringBuffer text;
@@ -29,8 +33,7 @@ public class BtorScript {
 
 	private final HashMap<BtorExpression, BtorExpression> expressionSet;
 
-	public BtorScript(final List<BtorSort> sortList) {
-		this.sortList = sortList;
+	public BtorScript() {
 		sortMap = new HashMap<>();
 		currentLine = 1;
 		text = new StringBuffer();
@@ -58,10 +61,30 @@ public class BtorScript {
 		}
 	}
 
+	public BadExpression createBadExpression(final BtorExpression bad) {
+		final BadExpression candidate = new BadExpression(bad);
+		if (expressionSet.containsKey(candidate)) {
+			return (BadExpression) expressionSet.get(candidate);
+		} else {
+			expressionSet.put(candidate, candidate);
+			return candidate;
+		}
+	}
+
 	public ConstdExpression createConstdExpression(final BtorSort sort, final long constant) {
 		final ConstdExpression candidate = new ConstdExpression(sort, constant);
 		if (expressionSet.containsKey(candidate)) {
 			return (ConstdExpression) expressionSet.get(candidate);
+		} else {
+			expressionSet.put(candidate, candidate);
+			return candidate;
+		}
+	}
+
+	public ConstraintExpression createConstraintExpression(final BtorExpression constraint) {
+		final ConstraintExpression candidate = new ConstraintExpression(constraint);
+		if (expressionSet.containsKey(candidate)) {
+			return (ConstraintExpression) expressionSet.get(candidate);
 		} else {
 			expressionSet.put(candidate, candidate);
 			return candidate;
@@ -147,12 +170,12 @@ public class BtorScript {
 		}
 	}
 
-	public <T extends BinaryExpression> T createTernaryExpression(final Class<T> cls, final BtorExpression first,
+	public <T extends TernaryExpression> T createTernaryExpression(final Class<T> cls, final BtorExpression first,
 			final BtorExpression second, final BtorExpression third) {
 		T candidate = null;
 		try {
-			candidate =
-					cls.getConstructor(BtorExpression.class, BtorExpression.class).newInstance(first, second, third);
+			candidate = cls.getConstructor(BtorExpression.class, BtorExpression.class, BtorExpression.class)
+					.newInstance(first, second, third);
 		} catch (final Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -168,6 +191,14 @@ public class BtorScript {
 		}
 	}
 
+	public Set<BtorSort> getRequiredBtorSorts() {
+		final Set<BtorSort> sorts = new HashSet<>();
+		for (final BtorExpression expression : expressionSet.keySet()) {
+			sorts.add(expression.getSort());
+		}
+		return sorts;
+	}
+
 	public void dumpScript(final OutputStreamWriter writer) throws IOException {
 		if (textExists) {
 			writer.write(text.toString());
@@ -177,7 +208,7 @@ public class BtorScript {
 		final ByteArrayOutputStream textStream = new ByteArrayOutputStream();
 		final OutputStreamWriter textStreamWriter = new OutputStreamWriter(textStream);
 
-		final Deque<BtorSort> sortWorklist = new ArrayDeque<>(sortList);
+		final Deque<BtorSort> sortWorklist = new ArrayDeque<>(getRequiredBtorSorts());
 		while (!sortWorklist.isEmpty()) {
 			final BtorSort sort = sortWorklist.pop();
 			if (sort.isArray()) {
@@ -186,8 +217,7 @@ public class BtorScript {
 				int keySid = 0;
 				int valueSid = 0;
 				if (valueSort.isArray()) {
-					final int i = 1 + 1;// throw new UnsupportedOperationException("BTOR2 does not support nested array
-										// sorts.");
+					final int i = 1 + 1;
 				}
 				try {
 					keySid = sortMap.get(keySort);
@@ -208,7 +238,17 @@ public class BtorScript {
 			currentLine++;
 			textStreamWriter.flush();
 		}
+
+		final ArrayList<BtorExpression> expressionWorklist = new ArrayList<>();
+
 		for (final BtorExpression expression : expressionSet.keySet()) {
+			if (expression instanceof InitExpression) {
+				currentLine = expression.dumpExpression(currentLine, textStreamWriter, sortMap);
+			} else {
+				expressionWorklist.add(expression);
+			}
+		}
+		for (final BtorExpression expression : expressionWorklist) {
 			currentLine = expression.dumpExpression(currentLine, textStreamWriter, sortMap);
 		}
 		textStreamWriter.flush();

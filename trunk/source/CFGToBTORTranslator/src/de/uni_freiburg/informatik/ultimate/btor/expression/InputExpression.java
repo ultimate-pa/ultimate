@@ -17,7 +17,7 @@ public class InputExpression extends BtorExpression {
 
 	@Override
 	public boolean equalFields(final BtorExpression other) {
-		if (((InputExpression) other).name == name) {
+		if (((InputExpression) other).name.equals(name)) {
 			return true;
 		}
 		return false;
