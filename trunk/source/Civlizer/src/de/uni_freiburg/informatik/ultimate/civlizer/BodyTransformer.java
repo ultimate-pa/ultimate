@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 
 final class BodyTransformer extends BoogieTransformer {
 
@@ -325,7 +326,7 @@ final class BodyTransformer extends BoogieTransformer {
 		
 		if (mCurrentProcedure != "ULTIMATE.start") {
 			newStatements.add(new CallStatement(null, new NamedAttribute[0], false,
-			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
+			    new VariableLHS[0], "terminate", tids));
 		}
 
 		return newStatements.toArray(Statement[]::new);

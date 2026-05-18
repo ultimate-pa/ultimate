@@ -1,14 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.io.OutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 
 final class StringBuilderWriter extends PrintWriter {
 
     private StringBuilder mResult;
 
-    StringBuilderWriter() {
-        super(OutputStream.nullOutputStream()); // to be change TODO
+    StringBuilderWriter() throws IOException {
+        super(new FileWriter("/tmp/temporary.bpl")); // to be change TODO
         mResult = new StringBuilder();
     }
 
@@ -23,11 +24,13 @@ final class StringBuilderWriter extends PrintWriter {
 
     @Override
     public void print(String s) {
+        super.print(s);
         mResult.append(s);
     }
 
     @Override
     public void println(String s) {
+        super.println(s);
         mResult.append(s).append("\n");
     }
 }

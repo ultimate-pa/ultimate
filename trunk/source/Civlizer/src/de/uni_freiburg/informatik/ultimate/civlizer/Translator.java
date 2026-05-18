@@ -1,12 +1,15 @@
 
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.util.Iterator;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -67,8 +70,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 
 public final class Translator extends BoogieVisitor {
 
@@ -79,7 +84,12 @@ public final class Translator extends BoogieVisitor {
 	Translator(ProgramAndProof programAndProof) {
 		programAndProof.preprocess();
 		mProgramAndProof = programAndProof;
-		mWriter = new StringBuilderWriter();
+		try {
+			mWriter = new StringBuilderWriter();
+		}
+		catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 		mOutput = new BoogieOutput(mWriter);
 	}
 
@@ -230,18 +240,19 @@ public final class Translator extends BoogieVisitor {
 
 		for (Tid tid : mProgramAndProof
 			.getTemplateVisitor()
-			.getAssociationTidMap()
+			.getAllTidMap()
 			.getOrDefault(procName, Collections.emptyList()))
 		{
-			tids.add("{:linear}" + tid.toString() + " : One Tid");
-		}
-
-		for (Tid tid : mProgramAndProof
-			.getTemplateVisitor()
-			.getUsedTidMap()
-			.getOrDefault(procName, Collections.emptyList()))
-		{
-			tids.add("{:linear_in}" + tid.toString() + " : One Tid");
+			if (mProgramAndProof
+				.getTemplateVisitor()
+				.getForkedTidMap()
+				.get(statement.getLoc())
+				.contains(tid)) {
+				tids.add(" " + tid.toString() + " : One Tid");
+			}
+			else {
+				tids.add("{:linear} " + tid.toString() + " : One Tid");
+			}
 		}
 		addStringList(tids, ", ");
 		mWriter.println(");");
@@ -262,20 +273,41 @@ public final class Translator extends BoogieVisitor {
 		}
 		addStringList(tids, " && ");
 		mWriter.print(";\n");
-		// test
-		//final var initialLoc = mProgramAndProof.getIcfg().getProcedureEntryNodes().getOrDefault("ULTIMAT, Collections.emptyList().)start");
-		//final var invariant = (Expression) WitnessInvariant.getAnnotation(statement).getInvariant();
-		
-		//final var invariant = (WitnessInvariant.getAnnotation(statement) != null) ? (Expression) WitnessInvariant.getAnnotation(statement).getInvariant() : null;
-		//final var codeLocation = (BoogieLocation) ILocation.getAnnotation(statement);
-		//System.out.println(invariant);
-		//System.out.println(codeLocation);
-		//mOutput.appendExpression(mWriter.getResult(), invariant);
-		// add annotation
+
 		if (annotation != null) {
 			mWriter.print("preserves ");
-			mOutput.appendExpression(mWriter.getResult(), annotation);
+			mWriter.print(BoogiePrettyPrinter.print(annotation));
 			mWriter.print(";\n");
+		}
+
+		Set<Tid> forked_tid = mProgramAndProof
+			.getTemplateVisitor()
+			.getForkedTidMap()
+			.get(statement.getLoc());
+
+		for (Tid tid : forked_tid) {
+			final Optional<String> forked_proc = mProgramAndProof
+				.getTemplateVisitor()
+				.getAssociationTidMap().entrySet().stream()
+				.filter(entry -> entry.getValue().contains(tid))
+				.map(Map.Entry::getKey)
+				.findFirst();
+
+			if (forked_proc.isPresent()) {
+				
+				// TODO set at the end of the procedure
+				final var initialLoc = mProgramAndProof
+					.getIcfg()
+					.getProcedureExitNodes()
+					.get(forked_proc.get());
+				final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
+				final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
+
+				mWriter.print("preserves ");
+				mWriter.print("(Set_Contains(join_pool, " + tid.toString() + ")) ==> (");
+				mWriter.print(BoogiePrettyPrinter.print(invariant));
+				mWriter.print(");\n");
+			}
 		}
 
 		mWriter.print("\n");
@@ -294,8 +326,8 @@ public final class Translator extends BoogieVisitor {
 				mWriter.println("();");
 
 				mWriter.println("refines atomic action {:layer 1,2} _ {");
-				mWriter.println("    ");
-				mOutput.appendStatement(mWriter.getResult(), statement);
+				mWriter.print("    ");
+				mWriter.println(BoogiePrettyPrinter.print(statement));
 				mWriter.println("}");
 		}
 	}
@@ -303,7 +335,7 @@ public final class Translator extends BoogieVisitor {
 	@Override
 	protected void visit(final Procedure decl) {
 		
-		Map<ILocation, Expression> annotationMap = mProgramAndProof.getAnnotation(decl.getIdentifier());
+		Map<ILocation, Expression> annotationMap = mProgramAndProof.getAnnotationMap(decl.getIdentifier());
 		/* Write invariant and atomic */
 		int counter = 0;
 		addYieldInvariants(decl.getIdentifier(), null, decl.getBody().getBlock()[0], counter);
@@ -337,7 +369,7 @@ public final class Translator extends BoogieVisitor {
 		mWriter.print("("); 
 		List<String> tids = new ArrayList<>();
 		if ("ULTIMATE.start" == decl.getIdentifier()) {
-			tids.add("start_tid");
+			tids.add("{:linear} start_tid : One StartTid");
 		}
 
 		for (Tid tid : mProgramAndProof
@@ -345,14 +377,14 @@ public final class Translator extends BoogieVisitor {
 			.getAllTidMap()
 			.getOrDefault(decl.getIdentifier(), Collections.emptyList()))
 		{
-			tids.add(tid.toString());
+			tids.add("{:linear_in} " + tid.toString() + " : One Tid");
 		}
 		addStringList(tids, ", ");
 		mWriter.println(");");
 
 		mWriter.print("requires call yield_");
 		mWriter.print(decl.getIdentifier());
-		mWriter.print("_0;");
+		mWriter.print("_0");
 		mWriter.print("(");
 		addStringList(tids, ", ");
 		mWriter.println(");");
@@ -375,12 +407,10 @@ public final class Translator extends BoogieVisitor {
 
 
 		for (VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
-			mOutput.printVarDeclaration(varDecl, "    ");
+			mWriter.print(BoogiePrettyPrinter.print(varDecl));
 		}
 		mWriter.print("\n");
-		mOutput.printBody(
-			transformer.transformBody(decl.getIdentifier(), decl.getBody())
-		);
+		mOutput.printBody(transformer.transformBody(decl.getIdentifier(), decl.getBody()));
 		mWriter.print("}\n\n");
 	}
 

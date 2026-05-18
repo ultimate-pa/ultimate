@@ -24,21 +24,27 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private String mCurrentProcedure;
-	private HashMap<String, List<Tid>> mAssociationTidMap;
-	private HashMap<String, List<Tid>> mUsedTidMap;
-	private HashMap<String, List<Tid>> mAllTidMap;
+	private Set<Tid> mCurrentForkedTid;
+
+	private Map<String, List<Tid>> mAssociationTidMap;
+	private Map<String, List<Tid>> mUsedTidMap;
+	private Map<String, List<Tid>> mAllTidMap;
 	private Set<Tid> mTids;
+	private Map<ILocation, Set<Tid>> mForkedTidMap;
 
 	ThreadTemplateVisitor(Unit boogieFile) {
 		mCurrentProcedure = null;
+		mCurrentForkedTid = null;
 		mAssociationTidMap = new HashMap<>();
 		mUsedTidMap = new HashMap<>();
 		mAllTidMap = new HashMap<>();
 		mTids = new HashSet<>();
+		mForkedTidMap = new HashMap<>();
 
 		for (Declaration elem : boogieFile.getDeclarations()) {
 			processDeclaration(elem);
@@ -85,6 +91,10 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		return mAllTidMap;
 	}
 
+	Map<ILocation, Set<Tid>> getForkedTidMap() {
+		return mForkedTidMap;
+	}
+
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
 		switch (decl) {
@@ -97,6 +107,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(final Procedure decl) {
 		mCurrentProcedure = decl.getIdentifier();
+		mCurrentForkedTid = new HashSet<>();
 
 		if (mCurrentProcedure != "ULTIMATE.start" && !mAssociationTidMap.containsKey(mCurrentProcedure)) {
 			mAssociationTidMap.put(mCurrentProcedure, new ArrayList<>());
@@ -122,6 +133,9 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 			case final WhileStatement whileStmt -> visit(whileStmt);
 			default -> {}
 		}
+
+		mForkedTidMap.put(statement.getLoc(), new HashSet<>(mCurrentForkedTid));
+
 		return statement;
 	}
 
@@ -153,53 +167,56 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(final ForkStatement statement) {
 
-		Tid result_association = new Tid(statement.getThreadID());
+		Tid tid = new Tid(statement.getThreadID());
 		List<Tid> tids = mAssociationTidMap.get(statement.getProcedureName());
 
-		if (!mAssociationTidMap.containsKey(result_association)) {
+		if (!mAssociationTidMap.containsKey(tid)) {
 			if (tids == null) {
 				mAssociationTidMap.put(
 					statement.getProcedureName(),
-					new ArrayList<>(Collections.singletonList(result_association))
+					new ArrayList<>(Collections.singletonList(tid))
 				);
 			}
 			else {
-				tids.add(result_association);
+				tids.add(tid);
 			}
 		}
 
-		Tid result_used = new Tid(statement.getThreadID());
 		tids = mUsedTidMap.get(mCurrentProcedure);
 
-		if (!mUsedTidMap.containsKey(result_used)) {
+		if (!mUsedTidMap.containsKey(tid)) {
 			if (tids == null) {
 				mUsedTidMap.put(
 					mCurrentProcedure,
-					new ArrayList<>(Collections.singletonList(result_used))
+					new ArrayList<>(Collections.singletonList(tid))
 				);
 			}
 			else {
-				tids.add(result_used);
+				tids.add(tid);
 			}
 		}
+
+		mCurrentForkedTid.add(tid);
 	}
 
 	@Override
 	protected void visit(final JoinStatement statement) {
 
-		Tid result = new Tid(statement.getThreadID());
+		Tid tid = new Tid(statement.getThreadID());
 		List<Tid> tids = mAssociationTidMap.get(mCurrentProcedure);
 
-		if (!mAssociationTidMap.containsKey(result)) {
+		if (!mAssociationTidMap.containsKey(tid)) {
 			if (tids == null) {
 				mAssociationTidMap.put(
 					mCurrentProcedure,
-					new ArrayList<>(Collections.singletonList(result))
+					new ArrayList<>(Collections.singletonList(tid))
 				);
 			}
 			else {
-				tids.add(result);
+				tids.add(tid);
 			}
 		}
+
+		mCurrentForkedTid.remove(tid);
 	}
 }
