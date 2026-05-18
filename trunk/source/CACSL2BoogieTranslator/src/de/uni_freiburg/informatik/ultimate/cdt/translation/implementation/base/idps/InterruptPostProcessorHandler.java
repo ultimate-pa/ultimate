@@ -34,7 +34,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InterruptPostProcessor;
@@ -51,15 +50,14 @@ public class InterruptPostProcessorHandler {
 
 	private final InterruptTranslationMode mTranslationMode;
 
-	public InterruptPostProcessorHandler(final ILogger logger, final FlatSymbolTable symbolTable,
-			final TranslationSettings settings, final ProcedureManager procedureManager, final CHandler chandler,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
-			final List<Declaration> declarations) {
+	public InterruptPostProcessorHandler(final ILogger logger, final TranslationSettings settings,
+			final ProcedureManager procedureManager, final CHandler chandler, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final ExpressionTranslation expressionTranslation, final List<Declaration> declarations) {
 		mTranslationMode = settings.interruptTranslationMode();
 		mIsrInfo = getIsrInfo(settings);
 		final var isrBuilder = new InterruptServiceRoutinesBuilder(declarations, mIsrInfo, logger);
 		mInterruptServiceRoutines = isrBuilder.getInterruptServiceRoutines();
-		mInterruptPostProcessor = new InterruptPostProcessor(logger, symbolTable, settings, procedureManager, chandler,
+		mInterruptPostProcessor = new InterruptPostProcessor(logger, settings, procedureManager, chandler,
 				auxVarInfoBuilder, expressionTranslation, mInterruptServiceRoutines);
 	}
 
