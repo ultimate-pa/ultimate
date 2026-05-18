@@ -813,8 +813,8 @@ public class CHandler {
 	}
 
 	private InterruptPostProcessorHandler getInterruptPostProcessorHandler() {
-		return new InterruptPostProcessorHandler(mLogger, mSymbolTable, mSettings, mProcedureManager, this,
-				mAuxVarInfoBuilder, mExpressionTranslation, mDeclarations);
+		return new InterruptPostProcessorHandler(mLogger, mSettings, mProcedureManager, this, mAuxVarInfoBuilder,
+				mExpressionTranslation, mDeclarations);
 	}
 
 	private List<Statement> handleWitnessDeclarations(final IDispatcher dispatcher) {

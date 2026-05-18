@@ -24,8 +24,35 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-public enum InterruptTranslationMode {
-	ONE_THREAD_PER_ISR, ALL_ISR_IN_ONE_THREAD, ONE_THREAD_PER_ISR_FORK_JOIN, NONE
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+
+/*
+ * Node of an ICFG for an interrupt-driven program that additionally stores whether the node belongs to an ISR of the
+ * original program or the main routine. Additionally the node stores the position in ISR, i.e. is the node part of the
+ * atomically executed ISR or is it part of the encapsulating outer while loop and which ISR it belongs to.
+ */
+public class BoogieIsrLocation extends BoogieIcfgLocation {
+
+	private final ISRLocationType mLocationType;
+
+	public BoogieIsrLocation(final DebugIdentifier debugIdentifier, final String procedure, final boolean isErrorLoc,
+			final BoogieASTNode boogieASTNode, final ISRLocationType locationType) {
+		super(debugIdentifier, procedure, isErrorLoc, boogieASTNode);
+		mLocationType = locationType;
+	}
+
+	public ISRLocationType getLocationType() {
+		return mLocationType;
+	}
+
+	public record ISRLocationType(ISRLocation location, int isrId) {
+
+	}
+
+	enum ISRLocation {
+		OUTER_ENTRY, OUTER_EXIT, INNER_ENTRY, INNER_EXIT, MAIN
+	}
 }
