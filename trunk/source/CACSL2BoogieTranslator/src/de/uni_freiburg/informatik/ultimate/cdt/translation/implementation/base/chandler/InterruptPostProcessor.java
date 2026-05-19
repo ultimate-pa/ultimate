@@ -4,24 +4,24 @@
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
- * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
@@ -87,7 +87,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class InterruptPostProcessor implements IPostProcessor {
 
-	private static final boolean ADD_ISR_LABELS = true;
+	private static final boolean ADD_ISR_LABELS = false;
 
 	private final ILogger mLogger;
 
@@ -490,12 +490,13 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Statement[] labelISRStatement(final Statement isrStatement, final Integer isrId) {
 		final var labelName = "~isr" + isrId;
 		final var isrNumAttribute = new NamedAttribute(mIgnoreLoc, Integer.toString(isrId), new Expression[0]);
-		final var entryAttribute = new NamedAttribute(mIgnoreLoc, "isr_entry_label", new Expression[0]);
-		final var exitAttribute = new NamedAttribute(mIgnoreLoc, "isr_exit_label", new Expression[0]);
-		final var entryLabel =
-				new Label(mIgnoreLoc, labelName + "Entry", new NamedAttribute[] { entryAttribute, isrNumAttribute });
-		final var exitLabel =
-				new Label(mIgnoreLoc, labelName + "Exit", new NamedAttribute[] { exitAttribute, isrNumAttribute });
+		final var isrAttribute = new NamedAttribute(mIgnoreLoc, "isr_label", new Expression[0]);
+		final var entryAttribute = new NamedAttribute(mIgnoreLoc, "entry", new Expression[0]);
+		final var exitAttribute = new NamedAttribute(mIgnoreLoc, "exit", new Expression[0]);
+		final var entryLabel = new Label(mIgnoreLoc, labelName + "Entry",
+				new NamedAttribute[] { isrAttribute, entryAttribute, isrNumAttribute });
+		final var exitLabel = new Label(mIgnoreLoc, labelName + "Exit",
+				new NamedAttribute[] { isrAttribute, exitAttribute, isrNumAttribute });
 		return new Statement[] { entryLabel, isrStatement, exitLabel };
 	}
 

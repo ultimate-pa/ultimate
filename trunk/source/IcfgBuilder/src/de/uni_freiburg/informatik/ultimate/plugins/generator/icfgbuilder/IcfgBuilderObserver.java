@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.CfgBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.util.ISRLabelHandler;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
@@ -90,6 +91,7 @@ public class IcfgBuilderObserver implements IUnmanagedObserver {
 			assert IcfgUtils.areLoopLocationsRegistered(mGraphroot);
 			assert IcfgUtils.areLocationsOfInterestRegistered(mGraphroot);
 			mServices.getBacktranslationService().addTranslator(recCFGBuilder.getBacktranslator());
+			final var isrLabelHandler = new ISRLabelHandler(mGraphroot, recCFGBuilder.getISRLocationMap(), mLogger);
 		} catch (final SMTLIBException e) {
 			final String message = e.getMessage();
 			if ("Cannot create quantifier in quantifier-free logic".equals(message)
