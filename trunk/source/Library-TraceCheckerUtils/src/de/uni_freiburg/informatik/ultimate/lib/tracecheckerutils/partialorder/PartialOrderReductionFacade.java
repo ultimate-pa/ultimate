@@ -97,7 +97,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	public static final boolean ENABLE_MULTI_PERSISTENT_SETS = true;
 
 	public enum OrderType {
-		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP
+		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP, IDP_MAIN, IDP_ISR
 	}
 
 	private final IUltimateServiceProvider mServices;
@@ -218,6 +218,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 							.thenComparing(Comparator.comparing(x -> x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparingInt(Object::hashCode)));
 		}
+		case IDP_MAIN -> new IDPMainOrder<>();
+		case IDP_ISR -> new IDPIsrOrder<>();
 		case PSEUDO_LOCKSTEP -> new BetterLockstepOrder<>(this::normalizePredicate);
 		case RANDOM -> new RandomDfsOrder<>(randomOrderSeed, false);
 		case POSITIONAL_RANDOM -> new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);

@@ -4,24 +4,24 @@
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
- * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
@@ -69,6 +69,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptServiceRoutines;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -163,7 +165,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		// Add atomic block and variable assignment true to request enabled all function
 		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
 
-		if (realization3 && (mISR.getRequestEnableAll() != null)) {
+		if (realization3) {
 			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadGpioProcedureMap);
 		}
 
@@ -184,6 +186,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private void addForksToRequestEnableAll(final Procedure mainProcedure,
 			final Map<Integer, Procedure> threadGpioProceduresMap) {
+		if (mainProcedure == null) {
+			return;
+		}
 		final var statements = new ArrayList<Statement>();
 		for (final Entry<Integer, Procedure> entry : threadGpioProceduresMap.entrySet()) {
 			final var irq = entry.getKey();
@@ -385,7 +390,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Procedure constructOneInterruptThreadGpioProc(final String identifier,
 			final IdentifierExpression threadEnabledId, final Integer irq) {
 		final var procName = constructThreadGpioID(identifier, irq);
+
 		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for ISR " + identifier);
+
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
@@ -446,8 +453,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId,
 			final Integer isrNum) {
 		final var enabledExpr = threadEnabledId;
-		final var ifStmt = getIfStatement(identifier, enabledExpr);
-		final var block = getIsrBlock(ifStmt, isrNum);
+		final var ifStmt = getIfStatement(identifier, enabledExpr, isrNum);
+		final var block = getIsrBlock(ifStmt);
 		final var forkJoin = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 		final var while_condition = forkJoin ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
 		return new WhileStatement(mIgnoreLoc, while_condition, new LoopInvariantSpecification[0], block);
@@ -464,7 +471,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final var threadEnabledId = mAuxVarExpressions.get(irq);
 			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
 			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ: " + irq;
-			ifStatements.add(getIfStatement(identifier, enabledExpression));
+			ifStatements.add(getIfStatement(identifier, enabledExpression, irq));
 			final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements);
 			atomicStatements.add(atomic);
 		}
@@ -473,16 +480,22 @@ public class InterruptPostProcessor implements IPostProcessor {
 				atomicStatements.toArray(new Statement[0]));
 	}
 
-	private Statement[] getIsrBlock(final Statement ifStatement, final Integer isrId) {
+	private Statement[] getIsrBlock(final Statement ifStatement) {
 		if (ADD_ISR_LABELS) {
-			return labelISRStatement(ifStatement, isrId);
+			return new Statement[] { ifStatement };
 		}
 		return new Statement[] { StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStatement)) };
 	}
 
-	private Statement getIfStatement(final String identifier, final Expression enabledExpr) {
+	private Statement getIfStatement(final String identifier, final Expression enabledExpr, final int id) {
+		final var interruptAnnotation = new InterruptAnnotations(ISRLocation.ISR, id);
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
+		interruptAnnotation.annotate(then);
+		if (ADD_ISR_LABELS) {
+			return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, labelISRStatement(then, id),
+					new Statement[0]);
+		}
 		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then },
 				new Statement[0]);
 	}
@@ -490,12 +503,13 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Statement[] labelISRStatement(final Statement isrStatement, final Integer isrId) {
 		final var labelName = "~isr" + isrId;
 		final var isrNumAttribute = new NamedAttribute(mIgnoreLoc, Integer.toString(isrId), new Expression[0]);
-		final var entryAttribute = new NamedAttribute(mIgnoreLoc, "isr_entry_label", new Expression[0]);
-		final var exitAttribute = new NamedAttribute(mIgnoreLoc, "isr_exit_label", new Expression[0]);
-		final var entryLabel =
-				new Label(mIgnoreLoc, labelName + "Entry", new NamedAttribute[] { entryAttribute, isrNumAttribute });
-		final var exitLabel =
-				new Label(mIgnoreLoc, labelName + "Exit", new NamedAttribute[] { exitAttribute, isrNumAttribute });
+		final var isrAttribute = new NamedAttribute(mIgnoreLoc, "isr_label", new Expression[0]);
+		final var entryAttribute = new NamedAttribute(mIgnoreLoc, "entry", new Expression[0]);
+		final var exitAttribute = new NamedAttribute(mIgnoreLoc, "exit", new Expression[0]);
+		final var entryLabel = new Label(mIgnoreLoc, labelName + "Entry",
+				new NamedAttribute[] { isrAttribute, entryAttribute, isrNumAttribute });
+		final var exitLabel = new Label(mIgnoreLoc, labelName + "Exit",
+				new NamedAttribute[] { isrAttribute, exitAttribute, isrNumAttribute });
 		return new Statement[] { entryLabel, isrStatement, exitLabel };
 	}
 
