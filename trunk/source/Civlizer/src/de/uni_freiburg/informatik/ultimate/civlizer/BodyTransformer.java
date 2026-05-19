@@ -283,12 +283,12 @@ final class BodyTransformer extends BoogieTransformer {
 			.getTemplateVisitor()
 			.getAllTidMap()
 			.get(mCurrentProcedure)
-			.size() + (mCurrentProcedure == "ULTIMATE.start" ? 1 : 0);
+			.size() + (mCurrentProcedure.equals("ULTIMATE.start") ? 1 : 0);
 		Expression[] tids = new Expression[size];
 
 		int i = 0;
 
-		if (mCurrentProcedure == "ULTIMATE.start") {
+		if (mCurrentProcedure.equals("ULTIMATE.start")) {
 			tids[i++] = new IdentifierExpression(
 				null,
 				BoogieType.createPlaceholderType(0),
@@ -392,6 +392,12 @@ final class BodyTransformer extends BoogieTransformer {
 				new IdentifierExpression(
 					forkstmt.getLoc(), /* maybe to be change TODO or not */
 					BoogieType.createPlaceholderType(0),
+					"start_tid",
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
+				),
+				new IdentifierExpression(
+					forkstmt.getLoc(), /* maybe to be change TODO or not */
+					BoogieType.createPlaceholderType(0),
 					(new Tid(threadId)).toString(),
 					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
 				)
@@ -412,17 +418,23 @@ final class BodyTransformer extends BoogieTransformer {
 				new IdentifierExpression(
 					joinstmt.getLoc(), /* maybe to be change TODO or not */
 					BoogieType.createPlaceholderType(0),
+					"start_tid",
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
+				),
+				new IdentifierExpression(
+					joinstmt.getLoc(), /* maybe to be change TODO or not */
+					BoogieType.createPlaceholderType(0),
 					(new Tid(threadId)).toString(),
 					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
 				)
 			};
 
-			VariableLHS[] out = new VariableLHS[] {
-				new VariableLHS(joinstmt.getLoc(), "out" + ((new Tid(threadId)).toString()).substring(3))
-			};
+			//VariableLHS[] out = new VariableLHS[] {
+			//	new VariableLHS(joinstmt.getLoc(), "out" + ((new Tid(threadId)).toString()).substring(3))
+			//}; Maybe laiter
 
             newStatement = new CallStatement(joinstmt.getLoc(), new NamedAttribute[0], false,
-				out, "join", tid); // LHS TODO
+				new VariableLHS[0], "join", tid); // LHS TODO
 		
 		}
 

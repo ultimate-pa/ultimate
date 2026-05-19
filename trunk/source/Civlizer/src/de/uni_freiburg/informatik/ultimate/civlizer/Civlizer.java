@@ -157,13 +157,10 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			mLogger.fatal("declared ghosts and initial values: %s",
 					WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
 			
-			// icfg -> location
-			// scan icfg and keep track of the location map ?
-			// access invariant and code location of an ICFG location
-			final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
-			final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
-			final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
-			mLogger.fatal("Annotation at %s is %s", codeLocation, invariant);
+			// final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
+			// final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
+			// final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
+			// mLogger.fatal("Annotation at %s is %s", codeLocation, invariant);
 
 		}
 
@@ -173,7 +170,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			//mLogger.warn("Annotation at %s", (Expression) WitnessInvariant.getAnnotation(mProgramAndProof.getBoogieAst()).getInvariant());
 			//mLogger.warn("TEST TEST TEST");
 
-			mLogger.warn(Translator.translate(mProgramAndProof));
+			Translator.translate(mProgramAndProof);
 		}
 
 		return false;

@@ -24,27 +24,22 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private String mCurrentProcedure;
-	private Set<Tid> mCurrentForkedTid;
 
 	private Map<String, List<Tid>> mAssociationTidMap;
 	private Map<String, List<Tid>> mUsedTidMap;
 	private Map<String, List<Tid>> mAllTidMap;
 	private Set<Tid> mTids;
-	private Map<ILocation, Set<Tid>> mForkedTidMap;
 
 	ThreadTemplateVisitor(Unit boogieFile) {
 		mCurrentProcedure = null;
-		mCurrentForkedTid = null;
 		mAssociationTidMap = new HashMap<>();
 		mUsedTidMap = new HashMap<>();
 		mAllTidMap = new HashMap<>();
 		mTids = new HashSet<>();
-		mForkedTidMap = new HashMap<>();
 
 		for (Declaration elem : boogieFile.getDeclarations()) {
 			processDeclaration(elem);
@@ -91,10 +86,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		return mAllTidMap;
 	}
 
-	Map<ILocation, Set<Tid>> getForkedTidMap() {
-		return mForkedTidMap;
-	}
-
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
 		switch (decl) {
@@ -107,9 +98,8 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(final Procedure decl) {
 		mCurrentProcedure = decl.getIdentifier();
-		mCurrentForkedTid = new HashSet<>();
 
-		if (mCurrentProcedure != "ULTIMATE.start" && !mAssociationTidMap.containsKey(mCurrentProcedure)) {
+		if (!mCurrentProcedure.equals("ULTIMATE.start") && !mAssociationTidMap.containsKey(mCurrentProcedure)) {
 			mAssociationTidMap.put(mCurrentProcedure, new ArrayList<>());
 		}
 
@@ -133,8 +123,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 			case final WhileStatement whileStmt -> visit(whileStmt);
 			default -> {}
 		}
-
-		mForkedTidMap.put(statement.getLoc(), new HashSet<>(mCurrentForkedTid));
 
 		return statement;
 	}
@@ -195,8 +183,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 				tids.add(tid);
 			}
 		}
-
-		mCurrentForkedTid.add(tid);
 	}
 
 	@Override
@@ -216,7 +202,5 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 				tids.add(tid);
 			}
 		}
-
-		mCurrentForkedTid.remove(tid);
 	}
 }
