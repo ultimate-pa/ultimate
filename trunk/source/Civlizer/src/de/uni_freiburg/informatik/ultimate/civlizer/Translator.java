@@ -4,11 +4,11 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
@@ -291,13 +291,15 @@ public final class Translator extends BoogieVisitor {
 				.getIcfg()
 				.getProcedureEntryNodes()
 				.get(procName);
-			final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
-			final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
+			if (WitnessInvariant.getAnnotation(initialLoc) != null) {
+				final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
+				final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
 
-			if (invariant != null) {
-				mWriter.print("preserves ");
-				mWriter.print(BoogiePrettyPrinter.print(invariant));
-				mWriter.print(";\n");
+				if (invariant != null) {
+					mWriter.print("preserves ");
+					mWriter.print(BoogiePrettyPrinter.print(invariant));
+					mWriter.print(";\n");
+				}
 			}
 		}
 
@@ -450,9 +452,9 @@ public final class Translator extends BoogieVisitor {
 
 		mWriter.println("{");
 
-		for (VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
-			mWriter.print(BoogiePrettyPrinter.print(varDecl));
-		}
+		// for (VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
+		//	mWriter.print(BoogiePrettyPrinter.print(varDecl));
+		// }
 		mWriter.print("\n");
 		mOutput.printBody(transformer.transformBody(decl.getIdentifier(), decl.getBody()));
 		mWriter.print("}\n\n");

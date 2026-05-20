@@ -154,8 +154,8 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 			// TODO Below is demo code showing how to access invariants and ghosts. Remove it once no longer needed.
 			// get ghost declarations including initial values
-			mLogger.fatal("declared ghosts and initial values: %s",
-					WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
+			//mLogger.fatal("declared ghosts and initial values: %s",
+			//		WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
 			
 			// final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
 			// final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();

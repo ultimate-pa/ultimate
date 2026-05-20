@@ -1,8 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -56,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 
 final class BodyTransformer extends BoogieTransformer {
 
@@ -282,8 +282,10 @@ final class BodyTransformer extends BoogieTransformer {
 		int size = mProgramAndProof
 			.getTemplateVisitor()
 			.getAllTidMap()
-			.get(mCurrentProcedure)
-			.size() + (mCurrentProcedure.equals("ULTIMATE.start") ? 1 : 0);
+			.getOrDefault(mCurrentProcedure, Collections.emptyList())
+			.size()
+			+ (mCurrentProcedure.equals("ULTIMATE.start") ? 1 : 0);
+
 		Expression[] tids = new Expression[size];
 
 		int i = 0;
@@ -303,7 +305,7 @@ final class BodyTransformer extends BoogieTransformer {
 		for (Tid tid : mProgramAndProof
 			.getTemplateVisitor()
 			.getAllTidMap()
-			.get(mCurrentProcedure)) 
+			.getOrDefault(mCurrentProcedure, Collections.emptyList())) 
 		{
 			tids[i++] = new IdentifierExpression(
 				null,
