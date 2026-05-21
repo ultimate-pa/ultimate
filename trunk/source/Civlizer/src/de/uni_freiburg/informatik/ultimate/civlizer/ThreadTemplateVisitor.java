@@ -9,26 +9,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.*;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private String mCurrentProcedure;
+	private ILocation mCurrentStatement;
 
+	private Set<String> mGlobalVariables;
+	private Map<ILocation, Set<String>> mStatementVariablesMap;
 	private Map<String, List<Tid>> mAssociationTidMap;
 	private Map<String, List<Tid>> mUsedTidMap;
 	private Map<String, List<Tid>> mAllTidMap;
@@ -36,6 +27,10 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	ThreadTemplateVisitor(Unit boogieFile) {
 		mCurrentProcedure = null;
+		mCurrentStatement = null;
+
+		mGlobalVariables = new HashSet<>();
+		mStatementVariablesMap = new HashMap<>();
 		mAssociationTidMap = new HashMap<>();
 		mUsedTidMap = new HashMap<>();
 		mAllTidMap = new HashMap<>();
@@ -86,9 +81,30 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		return mAllTidMap;
 	}
 
+	boolean containsGlobalVariables(Statement stmt) {
+		if (mStatementVariablesMap
+			.get(stmt.getLoc()) == null 
+			|| mGlobalVariables == null) {
+			return false;
+		}
+
+		return !Collections.disjoint(
+			mStatementVariablesMap
+			.get(stmt.getLoc()), 
+			mGlobalVariables
+		);
+	}
+
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
 		switch (decl) {
+			case final VariableDeclaration varDecl -> {
+				for (VarList varList : varDecl.getVariables()) {
+					for (String id : varList.getIdentifiers()) {
+						mGlobalVariables.add(id);
+					}
+				}
+			}
 			case final Procedure proc -> visit(proc);
 			default -> {}
 		}
@@ -110,18 +126,24 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	@Override
 	protected Statement processStatement(final Statement statement) {
+
+		mCurrentStatement = statement.getLoc();
+
 		switch (statement) {
+			case final AssertStatement assertStmt -> visit(assertStmt);
+			case final AssignmentStatement assignStmt -> visit(assignStmt);
+			case final AssumeStatement assumeStmt -> visit(assumeStmt);
 			case final AtomicStatement atomicStmt -> visit(atomicStmt);
-			case final BreakStatement breakStmt -> visit(breakStmt); // not allow
-			case final CallStatement callStmt -> visit(callStmt); // not allow
+			case final BreakStatement breakStmt -> visit(breakStmt);
+			case final CallStatement callStmt -> visit(callStmt);
 			case final ForkStatement forkStmt -> visit(forkStmt);
-			case final JoinStatement joinStmt -> visit(joinStmt);
-			case final GotoStatement gotoStmt -> visit(gotoStmt); // not allow
+			case final GotoStatement gotoStmt -> visit(gotoStmt);
+			case final HavocStatement havocStmt -> visit(havocStmt);
 			case final IfStatement ifStmt -> visit(ifStmt);
-			case final Label label -> visit(label); // not allow
-			case final ReturnStatement returnStmt -> visit(returnStmt); // not allow
+			case final JoinStatement joinStmt -> visit(joinStmt);
+			case final Label label -> visit(label);
+			case final ReturnStatement returnStmt -> visit(returnStmt);
 			case final WhileStatement whileStmt -> visit(whileStmt);
-			default -> {}
 		}
 
 		return statement;
@@ -202,5 +224,183 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 				tids.add(tid);
 			}
 		}
+	}
+
+	@Override
+	protected void visit(final HavocStatement statement) {
+		// empty because it may be overridden (but does not have to)
+		Set<String> res;
+		for (VariableLHS var : statement.getIdentifiers()) {
+			res = mStatementVariablesMap
+				.getOrDefault(mCurrentStatement, new HashSet());
+			res.add(var.getIdentifier());
+			mStatementVariablesMap.put(mCurrentStatement, res);
+		}
+	}
+
+	/*protected void visit(final CallStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}*/
+
+	@Override
+	protected void visit(final AssignmentStatement statement) {
+		for (LeftHandSide lhs : statement.getLhs()) {
+			processLeftHandSide(lhs);
+		}
+
+		for (Expression rhs : statement.getRhs()) {
+			processExpression(rhs);
+		}
+	}
+
+	@Override
+	protected void visit(final AssumeStatement statement) {
+		processExpression(statement.getFormula());
+	}
+
+	@Override
+	protected void visit(final AssertStatement statement) {
+		processExpression(statement.getFormula());
+	}
+
+	@Override
+	protected void visit(final VariableLHS lhs) {
+		Set<String> res = mStatementVariablesMap
+			.getOrDefault(mCurrentStatement, new HashSet());
+		res.add(lhs.getIdentifier());
+		mStatementVariablesMap.put(mCurrentStatement, res);
+	}
+
+	@Override
+	protected void visit(final StructLHS lhs) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final ArrayLHS lhs) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final RequiresSpecification spec) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final ModifiesSpecification spec) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final LoopInvariantSpecification spec) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final EnsuresSpecification spec) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final NamedAttribute attr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final Trigger attr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final WildcardExpression expr) {
+		// empty because it may be overridden (but does not have to)
+	}
+
+	@Override
+	protected void visit(final UnaryExpression expr) {
+		processExpression(expr.getExpr());
+	}
+
+	@Override
+	protected void visit(final StructConstructor expr) {
+		for (Expression fieldExpr : expr.getFieldValues()) {
+			processExpression(fieldExpr);
+		}
+	}
+
+	@Override
+	protected void visit(final StructAccessExpression expr) {
+		processExpression(expr.getStruct());
+	}
+
+	@Override
+	protected void visit(final QuantifierExpression expr) {
+
+		for (VarList varList : expr.getParameters()) {
+			for (String id : varList.getIdentifiers()) {
+
+				Set<String> res = mStatementVariablesMap
+					.getOrDefault(mCurrentStatement, new HashSet<>());
+
+				res.add(id);
+				mStatementVariablesMap.put(mCurrentStatement, res);
+			}
+		}
+
+		processExpression(expr.getSubformula());
+	}
+
+	@Override
+	protected void visit(final IfThenElseExpression expr) {
+		processExpression(expr.getCondition());
+		processExpression(expr.getThenPart());
+		processExpression(expr.getElsePart());
+	}
+
+	@Override
+	protected void visit(final IdentifierExpression expr) {
+
+		Set<String> res = mStatementVariablesMap
+			.getOrDefault(mCurrentStatement, new HashSet<>());
+
+		res.add(expr.getIdentifier());
+		mStatementVariablesMap.put(mCurrentStatement, res);
+	}
+
+	@Override
+	protected void visit(final FunctionApplication expr) {
+
+		for (Expression arg : expr.getArguments()) {
+			processExpression(arg);
+		}
+	}
+
+	@Override
+	protected void visit(final BinaryExpression expr) {
+		processExpression(expr.getLeft());
+		processExpression(expr.getRight());
+	}
+
+	@Override
+	protected void visit(final ArrayStoreExpression expr) {
+
+		//processExpression(expr.getArray());
+		//processExpression(expr.getIndex());
+		//processExpression(expr.getValue());
+	}
+
+	@Override
+	protected void visit(final ArrayAccessExpression expr) {
+
+		processExpression(expr.getArray());
+
+		for (Expression index : expr.getIndices()) {
+			processExpression(index);
+		}
+	}
+
+	@Override
+	protected void visit(final BitVectorAccessExpression expr) {
+		processExpression(expr.getBitvec());
 	}
 }

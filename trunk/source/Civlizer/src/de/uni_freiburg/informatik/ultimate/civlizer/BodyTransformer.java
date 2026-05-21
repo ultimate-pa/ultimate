@@ -321,7 +321,17 @@ final class BodyTransformer extends BoogieTransformer {
 		// we ignore some kind of first Label $Ultimate##0
 		for (i = 1; i < statements.length - 1; i++) { // ignore standard return
 			mAtomicStatementCounter += 1;
-			newStatements.add(processStatement(statements[i]));
+			
+			if (statements[i] instanceof ForkStatement
+				|| statements[i] instanceof JoinStatement
+				|| mProgramAndProof
+				.getTemplateVisitor()
+				.containsGlobalVariables(statements[i])) {
+					newStatements.add(processStatement(statements[i]));
+			}
+			else {
+				newStatements.add(statements[i]);
+			}
 			newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
 			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
 		}

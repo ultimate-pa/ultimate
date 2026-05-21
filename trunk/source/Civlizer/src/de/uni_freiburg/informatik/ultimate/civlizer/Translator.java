@@ -382,11 +382,15 @@ public final class Translator extends BoogieVisitor {
 				}
 			}
 
-			addAtomicStatement(
-				decl.getIdentifier(),
-				decl.getBody().getBlock()[i],
-				counter - 1
-			);
+			if (mProgramAndProof
+				.getTemplateVisitor()
+				.containsGlobalVariables(decl.getBody().getBlock()[i])) {
+				addAtomicStatement(
+					decl.getIdentifier(),
+					decl.getBody().getBlock()[i],
+					counter - 1
+				);
+			}
 
 			Expression annotation =
 				annotationMap.get(decl.getBody().getBlock()[i].getLoc());
@@ -634,30 +638,6 @@ public final class Translator extends BoogieVisitor {
 
 	protected void visit(final Trigger attr) {
 		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected Expression processExpression(final Expression expr) {
-		switch (expr) {
-		case final ArrayAccessExpression arrayAccess -> visit(arrayAccess);
-		case final ArrayStoreExpression arrayStore -> visit(arrayStore);
-		case final BinaryExpression binary -> visit(binary);
-		case final BitvecLiteral bitvec -> visit(bitvec);
-		case final BitVectorAccessExpression bitvecAccess -> visit(bitvecAccess);
-		case final BooleanLiteral booleanLit -> visit(booleanLit);
-		case final FunctionApplication funApp -> visit(funApp);
-		case final IdentifierExpression idExpr -> visit(idExpr);
-		case final IfThenElseExpression ite -> visit(ite);
-		case final IntegerLiteral intLit -> visit(intLit);
-		case final QuantifierExpression quantified -> visit(quantified);
-		case final RealLiteral realLit -> visit(realLit);
-		case final StringLiteral stringLit -> visit(stringLit);
-		case final StructAccessExpression structAccess -> visit(structAccess);
-		case final StructConstructor structConstructor -> visit(structConstructor);
-		case final UnaryExpression unary -> visit(unary);
-		case final WildcardExpression wildcard -> visit(wildcard);
-		}
-		return expr;
 	}
 
 	protected void visit(final WildcardExpression expr) {
