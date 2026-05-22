@@ -87,7 +87,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class InterruptPostProcessor implements IPostProcessor {
 
-	private static final boolean ADD_ISR_LABELS = false;
+	private static final boolean ADD_ISR_LABELS = true;
 
 	private final ILogger mLogger;
 

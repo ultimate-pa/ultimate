@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class ISRLabelHandler {
 
-	private final IIcfg<BoogieIcfgLocation> mIcfg;
-	private final Map<BoogieIcfgLocation, Label> mLoc2Label;
-	private final Map<BoogieIcfgLocation, IDPNodeLocation> mIcfgLoc2IsrLocType;
+	private final IIcfg<? extends IcfgLocation> mIcfg;
+	private final Map<? extends IcfgLocation, Label> mLoc2Label;
+	private final Map<IcfgLocation, IDPNodeLocation> mIcfgLoc2IsrLocType;
 
 	private final ILogger mLogger;
 
-	public ISRLabelHandler(final IIcfg<BoogieIcfgLocation> icfg, final Map<BoogieIcfgLocation, Label> loc2Label,
+	public ISRLabelHandler(final IIcfg<? extends IcfgLocation> icfg, final Map<? extends IcfgLocation, Label> loc2Label,
 			final ILogger logger) {
 		mLogger = logger;
 
@@ -59,14 +59,14 @@ public class ISRLabelHandler {
 		mIcfgLoc2IsrLocType = processIcfg();
 	}
 
-	private Map<BoogieIcfgLocation, IDPNodeLocation> processIcfg() {
-		final HashMap<BoogieIcfgLocation, IDPNodeLocation> boogieLoc2IdpLoc = new HashMap<>();
-		final HashDeque<Pair<BoogieIcfgLocation, IDPNodeLocation>> icfgNodes = new HashDeque<>();
-		final var visited = new HashSet<BoogieIcfgLocation>();
+	private Map<IcfgLocation, IDPNodeLocation> processIcfg() {
+		final HashMap<IcfgLocation, IDPNodeLocation> boogieLoc2IdpLoc = new HashMap<>();
+		final HashDeque<Pair<IcfgLocation, IDPNodeLocation>> icfgNodes = new HashDeque<>();
+		final var visited = new HashSet<IcfgLocation>();
 		final var initNodes = mIcfg.getProcedureEntryNodes().values();
 		final var idpMainProcLoc = new IDPNodeLocation(IDPLocation.MAIN, 0);
-		for (final BoogieIcfgLocation boogieIcfgLocation : initNodes) {
-			icfgNodes.offer(new Pair<>(boogieIcfgLocation, idpMainProcLoc));
+		for (final IcfgLocation IcfgLocation : initNodes) {
+			icfgNodes.offer(new Pair<>(IcfgLocation, idpMainProcLoc));
 		}
 		while (!icfgNodes.isEmpty()) {
 			final var currentPair = icfgNodes.poll();
@@ -83,19 +83,19 @@ public class ISRLabelHandler {
 			boogieLoc2IdpLoc.put(currentNode, nodeLoc);
 			final var edges = currentNode.getOutgoingEdges();
 			for (final IcfgEdge icfgEdge : edges) {
-				final var succNode = (BoogieIcfgLocation) icfgEdge.getTarget();
+				final var succNode = icfgEdge.getTarget();
 				icfgNodes.offer(new Pair<>(succNode, nodeLoc));
 			}
 		}
 		return boogieLoc2IdpLoc;
 	}
 
-	private boolean isIsrLocation(final BoogieIcfgLocation location) {
+	private boolean isIsrLocation(final IcfgLocation location) {
 		final var label = mLoc2Label.get(location);
 		return label != null;
 	}
 
-	private IDPNodeLocation getLocationISRType(final BoogieIcfgLocation location) {
+	private IDPNodeLocation getLocationISRType(final IcfgLocation location) {
 		final var label = mLoc2Label.get(location);
 		if (label == null) {
 			return new IDPNodeLocation(IDPLocation.MAIN, 0);
@@ -103,7 +103,7 @@ public class ISRLabelHandler {
 		return processISRLabel(label);
 	}
 
-	public Map<BoogieIcfgLocation, IDPNodeLocation> getIcfgLoc2IDPLoc() {
+	public Map<IcfgLocation, IDPNodeLocation> getIcfgLoc2IDPLoc() {
 		return mIcfgLoc2IsrLocType;
 	}
 
@@ -125,11 +125,16 @@ public class ISRLabelHandler {
 		return new IDPNodeLocation(IDPLocation.ISR_EXIT, isrId);
 	}
 
+	public IDPNodeLocation getIDPLocation(final IcfgLocation icfgLocation) {
+		// TODO: Mabe return MAIN if the get results in null?
+		return mIcfgLoc2IsrLocType.get(icfgLocation);
+	}
+
 	public record IDPNodeLocation(IDPLocation location, int isrId) {
 
 	}
 
-	enum IDPLocation {
+	public enum IDPLocation {
 		ISR_ENTRY, ISR_EXIT, MAIN
 	}
 }
