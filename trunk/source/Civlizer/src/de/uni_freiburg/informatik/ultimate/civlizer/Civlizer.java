@@ -28,15 +28,14 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -156,12 +155,29 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			// get ghost declarations including initial values
 			//mLogger.fatal("declared ghosts and initial values: %s",
 			//		WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
-			
-			// final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
+
+			//final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
 			// final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
 			// final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
 			// mLogger.fatal("Annotation at %s is %s", codeLocation, invariant);
 
+			var programPoints = icfg.getProgramPoints();
+
+			for (Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
+
+				for (Map.Entry<?, BoogieIcfgLocation> entry : innerMap.entrySet()) {
+
+					var key = entry.getKey();
+					BoogieIcfgLocation value = entry.getValue();
+
+					System.out.println(key);
+					System.out.println(value);
+
+					final var update = WitnessGhostUpdate.getAnnotation(value);
+
+					mLogger.fatal("Update is %s", update);
+				}
+			}
 		}
 
 		if (mProgramAndProof.isFull()) {

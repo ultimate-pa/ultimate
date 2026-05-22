@@ -332,6 +332,34 @@ final class BodyTransformer extends BoogieTransformer {
 			else {
 				newStatements.add(statements[i]);
 			}
+
+			// (Expression)
+			/*final var update = WitnessGhostUpdate.getAnnotation(statements[i]);
+			System.out.println("TEST CLASS " + update); 
+			if (update != null) {
+
+				// TEST
+				Class<?> clazz = update.getClass();
+
+				System.out.println("TEST CLASS " + clazz.getName()); 
+			}*/
+
+			/*
+			WitnessGhostUpdate<?> annotation = WitnessGhostUpdate.getAnnotation(statements[i]);
+
+			if (annotation != null) {
+				Map<?, ?> update = annotation.getUpdate();
+
+				for (Map.Entry<?, ?> entry : update.entrySet()) {
+					Object key = entry.getKey();
+					Object value = entry.getValue();
+
+					System.out.println("Key class: " + key.getClass().getName());
+					System.out.println("Value class: " + value.getClass().getName());
+				}
+			}
+			*/
+
 			newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
 			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
 		}

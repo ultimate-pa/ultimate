@@ -141,7 +141,7 @@ public final class Translator extends BoogieVisitor {
 	private void addGhostVar() {
 		for (OwickiGriesAnnotation proof : mProgramAndProof.getProof()) {
 			for (int i = 0; i < proof.getGhostVariables().size(); i++) {
-				mWriter.print("var {:layer 1,2} ~ghost~");
+				mWriter.print("var {:layer 2,2} ~ghost~");
 				mWriter.print(String.valueOf(i));
 				mWriter.print(" : int;\n\n"); // ??? TODO
 			}
@@ -232,7 +232,7 @@ public final class Translator extends BoogieVisitor {
 			final String procName, 
 			final Expression annotation, 
 			final Statement statement, 
-			Set<Tid> currentForkedTid, 
+			Set<Tid> tidNeedsLinearity, 
 			int counter) {
 
 		mWriter.print("yield invariant {:layer 2} ");
@@ -252,12 +252,12 @@ public final class Translator extends BoogieVisitor {
 			.getAllTidMap()
 			.getOrDefault(procName, Collections.emptyList()))
 		{
-			if (currentForkedTid
+			if (tidNeedsLinearity
 				.contains(tid)) {
-				tids.add(" " + tid.toString() + " : One Tid");
+				tids.add("{:linear} " + tid.toString() + " : One Tid");
 			}
 			else {
-				tids.add("{:linear} " + tid.toString() + " : One Tid");
+				tids.add(" " + tid.toString() + " : One Tid");
 			}
 		}
 		addStringList(tids, ", ");
@@ -286,7 +286,7 @@ public final class Translator extends BoogieVisitor {
 			mWriter.print(";\n");
 		}
 		else {
-			// requirement
+			// if no annotation this is the start
 			final var initialLoc = mProgramAndProof
 				.getIcfg()
 				.getProcedureEntryNodes()
@@ -303,7 +303,10 @@ public final class Translator extends BoogieVisitor {
 			}
 		}
 
-		for (Tid tid : currentForkedTid) {
+		for (Tid tid : mProgramAndProof
+			.getTemplateVisitor()
+			.getAllTidMap()
+			.getOrDefault(procName, Collections.emptyList())) {
 			final Optional<String> forked_proc = mProgramAndProof
 				.getTemplateVisitor()
 				.getAssociationTidMap().entrySet().stream()
@@ -356,14 +359,18 @@ public final class Translator extends BoogieVisitor {
 		Map<ILocation, Expression> annotationMap = mProgramAndProof.getAnnotationMap(decl.getIdentifier());
 		/* Write invariant and atomic */
 		int counter = 0;
-		Set<Tid> currentForkedTid = new HashSet<>();
+		Set<Tid> tidNeedsLinearity = new HashSet<>(
+			mProgramAndProof
+			.getTemplateVisitor()
+			.getTids()
+		);
 
 		// initial invariant BEFORE first statement
 		addYieldInvariants(
 			decl.getIdentifier(),
 			null,
 			null,
-			currentForkedTid,
+			tidNeedsLinearity,
 			counter
 		);
 
@@ -371,16 +378,6 @@ public final class Translator extends BoogieVisitor {
 
 		//for (Statement statement : decl.getBody().getBlock()) {
 		for (int i = 0; i < decl.getBody().getBlock().length; i++) {
-			// WHY ???
-
-			if (i < decl.getBody().getBlock().length - 1) {
-				if (decl.getBody().getBlock()[i+1] instanceof final ForkStatement forkstmt) {
-				currentForkedTid.add(new Tid(forkstmt.getThreadID()));
-				}
-				else if (decl.getBody().getBlock()[i+1] instanceof final JoinStatement joinstmt) {
-					currentForkedTid.remove(new Tid(joinstmt.getThreadID()));
-				}
-			}
 
 			if (mProgramAndProof
 				.getTemplateVisitor()
@@ -392,17 +389,24 @@ public final class Translator extends BoogieVisitor {
 				);
 			}
 
-			Expression annotation =
+			if (decl.getBody().getBlock()[i] instanceof final JoinStatement joinstmt) {
+				tidNeedsLinearity.add(new Tid(joinstmt.getThreadID()));
+			}
+
+			// ghost var update here
+
+			final Expression annotation =
 				annotationMap.get(decl.getBody().getBlock()[i].getLoc());
 
 			addYieldInvariants(
 				decl.getIdentifier(),
 				annotation,
 				decl.getBody().getBlock()[i],
-				currentForkedTid,
+				tidNeedsLinearity,
 				counter
 			);
 
+			tidNeedsLinearity.clear();
 			counter++;
 		}
 
