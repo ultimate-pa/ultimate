@@ -564,6 +564,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 						bspmResult.getStemPrecondition(), bspmResult.getStemPostcondition(), pu);
 				final IPredicate[] loopInterpolants =
 						getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
+				// lasso module = automaton recognizing only the lasso trace?
 				final NestedWordAutomaton<L, IPredicate> inputAutomaton =
 						mInterpolantAutomatonBuilder.constructInterpolantAutomaton(bspmResult.getStemPrecondition(),
 								mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
@@ -585,7 +586,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 				assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), inputAutomaton,
 						mCounterexample.getNestedLassoWord()).getResult();
-
+				// V - this one should be the cert. module obtained from the current lasso trace
 				interpolantAutomaton = mInterpolantAutomatonBuilder.constructGeneralizedAutomaton(mCounterexample,
 						constructionStyle, bspmResult, pu, stemInterpolants, loopInterpolants, inputAutomaton, bhtc);
 				mIsSemiDeterministic = constructionStyle.isAlwaysSemiDeterministic();

@@ -29,16 +29,19 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
@@ -115,6 +118,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		TERMINATING, NONTERMINATING, UNKNOWN, UNCHECKED
 	}
 
+	// possible outcomes of the fairness trace check
+	// TODO: V-Update once I know whats going on with the other enums
+	enum FairnessResult {
+		FAIR, UNFAIR, UNKNOWN, UNCHECKED
+	}
+
 	enum LassoPart {
 		STEM, LOOP, CONCAT
 	}
@@ -165,7 +174,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
 	private final NestedLassoRun<L, IPredicate> mCounterexample;
-
+	// TODO: V- what is this one?
 	private final Function<IPredicate, Object> mGetControlConfiguration;
 
 	/**
@@ -258,10 +267,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mStateFactoryForInterpolantAutomaton = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
 				mPredicateFactory, computeHoareAnnotation);
 
+		// V - the actual checks seem to happen in this classes constructor
 		mLassoCheckResult = new LassoCheckResult();
+
+		// TODO: V - might need to edit in the lines below
 		assert mLassoCheckResult.getStemFeasibility() != TraceCheckResult.UNCHECKED;
 		assert mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.UNCHECKED
 				|| mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.INFEASIBLE && !mTryTwofoldRefinement;
+		// V - the trace has an infeasible finite prefix or the loop alone terminates already?
 		if (mLassoCheckResult.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
 					|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
@@ -526,6 +539,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return new NonTerminationAnalysisSettings(new DefaultNonTerminationAnalysisSettings() {
 			@Override
 			public AnalysisType getAnalysis() {
+
 				return mGntaAnalysisType;
 			}
 
@@ -610,6 +624,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			}
 			if (!CHECK_TERMINATION_EVEN_IF_NON_TERMINATING && nonTermArgument != null) {
 				return SynthesisResult.NONTERMINATING;
+
 			}
 		}
 
@@ -674,6 +689,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 		if (nonTermArgument != null) {
 			return SynthesisResult.NONTERMINATING;
+
 		}
 		return SynthesisResult.UNKNOWN;
 	}
@@ -745,6 +761,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		private final SynthesisResult mLoopTermination;
 		private final SynthesisResult mLassoTermination;
 
+		// TODO: V - marker
+		// we first check if we can already show termination for only the loop part of our fairness automaton
+		private FairnessResult mLoopOnly = FairnessResult.UNCHECKED;
+		private FairnessResult mProgram = FairnessResult.UNCHECKED;
+
 		private final ContinueDirective mContinueDirective;
 
 		public LassoCheckResult() throws IOException {
@@ -752,6 +773,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			mLogger.info("Stem: " + stem);
 			final NestedWord<L> loop = mCounterexample.getLoop().getWord();
 			mLogger.info("Loop: " + loop);
+			// first check whether the lasso trace has an infeasible prefix
 			mStemFeasibility = checkStemFeasibility();
 			if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
 				mLogger.info("stem already infeasible");
@@ -805,6 +827,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				return;
 			}
 			// concat feasible
+
 			final UnmodifiableTransFormula loopTF = computeLoopTF();
 			// checking loop termination before we check lasso
 			// termination is a workaround.
@@ -813,6 +836,89 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			// LassoChecker is not optimal. Hence we first check
 			// only the loop, which guarantees that there are no
 			// supporting invariants.
+
+			// TODO: V- Add fairness check for the trace
+			/**
+			 * (1) identify loop/nonloop threads -- does the loop contain statements from all threads? -y-> fair (2)
+			 * Unroll the loop statement by statement, for each honda: - get guards of outgoing non-loop ts - build
+			 * modified loop, check if it terminates
+			 *
+			 *
+			 **/
+			assert !mCsToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()
+					: "Concurrent program expected";
+
+			final Set<String> threads = mCsToolkit.getProcedures();
+
+			// identify loop/non-loop threads
+			// loop threads: all threads that from which a statement on the loop originates
+			final Set<String> loopThreads = new HashSet<>();
+			for (final L st : loop) {
+				loopThreads.add(st.getSource().getProcedure());
+			}
+			final Set<String> nonLoopThreads = threads;
+			nonLoopThreads.removeAll(loopThreads);
+
+			// If there are no non-loop threads, the trace is definitely fair and we can proceed to check termination
+			if (nonLoopThreads.isEmpty()) {
+				mProgram = FairnessResult.FAIR;
+			} else {
+				// Iterate through the lasso states and check for outgoing non-loop edges.
+				final NestedRun<L, IPredicate> loopRun = mCounterexample.getLoop();
+				final int loopLen = loopRun.getLength();
+				final List<IPredicate> loopStates = loopRun.getStateSequence();
+				// TODO: get guard disjunctions here! - special treatment if true
+				// vielleicht kommt man über predicate utils an die locations?
+				final L guardDisj = null;
+				final Set<String> hondaTSThreads = new HashSet<>();
+				for (int i = 0; i < loopLen; i++) {
+					// TODO: V - add skip if the ts leading to this state doesnt modify guard vars
+					// do we need the state for anything?
+					final IPredicate honda = loopRun.getStateAtPosition(i);
+
+					// build "new" word with honda being the currently checked state
+					final NestedWord<L> newStem = stem.concatenate(loop.getSubWord(0, i));
+
+					// TODO: V - Add the "assume not G" at the beginning!!!
+					final NestedWord<L> newLoop = loop.getSubWord(i, loopLen).concatenate(loop.getSubWord(0, i));
+					final NestedLassoWord<L> newTrace = new NestedLassoWord(newStem, newLoop);
+
+					// first check whether the loop part already terminates
+					// TODO: V - find out what the booleans in this constructor signify
+					final UnmodifiableTransFormula newLoopTF = computeTF(newLoop, true, true, false);
+					final SynthesisResult res = checkLoopTermination(newLoopTF);
+					// TODO: V - this could be nicer
+
+					final boolean emptyStem = (newStem.length() == 0);
+					switch (res) {
+					case TERMINATING:
+						mLoopOnly = FairnessResult.UNFAIR;
+						mProgram = FairnessResult.UNFAIR;
+						// TODO: skip termination analysis
+						break;
+
+					case NONTERMINATING:
+						mLoopOnly = FairnessResult.FAIR;
+						if (emptyStem) {
+							mProgram = mLoopOnly;
+						} else {
+							mProgram = checkFairProgramTermination(newTrace, guardDisj, 3);
+						}
+						break;
+
+					case UNKNOWN:
+						mLoopOnly = FairnessResult.UNKNOWN;
+						if (emptyStem) {
+							mProgram = mLoopOnly;
+						} else {
+							mProgram = checkFairProgramTermination(newTrace, guardDisj, 3);
+							break;
+						}
+					}
+				}
+
+			}
+			// If the trace is fair, continue with termination check
 			mLoopTermination = checkLoopTermination(loopTF);
 			if (mLoopTermination == SynthesisResult.TERMINATING) {
 				mLassoTermination = SynthesisResult.UNCHECKED;
@@ -832,6 +938,61 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			}
 		}
 
+		// -------------------- fairness stuff -------------------------------------------------------------------------
+		// TODO: V - how do we check if the termination argument holds for the whole program?
+		/*
+		 * (Approximately) checks whether P(A_fair(trace, guard)) terminates by trying a few 'unrollings' of the
+		 * program. If one terminates we check whether its termination argument is sufficient for the whole program.
+		 *
+		 *
+		 *
+		 * @param trace - the trace we want to check for fairness
+		 *
+		 * @param guard - disjunction of guards of outgoing non-loop edges of the honda
+		 *
+		 * @param num_unrollings - how many traces of form [stem (loop)^i (assume not G; loop)^omega] we want to try,
+		 * should be greater than 0
+		 */
+		private FairnessResult checkFairProgramTermination(final NestedLassoWord<L> trace, final L guard,
+				final int num_unrollings) throws IOException {
+			NestedWord<L> stem = trace.getStem();
+			final UnmodifiableTransFormula originalStemTF = computeTF(stem, true, true, false);
+			final UnmodifiableTransFormula originalLoopTF = computeTF(trace.getLoop(), true, true, false);
+			final Word<L> G = new Word<>(guard);
+			final NestedWord<L> loop = NestedWord.nestedWord(G).concatenate(trace.getLoop());
+			// TODO: V- figure out which booleans to use
+			final UnmodifiableTransFormula loopTF = computeTF(loop, true, true, false);
+
+			for (int i = 0; i < num_unrollings; i++) {
+				stem = stem.concatenate(trace.getLoop());
+				final UnmodifiableTransFormula stemTF = computeTF(stem, true, true, false);
+				final SynthesisResult res = checkLassoTermination(stemTF, loopTF);
+				// One trace of P(A_fair) doesn't terminate --> P doesn't terminate --> G might not hold inf. often
+				if (res == SynthesisResult.NONTERMINATING) {
+					// TODO: V - should this be fair or unknown?
+					return FairnessResult.FAIR;
+				}
+				if (res == SynthesisResult.TERMINATING) {
+					// TODO: V - get the termination argument and check if its sufficient
+					// build A_fair, build trace module and check whether diff is empty?
+					// (AbstractBuchiCegarLoop.refineBuchi)
+					// reicht es zu prüfen, ob die sup. inv. auch eine invariante für den ersten loop ist?
+					// wenn das resultat terminating ist, dann sollte das termination argument zu diesem zeitpunkt in
+					// mBspmResult stehen?
+					// TODO: check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
+					final IPredicate supInvariant = mBspmResult.getSiConjunction();
+					// holds after execution of (old) stem? - stem precondition should be the same for original and
+					// unrolling stem
+
+					// is loop invariant for first loop of A_fair?
+
+				}
+			}
+
+			return FairnessResult.UNKNOWN;
+		}
+
+		// -------------------------------------------------------------------------------------------------------------
 		private TraceCheckResult checkStemFeasibility() {
 			final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
 			if (BuchiAutomizerUtils.isEmptyStem(stem)) {
