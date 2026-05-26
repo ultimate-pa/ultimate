@@ -423,7 +423,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			final Set<IcfgLocation> errorLocs) {
 		// run the CEGAR loop
 		final var cegarAndProofProducer = mCegarFactory.constructCegarLoop(services, name, icfg, errorLocs,
-				mWitnessTransformer, mRawFloydHoareAutomataFromFile);
+				mWitnessTransformer, mRawFloydHoareAutomataFromFile, mLocationMap);
 		final CegarLoopResult<L> clres = cegarAndProofProducer.getFirst().runCegar();
 
 		// extract a proof from the CEGAR loop (if one exists)

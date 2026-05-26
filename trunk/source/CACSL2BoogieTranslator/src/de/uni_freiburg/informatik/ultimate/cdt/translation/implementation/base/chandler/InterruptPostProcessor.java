@@ -385,7 +385,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Procedure constructOneInterruptThreadGpioProc(final String identifier,
 			final IdentifierExpression threadEnabledId, final Integer irq) {
 		final var procName = constructThreadGpioID(identifier, irq);
+
 		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for ISR " + identifier);
+
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
@@ -446,11 +448,12 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId,
 			final Integer isrNum) {
 		final var enabledExpr = threadEnabledId;
-		final var ifStmt = getIfStatement(identifier, enabledExpr);
-		final var block = getIsrBlock(ifStmt, isrNum);
+		final var ifStmt = getIfStatement(identifier, enabledExpr, isrNum);
+		// final var block = getIsrBlock(ifStmt, isrNum);
 		final var forkJoin = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 		final var while_condition = forkJoin ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
-		return new WhileStatement(mIgnoreLoc, while_condition, new LoopInvariantSpecification[0], block);
+		return new WhileStatement(mIgnoreLoc, while_condition, new LoopInvariantSpecification[0],
+				new Statement[] { ifStmt });
 	}
 
 	private Statement constructAllIsrWhileLoop(final AuxVarInfo auxVarInfo) {
@@ -464,7 +467,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final var threadEnabledId = mAuxVarExpressions.get(irq);
 			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
 			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ: " + irq;
-			ifStatements.add(getIfStatement(identifier, enabledExpression));
+			ifStatements.add(getIfStatement(identifier, enabledExpression, irq));
 			final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements);
 			atomicStatements.add(atomic);
 		}
@@ -480,10 +483,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return new Statement[] { StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStatement)) };
 	}
 
-	private Statement getIfStatement(final String identifier, final Expression enabledExpr) {
+	private Statement getIfStatement(final String identifier, final Expression enabledExpr, final int id) {
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
-		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then },
+		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, labelISRStatement(then, id),
 				new Statement[0]);
 	}
 

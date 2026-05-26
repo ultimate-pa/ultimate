@@ -31,102 +31,147 @@ import java.util.HashSet;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /*
  * Traverse the ICFG belonging to an IDP with BFS and extract information about the locations belonging to
  * interrupt-service routines.
  */
-public class ISRLabelHandler {
+public class ISRLabelHandler implements IStorable {
 
-	private final IIcfg<? extends IcfgLocation> mIcfg;
-	private final Map<? extends IcfgLocation, Label> mLoc2Label;
+	private final IIcfg<BoogieIcfgLocation> mIcfg;
 	private final Map<IcfgLocation, IDPNodeLocation> mIcfgLoc2IsrLocType;
+	private final BoogieDeclarations mBoogieDeclarations;
+	private final Map<Statement, Integer> mIsrId2Statements;
 
 	private final ILogger mLogger;
 
-	public ISRLabelHandler(final IIcfg<? extends IcfgLocation> icfg, final Map<? extends IcfgLocation, Label> loc2Label,
+	public ISRLabelHandler(final IIcfg<BoogieIcfgLocation> icfg, final BoogieDeclarations boogieDeclarations,
 			final ILogger logger) {
 		mLogger = logger;
 
 		mIcfg = icfg;
-		mLoc2Label = loc2Label;
+		mBoogieDeclarations = boogieDeclarations;
+		mIsrId2Statements = getInterruptStatements();
 		mIcfgLoc2IsrLocType = processIcfg();
 	}
 
 	private Map<IcfgLocation, IDPNodeLocation> processIcfg() {
 		final HashMap<IcfgLocation, IDPNodeLocation> boogieLoc2IdpLoc = new HashMap<>();
-		final HashDeque<Pair<IcfgLocation, IDPNodeLocation>> icfgNodes = new HashDeque<>();
+		final HashDeque<BoogieIcfgLocation> icfgNodes = new HashDeque<>();
 		final var visited = new HashSet<IcfgLocation>();
 		final var initNodes = mIcfg.getProcedureEntryNodes().values();
-		final var idpMainProcLoc = new IDPNodeLocation(IDPLocation.MAIN, 0);
-		for (final IcfgLocation IcfgLocation : initNodes) {
-			icfgNodes.offer(new Pair<>(IcfgLocation, idpMainProcLoc));
+		for (final BoogieIcfgLocation IcfgLocation : initNodes) {
+			icfgNodes.offer(IcfgLocation);
 		}
 		while (!icfgNodes.isEmpty()) {
-			final var currentPair = icfgNodes.poll();
-			final var currentNode = currentPair.getFirst();
-			var nodeLoc = currentPair.getSecond();
+			final BoogieIcfgLocation currentNode = icfgNodes.poll();
 			if (!visited.add(currentNode)) {
 				continue;
 			}
-			if (nodeLoc.location == IDPLocation.ISR_EXIT) {
-				nodeLoc = idpMainProcLoc;
-			} else if (isIsrLocation(currentNode)) {
-				nodeLoc = getLocationISRType(currentNode);
-			}
-			boogieLoc2IdpLoc.put(currentNode, nodeLoc);
+			final var nodeLoc = getLocationISRType(currentNode);
 			final var edges = currentNode.getOutgoingEdges();
 			for (final IcfgEdge icfgEdge : edges) {
-				final var succNode = icfgEdge.getTarget();
-				icfgNodes.offer(new Pair<>(succNode, nodeLoc));
+				final var succ = icfgEdge.getTarget();
+				if (succ instanceof final BoogieIcfgLocation boogieIcfgLocation) {
+					icfgNodes.offer(boogieIcfgLocation);
+				}
+				assert succ instanceof BoogieIcfgLocation;
 			}
+			boogieLoc2IdpLoc.put(currentNode, nodeLoc);
 		}
 		return boogieLoc2IdpLoc;
 	}
 
-	private boolean isIsrLocation(final IcfgLocation location) {
-		final var label = mLoc2Label.get(location);
-		return label != null;
+	private boolean isIsrLocation(final BoogieIcfgLocation location) {
+		if (location.getBoogieASTNode() instanceof final Statement st) {
+			return mIsrId2Statements.containsKey(st);
+		}
+		return false;
 	}
 
-	private IDPNodeLocation getLocationISRType(final IcfgLocation location) {
-		final var label = mLoc2Label.get(location);
-		if (label == null) {
+	private IDPNodeLocation getLocationISRType(final BoogieIcfgLocation location) {
+		final var astNode = location.getBoogieASTNode();
+		if (!isIsrLocation(location)) {
 			return new IDPNodeLocation(IDPLocation.MAIN, 0);
 		}
-		return processISRLabel(label);
+		final var st = (Statement) astNode;
+		return new IDPNodeLocation(IDPLocation.ISR, mIsrId2Statements.get(st));
 	}
 
 	public Map<IcfgLocation, IDPNodeLocation> getIcfgLoc2IDPLoc() {
 		return mIcfgLoc2IsrLocType;
 	}
 
-	private static IDPNodeLocation processISRLabel(final Label label) {
+	private static boolean isISRLabel(final Label label) {
 		final var attributes = label.getAttributes();
-
-		assert attributes.length == 3 : "Label is not a proper ISR-label";
-
-		final var labelType = attributes[0];
-		assert labelType.getName() == "isr_label" : "Attribute of ISR-label " + label.getName() + " is invalid";
-		final var labelLocation = attributes[1];
-		final var labelNum = attributes[2];
-		// TODO: Sanity checks?
-		final var isrId = Integer.parseInt(labelNum.getName());
-		if (labelLocation.getName().equals("entry")) {
-			return new IDPNodeLocation(IDPLocation.ISR_ENTRY, isrId);
+		if (attributes == null || attributes.length != 3) {
+			return false;
 		}
-		assert labelType.getName().equals("exit") : "Invalid attribute of ISR-label " + label.getName();
-		return new IDPNodeLocation(IDPLocation.ISR_EXIT, isrId);
+		final var attributeName = attributes[0].getName();
+		return attributeName.equals("isr_label");
+	}
+
+	private static boolean isISREntry(final Label label) {
+		final var attributes = label.getAttributes();
+		if (attributes == null || attributes.length != 3) {
+			return false;
+		}
+		final var attributeName = attributes[1].getName();
+		return attributeName.equals("entry");
+	}
+
+	private Map<Statement, Integer> getInterruptStatements() {
+		final var isrId2Statements = new HashMap<Statement, Integer>();
+		for (final String procName : mBoogieDeclarations.getProcSpecification().keySet()) {
+			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
+				final var stmt = mBoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
+				final var procId2Isr = getInterruptStatements(stmt);
+				isrId2Statements.putAll(procId2Isr);
+			}
+		}
+		return isrId2Statements;
+	}
+
+	private static Map<Statement, Integer> getInterruptStatements(final Statement[] block) {
+		final var isrId2Statements = new HashMap<Statement, Integer>();
+		var currentIsrNum = -1;
+		var isPartOfIsr = false;
+		for (final Statement st : block) {
+			if (isPartOfIsr) {
+				assert currentIsrNum >= 0;
+				final var prevVal = isrId2Statements.put(st, currentIsrNum);
+				assert prevVal == null;
+			}
+			if (st instanceof final Label laSt) {
+				if (!isISRLabel(laSt)) {
+					continue;
+				} else if (isISREntry(laSt)) {
+					assert !isPartOfIsr : "Nested ISR labels are invalid!";
+					isPartOfIsr = true;
+					final var attributes = laSt.getAttributes();
+					final var labelNum = attributes[2];
+					currentIsrNum = Integer.parseInt(labelNum.getName());
+					final var prevVal = isrId2Statements.put(st, currentIsrNum);
+					assert prevVal == null;
+				} else {
+					isPartOfIsr = false;
+				}
+			}
+		}
+		return isrId2Statements;
 	}
 
 	public IDPNodeLocation getIDPLocation(final IcfgLocation icfgLocation) {
-		// TODO: Mabe return MAIN if the get results in null?
+		// TODO: Maybe return MAIN if the get results in null?
 		return mIcfgLoc2IsrLocType.get(icfgLocation);
 	}
 
@@ -135,6 +180,12 @@ public class ISRLabelHandler {
 	}
 
 	public enum IDPLocation {
-		ISR_ENTRY, ISR_EXIT, MAIN
+		ISR, MAIN
+	}
+
+	@Override
+	public void destroy() {
+		// TODO Auto-generated method stub
+
 	}
 }

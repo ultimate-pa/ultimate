@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.BacktranslatingProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.FiniteAutomaton2IDPAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PartialOrderAbstractionProvider;
@@ -66,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.util.ISRLabelHandler;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IndependenceProviderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
@@ -128,15 +131,21 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	 *            An (optional) transformer for the abstraction using the witness
 	 * @param rawFloydHoareAutomataFromFile
 	 *            A list of automata to use if a CEGAR loop with Floyd/Hoare automata reuse is created
+	 * @param locationMap
 	 *
 	 * @return the newly created CEGAR loop
 	 */
 	public Pair<? extends BasicCegarLoop<L, ?>, IProofProducer<IIcfg<IcfgLocation>, ?>> constructCegarLoop(
 			final IUltimateServiceProvider services, final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final Set<IcfgLocation> errorLocs, final IWitnessTransformer<L> witnessTransformer,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final Map<IcfgLocation, IcfgLocation> locationMap) {
 		mCegarLoopBenchmark = new CegarLoopStatisticsGenerator();
 
+		final var loc2IdpLoc = services.getStorage().getStorable("isr_locations");
+		assert loc2IdpLoc != null;
+		assert loc2IdpLoc instanceof ISRLabelHandler;
+		final ISRLabelHandler isrHandler = (ISRLabelHandler) loc2IdpLoc;
 		final CfgSmtToolkit csToolkit = root.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
@@ -168,10 +177,12 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					mIndependenceProviderFactory =
 							new IndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
 				}
-				final var poCegar = new PartialOrderCegarLoop<>(name,
-						createPartialOrderAbstraction(services, predicateFactory, stateFactoryForRefinement, root,
-								errorLocs),
-						root, csToolkit, predicateFactory, mPrefs, errorLocs, services,
+				final var initAbstr = createPartialOrderAbstraction(services, predicateFactory,
+						stateFactoryForRefinement, root, errorLocs);
+				final var idpAutomaton =
+						new FiniteAutomaton2IDPAutomaton<>(initAbstr, isrHandler, locationMap, errorLocs);
+				final var poCegar = new PartialOrderCegarLoop<>(name, idpAutomaton, root, csToolkit, predicateFactory,
+						mPrefs, errorLocs, services,
 						mIndependenceProviderFactory.createProviders(root, predicateFactory), mTransitionClazz,
 						stateFactoryForRefinement, mCopyFactory);
 				return new Pair<>(poCegar, null);

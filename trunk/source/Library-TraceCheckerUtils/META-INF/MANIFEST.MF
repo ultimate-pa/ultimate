@@ -25,3 +25,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.tracecheckerutils
+Import-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.util

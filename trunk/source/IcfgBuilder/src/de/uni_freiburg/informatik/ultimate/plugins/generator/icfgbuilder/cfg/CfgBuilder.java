@@ -163,9 +163,6 @@ public class CfgBuilder {
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 
-	// Store the locations of ISR entries/exits in the CFG of an IDP
-	private static boolean STORE_ISR_LOCATIONS = false;
-
 	/**
 	 * ILogger for this plugin.
 	 */
@@ -204,8 +201,6 @@ public class CfgBuilder {
 
 	private final boolean mRemoveAssumeTrueStmt;
 	private final boolean mFutureLiveOptimization;
-
-	private final Map<BoogieIcfgLocation, Label> mIsrLoc2Label = new HashMap<>();
 
 	public CfgBuilder(final Unit unit, final IUltimateServiceProvider services) {
 		mServices = services;
@@ -295,11 +290,6 @@ public class CfgBuilder {
 			if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
 				procCfgBuilder.buildProcedureCfgFromImplementation(procName);
 			}
-		}
-
-		// If the program is an IDP store the ISR entry/exit locations
-		if (STORE_ISR_LOCATIONS) {
-			mIsrLoc2Label.putAll(procCfgBuilder.mIsrLoc2Label);
 		}
 
 		// Transform CFGs to a recursive CFG
@@ -529,10 +519,6 @@ public class CfgBuilder {
 		return oa != null;
 	}
 
-	public Map<BoogieIcfgLocation, Label> getISRLocationMap() {
-		return mIsrLoc2Label;
-	}
-
 	/**
 	 * Provides two informations that can be obtained by traversing all statements.
 	 * <ul>
@@ -658,8 +644,6 @@ public class CfgBuilder {
 
 		private Map<String, Integer> mGotoTargetCounter;
 
-		private final Map<BoogieIcfgLocation, Label> mIsrLoc2Label = new HashMap<>();
-
 		/**
 		 * Builds the control flow graph of a single procedure according to a given implementation.
 		 *
@@ -782,12 +766,6 @@ public class CfgBuilder {
 					continue;
 				}
 				if (st instanceof final Label laSt && isAuxiliaryLabel(laSt)) {
-					if (isISRLabel(laSt)) {
-						final var labelLoc = buildLabel(currentLocation, laSt);
-						addIsrLoc2LabelMapping(labelLoc, laSt);
-						currentLocation = labelLoc;
-						continue;
-					}
 					final int gotoTarget = mGotoTargetCounter.getOrDefault(laSt.getName(), 0);
 					if (gotoTarget == 0) {
 						// not target of a goto
@@ -1746,25 +1724,6 @@ public class CfgBuilder {
 			} else {
 				ModelUtils.copyAnnotationsExcept(oldLocNode, newLocNode, ILocation.class);
 			}
-		}
-
-		private boolean isISRLabel(final Label label) {
-			if (!STORE_ISR_LOCATIONS) {
-				return false;
-			}
-			final var attributes = label.getAttributes();
-			if (attributes == null || attributes.length != 3) {
-				return false;
-			}
-			final var attributeName = attributes[0].getName();
-			return attributeName.equals("isr_label");
-		}
-
-		private void addIsrLoc2LabelMapping(final BoogieIcfgLocation loc, final Label label) {
-			if (!STORE_ISR_LOCATIONS) {
-				return;
-			}
-			mIsrLoc2Label.put(loc, label);
 		}
 	}
 
