@@ -55,6 +55,8 @@ public class IcfgBuilderObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
+	private ISRLabelHandler mIsrLabelHandler;
+
 	public IcfgBuilderObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -66,6 +68,10 @@ public class IcfgBuilderObserver implements IUnmanagedObserver {
 	 */
 	public IIcfg<BoogieIcfgLocation> getRoot() {
 		return mGraphroot;
+	}
+
+	public ISRLabelHandler getIsrLabelHandler() {
+		return mIsrLabelHandler;
 	}
 
 	/**
@@ -91,7 +97,7 @@ public class IcfgBuilderObserver implements IUnmanagedObserver {
 			assert IcfgUtils.areLoopLocationsRegistered(mGraphroot);
 			assert IcfgUtils.areLocationsOfInterestRegistered(mGraphroot);
 			mServices.getBacktranslationService().addTranslator(recCFGBuilder.getBacktranslator());
-			final var isrLabelHandler = new ISRLabelHandler(mGraphroot, recCFGBuilder.getISRLocationMap(), mLogger);
+			mIsrLabelHandler = new ISRLabelHandler(mGraphroot, recCFGBuilder.getISRLocationMap(), mLogger);
 		} catch (final SMTLIBException e) {
 			final String message = e.getMessage();
 			if ("Cannot create quantifier in quantifier-free logic".equals(message)
