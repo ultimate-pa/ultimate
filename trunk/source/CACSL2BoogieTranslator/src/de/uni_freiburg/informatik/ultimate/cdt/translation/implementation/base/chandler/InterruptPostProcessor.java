@@ -449,11 +449,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final Integer isrNum) {
 		final var enabledExpr = threadEnabledId;
 		final var ifStmt = getIfStatement(identifier, enabledExpr, isrNum);
-		// final var block = getIsrBlock(ifStmt, isrNum);
+		final var block = getIsrBlock(ifStmt);
 		final var forkJoin = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 		final var while_condition = forkJoin ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
-		return new WhileStatement(mIgnoreLoc, while_condition, new LoopInvariantSpecification[0],
-				new Statement[] { ifStmt });
+		return new WhileStatement(mIgnoreLoc, while_condition, new LoopInvariantSpecification[0], block);
 	}
 
 	private Statement constructAllIsrWhileLoop(final AuxVarInfo auxVarInfo) {
@@ -476,9 +475,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 				atomicStatements.toArray(new Statement[0]));
 	}
 
-	private Statement[] getIsrBlock(final Statement ifStatement, final Integer isrId) {
+	private Statement[] getIsrBlock(final Statement ifStatement) {
 		if (ADD_ISR_LABELS) {
-			return labelISRStatement(ifStatement, isrId);
+			return new Statement[] { ifStatement };
 		}
 		return new Statement[] { StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStatement)) };
 	}
@@ -486,7 +485,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Statement getIfStatement(final String identifier, final Expression enabledExpr, final int id) {
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
-		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, labelISRStatement(then, id),
+		if (ADD_ISR_LABELS) {
+			return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, labelISRStatement(then, id),
+					new Statement[0]);
+		}
+		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then },
 				new Statement[0]);
 	}
 
