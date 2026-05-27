@@ -410,6 +410,17 @@ final class BodyTransformer extends BoogieTransformer {
 
 			newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
 			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
+
+			// Ghost update
+			if (mProgramAndProof.getGhostUpdateMap() != null 
+				&& mProgramAndProof
+					.getGhostUpdateMap().get(statements[i].getLocation()) != null) {
+				for (CallStatement stmt : mProgramAndProof
+						.getGhostUpdateMap().get(statements[i].getLocation())
+				) {
+					newStatements.add(stmt);
+				}
+			}
 		}
 		
 		if (mCurrentProcedure != "ULTIMATE.start") {

@@ -96,9 +96,12 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		}
 
 		for (String key : mUsedTidMap.keySet()) {
-			mAllTidMap
-				.computeIfAbsent(key, k -> new ArrayList<>())
-				.addAll(mUsedTidMap.get(key));
+			List<Tid> tids = mAllTidMap.getOrDefault(key, new ArrayList<>());
+			for (Tid tid : mUsedTidMap.get(key)) {
+				if (!tids.contains(tid)) {
+					tids.add(tid);
+				}
+			}
 		}
 
 		// TODO improve use set instead of list
