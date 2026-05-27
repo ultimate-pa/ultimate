@@ -36,12 +36,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
@@ -78,7 +76,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -93,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager.BspmResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -568,7 +571,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " +
 		// loopVars);
 		// }
-
+		// TODO: do we need to mess with the modifiable globals?
 		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mCsToolkit.getManagedScript(),
 				mModifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
@@ -867,28 +870,50 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final NestedRun<L, IPredicate> loopRun = mCounterexample.getLoop();
 				final int loopLen = loopRun.getLength();
 				final List<IPredicate> loopStates = loopRun.getStateSequence();
-				// TODO: get guard disjunctions here! - special treatment if true
-				// vielleicht kommt man über predicate utils an die locations?
-				final L guardDisj = null;
-				final Set<String> hondaTSThreads = new HashSet<>();
+
+				// get negated disjunction of guards of outgoing non-loop edges. the guard disj. is the same for every
+				// state of the loop.
+				final Set<IcfgLocation> loopLocs = PredicateUtils.getLocations(loopStates.getFirst());
+				final Set<TransFormula> guards = new HashSet<>();
+				for (final IcfgLocation threadLoc : loopLocs) {
+					if (loopThreads.contains(threadLoc.getProcedure())) {
+						continue;
+					}
+					for (final IcfgEdge edge : threadLoc.getOutgoingEdges()) {
+						guards.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mCsToolkit.getManagedScript(),
+								mServices));
+					}
+				}
+
+				// disjunction of terms should be equivalent to parallel comp of respective TransFormulae
+				// TODO: Ask if thats actually true and about branch indicators
+				final UnmodifiableTransFormula notGuardDisj = TransFormulaUtils.negate(
+						TransFormulaUtils.parallelComposition(mLogger, mServices, mCsToolkit.getManagedScript(), null,
+								false, true, guards.toArray(UnmodifiableTransFormula[]::new)),
+						mCsToolkit.getManagedScript(), mServices);
+
+				// we unroll the loop state by state and check if the resulting P(A_fair) terminates
+				NestedWord<L> newStem = stem;
+				NestedWord<L> unguardedLoop = loop;
 				for (int i = 0; i < loopLen; i++) {
 					// TODO: V - add skip if the ts leading to this state doesnt modify guard vars
-					// do we need the state for anything?
-					final IPredicate honda = loopRun.getStateAtPosition(i);
+					// get the transformulae of the current unrolling
+					// TODO: this is ugly, think of sth better
+					if (i > 0) {
+						newStem = stem.concatenate(loop.getSubWord(0, i));
+						unguardedLoop = loop.getSubWord(i, loopLen).concatenate(loop.getSubWord(0, i));
+					}
+					final UnmodifiableTransFormula newStemTF = computeTF(newStem, true, true, false);
+					final UnmodifiableTransFormula unguardedLoopTF = computeTF(unguardedLoop, true, true, false);
 
-					// build "new" word with honda being the currently checked state
-					final NestedWord<L> newStem = stem.concatenate(loop.getSubWord(0, i));
-
-					// TODO: V - Add the "assume not G" at the beginning!!!
-					final NestedWord<L> newLoop = loop.getSubWord(i, loopLen).concatenate(loop.getSubWord(0, i));
-					final NestedLassoWord<L> newTrace = new NestedLassoWord(newStem, newLoop);
+					final UnmodifiableTransFormula guardedLoopTF = TransFormulaUtils.sequentialComposition(mLogger,
+							mServices, mCsToolkit.getManagedScript(), true, false, false, mSimplificationTechnique,
+							List.of(notGuardDisj, unguardedLoopTF));
 
 					// first check whether the loop part already terminates
-					// TODO: V - find out what the booleans in this constructor signify
-					final UnmodifiableTransFormula newLoopTF = computeTF(newLoop, true, true, false);
-					final SynthesisResult res = checkLoopTermination(newLoopTF);
-					// TODO: V - this could be nicer
+					final SynthesisResult res = checkLoopTermination(guardedLoopTF);
 
+					// TODO: V - this could be nicer
 					final boolean emptyStem = (newStem.length() == 0);
 					switch (res) {
 					case TERMINATING:
@@ -902,7 +927,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						if (emptyStem) {
 							mProgram = mLoopOnly;
 						} else {
-							mProgram = checkFairProgramTermination(newTrace, guardDisj, 3);
+							mProgram = checkFairProgramTermination(newStemTF, guardedLoopTF, unguardedLoopTF, 3);
 						}
 						break;
 
@@ -911,7 +936,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						if (emptyStem) {
 							mProgram = mLoopOnly;
 						} else {
-							mProgram = checkFairProgramTermination(newTrace, guardDisj, 3);
+							mProgram = checkFairProgramTermination(newStemTF, guardedLoopTF, unguardedLoopTF, 3);
 							break;
 						}
 					}
@@ -919,7 +944,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 			}
 			// If the trace is fair, continue with termination check
-			mLoopTermination = checkLoopTermination(loopTF);
+			mLoopTermination =
+
+					checkLoopTermination(loopTF);
 			if (mLoopTermination == SynthesisResult.TERMINATING) {
 				mLassoTermination = SynthesisResult.UNCHECKED;
 				mContinueDirective = ContinueDirective.REFINE_BUCHI;
@@ -946,47 +973,48 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		 *
 		 *
 		 *
-		 * @param trace - the trace we want to check for fairness
+		 * @param stemTF - transition formula of the stem
 		 *
-		 * @param guard - disjunction of guards of outgoing non-loop edges of the honda
+		 * @param loopTF - transition formula for the second loop (with negated guard disjunction added in front)
+		 *
+		 * @param unguardedLoopTF - transition formula for the first loop
 		 *
 		 * @param num_unrollings - how many traces of form [stem (loop)^i (assume not G; loop)^omega] we want to try,
 		 * should be greater than 0
 		 */
-		private FairnessResult checkFairProgramTermination(final NestedLassoWord<L> trace, final L guard,
+		private FairnessResult checkFairProgramTermination(final UnmodifiableTransFormula stemTF,
+				final UnmodifiableTransFormula loopTF, final UnmodifiableTransFormula unguardedLoopTF,
 				final int num_unrollings) throws IOException {
-			NestedWord<L> stem = trace.getStem();
-			final UnmodifiableTransFormula originalStemTF = computeTF(stem, true, true, false);
-			final UnmodifiableTransFormula originalLoopTF = computeTF(trace.getLoop(), true, true, false);
-			final Word<L> G = new Word<>(guard);
-			final NestedWord<L> loop = NestedWord.nestedWord(G).concatenate(trace.getLoop());
-			// TODO: V- figure out which booleans to use
-			final UnmodifiableTransFormula loopTF = computeTF(loop, true, true, false);
-
+			UnmodifiableTransFormula urStemTF = stemTF;
+			// TODO: think about whether we count the stem(loop)^\omega as zeroth or first unrolling
 			for (int i = 0; i < num_unrollings; i++) {
-				stem = stem.concatenate(trace.getLoop());
-				final UnmodifiableTransFormula stemTF = computeTF(stem, true, true, false);
-				final SynthesisResult res = checkLassoTermination(stemTF, loopTF);
+				// stem = stem.concatenate(trace.getLoop());
+				// final UnmodifiableTransFormula stemTF = computeTF(stem, true, true, false);
+				// ch
+				final SynthesisResult res = checkLassoTermination(urStemTF, loopTF);
 				// One trace of P(A_fair) doesn't terminate --> P doesn't terminate --> G might not hold inf. often
-				if (res == SynthesisResult.NONTERMINATING) {
-					// TODO: V - should this be fair or unknown?
-					return FairnessResult.FAIR;
+				if (res != SynthesisResult.TERMINATING) {
+					// TODO: differentiate between nonterminating and unknown?
+					return FairnessResult.UNKNOWN;
 				}
-				if (res == SynthesisResult.TERMINATING) {
-					// TODO: V - get the termination argument and check if its sufficient
-					// build A_fair, build trace module and check whether diff is empty?
-					// (AbstractBuchiCegarLoop.refineBuchi)
-					// reicht es zu prüfen, ob die sup. inv. auch eine invariante für den ersten loop ist?
-					// wenn das resultat terminating ist, dann sollte das termination argument zu diesem zeitpunkt in
-					// mBspmResult stehen?
-					// TODO: check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
-					final IPredicate supInvariant = mBspmResult.getSiConjunction();
-					// holds after execution of (old) stem? - stem precondition should be the same for original and
-					// unrolling stem
 
-					// is loop invariant for first loop of A_fair?
+				// get the termination argument and check if its sufficient
+				// TODO: check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
+				// TODO: closed Formula oder Formula?
+				final Term[] supInv = { mBspmResult.getSiConjunction().getClosedFormula() };
+				// Note: this only checks whether {si} loop {si} holds - sufficient bc we know that all shorter
+				// unrollings terminate
 
+				// TODO: ist das die passende Funktion? machen wir irgendwas kaputt?
+				// TODO:sanity check - if we do this for the guarded loop it should always be true
+				final boolean sufficient =
+						mBspm.isSupportingInvariant(supInv, unguardedLoopTF, mModifiableGlobalsAtHonda);
+				if (sufficient) {
+					return FairnessResult.UNFAIR;
 				}
+				// unroll further
+				urStemTF = TransFormulaUtils.sequentialComposition(mLogger, mServices, mCsToolkit.getManagedScript(),
+						true, false, false, mSimplificationTechnique, List.of(urStemTF, unguardedLoopTF));
 			}
 
 			return FairnessResult.UNKNOWN;

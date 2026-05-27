@@ -158,7 +158,7 @@ public class BinaryStatePredicateManager {
 		return neededSiTerms;
 	}
 
-	private boolean isSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf,
+	public boolean isSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf,
 			final Set<IProgramNonOldVar> modifiableGlobals) {
 		final List<Term> siSubsetAndRankEqualityList = new ArrayList<>(Arrays.asList(siTermSubset));
 		siSubsetAndRankEqualityList.add(mRankEquality.getFormula());
