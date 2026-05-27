@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -162,31 +161,14 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			// mLogger.fatal("Annotation at %s is %s", codeLocation, invariant);
 			// IcfgEdge
 			mLogger.fatal("TEST");
-			var programPoints = icfg.getProgramPoints();
+			final var programPoints = icfg.getProgramPoints();
 
-			for (Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
-				for (BoogieIcfgLocation entry : innerMap.values()) {
-					
-					final BoogieIcfgContainer container = BoogieIcfgContainer.getAnnotation(entry);
-					if (container != null) {
-						for (IElement edge : BoogieIcfgContainer.extractStartEdges(container)) {
-							if (WitnessGhostUpdate.getAnnotation(edge) != null) {
-								Map<?, ?> update = WitnessGhostUpdate.getAnnotation(edge).getUpdate();
+			for (final Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
+				for (final BoogieIcfgLocation entry : innerMap.values()) {
 
-								for (Map.Entry<?, ?> entryUpdate : update.entrySet()) {
-									Object key = entryUpdate.getKey();
-									Object value = entryUpdate.getValue();
-
-									System.out.println(key + " -> " + value);
-								}
-							}
-							else {
-								mLogger.fatal("WITNESS WITNESS WITNESS");
-							}
-						}
-					}
-					else {
-						mLogger.fatal("CONTAINER CONTAINER CONTAINER");
+					for (final var edge : entry.getOutgoingEdges()) {
+						final var update = WitnessGhostUpdate.getAnnotation(edge);
+						mLogger.warn("update is %s", update);
 					}
 				}
 			}

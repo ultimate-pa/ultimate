@@ -10,6 +10,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.boogie.parser,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.lib.proofs
 Bundle-ActivationPolicy: lazy
