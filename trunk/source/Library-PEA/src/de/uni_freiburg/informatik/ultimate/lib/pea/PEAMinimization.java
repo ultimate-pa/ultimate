@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,6 +68,16 @@ public class PEAMinimization {
 
 	}
 
+	private String[] addClockSuffix(final String[] clocks, final String suffix) {
+		final List<String> clocksWithSuffix = new ArrayList<>();
+		for (final String clock : clocks) {
+			final String clockWithSuffix = clock + suffix;
+			clocksWithSuffix.add(clockWithSuffix);
+		}
+		final String[] clocksWithSuffixArray = new String[clocksWithSuffix.size()];
+		return clocksWithSuffix.toArray(clocksWithSuffixArray);
+	}
+
 	private static void createPartitionByClockInv(final List<Phase> phases) {
 		for (final Phase phase : phases) {
 			final CDD clockInv = phase.getClockInvariant();
@@ -103,6 +112,9 @@ public class PEAMinimization {
 
 	public static Boolean isMergable(final Phase location1, final Phase location2) {
 		// check if the two locations are successor equivalent
+		if (location1.isTerminal() && !location2.isTerminal() || !location1.isTerminal() && location2.isTerminal()) {
+			return false;
+		}
 		final Set<Phase> locations = new HashSet<>();
 		locations.add(location1);
 		locations.add(location2);
@@ -140,7 +152,7 @@ public class PEAMinimization {
 		for (final Set<Phase> equivalenceClass : mEquivalenceClasses.getAllEquivalenceClasses()) {
 			final List<Phase> equivalenceClassList = new ArrayList<>(equivalenceClass);
 			assert (equivalenceClass.size() >= 1);
-			final Phase rep = equivalenceClassList.get(0);
+			final Phase rep = mEquivalenceClasses.find(equivalenceClassList.get(0));
 
 			final Phase mergedLocation = new Phase(rep.getName() + "_merged", CDD.FALSE, rep.getClockInv());
 
@@ -163,12 +175,18 @@ public class PEAMinimization {
 	}
 
 	public void mergeOutgoingTransitions() {
-		for (final Phase rep : mMergedLocations.keySet()) {
+		for (final Phase rep : mEquivalenceClasses.getAllRepresentatives()) {
 			final HashSet<Phase> addedDestinations = new HashSet<>();
 			final Phase mergedLocation = mMergedLocations.get(rep);
 			for (final Transition outgoingTransition : rep.getTransitions()) {
 				final Phase destination = outgoingTransition.getDest();
 				final Phase destinationRep = mEquivalenceClasses.find(destination);
+				final Set<Phase> destinationClass = mEquivalenceClasses.getContainingSet(destination);
+				CDD mergedGuard = outgoingTransition.getGuard();
+
+				if (destinationClass.size() > 1) {
+					mergedGuard = mergedGuard.and(destination.getStateInv());
+				}
 
 				// skip if we already have a transition to destination
 				// skip if transition is "internal" to the equivalence class
@@ -176,9 +194,14 @@ public class PEAMinimization {
 					continue;
 				}
 
+				final String[] mergedResets = outgoingTransition.getResets();
+
+				for (int i = 0; i < mergedResets.length; i++) {
+					mergedResets[i] = mergedResets[i] + MIN_POSTFIX;
+				}
+
 				final Phase mergedDestination = mMergedLocations.get(destinationRep);
-				mergedLocation.addTransition(mergedDestination, outgoingTransition.getGuard(),
-						outgoingTransition.getResets());
+				mergedLocation.addTransition(mergedDestination, mergedGuard, mergedResets);
 
 			}
 
@@ -187,16 +210,14 @@ public class PEAMinimization {
 			if (rep.getClockInv().isTimed()) {
 				loopGuard = RangeDecision.strict(rep.getClockInv());
 			}
-			mergedLocation.addTransition(mergedLocation, loopGuard, null);
+			mergedLocation.addTransition(mergedLocation, loopGuard, new String[0]);
 		}
 	}
 
-	private void mergeIncomingTransitions() {
+	private void mergeInitialTransitions() {
 		for (final Phase rep : mMergedLocations.keySet()) {
 
 			final ImmutableSet<Phase> equivalenceClass = mEquivalenceClasses.getEquivalenceClassMembers(rep);
-			// key: source, value: set of transitions leading to this source
-			final HashMap<Phase, Set<Transition>> incomingTransitions = new HashMap<>();
 			final HashSet<InitialTransition> initialTransitions = new HashSet<>();
 
 			final Phase mergedLocation = mMergedLocations.get(rep);
@@ -206,35 +227,6 @@ public class PEAMinimization {
 					initialTransitions.add(initialTransition);
 					mergedLocation.setInit(true);
 				}
-				for (final Transition incomingTransition : location.getIncomingTransitions()) {
-					final Phase source = incomingTransition.getSrc();
-					final Phase sourceRep = mEquivalenceClasses.find(source);
-					final Phase mergedSource = mMergedLocations.get(sourceRep);
-					// skip if transition is "internal" to the equivalence class
-					if (rep == sourceRep) {
-						continue;
-					}
-					Set<Transition> set = incomingTransitions.get(mergedSource);
-					if (set == null) {
-						set = new HashSet<>();
-						incomingTransitions.put(mergedSource, set);
-					}
-					set.add(incomingTransition);
-				}
-			}
-			// build new transitions
-			for (final HashMap.Entry<Phase, Set<Transition>> entry : incomingTransitions.entrySet()) {
-				CDD guard = CDD.FALSE;
-				final List<String> clockResets = new ArrayList<>();
-				final Phase mergedSource = entry.getKey();
-				for (final Transition incomingTransition : entry.getValue()) {
-					guard = guard.or(incomingTransition.getGuard());
-					// clockResets.add(incomingTransition.getResets());
-
-					Collections.addAll(clockResets, incomingTransition.getResets());
-				}
-				final String[] clockResetsStrings = clockResets.toArray(new String[0]);
-				mergedSource.addTransition(mergedLocation, guard, clockResetsStrings);
 
 			}
 			if (mergedLocation.isInit()) {
@@ -270,8 +262,8 @@ public class PEAMinimization {
 						final Phase location1 = locations.get(i);
 						final Phase location2 = locations.get(j);
 
-						if (mEquivalenceClasses.union(location1, location2) && isMergable(location1, location2)) {
-							changed = true;
+						if (isMergable(location1, location2)) {
+							changed = mEquivalenceClasses.union(location1, location2);
 						}
 					}
 				}
@@ -281,11 +273,24 @@ public class PEAMinimization {
 
 		mergeLocations();
 		mergeOutgoingTransitions();
-		mergeIncomingTransitions();
+		mergeInitialTransitions();
 
-		final PhaseEventAutomata minimizedPEA = new PhaseEventAutomata(sourcePea.getName() + MIN_POSTFIX,
-				new ArrayList<>(mMergedLocations.values()), mMergedInitialTransitions);
+		final List<String> mergedClocks = new ArrayList<>();
+		for (final String s : sourcePea.getClocks()) {
+			mergedClocks.add(s + MIN_POSTFIX);
+		}
+
+		final PhaseEventAutomata minimizedPEA =
+				new PhaseEventAutomata(sourcePea.getName() + MIN_POSTFIX, new ArrayList<>(mMergedLocations.values()),
+						mMergedInitialTransitions, mergedClocks, new HashMap<>(sourcePea.getVariables()));
 		return minimizedPEA;
 	}
 
+	public PhaseEventAutomata getTotalisedPEA() {
+		return mTotalisedPEA;
+	}
+
+	public PhaseEventAutomata getMinimizedPEA() {
+		return mMinimizedPEA;
+	}
 }

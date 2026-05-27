@@ -295,4 +295,8 @@ public class Phase implements Comparable<Phase> {
 	public InitialTransition getInitialTransition() {
 		return mInitialTransition;
 	}
+
+	public boolean isTerminal() {
+		return mIsTerminal;
+	}
 }

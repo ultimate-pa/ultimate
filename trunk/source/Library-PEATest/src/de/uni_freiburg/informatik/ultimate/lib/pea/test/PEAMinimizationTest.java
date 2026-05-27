@@ -129,4 +129,9 @@ public class PEAMinimizationTest {
 		assert (minPea.isMergable(testPEA.getPhases().get(0), testPEA.getPhases().get(0)));
 	}
 
+	public void testMin() {
+		final PhaseEventAutomata testPEA = mTestAutomata.get(0);
+		final PEAMinimization minPea = new PEAMinimization(testPEA);
+	}
+
 }

@@ -110,6 +110,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private final Durations mDurations;
 
+	private boolean mTestMinimization;
+
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
 			final IReqSymbolTable symbolTable, final Durations durations) {
 		mLogger = logger;
@@ -143,6 +145,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
+		mTestMinimization = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
+				PEATransformerMode.class) == PEATransformerMode.REQ_MINIMIZATION_TEST;
 
 		// log preferences
 		mLogger.info(
@@ -183,7 +187,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		if (mCheckComplement) {
 			annotations.addAll(genCheckComplement(mUnitLocation));
 		}
-		if (mCheckRedundancy) {
+		if (mCheckRedundancy || mTestMinimization) {
 			annotations.addAll(genChecksRedundancy(mUnitLocation));
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
@@ -273,7 +277,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			final List<Phase> phases = pea.getPhases();
 			for (int i = 0; i < phases.size(); i++) {
 				final Phase phase = phases.get(i);
-				if (phase.getName().equals(PEAComplement.SINK_NAME)) {
+				if (phase.getName().contains(PEAComplement.SINK_NAME)) {
 					final Expression expression = genComparePhaseCounter(i, mSymbolTable.getPcName(pea), bl);
 					pcInSinkExpressions.add(expression);
 				}
@@ -509,7 +513,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	}
 
 	private List<Statement> genChecksRedundancy(final BoogieLocation bl) {
-		if (!mCheckRedundancy) {
+		if (!mCheckRedundancy && !mTestMinimization) {
 			return Collections.emptyList();
 		}
 		final List<Statement> stmtList = new ArrayList<>();

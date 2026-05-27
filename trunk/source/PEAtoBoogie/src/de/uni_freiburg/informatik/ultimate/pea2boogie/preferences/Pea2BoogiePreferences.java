@@ -52,6 +52,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final boolean DEF_CHECK_VACUITY = true;
 	private static final String DESC_CHECK_VACUITY = null;
 
+	public static final String LABEL_TEST_MINIMIZATION = "Test minimization";
+	private static final boolean DEF_TEST_MINIMIZATION = true;
+	private static final String DESC_TEST_MINIMIZATION = null;
+
 	public static final String LABEL_CHECK_CONSISTENCY = "Check consistency";
 	private static final boolean DEF_CHECK_CONSISTENCY = true;
 	private static final String DESC_CHECK_CONSISTENCY = null;
@@ -117,7 +121,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			step independend of length or usefulness.""";
 
 	public enum PEATransformerMode {
-		REQ_CHECK, REQ_TEST, REQ_RED
+		REQ_CHECK, REQ_TEST, REQ_RED, REQ_MINIMIZATION_TEST
 	}
 
 	public Pea2BoogiePreferences() {
@@ -136,6 +140,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_TEST_MINIMIZATION, DEF_TEST_MINIMIZATION, DESC_TEST_MINIMIZATION,
+						PreferenceType.Boolean),
 
 				new UltimatePreferenceItemGroup("Rt-Inconsistency",
 						new UltimatePreferenceItem<>(LABEL_GEN_FAILURE_PATH, DEF_GEN_FAILURE_PATH,

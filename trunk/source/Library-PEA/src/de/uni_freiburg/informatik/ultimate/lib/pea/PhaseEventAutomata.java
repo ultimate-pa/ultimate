@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +58,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	protected List<String> mDeclarations;
 
 	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init) {
-		this(name, phases, init, new ArrayList<String>());
+		this(name, phases, init, new ArrayList<>());
 	}
 
 	public PhaseEventAutomata(final String name, final List<Phase> phases, final List<InitialTransition> init,
@@ -148,13 +147,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		while (!todo.isEmpty()) {
 			final TodoEntry entry = todo.remove(0);
 			final CDD srcsinv = entry.p1.getStateInv().and(entry.p2.getStateInv());
-			final Iterator<?> i = entry.p1.getTransitions().iterator();
-			while (i.hasNext()) {
-				final Transition t1 = (Transition) i.next();
-				final Iterator<?> j = entry.p2.getTransitions().iterator();
-				while (j.hasNext()) {
-					final Transition t2 = (Transition) j.next();
-
+			for (final Transition t1 : entry.p1.getTransitions()) {
+				for (final Transition t2 : entry.p2.getTransitions()) {
 					final CDD guard = t1.getGuard().and(t2.getGuard());
 					if (guard == CDD.FALSE) {
 						continue;
@@ -162,7 +156,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 					final CDD sinv = t1.getDest().getStateInv().and(t2.getDest().getStateInv());
 					// This leads to a serious bug -
 					// if (sinv.and(guard) == CDD.FALSE)
-					if ((sinv == CDD.FALSE) || (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime(Collections.emptySet())) == CDD.FALSE)) {
+					if ((sinv == CDD.FALSE) || (guard != CDD.TRUE
+							&& srcsinv.and(guard).and(sinv.prime(Collections.emptySet())) == CDD.FALSE)) {
 						// TODO: Overapproximating for BoogieDecisions because constants will become primed
 						continue;
 					}

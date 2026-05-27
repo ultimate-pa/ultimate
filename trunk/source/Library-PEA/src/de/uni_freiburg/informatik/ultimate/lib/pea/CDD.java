@@ -141,10 +141,7 @@ public final class CDD {
 		for (int i = 0; i < childs.length; i++) {
 			hashcode = hashcode * (11 + i) ^ childs[i].hashCode();
 		}
-		final Iterator<CDD> iter = UNIFY_HASH.iterateHashCode(hashcode).iterator();
-
-		while (iter.hasNext()) {
-			final CDD current = iter.next();
+		for (final CDD current : UNIFY_HASH.iterateHashCode(hashcode)) {
 			if (current.isEqual(cdd)) {
 				return current;
 			}
@@ -844,16 +841,16 @@ public final class CDD {
 	}
 
 	/**
-	 * Returns an ArrayList of pairs containing all the Decisions in the CDD. The
-	 * first element of each pair is a Decision<?>, the second element is an array
-	 * of integers signifying the positions of all true children of the decision. If
-	 * called on CDD.TRUE or CDD.FALSE, it will return an empty array.
+	 * Returns an ArrayList of pairs containing all the Decisions in the CDD. The first element of each pair is a
+	 * Decision<?>, the second element is an array of integers signifying the positions of all true children of the
+	 * decision. If called on CDD.TRUE or CDD.FALSE, it will return an empty array.
 	 *
-	 * Example: cdd: a && !b && c5 >= 5 && c6 <= 5 && c7 == 5 && c8 != 5 result:
-	 * [(a, [0]) (b, [1]), (c5, [1]), (c6, [0]), (c7, [1]), (c8, [0, 2])]
+	 * Example: cdd: a && !b && c5 >= 5 && c6 <= 5 && c7 == 5 && c8 != 5 result: [(a, [0]) (b, [1]), (c5, [1]), (c6,
+	 * [0]), (c7, [1]), (c8, [0, 2])]
 	 *
 	 *
-	 * @param CDD cdd
+	 * @param CDD
+	 *            cdd
 	 * @return ArrayList<SimplePair<Decision<?>, Integer>> result
 	 */
 	public List<Pair<Decision<?>, int[]>> getDecisionsConjunction() {
@@ -915,6 +912,48 @@ public final class CDD {
 			result.add(conjunction.getDecisionsConjunction());
 		}
 		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static CDD addClockSuffixCDD(final CDD cdd, final String suffix) {
+		final List<List<Pair<Decision<?>, int[]>>> dnfDecisions = cdd.getDecisionsDNF();
+		final List<CDD> conjunctionsWithSuffix = new ArrayList<>();
+		for (final List<Pair<Decision<?>, int[]>> conjunction : dnfDecisions) {
+			CDD conjunctionWithSuffix = CDD.TRUE;
+			for (final Pair<Decision<?>, int[]> pair : conjunction) {
+				if (pair.getFirst() instanceof RangeDecision) {
+					final Decision<RangeDecision> decision = (Decision<RangeDecision>) pair.getFirst();
+					final RangeDecision rangeDecision = (RangeDecision) decision;
+					final int trueChildIndex = pair.getSecond()[0];
+					final int op = rangeDecision.getOp(trueChildIndex);
+					final int value = rangeDecision.getVal(trueChildIndex);
+
+					final String clockVarWithSuffix = decision.getVar() + suffix;
+
+					final CDD rangeDecisionWithSuffix = RangeDecision.create(clockVarWithSuffix, op, value);
+					conjunctionWithSuffix = conjunctionWithSuffix.and(rangeDecisionWithSuffix);
+				} else if (pair.getFirst() instanceof BoogieBooleanExpressionDecision) {
+					final BoogieBooleanExpressionDecision decision = (BoogieBooleanExpressionDecision) pair.getFirst();
+					CDD booleanDecision = BoogieBooleanExpressionDecision.create(decision.getExpression());
+					if (pair.getSecond()[0] == 1) { // when the index of the true child is 1, the decision is negated
+						booleanDecision = booleanDecision.negate();
+					}
+					conjunctionWithSuffix = conjunctionWithSuffix.and(booleanDecision);
+				} else { // boolean decision
+					CDD booleanDecision = BooleanDecision.create(pair.getFirst().getVar());
+					if (pair.getSecond()[0] == 1) { // when the index of the true child is 1, the decision is negated
+						booleanDecision = booleanDecision.negate();
+					}
+					conjunctionWithSuffix = conjunctionWithSuffix.and(booleanDecision);
+				}
+			}
+			conjunctionsWithSuffix.add(conjunctionWithSuffix);
+		}
+		CDD disjunctionWithSuffix = CDD.FALSE;
+		for (final CDD conjunction : conjunctionsWithSuffix) {
+			disjunctionWithSuffix = disjunctionWithSuffix.or(conjunction);
+		}
+		return disjunctionWithSuffix;
 	}
 
 }
