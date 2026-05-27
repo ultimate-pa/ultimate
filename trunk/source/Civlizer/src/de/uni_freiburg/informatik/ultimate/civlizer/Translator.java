@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
@@ -340,13 +341,48 @@ public final class Translator extends BoogieVisitor {
             || statement instanceof AssumeStatement
             || statement instanceof HavocStatement
             || statement instanceof AtomicStatement) {
+
+				List<String> arguments = new ArrayList<>();
+				List<String> returns = new ArrayList<>();
+
+				for (Map.Entry<String, ASTType> var : mProgramAndProof
+						.getTemplateVisitor()
+						.getProcedureVariablesMap()
+						.get(procName)
+						.entrySet()
+				) {
+					if (mProgramAndProof
+						.getTemplateVisitor()
+						.getStatementParametersMap()
+						.get(statement.getLoc())
+						.contains(var.getKey())
+					) {
+						arguments.add(var.getKey() + "_in : " + var.getValue());
+						returns.add(var.getKey() + " : " + var.getValue());
+					}
+				}
+
 				mWriter.print("yield procedure {:layer 0} ");
 				mWriter.print(procName);
 				mWriter.print("_stmt_");
 				mWriter.print(Integer.toString(counter));
-				mWriter.println("();");
+
+				mWriter.print("(");
+				addStringList(arguments, ", ");
+				mWriter.print(") returns (");
+				addStringList(returns, ", ");
+				mWriter.println(");");
 
 				mWriter.println("refines atomic action {:layer 1,2} _ {");
+				for (String var : mProgramAndProof
+						.getTemplateVisitor()
+						.getStatementParametersMap()
+						.get(statement.getLoc())
+				) {
+					mWriter.print("    ");
+					mWriter.print(var + " := " + var + "_in");
+					mWriter.println(";");
+				}
 				mWriter.print("    ");
 				mWriter.println(BoogiePrettyPrinter.print(statement));
 				mWriter.println("}\n");

@@ -321,44 +321,92 @@ final class BodyTransformer extends BoogieTransformer {
 		// we ignore some kind of first Label $Ultimate##0
 		for (i = 1; i < statements.length - 1; i++) { // ignore standard return
 			mAtomicStatementCounter += 1;
+
+			boolean globalVar = mProgramAndProof
+				.getTemplateVisitor()
+				.containsGlobalVariables(statements[i]);
+
+			boolean localVar = mProgramAndProof
+				.getTemplateVisitor()
+				.containsLocalVariables(mCurrentProcedure, statements[i]);
 			
 			if (statements[i] instanceof ForkStatement
 				|| statements[i] instanceof JoinStatement
-				|| mProgramAndProof
-				.getTemplateVisitor()
-				.containsGlobalVariables(statements[i])) {
+				|| globalVar && !localVar) {
 					newStatements.add(processStatement(statements[i]));
 			}
-			else {
-				newStatements.add(statements[i]);
-			}
+			else if (!globalVar && localVar) {
 
-			// (Expression)
-			/*final var update = WitnessGhostUpdate.getAnnotation(statements[i]);
-			System.out.println("TEST CLASS " + update); 
-			if (update != null) {
+				NamedAttribute[] layer = new NamedAttribute[] {
+					new NamedAttribute(
+						statements[i].getLoc(), 
+						"layer", 
+						new Expression[] {
+							new IdentifierExpression(
+								statements[i].getLoc(), 
+								BoogieType.createPlaceholderType(0),
+								"2",
+								new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
+							)
+						}
+					)
+				};
 
-				// TEST
-				Class<?> clazz = update.getClass();
-
-				System.out.println("TEST CLASS " + clazz.getName()); 
-			}*/
-
-			/*
-			WitnessGhostUpdate<?> annotation = WitnessGhostUpdate.getAnnotation(statements[i]);
-
-			if (annotation != null) {
-				Map<?, ?> update = annotation.getUpdate();
-
-				for (Map.Entry<?, ?> entry : update.entrySet()) {
-					Object key = entry.getKey();
-					Object value = entry.getValue();
-
-					System.out.println("Key class: " + key.getClass().getName());
-					System.out.println("Value class: " + value.getClass().getName());
+				if (statements[i] instanceof final AssertStatement assertStmt) {
+					newStatements.add(
+						new AssertStatement(
+							assertStmt.getLoc(), 
+							layer, 
+							assertStmt.getFormula()
+						)
+					);
+				}
+				else if (statements[i] instanceof final AssumeStatement assumeStmt) {
+					newStatements.add(
+						new AssumeStatement(
+							assumeStmt.getLoc(), 
+							layer, 
+							assumeStmt.getFormula()
+						)
+					);
+				}
+				/*else if (statements[i] instanceof final HavocStatement havoc) {
+					maybe havoc
+				}*/
+				else {
+					newStatements.add(statements[i]);
 				}
 			}
-			*/
+			else {
+				final var loc = statements[i].getLoc();
+
+				Expression[] arguments = mProgramAndProof
+					.getTemplateVisitor()
+					.getStatementParametersMap()
+					.get(loc)
+					.stream()
+					.map(arg -> new IdentifierExpression(
+						loc, 
+						BoogieType.createPlaceholderType(0),
+						arg,
+						new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
+					))
+					.toArray(Expression[]::new);
+
+				VariableLHS[] returns = mProgramAndProof
+					.getTemplateVisitor()
+					.getStatementParametersMap()
+					.get(loc)
+					.stream()
+					.map(ret -> new VariableLHS(
+						loc, 
+						ret
+					))
+					.toArray(VariableLHS[]::new);
+
+				newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
+			    	returns, mCurrentProcedure + "_stmt_" + mAtomicStatementCounter, arguments));
+			}
 
 			newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
 			    new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));

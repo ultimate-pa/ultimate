@@ -30,9 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -45,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * This class initializes the Civlizer.
@@ -160,8 +160,40 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			// final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
 			// final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
 			// mLogger.fatal("Annotation at %s is %s", codeLocation, invariant);
-
+			// IcfgEdge
+			mLogger.fatal("TEST");
 			var programPoints = icfg.getProgramPoints();
+
+			for (Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
+				for (BoogieIcfgLocation entry : innerMap.values()) {
+					
+					final BoogieIcfgContainer container = BoogieIcfgContainer.getAnnotation(entry);
+					if (container != null) {
+						for (IElement edge : BoogieIcfgContainer.extractStartEdges(container)) {
+							if (WitnessGhostUpdate.getAnnotation(edge) != null) {
+								Map<?, ?> update = WitnessGhostUpdate.getAnnotation(edge).getUpdate();
+
+								for (Map.Entry<?, ?> entryUpdate : update.entrySet()) {
+									Object key = entryUpdate.getKey();
+									Object value = entryUpdate.getValue();
+
+									System.out.println(key + " -> " + value);
+								}
+							}
+							else {
+								mLogger.fatal("WITNESS WITNESS WITNESS");
+							}
+						}
+					}
+					else {
+						mLogger.fatal("CONTAINER CONTAINER CONTAINER");
+					}
+				}
+			}
+			
+			mLogger.fatal("TEST");
+
+			/*var programPoints = icfg.getProgramPoints();
 
 			for (Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
 
@@ -177,7 +209,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 					mLogger.fatal("Update is %s", update);
 				}
-			}
+			}*/
 		}
 
 		if (mProgramAndProof.isFull()) {

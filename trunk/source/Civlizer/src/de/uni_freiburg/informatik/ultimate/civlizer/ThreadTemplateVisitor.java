@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 
 
 final class ThreadTemplateVisitor extends BoogieVisitor {
@@ -63,6 +65,8 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private Set<String> mGlobalVariables;
 	private Map<ILocation, Set<String>> mStatementVariablesMap;
+	private Map<ILocation, Set<String>> mStatementParametersMap;
+	private Map<String, Map<String, ASTType>> mProcedureVariablesMap;
 	
 	private Map<String, List<Tid>> mAssociationTidMap;
 	private Map<String, List<Tid>> mUsedTidMap;
@@ -75,6 +79,8 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 		mGlobalVariables = new HashSet<>();
 		mStatementVariablesMap = new HashMap<>();
+		mStatementParametersMap = new HashMap<>();
+		mProcedureVariablesMap = new HashMap<>();
 
 		mAssociationTidMap = new HashMap<>();
 		mUsedTidMap = new HashMap<>();
@@ -110,6 +116,14 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		}
 	}
 
+	Map<ILocation, Set<String>> getStatementParametersMap() {
+		return mStatementParametersMap;
+	}
+
+	Map<String, Map<String, ASTType>> getProcedureVariablesMap() {
+		return mProcedureVariablesMap;
+	}
+
 	Set<Tid> getTids() {
 		return mTids;
 	}
@@ -140,6 +154,20 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		);
 	}
 
+	boolean containsLocalVariables(String procName, Statement stmt) {
+		if (mStatementVariablesMap
+			.get(stmt.getLoc()) == null 
+			|| mGlobalVariables == null) {
+			return false;
+		}
+
+		return !Collections.disjoint(
+			mStatementVariablesMap
+			.get(stmt.getLoc()), 
+			mProcedureVariablesMap.get(procName).keySet()
+		);
+	}
+
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
 		switch (decl) {
@@ -159,13 +187,56 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(final Procedure decl) {
 		mCurrentProcedure = decl.getIdentifier();
+		Map res = new HashMap<>();
+
+		for (VariableDeclaration varDecl: decl.getBody().getLocalVars()) {
+			for (VarList varList : varDecl.getVariables()) {
+				for (String id : varList.getIdentifiers()) {
+					res.put(id, varList.getType());
+				}
+			}
+		}
+
+		mProcedureVariablesMap.put(mCurrentProcedure, res);
+		
 
 		if (!mCurrentProcedure.equals("ULTIMATE.start") && !mAssociationTidMap.containsKey(mCurrentProcedure)) {
 			mAssociationTidMap.put(mCurrentProcedure, new ArrayList<>());
 		}
 
 		for (Statement stmt : decl.getBody().getBlock()) {
+
+			// TEST
+
+			if (WitnessGhostUpdate.getAnnotation(stmt) != null) {
+				Map<?, ?> update = WitnessGhostUpdate.getAnnotation(stmt).getUpdate();
+				if (update != null) {
+					for (Map.Entry<?, ?> entryUpdate : update.entrySet()) {
+						Object key = entryUpdate.getKey();
+						Object value = entryUpdate.getValue();
+
+						System.out.println(key + " -> " + value);
+					}
+				}
+			}
+
+			// TEST
+
 			processStatement(stmt);
+
+			Set<String> parameters = new HashSet<>();
+
+			for (String id : mStatementVariablesMap.getOrDefault(stmt.getLoc(), new HashSet<>())) {
+				if (mProcedureVariablesMap
+					.get(mCurrentProcedure)
+					.keySet()
+					.contains(id)) {
+
+					parameters.add(id);
+				}
+			}
+
+			mStatementParametersMap.put(stmt.getLoc(), parameters);
 		}
 	}
 
@@ -229,7 +300,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	protected void visit(final ForkStatement statement) {
 
 		Tid tid = new Tid(statement.getThreadID());
-		List<Tid> tids = mAssociationTidMap.get(statement.getProcedureName());
+		List<Tid> tids = mAssociationTidMap.getOrDefault(statement.getProcedureName(), new ArrayList<>());
 
 		if (!mAssociationTidMap.containsKey(tid)) {
 			if (tids == null) {
