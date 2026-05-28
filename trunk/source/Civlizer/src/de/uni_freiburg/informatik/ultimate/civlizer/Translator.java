@@ -72,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
@@ -383,8 +382,15 @@ public final class Translator extends BoogieVisitor {
 					mWriter.print(var + " := " + var + "_in");
 					mWriter.println(";");
 				}
-				mWriter.print("    ");
-				mWriter.println(BoogiePrettyPrinter.print(statement));
+				
+				if (statement instanceof final AtomicStatement atom) {
+					for (Statement stmt : atom.getBody()) {
+						mWriter.println(BoogiePrettyPrinter.print(stmt));
+					}
+				}
+				else {
+					mWriter.println(BoogiePrettyPrinter.print(statement));
+				}
 				mWriter.println("}\n");
 		}
 	}
@@ -413,7 +419,7 @@ public final class Translator extends BoogieVisitor {
 		counter++;
 
 		//for (Statement statement : decl.getBody().getBlock()) {
-		for (int i = 0; i < decl.getBody().getBlock().length; i++) {
+		for (int i = 1; i < decl.getBody().getBlock().length; i++) {
 
 			if (mProgramAndProof
 				.getTemplateVisitor()
@@ -433,7 +439,7 @@ public final class Translator extends BoogieVisitor {
 
 			final Expression annotation =
 				annotationMap.get(decl.getBody().getBlock()[i].getLoc());
-
+			System.out.println("TEST " + annotation);
 			addYieldInvariants(
 				decl.getIdentifier(),
 				annotation,

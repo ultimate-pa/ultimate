@@ -1,20 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Set;
-import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 
 class ProgramAndProof {
 
@@ -66,10 +71,13 @@ class ProgramAndProof {
 		mTemplateVisitor = new ThreadTemplateVisitor(mBoogieAst);
 		mGhostUpdateMap = new HashMap<>();
 
+		// improve readability TODO
+
 		final var programPoints = mIcfg.getProgramPoints();
 
 		for (final Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
 			for (final BoogieIcfgLocation location : innerMap.values()) {
+				System.out.println("Location : " + location);
 
 				for (final var edge : location.getOutgoingEdges()) {
 					if (WitnessGhostUpdate.getAnnotation(edge) != null) {

@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 
 final class ThreadTemplateVisitor extends BoogieVisitor {
@@ -96,7 +96,8 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		}
 
 		for (String key : mUsedTidMap.keySet()) {
-			List<Tid> tids = mAllTidMap.getOrDefault(key, new ArrayList<>());
+			List<Tid> tids = mAllTidMap.computeIfAbsent(key, k -> new ArrayList<>());
+
 			for (Tid tid : mUsedTidMap.get(key)) {
 				if (!tids.contains(tid)) {
 					tids.add(tid);
@@ -104,7 +105,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 			}
 		}
 
-		// TODO improve use set instead of list
 		// remove duplicates per list
 		for (List<Tid> list : mAllTidMap.values()) {
 			Set<Tid> dedup = new LinkedHashSet<>(list);
@@ -113,9 +113,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		}
 
 		for (List<Tid> tidList : mAllTidMap.values()) {
-			for (Tid tid : tidList) {
-				mTids.add(tid);
-			}
+			mTids.addAll(tidList);
 		}
 	}
 
@@ -303,52 +301,45 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	protected void visit(final ForkStatement statement) {
 
 		Tid tid = new Tid(statement.getThreadID());
-		List<Tid> tids = mAssociationTidMap.getOrDefault(statement.getProcedureName(), new ArrayList<>());
 
-		if (!mAssociationTidMap.containsKey(tid)) {
-			if (tids == null) {
-				mAssociationTidMap.put(
-					statement.getProcedureName(),
-					new ArrayList<>(Collections.singletonList(tid))
-				);
-			}
-			else {
-				tids.add(tid);
-			}
+		List<Tid> tids = mAssociationTidMap.getOrDefault(
+			statement.getProcedureName(),
+			new ArrayList<>()
+		);
+
+		if (!tids.contains(tid)) {
+			tids.add(tid);
 		}
 
-		tids = mUsedTidMap.get(mCurrentProcedure);
+		mAssociationTidMap.put(statement.getProcedureName(), tids);
 
-		if (!mUsedTidMap.containsKey(tid)) {
-			if (tids == null) {
-				mUsedTidMap.put(
-					mCurrentProcedure,
-					new ArrayList<>(Collections.singletonList(tid))
-				);
-			}
-			else {
-				tids.add(tid);
-			}
+		tids = mUsedTidMap.getOrDefault(
+			mCurrentProcedure,
+			new ArrayList<>()
+		);
+
+		if (!tids.contains(tid)) {
+			tids.add(tid);
 		}
+
+		mUsedTidMap.put(mCurrentProcedure, tids);
 	}
 
 	@Override
 	protected void visit(final JoinStatement statement) {
 
 		Tid tid = new Tid(statement.getThreadID());
-		List<Tid> tids = mAssociationTidMap.get(mCurrentProcedure);
 
-		if (!mAssociationTidMap.containsKey(tid)) {
-			if (tids == null) {
-				mAssociationTidMap.put(
-					mCurrentProcedure,
-					new ArrayList<>(Collections.singletonList(tid))
-				);
-			}
-			else {
-				tids.add(tid);
-			}
+		List<Tid> tids = mUsedTidMap.getOrDefault(
+			mCurrentProcedure,
+			new ArrayList<>()
+		);
+
+		if (!tids.contains(tid)) {
+			tids.add(tid);
 		}
+
+		mUsedTidMap.put(mCurrentProcedure, tids);
 	}
 
 	@Override

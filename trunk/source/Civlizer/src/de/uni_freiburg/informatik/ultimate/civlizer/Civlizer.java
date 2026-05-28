@@ -166,6 +166,8 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			for (final Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
 				for (final BoogieIcfgLocation location : innerMap.values()) {
 
+					System.out.println(location.getBoogieASTNode());
+
 					for (final var edge : location.getOutgoingEdges()) {
 						if (WitnessGhostUpdate.getAnnotation(edge) != null) {
 							final Map<?, ?> update =
