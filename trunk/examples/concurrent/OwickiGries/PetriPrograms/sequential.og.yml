@@ -1,8 +1,0 @@
-#valid
-omega:
-  "l0" : true
-  "l1" : (>= x 0)
-  "l2" : (>= x 0)
-  "e"  : false
-ghost_variables:
-ghost_updates:
