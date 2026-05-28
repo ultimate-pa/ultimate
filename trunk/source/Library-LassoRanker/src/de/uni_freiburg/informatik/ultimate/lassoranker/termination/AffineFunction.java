@@ -193,7 +193,7 @@ public class AffineFunction implements Serializable {
 		if (!mConstant.equals(BigInteger.ZERO)) {
 			summands.add(SmtUtils.constructIntValue(script, mConstant));
 		}
-		return SmtUtils.sum(script, SmtSortUtils.getRealSort(script), summands.toArray(new Term[summands.size()]));
+		return SmtUtils.sum(script, SmtSortUtils.getIntSort(script), summands.toArray(new Term[summands.size()]));
 	}
 
 	/**
