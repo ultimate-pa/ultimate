@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
@@ -173,6 +174,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final BinaryStatePredicateManager mBspm;
 
+	// TODO V - replace all the mCsToolkit.getManagedScript() s?
+	private final ManagedScript mManagedScript;
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
@@ -224,7 +227,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final PredicateFactoryForInterpolantAutomata mStateFactoryForInterpolantAutomaton;
 
-	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
+	Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
 
 	private BspmResult mBspmResult;
 
@@ -250,10 +253,13 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mTrySimplificationTerminationArgument = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SIMPLIFY);
 		mTryTwofoldRefinement = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mCsToolkit = csToolkit;
+		// TODO: V - marker added here
+		mManagedScript = mCsToolkit.getManagedScript();
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mGetControlConfiguration = getControlConfiguration;
 		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
+		// TODO: think about removing this
 		mModifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
 				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
 				.collect(Collectors.toSet());
@@ -267,8 +273,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mPredicateFactory = predicateFactory;
 		// TODO: I am unsure about the following flag
 		final boolean computeHoareAnnotation = false;
-		mStateFactoryForInterpolantAutomaton = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
-				mPredicateFactory, computeHoareAnnotation);
+		mStateFactoryForInterpolantAutomaton =
+				new PredicateFactoryForInterpolantAutomata(mManagedScript, mPredicateFactory, computeHoareAnnotation);
 
 		// V - the actual checks seem to happen in this classes constructor
 		mLassoCheckResult = new LassoCheckResult();
@@ -555,12 +561,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private SynthesisResult synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF, final boolean containsArrays) throws IOException {
-		if (mCsToolkit.getManagedScript().isLocked()) {
+		if (mManagedScript.isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
 		if (!withStem) {
-			stemTF = TransFormulaBuilder.getTrivialTransFormula(mCsToolkit.getManagedScript());
+			stemTF = TransFormulaBuilder.getTrivialTransFormula(mManagedScript);
 		}
 		// TODO: present this somewhere else
 		// int loopVars = loopTF.getFormula().getFreeVars().length;
@@ -572,8 +578,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// loopVars);
 		// }
 		// TODO: do we need to mess with the modifiable globals?
-		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mCsToolkit.getManagedScript(),
-				mModifiableGlobalsAtHonda, stemTF, loopTF);
+		final FixpointCheck fixpointCheck =
+				new FixpointCheck(mServices, mLogger, mManagedScript, mModifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem) {
 				if (TRACE_CHECK_BASED_FIXPOINT_CHECK && !BuchiAutomizerUtils.isEmptyStem(mCounterexample.getStem())) {
@@ -848,6 +854,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			 *
 			 *
 			 **/
+			// TODO: just add a skip/direct fairness return here
 			assert !mCsToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()
 					: "Concurrent program expected";
 
@@ -880,17 +887,17 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						continue;
 					}
 					for (final IcfgEdge edge : threadLoc.getOutgoingEdges()) {
-						guards.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mCsToolkit.getManagedScript(),
-								mServices));
+						guards.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
 					}
 				}
 
 				// disjunction of terms should be equivalent to parallel comp of respective TransFormulae
 				// TODO: Ask if thats actually true and about branch indicators
-				final UnmodifiableTransFormula notGuardDisj = TransFormulaUtils.negate(
-						TransFormulaUtils.parallelComposition(mLogger, mServices, mCsToolkit.getManagedScript(), null,
-								false, true, guards.toArray(UnmodifiableTransFormula[]::new)),
-						mCsToolkit.getManagedScript(), mServices);
+				final UnmodifiableTransFormula notGuardDisj =
+						TransFormulaUtils.negate(
+								TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, null, false,
+										true, guards.toArray(UnmodifiableTransFormula[]::new)),
+								mManagedScript, mServices);
 
 				// we unroll the loop state by state and check if the resulting P(A_fair) terminates
 				NestedWord<L> newStem = stem;
@@ -902,13 +909,19 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					if (i > 0) {
 						newStem = stem.concatenate(loop.getSubWord(0, i));
 						unguardedLoop = loop.getSubWord(i, loopLen).concatenate(loop.getSubWord(0, i));
+						final IPredicate newHonda = loopStates.get(i);
+						mModifiableGlobalsAtHonda =
+								PredicateUtils.streamLocations(newHonda)
+										.flatMap(x -> mCsToolkit.getModifiableGlobalsTable()
+												.getModifiedBoogieVars(x.getProcedure()).stream())
+										.collect(Collectors.toSet());
 					}
 					final UnmodifiableTransFormula newStemTF = computeTF(newStem, true, true, false);
 					final UnmodifiableTransFormula unguardedLoopTF = computeTF(unguardedLoop, true, true, false);
 
-					final UnmodifiableTransFormula guardedLoopTF = TransFormulaUtils.sequentialComposition(mLogger,
-							mServices, mCsToolkit.getManagedScript(), true, false, false, mSimplificationTechnique,
-							List.of(notGuardDisj, unguardedLoopTF));
+					final UnmodifiableTransFormula guardedLoopTF =
+							TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false,
+									false, mSimplificationTechnique, List.of(notGuardDisj, unguardedLoopTF));
 
 					// first check whether the loop part already terminates
 					final SynthesisResult res = checkLoopTermination(guardedLoopTF);
@@ -1001,7 +1014,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				// get the termination argument and check if its sufficient
 				// TODO: check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
 				// TODO: closed Formula oder Formula?
-				final Term[] supInv = { mBspmResult.getSiConjunction().getClosedFormula() };
+				final Term[] supInv = { mBspmResult.getSiConjunction().getFormula() };
 				// Note: this only checks whether {si} loop {si} holds - sufficient bc we know that all shorter
 				// unrollings terminate
 
@@ -1013,8 +1026,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					return FairnessResult.UNFAIR;
 				}
 				// unroll further
-				urStemTF = TransFormulaUtils.sequentialComposition(mLogger, mServices, mCsToolkit.getManagedScript(),
-						true, false, false, mSimplificationTechnique, List.of(urStemTF, unguardedLoopTF));
+				urStemTF = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false,
+						false, mSimplificationTechnique, List.of(urStemTF, unguardedLoopTF));
 			}
 
 			return FairnessResult.UNKNOWN;
