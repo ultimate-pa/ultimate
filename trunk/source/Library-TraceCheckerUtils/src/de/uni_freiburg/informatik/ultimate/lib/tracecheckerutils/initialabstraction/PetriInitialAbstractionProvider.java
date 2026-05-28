@@ -48,10 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.CrownsOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries.FocusComputation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GraphEmpireOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
@@ -129,12 +127,6 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 		case NAIVE ->
 				new NaiveOwickiGries<>(mServices, mPredicateFactory, mIcfg.getCfgSmtToolkit(), mAbstraction, settings)
 						.createProofProducer(Function.identity());
-
-		// Outdated approaches (to be removed)
-		case CROWN -> new CrownsOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory,
-				Function.identity());
-		case SYMBOLIC_EXECUTION ->
-				new GraphEmpireOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory);
 
 		// Current state-of-the-art (as of POPL'26 paper)
 		case AUTOMATA -> new EmpireAutomataOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(),

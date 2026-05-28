@@ -56,10 +56,8 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireA
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomatonValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireReachableStates;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOG;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.IExplicitEmpireAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ILegalFocusFunction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalFocus;
@@ -272,12 +270,12 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		private final TimeTracker mFocusTimer = new TimeTracker();
 
 		public Statistics(final ILogger logger) {
-			super(logger, EmpireComputation.class, EmpireToOwickiGries.class);
+			super(logger, EmpireAutomaton.class, EmpireToOG.class);
 			declareTimeTracker("Focus computation time", mFocusTimer);
 		}
 
 		public void reportEmpire(final IExplicitEmpireAutomaton<?, ?, ?> empire) {
-			reportEmpireStatistics(new EmpireAutomataStatistics(empire), null);
+			reportEmpireStatistics(new EmpireAutomataStatistics(empire));
 		}
 
 		private void startFocusComputation() {

@@ -62,7 +62,7 @@ public class EmpireAutomatonValidityCheck<L extends IAction, P, S> {
 	public EmpireAutomatonValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final BasicPredicateFactory factory, final IPetriNet<L, P> net,
 			final ModifiableGlobalsTable modifiableGlobals, final IEmpireAutomaton<L, P, S> empire) {
-		mLogger = services.getLoggingService().getLogger(EmpireValidityCheck.class);
+		mLogger = services.getLoggingService().getLogger(EmpireAutomatonValidityCheck.class);
 		mHc = new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals);
 		mFactory = factory;
 

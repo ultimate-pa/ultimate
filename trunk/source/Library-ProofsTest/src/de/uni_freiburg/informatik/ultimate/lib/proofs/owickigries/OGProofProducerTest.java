@@ -173,33 +173,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		}
 	}
 
-	public static final class CrownsOG extends OGProofProducerTest {
-		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new CrownsOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
-					Function.identity());
-		}
-
-		@Override
-		protected OwickiGriesSettings getSettings() {
-			return new OwickiGriesSettings(OwickiGriesComputation.CROWN, false, false);
-		}
-	}
-
-	public static final class GraphEmpireOG extends OGProofProducerTest {
-		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new GraphEmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory);
-		}
-
-		@Override
-		protected OwickiGriesSettings getSettings() {
-			return new OwickiGriesSettings(OwickiGriesComputation.SYMBOLIC_EXECUTION, false, false);
-		}
-	}
-
 	public static final class EmpireAutomatonOG extends OGProofProducerTest {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>

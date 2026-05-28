@@ -61,8 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Directe
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedEmpireProduct.ProductState;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedLegalEmpireToOG;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedLegalFocus;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -227,12 +225,8 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		private final TimeTracker mFocusTimer = new TimeTracker();
 
 		public Statistics(final ILogger logger) {
-			super(logger, EmpireComputation.class, EmpireToOwickiGries.class);
+			super(logger, DirectedEmpireAutomaton.class, DirectedLegalEmpireToOG.class);
 			declareTimeTracker("Focus computation time", mFocusTimer);
-		}
-
-		public void reportEmpire(final IStatisticsDataProvider statistics) {
-			reportEmpireStatistics(statistics, null);
 		}
 
 		private void startFocusComputation() {
