@@ -287,7 +287,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				mAbstraction = enhancementResult.getSecond().getResult();
 				final var finPrefix = enhancementResult.getSecond().getFinitePrefixOfDifference();
 				if (mProofProducer != null && finPrefix.getAcceptingRun() == null) {
-					mProofProducer.finalize(mAbstraction, finPrefix.getResult());
+					mProofProducer.finalize(mAbstraction);
 				}
 			} else {
 				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
