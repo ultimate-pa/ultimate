@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Proofs Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
+package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;

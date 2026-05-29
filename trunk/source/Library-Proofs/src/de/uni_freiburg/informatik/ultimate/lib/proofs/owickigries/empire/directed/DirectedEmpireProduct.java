@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Proofs Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
+package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -42,7 +42,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedEmpireAutomaton.State;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 

@@ -23,7 +23,7 @@
  * licensors of the ULTIMATE Proofs Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
+package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.naive;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
