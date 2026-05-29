@@ -169,6 +169,39 @@ public class PEAMinimization {
 			if (!rep.getTerminal()) {
 				mergedLocation.setTerminal(false);
 			}
+
+			final List<RangeDecision> repModifiedConstraints = rep.getModifiedConstraints();
+			final List<RangeDecision> mergedModifiedConstraints = new ArrayList<>();
+			if (!repModifiedConstraints.isEmpty()) {
+				for (final RangeDecision strictClockConstraint : repModifiedConstraints) {
+					final String var = strictClockConstraint.getVar();
+					final int val = strictClockConstraint.getVal(0);
+					final int op = strictClockConstraint.getOp(0);
+					final CDD mergedStrictClockConstraint = RangeDecision.create(var, op, val);
+					mergedModifiedConstraints.add((RangeDecision) mergedStrictClockConstraint.getDecision());
+				}
+			}
+			mergedLocation.setModifiedConstraints(mergedModifiedConstraints);
+
+			final CDD clockInvRep = rep.getClockInv();
+
+			CDD mergedClockInvariant = CDD.TRUE;
+			if (clockInvRep.isTimed()) {
+				final Decision<?> decision = clockInvRep.getDecision();
+
+				final RangeDecision rangeDesc = (RangeDecision) decision;
+				final String var = rangeDesc.getVar() + MIN_POSTFIX;
+				// since we only have LT and LT_EQ in clock invariants,
+				// we can call getOp/getVal with 0 (trueChildIndex is 0 in this case)
+				final int op = rangeDesc.getOp(0);
+				final int val = rangeDesc.getVal(0);
+
+				final CDD rangeDescCdd = RangeDecision.create(var, op, val);
+				mergedClockInvariant = mergedClockInvariant.and(rangeDescCdd);
+			}
+
+			mergedLocation.setClockInv(mergedClockInvariant);
+
 			mMergedLocations.put(rep, mergedLocation);
 
 		}
@@ -194,7 +227,7 @@ public class PEAMinimization {
 					continue;
 				}
 
-				final String[] mergedResets = outgoingTransition.getResets();
+				final String[] mergedResets = outgoingTransition.getResets().clone();
 
 				for (int i = 0; i < mergedResets.length; i++) {
 					mergedResets[i] = mergedResets[i] + MIN_POSTFIX;
