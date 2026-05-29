@@ -146,8 +146,6 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected final List<Map<Transition<SimpleAction, IPredicate>, Transition<SimpleAction, IPredicate>>> mBacktranslations =
 			new ArrayList<>();
 
-	private FinitePrefix<SimpleAction, IPredicate> mFinitePrefixOfDifference;
-
 	private long mStartTime = -1L;
 
 	@TestFactory
@@ -177,7 +175,6 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mProgramPlaceMap.clear();
 		mProofs.clear();
 		mUnifiers.clear();
-		mFinitePrefixOfDifference = null;
 	}
 
 	private void setTimeout() {
@@ -303,15 +300,6 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		runTest(path, parsed, program, difference, IPossibleInterferences.fromRelation(interferenceRelation));
 	}
 
-	private FinitePrefix<SimpleAction, IPredicate>
-			getOrConstructFinPrefixOfDifference(final DifferencePetriNet<SimpleAction, IPredicate> difference)
-					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		if (mFinitePrefixOfDifference == null) {
-			mFinitePrefixOfDifference = new FinitePrefix<>(mAutomataServices, difference);
-		}
-		return mFinitePrefixOfDifference;
-	}
-
 	private boolean checkInterference(final IPetriNet<SimpleAction, IPredicate> program,
 			final HashRelation<IPredicate, Transition<SimpleAction, IPredicate>> interferenceRelation)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -323,7 +311,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 	private boolean checkCounterexample(final DifferencePetriNet<SimpleAction, IPredicate> difference)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		final var ctex = getOrConstructFinPrefixOfDifference(difference).getAcceptingRun();
+		final var ctex = new FinitePrefix<>(mAutomataServices, difference).getAcceptingRun();
 		if (ctex != null) {
 			mLogger.warn("Unproven counterexample: %s", ctex);
 		}
