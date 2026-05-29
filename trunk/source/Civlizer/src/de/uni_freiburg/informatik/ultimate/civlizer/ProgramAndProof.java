@@ -77,7 +77,9 @@ class ProgramAndProof {
 
 		for (final Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
 			for (final BoogieIcfgLocation location : innerMap.values()) {
+				System.out.println();
 				System.out.println("Location : " + location);
+				System.out.println("Statement : " + location.getBoogieASTNode());
 
 				for (final var edge : location.getOutgoingEdges()) {
 					if (WitnessGhostUpdate.getAnnotation(edge) != null) {
@@ -91,6 +93,8 @@ class ProgramAndProof {
 						// TODO improve readability
 
 						for (final Map.Entry<?, ?> updateEntry : update.entrySet()) {
+							System.out.println(updateEntry.getKey());
+							System.out.println(updateEntry.getValue());
 							
 							IdentifierExpression layerNum = new IdentifierExpression(
 								loc, 
@@ -136,12 +140,13 @@ class ProgramAndProof {
 		for (BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
 			final var invariant = (WitnessInvariant.getAnnotation(loc) != null) ? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant() : null;
 			final var codeLocation = (ILocation) ILocation.getAnnotation(loc);
-			System.out.println(invariant);
-			System.out.println(codeLocation);
+			System.out.println();
+			System.out.println("Invariant : " + invariant);
+			System.out.println("Location : "  + codeLocation);
+			System.out.println(loc.getBoogieASTNode());
 			result.put(codeLocation, invariant);
 		}
 
 		return result;
 	}
-
 }

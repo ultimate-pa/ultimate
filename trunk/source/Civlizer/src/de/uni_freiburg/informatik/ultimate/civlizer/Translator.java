@@ -427,7 +427,7 @@ public final class Translator extends BoogieVisitor {
 				addAtomicStatement(
 					decl.getIdentifier(),
 					decl.getBody().getBlock()[i],
-					counter - 1
+					counter
 				);
 			}
 

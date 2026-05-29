@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 
 final class BodyTransformer extends BoogieTransformer {
 
@@ -66,22 +65,6 @@ final class BodyTransformer extends BoogieTransformer {
 
     BodyTransformer(ProgramAndProof programAndProof) {
 		mProgramAndProof = programAndProof;
-		for (OwickiGriesAnnotation o : programAndProof.getProof()) {
-			//System.out.println("TEST TEST :" + o.getFormulaMapping());
-			for (var key : o.getFormulaMapping().keySet()) {
-				System.out.println(key);
-				System.out.println(o.getFormulaMapping().get(key));
-			}
-			System.out.println();
-
-			for (var key : o.getAssignmentMapping().keySet()) {
-				System.out.println(key);
-				System.out.println(o.getAssignmentMapping().get(key));
-			}
-			System.out.println();
-			System.out.println();
-		}
-
         mCurrentProcedure = null;
         mAtomicStatementCounter = 0;
     }
@@ -345,7 +328,7 @@ final class BodyTransformer extends BoogieTransformer {
 							new IdentifierExpression(
 								statements[i].getLoc(), 
 								BoogieType.createPlaceholderType(0),
-								"2",
+								"1,2",
 								new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
 							)
 						}
