@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorP
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries.FocusComputation;
@@ -67,7 +66,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final IPetriNetSuccessorProvider<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding,
 			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences)
 			throws AutomataLibraryException, IOException {
 		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s.", program.sizeInformation());
@@ -82,7 +80,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		for (int i = 0; i < mProofs.size(); ++i) {
 			producer.refine(mUnifiers.get(i), mProofs.get(i), mBacktranslations.get(i));
 		}
-		producer.finalize(refinedPetriNet, unfolding);
+		producer.finalize(refinedPetriNet);
 
 		// let producer compute the proof
 		assert producer.isReadyToComputeProof();
@@ -166,11 +164,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.NAIVE, false, false);
 		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
-		}
 	}
 
 	public static final class EmpireAutomatonOG extends OGProofProducerTest {
@@ -184,11 +177,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.AUTOMATA, false, false);
-		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
 		}
 	}
 
@@ -204,11 +192,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
 		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
-		}
 	}
 
 	public static final class ModularLegalFocusOG extends OGProofProducerTest {
@@ -223,11 +206,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
 		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
-		}
 	}
 
 	public static final class DirectedLegalFocusOG extends OGProofProducerTest {
@@ -240,11 +218,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.DIR_LEGAL_FOCUS, false, false);
-		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
 		}
 	}
 }

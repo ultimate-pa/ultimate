@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -56,11 +55,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireProduct;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireProduct.ProductState;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedLegalEmpireToOG;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedLegalFocus;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireAutomaton.State;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireProduct.ProductState;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -199,8 +198,7 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 	}
 
 	@Override
-	public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet,
-			final BranchingProcess<L, P> refinedNetUnfolding) {
+	public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet) {
 		// nothing to do here
 	}
 

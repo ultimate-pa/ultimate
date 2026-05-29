@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -202,7 +201,6 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected abstract void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final IPetriNetSuccessorProvider<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding,
 			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences)
 			throws AutomataLibraryException, IOException;
 
@@ -298,22 +296,11 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 					: "Specified possible interferences deviate from actual";
 		}
 
-		final IPetriNetSuccessorProvider<SimpleAction, IPredicate> constructedDifference;
-		final BranchingProcess<SimpleAction, IPredicate> bp;
-		if (requiresUnfoldingAndDifference()) {
-			bp = getOrConstructFinPrefixOfDifference(difference).getResult();
-			constructedDifference = difference.getYetConstructedPetriNet();
-		} else {
-			bp = null;
-			constructedDifference = difference;
-		}
-
 		final long setupTime = System.nanoTime() - mStartTime;
 		mLogger.info("OwickiGriesTestSuite setup time: %s",
 				CoreUtil.toTimeString(setupTime, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 0));
 
-		runTest(path, parsed, program, constructedDifference, bp,
-				IPossibleInterferences.fromRelation(interferenceRelation));
+		runTest(path, parsed, program, difference, IPossibleInterferences.fromRelation(interferenceRelation));
 	}
 
 	private FinitePrefix<SimpleAction, IPredicate>
@@ -323,10 +310,6 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 			mFinitePrefixOfDifference = new FinitePrefix<>(mAutomataServices, difference);
 		}
 		return mFinitePrefixOfDifference;
-	}
-
-	protected boolean requiresUnfoldingAndDifference() {
-		return true;
 	}
 
 	private boolean checkInterference(final IPetriNet<SimpleAction, IPredicate> program,
@@ -382,21 +365,6 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 
 	private static <L, P> Transition<L, P> findTransition(final IPetriNet<L, P> net, final L letter) {
 		return net.getTransitions().stream().filter(t -> t.getSymbol().equals(letter)).findAny().orElseThrow();
-	}
-
-	private static <L, P> Map<Transition<L, P>, Transition<L, P>> combine(
-			final Map<Transition<L, P>, Transition<L, P>> oldMapping,
-			final Map<Transition<L, P>, Transition<L, P>> newMapping) {
-		if (oldMapping == null) {
-			return newMapping;
-		}
-		final var result = new HashMap<Transition<L, P>, Transition<L, P>>();
-		for (final var newEntry : newMapping.entrySet()) {
-			final var reallyOld = oldMapping.get(newEntry.getValue());
-			assert reallyOld != null : "no back-mapping for " + newEntry.getValue();
-			result.put(newEntry.getKey(), reallyOld);
-		}
-		return result;
 	}
 
 	protected ModifiableGlobalsTable computeModifiableGlobals() {

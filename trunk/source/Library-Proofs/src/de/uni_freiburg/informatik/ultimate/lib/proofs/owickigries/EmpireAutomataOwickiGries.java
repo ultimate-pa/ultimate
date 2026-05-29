@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -251,8 +250,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	@Override
-	public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet,
-			final BranchingProcess<L, P> refinedNetUnfolding) {
+	public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet) {
 		// Nothing to do here
 	}
 

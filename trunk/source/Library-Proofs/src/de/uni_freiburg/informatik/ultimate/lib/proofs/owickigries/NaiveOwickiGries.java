@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorP
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -202,8 +201,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		}
 
 		@Override
-		public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet,
-				final BranchingProcess<L, P> refinedNetUnfolding) {
+		public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet) {
 			mFinalAbstraction = refinedNet;
 		}
 
