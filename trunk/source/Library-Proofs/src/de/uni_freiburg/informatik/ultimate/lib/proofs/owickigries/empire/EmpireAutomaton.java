@@ -306,7 +306,6 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		return regions;
 	}
 
-	// TODO use ImmutableSet for bystanders
 	public record State<L, P>(Territory<P, Region<P>> territory, IPredicate law, int hash) {
 		// Convenience constructor that computes the correct hash code. Always use this constructor.
 		public State(final Territory<P, Region<P>> territory, final IPredicate law) {
