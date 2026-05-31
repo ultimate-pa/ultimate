@@ -7,6 +7,7 @@
 bool button_state = false;
 
 bool step_in_isr = false;
+int n = 0;
 
 // Function Prototypes
 void HAL_GPIO_Init(void);
@@ -26,7 +27,7 @@ int main(void)
     HAL_GPIO_Init();
     HAL_GPIO_Enable_Int();
 
-    int n = 0;
+    n = 0;
     while (1) {
         assert(!step_in_isr);
         n++;
@@ -43,6 +44,7 @@ void HAL_GPIO_Enable_Int(void)
 
 void isr_gpio(void) 
 {   
+    int old_n = n;
     step_in_isr = true;
     bool st = HAL_GPIO_Read();
     if (st == BTN_PRESSED) {
@@ -53,5 +55,5 @@ void isr_gpio(void)
         button_state = st;
     }
     step_in_isr  = false;  
-   
+   assert(n==old_n);
 }

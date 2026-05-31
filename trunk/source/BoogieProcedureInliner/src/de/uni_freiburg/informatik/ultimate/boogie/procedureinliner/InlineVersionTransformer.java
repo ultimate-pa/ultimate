@@ -1046,6 +1046,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			addBacktranslation(assignStat, null);
 			inlineBlock.add(assignStat);
 		}
+
 		// note: some lists may be empty
 
 		inlineBlock.add(getAssumeCallMarker(ATTR_PREFIX_BEGIN_INLINE + procId, callLocation, call, false));
@@ -1058,6 +1059,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		inlineBlock.addAll(writeFromOutParams);
 		inlineBlock.addAll(localHavocs);
 		inlineBlock.add(getAssumeCallMarker(ATTR_PREFIX_END_INLINE + procId, callLocation, call, true));
+		for (final Statement statement : inlinedBody) {
+			ModelUtils.copyAnnotations(call, statement);
+		}
 		return inlineBlock;
 	}
 

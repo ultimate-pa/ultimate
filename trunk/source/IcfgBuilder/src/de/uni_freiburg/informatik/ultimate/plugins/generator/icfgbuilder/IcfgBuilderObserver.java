@@ -35,12 +35,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.CfgBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.util.ISRLabelHandler;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
@@ -56,8 +54,6 @@ public class IcfgBuilderObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	private ISRLabelHandler mIsrLabelHandler;
-
 	public IcfgBuilderObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -69,10 +65,6 @@ public class IcfgBuilderObserver implements IUnmanagedObserver {
 	 */
 	public IIcfg<BoogieIcfgLocation> getRoot() {
 		return mGraphroot;
-	}
-
-	public ISRLabelHandler getIsrLabelHandler() {
-		return mIsrLabelHandler;
 	}
 
 	/**
@@ -98,7 +90,6 @@ public class IcfgBuilderObserver implements IUnmanagedObserver {
 			assert IcfgUtils.areLoopLocationsRegistered(mGraphroot);
 			assert IcfgUtils.areLocationsOfInterestRegistered(mGraphroot);
 			mServices.getBacktranslationService().addTranslator(recCFGBuilder.getBacktranslator());
-			mIsrLabelHandler = new ISRLabelHandler(mGraphroot, new BoogieDeclarations(unit, mLogger), mLogger);
 		} catch (final SMTLIBException e) {
 			final String message = e.getMessage();
 			if ("Cannot create quantifier in quantifier-free logic".equals(message)

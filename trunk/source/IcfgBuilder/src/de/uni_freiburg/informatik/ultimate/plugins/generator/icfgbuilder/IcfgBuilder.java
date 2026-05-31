@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.util.ISRLabelHandler;
 
 /**
  * Main class of Plug-In RCFGBuilder
@@ -96,12 +95,7 @@ public class IcfgBuilder implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		mServices.getStorage().putStorable("isr_locations", getIsrLocations());
 		return mObserver.getRoot();
-	}
-
-	public ISRLabelHandler getIsrLocations() {
-		return mObserver.getIsrLabelHandler();
 	}
 
 	@Override

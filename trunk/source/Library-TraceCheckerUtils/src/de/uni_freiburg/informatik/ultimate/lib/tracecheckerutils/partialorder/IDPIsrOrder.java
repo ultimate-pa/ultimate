@@ -27,42 +27,22 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.IDPMainOrder.IDPMainComparator;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
-public class IDPIsrOrder<L extends IAction, S> implements IDfsOrder<L, S> {
+public class IDPIsrOrder<L extends IIcfgTransition<?>, S> implements IDfsOrder<L, S> {
 
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
-	private final Map<Object, L> mEntryEdge = new HashMap<>();
-	private final Function<S, Object> mNormalizer;
 
 	public IDPIsrOrder() {
-		this(null);
-	}
-
-	public IDPIsrOrder(final Function<S, Object> normalizer) {
-		mNormalizer = normalizer;
 	}
 
 	@Override
 	public Comparator<L> getOrder(final S state) {
-		final Object key = normalize(state);
-		final L entryEdge = mEntryEdge.get(key);
-
-		if (entryEdge == null) {
-			// should only happen for the initial state
-			return mDefaultComparator;
-		}
-
-		return new IDPMainComparator<>(mDefaultComparator);
+		return new IDPIsrComparator<>(mDefaultComparator);
 	}
 
 	@Override
@@ -70,19 +50,7 @@ public class IDPIsrOrder<L extends IAction, S> implements IDfsOrder<L, S> {
 		return true;
 	}
 
-	public <V extends IDfsVisitor<L, S>> WrapperVisitor<L, S, V> wrapVisitor(final V underlying) {
-		return new Visitor<>(underlying);
-	}
-
-	private Object normalize(final S state) {
-		if (mNormalizer == null) {
-			return state;
-		}
-		return mNormalizer.apply(state);
-	}
-
-	public static final class IDPIsrComparator<L extends IAction> implements Comparator<L> {
-		private static String MAIN_THREAD = "ULTIMATE.start";
+	public static final class IDPIsrComparator<L extends IIcfgTransition<?>> implements Comparator<L> {
 		private final Comparator<L> mFallback;
 
 		public IDPIsrComparator(final Comparator<L> fallback) {
@@ -91,31 +59,16 @@ public class IDPIsrOrder<L extends IAction, S> implements IDfsOrder<L, S> {
 
 		@Override
 		public int compare(final L x, final L y) {
-			final String xThread = x.getPrecedingProcedure();
-			final var xMainThread = xThread.equals(MAIN_THREAD);
-			final String yThread = y.getPrecedingProcedure();
-			final var yMainThread = yThread.equals(MAIN_THREAD);
-			if (xMainThread && !yMainThread) {
-				return -1;
-			}
+			final var xBelongsToIsr = InterruptAnnotations.hasAnnotation(x);
+			final var yBelongsToIsr = InterruptAnnotations.hasAnnotation(y);
 
-			if (!xMainThread && yMainThread) {
+			if (xBelongsToIsr && !yBelongsToIsr) {
 				return 1;
+			} else if (!xBelongsToIsr && yBelongsToIsr) {
+				return -1;
 			}
 			return mFallback.compare(x, y);
 		}
 
-	}
-
-	private final class Visitor<V extends IDfsVisitor<L, S>> extends WrapperVisitor<L, S, V> {
-		private Visitor(final V underlying) {
-			super(underlying);
-		}
-
-		@Override
-		public boolean discoverTransition(final S source, final L letter, final S target) {
-			mEntryEdge.putIfAbsent(normalize(target), letter);
-			return super.discoverTransition(source, letter, target);
-		}
 	}
 }

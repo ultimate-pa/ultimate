@@ -27,9 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
 import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -37,27 +34,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.util.ISRLabelHandler;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.util.ISRLabelHandler.IDPLocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S>
 		implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
-	private final ISRLabelHandler mIsrLabelHandler;
-	private final Map<IcfgLocation, IcfgLocation> mPetriNetLoc2IcfgLoc;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mFiniteAutomaton;
-	private final Set<IcfgLocation> mErrorLocations;
 
-	public FiniteAutomaton2IDPAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
-			final ISRLabelHandler labelHandler, final Map<IcfgLocation, IcfgLocation> petriNetLoc2IcfgLoc,
-			final Set<IcfgLocation> errorLocs) {
-		mIsrLabelHandler = labelHandler;
-		mPetriNetLoc2IcfgLoc = petriNetLoc2IcfgLoc;
+	public FiniteAutomaton2IDPAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand) {
 		mFiniteAutomaton = operand;
-		mErrorLocations = errorLocs;
 	}
 
 	@Override
@@ -75,23 +62,34 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S>
 	}
 
 	private boolean isIdpTransition(final OutgoingInternalTransition<L, S> transition, final S state) {
-		final var petriSucc = mFiniteAutomaton.internalSuccessors(state);
-		final var predecessors = StreamSupport.stream(petriSucc.spliterator(), false)
-				.map(t -> t.getLetter().getSource()).collect(Collectors.toSet());
-		final var predISRLoc = predecessors.stream()
-				.map(l -> mIsrLabelHandler.getIDPLocation(mPetriNetLoc2IcfgLoc.get(l))).collect(Collectors.toSet());
 		final var letter = transition.getLetter();
-		final var succLoc = mPetriNetLoc2IcfgLoc.get(letter.getTarget());
-		assert !predISRLoc.isEmpty() && !predISRLoc.contains(null) && succLoc != null;
-		final var allMainOrExit = predISRLoc.stream().allMatch(loc -> loc.location() == IDPLocation.MAIN);
-		if (allMainOrExit) {
-			return true;
-		}
-		final var activeIsr = DataStructureUtils.getOneAndOnly(
-				predISRLoc.stream().filter(i -> i.location() != IDPLocation.MAIN).toList(), "active isr");
-		final var predLoc = mIsrLabelHandler.getIDPLocation(mPetriNetLoc2IcfgLoc.get(letter.getSource()));
-		if (activeIsr != predLoc) {
-			return false;
+		var transitionAnno = InterruptAnnotations.getAnnotation(letter);
+		transitionAnno = transitionAnno == null ? new InterruptAnnotations(ISRLocation.MAIN, 0) : transitionAnno;
+		var predNodeAnno = InterruptAnnotations.getAnnotation(letter.getSource());
+		predNodeAnno = predNodeAnno == null ? new InterruptAnnotations(ISRLocation.MAIN, 0) : predNodeAnno;
+		final var petriSucc = mFiniteAutomaton.internalSuccessors(state);
+		for (final OutgoingInternalTransition<L, S> outgoingInternalTransition : petriSucc) {
+			final var otherLetter = outgoingInternalTransition.getLetter();
+			final var otherAnnot = InterruptAnnotations.getAnnotation(otherLetter);
+			if (otherAnnot == null || otherAnnot.getIsrLocation() == ISRLocation.MAIN) {
+				continue;
+			}
+			if (transitionAnno.getIsrLocation() == ISRLocation.MAIN) {
+				return false;
+			}
+			final var otherIsrId = otherAnnot.getIsrId();
+			if (otherIsrId == transitionAnno.getIsrId()) {
+				continue;
+			}
+			final var otherPred = otherLetter.getSource();
+			var otherPredAnno = InterruptAnnotations.getAnnotation(otherPred);
+			otherPredAnno = otherPredAnno == null ? new InterruptAnnotations(ISRLocation.MAIN, 0) : otherPredAnno;
+			if (predNodeAnno.getIsrLocation() == ISRLocation.MAIN
+					&& otherPredAnno.getIsrLocation() != ISRLocation.MAIN) {
+				return false;
+			}
+			assert !(predNodeAnno.getIsrLocation() == ISRLocation.ISR
+					&& otherPredAnno.getIsrLocation() == ISRLocation.ISR) : "Two ISRs are active at the same time!";
 		}
 		return true;
 	}

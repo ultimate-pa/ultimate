@@ -218,8 +218,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 							.thenComparing(Comparator.comparing(x -> x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparingInt(Object::hashCode)));
 		}
-		case IDP_MAIN -> new IDPMainOrder<>(this::normalizePredicate);
-		case IDP_ISR -> new IDPIsrOrder<>(this::normalizePredicate);
+		case IDP_MAIN -> new IDPMainOrder<>();
+		case IDP_ISR -> new IDPIsrOrder<>();
 		case PSEUDO_LOCKSTEP -> new BetterLockstepOrder<>(this::normalizePredicate);
 		case RANDOM -> new RandomDfsOrder<>(randomOrderSeed, false);
 		case POSITIONAL_RANDOM -> new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);

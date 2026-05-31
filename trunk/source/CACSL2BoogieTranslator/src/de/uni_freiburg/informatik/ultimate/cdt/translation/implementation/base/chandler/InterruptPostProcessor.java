@@ -69,6 +69,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptServiceRoutines;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -163,7 +165,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		// Add atomic block and variable assignment true to request enabled all function
 		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
 
-		if (realization3 && (mISR.getRequestEnableAll() != null)) {
+		if (realization3) {
 			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadGpioProcedureMap);
 		}
 
@@ -184,6 +186,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private void addForksToRequestEnableAll(final Procedure mainProcedure,
 			final Map<Integer, Procedure> threadGpioProceduresMap) {
+		if (mainProcedure == null) {
+			return;
+		}
 		final var statements = new ArrayList<Statement>();
 		for (final Entry<Integer, Procedure> entry : threadGpioProceduresMap.entrySet()) {
 			final var irq = entry.getKey();
@@ -483,8 +488,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private Statement getIfStatement(final String identifier, final Expression enabledExpr, final int id) {
+		final var interruptAnnotation = new InterruptAnnotations(ISRLocation.ISR, id);
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
+		interruptAnnotation.annotate(then);
 		if (ADD_ISR_LABELS) {
 			return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, labelISRStatement(then, id),
 					new Statement[0]);
