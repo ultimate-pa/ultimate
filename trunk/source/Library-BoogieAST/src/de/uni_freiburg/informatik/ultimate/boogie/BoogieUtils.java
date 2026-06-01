@@ -56,6 +56,9 @@ public class BoogieUtils {
 
 	public static final String AUXILIARY_LABEL = "auxiliary_label";
 
+	// A prefix that is added to the names of ghost variables during backtranslation.
+	public static final String GHOST_VARIABLE_PREFIX = "~ghost~";
+
 	private BoogieUtils() {
 		// Prevent instantiation of this utility class
 	}

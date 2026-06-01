@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BitvectorFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -652,7 +653,7 @@ public final class Term2Expression implements Serializable {
 			throw new UnsupportedOperationException("Cannot redeclare program variable as auxiliary: " + pv);
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(variable.getSort());
-		final String newIdentifier = "~ghost~" + mAuxiliaryVariables.size();
+		final String newIdentifier = BoogieUtils.GHOST_VARIABLE_PREFIX + mAuxiliaryVariables.size();
 		final var id = new IdentifierExpression(null, type, newIdentifier,
 				new DeclarationInformation(StorageClass.QUANTIFIED, null));
 		mAuxiliaryVariables.put(variable, id);

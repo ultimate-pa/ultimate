@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
@@ -886,10 +887,11 @@ public final class Boogie2ACSL {
 			throw new UnsupportedOperationException("Auxiliary variable already declared");
 		}
 
-		final String ghostPrefix = "~ghost~";
 		final String newIdentifier;
-		if (Pattern.matches(ghostPrefix + "([a-zA-Z0-9]*)", identifier)) {
-			newIdentifier = "__ULTIMATE_ghost_" + identifier.substring(ghostPrefix.length());
+		if (Pattern.matches(BoogieUtils.GHOST_VARIABLE_PREFIX + "([a-zA-Z0-9]*)", identifier)) {
+			// To avoid stacking "ghost" prefixes but still preserve meaningful variable names and guarantee uniqueness,
+			// we treat identifiers specially if they start with the prefix added during Boogie backtranslation.
+			newIdentifier = "__ULTIMATE_ghost_" + identifier.substring(BoogieUtils.GHOST_VARIABLE_PREFIX.length());
 		} else {
 			newIdentifier = "__ULTIMATE_C_ghost_" + mAuxVariables.size();
 		}
