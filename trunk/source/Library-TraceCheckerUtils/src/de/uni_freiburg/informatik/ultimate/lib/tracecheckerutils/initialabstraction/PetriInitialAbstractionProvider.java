@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries.FocusComputation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireOwickiGries.FocusComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
@@ -129,9 +129,9 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 						.createProofProducer(Function.identity());
 
 		// Current state-of-the-art (as of POPL'26 paper)
-		case AUTOMATA -> new EmpireAutomataOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(),
-				mPredicateFactory, FocusComputation.UNFOCUSED);
-		case LEGAL_FOCUS -> new EmpireAutomataOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(),
+		case EMPIRE -> new EmpireOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory,
+				FocusComputation.UNFOCUSED);
+		case LEGAL_FOCUS -> new EmpireOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(),
 				mPredicateFactory, FocusComputation.MODULAR);
 
 		// Unfinished future work

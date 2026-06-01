@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Explores the reachable states of an {@link IEmpireAutomaton}.
+ * Explores the reachable states of an {@link IEmpire}.
  *
  * @param <L>
  *            the type of letters in the Petri program
@@ -51,23 +51,23 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * @param <S>
  *            the type of states in the empire
  */
-public class EmpireReachableStates<L, P, S> implements IExplicitEmpireAutomaton<L, P, S> {
-	private final IEmpireAutomaton<L, P, S> mEmpire;
+public class EmpireReachableStates<L, P, S> implements IExplicitEmpire<L, P, S> {
+	private final IEmpire<L, P, S> mEmpire;
 	private final NestedWordAutomatonReachableStates<Transition<L, P>, S> mReachable;
 
-	public EmpireReachableStates(final IUltimateServiceProvider services, final IEmpireAutomaton<L, P, S> empire) {
+	public EmpireReachableStates(final IUltimateServiceProvider services, final IEmpire<L, P, S> empire) {
 		mEmpire = empire;
 		try {
 			mReachable = new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empire);
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(e,
-					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
+					new RunningTaskInfo(getClass(), "collecting reachable states of empire"));
 		}
 	}
 
-	public static <L, P, S> IExplicitEmpireAutomaton<L, P, S> makeExplicit(final IUltimateServiceProvider services,
-			final IEmpireAutomaton<L, P, S> empire) {
-		if (empire instanceof final IExplicitEmpireAutomaton<L, P, S> explicitEmpire) {
+	public static <L, P, S> IExplicitEmpire<L, P, S> makeExplicit(final IUltimateServiceProvider services,
+			final IEmpire<L, P, S> empire) {
+		if (empire instanceof final IExplicitEmpire<L, P, S> explicitEmpire) {
 			return explicitEmpire;
 		}
 		return new EmpireReachableStates<>(services, empire);

@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Creates an {@link OwickiGriesAnnotation} (for a Petri program) from a given empire (see {@link IEmpireAutomaton}).
+ * Creates an {@link OwickiGriesAnnotation} (for a Petri program) from a given empire (see {@link IEmpire}).
  *
  * @param <S>
  *            the types of states in the empire
@@ -81,7 +81,7 @@ public class EmpireToOwickiGries<S, L, P> {
 	private final Script mScript;
 	private final IPetriNet<L, P> mProgram;
 
-	private final IExplicitEmpireAutomaton<L, P, S> mEmpireAutomaton;
+	private final IExplicitEmpire<L, P, S> mEmpire;
 	private final ILegalFocusFunction<S, P> mLegalFocus;
 
 	private final BasicPredicateFactory mFactory;
@@ -92,7 +92,7 @@ public class EmpireToOwickiGries<S, L, P> {
 
 	public EmpireToOwickiGries(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final IExplicitEmpireAutomaton<L, P, S> empire,
+			final IExplicitEmpire<L, P, S> empire,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		this(services, mgdScript, program, symbolTable, procedures, empire, possibleInterferences,
 				new ILegalFocusFunction.TrivialFocus<>(empire));
@@ -100,14 +100,14 @@ public class EmpireToOwickiGries<S, L, P> {
 
 	public EmpireToOwickiGries(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final IExplicitEmpireAutomaton<L, P, S> empire,
+			final IExplicitEmpire<L, P, S> empire,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
 			final ILegalFocusFunction<S, P> legalFocus) {
 		mProgram = program;
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 
-		mEmpireAutomaton = empire;
+		mEmpire = empire;
 		mLegalFocus = legalFocus;
 
 		mGhostVariable = createGhostVariable();
@@ -118,10 +118,10 @@ public class EmpireToOwickiGries<S, L, P> {
 
 		final Map<S, Integer> stateIndistinction;
 		if (USE_STATE_INDISTINCTION) {
-			stateIndistinction = new StateIndistinction<>(services, mProgram, mEmpireAutomaton, possibleInterferences)
-					.computePartition();
+			stateIndistinction =
+					new StateIndistinction<>(services, mProgram, mEmpire, possibleInterferences).computePartition();
 		} else {
-			final var stateList = List.copyOf(mEmpireAutomaton.getStates());
+			final var stateList = List.copyOf(mEmpire.getStates());
 			stateIndistinction = IntStream.range(0, stateList.size()).mapToObj(i -> i)
 					.collect(Collectors.toMap(stateList::get, Function.identity()));
 		}
@@ -153,9 +153,9 @@ public class EmpireToOwickiGries<S, L, P> {
 	 */
 	private Map<P, IPredicate> computePlaceAnnotations() {
 		final Map<P, IPredicate> formulaMap = new HashMap<>();
-		final var empireStates = mEmpireAutomaton.getStates();
+		final var empireStates = mEmpire.getStates();
 		for (final P place : mProgram.getPlaces()) {
-			final var states = empireStates.stream().filter(s -> mEmpireAutomaton.containsPlace(s, place)).toList();
+			final var states = empireStates.stream().filter(s -> mEmpire.containsPlace(s, place)).toList();
 			assert noErrorPlaceInStates(place, states) : "Accepting place in state";
 
 			// As an optimization of the formula structure, we group the disjuncts by law.
@@ -164,7 +164,7 @@ public class EmpireToOwickiGries<S, L, P> {
 			final Map<List<Term>, List<Term>> disjunctsByLaws = new HashMap<>(states.size());
 
 			for (final S state : states) {
-				final var placeRegion = mEmpireAutomaton.getTerritory(state).getPlaceRegion(place);
+				final var placeRegion = mEmpire.getTerritory(state).getPlaceRegion(place);
 
 				final Term ghostEquation =
 						SmtUtils.binaryEquality(mScript, mGhostVariable.getTerm(), mStateTerms.get(state));
@@ -194,7 +194,7 @@ public class EmpireToOwickiGries<S, L, P> {
 	 * @return Map of ghost variable to its init assignment (which is the numeral of the init state)
 	 */
 	private Map<IProgramVar, Term> computeInitialGhostValuation() {
-		final var initState = DataStructureUtils.getOneAndOnly(mEmpireAutomaton.getInitialStates(), "initial state");
+		final var initState = DataStructureUtils.getOneAndOnly(mEmpire.getInitialStates(), "initial state");
 		return Map.of(mGhostVariable, mStateTerms.get(initState));
 	}
 
@@ -215,8 +215,8 @@ public class EmpireToOwickiGries<S, L, P> {
 	private GhostUpdate computeGhostUpdateForTransition(final Transition<L, P> transition) {
 		final var updatePairs = new ArrayList<Pair<S, S>>();
 
-		for (final S state : mEmpireAutomaton.getStates()) {
-			final var edge = DataStructureUtils.getOnly(mEmpireAutomaton.internalSuccessors(state, transition),
+		for (final S state : mEmpire.getStates()) {
+			final var edge = DataStructureUtils.getOnly(mEmpire.internalSuccessors(state, transition),
 					"More than one successor in automaton for a transition");
 			if (!edge.isPresent()) {
 				// The state does not have an edge for the given transition.
@@ -262,7 +262,7 @@ public class EmpireToOwickiGries<S, L, P> {
 
 	private Map<S, Term> getStateTerms(final Map<S, Integer> stateIndistinction) {
 		final var stateTerms = new LinkedHashMap<S, Term>();
-		for (final S state : mEmpireAutomaton.getStates()) {
+		for (final S state : mEmpire.getStates()) {
 			stateTerms.put(state, mScript.numeral(String.valueOf(stateIndistinction.get(state))));
 		}
 		return stateTerms;

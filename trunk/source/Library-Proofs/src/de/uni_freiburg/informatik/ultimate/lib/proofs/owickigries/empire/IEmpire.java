@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
-// TODO Possibly rename to IEmpire
-public interface IEmpireAutomaton<L, P, S> extends INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, S> {
+public interface IEmpire<L, P, S> extends INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, S> {
 	IPredicate getLaw(S state);
 
 	Territory<P, Region<P>> getTerritory(S state);

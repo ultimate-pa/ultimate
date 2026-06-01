@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-// TODO Give this class a more descriptive name
-public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutomaton.State<L, P>> {
+// TODO document this class
+public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.State<L, P>> {
 	private final ILogger mLogger;
 
 	private final IPetriNet<L, P> mNet;
@@ -57,7 +57,7 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	private final State<L, P> mInitialState;
 
-	public EmpireAutomaton(final IPetriNet<L, P> net,
+	public SaturatedEmpire(final IPetriNet<L, P> net,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
 			final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(getClass());

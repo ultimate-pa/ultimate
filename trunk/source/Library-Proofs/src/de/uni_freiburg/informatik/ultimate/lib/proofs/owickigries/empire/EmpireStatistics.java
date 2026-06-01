@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
 
-public class EmpireAutomataStatistics extends AbstractStatisticsDataProvider {
+public class EmpireStatistics extends AbstractStatisticsDataProvider {
 	public static final String AUTOMATON_SIZE = "automaton size";
 	public static final String UNIQUE_PAIRS = "number of unique pairs";
 	public static final String LAW_SIZE = "empire law size";
@@ -54,7 +54,7 @@ public class EmpireAutomataStatistics extends AbstractStatisticsDataProvider {
 	private final MinMaxMed mRegionsPerTerritory = new MinMaxMed();
 	private final MinMaxMed mPlacesPerRegion = new MinMaxMed();
 
-	public <P> EmpireAutomataStatistics(final IExplicitEmpireAutomaton<?, ?, P> empireAutomaton) {
+	public <P> EmpireStatistics(final IExplicitEmpire<?, ?, P> empire) {
 		declareCounter(ANNOTATION_SIZE, () -> mAnnotationSize);
 		declareCounter(AUTOMATON_SIZE, () -> mAutomatonSize);
 		declareCounter(UNIQUE_PAIRS, () -> mUniquePairs);
@@ -63,17 +63,14 @@ public class EmpireAutomataStatistics extends AbstractStatisticsDataProvider {
 		declareMinMaxMed(REGION_TERRITORY, mRegionsPerTerritory);
 		declareMinMaxMed(PLACES_PER_REGION, mPlacesPerRegion);
 
-		final var regions = empireAutomaton.getStates().stream()
-				.<Region<?>> flatMap(s -> empireAutomaton.getTerritory(s).getRegions().stream())
-				.collect(Collectors.toSet());
-		final var territories =
-				empireAutomaton.getStates().stream().map(empireAutomaton::getTerritory).collect(Collectors.toSet());
+		final var regions = empire.getStates().stream()
+				.<Region<?>> flatMap(s -> empire.getTerritory(s).getRegions().stream()).collect(Collectors.toSet());
+		final var territories = empire.getStates().stream().map(empire::getTerritory).collect(Collectors.toSet());
 
-		mAnnotationSize = empireAutomaton.getStates().stream()
-				.collect(Collectors.summingLong(s -> size(empireAutomaton.getLaw(s))));
-		mAutomatonSize = empireAutomaton.getStates().size();
-		mUniquePairs = empireAutomaton.getStates().stream()
-				.map(s -> new Pair<>(empireAutomaton.getTerritory(s), empireAutomaton.getLaw(s))).distinct().count();
+		mAnnotationSize = empire.getStates().stream().collect(Collectors.summingLong(s -> size(empire.getLaw(s))));
+		mAutomatonSize = empire.getStates().size();
+		mUniquePairs = empire.getStates().stream().map(s -> new Pair<>(empire.getTerritory(s), empire.getLaw(s)))
+				.distinct().count();
 
 		mNumberOfRegions = regions.size();
 		mNumberOfTerritories = territories.size();

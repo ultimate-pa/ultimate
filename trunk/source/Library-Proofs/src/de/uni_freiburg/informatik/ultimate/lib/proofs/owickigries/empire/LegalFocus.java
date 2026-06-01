@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 	private final IPetriNet<L, P> mProgram;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInterpolantAutomaton;
-	private final IExplicitEmpireAutomaton<L, P, S> mEmpire;
+	private final IExplicitEmpire<L, P, S> mEmpire;
 
 	private final int mNumLaws;
 	private final Function<IPredicate, List<IPredicate>> mSplitConjuncts;
@@ -60,13 +60,13 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 
 	private final HashRelation<Pair<S, Integer>, Region<P>> mLegalFocus;
 
-	public LegalFocus(final IExplicitEmpireAutomaton<L, P, S> empire, final IPetriNet<L, P> net,
+	public LegalFocus(final IExplicitEmpire<L, P, S> empire, final IPetriNet<L, P> net,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton, final int numLaws,
 			final Function<IPredicate, List<IPredicate>> splitConjuncts) {
 		this(empire, net, interpolantAutomaton, numLaws, splitConjuncts, IFocusedRegionHeuristic.bySize());
 	}
 
-	public LegalFocus(final IExplicitEmpireAutomaton<L, P, S> empire, final IPetriNet<L, P> program,
+	public LegalFocus(final IExplicitEmpire<L, P, S> empire, final IPetriNet<L, P> program,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton, final int numLaws,
 			final Function<IPredicate, List<IPredicate>> splitConjuncts, final IFocusedRegionHeuristic<P> heuristic) {
 		mProgram = program;

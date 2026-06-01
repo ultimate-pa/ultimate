@@ -49,31 +49,31 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class EmpireAutomatonValidityCheck<L extends IAction, P, S> {
+public class EmpireValidityCheck<L extends IAction, P, S> {
 	private final ILogger mLogger;
 
 	private final MonolithicHoareTripleChecker mHc;
 	private final BasicPredicateFactory mFactory;
 
-	private final IEmpireAutomaton<L, P, S> mEmpireAutomaton;
+	private final IEmpire<L, P, S> mEmpire;
 	private final IPetriNet<L, P> mNet;
 	private final Validity mValidity;
 
-	public EmpireAutomatonValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public EmpireValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final BasicPredicateFactory factory, final IPetriNet<L, P> net,
-			final ModifiableGlobalsTable modifiableGlobals, final IEmpireAutomaton<L, P, S> empire) {
-		mLogger = services.getLoggingService().getLogger(EmpireAutomatonValidityCheck.class);
+			final ModifiableGlobalsTable modifiableGlobals, final IEmpire<L, P, S> empire) {
+		mLogger = services.getLoggingService().getLogger(EmpireValidityCheck.class);
 		mHc = new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals);
 		mFactory = factory;
 
 		mNet = net;
-		mEmpireAutomaton = empire;
+		mEmpire = empire;
 
 		mValidity = checkValidity();
 	}
 
 	private Validity checkValidity() {
-		final var initialStates = mEmpireAutomaton.getInitialStates();
+		final var initialStates = mEmpire.getInitialStates();
 		final Set<S> initialState = new HashSet<>();
 		initialStates.forEach(initialState::add);
 
@@ -99,12 +99,12 @@ public class EmpireAutomatonValidityCheck<L extends IAction, P, S> {
 			return Validity.INVALID;
 		}
 		for (final S state : initialState) {
-			final var territory = mEmpireAutomaton.getTerritory(state);
+			final var territory = mEmpire.getTerritory(state);
 			if (!territory.containsMarking(Marking.initial(mNet))) {
 				mLogger.warn("Initial State does not contain initial marking: %s", state);
 				return Validity.INVALID;
 			}
-			final var law = mEmpireAutomaton.getLaw(state);
+			final var law = mEmpire.getLaw(state);
 			if (!isTrueLiteral(law)) {
 				mLogger.warn("Initial State contains Law that does not evaluate to true: %s", state);
 				return Validity.INVALID;
@@ -124,10 +124,10 @@ public class EmpireAutomatonValidityCheck<L extends IAction, P, S> {
 			if (!visitedStates.add(state)) {
 				continue;
 			}
-			final var territory = mEmpireAutomaton.getTerritory(state);
-			final var law = mEmpireAutomaton.getLaw(state);
+			final var territory = mEmpire.getTerritory(state);
+			final var law = mEmpire.getLaw(state);
 			for (final var transition : (Iterable<Transition<L, P>>) territory.getEnabledTransitions(mNet)::iterator) {
-				final var successorStates = mEmpireAutomaton.internalSuccessors(state, transition);
+				final var successorStates = mEmpire.internalSuccessors(state, transition);
 				final Set<S> successorState = new HashSet<>();
 				successorStates.forEach(i -> successorState.add(i.getSucc()));
 				assert successorState.size() < 2 : "More then one successor";
@@ -156,8 +156,8 @@ public class EmpireAutomatonValidityCheck<L extends IAction, P, S> {
 	private Validity checkAcceptingPlaces(final Set<S> states) {
 		final var accepting = mNet.getAcceptingPlaces();
 		for (final S state : states) {
-			final var territory = mEmpireAutomaton.getTerritory(state);
-			final var law = mEmpireAutomaton.getLaw(state);
+			final var territory = mEmpire.getTerritory(state);
+			final var law = mEmpire.getLaw(state);
 			if (DataStructureUtils.haveNonEmptyIntersection(territory.getPlaces(), accepting) && !isFalseLiteral(law)) {
 				return Validity.INVALID;
 			}
@@ -182,7 +182,7 @@ public class EmpireAutomatonValidityCheck<L extends IAction, P, S> {
 	private boolean checkHoareValidity(final Set<S> successorState, final IPredicate law,
 			final Transition<L, P> transition) {
 		for (final S state : successorState) {
-			final var successorLaw = mEmpireAutomaton.getLaw(state);
+			final var successorLaw = mEmpire.getLaw(state);
 			final var valid = checkHoareTriple(law, successorLaw, transition);
 			if (!valid) {
 				mLogger.warn("Invalid Hoare Triple\n \tprecondition %s \taction %s \tpostcondition %s", law,
@@ -195,9 +195,9 @@ public class EmpireAutomatonValidityCheck<L extends IAction, P, S> {
 
 	private boolean checkValidSuccessor(final Set<S> successorState, final S predState,
 			final Transition<L, P> transition) {
-		final var territory = mEmpireAutomaton.getTerritory(predState);
+		final var territory = mEmpire.getTerritory(predState);
 		for (final S state : successorState) {
-			if (!territory.isSuccessor(mEmpireAutomaton.getTerritory(state), transition)) {
+			if (!territory.isSuccessor(mEmpire.getTerritory(state), transition)) {
 				return false;
 			}
 		}

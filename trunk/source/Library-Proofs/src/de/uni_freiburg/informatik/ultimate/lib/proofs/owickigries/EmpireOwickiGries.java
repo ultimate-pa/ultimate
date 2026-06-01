@@ -51,22 +51,22 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomataStatistics;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton.State;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomatonValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireReachableStates;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireStatistics;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.IExplicitEmpireAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.IExplicitEmpire;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ILegalFocusFunction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalFocus;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.SaturatedEmpire;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.SaturatedEmpire.State;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
-public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
+public class EmpireOwickiGries<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
 	public enum FocusComputation {
 		UNFOCUSED, GLOBAL, MODULAR
 	}
@@ -92,13 +92,13 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGries;
 	private final Statistics mStatistics;
 
-	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
+	public EmpireOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final CfgSmtToolkit csToolkit, final PredicateFactory factory, final FocusComputation focusComputation) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
 				csToolkit.getModifiableGlobalsTable(), factory, focusComputation);
 	}
 
-	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
+	public EmpireOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ModifiableGlobalsTable modifiableGlobals, final PredicateFactory factory,
 			final FocusComputation focusComputation) {
@@ -162,56 +162,55 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 
 		assert isReadyToComputeProof() : "Not ready to compute proof";
 
-		final IExplicitEmpireAutomaton<L, P, State<L, P>> empireAutomaton = computeEmpireAutomaton();
-		assert checkAutomatonValidity(empireAutomaton) : "Empire automaton is invalid";
+		final IExplicitEmpire<L, P, State<L, P>> empire = computeEmpire();
+		assert checkEmpireValidity(empire) : "Empire is invalid";
 
-		final ILegalFocusFunction<State<L, P>, P> legalFocus = computeFocus(empireAutomaton);
+		final ILegalFocusFunction<State<L, P>, P> legalFocus = computeFocus(empire);
 
-		mOwickiGries = computeOwickiGriesAnnotation(empireAutomaton, legalFocus);
+		mOwickiGries = computeOwickiGriesAnnotation(empire, legalFocus);
 		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
 
 		return mOwickiGries;
 	}
 
-	private IExplicitEmpireAutomaton<L, P, State<L, P>> computeEmpireAutomaton() {
+	private IExplicitEmpire<L, P, State<L, P>> computeEmpire() {
 		mStatistics.startEmpireComputation();
 		try {
-			final var lazyAutomaton = new EmpireAutomaton<>(mProgram, mProofProduct, mServices);
+			final var lazyEmpire = new SaturatedEmpire<>(mProgram, mProofProduct, mServices);
 
-			mLogger.info("Exploring empire automaton...");
-			final var automaton = new EmpireReachableStates<>(mServices, lazyAutomaton);
+			mLogger.info("Exploring empire...");
+			final var empire = new EmpireReachableStates<>(mServices, lazyEmpire);
 
-			mLogger.info("Explored empire automaton has %s", automaton.sizeInformation());
-			mStatistics.reportEmpire(automaton);
+			mLogger.info("Explored empire has %s", empire.sizeInformation());
+			mStatistics.reportEmpire(empire);
 
-			return automaton;
+			return empire;
 		} finally {
 			mStatistics.stopEmpireComputation();
 		}
 	}
 
-	private boolean checkAutomatonValidity(final IExplicitEmpireAutomaton<L, P, ?> automaton) {
-		mLogger.info("Checking validity of empire automaton...");
+	private boolean checkEmpireValidity(final IExplicitEmpire<L, P, ?> empire) {
+		mLogger.info("Checking validity of empire...");
 		mStatistics.startEmpireValidity();
 		try {
-			final var checker = new EmpireAutomatonValidityCheck<>(mServices, mMgdScript, mFactory, mProgram,
-					mModifiableGlobals, automaton);
+			final var checker =
+					new EmpireValidityCheck<>(mServices, mMgdScript, mFactory, mProgram, mModifiableGlobals, empire);
 			return checker.getValidity() != Validity.INVALID;
 		} finally {
 			mStatistics.stopEmpireValidity();
 		}
 	}
 
-	private ILegalFocusFunction<State<L, P>, P>
-			computeFocus(final IExplicitEmpireAutomaton<L, P, State<L, P>> empireAutomaton) {
+	private ILegalFocusFunction<State<L, P>, P> computeFocus(final IExplicitEmpire<L, P, State<L, P>> empire) {
 		mLogger.info("Computing focus ...");
 		mStatistics.startFocusComputation();
 		try {
 			return switch (mFocusComputation) {
-			case UNFOCUSED -> new ILegalFocusFunction.TrivialFocus<>(empireAutomaton);
-			case MODULAR -> new LegalFocus<>(empireAutomaton, mProgram, mProofProduct, mNumProofs,
-					mProofUnionFactory::splitConjuncts);
-			case GLOBAL -> new LegalFocus<>(empireAutomaton, mProgram, mProofProduct, 1, List::of);
+			case UNFOCUSED -> new ILegalFocusFunction.TrivialFocus<>(empire);
+			case MODULAR ->
+					new LegalFocus<>(empire, mProgram, mProofProduct, mNumProofs, mProofUnionFactory::splitConjuncts);
+			case GLOBAL -> new LegalFocus<>(empire, mProgram, mProofProduct, 1, List::of);
 			};
 		} finally {
 			mStatistics.stopFocusComputation();
@@ -219,9 +218,8 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> computeOwickiGriesAnnotation(
-			final IExplicitEmpireAutomaton<L, P, State<L, P>> empire,
-			final ILegalFocusFunction<State<L, P>, P> legalFocus) {
-		mLogger.info("Converting empire automaton to Owicki-Gries annotation...");
+			final IExplicitEmpire<L, P, State<L, P>> empire, final ILegalFocusFunction<State<L, P>, P> legalFocus) {
+		mLogger.info("Converting empire to Owicki-Gries annotation...");
 		mStatistics.startOwickiGriesComputation();
 		try {
 			final var construction = new EmpireToOwickiGries<>(mServices, mMgdScript, mProgram, mSymbolTable,
@@ -268,12 +266,12 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		private final TimeTracker mFocusTimer = new TimeTracker();
 
 		public Statistics(final ILogger logger) {
-			super(logger, EmpireAutomaton.class, EmpireToOwickiGries.class);
+			super(logger, SaturatedEmpire.class, EmpireToOwickiGries.class);
 			declareTimeTracker("Focus computation time", mFocusTimer);
 		}
 
-		public void reportEmpire(final IExplicitEmpireAutomaton<?, ?, ?> empire) {
-			reportEmpireStatistics(new EmpireAutomataStatistics(empire));
+		public void reportEmpire(final IExplicitEmpire<?, ?, ?> empire) {
+			reportEmpireStatistics(new EmpireStatistics(empire));
 		}
 
 		private void startFocusComputation() {

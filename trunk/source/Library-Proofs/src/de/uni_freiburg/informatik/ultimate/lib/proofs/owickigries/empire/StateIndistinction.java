@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Symmetri
 
 /**
  * This class computes a <em>state indistinction relation</em>, i.e., an equivalence relation between states of an
- * empire automaton such that the imperial Owicki-Gries annotation need not distinguish between equivalent states.
+ * empire such that the imperial Owicki-Gries annotation need not distinguish between equivalent states.
  *
  * The ghost variable of the imperial Owicki-Gries relation tracks the equivalence class of the current empire state.
  *
@@ -68,7 +68,7 @@ class StateIndistinction<L, P, S> {
 	private final ILogger mLogger;
 
 	private final IPetriNet<L, P> mProgram;
-	private final IExplicitEmpireAutomaton<L, P, S> mEmpireAutomaton;
+	private final IExplicitEmpire<L, P, S> mEmpire;
 	private final IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 
 	// A list of all states, used to establish a clear iteration order.
@@ -85,16 +85,16 @@ class StateIndistinction<L, P, S> {
 	private final UnionFind<S> mPartition = new UnionFind<>();
 
 	public StateIndistinction(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final IExplicitEmpireAutomaton<L, P, S> empireAutomaton,
+			final IExplicitEmpire<L, P, S> empire,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(StateIndistinction.class);
 
 		mProgram = program;
-		mEmpireAutomaton = empireAutomaton;
+		mEmpire = empire;
 		mPossibleInterferences = possibleInterferences;
 
-		mStates = List.copyOf(mEmpireAutomaton.getStates());
+		mStates = List.copyOf(mEmpire.getStates());
 	}
 
 	public Map<S, Integer> computePartition() {
@@ -181,8 +181,8 @@ class StateIndistinction<L, P, S> {
 		for (int i = 0; i < mStates.size(); ++i) {
 			final S q1 = mStates.get(i);
 
-			final Territory<P, Region<P>> terr1 = mEmpireAutomaton.getTerritory(q1);
-			// final IPredicate law1 = mEmpireAutomaton.getLaw(q1);
+			final Territory<P, Region<P>> terr1 = mEmpire.getTerritory(q1);
+			// final IPredicate law1 = mEmpire.getLaw(q1);
 
 			for (int j = i + 1; j < mStates.size(); j++) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -193,11 +193,11 @@ class StateIndistinction<L, P, S> {
 
 				// states with equal laws need not be distinguished
 				// TODO currently unclear if this is sound, so disabled for now
-				// if (mEmpireAutomaton.getLaw(q2).equals(law1)) {
+				// if (mEmpire.getLaw(q2).equals(law1)) {
 				// continue;
 				// }
 
-				final Territory<P, Region<P>> terr2 = mEmpireAutomaton.getTerritory(q2);
+				final Territory<P, Region<P>> terr2 = mEmpire.getTerritory(q2);
 				if (haveCommonJoin(terr1, terr2) || haveCommonInterference(terr1, terr2)) {
 					distinguish(q1, q2);
 				}
@@ -244,7 +244,7 @@ class StateIndistinction<L, P, S> {
 
 		for (int i = 0; i < mStates.size(); ++i) {
 			final S q1 = mStates.get(i);
-			final var transitions = mEmpireAutomaton.getTerritory(q1).getEnabledTransitions(mProgram).toList();
+			final var transitions = mEmpire.getTerritory(q1).getEnabledTransitions(mProgram).toList();
 			for (int j = i + 1; j < mStates.size(); ++j) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(getClass());
@@ -259,15 +259,13 @@ class StateIndistinction<L, P, S> {
 
 				// rule (pseudo-simulation)
 				for (final var t : transitions) {
-					final Optional<S> succ1 =
-							DataStructureUtils.getOnly(mEmpireAutomaton.internalSuccessors(q1, t), "successor state")
-									.map(e -> e.getSucc());
+					final Optional<S> succ1 = DataStructureUtils
+							.getOnly(mEmpire.internalSuccessors(q1, t), "successor state").map(e -> e.getSucc());
 					if (succ1.isEmpty()) {
 						continue;
 					}
-					final Optional<S> succ2 =
-							DataStructureUtils.getOnly(mEmpireAutomaton.internalSuccessors(q2, t), "successor state")
-									.map(e -> e.getSucc());
+					final Optional<S> succ2 = DataStructureUtils
+							.getOnly(mEmpire.internalSuccessors(q2, t), "successor state").map(e -> e.getSucc());
 					if (succ2.isEmpty()) {
 						continue;
 					}
@@ -315,9 +313,9 @@ class StateIndistinction<L, P, S> {
 					continue;
 				}
 
-				final var terr1 = mEmpireAutomaton.getTerritory(s1);
-				final var terr2 = mEmpireAutomaton.getTerritory(s2);
-				final boolean equalLaws = mEmpireAutomaton.getLaw(s1).equals(mEmpireAutomaton.getLaw(s2));
+				final var terr1 = mEmpire.getTerritory(s1);
+				final var terr2 = mEmpire.getTerritory(s2);
+				final boolean equalLaws = mEmpire.getLaw(s1).equals(mEmpire.getLaw(s2));
 				assert equalLaws || !haveCommonJoin(terr1, terr2)
 						: "condition join-laws violated for " + s1 + " and " + s2;
 				assert equalLaws || !haveCommonInterference(terr1, terr2)
@@ -325,12 +323,10 @@ class StateIndistinction<L, P, S> {
 
 				terr1.getEnabledTransitions(mProgram).filter(terr2::enables).allMatch(t -> {
 					assert terr1.enables(t);
-					final Optional<S> succ1 =
-							DataStructureUtils.getOnly(mEmpireAutomaton.internalSuccessors(s1, t), "successor state")
-									.map(e -> e.getSucc());
-					final Optional<S> succ2 =
-							DataStructureUtils.getOnly(mEmpireAutomaton.internalSuccessors(s2, t), "successor state")
-									.map(e -> e.getSucc());
+					final Optional<S> succ1 = DataStructureUtils
+							.getOnly(mEmpire.internalSuccessors(s1, t), "successor state").map(e -> e.getSucc());
+					final Optional<S> succ2 = DataStructureUtils
+							.getOnly(mEmpire.internalSuccessors(s2, t), "successor state").map(e -> e.getSucc());
 					if (succ1.isEmpty() || succ2.isEmpty()) {
 						return true;
 					}

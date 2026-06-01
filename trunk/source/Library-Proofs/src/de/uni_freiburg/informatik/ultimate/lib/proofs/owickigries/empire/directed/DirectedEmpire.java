@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.IEmpireAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.IEmpire;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class DirectedEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, DirectedEmpireAutomaton.State<L, P>> {
+public class DirectedEmpire<L, P> implements IEmpire<L, P, DirectedEmpire.State<L, P>> {
 	private final ILogger mLogger;
 
 	private final IPetriNet<L, P> mNet;
@@ -56,8 +56,7 @@ public class DirectedEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Dir
 
 	private final State<L, P> mInitialState;
 
-	public DirectedEmpireAutomaton(final IPetriNet<L, P> net,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> proof,
+	public DirectedEmpire(final IPetriNet<L, P> net, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> proof,
 			final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mNet = net;
@@ -128,7 +127,7 @@ public class DirectedEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Dir
 	@Override
 	public Set<Transition<L, P>> lettersInternal(final State<L, P> state) {
 		// TODO Consider whether we can efficiently override this method
-		return IEmpireAutomaton.super.lettersInternal(state);
+		return IEmpire.super.lettersInternal(state);
 	}
 
 	@Override

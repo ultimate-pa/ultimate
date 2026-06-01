@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries.FocusComputation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireOwickiGries.FocusComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings.OwickiGriesComputation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
@@ -170,13 +170,13 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+			return new EmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
 					FocusComputation.UNFOCUSED);
 		}
 
 		@Override
 		protected OwickiGriesSettings getSettings() {
-			return new OwickiGriesSettings(OwickiGriesComputation.AUTOMATA, false, false);
+			return new OwickiGriesSettings(OwickiGriesComputation.EMPIRE, false, false);
 		}
 	}
 
@@ -184,7 +184,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+			return new EmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
 					FocusComputation.GLOBAL);
 		}
 
@@ -198,7 +198,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+			return new EmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
 					FocusComputation.MODULAR);
 		}
 

@@ -38,10 +38,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
- * An {@link IEmpireAutomaton} with direct access to reachable states, as well as incoming and outgoing edges of each
- * state.
+ * An {@link IEmpire} with direct access to reachable states, as well as incoming and outgoing edges of each state.
  *
- * Use {@link EmpireReachableStates} to turn an arbitrary {@link IEmpireAutomaton} into an instance of this interface.
+ * Use {@link EmpireReachableStates} to turn an arbitrary {@link IEmpire} into an instance of this interface.
  *
  * @param <L>
  *            the type of letters in the Petri program
@@ -50,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
  * @param <S>
  *            the type of states in the empire
  */
-public interface IExplicitEmpireAutomaton<L, P, S>
-		extends IEmpireAutomaton<L, P, S>, INestedWordAutomaton<Transition<L, P>, S> {
+public interface IExplicitEmpire<L, P, S> extends IEmpire<L, P, S>, INestedWordAutomaton<Transition<L, P>, S> {
 
 	/**
 	 * @deprecated We should not abuse the final states for empires, they do not represent any meaningful language.

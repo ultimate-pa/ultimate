@@ -34,14 +34,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 /**
  * Abstract interface for legal focus.
  *
- * A legal focus assigns potentially different laws to different regions in the territory belonging to an empire
- * automaton. For each region, the assigned law must be weaker than the state's full law, and satisfy additional
- * conditions.
+ * A legal focus assigns potentially different laws to different regions in the territory belonging to an empire. For
+ * each region, the assigned law must be weaker than the state's full law, and satisfy additional conditions.
  *
  * TODO Document additional conditions
  *
  * @param <S>
- *            the type of states in the empire automaton
+ *            the type of states in the empire
  * @param <P>
  *            the type of places in the regions
  */
@@ -61,14 +60,14 @@ public interface ILegalFocusFunction<S, P> {
 	 * Implements the trivial focus function, which assigns the full law of the state to every region.
 	 *
 	 * @param <S>
-	 *            the type of states in the empire automaton
+	 *            the type of states in the empire
 	 * @param <P>
 	 *            the type of places in the regions
 	 */
 	class TrivialFocus<S, P> implements ILegalFocusFunction<S, P> {
-		private final IEmpireAutomaton<?, P, S> mEmpire;
+		private final IEmpire<?, P, S> mEmpire;
 
-		public TrivialFocus(final IEmpireAutomaton<?, P, S> empire) {
+		public TrivialFocus(final IEmpire<?, P, S> empire) {
 			mEmpire = empire;
 		}
 
