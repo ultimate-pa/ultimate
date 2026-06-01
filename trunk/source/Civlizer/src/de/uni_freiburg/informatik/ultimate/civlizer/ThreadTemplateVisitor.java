@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private String mCurrentProcedure;
@@ -67,7 +66,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	private Map<ILocation, Set<String>> mStatementVariablesMap;
 	private Map<ILocation, Set<String>> mStatementParametersMap;
 	private Map<String, Map<String, ASTType>> mProcedureVariablesMap;
-	
+
 	private Map<String, List<Tid>> mAssociationTidMap;
 	private Map<String, List<Tid>> mUsedTidMap;
 	private Map<String, List<Tid>> mAllTidMap;
@@ -89,7 +88,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 		for (Declaration elem : boogieFile.getDeclarations()) {
 			processDeclaration(elem);
-        }
+		}
 
 		for (String key : mAssociationTidMap.keySet()) {
 			mAllTidMap.put(key, new ArrayList<>(mAssociationTidMap.get(key)));
@@ -142,45 +141,35 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	}
 
 	boolean containsGlobalVariables(Statement stmt) {
-		if (mStatementVariablesMap
-			.get(stmt.getLoc()) == null 
-			|| mGlobalVariables == null) {
+		if (mStatementVariablesMap.get(stmt.getLoc()) == null || mGlobalVariables == null) {
 			return false;
 		}
 
-		return !Collections.disjoint(
-			mStatementVariablesMap
-			.get(stmt.getLoc()), 
-			mGlobalVariables
-		);
+		return !Collections.disjoint(mStatementVariablesMap.get(stmt.getLoc()), mGlobalVariables);
 	}
 
 	boolean containsLocalVariables(String procName, Statement stmt) {
-		if (mStatementVariablesMap
-			.get(stmt.getLoc()) == null 
-			|| mGlobalVariables == null) {
+		if (mStatementVariablesMap.get(stmt.getLoc()) == null || mGlobalVariables == null) {
 			return false;
 		}
 
-		return !Collections.disjoint(
-			mStatementVariablesMap
-			.get(stmt.getLoc()), 
-			mProcedureVariablesMap.get(procName).keySet()
-		);
+		return !Collections.disjoint(mStatementVariablesMap.get(stmt.getLoc()),
+				mProcedureVariablesMap.get(procName).keySet());
 	}
 
 	@Override
 	protected Declaration processDeclaration(final Declaration decl) {
 		switch (decl) {
-			case final VariableDeclaration varDecl -> {
-				for (VarList varList : varDecl.getVariables()) {
-					for (String id : varList.getIdentifiers()) {
-						mGlobalVariables.add(id);
-					}
+		case final VariableDeclaration varDecl -> {
+			for (VarList varList : varDecl.getVariables()) {
+				for (String id : varList.getIdentifiers()) {
+					mGlobalVariables.add(id);
 				}
 			}
-			case final Procedure proc -> visit(proc);
-			default -> {}
+		}
+		case final Procedure proc -> visit(proc);
+		default -> {
+		}
 		}
 		return decl;
 	}
@@ -190,7 +179,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		mCurrentProcedure = decl.getIdentifier();
 		Map res = new HashMap<>();
 
-		for (VariableDeclaration varDecl: decl.getBody().getLocalVars()) {
+		for (VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
 			for (VarList varList : varDecl.getVariables()) {
 				for (String id : varList.getIdentifiers()) {
 					res.put(id, varList.getType());
@@ -199,7 +188,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		}
 
 		mProcedureVariablesMap.put(mCurrentProcedure, res);
-		
 
 		if (!mCurrentProcedure.equals("ULTIMATE.start") && !mAssociationTidMap.containsKey(mCurrentProcedure)) {
 			mAssociationTidMap.put(mCurrentProcedure, new ArrayList<>());
@@ -228,10 +216,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 			Set<String> parameters = new HashSet<>();
 
 			for (String id : mStatementVariablesMap.getOrDefault(stmt.getLoc(), new HashSet<>())) {
-				if (mProcedureVariablesMap
-					.get(mCurrentProcedure)
-					.keySet()
-					.contains(id)) {
+				if (mProcedureVariablesMap.get(mCurrentProcedure).keySet().contains(id)) {
 
 					parameters.add(id);
 				}
@@ -247,20 +232,20 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		mCurrentStatement = statement.getLoc();
 
 		switch (statement) {
-			case final AssertStatement assertStmt -> visit(assertStmt);
-			case final AssignmentStatement assignStmt -> visit(assignStmt);
-			case final AssumeStatement assumeStmt -> visit(assumeStmt);
-			case final AtomicStatement atomicStmt -> visit(atomicStmt);
-			case final BreakStatement breakStmt -> visit(breakStmt);
-			case final CallStatement callStmt -> visit(callStmt);
-			case final ForkStatement forkStmt -> visit(forkStmt);
-			case final GotoStatement gotoStmt -> visit(gotoStmt);
-			case final HavocStatement havocStmt -> visit(havocStmt);
-			case final IfStatement ifStmt -> visit(ifStmt);
-			case final JoinStatement joinStmt -> visit(joinStmt);
-			case final Label label -> visit(label);
-			case final ReturnStatement returnStmt -> visit(returnStmt);
-			case final WhileStatement whileStmt -> visit(whileStmt);
+		case final AssertStatement assertStmt -> visit(assertStmt);
+		case final AssignmentStatement assignStmt -> visit(assignStmt);
+		case final AssumeStatement assumeStmt -> visit(assumeStmt);
+		case final AtomicStatement atomicStmt -> visit(atomicStmt);
+		case final BreakStatement breakStmt -> visit(breakStmt);
+		case final CallStatement callStmt -> visit(callStmt);
+		case final ForkStatement forkStmt -> visit(forkStmt);
+		case final GotoStatement gotoStmt -> visit(gotoStmt);
+		case final HavocStatement havocStmt -> visit(havocStmt);
+		case final IfStatement ifStmt -> visit(ifStmt);
+		case final JoinStatement joinStmt -> visit(joinStmt);
+		case final Label label -> visit(label);
+		case final ReturnStatement returnStmt -> visit(returnStmt);
+		case final WhileStatement whileStmt -> visit(whileStmt);
 		}
 
 		return statement;
@@ -278,11 +263,8 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	protected void visit(final AtomicStatement statement) {
 		for (Statement stmt : statement.getBody()) {
 			processStatement(stmt);
-			Set<String> res = mStatementVariablesMap
-				.getOrDefault(statement.getLoc(), new HashSet());
-			res.addAll(mStatementVariablesMap
-				.getOrDefault(stmt.getLoc(), new HashSet())
-			);
+			Set<String> res = mStatementVariablesMap.getOrDefault(statement.getLoc(), new HashSet());
+			res.addAll(mStatementVariablesMap.getOrDefault(stmt.getLoc(), new HashSet()));
 			mStatementVariablesMap.put(statement.getLoc(), res);
 		}
 	}
@@ -303,10 +285,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 		Tid tid = new Tid(statement.getThreadID());
 
-		List<Tid> tids = mAssociationTidMap.getOrDefault(
-			statement.getProcedureName(),
-			new ArrayList<>()
-		);
+		List<Tid> tids = mAssociationTidMap.getOrDefault(statement.getProcedureName(), new ArrayList<>());
 
 		if (!tids.contains(tid)) {
 			tids.add(tid);
@@ -314,10 +293,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 		mAssociationTidMap.put(statement.getProcedureName(), tids);
 
-		tids = mUsedTidMap.getOrDefault(
-			mCurrentProcedure,
-			new ArrayList<>()
-		);
+		tids = mUsedTidMap.getOrDefault(mCurrentProcedure, new ArrayList<>());
 
 		if (!tids.contains(tid)) {
 			tids.add(tid);
@@ -331,10 +307,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 		Tid tid = new Tid(statement.getThreadID());
 
-		List<Tid> tids = mUsedTidMap.getOrDefault(
-			mCurrentProcedure,
-			new ArrayList<>()
-		);
+		List<Tid> tids = mUsedTidMap.getOrDefault(mCurrentProcedure, new ArrayList<>());
 
 		if (!tids.contains(tid)) {
 			tids.add(tid);
@@ -348,16 +321,16 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		// empty because it may be overridden (but does not have to)
 		Set<String> res;
 		for (VariableLHS var : statement.getIdentifiers()) {
-			res = mStatementVariablesMap
-				.getOrDefault(mCurrentStatement, new HashSet());
+			res = mStatementVariablesMap.getOrDefault(mCurrentStatement, new HashSet());
 			res.add(var.getIdentifier());
 			mStatementVariablesMap.put(mCurrentStatement, res);
 		}
 	}
 
-	/*protected void visit(final CallStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}*/
+	/*
+	 * protected void visit(final CallStatement statement) { // empty because it may be overridden (but does not have
+	 * to) }
+	 */
 
 	@Override
 	protected void visit(final AssignmentStatement statement) {
@@ -382,8 +355,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	@Override
 	protected void visit(final VariableLHS lhs) {
-		Set<String> res = mStatementVariablesMap
-			.getOrDefault(mCurrentStatement, new HashSet());
+		Set<String> res = mStatementVariablesMap.getOrDefault(mCurrentStatement, new HashSet());
 		res.add(lhs.getIdentifier());
 		mStatementVariablesMap.put(mCurrentStatement, res);
 	}
@@ -456,8 +428,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		for (VarList varList : expr.getParameters()) {
 			for (String id : varList.getIdentifiers()) {
 
-				Set<String> res = mStatementVariablesMap
-					.getOrDefault(mCurrentStatement, new HashSet<>());
+				Set<String> res = mStatementVariablesMap.getOrDefault(mCurrentStatement, new HashSet<>());
 
 				res.add(id);
 				mStatementVariablesMap.put(mCurrentStatement, res);
@@ -477,8 +448,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(final IdentifierExpression expr) {
 
-		Set<String> res = mStatementVariablesMap
-			.getOrDefault(mCurrentStatement, new HashSet<>());
+		Set<String> res = mStatementVariablesMap.getOrDefault(mCurrentStatement, new HashSet<>());
 
 		res.add(expr.getIdentifier());
 		mStatementVariablesMap.put(mCurrentStatement, res);
@@ -501,9 +471,9 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(final ArrayStoreExpression expr) {
 
-		//processExpression(expr.getArray());
-		//processExpression(expr.getIndex());
-		//processExpression(expr.getValue());
+		// processExpression(expr.getArray());
+		// processExpression(expr.getIndex());
+		// processExpression(expr.getValue());
 	}
 
 	@Override

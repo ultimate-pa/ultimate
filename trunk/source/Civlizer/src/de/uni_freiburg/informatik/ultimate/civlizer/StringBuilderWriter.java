@@ -6,31 +6,31 @@ import java.io.PrintWriter;
 
 final class StringBuilderWriter extends PrintWriter {
 
-    private StringBuilder mResult;
+	private StringBuilder mResult;
 
-    StringBuilderWriter() throws IOException {
-        super(new FileWriter("/tmp/temporary.bpl")); // to be change TODO
-        mResult = new StringBuilder();
-    }
+	StringBuilderWriter() throws IOException {
+		super(new FileWriter("/tmp/temporary.bpl")); // to be change TODO
+		mResult = new StringBuilder();
+	}
 
-    StringBuilder getResult() {
-        return mResult;
-    }
+	StringBuilder getResult() {
+		return mResult;
+	}
 
-    @Override
+	@Override
 	public String toString() {
 		return mResult.toString();
 	}
 
-    @Override
-    public void print(String s) {
-        super.print(s);
-        mResult.append(s);
-    }
+	@Override
+	public void print(String s) {
+		super.print(s);
+		mResult.append(s);
+	}
 
-    @Override
-    public void println(String s) {
-        super.println(s);
-        mResult.append(s).append("\n");
-    }
+	@Override
+	public void println(String s) {
+		super.println(s);
+		mResult.append(s).append("\n");
+	}
 }

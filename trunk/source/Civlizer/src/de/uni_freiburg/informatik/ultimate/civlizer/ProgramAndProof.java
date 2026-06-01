@@ -29,7 +29,8 @@ class ProgramAndProof {
 	private Map<ILocation, Set<CallStatement>> mGhostUpdateMap = null;
 	private ThreadTemplateVisitor mTemplateVisitor = null;
 
-	ProgramAndProof() {}
+	ProgramAndProof() {
+	}
 
 	ThreadTemplateVisitor getTemplateVisitor() {
 		return mTemplateVisitor;
@@ -83,66 +84,47 @@ class ProgramAndProof {
 
 				for (final var edge : location.getOutgoingEdges()) {
 					if (WitnessGhostUpdate.getAnnotation(edge) != null) {
-						
+
 						Set<CallStatement> assignments = new HashSet<>();
 						ILocation loc = location.getBoogieASTNode().getLocation();
 
-						final Map<?, ?> update =
-								WitnessGhostUpdate.getAnnotation(edge).getUpdate();
+						final Map<?, ?> update = WitnessGhostUpdate.getAnnotation(edge).getUpdate();
 
 						// TODO improve readability
 
 						for (final Map.Entry<?, ?> updateEntry : update.entrySet()) {
 							System.out.println(updateEntry.getKey());
 							System.out.println(updateEntry.getValue());
-							
-							IdentifierExpression layerNum = new IdentifierExpression(
-								loc, 
-								BoogieType.createPlaceholderType(0),
-								"1,2",
-								new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
-							);
 
-							CallStatement assign = new CallStatement(
-								loc,
-								new NamedAttribute[] {
-									new NamedAttribute(
-										loc, 
-										"layer", 
-										new Expression[] {
-											layerNum
-										}
-									)
-								},
-								false,
-								new VariableLHS[] {
-									new VariableLHS(loc, updateEntry.getKey().toString())
-								}, 
-								"Copy",
-								new Expression[] {
-									(Expression)updateEntry.getValue()
-								});
+							IdentifierExpression layerNum = new IdentifierExpression(loc,
+									BoogieType.createPlaceholderType(0), "1,2",
+									new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
+
+							CallStatement assign = new CallStatement(loc,
+									new NamedAttribute[] {
+											new NamedAttribute(loc, "layer", new Expression[] { layerNum }) },
+									false, new VariableLHS[] { new VariableLHS(loc, updateEntry.getKey().toString()) },
+									"Copy", new Expression[] { (Expression) updateEntry.getValue() });
 							assignments.add(assign);
 						}
-						mGhostUpdateMap.put(
-							loc, 
-							assignments
-						);
+						mGhostUpdateMap.put(loc, assignments);
 					}
 				}
 			}
 		}
 	}
 
-	//Map<Integer, Expression>
+	// Map<Integer, Expression>
 	Map<ILocation, Expression> getAnnotationMap(String procName) {
 		Map<ILocation, Expression> result = new HashMap<>();
 		for (BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
-			final var invariant = (WitnessInvariant.getAnnotation(loc) != null) ? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant() : null;
+			final var invariant = (WitnessInvariant.getAnnotation(loc) != null)
+					? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
+					: null;
 			final var codeLocation = (ILocation) ILocation.getAnnotation(loc);
 			System.out.println();
 			System.out.println("Invariant : " + invariant);
-			System.out.println("Location : "  + codeLocation);
+			System.out.println("Location : " + codeLocation);
 			System.out.println(loc.getBoogieASTNode());
 			result.put(codeLocation, invariant);
 		}

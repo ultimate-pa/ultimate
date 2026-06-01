@@ -152,10 +152,10 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 			// TODO Below is demo code showing how to access invariants and ghosts. Remove it once no longer needed.
 			// get ghost declarations including initial values
-			//mLogger.fatal("declared ghosts and initial values: %s",
-			//		WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
+			// mLogger.fatal("declared ghosts and initial values: %s",
+			// WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
 
-			//final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
+			// final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
 			// final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
 			// final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
 			// mLogger.fatal("Annotation at %s is %s", codeLocation, invariant);
@@ -170,46 +170,41 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 					for (final var edge : location.getOutgoingEdges()) {
 						if (WitnessGhostUpdate.getAnnotation(edge) != null) {
-							final Map<?, ?> update =
-									WitnessGhostUpdate.getAnnotation(edge).getUpdate();
+							final Map<?, ?> update = WitnessGhostUpdate.getAnnotation(edge).getUpdate();
 
 							for (final Map.Entry<?, ?> updateEntry : update.entrySet()) {
-								mLogger.warn(
-										"update is %s, %s",
-										updateEntry.getValue(),
-										updateEntry.getKey());
+								mLogger.warn("update is %s, %s", updateEntry.getValue(), updateEntry.getKey());
 							}
 						}
 					}
 				}
 			}
-			
+
 			mLogger.fatal("TEST");
 
-			/*var programPoints = icfg.getProgramPoints();
-
-			for (Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
-
-				for (Map.Entry<?, BoogieIcfgLocation> entry : innerMap.entrySet()) {
-
-					var key = entry.getKey();
-					BoogieIcfgLocation value = entry.getValue();
-
-					System.out.println(key);
-					System.out.println(value);
-
-					final var update = WitnessGhostUpdate.getAnnotation(value);
-
-					mLogger.fatal("Update is %s", update);
-				}
-			}*/
+			/*
+			 * var programPoints = icfg.getProgramPoints();
+			 * 
+			 * for (Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
+			 * 
+			 * for (Map.Entry<?, BoogieIcfgLocation> entry : innerMap.entrySet()) {
+			 * 
+			 * var key = entry.getKey(); BoogieIcfgLocation value = entry.getValue();
+			 * 
+			 * System.out.println(key); System.out.println(value);
+			 * 
+			 * final var update = WitnessGhostUpdate.getAnnotation(value);
+			 * 
+			 * mLogger.fatal("Update is %s", update); } }
+			 */
 		}
 
 		if (mProgramAndProof.isFull()) {
-			
-			//mLogger.warn("TEST TEST TEST");
-			//mLogger.warn("Annotation at %s", (Expression) WitnessInvariant.getAnnotation(mProgramAndProof.getBoogieAst()).getInvariant());
-			//mLogger.warn("TEST TEST TEST");
+
+			// mLogger.warn("TEST TEST TEST");
+			// mLogger.warn("Annotation at %s", (Expression)
+			// WitnessInvariant.getAnnotation(mProgramAndProof.getBoogieAst()).getInvariant());
+			// mLogger.warn("TEST TEST TEST");
 
 			Translator.translate(mProgramAndProof);
 		}
