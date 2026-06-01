@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.naive.OwickiGriesConstruction;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -122,8 +122,8 @@ public class EmpireToOG<S, L, P> {
 		final Map<IProgramVar, Term> initialGhostValuation = computeInitialGhostValuation();
 
 		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(
-				OwickiGriesConstruction.getSpecificationForPetriNet(mProgram, mFactory), possibleInterferences,
-				newSymbolTable, placeAnnotations, Set.of(mGhostVariable), initialGhostValuation, ghostUpdates);
+				OwickiGriesUtils.getSpecificationForPetriNet(mProgram, mFactory), possibleInterferences, newSymbolTable,
+				placeAnnotations, Set.of(mGhostVariable), initialGhostValuation, ghostUpdates);
 	}
 
 	private IProgramVar createGhostVariable() {

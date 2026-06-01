@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.PetriFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.TransformFloydHoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.naive.OwickiGriesConstruction;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.naive.NaiveOwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.naive.PetriFloydHoare;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
@@ -126,8 +126,8 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		mStatistics.startOwickiGriesComputation();
 		OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation;
 		try {
-			final OwickiGriesConstruction<L, P> construction = new OwickiGriesConstruction<>(mServices, mCsToolkit,
-					mProgram, reachableMarkings, floydHoare, mSettings.useHittingSets());
+			final NaiveOwickiGriesConstruction<L, P> construction = new NaiveOwickiGriesConstruction<>(mServices,
+					mCsToolkit, mProgram, reachableMarkings, floydHoare, mSettings.useHittingSets());
 			annotation = construction.getResult();
 			mStatistics.reportOwickiGries(annotation);
 		} finally {
@@ -247,7 +247,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		private final TimeTracker mFloydHoareValidityTime = new TimeTracker();
 
 		public Statistics(final ILogger logger) {
-			super(logger, null, OwickiGriesConstruction.class);
+			super(logger, null, NaiveOwickiGriesConstruction.class);
 
 			declareTimeTracker("Floyd-Hoare computation time", mFloydHoareTime);
 			declareTimeTracker("Floyd-Hoare validity check time", mFloydHoareValidityTime);

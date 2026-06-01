@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUtils;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireProduct.ProductState;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.naive.OwickiGriesConstruction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -111,8 +111,8 @@ public class DirectedLegalEmpireToOG<L, P> {
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
 		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(
-				OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory), possibleInterferences,
-				newSymbolTable, formulaMapping, Set.of(mGhostVariable), ghostInitAssignment, assignmentMapping);
+				OwickiGriesUtils.getSpecificationForPetriNet(mNet, mFactory), possibleInterferences, newSymbolTable,
+				formulaMapping, Set.of(mGhostVariable), ghostInitAssignment, assignmentMapping);
 	}
 
 	private IProgramVar createGhostVariable() {

@@ -44,11 +44,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <L>
  *            The type of statements in the Petri program
  */
-public class OwickiGriesConstruction<L, P> {
+public class NaiveOwickiGriesConstruction<L, P> {
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final BasicPredicateFactory mFactory;
@@ -86,14 +86,14 @@ public class OwickiGriesConstruction<L, P> {
 	private final Map<P, IProgramVar> mGhostVariables;
 	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mAnnotation;
 
-	public OwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+	public NaiveOwickiGriesConstruction(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IPetriNet<L, P> net, final Collection<Marking<P>> reachableMarkings,
 			final IFloydHoareAnnotation<Marking<P>> floydHoare, final boolean useHittingSets) {
 		this(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(), net,
 				reachableMarkings, floydHoare, useHittingSets);
 	}
 
-	public OwickiGriesConstruction(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public NaiveOwickiGriesConstruction(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final Set<String> procedures, final IPetriNet<L, P> net,
 			final Collection<Marking<P>> reachableMarkings, final IFloydHoareAnnotation<Marking<P>> floydHoare,
 			final boolean useHittingSets) {
@@ -114,7 +114,7 @@ public class OwickiGriesConstruction<L, P> {
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mAnnotation = new OwickiGriesAnnotation<>(getSpecificationForPetriNet(net, mFactory),
+		mAnnotation = new OwickiGriesAnnotation<>(OwickiGriesUtils.getSpecificationForPetriNet(net, mFactory),
 				getPossibleInterferences(), mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
 				ghostInitAssignment, assignmentMapping);
 	}
@@ -341,11 +341,5 @@ public class OwickiGriesConstruction<L, P> {
 			}
 		}
 		return IPossibleInterferences.fromRelation(relation);
-	}
-
-	public static <L, P> ThreadModularPrePostSpecification<P, Marking<P>>
-			getSpecificationForPetriNet(final IPetriNet<L, P> net, final BasicPredicateFactory factory) {
-		final var preconditions = Map.of(Marking.initial(net), factory.and());
-		return new ThreadModularPrePostSpecification<>(preconditions, net::isAccepting, factory.or());
 	}
 }
