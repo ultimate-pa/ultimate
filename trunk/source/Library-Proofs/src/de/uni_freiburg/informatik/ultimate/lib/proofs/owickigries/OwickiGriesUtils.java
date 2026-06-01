@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGho
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -80,8 +80,7 @@ public class OwickiGriesUtils {
 	public static <L extends IIcfgTransition<?>> void createResultsAndAnnotateIcfg(
 			final IUltimateServiceProvider services, final String pluginName, final IIcfg<IcfgLocation> icfg,
 			final OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>> annotation,
-			final IBacktranslationService backTranslatorService,
-			final Consumer<InvariantResult<IIcfgElement, ?>> reporter) {
+			final IBacktranslationService backTranslatorService, final Consumer<IResult> reporter) {
 		final var logger = services.getLoggingService().getLogger(OwickiGriesUtils.class);
 
 		final Set<IProgramVar> failedGhosts = new HashSet<>();
