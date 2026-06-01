@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEAMinimization;
@@ -88,6 +89,9 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 
 		final PatternType<?> pattern = reqPea.getPattern();
 
+		int totalisedPeaNumberOfLocations = 0;
+		int minimizedPeaNumberOfLocations = 0;
+
 		final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPea.getCounterTrace2Pea();
 
 		final List<Entry<CounterTrace, PhaseEventAutomata>> originalCtPea = new ArrayList<>();
@@ -102,8 +106,8 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 			final PhaseEventAutomata totalisedPea = peaMinimization.getTotalisedPEA();
 			final PhaseEventAutomata minimizedPea = peaMinimization.getMinimizedPEA();
 
-			// final int totalisedPeaNumberOfLocations = totalisedPea.getNumberOfLocations();
-			final int minimizedPeaNumberOfLocations = minimizedPea.getNumberOfLocations();
+			totalisedPeaNumberOfLocations += totalisedPea.getNumberOfLocations();
+			minimizedPeaNumberOfLocations += minimizedPea.getNumberOfLocations();
 
 			originalCtPea.add(new Pair<>(pea.getKey(), totalisedPea));
 			minimizedCtPea.add(new Pair<>(pea.getKey(), minimizedPea));
@@ -114,6 +118,8 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 		mReqPeas.add(new ReqPeas(pattern, minimizedCtPea));
 		mReqPeas.add(new ReqPeas(pattern, originalCtPea));
 		mSymbolTable = builder.constructSymbolTable();
+		mLogger.log(LogLevel.INFO, "Number of locations original: " + totalisedPeaNumberOfLocations);
+		mLogger.log(LogLevel.INFO, "Number of locations minimized: " + minimizedPeaNumberOfLocations);
 	}
 
 	@Override

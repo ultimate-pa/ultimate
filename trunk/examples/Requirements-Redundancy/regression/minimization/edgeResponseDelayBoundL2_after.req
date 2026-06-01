@@ -1,0 +1,6 @@
+// #TestSpec: redundant:R1; results:-1
+Input P is bool
+Input R is bool
+Input S is bool
+
+R1: After "P", it is always the case that once "R" becomes satisfied, "S" holds after at most 1 time units for at least 1 time units.

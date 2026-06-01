@@ -1,0 +1,5 @@
+// #TestSpec: redundant:R1; results:-1
+Input P is bool
+Input R is bool
+
+R1: Before "P", it is always the case that initially "R" holds.
