@@ -8,52 +8,36 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
@@ -88,13 +72,15 @@ final class BodyTransformer extends BoogieTransformer {
 		).toList();
 	}
 
-    Body transformBody(String name, Body body) {
+    Body transformBody(final String name, Body body) {
         setCurrentProcedure(name);
         // TO BE improved
         return processBody(body);
     }
 
-    Statement[] transformStatements(Statement[] statements) {
+    Statement[] transformStatements(final String name, Statement[] statements) {
+		setCurrentProcedure(name);
+
         return processStatements(statements);
 	}
 
@@ -424,14 +410,17 @@ final class BodyTransformer extends BoogieTransformer {
 	 */
 	protected Statement processStatement(final Statement statement) {
 		Statement newStatement = null;
+		//Label, IfStatement, AssignmentStatement, ReturnStatement, ForkStatement, CallStatement, JoinStatement, AssertStatement, WhileStatement, GotoStatement, AtomicStatement, AssumeStatement, BreakStatement, HavocStatement
 		if (statement instanceof AssertStatement 
+			|| statement instanceof IfStatement
             || statement instanceof AssignmentStatement
             || statement instanceof AssumeStatement
-            || statement instanceof HavocStatement
+			|| statement instanceof WhileStatement
             || statement instanceof AtomicStatement
-            ) {
-		    	newStatement = new CallStatement(statement.getLocation(), new NamedAttribute[0], false,
-			    	new VariableLHS[0], mCurrentProcedure + "_stmt_" + mAtomicStatementCounter, new Expression[0]);
+			|| statement instanceof HavocStatement
+        ) {
+		    newStatement = new CallStatement(statement.getLocation(), new NamedAttribute[0], false,
+		    	new VariableLHS[0], mCurrentProcedure + "_stmt_" + mAtomicStatementCounter, new Expression[0]);
 
 		} else if (statement instanceof final CallStatement call) {
 			final Expression[] args = call.getArguments();
@@ -442,26 +431,8 @@ final class BodyTransformer extends BoogieTransformer {
 			if (args != newArgs || lhs != newLhs || newAttr != call.getAttributes()) {
 				newStatement = new CallStatement(call.getLocation(), (NamedAttribute[]) newAttr, call.isForall(),
 						newLhs, call.getMethodName(), newArgs);
-			}
-		} else if (statement instanceof final IfStatement ifstmt) {
-			final Expression cond = ifstmt.getCondition();
-			final Expression newCond = processExpression(cond);
-			final Statement[] thens = ifstmt.getThenPart();
-			final Statement[] newThens = processStatements(thens);
-			final Statement[] elses = ifstmt.getElsePart();
-			final Statement[] newElses = processStatements(elses);
-			if (newCond != cond || newThens != thens || newElses != elses) {
-				newStatement = new IfStatement(ifstmt.getLocation(), newCond, newThens, newElses);
-			}
-		} else if (statement instanceof final WhileStatement whilestmt) {
-			final Expression cond = whilestmt.getCondition();
-			final Expression newCond = processExpression(cond);
-			final LoopInvariantSpecification[] invs = whilestmt.getInvariants();
-			final LoopInvariantSpecification[] newInvs = processLoopSpecifications(invs);
-			final Statement[] body = whilestmt.getBody();
-			final Statement[] newBody = processStatements(body);
-			if (newCond != cond || newInvs != invs || newBody != body) {
-				newStatement = new WhileStatement(whilestmt.getLocation(), newCond, newInvs, newBody);
+
+				// create error
 			}
 		} else if (statement instanceof final ForkStatement forkstmt) {
 			final Expression[] threadId = forkstmt.getThreadID();
@@ -727,123 +698,5 @@ final class BodyTransformer extends BoogieTransformer {
 			}
 		}
 		return changed ? newAttrs : attributes;
-	}
-
-	/**
-	 * Process the expressions. Calls processExpression for each element in the array.
-	 *
-	 * @param exprs
-	 *            the expression to process.
-	 * @return processed expressions.
-	 */
-	protected Expression[] processExpressions(final Expression[] exprs) {
-		final Expression[] newExprs = new Expression[exprs.length];
-		boolean changed = false;
-		for (int j = 0; j < exprs.length; j++) {
-			newExprs[j] = processExpression(exprs[j]);
-			if (newExprs[j] != exprs[j]) {
-				changed = true;
-			}
-		}
-		return changed ? newExprs : exprs;
-	}
-
-	/**
-	 * Process the expressions. Calls processExpression for each subexpression.
-	 *
-	 * @param expr
-	 *            the expression to process.
-	 * @return processed expression.
-	 */
-	protected Expression processExpression(final Expression expr) {
-		Expression newExpr = null;
-		if (expr instanceof final BinaryExpression binexp) {
-			final Expression left = processExpression(binexp.getLeft());
-			final Expression right = processExpression(binexp.getRight());
-			if (left != binexp.getLeft() || right != binexp.getRight()) {
-				newExpr = new BinaryExpression(expr.getLocation(), binexp.getType(), binexp.getOperator(), left, right);
-			}
-		} else if (expr instanceof final UnaryExpression unexp) {
-			final Expression subexpr = processExpression(unexp.getExpr());
-			if (subexpr != unexp.getExpr()) {
-				newExpr = new UnaryExpression(expr.getLocation(), unexp.getType(), unexp.getOperator(), subexpr);
-			}
-		} else if (expr instanceof final ArrayAccessExpression aaexpr) {
-			final Expression arr = processExpression(aaexpr.getArray());
-			final Expression[] indices = aaexpr.getIndices();
-			final Expression[] newIndices = processExpressions(indices);
-			if (arr != aaexpr.getArray() || indices != newIndices) {
-				newExpr = new ArrayAccessExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices);
-			}
-		} else if (expr instanceof final ArrayStoreExpression aaexpr) {
-			final Expression arr = processExpression(aaexpr.getArray());
-			final Expression value = processExpression(aaexpr.getValue());
-			final Expression[] indices = aaexpr.getIndices();
-			final Expression[] newIndices = processExpressions(indices);
-			if (arr != aaexpr.getArray() || indices != newIndices || value != aaexpr.getValue()) {
-				newExpr = new ArrayStoreExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices, value);
-			}
-		} else if (expr instanceof final BitVectorAccessExpression bvaexpr) {
-			final Expression bv = processExpression(bvaexpr.getBitvec());
-			if (bv != bvaexpr.getBitvec()) {
-				newExpr = new BitVectorAccessExpression(bvaexpr.getLocation(), bvaexpr.getType(), bv, bvaexpr.getEnd(),
-						bvaexpr.getStart());
-			}
-		} else if (expr instanceof final FunctionApplication app) {
-			final String name = app.getIdentifier();
-			final Expression[] args = processExpressions(app.getArguments());
-			if (args != app.getArguments()) {
-				newExpr = new FunctionApplication(app.getLocation(), app.getType(), name, args);
-			}
-		} else if (expr instanceof final IfThenElseExpression ite) {
-			final Expression cond = processExpression(ite.getCondition());
-			final Expression thenPart = processExpression(ite.getThenPart());
-			final Expression elsePart = processExpression(ite.getElsePart());
-			if (cond != ite.getCondition() || thenPart != ite.getThenPart() || elsePart != ite.getElsePart()) {
-				newExpr = new IfThenElseExpression(ite.getLocation(), thenPart.getType(), cond, thenPart, elsePart);
-			}
-		} else if (expr instanceof final QuantifierExpression quant) {
-			final Attribute[] attrs = quant.getAttributes();
-			final Attribute[] newAttrs = processAttributes(attrs);
-			final VarList[] params = quant.getParameters();
-			final VarList[] newParams = processVarLists(params);
-			final Expression subform = processExpression(quant.getSubformula());
-			if (subform != quant.getSubformula() || attrs != newAttrs || params != newParams) {
-				newExpr = new QuantifierExpression(quant.getLocation(), quant.getType(), quant.isUniversal(),
-						quant.getTypeParams(), newParams, newAttrs, subform);
-			}
-		} else if (expr instanceof final StructConstructor sConst) {
-			final Expression[] fieldValues = processExpressions(sConst.getFieldValues());
-			if (fieldValues != sConst.getFieldValues()) {
-				newExpr = new StructConstructor(sConst.getLocation(), sConst.getType(), sConst.getFieldIdentifiers(),
-						fieldValues);
-			}
-		} else if (expr instanceof final StructAccessExpression sae) {
-			final Expression struct = processExpression(sae.getStruct());
-			if (struct != sae.getStruct()) {
-				newExpr = new StructAccessExpression(sae.getLocation(), sae.getType(), struct, sae.getField());
-			}
-		} else if (expr instanceof BooleanLiteral) {
-		} else if (expr instanceof IntegerLiteral) {
-		} else if (expr instanceof BitvecLiteral) {
-		} else if (expr instanceof StringLiteral) {
-		} else if (expr instanceof IdentifierExpression) {
-		} else if (expr instanceof WildcardExpression) {
-		} else if (expr instanceof RealLiteral) {
-		} else if (expr == null) {
-			throw new IllegalArgumentException("expression may not be null");
-		} else {
-			throw new UnsupportedOperationException("unknown expression " + expr.getClass().getName());
-		}
-
-		if (newExpr == null || newExpr == expr) {
-			/*
-			 * BooleanLiteral, IntegerLiteral, BitvecLiteral, StringLiteral, IdentifierExpression and WildcardExpression
-			 * do not need recursion, and recursion can leave the expression unchanged.
-			 */
-			return expr;
-		}
-		ModelUtils.copyAnnotations(expr, newExpr);
-		return newExpr;
 	}
 }

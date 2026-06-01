@@ -99,7 +99,7 @@ class ProgramAndProof {
 							IdentifierExpression layerNum = new IdentifierExpression(
 								loc, 
 								BoogieType.createPlaceholderType(0),
-								"2",
+								"1,2",
 								new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)
 							);
 
@@ -110,7 +110,7 @@ class ProgramAndProof {
 										loc, 
 										"layer", 
 										new Expression[] {
-											layerNum, layerNum
+											layerNum
 										}
 									)
 								},

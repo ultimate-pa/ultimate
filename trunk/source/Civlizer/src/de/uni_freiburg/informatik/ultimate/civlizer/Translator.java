@@ -334,64 +334,145 @@ public final class Translator extends BoogieVisitor {
 		mWriter.print("\n");
 	}
 
+	private void addNonAtomicStatement(
+			final String procName, 
+			final Statement statement, 
+			Set<Tid> tidNeedsLinearity, 
+			int counter
+		) {
+		List<String> arguments = new ArrayList<>();
+		List<String> returns = new ArrayList<>();
+
+		if ("ULTIMATE.start".equals(procName)) {
+			arguments.add("{:linear} start_tid : One StartTid");
+		}
+
+		for (Tid tid : mProgramAndProof
+			.getTemplateVisitor()
+			.getAllTidMap()
+			.getOrDefault(procName, Collections.emptyList()))
+		{
+			if (tidNeedsLinearity
+				.contains(tid)) {
+				arguments.add("{:linear} " + tid.toString() + " : One Tid");
+			}
+			else {
+				arguments.add(" " + tid.toString() + " : One Tid");
+			}
+		}
+
+		for (Map.Entry<String, ASTType> var : mProgramAndProof
+			.getTemplateVisitor()
+			.getProcedureVariablesMap()
+			.get(procName)
+			.entrySet()
+		) {
+			if (mProgramAndProof
+				.getTemplateVisitor()
+				.getStatementParametersMap()
+				.get(statement.getLoc())
+				.contains(var.getKey())
+			) {
+				arguments.add(var.getKey() + "_in : " + var.getValue());
+				returns.add(var.getKey() + " : " + var.getValue());
+			}
+		}
+
+		BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
+
+		mWriter.print("yield procedure {:layer 2} ");
+		mWriter.print(procName);
+		mWriter.print("_stmt_");
+		mWriter.print(Integer.toString(counter));
+
+		mWriter.print("(");
+		addStringList(arguments, ", ");
+		mWriter.print(") returns (");
+		addStringList(returns, ", ");
+		mWriter.println(") {");
+
+		if (statement instanceof final IfStatement ifStmt) {
+			//Statement[] transformer.transformStatements(procName, ifStmt)
+		}
+		else if (statement instanceof final WhileStatement whileStmt) {
+			//Statement[] transformer.transformStatements(procName, whileStmt)
+		}
+
+		mWriter.println("}\n");
+	}
+
 	private void addAtomicStatement(String procName, final Statement statement, int counter) {
-		if (statement instanceof AssertStatement 
-            || statement instanceof AssignmentStatement
+		//IfStatement, ReturnStatement, CallStatement, WhileStatement, BreakStatement
+
+		List<String> arguments = new ArrayList<>();
+		List<String> returns = new ArrayList<>();
+
+		for (Map.Entry<String, ASTType> var : mProgramAndProof
+			.getTemplateVisitor()
+			.getProcedureVariablesMap()
+			.get(procName)
+			.entrySet()
+		) {
+			if (mProgramAndProof
+				.getTemplateVisitor()
+				.getStatementParametersMap()
+				.get(statement.getLoc())
+				.contains(var.getKey())
+			) {
+				arguments.add(var.getKey() + "_in : " + var.getValue());
+				returns.add(var.getKey() + " : " + var.getValue());
+			}
+		}
+
+		mWriter.print("yield procedure {:layer 0} ");
+		mWriter.print(procName);
+		mWriter.print("_stmt_");
+		mWriter.print(Integer.toString(counter));
+
+		mWriter.print("(");
+		addStringList(arguments, ", ");
+		mWriter.print(") returns (");
+		addStringList(returns, ", ");
+		mWriter.println(");");
+
+		mWriter.println("refines atomic action {:layer 1,2} _ {");
+		for (String var : mProgramAndProof
+			.getTemplateVisitor()
+			.getStatementParametersMap()
+			.get(statement.getLoc())
+		) {
+			mWriter.print("    ");
+			mWriter.print(var + " := " + var + "_in");
+			mWriter.println(";");
+		}
+				
+		if (statement instanceof final AtomicStatement atom) {
+			for (Statement stmt : atom.getBody()) {
+				mWriter.println(BoogiePrettyPrinter.print(stmt));
+			}
+		}
+		else {
+			mWriter.println(BoogiePrettyPrinter.print(statement));
+		}
+		mWriter.println("}\n");
+	}
+
+	private void addStatement(
+			final String procName, 
+			final Statement statement, 
+			Set<Tid> tidNeedsLinearity, 
+			final int counter
+		) {
+		if (statement instanceof AssignmentStatement
+			|| statement instanceof AssertStatement 
             || statement instanceof AssumeStatement
             || statement instanceof HavocStatement
             || statement instanceof AtomicStatement) {
-
-				List<String> arguments = new ArrayList<>();
-				List<String> returns = new ArrayList<>();
-
-				for (Map.Entry<String, ASTType> var : mProgramAndProof
-						.getTemplateVisitor()
-						.getProcedureVariablesMap()
-						.get(procName)
-						.entrySet()
-				) {
-					if (mProgramAndProof
-						.getTemplateVisitor()
-						.getStatementParametersMap()
-						.get(statement.getLoc())
-						.contains(var.getKey())
-					) {
-						arguments.add(var.getKey() + "_in : " + var.getValue());
-						returns.add(var.getKey() + " : " + var.getValue());
-					}
-				}
-
-				mWriter.print("yield procedure {:layer 0} ");
-				mWriter.print(procName);
-				mWriter.print("_stmt_");
-				mWriter.print(Integer.toString(counter));
-
-				mWriter.print("(");
-				addStringList(arguments, ", ");
-				mWriter.print(") returns (");
-				addStringList(returns, ", ");
-				mWriter.println(");");
-
-				mWriter.println("refines atomic action {:layer 1,2} _ {");
-				for (String var : mProgramAndProof
-						.getTemplateVisitor()
-						.getStatementParametersMap()
-						.get(statement.getLoc())
-				) {
-					mWriter.print("    ");
-					mWriter.print(var + " := " + var + "_in");
-					mWriter.println(";");
-				}
-				
-				if (statement instanceof final AtomicStatement atom) {
-					for (Statement stmt : atom.getBody()) {
-						mWriter.println(BoogiePrettyPrinter.print(stmt));
-					}
-				}
-				else {
-					mWriter.println(BoogiePrettyPrinter.print(statement));
-				}
-				mWriter.println("}\n");
+				addAtomicStatement(procName, statement, counter);
+		}
+		else if (statement instanceof IfStatement
+			|| statement instanceof WhileStatement) {
+				addNonAtomicStatement(procName, statement, tidNeedsLinearity, counter);
 		}
 	}
 
@@ -424,9 +505,10 @@ public final class Translator extends BoogieVisitor {
 			if (mProgramAndProof
 				.getTemplateVisitor()
 				.containsGlobalVariables(decl.getBody().getBlock()[i])) {
-				addAtomicStatement(
+				addStatement(
 					decl.getIdentifier(),
 					decl.getBody().getBlock()[i],
+					tidNeedsLinearity,
 					counter
 				);
 			}
@@ -440,6 +522,7 @@ public final class Translator extends BoogieVisitor {
 			final Expression annotation =
 				annotationMap.get(decl.getBody().getBlock()[i].getLoc());
 			System.out.println("TEST " + annotation);
+			System.out.println("TEST2 " + decl.getBody().getBlock()[i]);
 			addYieldInvariants(
 				decl.getIdentifier(),
 				annotation,

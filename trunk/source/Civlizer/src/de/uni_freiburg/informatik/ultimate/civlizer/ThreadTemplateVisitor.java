@@ -268,6 +268,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	@Override
 	protected void visit(final WhileStatement statement) {
+		processExpression(statement.getCondition());
 		for (Statement stmt : statement.getBody()) {
 			processStatement(stmt);
 		}
@@ -288,10 +289,10 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	@Override
 	protected void visit(final IfStatement statement) {
+		processExpression(statement.getCondition());
 		for (Statement stmt : statement.getThenPart()) {
 			processStatement(stmt);
 		}
-
 		for (Statement stmt : statement.getElsePart()) {
 			processStatement(stmt);
 		}
