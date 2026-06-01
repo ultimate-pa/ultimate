@@ -62,7 +62,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class EmpireToOG<S, L, P> {
+/**
+ * Creates an {@link OwickiGriesAnnotation} (for a Petri program) from a given empire (see {@link IEmpireAutomaton}).
+ *
+ * @param <S>
+ *            the types of states in the empire
+ * @param <L>
+ *            the type of actions in the proven Petri program
+ * @param <P>
+ *            the type of places in the proven Petri program
+ */
+public class EmpireToOwickiGries<S, L, P> {
 	private static final String GHOST = "ghost";
 
 	private static final boolean USE_STATE_INDISTINCTION = false;
@@ -80,7 +90,7 @@ public class EmpireToOG<S, L, P> {
 
 	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGriesAnnotation;
 
-	public EmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public EmpireToOwickiGries(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final IExplicitEmpireAutomaton<L, P, S> empire,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
@@ -88,7 +98,7 @@ public class EmpireToOG<S, L, P> {
 				new ILegalFocusFunction.TrivialFocus<>(empire));
 	}
 
-	public EmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public EmpireToOwickiGries(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final IExplicitEmpireAutomaton<L, P, S> empire,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,

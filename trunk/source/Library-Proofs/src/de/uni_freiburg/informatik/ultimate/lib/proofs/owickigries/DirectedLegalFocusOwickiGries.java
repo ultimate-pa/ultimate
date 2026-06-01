@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directe
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireProduct;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireProduct.ProductState;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedLegalEmpireToOG;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedLegalFocus;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -207,10 +207,10 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		return mProgram;
 	}
 
-	private DirectedLegalEmpireToOG<L, P> getOwickiGriesAnnotation(
+	private DirectedEmpireToOwickiGries<L, P> getOwickiGriesAnnotation(
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
 			final DirectedLegalFocus<L, P> legalFocus) {
-		return new DirectedLegalEmpireToOG<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures, mProduct,
+		return new DirectedEmpireToOwickiGries<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures, mProduct,
 				legalFocus, possibleInterferences);
 	}
 
@@ -223,7 +223,7 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		private final TimeTracker mFocusTimer = new TimeTracker();
 
 		public Statistics(final ILogger logger) {
-			super(logger, DirectedEmpireAutomaton.class, DirectedLegalEmpireToOG.class);
+			super(logger, DirectedEmpireAutomaton.class, DirectedEmpireToOwickiGries.class);
 			declareTimeTracker("Focus computation time", mFocusTimer);
 		}
 

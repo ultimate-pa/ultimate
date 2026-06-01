@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class DirectedLegalEmpireToOG<L, P> {
+public class DirectedEmpireToOwickiGries<L, P> {
 	private static final String GHOST = "g";
 
 	private final IPetriNet<L, P> mNet;
@@ -80,7 +80,7 @@ public class DirectedLegalEmpireToOG<L, P> {
 	private final DirectedLegalFocus<L, P> mLegalFocus;
 	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGriesAnnotation;
 
-	public DirectedLegalEmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public DirectedEmpireToOwickiGries(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, ProductState<L, P>> empireProduct,
 			final DirectedLegalFocus<L, P> legalFocus,
