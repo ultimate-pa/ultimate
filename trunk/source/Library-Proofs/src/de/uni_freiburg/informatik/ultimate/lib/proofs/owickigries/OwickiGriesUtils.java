@@ -26,12 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Provides utility functionalities related to Owicki-Gries proofs.
@@ -55,5 +75,85 @@ public class OwickiGriesUtils {
 			getSpecificationForPetriNet(final IPetriNet<L, P> net, final BasicPredicateFactory factory) {
 		final var preconditions = Map.of(Marking.initial(net), factory.and());
 		return new ThreadModularPrePostSpecification<>(preconditions, net::isAccepting, factory.or());
+	}
+
+	public static <L extends IIcfgTransition<?>> void createResultsAndAnnotateIcfg(
+			final IUltimateServiceProvider services, final String pluginName, final IIcfg<IcfgLocation> icfg,
+			final OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>> annotation,
+			final IBacktranslationService backTranslatorService,
+			final Consumer<InvariantResult<IIcfgElement, ?>> reporter) {
+		final var logger = services.getLoggingService().getLogger(OwickiGriesUtils.class);
+
+		final Set<IProgramVar> failedGhosts = new HashSet<>();
+		final Map<IProgramVar, String> declaredGhosts = new HashMap<>();
+
+		// Process declarations and initial values of ghost variables.
+		final var ghostsInits = new HashMap<String, Object>();
+		for (final var entry : annotation.getGhostAssignment().entrySet()) {
+			final var ghost = entry.getKey();
+			final var expr = entry.getValue();
+
+			final var initialValue = backTranslatorService.translateExpression(expr, Term.class);
+			if (initialValue == null) {
+				logger.warn("Could not translate initial value of ghost variable %s: %s", ghost, initialValue);
+				failedGhosts.add(ghost);
+				continue;
+			}
+
+			final var declaredGhost = backTranslatorService.declareAndTranslateAuxiliaryVariable(ghost.getTerm());
+			final var declaredGhostName = backTranslatorService.targetExpressionToString(declaredGhost);
+			ghostsInits.put(declaredGhostName, initialValue);
+			declaredGhosts.put(ghost, declaredGhostName);
+		}
+		new WitnessGhostDeclaration<>(ghostsInits).annotate(icfg);
+
+		// Process ghost updates
+		for (final var entry : annotation.getAssignmentMapping().entrySet()) {
+			final var edge = (IIcfgTransition<?>) entry.getKey();
+			final GhostUpdate update = entry.getValue();
+
+			final Map<String, Object> ghostUpdate = new HashMap<>();
+			for (final var ghost : update.getAssignedVariables()) {
+				if (failedGhosts.contains(ghost)) {
+					continue;
+				}
+
+				final var context = ILocation.getAnnotation(edge);
+				final var term = update.getExpressionFor(ghost);
+				final var expression = backTranslatorService.translateExpressionWithContext(term, context, Term.class);
+				if (expression == null) {
+					logger.warn("Could not translate assignment to ghost variable %s: %s", ghost, term);
+					failedGhosts.add(ghost);
+				} else {
+					ghostUpdate.put(declaredGhosts.get(ghost), expression);
+				}
+			}
+			new WitnessGhostUpdate<>(ghostUpdate).annotate(edge);
+		}
+
+		// Process location invariants.
+		final var failedGhostTvs = failedGhosts.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		for (final var entry : annotation.getFormulaMapping().entrySet()) {
+			final IcfgLocation loc = entry.getKey();
+			final Term formula = entry.getValue().getFormula();
+			final Object invariant = backTranslatorService.translateExpressionWithContext(formula,
+					ILocation.getAnnotation(loc), Term.class);
+			final String invariantString =
+					invariant == null ? null : backTranslatorService.targetExpressionToString(invariant);
+
+			if (invariant == null || invariant.toString().equals("1")) {
+				continue;
+			}
+
+			final var invResult = new InvariantResult<>(pluginName, loc, invariant, invariantString, null /* TODO */);
+			reporter.accept(invResult);
+
+			final var failedGhost = Arrays.stream(formula.getFreeVars()).filter(failedGhostTvs::contains).findAny();
+			if (failedGhost.isPresent()) {
+				logger.warn("Invariant contains ghost variable that was not properly backtranslated. "
+						+ "Invariant: %s. Ghost variable: %s", invariant, failedGhost.get());
+			}
+			new WitnessInvariant<>(invariant).annotate(loc);
+		}
 	}
 }

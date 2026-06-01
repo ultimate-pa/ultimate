@@ -28,9 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,16 +43,11 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
@@ -72,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
@@ -80,11 +72,10 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareValidityCheck.MissingAnnotationBehaviour;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
@@ -221,79 +212,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final var annotation = (OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>) proof;
 				// TODO assert validity of annotation
 
-				// write to Icfg
-				final Set<IProgramVar> failedGhosts = new HashSet<>();
-				final Map<IProgramVar, String> declaredGhosts = new HashMap<>();
-				final var ghostsInits = new HashMap<String, Object>();
-				for (final var entry : annotation.getGhostAssignment().entrySet()) {
-					final var ghost = entry.getKey();
-					final var expr = entry.getValue();
-
-					final var initialValue = backTranslatorService.translateExpression(expr, Term.class);
-					if (initialValue == null) {
-						mLogger.warn("Could not translate initial value of ghost variable %s: %s", ghost, initialValue);
-						failedGhosts.add(ghost);
-						continue;
-					}
-
-					final var declaredGhost =
-							backTranslatorService.declareAndTranslateAuxiliaryVariable(ghost.getTerm());
-					final var declaredGhostName = backTranslatorService.targetExpressionToString(declaredGhost);
-					ghostsInits.put(declaredGhostName, initialValue);
-					declaredGhosts.put(ghost, declaredGhostName);
-				}
-				new WitnessGhostDeclaration<>(ghostsInits).annotate(icfg);
-
-				for (final var entry : annotation.getAssignmentMapping().entrySet()) {
-					final var edge = (IIcfgTransition<?>) entry.getKey();
-					final GhostUpdate update = entry.getValue();
-
-					final Map<String, Object> ghostUpdate = new HashMap<>();
-					for (final var ghost : update.getAssignedVariables()) {
-						if (failedGhosts.contains(ghost)) {
-							continue;
-						}
-
-						final var context = ILocation.getAnnotation(edge);
-						final var term = update.getExpressionFor(ghost);
-						final var expression =
-								backTranslatorService.translateExpressionWithContext(term, context, Term.class);
-						if (expression == null) {
-							mLogger.warn("Could not translate assignment to ghost variable %s: %s", ghost, term);
-							failedGhosts.add(ghost);
-						} else {
-							ghostUpdate.put(declaredGhosts.get(ghost), expression);
-						}
-					}
-					new WitnessGhostUpdate<>(ghostUpdate).annotate(edge);
-				}
-
-				final var failedGhostTvs =
-						failedGhosts.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-				for (final var entry : annotation.getFormulaMapping().entrySet()) {
-					final IcfgLocation loc = entry.getKey();
-					final Term formula = entry.getValue().getFormula();
-					final Object invariant = backTranslatorService.translateExpressionWithContext(formula,
-							ILocation.getAnnotation(loc), Term.class);
-					final String invariantString =
-							invariant == null ? null : backTranslatorService.targetExpressionToString(invariant);
-
-					if (invariant == null || invariant.toString().equals("1")) {
-						continue;
-					}
-
-					final var invResult = new InvariantResult<>(Activator.PLUGIN_NAME, loc, invariant, invariantString,
-							null /* TODO */);
-					mResultReporter.reportResult(invResult);
-
-					final var failedGhost =
-							Arrays.stream(formula.getFreeVars()).filter(failedGhostTvs::contains).findAny();
-					if (failedGhost.isPresent()) {
-						mLogger.warn("Invariant contains ghost variable that was not properly backtranslated. "
-								+ "Invariant: %s. Ghost variable: %s", invariant, failedGhost.get());
-					}
-					new WitnessInvariant<>(invariant).annotate(loc);
-				}
+				OwickiGriesUtils.createResultsAndAnnotateIcfg(mServices, Activator.PLUGIN_NAME, icfg, annotation,
+						backTranslatorService, mResultReporter::reportResult);
 			} else if (result.getProof() != null) {
 				mLogger.warn("Unknown type of proof: " + result.getProof().getClass());
 			}
