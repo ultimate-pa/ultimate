@@ -103,8 +103,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Buch
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ILassoCheckResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.InfeasibilityResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.NonterminationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TerminationAndInfeasibilityResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TerminationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.UnknownResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TermcompProofBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
@@ -363,7 +367,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 						mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
 						mCounterexample, this::getControlConfiguration, identifier, mServices, SIMPLIFICATION_TECHNIQUE,
 						mRefinementStrategyFactory, mAbstraction, taskIdentifier, mBenchmarkGenerator);
-				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
+				if (lassoCheck.getLassoCheckResult() instanceof UnknownResult) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
 					// This allows us to verify Vincent's coolant examples
@@ -394,38 +398,49 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.LASSO_ANALYSIS_TIME);
 			}
 
-			final ContinueDirective cd = lassoCheck.getLassoCheckResult().getContinueDirective();
+			final ILassoCheckResult<L> lcr = lassoCheck.getLassoCheckResult();
 			mBenchmarkGenerator.reportLassoAnalysis(lassoCheck);
 			try {
-				switch (cd) {
-				case REFINE_BOTH:
-					mAbstraction = refineFiniteInternal(refineBuchiInternal(lassoCheck), lassoCheck);
+				switch (lcr) {
+				case final TerminationAndInfeasibilityResult<L> tair:
+					mAbstraction =
+							refineFiniteInternal(refineBuchiInternal(tair.result()), tair.refinementEngineResult());
 					break;
-				case REFINE_FINITE:
-					mAbstraction = refineFiniteInternal(mAbstraction, lassoCheck);
+				case final InfeasibilityResult<L> ir:
+					mAbstraction = refineFiniteInternal(mAbstraction, ir.refinementEngineResult());
 					break;
-				case REFINE_BUCHI:
-					mAbstraction = refineBuchiInternal(lassoCheck);
+				case final TerminationResult<L> tr:
+					mAbstraction = refineBuchiInternal(tr.result());
 					break;
-				case REPORT_UNKNOWN:
-				case REPORT_NONTERMINATION:
+				case final UnknownResult<L> ur: {
 					// Ignore the insufficient thread locations in the counterexample
 					final var inUseLocs = new HashSet<>(
 							mCsToolkitWithoutRankVars.getConcurrencyInformation().getInUseErrorNodeMap().values());
 					final NestedWord<L> stem = getWordWithoutLocs(mCounterexample.getStem(), inUseLocs);
 					final NestedWord<L> loop = getWordWithoutLocs(mCounterexample.getLoop(), inUseLocs);
-					if (cd == ContinueDirective.REPORT_NONTERMINATION && getOverapproximations().isEmpty()) {
+					reportRemainderModule(false);
+					return BuchiCegarLoopResult.constructUnknownResult(stem, loop, getOverapproximations(),
+							mMDBenchmark, mTermcompProofBenchmark);
+				}
+				case final NonterminationResult<L> nr: {
+					// Ignore the insufficient thread locations in the counterexample
+					final var inUseLocs = new HashSet<>(
+							mCsToolkitWithoutRankVars.getConcurrencyInformation().getInUseErrorNodeMap().values());
+					final NestedWord<L> stem = getWordWithoutLocs(mCounterexample.getStem(), inUseLocs);
+					final NestedWord<L> loop = getWordWithoutLocs(mCounterexample.getLoop(), inUseLocs);
+					if (getOverapproximations().isEmpty()) {
 						reportRemainderModule(true);
 						// The loop is empty, i.e. it contains only self-loops in the insufficient thread locations.
 						if (loop.length() == 0) {
 							return BuchiCegarLoopResult.constructInsufficientThreadsResult();
 						}
-						return BuchiCegarLoopResult.constructNonTerminatingResult(stem, loop,
-								lassoCheck.getNonTerminationArgument(), mMDBenchmark, mTermcompProofBenchmark);
+						return BuchiCegarLoopResult.constructNonTerminatingResult(stem, loop, nr.argument(),
+								mMDBenchmark, mTermcompProofBenchmark);
 					}
 					reportRemainderModule(false);
 					return BuchiCegarLoopResult.constructUnknownResult(stem, loop, getOverapproximations(),
 							mMDBenchmark, mTermcompProofBenchmark);
+				}
 				default:
 					throw new AssertionError("impossible case");
 				}
@@ -460,10 +475,10 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return NestedWord.nestedWord(new Word<>(letters));
 	}
 
-	private A refineFiniteInternal(final A abstraction, final LassoCheck<L> lassoCheck)
+	private A refineFiniteInternal(final A abstraction,
+			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> traceCheck)
 			throws AutomataLibraryException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final var traceCheck = constructRefinementEngineResult(lassoCheck);
 		final NestedWordAutomaton<L, IPredicate> interpolAutomaton = traceCheck.getInfeasibilityProof();
 
 		final IHoareTripleChecker htc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
@@ -500,27 +515,26 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return result;
 	}
 
-	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
-			constructRefinementEngineResult(final LassoCheck<L> lassoCheck) {
-		final var lcr = lassoCheck.getLassoCheckResult();
-		if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
-			// if both (stem and loop) are infeasible we take the smaller one.
-			final int stemSize = mCounterexample.getStem().getLength();
-			final int loopSize = mCounterexample.getLoop().getLength();
-			if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
-				return lassoCheck.getLoopCheck();
-			}
-			return lassoCheck.getStemCheck();
-		}
-		if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-			return lassoCheck.getLoopCheck();
-		}
-		assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
-		return lassoCheck.getConcatCheck();
-	}
+	// private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
+	// constructRefinementEngineResult(final LassoCheck<L> lassoCheck) {
+	// final var lcr = lassoCheck.getLassoCheckResult();
+	// if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
+	// // if both (stem and loop) are infeasible we take the smaller one.
+	// final int stemSize = mCounterexample.getStem().getLength();
+	// final int loopSize = mCounterexample.getLoop().getLength();
+	// if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
+	// return lassoCheck.getLoopCheck();
+	// }
+	// return lassoCheck.getStemCheck();
+	// }
+	// if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
+	// return lassoCheck.getLoopCheck();
+	// }
+	// assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
+	// return lassoCheck.getConcatCheck();
+	// }
 
-	private A refineBuchiInternal(final LassoCheck<L> lassoCheck) throws AutomataOperationCanceledException {
-		final BspmResult bspmResult = lassoCheck.getBspmResult();
+	private A refineBuchiInternal(final BspmResult bspmResult) throws AutomataOperationCanceledException {
 		final IPredicate hondaPredicate = bspmResult.getHondaPredicate();
 		final IPredicate rankEqAndSi = bspmResult.getRankEqAndSi();
 
