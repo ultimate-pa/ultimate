@@ -683,62 +683,47 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				+ new DagSizePrinter(stemTF.getFormula()) + ", loop dagsize " + new DagSizePrinter(loopTF.getFormula());
 	}
 
-	private TraceCheckResult mStemFeasibility;
-	private TraceCheckResult mLoopFeasibility;
-	private TraceCheckResult mConcatFeasibility;
-
-	private SynthesisResult mLoopTermination;
-	private SynthesisResult mLassoTermination;
-
 	// TODO: Make sure to use the shorter trace check for infeasibility
 	private ILassoCheckResult<L> constructLassoCheckResult() throws IOException {
 		final NestedWord<L> stem = mCounterexample.getStem().getWord();
 		mLogger.info("Stem: " + stem);
 		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
 		mLogger.info("Loop: " + loop);
-		mStemFeasibility = checkStemFeasibility();
-		if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
+		// TODO: Avoid this method to have side effects
+		final TraceCheckResult stemFeasibility = checkStemFeasibility();
+		if (stemFeasibility == TraceCheckResult.INFEASIBLE) {
 			mLogger.info("stem already infeasible");
 			if (!mTryTwofoldRefinement) {
-				mLoopFeasibility = TraceCheckResult.UNCHECKED;
-				mConcatFeasibility = TraceCheckResult.UNCHECKED;
-				mLoopTermination = SynthesisResult.UNCHECKED;
-				mLassoTermination = SynthesisResult.UNCHECKED;
 				return new InfeasibilityResult<>(mStemCheck);
 			}
 		}
-		mLoopFeasibility = checkLoopFeasibility();
-		if (mLoopFeasibility == TraceCheckResult.INFEASIBLE) {
+		// TODO: Avoid this method to have side effects
+		if (checkLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
 			mLogger.info("loop already infeasible");
-			mConcatFeasibility = TraceCheckResult.UNCHECKED;
-			mLoopTermination = SynthesisResult.UNCHECKED;
-			mLassoTermination = SynthesisResult.UNCHECKED;
 			return new InfeasibilityResult<>(mLoopCheck);
 		}
-		if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
+		if (stemFeasibility == TraceCheckResult.INFEASIBLE) {
 			assert mTryTwofoldRefinement;
 			final UnmodifiableTransFormula loopTF = computeLoopTF();
-			mLoopTermination = checkLoopTermination(loopTF);
-			mConcatFeasibility = TraceCheckResult.UNCHECKED;
-			mLassoTermination = SynthesisResult.UNCHECKED;
+			// TODO: Avoid this method to have side effects
+			final SynthesisResult mLoopTermination = checkLoopTermination(loopTF);
 			if (mLoopTermination == SynthesisResult.TERMINATING) {
 				return new TerminationAndInfeasibilityResult<>(mStemCheck, mBspmResult);
 			}
 			return new InfeasibilityResult<>(mStemCheck);
 		}
 		// stem feasible
-		mConcatFeasibility = checkConcatFeasibility();
-		if (mConcatFeasibility == TraceCheckResult.INFEASIBLE) {
-			mLassoTermination = SynthesisResult.UNCHECKED;
+		// TODO: Avoid this method to have side effects
+		if (checkConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
 			if (mTryTwofoldRefinement) {
 				final UnmodifiableTransFormula loopTF = computeLoopTF();
-				mLoopTermination = checkLoopTermination(loopTF);
+				// TODO: Avoid this method to have side effects
+				final SynthesisResult mLoopTermination = checkLoopTermination(loopTF);
 				if (mLoopTermination == SynthesisResult.TERMINATING) {
 					return new TerminationAndInfeasibilityResult<>(mConcatCheck, mBspmResult);
 				}
 				return new InfeasibilityResult<>(mConcatCheck);
 			}
-			mLoopTermination = SynthesisResult.UNCHECKED;
 			return new InfeasibilityResult<>(mConcatCheck);
 		}
 		// concat feasible
@@ -750,13 +735,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// LassoChecker is not optimal. Hence we first check
 		// only the loop, which guarantees that there are no
 		// supporting invariants.
-		mLoopTermination = checkLoopTermination(loopTF);
+		// TODO: Avoid this method to have side effects
+		final SynthesisResult mLoopTermination = checkLoopTermination(loopTF);
 		if (mLoopTermination == SynthesisResult.TERMINATING) {
-			mLassoTermination = SynthesisResult.UNCHECKED;
 			return new TerminationResult<>(mBspmResult);
 		}
 		final UnmodifiableTransFormula stemTF = computeStemTF();
-		mLassoTermination = checkLassoTermination(stemTF, loopTF);
+		// TODO: Avoid this method to have side effects
+		final SynthesisResult mLassoTermination = checkLassoTermination(stemTF, loopTF);
 		if (mLassoTermination == SynthesisResult.TERMINATING) {
 			return new TerminationResult<>(mBspmResult);
 		}
