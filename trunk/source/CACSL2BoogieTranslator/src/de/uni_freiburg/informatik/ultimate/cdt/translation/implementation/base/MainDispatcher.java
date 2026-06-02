@@ -460,8 +460,14 @@ public class MainDispatcher implements IDispatcher {
 		if (mWitness == null) {
 			return List.of();
 		}
-		return mWitness.getFunctionContracts(node).stream().flatMap(x -> x.getAcslContractClauses().stream())
-				.collect(Collectors.toList());
+		final List<ACSLNode> functionContracts = mWitness.getFunctionContracts(node).stream()
+				.flatMap(x -> x.getAcslContractClauses().stream()).collect(Collectors.toList());
+		// TODO: Implement function contracts properly as hints in ExtractedFunctionContract
+		if (!functionContracts.isEmpty() && !mSettings.checkWitnesses()) {
+			mLogger.warn("Ignoring function contract: " + functionContracts);
+			return List.of();
+		}
+		return functionContracts;
 	}
 
 	@Override
