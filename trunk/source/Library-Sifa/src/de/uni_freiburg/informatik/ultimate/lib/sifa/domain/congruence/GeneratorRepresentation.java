@@ -211,12 +211,24 @@ public class GeneratorRepresentation {
 
 	public GeneratorRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
 			final int resultColumnCount) {
+
 		final MatrixQ128 reorderedLineMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
 				getLineMatrix());
 		final MatrixQ128 reorderedParameterMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
 				getParameterMatrix());
-		return new GeneratorRepresentation(reorderedLineMatrix, reorderedParameterMatrix, resultColumnCount,
-				isMinimal());
+
+		// We pad the parameters with vectors that correspond to x ≡1 0, for all
+		// variables x that got newly added to our context. This avoids them appearing
+		// as x = 0. Since we only care about whole numbers x ≡1 0 holds trivially.
+		final List<MatrixQ128> paddedParameters = CongruenceUtil.getRowsFromMatrix(reorderedParameterMatrix);
+		for (int i = 0; i < resultColumnCount; i++) {
+			if (!reorderMap.containsValue(i)) {
+				final MatrixQ128 newParameter = CongruenceUtil.getStandardBasisVector(i, resultColumnCount);
+				paddedParameters.add(newParameter);
+			}
+		}
+		return new GeneratorRepresentation(reorderedLineMatrix, CongruenceUtil.getMatrixFromRows(paddedParameters),
+				resultColumnCount, isMinimal());
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
