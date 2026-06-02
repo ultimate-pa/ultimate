@@ -272,7 +272,6 @@ public class ConstraintRepresentation {
 		if (isStrongMinimal()) {
 			return;
 		}
-		final var sth = this;
 		minimize();
 
 		final List<MatrixQ128> equalities = getEqualities();

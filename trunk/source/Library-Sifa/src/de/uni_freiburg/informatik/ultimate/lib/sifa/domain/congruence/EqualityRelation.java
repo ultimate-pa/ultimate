@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.ojalgo.matrix.MatrixQ128;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
@@ -37,6 +38,9 @@ public class EqualityRelation {
 	public static EqualityRelation of(final Term term, final Script script) {
 		final PolynomialRelation polynomialRelation = PolynomialRelation.of(script, term);
 		if (polynomialRelation == null) {
+			return null;
+		}
+		if (!polynomialRelation.getRelationSymbol().equals(RelationSymbol.EQ)) {
 			return null;
 		}
 		final AffineTerm affineTerm = getAffineTerm(polynomialRelation);

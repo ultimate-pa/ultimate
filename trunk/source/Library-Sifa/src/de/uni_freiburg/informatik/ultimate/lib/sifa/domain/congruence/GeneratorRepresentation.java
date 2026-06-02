@@ -94,9 +94,6 @@ public class GeneratorRepresentation {
 			return;
 		}
 
-		final var one = getLines();
-		final var two = getParameters();
-
 		final List<MatrixQ128> lines = getLines();
 		final List<MatrixQ128> parameters = getParameters();
 
@@ -233,8 +230,6 @@ public class GeneratorRepresentation {
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
 		minimize();
-
-		final var sth = this;
 
 		final List<MatrixQ128> lines = getLines();
 		final int linesNum = lines.size();

@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Abstract class for an {@link IDomain} that uses states, i.e. that transforms predicates into an internal state
- * representation (using the method {@code toStates}).
+ * Abstract class for an {@link IDomain} that uses states, i.e. that transforms
+ * predicates into an internal state representation (using the method
+ * {@code toStates}).
  *
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
- * @param <STATE>
- *            The abstract state that is used internally
+ * @param <STATE> The abstract state that is used internally
  */
 public class StateBasedDomain<STATE extends IAbstractState<STATE>> implements IDomain {
 	private final SymbolicTools mTools;
@@ -163,8 +163,9 @@ public class StateBasedDomain<STATE extends IAbstractState<STATE>> implements ID
 		STATE getTopState();
 
 		/**
-		 * Transformations that are applied before converting the DNF to improve the states that are produced from the
-		 * DNF. This method has to return an overapproximation of {@code term}.
+		 * Transformations that are applied before converting the DNF to improve the
+		 * states that are produced from the DNF. This method has to return an
+		 * overapproximation of {@code term}.
 		 */
 		Term preprocessTerm(final Term term);
 	}

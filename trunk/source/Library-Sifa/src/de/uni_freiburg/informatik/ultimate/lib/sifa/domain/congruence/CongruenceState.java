@@ -170,15 +170,11 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
 				selfReorderedGenerators.getVectorLength());
 
-		final var sth = new CongruenceState(newVarToIndex, newGenerators);
-		final var sthElse = sth.getConstraintRepresentation();
 		return new CongruenceState(newVarToIndex, newGenerators);
 	}
 
 	@Override
 	public CongruenceState widen(final CongruenceState other) {
-		final var sth = this;
-
 		/*
 		 * if (isBottom()) { return other; } if (other.isBottom()) { return this; }
 		 */
@@ -222,7 +218,6 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		final ConstraintRepresentation newConstraints = new ConstraintRepresentation(newEqualities, newCongruences,
 				upperConstraints.getVectorLength());
-		final var sthelse = new CongruenceState(newVarToIndex, newConstraints);
 		return new CongruenceState(newVarToIndex, newConstraints);
 	}
 
