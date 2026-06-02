@@ -673,7 +673,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				+ new DagSizePrinter(stemTF.getFormula()) + ", loop dagsize " + new DagSizePrinter(loopTF.getFormula());
 	}
 
-	// TODO: Make sure to use the shorter trace check for infeasibility
 	private ILassoCheckResult<L> constructLassoCheckResult() throws IOException {
 		final NestedWord<L> stem = mCounterexample.getStem().getWord();
 		mLogger.info("Stem: " + stem);
@@ -697,7 +696,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final var loopCheck = checkLoopFeasibility();
 		if (isInfeasible(loopCheck)) {
 			mLogger.info("loop already infeasible");
-			return new InfeasibilityResult<>(loopCheck);
+			// if both (stem and loop) are infeasible we take the smaller one.
+			final int stemSize = mCounterexample.getStem().getLength();
+			final int loopSize = mCounterexample.getLoop().getLength();
+			return loopSize <= stemSize ? new InfeasibilityResult<>(loopCheck) : new InfeasibilityResult<>(stemCheck);
 		}
 		if (isStemInfeasible) {
 			assert mTryTwofoldRefinement;

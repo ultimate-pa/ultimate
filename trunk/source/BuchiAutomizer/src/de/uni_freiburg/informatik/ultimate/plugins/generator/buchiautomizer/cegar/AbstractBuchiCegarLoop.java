@@ -515,25 +515,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return result;
 	}
 
-	// private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
-	// constructRefinementEngineResult(final LassoCheck<L> lassoCheck) {
-	// final var lcr = lassoCheck.getLassoCheckResult();
-	// if (lassoCheck.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
-	// // if both (stem and loop) are infeasible we take the smaller one.
-	// final int stemSize = mCounterexample.getStem().getLength();
-	// final int loopSize = mCounterexample.getLoop().getLength();
-	// if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
-	// return lassoCheck.getLoopCheck();
-	// }
-	// return lassoCheck.getStemCheck();
-	// }
-	// if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-	// return lassoCheck.getLoopCheck();
-	// }
-	// assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
-	// return lassoCheck.getConcatCheck();
-	// }
-
 	private A refineBuchiInternal(final BspmResult bspmResult) throws AutomataOperationCanceledException {
 		final IPredicate hondaPredicate = bspmResult.getHondaPredicate();
 		final IPredicate rankEqAndSi = bspmResult.getRankEqAndSi();
