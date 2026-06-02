@@ -132,6 +132,17 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			require a previosu state to determine the successor state. Note: this will only work for the very first\
 			step independend of length or usefulness.""";
 
+	// Local Unrealizability
+	public static final String LABEL_CHECK_LOCAL_UNREALIZABILITY = "Check local unrealizability";
+	private static final boolean DEF_CHECK_LOCAL_UNREALIZABILITY = false;
+	private static final String DESC_CHECK_LOCAL_UNREALIZABILITY = null;
+
+	public static final String LABEL_LOCAL_UNREALIZABILITY_RANGE = "Local unrealizability range";
+	private static final int DEF_LOCAL_UNREALIZABILITY_RANGE = 2;
+	private static final String DESC_LOCAL_UNREALIZABILITY_RANGE = """
+			How many requirements should be checked for local unrealizability at the same time? \
+			Allows only positive integer values.""";
+
 	public enum PEATransformerMode {
 		REQ_CHECK, REQ_TEST, REQ_RED
 	}
@@ -155,6 +166,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_LOCAL_UNREALIZABILITY, DEF_CHECK_LOCAL_UNREALIZABILITY,
+						DESC_CHECK_LOCAL_UNREALIZABILITY, PreferenceType.Boolean),
 				new UltimatePreferenceItemGroup("Complete Rt-Inconsistency Check",
 						new UltimatePreferenceItem<>(LABEL_COMPLETE_RT_INCONSISTENCY_CHECK,
 								DEF_COMPLETE_RT_INCONSISTENCY_CHECK, DESC_COMPLETE_RT_INCONSISTENCY_CHECK,
@@ -178,6 +191,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 								PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
 								DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer,
+								IUltimatePreferenceItemValidator.ONLY_POSITIVE)),
+				new UltimatePreferenceItemGroup("Local unrealiyabilitz",
+						new UltimatePreferenceItem<>(LABEL_LOCAL_UNREALIZABILITY_RANGE, DEF_LOCAL_UNREALIZABILITY_RANGE,
+								DESC_LOCAL_UNREALIZABILITY_RANGE, PreferenceType.Integer,
 								IUltimatePreferenceItemValidator.ONLY_POSITIVE)),
 				new UltimatePreferenceItem<>(LABEL_HISTORY_VARS, DEF_HISTORY_VARS, DESC_HISTORY_VASRS,
 						PreferenceType.Boolean),

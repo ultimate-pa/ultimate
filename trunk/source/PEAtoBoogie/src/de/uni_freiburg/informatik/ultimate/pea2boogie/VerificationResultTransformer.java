@@ -187,8 +187,8 @@ public class VerificationResultTransformer {
 			return new ReqCheckSuccessResult<>(element, plugin);
 		}
 
-		if (spec == Spec.RTINCONSISTENT) {
-			if (!mPrefs.getBoolean(Pea2BoogiePreferences.LABEL_GEN_FAILURE_PATH)) {
+		if (spec == Spec.RTINCONSISTENT || spec == Spec.LOCAL_UNREALIZABILITY) {
+			if (spec == Spec.RTINCONSISTENT && !mPrefs.getBoolean(Pea2BoogiePreferences.LABEL_GEN_FAILURE_PATH)) {
 				return new ReqCheckRtInconsistentResult<>(element, plugin);
 			}
 			@SuppressWarnings("unchecked")
@@ -606,6 +606,7 @@ public class VerificationResultTransformer {
 		case RTINCONSISTENT:
 		case COMPLEMENT:
 		case REDUNDANCY:
+		case LOCAL_UNREALIZABILITY:
 			return;
 		default:
 			throw new UnsupportedOperationException("Unknown spec type " + spec);

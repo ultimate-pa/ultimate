@@ -215,7 +215,13 @@ public enum Spec {
 	*/
 	REDUNDANCY(Group.REQUIREMENT,
 			"non-redundant",
-			"redundant");
+			"redundant"),
+	/**
+	 * Checks for local unrealizability.
+	 */
+	LOCAL_UNREALIZABILITY(Group.REQUIREMENT,
+			"locally realizable",
+			"locally unrealizable");
 	// @formatter:on
 
 	/**

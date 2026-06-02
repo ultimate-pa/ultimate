@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPe
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.LocalUnrealizabilityCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
@@ -105,6 +106,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mCheckRedundancy;
 	private boolean mReportTrivialConsistency;
 	private boolean mGenerateFailurePath;
+	private boolean mCheckLocalUnrealizability;
+	private int mLocalUnrealizabilityRange;
+	private BoogieDeclarations mBoogieDeclarations;
 
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
@@ -154,22 +158,35 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
 
+		mCheckLocalUnrealizability = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_LOCAL_UNREALIZABILITY);
+		if (mCheckLocalUnrealizability) {
+			final int length = mReqPeas.size();
+			mLocalUnrealizabilityRange =
+					Math.min(length, prefs.getInt(Pea2BoogiePreferences.LABEL_LOCAL_UNREALIZABILITY_RANGE));
+		} else {
+			mLocalUnrealizabilityRange = -1;
+		}
+
 		// log preferences
-		mLogger.info(
-				String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
-						mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
-						Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
-						Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
-						Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling,
-						Pea2BoogiePreferences.LABEL_GEN_FAILURE_PATH, mGenerateFailurePath));
+		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s",
+				Pea2BoogiePreferences.LABEL_CHECK_VACUITY, mCheckVacuity,
+				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
+				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
+				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
+				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling,
+				Pea2BoogiePreferences.LABEL_GEN_FAILURE_PATH, mGenerateFailurePath,
+				Pea2BoogiePreferences.LABEL_CHECK_LOCAL_UNREALIZABILITY, mCheckLocalUnrealizability,
+				Pea2BoogiePreferences.LABEL_LOCAL_UNREALIZABILITY_RANGE, mLocalUnrealizabilityRange));
 
 		final List<Declaration> decls = new ArrayList<>(mSymbolTable.getDeclarations());
 		RtInconcistencyConditionGenerator rticGenerator;
 		try {
+			if (mCombinationNum >= 1 || mCheckLocalUnrealizability) {
+				mBoogieDeclarations = new BoogieDeclarations(decls, mLogger);
+			}
 			if (mCombinationNum >= 1) {
-				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
 				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymbolTable,
-						mReqPeas, boogieDeclarations, mDurations, mSeparateInvariantHandling);
+						mReqPeas, mBoogieDeclarations, mDurations, mSeparateInvariantHandling);
 			} else {
 				rticGenerator = null;
 			}
@@ -195,6 +212,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 		if (mCheckRedundancy) {
 			annotations.addAll(genChecksRedundancy(mUnitLocation));
+		}
+		if (mCheckLocalUnrealizability) {
+			annotations.addAll(genChecksLocalUnrealizability(mUnitLocation));
 		}
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
 		return annotations;
@@ -448,6 +468,44 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final AssertStatement rtr = new AssertStatement(loc, attr, expr);
 		check.annotate(rtr);
 		return rtr;
+	}
+
+	private List<Statement> genChecksLocalUnrealizability(final BoogieLocation bl) {
+		if (!mCheckLocalUnrealizability || mLocalUnrealizabilityRange < 1 || mBoogieDeclarations == null) {
+			return Collections.emptyList();
+		}
+
+		final LocalUnrealizabilityCheck checker = new LocalUnrealizabilityCheck(mReqPeas, mPeaResultUtil,
+				mBoogieDeclarations, mSymbolTable, mServices, mLogger);
+		final List<LocalUnrealizabilityCheck.Witness> witnesses = checker.check(mLocalUnrealizabilityRange);
+		mLogger.info("Found " + witnesses.size() + " locally unrealizable subsets");
+
+		final List<Statement> stmtList = new ArrayList<>();
+		for (final LocalUnrealizabilityCheck.Witness witness : witnesses) {
+			stmtList.add(genAssertLocalUnrealizability(witness, bl));
+		}
+		return stmtList;
+	}
+
+	private Statement genAssertLocalUnrealizability(final LocalUnrealizabilityCheck.Witness witness,
+			final BoogieLocation bl) {
+		final PatternType<?>[] patterns = witness.patterns();
+		final PhaseEventAutomata[] peas = witness.peas();
+		final int[] critPhaseIndices = witness.critPhaseIndices();
+
+		final List<Expression> pcEqualities = new ArrayList<>();
+		for (int i = 0; i < peas.length; i++) {
+			pcEqualities.add(genComparePhaseCounter(critPhaseIndices[i], mSymbolTable.getPcName(peas[i]), bl));
+		}
+		final Expression conjunction = ExpressionFactory.and(bl, pcEqualities);
+		final Expression assertion = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, conjunction);
+
+		final String[] reqIds = Arrays.stream(patterns).map(PatternType::getId).toArray(String[]::new);
+		final String[] peaNames = Arrays.stream(peas).map(PhaseEventAutomata::getName).toArray(String[]::new);
+		final ReqCheck check = new ReqCheck(Spec.LOCAL_UNREALIZABILITY, reqIds, peaNames);
+		final String label = "LOCAL_UNREALIZABILITY_"
+				+ Arrays.stream(peas).map(PhaseEventAutomata::getName).collect(Collectors.joining("_"));
+		return createAssert(assertion, check, label);
 	}
 
 	@Override
