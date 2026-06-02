@@ -107,6 +107,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class LassoCheck<L extends IIcfgTransition<?>> {
 
@@ -775,12 +776,13 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// we first check if we can already show termination for only the loop part of our fairness automaton
 		private FairnessResult mLoopOnly = FairnessResult.UNCHECKED;
 		private FairnessResult mProgram = FairnessResult.UNCHECKED;
-		// TODO: think about how to return this
+		// TODO: think about how to return this-just leave it in the bspm result? -_-
 		public TerminationArgument mUnfairnessArgument;
 
 		private final ContinueDirective mContinueDirective;
 
 		public LassoCheckResult() throws IOException {
+			mBspmResult = null;
 			final NestedWord<L> stem = mCounterexample.getStem().getWord();
 			mLogger.info("Stem: " + stem);
 			final NestedWord<L> loop = mCounterexample.getLoop().getWord();
@@ -892,14 +894,19 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 				// disjunction of terms should be equivalent to parallel comp of respective TransFormulae
 				// TODO: Ask if thats actually true and about branch indicators
-				// TODO: do sth separate if guard disj is true?
+
 				final UnmodifiableTransFormula notGuardDisj =
 						TransFormulaUtils.negate(
 								TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, null, false,
 										true, guards.toArray(UnmodifiableTransFormula[]::new)),
 								mManagedScript, mServices);
+				// TODO: do sth separate if guard disj is true - then we can add whatever loop TS we want to the loop,
+				// no?
+				final boolean falseGuard = (SmtUtils.isFalseLiteral(notGuardDisj.getFormula()));
 
 				// we unroll the loop state by state and check if the resulting P(A_fair) terminates
+				NestedRun<L, IPredicate> newStemRun = mCounterexample.getStem();
+				NestedRun<L, IPredicate> newLoopRun = mCounterexample.getLoop();
 				NestedWord<L> newStem = stem;
 				NestedWord<L> unguardedLoop = loop;
 				Set<IProgramNonOldVar> modifiableGlobalsAtHonda = mModifiableGlobalsAtHonda;
@@ -913,8 +920,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						// if this transition does not alter variables from the guard term, we can skip this honda
 						final L currentTS = loopRun.getWord().asList().get(i - 1);
 
+						// TODO: überlegen, was mehr sinn macht
+						newStemRun = newStemRun.concatenate(newLoopRun.getSubRun(0, 1));
+						newLoopRun = newLoopRun.getSubRun(1, loopLen - 1).concatenate(newLoopRun.getSubRun(0, 1));
 						newStem = stem.concatenate(loop.getSubWord(0, i));
 						unguardedLoop = loop.getSubWord(i, loopLen - 1).concatenate(loop.getSubWord(0, i));
+
 						final IPredicate newHonda = loopStates.get(i);
 						modifiableGlobalsAtHonda =
 								PredicateUtils.streamLocations(newHonda)
@@ -924,13 +935,13 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					}
 					final UnmodifiableTransFormula newStemTF = computeTF(newStem, true, true, false);
 					final UnmodifiableTransFormula unguardedLoopTF = computeTF(unguardedLoop, true, true, false);
-
 					final UnmodifiableTransFormula guardedLoopTF =
 							TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false,
 									false, mSimplificationTechnique, List.of(notGuardDisj, unguardedLoopTF));
 
 					// TODO: Was machen wir, wenn das Ding schon ein infeasible prefix (also concat/loop) hat?
-					// first check whether the loop part already terminates
+					// first check whether the loop part already terminates -- wenn der loop infeasible ist, müssen wir
+					// den automaten irgendwie anders bauen
 					final SynthesisResult res = checkLoopTermination(guardedLoopTF, modifiableGlobalsAtHonda);
 
 					// TODO: V - this could be nicer
@@ -939,7 +950,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					case TERMINATING:
 						mLoopOnly = FairnessResult.UNFAIR;
 						mProgram = FairnessResult.UNFAIR;
-						// TODO: skip termination analysis
+						mUnfairnessArgument = mBspmResult.getTerminationArgument();
 						break;
 
 					case NONTERMINATING:
@@ -947,8 +958,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						if (emptyStem) {
 							mProgram = mLoopOnly;
 						} else {
-							mProgram = checkFairProgramTermination(newStemTF, guardedLoopTF, unguardedLoopTF,
-									modifiableGlobalsAtHonda, 3);
+							final Pair<FairnessResult, TerminationArgument> progTerm = checkFairProgramTermination(
+									newStemTF, guardedLoopTF, unguardedLoopTF, modifiableGlobalsAtHonda, 3);
+							mProgram = progTerm.getFirst();
+							mUnfairnessArgument = progTerm.getSecond();
 						}
 						break;
 
@@ -957,17 +970,20 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						if (emptyStem) {
 							mProgram = mLoopOnly;
 						} else {
-							mProgram = checkFairProgramTermination(newStemTF, guardedLoopTF, unguardedLoopTF,
-									modifiableGlobalsAtHonda, 3);
-							break;
+							final Pair<FairnessResult, TerminationArgument> progTerm = checkFairProgramTermination(
+									newStemTF, guardedLoopTF, unguardedLoopTF, modifiableGlobalsAtHonda, 3);
+							mProgram = progTerm.getFirst();
+							mUnfairnessArgument = progTerm.getSecond();
 						}
+						break;
 					}
 				}
 
 			}
 
 			if (mProgram == FairnessResult.UNFAIR) {
-				// TODO: sort out continue direktives and when its ok to leave the synthesis results at unchecked
+				// TODO: sort out continue direktives and when its ok to leave the synthesis results at unchecked - why
+				// is the unchecked not assigned from the beginning?
 				mLoopTermination = SynthesisResult.UNCHECKED;
 				mLassoTermination = SynthesisResult.UNCHECKED;
 				mContinueDirective = ContinueDirective.REPORT_UNKNOWN;
@@ -995,7 +1011,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 
 		// -------------------- fairness stuff -------------------------------------------------------------------------
-		// TODO: V - how do we check if the termination argument holds for the whole program?
 		/*
 		 * (Approximately) checks whether P(A_fair(trace, guard)) terminates by trying a few 'unrollings' of the
 		 * program. If one terminates we check whether its termination argument is sufficient for the whole program.
@@ -1011,21 +1026,27 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		 * @param num_unrollings - how many traces of form [stem (loop)^i (assume not G; loop)^omega] we want to try,
 		 * should be greater than 0
 		 */
-		private FairnessResult checkFairProgramTermination(final UnmodifiableTransFormula stemTF,
-				final UnmodifiableTransFormula loopTF, final UnmodifiableTransFormula unguardedLoopTF,
-				final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final int num_unrollings) throws IOException {
+		private Pair<FairnessResult, TerminationArgument> checkFairProgramTermination(
+				final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTF,
+				final UnmodifiableTransFormula unguardedLoopTF, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
+				final int num_unrollings) throws IOException {
 			UnmodifiableTransFormula urStemTF = stemTF;
+			final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> stemCheck;
 			// TODO: think about whether we count the stem(loop)^\omega as zeroth or first unrolling
 			for (int i = 0; i < num_unrollings; i++) {
 				final SynthesisResult res = checkLassoTermination(urStemTF, loopTF, modifiableGlobalsAtHonda);
 				// One trace of P(A_fair) doesn't terminate --> P doesn't terminate --> G might not hold inf. often
 				if (res != SynthesisResult.TERMINATING) {
 					// TODO: differentiate between nonterminating and unknown?
-					return FairnessResult.UNKNOWN;
+					return new Pair(FairnessResult.UNKNOWN, null);
 				}
 
 				// get the termination argument and check if its sufficient
-				// TODO: check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
+				// TODO: if the trace's stem is infeasible the argument is useless, so just continue with the next
+				// unrolling?
+
+				// TODO: check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate or
+				// feasibility checks hit?
 				// TODO: closed Formula oder Formula?
 				final Term[] supInv = { mBspmResult.getSiConjunction().getFormula() };
 				// Note: this only checks whether {si} loop {si} holds - sufficient bc we know that all shorter
@@ -1036,14 +1057,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final boolean sufficient =
 						mBspm.isSupportingInvariant(supInv, unguardedLoopTF, modifiableGlobalsAtHonda);
 				if (sufficient) {
-					return FairnessResult.UNFAIR;
+					return new Pair(FairnessResult.UNFAIR, mBspmResult.getTerminationArgument());
 				}
 				// unroll further
 				urStemTF = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false,
 						false, mSimplificationTechnique, List.of(urStemTF, unguardedLoopTF));
 			}
 
-			return FairnessResult.UNKNOWN;
+			return new Pair(FairnessResult.UNKNOWN, null);
 		}
 
 		// -------------------------------------------------------------------------------------------------------------
@@ -1117,7 +1138,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			return synthesize(false, null, loopTF, mModifiableGlobalsAtHonda, containsArrays);
 		}
 
-		// Added because for fairness we need the option to check different lassos with different hondas
+		/*
+		 * Added because for fairness we need the option to check different lassos with different hondas If it
+		 * terminates, the termination argument can be found in mBspmResult (?)
+		 *
+		 */
 		private SynthesisResult checkLoopTermination(final UnmodifiableTransFormula loopTF,
 				final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) throws IOException {
 			final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
