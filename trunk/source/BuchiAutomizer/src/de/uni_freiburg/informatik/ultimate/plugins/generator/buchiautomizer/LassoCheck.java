@@ -103,10 +103,6 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class LassoCheck<L extends IIcfgTransition<?>> {
 
-	public enum TraceCheckResult {
-		FEASIBLE, INFEASIBLE, UNKNOWN, UNCHECKED
-	}
-
 	enum SynthesisResult {
 		TERMINATING, NONTERMINATING, UNKNOWN, UNCHECKED
 	}
@@ -173,12 +169,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	// //////////////////////
 
 	// ////////////////////////////// output /////////////////////////////////
-
-	// private final BuchiModGlobalVarManager mBuchiModGlobalVarManager;
-
-	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mStemCheck;
-	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mLoopCheck;
-	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mConcatCheck;
 
 	private NonTerminationArgument mNonterminationArgument;
 
@@ -689,42 +679,49 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mLogger.info("Stem: " + stem);
 		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
 		mLogger.info("Loop: " + loop);
-		// TODO: Avoid this method to have side effects
-		final TraceCheckResult stemFeasibility = checkStemFeasibility();
-		if (stemFeasibility == TraceCheckResult.INFEASIBLE) {
+		IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> stemCheck;
+		final boolean isStemInfeasible;
+		if (BuchiAutomizerUtils.isEmptyStem(stem)) {
+			stemCheck = null;
+			isStemInfeasible = false;
+		} else {
+			stemCheck = checkStemFeasibility();
+			isStemInfeasible = isInfeasible(stemCheck);
+		}
+		if (isStemInfeasible) {
 			mLogger.info("stem already infeasible");
 			if (!mTryTwofoldRefinement) {
-				return new InfeasibilityResult<>(mStemCheck);
+				return new InfeasibilityResult<>(stemCheck);
 			}
 		}
-		// TODO: Avoid this method to have side effects
-		if (checkLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
+		final var loopCheck = checkLoopFeasibility();
+		if (isInfeasible(loopCheck)) {
 			mLogger.info("loop already infeasible");
-			return new InfeasibilityResult<>(mLoopCheck);
+			return new InfeasibilityResult<>(loopCheck);
 		}
-		if (stemFeasibility == TraceCheckResult.INFEASIBLE) {
+		if (isStemInfeasible) {
 			assert mTryTwofoldRefinement;
 			final UnmodifiableTransFormula loopTF = computeLoopTF();
 			// TODO: Avoid this method to have side effects
 			final SynthesisResult mLoopTermination = checkLoopTermination(loopTF);
 			if (mLoopTermination == SynthesisResult.TERMINATING) {
-				return new TerminationAndInfeasibilityResult<>(mStemCheck, mBspmResult);
+				return new TerminationAndInfeasibilityResult<>(stemCheck, mBspmResult);
 			}
-			return new InfeasibilityResult<>(mStemCheck);
+			return new InfeasibilityResult<>(stemCheck);
 		}
 		// stem feasible
-		// TODO: Avoid this method to have side effects
-		if (checkConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
+		final var concatCheck = checkConcatFeasibility();
+		if (isInfeasible(concatCheck)) {
 			if (mTryTwofoldRefinement) {
 				final UnmodifiableTransFormula loopTF = computeLoopTF();
 				// TODO: Avoid this method to have side effects
 				final SynthesisResult mLoopTermination = checkLoopTermination(loopTF);
 				if (mLoopTermination == SynthesisResult.TERMINATING) {
-					return new TerminationAndInfeasibilityResult<>(mConcatCheck, mBspmResult);
+					return new TerminationAndInfeasibilityResult<>(concatCheck, mBspmResult);
 				}
-				return new InfeasibilityResult<>(mConcatCheck);
+				return new InfeasibilityResult<>(concatCheck);
 			}
-			return new InfeasibilityResult<>(mConcatCheck);
+			return new InfeasibilityResult<>(concatCheck);
 		}
 		// concat feasible
 		final UnmodifiableTransFormula loopTF = computeLoopTF();
@@ -752,38 +749,25 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return new UnknownResult<>();
 	}
 
-	private TraceCheckResult checkStemFeasibility() {
-		final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
-		if (BuchiAutomizerUtils.isEmptyStem(stem)) {
-			return TraceCheckResult.FEASIBLE;
-		}
-		mStemCheck = checkFeasibilityAndComputeInterpolants(stem,
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkStemFeasibility() {
+		return checkFeasibilityAndComputeInterpolants(mCounterexample.getStem(),
 				new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.STEM));
-		return translateSatisfiabilityToFeasibility(mStemCheck.getCounterexampleFeasibility());
 	}
 
-	private TraceCheckResult checkLoopFeasibility() {
-		final NestedRun<L, IPredicate> loop = mCounterexample.getLoop();
-		mLoopCheck = checkFeasibilityAndComputeInterpolants(loop,
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkLoopFeasibility() {
+		return checkFeasibilityAndComputeInterpolants(mCounterexample.getLoop(),
 				new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.LOOP));
-		return translateSatisfiabilityToFeasibility(mLoopCheck.getCounterexampleFeasibility());
 	}
 
-	private TraceCheckResult checkConcatFeasibility() {
+	private boolean isInfeasible(final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> check) {
+		return check.getCounterexampleFeasibility() == LBool.UNSAT;
+	}
+
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkConcatFeasibility() {
 		final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
 		final NestedRun<L, IPredicate> loop = mCounterexample.getLoop();
-		final NestedRun<L, IPredicate> concat = stem.concatenate(loop);
-		mConcatCheck = checkFeasibilityAndComputeInterpolants(concat,
+		return checkFeasibilityAndComputeInterpolants(stem.concatenate(loop),
 				new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.CONCAT));
-		return translateSatisfiabilityToFeasibility(mConcatCheck.getCounterexampleFeasibility());
-	}
-
-	private TraceCheckResult translateSatisfiabilityToFeasibility(final LBool lBool) {
-		return switch (lBool) {
-		case SAT -> TraceCheckResult.FEASIBLE;
-		case UNKNOWN -> TraceCheckResult.UNKNOWN;
-		case UNSAT -> TraceCheckResult.INFEASIBLE;
-		};
 	}
 
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkFeasibilityAndComputeInterpolants(
