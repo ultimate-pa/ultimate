@@ -83,7 +83,8 @@ public class SifaBuilder {
 	}
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer) {
-		return construct(icfg, timer, IcfgInterpreter.allErrorLocations(icfg));
+		return construct(icfg, timer,
+				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).toList());
 	}
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer,
