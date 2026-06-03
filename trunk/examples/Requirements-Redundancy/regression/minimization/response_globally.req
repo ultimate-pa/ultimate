@@ -1,5 +1,0 @@
-// #TestSpec: redundant:R1; results:-1
-Input R is bool
-Input S is bool
-
-R1: Globally, it is always the case that if "R" holds then "S" eventually holds.

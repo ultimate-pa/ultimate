@@ -56,6 +56,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final boolean DEF_TEST_MINIMIZATION = true;
 	private static final String DESC_TEST_MINIMIZATION = null;
 
+	public static final String LABEL_MINIMIZE_PEAS = "use minimization";
+	private static final boolean DEF_MINIMIZE_PEAS = true;
+	private static final String DESC_MINIMIZE_PEAS = "use PEA minimization procedure";
+
 	public static final String LABEL_CHECK_CONSISTENCY = "Check consistency";
 	private static final boolean DEF_CHECK_CONSISTENCY = true;
 	private static final String DESC_CHECK_CONSISTENCY = null;
@@ -141,6 +145,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_TEST_MINIMIZATION, DEF_TEST_MINIMIZATION, DESC_TEST_MINIMIZATION,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MINIMIZE_PEAS, DEF_MINIMIZE_PEAS, DESC_MINIMIZE_PEAS,
 						PreferenceType.Boolean),
 
 				new UltimatePreferenceItemGroup("Rt-Inconsistency",

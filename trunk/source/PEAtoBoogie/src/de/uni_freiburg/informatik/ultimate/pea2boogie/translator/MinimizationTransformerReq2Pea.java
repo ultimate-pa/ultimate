@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEAMinimization;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
@@ -92,6 +93,9 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 		int totalisedPeaNumberOfLocations = 0;
 		int minimizedPeaNumberOfLocations = 0;
 
+		int totalisedNumberOfTransitions = 0;
+		int minimizedNumberOfTransitions = 0;
+
 		final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqPea.getCounterTrace2Pea();
 
 		final List<Entry<CounterTrace, PhaseEventAutomata>> originalCtPea = new ArrayList<>();
@@ -104,10 +108,23 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 			final PEAMinimization peaMinimization = new PEAMinimization(peaToMinimize);
 
 			final PhaseEventAutomata totalisedPea = peaMinimization.getTotalisedPEA();
+
 			final PhaseEventAutomata minimizedPea = peaMinimization.getMinimizedPEA();
 
 			totalisedPeaNumberOfLocations += totalisedPea.getNumberOfLocations();
+
+			for (final Phase location : totalisedPea.getPhases()) {
+
+				totalisedNumberOfTransitions += location.getTransitions().size();
+
+			}
 			minimizedPeaNumberOfLocations += minimizedPea.getNumberOfLocations();
+
+			for (final Phase location : minimizedPea.getPhases()) {
+
+				minimizedNumberOfTransitions += location.getTransitions().size();
+
+			}
 
 			originalCtPea.add(new Pair<>(pea.getKey(), totalisedPea));
 			minimizedCtPea.add(new Pair<>(pea.getKey(), minimizedPea));
@@ -118,8 +135,16 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 		mReqPeas.add(new ReqPeas(pattern, minimizedCtPea));
 		mReqPeas.add(new ReqPeas(pattern, originalCtPea));
 		mSymbolTable = builder.constructSymbolTable();
+
 		mLogger.log(LogLevel.INFO, "Number of locations original: " + totalisedPeaNumberOfLocations);
 		mLogger.log(LogLevel.INFO, "Number of locations minimized: " + minimizedPeaNumberOfLocations);
+		final int locationsRemoved = totalisedPeaNumberOfLocations - minimizedPeaNumberOfLocations;
+		mLogger.log(LogLevel.INFO, "Locations removed: " + locationsRemoved);
+
+		mLogger.log(LogLevel.INFO, "Number of transitions original: " + totalisedNumberOfTransitions);
+		mLogger.log(LogLevel.INFO, "Number of transitions minimized: " + minimizedNumberOfTransitions);
+		final int transitionsRemoved = totalisedNumberOfTransitions - minimizedNumberOfTransitions;
+		mLogger.log(LogLevel.INFO, "Transitions removed: " + transitionsRemoved);
 	}
 
 	@Override
