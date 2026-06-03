@@ -1070,7 +1070,7 @@ public class CfgBuilder {
 		 */
 		private void buildBranchingWithoutTrueCond(final IIcfgElement part1, final AssumeStatement cond2,
 				final IIcfgElement part2, final BoogieIcfgLocation srcLoc) {
-			mergeLocNodes((BoogieIcfgLocation) part1, srcLoc, true);
+			mergeLocNodes((BoogieIcfgLocation) part1, srcLoc, false);
 			final StatementSequence branch2 = prependStatement(cond2, part2);
 			endStatementSequence(branch2, srcLoc);
 		}
