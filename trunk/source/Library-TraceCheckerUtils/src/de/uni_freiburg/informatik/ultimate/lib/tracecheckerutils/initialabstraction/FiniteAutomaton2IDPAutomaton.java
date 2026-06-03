@@ -27,6 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -35,16 +38,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S>
+public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extends IPredicate>
 		implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mFiniteAutomaton;
+	private final Function<S, IcfgLocation[]> mState2LocationsFunction;
 
-	public FiniteAutomaton2IDPAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand) {
+	public FiniteAutomaton2IDPAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
+			final Function<S, IcfgLocation[]> state2Locations) {
 		mFiniteAutomaton = operand;
+		mState2LocationsFunction = state2Locations;
 	}
 
 	@Override
@@ -62,36 +70,15 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S>
 	}
 
 	private boolean isIdpTransition(final OutgoingInternalTransition<L, S> transition, final S state) {
-		final var letter = transition.getLetter();
-		var transitionAnno = InterruptAnnotations.getAnnotation(letter);
-		transitionAnno = transitionAnno == null ? new InterruptAnnotations(ISRLocation.MAIN, 0) : transitionAnno;
-		var predNodeAnno = InterruptAnnotations.getAnnotation(letter.getSource());
-		predNodeAnno = predNodeAnno == null ? new InterruptAnnotations(ISRLocation.MAIN, 0) : predNodeAnno;
-		final var petriSucc = mFiniteAutomaton.internalSuccessors(state);
-		for (final OutgoingInternalTransition<L, S> outgoingInternalTransition : petriSucc) {
-			final var otherLetter = outgoingInternalTransition.getLetter();
-			final var otherAnnot = InterruptAnnotations.getAnnotation(otherLetter);
-			if (otherAnnot == null || otherAnnot.getIsrLocation() == ISRLocation.MAIN) {
-				continue;
-			}
-			if (transitionAnno.getIsrLocation() == ISRLocation.MAIN) {
-				return false;
-			}
-			final var otherIsrId = otherAnnot.getIsrId();
-			if (otherIsrId == transitionAnno.getIsrId()) {
-				continue;
-			}
-			final var otherPred = otherLetter.getSource();
-			var otherPredAnno = InterruptAnnotations.getAnnotation(otherPred);
-			otherPredAnno = otherPredAnno == null ? new InterruptAnnotations(ISRLocation.MAIN, 0) : otherPredAnno;
-			if (predNodeAnno.getIsrLocation() == ISRLocation.MAIN
-					&& otherPredAnno.getIsrLocation() != ISRLocation.MAIN) {
-				return false;
-			}
-			assert !(predNodeAnno.getIsrLocation() == ISRLocation.ISR
-					&& otherPredAnno.getIsrLocation() == ISRLocation.ISR) : "Two ISRs are active at the same time!";
+		final var stateIcfgLocations = List.of(mState2LocationsFunction.apply(state));
+		final var isrIcfgLocations = stateIcfgLocations.stream().filter(l -> InterruptAnnotations.hasAnnotation(l))
+				.collect(Collectors.toList());
+		if (isrIcfgLocations.isEmpty()) {
+			return true;
 		}
-		return true;
+		final var singleIsrLocation = DataStructureUtils.getOneAndOnly(isrIcfgLocations, "active isr");
+		final var letter = transition.getLetter();
+		return letter.getSource() == singleIsrLocation;
 	}
 
 	@Override
