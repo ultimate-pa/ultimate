@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
@@ -171,7 +172,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				}
 				final var initAbstr = createPartialOrderAbstraction(services, predicateFactory,
 						stateFactoryForRefinement, root, errorLocs);
-				final var idpAutomaton = new FiniteAutomaton2IDPAutomaton<>(initAbstr);
+				final var idpAutomaton =
+						new FiniteAutomaton2IDPAutomaton<>(initAbstr, s -> ((IMLPredicate) s).getProgramPoints());
 				final var poCegar = new PartialOrderCegarLoop<>(name, idpAutomaton, root, csToolkit, predicateFactory,
 						mPrefs, errorLocs, services,
 						mIndependenceProviderFactory.createProviders(root, predicateFactory), mTransitionClazz,
