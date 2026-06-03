@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2026 Matthias Zumkeller
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
 import java.util.HashMap;
@@ -11,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IS
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -88,15 +115,14 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 		for (final L aEntry : isrAEntryPoints) {
 			aTransitionQueue.offer(aEntry);
 		}
+		final Set<IIcfgTransition<?>> visited = new HashSet<>();
 		while (!aTransitionQueue.isEmpty()) {
 			final var currentA = aTransitionQueue.poll();
-			final var aTargetNode = currentA.getTarget();
-			if (InterruptAnnotations.hasAnnotation(currentA) && InterruptAnnotations.hasAnnotation(aTargetNode)) {
-				final var successors = aTargetNode.getOutgoingEdges();
-				for (final IIcfgTransition<?> icfgEdge : successors) {
-					aTransitionQueue.offer(icfgEdge);
-				}
+			if (!visited.add(currentA)) {
+				continue;
 			}
+			final var aTargetNode = currentA.getTarget();
+			addInterruptSuccessorsToQueue(currentA, aTargetNode, aTransitionQueue);
 			// Store transition b in queue for BFS
 			final HashDeque<IIcfgTransition<?>> bTransitionQueue = new HashDeque<>();
 			for (final L bEntry : isrBEntryPoints) {
@@ -104,13 +130,11 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 			}
 			while (!bTransitionQueue.isEmpty()) {
 				final var currentB = bTransitionQueue.poll();
-				final var bTargetNode = currentB.getTarget();
-				if (InterruptAnnotations.hasAnnotation(currentB) && InterruptAnnotations.hasAnnotation(bTargetNode)) {
-					final var successors = bTargetNode.getOutgoingEdges();
-					for (final IIcfgTransition<?> icfgEdge : successors) {
-						bTransitionQueue.offer(icfgEdge);
-					}
+				if (!visited.add(currentB)) {
+					continue;
 				}
+				final var bTargetNode = currentB.getTarget();
+				addInterruptSuccessorsToQueue(currentB, bTargetNode, bTransitionQueue);
 				if (mUnderlying.isIndependent(null, (L) currentA, (L) currentB) != Dependence.INDEPENDENT) {
 					mIsrDependenceCache.put(letterPair, Dependence.DEPENDENT);
 					return Dependence.DEPENDENT;
@@ -121,6 +145,16 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 		return Dependence.INDEPENDENT;
 	}
 
+	private static void addInterruptSuccessorsToQueue(final IIcfgTransition<?> currentTransition,
+			final IcfgLocation targetNode, final HashDeque<IIcfgTransition<?>> transitionQueue) {
+		if (InterruptAnnotations.hasAnnotation(currentTransition) && InterruptAnnotations.hasAnnotation(targetNode)) {
+			final var successors = targetNode.getOutgoingEdges();
+			for (final IIcfgTransition<?> icfgEdge : successors) {
+				transitionQueue.offer(icfgEdge);
+			}
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	private Set<L> getIsrEntryTransitions(final L isrTransition) {
 		if (!InterruptAnnotations.hasAnnotation(isrTransition)) {
@@ -128,9 +162,13 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 		}
 		final Set<L> isrEntryTransition = new HashSet<>();
 		final HashDeque<L> bfsQueue = new HashDeque<>();
+		final Set<L> visited = new HashSet<>();
 		bfsQueue.add(isrTransition);
 		while (!bfsQueue.isEmpty()) {
 			final var currentTransition = bfsQueue.poll();
+			if (!visited.add(currentTransition)) {
+				continue;
+			}
 			final var predNode = currentTransition.getSource();
 			final var predTransitions = predNode.getIncomingEdges();
 			final var predIsrTransitions =

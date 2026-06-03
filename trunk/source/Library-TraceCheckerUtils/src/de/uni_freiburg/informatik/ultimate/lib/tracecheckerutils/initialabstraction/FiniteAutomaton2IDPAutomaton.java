@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * On-the-fly construction of an IDP-DFA for the underlying finite automaton. Computes the transition function for
- * interrupt-driven programs such that in the case that an interrupt is active, only the successor transitions of this
- * specific interrupt are returned.
+ * On-the-fly construction of an IDP-DFA for the underlying finite automaton constructed from a product CFG. Computes
+ * the transition function for interrupt-driven programs such that in the case that an interrupt is active, only the
+ * successor transitions of this specific interrupt are returned.
  *
  * @param <S>
  *            The type of states of the underlying automaton
@@ -59,6 +59,14 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mFiniteAutomaton;
 	private final Function<S, IcfgLocation[]> mState2LocationsFunction;
 
+	/**
+	 * Construct an IDP-DFA
+	 *
+	 * @param operand
+	 *            Underlying automaton representing the program
+	 * @param state2Locations
+	 *            Function that maps states of the operand to Icfg locations of the original program
+	 */
 	public FiniteAutomaton2IDPAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final Function<S, IcfgLocation[]> state2Locations) {
 		mFiniteAutomaton = operand;

@@ -54,6 +54,10 @@ void isr_gpio(void)
         HAL_GPIO_Write(10, OFF);
         button_state = st;
     }
+    int i = 0;
+    while (i<3){
+      i++;
+    }
     step_in_isr  = false;  
    assert(n==old_n);
 }
