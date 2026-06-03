@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,10 +82,8 @@ class StemOverapproximator implements AutoCloseable {
 	 *
 	 * @param preferences
 	 *            LassoRanker preferences regarding new SMT scripts
-	 * @throws IOException
 	 */
-	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services)
-			throws IOException {
+	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services) {
 		mServices = services;
 		mAnnotateTerms = preferences.isAnnotateTerms();
 

@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -360,10 +359,10 @@ public class LassoAnalysis {
 	 * @param services
 	 * @return the list of non-termination arguments (one for each component) or null if at least one component does not
 	 *         have one
-	 * @throws IOException
+	 * 
 	 */
 	public GeometricNonTerminationArgument checkNonTermination(final NonTerminationAnalysisSettings settings)
-			throws SMTLIBException, TermException, IOException {
+			throws SMTLIBException, TermException {
 		mLogger.info("Checking for nontermination...");
 
 		final List<GeometricNonTerminationArgument> ntas = new ArrayList<>(mLassos.size());
@@ -446,10 +445,9 @@ public class LassoAnalysis {
 	 * @param settings
 	 *            (local) settings for termination analysis
 	 * @return the termination argument or null of none is found
-	 * @throws IOException
 	 */
 	public TerminationArgument tryTemplate(final RankingTemplate template, final TerminationAnalysisSettings settings)
-			throws SMTLIBException, TermException, IOException {
+			throws SMTLIBException, TermException {
 		// ignore stem
 		mLogger.info("Using template '" + template.getName() + "'.");
 		if (mLogger.isDebugEnabled()) {

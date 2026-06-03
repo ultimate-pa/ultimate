@@ -109,12 +109,10 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param arrayIndexSupportingInvariants
 	 *            supporting invariants that were discovered during preprocessing
 	 * @param services
-	 * @throws IOException
 	 */
 	public TerminationArgumentSynthesizer(final Lasso lasso, final RankingTemplate template,
 			final ILassoRankerPreferences preferences, final TerminationAnalysisSettings settings,
-			final Set<Term> arrayIndexSupportingInvariants, final IUltimateServiceProvider services)
-			throws IOException {
+			final Set<Term> arrayIndexSupportingInvariants, final IUltimateServiceProvider services) {
 		super(lasso, preferences, template.getName() + "Template", services);
 		mSettings = settings;
 		mLogger.info("Termination Analysis Settings: " + settings.toString());
@@ -327,7 +325,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @throws IOException
 	 */
 	@Override
-	protected LBool doSynthesis() throws SMTLIBException, TermException, IOException {
+	protected LBool doSynthesis() throws SMTLIBException, TermException {
 		mTemplate.init(this);
 		if (mSettings.getAnalysis().isLinear() && mTemplate.getDegree() > 0) {
 			mLogger.warn(

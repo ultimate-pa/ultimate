@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
@@ -70,10 +69,9 @@ class SupportingInvariantSimplifier implements AutoCloseable {
 	 *
 	 * @param preferences
 	 *            LassoRanker preferences regarding new SMT scripts
-	 * @throws IOException
 	 */
 	public SupportingInvariantSimplifier(final ILassoRankerPreferences preferences,
-			final IUltimateServiceProvider services) throws IOException {
+			final IUltimateServiceProvider services) {
 		mServices = services;
 		mAnnotateTerms = preferences.isAnnotateTerms();
 

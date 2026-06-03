@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -181,7 +180,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final Function<IPredicate, Object> getControlConfiguration, final String lassoCheckIdentifier,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final StrategyFactory<L> refinementStrategyFactory, final IAutomaton<L, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier) throws IOException {
+			final TaskIdentifier taskIdentifier) {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -213,8 +212,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mResult = checkTermination(counterexample);
 	}
 
-	private ILassoCheckResult<L> checkTermination(final NestedLassoRun<L, IPredicate> counterexample)
-			throws IOException {
+	private ILassoCheckResult<L> checkTermination(final NestedLassoRun<L, IPredicate> counterexample) {
 		final NestedRun<L, IPredicate> stem = counterexample.getStem();
 		final NestedRun<L, IPredicate> loop = counterexample.getLoop();
 		mLogger.info("Stem: " + stem.getWord());
@@ -514,8 +512,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private ILassoCheckResult<L> synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF, final boolean containsArrays,
-			final NestedLassoRun<L, IPredicate> counterexample, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda)
-			throws IOException {
+			final NestedLassoRun<L, IPredicate> counterexample, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) {
 		if (mCsToolkit.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
@@ -652,7 +649,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private TerminationArgument tryTemplatesAndComputePredicates(final LassoAnalysis la,
 			final List<RankingTemplate> rankingFunctionTemplates, final UnmodifiableTransFormula stemTF,
-			final UnmodifiableTransFormula loopTF) throws AssertionError, IOException {
+			final UnmodifiableTransFormula loopTF) throws AssertionError {
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;
@@ -750,8 +747,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	}
 
 	private ILassoCheckResult<L> checkLoopTermination(final UnmodifiableTransFormula loopTF,
-			final NestedLassoRun<L, IPredicate> counterexample, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda)
-			throws IOException {
+			final NestedLassoRun<L, IPredicate> counterexample, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) {
 		final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 		if (containsArrays) {
 			// if there are array variables we will probably run in a huge
@@ -763,7 +759,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private ILassoCheckResult<L> checkLassoTermination(final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF, final NestedLassoRun<L, IPredicate> counterexample,
-			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) throws IOException {
+			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) {
 		assert loopTF != null;
 		final boolean containsArrays = SmtUtils.containsArrayVariables(stemTF.getFormula())
 				|| SmtUtils.containsArrayVariables(loopTF.getFormula());

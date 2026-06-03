@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -95,10 +94,9 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *            the preferences
 	 * @param constaintsName
 	 *            name of the constraints whose satisfiability is checked
-	 * @throws IOException
 	 */
 	public ArgumentSynthesizer(final Lasso lasso, final ILassoRankerPreferences preferences,
-			final String constaintsName, final IUltimateServiceProvider services) throws IOException {
+			final String constaintsName, final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mPreferences = preferences;
 		mLasso = lasso;
@@ -131,9 +129,8 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * Try to synthesize an argument for (non-)termination
 	 *
 	 * @return result of the solver while checking the constraints
-	 * @throws IOException
 	 */
-	public final LBool synthesize() throws SMTLIBException, TermException, IOException {
+	public final LBool synthesize() throws SMTLIBException, TermException {
 		final LBool lBool = doSynthesis();
 		mSynthesisSuccessful = (lBool == LBool.SAT);
 		return lBool;
@@ -144,9 +141,8 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * synthesize().
 	 *
 	 * @return result of the solver while checking the constraints
-	 * @throws IOException
 	 */
-	protected abstract LBool doSynthesis() throws SMTLIBException, TermException, IOException;
+	protected abstract LBool doSynthesis() throws SMTLIBException, TermException;
 
 	/**
 	 * Define a new constant

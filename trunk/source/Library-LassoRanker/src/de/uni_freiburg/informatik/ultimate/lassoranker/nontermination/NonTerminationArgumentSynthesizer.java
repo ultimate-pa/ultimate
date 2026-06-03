@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.nontermination;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -138,10 +137,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @param settings
 	 *            (local) settings for termination analysis
 	 * @param services
-	 * @throws IOException
 	 */
 	public NonTerminationArgumentSynthesizer(final Lasso lasso, final ILassoRankerPreferences preferences,
-			final NonTerminationAnalysisSettings settings, final IUltimateServiceProvider services) throws IOException {
+			final NonTerminationAnalysisSettings settings, final IUltimateServiceProvider services) {
 		super(lasso, preferences, "nonterminationTemplate", services);
 		mArgument = null;
 		mSettings = new NonTerminationAnalysisSettings(settings); // defensive copy
