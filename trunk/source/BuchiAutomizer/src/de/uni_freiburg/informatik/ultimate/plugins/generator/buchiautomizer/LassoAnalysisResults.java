@@ -66,7 +66,7 @@ public class LassoAnalysisResults implements IStatisticsDataProvider, IStatistic
 	/**
 	 * Cases where the stem is infeasible and the termination/feasibility of the loop is unknown.
 	 */
-	public static final String STEM_FEASIBLE_LOOP_UNKNOWN = "SILU";
+	public static final String STEM_INFEASIBLE_LOOP_UNKNOWN = "SILU";
 	/**
 	 * Cases where the stem is infeasible and the loop is infeasible.
 	 */
@@ -91,7 +91,7 @@ public class LassoAnalysisResults implements IStatisticsDataProvider, IStatistic
 		mMap.put(CONCATENATION_INFEASIBLE, 0);
 		mMap.put(CONCATENATION_INFEASIBLE_LOOP_TERMINATING, 0);
 		mMap.put(STEM_INFEASIBLE_LOOP_NONTERMINATING, 0);
-		mMap.put(STEM_FEASIBLE_LOOP_UNKNOWN, 0);
+		mMap.put(STEM_INFEASIBLE_LOOP_UNKNOWN, 0);
 		mMap.put(STEM_INFEASIBLE_LOOP_INFEASIBLE, 0);
 		mMap.put(STEM_INFEASIBLE_LOOP_TERMINATING, 0);
 		mMap.put(LASSO_TERMINATING, 0);

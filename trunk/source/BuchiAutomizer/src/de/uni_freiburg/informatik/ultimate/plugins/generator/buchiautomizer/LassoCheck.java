@@ -231,7 +231,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (isStemInfeasible) {
 			mLogger.info("stem already infeasible");
 			if (!mTryTwofoldRefinement) {
-				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_NONTERMINATING);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_UNKNOWN);
 				return new InfeasibilityResult<>(stemCheck);
 			}
 		}
