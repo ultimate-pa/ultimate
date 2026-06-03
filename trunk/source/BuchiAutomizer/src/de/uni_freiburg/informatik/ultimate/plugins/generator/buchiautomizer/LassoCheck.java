@@ -306,7 +306,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return mNonterminationAnalysisBenchmarks;
 	}
 
-	protected UnmodifiableTransFormula computeTF(final NestedWord<L> word) {
+	private UnmodifiableTransFormula computeTF(final NestedWord<L> word) {
 		try {
 			final boolean toCNF = false;
 			final UnmodifiableTransFormula loopTF =
