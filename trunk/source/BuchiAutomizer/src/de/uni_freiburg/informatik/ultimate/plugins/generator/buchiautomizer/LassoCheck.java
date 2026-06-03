@@ -115,12 +115,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private static final boolean SIMPLIFY_STEM_AND_LOOP = true;
 
-	/**
-	 * For debugging only. Check for termination arguments even if we found a nontermination argument. This may reveal
-	 * unsoundness bugs.
-	 */
-	private static final boolean CHECK_TERMINATION_EVEN_IF_NON_TERMINATING = false;
-
 	private static final boolean AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED = true;
 
 	private static final boolean TRACE_CHECK_BASED_FIXPOINT_CHECK = true;
@@ -170,8 +164,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	// ////////////////////////////// output /////////////////////////////////
 
-	private NonTerminationArgument mNonterminationArgument;
-
 	private final SmtFunctionsAndAxioms mSmtSymbols;
 	private final IUltimateServiceProvider mServices;
 	private final boolean mRemoveSuperfluousSupportingInvariants = true;
@@ -197,8 +189,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private final PredicateFactoryForInterpolantAutomata mStateFactoryForInterpolantAutomaton;
 
 	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
-
-	private BspmResult mBspmResult;
 
 	public LassoCheck(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final SmtFunctionsAndAxioms smtSymbols, final BinaryStatePredicateManager bspm,
@@ -477,7 +467,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		});
 	}
 
-	private SynthesisResult synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
+	private ILassoCheckResult<L> synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF, final boolean containsArrays) throws IOException {
 		if (mCsToolkit.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
@@ -499,22 +489,20 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mCsToolkit.getManagedScript(),
 				mModifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
-			if (withStem) {
-				if (TRACE_CHECK_BASED_FIXPOINT_CHECK && !BuchiAutomizerUtils.isEmptyStem(mCounterexample.getStem())) {
-					final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<>(mServices, mLogger, mCsToolkit,
-							mPredicateFactory, mCounterexample.getStem().getWord(), loopTF);
-					if (fixpointCheck2.getResult() != fixpointCheck.getResult()) {
-						throw new AssertionError(String.format(
-								"Contradicting results of nontermination analyses: Old %s, New %s, Stem length %s, Loop length %s",
-								fixpointCheck.getResult(), fixpointCheck2.getResult(),
-								mCounterexample.getStem().getLength(), mCounterexample.getLoop().getLength()));
-					}
-					mNonterminationArgument = fixpointCheck2.getTerminationArgument();
-				} else {
-					mNonterminationArgument = fixpointCheck.getTerminationArgument();
+			if (withStem && TRACE_CHECK_BASED_FIXPOINT_CHECK
+					&& !BuchiAutomizerUtils.isEmptyStem(mCounterexample.getStem())) {
+				final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<>(mServices, mLogger, mCsToolkit,
+						mPredicateFactory, mCounterexample.getStem().getWord(), loopTF);
+				if (fixpointCheck2.getResult() != fixpointCheck.getResult()) {
+					throw new AssertionError(String.format(
+							"Contradicting results of nontermination analyses: Old %s, New %s, Stem length %s, Loop length %s",
+							fixpointCheck.getResult(), fixpointCheck2.getResult(),
+							mCounterexample.getStem().getLength(), mCounterexample.getLoop().getLength()));
 				}
+				return new NonterminationResult<>(fixpointCheck2.getTerminationArgument());
 			}
-			return SynthesisResult.NONTERMINATING;
+			// TODO: Is this the correct non-termination argument to return here?
+			return new NonterminationResult<>(fixpointCheck.getTerminationArgument());
 		}
 
 		final boolean doNonterminationAnalysis =
@@ -547,10 +535,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				throw new AssertionError("TermException " + e);
 			}
 			if (withStem) {
-				mNonterminationArgument = nonTermArgument;
-			}
-			if (!CHECK_TERMINATION_EVEN_IF_NON_TERMINATING && nonTermArgument != null) {
-				return SynthesisResult.NONTERMINATING;
+				return new NonterminationResult<>(nonTermArgument);
 			}
 		}
 
@@ -609,14 +594,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				tryTemplatesAndComputePredicates(laT, rankingFunctionTemplates, stemTF, loopTF);
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
-			mBspmResult = mBspm.computePredicates(termArg, mRemoveSuperfluousSupportingInvariants, stemTF, loopTF,
-					mModifiableGlobalsAtHonda);
-			return SynthesisResult.TERMINATING;
+			final BspmResult bspmResult = mBspm.computePredicates(termArg, mRemoveSuperfluousSupportingInvariants,
+					stemTF, loopTF, mModifiableGlobalsAtHonda);
+			return new TerminationResult<>(bspmResult);
 		}
 		if (nonTermArgument != null) {
-			return SynthesisResult.NONTERMINATING;
+			return new NonterminationResult<>(nonTermArgument);
 		}
-		return SynthesisResult.UNKNOWN;
+		return new UnknownResult<>();
 	}
 
 	private TerminationArgument tryTemplatesAndComputePredicates(final LassoAnalysis la,
@@ -704,10 +689,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (isStemInfeasible) {
 			assert mTryTwofoldRefinement;
 			final UnmodifiableTransFormula loopTF = computeLoopTF();
-			// TODO: Avoid this method to have side effects
-			final SynthesisResult mLoopTermination = checkLoopTermination(loopTF);
-			if (mLoopTermination == SynthesisResult.TERMINATING) {
-				return new TerminationAndInfeasibilityResult<>(stemCheck, mBspmResult);
+			final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF);
+			if (loopTermination instanceof final TerminationResult<L> tr) {
+				return new TerminationAndInfeasibilityResult<>(stemCheck, tr.result());
 			}
 			return new InfeasibilityResult<>(stemCheck);
 		}
@@ -716,10 +700,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (isInfeasible(concatCheck)) {
 			if (mTryTwofoldRefinement) {
 				final UnmodifiableTransFormula loopTF = computeLoopTF();
-				// TODO: Avoid this method to have side effects
-				final SynthesisResult mLoopTermination = checkLoopTermination(loopTF);
-				if (mLoopTermination == SynthesisResult.TERMINATING) {
-					return new TerminationAndInfeasibilityResult<>(concatCheck, mBspmResult);
+				final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF);
+				if (loopTermination instanceof final TerminationResult<L> tr) {
+					return new TerminationAndInfeasibilityResult<>(concatCheck, tr.result());
 				}
 				return new InfeasibilityResult<>(concatCheck);
 			}
@@ -727,28 +710,16 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 		// concat feasible
 		final UnmodifiableTransFormula loopTF = computeLoopTF();
-		// checking loop termination before we check lasso
-		// termination is a workaround.
-		// We want to avoid supporting invariants in possible
-		// yet the termination argument simplification of the
-		// LassoChecker is not optimal. Hence we first check
-		// only the loop, which guarantees that there are no
+		// checking loop termination before we check lasso termination is a workaround.
+		// We want to avoid supporting invariants in possible yet the termination argument simplification of the
+		// LassoChecker is not optimal. Hence we first check only the loop, which guarantees that there are no
 		// supporting invariants.
-		// TODO: Avoid this method to have side effects
-		final SynthesisResult mLoopTermination = checkLoopTermination(loopTF);
-		if (mLoopTermination == SynthesisResult.TERMINATING) {
-			return new TerminationResult<>(mBspmResult);
+		final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF);
+		if (loopTermination instanceof TerminationResult<L>) {
+			return loopTermination;
 		}
 		final UnmodifiableTransFormula stemTF = computeStemTF();
-		// TODO: Avoid this method to have side effects
-		final SynthesisResult mLassoTermination = checkLassoTermination(stemTF, loopTF);
-		if (mLassoTermination == SynthesisResult.TERMINATING) {
-			return new TerminationResult<>(mBspmResult);
-		}
-		if (mLassoTermination == SynthesisResult.NONTERMINATING) {
-			return new NonterminationResult<>(mNonterminationArgument);
-		}
-		return new UnknownResult<>();
+		return checkLassoTermination(stemTF, loopTF);
 	}
 
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkStemFeasibility() {
@@ -795,17 +766,17 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private SynthesisResult checkLoopTermination(final UnmodifiableTransFormula loopTF) throws IOException {
+	private ILassoCheckResult<L> checkLoopTermination(final UnmodifiableTransFormula loopTF) throws IOException {
 		final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 		if (containsArrays) {
 			// if there are array variables we will probably run in a huge
 			// DNF, so as a precaution we do not check and say unknown
-			return SynthesisResult.UNKNOWN;
+			return new UnknownResult<>();
 		}
 		return synthesize(false, null, loopTF, containsArrays);
 	}
 
-	private SynthesisResult checkLassoTermination(final UnmodifiableTransFormula stemTF,
+	private ILassoCheckResult<L> checkLassoTermination(final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF) throws IOException {
 		assert loopTF != null;
 		final boolean containsArrays = SmtUtils.containsArrayVariables(stemTF.getFormula())
