@@ -43,6 +43,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ * On-the-fly construction of an IDP-DFA for the underlying finite automaton. Computes the transition function for
+ * interrupt-driven programs such that in the case that an interrupt is active, only the successor transitions of this
+ * specific interrupt are returned.
+ *
+ * @param <S>
+ *            The type of states of the underlying automaton
+ * @param <L>
+ *            The type of transitions of the underlying automaton
+ */
 public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extends IPredicate>
 		implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
@@ -58,6 +68,7 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
 		final var petriSuccessors = mFiniteAutomaton.internalSuccessors(state, letter);
+		// Filter out transitions that are not part of the ISR
 		return () -> StreamSupport.stream(petriSuccessors.spliterator(), false).filter(t -> isIdpTransition(t, state))
 				.iterator();
 	}
@@ -65,19 +76,33 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state) {
 		final var petriSuccessors = mFiniteAutomaton.internalSuccessors(state);
+		// Filter out transitions that are not part of the ISR
 		return () -> StreamSupport.stream(petriSuccessors.spliterator(), false).filter(t -> isIdpTransition(t, state))
 				.iterator();
 	}
 
+	/**
+	 * Check whether the transition of the underlying automaton is also a successor of the state for the IDP transition
+	 * function.
+	 *
+	 * @param transition
+	 *            Outgoing transition of the state
+	 * @param state
+	 *            The corresponding state
+	 * @return True if the transition is also part of the IDP, false otherwise
+	 */
 	private boolean isIdpTransition(final OutgoingInternalTransition<L, S> transition, final S state) {
 		final var stateIcfgLocations = List.of(mState2LocationsFunction.apply(state));
 		final var isrIcfgLocations = stateIcfgLocations.stream().filter(l -> InterruptAnnotations.hasAnnotation(l))
 				.collect(Collectors.toList());
+		// If no ISR is empty, no transition gets filtered out
 		if (isrIcfgLocations.isEmpty()) {
 			return true;
 		}
 		final var singleIsrLocation = DataStructureUtils.getOneAndOnly(isrIcfgLocations, "active isr");
 		final var letter = transition.getLetter();
+
+		// If one (and only one) ISR is active, the transition has to be part of said ISR
 		return letter.getSource() == singleIsrLocation;
 	}
 

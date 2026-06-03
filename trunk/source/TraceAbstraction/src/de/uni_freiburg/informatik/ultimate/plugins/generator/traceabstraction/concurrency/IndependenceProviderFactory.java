@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.AtomicInterruptIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
@@ -187,7 +188,6 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		// It is the responsibility of the abstraction function to transfer the transition formulas. But we leave it to
 		// the independence relation to transfer conditions.
 		final var independence = constructIndependence(settings, true, predicateFactory, mPredicateTransferrer);
-
 		return new IndependenceProviderWithAbstraction<>(cachedAbstraction, independence);
 	}
 
@@ -200,7 +200,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
 
 		// Semantic independence forms the base.
-		return IndependenceBuilder
+		final var independence = IndependenceBuilder
 				.<L> semantic(mServices, mIndependenceScript, settings.useConditional(),
 						!settings.useSemiCommutativity(), mPref.getSymbolicRelationMode(), mIndepScriptPredicateFactory,
 						getGenerator(settings))
@@ -232,6 +232,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.threadSeparated()
 				// Retrieve the constructed relation.
 				.build();
+		return new AtomicInterruptIndependenceRelation<>(independence, mLogger);
 	}
 
 	private static <L extends IIcfgTransition<?>, C extends Collection<IPredicate>> IConditionMerger<L, IPredicate, C>
