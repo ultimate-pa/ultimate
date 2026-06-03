@@ -115,6 +115,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private static final boolean TRACE_CHECK_BASED_FIXPOINT_CHECK = true;
 
+	private static final boolean REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS = true;
+
 	/**
 	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
 	 * infeasible. This allows us to use refineFinite and refineBuchi in the same iteration.
@@ -135,7 +137,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 */
 	private final boolean mTemplateBenchmarkMode;
 
-	// ////////////////////////////// input /////////////////////////////////
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
@@ -150,14 +151,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 */
 	private final String mLassoCheckIdentifier;
 
-	// ////////////////////////////// auxilliary variables
-	// //////////////////////
-
-	// ////////////////////////////// output /////////////////////////////////
-
 	private final SmtFunctionsAndAxioms mSmtSymbols;
 	private final IUltimateServiceProvider mServices;
-	private final boolean mRemoveSuperfluousSupportingInvariants = true;
 
 	private final ILassoCheckResult<L> mResult;
 
@@ -619,7 +614,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				tryTemplatesAndComputePredicates(laT, rankingFunctionTemplates, stemTF, loopTF);
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
-			final BspmResult bspmResult = mBspm.computePredicates(termArg, mRemoveSuperfluousSupportingInvariants,
+			final BspmResult bspmResult = mBspm.computePredicates(termArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
 					stemTF, loopTF, modifiableGlobalsAtHonda);
 			return new TerminationResult<>(bspmResult);
 		}
