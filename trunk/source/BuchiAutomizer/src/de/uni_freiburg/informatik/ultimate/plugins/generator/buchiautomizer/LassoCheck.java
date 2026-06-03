@@ -465,7 +465,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				}
 				return new NonterminationResult<>(fixpointCheck2.getTerminationArgument());
 			}
-			// TODO: Is this the correct non-termination argument to return here?
 			return new NonterminationResult<>(fixpointCheck.getTerminationArgument());
 		}
 
