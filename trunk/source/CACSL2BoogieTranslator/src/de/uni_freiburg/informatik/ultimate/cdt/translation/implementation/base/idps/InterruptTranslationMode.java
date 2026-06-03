@@ -26,6 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
+/**
+ * Different modes for the source-to-source translation of IDPs. ONE_THREAD_PER_ISR: Introduce one thread for each ISR,
+ * that calls the corresponding ISR infinitely often. ALL_ISR_IN_ONE_THREAD: Introduce only one thread that calls all
+ * ISRs non-deterministically in an infinite loop. ONE_THREAD_PER_ISR_FORK_JOIN: Introduce one thread for each ISR, that
+ * calls the corresponding ISR infinitely often. but only fork the ISR thread if the interrupt is enabled and join it
+ * otherwise.
+ */
 public enum InterruptTranslationMode {
 	ONE_THREAD_PER_ISR, ALL_ISR_IN_ONE_THREAD, ONE_THREAD_PER_ISR_FORK_JOIN, NONE
 }
