@@ -366,7 +366,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
 						mCounterexample, this::getControlConfiguration, identifier, mServices, SIMPLIFICATION_TECHNIQUE,
-						mRefinementStrategyFactory, mAbstraction, taskIdentifier, mBenchmarkGenerator);
+						mRefinementStrategyFactory, mAbstraction, taskIdentifier);
 				if (lassoCheck.getLassoCheckResult() instanceof UnknownResult) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
@@ -380,8 +380,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					lassoCheck = new LassoCheck<>(mCsToolkitWithoutRankVars, mPredicateFactory,
 							mCsToolkitWithoutRankVars.getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager,
 							mCounterexample, this::getControlConfiguration, identifier, mServices,
-							SIMPLIFICATION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier,
-							mBenchmarkGenerator);
+							SIMPLIFICATION_TECHNIQUE, mRefinementStrategyFactory, mAbstraction,
+							unwindingTaskIdentifier);
 				}
 			} catch (final ToolchainCanceledException e) {
 				final int traceHistogramMaxStem =

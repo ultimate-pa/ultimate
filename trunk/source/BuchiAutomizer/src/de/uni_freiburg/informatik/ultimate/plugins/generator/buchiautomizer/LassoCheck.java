@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -167,8 +168,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final TaskIdentifier mTaskIdentifier;
 
-	// TODO: Do not add statistics but do provide statistics
-	private final BuchiCegarLoopBenchmarkGenerator mCegarStatistics;
+	private final List<RefinementEngineStatisticsGenerator> mRefinementEngineStatistics = new ArrayList<>();
+	private final LassoAnalysisResults mLassoAnalysisResults = new LassoAnalysisResults();
 
 	private final PredicateFactory mPredicateFactory;
 
@@ -180,8 +181,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final Function<IPredicate, Object> getControlConfiguration, final String lassoCheckIdentifier,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final StrategyFactory<L> refinementStrategyFactory, final IAutomaton<L, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier, final BuchiCegarLoopBenchmarkGenerator cegarStatistics)
-			throws IOException {
+			final TaskIdentifier taskIdentifier) throws IOException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -203,7 +203,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mRefinementStrategyFactory = refinementStrategyFactory;
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
-		mCegarStatistics = cegarStatistics;
 
 		mPredicateFactory = predicateFactory;
 		// TODO: I am unsure about the following flag
@@ -232,15 +231,21 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (isStemInfeasible) {
 			mLogger.info("stem already infeasible");
 			if (!mTryTwofoldRefinement) {
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_NONTERMINATING);
 				return new InfeasibilityResult<>(stemCheck);
 			}
 		}
 		final var loopCheck = checkLoopFeasibility(loop);
 		if (isInfeasible(loopCheck)) {
 			mLogger.info("loop already infeasible");
-			// if both (stem and loop) are infeasible we take the smaller one.
-			return loop.getLength() <= stem.getLength() ? new InfeasibilityResult<>(loopCheck)
-					: new InfeasibilityResult<>(stemCheck);
+			if (isStemInfeasible) {
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_INFEASIBLE);
+				// if both (stem and loop) are infeasible we take the smaller one.
+				return loop.getLength() <= stem.getLength() ? new InfeasibilityResult<>(loopCheck)
+						: new InfeasibilityResult<>(stemCheck);
+			}
+			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_INFEASIBLE);
+			return new InfeasibilityResult<>(loopCheck);
 		}
 		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
 		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
@@ -252,8 +257,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final ILassoCheckResult<L> loopTermination =
 					checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
 			if (loopTermination instanceof final TerminationResult<L> tr) {
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_TERMINATING);
 				return new TerminationAndInfeasibilityResult<>(stemCheck, tr.result());
 			}
+			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_NONTERMINATING);
 			return new InfeasibilityResult<>(stemCheck);
 		}
 		// stem feasible
@@ -264,10 +271,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final ILassoCheckResult<L> loopTermination =
 						checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
 				if (loopTermination instanceof final TerminationResult<L> tr) {
+					mLassoAnalysisResults.increment(LassoAnalysisResults.CONCATENATION_INFEASIBLE_LOOP_TERMINATING);
 					return new TerminationAndInfeasibilityResult<>(concatCheck, tr.result());
 				}
-				return new InfeasibilityResult<>(concatCheck);
 			}
+			mLassoAnalysisResults.increment(LassoAnalysisResults.CONCATENATION_INFEASIBLE);
 			return new InfeasibilityResult<>(concatCheck);
 		}
 		// concat feasible
@@ -279,14 +287,32 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final ILassoCheckResult<L> loopTermination =
 				checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
 		if (loopTermination instanceof TerminationResult<L>) {
+			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
 			return loopTermination;
 		}
 		final UnmodifiableTransFormula stemTF = computeTF(stem.getWord());
-		return checkLassoTermination(stemTF, loopTF, counterexample, modifiableGlobalsAtHonda);
+		final var result = checkLassoTermination(stemTF, loopTF, counterexample, modifiableGlobalsAtHonda);
+		switch (result) {
+		case final TerminationResult<L> tr ->
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
+		case final NonterminationResult<L> nr ->
+				mLassoAnalysisResults.increment(LassoAnalysisResults.LASSO_NONTERMINATING);
+		case final UnknownResult<L> ur -> mLassoAnalysisResults.increment(LassoAnalysisResults.TERMINATION_UNKNOWN);
+		default -> throw new AssertionError("Impossible case");
+		}
+		return result;
 	}
 
 	public ILassoCheckResult<L> getLassoCheckResult() {
 		return mResult;
+	}
+
+	public List<RefinementEngineStatisticsGenerator> getRefinementEngineStatistics() {
+		return mRefinementEngineStatistics;
+	}
+
+	public LassoAnalysisResults getLassoAnalysisResults() {
+		return mLassoAnalysisResults;
 	}
 
 	public List<PreprocessingBenchmark> getPreprocessingBenchmarks() {
@@ -712,7 +738,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					IPostconditionProvider.constructDefaultPostconditionProvider());
 			final IRefinementEngine<L, NestedWordAutomaton<L, IPredicate>> engine =
 					new TraceAbstractionRefinementEngine<>(mServices, mLogger, strategy);
-			mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());
+			mRefinementEngineStatistics.add(engine.getRefinementEngineStatistics());
 			return engine.getResult();
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
