@@ -103,10 +103,6 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class LassoCheck<L extends IIcfgTransition<?>> {
 
-	enum SynthesisResult {
-		TERMINATING, NONTERMINATING, UNKNOWN, UNCHECKED
-	}
-
 	enum LassoPart {
 		STEM, LOOP, CONCAT
 	}
