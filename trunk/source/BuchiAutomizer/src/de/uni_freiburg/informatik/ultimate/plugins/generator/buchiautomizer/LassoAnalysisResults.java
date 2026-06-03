@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -81,6 +82,10 @@ public class LassoAnalysisResults implements IStatisticsDataProvider, IStatistic
 	public static final String LASSO_TERMINATING = "lasso";
 
 	private final Map<String, Integer> mMap;
+
+	private LassoAnalysisResults(final Map<String, Integer> map) {
+		mMap = map;
+	}
 
 	public LassoAnalysisResults() {
 		mMap = new LinkedHashMap<>();
@@ -145,4 +150,8 @@ public class LassoAnalysisResults implements IStatisticsDataProvider, IStatistic
 		return sb.toString();
 	}
 
+	public LassoAnalysisResults merge(final LassoAnalysisResults other) {
+		return new LassoAnalysisResults(
+				getKeys().stream().collect(Collectors.toMap(x -> x, x -> mMap.get(x) + other.mMap.get(x))));
+	}
 }

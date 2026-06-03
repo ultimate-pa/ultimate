@@ -155,7 +155,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 		for (final var refinementStats : lassoCheck.getRefinementEngineStatistics()) {
 			addRefinementEngineStatistics(refinementStats);
 		}
-		mLassoAnalysisResults = lassoCheck.getLassoAnalysisResults();
+		mLassoAnalysisResults = mLassoAnalysisResults.merge(lassoCheck.getLassoAnalysisResults());
 	}
 
 	public void reportHighestRank(final int highestRank) {
