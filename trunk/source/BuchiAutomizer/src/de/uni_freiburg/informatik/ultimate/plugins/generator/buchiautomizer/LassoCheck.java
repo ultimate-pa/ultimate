@@ -147,11 +147,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final BinaryStatePredicateManager mBspm;
 
-	/**
-	 * Accepting run of the abstraction obtained in this iteration.
-	 */
-	private final NestedLassoRun<L, IPredicate> mCounterexample;
-
 	private final Function<IPredicate, Object> mGetControlConfiguration;
 
 	/**
@@ -213,7 +208,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mTryTwofoldRefinement = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mCsToolkit = csToolkit;
 		mBspm = bspm;
-		mCounterexample = counterexample;
 		mGetControlConfiguration = getControlConfiguration;
 		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
 		mModifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
@@ -232,7 +226,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mStateFactoryForInterpolantAutomaton = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
 				mPredicateFactory, computeHoareAnnotation);
 
-		mResult = constructLassoCheckResult();
+		mResult = constructLassoCheckResult(counterexample);
 	}
 
 	public ILassoCheckResult<L> getLassoCheckResult() {
@@ -251,51 +245,20 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return mNonterminationAnalysisBenchmarks;
 	}
 
-	/**
-	 * Compute TransFormula that represents the stem.
-	 */
-	protected UnmodifiableTransFormula computeStemTF() {
-		final NestedWord<L> stem = mCounterexample.getStem().getWord();
+	protected UnmodifiableTransFormula computeTF(final NestedWord<L> word) {
 		try {
-			final UnmodifiableTransFormula stemTF = computeTF(stem, SIMPLIFY_STEM_AND_LOOP, true, false);
-			if (SmtUtils.isFalseLiteral(stemTF.getFormula())) {
-				throw new AssertionError("stemTF is false but stem analysis said: feasible");
-			}
-			return stemTF;
-		} catch (final ToolchainCanceledException tce) {
-			final String taskDescription = "constructing stem TransFormula";
-			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
-			throw tce;
-		}
-	}
-
-	/**
-	 * Compute TransFormula that represents the loop.
-	 */
-	protected UnmodifiableTransFormula computeLoopTF() {
-		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
-		try {
-			final UnmodifiableTransFormula loopTF = computeTF(loop, SIMPLIFY_STEM_AND_LOOP, true, false);
+			final boolean toCNF = false;
+			final UnmodifiableTransFormula loopTF =
+					SequentialComposition.getInterproceduralTransFormula(mCsToolkit, SIMPLIFY_STEM_AND_LOOP, true,
+							toCNF, false, mLogger, mServices, word.asList(), mSimplificationTechnique);
 			if (SmtUtils.isFalseLiteral(loopTF.getFormula())) {
-				throw new AssertionError("loopTF is false but loop analysis said: feasible");
+				throw new AssertionError("TransFormula is false but analysis said: feasible");
 			}
 			return loopTF;
 		} catch (final ToolchainCanceledException tce) {
-			final String taskDescription = "constructing loop TransFormula";
-			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "constructing TransFormula"));
 			throw tce;
 		}
-	}
-
-	/**
-	 * Compute TransFormula that represents the NestedWord word.
-	 */
-	private UnmodifiableTransFormula computeTF(final NestedWord<L> word, final boolean simplify,
-			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
-		final boolean toCNF = false;
-		return SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify,
-				extendedPartialQuantifierElimination, toCNF, withBranchEncoders, mLogger, mServices, word.asList(),
-				mSimplificationTechnique);
 	}
 
 	// private boolean areSupportingInvariantsCorrect() {
@@ -468,7 +431,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	}
 
 	private ILassoCheckResult<L> synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
-			final UnmodifiableTransFormula loopTF, final boolean containsArrays) throws IOException {
+			final UnmodifiableTransFormula loopTF, final boolean containsArrays,
+			final NestedLassoRun<L, IPredicate> counterexample) throws IOException {
 		if (mCsToolkit.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
@@ -490,14 +454,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				mModifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem && TRACE_CHECK_BASED_FIXPOINT_CHECK
-					&& !BuchiAutomizerUtils.isEmptyStem(mCounterexample.getStem())) {
+					&& !BuchiAutomizerUtils.isEmptyStem(counterexample.getStem())) {
 				final FixpointCheck2<L> fixpointCheck2 = new FixpointCheck2<>(mServices, mLogger, mCsToolkit,
-						mPredicateFactory, mCounterexample.getStem().getWord(), loopTF);
+						mPredicateFactory, counterexample.getStem().getWord(), loopTF);
 				if (fixpointCheck2.getResult() != fixpointCheck.getResult()) {
 					throw new AssertionError(String.format(
 							"Contradicting results of nontermination analyses: Old %s, New %s, Stem length %s, Loop length %s",
-							fixpointCheck.getResult(), fixpointCheck2.getResult(),
-							mCounterexample.getStem().getLength(), mCounterexample.getLoop().getLength()));
+							fixpointCheck.getResult(), fixpointCheck2.getResult(), counterexample.getStem().getLength(),
+							counterexample.getLoop().getLength()));
 				}
 				return new NonterminationResult<>(fixpointCheck2.getTerminationArgument());
 			}
@@ -658,18 +622,19 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				+ new DagSizePrinter(stemTF.getFormula()) + ", loop dagsize " + new DagSizePrinter(loopTF.getFormula());
 	}
 
-	private ILassoCheckResult<L> constructLassoCheckResult() throws IOException {
-		final NestedWord<L> stem = mCounterexample.getStem().getWord();
-		mLogger.info("Stem: " + stem);
-		final NestedWord<L> loop = mCounterexample.getLoop().getWord();
-		mLogger.info("Loop: " + loop);
+	private ILassoCheckResult<L> constructLassoCheckResult(final NestedLassoRun<L, IPredicate> counterexample)
+			throws IOException {
+		final NestedRun<L, IPredicate> stem = counterexample.getStem();
+		final NestedRun<L, IPredicate> loop = counterexample.getLoop();
+		mLogger.info("Stem: " + stem.getWord());
+		mLogger.info("Loop: " + loop.getWord());
 		IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> stemCheck;
 		final boolean isStemInfeasible;
 		if (BuchiAutomizerUtils.isEmptyStem(stem)) {
 			stemCheck = null;
 			isStemInfeasible = false;
 		} else {
-			stemCheck = checkStemFeasibility();
+			stemCheck = checkStemFeasibility(stem);
 			isStemInfeasible = isInfeasible(stemCheck);
 		}
 		if (isStemInfeasible) {
@@ -678,29 +643,28 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				return new InfeasibilityResult<>(stemCheck);
 			}
 		}
-		final var loopCheck = checkLoopFeasibility();
+		final var loopCheck = checkLoopFeasibility(loop);
 		if (isInfeasible(loopCheck)) {
 			mLogger.info("loop already infeasible");
 			// if both (stem and loop) are infeasible we take the smaller one.
-			final int stemSize = mCounterexample.getStem().getLength();
-			final int loopSize = mCounterexample.getLoop().getLength();
-			return loopSize <= stemSize ? new InfeasibilityResult<>(loopCheck) : new InfeasibilityResult<>(stemCheck);
+			return loop.getLength() <= stem.getLength() ? new InfeasibilityResult<>(loopCheck)
+					: new InfeasibilityResult<>(stemCheck);
 		}
 		if (isStemInfeasible) {
 			assert mTryTwofoldRefinement;
-			final UnmodifiableTransFormula loopTF = computeLoopTF();
-			final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF);
+			final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
+			final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF, counterexample);
 			if (loopTermination instanceof final TerminationResult<L> tr) {
 				return new TerminationAndInfeasibilityResult<>(stemCheck, tr.result());
 			}
 			return new InfeasibilityResult<>(stemCheck);
 		}
 		// stem feasible
-		final var concatCheck = checkConcatFeasibility();
+		final var concatCheck = checkConcatFeasibility(stem, loop);
 		if (isInfeasible(concatCheck)) {
 			if (mTryTwofoldRefinement) {
-				final UnmodifiableTransFormula loopTF = computeLoopTF();
-				final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF);
+				final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
+				final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF, counterexample);
 				if (loopTermination instanceof final TerminationResult<L> tr) {
 					return new TerminationAndInfeasibilityResult<>(concatCheck, tr.result());
 				}
@@ -709,26 +673,28 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			return new InfeasibilityResult<>(concatCheck);
 		}
 		// concat feasible
-		final UnmodifiableTransFormula loopTF = computeLoopTF();
+		final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
 		// checking loop termination before we check lasso termination is a workaround.
 		// We want to avoid supporting invariants in possible yet the termination argument simplification of the
 		// LassoChecker is not optimal. Hence we first check only the loop, which guarantees that there are no
 		// supporting invariants.
-		final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF);
+		final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF, counterexample);
 		if (loopTermination instanceof TerminationResult<L>) {
 			return loopTermination;
 		}
-		final UnmodifiableTransFormula stemTF = computeStemTF();
-		return checkLassoTermination(stemTF, loopTF);
+		final UnmodifiableTransFormula stemTF = computeTF(stem.getWord());
+		return checkLassoTermination(stemTF, loopTF, counterexample);
 	}
 
-	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkStemFeasibility() {
-		return checkFeasibilityAndComputeInterpolants(mCounterexample.getStem(),
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
+			checkStemFeasibility(final NestedRun<L, IPredicate> stem) {
+		return checkFeasibilityAndComputeInterpolants(stem,
 				new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.STEM));
 	}
 
-	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkLoopFeasibility() {
-		return checkFeasibilityAndComputeInterpolants(mCounterexample.getLoop(),
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
+			checkLoopFeasibility(final NestedRun<L, IPredicate> loop) {
+		return checkFeasibilityAndComputeInterpolants(loop,
 				new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.LOOP));
 	}
 
@@ -736,9 +702,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return check.getCounterexampleFeasibility() == LBool.UNSAT;
 	}
 
-	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> checkConcatFeasibility() {
-		final NestedRun<L, IPredicate> stem = mCounterexample.getStem();
-		final NestedRun<L, IPredicate> loop = mCounterexample.getLoop();
+	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
+			checkConcatFeasibility(final NestedRun<L, IPredicate> stem, final NestedRun<L, IPredicate> loop) {
 		return checkFeasibilityAndComputeInterpolants(stem.concatenate(loop),
 				new SubtaskLassoCheckIdentifier(mTaskIdentifier, LassoPart.CONCAT));
 	}
@@ -766,22 +731,24 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private ILassoCheckResult<L> checkLoopTermination(final UnmodifiableTransFormula loopTF) throws IOException {
+	private ILassoCheckResult<L> checkLoopTermination(final UnmodifiableTransFormula loopTF,
+			final NestedLassoRun<L, IPredicate> counterexample) throws IOException {
 		final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 		if (containsArrays) {
 			// if there are array variables we will probably run in a huge
 			// DNF, so as a precaution we do not check and say unknown
 			return new UnknownResult<>();
 		}
-		return synthesize(false, null, loopTF, containsArrays);
+		return synthesize(false, null, loopTF, containsArrays, counterexample);
 	}
 
 	private ILassoCheckResult<L> checkLassoTermination(final UnmodifiableTransFormula stemTF,
-			final UnmodifiableTransFormula loopTF) throws IOException {
+			final UnmodifiableTransFormula loopTF, final NestedLassoRun<L, IPredicate> counterexample)
+			throws IOException {
 		assert loopTF != null;
 		final boolean containsArrays = SmtUtils.containsArrayVariables(stemTF.getFormula())
 				|| SmtUtils.containsArrayVariables(loopTF.getFormula());
-		return synthesize(true, stemTF, loopTF, containsArrays);
+		return synthesize(true, stemTF, loopTF, containsArrays, counterexample);
 	}
 
 	private static class SubtaskLassoCheckIdentifier extends TaskIdentifier {
