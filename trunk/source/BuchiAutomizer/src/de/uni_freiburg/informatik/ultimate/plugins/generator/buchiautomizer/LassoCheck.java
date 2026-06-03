@@ -216,7 +216,78 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mStateFactoryForInterpolantAutomaton = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
 				mPredicateFactory, computeHoareAnnotation);
 
-		mResult = constructLassoCheckResult(counterexample);
+		mResult = checkTermination(counterexample);
+	}
+
+	private ILassoCheckResult<L> checkTermination(final NestedLassoRun<L, IPredicate> counterexample)
+			throws IOException {
+		final NestedRun<L, IPredicate> stem = counterexample.getStem();
+		final NestedRun<L, IPredicate> loop = counterexample.getLoop();
+		mLogger.info("Stem: " + stem.getWord());
+		mLogger.info("Loop: " + loop.getWord());
+		IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> stemCheck;
+		final boolean isStemInfeasible;
+		if (BuchiAutomizerUtils.isEmptyStem(stem)) {
+			stemCheck = null;
+			isStemInfeasible = false;
+		} else {
+			stemCheck = checkStemFeasibility(stem);
+			isStemInfeasible = isInfeasible(stemCheck);
+		}
+		if (isStemInfeasible) {
+			mLogger.info("stem already infeasible");
+			if (!mTryTwofoldRefinement) {
+				return new InfeasibilityResult<>(stemCheck);
+			}
+		}
+		final var loopCheck = checkLoopFeasibility(loop);
+		if (isInfeasible(loopCheck)) {
+			mLogger.info("loop already infeasible");
+			// if both (stem and loop) are infeasible we take the smaller one.
+			return loop.getLength() <= stem.getLength() ? new InfeasibilityResult<>(loopCheck)
+					: new InfeasibilityResult<>(stemCheck);
+		}
+		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
+		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
+				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
+				.collect(Collectors.toSet());
+		if (isStemInfeasible) {
+			assert mTryTwofoldRefinement;
+			final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
+			final ILassoCheckResult<L> loopTermination =
+					checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
+			if (loopTermination instanceof final TerminationResult<L> tr) {
+				return new TerminationAndInfeasibilityResult<>(stemCheck, tr.result());
+			}
+			return new InfeasibilityResult<>(stemCheck);
+		}
+		// stem feasible
+		final var concatCheck = checkConcatFeasibility(stem, loop);
+		if (isInfeasible(concatCheck)) {
+			if (mTryTwofoldRefinement) {
+				final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
+				final ILassoCheckResult<L> loopTermination =
+						checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
+				if (loopTermination instanceof final TerminationResult<L> tr) {
+					return new TerminationAndInfeasibilityResult<>(concatCheck, tr.result());
+				}
+				return new InfeasibilityResult<>(concatCheck);
+			}
+			return new InfeasibilityResult<>(concatCheck);
+		}
+		// concat feasible
+		final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
+		// checking loop termination before we check lasso termination is a workaround.
+		// We want to avoid supporting invariants in possible yet the termination argument simplification of the
+		// LassoChecker is not optimal. Hence we first check only the loop, which guarantees that there are no
+		// supporting invariants.
+		final ILassoCheckResult<L> loopTermination =
+				checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
+		if (loopTermination instanceof TerminationResult<L>) {
+			return loopTermination;
+		}
+		final UnmodifiableTransFormula stemTF = computeTF(stem.getWord());
+		return checkLassoTermination(stemTF, loopTF, counterexample, modifiableGlobalsAtHonda);
 	}
 
 	public ILassoCheckResult<L> getLassoCheckResult() {
@@ -610,77 +681,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final UnmodifiableTransFormula loopTF, final RankingTemplate rft) {
 		return "applying " + rft.getName() + " template (degree " + rft.getDegree() + "), stem dagsize "
 				+ new DagSizePrinter(stemTF.getFormula()) + ", loop dagsize " + new DagSizePrinter(loopTF.getFormula());
-	}
-
-	private ILassoCheckResult<L> constructLassoCheckResult(final NestedLassoRun<L, IPredicate> counterexample)
-			throws IOException {
-		final NestedRun<L, IPredicate> stem = counterexample.getStem();
-		final NestedRun<L, IPredicate> loop = counterexample.getLoop();
-		mLogger.info("Stem: " + stem.getWord());
-		mLogger.info("Loop: " + loop.getWord());
-		IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> stemCheck;
-		final boolean isStemInfeasible;
-		if (BuchiAutomizerUtils.isEmptyStem(stem)) {
-			stemCheck = null;
-			isStemInfeasible = false;
-		} else {
-			stemCheck = checkStemFeasibility(stem);
-			isStemInfeasible = isInfeasible(stemCheck);
-		}
-		if (isStemInfeasible) {
-			mLogger.info("stem already infeasible");
-			if (!mTryTwofoldRefinement) {
-				return new InfeasibilityResult<>(stemCheck);
-			}
-		}
-		final var loopCheck = checkLoopFeasibility(loop);
-		if (isInfeasible(loopCheck)) {
-			mLogger.info("loop already infeasible");
-			// if both (stem and loop) are infeasible we take the smaller one.
-			return loop.getLength() <= stem.getLength() ? new InfeasibilityResult<>(loopCheck)
-					: new InfeasibilityResult<>(stemCheck);
-		}
-		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
-		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
-				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
-				.collect(Collectors.toSet());
-		if (isStemInfeasible) {
-			assert mTryTwofoldRefinement;
-			final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
-			final ILassoCheckResult<L> loopTermination =
-					checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
-			if (loopTermination instanceof final TerminationResult<L> tr) {
-				return new TerminationAndInfeasibilityResult<>(stemCheck, tr.result());
-			}
-			return new InfeasibilityResult<>(stemCheck);
-		}
-		// stem feasible
-		final var concatCheck = checkConcatFeasibility(stem, loop);
-		if (isInfeasible(concatCheck)) {
-			if (mTryTwofoldRefinement) {
-				final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
-				final ILassoCheckResult<L> loopTermination =
-						checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
-				if (loopTermination instanceof final TerminationResult<L> tr) {
-					return new TerminationAndInfeasibilityResult<>(concatCheck, tr.result());
-				}
-				return new InfeasibilityResult<>(concatCheck);
-			}
-			return new InfeasibilityResult<>(concatCheck);
-		}
-		// concat feasible
-		final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
-		// checking loop termination before we check lasso termination is a workaround.
-		// We want to avoid supporting invariants in possible yet the termination argument simplification of the
-		// LassoChecker is not optimal. Hence we first check only the loop, which guarantees that there are no
-		// supporting invariants.
-		final ILassoCheckResult<L> loopTermination =
-				checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
-		if (loopTermination instanceof TerminationResult<L>) {
-			return loopTermination;
-		}
-		final UnmodifiableTransFormula stemTF = computeTF(stem.getWord());
-		return checkLassoTermination(stemTF, loopTF, counterexample, modifiableGlobalsAtHonda);
 	}
 
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
