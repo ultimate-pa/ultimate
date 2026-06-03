@@ -6,14 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -27,6 +26,7 @@ class ProgramAndProof {
 	private BoogieIcfgContainer mIcfg = null;
 	private List<OwickiGriesAnnotation> mProof = null;
 	private Map<ILocation, Set<CallStatement>> mGhostUpdateMap = null;
+	// private final Map<ILocation, Set<Expression>> mAnnotationMap = null;
 	private ThreadTemplateVisitor mTemplateVisitor = null;
 
 	ProgramAndProof() {
@@ -48,15 +48,15 @@ class ProgramAndProof {
 		return mProof;
 	}
 
-	void setBoogieAst(Unit boogieAst) {
+	void setBoogieAst(final Unit boogieAst) {
 		mBoogieAst = boogieAst;
 	}
 
-	void setIcfg(BoogieIcfgContainer icfg) {
+	void setIcfg(final BoogieIcfgContainer icfg) {
 		mIcfg = icfg;
 	}
 
-	void setProof(List<OwickiGriesAnnotation> proof) {
+	void setProof(final List<OwickiGriesAnnotation> proof) {
 		mProof = proof;
 	}
 
@@ -68,8 +68,44 @@ class ProgramAndProof {
 		return mGhostUpdateMap;
 	}
 
+	void computeEntryAnnotationMap() {
+		mEntryAnnotationMap = new HashMap<>();
+
+		for (final BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
+			final var invariant = (WitnessInvariant.getAnnotation(loc) != null)
+					? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
+					: null;
+			final var codeLocation = ILocation.getAnnotation(loc);
+			System.out.println();
+			System.out.println("Invariant : " + invariant);
+			System.out.println("Location : " + codeLocation);
+			System.out.println(loc.getBoogieASTNode());
+			result.put(codeLocation, invariant);
+		}
+
+		return result;
+	}
+
+	void computeExitAnnotationMap() {
+		mExitAnnotationMap = new HashMap<>();
+
+		for (final BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
+			final var invariant = (WitnessInvariant.getAnnotation(loc) != null)
+					? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
+					: null;
+			final var codeLocation = ILocation.getAnnotation(loc);
+			System.out.println();
+			System.out.println("Invariant : " + invariant);
+			System.out.println("Location : " + codeLocation);
+			System.out.println(loc.getBoogieASTNode());
+			result.put(codeLocation, invariant);
+		}
+
+		return result;
+	}
+
 	void preprocess() {
-		mTemplateVisitor = new ThreadTemplateVisitor(mBoogieAst);
+		mTemplateVisitor = new ThreadTemplateVisitor(mBoogieAst, mIcfg);
 		mGhostUpdateMap = new HashMap<>();
 
 		// improve readability TODO
@@ -78,36 +114,38 @@ class ProgramAndProof {
 
 		for (final Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
 			for (final BoogieIcfgLocation location : innerMap.values()) {
-				System.out.println();
-				System.out.println("Location : " + location);
-				System.out.println("Statement : " + location.getBoogieASTNode());
 
 				for (final var edge : location.getOutgoingEdges()) {
 					if (WitnessGhostUpdate.getAnnotation(edge) != null) {
 
-						Set<CallStatement> assignments = new HashSet<>();
-						ILocation loc = location.getBoogieASTNode().getLocation();
+						final Set<CallStatement> assignments = new HashSet<>();
+						final ILocation loc = ILocation.getAnnotation(edge);
 
-						final Map<?, ?> update = WitnessGhostUpdate.getAnnotation(edge).getUpdate();
+						System.out.println();
+						System.out.println("Location : " + loc);
+						System.out.println("Edge : " + edge);
 
-						// TODO improve readability
+						if (loc != null) {
+							final Map<?, ?> update = WitnessGhostUpdate.getAnnotation(edge).getUpdate();
 
-						for (final Map.Entry<?, ?> updateEntry : update.entrySet()) {
-							System.out.println(updateEntry.getKey());
-							System.out.println(updateEntry.getValue());
+							// TODO improve readability
 
-							IdentifierExpression layerNum = new IdentifierExpression(loc,
-									BoogieType.createPlaceholderType(0), "1,2",
-									new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
+							for (final Map.Entry<?, ?> updateEntry : update.entrySet()) {
+								System.out.println(updateEntry.getKey());
+								System.out.println(updateEntry.getValue());
 
-							CallStatement assign = new CallStatement(loc,
-									new NamedAttribute[] {
-											new NamedAttribute(loc, "layer", new Expression[] { layerNum }) },
-									false, new VariableLHS[] { new VariableLHS(loc, updateEntry.getKey().toString()) },
-									"Copy", new Expression[] { (Expression) updateEntry.getValue() });
-							assignments.add(assign);
+								final IntegerLiteral layerNum = new IntegerLiteral(loc, "2");
+
+								final CallStatement assign = new CallStatement(loc,
+										new NamedAttribute[] {
+												new NamedAttribute(loc, "layer", new Expression[] { layerNum }) },
+										false,
+										new VariableLHS[] { new VariableLHS(loc, updateEntry.getKey().toString()) },
+										"Copy", new Expression[] { (Expression) updateEntry.getValue() });
+								assignments.add(assign);
+							}
+							mGhostUpdateMap.put(loc, assignments);
 						}
-						mGhostUpdateMap.put(loc, assignments);
 					}
 				}
 			}
@@ -115,18 +153,27 @@ class ProgramAndProof {
 	}
 
 	// Map<Integer, Expression>
-	Map<ILocation, Expression> getAnnotationMap(String procName) {
-		Map<ILocation, Expression> result = new HashMap<>();
-		for (BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
+	Map<ILocation, Expression> getAnnotationMap(final String procName) {
+		final Map<ILocation, Expression> result = new HashMap<>();
+		for (final BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
 			final var invariant = (WitnessInvariant.getAnnotation(loc) != null)
 					? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
 					: null;
-			final var codeLocation = (ILocation) ILocation.getAnnotation(loc);
+
+			final var codeLocation = ILocation.getAnnotation(loc);
+			// merge together
+			if (result.get(codeLocation) != null) {
+				final Expression buf = result.get(codeLocation);
+				result.put(codeLocation,
+						new BinaryExpression(codeLocation, BinaryExpression.Operator.LOGICAND, invariant, buf));
+			} else {
+				result.put(codeLocation, invariant);
+			}
+
 			System.out.println();
 			System.out.println("Invariant : " + invariant);
 			System.out.println("Location : " + codeLocation);
 			System.out.println(loc.getBoogieASTNode());
-			result.put(codeLocation, invariant);
 		}
 
 		return result;

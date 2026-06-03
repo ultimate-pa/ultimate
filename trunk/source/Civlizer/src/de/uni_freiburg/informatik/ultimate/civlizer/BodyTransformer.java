@@ -23,13 +23,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
@@ -43,24 +46,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 final class BodyTransformer extends BoogieTransformer {
 
-	private ProgramAndProof mProgramAndProof;
+	private final ProgramAndProof mProgramAndProof;
 	private String mCurrentProcedure;
 	private int mAtomicStatementCounter;
 
-	BodyTransformer(ProgramAndProof programAndProof) {
+	BodyTransformer(final ProgramAndProof programAndProof) {
 		mProgramAndProof = programAndProof;
 		mCurrentProcedure = null;
 		mAtomicStatementCounter = 0;
 	}
 
-	private void setCurrentProcedure(String name) {
+	private void setCurrentProcedure(final String name) {
 		if (mCurrentProcedure != name) {
 			mCurrentProcedure = name;
 			mAtomicStatementCounter = 0;
 		}
 	}
 
-	private static List<Expression> tidListToArrayExpression(List<Tid> tidList) {
+	private static List<Expression> tidListToArrayExpression(final List<Tid> tidList) {
 		return tidList.stream().map(tid -> (Expression) new IdentifierExpression(null, /*
 																						 * maybe to be change TODO or
 																						 * not
@@ -69,13 +72,13 @@ final class BodyTransformer extends BoogieTransformer {
 				new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null))).toList();
 	}
 
-	Body transformBody(final String name, Body body) {
+	Body transformBody(final String name, final Body body) {
 		setCurrentProcedure(name);
 		// TO BE improved
 		return processBody(body);
 	}
 
-	Statement[] transformStatements(final String name, Statement[] statements) {
+	Statement[] transformStatements(final String name, final Statement[] statements) {
 		setCurrentProcedure(name);
 
 		return processStatements(statements);
@@ -88,6 +91,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the types to process.
 	 * @return the processed types.
 	 */
+	@Override
 	protected ASTType[] processTypes(final ASTType[] types) {
 		boolean changed = false;
 		final ASTType[] newTypes = new ASTType[types.length];
@@ -107,6 +111,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the type to process.
 	 * @return the processed type.
 	 */
+	@Override
 	protected ASTType processType(final ASTType type) {
 		ASTType newType = null;
 		if (type instanceof ArrayType) {
@@ -142,6 +147,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the variable lists
 	 * @return the processed variable lists.
 	 */
+	@Override
 	protected VarList[] processVarLists(final VarList[] vls) {
 		boolean changed = false;
 		final VarList[] newVls = new VarList[vls.length];
@@ -162,6 +168,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the variable list
 	 * @return the processed variable list.
 	 */
+	@Override
 	protected VarList processVarList(final VarList vl) {
 		final ASTType type = vl.getType();
 		final ASTType newType = processType(type);
@@ -182,6 +189,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the implementation body.
 	 * @return the processed body.
 	 */
+	@Override
 	protected Body processBody(final Body body) {
 		final VariableDeclaration[] locals = body.getLocalVars();
 		final VariableDeclaration[] newLocals = processLocalVariableDeclarations(locals);
@@ -203,6 +211,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            The local variable declaration.
 	 * @return the processed declaration.
 	 */
+	@Override
 	protected VariableDeclaration processLocalVariableDeclaration(final VariableDeclaration local) {
 		final Attribute[] attrs = local.getAttributes();
 		final Attribute[] newAttrs = processAttributes(attrs);
@@ -223,6 +232,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the array of variable declarations
 	 * @return the processed declarations.
 	 */
+	@Override
 	protected VariableDeclaration[] processLocalVariableDeclarations(final VariableDeclaration[] locals) {
 		boolean changed = false;
 		final VariableDeclaration[] newLocals = new VariableDeclaration[locals.length];
@@ -242,51 +252,60 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the statement to process.
 	 * @return processed statements.
 	 */
+	@Override
 	protected Statement[] processStatements(final Statement[] statements) {
-		List<Statement> newStatements = new ArrayList<>();
+		final List<Statement> newStatements = new ArrayList<>();
 
-		int size = mProgramAndProof.getTemplateVisitor().getAllTidMap()
+		final int size = mProgramAndProof.getTemplateVisitor().getAllTidMap()
 				.getOrDefault(mCurrentProcedure, Collections.emptyList()).size()
 				+ (mCurrentProcedure.equals("ULTIMATE.start") ? 1 : 0);
 
-		Expression[] tids = new Expression[size];
+		final Expression[] tids = new Expression[size];
 
 		int i = 0;
 
 		if (mCurrentProcedure.equals("ULTIMATE.start")) {
-			tids[i++] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), "start_tid",
+			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), "start_tid",
 					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
+			i++;
 		}
 
-		for (Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(mCurrentProcedure,
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(mCurrentProcedure,
 				Collections.emptyList())) {
-			tids[i++] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), tid.toString(),
+			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), tid.toString(),
 					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
+			i++;
 		}
 
 		// we ignore some kind of first Label $Ultimate##0
-		for (i = 1; i < statements.length - 1; i++) { // ignore standard return
+		for (i = 0; i < statements.length; i++) { // ignore standard return
+			// skip return for now
+			if (statements[i] instanceof ReturnStatement) {
+				continue;
+			}
+
 			mAtomicStatementCounter += 1;
 
-			boolean globalVar = mProgramAndProof.getTemplateVisitor().containsGlobalVariables(statements[i]);
+			final boolean globalVar = mProgramAndProof.getTemplateVisitor().containsGlobalVariables(statements[i]);
 
-			boolean localVar =
+			final boolean localVar =
 					mProgramAndProof.getTemplateVisitor().containsLocalVariables(mCurrentProcedure, statements[i]);
 
 			if (statements[i] instanceof ForkStatement || statements[i] instanceof JoinStatement
 					|| globalVar && !localVar) {
 				newStatements.add(processStatement(statements[i]));
-			} else if (!globalVar && localVar) {
+			} else if (!globalVar) {
 
-				NamedAttribute[] layer = new NamedAttribute[] { new NamedAttribute(statements[i].getLoc(), "layer",
-						new Expression[] { new IdentifierExpression(statements[i].getLoc(),
-								BoogieType.createPlaceholderType(0), "1,2",
-								new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)) }) };
+				final NamedAttribute[] layer = { new NamedAttribute(statements[i].getLoc(), "layer",
+						new Expression[] { new IntegerLiteral(statements[i].getLoc(), "1"),
+								new IntegerLiteral(statements[i].getLoc(), "2") }) };
 
 				if (statements[i] instanceof final AssertStatement assertStmt) {
 					newStatements.add(new AssertStatement(assertStmt.getLoc(), layer, assertStmt.getFormula()));
 				} else if (statements[i] instanceof final AssumeStatement assumeStmt) {
 					newStatements.add(new AssumeStatement(assumeStmt.getLoc(), layer, assumeStmt.getFormula()));
+				} else if (statements[i] instanceof final Label labelStmt) {
+					newStatements.add(new Label(labelStmt.getLoc(), labelStmt.getName()));
 				}
 				/*
 				 * else if (statements[i] instanceof final HavocStatement havoc) { maybe havoc }
@@ -297,13 +316,13 @@ final class BodyTransformer extends BoogieTransformer {
 			} else {
 				final var loc = statements[i].getLoc();
 
-				Expression[] arguments =
+				final Expression[] arguments =
 						mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(loc).stream()
 								.map(arg -> new IdentifierExpression(loc, BoogieType.createPlaceholderType(0), arg,
 										new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)))
 								.toArray(Expression[]::new);
 
-				VariableLHS[] returns = mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(loc)
+				final VariableLHS[] returns = mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(loc)
 						.stream().map(ret -> new VariableLHS(loc, ret)).toArray(VariableLHS[]::new);
 
 				newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false, returns,
@@ -316,11 +335,17 @@ final class BodyTransformer extends BoogieTransformer {
 			// Ghost update
 			if (mProgramAndProof.getGhostUpdateMap() != null
 					&& mProgramAndProof.getGhostUpdateMap().get(statements[i].getLocation()) != null) {
-				for (CallStatement stmt : mProgramAndProof.getGhostUpdateMap().get(statements[i].getLocation())) {
-					newStatements.add(stmt);
-				}
+				newStatements.addAll(mProgramAndProof.getGhostUpdateMap().get(statements[i].getLocation()));
 			}
 		}
+
+		mAtomicStatementCounter += 1;
+		newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
+				"yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
+
+		mAtomicStatementCounter += 1;
+		newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
+				"yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
 
 		if (mCurrentProcedure != "ULTIMATE.start") {
 			newStatements
@@ -338,6 +363,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the statement to process.
 	 * @return processed statement.
 	 */
+	@Override
 	protected Statement processStatement(final Statement statement) {
 		Statement newStatement = null;
 		// Label, IfStatement, AssignmentStatement, ReturnStatement, ForkStatement, CallStatement, JoinStatement,
@@ -369,10 +395,9 @@ final class BodyTransformer extends BoogieTransformer {
 			final Expression[] newThreadId = processExpressions(threadId);
 			final Expression[] newArguments = processExpressions(arguments);
 
-			Expression[] tids = new Expression[] { new IdentifierExpression(forkstmt.getLoc(), /*
-																								 * maybe to be change
-																								 * TODO or not
-																								 */
+			final Expression[] tids = { new IdentifierExpression(forkstmt.getLoc(), /*
+																					 * maybe to be change TODO or not
+																					 */
 					BoogieType.createPlaceholderType(0), "start_tid",
 					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)),
 					new IdentifierExpression(forkstmt.getLoc(), /* maybe to be change TODO or not */
@@ -390,10 +415,9 @@ final class BodyTransformer extends BoogieTransformer {
 
 			// variable out to define TODO
 
-			Expression[] tid = new Expression[] { new IdentifierExpression(joinstmt.getLoc(), /*
-																								 * maybe to be change
-																								 * TODO or not
-																								 */
+			final Expression[] tid = { new IdentifierExpression(joinstmt.getLoc(), /*
+																					 * maybe to be change TODO or not
+																					 */
 					BoogieType.createPlaceholderType(0), "start_tid",
 					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)),
 					new IdentifierExpression(joinstmt.getLoc(), /* maybe to be change TODO or not */
@@ -425,6 +449,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the invariant specifications to process.
 	 * @return processed specifications.
 	 */
+	@Override
 	protected LoopInvariantSpecification[] processLoopSpecifications(final LoopInvariantSpecification[] specs) {
 		boolean changed = false;
 		final LoopInvariantSpecification[] newSpecs = new LoopInvariantSpecification[specs.length];
@@ -450,6 +475,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the left hand side to process.
 	 * @return processed left hand side.
 	 */
+	@Override
 	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
 		if (lhs instanceof final ArrayLHS alhs) {
 			final LeftHandSide array = alhs.getArray();
@@ -478,6 +504,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the left hand sides to process.
 	 * @return processed left hand sides.
 	 */
+	@Override
 	protected LeftHandSide[] processLeftHandSides(final LeftHandSide[] lhs) {
 		boolean changed = false;
 		final LeftHandSide[] newLhs = new LeftHandSide[lhs.length];
@@ -498,6 +525,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the left hand sides to process.
 	 * @return processed left hand sides.
 	 */
+	@Override
 	protected VariableLHS[] processVariableLHSs(final VariableLHS[] lhs) {
 		final LeftHandSide[] newLhs = processLeftHandSides(lhs);
 		if (newLhs == lhs) {
@@ -516,6 +544,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the specification to process.
 	 * @return processed specification.
 	 */
+	@Override
 	protected Specification processSpecification(final Specification spec) {
 		Specification newSpec = null;
 		if (spec instanceof final EnsuresSpecification ensures) {
@@ -552,6 +581,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the specifications to process.
 	 * @return processed specifications.
 	 */
+	@Override
 	protected Specification[] processSpecifications(final Specification[] specs) {
 		boolean changed = false;
 		final Specification[] newSpecs = new Specification[specs.length];
@@ -572,6 +602,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the attribute to process.
 	 * @return processed attribute.
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	protected <T extends Attribute> T processAttribute(final T attr) {
 		T newAttr = null;
@@ -603,6 +634,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the attributes to process.
 	 * @return processed attributes.
 	 */
+	@Override
 	protected <T extends Attribute> T[] processAttributes(final T[] attributes) {
 		if (attributes == null) {
 			return attributes;

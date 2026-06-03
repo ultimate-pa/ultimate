@@ -78,16 +78,16 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnn
 
 public final class Translator extends BoogieVisitor {
 
-	private ProgramAndProof mProgramAndProof;
+	private final ProgramAndProof mProgramAndProof;
 	private StringBuilderWriter mWriter;
-	private BoogieOutput mOutput;
+	private final BoogieOutput mOutput;
 
-	Translator(ProgramAndProof programAndProof) {
+	Translator(final ProgramAndProof programAndProof) {
 		programAndProof.preprocess();
 		mProgramAndProof = programAndProof;
 		try {
 			mWriter = new StringBuilderWriter();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 		mOutput = new BoogieOutput(mWriter);
@@ -96,8 +96,8 @@ public final class Translator extends BoogieVisitor {
 	/**
 	 * translate the Ultimate boogie Ast into a String representing the resulting Civl program
 	 */
-	public static String translate(ProgramAndProof programAndProof) {
-		Translator translation = new Translator(programAndProof);
+	public static String translate(final ProgramAndProof programAndProof) {
+		final Translator translation = new Translator(programAndProof);
 
 		translation.addTidsType();
 
@@ -107,18 +107,18 @@ public final class Translator extends BoogieVisitor {
 
 		translation.addThreadControlFlow();
 
-		for (Declaration elem : programAndProof.getBoogieAst().getDeclarations()) {
+		for (final Declaration elem : programAndProof.getBoogieAst().getDeclarations()) {
 			translation.processDeclaration(elem);
 		}
 
 		return translation.toString();
 	}
 
-	private void addStringList(List<String> list, String sep) {
+	private void addStringList(final List<String> list, final String sep) {
 		mWriter.print(String.join(sep, list));
 	}
 
-	private void addTidConst(Tid tid) {
+	private void addTidConst(final Tid tid) {
 		mWriter.print("const unique const_");
 		mWriter.print(tid.toString());
 		mWriter.println(" : Tid;");
@@ -130,7 +130,7 @@ public final class Translator extends BoogieVisitor {
 		mWriter.println("const unique const_start_tid : StartTid;");
 		mWriter.println("type Tid;");
 
-		for (Tid tid : mProgramAndProof.getTemplateVisitor().getTids()) {
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getTids()) {
 			addTidConst(tid);
 		}
 
@@ -138,7 +138,7 @@ public final class Translator extends BoogieVisitor {
 	}
 
 	private void addGhostVar() {
-		for (OwickiGriesAnnotation proof : mProgramAndProof.getProof()) {
+		for (final OwickiGriesAnnotation proof : mProgramAndProof.getProof()) {
 			for (int i = 0; i < proof.getGhostVariables().size(); i++) {
 				mWriter.print("var {:layer 2,2} ~ghost~");
 				mWriter.print(String.valueOf(i));
@@ -147,7 +147,7 @@ public final class Translator extends BoogieVisitor {
 		}
 	}
 
-	private void addFork(String procName) {
+	private void addFork(final String procName) {
 		mWriter.println("yield procedure {:layer 2} fork_" + procName
 				+ "({:linear} start_tid : One StartTid, {:linear_in} tid : One Tid) {}");
 	}
@@ -177,7 +177,7 @@ public final class Translator extends BoogieVisitor {
 	private void addThreadControlFlow() {
 		mWriter.print("\n");
 
-		for (String procName : mProgramAndProof.getTemplateVisitor().getAssociationTidMap().keySet()) {
+		for (final String procName : mProgramAndProof.getTemplateVisitor().getAssociationTidMap().keySet()) {
 			addFork(procName);
 			mWriter.print("\n");
 		}
@@ -203,9 +203,9 @@ public final class Translator extends BoogieVisitor {
 			// this case is already handled by processVariableDeclaration
 
 			// ???
-			for (VarList varl : varDecl.getVariables()) {
+			for (final VarList varl : varDecl.getVariables()) {
 
-				int len = varl.getIdentifiers().length;
+				final int len = varl.getIdentifiers().length;
 				mWriter.print("var {:layer 0,2} ");
 
 				for (int i = 0; i < len - 1; i++) {
@@ -224,7 +224,7 @@ public final class Translator extends BoogieVisitor {
 	}
 
 	private void addYieldInvariants(final String procName, final Expression annotation, final Statement statement,
-			Set<Tid> tidNeedsLinearity, int counter) {
+			final Set<Tid> tidNeedsLinearity, final int counter) {
 
 		mWriter.print("yield invariant {:layer 2} ");
 		mWriter.print("yield_");
@@ -238,7 +238,7 @@ public final class Translator extends BoogieVisitor {
 			tids.add("{:linear} start_tid : One StartTid");
 		}
 
-		for (Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
 				Collections.emptyList())) {
 			if (tidNeedsLinearity.contains(tid)) {
 				tids.add("{:linear} " + tid.toString() + " : One Tid");
@@ -255,7 +255,7 @@ public final class Translator extends BoogieVisitor {
 			tids.add("start_tid->val == const_start_tid");
 		}
 
-		for (Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
 				Collections.emptyList())) {
 			tids.add(tid.toString() + "->val == const_" + tid.toString());
 		}
@@ -281,7 +281,7 @@ public final class Translator extends BoogieVisitor {
 			}
 		}
 
-		for (Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
 				Collections.emptyList())) {
 			final Optional<String> forked_proc = mProgramAndProof.getTemplateVisitor().getAssociationTidMap().entrySet()
 					.stream().filter(entry -> entry.getValue().contains(tid)).map(Map.Entry::getKey).findFirst();
@@ -303,16 +303,16 @@ public final class Translator extends BoogieVisitor {
 		mWriter.print("\n");
 	}
 
-	private void addNonAtomicStatement(final String procName, final Statement statement, Set<Tid> tidNeedsLinearity,
-			int counter) {
-		List<String> arguments = new ArrayList<>();
-		List<String> returns = new ArrayList<>();
+	private void addNonAtomicStatement(final String procName, final Statement statement,
+			final Set<Tid> tidNeedsLinearity, final int counter) {
+		final List<String> arguments = new ArrayList<>();
+		final List<String> returns = new ArrayList<>();
 
 		if ("ULTIMATE.start".equals(procName)) {
 			arguments.add("{:linear} start_tid : One StartTid");
 		}
 
-		for (Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
 				Collections.emptyList())) {
 			if (tidNeedsLinearity.contains(tid)) {
 				arguments.add("{:linear} " + tid.toString() + " : One Tid");
@@ -321,7 +321,7 @@ public final class Translator extends BoogieVisitor {
 			}
 		}
 
-		for (Map.Entry<String, ASTType> var : mProgramAndProof.getTemplateVisitor().getProcedureVariablesMap()
+		for (final Map.Entry<String, ASTType> var : mProgramAndProof.getTemplateVisitor().getProcedureVariablesMap()
 				.get(procName).entrySet()) {
 			if (mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(statement.getLoc())
 					.contains(var.getKey())) {
@@ -330,7 +330,7 @@ public final class Translator extends BoogieVisitor {
 			}
 		}
 
-		BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
+		final BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
 
 		mWriter.print("yield procedure {:layer 2} ");
 		mWriter.print(procName);
@@ -352,13 +352,13 @@ public final class Translator extends BoogieVisitor {
 		mWriter.println("}\n");
 	}
 
-	private void addAtomicStatement(String procName, final Statement statement, int counter) {
+	private void addAtomicStatement(final String procName, final Statement statement, final int counter) {
 		// IfStatement, ReturnStatement, CallStatement, WhileStatement, BreakStatement
 
-		List<String> arguments = new ArrayList<>();
-		List<String> returns = new ArrayList<>();
+		final List<String> arguments = new ArrayList<>();
+		final List<String> returns = new ArrayList<>();
 
-		for (Map.Entry<String, ASTType> var : mProgramAndProof.getTemplateVisitor().getProcedureVariablesMap()
+		for (final Map.Entry<String, ASTType> var : mProgramAndProof.getTemplateVisitor().getProcedureVariablesMap()
 				.get(procName).entrySet()) {
 			if (mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(statement.getLoc())
 					.contains(var.getKey())) {
@@ -379,14 +379,15 @@ public final class Translator extends BoogieVisitor {
 		mWriter.println(");");
 
 		mWriter.println("refines atomic action {:layer 1,2} _ {");
-		for (String var : mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(statement.getLoc())) {
+		for (final String var : mProgramAndProof.getTemplateVisitor().getStatementParametersMap()
+				.get(statement.getLoc())) {
 			mWriter.print("    ");
 			mWriter.print(var + " := " + var + "_in");
 			mWriter.println(";");
 		}
 
 		if (statement instanceof final AtomicStatement atom) {
-			for (Statement stmt : atom.getBody()) {
+			for (final Statement stmt : atom.getBody()) {
 				mWriter.println(BoogiePrettyPrinter.print(stmt));
 			}
 		} else {
@@ -395,7 +396,7 @@ public final class Translator extends BoogieVisitor {
 		mWriter.println("}\n");
 	}
 
-	private void addStatement(final String procName, final Statement statement, Set<Tid> tidNeedsLinearity,
+	private void addStatement(final String procName, final Statement statement, final Set<Tid> tidNeedsLinearity,
 			final int counter) {
 		if (statement instanceof AssignmentStatement || statement instanceof AssertStatement
 				|| statement instanceof AssumeStatement || statement instanceof HavocStatement
@@ -408,39 +409,57 @@ public final class Translator extends BoogieVisitor {
 
 	@Override
 	protected void visit(final Procedure decl) {
+		// test
+		final Map<ILocation, Expression> map = mProgramAndProof.getAnnotationMap(decl.getIdentifier());
 
-		Map<ILocation, Expression> annotationMap = mProgramAndProof.getAnnotationMap(decl.getIdentifier());
-		/* Write invariant and atomic */
 		int counter = 0;
-		Set<Tid> tidNeedsLinearity = new HashSet<>(mProgramAndProof.getTemplateVisitor().getTids());
+		final Set<Tid> tidNeedsLinearity = new HashSet<>(mProgramAndProof.getTemplateVisitor().getTids());
 
 		// initial invariant BEFORE first statement
-		addYieldInvariants(decl.getIdentifier(), null, null, tidNeedsLinearity, counter);
+		addYieldInvariants(decl.getIdentifier(),
+				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier()), null,
+				tidNeedsLinearity, counter);
 
 		counter++;
 
 		// for (Statement statement : decl.getBody().getBlock()) {
-		for (int i = 1; i < decl.getBody().getBlock().length; i++) {
+		for (final Statement stmt : decl.getBody().getBlock()) {
 
-			if (mProgramAndProof.getTemplateVisitor().containsGlobalVariables(decl.getBody().getBlock()[i])) {
-				addStatement(decl.getIdentifier(), decl.getBody().getBlock()[i], tidNeedsLinearity, counter);
+			// skip return for now
+			if (stmt instanceof ReturnStatement) {
+				continue;
 			}
 
-			if (decl.getBody().getBlock()[i] instanceof final JoinStatement joinstmt) {
+			final Expression invariant = map.get(stmt.getLoc());
+			// (WitnessInvariant.getAnnotation(stmt) == null) ? null
+			// : (Expression) WitnessInvariant.getAnnotation(stmt).getInvariant();
+
+			if (mProgramAndProof.getTemplateVisitor().containsGlobalVariables(stmt)) {
+				addStatement(decl.getIdentifier(), stmt, tidNeedsLinearity, counter);
+			}
+
+			if (stmt instanceof final JoinStatement joinstmt) {
 				tidNeedsLinearity.add(new Tid(joinstmt.getThreadID()));
 			}
 
 			// ghost var update here
 
-			final Expression annotation = annotationMap.get(decl.getBody().getBlock()[i].getLoc());
-			System.out.println("TEST " + annotation);
-			System.out.println("TEST2 " + decl.getBody().getBlock()[i]);
-			addYieldInvariants(decl.getIdentifier(), annotation, decl.getBody().getBlock()[i], tidNeedsLinearity,
-					counter);
+			System.out.println("TEST " + invariant);
+			System.out.println("TEST2 " + stmt);
+			addYieldInvariants(decl.getIdentifier(), invariant, stmt, tidNeedsLinearity, counter);
 
 			tidNeedsLinearity.clear();
 			counter++;
 		}
+
+		addYieldInvariants(decl.getIdentifier(),
+				mProgramAndProof.getTemplateVisitor().getFinalAnnotationMap().get(decl.getIdentifier()), null,
+				tidNeedsLinearity, counter);
+		counter++;
+
+		addYieldInvariants(decl.getIdentifier(),
+				mProgramAndProof.getTemplateVisitor().getExitAnnotationMap().get(decl.getIdentifier()), null,
+				tidNeedsLinearity, counter);
 
 		/* Write the yield procedure itself */
 		// if (decl.getInParams() != null || decl.getOutParams() != null) {
@@ -449,7 +468,7 @@ public final class Translator extends BoogieVisitor {
 		// }
 
 		/* Write Thread template */
-		BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
+		final BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
 
 		mWriter.print("yield procedure {:layer 2} ");
 		mWriter.print(decl.getIdentifier());
@@ -460,7 +479,7 @@ public final class Translator extends BoogieVisitor {
 			tids.add("{:linear} start_tid : One StartTid");
 		}
 
-		for (Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(decl.getIdentifier(),
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(decl.getIdentifier(),
 				Collections.emptyList())) {
 			tids.add("{:linear_in} " + tid.toString() + " : One Tid");
 		}
@@ -476,7 +495,7 @@ public final class Translator extends BoogieVisitor {
 			tids.add("start_tid");
 		}
 
-		for (Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(decl.getIdentifier(),
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(decl.getIdentifier(),
 				Collections.emptyList())) {
 			tids.add(tid.toString());
 		}
@@ -495,6 +514,7 @@ public final class Translator extends BoogieVisitor {
 		mWriter.flush(); // automatic flush ? TODO
 	}
 
+	@Override
 	protected void visit(final TypeDeclaration decl) {
 		// empty because it may be overridden (but does not have to)
 	}
@@ -510,18 +530,22 @@ public final class Translator extends BoogieVisitor {
 		return type;
 	}
 
+	@Override
 	protected void visit(final ArrayType type) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final NamedType type) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final PrimitiveType type) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final StructType type) {
 		// empty because it may be overridden (but does not have to)
 	}
@@ -547,58 +571,72 @@ public final class Translator extends BoogieVisitor {
 		return statement;
 	}
 
+	@Override
 	protected void visit(final WhileStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final AtomicStatement statment) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final ReturnStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final Label statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final IfStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final HavocStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final GotoStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final CallStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final ForkStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final JoinStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final BreakStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final AssignmentStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final AssumeStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final AssertStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
@@ -613,14 +651,17 @@ public final class Translator extends BoogieVisitor {
 		return lhs;
 	}
 
+	@Override
 	protected void visit(final VariableLHS lhs) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final StructLHS lhs) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final ArrayLHS lhs) {
 		// empty because it may be overridden (but does not have to)
 	}
@@ -636,18 +677,22 @@ public final class Translator extends BoogieVisitor {
 		return spec;
 	}
 
+	@Override
 	protected void visit(final RequiresSpecification spec) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final ModifiesSpecification spec) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final LoopInvariantSpecification spec) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final EnsuresSpecification spec) {
 		// empty because it may be overridden (but does not have to)
 	}
@@ -661,78 +706,97 @@ public final class Translator extends BoogieVisitor {
 		return attr;
 	}
 
+	@Override
 	protected void visit(final NamedAttribute attr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final Trigger attr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final WildcardExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final UnaryExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final StructConstructor expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final StructAccessExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final StringLiteral expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final RealLiteral expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final QuantifierExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final IntegerLiteral expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final IfThenElseExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final IdentifierExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final FunctionApplication expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final BooleanLiteral expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final BitVectorAccessExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final BitvecLiteral expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final BinaryExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final ArrayStoreExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
 
+	@Override
 	protected void visit(final ArrayAccessExpression expr) {
 		// empty because it may be overridden (but does not have to)
 	}
