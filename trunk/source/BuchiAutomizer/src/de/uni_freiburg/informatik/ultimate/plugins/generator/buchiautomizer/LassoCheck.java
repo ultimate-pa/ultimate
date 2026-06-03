@@ -179,8 +179,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private final PredicateFactoryForInterpolantAutomata mStateFactoryForInterpolantAutomaton;
 
-	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
-
 	public LassoCheck(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final SmtFunctionsAndAxioms smtSymbols, final BinaryStatePredicateManager bspm,
 			final NestedLassoRun<L, IPredicate> counterexample,
@@ -205,10 +203,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mCsToolkit = csToolkit;
 		mBspm = bspm;
 		mGetControlConfiguration = getControlConfiguration;
-		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
-		mModifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
-				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
-				.collect(Collectors.toSet());
 		mLassoCheckIdentifier = lassoCheckIdentifier;
 		mSmtSymbols = smtSymbols;
 		mRefinementStrategyFactory = refinementStrategyFactory;
@@ -428,7 +422,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private ILassoCheckResult<L> synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF, final boolean containsArrays,
-			final NestedLassoRun<L, IPredicate> counterexample) throws IOException {
+			final NestedLassoRun<L, IPredicate> counterexample, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda)
+			throws IOException {
 		if (mCsToolkit.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
@@ -447,7 +442,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// }
 
 		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mCsToolkit.getManagedScript(),
-				mModifiableGlobalsAtHonda, stemTF, loopTF);
+				modifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem && TRACE_CHECK_BASED_FIXPOINT_CHECK
 					&& !BuchiAutomizerUtils.isEmptyStem(counterexample.getStem())) {
@@ -472,7 +467,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			LassoAnalysis laNT = null;
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
-				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, mModifiableGlobalsAtHonda, mSmtSymbols,
+				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mSmtSymbols,
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
 						mServices, mSimplificationTechnique);
@@ -501,7 +496,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		LassoAnalysis laT = null;
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
-			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, mModifiableGlobalsAtHonda, mSmtSymbols,
+			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mSmtSymbols,
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
 					mServices, mSimplificationTechnique);
@@ -554,7 +549,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
 			final BspmResult bspmResult = mBspm.computePredicates(termArg, mRemoveSuperfluousSupportingInvariants,
-					stemTF, loopTF, mModifiableGlobalsAtHonda);
+					stemTF, loopTF, modifiableGlobalsAtHonda);
 			return new TerminationResult<>(bspmResult);
 		}
 		if (nonTermArgument != null) {
@@ -645,10 +640,15 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			return loop.getLength() <= stem.getLength() ? new InfeasibilityResult<>(loopCheck)
 					: new InfeasibilityResult<>(stemCheck);
 		}
+		final IPredicate honda = counterexample.getLoop().getStateAtPosition(0);
+		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda = PredicateUtils.streamLocations(honda)
+				.flatMap(x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
+				.collect(Collectors.toSet());
 		if (isStemInfeasible) {
 			assert mTryTwofoldRefinement;
 			final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
-			final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF, counterexample);
+			final ILassoCheckResult<L> loopTermination =
+					checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
 			if (loopTermination instanceof final TerminationResult<L> tr) {
 				return new TerminationAndInfeasibilityResult<>(stemCheck, tr.result());
 			}
@@ -659,7 +659,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (isInfeasible(concatCheck)) {
 			if (mTryTwofoldRefinement) {
 				final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
-				final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF, counterexample);
+				final ILassoCheckResult<L> loopTermination =
+						checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
 				if (loopTermination instanceof final TerminationResult<L> tr) {
 					return new TerminationAndInfeasibilityResult<>(concatCheck, tr.result());
 				}
@@ -673,12 +674,13 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// We want to avoid supporting invariants in possible yet the termination argument simplification of the
 		// LassoChecker is not optimal. Hence we first check only the loop, which guarantees that there are no
 		// supporting invariants.
-		final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF, counterexample);
+		final ILassoCheckResult<L> loopTermination =
+				checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
 		if (loopTermination instanceof TerminationResult<L>) {
 			return loopTermination;
 		}
 		final UnmodifiableTransFormula stemTF = computeTF(stem.getWord());
-		return checkLassoTermination(stemTF, loopTF, counterexample);
+		return checkLassoTermination(stemTF, loopTF, counterexample, modifiableGlobalsAtHonda);
 	}
 
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>>
@@ -727,23 +729,24 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	}
 
 	private ILassoCheckResult<L> checkLoopTermination(final UnmodifiableTransFormula loopTF,
-			final NestedLassoRun<L, IPredicate> counterexample) throws IOException {
+			final NestedLassoRun<L, IPredicate> counterexample, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda)
+			throws IOException {
 		final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 		if (containsArrays) {
 			// if there are array variables we will probably run in a huge
 			// DNF, so as a precaution we do not check and say unknown
 			return new UnknownResult<>();
 		}
-		return synthesize(false, null, loopTF, containsArrays, counterexample);
+		return synthesize(false, null, loopTF, containsArrays, counterexample, modifiableGlobalsAtHonda);
 	}
 
 	private ILassoCheckResult<L> checkLassoTermination(final UnmodifiableTransFormula stemTF,
-			final UnmodifiableTransFormula loopTF, final NestedLassoRun<L, IPredicate> counterexample)
-			throws IOException {
+			final UnmodifiableTransFormula loopTF, final NestedLassoRun<L, IPredicate> counterexample,
+			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) throws IOException {
 		assert loopTF != null;
 		final boolean containsArrays = SmtUtils.containsArrayVariables(stemTF.getFormula())
 				|| SmtUtils.containsArrayVariables(loopTF.getFormula());
-		return synthesize(true, stemTF, loopTF, containsArrays, counterexample);
+		return synthesize(true, stemTF, loopTF, containsArrays, counterexample, modifiableGlobalsAtHonda);
 	}
 
 	private static class SubtaskLassoCheckIdentifier extends TaskIdentifier {
