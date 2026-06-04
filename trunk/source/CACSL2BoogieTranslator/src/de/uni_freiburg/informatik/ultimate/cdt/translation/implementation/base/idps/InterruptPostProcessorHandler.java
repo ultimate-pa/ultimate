@@ -130,7 +130,7 @@ public class InterruptPostProcessorHandler {
 			final Map<Integer, String> numToISR = new HashMap<>();
 			final Map<Integer, String> numToReqEnable = new HashMap<>();
 
-			for (int i = 1; i <= 10; i++) {
+			for (int i = 1; i <= 9; i++) {
 				final String isrName = "isr" + 1 + "_gpio";
 
 				numToISR.put(i, isrName);
