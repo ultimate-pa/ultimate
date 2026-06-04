@@ -184,17 +184,17 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 			/*
 			 * var programPoints = icfg.getProgramPoints();
-			 * 
+			 *
 			 * for (Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
-			 * 
+			 *
 			 * for (Map.Entry<?, BoogieIcfgLocation> entry : innerMap.entrySet()) {
-			 * 
+			 *
 			 * var key = entry.getKey(); BoogieIcfgLocation value = entry.getValue();
-			 * 
+			 *
 			 * System.out.println(key); System.out.println(value);
-			 * 
+			 *
 			 * final var update = WitnessGhostUpdate.getAnnotation(value);
-			 * 
+			 *
 			 * mLogger.fatal("Update is %s", update); } }
 			 */
 		}
@@ -206,7 +206,8 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			// WitnessInvariant.getAnnotation(mProgramAndProof.getBoogieAst()).getInvariant());
 			// mLogger.warn("TEST TEST TEST");
 
-			Translator.translate(mProgramAndProof);
+			final Translator translation = new Translator(mProgramAndProof);
+			translation.translate();
 		}
 
 		return false;

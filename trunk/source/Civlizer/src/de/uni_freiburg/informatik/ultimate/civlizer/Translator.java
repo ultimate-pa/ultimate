@@ -1,4 +1,29 @@
-
+/*
+ * Copyright (C) 2026 Dominik Klumpp (klumpp@lix.polytechnique.fr)
+ * Copyright (C) 2026 École Polytechnique
+ *
+ * This file is part of the ULTIMATE Civlizer plug-in.
+ *
+ * The ULTIMATE Civlizer plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Civlizer plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Civlizer plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Civlizer plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Civlizer plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.io.IOException;
@@ -13,76 +38,71 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 
+/**
+ * Translates an Ultimate Boogie AST and its associated proof annotations into a CIVL program representation and write
+ * the result in a file.
+ *
+ * <p>
+ * This class traverses the Boogie abstract syntax tree (AST), extracts thread information, invariants, ghost variables,
+ * and proof annotations, and generates the corresponding Civl code as a file.
+ * </p>
+ *
+ * <p>
+ * The translation process includes:
+ * <ul>
+ * <li>Declaration of thread identifiers and auxiliary types.</li>
+ * <li>Generation of ghost variables from Owicki-Gries proofs.</li>
+ * <li>Creation of thread control-flow procedures (fork, join, terminate).</li>
+ * <li>Translation of Boogie declarations and procedures.</li>
+ * <li>Insertion of yield invariants derived from witness annotations.</li>
+ * </ul>
+ * </p>
+ *
+ * <p>
+ * The resulting CIVL program is returned as a string and can be used for subsequent verification steps.
+ * </p>
+ *
+ * @author Gabriel Tréca (gabriel.treca@polytechnique.edu)
+ */
 public final class Translator extends BoogieVisitor {
 
 	private final ProgramAndProof mProgramAndProof;
-	private StringBuilderWriter mWriter;
+	private final StringBuilderWriter mWriter;
 	private final BoogieOutput mOutput;
 
-	Translator(final ProgramAndProof programAndProof) {
+	/**
+	 * Creates a translator for the specified program and proof. Preprocesses the input and initializes the output
+	 * writer.
+	 *
+	 * @param programAndProof
+	 *            the program and proof to translate
+	 */
+	public Translator(final ProgramAndProof programAndProof) {
 		programAndProof.preprocess();
 		mProgramAndProof = programAndProof;
 		try {
@@ -94,24 +114,27 @@ public final class Translator extends BoogieVisitor {
 	}
 
 	/**
-	 * translate the Ultimate boogie Ast into a String representing the resulting Civl program
+	 * Translates the given Boogie program and proof into a Civl program.
+	 *
+	 * @param programAndProof
+	 *            the Boogie program together with its proof annotations and thread information
+	 * @return a string containing the generated Civl program
 	 */
-	public static String translate(final ProgramAndProof programAndProof) {
-		final Translator translation = new Translator(programAndProof);
+	public String translate() {
 
-		translation.addTidsType();
+		addTidsType();
 
-		translation.addGhostVar();
+		addGhostVar();
 
-		translation.mWriter.println("var {:layer 0,2} {:linear} join_pool : Set (One Tid);\n");
+		mWriter.println("var {:layer 0,2} {:linear} join_pool : Set (One Tid);\n");
 
-		translation.addThreadControlFlow();
+		addThreadControlFlow();
 
-		for (final Declaration elem : programAndProof.getBoogieAst().getDeclarations()) {
-			translation.processDeclaration(elem);
+		for (final Declaration elem : mProgramAndProof.getBoogieAst().getDeclarations()) {
+			processDeclaration(elem);
 		}
 
-		return translation.toString();
+		return toString();
 	}
 
 	private void addStringList(final List<String> list, final String sep) {
@@ -142,7 +165,7 @@ public final class Translator extends BoogieVisitor {
 			for (int i = 0; i < proof.getGhostVariables().size(); i++) {
 				mWriter.print("var {:layer 2,2} ~ghost~");
 				mWriter.print(String.valueOf(i));
-				mWriter.print(" : int;\n\n"); // ??? TODO
+				mWriter.print(" : int;\n\n"); // ??? TODO improve
 			}
 		}
 	}
@@ -407,67 +430,13 @@ public final class Translator extends BoogieVisitor {
 		}
 	}
 
-	@Override
-	protected void visit(final Procedure decl) {
-		// test
-		final Map<ILocation, Expression> map = mProgramAndProof.getAnnotationMap(decl.getIdentifier());
+	void writeBody(final Procedure decl) {
+		final BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
 
-		int counter = 0;
-		final Set<Tid> tidNeedsLinearity = new HashSet<>(mProgramAndProof.getTemplateVisitor().getTids());
+		mOutput.printBody(transformer.transformBody(decl.getIdentifier(), decl.getBody()));
+	}
 
-		// initial invariant BEFORE first statement
-		addYieldInvariants(decl.getIdentifier(),
-				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier()), null,
-				tidNeedsLinearity, counter);
-
-		counter++;
-
-		// for (Statement statement : decl.getBody().getBlock()) {
-		for (final Statement stmt : decl.getBody().getBlock()) {
-
-			// skip return for now
-			if (stmt instanceof ReturnStatement) {
-				continue;
-			}
-
-			final Expression invariant = map.get(stmt.getLoc());
-			// (WitnessInvariant.getAnnotation(stmt) == null) ? null
-			// : (Expression) WitnessInvariant.getAnnotation(stmt).getInvariant();
-
-			if (mProgramAndProof.getTemplateVisitor().containsGlobalVariables(stmt)) {
-				addStatement(decl.getIdentifier(), stmt, tidNeedsLinearity, counter);
-			}
-
-			if (stmt instanceof final JoinStatement joinstmt) {
-				tidNeedsLinearity.add(new Tid(joinstmt.getThreadID()));
-			}
-
-			// ghost var update here
-
-			System.out.println("TEST " + invariant);
-			System.out.println("TEST2 " + stmt);
-			addYieldInvariants(decl.getIdentifier(), invariant, stmt, tidNeedsLinearity, counter);
-
-			tidNeedsLinearity.clear();
-			counter++;
-		}
-
-		addYieldInvariants(decl.getIdentifier(),
-				mProgramAndProof.getTemplateVisitor().getFinalAnnotationMap().get(decl.getIdentifier()), null,
-				tidNeedsLinearity, counter);
-		counter++;
-
-		addYieldInvariants(decl.getIdentifier(),
-				mProgramAndProof.getTemplateVisitor().getExitAnnotationMap().get(decl.getIdentifier()), null,
-				tidNeedsLinearity, counter);
-
-		/* Write the yield procedure itself */
-		// if (decl.getInParams() != null || decl.getOutParams() != null) {
-		// System.err.println("fatal procedure take no parameter for now");
-		// System.exit(1);
-		// }
-
-		/* Write Thread template */
+	void writeProcedure(final Procedure decl) {
 		final BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
 
 		mWriter.print("yield procedure {:layer 2} ");
@@ -504,300 +473,68 @@ public final class Translator extends BoogieVisitor {
 
 		mWriter.println("{");
 
-		// for (VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
-		// mWriter.print(BoogiePrettyPrinter.print(varDecl));
-		// }
-		mWriter.print("\n");
-		mOutput.printBody(transformer.transformBody(decl.getIdentifier(), decl.getBody()));
+		writeBody(decl);
+
 		mWriter.print("}\n\n");
 
 		mWriter.flush(); // automatic flush ? TODO
 	}
 
 	@Override
-	protected void visit(final TypeDeclaration decl) {
-		// empty because it may be overridden (but does not have to)
-	}
+	protected void visit(final Procedure decl) {
+		// test
+		final Map<ILocation, Expression> map = mProgramAndProof.getAnnotationMap(decl.getIdentifier());
 
-	@Override
-	protected ASTType processType(final ASTType type) {
-		switch (type) {
-		case final ArrayType array -> visit(array);
-		case final NamedType named -> visit(named);
-		case final PrimitiveType primitive -> visit(primitive);
-		case final StructType struct -> visit(struct);
+		int counter = 0;
+		final Set<Tid> tidNeedsLinearity = new HashSet<>(mProgramAndProof.getTemplateVisitor().getTids());
+
+		// initial invariant BEFORE first statement
+		addYieldInvariants(decl.getIdentifier(),
+				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier()), null,
+				tidNeedsLinearity, counter);
+
+		counter++;
+
+		// for (Statement statement : decl.getBody().getBlock()) {
+		for (final Statement stmt : decl.getBody().getBlock()) {
+
+			// skip return for now
+			if (stmt instanceof ReturnStatement) {
+				continue;
+			}
+
+			final Expression invariant = map.get(stmt.getLoc());
+			// final ILocation loc = BoogieIcfgContainer.getAnnotation(stmt);
+			// final Expression invariant = (WitnessInvariant.getAnnotation(stmt) == null) ? null
+			// : (Expression) WitnessInvariant.getAnnotation(stmt).getInvariant();
+
+			if (mProgramAndProof.getTemplateVisitor().containsGlobalVariables(stmt)) {
+				addStatement(decl.getIdentifier(), stmt, tidNeedsLinearity, counter);
+			}
+
+			if (stmt instanceof final JoinStatement joinstmt) {
+				tidNeedsLinearity.add(new Tid(joinstmt.getThreadID()));
+			}
+
+			// ghost var update here
+
+			System.out.println("TEST " + invariant);
+			System.out.println("TEST2 " + stmt);
+			addYieldInvariants(decl.getIdentifier(), invariant, stmt, tidNeedsLinearity, counter);
+
+			tidNeedsLinearity.clear();
+			counter++;
 		}
-		return type;
-	}
 
-	@Override
-	protected void visit(final ArrayType type) {
-		// empty because it may be overridden (but does not have to)
-	}
+		addYieldInvariants(decl.getIdentifier(),
+				mProgramAndProof.getTemplateVisitor().getFinalAnnotationMap().get(decl.getIdentifier()), null,
+				tidNeedsLinearity, counter);
+		counter++;
 
-	@Override
-	protected void visit(final NamedType type) {
-		// empty because it may be overridden (but does not have to)
-	}
+		addYieldInvariants(decl.getIdentifier(),
+				mProgramAndProof.getTemplateVisitor().getExitAnnotationMap().get(decl.getIdentifier()), null,
+				tidNeedsLinearity, counter);
 
-	@Override
-	protected void visit(final PrimitiveType type) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final StructType type) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected Statement processStatement(final Statement statement) {
-		switch (statement) {
-		case final AssertStatement assertStmt -> visit(assertStmt);
-		case final AssignmentStatement assignStmt -> visit(assignStmt);
-		case final AssumeStatement assumeStmt -> visit(assumeStmt);
-		case final AtomicStatement atomicStmt -> visit(atomicStmt);
-		case final BreakStatement breakStmt -> visit(breakStmt);
-		case final CallStatement callStmt -> visit(callStmt);
-		case final ForkStatement forkStmt -> visit(forkStmt);
-		case final GotoStatement gotoStmt -> visit(gotoStmt);
-		case final HavocStatement havocStmt -> visit(havocStmt);
-		case final IfStatement ifStmt -> visit(ifStmt);
-		case final JoinStatement joinStmt -> visit(joinStmt);
-		case final Label label -> visit(label);
-		case final ReturnStatement returnStmt -> visit(returnStmt);
-		case final WhileStatement whileStmt -> visit(whileStmt);
-		}
-		return statement;
-	}
-
-	@Override
-	protected void visit(final WhileStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final AtomicStatement statment) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final ReturnStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final Label statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final IfStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final HavocStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final GotoStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final CallStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final ForkStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final JoinStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final BreakStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final AssignmentStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final AssumeStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final AssertStatement statement) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-		switch (lhs) {
-		case final ArrayLHS array -> visit(array);
-		case final StructLHS struct -> visit(struct);
-		case final VariableLHS variable -> visit(variable);
-		}
-		return lhs;
-	}
-
-	@Override
-	protected void visit(final VariableLHS lhs) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final StructLHS lhs) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final ArrayLHS lhs) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected Specification processSpecification(final Specification spec) {
-		switch (spec) {
-		case final EnsuresSpecification ensures -> visit(ensures);
-		case final LoopInvariantSpecification loopInvariant -> visit(loopInvariant);
-		case final ModifiesSpecification modifies -> visit(modifies);
-		case final RequiresSpecification requires -> visit(requires);
-		}
-		return spec;
-	}
-
-	@Override
-	protected void visit(final RequiresSpecification spec) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final ModifiesSpecification spec) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final LoopInvariantSpecification spec) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final EnsuresSpecification spec) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected <T extends Attribute> T processAttribute(final T attr) {
-		switch (attr) {
-		case final NamedAttribute named -> visit(named);
-		case final Trigger trigger -> visit(trigger);
-		}
-		return attr;
-	}
-
-	@Override
-	protected void visit(final NamedAttribute attr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final Trigger attr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final WildcardExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final UnaryExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final StructConstructor expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final StructAccessExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final StringLiteral expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final RealLiteral expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final QuantifierExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final IntegerLiteral expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final IfThenElseExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final IdentifierExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final FunctionApplication expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final BooleanLiteral expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final BitVectorAccessExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final BitvecLiteral expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final BinaryExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final ArrayStoreExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final ArrayAccessExpression expr) {
-		// empty because it may be overridden (but does not have to)
+		writeProcedure(decl);
 	}
 }

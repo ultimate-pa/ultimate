@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2026 Dominik Klumpp (klumpp@lix.polytechnique.fr)
+ * Copyright (C) 2026 École Polytechnique
+ *
+ * This file is part of the ULTIMATE Civlizer plug-in.
+ *
+ * The ULTIMATE Civlizer plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Civlizer plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Civlizer plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Civlizer plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Civlizer plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.ArrayList;
@@ -12,8 +38,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -23,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
@@ -35,30 +58,43 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
+/**
+ * Visitor over a Boogie AST that extracts thread-related metadata, variable usage information and annotation data from
+ * a program.
+ *
+ * <p>
+ * This visitor builds several internal mappings while traversing a Boogie program, including:
+ * <ul>
+ * <li>Global and procedure-local variable usage per statement location</li>
+ * <li>Procedure parameter usage derived from statements</li>
+ * <li>Thread identifiers (TIDs) associated or used in thread template</li>
+ * <li>Entry, exit, and final invariants extracted from witness annotations</li>
+ * </ul>
+ *
+ * <p>
+ * The collected information is later used by the Civlizer analysis pipeline to reason about concurrency structure and
+ * thread associations.
+ *
+ * <p>
+ * Thread identifiers are represented using {@link Tid}, and are tracked in association, usage, and global TID sets.
+ */
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private final BoogieIcfgContainer mIcfg;
@@ -398,51 +434,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(final StructLHS lhs) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final ArrayLHS lhs) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final RequiresSpecification spec) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final ModifiesSpecification spec) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final LoopInvariantSpecification spec) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final EnsuresSpecification spec) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final NamedAttribute attr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final Trigger attr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
-	protected void visit(final WildcardExpression expr) {
-		// empty because it may be overridden (but does not have to)
-	}
-
-	@Override
 	protected void visit(final UnaryExpression expr) {
 		processExpression(expr.getExpr());
 	}
@@ -503,14 +494,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	protected void visit(final BinaryExpression expr) {
 		processExpression(expr.getLeft());
 		processExpression(expr.getRight());
-	}
-
-	@Override
-	protected void visit(final ArrayStoreExpression expr) {
-
-		// processExpression(expr.getArray());
-		// processExpression(expr.getIndex());
-		// processExpression(expr.getValue());
 	}
 
 	@Override

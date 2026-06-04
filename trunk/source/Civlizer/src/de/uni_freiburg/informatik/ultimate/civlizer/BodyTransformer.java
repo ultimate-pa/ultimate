@@ -1,15 +1,37 @@
+/*
+ * Copyright (C) 2026 Dominik Klumpp (klumpp@lix.polytechnique.fr)
+ * Copyright (C) 2026 École Polytechnique
+ *
+ * This file is part of the ULTIMATE Civlizer plug-in.
+ *
+ * The ULTIMATE Civlizer plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Civlizer plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Civlizer plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Civlizer plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Civlizer plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -17,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -26,30 +47,52 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
+/**
+ * Transforms Boogie procedure bodies into their Civl thread template bodies.
+ *
+ * <p>
+ * This transformer rewrites statements of a procedure in order to introduce the statement representation in Civl and
+ * proof.
+ * </p>
+ *
+ * <p>
+ * In particular, the transformation:
+ * <ul>
+ * <li>Introduces calls to generated atomic actions for statements accessing shared state.</li>
+ * <li>Inserts yield invariant.</li>
+ * <li>Rewrites thread-management statements such as {@code fork} and {@code join} into their Civl concurrency-flow
+ * operation calls.</li>
+ * <li>Injects ghost-variable updates generated from proof annotations.</li>
+ * </ul>
+ * </p>
+ *
+ * <p>
+ * The transformation is performed procedure by procedure while maintaining statement numbering used to reference
+ * generated yield procedures and atomic actions.
+ * </p>
+ *
+ * @author Gabriel Tréca (gabriel.treca@polytechnique.edu)
+ */
 final class BodyTransformer extends BoogieTransformer {
 
 	private final ProgramAndProof mProgramAndProof;
 	private String mCurrentProcedure;
 	private int mAtomicStatementCounter;
 
+	/**
+	 * Creates a new body transformer.
+	 *
+	 * @param programAndProof
+	 *            the program together with its proof annotations and thread information
+	 */
 	BodyTransformer(final ProgramAndProof programAndProof) {
 		mProgramAndProof = programAndProof;
 		mCurrentProcedure = null;
@@ -72,12 +115,30 @@ final class BodyTransformer extends BoogieTransformer {
 				new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null))).toList();
 	}
 
+	/**
+	 * Transforms the body of a procedure into its CIVL representation.
+	 *
+	 * @param name
+	 *            the procedure name
+	 * @param body
+	 *            the original Boogie procedure body
+	 * @return the transformed body
+	 */
 	Body transformBody(final String name, final Body body) {
 		setCurrentProcedure(name);
 		// TO BE improved
 		return processBody(body);
 	}
 
+	/**
+	 * Transforms a sequence of statements belonging to a procedure.
+	 *
+	 * @param name
+	 *            the procedure name
+	 * @param statements
+	 *            the statements to transform
+	 * @return the transformed statements
+	 */
 	Statement[] transformStatements(final String name, final Statement[] statements) {
 		setCurrentProcedure(name);
 
@@ -85,172 +146,22 @@ final class BodyTransformer extends BoogieTransformer {
 	}
 
 	/**
-	 * Process an array of AST type. This implementation calls processType on all elements
+	 * Rewrites the statements of the current procedure.
 	 *
-	 * @param types
-	 *            the types to process.
-	 * @return the processed types.
-	 */
-	@Override
-	protected ASTType[] processTypes(final ASTType[] types) {
-		boolean changed = false;
-		final ASTType[] newTypes = new ASTType[types.length];
-		for (int i = 0; i < types.length; i++) {
-			newTypes[i] = processType(types[i]);
-			if (newTypes[i] != types[i]) {
-				changed = true;
-			}
-		}
-		return changed ? newTypes : types;
-	}
-
-	/**
-	 * Process a AST type. This implementation recurses on the sub types.
-	 *
-	 * @param type
-	 *            the type to process.
-	 * @return the processed type.
-	 */
-	@Override
-	protected ASTType processType(final ASTType type) {
-		ASTType newType = null;
-		if (type instanceof ArrayType) {
-			final ArrayType arrtype = (ArrayType) type;
-			final ASTType[] indexTypes = arrtype.getIndexTypes();
-			final ASTType valueType = arrtype.getValueType();
-			final ASTType[] newIndexTypes = processTypes(indexTypes);
-			final ASTType newValueType = processType(valueType);
-			if (newIndexTypes != indexTypes || newValueType != valueType) {
-				newType = new ArrayType(arrtype.getLocation(), arrtype.getBoogieType(), arrtype.getTypeParams(),
-						newIndexTypes, newValueType);
-			}
-		} else if (type instanceof NamedType) {
-			final NamedType ntype = (NamedType) type;
-			final ASTType[] argTypes = ntype.getTypeArgs();
-			final ASTType[] newArgTypes = processTypes(argTypes);
-			if (newArgTypes != argTypes) {
-				newType = new NamedType(ntype.getLocation(), ntype.getBoogieType(), ntype.getName(), newArgTypes);
-			}
-		}
-		if (newType == null) {
-			return type;
-		}
-		ModelUtils.copyAnnotations(type, newType);
-		return newType;
-	}
-
-	/**
-	 * Process an array of variable list as it appears in function- and variable-specifications. This implementation
-	 * calls processVarList on all elements.
-	 *
-	 * @param vls
-	 *            the variable lists
-	 * @return the processed variable lists.
-	 */
-	@Override
-	protected VarList[] processVarLists(final VarList[] vls) {
-		boolean changed = false;
-		final VarList[] newVls = new VarList[vls.length];
-		for (int i = 0; i < vls.length; i++) {
-			newVls[i] = processVarList(vls[i]);
-			if (newVls[i] != vls[i]) {
-				changed = true;
-			}
-		}
-		return changed ? newVls : vls;
-	}
-
-	/**
-	 * Process a variable list as it appears in function- and variable-specifications. This implementation processes the
-	 * where clause and the type.
-	 *
-	 * @param vl
-	 *            the variable list
-	 * @return the processed variable list.
-	 */
-	@Override
-	protected VarList processVarList(final VarList vl) {
-		final ASTType type = vl.getType();
-		final ASTType newType = processType(type);
-		final Expression where = vl.getWhereClause();
-		final Expression newWhere = where != null ? processExpression(where) : null;
-		if (newType != type || newWhere != where) {
-			final VarList newVl = new VarList(vl.getLocation(), vl.getIdentifiers(), newType, newWhere);
-			ModelUtils.copyAnnotations(vl, newVl);
-			return newVl;
-		}
-		return vl;
-	}
-
-	/**
-	 * Process the body of an implementation. Processes the contained variable declarations and statements.
-	 *
-	 * @param body
-	 *            the implementation body.
-	 * @return the processed body.
-	 */
-	@Override
-	protected Body processBody(final Body body) {
-		final VariableDeclaration[] locals = body.getLocalVars();
-		final VariableDeclaration[] newLocals = processLocalVariableDeclarations(locals);
-
-		final Statement[] statements = body.getBlock();
-		final Statement[] newStatements = processStatements(statements);
-		if (newLocals != locals || newStatements != statements) {
-			final Body newBody = new Body(body.getLocation(), newLocals, newStatements);
-			ModelUtils.copyAnnotations(body, newBody);
-			return newBody;
-		}
-		return body;
-	}
-
-	/**
-	 * Process a local variable declaration. Global declarations are processed by processDeclaration.
-	 *
-	 * @param local
-	 *            The local variable declaration.
-	 * @return the processed declaration.
-	 */
-	@Override
-	protected VariableDeclaration processLocalVariableDeclaration(final VariableDeclaration local) {
-		final Attribute[] attrs = local.getAttributes();
-		final Attribute[] newAttrs = processAttributes(attrs);
-		final VarList[] vl = local.getVariables();
-		final VarList[] newVl = processVarLists(vl);
-		if (vl != newVl || attrs != newAttrs) {
-			final VariableDeclaration newLocal = new VariableDeclaration(local.getLocation(), newAttrs, newVl);
-			ModelUtils.copyAnnotations(local, newLocal);
-			return newLocal;
-		}
-		return local;
-	}
-
-	/**
-	 * Process array of local variable declarations. This is called for implementations.
-	 *
-	 * @param locals
-	 *            the array of variable declarations
-	 * @return the processed declarations.
-	 */
-	@Override
-	protected VariableDeclaration[] processLocalVariableDeclarations(final VariableDeclaration[] locals) {
-		boolean changed = false;
-		final VariableDeclaration[] newLocals = new VariableDeclaration[locals.length];
-		for (int i = 0; i < locals.length; i++) {
-			newLocals[i] = processLocalVariableDeclaration(locals[i]);
-			if (newLocals[i] != locals[i]) {
-				changed = true;
-			}
-		}
-		return changed ? newLocals : locals;
-	}
-
-	/**
-	 * Process the statements. Calls processStatement for all statements in the array.
+	 * <p>
+	 * Depending on the accessed variables and the statement kind, statements may be:
+	 * <ul>
+	 * <li>left unchanged,</li>
+	 * <li>annotated with Civl layers,</li>
+	 * <li>replaced by calls to generated atomic actions,</li>
+	 * <li>rewritten into fork/join operations,</li>
+	 * <li>followed by calls to generated yield invariants.</li>
+	 * </ul>
+	 * </p>
 	 *
 	 * @param statements
-	 *            the statement to process.
-	 * @return processed statements.
+	 *            the statements to transform
+	 * @return the transformed statements
 	 */
 	@Override
 	protected Statement[] processStatements(final Statement[] statements) {
@@ -356,12 +267,16 @@ final class BodyTransformer extends BoogieTransformer {
 	}
 
 	/**
-	 * Process the statement. Calls processExpression for all contained expressions and recurses for while and if
-	 * statements.
+	 * Rewrites a single statement into its Civl equivalent.
+	 *
+	 * <p>
+	 * Statements that interact with shared state are replaced by calls to generated atomic actions, while
+	 * thread-management statements are translated into Civl fork and join procedures.
+	 * </p>
 	 *
 	 * @param statement
-	 *            the statement to process.
-	 * @return processed statement.
+	 *            the statement to transform
+	 * @return the transformed statement
 	 */
 	@Override
 	protected Statement processStatement(final Statement statement) {
@@ -440,214 +355,5 @@ final class BodyTransformer extends BoogieTransformer {
 		}
 		ModelUtils.copyAnnotations(statement, newStatement);
 		return newStatement;
-	}
-
-	/**
-	 * Process the loop invariant specifications. Calls processExpression for all loop invariants.
-	 *
-	 * @param specs
-	 *            the invariant specifications to process.
-	 * @return processed specifications.
-	 */
-	@Override
-	protected LoopInvariantSpecification[] processLoopSpecifications(final LoopInvariantSpecification[] specs) {
-		boolean changed = false;
-		final LoopInvariantSpecification[] newSpecs = new LoopInvariantSpecification[specs.length];
-		for (int i = 0; i < newSpecs.length; i++) {
-			final Expression expr = specs[i].getFormula();
-			final Expression newExpr = processExpression(expr);
-			if (expr != newExpr) {
-				changed = true;
-				newSpecs[i] = new LoopInvariantSpecification(specs[i].getLocation(), specs[i].isFree(), newExpr);
-				ModelUtils.copyAnnotations(specs[i], newSpecs[i]);
-			} else {
-				newSpecs[i] = specs[i];
-			}
-		}
-		return changed ? newSpecs : specs;
-	}
-
-	/**
-	 * Process a left hand side (of an assignement). Recurses for array left hand side and calls processExpression for
-	 * all contained expressions.
-	 *
-	 * @param lhs
-	 *            the left hand side to process.
-	 * @return processed left hand side.
-	 */
-	@Override
-	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-		if (lhs instanceof final ArrayLHS alhs) {
-			final LeftHandSide array = alhs.getArray();
-			final LeftHandSide newArray = processLeftHandSide(array);
-			final Expression[] indices = alhs.getIndices();
-			final Expression[] newIndices = processExpressions(indices);
-			if (array != newArray || indices != newIndices) {
-				final LeftHandSide newLhs = new ArrayLHS(lhs.getLocation(), alhs.getType(), newArray, newIndices);
-				ModelUtils.copyAnnotations(lhs, newLhs);
-				return newLhs;
-			}
-		} else if (lhs instanceof final StructLHS slhs) {
-			final LeftHandSide struct = slhs.getStruct();
-			final LeftHandSide newStruct = processLeftHandSide(struct);
-			if (newStruct != struct) {
-				return new StructLHS(lhs.getLocation(), slhs.getType(), newStruct, slhs.getField());
-			}
-		}
-		return lhs;
-	}
-
-	/**
-	 * Process the left hand sides (of an assignment). Calls processLeftHandSide for each element in the array.
-	 *
-	 * @param lhs
-	 *            the left hand sides to process.
-	 * @return processed left hand sides.
-	 */
-	@Override
-	protected LeftHandSide[] processLeftHandSides(final LeftHandSide[] lhs) {
-		boolean changed = false;
-		final LeftHandSide[] newLhs = new LeftHandSide[lhs.length];
-		for (int i = 0; i < newLhs.length; i++) {
-			newLhs[i] = processLeftHandSide(lhs[i]);
-			if (newLhs[i] != lhs[i]) {
-				changed = true;
-			}
-		}
-		return changed ? newLhs : lhs;
-	}
-
-	/**
-	 * Process the left hand sides (of a call or havoc, or modifies specification). Default implementation calls
-	 * processLeftHandSides and casts back to VariableLHS.
-	 *
-	 * @param lhs
-	 *            the left hand sides to process.
-	 * @return processed left hand sides.
-	 */
-	@Override
-	protected VariableLHS[] processVariableLHSs(final VariableLHS[] lhs) {
-		final LeftHandSide[] newLhs = processLeftHandSides(lhs);
-		if (newLhs == lhs) {
-			return lhs;
-		}
-		final VariableLHS[] nnewLhs = new VariableLHS[newLhs.length];
-		System.arraycopy(newLhs, 0, nnewLhs, 0, newLhs.length);
-		return nnewLhs;
-	}
-
-	/**
-	 * Process a procedure specification. Recursively calls processExpression for ensures and requires specifications.
-	 * This must not be called for LoopInvariantSpecifications.
-	 *
-	 * @param spec
-	 *            the specification to process.
-	 * @return processed specification.
-	 */
-	@Override
-	protected Specification processSpecification(final Specification spec) {
-		Specification newSpec = null;
-		if (spec instanceof final EnsuresSpecification ensures) {
-			final Expression expr = ensures.getFormula();
-			final Expression newExpr = processExpression(expr);
-			if (expr != newExpr) {
-				newSpec = new EnsuresSpecification(spec.getLocation(), spec.isFree(), newExpr);
-			}
-		} else if (spec instanceof final RequiresSpecification requires) {
-			final Expression expr = requires.getFormula();
-			final Expression newExpr = processExpression(expr);
-			if (expr != newExpr) {
-				newSpec = new RequiresSpecification(spec.getLocation(), spec.isFree(), newExpr);
-			}
-		} else if (spec instanceof final ModifiesSpecification modifies) {
-			final VariableLHS[] ids = modifies.getIdentifiers();
-			final VariableLHS[] newIds = processVariableLHSs(ids);
-			if (ids != newIds) {
-				newSpec = new ModifiesSpecification(spec.getLocation(), spec.isFree(), newIds);
-			}
-		}
-		if (newSpec == null) {
-			return spec;
-		}
-		ModelUtils.copyAnnotations(spec, newSpec);
-		return newSpec;
-	}
-
-	/**
-	 * Process the procedure specifications. Calls processSpecification for each element in the array. This must not be
-	 * called for LoopInvariantSpecifications.
-	 *
-	 * @param specs
-	 *            the specifications to process.
-	 * @return processed specifications.
-	 */
-	@Override
-	protected Specification[] processSpecifications(final Specification[] specs) {
-		boolean changed = false;
-		final Specification[] newSpecs = new Specification[specs.length];
-		for (int i = 0; i < newSpecs.length; i++) {
-			newSpecs[i] = processSpecification(specs[i]);
-			if (newSpecs[i] != specs[i]) {
-				changed = true;
-			}
-		}
-		return changed ? newSpecs : specs;
-	}
-
-	/**
-	 * Process the attribute. Calls processExpression for all contained expressions. This must handle all kinds of
-	 * attributes, including triggers.
-	 *
-	 * @param attr
-	 *            the attribute to process.
-	 * @return processed attribute.
-	 */
-	@Override
-	@SuppressWarnings("unchecked")
-	protected <T extends Attribute> T processAttribute(final T attr) {
-		T newAttr = null;
-		if (attr instanceof final Trigger trigger) {
-			final Expression[] exprs = trigger.getTriggers();
-			final Expression[] newExprs = processExpressions(exprs);
-			if (newExprs != exprs) {
-				return (T) new Trigger(attr.getLocation(), newExprs);
-			}
-		} else if (attr instanceof final NamedAttribute named) {
-			final Expression[] exprs = named.getValues();
-			final Expression[] newExprs = processExpressions(exprs);
-			if (newExprs != exprs) {
-				newAttr = (T) new NamedAttribute(attr.getLocation(), ((NamedAttribute) attr).getName(), newExprs);
-			}
-		}
-		if (newAttr == null) {
-			return attr;
-		}
-		ModelUtils.copyAnnotations(attr, newAttr);
-		return newAttr;
-	}
-
-	/**
-	 * Process the attributes. Calls processAttribute for each element in the array. This must handle all kinds of
-	 * attributes, including triggers.
-	 *
-	 * @param attributes
-	 *            the attributes to process.
-	 * @return processed attributes.
-	 */
-	@Override
-	protected <T extends Attribute> T[] processAttributes(final T[] attributes) {
-		if (attributes == null) {
-			return attributes;
-		}
-		boolean changed = false;
-
-		final T[] newAttrs = Arrays.copyOf(attributes, attributes.length);
-		for (int i = 0; i < attributes.length; i++) {
-			newAttrs[i] = processAttribute(attributes[i]);
-			if (newAttrs[i] != attributes[i]) {
-				changed = true;
-			}
-		}
-		return changed ? newAttrs : attributes;
 	}
 }
