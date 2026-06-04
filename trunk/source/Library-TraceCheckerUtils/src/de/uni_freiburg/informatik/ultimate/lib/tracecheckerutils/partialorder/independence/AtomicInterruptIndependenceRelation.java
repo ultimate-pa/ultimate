@@ -83,17 +83,9 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 		if (fromSameThread(a, b)) {
 			return Dependence.DEPENDENT;
 		} else if (isNonISRTransition(a) && isNonISRTransition(b)) {
-			if (isIsrPredecessor(a) || isIsrPredecessor(b)) {
-				return Dependence.DEPENDENT;
-			}
 			return mUnderlying.isIndependent(null, a, b);
 		}
 		return getInterruptDependence(a, b);
-	}
-
-	private boolean isIsrPredecessor(final L transition) {
-		final var succTransitions = transition.getTarget().getOutgoingEdges();
-		return !succTransitions.stream().anyMatch(e -> InterruptAnnotations.hasAnnotation(e));
 	}
 
 	private boolean isNonISRTransition(final L a) {

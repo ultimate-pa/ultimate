@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -101,13 +101,30 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 	 */
 	private boolean isIdpTransition(final OutgoingInternalTransition<L, S> transition, final S state) {
 		final var stateIcfgLocations = List.of(mState2LocationsFunction.apply(state));
-		final var isrIcfgLocations = stateIcfgLocations.stream().filter(l -> InterruptAnnotations.hasAnnotation(l))
-				.collect(Collectors.toList());
+		final var innerIsrLocations = new ArrayList<IcfgLocation>(stateIcfgLocations.size());
+		for (final IcfgLocation IcfgLocation : stateIcfgLocations) {
+			if (!InterruptAnnotations.hasAnnotation(IcfgLocation)) {
+				continue;
+			}
+			final var predecessors = IcfgLocation.getIncomingNodes();
+			boolean isIsrInnerNode = true;
+			for (final IcfgLocation pred : predecessors) {
+				if (!InterruptAnnotations.hasAnnotation(pred)) {
+					isIsrInnerNode = false;
+					break;
+				}
+			}
+			if (isIsrInnerNode) {
+				innerIsrLocations.add(IcfgLocation);
+			}
+			assert isIsrInnerNode || predecessors.stream().allMatch(l -> !InterruptAnnotations.hasAnnotation(l))
+					: "CFG node is an inner ISR-location and starting location at the same time!";
+		}
 		// If no ISR is empty, no transition gets filtered out
-		if (isrIcfgLocations.isEmpty()) {
+		if (innerIsrLocations.isEmpty()) {
 			return true;
 		}
-		final var singleIsrLocation = DataStructureUtils.getOneAndOnly(isrIcfgLocations, "active isr");
+		final var singleIsrLocation = DataStructureUtils.getOneAndOnly(innerIsrLocations, "active isr");
 		final var letter = transition.getLetter();
 
 		// If one (and only one) ISR is active, the transition has to be part of said ISR
