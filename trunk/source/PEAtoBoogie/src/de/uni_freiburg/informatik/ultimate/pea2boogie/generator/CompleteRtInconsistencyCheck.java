@@ -445,7 +445,7 @@ public class CompleteRtInconsistencyCheck {
 		}
 	}
 
-	private static class UnionFind {
+	static class UnionFind {
 
 		private final int[] parent;
 		private final int[] rank;

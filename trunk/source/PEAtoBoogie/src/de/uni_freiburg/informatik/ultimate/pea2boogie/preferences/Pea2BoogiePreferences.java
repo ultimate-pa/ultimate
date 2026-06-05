@@ -141,7 +141,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final int DEF_LOCAL_UNREALIZABILITY_RANGE = 2;
 	private static final String DESC_LOCAL_UNREALIZABILITY_RANGE = """
 			How many requirements should be checked for local unrealizability at the same time? \
-			Allows only positive integer values.""";
+			0 for all""";
 
 	public enum PEATransformerMode {
 		REQ_CHECK, REQ_TEST, REQ_RED

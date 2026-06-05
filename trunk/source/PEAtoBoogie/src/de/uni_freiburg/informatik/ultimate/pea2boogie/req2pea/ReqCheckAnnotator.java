@@ -161,8 +161,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckLocalUnrealizability = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_LOCAL_UNREALIZABILITY);
 		if (mCheckLocalUnrealizability) {
 			final int length = mReqPeas.size();
-			mLocalUnrealizabilityRange =
-					Math.min(length, prefs.getInt(Pea2BoogiePreferences.LABEL_LOCAL_UNREALIZABILITY_RANGE));
+			if (prefs.getInt(Pea2BoogiePreferences.LABEL_LOCAL_UNREALIZABILITY_RANGE) == 0) {
+				mLocalUnrealizabilityRange = length;
+			} else {
+				mLocalUnrealizabilityRange =
+						Math.min(length, prefs.getInt(Pea2BoogiePreferences.LABEL_LOCAL_UNREALIZABILITY_RANGE));
+			}
 		} else {
 			mLocalUnrealizabilityRange = -1;
 		}

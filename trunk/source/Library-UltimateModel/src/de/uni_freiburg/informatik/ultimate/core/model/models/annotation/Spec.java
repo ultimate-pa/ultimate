@@ -220,7 +220,7 @@ public enum Spec {
 	 * Checks for local unrealizability.
 	 */
 	LOCAL_UNREALIZABILITY(Group.REQUIREMENT,
-			"locally realizable",
+			"local unrealizablility is not reachable",
 			"locally unrealizable");
 	// @formatter:on
 

@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDe
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
@@ -105,47 +107,110 @@ public class LocalUnrealizabilityCheck {
 		}
 	}
 
-	public List<Witness> check(final int subsetSize) {
+	public List<Witness> check(final int maxSubsetSize) {
 		final List<AnnotatedReq> reqs = new ArrayList<>(mAnnotatedReqs.values());
-		if (reqs.size() < subsetSize) {
+		if (reqs.isEmpty()) {
 			mScript.exit();
 			return Collections.emptyList();
 		}
 
-		mLogger.info(
-				"Checking local unrealizability for " + reqs.size() + " requirements with subset size " + subsetSize);
+		final Set<Set<AnnotatedReq>> groups = groupVcsBySymbols(reqs);
+		mLogger.info("Checking local unrealizability: " + reqs.size() + " requirements in " + groups.size()
+				+ " variable groups, max subset size " + maxSubsetSize);
 
 		final List<Witness> result = new ArrayList<>();
-		final AnnotatedReq[] reqArray = reqs.toArray(new AnnotatedReq[0]);
-		final List<AnnotatedReq[]> subsets =
-				CrossProducts.subArrays(reqArray, subsetSize, new AnnotatedReq[subsetSize]);
+		for (final Set<AnnotatedReq> group : groups) {
+			result.addAll(findMinimalInGroup(new ArrayList<>(group), maxSubsetSize));
+		}
 
-		for (final AnnotatedReq[] subset : subsets) {
-			final int[][] critPhaseIndexArrays = Arrays.stream(subset)
-					.map(ar -> ar.critPhases().keySet().stream().mapToInt(Integer::intValue).toArray())
-					.toArray(int[][]::new);
+		mScript.exit();
+		mLogger.info("Found " + result.size() + " locally unrealizable subsets");
+		return result;
+	}
 
-			for (final int[] phaseCombo : CrossProducts.crossProduct(critPhaseIndexArrays)) {
-				mLogger.debug("--- Start set for local unrealiyabilitz check");
-				final List<Term> vcs = new ArrayList<>();
-				for (int i = 0; i < subset.length; i++) {
-					mLogger.debug("Req id: " + subset[i].patternType().getId() + " Phase: " + phaseCombo[i]);
-					vcs.add(subset[i].critPhases().get(phaseCombo[i]).vc());
-				}
+	private Set<Set<AnnotatedReq>> groupVcsBySymbols(final List<AnnotatedReq> reqs) {
+		final CompleteRtInconsistencyCheck.UnionFind unionFind =
+				new CompleteRtInconsistencyCheck.UnionFind(reqs.size());
 
-				if (isLocallyUnrealizable(vcs)) {
-					mLogger.info("Found locally unrealizable subset: "
-							+ Arrays.stream(subset).map(ar -> ar.pea().getName()).collect(Collectors.joining(", ")));
-					result.add(new Witness(
-							Arrays.stream(subset).map(AnnotatedReq::patternType).toArray(PatternType[]::new),
-							Arrays.stream(subset).map(AnnotatedReq::pea).toArray(PhaseEventAutomata[]::new),
-							phaseCombo));
+		// Map each symbol to the list of req indices that contain it (across all critical phases)
+		final Map<NonTheorySymbol<?>, List<Integer>> symbolToReqIndices = new HashMap<>();
+		for (int i = 0; i < reqs.size(); i++) {
+			for (final CritPhaseComputer.CritPhase critPhase : reqs.get(i).critPhases().values()) {
+				for (final NonTheorySymbol<?> symbol : critPhase.symbols()) {
+					symbolToReqIndices.computeIfAbsent(symbol, k -> new ArrayList<>()).add(i);
 				}
 			}
 		}
 
-		mScript.exit();
+		// Union requirements that share a symbol
+		for (final List<Integer> indices : symbolToReqIndices.values()) {
+			final int first = indices.get(0);
+			for (int j = 1; j < indices.size(); j++) {
+				unionFind.union(first, indices.get(j));
+			}
+		}
+
+		// Collect groups by root
+		final Map<Integer, Set<AnnotatedReq>> groups = new HashMap<>();
+		for (int i = 0; i < reqs.size(); i++) {
+			groups.computeIfAbsent(unionFind.find(i), k -> new HashSet<>()).add(reqs.get(i));
+		}
+		return new HashSet<>(groups.values());
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<Witness> findMinimalInGroup(final List<AnnotatedReq> group, final int maxSubsetSize) {
+		final List<Witness> result = new ArrayList<>();
+		final List<Set<Entry<String, Integer>>> foundMinimalCombinations = new ArrayList<>();
+
+		final int limit = Math.min(maxSubsetSize, group.size());
+		for (int size = 1; size <= limit; size++) {
+			final AnnotatedReq[] groupArray = group.toArray(new AnnotatedReq[0]);
+			for (final AnnotatedReq[] subset : CrossProducts.subArrays(groupArray, size, new AnnotatedReq[size])) {
+
+				final int[][] critPhaseIndexArrays = Arrays.stream(subset)
+						.map(ar -> ar.critPhases().keySet().stream().mapToInt(Integer::intValue).toArray())
+						.toArray(int[][]::new);
+
+				for (final int[] phaseCombo : CrossProducts.crossProduct(critPhaseIndexArrays)) {
+					final Map<String, Integer> candidateMap = new HashMap<>();
+					for (int i = 0; i < subset.length; i++) {
+						candidateMap.put(subset[i].pea().getName(), phaseCombo[i]);
+					}
+
+					if (isSupersetOfFound(candidateMap, foundMinimalCombinations)) {
+						continue;
+					}
+
+					mLogger.debug("Checking local unrealizability for: " + Arrays.stream(subset)
+							.map(ar -> ar.patternType().getId()).collect(Collectors.joining(", ")) + " phases: "
+							+ Arrays.toString(phaseCombo));
+
+					final List<Term> vcs = new ArrayList<>();
+					for (int i = 0; i < subset.length; i++) {
+						vcs.add(subset[i].critPhases().get(phaseCombo[i]).vc());
+					}
+
+					if (isLocallyUnrealizable(vcs)) {
+						mLogger.info("Found locally unrealizable subset: "
+								+ Arrays.stream(subset).map(ar -> ar.pea().getName()).collect(Collectors.joining(", "))
+								+ " phases: " + Arrays.toString(phaseCombo));
+						foundMinimalCombinations.add(new HashSet<>(candidateMap.entrySet()));
+						result.add(new Witness(
+								Arrays.stream(subset).map(AnnotatedReq::patternType).toArray(PatternType[]::new),
+								Arrays.stream(subset).map(AnnotatedReq::pea).toArray(PhaseEventAutomata[]::new),
+								phaseCombo));
+					}
+				}
+			}
+		}
 		return result;
+	}
+
+	private static boolean isSupersetOfFound(final Map<String, Integer> candidateMap,
+			final List<Set<Entry<String, Integer>>> foundMinimal) {
+		return foundMinimal.stream().anyMatch(
+				found -> found.stream().allMatch(e -> Objects.equals(candidateMap.get(e.getKey()), e.getValue())));
 	}
 
 	private boolean isLocallyUnrealizable(final List<Term> vcs) {
@@ -178,6 +243,7 @@ public class LocalUnrealizabilityCheck {
 		if (!inputVars.isEmpty()) {
 			formula = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, inputVars, formula);
 		}
+
 		return SmtUtils.checkSatTerm(mScript, formula) == LBool.SAT;
 	}
 }
