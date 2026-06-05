@@ -592,46 +592,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			throw new AssertionError("TermException " + e);
 		}
 
-		final List<RankingTemplate> rankingFunctionTemplates = new ArrayList<>();
-		rankingFunctionTemplates.add(new AffineTemplate());
-
-		// if (mAllowNonLinearConstraints) {
-		// rankingFunctionTemplates.add(new NestedTemplate(1));
-		rankingFunctionTemplates.add(new NestedTemplate(2));
-		rankingFunctionTemplates.add(new NestedTemplate(3));
-		rankingFunctionTemplates.add(new NestedTemplate(4));
-		if (mTemplateBenchmarkMode) {
-			rankingFunctionTemplates.add(new NestedTemplate(5));
-			rankingFunctionTemplates.add(new NestedTemplate(6));
-			rankingFunctionTemplates.add(new NestedTemplate(7));
-		}
-
-		// rankingFunctionTemplates.add(new MultiphaseTemplate(1));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(2));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
-		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
-		if (mTemplateBenchmarkMode) {
-			rankingFunctionTemplates.add(new MultiphaseTemplate(5));
-			rankingFunctionTemplates.add(new MultiphaseTemplate(6));
-			rankingFunctionTemplates.add(new MultiphaseTemplate(7));
-		}
-
-		// rankingFunctionTemplates.add(new LexicographicTemplate(1));
-		rankingFunctionTemplates.add(new LexicographicTemplate(2));
-		rankingFunctionTemplates.add(new LexicographicTemplate(3));
-		if (mTemplateBenchmarkMode) {
-			rankingFunctionTemplates.add(new LexicographicTemplate(4));
-		}
-
-		if (mTemplateBenchmarkMode) {
-			rankingFunctionTemplates.add(new PiecewiseTemplate(2));
-			rankingFunctionTemplates.add(new PiecewiseTemplate(3));
-			rankingFunctionTemplates.add(new PiecewiseTemplate(4));
-		}
-		// }
-
-		final TerminationArgument termArg =
-				tryTemplatesAndComputePredicates(laT, rankingFunctionTemplates, stemTF, loopTF);
+		final TerminationArgument termArg = tryTemplatesAndComputePredicates(laT, stemTF, loopTF);
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
 			final BspmResult bspmResult = mBspm.computePredicates(termArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
@@ -645,10 +606,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	}
 
 	private TerminationArgument tryTemplatesAndComputePredicates(final LassoAnalysis la,
-			final List<RankingTemplate> rankingFunctionTemplates, final UnmodifiableTransFormula stemTF,
-			final UnmodifiableTransFormula loopTF) throws AssertionError {
+			final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTF) throws AssertionError {
 		TerminationArgument firstTerminationArgument = null;
-		for (final RankingTemplate rft : rankingFunctionTemplates) {
+		for (final RankingTemplate rft : getRankingFunctionTemplates()) {
 			TerminationArgument termArg;
 			try {
 				final TerminationAnalysisSettings settings = constructTASettings();
@@ -690,6 +650,47 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			return firstTerminationArgument;
 		}
 		return null;
+	}
+
+	private List<RankingTemplate> getRankingFunctionTemplates() {
+		final List<RankingTemplate> rankingFunctionTemplates = new ArrayList<>();
+		rankingFunctionTemplates.add(new AffineTemplate());
+	
+		// if (mAllowNonLinearConstraints) {
+		// rankingFunctionTemplates.add(new NestedTemplate(1));
+		rankingFunctionTemplates.add(new NestedTemplate(2));
+		rankingFunctionTemplates.add(new NestedTemplate(3));
+		rankingFunctionTemplates.add(new NestedTemplate(4));
+		if (mTemplateBenchmarkMode) {
+			rankingFunctionTemplates.add(new NestedTemplate(5));
+			rankingFunctionTemplates.add(new NestedTemplate(6));
+			rankingFunctionTemplates.add(new NestedTemplate(7));
+		}
+	
+		// rankingFunctionTemplates.add(new MultiphaseTemplate(1));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(2));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
+		rankingFunctionTemplates.add(new MultiphaseTemplate(4));
+		if (mTemplateBenchmarkMode) {
+			rankingFunctionTemplates.add(new MultiphaseTemplate(5));
+			rankingFunctionTemplates.add(new MultiphaseTemplate(6));
+			rankingFunctionTemplates.add(new MultiphaseTemplate(7));
+		}
+	
+		// rankingFunctionTemplates.add(new LexicographicTemplate(1));
+		rankingFunctionTemplates.add(new LexicographicTemplate(2));
+		rankingFunctionTemplates.add(new LexicographicTemplate(3));
+		if (mTemplateBenchmarkMode) {
+			rankingFunctionTemplates.add(new LexicographicTemplate(4));
+		}
+	
+		if (mTemplateBenchmarkMode) {
+			rankingFunctionTemplates.add(new PiecewiseTemplate(2));
+			rankingFunctionTemplates.add(new PiecewiseTemplate(3));
+			rankingFunctionTemplates.add(new PiecewiseTemplate(4));
+		}
+		// }
+		return rankingFunctionTemplates;
 	}
 
 	private static String generateRunningTaskInfo(final UnmodifiableTransFormula stemTF,
