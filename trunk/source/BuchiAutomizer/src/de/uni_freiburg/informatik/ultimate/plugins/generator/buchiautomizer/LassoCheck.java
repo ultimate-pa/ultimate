@@ -577,9 +577,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				e.printStackTrace();
 				throw new AssertionError("TermException " + e);
 			}
-			if (withStem) {
-				return new NonterminationResult<>(nonTermArgument);
-			}
 		}
 
 		LassoAnalysis laT = null;
