@@ -111,6 +111,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private static final boolean SIMPLIFY_STEM_AND_LOOP = true;
 
+	/**
+	 * For debugging only. Check for termination arguments even if we found a nontermination argument. This may reveal
+	 * unsoundness bugs.
+	 */
+	private static final boolean CHECK_TERMINATION_EVEN_IF_NON_TERMINATING = false;
+
 	private static final boolean AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED = true;
 
 	private static final boolean TRACE_CHECK_BASED_FIXPOINT_CHECK = true;
@@ -578,6 +584,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				throw new AssertionError("TermException " + e);
 			}
 		}
+		if (!CHECK_TERMINATION_EVEN_IF_NON_TERMINATING && nonTermArgument != null) {
+			return new NonterminationResult<>(nonTermArgument);
+		}
 
 		LassoAnalysis laT = null;
 		try {
@@ -655,7 +664,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private List<RankingTemplate> getRankingFunctionTemplates() {
 		final List<RankingTemplate> rankingFunctionTemplates = new ArrayList<>();
 		rankingFunctionTemplates.add(new AffineTemplate());
-	
+
 		// if (mAllowNonLinearConstraints) {
 		// rankingFunctionTemplates.add(new NestedTemplate(1));
 		rankingFunctionTemplates.add(new NestedTemplate(2));
@@ -666,7 +675,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			rankingFunctionTemplates.add(new NestedTemplate(6));
 			rankingFunctionTemplates.add(new NestedTemplate(7));
 		}
-	
+
 		// rankingFunctionTemplates.add(new MultiphaseTemplate(1));
 		rankingFunctionTemplates.add(new MultiphaseTemplate(2));
 		rankingFunctionTemplates.add(new MultiphaseTemplate(3));
@@ -676,14 +685,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			rankingFunctionTemplates.add(new MultiphaseTemplate(6));
 			rankingFunctionTemplates.add(new MultiphaseTemplate(7));
 		}
-	
+
 		// rankingFunctionTemplates.add(new LexicographicTemplate(1));
 		rankingFunctionTemplates.add(new LexicographicTemplate(2));
 		rankingFunctionTemplates.add(new LexicographicTemplate(3));
 		if (mTemplateBenchmarkMode) {
 			rankingFunctionTemplates.add(new LexicographicTemplate(4));
 		}
-	
+
 		if (mTemplateBenchmarkMode) {
 			rankingFunctionTemplates.add(new PiecewiseTemplate(2));
 			rankingFunctionTemplates.add(new PiecewiseTemplate(3));
