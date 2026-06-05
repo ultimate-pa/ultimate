@@ -160,7 +160,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private final SmtFunctionsAndAxioms mSmtSymbols;
 	private final IUltimateServiceProvider mServices;
 
-	private final ILassoCheckResult<L> mResult;
+	private final ILassoCheckResult<L> mLassoCheckResult;
 
 	private final List<PreprocessingBenchmark> mPreprocessingBenchmarks = new ArrayList<>();
 
@@ -215,7 +215,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mStateFactoryForInterpolantAutomaton = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
 				mPredicateFactory, computeHoareAnnotation);
 
-		mResult = checkTermination(counterexample);
+		mLassoCheckResult = checkTermination(counterexample);
 	}
 
 	private ILassoCheckResult<L> checkTermination(final NestedLassoRun<L, IPredicate> counterexample) {
@@ -308,7 +308,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	}
 
 	public ILassoCheckResult<L> getLassoCheckResult() {
-		return mResult;
+		return mLassoCheckResult;
 	}
 
 	public List<RefinementEngineStatisticsGenerator> getRefinementEngineStatistics() {
