@@ -289,19 +289,6 @@ public final class Translator extends BoogieVisitor {
 			mWriter.print("preserves ");
 			mWriter.print(BoogiePrettyPrinter.print(annotation));
 			mWriter.print(";\n");
-		} else {
-			// if no annotation this is the start
-			final var initialLoc = mProgramAndProof.getIcfg().getProcedureEntryNodes().get(procName);
-			if (WitnessInvariant.getAnnotation(initialLoc) != null) {
-				final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
-				final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
-
-				if (invariant != null) {
-					mWriter.print("preserves ");
-					mWriter.print(BoogiePrettyPrinter.print(invariant));
-					mWriter.print(";\n");
-				}
-			}
 		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
@@ -309,7 +296,7 @@ public final class Translator extends BoogieVisitor {
 			final Optional<String> forked_proc = mProgramAndProof.getTemplateVisitor().getAssociationTidMap().entrySet()
 					.stream().filter(entry -> entry.getValue().contains(tid)).map(Map.Entry::getKey).findFirst();
 
-			if (forked_proc.isPresent()) {
+			if (forked_proc.isPresent() && !procName.equals(forked_proc.get())) {
 
 				// TODO set at the end of the procedure
 				final var initialLoc = mProgramAndProof.getIcfg().getProcedureExitNodes().get(forked_proc.get());
@@ -340,7 +327,7 @@ public final class Translator extends BoogieVisitor {
 			if (tidNeedsLinearity.contains(tid)) {
 				arguments.add("{:linear} " + tid.toString() + " : One Tid");
 			} else {
-				arguments.add(" " + tid.toString() + " : One Tid");
+				arguments.add(tid.toString() + " : One Tid");
 			}
 		}
 
@@ -487,11 +474,11 @@ public final class Translator extends BoogieVisitor {
 
 		int counter = 0;
 		final Set<Tid> tidNeedsLinearity = new HashSet<>(mProgramAndProof.getTemplateVisitor().getTids());
+		Expression lastInvariant =
+				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier());
 
 		// initial invariant BEFORE first statement
-		addYieldInvariants(decl.getIdentifier(),
-				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier()), null,
-				tidNeedsLinearity, counter);
+		addYieldInvariants(decl.getIdentifier(), lastInvariant, null, tidNeedsLinearity, counter);
 
 		counter++;
 
@@ -504,32 +491,40 @@ public final class Translator extends BoogieVisitor {
 			}
 
 			final Expression invariant = map.get(stmt.getLoc());
-			// final ILocation loc = BoogieIcfgContainer.getAnnotation(stmt);
-			// final Expression invariant = (WitnessInvariant.getAnnotation(stmt) == null) ? null
-			// : (Expression) WitnessInvariant.getAnnotation(stmt).getInvariant();
+			if (invariant != null) {
+				lastInvariant = invariant; // TODO handle conditional
+			}
+			/*
+			 * final BoogieIcfgContainer loc = BoogieIcfgContainer.getAnnotation(stmt); final Expression invariant =
+			 * (WitnessInvariant.getAnnotation(loc) == null) ? null : (Expression)
+			 * WitnessInvariant.getAnnotation(loc).getInvariant();
+			 */
 
 			if (mProgramAndProof.getTemplateVisitor().containsGlobalVariables(stmt)) {
 				addStatement(decl.getIdentifier(), stmt, tidNeedsLinearity, counter);
 			}
 
+			// ghost var update here
+
+			System.out.println("TEST " + lastInvariant);
+			System.out.println("TEST2 " + stmt);
+			if (WitnessInvariant.getAnnotation(stmt) != null) {
+				System.out.println("TEST3 " + WitnessInvariant.getAnnotation(stmt).getInvariant());
+			}
+			addYieldInvariants(decl.getIdentifier(), lastInvariant, stmt, tidNeedsLinearity, counter);
+
 			if (stmt instanceof final JoinStatement joinstmt) {
 				tidNeedsLinearity.add(new Tid(joinstmt.getThreadID()));
 			}
 
-			// ghost var update here
-
-			System.out.println("TEST " + invariant);
-			System.out.println("TEST2 " + stmt);
-			addYieldInvariants(decl.getIdentifier(), invariant, stmt, tidNeedsLinearity, counter);
-
 			tidNeedsLinearity.clear();
+			// tempory to make it work TODO
+			if (mProgramAndProof.getTemplateVisitor().getAssociationTidMap().get(decl.getIdentifier()) != null) {
+				tidNeedsLinearity
+						.addAll(mProgramAndProof.getTemplateVisitor().getAssociationTidMap().get(decl.getIdentifier()));
+			}
 			counter++;
 		}
-
-		addYieldInvariants(decl.getIdentifier(),
-				mProgramAndProof.getTemplateVisitor().getFinalAnnotationMap().get(decl.getIdentifier()), null,
-				tidNeedsLinearity, counter);
-		counter++;
 
 		addYieldInvariants(decl.getIdentifier(),
 				mProgramAndProof.getTemplateVisitor().getExitAnnotationMap().get(decl.getIdentifier()), null,

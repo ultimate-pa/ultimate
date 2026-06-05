@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
@@ -100,42 +101,6 @@ final class ProgramAndProof {
 
 	Map<ILocation, Set<CallStatement>> getGhostUpdateMap() {
 		return mGhostUpdateMap;
-	}
-
-	void computeEntryAnnotationMap() {
-		mEntryAnnotationMap = new HashMap<>();
-
-		for (final BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
-			final var invariant = (WitnessInvariant.getAnnotation(loc) != null)
-					? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
-					: null;
-			final var codeLocation = ILocation.getAnnotation(loc);
-			System.out.println();
-			System.out.println("Invariant : " + invariant);
-			System.out.println("Location : " + codeLocation);
-			System.out.println(loc.getBoogieASTNode());
-			result.put(codeLocation, invariant);
-		}
-
-		return result;
-	}
-
-	void computeExitAnnotationMap() {
-		mExitAnnotationMap = new HashMap<>();
-
-		for (final BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
-			final var invariant = (WitnessInvariant.getAnnotation(loc) != null)
-					? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
-					: null;
-			final var codeLocation = ILocation.getAnnotation(loc);
-			System.out.println();
-			System.out.println("Invariant : " + invariant);
-			System.out.println("Location : " + codeLocation);
-			System.out.println(loc.getBoogieASTNode());
-			result.put(codeLocation, invariant);
-		}
-
-		return result;
 	}
 
 	/**
@@ -203,22 +168,26 @@ final class ProgramAndProof {
 	Map<ILocation, Expression> getAnnotationMap(final String procName) {
 		final Map<ILocation, Expression> result = new HashMap<>();
 		for (final BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
-			final var invariant = (WitnessInvariant.getAnnotation(loc) != null)
-					? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
-					: null;
 
 			final var codeLocation = ILocation.getAnnotation(loc);
-			// merge together
-			if (result.get(codeLocation) != null) {
-				final Expression buf = result.get(codeLocation);
-				result.put(codeLocation,
-						new BinaryExpression(codeLocation, BinaryExpression.Operator.LOGICAND, invariant, buf));
-			} else {
-				result.put(codeLocation, invariant);
+
+			if (!loc.isErrorLocation() && loc.getBoogieASTNode() instanceof Statement) {
+
+				final Expression invariant = (WitnessInvariant.getAnnotation(loc) != null)
+						? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
+						: null;
+
+				// merge together
+				if (result.get(codeLocation) != null) {
+					final Expression buf = result.get(codeLocation);
+					result.put(codeLocation,
+							new BinaryExpression(codeLocation, BinaryExpression.Operator.LOGICAND, invariant, buf));
+				} else {
+					result.put(codeLocation, invariant);
+				}
 			}
 
 			System.out.println();
-			System.out.println("Invariant : " + invariant);
 			System.out.println("Location : " + codeLocation);
 			System.out.println(loc.getBoogieASTNode());
 		}

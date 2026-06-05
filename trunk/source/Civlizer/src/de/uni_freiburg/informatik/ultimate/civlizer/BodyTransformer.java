@@ -202,6 +202,9 @@ final class BodyTransformer extends BoogieTransformer {
 			final boolean localVar =
 					mProgramAndProof.getTemplateVisitor().containsLocalVariables(mCurrentProcedure, statements[i]);
 
+			newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
+					new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
+
 			if (statements[i] instanceof ForkStatement || statements[i] instanceof JoinStatement
 					|| globalVar && !localVar) {
 				newStatements.add(processStatement(statements[i]));
@@ -240,8 +243,8 @@ final class BodyTransformer extends BoogieTransformer {
 						mCurrentProcedure + "_stmt_" + mAtomicStatementCounter, arguments));
 			}
 
-			newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
-					new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
+			// newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
+			// new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
 
 			// Ghost update
 			if (mProgramAndProof.getGhostUpdateMap() != null
@@ -249,10 +252,6 @@ final class BodyTransformer extends BoogieTransformer {
 				newStatements.addAll(mProgramAndProof.getGhostUpdateMap().get(statements[i].getLocation()));
 			}
 		}
-
-		mAtomicStatementCounter += 1;
-		newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
-				"yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
 
 		mAtomicStatementCounter += 1;
 		newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],

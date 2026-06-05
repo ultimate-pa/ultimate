@@ -108,7 +108,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private final Map<String, Expression> mEntryAnnotationMap;
 	private final Map<String, Expression> mExitAnnotationMap;
-	private final Map<String, Expression> mFinalAnnotationMap;
 
 	private final Map<String, List<Tid>> mAssociationTidMap;
 	private final Map<String, List<Tid>> mUsedTidMap;
@@ -127,7 +126,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 		mEntryAnnotationMap = new HashMap<>();
 		mExitAnnotationMap = new HashMap<>();
-		mFinalAnnotationMap = new HashMap<>();
 
 		mAssociationTidMap = new HashMap<>();
 		mUsedTidMap = new HashMap<>();
@@ -196,10 +194,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		return mExitAnnotationMap;
 	}
 
-	Map<String, Expression> getFinalAnnotationMap() {
-		return mFinalAnnotationMap;
-	}
-
 	boolean containsGlobalVariables(final Statement stmt) {
 		if (mStatementVariablesMap.get(stmt.getLoc()) == null || mGlobalVariables == null) {
 			return false;
@@ -243,12 +237,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		final var icfgExitLoc = mIcfg.getProcedureExitNodes().get(mCurrentProcedure);
 		final Expression exitInvariant = (Expression) WitnessInvariant.getAnnotation(icfgExitLoc).getInvariant();
 		mExitAnnotationMap.put(mCurrentProcedure, exitInvariant);
-
-		// final on declaration
-		if (WitnessInvariant.getAnnotation(decl) != null) {
-			final Expression finalInvariant = (Expression) WitnessInvariant.getAnnotation(decl).getInvariant();
-			mFinalAnnotationMap.put(mCurrentProcedure, finalInvariant);
-		}
 
 		final Map res = new HashMap<>();
 
