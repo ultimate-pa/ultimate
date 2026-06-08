@@ -101,34 +101,22 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 	 */
 	private boolean isIdpTransition(final OutgoingInternalTransition<L, S> transition, final S state) {
 		final var stateIcfgLocations = List.of(mState2LocationsFunction.apply(state));
-		final var innerIsrLocations = new ArrayList<IcfgLocation>(stateIcfgLocations.size());
-		for (final IcfgLocation IcfgLocation : stateIcfgLocations) {
-			if (!InterruptAnnotations.hasAnnotation(IcfgLocation)) {
+		final var isrLocations = new ArrayList<IcfgLocation>(stateIcfgLocations.size());
+		for (final IcfgLocation icfgLocation : stateIcfgLocations) {
+			if (!InterruptAnnotations.hasAnnotation(icfgLocation)) {
 				continue;
 			}
-			final var predecessors = IcfgLocation.getIncomingNodes();
-			boolean isIsrInnerNode = true;
-			for (final IcfgLocation pred : predecessors) {
-				if (!InterruptAnnotations.hasAnnotation(pred)) {
-					isIsrInnerNode = false;
-					break;
-				}
-			}
-			if (isIsrInnerNode) {
-				innerIsrLocations.add(IcfgLocation);
-			}
-			assert isIsrInnerNode || predecessors.stream().allMatch(l -> !InterruptAnnotations.hasAnnotation(l))
-					: "CFG node is an inner ISR-location and starting location at the same time!";
+			isrLocations.add(icfgLocation);
 		}
-		// If no ISR is empty, no transition gets filtered out
-		if (innerIsrLocations.isEmpty()) {
+		// If no ISR is active, no transition gets filtered out
+		if (isrLocations.isEmpty()) {
 			return true;
 		}
-		final var singleIsrLocation = DataStructureUtils.getOneAndOnly(innerIsrLocations, "active isr");
-		final var letter = transition.getLetter();
+		final var singleIsrLocation = DataStructureUtils.getOneAndOnly(isrLocations, "active isr");
 
-		// If one (and only one) ISR is active, the transition has to be part of said ISR
-		return letter.getSource() == singleIsrLocation;
+		// If one (and only one) ISR is active, the transition has to be part of this ISR, i.e. has to be a successor of
+		// the active ISR-location in the CFG
+		return transition.getLetter().getSource() == singleIsrLocation;
 	}
 
 	@Override

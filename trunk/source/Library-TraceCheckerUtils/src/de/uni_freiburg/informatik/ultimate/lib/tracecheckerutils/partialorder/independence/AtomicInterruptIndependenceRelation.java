@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;
 
+import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -35,10 +38,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -57,6 +61,7 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 	private final IIndependenceRelation<S, L> mUnderlying;
 	// Store the dependences for pairs where at least one is part of an ISR
 	private final Map<Pair<Set<L>, Set<L>>, Dependence> mIsrDependenceCache;
+	private final Map<IElement, Boolean> mHasInterruptAnnotation = new HashMap<>();
 
 	private final ILogger mLogger;
 
@@ -83,13 +88,26 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 		if (fromSameThread(a, b)) {
 			return Dependence.DEPENDENT;
 		} else if (isNonISRTransition(a) && isNonISRTransition(b)) {
-			return mUnderlying.isIndependent(null, a, b);
+			if (isIsrPredecessor(a) || isIsrPredecessor(b)) {
+				return Dependence.DEPENDENT;
+			}
+			return mUnderlying.isIndependent(state, a, b);
 		}
 		return getInterruptDependence(a, b);
 	}
 
+	private boolean isIsrPredecessor(final L transition) {
+		final var succTransitions = transition.getTarget().getOutgoingEdges();
+		for (final IcfgEdge succTransition : succTransitions) {
+			if (hasInterruptAnnotation(succTransition)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private boolean isNonISRTransition(final L a) {
-		return !InterruptAnnotations.hasAnnotation(a);
+		return !hasInterruptAnnotation(a);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -103,30 +121,21 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 		}
 
 		// Store transition a in queue for BFS
-		final HashDeque<IIcfgTransition<?>> aTransitionQueue = new HashDeque<>();
+		final ArrayDeque<IIcfgTransition<?>> aTransitionQueue = new ArrayDeque<>();
 		for (final L aEntry : isrAEntryPoints) {
 			aTransitionQueue.offer(aEntry);
 		}
-		final Set<IIcfgTransition<?>> visited = new HashSet<>();
+		final Set<IIcfgTransition<?>> visitedA = new HashSet<>(isrAEntryPoints);
+		final var bIsrTransitions = getAllIsrIcfgTransitions(isrBEntryPoints);
 		while (!aTransitionQueue.isEmpty()) {
 			final var currentA = aTransitionQueue.poll();
-			if (!visited.add(currentA)) {
-				continue;
-			}
-			final var aTargetNode = currentA.getTarget();
-			addInterruptSuccessorsToQueue(currentA, aTargetNode, aTransitionQueue);
+			addInterruptSuccessorsToQueue(currentA, currentA.getTarget(), aTransitionQueue, visitedA);
 			// Store transition b in queue for BFS
-			final HashDeque<IIcfgTransition<?>> bTransitionQueue = new HashDeque<>();
+			final ArrayDeque<IIcfgTransition<?>> bTransitionQueue = new ArrayDeque<>();
 			for (final L bEntry : isrBEntryPoints) {
 				bTransitionQueue.offer(bEntry);
 			}
-			while (!bTransitionQueue.isEmpty()) {
-				final var currentB = bTransitionQueue.poll();
-				if (!visited.add(currentB)) {
-					continue;
-				}
-				final var bTargetNode = currentB.getTarget();
-				addInterruptSuccessorsToQueue(currentB, bTargetNode, bTransitionQueue);
+			for (final IIcfgTransition<?> currentB : bIsrTransitions) {
 				if (mUnderlying.isIndependent(null, (L) currentA, (L) currentB) != Dependence.INDEPENDENT) {
 					mIsrDependenceCache.put(letterPair, Dependence.DEPENDENT);
 					return Dependence.DEPENDENT;
@@ -137,49 +146,74 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 		return Dependence.INDEPENDENT;
 	}
 
-	private static void addInterruptSuccessorsToQueue(final IIcfgTransition<?> currentTransition,
-			final IcfgLocation targetNode, final HashDeque<IIcfgTransition<?>> transitionQueue) {
-		if (InterruptAnnotations.hasAnnotation(currentTransition) && InterruptAnnotations.hasAnnotation(targetNode)) {
-			final var successors = targetNode.getOutgoingEdges();
-			for (final IIcfgTransition<?> icfgEdge : successors) {
-				transitionQueue.offer(icfgEdge);
+	private Set<IIcfgTransition<?>> getAllIsrIcfgTransitions(final Set<L> entryTransitions) {
+		final ArrayDeque<IIcfgTransition<?>> transitionQueue = new ArrayDeque<>();
+		final Set<IIcfgTransition<?>> visited = new HashSet<>(entryTransitions);
+		for (final L entry : entryTransitions) {
+			transitionQueue.offer(entry);
+		}
+		while (!transitionQueue.isEmpty()) {
+			final var current = transitionQueue.poll();
+			addInterruptSuccessorsToQueue(current, current.getTarget(), transitionQueue, visited);
+
+		}
+		return visited;
+	}
+
+	private void addInterruptSuccessorsToQueue(final IIcfgTransition<?> currentTransition,
+			final IcfgLocation targetNode, final ArrayDeque<IIcfgTransition<?>> transitionQueue,
+			final Set<IIcfgTransition<?>> visited) {
+		if (!hasInterruptAnnotation(currentTransition) || !hasInterruptAnnotation(targetNode)) {
+			return;
+		}
+		for (final IIcfgTransition<?> icfgEdge : targetNode.getOutgoingEdges()) {
+			if (!visited.add(icfgEdge)) {
+				continue;
 			}
+			transitionQueue.offer(icfgEdge);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private Set<L> getIsrEntryTransitions(final L isrTransition) {
-		if (!InterruptAnnotations.hasAnnotation(isrTransition)) {
+		if (!hasInterruptAnnotation(isrTransition)) {
 			return Set.of(isrTransition);
 		}
-		final Set<L> isrEntryTransition = new HashSet<>();
-		final HashDeque<L> bfsQueue = new HashDeque<>();
-		final Set<L> visited = new HashSet<>();
+		final Set<L> isrEntryTransitions = new HashSet<>();
+		final ArrayDeque<L> bfsQueue = new ArrayDeque<>();
+		final Set<L> visited = Collections.newSetFromMap(new IdentityHashMap<L, Boolean>());
+		visited.add(isrTransition);
 		bfsQueue.add(isrTransition);
 		while (!bfsQueue.isEmpty()) {
 			final var currentTransition = bfsQueue.poll();
-			if (!visited.add(currentTransition)) {
-				continue;
+
+			final var predTransitions = currentTransition.getSource().getIncomingEdges();
+			boolean hasInterruptPredecessor = false;
+			for (final IcfgEdge predTrans : predTransitions) {
+				if (!hasInterruptAnnotation(predTrans)) {
+					continue;
+				}
+				hasInterruptPredecessor = true;
+				final L pred = (L) predTrans;
+				if (visited.add(pred)) {
+					bfsQueue.offer(pred);
+				}
 			}
-			final var predNode = currentTransition.getSource();
-			final var predTransitions = predNode.getIncomingEdges();
-			final var predIsrTransitions =
-					predTransitions.stream().filter(t -> InterruptAnnotations.hasAnnotation(t)).toList();
-			if (predIsrTransitions.isEmpty()) {
-				isrEntryTransition.add(currentTransition);
-				continue;
-			}
-			for (final IIcfgTransition<?> icfgEdge : predIsrTransitions) {
-				bfsQueue.offer((L) icfgEdge);
+			if (!hasInterruptPredecessor) {
+				isrEntryTransitions.add(currentTransition);
 			}
 		}
-		return isrEntryTransition;
+		return isrEntryTransitions;
 	}
 
 	private boolean fromSameThread(final L a, final L b) {
 		// TODO: Duplicated method from ThreadSeperatingIndependence. Maybe we can ensure that underlying is already
 		// thread-separating?
 		return Objects.equals(a.getPrecedingProcedure(), b.getPrecedingProcedure());
+	}
+
+	private boolean hasInterruptAnnotation(final IElement element) {
+		return mHasInterruptAnnotation.computeIfAbsent(element, e -> InterruptAnnotations.hasAnnotation(e));
 	}
 
 	@Override
