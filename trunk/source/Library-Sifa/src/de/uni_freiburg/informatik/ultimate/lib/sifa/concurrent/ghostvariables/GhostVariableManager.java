@@ -29,6 +29,7 @@ public class GhostVariableManager {
 	private final Map<String, IcfgLocation> mEntryLocations;
 	private final Set<String> mImpreciseLocationThreads;
 	private final Map<String, GhostProgramVar> mLocationVars = new HashMap<>();
+	private Set<TermVariable> mCachedLocationTermVariables;
 
 	private GhostVariableManager(final ManagedScript managedScript, final Map<IcfgLocation, Integer> locationIds,
 			final Map<String, IcfgLocation> entryLocations, final Set<String> impreciseLocationThreads) {
@@ -72,7 +73,11 @@ public class GhostVariableManager {
 	}
 
 	public Set<TermVariable> getLocationTermVariables() {
-		return mLocationVars.values().stream().map(GhostProgramVar::getTermVariable).collect(Collectors.toSet());
+		if (mCachedLocationTermVariables == null) {
+			mCachedLocationTermVariables = mLocationVars.values().stream()
+					.map(GhostProgramVar::getTermVariable).collect(Collectors.toUnmodifiableSet());
+		}
+		return mCachedLocationTermVariables;
 	}
 
 	public Term createLocationConstraint(final String threadId, final IcfgLocation location) {

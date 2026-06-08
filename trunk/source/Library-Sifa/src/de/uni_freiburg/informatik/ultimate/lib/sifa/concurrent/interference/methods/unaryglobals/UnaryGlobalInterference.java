@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.unaryglobals;
 
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -10,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -21,47 +25,109 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * A very coarse interference abstraction that keeps one unary summary predicate per changed global variable.
+ * A very coarse interference abstraction that keeps one unary summary predicate per changed global variable,
+ * stored per-thread for precise filtering and convergence checking.
  */
 public final class UnaryGlobalInterference implements IInterference {
 
-	private final Map<IProgramVar, IPredicate> mSummaryByGlobal;
+	/** Precomputed per-thread data for fast application. */
+	private record PerThreadData(
+			Map<IProgramVar, IPredicate> summaryByGlobal,
+			Set<TermVariable> varsToForget,
+			Term combinedSummary,
+			IdentityHashMap<Term, Term> projectionCache) {
+
+		PerThreadData(final Map<IProgramVar, IPredicate> summaryByGlobal, final Script script) {
+			this(Map.copyOf(summaryByGlobal),
+					summaryByGlobal.keySet().stream().map(IProgramVar::getTermVariable)
+							.collect(Collectors.toUnmodifiableSet()),
+					buildCombined(summaryByGlobal, script),
+					new IdentityHashMap<>());
+		}
+
+		private static Term buildCombined(final Map<IProgramVar, IPredicate> summaryByGlobal, final Script script) {
+			Term combined = script.term("true");
+			for (final IPredicate s : summaryByGlobal.values()) {
+				combined = SmtUtils.and(script, combined, s.getFormula());
+			}
+			return combined;
+		}
+	}
+
+	// threadId → per-thread data; LinkedHashMap preserves insertion order for deterministic iteration
+	private final Map<String, PerThreadData> mDataByThread;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 
-	public UnaryGlobalInterference(final Map<IProgramVar, IPredicate> summaryByGlobal,
+	private UnaryGlobalInterference(final Map<String, PerThreadData> dataByThread,
 			final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final BasicPredicateFactory predicateFactory) {
-		mSummaryByGlobal = Map.copyOf(summaryByGlobal);
+		mDataByThread = Map.copyOf(dataByThread);
 		mServices = services;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 	}
 
-	@Override
-	public IPredicate applyUntilFixpoint(final IPredicate state, final IDomain domain, final int wideningThreshold,
-			final SifaStats stats) {
-		if (mSummaryByGlobal.isEmpty()) {
-			return state;
-		}
-		return domain.join(state, overwriteSummarizedGlobals(state));
+	public static UnaryGlobalInterference create(final Map<String, Map<IProgramVar, IPredicate>> summaryByThread,
+			final IUltimateServiceProvider services, final ManagedScript managedScript,
+			final BasicPredicateFactory predicateFactory) {
+		final Map<String, PerThreadData> data = new LinkedHashMap<>();
+		final Script script = managedScript.getScript();
+		summaryByThread.forEach((threadId, summary) -> data.put(threadId, new PerThreadData(summary, script)));
+		return new UnaryGlobalInterference(data, services, managedScript, predicateFactory);
 	}
 
-	private IPredicate overwriteSummarizedGlobals(final IPredicate state) {
-		final Set<TermVariable> varsToForget = mSummaryByGlobal.keySet().stream().map(IProgramVar::getTermVariable)
-				.collect(Collectors.toSet());
-		final Script script = mManagedScript.getScript();
-		final Term forgotten = varsToForget.isEmpty() || !hasAnyFreeVarIn(state.getFormula(), varsToForget)
-				? state.getFormula()
-				: RelationalPredicateUtils.existentiallyProject(state.getFormula(), varsToForget, mServices,
-						mManagedScript);
-
-		Term combined = forgotten;
-		for (final IPredicate unarySummary : mSummaryByGlobal.values()) {
-			combined = SmtUtils.and(script, combined, unarySummary.getFormula());
+	@Override
+	public IPredicate applyUntilFixpoint(final IPredicate state, final Set<String> activeThreadIds,
+			final IDomain domain, final int wideningThreshold, final SifaStats stats) {
+		if (mDataByThread.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
+				|| SmtUtils.isFalseLiteral(state.getFormula())) {
+			return state;
 		}
-		return mPredicateFactory.newPredicate(combined);
+		final List<PerThreadData> filtered = buildFiltered(activeThreadIds);
+		if (filtered.isEmpty()) {
+			return state;
+		}
+		IPredicate current = state;
+		for (final PerThreadData data : filtered) {
+			current = domain.join(current, overwriteSummarizedGlobals(current, data));
+		}
+		return current;
+	}
+
+	private List<PerThreadData> buildFiltered(final Set<String> activeThreadIds) {
+		final List<PerThreadData> filtered = new ArrayList<>();
+		for (final Entry<String, PerThreadData> e : mDataByThread.entrySet()) {
+			if (activeThreadIds.contains(e.getKey()) && !e.getValue().summaryByGlobal().isEmpty()) {
+				filtered.add(e.getValue());
+			}
+		}
+		return filtered;
+	}
+
+	private IPredicate overwriteSummarizedGlobals(final IPredicate state, final PerThreadData data) {
+		final Term stateTerm = state.getFormula();
+		final Term forgotten;
+		if (data.varsToForget().isEmpty() || !hasAnyFreeVarIn(stateTerm, data.varsToForget())) {
+			forgotten = stateTerm;
+		} else {
+			forgotten = data.projectionCache().computeIfAbsent(stateTerm,
+					k -> RelationalPredicateUtils.existentiallyProject(k, data.varsToForget(), mServices,
+							mManagedScript));
+		}
+		return mPredicateFactory
+				.newPredicate(SmtUtils.and(mManagedScript.getScript(), forgotten, data.combinedSummary()));
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return mDataByThread.isEmpty();
+	}
+
+	@Override
+	public Set<String> threadIds() {
+		return mDataByThread.keySet();
 	}
 
 	@Override
@@ -70,18 +136,28 @@ public final class UnaryGlobalInterference implements IInterference {
 			throw new IllegalArgumentException(
 					"Cannot widen UnaryGlobalInterference with " + other.getClass().getSimpleName());
 		}
-		final Map<IProgramVar, IPredicate> widened = new LinkedHashMap<>();
-		for (final Entry<IProgramVar, IPredicate> entry : mSummaryByGlobal.entrySet()) {
-			final IPredicate otherSummary = typedOther.mSummaryByGlobal.get(entry.getKey());
-			final IPredicate widenedSummary = otherSummary == null ? entry.getValue()
-					: domain.widen(entry.getValue(), otherSummary);
-			widened.put(entry.getKey(), widenedSummary);
+		final Map<String, Map<IProgramVar, IPredicate>> result = new LinkedHashMap<>();
+		for (final Entry<String, PerThreadData> entry : mDataByThread.entrySet()) {
+			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey());
+			final PerThreadData otherData = typedOther.mDataByThread.get(entry.getKey());
+			final Map<IProgramVar, IPredicate> widenedSummary = new LinkedHashMap<>();
+			for (final Entry<IProgramVar, IPredicate> g : entry.getValue().summaryByGlobal().entrySet()) {
+				final IPredicate otherSummary = otherData == null ? null : otherData.summaryByGlobal().get(g.getKey());
+				widenedSummary.put(g.getKey(),
+						otherSummary == null ? g.getValue() : domain.widen(g.getValue(), otherSummary));
+			}
+			if (!widenedSummary.isEmpty()) {
+				result.put(entry.getKey(), widenedSummary);
+			}
 		}
-		for (final Entry<IProgramVar, IPredicate> entry : typedOther.mSummaryByGlobal.entrySet()) {
-			widened.putIfAbsent(entry.getKey(), entry.getValue());
+		// Include threads present only in other (no widen needed, just copy)
+		for (final Entry<String, PerThreadData> entry : typedOther.mDataByThread.entrySet()) {
+			if (!result.containsKey(entry.getKey())) {
+				result.put(entry.getKey(), new LinkedHashMap<>(entry.getValue().summaryByGlobal()));
+			}
 		}
-		return widened.isEmpty() ? null
-				: new UnaryGlobalInterference(widened, mServices, mManagedScript, mPredicateFactory);
+		return result.isEmpty() ? null
+				: UnaryGlobalInterference.create(result, mServices, mManagedScript, mPredicateFactory);
 	}
 
 	@Override
@@ -89,10 +165,15 @@ public final class UnaryGlobalInterference implements IInterference {
 		if (!(other instanceof final UnaryGlobalInterference typedOther)) {
 			return false;
 		}
-		for (final Entry<IProgramVar, IPredicate> entry : mSummaryByGlobal.entrySet()) {
-			final IPredicate otherSummary = typedOther.mSummaryByGlobal.get(entry.getKey());
-			if (otherSummary == null || !domain.isSubsetEq(entry.getValue(), otherSummary).isTrueForAbstraction()) {
-				return false;
+		for (final Entry<String, PerThreadData> entry : mDataByThread.entrySet()) {
+			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey());
+			final PerThreadData otherData = typedOther.mDataByThread.get(entry.getKey());
+			for (final Entry<IProgramVar, IPredicate> g : entry.getValue().summaryByGlobal().entrySet()) {
+				final IPredicate otherSummary = otherData == null ? null : otherData.summaryByGlobal().get(g.getKey());
+				if (otherSummary == null
+						|| !domain.isSubsetEq(g.getValue(), otherSummary).isTrueForAbstraction()) {
+					return false;
+				}
 			}
 		}
 		return true;

@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.ThreadedKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
@@ -159,11 +159,10 @@ public class InterferencePrecisionRegressionTest {
 
 		final IPredicate state = predicate(
 				and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
-		final InterferenceCollection interferences = mutexInterferences();
+		final IInterference itf = mutexInterferences();
 
 		mManagedScript.unlock(this);
-		final IInterference itf = interferences.getInterferenceForThread(INTERFERING_THREAD_ID);
-		final IPredicate fixedJoin = itf.applyUntilFixpoint(state, mIntervalDomain, 20, mStats);
+		final IPredicate fixedJoin = itf.applyUntilFixpoint(state, Set.of(INTERFERING_THREAD_ID), mIntervalDomain, 20, mStats);
 		mManagedScript.lock(this);
 
 		assertUnsat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(1))));
@@ -177,12 +176,11 @@ public class InterferencePrecisionRegressionTest {
 		final IPredicate state = predicate(
 				and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
 		final IIcfgInternalTransition<IcfgLocation> transition = dummyIdentityTransition();
-		final InterferenceCollection interferences = mutexInterferences();
+		final IInterference itf = mutexInterferences();
 
 		mManagedScript.unlock(this);
 		final IPredicate post = mTools.post(state, transition);
-		final IInterference itf = interferences.getInterferenceForThread(INTERFERING_THREAD_ID);
-		final IPredicate fixedJoin = itf.applyUntilFixpoint(post, mIntervalDomain, 20, mStats);
+		final IPredicate fixedJoin = itf.applyUntilFixpoint(post, Set.of(INTERFERING_THREAD_ID), mIntervalDomain, 20, mStats);
 		mManagedScript.lock(this);
 
 		assertUnsat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(1))));
@@ -209,16 +207,14 @@ public class InterferencePrecisionRegressionTest {
 		mIntervalDomain = new IntervalDomain(logger, mTools, 8, () -> ALWAYS_RUNNING_TIMER);
 	}
 
-	private InterferenceCollection mutexInterferences() {
+	private IInterference mutexInterferences() {
 		final Term all = SmtUtils.orWithExtendedLocalSimplification(mScript, List.of(writerWriteRaceZero().getFormula(),
 				writerUnlock().getFormula(), unreachableOtherThreadWriteOne().getFormula()));
 		final IPredicate asPredicate = predicate(all);
-		final var key = new AbstractLocationPair(0, 0);
+		final var key = new ThreadedKey(INTERFERING_THREAD_ID, new AbstractLocationPair(0, 0));
 		final var contribution = new StrongestPostconditionInterference.RelationalInterference(asPredicate,
 				mRelationalPost.prepareRelation(asPredicate));
-		final var interference = new StrongestPostconditionInterference(Map.of(key, contribution), mRelationalPost, null);
-		return InterferenceCollection.of(
-				Map.of(INTERFERING_THREAD_ID, interference));
+		return new StrongestPostconditionInterference(Map.of(key, contribution), mRelationalPost, null);
 	}
 
 

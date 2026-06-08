@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.Buck
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeTraverser;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.ThreadedKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
@@ -42,11 +42,16 @@ public final class PrePostInterferenceFactory implements IInterferenceFactory {
 	}
 
 	@Override
-	public IInterference buildFromStates(final Map<IcfgLocation, IPredicate> locationStates) {
-		final Map<AbstractLocationPair, PrePostInterference.PrePostPair> interferenceByAbstractLocationPair =
-				new LinkedHashMap<>();
-		for (final TranslatedInterferenceOfEdge edge : mTraverser.collect(locationStates)) {
-			final IPredicate sourceState = locationStates.get(edge.source());
+	public IInterference buildFromAllStates(final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates) {
+		final Map<IcfgLocation, IPredicate> allStates = mergeStates(perThreadStates);
+		final Map<ThreadedKey, PrePostInterference.PrePostPair> interferenceByKey = new LinkedHashMap<>();
+		for (final TranslatedInterferenceOfEdge edge : mTraverser.collect(allStates)) {
+			final String threadId = edge.source().getProcedure();
+			final Map<IcfgLocation, IPredicate> threadStates = perThreadStates.get(threadId);
+			if (threadStates == null) {
+				continue;
+			}
+			final IPredicate sourceState = threadStates.get(edge.source());
 			if (sourceState == null) {
 				continue;
 			}
@@ -68,11 +73,12 @@ public final class PrePostInterferenceFactory implements IInterferenceFactory {
 				}
 			}
 			if (mergedPair != null) {
-				interferenceByAbstractLocationPair.merge(edge.abstractLocationPair(), mergedPair, this::mergePairs);
+				interferenceByKey.merge(new ThreadedKey(threadId, edge.abstractLocationPair()), mergedPair,
+						this::mergePairs);
 			}
 		}
-		return interferenceByAbstractLocationPair.isEmpty() ? null
-				: new PrePostInterference(interferenceByAbstractLocationPair, mManagedScript, mBucketDomain,
+		return interferenceByKey.isEmpty() ? null
+				: new PrePostInterference(interferenceByKey, mManagedScript, mBucketDomain,
 						mPredicateFactory.newPredicate(mManagedScript.getScript().term("false")));
 	}
 
@@ -91,5 +97,12 @@ public final class PrePostInterferenceFactory implements IInterferenceFactory {
 	private IPredicate or(final IPredicate left, final IPredicate right) {
 		final Script script = mManagedScript.getScript();
 		return mPredicateFactory.newPredicate(SmtUtils.or(script, left.getFormula(), right.getFormula()));
+	}
+
+	private static Map<IcfgLocation, IPredicate> mergeStates(
+			final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates) {
+		final Map<IcfgLocation, IPredicate> merged = new LinkedHashMap<>();
+		perThreadStates.values().forEach(merged::putAll);
+		return merged;
 	}
 }

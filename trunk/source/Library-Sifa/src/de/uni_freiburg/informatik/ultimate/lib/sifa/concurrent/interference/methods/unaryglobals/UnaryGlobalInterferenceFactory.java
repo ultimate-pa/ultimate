@@ -49,37 +49,44 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 	}
 
 	@Override
-	public IInterference buildFromStates(final Map<IcfgLocation, IPredicate> locationStates) {
-		final Map<IProgramVar, IPredicate> summaryByGlobal = new LinkedHashMap<>();
-		for (final TranslatedInterferenceOfEdge edge : mTraverser.collect(locationStates)) {
+	public IInterference buildFromAllStates(final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates) {
+		final Map<IcfgLocation, IPredicate> allStates = mergeStates(perThreadStates);
+		// threadId → (global → summary predicate)
+		final Map<String, Map<IProgramVar, IPredicate>> summaryByThread = new LinkedHashMap<>();
+		for (final TranslatedInterferenceOfEdge edge : mTraverser.collect(allStates)) {
 			if (edge.changedGlobals().isEmpty()) {
 				continue;
 			}
-			final IPredicate postState = computeEdgeLocalPostState(edge, locationStates);
+			final String threadId = edge.source().getProcedure();
+			final Map<IcfgLocation, IPredicate> threadStates = perThreadStates.get(threadId);
+			if (threadStates == null) {
+				continue;
+			}
+			final IPredicate postState = computeEdgeLocalPostState(edge, threadStates);
 			if (postState == null || SmtUtils.isFalseLiteral(postState.getFormula())) {
 				continue;
 			}
+			final Map<IProgramVar, IPredicate> threadSummary =
+					summaryByThread.computeIfAbsent(threadId, k -> new LinkedHashMap<>());
 			for (final IProgramVar global : edge.changedGlobals()) {
 				final IPredicate unarySummary = SmtUtils.isTrueLiteral(postState.getFormula()) ? mTruePredicate
 						: projectToSingleGlobal(postState, global);
-				summaryByGlobal.merge(global, unarySummary, mDomain::join);
+				threadSummary.merge(global, unarySummary, mDomain::join);
 			}
 		}
-		return summaryByGlobal.isEmpty() ? null
-				: new UnaryGlobalInterference(summaryByGlobal, mServices, mManagedScript, mPredicateFactory);
+		return summaryByThread.isEmpty() ? null
+				: UnaryGlobalInterference.create(summaryByThread, mServices, mManagedScript, mPredicateFactory);
 	}
 
 	private IPredicate computeEdgeLocalPostState(final TranslatedInterferenceOfEdge edge,
-			final Map<IcfgLocation, IPredicate> locationStates) {
-		final IPredicate sourceState = locationStates.get(edge.source());
+			final Map<IcfgLocation, IPredicate> threadStates) {
+		final IPredicate sourceState = threadStates.get(edge.source());
 		if (sourceState == null || SmtUtils.isFalseLiteral(sourceState.getFormula())) {
 			return mFalsePredicate;
 		}
 		final Term combined = SmtUtils.andWithExtendedLocalSimplification(mManagedScript.getScript(),
 				sourceState.getFormula(), edge.transitionPredicate().getFormula());
 		final IPredicate relationalInterference = mPredicateFactory.newPredicate(combined);
-		// SP(PreState, Transition) gives the post-state of the edge.
-		// Since PreState already over-approximates interferences, this is sound.
 		return mPostcondition.strongestPostcondition(mTruePredicate, relationalInterference);
 	}
 
@@ -101,5 +108,12 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 			}
 		}
 		return false;
+	}
+
+	private static Map<IcfgLocation, IPredicate> mergeStates(
+			final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates) {
+		final Map<IcfgLocation, IPredicate> merged = new LinkedHashMap<>();
+		perThreadStates.values().forEach(merged::putAll);
+		return merged;
 	}
 }

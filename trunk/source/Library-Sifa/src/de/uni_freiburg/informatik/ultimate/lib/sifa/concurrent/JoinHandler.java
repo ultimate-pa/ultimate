@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,6 +31,10 @@ class JoinHandler {
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private GhostVariableManager mGhostVariables;
+	// Caches keyed by join-thread name and edge identity respectively; both are fixed after configureStaticAnalysis.
+	private final Map<String, Set<TermVariable>> mGhostVarsToProjectCache = new HashMap<>();
+	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedVarsCache =
+			new IdentityHashMap<>();
 
 	JoinHandler(final ConcurrentSymbolicTools tools, final IUltimateServiceProvider services,
 			final IIcfg<IcfgLocation> icfg) {
@@ -46,6 +53,7 @@ class JoinHandler {
 		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join)) {
 			return state;
 		}
+		// auch wenn nicht eindeutig vlt mit disjunciton versuchen
 		final String joinedThread = activityPreanalysis
 				.getJoinedThreadForJoin((IIcfgJoinTransitionThreadCurrent<IcfgLocation>) join);
 		if (joinedThread == null) {
@@ -86,9 +94,11 @@ class JoinHandler {
 		if (mGhostVariables == null) {
 			return Set.of();
 		}
-		final Set<TermVariable> extra = new HashSet<>(mGhostVariables.getLocationTermVariables());
-		extra.remove(mGhostVariables.getLocationTermVar(joinedThread));
-		return extra;
+		return mGhostVarsToProjectCache.computeIfAbsent(joinedThread, k -> {
+			final Set<TermVariable> extra = new HashSet<>(mGhostVariables.getLocationTermVariables());
+			extra.remove(mGhostVariables.getLocationTermVar(k));
+			return Set.copyOf(extra);
+		});
 	}
 
 	private IPredicate intersectStateAndExitLocationState(final IPredicate state, final String joinedThread,
@@ -114,8 +124,8 @@ class JoinHandler {
 	}
 
 	private Set<TermVariable> collectAssignedTermVars(final IIcfgJoinTransitionThreadCurrent<?> join) {
-		return join.getJoinSmtArguments().getAssignmentLhs().stream().filter(Objects::nonNull)
-				.map(IProgramVar::getTermVariable).collect(Collectors.toCollection(HashSet::new));
+		return mAssignedVarsCache.computeIfAbsent(join, k -> k.getJoinSmtArguments().getAssignmentLhs().stream()
+				.filter(Objects::nonNull).map(IProgramVar::getTermVariable).collect(Collectors.toUnmodifiableSet()));
 	}
 
 }

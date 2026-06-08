@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
@@ -9,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -19,13 +18,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
  */
 final class Optimizations {
 
-	static boolean trivialState(final IPredicate state, final InterferenceCollection interferences) {
-		return interferences.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
+	static boolean trivialState(final IPredicate state, final IInterference interference) {
+		return interference == null || interference.isEmpty()
+				|| SmtUtils.isTrueLiteral(state.getFormula())
 				|| SmtUtils.isFalseLiteral(state.getFormula());
 	}
 
 	static boolean noGrowth(final IDomain domain, final IPredicate candidate, final IPredicate current) {
-		return domain.isSubsetEq(candidate, current).isTrueForAbstraction();
+		return candidate == current || domain.isSubsetEq(candidate, current).isTrueForAbstraction();
 	}
 
 	static boolean roundConverged(final boolean changed, final IDomain domain, final IPredicate current,
@@ -37,34 +37,30 @@ final class Optimizations {
 		return !isForkOrJoin(transition) && !touchesGlobals(transition);
 	}
 
-	static List<IInterference> filterApplicable(final ThreadAnalysisContext ctx, final IcfgLocation location,
+	static Set<String> filterApplicable(final ThreadAnalysisContext ctx, final IcfgLocation location,
 			final ThreadActivityPreanalysis preanalysis) {
-		return ctx.applicableInterferencesByLocation().computeIfAbsent(location,
+		return ctx.activeThreadIdsByLocation().computeIfAbsent(location,
 				loc -> computeApplicable(ctx, loc, preanalysis));
 	}
 
-	private static List<IInterference> computeApplicable(final ThreadAnalysisContext ctx, final IcfgLocation location,
+	private static Set<String> computeApplicable(final ThreadAnalysisContext ctx, final IcfgLocation location,
 			final ThreadActivityPreanalysis preanalysis) {
-		final List<IInterference> result = new ArrayList<>();
+		final Set<String> result = new LinkedHashSet<>();
 		final String threadId = ctx.threadId();
 		final boolean includeSelf = ctx.includeSelfInterference();
 		for (final String otherId : ctx.sortedInterferenceThreadIds()) {
 			if (otherId.equals(threadId) && !includeSelf) {
-				continue; // self-interference
+				continue;
 			}
 			if (!preanalysis.mayBeActiveAt(location, otherId)) {
-				continue; // known inactive
+				continue;
 			}
 			if (preanalysis.isDefinitelyJoinedAt(location, otherId)) {
-				continue; // definitely joined before this location
+				continue;
 			}
-			final IInterference itf = ctx.interferences().getInterferenceForThread(otherId);
-			if (itf == null) {
-				continue; // trivial interference
-			}
-			result.add(itf);
+			result.add(otherId);
 		}
-		return List.copyOf(result);
+		return Set.copyOf(result);
 	}
 
 	private static boolean isForkOrJoin(final IIcfgTransition<IcfgLocation> transition) {

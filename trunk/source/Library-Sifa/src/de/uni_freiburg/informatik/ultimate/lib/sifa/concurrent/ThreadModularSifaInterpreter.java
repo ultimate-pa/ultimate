@@ -25,7 +25,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LoiExpansion;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.SingleThreadIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
@@ -138,13 +137,13 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	private FixpointResult computeOuterInterferenceFixpoint() {
 		final Map<IcfgLocation, IPredicate> allPredicates = new HashMap<>();
-		InterferenceCollection currentInterferences = InterferenceCollection.empty();
+		IInterference currentInterferences = null;
 		final Set<IcfgLocation> joinedExitLocations = computeJoinedExitLocations();
 		boolean rerunWithStableInterferences = false;
 
 		if (mConcurrentTools.getSettings().interferenceApplicatorType() == InterferenceApplicatorType.NONE) {
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new HashMap<>();
-			analyzeThreads(currentInterferences, allPredicates, perThreadPredicates);
+			analyzeThreads(null, allPredicates, perThreadPredicates);
 			return new FixpointResult(allPredicates, perThreadPredicates);
 		}
 
@@ -162,9 +161,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 					joinedExitLocations.isEmpty() ? Map.of() : snapshotLocations(allPredicates, joinedExitLocations);
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new HashMap<>();
 			analyzeThreads(currentInterferences, allPredicates, perThreadPredicates);
-			final InterferenceCollection extractedInterferences = rebuildInterferences(perThreadPredicates);
-			final boolean interferencesHaveConverged =
-					extractedInterferences.hasConverged(currentInterferences, mDomain);
+			final IInterference extractedInterferences = rebuildInterferences(perThreadPredicates);
+			final boolean interferencesHaveConverged = hasConverged(extractedInterferences, currentInterferences);
 
 			if (interferencesHaveConverged) {
 				// Only do an extra iteration when a joined-thread's exit changed this round,
@@ -178,15 +176,30 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 				continue;
 			}
 			rerunWithStableInterferences = false;
-			final InterferenceCollection nextInterferences;
 			if (iteration >= mOuterWideningThreshold) {
-				nextInterferences = currentInterferences.widen(extractedInterferences, mDomain);
+				currentInterferences = widen(currentInterferences, extractedInterferences);
 				mStats.increment(Key.INTERFERENCE_OUTER_WIDENINGS);
 			} else {
-				nextInterferences = extractedInterferences;
+				currentInterferences = extractedInterferences;
 			}
-			currentInterferences = nextInterferences;
 		}
+	}
+
+	private boolean hasConverged(final IInterference extracted, final IInterference current) {
+		if (extracted == null) {
+			return true; // no new interferences → always converged
+		}
+		if (current == null) {
+			return false; // first non-trivial iteration
+		}
+		return extracted.isSubsumedBy(current, mDomain);
+	}
+
+	private IInterference widen(final IInterference current, final IInterference extracted) {
+		if (current == null) {
+			return extracted;
+		}
+		return current.widen(extracted, mDomain);
 	}
 
 	private Set<IcfgLocation> computeJoinedExitLocations() {
@@ -228,30 +241,18 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		return true;
 	}
 
-	private InterferenceCollection rebuildInterferences(
+	private IInterference rebuildInterferences(
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates) {
-		final Map<String, IInterference> rebuiltInterferences = new HashMap<>();
-		// TODO: goblint only 1 iinterference globally
-		for (final String threadId : mThreadIds) {
-			final Map<IcfgLocation, IPredicate> locationStates = perThreadPredicates.get(threadId);
-			if (locationStates == null) {
-				continue;
-			}
-			final IInterference rebuilt = mInterferenceFactory.buildFromStates(locationStates);
-			if (rebuilt != null) {
-				rebuiltInterferences.put(threadId, rebuilt);
-			}
-		}
-		return InterferenceCollection.of(rebuiltInterferences);
+		return mInterferenceFactory.buildFromAllStates(perThreadPredicates);
 	}
 
-	private void analyzeThreads(final InterferenceCollection interferences,
+	private void analyzeThreads(final IInterference interference,
 			final Map<IcfgLocation, IPredicate> allPredicates,
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates) {
 		for (final String threadId : mThreadIds) {
 			final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
 
-			mConcurrentTools.configureForThread(threadId, interferences, allPredicates, mDomain, mPostcondition);
+			mConcurrentTools.configureForThread(threadId, interference, allPredicates, mDomain, mPostcondition);
 			final IPredicate initialState = mConcurrentTools.getInitialStatePredicate(threadId);
 			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
 			mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);

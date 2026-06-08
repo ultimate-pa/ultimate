@@ -3,8 +3,8 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -25,15 +25,11 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.Buck
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.ObservedThreadStateRecorder;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceCollection;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.poststate.PostStateInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.unaryglobals.UnaryGlobalInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.InitialStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -53,6 +49,9 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
 	private ThreadAnalysisContext mThreadContext;
 	private ObservedThreadStateRecorder mObservedStateRecorder;
+	// Per-thread cache of existential projections over the ghost location var: Term identity is safe in SmtInterpol.
+	// Persists across outer iterations since the ghost loc var for a thread never changes.
+	private final Map<String, IdentityHashMap<Term, Term>> mLocProjectionCache = new HashMap<>();
 
 	public ConcurrentSymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
 			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
@@ -98,15 +97,17 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mJoinHandler.configureStaticAnalysis(ghostVariables);
 	}
 
-	public void configureForThread(final String threadId, final InterferenceCollection interferences,
+	public void configureForThread(final String threadId, final IInterference interference,
 			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain,
 			final RelationalPredicatePostcondition postcondition) {
 		IThreadLocalDomainContext.setIfApplicable(domain, threadId);
-		final List<String> sortedInterferenceThreadIds = new ArrayList<>(interferences.getThreadIds());
+		final ArrayList<String> sortedInterferenceThreadIds = interference != null
+				? new ArrayList<>(interference.threadIds()) : new ArrayList<>();
 		Collections.sort(sortedInterferenceThreadIds);
 		final boolean includeSelfInterference = mThreadActivityPreanalysis.getMultiForkedThreads().contains(threadId);
-		mThreadContext = new ThreadAnalysisContext(threadId, interferences, domain, postcondition,
-				includeSelfInterference, List.copyOf(sortedInterferenceThreadIds), locationPredicates, new HashMap<>());
+		mThreadContext = new ThreadAnalysisContext(threadId, interference, domain, postcondition,
+				includeSelfInterference, java.util.List.copyOf(sortedInterferenceThreadIds), locationPredicates,
+				new HashMap<>());
 		mObservedStateRecorder = new ObservedThreadStateRecorder(domain, mGhostVariables);
 		mInitialStateFactory.configureForThread(locationPredicates, domain);
 	}
@@ -146,55 +147,16 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	}
 
 	public IPredicate applyInterferences(final IPredicate state, final IcfgLocation location) {
-		if (Optimizations.trivialState(state, mThreadContext.interferences())) {
+		if (Optimizations.trivialState(state, mThreadContext.interference())) {
 			return state;
 		}
-		final List<IInterference> applicable = Optimizations.filterApplicable(mThreadContext, location,
-				mThreadActivityPreanalysis);
-		if (applicable.isEmpty()) {
+		final Set<String> activeThreadIds =
+				Optimizations.filterApplicable(mThreadContext, location, mThreadActivityPreanalysis);
+		if (activeThreadIds.isEmpty()) {
 			return state;
 		}
-		return applyInterferenceRounds(state, applicable);
-	}
-
-	private IPredicate applyInterferenceRounds(final IPredicate state, final List<IInterference> interferences) {
-		final IDomain domain = mThreadContext.domain();
-		if (usesOnePassApplication(interferences)) {
-			return applyInterferencesOnce(state, interferences, domain);
-		}
-		IPredicate current = state;
-		while (true) {
-			final IPredicate roundStart = current;
-			boolean changed = false;
-			for (final IInterference itf : interferences) {
-				final IPredicate next = itf.applyUntilFixpoint(current, domain, mSettings.innerWideningThreshold(),
-						getStats());
-				if (Optimizations.noGrowth(domain, next, current)) {
-					continue;
-				}
-				current = next;
-				changed = true;
-			}
-			if (Optimizations.roundConverged(changed, domain, current, roundStart)) {
-				return current;
-			}
-		}
-	}
-
-	private boolean usesOnePassApplication(final List<IInterference> interferences) {
-		return mSettings.interferenceApplicatorType() == InterferenceApplicatorType.UNARY_GLOBALS
-				|| mSettings.interferenceApplicatorType() == InterferenceApplicatorType.POST_STATE
-				|| interferences.stream().allMatch(itf -> itf instanceof UnaryGlobalInterference
-						|| itf instanceof PostStateInterference);
-	}
-
-	private IPredicate applyInterferencesOnce(final IPredicate state, final List<IInterference> interferences,
-			final IDomain domain) {
-		IPredicate current = state;
-		for (final IInterference itf : interferences) {
-			current = itf.applyUntilFixpoint(current, domain, mSettings.innerWideningThreshold(), getStats());
-		}
-		return current;
+		return mThreadContext.interference().applyUntilFixpoint(state, activeThreadIds,
+				mThreadContext.domain(), mSettings.innerWideningThreshold(), getStats());
 	}
 
 	private IPredicate updateGhostvarsAndApplyInterferences(final IPredicate state,
@@ -228,14 +190,17 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			return postState;
 		}
 
-		final TermVariable currentLocTv = mGhostVariables.getLocationTermVar(threadId);
 		final Term locConstraint = mGhostVariables.createLocationConstraint(threadId, targetLocation);
 		if (SmtUtils.isTrueLiteral(postState.getFormula())) {
 			return predicate(locConstraint);
 		}
 
-		final Term projected = RelationalPredicateUtils.existentiallyProject(postState.getFormula(),
-				Set.of(currentLocTv), mServices, getManagedScript());
+		final TermVariable currentLocTv = mGhostVariables.getLocationTermVar(threadId);
+		final Term stateTerm = postState.getFormula();
+		final Term projected = mLocProjectionCache.computeIfAbsent(threadId, k -> new IdentityHashMap<>())
+				.computeIfAbsent(stateTerm,
+						k -> RelationalPredicateUtils.existentiallyProject(k, Set.of(currentLocTv), mServices,
+								getManagedScript()));
 		final Term combined = SmtUtils.and(getScript(), projected, locConstraint);
 		return predicate(combined);
 	}

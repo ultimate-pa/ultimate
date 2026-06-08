@@ -8,6 +8,9 @@ public final class InterferenceGrouping {
 	public record AbstractLocationPair(int sourceAbstractLocation, int targetAbstractLocation) {
 	}
 
+	public record ThreadedKey(String threadId, AbstractLocationPair pair) {
+	}
+
 	private InterferenceGrouping() {
 	}
 
