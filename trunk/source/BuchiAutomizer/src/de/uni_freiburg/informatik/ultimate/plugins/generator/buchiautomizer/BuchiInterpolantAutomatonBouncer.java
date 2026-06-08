@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Given a lasso annotated with predicates, construct an interpolant automaton that is nearly determinisitic.
+ * Given a lasso annotated with predicates, construct an interpolant automaton that is nearly deterministic.
  *
  * @author Matthias Heizmann
  *

@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -66,7 +67,7 @@ public class LassoAnalysisResults implements IStatisticsDataProvider, IStatistic
 	/**
 	 * Cases where the stem is infeasible and the termination/feasibility of the loop is unknown.
 	 */
-	public static final String STEM_FEASIBLE_LOOP_UNKNOWN = "SILU";
+	public static final String STEM_INFEASIBLE_LOOP_UNKNOWN = "SILU";
 	/**
 	 * Cases where the stem is infeasible and the loop is infeasible.
 	 */
@@ -82,6 +83,10 @@ public class LassoAnalysisResults implements IStatisticsDataProvider, IStatistic
 
 	private final Map<String, Integer> mMap;
 
+	private LassoAnalysisResults(final Map<String, Integer> map) {
+		mMap = map;
+	}
+
 	public LassoAnalysisResults() {
 		mMap = new LinkedHashMap<>();
 		mMap.put(LASSO_NONTERMINATING, 0);
@@ -91,7 +96,7 @@ public class LassoAnalysisResults implements IStatisticsDataProvider, IStatistic
 		mMap.put(CONCATENATION_INFEASIBLE, 0);
 		mMap.put(CONCATENATION_INFEASIBLE_LOOP_TERMINATING, 0);
 		mMap.put(STEM_INFEASIBLE_LOOP_NONTERMINATING, 0);
-		mMap.put(STEM_FEASIBLE_LOOP_UNKNOWN, 0);
+		mMap.put(STEM_INFEASIBLE_LOOP_UNKNOWN, 0);
 		mMap.put(STEM_INFEASIBLE_LOOP_INFEASIBLE, 0);
 		mMap.put(STEM_INFEASIBLE_LOOP_TERMINATING, 0);
 		mMap.put(LASSO_TERMINATING, 0);
@@ -145,4 +150,8 @@ public class LassoAnalysisResults implements IStatisticsDataProvider, IStatistic
 		return sb.toString();
 	}
 
+	public LassoAnalysisResults merge(final LassoAnalysisResults other) {
+		return new LassoAnalysisResults(
+				getKeys().stream().collect(Collectors.toMap(x -> x, x -> mMap.get(x) + other.mMap.get(x))));
+	}
 }
