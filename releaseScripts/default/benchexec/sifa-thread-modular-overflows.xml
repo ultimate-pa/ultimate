@@ -13,27 +13,27 @@
 
   <rundefinition name="strongestpost">
     <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
-    <option name="--sifa.guard.bucket.split">true</option>
+    <option name="--sifa.use.buckets">true</option>
   </rundefinition>
 
   <rundefinition name="prepost">
     <option name="--sifa.interference.applicator">PREPOST</option>
-    <option name="--sifa.guard.bucket.split">false</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
 
   <rundefinition name="guarded-exact-update">
     <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
-    <option name="--sifa.guard.bucket.split">true</option>
+    <option name="--sifa.use.buckets">true</option>
   </rundefinition>
 
   <rundefinition name="post-state">
     <option name="--sifa.interference.applicator">POST_STATE</option>
-    <option name="--sifa.guard.bucket.split">false</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
 
   <rundefinition name="none">
     <option name="--sifa.interference.applicator">NONE</option>
-    <option name="--sifa.guard.bucket.split">false</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
 
   <tasks name="SVCOMP-Concurrency">
