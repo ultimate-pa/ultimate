@@ -258,14 +258,19 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		if (isStemInfeasible) {
 			assert mTryTwofoldRefinement;
 			final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
-			final ILassoCheckResult<L> loopTermination =
-					checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
-			if (loopTermination instanceof final TerminationResult<L> tr) {
+			switch (checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda)) {
+			case final TerminationResult<L> tr:
 				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_TERMINATING);
 				return new TerminationAndInfeasibilityResult<>(stemCheck, tr.result());
+			case final NonterminationResult<L> nr:
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_NONTERMINATING);
+				return new InfeasibilityResult<>(stemCheck);
+			case final UnknownResult<L> ur:
+				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_UNKNOWN);
+				return new InfeasibilityResult<>(stemCheck);
+			default:
+				throw new AssertionError("Impossible case");
 			}
-			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_INFEASIBLE_LOOP_NONTERMINATING);
-			return new InfeasibilityResult<>(stemCheck);
 		}
 		// stem feasible
 		final var concatCheck = checkConcatFeasibility(stem, loop);
