@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ojalgo.matrix.MatrixQ128;
-import org.ojalgo.matrix.store.GenericStore;
+import org.ojalgo.matrix.store.SparseStore;
 import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -136,7 +136,7 @@ public class CongruenceUtil {
 			m = rows.get(0).countColumns();
 		}
 
-		final GenericStore<RationalNumber> protoMatrix = GenericStore.Q128.make(n, m);
+		final SparseStore<RationalNumber> protoMatrix = SparseStore.Q128.make(n, m);
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < m; j++) {
 				protoMatrix.set(i, j, rows.get(i).get(0, j));
@@ -152,7 +152,7 @@ public class CongruenceUtil {
 
 	public static MatrixQ128 getMatrixFromIntList(final List<Integer> entries, final int rowCount,
 			final int columnCount) {
-		final GenericStore<RationalNumber> protoMatrix = GenericStore.Q128.make(rowCount, columnCount);
+		final SparseStore<RationalNumber> protoMatrix = SparseStore.Q128.make(rowCount, columnCount);
 
 		for (int i = 0; i < rowCount; i++) {
 			for (int j = 0; j < columnCount; j++) {
@@ -167,7 +167,7 @@ public class CongruenceUtil {
 
 	public static MatrixQ128 getMatrixFromRationalNumberList(final List<RationalNumber> entries, final int rowCount,
 			final int columnCount) {
-		final GenericStore<RationalNumber> protoMatrix = GenericStore.Q128.make(rowCount, columnCount);
+		final SparseStore<RationalNumber> protoMatrix = SparseStore.Q128.make(rowCount, columnCount);
 
 		for (int i = 0; i < rowCount; i++) {
 			for (int j = 0; j < columnCount; j++) {
@@ -181,7 +181,7 @@ public class CongruenceUtil {
 
 	public static MatrixQ128 getMatrixFromRationalList(final List<Rational> entries, final int rowCount,
 			final int columnCount) {
-		final GenericStore<RationalNumber> protoMatrix = GenericStore.Q128.make(rowCount, columnCount);
+		final SparseStore<RationalNumber> protoMatrix = SparseStore.Q128.make(rowCount, columnCount);
 
 		for (int i = 0; i < rowCount; i++) {
 			for (int j = 0; j < columnCount; j++) {
