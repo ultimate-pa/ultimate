@@ -332,7 +332,6 @@ public class ConstraintRepresentation {
 	public GeneratorRepresentation computeGeneratorRepresentation() {
 		minimize();
 		final List<MatrixQ128> equalities = getEqualities();
-		final int equalitiesNum = equalities.size();
 		final List<MatrixQ128> congruences = getCongruences();
 		final int congruencesNum = congruences.size();
 
