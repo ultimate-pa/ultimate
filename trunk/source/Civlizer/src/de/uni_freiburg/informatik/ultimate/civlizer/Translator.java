@@ -171,8 +171,8 @@ public final class Translator extends BoogieVisitor {
 	}
 
 	private void addFork(final String procName) {
-		mWriter.println("yield procedure {:layer 2} fork_" + procName
-				+ "({:linear} start_tid : One StartTid, {:linear_in} tid : One Tid) {}");
+		mWriter.println("yield procedure {:layer 0} fork_" + procName + "({:linear_in} tid : One Tid);\n"
+				+ "refines atomic action {:layer 1, 2} _ {}");
 	}
 
 	private void addTerminate() {
@@ -187,9 +187,7 @@ public final class Translator extends BoogieVisitor {
 	private void addJoin() {
 		// linear_out try TODO
 		mWriter.println("""
-				yield procedure {:layer 0} join(
-					{:linear} start_tid : One StartTid,
-					{:linear_out} tid : One Tid);
+				yield procedure {:layer 0} join({:linear_out} tid : One Tid);
 				refines atomic action {:layer 1, 2} _ {
 					assume Set_Contains(join_pool, tid);
 					call One_Get(join_pool, tid);

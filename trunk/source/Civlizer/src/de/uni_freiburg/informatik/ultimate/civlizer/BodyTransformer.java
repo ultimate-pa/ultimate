@@ -309,14 +309,9 @@ final class BodyTransformer extends BoogieTransformer {
 			final Expression[] newThreadId = processExpressions(threadId);
 			final Expression[] newArguments = processExpressions(arguments);
 
-			final Expression[] tids = { new IdentifierExpression(forkstmt.getLoc(), /*
-																					 * maybe to be change TODO or not
-																					 */
-					BoogieType.createPlaceholderType(0), "start_tid",
-					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)),
-					new IdentifierExpression(forkstmt.getLoc(), /* maybe to be change TODO or not */
-							BoogieType.createPlaceholderType(0), (new Tid(threadId)).toString(),
-							new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)) };
+			final Expression[] tids = { new IdentifierExpression(forkstmt.getLoc(), BoogieType.createPlaceholderType(0),
+					(new Tid(threadId)).toString(),
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)) };
 
 			newStatement = new CallStatement(forkstmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0],
 					"fork_" + procName, tids); // add expression TODO
@@ -329,14 +324,9 @@ final class BodyTransformer extends BoogieTransformer {
 
 			// variable out to define TODO
 
-			final Expression[] tid = { new IdentifierExpression(joinstmt.getLoc(), /*
-																					 * maybe to be change TODO or not
-																					 */
-					BoogieType.createPlaceholderType(0), "start_tid",
-					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)),
-					new IdentifierExpression(joinstmt.getLoc(), /* maybe to be change TODO or not */
-							BoogieType.createPlaceholderType(0), (new Tid(threadId)).toString(),
-							new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)) };
+			final Expression[] tid = { new IdentifierExpression(joinstmt.getLoc(), BoogieType.createPlaceholderType(0),
+					(new Tid(threadId)).toString(),
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null)) };
 
 			// VariableLHS[] out = new VariableLHS[] {
 			// new VariableLHS(joinstmt.getLoc(), "out" + ((new Tid(threadId)).toString()).substring(3))
