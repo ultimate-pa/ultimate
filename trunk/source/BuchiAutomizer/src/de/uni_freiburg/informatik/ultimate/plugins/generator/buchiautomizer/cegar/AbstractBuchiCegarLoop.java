@@ -521,7 +521,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 *
 	 *
 	 */
-	private A refineUnfair(final UnfairnessResult unfairRes) {
+	private A refineUnfair(final UnfairnessResult unfairRes) throws AutomataLibraryException {
 		final A newAbstr;
 		final IPredicate hondaPredicate = unfairRes.result().getHondaPredicate();
 		final IPredicate rankEqAndSi = unfairRes.result().getRankEqAndSi();
@@ -550,6 +550,36 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mInterpolantAutomatonBuilder.constructInterpolantAutomaton(unfairRes.result().getStemPrecondition(),
 						mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
 						BuchiAutomizerUtils.getVpAlphabet(mAbstraction), mDefaultStateFactory);
+		final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
+				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, pu);
+		// hoare triple checker that can handle the oldrank/ranking function stuff
+		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
+		bhtc.putDecreaseEqualPair(hondaPredicate, rankEqAndSi);
+		assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkitWithRankVars.getManagedScript(),
+				bhtc, pu, inputAutomaton, true, unfairRes.result().getStemPrecondition()).getResult();
+		assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), inputAutomaton,
+				mCounterexample.getNestedLassoWord()).getResult();
+		// the equivalent to constructGeneralizedAutomaton, but we always do nondeterminism
+		if (!inputAutomaton.getStates().contains(pu.getTruePredicate())) {
+			inputAutomaton.addState(false, false, pu.getTruePredicate());
+		}
+		if (!inputAutomaton.getStates().contains(pu.getFalsePredicate())) {
+			inputAutomaton.addState(false, true, pu.getFalsePredicate());
+		}
+		final NondeterministicInterpolantAutomaton<L> generalizedAutomaton = new NondeterministicInterpolantAutomaton<>(
+				mServices, mCsToolkitWithRankVars, bhtc, inputAutomaton, pu, false, true);
+		// TODO: if we want fair termination, wrap the interpolant automaton for filtering
+		newAbstr = refineBuchi(mAbstraction, generalizedAutomaton);
+		// Switch to read-only-mode for lazy constructions
+		generalizedAutomaton.switchToReadonlyMode();
+
+		mBenchmarkGenerator.addEdgeCheckerData(bhtc.getStatistics());
+		final boolean isUseful = isUsefulInterpolantAutomaton(generalizedAutomaton, mCounterexample);
+		if (isUseful) {
+			mMDBenchmark.reportNonDeterministicModule(mIteration, generalizedAutomaton.size());
+		}
+		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mBci);
 		return newAbstr;
 	}
 

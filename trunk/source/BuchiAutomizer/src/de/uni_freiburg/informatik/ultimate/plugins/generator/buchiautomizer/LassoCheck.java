@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -360,14 +361,17 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			// no?
 			// For now, take sup. invariant false and constant ranking function f = 0
 			final boolean falseGuard = (SmtUtils.isFalseLiteral(notGuardDisj.getFormula()));
-			if (falseGuard) {
-				final RankingFunction constRank = new LinearRankingFunction(new AffineFunction());
-				final SupportingInvariant falseInv = new SupportingInvariant(new AffineFunction());
-				assert falseInv.isFalse() : "Invariant construction failed";
-				final TerminationArgument constArg =
-						new TerminationArgument(constRank, Collections.singletonList(falseInv), null);
-				return new UnfairnessResult(mBspm.computePredicates(constArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
-						stemTF, loopTF, modifiableGlobalsAtHonda), nonLoopThreads, notGuardDisj);
+			// TODO: do this properly
+			if (mBspm == null) {
+				mLogger.warn("Why is bspm null here?");
+			}
+			if (falseGuard && mBspm.equals(null)) {
+				final TerminationArgument constArg = constructTrivialTerminationArgument();
+				// TODO: figure out why mBspm is null here
+				final UnfairnessResult<L> unf = new UnfairnessResult<>(mBspm.computePredicates(constArg,
+						REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS, stemTF, loopTF, modifiableGlobalsAtHonda),
+						nonLoopThreads, notGuardDisj);
+				return unf;
 
 			}
 			// we unroll the loop state by state and check if the resulting P(A_fair) terminates
@@ -426,11 +430,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				case final InfeasibilityResult<L> inf:
 					// TODO: Vfind a sane way to do this
 					mLogger.warn("Infeasibility, könnte noch fehlerhaft sein!");
-					final RankingFunction constRank = new LinearRankingFunction(new AffineFunction());
-					final SupportingInvariant falseInv = new SupportingInvariant(new AffineFunction());
-					assert falseInv.isFalse() : "Invariant construction failed";
-					final TerminationArgument infArg =
-							new TerminationArgument(constRank, Collections.singletonList(falseInv), null);
+					final TerminationArgument infArg = constructTrivialTerminationArgument();
 					final BspmResult infRes = mBspm.computePredicates(infArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
 							newStemTF, unguardedLoopTF, newHondaModGlobals);
 					return new UnfairnessResult(infRes, nonLoopThreads, notGuardDisj);
@@ -484,6 +484,22 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		default -> throw new AssertionError("Impossible case");
 		}
 		return result;
+	}
+
+	/*
+	 * Construct a termination argument with constant ranking function f = 0 and supporting invariant false
+	 *
+	 */
+	private TerminationArgument constructTrivialTerminationArgument() {
+		final RankingFunction constRank = new LinearRankingFunction(new AffineFunction());
+		final AffineFunction f = new AffineFunction();
+
+		f.setConstant(BigInteger.ONE.negate());
+		// it seems that a supporting invariant is an affine ranking function that evaluates to false if it has no
+		// coefficients and its constant is <= 0
+		final SupportingInvariant falseInv = new SupportingInvariant(f);
+		assert falseInv.isFalse() : "Invariant construction failed";
+		return new TerminationArgument(constRank, Collections.singletonList(falseInv), null);
 	}
 
 	public ILassoCheckResult<L> getLassoCheckResult() {
