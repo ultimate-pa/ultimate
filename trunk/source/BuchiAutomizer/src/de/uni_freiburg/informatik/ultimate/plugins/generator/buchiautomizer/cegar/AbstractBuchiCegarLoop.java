@@ -108,6 +108,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.NonterminationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TerminationAndInfeasibilityResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TerminationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.UnfairnessResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.UnknownResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TermcompProofBenchmark;
@@ -513,6 +514,43 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getStatistics());
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		return result;
+	}
+
+	/*
+	 * Essentially a simplified version of refineBuchiInternal for Unfairness
+	 *
+	 *
+	 */
+	private A refineUnfair(final UnfairnessResult unfairRes) {
+		final A newAbstr;
+		final IPredicate hondaPredicate = unfairRes.result().getHondaPredicate();
+		final IPredicate rankEqAndSi = unfairRes.result().getRankEqAndSi();
+
+		assert !SmtUtils.isFalseLiteral(unfairRes.result().getStemPrecondition().getFormula());
+		// assert !SmtUtils.isFalseLiteral(hondaPredicate.getFormula());
+		assert !SmtUtils.isFalseLiteral(rankEqAndSi.getFormula());
+		// TODO: was sind die dump automata einstellungen?
+
+		final RankingFunction rank = unfairRes.result().getTerminationArgument().getRankingFunction();
+		final Script script = mCsToolkitWithRankVars.getManagedScript().getScript();
+
+		mMDBenchmark.reportRankingFunction(mIteration, rank, script);
+		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		// for now we ignore the constructions styles
+		final PredicateUnifier pu = new PredicateUnifier(mLogger, mServices, mCsToolkitWithRankVars.getManagedScript(),
+				mPredicateFactory, mCsToolkitWithRankVars.getSymbolTable(), SIMPLIFICATION_TECHNIQUE,
+				unfairRes.result().getStemPrecondition(), hondaPredicate, rankEqAndSi,
+				unfairRes.result().getStemPostcondition(), unfairRes.result().getRankDecreaseAndBound(),
+				unfairRes.result().getSiConjunction());
+		final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
+				unfairRes.result().getStemPrecondition(), unfairRes.result().getStemPostcondition(), pu);
+		final IPredicate[] loopInterpolants =
+				getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
+		final NestedWordAutomaton<L, IPredicate> inputAutomaton =
+				mInterpolantAutomatonBuilder.constructInterpolantAutomaton(unfairRes.result().getStemPrecondition(),
+						mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
+						BuchiAutomizerUtils.getVpAlphabet(mAbstraction), mDefaultStateFactory);
+		return newAbstr;
 	}
 
 	private A refineBuchiInternal(final BspmResult bspmResult) throws AutomataOperationCanceledException {

@@ -172,7 +172,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER>
 	}
 
 	@Override
-	public final String sizeInformation() {
+	public String sizeInformation() {
 		if (mInputInterpolantAutomaton == null) {
 			return "yet neither states nor transitions";
 		}

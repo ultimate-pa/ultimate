@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -61,11 +62,15 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCh
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck2;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.DefaultTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LinearRankingFunction;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.MultiphaseTemplate;
@@ -353,8 +358,18 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 							guards.toArray(UnmodifiableTransFormula[]::new)), mManagedScript, mServices);
 			// TODO: do sth separate if guard disj is true - then we can add whatever loop TS we want to the loop,
 			// no?
+			// For now, take sup. invariant false and constant ranking function f = 0
 			final boolean falseGuard = (SmtUtils.isFalseLiteral(notGuardDisj.getFormula()));
+			if (falseGuard) {
+				final RankingFunction constRank = new LinearRankingFunction(new AffineFunction());
+				final SupportingInvariant falseInv = new SupportingInvariant(new AffineFunction());
+				assert falseInv.isFalse() : "Invariant construction failed";
+				final TerminationArgument constArg =
+						new TerminationArgument(constRank, Collections.singletonList(falseInv), null);
+				return new UnfairnessResult(mBspm.computePredicates(constArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
+						stemTF, loopTF, modifiableGlobalsAtHonda), nonLoopThreads, notGuardDisj);
 
+			}
 			// we unroll the loop state by state and check if the resulting P(A_fair) terminates
 			Set<IProgramNonOldVar> newHondaModGlobals = modifiableGlobalsAtHonda;
 			NestedRun<L, IPredicate> newStemRun = counterexample.getStem();
@@ -408,7 +423,17 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				case final TerminationResult<L> term:
 					// the loop without preconditions is enough to prove unfairness
 					return new UnfairnessResult<>(term.result(), nonLoopThreads, notGuardDisj);
-
+				case final InfeasibilityResult<L> inf:
+					// TODO: Vfind a sane way to do this
+					mLogger.warn("Infeasibility, könnte noch fehlerhaft sein!");
+					final RankingFunction constRank = new LinearRankingFunction(new AffineFunction());
+					final SupportingInvariant falseInv = new SupportingInvariant(new AffineFunction());
+					assert falseInv.isFalse() : "Invariant construction failed";
+					final TerminationArgument infArg =
+							new TerminationArgument(constRank, Collections.singletonList(falseInv), null);
+					final BspmResult infRes = mBspm.computePredicates(infArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
+							newStemTF, unguardedLoopTF, newHondaModGlobals);
+					return new UnfairnessResult(infRes, nonLoopThreads, notGuardDisj);
 				// TODO: find merge next two cases
 				case final NonterminationResult<L> nonterm:
 					if (withStem) {
@@ -965,15 +990,17 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		for (int i = 0; i < num_unrollings; i++) {
 			final ILassoCheckResult<L> res = synthesize_wo_counterexample(true, false, urStemWord, urStemTF,
 					ugLoop.length() + 1, loopTF, containsArray, modifiableGlobalsAtHonda);
-			// One trace of P(A_fair) doesn't terminate --> P doesn't terminate --> G might not hold inf. often
 			switch (res) {
 			case final UnknownResult<L> uk:
 				return new UnknownResult<>();
+			// if only this unrolling is infeasible, it doesn't help proving the rest of the program
+			case final InfeasibilityResult<L> inf:
+				break;
+			// One trace of P(A_fair) doesn't terminate --> P doesn't terminate --> G might not hold inf. often
 			case final NonterminationResult<L> nonterm:
 				// TODO: differentiate between nonterminating and unknown?
 				return new UnknownResult<>();
 			case final TerminationResult<L> ter:
-
 				// TODO: closed Formula oder Formula?
 				final Term supInv = ter.result().getSiConjunction().getFormula();
 				// TODO: check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
@@ -1048,6 +1075,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	}
 
 	// TODO: what form should an Unfairnessresult take?
+
+	/*
+	 * @param result bspm result containing the termination argument
+	 *
+	 * @param nonLoopThreads threads of whom no statement is part of the loop
+	 *
+	 * @param notG negated disj. of guards of outgoing non-loop statements at the honda
+	 */
 	public record UnfairnessResult<L extends IIcfgTransition<?>>(BspmResult result, Set<String> nonLoopThreads,
 			UnmodifiableTransFormula notG) implements ILassoCheckResult<L> {
 
