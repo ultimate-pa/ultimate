@@ -102,6 +102,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Buch
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStyle;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.FairnessWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ILassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.InfeasibilityResult;
@@ -410,6 +411,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				case final InfeasibilityResult<L> ir:
 					mAbstraction = refineFiniteInternal(mAbstraction, ir.refinementEngineResult());
 					break;
+				case final UnfairnessResult<L> unf:
+					mAbstraction = refineUnfair(unf);
+					break;
 				case final TerminationResult<L> tr:
 					mAbstraction = refineBuchiInternal(tr.result());
 					break;
@@ -521,13 +525,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	 *
 	 *
 	 */
-	private A refineUnfair(final UnfairnessResult unfairRes) throws AutomataLibraryException {
+	private A refineUnfair(final UnfairnessResult<L> unfairRes) throws AutomataLibraryException {
 		final A newAbstr;
 		final IPredicate hondaPredicate = unfairRes.result().getHondaPredicate();
 		final IPredicate rankEqAndSi = unfairRes.result().getRankEqAndSi();
 
 		assert !SmtUtils.isFalseLiteral(unfairRes.result().getStemPrecondition().getFormula());
-		// assert !SmtUtils.isFalseLiteral(hondaPredicate.getFormula());
+		// assert !SmtUtils.isFalseLiteral(hondaPredicate.getFormula()); -- we allow that for now
 		assert !SmtUtils.isFalseLiteral(rankEqAndSi.getFormula());
 		// TODO: was sind die dump automata einstellungen?
 
@@ -542,10 +546,28 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				unfairRes.result().getStemPrecondition(), hondaPredicate, rankEqAndSi,
 				unfairRes.result().getStemPostcondition(), unfairRes.result().getRankDecreaseAndBound(),
 				unfairRes.result().getSiConjunction());
+		// TODO: rausfinden, ob/wo ork=inf ins spiel kommt
 		final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
 				unfairRes.result().getStemPrecondition(), unfairRes.result().getStemPostcondition(), pu);
 		final IPredicate[] loopInterpolants =
 				getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
+//------------------------------------------ getting the A_fair predicates ---------------------------------------------
+		// TODO: I have no idea if this can work
+		final NestedRun<L, IPredicate> loopRun;
+		// TODO: find out if the hondaPredicate already contains the supporting invariants
+		final InterpolatingTraceCheck<L> upperLoopCheck =
+				constructTraceCheck(hondaPredicate, hondaPredicate, mCounterexample.getLoop(), pu);
+		// hondaPrime is supposed to be the state after the assume notG edge in A_fair
+		// TODO: do we need to use rankeqandsi?
+		IPredicate hondaPrime = mPredicateFactory.newPredicate(unfairRes.notG().getFormula());
+		hondaPrime = mPredicateFactory.and(hondaPredicate, hondaPrime);
+		final List<IPredicate> stateSeq = List.of(hondaPrime);
+		stateSeq.addAll(mCounterexample.getLoop().getStateSequence());
+		loopRun = new NestedRun(mCounterexample.getLoop().getWord(), stateSeq);
+		final InterpolatingTraceCheck<L> guardedLoopCheck =
+				constructTraceCheck(hondaPrime, hondaPredicate, mCounterexample.getLoop(), pu);
+
+//----------------------------------------------------------------------------------------------------------------------
 		final NestedWordAutomaton<L, IPredicate> inputAutomaton =
 				mInterpolantAutomatonBuilder.constructInterpolantAutomaton(unfairRes.result().getStemPrecondition(),
 						mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
@@ -566,9 +588,15 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		if (!inputAutomaton.getStates().contains(pu.getFalsePredicate())) {
 			inputAutomaton.addState(false, true, pu.getFalsePredicate());
 		}
-		final NondeterministicInterpolantAutomaton<L> generalizedAutomaton = new NondeterministicInterpolantAutomaton<>(
+		final NondeterministicInterpolantAutomaton<L> tbwAutomaton = new NondeterministicInterpolantAutomaton<>(
 				mServices, mCsToolkitWithRankVars, bhtc, inputAutomaton, pu, false, true);
-		// TODO: if we want fair termination, wrap the interpolant automaton for filtering
+
+		// TODO: if we want fair termination, wrap the interpolant automaton to filter out transitions that may lead to
+		// fair runs
+		final FairnessWrapper<L> generalizedAutomaton = new FairnessWrapper(tbwAutomaton, mCounterexample,
+				unfairRes.nonLoopThreads(), stemInterpolants, loopInterpolants, upperLoopCheck.getInterpolants(),
+				guardedLoopCheck.getInterpolants(), hondaPredicate, unfairRes.notG(), bhtc);
+
 		newAbstr = refineBuchi(mAbstraction, generalizedAutomaton);
 		// Switch to read-only-mode for lazy constructions
 		generalizedAutomaton.switchToReadonlyMode();

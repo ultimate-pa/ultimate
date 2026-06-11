@@ -233,7 +233,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final boolean computeHoareAnnotation = false;
 		mStateFactoryForInterpolantAutomaton =
 				new PredicateFactoryForInterpolantAutomata(mManagedScript, mPredicateFactory, computeHoareAnnotation);
-
 		mResult = checkTermination(counterexample);
 	}
 
@@ -352,8 +351,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			}
 
 			// disjunction of terms should be equivalent to parallel comp of respective TransFormulae
-			// TODO: Ask if thats actually true and about branch indicators
-
 			final UnmodifiableTransFormula notGuardDisj = TransFormulaUtils
 					.negate(TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, null, false, true,
 							guards.toArray(UnmodifiableTransFormula[]::new)), mManagedScript, mServices);
@@ -724,6 +721,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				modifiableGlobalsAtHonda);
 	}
 
+	// TODO: gives a nonterminating verdict for transformula false - why is that -- was ist mit dem 'with stem'?
 	// TODO: check if there is an easy way for constructing the A_fair counterexample
 	// V - removed the direct use of the counterexample from this method bc it is easier for unfairness
 	private ILassoCheckResult<L> synthesize_wo_counterexample(final boolean withStem, final boolean stemEmpty,
