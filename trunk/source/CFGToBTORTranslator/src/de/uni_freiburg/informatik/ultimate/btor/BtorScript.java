@@ -19,8 +19,11 @@ import de.uni_freiburg.informatik.ultimate.btor.expression.InitExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.InputExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.NextExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.OneExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SextExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.SliceExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.StateExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.TernaryExpression;
+import de.uni_freiburg.informatik.ultimate.btor.expression.UextExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.btor.expression.ZeroExpression;
 
@@ -55,6 +58,36 @@ public class BtorScript {
 		final ZeroExpression candidate = new ZeroExpression(sort);
 		if (expressionSet.containsKey(candidate)) {
 			return (ZeroExpression) expressionSet.get(candidate);
+		} else {
+			expressionSet.put(candidate, candidate);
+			return candidate;
+		}
+	}
+
+	public SextExpression createSextExpression(final BtorExpression child, final int extendBy) {
+		final SextExpression candidate = new SextExpression(child, extendBy);
+		if (expressionSet.containsKey(candidate)) {
+			return (SextExpression) expressionSet.get(candidate);
+		} else {
+			expressionSet.put(candidate, candidate);
+			return candidate;
+		}
+	}
+
+	public UextExpression createUextExpression(final BtorExpression child, final int extendBy) {
+		final UextExpression candidate = new UextExpression(child, extendBy);
+		if (expressionSet.containsKey(candidate)) {
+			return (UextExpression) expressionSet.get(candidate);
+		} else {
+			expressionSet.put(candidate, candidate);
+			return candidate;
+		}
+	}
+
+	public SliceExpression createSliceExpression(final BtorExpression child, final int upper, final int lower) {
+		final SliceExpression candidate = new SliceExpression(child, upper, lower);
+		if (expressionSet.containsKey(candidate)) {
+			return (SliceExpression) expressionSet.get(candidate);
 		} else {
 			expressionSet.put(candidate, candidate);
 			return candidate;

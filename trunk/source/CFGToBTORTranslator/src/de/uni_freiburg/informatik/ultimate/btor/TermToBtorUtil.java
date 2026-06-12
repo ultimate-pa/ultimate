@@ -79,10 +79,11 @@ public class TermToBtorUtil {
 			if (maybeInteger instanceof Rational) {
 				final Rational rational = (Rational) maybeInteger;
 				assert (rational.isIntegral());
-				return script.createConstdExpression(new BtorSort(64), rational.numerator().longValue());
+
+				return script.createConstdExpression(new BtorSort(term.getSort()), rational.numerator().longValue());
 			} else if (maybeInteger instanceof BigInteger) {
 				final BigInteger integer = (BigInteger) maybeInteger;
-				return script.createConstdExpression(new BtorSort(64), integer.longValue());
+				return script.createConstdExpression(new BtorSort(term.getSort()), integer.longValue());
 			} else {
 				throw new UnsupportedOperationException("Non-integral constant.");
 			}
@@ -110,8 +111,22 @@ public class TermToBtorUtil {
 			return variableMap.get(programVar.getGloballyUniqueId());
 		} else if (rhs instanceof ConstantTerm) {
 			// Assume the constant term is an integer
-			final Rational rational = (Rational) ((ConstantTerm) rhs).getValue();
-			return script.createConstdExpression(new BtorSort(64), rational.numerator().longValue());
+
+			final Object maybeInteger = ((ConstantTerm) rhs).getValue();
+			if (maybeInteger instanceof Rational) {
+				final Rational rational = (Rational) maybeInteger;
+				assert (rational.isIntegral());
+
+				return script.createConstdExpression(new BtorSort(rhs.getSort()), rational.numerator().longValue());
+			} else if (maybeInteger instanceof BigInteger) {
+				final BigInteger integer = (BigInteger) maybeInteger;
+				return script.createConstdExpression(new BtorSort(rhs.getSort()), integer.longValue());
+			} else {
+				throw new UnsupportedOperationException("Non-integral constant.");
+			}
+
+//			final Rational rational = (Rational) ((ConstantTerm) rhs).getValue();
+//			return script.createConstdExpression(new BtorSort(64), rational.numerator().longValue());
 		}
 		throw new UnsupportedOperationException("Rhs term is of an unsupported instance");
 	}
@@ -130,17 +145,29 @@ public class TermToBtorUtil {
 		Term idx;
 		List<Term> idxs;
 		int i;
+
+		BtorExpression zero;
+		BtorExpression one;
+		BtorExpression mod;
+		BtorExpression div;
+		final BtorExpression rhsSignCheck;
+		BtorExpression modSignCheck;
+		BtorExpression child;
 		switch (appName) {
 
-		// case sign_extend:
-		// case zero_extend:
-//		case "sign_extend":
-//			final BtorExpression ext =
-//					convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
-//			sort = ext.getSort();
-//			return new BtorExpression(sort, BtorExpressionType.SEXT, Arrays.asList(ext));
+		case "sign_extend":
+			child = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
+			return script.createSextExpression(child, Integer.parseInt(appTerm.getFunction().getIndices()[0]));
 
-		// case extract: (slice)
+		case "zero_extend":
+			child = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
+			return script.createUextExpression(child, Integer.parseInt(appTerm.getFunction().getIndices()[0]));
+
+		case "extract":
+			child = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
+			return script.createSliceExpression(child, Integer.parseInt(appTerm.getFunction().getIndices()[0]),
+					Integer.parseInt(appTerm.getFunction().getIndices()[1]));
+
 		case "bvnot":
 		case "not":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
@@ -202,6 +229,7 @@ public class TermToBtorUtil {
 
 		case "bvand":
 		case "and":
+		case "&":
 			// Handle nonbinary `and`
 			final Term[] andParams = appTerm.getParameters();
 			lhs = convertConditionalToBtorExpression(andParams[0], tf, variableMap, boogie2SMT, script);
@@ -278,13 +306,13 @@ public class TermToBtorUtil {
 			return script.createBinaryExpression(MulExpression.class, lhs, rhs);
 
 		case "bvsdiv":
-		case "div":
-		case "/":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
+			zero = script.createZeroExpression(sort);
 			return script.createBinaryExpression(SdivExpression.class, lhs, rhs);
+
 		case "bvudiv":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
@@ -292,13 +320,48 @@ public class TermToBtorUtil {
 			sort = lhs.getSort();
 			return script.createBinaryExpression(UdivExpression.class, lhs, rhs);
 
+		// workaround for division using integers instead of bitvectors
+		case "div":
+		case "/":
+			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
+			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
+			assert (lhs.getSort().equals(rhs.getSort()));
+			sort = lhs.getSort();
+			zero = script.createZeroExpression(sort);
+			one = script.createOneExpression(sort);
+			mod = script.createBinaryExpression(SremExpression.class, lhs, rhs);
+			div = script.createBinaryExpression(SdivExpression.class, lhs, rhs);
+			final BtorExpression divInc = script.createBinaryExpression(AddExpression.class, div, one);
+			final BtorExpression divDec = script.createBinaryExpression(SubExpression.class, div, one);
+			modSignCheck = script.createBinaryExpression(SltExpression.class, mod, zero);
+			rhsSignCheck = script.createBinaryExpression(SltExpression.class, rhs, zero);
+			final BtorExpression divAdjust =
+					script.createTernaryExpression(ITEExpression.class, rhsSignCheck, divInc, divDec);
+			return script.createTernaryExpression(ITEExpression.class, modSignCheck, divAdjust, div);
+
 		case "bvsmod":
-		case "mod":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
 			return script.createBinaryExpression(SmodExpression.class, lhs, rhs);
+
+		// workaround for modulus using integers instead of bitvectors
+		case "mod":
+			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
+			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT, script);
+			assert (lhs.getSort().equals(rhs.getSort()));
+			sort = lhs.getSort();
+			zero = script.createZeroExpression(sort);
+			mod = script.createBinaryExpression(SremExpression.class, lhs, rhs);
+			div = script.createBinaryExpression(SdivExpression.class, lhs, rhs);
+			final BtorExpression modAdd = script.createBinaryExpression(AddExpression.class, mod, rhs);
+			final BtorExpression modSub = script.createBinaryExpression(SubExpression.class, mod, rhs);
+			modSignCheck = script.createBinaryExpression(SltExpression.class, mod, zero);
+			rhsSignCheck = script.createBinaryExpression(SltExpression.class, rhs, zero);
+			final BtorExpression modAdjust =
+					script.createTernaryExpression(ITEExpression.class, rhsSignCheck, modSub, modAdd);
+			return script.createTernaryExpression(ITEExpression.class, modSignCheck, modAdjust, mod);
 
 		case "bvsrem":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT, script);
