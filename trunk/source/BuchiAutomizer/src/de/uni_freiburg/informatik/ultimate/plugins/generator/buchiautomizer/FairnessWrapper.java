@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -35,10 +38,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /*
  * Wrapper for a nondeterministic interpolant automaton (certified module from termination analysis) to filter out
@@ -57,6 +65,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	IPredicate[] mPrimedPredicates; // annotations for the "lower" loop of A_fair (the one containing assume !G)
 	List<IPredicate> mLoopStates; // what is better, set or list
 	List<IPredicate> mStemStates;
+	HashMap<IPredicate, Pair<IPredicate, IPredicate>> mPredicateMap;
 	IPredicate mHonda;
 	BuchiHoareTripleChecker mHTC;
 	Set<L> mOriginalEdges;
@@ -103,12 +112,17 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		mNotG = notG;
 		mHTC = htc;
 
+		// TODO: provisorium
+		for (int i = 0; i < mLoopInterpolants.length; i++) {
+			mPredicateMap.put(mLoopInterpolants[i], new Pair<>(mPredicates[i], mPrimedPredicates[i]));
+		}
+
 		mStemStateSet = Set.of(mStemInterpolants);
 		mLoopStateSet = Set.of(mLoopInterpolants);
 		mOriginalEdges = (mLassoRun.getLoop().getWord().asSet());
 		mOriginalEdges.addAll(mLassoRun.getStem().getWord().asSet());
 
-		// TODO: remove/streamline
+		// TODO: remove/streamline - just here to check stuff
 		mLoopStates = mLassoRun.getLoop().getStateSequence();
 		mStemStates = mLassoRun.getStem().getStateSequence();
 		final int num_states_lasso = mLoopStates.size() + mStemStates.size();
@@ -153,37 +167,71 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		return "to be implemented";
 	}
 
+	/*
+	 * Returns all internal successor transitions that are legal for unfairness generalization
+	 */
 	@Override
 	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(final IPredicate state,
 			final L letter) {
-		final Iterable<OutgoingInternalTransition<L, IPredicate>> unfilteredTS =
-				mWrappedAutomaton.internalSuccessors(state, letter);
-
-		// all edges of the original lasso are kept
-		return null;
-	}
-
-	@Override
-	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(final IPredicate state, final L letter) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(final IPredicate state,
-			final IPredicate hier, final L letter) {
-		// TODO Auto-generated method stub
-		return null;
+		final List<OutgoingInternalTransition<L, IPredicate>> filteredTS = new ArrayList<>();
+		// TODO: figure out why the type problem for ts
+		for (final OutgoingInternalTransition<L, IPredicate> ts : mWrappedAutomaton.internalSuccessors(state, letter)) {
+			if (isLegalTS(state, (L) ts, true, false, false, null)) {
+				filteredTS.add(ts);
+			}
+		}
+		return filteredTS;
 	}
 
 	/*
-	 * Checks whether adding this edge is allowed according to unfairness generalization rules
-	 *
+	 * Returns all call successor transitions that are legal for unfairness generalization
 	 */
-	boolean isLegalTS(final IPredicate source, final L ts) {
-		// TODO: are those actually predicates?
+	@Override
+	// TODO: figure out if call/return can even be unfair
+	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(final IPredicate state, final L letter) {
+		final List<OutgoingCallTransition<L, IPredicate>> filteredTS = new ArrayList<>();
+		for (final OutgoingCallTransition<L, IPredicate> ts : mWrappedAutomaton.callSuccessors(state, letter)) {
+			if (isLegalTS(state, (L) ts, false, true, false, null)) {
+				filteredTS.add(ts);
+			}
+		}
+		return filteredTS;
+	}
+
+	/*
+	 * Returns all return successor transitions that are legal for unfairness generalization
+	 */
+	@Override
+	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(final IPredicate state,
+			final IPredicate hier, final L letter) {
+		final List<OutgoingReturnTransition<L, IPredicate>> filteredTS = new ArrayList<>();
+		for (final OutgoingReturnTransition<L, IPredicate> ts : mWrappedAutomaton.returnSuccessors(state, hier,
+				letter)) {
+			if (isLegalTS(state, (L) ts, false, false, true, hier)) {
+				filteredTS.add(ts);
+			}
+		}
+		return filteredTS;
+	}
+
+	/*
+	 * Checks whether adding an edge is allowed according to unfairness generalization rules. Contains questionable type
+	 * casts.
+	 *
+	 * @param internal indicates if the edge is an internal transition
+	 *
+	 * @param call - indicates whether the edge is a call transition
+	 *
+	 * @param ret -indicates whether the edge is a return transition
+	 *
+	 * @param resHier - some parameter needed for return ts, just set to null for other ts
+	 */
+	boolean isLegalTS(final IPredicate source, final L ts, final boolean internal, final boolean call,
+			final boolean ret, final IPredicate resHier) {
+		assert Stream.of(internal, call, ret).filter(b -> b).count() == 1
+				: "The transition has to be exactly one of call, return or internal";
 		final IPredicate target = (IPredicate) ts.getTarget();
-		// we keep the edges of the counterexample
+		// we keep the edges of the original lasso
 		if (isOriginalEdge(ts)) {
 			return true;
 		}
@@ -199,6 +247,39 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		}
 		assert !mStemStateSet.contains(target) : "Illegal Edge from loop to stem!";
 		// for loop edges we need to check if they form valid hoare triples with the unfairness predicates
+		if (mLoopStateSet.contains(source) && !isHonda(target)) {
+			final Pair<IPredicate, IPredicate> sourcePreds = mPredicateMap.get(source);
+			final Pair<IPredicate, IPredicate> targetPreds = mPredicateMap.get(target);
+			boolean u = false;
+			boolean l = false;
+
+			if (internal) {
+				// check if the upper loop ts forms a valid hoare triple
+				u = mHTC.checkInternal(sourcePreds.getFirst(), (IInternalAction) ts,
+						targetPreds.getFirst()) == Validity.VALID;
+				// check if the lower loop forms a valid hoare triple
+				l = mHTC.checkInternal(sourcePreds.getSecond(), (IInternalAction) ts,
+						targetPreds.getSecond()) == Validity.VALID;
+			}
+			if (call) {
+				u = mHTC.checkCall(sourcePreds.getFirst(), (ICallAction) ts, targetPreds.getFirst()) == Validity.VALID;
+				l = mHTC.checkCall(sourcePreds.getSecond(), (ICallAction) ts,
+						targetPreds.getSecond()) == Validity.VALID;
+			}
+			// TODO: find out about the hierarchy stuff
+			if (ret) {
+				u = mHTC.checkReturn(sourcePreds.getFirst(), resHier, (IReturnAction) ts,
+						targetPreds.getFirst()) == Validity.VALID;
+				l = mHTC.checkReturn(sourcePreds.getSecond(), resHier, (IReturnAction) ts,
+						targetPreds.getSecond()) == Validity.VALID;
+			}
+
+			return u && l;
+
+		}
+
+		// the honda is slightly special since we have a virtual 'assume not G' edge "splitting" it
+		// TODO: think about honda cases
 		return false;
 	}
 
