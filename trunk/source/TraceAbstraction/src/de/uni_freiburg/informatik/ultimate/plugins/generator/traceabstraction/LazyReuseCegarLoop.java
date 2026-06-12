@@ -179,7 +179,8 @@ public class LazyReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCegar
 
 			// Check if all edges of the Floyd-Hoare automaton are indeed inductive.
 			assert checkInterpolantAutomatonInductivity(
-					new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), reuseAut).getResult());
+					new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), reuseAut).getResult(),
+					reuseAutPair.getSecond());
 
 			dumpOrAppendAutomatonForReuseIfEnabled(reuseAut, reuseAutPair.getSecond());
 
