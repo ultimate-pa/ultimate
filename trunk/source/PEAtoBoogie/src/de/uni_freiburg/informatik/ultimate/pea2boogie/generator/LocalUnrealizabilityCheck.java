@@ -130,7 +130,8 @@ public class LocalUnrealizabilityCheck {
 
 	private Set<Set<AnnotatedReq>> groupVcsBySymbols(final List<AnnotatedReq> reqs) {
 		final CompleteRtInconsistencyCheck.UnionFind unionFind =
-				new CompleteRtInconsistencyCheck.UnionFind(reqs.size());
+				new CompleteRtInconsistencyCheck.UnionFind(reqs.size()); // could be in its own class an not in
+																			// CompleteRtInconsistencyCheck
 
 		// Map each symbol to the list of req indices that contain it (across all critical phases)
 		final Map<NonTheorySymbol<?>, List<Integer>> symbolToReqIndices = new HashMap<>();
@@ -160,6 +161,16 @@ public class LocalUnrealizabilityCheck {
 
 	@SuppressWarnings("unchecked")
 	private List<Witness> findMinimalInGroup(final List<AnnotatedReq> group, final int maxSubsetSize) {
+		final List<Term> allVcs = new ArrayList<>();
+		for (final AnnotatedReq ar : group) {
+			for (final CritPhaseComputer.CritPhase phase : ar.critPhases().values()) {
+				allVcs.add(phase.vc());
+			}
+		}
+		if (!isLocallyUnrealizable(allVcs)) {
+			return Collections.emptyList();
+		}
+
 		final List<Witness> result = new ArrayList<>();
 		final List<Set<Entry<String, Integer>>> foundMinimalCombinations = new ArrayList<>();
 
