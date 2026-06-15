@@ -119,7 +119,7 @@ public final class TAPreferences {
 	}
 
 	public enum Concurrency {
-		FINITE_AUTOMATA, PETRI_NET, PARTIAL_ORDER_FA
+		FINITE_AUTOMATA, PETRI_NET, PARTIAL_ORDER_FA, PARTIAL_ORDER_IDP_FA
 	}
 
 	public enum LooperCheck {
