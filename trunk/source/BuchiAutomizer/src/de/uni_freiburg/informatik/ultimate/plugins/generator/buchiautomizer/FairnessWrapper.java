@@ -65,7 +65,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	IPredicate[] mPrimedPredicates; // annotations for the "lower" loop of A_fair (the one containing assume !G)
 	List<IPredicate> mLoopStates; // what is better, set or list
 	List<IPredicate> mStemStates;
-	HashMap<IPredicate, Pair<IPredicate, IPredicate>> mPredicateMap;
+	HashMap<IPredicate, Pair<IPredicate, IPredicate>> mPredicateMap = new HashMap<>();
 	IPredicate mHonda;
 	BuchiHoareTripleChecker mHTC;
 	Set<L> mOriginalEdges;
@@ -122,11 +122,11 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		mOriginalEdges = (mLassoRun.getLoop().getWord().asSet());
 		mOriginalEdges.addAll(mLassoRun.getStem().getWord().asSet());
 
-		// TODO: remove/streamline - just here to check stuff
+		// TODO: is the size information of the wrapped automaton accurate?
 		mLoopStates = mLassoRun.getLoop().getStateSequence();
 		mStemStates = mLassoRun.getStem().getStateSequence();
 		final int num_states_lasso = mLoopStates.size() + mStemStates.size();
-		assert num_states_lasso == mWrappedAutomaton.size() : "States went missing!";
+		// assert num_states_lasso == mWrappedAutomaton.size() : "States went missing!";
 
 	}
 

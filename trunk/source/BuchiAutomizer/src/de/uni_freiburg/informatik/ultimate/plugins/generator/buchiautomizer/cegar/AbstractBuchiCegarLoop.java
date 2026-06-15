@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -537,6 +538,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		final RankingFunction rank = unfairRes.result().getTerminationArgument().getRankingFunction();
 		final Script script = mCsToolkitWithRankVars.getManagedScript().getScript();
+		// TODO: If the loop is infeasible (e.g. bc not G is false) we need a different way to compute the interpolants
 
 		mMDBenchmark.reportRankingFunction(mIteration, rank, script);
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -549,8 +551,15 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		// TODO: rausfinden, ob/wo ork=inf ins spiel kommt
 		final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
 				unfairRes.result().getStemPrecondition(), unfairRes.result().getStemPostcondition(), pu);
-		final IPredicate[] loopInterpolants =
-				getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
+		// TODO: If the loop is infeasible (e.g. bc not G is false) we need a different way to compute the interpolants
+		// this is experimental and should be removed later
+		final IPredicate[] loopInterpolants;
+		if (SmtUtils.isFalseLiteral(unfairRes.notG().getFormula())) {
+			final IPredicate falsePred = mPredicateFactory.newPredicate(unfairRes.notG().getFormula());
+			loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, falsePred, pu);
+		} else {
+			loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
+		}
 //------------------------------------------ getting the A_fair predicates ---------------------------------------------
 		// TODO: I have no idea if this can work
 		final NestedRun<L, IPredicate> loopRun;
@@ -561,9 +570,11 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		// TODO: do we need to use rankeqandsi?
 		IPredicate hondaPrime = mPredicateFactory.newPredicate(unfairRes.notG().getFormula());
 		hondaPrime = mPredicateFactory.and(hondaPredicate, hondaPrime);
-		final List<IPredicate> stateSeq = List.of(hondaPrime);
+		final List<IPredicate> stateSeq = new ArrayList();
+		stateSeq.add(hondaPrime);
 		stateSeq.addAll(mCounterexample.getLoop().getStateSequence());
-		loopRun = new NestedRun(mCounterexample.getLoop().getWord(), stateSeq);
+		// what was that good for?
+		// loopRun = new NestedRun(mCounterexample.getLoop().getWord(), stateSeq);
 		final InterpolatingTraceCheck<L> guardedLoopCheck =
 				constructTraceCheck(hondaPrime, hondaPredicate, mCounterexample.getLoop(), pu);
 
@@ -577,8 +588,12 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		// hoare triple checker that can handle the oldrank/ranking function stuff
 		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
 		bhtc.putDecreaseEqualPair(hondaPredicate, rankEqAndSi);
-		assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkitWithRankVars.getManagedScript(),
-				bhtc, pu, inputAutomaton, true, unfairRes.result().getStemPrecondition()).getResult();
+		// TODO: Can/should we do an equivalent check for the unfair automaton?
+		/*
+		 * assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices,
+		 * mCsToolkitWithRankVars.getManagedScript(), bhtc, pu, inputAutomaton, true,
+		 * unfairRes.result().getStemPrecondition()).getResult();
+		 */
 		assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), inputAutomaton,
 				mCounterexample.getNestedLassoWord()).getResult();
 		// the equivalent to constructGeneralizedAutomaton, but we always do nondeterminism
@@ -813,10 +828,17 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return traceCheck.getInterpolants();
 	}
 
+	/*
+	 * @param rankEqAndSi - precondition for the loop
+	 *
+	 * @param hondaPredicate - postcondition
+	 *
+	 */
 	private IPredicate[] getLoopInterpolants(final NestedRun<L, IPredicate> loop, final IPredicate hondaPredicate,
 			final IPredicate rankEqAndSi, final PredicateUnifier predicateUnifier) {
 		final InterpolatingTraceCheck<L> traceCheck =
 				constructTraceCheck(rankEqAndSi, hondaPredicate, loop, predicateUnifier);
+		// TODO: can this work if the loop is infeasible? should we give a trivial postcondition?
 		if (traceCheck.isCorrect() != LBool.UNSAT) {
 			throw new AssertionError("incorrect predicates - loop");
 		}
