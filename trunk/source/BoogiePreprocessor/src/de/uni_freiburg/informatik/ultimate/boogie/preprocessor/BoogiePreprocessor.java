@@ -136,6 +136,7 @@ public class BoogiePreprocessor implements IAnalysis {
 		if (replaceAtomics) {
 			observers.add(new AtomicsToLocks(backTranslator, mServices));
 		}
+		observers.add(new InterruptAnnotator());
 		observers.add(symb);
 		return observers;
 	}

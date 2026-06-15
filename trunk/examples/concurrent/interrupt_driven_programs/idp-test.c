@@ -23,10 +23,8 @@ void HAL_GPIO_Write(int pin, int state);
 
 int main(void) 
 {
-    
     HAL_GPIO_Init();
     HAL_GPIO_Enable_Int();
-
     n = 0;
     while (1) {
         assert(!step_in_isr);
@@ -43,7 +41,7 @@ void HAL_GPIO_Enable_Int(void)
 }
 
 void isr_gpio(void) 
-{   
+{  
     int old_n = n;
     step_in_isr = true;
     bool st = HAL_GPIO_Read();
@@ -58,6 +56,6 @@ void isr_gpio(void)
     while (i<3){
       i++;
     }
-    step_in_isr  = false;  
+  step_in_isr  = false;  
    assert(n==old_n);
 }

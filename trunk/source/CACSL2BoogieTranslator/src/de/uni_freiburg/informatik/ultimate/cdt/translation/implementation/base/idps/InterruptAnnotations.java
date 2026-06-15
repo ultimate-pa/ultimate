@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 public class InterruptAnnotations extends ModernAnnotations {
 	private static final long serialVersionUID = 1L;
 	private final ISRLocation mIsrLocation;
-	private final int mIsrId;
+	private final Object mIsrId;
 
-	public InterruptAnnotations(final ISRLocation isrLocation, final int isrId) {
+	public InterruptAnnotations(final ISRLocation isrLocation, final Object isrId) {
 		mIsrLocation = isrLocation;
 		mIsrId = isrId;
 	}
@@ -49,7 +49,7 @@ public class InterruptAnnotations extends ModernAnnotations {
 				this);
 	}
 
-	public int getIsrId() {
+	public Object getIsrId() {
 		return mIsrId;
 	}
 
@@ -84,6 +84,6 @@ public class InterruptAnnotations extends ModernAnnotations {
 	}
 
 	public enum ISRLocation {
-		ISR
+		ISR, ENTRY
 	}
 }

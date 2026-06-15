@@ -38,6 +38,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -88,22 +89,13 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 		if (fromSameThread(a, b)) {
 			return Dependence.DEPENDENT;
 		} else if (isNonISRTransition(a) && isNonISRTransition(b)) {
-			if (isIsrPredecessor(a) || isIsrPredecessor(b)) {
-				return Dependence.DEPENDENT;
-			}
 			return mUnderlying.isIndependent(state, a, b);
 		}
 		return getInterruptDependence(a, b);
 	}
 
 	private boolean isIsrPredecessor(final L transition) {
-		final var succTransitions = transition.getTarget().getOutgoingEdges();
-		for (final IcfgEdge succTransition : succTransitions) {
-			if (hasInterruptAnnotation(succTransition)) {
-				return true;
-			}
-		}
-		return false;
+		return hasInterruptAnnotation(transition.getTarget());
 	}
 
 	private boolean isNonISRTransition(final L a) {
@@ -199,7 +191,9 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 					bfsQueue.offer(pred);
 				}
 			}
-			if (!hasInterruptPredecessor) {
+			// TODO: Is it sufficient to check for entry annotations?
+			final var interruptAnnotation = InterruptAnnotations.getAnnotation(currentTransition);
+			if (!hasInterruptPredecessor || interruptAnnotation.getIsrLocation() == ISRLocation.ENTRY) {
 				isrEntryTransitions.add(currentTransition);
 			}
 		}

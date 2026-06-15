@@ -490,13 +490,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private Statement getIfStatement(final String identifier, final Expression enabledExpr, final int id) {
-		final var interruptAnnotation = new InterruptAnnotations(ISRLocation.ISR, id);
+		final var interruptAnnotation = new InterruptAnnotations(ISRLocation.ENTRY, id);
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
-		interruptAnnotation.annotate(then);
 		if (ADD_ISR_LABELS) {
-			return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, labelISRStatement(then, id),
+			final var ifStmt = StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, labelISRStatement(then, id),
 					new Statement[0]);
+			interruptAnnotation.annotate(ifStmt);
+			return ifStmt;
 		}
 		return StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr, new Statement[] { then },
 				new Statement[0]);
