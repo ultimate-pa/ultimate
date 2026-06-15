@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -104,6 +105,11 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 		final var isrLocations = new ArrayList<IcfgLocation>(stateIcfgLocations.size());
 		for (final IcfgLocation icfgLocation : stateIcfgLocations) {
 			if (!InterruptAnnotations.hasAnnotation(icfgLocation)) {
+				continue;
+			}
+			final var annotation = InterruptAnnotations.getAnnotation(icfgLocation);
+			if (annotation.getIsrLocation() == ISRLocation.ENTRY) {
+				// If the successor is an entry edge, the ISR is not active yet
 				continue;
 			}
 			isrLocations.add(icfgLocation);
