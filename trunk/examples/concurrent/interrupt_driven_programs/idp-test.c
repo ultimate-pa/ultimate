@@ -56,6 +56,6 @@ void isr_gpio(void)
     while (i<3){
       i++;
     }
-  step_in_isr  = false;  
+  //step_in_isr  = false;  
    assert(n==old_n);
 }

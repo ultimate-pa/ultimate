@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IndependenceProviderFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.InterruptIndependenceProviderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
@@ -167,8 +168,10 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				requireNoReuse("POR-based analysis");
 				requireNoWitnesses(witnessTransformer, "POR-based analysis");
 				if (mIndependenceProviderFactory == null) {
+					// mIndependenceProviderFactory =
+					// new IndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
 					mIndependenceProviderFactory =
-							new IndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
+							new InterruptIndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
 				}
 				final var initAbstr = createPartialOrderAbstraction(services, predicateFactory,
 						stateFactoryForRefinement, root, errorLocs);
