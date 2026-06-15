@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IS
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -64,12 +63,9 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 	private final Map<Pair<Set<L>, Set<L>>, Dependence> mIsrDependenceCache;
 	private final Map<IElement, Boolean> mHasInterruptAnnotation = new HashMap<>();
 
-	private final ILogger mLogger;
-
-	public AtomicInterruptIndependenceRelation(final IIndependenceRelation<S, L> underlying, final ILogger logger) {
+	public AtomicInterruptIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
 		mUnderlying = underlying;
 		mIsrDependenceCache = new HashMap<>();
-		mLogger = logger;
 	}
 
 	@Override

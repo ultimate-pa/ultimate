@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.AtomicInterruptIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
@@ -191,7 +190,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		return new IndependenceProviderWithAbstraction<>(cachedAbstraction, independence);
 	}
 
-	private IIndependenceRelation<IPredicate, L> constructIndependence(final IndependenceSettings settings,
+	protected IIndependenceRelation<IPredicate, L> constructIndependence(final IndependenceSettings settings,
 			final boolean tfsAlreadyTransferred, final PredicateFactory predicateFactory,
 			final PredicateTransferrer predicateTransferrer) {
 		if (settings.getIndependenceType() == IndependenceType.SYNTACTIC) {
@@ -200,7 +199,7 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 		assert settings.getIndependenceType() == IndependenceType.SEMANTIC : "unsupported independence type";
 
 		// Semantic independence forms the base.
-		final var independence = IndependenceBuilder
+		return IndependenceBuilder
 				.<L> semantic(mServices, mIndependenceScript, settings.useConditional(),
 						!settings.useSemiCommutativity(), mPref.getSymbolicRelationMode(), mIndepScriptPredicateFactory,
 						getGenerator(settings))
@@ -232,7 +231,6 @@ public class IndependenceProviderFactory<L extends IIcfgTransition<?>> {
 				.threadSeparated()
 				// Retrieve the constructed relation.
 				.build();
-		return new AtomicInterruptIndependenceRelation<>(independence, mLogger);
 	}
 
 	private static <L extends IIcfgTransition<?>, C extends Collection<IPredicate>> IConditionMerger<L, IPredicate, C>
