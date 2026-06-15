@@ -168,20 +168,34 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				requireNoReuse("POR-based analysis");
 				requireNoWitnesses(witnessTransformer, "POR-based analysis");
 				if (mIndependenceProviderFactory == null) {
+					mIndependenceProviderFactory =
+							new IndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
+				}
+				final var initAbstr = createPartialOrderAbstraction(services, predicateFactory,
+						stateFactoryForRefinement, root, errorLocs);
+				final var poCegar = new PartialOrderCegarLoop<>(name, initAbstr, root, csToolkit, predicateFactory,
+						mPrefs, errorLocs, services,
+						mIndependenceProviderFactory.createProviders(root, predicateFactory), mTransitionClazz,
+						stateFactoryForRefinement, mCopyFactory);
+				return new Pair<>(poCegar, null);
+			case PARTIAL_ORDER_IDP_FA:
+				requireNoReuse("POR-based analysis");
+				requireNoWitnesses(witnessTransformer, "POR-based analysis");
+				if (mIndependenceProviderFactory == null) {
 					// mIndependenceProviderFactory =
 					// new IndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
 					mIndependenceProviderFactory =
 							new InterruptIndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
 				}
-				final var initAbstr = createPartialOrderAbstraction(services, predicateFactory,
+				final var initialAbstr = createPartialOrderAbstraction(services, predicateFactory,
 						stateFactoryForRefinement, root, errorLocs);
 				final var idpAutomaton =
-						new FiniteAutomaton2IDPAutomaton<>(initAbstr, s -> ((IMLPredicate) s).getProgramPoints());
-				final var poCegar = new PartialOrderCegarLoop<>(name, idpAutomaton, root, csToolkit, predicateFactory,
+						new FiniteAutomaton2IDPAutomaton<>(initialAbstr, s -> ((IMLPredicate) s).getProgramPoints());
+				final var porCegar = new PartialOrderCegarLoop<>(name, idpAutomaton, root, csToolkit, predicateFactory,
 						mPrefs, errorLocs, services,
 						mIndependenceProviderFactory.createProviders(root, predicateFactory), mTransitionClazz,
 						stateFactoryForRefinement, mCopyFactory);
-				return new Pair<>(poCegar, null);
+				return new Pair<>(porCegar, null);
 			case PETRI_NET:
 				requireNoReuse("Petri net-based analysis");
 				requireNoWitnesses(witnessTransformer, "Petri net-based analysis");
