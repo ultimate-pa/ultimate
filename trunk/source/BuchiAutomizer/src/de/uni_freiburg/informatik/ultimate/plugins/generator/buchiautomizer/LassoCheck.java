@@ -131,6 +131,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	private static final boolean SIMPLIFY_STEM_AND_LOOP = true;
 
+	/**
+	 * For debugging only. Check for termination arguments even if we found a nontermination argument. This may reveal
+	 * unsoundness bugs.
+	 */
+	private static final boolean CHECK_TERMINATION_EVEN_IF_NON_TERMINATING = false;
+
 	private static final boolean AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED = true;
 
 	private static final boolean TRACE_CHECK_BASED_FIXPOINT_CHECK = true;
@@ -791,9 +797,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				e.printStackTrace();
 				throw new AssertionError("TermException " + e);
 			}
-			if (withStem) {
+			// TODO: whats happening here?
+
+			if (!CHECK_TERMINATION_EVEN_IF_NON_TERMINATING && nonTermArgument != null) {
 				return new NonterminationResult<>(nonTermArgument);
 			}
+
 		}
 
 		LassoAnalysis laT = null;
