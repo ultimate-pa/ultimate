@@ -32,9 +32,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -133,11 +135,14 @@ public class LocalUnrealizabilityCheck {
 				new CompleteRtInconsistencyCheck.UnionFind(reqs.size()); // could be in its own class an not in
 																			// CompleteRtInconsistencyCheck
 
-		// Map each symbol to the list of req indices that contain it (across all critical phases)
+		final Set<String> outputVarNames = mReqSymbolTable.getOutputVars();
 		final Map<NonTheorySymbol<?>, List<Integer>> symbolToReqIndices = new HashMap<>();
 		for (int i = 0; i < reqs.size(); i++) {
 			for (final CritPhaseComputer.CritPhase critPhase : reqs.get(i).critPhases().values()) {
 				for (final NonTheorySymbol<?> symbol : critPhase.symbols()) {
+					if (!isOutputSymbol(symbol, outputVarNames)) {
+						continue;
+					}
 					symbolToReqIndices.computeIfAbsent(symbol, k -> new ArrayList<>()).add(i);
 				}
 			}
@@ -161,6 +166,7 @@ public class LocalUnrealizabilityCheck {
 
 	@SuppressWarnings("unchecked")
 	private List<Witness> findMinimalInGroup(final List<AnnotatedReq> group, final int maxSubsetSize) {
+		// check if whole set is locally unrealizable, if not no subset can be
 		final List<Term> allVcs = new ArrayList<>();
 		for (final AnnotatedReq ar : group) {
 			for (final CritPhaseComputer.CritPhase phase : ar.critPhases().values()) {
@@ -175,9 +181,11 @@ public class LocalUnrealizabilityCheck {
 		final List<Set<Entry<String, Integer>>> foundMinimalCombinations = new ArrayList<>();
 
 		final int limit = Math.min(maxSubsetSize, group.size());
+		mLogger.info("max size: " + limit);
 		for (int size = 1; size <= limit; size++) {
 			final AnnotatedReq[] groupArray = group.toArray(new AnnotatedReq[0]);
-			for (final AnnotatedReq[] subset : CrossProducts.subArrays(groupArray, size, new AnnotatedReq[size])) {
+			mLogger.info("curren size: " + size);
+			for (final AnnotatedReq[] subset : subArraysLazy(groupArray, size, new AnnotatedReq[size])) {
 
 				final int[][] critPhaseIndexArrays = Arrays.stream(subset)
 						.map(ar -> ar.critPhases().keySet().stream().mapToInt(Integer::intValue).toArray())
@@ -190,6 +198,10 @@ public class LocalUnrealizabilityCheck {
 					}
 
 					if (isSupersetOfFound(candidateMap, foundMinimalCombinations)) {
+						continue;
+					}
+
+					if (!areSymbolsConnected(subset, phaseCombo)) {
 						continue;
 					}
 
@@ -218,10 +230,106 @@ public class LocalUnrealizabilityCheck {
 		return result;
 	}
 
+	private boolean isOutputSymbol(final NonTheorySymbol<?> symbol, final Set<String> outputVarNames) {
+		if (!(symbol instanceof NonTheorySymbol.Variable)) {
+			return false;
+		}
+		final TermVariable tv = ((NonTheorySymbol.Variable) symbol).getSymbol();
+		final var expr = mBoogie2Smt.getTerm2Expression().translate(tv);
+		if (!(expr instanceof final IdentifierExpression ie)) {
+			return false;
+		}
+		return outputVarNames.contains(ie.getIdentifier());
+	}
+
 	private static boolean isSupersetOfFound(final Map<String, Integer> candidateMap,
 			final List<Set<Entry<String, Integer>>> foundMinimal) {
 		return foundMinimal.stream().anyMatch(
 				found -> found.stream().allMatch(e -> Objects.equals(candidateMap.get(e.getKey()), e.getValue())));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static boolean areSymbolsConnected(final AnnotatedReq[] subset, final int[] phaseCombo) {
+		if (subset.length <= 1) {
+			return true;
+		}
+		final Set<NonTheorySymbol<?>>[] symbolSets = new Set[subset.length];
+		for (int i = 0; i < subset.length; i++) {
+			symbolSets[i] = subset[i].critPhases().get(phaseCombo[i]).symbols();
+		}
+		final boolean[] visited = new boolean[subset.length];
+		visited[0] = true;
+		boolean changed = true;
+		while (changed) {
+			changed = false;
+			for (int i = 0; i < subset.length; i++) {
+				if (!visited[i]) {
+					continue;
+				}
+				for (int j = 0; j < subset.length; j++) {
+					if (!visited[j] && !Collections.disjoint(symbolSets[i], symbolSets[j])) {
+						visited[j] = true;
+						changed = true;
+					}
+				}
+			}
+		}
+		for (final boolean v : visited) {
+			if (!v) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Generates all k-element subarrays of input lazily using the next-k-combination algorithm (Knuth TAOCP Vol. 4A,
+	 * Algorithm L). Uses O(k) memory instead of materializing all C(n,k) combinations at once.
+	 *
+	 * <b>IMPORTANT:</b> The returned array instance is reused across iterations. Do not store it beyond the loop body.
+	 */
+	private static <T> Iterable<T[]> subArraysLazy(final T[] input, final int k, final T[] intermediateArray) {
+		return () -> new Iterator<>() {
+			private final int n = input.length;
+			private final int[] indices = initIndices();
+			private boolean hasNext = k <= n;
+
+			private int[] initIndices() {
+				final int[] idx = new int[k];
+				for (int i = 0; i < k; i++) {
+					idx[i] = i;
+				}
+				return idx;
+			}
+
+			@Override
+			public boolean hasNext() {
+				return hasNext;
+			}
+
+			@Override
+			public T[] next() {
+				if (!hasNext) {
+					throw new NoSuchElementException();
+				}
+				for (int i = 0; i < k; i++) {
+					intermediateArray[i] = input[indices[i]];
+				}
+				int p = k - 1;
+				while (p >= 0 && indices[p] == n - k + p) {
+					p--;
+				}
+				if (p < 0) {
+					hasNext = false;
+				} else {
+					indices[p]++;
+					for (int j = p + 1; j < k; j++) {
+						indices[j] = indices[p] + (j - p);
+					}
+				}
+				return intermediateArray;
+			}
+		};
 	}
 
 	private boolean isLocallyUnrealizable(final List<Term> vcs) {
