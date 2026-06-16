@@ -174,7 +174,7 @@ public class PEAMinimization {
 			final List<RangeDecision> mergedModifiedConstraints = new ArrayList<>();
 			if (!repModifiedConstraints.isEmpty()) {
 				for (final RangeDecision strictClockConstraint : repModifiedConstraints) {
-					final String var = strictClockConstraint.getVar();
+					final String var = strictClockConstraint.getVar() + MIN_POSTFIX;
 					final int val = strictClockConstraint.getVal(0);
 					final int op = strictClockConstraint.getOp(0);
 					final CDD mergedStrictClockConstraint = RangeDecision.create(var, op, val);
@@ -187,17 +187,8 @@ public class PEAMinimization {
 
 			CDD mergedClockInvariant = CDD.TRUE;
 			if (clockInvRep.isTimed()) {
-				final Decision<?> decision = clockInvRep.getDecision();
-
-				final RangeDecision rangeDesc = (RangeDecision) decision;
-				final String var = rangeDesc.getVar() + MIN_POSTFIX;
-				// since we only have LT and LT_EQ in clock invariants,
-				// we can call getOp/getVal with 0 (trueChildIndex is 0 in this case)
-				final int op = rangeDesc.getOp(0);
-				final int val = rangeDesc.getVal(0);
-
-				final CDD rangeDescCdd = RangeDecision.create(var, op, val);
-				mergedClockInvariant = mergedClockInvariant.and(rangeDescCdd);
+				final CDD invWithRenamedClock = CDD.addClockSuffixCDD(clockInvRep, MIN_POSTFIX);
+				mergedClockInvariant = mergedClockInvariant.and(invWithRenamedClock);
 			}
 
 			mergedLocation.setClockInv(mergedClockInvariant);
@@ -215,7 +206,15 @@ public class PEAMinimization {
 				final Phase destination = outgoingTransition.getDest();
 				final Phase destinationRep = mEquivalenceClasses.find(destination);
 				final Set<Phase> destinationClass = mEquivalenceClasses.getContainingSet(destination);
-				CDD mergedGuard = outgoingTransition.getGuard();
+				final CDD guard = outgoingTransition.getGuard();
+				CDD mergedGuard = CDD.TRUE;
+
+				if (guard.isTimed()) {
+					final CDD guardWithRenamedClock = CDD.addClockSuffixCDD(guard, MIN_POSTFIX);
+					mergedGuard = mergedGuard.and(guardWithRenamedClock);
+				} else {
+					mergedGuard = mergedGuard.and(guard);
+				}
 
 				if (destinationClass.size() > 1) {
 					mergedGuard = mergedGuard.and(destination.getStateInv());
@@ -241,7 +240,7 @@ public class PEAMinimization {
 			// add stutter loop
 			CDD loopGuard = CDD.TRUE;
 			if (rep.getClockInv().isTimed()) {
-				loopGuard = RangeDecision.strict(rep.getClockInv());
+				loopGuard = RangeDecision.strict(mergedLocation.getClockInv());
 			}
 			mergedLocation.addTransition(mergedLocation, loopGuard, new String[0]);
 		}
