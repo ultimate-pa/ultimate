@@ -558,12 +558,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		// TODO: If the loop is infeasible (e.g. bc not G is false) we need a different way to compute the interpolants
 		// this is experimental and should be removed later
 		final IPredicate[] loopInterpolants;
-		if (SmtUtils.isFalseLiteral(unfairRes.notG().getFormula())) {
-			final IPredicate falsePred = mPredicateFactory.newPredicate(unfairRes.notG().getFormula());
-			loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, falsePred, pu);
-		} else {
-			loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
-		}
+
+		loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
+
 //------------------------------------------ getting the A_fair predicates ---------------------------------------------
 		// TODO: I have no idea if this can work
 		final NestedRun<L, IPredicate> loopRun;

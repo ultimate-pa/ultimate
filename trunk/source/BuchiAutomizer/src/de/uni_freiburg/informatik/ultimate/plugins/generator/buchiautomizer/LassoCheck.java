@@ -414,7 +414,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false, false,
 								mSimplificationTechnique, List.of(notGuardDisj, unguardedLoopTF));
 
-				// TODO: Was machen wir, wenn das Ding schon ein infeasible prefix (also concat/loop) hat?
 				// first check whether the loop part already terminates -- wenn der loop infeasible ist, m�ssen wir
 				// den automaten irgendwie anders bauen
 				// TODO: das sollte schöner gehen
@@ -425,8 +424,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 				// TODO: check infeasibility of the new loop - either directly from transformula or maybe take the
 				// negated guard as pre and postcondition?
-
-				final ILassoCheckResult<L> res = synthesize_wo_counterexample(withStem, !withStem, newStem, newStemTF,
+				// check if the loop alone is already unfair
+				final ILassoCheckResult<L> res = synthesize_wo_counterexample(false, true, null, null,
 						unguardedLoop.length() + 1, guardedLoopTF, contArr, newHondaModGlobals);
 
 				// TODO: V - this could be nicer
@@ -498,16 +497,17 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 *
 	 * @return termination argument si = false, f = 0
 	 */
-	private TerminationArgument constructTrivialTerminationArgument() {
+	private static TerminationArgument constructTrivialTerminationArgument() {
 		final RankingFunction constRank = new LinearRankingFunction(new AffineFunction());
 		final AffineFunction f = new AffineFunction();
 
 		f.setConstant(BigInteger.ONE.negate());
 		// it seems that a supporting invariant is an affine ranking function that evaluates to false if it has no
 		// coefficients and its constant is <= 0
-		final SupportingInvariant falseInv = new SupportingInvariant(f);
-		assert falseInv.isFalse() : "Invariant construction failed";
-		return new TerminationArgument(constRank, Collections.singletonList(falseInv), null);
+		final ArrayList<SupportingInvariant> falseInv = new ArrayList<>();
+		falseInv.add(new SupportingInvariant(f));
+
+		return new TerminationArgument(constRank, falseInv, Collections.emptySet());
 	}
 
 	public ILassoCheckResult<L> getLassoCheckResult() {
@@ -742,6 +742,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
+		// TODO: catch infeasible loops here! Problem is that mBspm has mostly null fields here
 		if (!withStem) {
 			stemTF = TransFormulaBuilder.getTrivialTransFormula(mManagedScript);
 		}
@@ -773,6 +774,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 		final boolean doNonterminationAnalysis =
 				(!AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED || !containsArrays);
+		// if the loop is obviously infeasible return a TerminationResult with si false and f = 0;
 
 		NonTerminationArgument nonTermArgument = null;
 		if (doNonterminationAnalysis) {
@@ -863,6 +865,15 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				tryTemplatesAndComputePredicates(laT, rankingFunctionTemplates, stemTF, loopTF);
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
+
+			// TODO: solve the problem of infeasible loops properly - this is just a workaround bc its one of the rare
+			// places where mBspm is not null
+			if (SmtUtils.isFalseLiteral(loopTF.getFormula())) {
+				final TerminationArgument ta = constructTrivialTerminationArgument();
+				final BspmResult bspmres = mBspm.computePredicates(ta, false, stemTF, loopTF, modifiableGlobalsAtHonda);
+				return new TerminationResult<>(bspmres);
+			}
+
 			final BspmResult bspmResult = mBspm.computePredicates(termArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
 					stemTF, loopTF, modifiableGlobalsAtHonda);
 			return new TerminationResult<>(bspmResult);

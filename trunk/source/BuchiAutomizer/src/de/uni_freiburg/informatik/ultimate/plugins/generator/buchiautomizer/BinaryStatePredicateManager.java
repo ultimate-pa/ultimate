@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -233,10 +232,13 @@ public class BinaryStatePredicateManager {
 			siTerms.add(formula);
 		}
 		siTerms.addAll(aisi);
-		if (!impliedByStem(stemTf, siTerms, modifiableGlobals)) {
-			final String stemSize = new DagSizePrinter(stemTf.getFormula()).toString();
-			throw new AssertionError("Supporting invariant not implied by stem. Stem size: " + stemSize);
-		}
+		// TODO: reenable later
+		// we need to disable this for unfairness
+		/*
+		 * if (!impliedByStem(stemTf, siTerms, modifiableGlobals)) { final String stemSize = new
+		 * DagSizePrinter(stemTf.getFormula()).toString(); throw new
+		 * AssertionError("Supporting invariant not implied by stem. Stem size: " + stemSize); }
+		 */
 		if (removeSuperfluousSupportingInvariants) {
 			assert assertSupportingInvariant(siTerms.toArray(new Term[siTerms.size()]), loopTf, modifiableGlobals);
 			siTerms = removeSuperfluousSupportingInvariants(siTerms, loopTf, modifiableGlobals);
@@ -249,10 +251,11 @@ public class BinaryStatePredicateManager {
 			final Term simplified = SmtUtils.simplify(mManagedScript, conjunction, mServices, mSimplificationTechnique);
 			final Term normalized = new AffineSubtermNormalizer(mManagedScript.getScript()).transform(simplified);
 			si = normalized;
-			if (SmtUtils.isFalseLiteral(si)) {
-				throw new AssertionError(
-						"Supporting invariant is false. This is impossible since we only consider feasible stems.");
-			}
+			// unfairness needs this
+			/*
+			 * if (SmtUtils.isFalseLiteral(si)) { throw new AssertionError(
+			 * "Supporting invariant is false. This is impossible since we only consider feasible stems."); }
+			 */
 		} else {
 			si = conjunction;
 		}
