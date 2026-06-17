@@ -132,7 +132,13 @@ public class BinaryStatePredicateManager {
 			rankEqualityAndSi = mRankEquality;
 			honda = unseededOrRankDecrease;
 		} else {
-			stemPostcondition = mPredicateFactory.and(unseededPredicate, siConjunction);
+			if (SmtUtils.isFalseLiteral(loopTf.getFormula())) {
+				stemPostcondition = mPredicateFactory.not(siConjunction);
+			} else {
+				// this case should only occur when checking unfairness; if the loop is infeasible anyway, we dont need
+				// a postcondition for the stem
+				stemPostcondition = mPredicateFactory.and(unseededPredicate, siConjunction);
+			}
 			rankEqualityAndSi = mPredicateFactory.and(mRankEquality, siConjunction);
 			honda = mPredicateFactory.and(siConjunction, unseededOrRankDecrease);
 		}

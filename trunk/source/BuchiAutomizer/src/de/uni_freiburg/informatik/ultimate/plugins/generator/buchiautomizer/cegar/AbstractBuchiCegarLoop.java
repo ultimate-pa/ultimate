@@ -547,11 +547,24 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mMDBenchmark.reportRankingFunction(mIteration, rank, script);
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		// for now we ignore the constructions styles
+		// TODO: find out whether messing with the initial predicates causes any damage and code this nicer
+		// -->it does, when computing the difference we get complaints that the predicates are unknown...
+		final List<IPredicate> initialPredicates = new ArrayList<>();
+		initialPredicates.add(unfairRes.result().getStemPrecondition());
+		initialPredicates.add(unfairRes.result().getStemPostcondition());
+		initialPredicates.add(unfairRes.result().getRankDecreaseAndBound());
+		initialPredicates.add(hondaPredicate);
+
+		/*
+		 * if (!SmtUtils.isFalseLiteral(hondaPredicate.getFormula())) { initialPredicates.add(hondaPredicate); }
+		 */
+		if (!SmtUtils.isFalseLiteral(unfairRes.result().getSiConjunction().getFormula())) {
+			initialPredicates.add(rankEqAndSi);
+			initialPredicates.add(unfairRes.result().getSiConjunction());
+		}
+		final IPredicate[] predArr = initialPredicates.stream().toArray(IPredicate[]::new);
 		final PredicateUnifier pu = new PredicateUnifier(mLogger, mServices, mCsToolkitWithRankVars.getManagedScript(),
-				mPredicateFactory, mCsToolkitWithRankVars.getSymbolTable(), SIMPLIFICATION_TECHNIQUE,
-				unfairRes.result().getStemPrecondition(), hondaPredicate, rankEqAndSi,
-				unfairRes.result().getStemPostcondition(), unfairRes.result().getRankDecreaseAndBound(),
-				unfairRes.result().getSiConjunction());
+				mPredicateFactory, mCsToolkitWithRankVars.getSymbolTable(), SIMPLIFICATION_TECHNIQUE, predArr);
 		// TODO: rausfinden, ob/wo ork=inf ins spiel kommt
 		final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
 				unfairRes.result().getStemPrecondition(), unfairRes.result().getStemPostcondition(), pu);

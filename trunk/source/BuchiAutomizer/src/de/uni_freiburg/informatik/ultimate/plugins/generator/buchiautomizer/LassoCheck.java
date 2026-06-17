@@ -422,7 +422,16 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final boolean contArr = SmtUtils.containsArrayVariables(newStemTF.getFormula())
 						|| SmtUtils.containsArrayVariables(loopTF.getFormula());
 
-				// TODO: check infeasibility of the new loop - either directly from transformula or maybe take the
+				// TODO: check infeasibility of the new loop - either directly from transformula or maybe take the not G
+				// as pre + postcondition?
+				if (SmtUtils.isFalseLiteral(guardedLoopTF.getFormula())) {
+					// TODO: solve the problem of infeasible loops properly
+					final TerminationArgument ta = constructTrivialTerminationArgument();
+					final BspmResult bspmres =
+							mBspm.computePredicates(ta, false, stemTF, guardedLoopTF, modifiableGlobalsAtHonda);
+					return new UnfairnessResult<>(bspmres, nonLoopThreads, notGuardDisj);
+
+				}
 				// negated guard as pre and postcondition?
 				// check if the loop alone is already unfair
 				final ILassoCheckResult<L> res = synthesize_wo_counterexample(false, true, null, null,
@@ -865,15 +874,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				tryTemplatesAndComputePredicates(laT, rankingFunctionTemplates, stemTF, loopTF);
 		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
-
-			// TODO: solve the problem of infeasible loops properly - this is just a workaround bc its one of the rare
-			// places where mBspm is not null
-			if (SmtUtils.isFalseLiteral(loopTF.getFormula())) {
-				final TerminationArgument ta = constructTrivialTerminationArgument();
-				final BspmResult bspmres = mBspm.computePredicates(ta, false, stemTF, loopTF, modifiableGlobalsAtHonda);
-				return new TerminationResult<>(bspmres);
-			}
-
 			final BspmResult bspmResult = mBspm.computePredicates(termArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
 					stemTF, loopTF, modifiableGlobalsAtHonda);
 			return new TerminationResult<>(bspmResult);
