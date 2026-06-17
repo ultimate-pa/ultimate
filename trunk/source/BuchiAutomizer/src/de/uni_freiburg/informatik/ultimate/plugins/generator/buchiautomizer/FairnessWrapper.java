@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -127,9 +129,10 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		for (int i = 0; i < mLoopInterpolants.length; i++) {
 			mPredicateMap.put(mLoopInterpolants[i], new Pair<>(mPredicates[i], mPrimedPredicates[i]));
 		}
-
-		mStemStateSet = Set.of(mStemInterpolants);
-		mLoopStateSet = Set.of(mLoopInterpolants);
+		// TODO: Find out if the stem / loop state classification is actually reliable, the predicate unifier might mess
+		// with this
+		mStemStateSet = new HashSet<>(Arrays.asList(mStemInterpolants));
+		mLoopStateSet = new HashSet<>(Arrays.asList(mLoopInterpolants));
 		mOriginalEdges = (mLassoRun.getLoop().getWord().asSet());
 		mOriginalEdges.addAll(mLassoRun.getStem().getWord().asSet());
 

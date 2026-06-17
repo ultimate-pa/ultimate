@@ -551,7 +551,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		// -->it does, when computing the difference we get complaints that the predicates are unknown...
 		final List<IPredicate> initialPredicates = new ArrayList<>();
 		initialPredicates.add(unfairRes.result().getStemPrecondition());
-		initialPredicates.add(unfairRes.result().getStemPostcondition());
+		// initialPredicates.add(unfairRes.result().getStemPostcondition());
 		initialPredicates.add(unfairRes.result().getRankDecreaseAndBound());
 		initialPredicates.add(hondaPredicate);
 
@@ -569,15 +569,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
 				unfairRes.result().getStemPrecondition(), unfairRes.result().getStemPostcondition(), pu);
 		// TODO: If the loop is infeasible (e.g. bc not G is false) we need a different way to compute the interpolants
-		// this is experimental and should be removed later
+
 		final IPredicate[] loopInterpolants;
 
 		loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
 
 //------------------------------------------ getting the A_fair predicates ---------------------------------------------
-		// TODO: I have no idea if this can work
-		final NestedRun<L, IPredicate> loopRun;
-		// TODO: find out if the hondaPredicate already contains the supporting invariants
+		// hondaPredicate already contains the supporting invariants
 		final InterpolatingTraceCheck<L> upperLoopCheck =
 				constructTraceCheck(hondaPredicate, hondaPredicate, mCounterexample.getLoop(), pu);
 		// hondaPrime is supposed to be the state after the assume notG edge in A_fair
