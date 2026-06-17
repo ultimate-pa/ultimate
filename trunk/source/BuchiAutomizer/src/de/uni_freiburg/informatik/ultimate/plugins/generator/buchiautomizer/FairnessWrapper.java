@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /*
  * Wrapper for a nondeterministic interpolant automaton (certified module from termination analysis) to filter out
- * transitions that are illegal in the context of fairness. Used when doing termination under fairness in the generalization of an unfair trace.
+ * transitions that are illegal in the context of fairness. Used for the generalization of an unfair trace when doing termination under fairness
  * We assume that no states were pruned in the input automaton.
  */
 public class FairnessWrapper<L extends IIcfgTransition<?>>
@@ -72,30 +72,41 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	Set<IPredicate> mStemStateSet;
 	Set<IPredicate> mLoopStateSet;
 
-	/*
+	/**
 	 * Unfairness Wrapper.
 	 *
-	 * @param automaton - the automaton to wrap
+	 * @param automaton
+	 *            the automaton to wrap
 	 *
-	 * @param lasso - the counterexample from which the generalized automaton was build
+	 * @param lasso
+	 *            the counterexample from which the generalized automaton was build
 	 *
-	 * @param nonloopthreads - the set of threads of which there is no statement on the counterexample's loop
+	 * @param nonloopthreads
+	 *            the set of threads of which there is no statement on the counterexample's loop
 	 *
-	 * @param stem - the interpolants of the stem of the lasso
+	 * @param stem
 	 *
-	 * @param loop - the interpolants of the loop of the lasso
+	 *            the interpolants of the stem of the lasso
 	 *
-	 * @param loopbasic - the predicates for the states of the upper loop of A_fair
+	 * @param loop
+	 *            the interpolants of the loop of the lasso
 	 *
-	 * @param loopprime - the predicates for the states of the guarded loop of A_fair; however we start at the state
-	 * after the "assume not G" statement and leave out the oldrank stuff since that should already be covered by the
-	 * termination predicates
+	 * @param loopbasic
+	 *            the predicates for the states of the upper loop of A_fair
 	 *
-	 * @param honda - predicate of the lasso's honda
+	 * @param loopprime
+	 *            the predicates for the states of the guarded loop of A_fair; however we start at the state after the
+	 *            "assume not G" statement and leave out the oldrank stuff since that should already be covered by the
+	 *            termination predicates
 	 *
-	 * @param notG - negated disjunction of guards of non-loop thread statements at the honda
+	 * @param honda
+	 *            predicate of the lasso's honda
 	 *
-	 * @param htc - hoare triple checker able to handle the special honda predicates in termination
+	 * @param notG
+	 *            - negated disjunction of guards of non-loop thread statements at the honda
+	 *
+	 * @param htc
+	 *            - hoare triple checker able to handle the special honda predicates in termination
 	 */
 	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton,
 			final NestedLassoRun<L, IPredicate> lasso, final Set<String> nonloopthreads, final IPredicate[] stem,
@@ -176,61 +187,71 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		final List<OutgoingInternalTransition<L, IPredicate>> filteredTS = new ArrayList<>();
 		// TODO: figure out why the type problem for ts
 		for (final OutgoingInternalTransition<L, IPredicate> ts : mWrappedAutomaton.internalSuccessors(state, letter)) {
-			if (isLegalTS(state, (L) ts, true, false, false, null)) {
-				filteredTS.add(ts);
+			for (final IPredicate target : mWrappedAutomaton.successorPredicates(state, letter)) {
+				if (isLegalTS(state, ts.getLetter(), target, true, false, false, null)) {
+					filteredTS.add(ts);
+				}
 			}
 		}
 		return filteredTS;
 	}
 
-	/*
-	 * Returns all call successor transitions that are legal for unfairness generalization
+	/**
+	 * Call functions are not supported for concurrency, so this method should not be used.
+	 *
+	 * @return an empty iterable
+	 *
 	 */
 	@Override
-	// TODO: figure out if call/return can even be unfair
 	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(final IPredicate state, final L letter) {
-		final List<OutgoingCallTransition<L, IPredicate>> filteredTS = new ArrayList<>();
-		for (final OutgoingCallTransition<L, IPredicate> ts : mWrappedAutomaton.callSuccessors(state, letter)) {
-			if (isLegalTS(state, (L) ts, false, true, false, null)) {
-				filteredTS.add(ts);
-			}
-		}
-		return filteredTS;
+		// the wrapped automaton should not have any call transitions
+		assert !mWrappedAutomaton.callSuccessors(state, letter).iterator().hasNext() : "Illegal ";
+		return mWrappedAutomaton.callSuccessors(state, letter);
 	}
 
-	/*
-	 * Returns all return successor transitions that are legal for unfairness generalization
+	/**
+	 * Return functions are not supported for concurrent programs, so this method should not be used.
+	 *
+	 * @return an empty iterable
 	 */
 	@Override
+	// TODO: remove
 	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(final IPredicate state,
 			final IPredicate hier, final L letter) {
-		final List<OutgoingReturnTransition<L, IPredicate>> filteredTS = new ArrayList<>();
-		for (final OutgoingReturnTransition<L, IPredicate> ts : mWrappedAutomaton.returnSuccessors(state, hier,
-				letter)) {
-			if (isLegalTS(state, (L) ts, false, false, true, hier)) {
-				filteredTS.add(ts);
-			}
-		}
-		return filteredTS;
+		// the wrapped automaton should not have any return transitions
+		assert !mWrappedAutomaton.returnSuccessors(state, hier, letter).iterator().hasNext() : "Illegal ";
+		return mWrappedAutomaton.returnSuccessors(state, hier, letter);
 	}
 
-	/*
+	/**
 	 * Checks whether adding an edge is allowed according to unfairness generalization rules. Contains questionable type
 	 * casts.
 	 *
-	 * @param internal indicates if the edge is an internal transition
+	 * @param source
+	 *            source node of the edge
 	 *
-	 * @param call - indicates whether the edge is a call transition
+	 * @param ts
+	 *            transition to be checked
 	 *
-	 * @param ret -indicates whether the edge is a return transition
+	 * @param internal
+	 *            indicates if the edge is an internal transition
 	 *
-	 * @param resHier - some parameter needed for return ts, just set to null for other ts
+	 * @param call
+	 *            indicates whether the edge is a call transition
+	 *
+	 * @param ret
+	 *            indicates whether the edge is a return transition
+	 *
+	 * @param resHier
+	 *            some parameter needed for return ts, just set to null for other ts
+	 *
+	 * @return true if the edge is legal
 	 */
-	boolean isLegalTS(final IPredicate source, final L ts, final boolean internal, final boolean call,
-			final boolean ret, final IPredicate resHier) {
+	boolean isLegalTS(final IPredicate source, final L ts, final IPredicate target, final boolean internal,
+			final boolean call, final boolean ret, final IPredicate resHier) {
 		assert Stream.of(internal, call, ret).filter(b -> b).count() == 1
 				: "The transition has to be exactly one of call, return or internal";
-		final IPredicate target = (IPredicate) ts.getTarget();
+
 		// we keep the edges of the original lasso
 		if (isOriginalEdge(ts)) {
 			return true;

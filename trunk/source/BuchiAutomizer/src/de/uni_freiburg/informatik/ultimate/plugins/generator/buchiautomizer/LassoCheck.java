@@ -422,6 +422,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final boolean withStem = newStem.length() > 0;
 				final boolean contArr = SmtUtils.containsArrayVariables(newStemTF.getFormula())
 						|| SmtUtils.containsArrayVariables(loopTF.getFormula());
+
+				// TODO: check infeasibility of the new loop - either directly from transformula or maybe take the
+				// negated guard as pre and postcondition?
+
 				final ILassoCheckResult<L> res = synthesize_wo_counterexample(withStem, !withStem, newStem, newStemTF,
 						unguardedLoop.length() + 1, guardedLoopTF, contArr, newHondaModGlobals);
 
@@ -434,8 +438,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					// TODO: Vfind a sane way to do this
 					mLogger.warn("Infeasibility, könnte noch fehlerhaft sein!");
 					final TerminationArgument infArg = constructTrivialTerminationArgument();
-					final BspmResult infRes = mBspm.computePredicates(infArg, REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS,
-							newStemTF, unguardedLoopTF, newHondaModGlobals);
+					final BspmResult infRes =
+							mBspm.computePredicates(infArg, false, newStemTF, unguardedLoopTF, newHondaModGlobals);
 					return new UnfairnessResult(infRes, nonLoopThreads, notGuardDisj);
 				// TODO: find merge next two cases
 				case final NonterminationResult<L> nonterm:
@@ -489,9 +493,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		return result;
 	}
 
-	/*
+	/**
 	 * Construct a termination argument with constant ranking function f = 0 and supporting invariant false
 	 *
+	 * @return termination argument si = false, f = 0
 	 */
 	private TerminationArgument constructTrivialTerminationArgument() {
 		final RankingFunction constRank = new LinearRankingFunction(new AffineFunction());
@@ -727,8 +732,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				modifiableGlobalsAtHonda);
 	}
 
-	// TODO: gives a nonterminating verdict for transformula false - why is that -- was ist mit dem 'with stem'?
-	// TODO: check if there is an easy way for constructing the A_fair counterexample
 	// V - removed the direct use of the counterexample from this method bc it is easier for unfairness
 	private ILassoCheckResult<L> synthesize_wo_counterexample(final boolean withStem, final boolean stemEmpty,
 			final NestedWord<L> stemWord, UnmodifiableTransFormula stemTF, final int loopLen,

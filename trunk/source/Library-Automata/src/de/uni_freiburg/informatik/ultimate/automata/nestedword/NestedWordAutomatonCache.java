@@ -64,7 +64,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	private static final String NOT_IN_AUTOMATON = " not in automaton";
 	private static final String UNKNOWN = " unknown";
 
-	protected final IEmptyStackStateFactory<STATE> mStateFactory;
+	public final IEmptyStackStateFactory<STATE> mStateFactory;
 
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;

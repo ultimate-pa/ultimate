@@ -224,4 +224,20 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 		sch.reportSuccsComputed(resPred, resHier, letter);
 	}
 
+	/**
+	 * return the successor state(s) of of the input state and letter
+	 *
+	 * @param source
+	 *            state whose successors are being computed
+	 * @param letter
+	 *            outgoing icfg transition
+	 * @return the successor state
+	 */
+	public Set<IPredicate> successorPredicates(final IPredicate source, final LETTER letter) {
+		final Set<IPredicate> succs = mAlreadyConstructedAutomaton.succInternal(source, letter);
+
+		return succs;
+
+	}
+
 }

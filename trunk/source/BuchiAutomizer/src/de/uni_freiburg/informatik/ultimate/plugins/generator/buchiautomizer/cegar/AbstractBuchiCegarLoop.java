@@ -521,19 +521,23 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return result;
 	}
 
-	/*
+	/**
 	 * Essentially a simplified version of refineBuchiInternal for Unfairness
 	 *
+	 * @param unfairRes
+	 *            the result of an unfairness analysis
 	 *
+	 * @return the difference between the previous abstraction and the generalized unfair trace module
 	 */
 	private A refineUnfair(final UnfairnessResult<L> unfairRes) throws AutomataLibraryException {
 		final A newAbstr;
 		final IPredicate hondaPredicate = unfairRes.result().getHondaPredicate();
+		// Problem: if the loop is infeasible, bspm manager takes supporting invariant = true
 		final IPredicate rankEqAndSi = unfairRes.result().getRankEqAndSi();
 
 		assert !SmtUtils.isFalseLiteral(unfairRes.result().getStemPrecondition().getFormula());
 		// assert !SmtUtils.isFalseLiteral(hondaPredicate.getFormula()); -- we allow that for now
-		assert !SmtUtils.isFalseLiteral(rankEqAndSi.getFormula());
+		// assert !SmtUtils.isFalseLiteral(rankEqAndSi.getFormula());
 		// TODO: was sind die dump automata einstellungen?
 
 		final RankingFunction rank = unfairRes.result().getTerminationArgument().getRankingFunction();
@@ -603,6 +607,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		if (!inputAutomaton.getStates().contains(pu.getFalsePredicate())) {
 			inputAutomaton.addState(false, true, pu.getFalsePredicate());
 		}
+		// automaton generalized under termination rules
 		final NondeterministicInterpolantAutomaton<L> tbwAutomaton = new NondeterministicInterpolantAutomaton<>(
 				mServices, mCsToolkitWithRankVars, bhtc, inputAutomaton, pu, false, true);
 
@@ -612,11 +617,19 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				unfairRes.nonLoopThreads(), stemInterpolants, loopInterpolants, upperLoopCheck.getInterpolants(),
 				guardedLoopCheck.getInterpolants(), hondaPredicate, unfairRes.notG(), bhtc);
 
+		// sanity check
+		/*
+		 * assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), tbwAutomaton,
+		 * mCounterexample.getNestedLassoWord()).getResult() :
+		 * "the generalized automaton does not accept the original trace";
+		 */
+
 		newAbstr = refineBuchi(mAbstraction, generalizedAutomaton);
 		// Switch to read-only-mode for lazy constructions
 		generalizedAutomaton.switchToReadonlyMode();
 
 		mBenchmarkGenerator.addEdgeCheckerData(bhtc.getStatistics());
+
 		final boolean isUseful = isUsefulInterpolantAutomaton(generalizedAutomaton, mCounterexample);
 		if (isUseful) {
 			mMDBenchmark.reportNonDeterministicModule(mIteration, generalizedAutomaton.size());
