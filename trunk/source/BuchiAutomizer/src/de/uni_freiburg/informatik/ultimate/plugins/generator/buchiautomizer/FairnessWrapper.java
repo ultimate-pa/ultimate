@@ -59,7 +59,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate> {
 	NondeterministicInterpolantAutomaton<L> mWrappedAutomaton;
 	NestedLassoRun<L, IPredicate> mLassoRun; // needed for checking which ts existed in the original word
-	Set<String> mNonLoopThreads;
+	Set<String> mLoopThreads;
 	UnmodifiableTransFormula mNotG;
 	IPredicate[] mStemInterpolants;
 	IPredicate[] mLoopInterpolants;
@@ -73,6 +73,9 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	Set<L> mOriginalEdges;
 	Set<IPredicate> mStemStateSet;
 	Set<IPredicate> mLoopStateSet;
+	// cache the already constructed transitions
+	HashSet<OutgoingInternalTransition<L, IPredicate>> mAlreadyConstructedTS = new HashSet<>();
+	HashMap<OutgoingInternalTransition<L, IPredicate>, IPredicate> mOrigins = new HashMap<>();
 
 	/**
 	 * Unfairness Wrapper.
@@ -83,8 +86,8 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 * @param lasso
 	 *            the counterexample from which the generalized automaton was build
 	 *
-	 * @param nonloopthreads
-	 *            the set of threads of which there is no statement on the counterexample's loop
+	 * @param loopthreads
+	 *            the set of threads whose statements are part of the counterexample's loop
 	 *
 	 * @param stem
 	 *
@@ -111,12 +114,14 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 *            - hoare triple checker able to handle the special honda predicates in termination
 	 */
 	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton,
-			final NestedLassoRun<L, IPredicate> lasso, final Set<String> nonloopthreads, final IPredicate[] stem,
+			final NestedLassoRun<L, IPredicate> lasso, final Set<String> loopthreads, final IPredicate[] stem,
 			final IPredicate[] loop, final IPredicate[] loopbasic, final IPredicate[] loopprime, final IPredicate honda,
 			final UnmodifiableTransFormula notG, final BuchiHoareTripleChecker htc) {
+		// we cache already constructed ts
+		// TODO: make s
 		mWrappedAutomaton = automaton;
 		mLassoRun = lasso;
-		mNonLoopThreads = nonloopthreads;
+		mLoopThreads = loopthreads;
 		mStemInterpolants = stem;
 		mLoopInterpolants = loop;
 		mPredicates = loopbasic;
@@ -188,11 +193,21 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(final IPredicate state,
 			final L letter) {
 		final List<OutgoingInternalTransition<L, IPredicate>> filteredTS = new ArrayList<>();
-		// TODO: figure out why the type problem for ts
 		for (final OutgoingInternalTransition<L, IPredicate> ts : mWrappedAutomaton.internalSuccessors(state, letter)) {
 			for (final IPredicate target : mWrappedAutomaton.successorPredicates(state, letter)) {
-				if (isLegalTS(state, ts.getLetter(), target, true, false, false, null)) {
+				// TODO: for debugging, remove later
+				// TODO: Warum haben dieselben Kanten unterschiedliche ids?
+				final boolean c = mAlreadyConstructedTS.contains(ts);
+				final IPredicate p = mOrigins.get(ts);
+				final boolean o = mOrigins.get(ts) == state;
+				if (mAlreadyConstructedTS.contains(ts) && (mOrigins.get(ts) == state)) {
 					filteredTS.add(ts);
+				} else {
+					if (isLegalTS(state, ts.getLetter(), target, true, false, false, null)) {
+						filteredTS.add(ts);
+						mAlreadyConstructedTS.add(ts);
+						mOrigins.put(ts, state);
+					}
 				}
 			}
 		}
@@ -256,12 +271,13 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 				: "The transition has to be exactly one of call, return or internal";
 
 		// we keep the edges of the original lasso
+		// TODO: we need to make sure they are only added ONCE and in the right place...
 		if (isOriginalEdge(ts)) {
 			return true;
 		}
 		// adding additional non-loop ts is forbidden (we need to guarantee that nonloop thread locations remain
 		// unchanged)
-		if (isNonLoopEdge(ts)) {
+		if (!isLoopEdge(ts)) {
 			return false;
 		}
 		// for stem states we allow all loop ts that form valid hoare triples; and the predicates should be the same as
@@ -315,16 +331,21 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	/*
 	 * Check if an edge was part of the original lasso trace (the counterexample)
 	 */
-	// TODO: Does this work?
+	// TODO: Does this work? -- nope
 	boolean isOriginalEdge(final L ts) {
 		return mOriginalEdges.contains(ts);
 	}
 
-	/*
-	 * Checks whether the input transition originates from a non-loop thread.
+	/**
+	 * Checks whether the input transition originates from a loop thread.
+	 *
+	 * @param an
+	 *            edge of the wrapped automaton
+	 *
+	 * @return true if the edge originates from a loop thread
 	 */
-	boolean isNonLoopEdge(final L ts) {
-		return mNonLoopThreads.contains(ts.getSource().getProcedure());
+	boolean isLoopEdge(final L ts) {
+		return mLoopThreads.contains(ts.getSource().getProcedure());
 	}
 
 	public void switchToReadonlyMode() {

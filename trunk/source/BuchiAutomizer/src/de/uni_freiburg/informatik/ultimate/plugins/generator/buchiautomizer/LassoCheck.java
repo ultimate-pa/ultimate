@@ -373,7 +373,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				// TODO: figure out why mBspm is null here
 				final UnfairnessResult<L> unf = new UnfairnessResult<>(mBspm.computePredicates(constArg,
 						REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS, stemTF, loopTF, modifiableGlobalsAtHonda),
-						nonLoopThreads, notGuardDisj);
+						loopThreads, notGuardDisj);
 				return unf;
 
 			}
@@ -429,7 +429,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 					final TerminationArgument ta = constructTrivialTerminationArgument();
 					final BspmResult bspmres =
 							mBspm.computePredicates(ta, false, stemTF, guardedLoopTF, modifiableGlobalsAtHonda);
-					return new UnfairnessResult<>(bspmres, nonLoopThreads, notGuardDisj);
+					return new UnfairnessResult<>(bspmres, loopThreads, notGuardDisj);
 
 				}
 				// negated guard as pre and postcondition?
@@ -441,19 +441,19 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				switch (res) {
 				case final TerminationResult<L> term:
 					// the loop without preconditions is enough to prove unfairness
-					return new UnfairnessResult<>(term.result(), nonLoopThreads, notGuardDisj);
+					return new UnfairnessResult<>(term.result(), loopThreads, notGuardDisj);
 				case final InfeasibilityResult<L> inf:
 					// TODO: Vfind a sane way to do this
 					mLogger.warn("Infeasibility, könnte noch fehlerhaft sein!");
 					final TerminationArgument infArg = constructTrivialTerminationArgument();
 					final BspmResult infRes =
 							mBspm.computePredicates(infArg, false, newStemTF, unguardedLoopTF, newHondaModGlobals);
-					return new UnfairnessResult(infRes, nonLoopThreads, notGuardDisj);
+					return new UnfairnessResult(infRes, loopThreads, notGuardDisj);
 				// TODO: find merge next two cases
 				case final NonterminationResult<L> nonterm:
 					if (withStem) {
 						final ILassoCheckResult<L> progTerm =
-								checkFairProgramTermination(nonLoopThreads, newStem, newStemTF, notGuardDisj,
+								checkFairProgramTermination(loopThreads, newStem, newStemTF, notGuardDisj,
 										unguardedLoop, guardedLoopTF, contArr, unguardedLoopTF, newHondaModGlobals, 3);
 						if (progTerm instanceof UnfairnessResult<L>) {
 							return progTerm;
@@ -464,7 +464,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				case final UnknownResult<L> uk:
 					if (withStem) {
 						final ILassoCheckResult<L> progTerm =
-								checkFairProgramTermination(nonLoopThreads, newStem, newStemTF, notGuardDisj,
+								checkFairProgramTermination(loopThreads, newStem, newStemTF, notGuardDisj,
 										unguardedLoop, guardedLoopTF, contArr, unguardedLoopTF, newHondaModGlobals, 3);
 						if (progTerm instanceof UnfairnessResult<L>) {
 							return progTerm;
@@ -1014,7 +1014,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 * @param num_unrollings - how many traces of form [stem (loop)^i (assume not G; loop)^omega] we want to try, should
 	 * be greater than 0
 	 */
-	private ILassoCheckResult<L> checkFairProgramTermination(final Set<String> nonLoopThreads, final NestedWord<L> stem,
+	private ILassoCheckResult<L> checkFairProgramTermination(final Set<String> loopThreads, final NestedWord<L> stem,
 			final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTF, final NestedWord<L> ugLoop,
 			final UnmodifiableTransFormula notG, final boolean containsArray,
 			final UnmodifiableTransFormula unguardedLoopTF, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
@@ -1048,7 +1048,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final boolean sufficient =
 						mBspm.isSupportingInvariant(new Term[] { supInv }, unguardedLoopTF, modifiableGlobalsAtHonda);
 				if (sufficient) {
-					return new UnfairnessResult<>(ter.result(), nonLoopThreads, notG);
+					return new UnfairnessResult<>(ter.result(), loopThreads, notG);
 				}
 			default:
 				mLogger.error("wrong type found!");
@@ -1116,11 +1116,11 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	/*
 	 * @param result bspm result containing the termination argument
 	 *
-	 * @param nonLoopThreads threads of whom no statement is part of the loop
+	 * @param oopThreads threads whose statements are part of the loop
 	 *
 	 * @param notG negated disj. of guards of outgoing non-loop statements at the honda
 	 */
-	public record UnfairnessResult<L extends IIcfgTransition<?>>(BspmResult result, Set<String> nonLoopThreads,
+	public record UnfairnessResult<L extends IIcfgTransition<?>>(BspmResult result, Set<String> loopThreads,
 			UnmodifiableTransFormula notG) implements ILassoCheckResult<L> {
 
 	}

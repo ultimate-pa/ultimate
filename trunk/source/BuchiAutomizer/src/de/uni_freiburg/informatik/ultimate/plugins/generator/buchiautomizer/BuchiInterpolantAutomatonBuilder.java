@@ -76,6 +76,9 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 		mInterpolation = interpolation;
 	}
 
+	/**
+	 * Note that input interpolants with the same Predicate will be merged into one state.
+	 */
 	public NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(final IPredicate precondition,
 			final NestedLassoRun<LETTER, ?> counterexample, final IPredicate[] stemInterpolants, final IPredicate honda,
 			final IPredicate[] loopInterpolants, final VpAlphabet<LETTER> vpAlphabet,

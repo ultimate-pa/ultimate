@@ -532,7 +532,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	private A refineUnfair(final UnfairnessResult<L> unfairRes) throws AutomataLibraryException {
 		final A newAbstr;
 		final IPredicate hondaPredicate = unfairRes.result().getHondaPredicate();
-		// Problem: if the loop is infeasible, bspm manager takes supporting invariant = true
 		final IPredicate rankEqAndSi = unfairRes.result().getRankEqAndSi();
 
 		assert !SmtUtils.isFalseLiteral(unfairRes.result().getStemPrecondition().getFormula());
@@ -540,9 +539,9 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		// assert !SmtUtils.isFalseLiteral(rankEqAndSi.getFormula());
 		// TODO: was sind die dump automata einstellungen?
 
+		// hondaPredicate already contains the supporting invariants
 		final RankingFunction rank = unfairRes.result().getTerminationArgument().getRankingFunction();
 		final Script script = mCsToolkitWithRankVars.getManagedScript().getScript();
-		// TODO: If the loop is infeasible (e.g. bc not G is false) we need a different way to compute the interpolants
 
 		mMDBenchmark.reportRankingFunction(mIteration, rank, script);
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -565,41 +564,99 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		final IPredicate[] predArr = initialPredicates.stream().toArray(IPredicate[]::new);
 		final PredicateUnifier pu = new PredicateUnifier(mLogger, mServices, mCsToolkitWithRankVars.getManagedScript(),
 				mPredicateFactory, mCsToolkitWithRankVars.getSymbolTable(), SIMPLIFICATION_TECHNIQUE, predArr);
-		// TODO: rausfinden, ob/wo ork=inf ins spiel kommt
-		final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
+		final IPredicate[] unifiedStemInterpolants = getStemInterpolants(mCounterexample.getStem(),
 				unfairRes.result().getStemPrecondition(), unfairRes.result().getStemPostcondition(), pu);
-		// TODO: If the loop is infeasible (e.g. bc not G is false) we need a different way to compute the interpolants
 
-		final IPredicate[] loopInterpolants;
+		final IPredicate[] unifiedLoopInterpolants =
+				getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
 
-		loopInterpolants = getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
-
-//------------------------------------------ getting the A_fair predicates ---------------------------------------------
-		// hondaPredicate already contains the supporting invariants
-		final InterpolatingTraceCheck<L> upperLoopCheck =
-				constructTraceCheck(hondaPredicate, hondaPredicate, mCounterexample.getLoop(), pu);
-		// hondaPrime is supposed to be the state after the assume notG edge in A_fair
-		// TODO: do we need to use rankeqandsi?
-		IPredicate hondaPrime = mPredicateFactory.newPredicate(unfairRes.notG().getFormula());
-		hondaPrime = mPredicateFactory.and(hondaPredicate, hondaPrime);
-		final List<IPredicate> stateSeq = new ArrayList();
-		stateSeq.add(hondaPrime);
-		stateSeq.addAll(mCounterexample.getLoop().getStateSequence());
-		// what was that good for?
-		// loopRun = new NestedRun(mCounterexample.getLoop().getWord(), stateSeq);
-		final InterpolatingTraceCheck<L> guardedLoopCheck =
-				constructTraceCheck(hondaPrime, hondaPredicate, mCounterexample.getLoop(), pu);
-
-//----------------------------------------------------------------------------------------------------------------------
-		final NestedWordAutomaton<L, IPredicate> inputAutomaton =
-				mInterpolantAutomatonBuilder.constructInterpolantAutomaton(unfairRes.result().getStemPrecondition(),
-						mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
-						BuchiAutomizerUtils.getVpAlphabet(mAbstraction), mDefaultStateFactory);
+		// TODO: see if the predicate unifier messes with this
 		final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, pu);
 		// hoare triple checker that can handle the oldrank/ranking function stuff
 		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(ehtc);
 		bhtc.putDecreaseEqualPair(hondaPredicate, rankEqAndSi);
+
+//-------------------------- merge prevention --------------------------------------------------------------------------
+		// TODO: prevent illegal merges when computing the interpolant automaton.
+
+		final NestedWord<L> stemWord = mCounterexample.getStem().getWord();
+
+		// TODO: code this properly
+		final IPredicate[] stemInterpolants = unifiedStemInterpolants;
+		if (unifiedStemInterpolants.length > 2) {
+			for (int i = 0; i < unifiedStemInterpolants.length - 1; i++) {
+				if (unifiedStemInterpolants[i] == unifiedStemInterpolants[i + 1]) {
+					// we may only merge states with no non-loop edge inbetween
+					final L sepSt = stemWord.getSymbol(i + 1);
+					if (!unfairRes.loopThreads().contains(stemWord.getSymbol(i + 1).getSource().getProcedure())) {
+						stemInterpolants[i] = mPredicateFactory.newPredicate(unifiedStemInterpolants[i].getFormula());
+
+					} else {
+						stemInterpolants[i] = unifiedStemInterpolants[i];
+					}
+				}
+			}
+		}
+
+		// hondaPrime is supposed to be the state after the assume notG edge in A_fair
+		IPredicate hondaPrime = mPredicateFactory.newPredicate(unfairRes.notG().getFormula());
+		hondaPrime = mPredicateFactory.and(hondaPredicate, hondaPrime);
+
+		// get the predicates on the upper loop
+		final InterpolatingTraceCheck<L> upperLoopCheck =
+				constructTraceCheck(hondaPredicate, hondaPredicate, mCounterexample.getLoop(), pu);
+		final IPredicate[] upperLoopInterpolants = upperLoopCheck.getInterpolants();
+
+		// get the predicates on the lower loop
+		final InterpolatingTraceCheck<L> guardedLoopCheck =
+				constructTraceCheck(hondaPrime, hondaPredicate, mCounterexample.getLoop(), pu);
+		final IPredicate[] guardedLoopInterpolants = guardedLoopCheck.getInterpolants();
+
+		final List<IPredicate> loopInterpolants = new ArrayList<>();
+		assert unifiedLoopInterpolants.length == upperLoopInterpolants.length;
+		assert unifiedLoopInterpolants.length == guardedLoopInterpolants.length;
+		// states we dont want to merge need to have different predicates....
+		loopInterpolants.add(unifiedLoopInterpolants[0]);
+		if (unifiedLoopInterpolants.length > 2) {
+			for (int i = 1; i < unifiedLoopInterpolants.length; i++) {
+				// we are only allowed to merge if the predicates of adjacent states are the same on the upper and on
+				// the
+				// lower loop
+				final boolean u = unifiedLoopInterpolants[i - 1] == unifiedLoopInterpolants[i];
+				if (u) {
+					final boolean upper = upperLoopInterpolants[i - 1] == upperLoopInterpolants[i];
+					final boolean guarded = guardedLoopInterpolants[i - 1] == guardedLoopInterpolants[i];
+					if (upper && guarded) {
+						loopInterpolants.add(unifiedLoopInterpolants[i]);
+					} else {
+						// create a new predicate with the same formula
+						loopInterpolants.add(mPredicateFactory.newPredicate(unifiedLoopInterpolants[i].getFormula()));
+					}
+
+				}
+			}
+		}
+
+//------------------------------------------ getting the A_fair predicates ---------------------------------------------
+
+		final List<IPredicate> stateSeq = new ArrayList();
+		stateSeq.add(hondaPrime);
+		stateSeq.addAll(mCounterexample.getLoop().getStateSequence());
+		// what was that good for?
+		// loopRun = new NestedRun(mCounterexample.getLoop().getWord(), stateSeq);
+
+//----------------------------------------------------------------------------------------------------------------------
+		// TODO: Warning: the interpolant automaton already merges states with the same predicate! - and because of the
+		// predicate unifier, all predicates with the same formula count as the same predicate
+		// We need a way to stop illegal merges....
+
+		final NestedWordAutomaton<L, IPredicate> inputAutomaton =
+				mInterpolantAutomatonBuilder.constructInterpolantAutomaton(unfairRes.result().getStemPrecondition(),
+						mCounterexample, unifiedStemInterpolants, hondaPredicate,
+						loopInterpolants.toArray(new IPredicate[loopInterpolants.size()]),
+						BuchiAutomizerUtils.getVpAlphabet(mAbstraction), mDefaultStateFactory);
+
 		// TODO: Can/should we do an equivalent check for the unfair automaton?
 		/*
 		 * assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices,
@@ -621,9 +678,10 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		// TODO: if we want fair termination, wrap the interpolant automaton to filter out transitions that may lead to
 		// fair runs
-		final FairnessWrapper<L> generalizedAutomaton = new FairnessWrapper(tbwAutomaton, mCounterexample,
-				unfairRes.nonLoopThreads(), stemInterpolants, loopInterpolants, upperLoopCheck.getInterpolants(),
-				guardedLoopCheck.getInterpolants(), hondaPredicate, unfairRes.notG(), bhtc);
+		final FairnessWrapper<L> generalizedAutomaton =
+				new FairnessWrapper(tbwAutomaton, mCounterexample, unfairRes.loopThreads(), unifiedStemInterpolants,
+						unifiedLoopInterpolants, upperLoopCheck.getInterpolants(), guardedLoopCheck.getInterpolants(),
+						hondaPredicate, unfairRes.notG(), bhtc);
 
 		// sanity check
 		/*
@@ -849,10 +907,14 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return traceCheck.getInterpolants();
 	}
 
-	/*
-	 * @param rankEqAndSi - precondition for the loop
+	/**
+	 * Note: the number of interpolants is the length of the trace - 1
 	 *
-	 * @param hondaPredicate - postcondition
+	 * @param rankEqAndSi
+	 *            - precondition for the loop
+	 *
+	 * @param hondaPredicate
+	 *            - postcondition
 	 *
 	 */
 	private IPredicate[] getLoopInterpolants(final NestedRun<L, IPredicate> loop, final IPredicate hondaPredicate,
