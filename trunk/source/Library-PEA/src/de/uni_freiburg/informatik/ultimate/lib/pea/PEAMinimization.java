@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,9 +56,12 @@ public class PEAMinimization {
 	private static HashMap<Phase, Phase> mMergedLocations;
 	List<InitialTransition> mMergedInitialTransitions;
 
+	private final Set<String> mConstVars;
+
 	public PEAMinimization(final PhaseEventAutomata peaToMinimize) {
 		mPEAtoMinimize = peaToMinimize;
 		mEquivalenceClasses = new UnionFind<>();
+		mConstVars = Collections.emptySet();
 		mPEAComplement = new PEAComplement(mPEAtoMinimize);
 		mTotalisedPEA = mPEAComplement.getTotalisedPEA();
 		mPartitionByClockInv = new HashMap<>();
@@ -68,14 +72,17 @@ public class PEAMinimization {
 
 	}
 
-	private String[] addClockSuffix(final String[] clocks, final String suffix) {
-		final List<String> clocksWithSuffix = new ArrayList<>();
-		for (final String clock : clocks) {
-			final String clockWithSuffix = clock + suffix;
-			clocksWithSuffix.add(clockWithSuffix);
-		}
-		final String[] clocksWithSuffixArray = new String[clocksWithSuffix.size()];
-		return clocksWithSuffix.toArray(clocksWithSuffixArray);
+	public PEAMinimization(final PhaseEventAutomata peaToMinimize, final Set<String> constVars) {
+		mPEAtoMinimize = peaToMinimize;
+		mEquivalenceClasses = new UnionFind<>();
+		mConstVars = constVars;
+		mPEAComplement = new PEAComplement(mPEAtoMinimize, mConstVars);
+		mTotalisedPEA = mPEAComplement.getTotalisedPEA();
+		mPartitionByClockInv = new HashMap<>();
+		mMergedLocations = new HashMap<>();
+		createPartitionByClockInv(mTotalisedPEA.getPhases());
+		mMergedInitialTransitions = new ArrayList<>();
+		mMinimizedPEA = minimize(mTotalisedPEA);
 	}
 
 	private static void createPartitionByClockInv(final List<Phase> phases) {

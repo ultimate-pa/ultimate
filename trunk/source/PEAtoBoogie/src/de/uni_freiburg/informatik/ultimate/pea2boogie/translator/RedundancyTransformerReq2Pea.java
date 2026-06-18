@@ -88,7 +88,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
 				final PhaseEventAutomata peaToComplement = pea.getValue();
-				final PEAMinimization minimizePea = new PEAMinimization(peaToComplement);
+				final PEAMinimization minimizePea = new PEAMinimization(peaToComplement, constVars);
 				// final PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
 				final PhaseEventAutomata totalisedPea = minimizePea.getTotalisedPEA();
 				final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
