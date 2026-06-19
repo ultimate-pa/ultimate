@@ -143,8 +143,7 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 		// At this point, we know that at least one successor region of the transition is focused.
 		// Hence, at least one predecessor region of the transition must also be focused.
 		// (Rule: inductive-edge)
-		final var transitionPredecessors = transition.getPredecessors();
-		final var predecessorRegions = territory.getPlacesRegions(transitionPredecessors);
+		final var predecessorRegions = territory.getPlacesRegions(transition.getPredecessors());
 
 		assert !predecessorRegions.isEmpty() : "territory enables transition but has no predecessor regions";
 
