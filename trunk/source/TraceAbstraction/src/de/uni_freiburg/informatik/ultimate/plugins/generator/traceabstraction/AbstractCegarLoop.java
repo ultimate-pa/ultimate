@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptio
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -77,6 +79,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskStringIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -167,11 +171,15 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	// used for debugging only
 	protected IAutomaton<L, IPredicate> mArtifactAutomaton;
 
-	protected final Format mPrintAutomataLabeling;
+	protected final Format mDumpAutomataFormat;
 
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	protected IUltimateServiceProvider mServices;
+
+	protected final String mTaskFilename;
+
+	protected final DebugIdentifier mTaskDebugIdentifier;
 
 	protected final TaskIdentifier mTaskIdentifier;
 
@@ -208,7 +216,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
-		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
+		mDumpAutomataFormat = taPrefs.dumpAutomataFormat();
 		mName = name;
 		mAbstraction = initialAbstraction;
 		mIcfg = rootNode;
@@ -216,8 +224,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
+		mTaskFilename = ILocation.getAnnotation(rootNode).getFileName();
+		mTaskDebugIdentifier = name;
 		// TODO: TaskIdentifier should probably be provided by caller
-		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
+		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + mTaskDebugIdentifier);
 		mResultBuilder = new CegarLoopResultBuilder();
 	}
 
@@ -347,7 +357,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		}
 		// initialize dump of debugging output to files if necessary
 		if (mPref.dumpAutomata()) {
-			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
+			final TaskIdentifier tid = new SubtaskIterationIdentifier(null, mIteration);
+			mDumper = new Dumper(mLogger, this.getDumpAutomataPath(tid.toString()));
 		}
 		try {
 			if (!computeInitialAbstraction()) {
@@ -384,8 +395,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mArtifactAutomaton = mAbstraction;
 		}
 		if (mPref.dumpAutomata()) {
-			final String filename = mTaskIdentifier + "_InitialAbstraction";
-			writeAutomatonToFile(mAbstraction, filename);
+			this.writeAutomatonToFile(mAbstraction, "InitialAbstraction");
 		}
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 
@@ -417,7 +427,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 					mDumper.close();
 				}
 				if (mPref.dumpAutomata()) {
-					mDumper = new Dumper(mLogger, mPref, mName, mIteration);
+					final TaskIdentifier tid = new SubtaskIterationIdentifier(null, mIteration);
+					mDumper = new Dumper(mLogger, this.getDumpAutomataPath(tid.toString()));
 				}
 
 				try {
@@ -499,8 +510,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 		final boolean newMaximumReached = mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-			final String filename = mIcfg.getIdentifier() + "_BiggestAutomaton";
-			writeAutomatonToFile(mAbstraction, filename);
+			this.writeAutomatonToFile(mAbstraction, "BiggestAutomaton");
 		}
 	}
 
@@ -624,21 +634,58 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return mResultBuilder.addResultForAllRemaining(res, null, e, null).getResult();
 	}
 
-	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final String filename) {
+	protected String getDumpAutomataPath(final String suffix) {
+		String filePath = null;
+
+		if (mPref.dumpAutomataBesideFile()) {
+			assert Paths.get(mTaskFilename).isAbsolute();
+			filePath = mTaskFilename;
+		} else {
+			filePath = mPref.dumpAutomataDirectory() + File.separator + mPref.dumpAutomataFilename();
+		}
+
+		filePath += TaskIdentifier.SEPARATOR + mTaskDebugIdentifier.toString();
+
+		return (suffix != null && !suffix.isEmpty()) ? filePath + TaskIdentifier.SEPARATOR + suffix : filePath;
+	}
+
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final TaskIdentifier tid) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
+		final String fullAutomataPath = this.getDumpAutomataPath(tid.toString());
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(getServices()),
-				determineAutomatonName(automaton), mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling,
-				"", automaton);
+				determineAutomatonName(automaton), fullAutomataPath, mDumpAutomataFormat, "", automaton);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 	}
 
-	protected void writeAutomataToFile(final String filename, final String atsHeaderMessage, final String atsCommands,
-			final NamedAutomaton<L, IPredicate>... automata) {
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final String suffix) {
+		final TaskIdentifier tid = new SubtaskStringIdentifier(null, suffix);
+		this.writeAutomatonToFile(automaton, tid);
+	}
+
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final int iteration) {
+		final TaskIdentifier tid = new SubtaskIterationIdentifier(null, iteration);
+		this.writeAutomatonToFile(automaton, tid);
+	}
+
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final int iteration,
+			final String suffix) {
+		final TaskIdentifier tid = new SubtaskStringIdentifier(new SubtaskIterationIdentifier(null, iteration), suffix);
+		this.writeAutomatonToFile(automaton, tid);
+	}
+
+	protected void writeAutomataToFile(final TaskIdentifier tid, final String atsHeaderMessage,
+			final String atsCommands, final NamedAutomaton<L, IPredicate>... automata) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
-		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(getServices()),
-				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, atsHeaderMessage, atsCommands,
-				automata);
+		final String fullAutomataPath = this.getDumpAutomataPath(tid.toString());
+		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(getServices()), fullAutomataPath,
+				mDumpAutomataFormat, atsHeaderMessage, atsCommands, automata);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
+	}
+
+	protected void writeAutomataToFile(final int iteration, final String suffix, final String atsHeaderMessage,
+			final String atsCommands, final NamedAutomaton<L, IPredicate>... automata) {
+		final TaskIdentifier tid = new SubtaskStringIdentifier(new SubtaskIterationIdentifier(null, iteration), suffix);
+		this.writeAutomataToFile(tid, atsHeaderMessage, atsCommands, automata);
 	}
 
 	private String determineAutomatonName(final IAutomaton<L, IPredicate> automaton) {

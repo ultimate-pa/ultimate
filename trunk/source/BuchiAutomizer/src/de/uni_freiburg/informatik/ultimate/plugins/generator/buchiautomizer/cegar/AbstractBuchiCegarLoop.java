@@ -317,8 +317,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 		if (mPref.dumpAutomata()) {
 			final String filename = mIdentifier + "_" + name + "Abstraction" + mIteration;
-			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
-					mPref.getAutomataFormat(), "");
+			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpAutomataDirectory(), filename,
+					mPref.dumpAutomataFormat(), "");
 		}
 		boolean initalAbstractionCorrect;
 		try {
@@ -433,8 +433,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 
 				if (mPref.dumpAutomata()) {
 					final String filename = mIdentifier + "_" + name + "Abstraction" + mIteration;
-					BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
-							mPref.getAutomataFormat(), "");
+					BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpAutomataDirectory(), filename,
+							mPref.dumpAutomataFormat(), "");
 				}
 
 			} catch (final AutomataLibraryException e) {
@@ -485,8 +485,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		determinized.switchToReadonlyMode();
 		if (mPref.dumpAutomata()) {
 			final String filename = mIdentifier + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
-			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mPref.dumpPath(), filename,
-					mPref.getAutomataFormat(), "");
+			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mPref.dumpAutomataDirectory(), filename,
+					mPref.dumpAutomataFormat(), "");
 		}
 		if (mConstructTermcompProof) {
 			mTermcompProofBenchmark.reportFiniteModule(mIteration, interpolAutomaton);
@@ -529,8 +529,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		assert !SmtUtils.isFalseLiteral(rankEqAndSi.getFormula());
 
 		final boolean dumpAutomata = mPref.dumpAutomata();
-		final String dumpPath = mPref.dumpPath();
-		final Format format = mPref.getAutomataFormat();
+		final String dumpPath = mPref.dumpAutomataDirectory();
+		final Format format = mPref.dumpAutomataFormat();
 
 		final RankingFunction rankingFunction = bspmResult.getTerminationArgument().getRankingFunction();
 		final Script script = mCsToolkitWithRankVars.getManagedScript().getScript();

@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskStringIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
@@ -198,10 +199,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			// Construct an empty file. We need this empty file in cases where
 			// the CFG does not have error location and no automaton is dumped.
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString());
-			final String filename = mTaskIdentifier + "-reuse";
-			final String fullPath = mPref.dumpPath() + File.separator + filename + "."
-					+ mPrintAutomataLabeling.getFormat().getFileEnding();
-			final File file = new File(fullPath);
+			final String fullAutomataPath = getDumpAutomataPath(new SubtaskStringIdentifier(null, "reuse").toString())
+					+ "." + mPref.dumpAutomataFormat().getFormat().getFileEnding();
+			final File file = new File(fullAutomataPath);
 			try {
 				final FileWriter fw = new FileWriter(file, false);
 				fw.close();
@@ -378,9 +378,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
 
 		if (mPref.dumpAutomata()) {
-			final String filename =
-					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_RawFloydHoareAutomaton";
-			super.writeAutomatonToFile(mInterpolAutomaton, filename);
+			super.writeAutomatonToFile(mInterpolAutomaton, getIteration(), "RawFloydHoareAutomaton");
 		}
 
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
@@ -503,7 +501,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString() + " " + automaton.getClass());
-			final String filename = mTaskIdentifier + "-reuse";
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> printedAutomaton;
 			final AutomataLibraryServices services = new AutomataLibraryServices(getServices());
 			final boolean addPredicateImplicationInformation = true;
@@ -526,9 +523,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			} else {
 				printedAutomaton = automaton;
 			}
-			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + getIteration(),
-					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", !mFirstReuseDump,
-					printedAutomaton);
+			final String fullAutomataPath = getDumpAutomataPath(new SubtaskStringIdentifier(null, "reuse").toString());
+			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + getIteration(), fullAutomataPath,
+					mDumpAutomataFormat, "", !mFirstReuseDump, printedAutomaton);
 			mFirstReuseDump = false;
 			mLogger.info("Finished dumping");
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);

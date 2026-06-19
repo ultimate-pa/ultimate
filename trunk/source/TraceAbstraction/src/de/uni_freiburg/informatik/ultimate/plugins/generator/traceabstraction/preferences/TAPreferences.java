@@ -70,8 +70,11 @@ public final class TAPreferences {
 	private final InterpolationTechnique mInterpolation;
 	private final InterpolantAutomaton mInterpolantAutomaton;
 	private final boolean mDumpAutomata;
-	private final Format mAutomataFormat;
-	private final String mDumpPath;
+	private final Format mDumpAutomataFormat;
+	private final String mDumpAutomataDirectory;
+	private final String mDumpAutomataFilename;
+	private final boolean mDumpAutomataBesideFile;
+	private final boolean mDumpOnlyReuseAutomata;
 	private final InterpolantAutomatonEnhancement mDeterminiation;
 	private final Minimization mMinimize;
 	private final Concurrency mAutomataTypeConcurrency;
@@ -79,7 +82,6 @@ public final class TAPreferences {
 	@Reflected(excluded = true)
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
-	private final boolean mDumpOnlyReuseAutomata;
 	private final int mLimitTraceHistogram;
 	private final int mErrorLocTimeLimit;
 	private final int mLimitPathProgramCount;
@@ -140,12 +142,15 @@ public final class TAPreferences {
 		mInterpolantAutomaton = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON,
 				InterpolantAutomaton.class);
 
-		mDumpAutomata = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMPAUTOMATA);
-
-		mAutomataFormat = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_AUTOMATAFORMAT, Format.class);
-
-		mDumpPath = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
-		mDumpOnlyReuseAutomata = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_ONLY_REUSE);
+		mDumpAutomata = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA);
+		mDumpAutomataFormat =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_FORMAT, Format.class);
+		mDumpAutomataDirectory = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_DIRECTORY);
+		mDumpAutomataFilename = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_FILENAME);
+		mDumpAutomataBesideFile =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_BESIDE_FILE);
+		mDumpOnlyReuseAutomata =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_ONLY_REUSE);
 
 		mDeterminiation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 				InterpolantAutomatonEnhancement.class);
@@ -315,17 +320,37 @@ public final class TAPreferences {
 		return mDumpAutomata && !mDumpOnlyReuseAutomata;
 	}
 
-	public Format getAutomataFormat() {
-		return mAutomataFormat;
+	/**
+	 * @return The automata dump format.
+	 */
+	public Format dumpAutomataFormat() {
+		return mDumpAutomataFormat;
 	}
 
 	/**
-	 * @return The dump path.
+	 * @return The automata dump directory.
 	 */
-	public String dumpPath() {
-		return mDumpPath;
+	public String dumpAutomataDirectory() {
+		return mDumpAutomataDirectory;
 	}
 
+	/**
+	 * @return The automata dump filename.
+	 */
+	public String dumpAutomataFilename() {
+		return mDumpAutomataFilename;
+	}
+
+	/**
+	 * @return The automata dump besides input file flag.
+	 */
+	public boolean dumpAutomataBesideFile() {
+		return mDumpAutomataBesideFile;
+	}
+
+	/**
+	 * @return The only-resue automata dump flag.
+	 */
 	public boolean dumpOnlyReuseAutomata() {
 		return mDumpAutomata && mDumpOnlyReuseAutomata;
 	}

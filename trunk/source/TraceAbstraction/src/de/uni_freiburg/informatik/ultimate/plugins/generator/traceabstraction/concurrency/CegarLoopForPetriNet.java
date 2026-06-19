@@ -232,9 +232,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 
 			if (mPref.dumpAutomata()) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_AbstractionAfterDifferencePairwiseOnDemand";
-				super.writeAutomatonToFile(enhancementResult.getSecond().getResult(), filename);
+				super.writeAutomatonToFile(enhancementResult.getSecond().getResult(), getIteration(),
+						"AbstractionAfterDifferencePairwiseOnDemand");
 			}
 
 			if (getIteration() <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
@@ -486,12 +485,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				dia = new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), awis).getResult();
 				final long end = System.nanoTime();
 				if (end - start > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
-					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-							+ "_DifferencePairwiseOnDemandInput";
 					final String atsHeaderMessage = "inputs of difference operation in iteration " + getIteration();
 					final String atsCode = "PetriNet diff = differencePairwiseOnDemand(net, nwa);";
-					super.writeAutomataToFile(filename, atsHeaderMessage, atsCode,
-							new NamedAutomaton<>("net", mAbstraction), new NamedAutomaton<>("nwa", dia));
+					super.writeAutomataToFile(getIteration(), "DifferencePairwiseOnDemandInput", atsHeaderMessage,
+							atsCode, new NamedAutomaton<>("net", mAbstraction), new NamedAutomaton<>("nwa", dia));
 				}
 			} else {
 				dpod = null;
@@ -508,9 +505,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 					.getTransitionDensity(SymbolType.INTERNAL);
 			mLogger.info("DFA transition density " + dfaTransitionDensity);
 			if (mPref.dumpAutomata()) {
-				final String filename =
-						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_EagerFloydHoareAutomaton";
-				super.writeAutomatonToFile(dia, filename);
+				super.writeAutomatonToFile(dia, getIteration(), "EagerFloydHoareAutomaton");
 			}
 			break;
 		default:

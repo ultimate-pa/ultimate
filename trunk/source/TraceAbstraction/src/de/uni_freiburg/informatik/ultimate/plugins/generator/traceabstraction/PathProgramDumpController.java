@@ -105,7 +105,7 @@ public class PathProgramDumpController<L extends IIcfgTransition<?>> {
 			throw createToolchainCanceledException(message, iteration);
 		}
 
-		final String filename = mPref.dumpPath() + File.separator + mIcfg.getIdentifier() + "_" + iteration + ".bpl";
+		final String filename = mPref.dumpAutomataDirectory() + File.separator + mIcfg.getIdentifier() + "_" + iteration + ".bpl";
 		new PathProgramDumper(mIcfg, mServices, counterexample, filename, DUMP_PATH_PROGRAMS_INPUT_MODE);
 
 		if (mDumpStopMode == PathProgramDumpStop.AFTER_FIRST_DUMP) {
