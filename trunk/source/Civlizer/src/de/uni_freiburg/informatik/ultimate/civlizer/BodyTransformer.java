@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -85,6 +87,7 @@ final class BodyTransformer extends BoogieTransformer {
 
 	private final ProgramAndProof mProgramAndProof;
 	private String mCurrentProcedure;
+	private Expression[] mCurrentTids;
 	private int mAtomicStatementCounter;
 
 	/**
@@ -96,12 +99,14 @@ final class BodyTransformer extends BoogieTransformer {
 	BodyTransformer(final ProgramAndProof programAndProof) {
 		mProgramAndProof = programAndProof;
 		mCurrentProcedure = null;
+		mCurrentTids = null;
 		mAtomicStatementCounter = 0;
 	}
 
-	private void setCurrentProcedure(final String name) {
+	private void setCurrentProcedure(final String name, final Expression[] tids) {
 		if (mCurrentProcedure != name) {
 			mCurrentProcedure = name;
+			mCurrentTids = tids;
 			mAtomicStatementCounter = 0;
 		}
 	}
@@ -125,24 +130,31 @@ final class BodyTransformer extends BoogieTransformer {
 	 * @return the transformed body
 	 */
 	Body transformBody(final String name, final Body body) {
-		setCurrentProcedure(name);
-		// TO BE improved
+
+		final int size =
+				mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(name, Collections.emptyList()).size()
+						+ (name.equals("ULTIMATE.start") ? 1 : 0);
+
+		final Expression[] tids = new Expression[size];
+
+		int i = 0;
+
+		if (name.equals("ULTIMATE.start")) {
+			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), "start_tid",
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
+			i++;
+		}
+
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(name,
+				Collections.emptyList())) {
+			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), tid.toString(),
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
+			i++;
+		}
+
+		setCurrentProcedure(name, tids);
+
 		return processBody(body);
-	}
-
-	/**
-	 * Transforms a sequence of statements belonging to a procedure.
-	 *
-	 * @param name
-	 *            the procedure name
-	 * @param statements
-	 *            the statements to transform
-	 * @return the transformed statements
-	 */
-	Statement[] transformStatements(final String name, final Statement[] statements) {
-		setCurrentProcedure(name);
-
-		return processStatements(statements);
 	}
 
 	/**
@@ -167,68 +179,68 @@ final class BodyTransformer extends BoogieTransformer {
 	protected Statement[] processStatements(final Statement[] statements) {
 		final List<Statement> newStatements = new ArrayList<>();
 
-		final int size = mProgramAndProof.getTemplateVisitor().getAllTidMap()
-				.getOrDefault(mCurrentProcedure, Collections.emptyList()).size()
-				+ (mCurrentProcedure.equals("ULTIMATE.start") ? 1 : 0);
-
-		final Expression[] tids = new Expression[size];
-
-		int i = 0;
-
-		if (mCurrentProcedure.equals("ULTIMATE.start")) {
-			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), "start_tid",
-					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
-			i++;
-		}
-
-		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(mCurrentProcedure,
-				Collections.emptyList())) {
-			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), tid.toString(),
-					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
-			i++;
-		}
-
-		// we ignore some kind of first Label $Ultimate##0
-		for (i = 0; i < statements.length; i++) { // ignore standard return
+		for (final Statement statement : statements) { // ignore standard return
 			// skip return for now
-			if (statements[i] instanceof ReturnStatement) {
+			if (statement instanceof ReturnStatement) {
 				continue;
 			}
 
 			mAtomicStatementCounter += 1;
 
-			final boolean globalVar = mProgramAndProof.getTemplateVisitor().containsGlobalVariables(statements[i]);
+			final boolean globalVar = mProgramAndProof.getTemplateVisitor().containsGlobalVariables(statement);
 
 			final boolean localVar =
-					mProgramAndProof.getTemplateVisitor().containsLocalVariables(mCurrentProcedure, statements[i]);
+					mProgramAndProof.getTemplateVisitor().containsLocalVariables(mCurrentProcedure, statement);
 
-			newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false,
-					new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
+			newStatements.add(new CallStatement(statement.getLocation(), new NamedAttribute[0], false,
+					new VariableLHS[0], "yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, mCurrentTids));
 
-			if (statements[i] instanceof ForkStatement || statements[i] instanceof JoinStatement
+			if (statement instanceof final IfStatement ifStmt) {
+				newStatements.add(new CallStatement(ifStmt.getLocation(), new NamedAttribute[0], false,
+						new VariableLHS[] { new VariableLHS(ifStmt.getLocation(), "condition") },
+						mCurrentProcedure + "_condition_" + mAtomicStatementCounter,
+						new Expression[] { ifStmt.getCondition() }));
+				newStatements
+						.add(new IfStatement(ifStmt.getLoc(), new IdentifierExpression(ifStmt.getLoc(), "condition"),
+								processStatements(ifStmt.getThenPart()), processStatements(ifStmt.getElsePart())));
+
+			} else if (statement instanceof final WhileStatement whileStmt) {
+				final int currentCounter = mAtomicStatementCounter;
+
+				final Statement assignCondition = new CallStatement(whileStmt.getLocation(), new NamedAttribute[0],
+						false, new VariableLHS[] { new VariableLHS(whileStmt.getLocation(), "condition") },
+						mCurrentProcedure + "_condition_" + currentCounter,
+						new Expression[] { whileStmt.getCondition() });
+
+				newStatements.add(assignCondition);
+				newStatements.add(new WhileStatement(whileStmt.getLocation(),
+						new IdentifierExpression(whileStmt.getLoc(), "condition"), whileStmt.getInvariants(),
+						Stream.concat(Arrays.stream(processStatements(whileStmt.getBody())), Stream.of(assignCondition))
+								.toArray(Statement[]::new)));
+
+			} else if (statement instanceof ForkStatement || statement instanceof JoinStatement
 					|| globalVar && !localVar) {
-				newStatements.add(processStatement(statements[i]));
+				newStatements.add(processStatement(statement));
 			} else if (!globalVar) {
 
-				final NamedAttribute[] layer = { new NamedAttribute(statements[i].getLoc(), "layer",
-						new Expression[] { new IntegerLiteral(statements[i].getLoc(), "1"),
-								new IntegerLiteral(statements[i].getLoc(), "2") }) };
+				final NamedAttribute[] layer = { new NamedAttribute(statement.getLoc(), "layer", new Expression[] {
+						new IntegerLiteral(statement.getLoc(), "1"), new IntegerLiteral(statement.getLoc(), "2") }) };
 
-				if (statements[i] instanceof final AssertStatement assertStmt) {
+				if (statement instanceof final AssertStatement assertStmt) {
 					newStatements.add(new AssertStatement(assertStmt.getLoc(), layer, assertStmt.getFormula()));
-				} else if (statements[i] instanceof final AssumeStatement assumeStmt) {
+				} else if (statement instanceof final AssumeStatement assumeStmt) {
 					newStatements.add(new AssumeStatement(assumeStmt.getLoc(), layer, assumeStmt.getFormula()));
-				} else if (statements[i] instanceof final Label labelStmt) {
+				} else if (statement instanceof final Label labelStmt) {
 					newStatements.add(new Label(labelStmt.getLoc(), labelStmt.getName()));
 				}
 				/*
 				 * else if (statements[i] instanceof final HavocStatement havoc) { maybe havoc }
 				 */
 				else {
-					newStatements.add(statements[i]);
+					newStatements.add(statement);
 				}
 			} else {
-				final var loc = statements[i].getLoc();
+				final var loc = statement.getLoc();
 
 				final Expression[] arguments =
 						mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(loc).stream()
@@ -239,7 +251,7 @@ final class BodyTransformer extends BoogieTransformer {
 				final VariableLHS[] returns = mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(loc)
 						.stream().map(ret -> new VariableLHS(loc, ret)).toArray(VariableLHS[]::new);
 
-				newStatements.add(new CallStatement(statements[i].getLocation(), new NamedAttribute[0], false, returns,
+				newStatements.add(new CallStatement(statement.getLocation(), new NamedAttribute[0], false, returns,
 						mCurrentProcedure + "_stmt_" + mAtomicStatementCounter, arguments));
 			}
 
@@ -248,18 +260,18 @@ final class BodyTransformer extends BoogieTransformer {
 
 			// Ghost update
 			if (mProgramAndProof.getGhostUpdateMap() != null
-					&& mProgramAndProof.getGhostUpdateMap().get(statements[i].getLocation()) != null) {
-				newStatements.addAll(mProgramAndProof.getGhostUpdateMap().get(statements[i].getLocation()));
+					&& mProgramAndProof.getGhostUpdateMap().get(statement.getLocation()) != null) {
+				newStatements.addAll(mProgramAndProof.getGhostUpdateMap().get(statement.getLocation()));
 			}
 		}
 
 		mAtomicStatementCounter += 1;
 		newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
-				"yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, tids));
+				"yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, mCurrentTids));
 
 		if (mCurrentProcedure != "ULTIMATE.start") {
-			newStatements
-					.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate", tids));
+			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
+					mCurrentTids));
 		}
 
 		return newStatements.toArray(Statement[]::new);
@@ -283,13 +295,11 @@ final class BodyTransformer extends BoogieTransformer {
 		// Label, IfStatement, AssignmentStatement, ReturnStatement, ForkStatement, CallStatement, JoinStatement,
 		// AssertStatement, WhileStatement, GotoStatement, AtomicStatement, AssumeStatement, BreakStatement,
 		// HavocStatement
-		if (statement instanceof AssertStatement || statement instanceof IfStatement
-				|| statement instanceof AssignmentStatement || statement instanceof AssumeStatement
-				|| statement instanceof WhileStatement || statement instanceof AtomicStatement
+		if (statement instanceof AssertStatement || statement instanceof AssignmentStatement
+				|| statement instanceof AssumeStatement || statement instanceof AtomicStatement
 				|| statement instanceof HavocStatement) {
 			newStatement = new CallStatement(statement.getLocation(), new NamedAttribute[0], false, new VariableLHS[0],
 					mCurrentProcedure + "_stmt_" + mAtomicStatementCounter, new Expression[0]);
-
 		} else if (statement instanceof final CallStatement call) {
 			final Expression[] args = call.getArguments();
 			final Expression[] newArgs = processExpressions(args);

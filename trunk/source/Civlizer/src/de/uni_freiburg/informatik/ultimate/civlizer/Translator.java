@@ -50,12 +50,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -314,48 +316,38 @@ public final class Translator extends BoogieVisitor {
 	private void addNonAtomicStatement(final String procName, final Statement statement,
 			final Set<Tid> tidNeedsLinearity, final int counter) {
 		final List<String> arguments = new ArrayList<>();
-		final List<String> returns = new ArrayList<>();
-
-		if ("ULTIMATE.start".equals(procName)) {
-			arguments.add("{:linear} start_tid : One StartTid");
-		}
-
-		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
-				Collections.emptyList())) {
-			if (tidNeedsLinearity.contains(tid)) {
-				arguments.add("{:linear} " + tid.toString() + " : One Tid");
-			} else {
-				arguments.add(tid.toString() + " : One Tid");
-			}
-		}
 
 		for (final Map.Entry<String, ASTType> var : mProgramAndProof.getTemplateVisitor().getProcedureVariablesMap()
 				.get(procName).entrySet()) {
 			if (mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(statement.getLoc())
 					.contains(var.getKey())) {
-				arguments.add(var.getKey() + "_in : " + var.getValue());
-				returns.add(var.getKey() + " : " + var.getValue());
+				arguments.add(var.getKey() + " : " + var.getValue());
 			}
 		}
 
 		final BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
 
 		mWriter.print("yield procedure {:layer 2} ");
-		mWriter.print(procName);
+		mWriter.print("condition_" + procName + "_" + counter);
 		mWriter.print("_stmt_");
 		mWriter.print(Integer.toString(counter));
 
 		mWriter.print("(");
 		addStringList(arguments, ", ");
-		mWriter.print(") returns (");
-		addStringList(returns, ", ");
-		mWriter.println(") {");
+		mWriter.println(") returns (out : bool) {");
 
+		// improve that
+		Expression condition;
 		if (statement instanceof final IfStatement ifStmt) {
-			// Statement[] transformer.transformStatements(procName, ifStmt)
+			condition = ifStmt.getCondition();
 		} else if (statement instanceof final WhileStatement whileStmt) {
-			// Statement[] transformer.transformStatements(procName, whileStmt)
+			condition = whileStmt.getCondition();
 		}
+
+		final LeftHandSide[] outVariable = { new VariableLHS(statement.getLoc(), "out") };
+
+		mWriter.print(BoogiePrettyPrinter
+				.print(new AssignmentStatement(statement.getLoc(), outVariable, new Expression[] { condition })));
 
 		mWriter.println("}\n");
 	}
