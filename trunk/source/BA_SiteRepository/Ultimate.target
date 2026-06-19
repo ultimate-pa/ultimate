@@ -113,6 +113,20 @@
                     <version>56.2.1</version>
                     <type>jar</type>
                 </dependency>
+              <!-- Source: https://mvnrepository.com/artifact/org.ejml/ejml-simple -->
+				<dependency>
+				    <groupId>org.ejml</groupId>
+				    <artifactId>ejml-simple</artifactId>
+				    <version>0.45.1</version>
+				    <type>jar</type>
+				</dependency>
+				<!-- Source: https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
+			<dependency>
+			    <groupId>org.apache.commons</groupId>
+			    <artifactId>commons-math3</artifactId>
+			    <version>3.6.1</version>
+			    <type>jar</type>
+			</dependency>
             </dependencies>
         </location>
     </locations>

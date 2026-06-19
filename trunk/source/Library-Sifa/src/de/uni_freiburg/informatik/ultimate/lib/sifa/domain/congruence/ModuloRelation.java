@@ -66,6 +66,7 @@ public class ModuloRelation {
 			// Modulo equality
 			final ModuloRelation moduloRelation = new ModuloRelation(affineTerm, modInt);
 			return List.of(moduloRelation);
+			// TODO: Remove the other cases
 		} else if (relationSymbol.equals(RelationSymbol.DISTINCT) && modInt.compareTo(MAX_NEG_MOD_COUNT) <= 0) {
 			// Have an inequality with a mod value that's small enough
 			final List<ModuloRelation> list = new ArrayList<>();
@@ -92,6 +93,8 @@ public class ModuloRelation {
 		final Term lhs = bnr.getLhs();
 		final Term rhs = bnr.getRhs();
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
+
+		// TODO: Check
 
 		final ModTerm modTermRhs = ModTerm.of(rhs);
 		final ModTerm modTermLhs = ModTerm.of(lhs);
@@ -180,6 +183,7 @@ public class ModuloRelation {
 
 	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
+		// TODO: What does following line do when modInt is 2^32 ?
 		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mMod))
 				.collect(Collectors.toList());
 		final Rational rationalMod = Rational.valueOf(mMod, BigInteger.ONE);

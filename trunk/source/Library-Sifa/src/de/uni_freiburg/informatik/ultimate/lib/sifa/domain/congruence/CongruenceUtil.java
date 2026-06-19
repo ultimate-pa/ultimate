@@ -106,6 +106,8 @@ public class CongruenceUtil {
 		final RationalNumber factor1 = wholePivotElement2Rational.negate().divide(rRational);
 		final RationalNumber factor2 = wholePivotElement1Rational.divide(rRational);
 		final MatrixQ128 newWholeV2 = wholeV1.multiply(factor1).add(wholeV2.multiply(factor2));
+		final var sth = wholeV1.multiply(factor1);
+		final var sth2 = wholeV2.multiply(factor2);
 
 		final MatrixQ128 newV1 = newWholeV1.divide(commonDenominatorRational);
 		final MatrixQ128 newV2 = newWholeV2.divide(commonDenominatorRational);
@@ -142,6 +144,10 @@ public class CongruenceUtil {
 				protoMatrix.set(i, j, rows.get(i).get(0, j));
 			}
 		}
+
+		final var x = MatrixQ128.FACTORY.newSparseBuilder(n, m);
+		x.set(0, 0, RationalNumber.of(1, 2));
+		final var y = x.build();
 
 		return MatrixQ128.FACTORY.copy(protoMatrix);
 	}
@@ -322,10 +328,27 @@ public class CongruenceUtil {
 		return Math.abs(Math.divideExact(x, gcd) * y);
 	}
 
-	public static long getCommonDenominator(final List<RationalNumber> list) {
-		long commonDenominator = 1;
-		for (final RationalNumber rationalNumber : list) {
-			final long denominator = getDenominator(rationalNumber);
+	public static BigInteger lcm(final BigInteger x, final BigInteger y) {
+		final BigInteger gcd = x.gcd(y);
+		if (gcd.equals(BigInteger.ZERO)) {
+			return BigInteger.ZERO;
+		}
+		return x.divideAndRemainder(gcd)[0].multiply(y).abs();
+	}
+
+//	public static long getCommonDenominator(final List<RationalNumber> rationalList) {
+//		long commonDenominator = 1;
+//		for (final RationalNumber rationalNumber : rationalList) {
+//			final long denominator = getDenominator(rationalNumber);
+//			commonDenominator = lcm(denominator, commonDenominator);
+//		}
+//		return commonDenominator;
+//	}
+
+	public static BigInteger getCommonDenominator(final List<Rational> list) {
+		BigInteger commonDenominator = BigInteger.ONE;
+		for (final Rational rational : list) {
+			final BigInteger denominator = rational.denominator();
 			commonDenominator = lcm(denominator, commonDenominator);
 		}
 		return commonDenominator;

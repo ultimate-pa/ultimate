@@ -36,6 +36,12 @@ public class GeneratorRepresentation {
 		mParameterMatrix = parameterMatrix;
 		mVectorLength = vectorLength;
 		mIsMinimal = isMinimal;
+
+		for (final var x : mParameterMatrix.toList()) {
+			if (CongruenceUtil.getDenominator(x) == 0) {
+				throw new AssertionError();
+			}
+		}
 	}
 
 	/**
@@ -96,6 +102,7 @@ public class GeneratorRepresentation {
 
 		final List<MatrixQ128> lines = getLines();
 		final List<MatrixQ128> parameters = getParameters();
+		final var sth = getParameters();
 
 		final List<Integer> linesToDelete = new ArrayList<>();
 		final List<Integer> parametersToDelete = new ArrayList<>();
@@ -201,7 +208,8 @@ public class GeneratorRepresentation {
 		mIsMinimal = true;
 
 		if (lines.size() + parameters.size() > mVectorLength) {
-			throw new AssertionError();
+			throw new AssertionError("lines and parameters are too long\n Lines: " + minimalLineMatrix
+					+ "\n Parameters: " + minimalParameterMatrix);
 		}
 
 	}
@@ -255,7 +263,7 @@ public class GeneratorRepresentation {
 		final MatrixQ128 generatorMatrix = CongruenceUtil.getMatrixFromRows(vectorList);
 
 		if (!generatorMatrix.isSquare()) {
-			throw new AssertionError();
+			throw new AssertionError("generatorMatrix is not square. \n generatorMatrix: " + generatorMatrix);
 		}
 
 		final MatrixQ128 constraintMatrix = generatorMatrix.invert().transpose();

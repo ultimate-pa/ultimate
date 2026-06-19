@@ -175,9 +175,15 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 	@Override
 	public CongruenceState widen(final CongruenceState other) {
-		/*
-		 * if (isBottom()) { return other; } if (other.isBottom()) { return this; }
-		 */
+
+		final var sth = 0;
+
+		if (isBottom()) {
+			return other;
+		}
+		if (other.isBottom()) {
+			return this;
+		}
 
 		final CongruenceState upper = join(other);
 		final var newVarToIndex = upper.getVarToIndex();

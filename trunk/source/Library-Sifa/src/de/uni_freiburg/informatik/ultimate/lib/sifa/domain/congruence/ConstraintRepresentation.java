@@ -264,7 +264,8 @@ public class ConstraintRepresentation {
 		mIsMinimal = true;
 
 		if (equalities.size() + congruences.size() > mVectorLength) {
-			throw new AssertionError();
+			throw new AssertionError("equalities and congruences are too long\n Equalities: " + mEqualityMatrix
+					+ "\n Congruences: " + mCongruenceMatrix);
 		}
 	}
 
@@ -354,7 +355,7 @@ public class ConstraintRepresentation {
 		final MatrixQ128 constraintMatrix = CongruenceUtil.getMatrixFromRows(vectorList);
 
 		if (!constraintMatrix.isSquare()) {
-			throw new AssertionError();
+			throw new AssertionError("constraintMatrix is not square. \n generatorMatrix: " + constraintMatrix);
 		}
 
 		final MatrixQ128 generatorMatrix = constraintMatrix.invert().transpose();
