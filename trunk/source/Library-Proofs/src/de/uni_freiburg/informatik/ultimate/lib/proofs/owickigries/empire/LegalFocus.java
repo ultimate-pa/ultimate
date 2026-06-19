@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -63,7 +64,8 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 	public LegalFocus(final IExplicitEmpire<L, P, S> empire, final IPetriNet<L, P> net,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton, final int numLaws,
 			final Function<IPredicate, List<IPredicate>> splitConjuncts) {
-		this(empire, net, interpolantAutomaton, numLaws, splitConjuncts, IFocusedRegionHeuristic.bySize());
+		this(empire, net, interpolantAutomaton, numLaws, splitConjuncts,
+				IFocusedRegionHeuristic.bySizeExcludingAuxilliaryPlaces());
 	}
 
 	public LegalFocus(final IExplicitEmpire<L, P, S> empire, final IPetriNet<L, P> program,
@@ -141,7 +143,9 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 		// At this point, we know that at least one successor region of the transition is focused.
 		// Hence, at least one predecessor region of the transition must also be focused.
 		// (Rule: inductive-edge)
-		final var predecessorRegions = territory.getPlacesRegions(transition.getPredecessors());
+		final var transitionPredecessors = transition.getPredecessors();
+		final var predecessorRegions = territory.getPlacesRegions(transitionPredecessors);
+
 		assert !predecessorRegions.isEmpty() : "territory enables transition but has no predecessor regions";
 
 		final boolean alreadyFocused = predecessorRegions.stream().anyMatch(predecessorFocus::contains);
@@ -276,6 +280,26 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 				@Override
 				public Comparator<Region<P>> getPreference(final IPredicate law) {
 					return Comparator.comparing(Region::size);
+				}
+			};
+		}
+
+		static <P> IFocusedRegionHeuristic<P> bySizeExcludingAuxilliaryPlaces() {
+			return new IFocusedRegionHeuristic<>() {
+				@Override
+				public Comparator<Pair<Region<P>, IPredicate>> getPreference() {
+					return Comparator.comparing(Pair::getFirst, Comparator.comparing(this::containsOnlyISLPredicate)
+							.thenComparing(Comparator.comparing(Region::size)));
+				}
+
+				@Override
+				public Comparator<Region<P>> getPreference(final IPredicate law) {
+					return Comparator.comparing(this::containsOnlyISLPredicate)
+							.thenComparing(Comparator.comparing(Region::size));
+				}
+
+				private boolean containsOnlyISLPredicate(final Region<P> region) {
+					return region.getPlaces().stream().allMatch(p -> p instanceof ISLPredicate);
 				}
 			};
 		}
