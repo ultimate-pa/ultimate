@@ -765,7 +765,7 @@ public class CfgBuilder {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
-				if (st instanceof final Label laSt) {
+				if (st instanceof final Label laSt && isAuxiliaryLabel(laSt)) {
 					final int gotoTarget = mGotoTargetCounter.getOrDefault(laSt.getName(), 0);
 					if (gotoTarget == 0) {
 						// not target of a goto
