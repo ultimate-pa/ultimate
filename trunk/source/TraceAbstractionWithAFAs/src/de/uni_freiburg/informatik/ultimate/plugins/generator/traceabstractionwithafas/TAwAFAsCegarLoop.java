@@ -573,8 +573,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		mAbstraction = diff.getResult();
 		// mDeadEndRemovalTime = diff.getDeadEndRemovalTime();
 		if (mPref.dumpAutomata()) {
-			final String filename = "InterpolantAutomaton_Iteration" + getIteration();
-			super.writeAutomatonToFile(mInterpolAutomaton, filename);
+			super.writeAutomatonToFile(mInterpolAutomaton, getIteration());
 		}
 
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
