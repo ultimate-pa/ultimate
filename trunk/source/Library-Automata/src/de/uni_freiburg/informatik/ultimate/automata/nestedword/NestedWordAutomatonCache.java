@@ -74,7 +74,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	/**
 	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs.
 	 */
-	protected final NestedMap3<STATE, LETTER, STATE, IsContained> mInternalOut = new NestedMap3<>();
+	public final NestedMap3<STATE, LETTER, STATE, IsContained> mInternalOut = new NestedMap3<>();
 
 	/**
 	 * Set of call transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs.

@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ceg
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -113,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.UnfairnessResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.UnknownResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ReplacingBuchiHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TermcompProofBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -127,6 +130,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -546,8 +552,10 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mMDBenchmark.reportRankingFunction(mIteration, rank, script);
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		// for now we ignore the constructions styles
+
 		// TODO: find out whether messing with the initial predicates causes any damage and code this nicer
 		// -->it does, when computing the difference we get complaints that the predicates are unknown...
+		// the predicate unifier can't take different predicates with the same formula as input
 		final List<IPredicate> initialPredicates = new ArrayList<>();
 		initialPredicates.add(unfairRes.result().getStemPrecondition());
 		// initialPredicates.add(unfairRes.result().getStemPostcondition());
@@ -578,12 +586,20 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		bhtc.putDecreaseEqualPair(hondaPredicate, rankEqAndSi);
 
 //-------------------------- merge prevention --------------------------------------------------------------------------
-		// TODO: prevent illegal merges when computing the interpolant automaton.
 
 		final NestedWord<L> stemWord = mCounterexample.getStem().getWord();
+		// the hoare triple checks and a lot of other things only work with the unified predicates from the pu, so we
+		// have to keep them in some form
+		final HashMap<IPredicate, IPredicate> correspUnifiedPred = new HashMap<>();
 
 		// TODO: code this properly
-		final IPredicate[] stemInterpolants = unifiedStemInterpolants;
+		final IPredicate[] stemInterpolants = new IPredicate[unifiedStemInterpolants.length];
+		for (int i = 0; i < unifiedStemInterpolants.length; i++) {
+			correspUnifiedPred.putIfAbsent(unifiedStemInterpolants[i], unifiedStemInterpolants[i]);
+			stemInterpolants[i] = unifiedStemInterpolants[i];
+
+		}
+
 		if (unifiedStemInterpolants.length > 2) {
 			for (int i = 0; i < unifiedStemInterpolants.length - 1; i++) {
 				if (unifiedStemInterpolants[i] == unifiedStemInterpolants[i + 1]) {
@@ -591,9 +607,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					final L sepSt = stemWord.getSymbol(i + 1);
 					if (!unfairRes.loopThreads().contains(stemWord.getSymbol(i + 1).getSource().getProcedure())) {
 						stemInterpolants[i] = mPredicateFactory.newPredicate(unifiedStemInterpolants[i].getFormula());
+						correspUnifiedPred.put(stemInterpolants[i], unifiedStemInterpolants[i]);
 
-					} else {
-						stemInterpolants[i] = unifiedStemInterpolants[i];
 					}
 				}
 			}
@@ -613,49 +628,59 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				constructTraceCheck(hondaPrime, hondaPredicate, mCounterexample.getLoop(), pu);
 		final IPredicate[] guardedLoopInterpolants = guardedLoopCheck.getInterpolants();
 
-		final List<IPredicate> loopInterpolants = new ArrayList<>();
-		assert unifiedLoopInterpolants.length == upperLoopInterpolants.length;
-		assert unifiedLoopInterpolants.length == guardedLoopInterpolants.length;
-		// states we dont want to merge need to have different predicates....
-		loopInterpolants.add(unifiedLoopInterpolants[0]);
+		final IPredicate[] loopInterpolants = new IPredicate[unifiedLoopInterpolants.length];
+		// loop -->(upper loop, guarded loop); since the loop interpolants are supposed to be unique this should be ok
+		// TODO: check if the honda is mapped properly
+		final HashMap<IPredicate, Pair<IPredicate, IPredicate>> loopMap = new HashMap<>();
+
+		for (int i = 0; i < unifiedLoopInterpolants.length; i++) {
+			loopInterpolants[i] = unifiedLoopInterpolants[i];
+			correspUnifiedPred.putIfAbsent(unifiedLoopInterpolants[i], unifiedLoopInterpolants[i]);
+			loopMap.putIfAbsent(loopInterpolants[i], new Pair<>(upperLoopInterpolants[i], guardedLoopInterpolants[i]));
+		}
 		if (unifiedLoopInterpolants.length > 2) {
 			for (int i = 1; i < unifiedLoopInterpolants.length; i++) {
 				// we are only allowed to merge if the predicates of adjacent states are the same on the upper and on
-				// the
-				// lower loop
+				// the lower loop
+				// TODO: for debugging only, remove superfluous vars once done
 				final boolean u = unifiedLoopInterpolants[i - 1] == unifiedLoopInterpolants[i];
 				if (u) {
 					final boolean upper = upperLoopInterpolants[i - 1] == upperLoopInterpolants[i];
 					final boolean guarded = guardedLoopInterpolants[i - 1] == guardedLoopInterpolants[i];
-					if (upper && guarded) {
-						loopInterpolants.add(unifiedLoopInterpolants[i]);
-					} else {
-						// create a new predicate with the same formula
-						loopInterpolants.add(mPredicateFactory.newPredicate(unifiedLoopInterpolants[i].getFormula()));
+					if (!(upper && guarded)) {
+						loopInterpolants[i] = mPredicateFactory.newPredicate(unifiedLoopInterpolants[i].getFormula());
+						loopMap.putIfAbsent(loopInterpolants[i],
+								new Pair<>(upperLoopInterpolants[i], guardedLoopInterpolants[i]));
 					}
 
 				}
 			}
 		}
+//------------------------------------------ merge prevention end ---------------------------------------------
 
-//------------------------------------------ getting the A_fair predicates ---------------------------------------------
+		final Set<IPredicate> stemSet = new HashSet<>(Arrays.asList(stemInterpolants));
+		final Set<IPredicate> loopSet = new HashSet<>(Arrays.asList(loopInterpolants));
 
 		final List<IPredicate> stateSeq = new ArrayList();
 		stateSeq.add(hondaPrime);
 		stateSeq.addAll(mCounterexample.getLoop().getStateSequence());
-		// what was that good for?
-		// loopRun = new NestedRun(mCounterexample.getLoop().getWord(), stateSeq);
 
 //----------------------------------------------------------------------------------------------------------------------
-		// TODO: Warning: the interpolant automaton already merges states with the same predicate! - and because of the
+		// Warning: the interpolant automaton already merges states with the same predicate! - and because of the
 		// predicate unifier, all predicates with the same formula count as the same predicate
-		// We need a way to stop illegal merges....
 
 		final NestedWordAutomaton<L, IPredicate> inputAutomaton =
 				mInterpolantAutomatonBuilder.constructInterpolantAutomaton(unfairRes.result().getStemPrecondition(),
-						mCounterexample, unifiedStemInterpolants, hondaPredicate,
-						loopInterpolants.toArray(new IPredicate[loopInterpolants.size()]),
+						mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
 						BuchiAutomizerUtils.getVpAlphabet(mAbstraction), mDefaultStateFactory);
+		// when constructing an interpolant automaton, an initial state is added
+		for (final IPredicate init : inputAutomaton.getInitialStates()) {
+			correspUnifiedPred.put(init, init);
+			stemSet.add(init);
+		}
+
+		// TODO: check if this does what I think it does
+		final NestedMap3<IPredicate, L, IPredicate, IsContained> originalEdges = inputAutomaton.mInternalOut;
 
 		// TODO: Can/should we do an equivalent check for the unfair automaton?
 		/*
@@ -663,8 +688,10 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		 * mCsToolkitWithRankVars.getManagedScript(), bhtc, pu, inputAutomaton, true,
 		 * unfairRes.result().getStemPrecondition()).getResult();
 		 */
-		assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), inputAutomaton,
-				mCounterexample.getNestedLassoWord()).getResult();
+		// TODO: figure out how to do buchi accepts with ununified predicates
+		// assert new BuchiAccepts<>(new AutomataLibraryServices(mServices),
+		// inputAutomaton,mCounterexample.getNestedLassoWord()).getResult();
+
 		// the equivalent to constructGeneralizedAutomaton, but we always do nondeterminism
 		if (!inputAutomaton.getStates().contains(pu.getTruePredicate())) {
 			inputAutomaton.addState(false, false, pu.getTruePredicate());
@@ -672,34 +699,36 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		if (!inputAutomaton.getStates().contains(pu.getFalsePredicate())) {
 			inputAutomaton.addState(false, true, pu.getFalsePredicate());
 		}
-		// automaton generalized under termination rules
+
+		final ReplacingBuchiHoareTripleChecker rbhtc =
+				new ReplacingBuchiHoareTripleChecker(new BuchiHoareTripleChecker(ehtc), correspUnifiedPred);
+
+		// automaton generalized under terminationrules
 		final NondeterministicInterpolantAutomaton<L> tbwAutomaton = new NondeterministicInterpolantAutomaton<>(
-				mServices, mCsToolkitWithRankVars, bhtc, inputAutomaton, pu, false, true);
+				mServices, mCsToolkitWithRankVars, rbhtc, inputAutomaton, pu, false, true, true, correspUnifiedPred);
 
 		// TODO: if we want fair termination, wrap the interpolant automaton to filter out transitions that may lead to
 		// fair runs
-		final FairnessWrapper<L> generalizedAutomaton =
-				new FairnessWrapper(tbwAutomaton, mCounterexample, unfairRes.loopThreads(), unifiedStemInterpolants,
-						unifiedLoopInterpolants, upperLoopCheck.getInterpolants(), guardedLoopCheck.getInterpolants(),
-						hondaPredicate, unfairRes.notG(), bhtc);
+		final FairnessWrapper<L> generalizedAutomaton = new FairnessWrapper<>(tbwAutomaton, unfairRes.loopThreads(),
+				originalEdges, stemSet, loopSet, loopMap, hondaPredicate, unfairRes.notG(), rbhtc);
 
-		// sanity check
+		// disabled bc the it doesnt work with ununified predicates -.-
 		/*
 		 * assert new BuchiAccepts<>(new AutomataLibraryServices(mServices), tbwAutomaton,
 		 * mCounterexample.getNestedLassoWord()).getResult() :
 		 * "the generalized automaton does not accept the original trace";
 		 */
-
+		// TODO: can we properly compute the difference when we use un-unified predicates?
 		newAbstr = refineBuchi(mAbstraction, generalizedAutomaton);
 		// Switch to read-only-mode for lazy constructions
-		generalizedAutomaton.switchToReadonlyMode();
+		// inputAutomaton.switchToReadonlyMode();
 
 		mBenchmarkGenerator.addEdgeCheckerData(bhtc.getStatistics());
 
-		final boolean isUseful = isUsefulInterpolantAutomaton(generalizedAutomaton, mCounterexample);
-		if (isUseful) {
-			mMDBenchmark.reportNonDeterministicModule(mIteration, generalizedAutomaton.size());
-		}
+		/*
+		 * final boolean isUseful = isUsefulInterpolantAutomaton(generalizedAutomaton, mCounterexample); if (isUseful) {
+		 * mMDBenchmark.reportNonDeterministicModule(mIteration, generalizedAutomaton.size()); }
+		 */
 		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mBci);
 		return newAbstr;

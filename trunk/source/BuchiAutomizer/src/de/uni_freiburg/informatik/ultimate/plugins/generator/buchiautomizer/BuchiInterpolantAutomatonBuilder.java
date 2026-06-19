@@ -143,7 +143,6 @@ public class BuchiInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 		return predicates[pos];
 	}
 
-//TODO: V - Find out what this method does
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructGeneralizedAutomaton(
 			final NestedLassoRun<LETTER, IPredicate> counterexample,
 			final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle, final BspmResult bspmResult,

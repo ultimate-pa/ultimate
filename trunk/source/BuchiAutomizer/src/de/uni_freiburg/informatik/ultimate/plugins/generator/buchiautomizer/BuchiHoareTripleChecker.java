@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 
 	private final Map<IPredicate, IPredicate> mRankDecrease2RankEquality = new HashMap<>();
-	private final IHoareTripleChecker mIHoareTripleChecker;
+	protected final IHoareTripleChecker mIHoareTripleChecker;
 
 	public BuchiHoareTripleChecker(final IHoareTripleChecker iHoareTripleChecker) {
 		mIHoareTripleChecker = iHoareTripleChecker;
@@ -60,7 +60,7 @@ public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 		mRankDecrease2RankEquality.put(rankDecreaseAndBound, rankEquality);
 	}
 
-	private IPredicate replaceIfRankDecreasePredicate(final IPredicate p) {
+	protected IPredicate replaceIfRankDecreasePredicate(final IPredicate p) {
 		final IPredicate rankEq = mRankDecrease2RankEquality.get(p);
 		if (rankEq == null) {
 			return p;

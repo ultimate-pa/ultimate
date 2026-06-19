@@ -225,6 +225,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER>
 	}
 
 	@Override
+
 	public final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state,
 			final LETTER letter) {
 		if ((mMode == Mode.ON_DEMAND_CONSTRUCTION)

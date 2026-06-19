@@ -27,27 +27,25 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /*
@@ -58,21 +56,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class FairnessWrapper<L extends IIcfgTransition<?>>
 		implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate> {
 	NondeterministicInterpolantAutomaton<L> mWrappedAutomaton;
-	NestedLassoRun<L, IPredicate> mLassoRun; // needed for checking which ts existed in the original word
 	Set<String> mLoopThreads;
 	UnmodifiableTransFormula mNotG;
-	IPredicate[] mStemInterpolants;
-	IPredicate[] mLoopInterpolants;
-	IPredicate[] mPredicates; // annotations for the "upper" loop of A_fair (with annotation ork = inf && sup. inv)
-	IPredicate[] mPrimedPredicates; // annotations for the "lower" loop of A_fair (the one containing assume !G)
-	List<IPredicate> mLoopStates; // what is better, set or list
-	List<IPredicate> mStemStates;
-	HashMap<IPredicate, Pair<IPredicate, IPredicate>> mPredicateMap = new HashMap<>();
+	Set<IPredicate> mStemStates;
+	Set<IPredicate> mLoopStates;
+
+	// maps base loop predicates to upper/lower loop predicates
+	Map<IPredicate, Pair<IPredicate, IPredicate>> mLoopPredicateMap;
 	IPredicate mHonda;
 	BuchiHoareTripleChecker mHTC;
-	Set<L> mOriginalEdges;
-	Set<IPredicate> mStemStateSet;
-	Set<IPredicate> mLoopStateSet;
+	NestedMap3<IPredicate, L, IPredicate, IsContained> mOriginalEdges;
+
 	// cache the already constructed transitions
 	HashSet<OutgoingInternalTransition<L, IPredicate>> mAlreadyConstructedTS = new HashSet<>();
 	HashMap<OutgoingInternalTransition<L, IPredicate>, IPredicate> mOrigins = new HashMap<>();
@@ -83,70 +77,44 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 * @param automaton
 	 *            the automaton to wrap
 	 *
-	 * @param lasso
-	 *            the counterexample from which the generalized automaton was build
+	 * @param originalTS
+	 *            set of edges of the original lasso; take from interpolant automaton
 	 *
 	 * @param loopthreads
 	 *            the set of threads whose statements are part of the counterexample's loop
 	 *
-	 * @param stem
+	 * @param stemInterpolants
 	 *
 	 *            the interpolants of the stem of the lasso
 	 *
-	 * @param loop
+	 * @param loopInterpolants
 	 *            the interpolants of the loop of the lasso
 	 *
-	 * @param loopbasic
-	 *            the predicates for the states of the upper loop of A_fair
-	 *
-	 * @param loopprime
-	 *            the predicates for the states of the guarded loop of A_fair; however we start at the state after the
-	 *            "assume not G" statement and leave out the oldrank stuff since that should already be covered by the
-	 *            termination predicates
 	 *
 	 * @param honda
 	 *            predicate of the lasso's honda
 	 *
 	 * @param notG
 	 *            - negated disjunction of guards of non-loop thread statements at the honda
-	 *
 	 * @param htc
-	 *            - hoare triple checker able to handle the special honda predicates in termination
+	 *            - atm we need a replacing hoare triple checker here to circumvent the duplicate predicate problem
+	 *
+	 *
 	 */
-	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton,
-			final NestedLassoRun<L, IPredicate> lasso, final Set<String> loopthreads, final IPredicate[] stem,
-			final IPredicate[] loop, final IPredicate[] loopbasic, final IPredicate[] loopprime, final IPredicate honda,
-			final UnmodifiableTransFormula notG, final BuchiHoareTripleChecker htc) {
-		// we cache already constructed ts
-		// TODO: make s
+	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton, final Set<String> loopthreads,
+			final NestedMap3<IPredicate, L, IPredicate, IsContained> originalTS, final Set<IPredicate> stemInterpolants,
+			final Set<IPredicate> loopInterpolants, final Map<IPredicate, Pair<IPredicate, IPredicate>> loopMap,
+			final IPredicate honda, final UnmodifiableTransFormula notG, final ReplacingBuchiHoareTripleChecker htc) {
+
 		mWrappedAutomaton = automaton;
-		mLassoRun = lasso;
 		mLoopThreads = loopthreads;
-		mStemInterpolants = stem;
-		mLoopInterpolants = loop;
-		mPredicates = loopbasic;
-		mPrimedPredicates = loopprime;
+		mStemStates = stemInterpolants;
+		mLoopStates = loopInterpolants;
 		mHonda = honda;
 		mNotG = notG;
 		mHTC = htc;
-
-		// TODO: provisorium
-		for (int i = 0; i < mLoopInterpolants.length; i++) {
-			mPredicateMap.put(mLoopInterpolants[i], new Pair<>(mPredicates[i], mPrimedPredicates[i]));
-		}
-		// TODO: Find out if the stem / loop state classification is actually reliable, the predicate unifier might mess
-		// with this
-		mStemStateSet = new HashSet<>(Arrays.asList(mStemInterpolants));
-		mLoopStateSet = new HashSet<>(Arrays.asList(mLoopInterpolants));
-		mOriginalEdges = (mLassoRun.getLoop().getWord().asSet());
-		mOriginalEdges.addAll(mLassoRun.getStem().getWord().asSet());
-
-		// TODO: is the size information of the wrapped automaton accurate?
-		mLoopStates = mLassoRun.getLoop().getStateSequence();
-		mStemStates = mLassoRun.getStem().getStateSequence();
-		final int num_states_lasso = mLoopStates.size() + mStemStates.size();
-		// assert num_states_lasso == mWrappedAutomaton.size() : "States went missing!";
-
+		mOriginalEdges = originalTS;
+		mLoopPredicateMap = loopMap;
 	}
 
 	@Override
@@ -183,10 +151,10 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	@Override
 	public String sizeInformation() {
 		// TODO implement
-		return "to be implemented";
+		return "size information not implemented yet";
 	}
 
-	/*
+	/**
 	 * Returns all internal successor transitions that are legal for unfairness generalization
 	 */
 	@Override
@@ -203,7 +171,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 				if (mAlreadyConstructedTS.contains(ts) && (mOrigins.get(ts) == state)) {
 					filteredTS.add(ts);
 				} else {
-					if (isLegalTS(state, ts.getLetter(), target, true, false, false, null)) {
+					if (isLegalTS(state, ts.getLetter(), target)) {
 						filteredTS.add(ts);
 						mAlreadyConstructedTS.add(ts);
 						mOrigins.put(ts, state);
@@ -249,30 +217,14 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 *            source node of the edge
 	 *
 	 * @param ts
-	 *            transition to be checked
-	 *
-	 * @param internal
-	 *            indicates if the edge is an internal transition
-	 *
-	 * @param call
-	 *            indicates whether the edge is a call transition
-	 *
-	 * @param ret
-	 *            indicates whether the edge is a return transition
-	 *
-	 * @param resHier
-	 *            some parameter needed for return ts, just set to null for other ts
+	 *            transition to be checked, needs to be an internal transition
 	 *
 	 * @return true if the edge is legal
 	 */
-	boolean isLegalTS(final IPredicate source, final L ts, final IPredicate target, final boolean internal,
-			final boolean call, final boolean ret, final IPredicate resHier) {
-		assert Stream.of(internal, call, ret).filter(b -> b).count() == 1
-				: "The transition has to be exactly one of call, return or internal";
-
+	boolean isLegalTS(final IPredicate source, final L ts, final IPredicate target) {
 		// we keep the edges of the original lasso
 		// TODO: we need to make sure they are only added ONCE and in the right place...
-		if (isOriginalEdge(ts)) {
+		if (isOriginalEdge(source, ts, target)) {
 			return true;
 		}
 		// adding additional non-loop ts is forbidden (we need to guarantee that nonloop thread locations remain
@@ -282,40 +234,25 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		}
 		// for stem states we allow all loop ts that form valid hoare triples; and the predicates should be the same as
 		// for termination
-		if (mStemStateSet.contains(source) && mStemStateSet.contains(target)) {
+		if (mStemStates.contains(source) && mStemStates.contains(target)) {
 			return true;
 		}
-		assert !mStemStateSet.contains(target) : "Illegal Edge from loop to stem!";
+		assert !mStemStates.contains(target) : "Illegal Edge from loop to stem!";
 		// for loop edges we need to check if they form valid hoare triples with the unfairness predicates
-		if (mLoopStateSet.contains(source) && !isHonda(target)) {
-			final Pair<IPredicate, IPredicate> sourcePreds = mPredicateMap.get(source);
-			final Pair<IPredicate, IPredicate> targetPreds = mPredicateMap.get(target);
+		if (mLoopStates.contains(source) && !isHonda(target)) {
+			final Pair<IPredicate, IPredicate> sourcePreds = mLoopPredicateMap.get(source);
+			final Pair<IPredicate, IPredicate> targetPreds = mLoopPredicateMap.get(target);
 			boolean u = false;
 			boolean l = false;
 
-			if (internal) {
-				// check if the upper loop ts forms a valid hoare triple
-				u = mHTC.checkInternal(sourcePreds.getFirst(), (IInternalAction) ts,
-						targetPreds.getFirst()) == Validity.VALID;
-				// check if the lower loop forms a valid hoare triple
-				l = mHTC.checkInternal(sourcePreds.getSecond(), (IInternalAction) ts,
-						targetPreds.getSecond()) == Validity.VALID;
-			}
-			if (call) {
-				u = mHTC.checkCall(sourcePreds.getFirst(), (ICallAction) ts, targetPreds.getFirst()) == Validity.VALID;
-				l = mHTC.checkCall(sourcePreds.getSecond(), (ICallAction) ts,
-						targetPreds.getSecond()) == Validity.VALID;
-			}
-			// TODO: find out about the hierarchy stuff
-			if (ret) {
-				u = mHTC.checkReturn(sourcePreds.getFirst(), resHier, (IReturnAction) ts,
-						targetPreds.getFirst()) == Validity.VALID;
-				l = mHTC.checkReturn(sourcePreds.getSecond(), resHier, (IReturnAction) ts,
-						targetPreds.getSecond()) == Validity.VALID;
-			}
+			// check if the upper loop ts forms a valid hoare triple
+			u = mHTC.checkInternal(sourcePreds.getFirst(), (IInternalAction) ts,
+					targetPreds.getFirst()) == Validity.VALID;
+			// check if the lower loop forms a valid hoare triple
+			l = mHTC.checkInternal(sourcePreds.getSecond(), (IInternalAction) ts,
+					targetPreds.getSecond()) == Validity.VALID;
 
 			return u && l;
-
 		}
 
 		// the honda is slightly special since we have a virtual 'assume not G' edge "splitting" it
@@ -331,9 +268,10 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	/*
 	 * Check if an edge was part of the original lasso trace (the counterexample)
 	 */
-	// TODO: Does this work? -- nope
-	boolean isOriginalEdge(final L ts) {
-		return mOriginalEdges.contains(ts);
+	// TODO: Does this work? If so remove the unnecessary res
+	boolean isOriginalEdge(final IPredicate source, final L ts, final IPredicate target) {
+		final boolean res = mOriginalEdges.get(source, ts, target) == IsContained.IsContained;
+		return res;
 	}
 
 	/**
