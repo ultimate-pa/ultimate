@@ -6,7 +6,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeTraverser;
@@ -19,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class StrongestPostconditionInterferenceFactory implements IInterferenceFactory {
 
@@ -27,18 +27,17 @@ public final class StrongestPostconditionInterferenceFactory implements IInterfe
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final ManagedScript mManagedScript;
-	private final BucketDomain mBucketDomain;
+	private final IPredicate mTruePredicate;
 
 	public StrongestPostconditionInterferenceFactory(final InterferenceEdgeTraverser traverser,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
-			final BasicPredicateFactory predicateFactory, final ManagedScript managedScript,
-			final BucketDomain bucketDomain) {
+			final BasicPredicateFactory predicateFactory, final ManagedScript managedScript) {
 		mTraverser = traverser;
 		mTranslator = translator;
 		mPostcondition = postcondition;
 		mPredicateFactory = predicateFactory;
 		mManagedScript = managedScript;
-		mBucketDomain = bucketDomain;
+		mTruePredicate = predicateFactory.newPredicate(managedScript.getScript().term("true"));
 	}
 
 	@Override
@@ -46,6 +45,7 @@ public final class StrongestPostconditionInterferenceFactory implements IInterfe
 		final Map<IcfgLocation, IPredicate> allStates = mergeStates(perThreadStates);
 		final Map<ThreadedKey, StrongestPostconditionInterference.RelationalInterference> interferenceByKey =
 				new LinkedHashMap<>();
+		final Map<String, String> locationVarNameByThread = new LinkedHashMap<>();
 		for (final TranslatedInterferenceOfEdge edge : mTraverser.collect(allStates)) {
 			final String threadId = edge.source().getProcedure();
 			final Map<IcfgLocation, IPredicate> threadStates = perThreadStates.get(threadId);
@@ -61,13 +61,20 @@ public final class StrongestPostconditionInterferenceFactory implements IInterfe
 			if (InterferenceUtils.shouldSkipTrivialPredicate(relationalInterference)) {
 				continue;
 			}
+			final TermVariable locationVar = mTranslator.getLocationTermVarOrNull(threadId);
+			if (locationVar != null) {
+				locationVarNameByThread.put(threadId, locationVar.getName());
+			}
+			final IPredicate unconditionalPostState =
+					mPostcondition.strongestPostcondition(mTruePredicate, relationalInterference);
 			final var relationalInterferenceForEdge = new StrongestPostconditionInterference.RelationalInterference(
-					relationalInterference, mPostcondition.prepareRelation(relationalInterference));
+					relationalInterference, mPostcondition.prepareRelation(relationalInterference),
+					unconditionalPostState);
 			interferenceByKey.merge(new ThreadedKey(threadId, edge.abstractLocationPair()),
 					relationalInterferenceForEdge, this::mergeRelationalInterferences);
 		}
 		return interferenceByKey.isEmpty() ? null
-				: new StrongestPostconditionInterference(interferenceByKey, mPostcondition, mBucketDomain);
+				: new StrongestPostconditionInterference(interferenceByKey, locationVarNameByThread, mPostcondition);
 	}
 
 	private StrongestPostconditionInterference.RelationalInterference mergeRelationalInterferences(
@@ -75,8 +82,9 @@ public final class StrongestPostconditionInterferenceFactory implements IInterfe
 			final StrongestPostconditionInterference.RelationalInterference right) {
 		final IPredicate mergedRelationalInterference =
 				or(left.relationalInterference(), right.relationalInterference());
+		final IPredicate mergedPostState = or(left.unconditionalPostState(), right.unconditionalPostState());
 		return new StrongestPostconditionInterference.RelationalInterference(mergedRelationalInterference,
-				mPostcondition.prepareRelation(mergedRelationalInterference));
+				mPostcondition.prepareRelation(mergedRelationalInterference), mergedPostState);
 	}
 
 	private IPredicate combine(final IPredicate left, final IPredicate right) {

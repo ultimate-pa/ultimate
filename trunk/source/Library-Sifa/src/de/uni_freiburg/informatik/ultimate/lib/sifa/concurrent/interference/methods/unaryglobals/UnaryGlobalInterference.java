@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -81,7 +82,8 @@ public final class UnaryGlobalInterference implements IInterference {
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final Set<String> activeThreadIds,
 			final IDomain domain, final int wideningThreshold, final SifaStats stats) {
-		if (mDataByThread.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
+		if (mDataByThread.isEmpty()
+				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isTrueLiteral(state.getFormula()))
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}

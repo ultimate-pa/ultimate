@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
@@ -68,8 +68,12 @@ public final class ThreadModularSetup {
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		concurrentTools.configureStaticAnalysis(ghostVars, activityPreanalysis);
-		final BucketDomain bucketDomain = usesBuckets(settings)
-				? createBucketDomain(logger, tools, threadIds, locationIds, icfg, baseDomain) : null;
+		final AbstractLocationPartitionedDomain bucketDomain = usesBuckets(settings) && ghostVars != null
+				? AbstractLocationPartitionedDomain.create(baseDomain, tools, ghostVars.getLocationTermVariablesByThread()) : null;
+		if (bucketDomain != null) {
+			logger.info("Bucket domain enabled");
+			concurrentTools.setBucketDomain(bucketDomain);
+		}
 		final IDomain domain = bucketDomain != null ? bucketDomain : baseDomain;
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
 				ghostVars, locationIds, icfg.getProcedureEntryNodes());
@@ -78,7 +82,7 @@ public final class ThreadModularSetup {
 		final InterferenceEdgeTraverser edgeTraverser = new InterferenceEdgeTraverser(icfg, translator);
 		final IInterferenceFactory interferenceFactory = createInterferenceFactory(
 				settings.interferenceApplicatorType(), icfg, edgeTraverser, translator, postcondition, domain, factory,
-				script, bucketDomain);
+				script);
 		logger.info("Interference method: %s (%s)", settings.interferenceApplicatorType(),
 				interferenceFactory == null ? "None" : interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", settings.locationAbstractionType());
@@ -97,19 +101,7 @@ public final class ThreadModularSetup {
 			return false;
 		}
 		final InterferenceApplicatorType type = settings.interferenceApplicatorType();
-		return type == InterferenceApplicatorType.STRONGEST_POSTCONDITION || type == InterferenceApplicatorType.PREPOST
-				|| type == InterferenceApplicatorType.GUARDED_EXACT_UPDATE;
-	}
-
-	private static BucketDomain createBucketDomain(final ILogger logger, final SymbolicTools tools,
-			final List<String> threadIds, final Map<IcfgLocation, Integer> locationIds,
-			final IIcfg<IcfgLocation> icfg, final IDomain baseDomain) {
-		final BucketDomain bd = BucketDomain.createIfUseful(baseDomain, tools, threadIds, locationIds, icfg);
-		if (bd != null) {
-			logger.info("Bucket domain enabled for %d threads: %s", bd.bucketedThreads().size(),
-					bd.bucketedThreads());
-		}
-		return bd;
+		return type == InterferenceApplicatorType.STRONGEST_POSTCONDITION;
 	}
 
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
@@ -175,16 +167,14 @@ public final class ThreadModularSetup {
 	private static IInterferenceFactory createInterferenceFactory(final InterferenceApplicatorType applicatorType,
 			final IIcfg<IcfgLocation> icfg, final InterferenceEdgeTraverser edgeTraverser,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
-			final IDomain domain, final BasicPredicateFactory factory, final ManagedScript script,
-			final BucketDomain bucketDomain) {
+			final IDomain domain, final BasicPredicateFactory factory, final ManagedScript script) {
 		return switch (applicatorType) {
 		case STRONGEST_POSTCONDITION ->
-			new StrongestPostconditionInterferenceFactory(edgeTraverser, translator, postcondition, factory, script,
-					bucketDomain);
+			new StrongestPostconditionInterferenceFactory(edgeTraverser, translator, postcondition, factory, script);
 		case PREPOST ->
-			new PrePostInterferenceFactory(edgeTraverser, translator, postcondition, script, factory, bucketDomain);
+			new PrePostInterferenceFactory(edgeTraverser, translator, postcondition, script, factory);
 		case GUARDED_EXACT_UPDATE ->
-			new GuardedUpdateInterferenceFactory(icfg, translator, postcondition, script, factory, bucketDomain);
+			new GuardedUpdateInterferenceFactory(icfg, translator, postcondition, script, factory);
 		case POST_STATE ->
 			new PostStateInterferenceFactory(edgeTraverser, translator, postcondition, domain, factory, script);
 		case UNARY_GLOBALS ->

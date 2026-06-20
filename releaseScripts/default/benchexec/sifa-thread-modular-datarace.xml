@@ -4,14 +4,12 @@
   <option name="--force-no-wrapper" />
   <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaCThreadModular.xml</option>
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-DataRace-32bit-Automizer_Default.epf</option>
-  <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
   <option name="--sifa.fluid">SizeLimitFluid</option>
-  <option name="--sifa.max.parallel.explicit.values">1</option>
-  <option name="--sifa.join.precision">false</option>
   <option name="--sifa.proof.check">false</option>
   <option name="--sifa.result.print">false</option>
 
-  <rundefinition name="strongestpost">
+<<<<<<< HEAD
+  <rundefinition name="strongestpost-buckets">
     <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
     <option name="--sifa.use.buckets">true</option>
   </rundefinition>
@@ -38,6 +36,60 @@
   <rundefinition name="none">
     <option name="--sifa.interference.applicator">NONE</option>
     <option name="--sifa.use.buckets">false</option>
+=======
+  <rundefinition name="none">
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+    <option name="--sifa.interference.applicator">NONE</option>
+    <option name="--sifa.use.buckets">false</option>
+    <option name="--sifa.max.parallel.explicit.values">1</option>
+    <option name="--sifa.join.precision">false</option>
+    <option name="--sifa.location.tracking.mode">NONE</option>
+    <option name="--sifa.location.abstraction">SINGLETON</option>
+  </rundefinition>
+
+  <rundefinition name="post-state">
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+    <option name="--sifa.interference.applicator">POST_STATE</option>
+    <option name="--sifa.use.buckets">false</option>
+    <option name="--sifa.max.parallel.explicit.values">4</option>
+    <option name="--sifa.join.precision">true</option>
+    <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
+    <option name="--sifa.location.abstraction">SPLIT_AT_GUARD</option>
+    <option name="--sifa.inner.interference.widening.threshold">5</option>
+  </rundefinition>
+
+  <rundefinition name="strongestpost-ev">
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+    <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
+    <option name="--sifa.use.buckets">false</option>
+    <option name="--sifa.max.parallel.explicit.values">4</option>
+    <option name="--sifa.join.precision">true</option>
+    <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
+    <option name="--sifa.location.abstraction">SPLIT_AT_GUARDS_AND_WRITES</option>
+    <option name="--sifa.inner.interference.widening.threshold">5</option>
+  </rundefinition>
+
+  <rundefinition name="strongestpost-octagon-buckets">
+    <option name="--sifa.abstract.domain">OctagonDomain</option>
+    <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
+    <option name="--sifa.use.buckets">true</option>
+    <option name="--sifa.max.parallel.octagon">1</option>
+    <option name="--sifa.join.precision">true</option>
+    <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
+    <option name="--sifa.location.abstraction">SPLIT_AT_GUARDS_AND_WRITES</option>
+    <option name="--sifa.inner.interference.widening.threshold">5</option>
+  </rundefinition>
+
+  <rundefinition name="guarded-exact-update-octagon-buckets">
+    <option name="--sifa.abstract.domain">OctagonDomain</option>
+    <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
+    <option name="--sifa.use.buckets">true</option>
+    <option name="--sifa.max.parallel.octagon">1</option>
+    <option name="--sifa.join.precision">true</option>
+    <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
+    <option name="--sifa.location.abstraction">SPLIT_AT_GUARDS_AND_WRITES</option>
+    <option name="--sifa.inner.interference.widening.threshold">5</option>
+>>>>>>> 56e31d8a90 (Clean up AbstractLocationPartitionedDomain (renamed from BucketDomain))
   </rundefinition>
 
   <tasks name="SVCOMP-Concurrency">

@@ -6,7 +6,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeTraverser;
@@ -27,18 +26,15 @@ public final class PrePostInterferenceFactory implements IInterferenceFactory {
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
-	private final BucketDomain mBucketDomain;
 
 	public PrePostInterferenceFactory(final InterferenceEdgeTraverser traverser,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
-			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final BucketDomain bucketDomain) {
+			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory) {
 		mTraverser = traverser;
 		mTranslator = translator;
 		mPostcondition = postcondition;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
-		mBucketDomain = bucketDomain;
 	}
 
 	@Override
@@ -78,7 +74,7 @@ public final class PrePostInterferenceFactory implements IInterferenceFactory {
 			}
 		}
 		return interferenceByKey.isEmpty() ? null
-				: new PrePostInterference(interferenceByKey, mManagedScript, mBucketDomain,
+				: new PrePostInterference(interferenceByKey, mManagedScript,
 						mPredicateFactory.newPredicate(mManagedScript.getScript().term("false")));
 	}
 

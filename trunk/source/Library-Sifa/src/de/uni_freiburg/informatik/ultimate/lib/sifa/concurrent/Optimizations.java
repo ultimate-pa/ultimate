@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -20,8 +21,8 @@ final class Optimizations {
 
 	static boolean trivialState(final IPredicate state, final IInterference interference) {
 		return interference == null || interference.isEmpty()
-				|| SmtUtils.isTrueLiteral(state.getFormula())
-				|| SmtUtils.isFalseLiteral(state.getFormula());
+				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isTrueLiteral(state.getFormula()))
+				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isFalseLiteral(state.getFormula()));
 	}
 
 	static boolean noGrowth(final IDomain domain, final IPredicate candidate, final IPredicate current) {

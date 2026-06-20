@@ -6,12 +6,10 @@
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Overflow-32bit-Automizer_Default.epf</option>
   <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
   <option name="--sifa.fluid">SizeLimitFluid</option>
-  <option name="--sifa.max.parallel.explicit.values">1</option>
-  <option name="--sifa.join.precision">false</option>
   <option name="--sifa.proof.check">false</option>
   <option name="--sifa.result.print">false</option>
 
-  <rundefinition name="strongestpost">
+  <rundefinition name="strongestpost-buckets">
     <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
     <option name="--sifa.use.buckets">true</option>
   </rundefinition>
@@ -29,6 +27,10 @@
   <rundefinition name="post-state">
     <option name="--sifa.interference.applicator">POST_STATE</option>
     <option name="--sifa.use.buckets">false</option>
+  </rundefinition>
+
+  <rundefinition name="unary-globals">
+    <option name="--sifa.interference.applicator">UNARY_GLOBALS</option>
   </rundefinition>
 
   <rundefinition name="none">

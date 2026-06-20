@@ -57,11 +57,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-/**
- * Precision regression tests for thread-modular interference in a small mutex model
- *
- * w: lock flag (1 means locked) race_x: shared value written under lock v_loc_writer: writer location id
- */
 public class InterferencePrecisionRegressionTest {
 
 	private static final String MAIN_THREAD_ID = "main";
@@ -175,12 +170,13 @@ public class InterferencePrecisionRegressionTest {
 
 		final IPredicate state = predicate(
 				and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
-		final IIcfgInternalTransition<IcfgLocation> transition = dummyIdentityTransition();
+		final IIcfgInternalTransition<IcfgLocation> transition = identityTransition();
 		final IInterference itf = mutexInterferences();
 
 		mManagedScript.unlock(this);
 		final IPredicate post = mTools.post(state, transition);
-		final IPredicate fixedJoin = itf.applyUntilFixpoint(post, Set.of(INTERFERING_THREAD_ID), mIntervalDomain, 20, mStats);
+		final IPredicate fixedJoin =
+				itf.applyUntilFixpoint(post, Set.of(INTERFERING_THREAD_ID), mIntervalDomain, 20, mStats);
 		mManagedScript.lock(this);
 
 		assertUnsat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(1))));
@@ -201,7 +197,7 @@ public class InterferencePrecisionRegressionTest {
 		final CfgSmtToolkit toolkit = new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()),
 				mManagedScript, mPrimedSymbolTable, Collections.emptySet(), Collections.emptyMap(),
 				Collections.emptyMap(), null, null, null);
-		mTools = new SymbolicTools(mServices, mStats, new DummyIcfg(toolkit), SimplificationTechnique.NONE,
+		mTools = new SymbolicTools(mServices, mStats, new MinimalIcfg(toolkit), SimplificationTechnique.NONE,
 				mPrimedSymbolTable);
 		final ILogger logger = mServices.getLoggingService().getLogger(getClass());
 		mIntervalDomain = new IntervalDomain(logger, mTools, 8, () -> ALWAYS_RUNNING_TIMER);
@@ -213,11 +209,10 @@ public class InterferencePrecisionRegressionTest {
 		final IPredicate asPredicate = predicate(all);
 		final var key = new ThreadedKey(INTERFERING_THREAD_ID, new AbstractLocationPair(0, 0));
 		final var contribution = new StrongestPostconditionInterference.RelationalInterference(asPredicate,
-				mRelationalPost.prepareRelation(asPredicate));
-		return new StrongestPostconditionInterference(Map.of(key, contribution), mRelationalPost, null);
+				mRelationalPost.prepareRelation(asPredicate), asPredicate);
+		return new StrongestPostconditionInterference(Map.of(key, contribution),
+				Map.of(INTERFERING_THREAD_ID, mLocWriter.getTermVariable().getName()), mRelationalPost);
 	}
-
-
 
 	private IPredicate writerWriteRaceZero() {
 		return predicate(and(eq(varTv(mLocWriter), num(1)), eq(primedTv(mLocWriter), num(2)), eq(varTv(mW), num(1)),
@@ -234,10 +229,10 @@ public class InterferencePrecisionRegressionTest {
 				eq(primedTv(mW), num(1)), eq(primedTv(mRaceX), num(1))));
 	}
 
-	private IIcfgInternalTransition<IcfgLocation> dummyIdentityTransition() {
+	private IIcfgInternalTransition<IcfgLocation> identityTransition() {
 		final IcfgLocation source = new IcfgLocation(new StringDebugIdentifier("src"), MAIN_THREAD_ID);
 		final IcfgLocation target = new IcfgLocation(new StringDebugIdentifier("tgt"), MAIN_THREAD_ID);
-		return new DummyInternalTransition(source, target, MAIN_THREAD_ID,
+		return new InternalTransitionForTest(source, target, MAIN_THREAD_ID,
 				createIdentityTransformula(List.of(mW, mRaceX, mLocWriter)));
 	}
 
@@ -297,12 +292,12 @@ public class InterferencePrecisionRegressionTest {
 		assertEquals(LBool.UNSAT, SmtUtils.checkSatTerm(mScript, formula));
 	}
 
-	private static final class DummyIcfg implements IIcfg<IcfgLocation> {
+	private static final class MinimalIcfg implements IIcfg<IcfgLocation> {
 		private static final long serialVersionUID = 1L;
 		private final CfgSmtToolkit mToolkit;
 		private IPayload mPayload;
 
-		private DummyIcfg(final CfgSmtToolkit toolkit) {
+		private MinimalIcfg(final CfgSmtToolkit toolkit) {
 			mToolkit = toolkit;
 		}
 
@@ -348,7 +343,7 @@ public class InterferencePrecisionRegressionTest {
 
 		@Override
 		public String getIdentifier() {
-			return "dummy-icfg";
+			return "minimal-icfg";
 		}
 
 		@Override
@@ -370,7 +365,7 @@ public class InterferencePrecisionRegressionTest {
 		}
 	}
 
-	private static final class DummyInternalTransition implements IIcfgInternalTransition<IcfgLocation> {
+	private static final class InternalTransitionForTest implements IIcfgInternalTransition<IcfgLocation> {
 		private static final long serialVersionUID = 1L;
 		private final IcfgLocation mSource;
 		private final IcfgLocation mTarget;
@@ -378,7 +373,7 @@ public class InterferencePrecisionRegressionTest {
 		private final UnmodifiableTransFormula mTransformula;
 		private IPayload mPayload;
 
-		private DummyInternalTransition(final IcfgLocation source, final IcfgLocation target, final String procedure,
+		private InternalTransitionForTest(final IcfgLocation source, final IcfgLocation target, final String procedure,
 				final UnmodifiableTransFormula transformula) {
 			mSource = source;
 			mTarget = target;

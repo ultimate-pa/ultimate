@@ -80,6 +80,11 @@ public class GhostVariableManager {
 		return mCachedLocationTermVariables;
 	}
 
+	public Map<String, TermVariable> getLocationTermVariablesByThread() {
+		return mLocationVars.entrySet().stream().collect(Collectors.toUnmodifiableMap(Entry::getKey,
+				entry -> entry.getValue().getTermVariable()));
+	}
+
 	public Term createLocationConstraint(final String threadId, final IcfgLocation location) {
 		if (!tracksLocationPrecisely(threadId)) {
 			return mManagedScript.getScript().term("true");

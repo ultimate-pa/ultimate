@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.ThreadedKey;
@@ -38,32 +38,26 @@ public final class GuardedUpdateInterference implements IInterference {
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IPredicate mFalsePredicate;
-	private final BucketDomain mBucketDomain;
 
 	public GuardedUpdateInterference(final Map<ThreadedKey, GuardedUpdateGroup> interferenceByKey,
-			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final BucketDomain bucketDomain) {
+			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory) {
 		mInterferenceByKey = Map.copyOf(interferenceByKey);
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
-		mBucketDomain = bucketDomain;
 	}
 
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final Set<String> activeThreadIds,
 			final IDomain domain, final int wideningThreshold, final SifaStats stats) {
-		if (mInterferenceByKey.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
-				|| SmtUtils.isFalseLiteral(state.getFormula())) {
+		if (mInterferenceByKey.isEmpty()
+				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isTrueLiteral(state.getFormula()))
+				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isFalseLiteral(state.getFormula()))) {
 			return state;
 		}
 		final Map<AbstractLocationPair, GuardedUpdateGroup> filtered = buildFiltered(activeThreadIds);
 		if (filtered.isEmpty()) {
 			return state;
-		}
-		if (mBucketDomain != null && mBucketDomain.hasCurrentBuckets()) {
-			return mBucketDomain.applyUntilFixpoint(state, domain, wideningThreshold, stats,
-					filtered, this::applyGroupToFrontier);
 		}
 		IPredicate current = state;
 		IPredicate frontier = state;
@@ -166,7 +160,7 @@ public final class GuardedUpdateInterference implements IInterference {
 			}
 		}
 		return widened.isEmpty() ? null
-				: new GuardedUpdateInterference(widened, mManagedScript, mPredicateFactory, mBucketDomain);
+				: new GuardedUpdateInterference(widened, mManagedScript, mPredicateFactory);
 	}
 
 	@Override

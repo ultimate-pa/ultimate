@@ -10,9 +10,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.BucketDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.ThreadedKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -29,42 +28,38 @@ public final class PrePostInterference implements IInterference {
 
 	private final Map<ThreadedKey, PrePostPair> mInterferenceByKey;
 	private final ManagedScript mManagedScript;
-	private final BucketDomain mBucketDomain;
 	private final IPredicate mFalsePredicate;
 
 	public PrePostInterference(final Map<ThreadedKey, PrePostPair> interferenceByKey,
-			final ManagedScript managedScript, final BucketDomain bucketDomain, final IPredicate falsePredicate) {
+			final ManagedScript managedScript, final IPredicate falsePredicate) {
 		mInterferenceByKey = Map.copyOf(interferenceByKey);
 		mManagedScript = managedScript;
-		mBucketDomain = bucketDomain;
 		mFalsePredicate = falsePredicate;
 	}
 
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final Set<String> activeThreadIds,
 			final IDomain domain, final int wideningThreshold, final SifaStats stats) {
-		if (mInterferenceByKey.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
-				|| SmtUtils.isFalseLiteral(state.getFormula())) {
+		if (mInterferenceByKey.isEmpty()
+				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isTrueLiteral(state.getFormula()))
+				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isFalseLiteral(state.getFormula()))) {
 			return state;
 		}
-		final Map<AbstractLocationPair, PrePostPair> filtered = buildFiltered(activeThreadIds);
-		if (filtered.isEmpty()) {
+		final ArrayList<Entry<ThreadedKey, PrePostPair>> active = buildActive(activeThreadIds);
+		if (active.isEmpty()) {
 			return state;
-		}
-		if (mBucketDomain != null && mBucketDomain.hasCurrentBuckets()) {
-			return mBucketDomain.applyUntilFixpoint(state, domain, wideningThreshold, stats,
-					filtered, (frontier, pair, __) ->
-							intersects(frontier, pair.preState()) ? pair.postState() : mFalsePredicate);
 		}
 		IPredicate current = state;
 		IPredicate frontier = state;
-		final ArrayList<PrePostPair> remaining = new ArrayList<>(filtered.values());
+		// Copy to allow removal of fired pairs without re-checking them.
+		final ArrayList<Entry<ThreadedKey, PrePostPair>> remaining = new ArrayList<>(active);
 		for (int iteration = 1;; iteration++) {
 			stats.increment(Key.INTERFERENCE_INNER_ITERATIONS);
 			boolean hasGenerated = false;
 			IPredicate generated = state;
-			for (final Iterator<PrePostPair> iterator = remaining.iterator(); iterator.hasNext();) {
-				final PrePostPair pair = iterator.next();
+			for (final Iterator<Entry<ThreadedKey, PrePostPair>> iterator = remaining.iterator();
+						iterator.hasNext();) {
+				final PrePostPair pair = iterator.next().getValue();
 				if (!SmtUtils.isTrueLiteral(pair.preState().getFormula()) && !intersects(frontier, pair.preState())) {
 					continue;
 				}
@@ -99,14 +94,14 @@ public final class PrePostInterference implements IInterference {
 		}
 	}
 
-	private Map<AbstractLocationPair, PrePostPair> buildFiltered(final Set<String> activeThreadIds) {
-		final Map<AbstractLocationPair, PrePostPair> filtered = new LinkedHashMap<>();
+	private ArrayList<Entry<ThreadedKey, PrePostPair>> buildActive(final Set<String> activeThreadIds) {
+		final ArrayList<Entry<ThreadedKey, PrePostPair>> active = new ArrayList<>();
 		for (final Entry<ThreadedKey, PrePostPair> e : mInterferenceByKey.entrySet()) {
 			if (activeThreadIds.contains(e.getKey().threadId())) {
-				filtered.put(e.getKey().pair(), e.getValue());
+				active.add(e);
 			}
 		}
-		return filtered;
+		return active;
 	}
 
 	@Override
@@ -144,7 +139,7 @@ public final class PrePostInterference implements IInterference {
 			}
 		}
 		return widened.isEmpty() ? null
-				: new PrePostInterference(widened, mManagedScript, mBucketDomain, mFalsePredicate);
+				: new PrePostInterference(widened, mManagedScript, mFalsePredicate);
 	}
 
 	@Override

@@ -62,10 +62,18 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static final String PROP_INPUT_DIR = "sifa.regression.inputDir";
 	private static final String PROP_FILE_ENDING = "sifa.regression.fileEnding";
 	private static final String PROP_METHODS = "sifa.regression.methods";
+	private static final String PROP_USE_BUCKETS = "sifa.regression.useBuckets";
+	private static final String PROP_JOIN_PRECISION = "sifa.regression.joinPrecision";
+	private static final String PROP_MAX_PARALLEL_EXPLICIT_VALUES = "sifa.regression.maxParallelExplicitValues";
+	private static final String PROP_ABSTRACT_DOMAIN = "sifa.regression.abstractDomain";
+	private static final String PROP_MAX_PARALLEL_OCTAGON = "sifa.regression.maxParallelOctagon";
+	private static final String PROP_LOCATION_ABSTRACTION = "sifa.regression.locationAbstraction";
+	private static final String PROP_MAX_DISJUNCTIONS = "sifa.regression.maxDisjunctions";
+	private static final String PROP_INNER_WIDENING_THRESHOLD = "sifa.regression.innerWideningThreshold";
 
 	private static final String TOOLCHAIN = "SifaThreadModular.xml";
 	private static final String SETTINGS = "examples/concurrent/bpl/regression/thread-modular-sifa/testSettings.epf";
-	private static final String INPUT_DIR = "examples/concurrent/bpl/regression";
+	private static final String INPUT_DIR = "examples/concurrent/bpl/regression/thread-modular-sifa";
 	private static final String FILE_ENDING = ".bpl";
 	private static final long TIMEOUT_MS = 30_000L;
 
@@ -84,25 +92,27 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	 *   { "POST_STATE", "UNARY_GLOBALS", "NONE" }
 	 */
 	// private static final String[] METHODS = { "STRONGEST_POSTCONDITION", "PREPOST", "GUARDED_EXACT_UPDATE", "POST_STATE", "UNARY_GLOBALS", "NONE" };
-	private static final String[] METHODS = { "UNARY_GLOBALS", "POST_STATE", "NONE" };
+	private static final String[] METHODS = { "STRONGEST_POSTCONDITION" };
 
-	private static final String ABSTRACT_DOMAIN = "ExplicitValueDomain";
+	// private static final String ABSTRACT_DOMAIN = "ExplicitValueDomain";
 	// Alternatives:
 	// private static final String ABSTRACT_DOMAIN = "IntervalDomain";
 	// private static final String ABSTRACT_DOMAIN = "EqDomain";
-	// private static final String ABSTRACT_DOMAIN = "OctagonDomain";
+	private static final String ABSTRACT_DOMAIN = "OctagonDomain";
 	// private static final String ABSTRACT_DOMAIN = "CompoundDomain";
 	private static final String FLUID = "SizeLimitFluid";
 	private static final int MAX_PARALLEL_EXPLICIT_VALUES = 2;
+	private static final int MAX_PARALLEL_OCTAGON = 1;
+	private static final int MAX_DISJUNCTIONS = 8;
 	private static final boolean JOIN_PRECISION = true;
-	private static final boolean USE_BUCKETS = false;
+	private static final boolean USE_BUCKETS = true;
 	private static final boolean PROOF_CHECK = false;
 	private static final boolean RESULT_PRINT = false;
 
 	// private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARD_AND_EXIT";
 	// private static final String LOCATION_ABSTRACTION = "SINGLETON";
-	private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARD";
-	// private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARDS_AND_WRITES";
+	// private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARD";
+	private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARDS_AND_WRITES";
 	// private static final String LOCATION_ABSTRACTION = "SPLIT_AT_EVERY_LOCATION";
 
 	@Override
@@ -127,14 +137,25 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 				prefs.put("Interference Applicator", method);
 
 				// Apply common experiment settings. Change the constants above to adjust runs.
-				prefs.put("Abstract Domain", ABSTRACT_DOMAIN);
+				prefs.put("Abstract Domain", System.getProperty(PROP_ABSTRACT_DOMAIN, ABSTRACT_DOMAIN));
 				prefs.put("Fluid", FLUID);
-				prefs.put("Max. Parallel Explicit Values", MAX_PARALLEL_EXPLICIT_VALUES);
-				prefs.put("Join Precision", JOIN_PRECISION);
-				prefs.put("Use Buckets", USE_BUCKETS);
+				prefs.put("Max. Parallel Explicit Values",
+						Integer.getInteger(PROP_MAX_PARALLEL_EXPLICIT_VALUES, MAX_PARALLEL_EXPLICIT_VALUES));
+				prefs.put("Max. Parallel Octagon",
+						Integer.getInteger(PROP_MAX_PARALLEL_OCTAGON, MAX_PARALLEL_OCTAGON));
+				prefs.put("Join Precision", Boolean.parseBoolean(
+						System.getProperty(PROP_JOIN_PRECISION, Boolean.toString(JOIN_PRECISION))));
+				prefs.put("Use Buckets", Boolean.getBoolean(PROP_USE_BUCKETS) || USE_BUCKETS);
 				prefs.put("Proof Check", PROOF_CHECK);
 				prefs.put("Result Print", RESULT_PRINT);
-				prefs.put("Location Abstraction", LOCATION_ABSTRACTION);
+				prefs.put("Location Abstraction",
+						System.getProperty(PROP_LOCATION_ABSTRACTION, LOCATION_ABSTRACTION));
+				prefs.put("SizeLimitFluid Max. Disjunctions",
+						Integer.getInteger(PROP_MAX_DISJUNCTIONS, MAX_DISJUNCTIONS));
+				final Integer innerWideningThreshold = Integer.getInteger(PROP_INNER_WIDENING_THRESHOLD);
+				if (innerWideningThreshold != null) {
+					prefs.put("Inner Interference Widening Threshold", innerWideningThreshold);
+				}
 
 				return s;
 			};
