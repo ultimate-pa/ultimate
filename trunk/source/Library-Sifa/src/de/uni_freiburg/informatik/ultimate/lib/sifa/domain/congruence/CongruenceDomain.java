@@ -1,15 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import org.ojalgo.matrix.MatrixQ128;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -65,8 +62,8 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 				freeIndex++;
 			}
 
-			final List<MatrixQ128> equalities = new ArrayList<>();
-			final List<MatrixQ128> congruences = new ArrayList<>();
+			final List<RationalVector> equalities = new ArrayList<>();
+			final List<RationalVector> congruences = new ArrayList<>();
 			for (final EqualityRelation equalityRelation : equalityRelations) {
 				equalities.add(equalityRelation.getVector(varToIndex));
 			}
@@ -77,9 +74,7 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 			final var vectorLength = varToIndex.size() + 1;
 
 			// Add that 1 % 1 = 0
-			final List<Integer> list = new ArrayList<>(Collections.nCopies(vectorLength, 0));
-			list.set(0, -1);
-			congruences.add(CongruenceUtil.getRowVectorFromIntList(list));
+			congruences.add(RationalVector.getUnitVector(0, vectorLength).negate());
 
 			return new CongruenceState(varToIndex, new ConstraintRepresentation(equalities, congruences, vectorLength));
 		}

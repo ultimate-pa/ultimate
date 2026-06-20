@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.ojalgo.matrix.MatrixQ128;
-
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -69,9 +67,9 @@ public class EqualityRelation {
 		return list;
 	}
 
-	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
+	public RationalVector getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = getProtoVector(varToIndex);
-		return CongruenceUtil.getRowVectorFromRationalList(protoVector);
+		return new RationalVector(protoVector);
 	}
 
 }

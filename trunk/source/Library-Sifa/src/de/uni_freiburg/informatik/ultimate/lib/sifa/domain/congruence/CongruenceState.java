@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.ojalgo.matrix.MatrixQ128;
-
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -73,24 +71,24 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	@Override
 	public String toString() {
 		final ConstraintRepresentation constraints = getConstraintRepresentation();
-		final List<MatrixQ128> equalities = constraints.getEqualities();
-		final List<MatrixQ128> congruences = constraints.getCongruences();
+		final List<RationalVector> equalities = constraints.getEqualities();
+		final List<RationalVector> congruences = constraints.getCongruences();
 
 		final Map<Integer, Term> indexToVar = getIndexToVar();
 
 		final StringBuilder constraintsString = new StringBuilder();
 
-		for (final MatrixQ128 equality : equalities) {
-			final long commonDenominator = CongruenceUtil.getCommonDenominator(equality);
-			final MatrixQ128 wholeEquality = equality.multiply(commonDenominator);
+		for (final RationalVector equality : equalities) {
+			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(equality);
+			final RationalVector wholeEquality = equality.multiply(commonDenominator);
 			final String[] vectorStrings = CongruenceUtil.getVectorStrings(wholeEquality, indexToVar);
 			final String equalityString = vectorStrings[0] + " = " + vectorStrings[1];
 			constraintsString.append(equalityString).append(";\n");
 		}
 
-		for (final MatrixQ128 congruence : congruences) {
-			final long commonDenominator = CongruenceUtil.getCommonDenominator(congruence);
-			final MatrixQ128 wholeCongruence = congruence.multiply(commonDenominator);
+		for (final RationalVector congruence : congruences) {
+			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(congruence);
+			final RationalVector wholeCongruence = congruence.multiply(commonDenominator);
 			final String[] vectorStrings = CongruenceUtil.getVectorStrings(wholeCongruence, indexToVar);
 			final String congruenceString = vectorStrings[0] + " ≡" + commonDenominator + " " + vectorStrings[1];
 			constraintsString.append(congruenceString).append(";\n");
@@ -103,27 +101,27 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	@Override
 	public Term toTerm(final Script script) {
 		final ConstraintRepresentation constraints = getConstraintRepresentation();
-		final List<MatrixQ128> equalities = constraints.getEqualities();
-		final List<MatrixQ128> congruences = constraints.getCongruences();
+		final List<RationalVector> equalities = constraints.getEqualities();
+		final List<RationalVector> congruences = constraints.getCongruences();
 
 		final Map<Integer, Term> indexToVar = getIndexToVar();
 
 		final Set<Term> terms = new HashSet<>();
 
-		for (final MatrixQ128 equality : equalities) {
-			final long commonDenominator = CongruenceUtil.getCommonDenominator(equality);
-			final MatrixQ128 wholeEquality = equality.multiply(commonDenominator);
+		for (final RationalVector equality : equalities) {
+			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(equality);
+			final RationalVector wholeEquality = equality.multiply(commonDenominator);
 			final Term sum = CongruenceUtil.getSumTerm(wholeEquality, indexToVar, script);
 			final Term equalityTerm = SmtUtils.binaryEquality(script, sum,
 					SmtUtils.constructIntValue(script, BigInteger.ZERO));
 			terms.add(equalityTerm);
 		}
 
-		for (final MatrixQ128 congruence : congruences) {
-			final long commonDenominator = CongruenceUtil.getCommonDenominator(congruence);
-			final MatrixQ128 wholeCongruence = congruence.multiply(commonDenominator);
+		for (final RationalVector congruence : congruences) {
+			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(congruence);
+			final RationalVector wholeCongruence = congruence.multiply(commonDenominator);
 			final Term sum = CongruenceUtil.getSumTerm(wholeCongruence, indexToVar, script);
-			final Term modTerm = SmtUtils.constructIntValue(script, BigInteger.valueOf(commonDenominator));
+			final Term modTerm = SmtUtils.constructIntValue(script, commonDenominator);
 			final Term modSum = SmtUtils.mod(script, sum, modTerm);
 			final Term congruenceTerm = SmtUtils.binaryEquality(script, modSum,
 					SmtUtils.constructIntValue(script, BigInteger.ZERO));
@@ -161,10 +159,10 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final GeneratorRepresentation otherReorderedGenerators = otherReorderedForm.getGeneratorRepresentation();
 
 		// Combine the generators
-		final List<MatrixQ128> newLines = selfReorderedGenerators.getLines();
+		final List<RationalVector> newLines = selfReorderedGenerators.getLines();
 		newLines.addAll(otherReorderedGenerators.getLines());
 
-		final List<MatrixQ128> newParameters = selfReorderedGenerators.getParameters();
+		final List<RationalVector> newParameters = selfReorderedGenerators.getParameters();
 		newParameters.addAll(otherReorderedGenerators.getParameters());
 
 		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
@@ -201,21 +199,21 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		// CS := {γ ∈ C2 | ∃β ∈ C1 . β ⇑ γ}
 
-		final List<MatrixQ128> lowerVectors = new ArrayList<>(lowerConstraints.getEqualities());
+		final List<RationalVector> lowerVectors = new ArrayList<>(lowerConstraints.getEqualities());
 		lowerVectors.addAll(lowerConstraints.getCongruences());
 
-		final List<MatrixQ128> newEqualities = new ArrayList<>();
-		for (final MatrixQ128 equality : upperConstraints.getEqualities()) {
-			for (final MatrixQ128 lowerVector : lowerVectors) {
+		final List<RationalVector> newEqualities = new ArrayList<>();
+		for (final RationalVector equality : upperConstraints.getEqualities()) {
+			for (final RationalVector lowerVector : lowerVectors) {
 				if (CongruenceUtil.isEqualsInLastNonZero(equality, lowerVector)) {
 					newEqualities.add(equality);
 				}
 			}
 		}
 
-		final List<MatrixQ128> newCongruences = new ArrayList<>();
-		for (final MatrixQ128 congruence : upperConstraints.getCongruences()) {
-			for (final MatrixQ128 lowerVector : lowerVectors) {
+		final List<RationalVector> newCongruences = new ArrayList<>();
+		for (final RationalVector congruence : upperConstraints.getCongruences()) {
+			for (final RationalVector lowerVector : lowerVectors) {
 				if (CongruenceUtil.isEqualsInLastNonZero(congruence, lowerVector)) {
 					newCongruences.add(congruence);
 				}

@@ -1,27 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
+import java.util.stream.IntStream;
 
-import org.ojalgo.matrix.MatrixQ128;
-import org.ojalgo.scalar.RationalNumber;
-
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ConstraintRepresentation {
-	private MatrixQ128 mEqualityMatrix;
-	private MatrixQ128 mCongruenceMatrix;
+	private List<RationalVector> mEqualities;
+	private List<RationalVector> mCongruences;
 
 	final private int mVectorLength;
 
 	private boolean mIsMinimal;
 	private boolean mIsStrongMinimal;
 
-	public ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
+	public ConstraintRepresentation(final List<RationalVector> equalities, final List<RationalVector> congruences,
 			final int vectorLength) {
 		this(equalities, congruences, vectorLength, false, false);
 	}
@@ -32,29 +30,30 @@ public class ConstraintRepresentation {
 	 * constructor without isMinimal/isStrongMinimal and call
 	 * minimize/stronglyMinimize afterwards.
 	 */
-	ConstraintRepresentation(final List<MatrixQ128> equalities, final List<MatrixQ128> congruences,
+	ConstraintRepresentation(final List<RationalVector> equalities, final List<RationalVector> congruences,
 			final int vectorLength, final boolean isMinimal, final boolean isStrongMinimal) {
-		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
-		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
+		mEqualities = equalities;
+		mCongruences = congruences;
 		mVectorLength = vectorLength;
+
 		mIsMinimal = isMinimal;
 		mIsStrongMinimal = isStrongMinimal;
 	}
 
-	public MatrixQ128 getEqualityMatrix() {
-		return mEqualityMatrix;
+	public RationalMatrix getEqualityMatrix() {
+		return RationalMatrix.ofRowVectors(mEqualities, mVectorLength);
 	}
 
-	public MatrixQ128 getCongruenceMatrix() {
-		return mCongruenceMatrix;
+	public RationalMatrix getCongruenceMatrix() {
+		return RationalMatrix.ofRowVectors(mCongruences, mVectorLength);
 	}
 
-	public List<MatrixQ128> getEqualities() {
-		return CongruenceUtil.getRowsFromMatrix(mEqualityMatrix);
+	public List<RationalVector> getEqualities() {
+		return mEqualities;
 	}
 
-	public List<MatrixQ128> getCongruences() {
-		return CongruenceUtil.getRowsFromMatrix(mCongruenceMatrix);
+	public List<RationalVector> getCongruences() {
+		return mCongruences;
 	}
 
 	public int getVectorLength() {
@@ -71,8 +70,8 @@ public class ConstraintRepresentation {
 
 	@Override
 	public String toString() {
-		return "ConstraintRepresentation [mEqualityMatrix=" + mEqualityMatrix + ", mCongruenceMatrix="
-				+ mCongruenceMatrix + ", mIsMinimal=" + mIsMinimal + ", mIsStrongMinimal=" + mIsStrongMinimal + "]";
+		return "ConstraintRepresentation [mEqualityMatrix=" + getEqualityMatrix() + ", mCongruenceMatrix="
+				+ getCongruenceMatrix() + ", mIsMinimal=" + mIsMinimal + ", mIsStrongMinimal=" + mIsStrongMinimal + "]";
 	}
 
 	public boolean equals(final ConstraintRepresentation other) {
@@ -100,23 +99,23 @@ public class ConstraintRepresentation {
 	}
 
 	private void markAsUnsat() {
-		mEqualityMatrix = unsatVector(mVectorLength);
-		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(List.of());
+		mEqualities = List.of(unsatVector(mVectorLength));
+		mCongruences = List.of();
 		mIsMinimal = true;
 		mIsStrongMinimal = true;
 	}
 
 	public boolean isUnsat() {
 		minimize();
-		for (final MatrixQ128 equality : getEqualities()) {
+		for (final RationalVector equality : getEqualities()) {
 			if (CongruenceUtil.lastPivot(equality) == 0) {
 				// markAsUnsat();
 				return true;
 			}
 		}
-		for (final MatrixQ128 congruence : getCongruences()) {
-			final long pivot = CongruenceUtil.lastPivot(congruence);
-			if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) != 1) {
+		for (final RationalVector congruence : getCongruences()) {
+			final int pivot = CongruenceUtil.lastPivot(congruence);
+			if (pivot == 0 && !congruence.get(pivot).denominator().equals(BigInteger.ONE)) {
 				// markAsUnsat();
 				return true;
 			}
@@ -125,10 +124,8 @@ public class ConstraintRepresentation {
 		return false;
 	}
 
-	private static MatrixQ128 unsatVector(final int length) {
-		final List<Integer> list = new ArrayList<>(Collections.nCopies(length, 0));
-		list.set(0, -1);
-		return CongruenceUtil.getRowVectorFromIntList(list);
+	private static RationalVector unsatVector(final int length) {
+		return RationalVector.getUnitVector(0, length).negate();
 	}
 
 	public int getDim() {
@@ -141,16 +138,16 @@ public class ConstraintRepresentation {
 			return;
 		}
 
-		final List<MatrixQ128> equalities = getEqualities();
-		final List<MatrixQ128> congruences = getCongruences();
+		final List<RationalVector> equalities = getEqualities();
+		final List<RationalVector> congruences = getCongruences();
 
 		final List<Integer> equalitiesToDelete = new ArrayList<>();
 		final List<Integer> congruencesToDelete = new ArrayList<>();
 
 		// Making the equality pivots unique
 		for (int i = 0; i < equalities.size(); i++) {
-			MatrixQ128 equality = equalities.get(i);
-			final long pivot = CongruenceUtil.lastPivot(equality);
+			RationalVector equality = equalities.get(i);
+			final int pivot = CongruenceUtil.lastPivot(equality);
 
 			if (pivot == -1) {
 				// vector is empty, can be deleted
@@ -162,21 +159,21 @@ public class ConstraintRepresentation {
 
 			} else {
 				// Make pivotValue positive
-				final RationalNumber pivotValue = equality.get(0, pivot);
-				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+				final Rational pivotValue = equality.get(pivot);
+				if (pivotValue.compareTo(Rational.ZERO) < 0) {
 					equality = equality.negate();
 					equalities.set(i, equality);
 				}
 
 				// Eliminate the pivot field from the following equalities
 				for (int j = i + 1; j < equalities.size(); j++) {
-					final MatrixQ128 other = equalities.get(j);
+					final RationalVector other = equalities.get(j);
 					equalities.set(j, CongruenceUtil.gaussEliminateField(other, equality, pivot));
 				}
 
 				// Eliminate the pivot field from the following congruence's
 				for (int j = 0; j < congruences.size(); j++) {
-					final MatrixQ128 other = congruences.get(j);
+					final RationalVector other = congruences.get(j);
 					congruences.set(j, CongruenceUtil.gaussEliminateField(other, equality, pivot));
 				}
 			}
@@ -190,8 +187,8 @@ public class ConstraintRepresentation {
 		for (int index = mVectorLength - 1; index >= 0; index--) {
 			// Find a congruence with pivot == index
 			int i;
-			long pivot = mVectorLength;
-			MatrixQ128 congruence = null;
+			int pivot = mVectorLength;
+			RationalVector congruence = null;
 			for (i = 0; i < congruences.size(); i++) {
 				congruence = congruences.get(i);
 				pivot = CongruenceUtil.lastPivot(congruence);
@@ -203,7 +200,7 @@ public class ConstraintRepresentation {
 				if (pivot == -1) {
 					// vector is empty, can be deleted
 					// We do that later though
-				} else if (pivot == 0 && CongruenceUtil.getDenominator(congruence.get(0, pivot)) != 1) {
+				} else if (pivot == 0 && !congruence.get(pivot).denominator().equals(BigInteger.ONE)) {
 					// We just have a constant
 					// The constant is not whole and so it's not 0 mod 1
 					// So the congruence is unsatisfiable and so is the whole system
@@ -220,12 +217,12 @@ public class ConstraintRepresentation {
 			// equality doesn't conserve the equality
 			// We need to use the hermit elimination to preserve congruence's
 			for (int j = i + 1; j < congruences.size(); j++) {
-				final MatrixQ128 other = congruences.get(j);
+				final RationalVector other = congruences.get(j);
 				final long otherPivot = CongruenceUtil.lastPivot(other);
 
 				if (pivot == otherPivot) {
-					final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, congruence,
-							pivot);
+					final Pair<RationalVector, RationalVector> pair = CongruenceUtil.hermitEliminateField(other,
+							congruence, pivot);
 					congruences.set(j, pair.getFirst());
 					congruences.set(i, pair.getSecond());
 				}
@@ -234,7 +231,7 @@ public class ConstraintRepresentation {
 
 		// Scan for empty congruence's
 		for (int i = 0; i < congruences.size(); i++) {
-			final MatrixQ128 congruence = congruences.get(i);
+			final RationalVector congruence = congruences.get(i);
 			final long pivot = CongruenceUtil.lastPivot(congruence);
 
 			if (pivot == -1) {
@@ -250,22 +247,23 @@ public class ConstraintRepresentation {
 
 		// Make pivot values for congruence's positive
 		for (int i = 0; i < congruences.size(); i++) {
-			MatrixQ128 congruence = congruences.get(i);
-			final long pivot = CongruenceUtil.lastPivot(congruence);
-			final var pivotValue = congruence.get(0, pivot);
-			if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+			RationalVector congruence = congruences.get(i);
+			final int pivot = CongruenceUtil.lastPivot(congruence);
+			final var pivotValue = congruence.get(pivot);
+
+			if (pivotValue.compareTo(Rational.ZERO) < 0) {
 				congruence = congruence.negate();
 				congruences.set(i, congruence);
 			}
 		}
 
-		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
-		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
+		mEqualities = equalities;
+		mCongruences = congruences;
 		mIsMinimal = true;
 
 		if (equalities.size() + congruences.size() > mVectorLength) {
-			throw new AssertionError("equalities and congruences are too long\n Equalities: " + mEqualityMatrix
-					+ "\n Congruences: " + mCongruenceMatrix);
+			throw new AssertionError("equalities and congruences are too long\n Equalities: " + mEqualities
+					+ "\n Congruences: " + mCongruences);
 		}
 	}
 
@@ -275,8 +273,8 @@ public class ConstraintRepresentation {
 		}
 		minimize();
 
-		final List<MatrixQ128> equalities = getEqualities();
-		final List<MatrixQ128> congruences = getCongruences();
+		final List<RationalVector> equalities = getEqualities();
+		final List<RationalVector> congruences = getCongruences();
 		// Sorting the congruence's by last pivot is needed for the rest
 		congruences.sort((v1, v2) -> (CongruenceUtil.lastPivot(v1) < CongruenceUtil.lastPivot(v2)) ? 1 : -1);
 
@@ -285,84 +283,95 @@ public class ConstraintRepresentation {
 				if (i == j) {
 					continue;
 				}
-				final MatrixQ128 congruence = congruences.get(i);
-				final MatrixQ128 other = congruences.get(j);
-				final long index = CongruenceUtil.lastPivot(other);
+				final RationalVector congruence = congruences.get(i);
+				final RationalVector other = congruences.get(j);
+				final int index = CongruenceUtil.lastPivot(other);
 
-				final RationalNumber indexValue = congruence.get(0, index);
-				final RationalNumber otherIndexValue = other.get(0, index);
-				final RationalNumber indexValue2 = indexValue.multiply(2);
+				final Rational indexValue = congruence.get(index);
+				final Rational otherIndexValue = other.get(index);
+				final Rational indexValue2 = indexValue.mul(BigInteger.TWO);
 
 				if (indexValue2.compareTo(otherIndexValue.negate()) <= 0
 						|| indexValue2.compareTo(otherIndexValue) > 0) {
-					final MatrixQ128 v1 = congruence;
-					final MatrixQ128 v2 = other;
+					final RationalVector v1 = congruence;
+					final RationalVector v2 = other;
 
-					final long congruenceDenominator = CongruenceUtil.getCommonDenominator(congruence);
-					final long otherDenominator = CongruenceUtil.getCommonDenominator(other);
-					final long commonDenominator = CongruenceUtil.lcm(congruenceDenominator, otherDenominator);
-					final RationalNumber commonDenominatorRational = RationalNumber.of(commonDenominator, 1);
+					final BigInteger congruenceDenominator = CongruenceUtil.getCommonDenominator(congruence);
+					final BigInteger otherDenominator = CongruenceUtil.getCommonDenominator(other);
+					final BigInteger commonDenominator = CongruenceUtil.lcm(congruenceDenominator, otherDenominator);
+					final Rational commonDenominatorRational = Rational.valueOf(commonDenominator, BigInteger.ONE);
 
-					final MatrixQ128 wholeV1 = v1.multiply(commonDenominatorRational);
-					final MatrixQ128 wholeV2 = v2.multiply(commonDenominatorRational);
+					final RationalVector wholeV1 = v1.multiply(commonDenominatorRational);
+					final RationalVector wholeV2 = v2.multiply(commonDenominatorRational);
 
-					final RationalNumber wholeIndexElement1Rational = wholeV1.get(0, index);
-					final RationalNumber wholeIndexElement2Rational = wholeV2.get(0, index);
-					final long wholeIndexElement1 = CongruenceUtil.getNumerator(wholeIndexElement1Rational);
-					final long wholeIndexElement2 = CongruenceUtil.getNumerator(wholeIndexElement2Rational);
+					final Rational wholeIndexElement1Rational = wholeV1.get(index);
+					final Rational wholeIndexElement2Rational = wholeV2.get(index);
+					final BigInteger wholeIndexElement1 = wholeIndexElement1Rational.numerator();
+					final BigInteger wholeIndexElement2 = wholeIndexElement2Rational.numerator();
 
-					long factor;
-					if ((wholeIndexElement1 % wholeIndexElement2) * 2 > wholeIndexElement1) {
-						factor = Math.ceilDivExact(wholeIndexElement1, wholeIndexElement2);
+					BigInteger factor;
+					final BigInteger e1ModE2Times2 = wholeIndexElement1.mod(wholeIndexElement2)
+							.multiply(BigInteger.TWO);
+
+					final BigInteger[] divideAndRemainder = wholeIndexElement1.divideAndRemainder(wholeIndexElement2);
+					final BigInteger divide = divideAndRemainder[0];
+					final BigInteger remainder = divideAndRemainder[1];
+
+					if (e1ModE2Times2.compareTo(wholeIndexElement1) > 0) {
+						if (remainder.equals(BigInteger.ZERO)) {
+							factor = divide;
+						} else {
+							factor = divide.add(BigInteger.ONE);
+						}
 					} else {
-						factor = Math.floorDivExact(wholeIndexElement1, wholeIndexElement2);
+						factor = divide;
 					}
 
-					final MatrixQ128 newWholeV1 = wholeV1.subtract(wholeV2.multiply(factor));
-					final MatrixQ128 newCongruence = newWholeV1.divide(commonDenominatorRational);
+					final RationalVector newWholeV1 = wholeV1.subtract(wholeV2.multiply(factor));
+					final RationalVector newCongruence = newWholeV1.divide(commonDenominatorRational);
 					congruences.set(i, newCongruence);
 				}
 
 			}
 		}
-		mEqualityMatrix = CongruenceUtil.getMatrixFromRows(equalities);
-		mCongruenceMatrix = CongruenceUtil.getMatrixFromRows(congruences);
+		mEqualities = equalities;
+		mCongruences = congruences;
 		mIsStrongMinimal = true;
 	}
 
 	public GeneratorRepresentation computeGeneratorRepresentation() {
 		minimize();
-		final List<MatrixQ128> equalities = getEqualities();
-		final List<MatrixQ128> congruences = getCongruences();
+		final List<RationalVector> equalities = getEqualities();
+		final List<RationalVector> congruences = getCongruences();
 		final int congruencesNum = congruences.size();
 
-		final List<MatrixQ128> constraintList = new ArrayList<>(congruences);
+		final List<RationalVector> constraintList = new ArrayList<>(congruences);
 		constraintList.addAll(equalities);
 
-		final Set<Long> missingPivots = LongStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
-		for (final MatrixQ128 vector : constraintList) {
+		final Set<Integer> missingPivots = IntStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
+		for (final RationalVector vector : constraintList) {
 			missingPivots.remove(CongruenceUtil.lastPivot(vector));
 		}
 
-		final List<MatrixQ128> fillerList = new ArrayList<>();
-		for (final Long missingPivot : missingPivots) {
-			fillerList.add(CongruenceUtil.getStandardBasisVector(missingPivot.intValue(), mVectorLength));
+		final List<RationalVector> fillerList = new ArrayList<>();
+		for (final Integer missingPivot : missingPivots) {
+			fillerList.add(RationalVector.getUnitVector(missingPivot, mVectorLength));
 		}
 		final int fillerNum = fillerList.size();
 
-		final List<MatrixQ128> vectorList = new ArrayList<>(fillerList);
+		final List<RationalVector> vectorList = new ArrayList<>(fillerList);
 		vectorList.addAll(constraintList);
-		final MatrixQ128 constraintMatrix = CongruenceUtil.getMatrixFromRows(vectorList);
+		final RationalMatrix constraintMatrix = RationalMatrix.ofRowVectors(vectorList, mVectorLength);
 
 		if (!constraintMatrix.isSquare()) {
 			throw new AssertionError("constraintMatrix is not square. \n generatorMatrix: " + constraintMatrix);
 		}
 
-		final MatrixQ128 generatorMatrix = constraintMatrix.invert().transpose();
-		final List<MatrixQ128> generatorList = CongruenceUtil.getRowsFromMatrix(generatorMatrix);
+		final RationalMatrix generatorMatrix = constraintMatrix.invert().transpose();
+		final List<RationalVector> generatorList = generatorMatrix.getRowVectors();
 
-		final List<MatrixQ128> lines = generatorList.subList(0, fillerNum);
-		final List<MatrixQ128> parameters = generatorList.subList(fillerNum, fillerNum + congruencesNum);
+		final List<RationalVector> lines = generatorList.subList(0, fillerNum);
+		final List<RationalVector> parameters = generatorList.subList(fillerNum, fillerNum + congruencesNum);
 
 		return new GeneratorRepresentation(lines, parameters, mVectorLength, true);
 	}

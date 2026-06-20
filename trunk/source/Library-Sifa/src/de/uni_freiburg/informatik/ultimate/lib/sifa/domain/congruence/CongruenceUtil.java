@@ -22,35 +22,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CongruenceUtil {
-	// TODO: Remove this
-	/*
-	 * public static MatrixQ128 equalityToVector(final int[] poliArray, final int
-	 * result) { final List<Integer> list = new ArrayList<>(List.of(-result)); for
-	 * (final int item : poliArray) { list.add(item); } return
-	 * getRowVectorFromIntList(list); }
-	 *
-	 * public static MatrixQ128 CongruenceToVector(final int[] poliArray, final int
-	 * result, final int mod) { final int[] modPoliArray =
-	 * Arrays.stream(poliArray).map(n -> n % mod).toArray(); final int modResult =
-	 * result % mod; return equalityToVector(modPoliArray, modResult).divide(mod); }
-	 */
 
-	public static long firstPivot(final MatrixQ128 vector) {
-		final long k = vector.countColumns();
+	public static int firstPivot(final RationalVector vector) {
+		final int k = vector.getLength();
 
-		for (long i = 0; i < k; i++) {
-			if (!vector.get(0, i).isZero()) {
+		for (int i = 0; i < k; i++) {
+			if (!vector.get(i).equals(Rational.ZERO)) {
 				return i;
 			}
 		}
 		return k;
 	}
 
-	public static long lastPivot(final MatrixQ128 vector) {
-		final var k = vector.countColumns();
+	public static int lastPivot(final RationalVector vector) {
+		final int k = vector.getLength();
 
-		for (long i = k - 1; i >= 0; i--) {
-			if (!vector.get(0, i).isZero()) {
+		for (int i = k - 1; i >= 0; i--) {
+			if (!vector.get(i).equals(Rational.ZERO)) {
 				return i;
 			}
 		}
@@ -61,13 +49,13 @@ public class CongruenceUtil {
 	 * Eliminates the field in minuendVector by subtracting a multiple of the
 	 * subtrahendVector and returns the updated minuendVector
 	 */
-	public static MatrixQ128 gaussEliminateField(final MatrixQ128 minuendVector, final MatrixQ128 subtrahendVector,
-			final long pivot) {
-		final MatrixQ128 v1 = subtrahendVector;
-		final MatrixQ128 v2 = minuendVector;
-		final var v1Value = v1.get(0, pivot);
-		final var v2Value = v2.get(0, pivot);
-		final var factor = v2Value.divide(v1Value);
+	public static RationalVector gaussEliminateField(final RationalVector minuendVector,
+			final RationalVector subtrahendVector, final int pivot) {
+		final RationalVector v1 = subtrahendVector;
+		final RationalVector v2 = minuendVector;
+		final Rational v1Value = v1.get(pivot);
+		final Rational v2Value = v2.get(pivot);
+		final Rational factor = v2Value.div(v1Value);
 		return v2.subtract(v1.multiply(factor));
 	}
 
@@ -76,44 +64,44 @@ public class CongruenceUtil {
 	 * subtrahendVector in a way that conserves modulo relations and returns the
 	 * updated minuendVector and subtrahendVector
 	 */
-	public static Pair<MatrixQ128, MatrixQ128> hermitEliminateField(final MatrixQ128 minuendVector,
-			final MatrixQ128 subtrahendVector, final long pivot) {
-		final MatrixQ128 v1 = subtrahendVector;
-		final MatrixQ128 v2 = minuendVector;
+	public static Pair<RationalVector, RationalVector> hermitEliminateField(final RationalVector minuendVector,
+			final RationalVector subtrahendVector, final int pivot) {
+		final RationalVector v1 = subtrahendVector;
+		final RationalVector v2 = minuendVector;
 
-		final List<RationalNumber> elementList = new ArrayList<>(v1.asList());
+		final List<Rational> elementList = new ArrayList<>(v1.asList());
 		elementList.addAll(v2.asList());
-		final long commonDenominator = getCommonDenominator(elementList);
-		final RationalNumber commonDenominatorRational = RationalNumber.of(commonDenominator, 1);
+		final BigInteger commonDenominator = getCommonDenominator(elementList);
+		final Rational commonDenominatorRational = Rational.valueOf(commonDenominator, BigInteger.ONE);
 
-		final MatrixQ128 wholeV1 = v1.multiply(commonDenominatorRational);
-		final MatrixQ128 wholeV2 = v2.multiply(commonDenominatorRational);
+		final RationalVector wholeV1 = v1.multiply(commonDenominatorRational);
+		final RationalVector wholeV2 = v2.multiply(commonDenominatorRational);
 
-		final RationalNumber wholePivotElement1Rational = wholeV1.get(0, pivot);
-		final RationalNumber wholePivotElement2Rational = wholeV2.get(0, pivot);
-		final long wholePivotElement1 = getNumerator(wholePivotElement1Rational);
-		final long wholePivotElement2 = getNumerator(wholePivotElement2Rational);
+		final Rational wholePivotElement1Rational = wholeV1.get(pivot);
+		final Rational wholePivotElement2Rational = wholeV2.get(pivot);
+		final BigInteger wholePivotElement1 = wholePivotElement1Rational.numerator();
+		final BigInteger wholePivotElement2 = wholePivotElement2Rational.numerator();
 
-		final long[] rst = gcdext(wholePivotElement1, wholePivotElement2);
-		final long r = rst[0];
-		final RationalNumber rRational = RationalNumber.of(r, 1);
-		final long s = rst[1];
-		final RationalNumber sRational = RationalNumber.of(s, 1);
-		final long t = rst[2];
-		final RationalNumber tRational = RationalNumber.of(t, 1);
+		final BigInteger[] rst = gcdext(wholePivotElement1, wholePivotElement2);
+		final BigInteger r = rst[0];
+		final Rational rRational = Rational.valueOf(r, BigInteger.ONE);
+		final BigInteger s = rst[1];
+		final Rational sRational = Rational.valueOf(s, BigInteger.ONE);
+		final BigInteger t = rst[2];
+		final Rational tRational = Rational.valueOf(t, BigInteger.ONE);
 
-		final MatrixQ128 newWholeV1 = wholeV1.multiply(sRational).add(wholeV2.multiply(tRational));
-		final RationalNumber factor1 = wholePivotElement2Rational.negate().divide(rRational);
-		final RationalNumber factor2 = wholePivotElement1Rational.divide(rRational);
-		final MatrixQ128 newWholeV2 = wholeV1.multiply(factor1).add(wholeV2.multiply(factor2));
+		final RationalVector newWholeV1 = wholeV1.multiply(sRational).add(wholeV2.multiply(tRational));
+		final Rational factor1 = wholePivotElement2Rational.negate().div(rRational);
+		final Rational factor2 = wholePivotElement1Rational.div(rRational);
+		final RationalVector newWholeV2 = wholeV1.multiply(factor1).add(wholeV2.multiply(factor2));
 		final var sth = wholeV1.multiply(factor1);
 		final var sth2 = wholeV2.multiply(factor2);
 
-		final MatrixQ128 newV1 = newWholeV1.divide(commonDenominatorRational);
-		final MatrixQ128 newV2 = newWholeV2.divide(commonDenominatorRational);
+		final RationalVector newV1 = newWholeV1.divide(commonDenominatorRational);
+		final RationalVector newV2 = newWholeV2.divide(commonDenominatorRational);
 
-		final MatrixQ128 newSubtrahendVector = newV1;
-		final MatrixQ128 newMinuendVector = newV2;
+		final RationalVector newSubtrahendVector = newV1;
+		final RationalVector newMinuendVector = newV2;
 
 		return new Pair<>(newMinuendVector, newSubtrahendVector);
 	}
@@ -215,17 +203,17 @@ public class CongruenceUtil {
 		return getMatrixFromRationalList(list, rowCount, columnCount);
 	}
 
-	public static MatrixQ128 reorderByColumns(final Map<Integer, Integer> map, final int resultColumnCount,
-			final MatrixQ128 matrix) {
-		final List<MatrixQ128> columns = getColumnsFromMatrix(matrix);
-		final List<MatrixQ128> resultColumns = getColumnsFromMatrix(
-				getZeroMatrix(matrix.getRowDim(), resultColumnCount));
+	public static RationalMatrix reorderByColumns(final Map<Integer, Integer> map, final int resultColumnCount,
+			final RationalMatrix matrix) {
+		final List<RationalVector> columns = matrix.getColumnVectors();
+		final List<RationalVector> resultColumns = RationalMatrix.getZeroMatrix(matrix.getRowCount(), resultColumnCount)
+				.getColumnVectors();
 
 		for (int i = 0; i < columns.size(); i++) {
 			resultColumns.set(map.get(i), columns.get(i));
 		}
 
-		return getMatrixFromColumns(resultColumns);
+		return RationalMatrix.ofColumnVectors(resultColumns, matrix.getRowCount());
 	}
 
 	public static MatrixQ128 getStandardBasisVector(final int index, final int size) {
@@ -293,6 +281,10 @@ public class CongruenceUtil {
 		return Math.floorDiv(x, y);
 	}
 
+	private static BigInteger wholeDiv(final BigInteger x, final BigInteger y) {
+		return x.divideAndRemainder(y)[0];
+	}
+
 	public static long[] gcdext(final long x, final long y) {
 		long oldR = x;
 		long newR = y;
@@ -318,6 +310,33 @@ public class CongruenceUtil {
 		}
 
 		return new long[] { oldR, oldS, oldT };
+	}
+
+	public static BigInteger[] gcdext(final BigInteger x, final BigInteger y) {
+		BigInteger oldR = x;
+		BigInteger newR = y;
+		BigInteger oldS = BigInteger.ONE;
+		BigInteger newS = BigInteger.ZERO;
+		BigInteger oldT = BigInteger.ZERO;
+		BigInteger newT = BigInteger.ONE;
+
+		while (!newR.equals(BigInteger.ZERO)) {
+			final BigInteger q = wholeDiv(oldR, newR);
+
+			final BigInteger tempR = oldR;
+			oldR = newR;
+			newR = tempR.subtract(q.multiply(newR));
+
+			final BigInteger tempS = oldS;
+			oldS = newS;
+			newS = tempS.subtract(q.multiply(newS));
+
+			final BigInteger tempT = oldT;
+			oldT = newT;
+			newT = tempT.subtract(q.multiply(newT));
+		}
+
+		return new BigInteger[] { oldR, oldS, oldT };
 	}
 
 	public static long lcm(final long x, final long y) {
@@ -354,27 +373,28 @@ public class CongruenceUtil {
 		return commonDenominator;
 	}
 
-	public static long getCommonDenominator(final MatrixQ128 matrix) {
-		final List<RationalNumber> list = matrix.asList();
+	public static BigInteger getCommonDenominator(final RationalVector vector) {
+		final List<Rational> list = vector.asList();
 		return getCommonDenominator(list);
 	}
 
-	public static Term getSumTerm(final MatrixQ128 vector, final Map<Integer, Term> indexToVar, final Script script) {
+	public static Term getSumTerm(final RationalVector vector, final Map<Integer, Term> indexToVar,
+			final Script script) {
 		final Set<Term> summands = new HashSet<>();
-		for (int i = 0; i < vector.countColumns(); i++) {
-			final RationalNumber rationalFactor = vector.get(0, i);
+		for (int i = 0; i < vector.getLength(); i++) {
+			final Rational rationalFactor = vector.get(i);
 
-			if (rationalFactor.isZero()) {
+			if (rationalFactor.equals(Rational.ZERO)) {
 				continue;
 			}
-			final long factor = CongruenceUtil.getNumerator(rationalFactor);
+			final BigInteger factor = rationalFactor.numerator();
 
 			Term term;
 			if (i == 0) {
-				term = SmtUtils.constructIntValue(script, BigInteger.valueOf(factor));
+				term = SmtUtils.constructIntValue(script, factor);
 			} else {
 				final Term var = indexToVar.get(i);
-				term = SmtUtils.mul(script, Rational.valueOf(factor, 1), var);
+				term = SmtUtils.mul(script, Rational.valueOf(factor, BigInteger.ONE), var);
 			}
 			summands.add(term);
 		}
@@ -390,23 +410,23 @@ public class CongruenceUtil {
 		return sum;
 	}
 
-	public static String[] getVectorStrings(final MatrixQ128 vector, final Map<Integer, Term> indexToVar) {
+	public static String[] getVectorStrings(final RationalVector vector, final Map<Integer, Term> indexToVar) {
 		String resultString = "0";
 		final Set<String> summands = new HashSet<>();
-		for (int i = 0; i < vector.countColumns(); i++) {
-			final RationalNumber rationalFactor = vector.get(0, i);
+		for (int i = 0; i < vector.getLength(); i++) {
+			final Rational rationalFactor = vector.get(i);
 
-			if (rationalFactor.isZero()) {
+			if (rationalFactor.equals(Rational.ZERO)) {
 				continue;
 			}
-			final long factor = CongruenceUtil.getNumerator(rationalFactor);
+			final BigInteger factor = rationalFactor.numerator();
 
 			String term;
 			if (i == 0) {
-				resultString = BigInteger.valueOf(factor).negate().toString();
+				resultString = factor.negate().toString();
 			} else {
 				final Term var = indexToVar.get(i);
-				if (factor == 1) {
+				if (factor.equals(BigInteger.ONE)) {
 					term = var.toString();
 				} else {
 					term = factor + " * " + var;
@@ -428,14 +448,14 @@ public class CongruenceUtil {
 		return new String[] { sum.toString(), resultString };
 	}
 
-	public static boolean isEqualsInLastNonZero(final MatrixQ128 vector1, final MatrixQ128 vector2) {
-		final long k = lastPivot(vector1);
+	public static boolean isEqualsInLastNonZero(final RationalVector vector1, final RationalVector vector2) {
+		final int k = lastPivot(vector1);
 		if (k == lastPivot(vector2)) {
 			if (k == 0) {
 				return true;
 			}
-			final RationalNumber value1 = vector1.get(0, k);
-			final RationalNumber value2 = vector2.get(0, k);
+			final Rational value1 = vector1.get(k);
+			final Rational value2 = vector2.get(k);
 			if (value1.equals(value2)) {
 				return true;
 			}

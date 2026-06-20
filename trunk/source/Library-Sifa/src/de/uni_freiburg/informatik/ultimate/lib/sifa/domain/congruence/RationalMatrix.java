@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.math3.fraction.BigFraction;
@@ -17,6 +18,10 @@ public class RationalMatrix {
 		mMatrix = matrix;
 	}
 
+	public static RationalMatrix getZeroMatrix(final int rowCount, final int columnCount) {
+		return new RationalMatrix(new Array2DRowFieldMatrix<>(BigFractionField.getInstance(), rowCount, columnCount));
+	}
+
 	public static RationalMatrix ofRowVectors(final List<RationalVector> rowVectors, final int columnCount) {
 		final FieldMatrix<BigFraction> matrix = new Array2DRowFieldMatrix<>(BigFractionField.getInstance(),
 				rowVectors.size(), columnCount);
@@ -28,12 +33,45 @@ public class RationalMatrix {
 		return new RationalMatrix(matrix);
 	}
 
+	public static RationalMatrix ofColumnVectors(final List<RationalVector> columnVectors, final int rowCount) {
+		final FieldMatrix<BigFraction> matrix = new Array2DRowFieldMatrix<>(BigFractionField.getInstance(), rowCount,
+				columnVectors.size());
+
+		for (int i = 0; i < columnVectors.size(); i++) {
+			matrix.setColumnVector(i, columnVectors.get(i).getVector());
+		}
+
+		return new RationalMatrix(matrix);
+	}
+
+	public List<RationalVector> getRowVectors() {
+		final List<RationalVector> rowVectors = new ArrayList<>();
+		for (int i = 0; i < getRowCount(); i++) {
+			final RationalVector rowVector = new RationalVector(mMatrix.getRowVector(i));
+			rowVectors.add(rowVector);
+		}
+		return rowVectors;
+	}
+
+	public List<RationalVector> getColumnVectors() {
+		final List<RationalVector> columnVectors = new ArrayList<>();
+		for (int i = 0; i < getColumnCount(); i++) {
+			final RationalVector columnVector = new RationalVector(mMatrix.getColumnVector(i));
+			columnVectors.add(columnVector);
+		}
+		return columnVectors;
+	}
+
 	public int getColumnCount() {
 		return mMatrix.getColumnDimension();
 	}
 
 	public int getRowCount() {
 		return mMatrix.getRowDimension();
+	}
+
+	public boolean isSquare() {
+		return getColumnCount() == getRowCount();
 	}
 
 	public Rational get(final int row, final int column) {

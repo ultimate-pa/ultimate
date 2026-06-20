@@ -5,43 +5,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
+import java.util.stream.IntStream;
 
-import org.ojalgo.matrix.MatrixQ128;
-import org.ojalgo.scalar.RationalNumber;
-
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class GeneratorRepresentation {
-	private MatrixQ128 mLineMatrix;
-	private MatrixQ128 mParameterMatrix;
+	private List<RationalVector> mLines;
+	private List<RationalVector> mParameters;
 
 	final private int mVectorLength;
 
 	private boolean mIsMinimal;
 
-	public GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters,
+	public GeneratorRepresentation(final List<RationalVector> lines, final List<RationalVector> parameters,
 			final int vectorLength) {
 		this(lines, parameters, vectorLength, false);
-	}
-
-	/**
-	 * WARNING: Only give isMinimal as true if lineMatrix and parameterMatrix are
-	 * minimal. Alternatively just use the constructor without isMinimal and call
-	 * minimize afterwards.
-	 */
-	GeneratorRepresentation(final MatrixQ128 lineMatrix, final MatrixQ128 parameterMatrix, final int vectorLength,
-			final boolean isMinimal) {
-		mLineMatrix = lineMatrix;
-		mParameterMatrix = parameterMatrix;
-		mVectorLength = vectorLength;
-		mIsMinimal = isMinimal;
-
-		for (final var x : mParameterMatrix.toList()) {
-			if (CongruenceUtil.getDenominator(x) == 0) {
-				throw new AssertionError();
-			}
-		}
 	}
 
 	/**
@@ -49,10 +28,12 @@ public class GeneratorRepresentation {
 	 * minimal. Alternatively use the constructor without isMinimal and call
 	 * minimize afterwards.
 	 */
-	GeneratorRepresentation(final List<MatrixQ128> lines, final List<MatrixQ128> parameters, final int vectorLength,
-			final boolean isMinimal) {
-		this(CongruenceUtil.getMatrixFromRows(lines), CongruenceUtil.getMatrixFromRows(parameters), vectorLength,
-				isMinimal);
+	GeneratorRepresentation(final List<RationalVector> lines, final List<RationalVector> parameters,
+			final int vectorLength, final boolean isMinimal) {
+		mLines = lines;
+		mParameters = parameters;
+		mVectorLength = vectorLength;
+		mIsMinimal = isMinimal;
 	}
 
 	@Override
@@ -71,20 +52,20 @@ public class GeneratorRepresentation {
 		return true;
 	}
 
-	public MatrixQ128 getLineMatrix() {
-		return mLineMatrix;
+	public RationalMatrix getLineMatrix() {
+		return RationalMatrix.ofRowVectors(mLines, mVectorLength);
 	}
 
-	public MatrixQ128 getParameterMatrix() {
-		return mParameterMatrix;
+	public RationalMatrix getParameterMatrix() {
+		return RationalMatrix.ofRowVectors(mParameters, mVectorLength);
 	}
 
-	public List<MatrixQ128> getLines() {
-		return CongruenceUtil.getRowsFromMatrix(getLineMatrix());
+	public List<RationalVector> getLines() {
+		return mLines;
 	}
 
-	public List<MatrixQ128> getParameters() {
-		return CongruenceUtil.getRowsFromMatrix(getParameterMatrix());
+	public List<RationalVector> getParameters() {
+		return mParameters;
 	}
 
 	public int getVectorLength() {
@@ -100,37 +81,36 @@ public class GeneratorRepresentation {
 			return;
 		}
 
-		final List<MatrixQ128> lines = getLines();
-		final List<MatrixQ128> parameters = getParameters();
-		final var sth = getParameters();
+		final List<RationalVector> lines = getLines();
+		final List<RationalVector> parameters = getParameters();
 
 		final List<Integer> linesToDelete = new ArrayList<>();
 		final List<Integer> parametersToDelete = new ArrayList<>();
 
 		// Making the line pivots unique
 		for (int i = 0; i < lines.size(); i++) {
-			MatrixQ128 line = lines.get(i);
-			final long pivot = CongruenceUtil.firstPivot(line);
+			RationalVector line = lines.get(i);
+			final int pivot = CongruenceUtil.firstPivot(line);
 
-			if (pivot == line.countColumns()) {
+			if (pivot == line.getLength()) {
 				// line is empty, can be deleted
 				linesToDelete.add(i);
 			} else {
 				// Make pivotValue positive
-				final RationalNumber pivotValue = line.get(0, pivot);
-				if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+				final Rational pivotValue = line.get(pivot);
+				if (pivotValue.compareTo(Rational.ZERO) < 0) {
 					line = line.negate();
 					lines.set(i, line);
 				}
 
 				// Eliminate the pivot field from the following lines
 				for (int j = i + 1; j < lines.size(); j++) {
-					final MatrixQ128 other = lines.get(j);
+					final RationalVector other = lines.get(j);
 					lines.set(j, CongruenceUtil.gaussEliminateField(other, line, pivot));
 				}
 				// Eliminate the pivot field from the parameters
 				for (int j = 0; j < parameters.size(); j++) {
-					final MatrixQ128 other = parameters.get(j);
+					final RationalVector other = parameters.get(j);
 					parameters.set(j, CongruenceUtil.gaussEliminateField(other, line, pivot));
 				}
 			}
@@ -145,8 +125,8 @@ public class GeneratorRepresentation {
 		for (int index = 0; index < mVectorLength; index++) {
 			// Find a parameter with pivot == index
 			int i;
-			long pivot = mVectorLength;
-			MatrixQ128 parameter = null;
+			int pivot = mVectorLength;
+			RationalVector parameter = null;
 			for (i = 0; i < parameters.size(); i++) {
 				parameter = parameters.get(i);
 				pivot = CongruenceUtil.firstPivot(parameter);
@@ -161,12 +141,12 @@ public class GeneratorRepresentation {
 
 			// Eliminate the pivot field from the following parameters
 			for (int j = i + 1; j < parameters.size(); j++) {
-				final MatrixQ128 other = parameters.get(j);
-				final long otherPivot = CongruenceUtil.firstPivot(other);
+				final RationalVector other = parameters.get(j);
+				final int otherPivot = CongruenceUtil.firstPivot(other);
 
 				if (pivot == otherPivot) {
-					final Pair<MatrixQ128, MatrixQ128> pair = CongruenceUtil.hermitEliminateField(other, parameter,
-							pivot);
+					final Pair<RationalVector, RationalVector> pair = CongruenceUtil.hermitEliminateField(other,
+							parameter, pivot);
 					parameters.set(j, pair.getFirst());
 					parameters.set(i, pair.getSecond());
 				}
@@ -175,10 +155,10 @@ public class GeneratorRepresentation {
 
 		// Scan for empty parameters
 		for (int i = 0; i < parameters.size(); i++) {
-			final MatrixQ128 parameter = parameters.get(i);
+			final RationalVector parameter = parameters.get(i);
 			final long pivot = CongruenceUtil.firstPivot(parameter);
 
-			if (pivot == parameter.countColumns()) {
+			if (pivot == parameter.getLength()) {
 				// parameter is empty, can be deleted
 				parametersToDelete.add(i);
 			}
@@ -191,25 +171,22 @@ public class GeneratorRepresentation {
 
 		// Make pivot values for parameters positive
 		for (int i = 0; i < parameters.size(); i++) {
-			MatrixQ128 parameter = parameters.get(i);
-			final long pivot = CongruenceUtil.firstPivot(parameter);
-			final var pivotValue = parameter.get(0, pivot);
-			if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+			RationalVector parameter = parameters.get(i);
+			final int pivot = CongruenceUtil.firstPivot(parameter);
+			final var pivotValue = parameter.get(pivot);
+			if (pivotValue.compareTo(Rational.ZERO) < 0) {
 				parameter = parameter.negate();
 				parameters.set(i, parameter);
 			}
 		}
 
-		final MatrixQ128 minimalLineMatrix = CongruenceUtil.getMatrixFromRows(lines);
-		final MatrixQ128 minimalParameterMatrix = CongruenceUtil.getMatrixFromRows(parameters);
-
-		mLineMatrix = minimalLineMatrix;
-		mParameterMatrix = minimalParameterMatrix;
+		mLines = lines;
+		mParameters = parameters;
 		mIsMinimal = true;
 
 		if (lines.size() + parameters.size() > mVectorLength) {
-			throw new AssertionError("lines and parameters are too long\n Lines: " + minimalLineMatrix
-					+ "\n Parameters: " + minimalParameterMatrix);
+			throw new AssertionError(
+					"lines and parameters are too long\n Lines: " + lines + "\n Parameters: " + parameters);
 		}
 
 	}
@@ -217,60 +194,60 @@ public class GeneratorRepresentation {
 	public GeneratorRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
 			final int resultColumnCount) {
 
-		final MatrixQ128 reorderedLineMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
+		final RationalMatrix reorderedLineMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
 				getLineMatrix());
-		final MatrixQ128 reorderedParameterMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
+		final RationalMatrix reorderedParameterMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
 				getParameterMatrix());
 
 		// We pad the parameters with vectors that correspond to x ≡1 0, for all
 		// variables x that got newly added to our context. This avoids them appearing
 		// as x = 0. Since we only care about whole numbers x ≡1 0 holds trivially.
-		final List<MatrixQ128> paddedParameters = CongruenceUtil.getRowsFromMatrix(reorderedParameterMatrix);
+		final List<RationalVector> paddedParameters = reorderedParameterMatrix.getRowVectors();
 		for (int i = 0; i < resultColumnCount; i++) {
 			if (!reorderMap.containsValue(i)) {
-				final MatrixQ128 newParameter = CongruenceUtil.getStandardBasisVector(i, resultColumnCount);
+				final RationalVector newParameter = RationalVector.getUnitVector(i, resultColumnCount);
 				paddedParameters.add(newParameter);
 			}
 		}
-		return new GeneratorRepresentation(reorderedLineMatrix, CongruenceUtil.getMatrixFromRows(paddedParameters),
-				resultColumnCount, isMinimal());
+		return new GeneratorRepresentation(reorderedLineMatrix.getRowVectors(), paddedParameters, resultColumnCount,
+				isMinimal());
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
 		minimize();
 
-		final List<MatrixQ128> lines = getLines();
+		final List<RationalVector> lines = getLines();
 		final int linesNum = lines.size();
-		final List<MatrixQ128> parameters = getParameters();
+		final List<RationalVector> parameters = getParameters();
 		final int parametersNum = parameters.size();
 
-		final List<MatrixQ128> generatorList = new ArrayList<>(lines);
+		final List<RationalVector> generatorList = new ArrayList<>(lines);
 		generatorList.addAll(parameters);
 
-		final Set<Long> missingPivots = LongStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
-		for (final MatrixQ128 vector : generatorList) {
+		final Set<Integer> missingPivots = IntStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
+		for (final RationalVector vector : generatorList) {
 			missingPivots.remove(CongruenceUtil.firstPivot(vector));
 		}
 
-		final List<MatrixQ128> fillerList = new ArrayList<>();
-		for (final Long missingPivot : missingPivots) {
-			fillerList.add(CongruenceUtil.getStandardBasisVector(missingPivot.intValue(), mVectorLength));
+		final List<RationalVector> fillerList = new ArrayList<>();
+		for (final Integer missingPivot : missingPivots) {
+			fillerList.add(RationalVector.getUnitVector(missingPivot, mVectorLength));
 		}
 		final int fillerNum = fillerList.size();
 
-		final List<MatrixQ128> vectorList = new ArrayList<>(generatorList);
+		final List<RationalVector> vectorList = new ArrayList<>(generatorList);
 		vectorList.addAll(fillerList);
-		final MatrixQ128 generatorMatrix = CongruenceUtil.getMatrixFromRows(vectorList);
+		final RationalMatrix generatorMatrix = RationalMatrix.ofRowVectors(vectorList, mVectorLength);
 
 		if (!generatorMatrix.isSquare()) {
 			throw new AssertionError("generatorMatrix is not square. \n generatorMatrix: " + generatorMatrix);
 		}
 
-		final MatrixQ128 constraintMatrix = generatorMatrix.invert().transpose();
-		final List<MatrixQ128> constraintList = CongruenceUtil.getRowsFromMatrix(constraintMatrix);
+		final RationalMatrix constraintMatrix = generatorMatrix.invert().transpose();
+		final List<RationalVector> constraintList = constraintMatrix.getRowVectors();
 
-		final List<MatrixQ128> congruences = constraintList.subList(linesNum, linesNum + parametersNum);
-		final List<MatrixQ128> equalities = constraintList.subList(linesNum + parametersNum,
+		final List<RationalVector> congruences = constraintList.subList(linesNum, linesNum + parametersNum);
+		final List<RationalVector> equalities = constraintList.subList(linesNum + parametersNum,
 				linesNum + parametersNum + fillerNum);
 
 		return new ConstraintRepresentation(equalities, congruences, mVectorLength, true, false);

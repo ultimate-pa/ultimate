@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.ojalgo.matrix.MatrixQ128;
-
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ModTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -181,7 +179,7 @@ public class ModuloRelation {
 		return rational;
 	}
 
-	public MatrixQ128 getVector(final Map<Term, Integer> varToIndex) {
+	public RationalVector getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
 		// TODO: What does following line do when modInt is 2^32 ?
 		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mMod))
@@ -190,7 +188,7 @@ public class ModuloRelation {
 		final List<Rational> divProtoVector = modProtoVector.stream().map(rational -> rational.div(rationalMod))
 				.collect(Collectors.toList());
 
-		return CongruenceUtil.getRowVectorFromRationalList(divProtoVector);
+		return new RationalVector(divProtoVector);
 	}
 
 }
