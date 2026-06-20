@@ -39,7 +39,14 @@ public class RationalVector {
 			vector.setEntry(i, getBigFractionFromRational(rationalList.get(i)));
 		}
 		mVector = vector;
+	}
 
+	public static RationalVector fromIntList(final List<Integer> integerList) {
+		final List<Rational> rationalList = new ArrayList<>();
+		for (final Integer i : integerList) {
+			rationalList.add(Rational.valueOf(i.longValue(), 1));
+		}
+		return new RationalVector(rationalList);
 	}
 
 	public FieldVector<BigFraction> getVector() {

@@ -53,11 +53,11 @@ public class GeneratorRepresentation {
 	}
 
 	public RationalMatrix getLineMatrix() {
-		return RationalMatrix.ofRowVectors(mLines, mVectorLength);
+		return RationalMatrix.fromRowVectors(mLines, mVectorLength);
 	}
 
 	public RationalMatrix getParameterMatrix() {
-		return RationalMatrix.ofRowVectors(mParameters, mVectorLength);
+		return RationalMatrix.fromRowVectors(mParameters, mVectorLength);
 	}
 
 	public List<RationalVector> getLines() {
@@ -237,7 +237,7 @@ public class GeneratorRepresentation {
 
 		final List<RationalVector> vectorList = new ArrayList<>(generatorList);
 		vectorList.addAll(fillerList);
-		final RationalMatrix generatorMatrix = RationalMatrix.ofRowVectors(vectorList, mVectorLength);
+		final RationalMatrix generatorMatrix = RationalMatrix.fromRowVectors(vectorList, mVectorLength);
 
 		if (!generatorMatrix.isSquare()) {
 			throw new AssertionError("generatorMatrix is not square. \n generatorMatrix: " + generatorMatrix);

@@ -2,18 +2,11 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.ojalgo.matrix.MatrixQ128;
-import org.ojalgo.matrix.store.SparseStore;
-import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -94,8 +87,6 @@ public class CongruenceUtil {
 		final Rational factor1 = wholePivotElement2Rational.negate().div(rRational);
 		final Rational factor2 = wholePivotElement1Rational.div(rRational);
 		final RationalVector newWholeV2 = wholeV1.multiply(factor1).add(wholeV2.multiply(factor2));
-		final var sth = wholeV1.multiply(factor1);
-		final var sth2 = wholeV2.multiply(factor2);
 
 		final RationalVector newV1 = newWholeV1.divide(commonDenominatorRational);
 		final RationalVector newV2 = newWholeV2.divide(commonDenominatorRational);
@@ -104,103 +95,6 @@ public class CongruenceUtil {
 		final RationalVector newMinuendVector = newV2;
 
 		return new Pair<>(newMinuendVector, newSubtrahendVector);
-	}
-
-	public static List<MatrixQ128> getRowsFromMatrix(final MatrixQ128 matrix) {
-		final ArrayList<MatrixQ128> rows = new ArrayList<>();
-		for (int i = 0; i < matrix.countRows(); i++) {
-			final var row = matrix.select(new int[] { i }, null);
-			rows.add(row);
-		}
-		return rows;
-	}
-
-	public static List<MatrixQ128> getColumnsFromMatrix(final MatrixQ128 matrix) {
-		return getRowsFromMatrix(matrix.transpose());
-	}
-
-	public static MatrixQ128 getMatrixFromRows(final List<MatrixQ128> rows) {
-		final var n = rows.size();
-		long m = 0;
-		if (n != 0) {
-			m = rows.get(0).countColumns();
-		}
-
-		final SparseStore<RationalNumber> protoMatrix = SparseStore.Q128.make(n, m);
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < m; j++) {
-				protoMatrix.set(i, j, rows.get(i).get(0, j));
-			}
-		}
-
-		final var x = MatrixQ128.FACTORY.newSparseBuilder(n, m);
-		x.set(0, 0, RationalNumber.of(1, 2));
-		final var y = x.build();
-
-		return MatrixQ128.FACTORY.copy(protoMatrix);
-	}
-
-	public static MatrixQ128 getMatrixFromColumns(final List<MatrixQ128> columns) {
-		return getMatrixFromRows(columns).transpose();
-	}
-
-	public static MatrixQ128 getMatrixFromIntList(final List<Integer> entries, final int rowCount,
-			final int columnCount) {
-		final SparseStore<RationalNumber> protoMatrix = SparseStore.Q128.make(rowCount, columnCount);
-
-		for (int i = 0; i < rowCount; i++) {
-			for (int j = 0; j < columnCount; j++) {
-				final var rationalEntry = RationalNumber.of(entries.get(i * columnCount + j), 1);
-				protoMatrix.set(i, j, rationalEntry);
-			}
-		}
-
-		final var matrix = MatrixQ128.FACTORY.copy(protoMatrix);
-		return matrix;
-	}
-
-	public static MatrixQ128 getMatrixFromRationalNumberList(final List<RationalNumber> entries, final int rowCount,
-			final int columnCount) {
-		final SparseStore<RationalNumber> protoMatrix = SparseStore.Q128.make(rowCount, columnCount);
-
-		for (int i = 0; i < rowCount; i++) {
-			for (int j = 0; j < columnCount; j++) {
-				protoMatrix.set(i, j, entries.get(i * columnCount + j));
-			}
-		}
-
-		final var matrix = MatrixQ128.FACTORY.copy(protoMatrix);
-		return matrix;
-	}
-
-	public static MatrixQ128 getMatrixFromRationalList(final List<Rational> entries, final int rowCount,
-			final int columnCount) {
-		final SparseStore<RationalNumber> protoMatrix = SparseStore.Q128.make(rowCount, columnCount);
-
-		for (int i = 0; i < rowCount; i++) {
-			for (int j = 0; j < columnCount; j++) {
-				final Rational rational = entries.get(i * columnCount + j);
-				final RationalNumber rationalEntry = RationalNumber.of(rational.numerator().longValueExact(),
-						rational.denominator().longValueExact());
-				protoMatrix.set(i, j, rationalEntry);
-			}
-		}
-
-		final var matrix = MatrixQ128.FACTORY.copy(protoMatrix);
-		return matrix;
-	}
-
-	public static MatrixQ128 getRowVectorFromIntList(final List<Integer> entries) {
-		return getMatrixFromIntList(entries, 1, entries.size());
-	}
-
-	public static MatrixQ128 getRowVectorFromRationalList(final List<Rational> entries) {
-		return getMatrixFromRationalList(entries, 1, entries.size());
-	}
-
-	public static MatrixQ128 getZeroMatrix(final int rowCount, final int columnCount) {
-		final List<Rational> list = new ArrayList<>(Collections.nCopies(rowCount * columnCount, Rational.ZERO));
-		return getMatrixFromRationalList(list, rowCount, columnCount);
 	}
 
 	public static RationalMatrix reorderByColumns(final Map<Integer, Integer> map, final int resultColumnCount,
@@ -213,35 +107,7 @@ public class CongruenceUtil {
 			resultColumns.set(map.get(i), columns.get(i));
 		}
 
-		return RationalMatrix.ofColumnVectors(resultColumns, matrix.getRowCount());
-	}
-
-	public static MatrixQ128 getStandardBasisVector(final int index, final int size) {
-		final List<Rational> list = new ArrayList<>(Collections.nCopies(size, Rational.ZERO));
-		list.set(index, Rational.ONE);
-		return getRowVectorFromRationalList(list);
-	}
-
-	public static long getNumerator(final RationalNumber num) {
-		// TODO: Replace with new ojalgo release by internal methods
-		final Pattern pattern = Pattern.compile("\\(\\s*(-?\\d+)\\s*/\\s*\\d+\\s*\\)");
-		final Matcher matcher = pattern.matcher(num.toString());
-
-		if (matcher.matches()) {
-			return Long.parseLong(matcher.group(1));
-		}
-		throw new IllegalArgumentException("Invalid format: " + num);
-	}
-
-	public static long getDenominator(final RationalNumber num) {
-		// TODO: Replace with new ojalgo release by internal methods
-		final Pattern pattern = Pattern.compile("\\(\\s*-?\\d+\\s*/\\s*(\\d+)\\s*\\)");
-		final Matcher matcher = pattern.matcher(num.toString());
-
-		if (matcher.matches()) {
-			return Long.parseLong(matcher.group(1));
-		}
-		throw new IllegalArgumentException("Invalid format: " + num);
+		return RationalMatrix.fromColumnVectors(resultColumns, matrix.getRowCount());
 	}
 
 	public static <K> Map<K, Integer> mergeMaps(final Map<K, Integer> map1, final Map<K, Integer> map2) {
@@ -277,40 +143,40 @@ public class CongruenceUtil {
 		return newMap;
 	}
 
-	private static long wholeDiv(final long x, final long y) {
-		return Math.floorDiv(x, y);
-	}
+//	private static long wholeDiv(final long x, final long y) {
+//		return Math.floorDiv(x, y);
+//	}
 
 	private static BigInteger wholeDiv(final BigInteger x, final BigInteger y) {
 		return x.divideAndRemainder(y)[0];
 	}
 
-	public static long[] gcdext(final long x, final long y) {
-		long oldR = x;
-		long newR = y;
-		long oldS = 1;
-		long newS = 0;
-		long oldT = 0;
-		long newT = 1;
-
-		while (newR != 0) {
-			final long q = wholeDiv(oldR, newR);
-
-			final long tempR = oldR;
-			oldR = newR;
-			newR = tempR - q * newR;
-
-			final long tempS = oldS;
-			oldS = newS;
-			newS = tempS - q * newS;
-
-			final long tempT = oldT;
-			oldT = newT;
-			newT = tempT - q * newT;
-		}
-
-		return new long[] { oldR, oldS, oldT };
-	}
+//	public static long[] gcdext(final long x, final long y) {
+//		long oldR = x;
+//		long newR = y;
+//		long oldS = 1;
+//		long newS = 0;
+//		long oldT = 0;
+//		long newT = 1;
+//
+//		while (newR != 0) {
+//			final long q = wholeDiv(oldR, newR);
+//
+//			final long tempR = oldR;
+//			oldR = newR;
+//			newR = tempR - q * newR;
+//
+//			final long tempS = oldS;
+//			oldS = newS;
+//			newS = tempS - q * newS;
+//
+//			final long tempT = oldT;
+//			oldT = newT;
+//			newT = tempT - q * newT;
+//		}
+//
+//		return new long[] { oldR, oldS, oldT };
+//	}
 
 	public static BigInteger[] gcdext(final BigInteger x, final BigInteger y) {
 		BigInteger oldR = x;
@@ -339,13 +205,13 @@ public class CongruenceUtil {
 		return new BigInteger[] { oldR, oldS, oldT };
 	}
 
-	public static long lcm(final long x, final long y) {
-		final long gcd = gcdext(x, y)[0];
-		if (gcd == 0) {
-			return 0;
-		}
-		return Math.abs(Math.divideExact(x, gcd) * y);
-	}
+//	public static long lcm(final long x, final long y) {
+//		final long gcd = gcdext(x, y)[0];
+//		if (gcd == 0) {
+//			return 0;
+//		}
+//		return Math.abs(Math.divideExact(x, gcd) * y);
+//	}
 
 	public static BigInteger lcm(final BigInteger x, final BigInteger y) {
 		final BigInteger gcd = x.gcd(y);

@@ -41,11 +41,11 @@ public class ConstraintRepresentation {
 	}
 
 	public RationalMatrix getEqualityMatrix() {
-		return RationalMatrix.ofRowVectors(mEqualities, mVectorLength);
+		return RationalMatrix.fromRowVectors(mEqualities, mVectorLength);
 	}
 
 	public RationalMatrix getCongruenceMatrix() {
-		return RationalMatrix.ofRowVectors(mCongruences, mVectorLength);
+		return RationalMatrix.fromRowVectors(mCongruences, mVectorLength);
 	}
 
 	public List<RationalVector> getEqualities() {
@@ -361,7 +361,7 @@ public class ConstraintRepresentation {
 
 		final List<RationalVector> vectorList = new ArrayList<>(fillerList);
 		vectorList.addAll(constraintList);
-		final RationalMatrix constraintMatrix = RationalMatrix.ofRowVectors(vectorList, mVectorLength);
+		final RationalMatrix constraintMatrix = RationalMatrix.fromRowVectors(vectorList, mVectorLength);
 
 		if (!constraintMatrix.isSquare()) {
 			throw new AssertionError("constraintMatrix is not square. \n generatorMatrix: " + constraintMatrix);

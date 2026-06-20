@@ -22,7 +22,7 @@ public class RationalMatrix {
 		return new RationalMatrix(new Array2DRowFieldMatrix<>(BigFractionField.getInstance(), rowCount, columnCount));
 	}
 
-	public static RationalMatrix ofRowVectors(final List<RationalVector> rowVectors, final int columnCount) {
+	public static RationalMatrix fromRowVectors(final List<RationalVector> rowVectors, final int columnCount) {
 		final FieldMatrix<BigFraction> matrix = new Array2DRowFieldMatrix<>(BigFractionField.getInstance(),
 				rowVectors.size(), columnCount);
 
@@ -33,7 +33,7 @@ public class RationalMatrix {
 		return new RationalMatrix(matrix);
 	}
 
-	public static RationalMatrix ofColumnVectors(final List<RationalVector> columnVectors, final int rowCount) {
+	public static RationalMatrix fromColumnVectors(final List<RationalVector> columnVectors, final int rowCount) {
 		final FieldMatrix<BigFraction> matrix = new Array2DRowFieldMatrix<>(BigFractionField.getInstance(), rowCount,
 				columnVectors.size());
 
@@ -42,6 +42,24 @@ public class RationalMatrix {
 		}
 
 		return new RationalMatrix(matrix);
+	}
+
+	public static RationalMatrix fromIntList(final List<Integer> integerList, final int rowCount,
+			final int columnCount) {
+		final List<Rational> rationalList = new ArrayList<>();
+		for (final Integer integer : integerList) {
+			rationalList.add(Rational.valueOf(integer.longValue(), 1));
+		}
+		return fromRationalList(rationalList, rowCount, columnCount);
+	}
+
+	public static RationalMatrix fromRationalList(final List<Rational> rationalList, final int rowCount,
+			final int columnCount) {
+		final List<RationalVector> rationalVectorList = new ArrayList<>();
+		for (int i = 0; i < rowCount; i++) {
+			rationalVectorList.add(new RationalVector(rationalList.subList(i, i + columnCount)));
+		}
+		return fromRowVectors(rationalVectorList, columnCount);
 	}
 
 	public List<RationalVector> getRowVectors() {

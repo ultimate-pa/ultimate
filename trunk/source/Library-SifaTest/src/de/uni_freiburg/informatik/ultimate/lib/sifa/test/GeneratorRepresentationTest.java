@@ -5,12 +5,11 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.ojalgo.matrix.MatrixQ128;
-import org.ojalgo.scalar.RationalNumber;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceUtil;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.ConstraintRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorRepresentation;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.RationalVector;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class GeneratorRepresentationTest {
@@ -27,12 +26,12 @@ public class GeneratorRepresentationTest {
 		 * Q = {}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> lines = new ArrayList<>();
-		lines.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
-		lines.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
-		lines.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 1, 0, 0)));
+		final List<RationalVector> lines = new ArrayList<>();
+		lines.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		lines.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		lines.add(RationalVector.fromIntList(List.of(1, 1, 1, 0, 0)));
 
-		final List<MatrixQ128> parameters = new ArrayList<>();
+		final List<RationalVector> parameters = new ArrayList<>();
 
 		return new GeneratorRepresentation(lines, parameters, 5);
 	}
@@ -44,11 +43,11 @@ public class GeneratorRepresentationTest {
 		 * Q = {(0, 1, 1, -2, 0), (0, 0, 0, 0, 1)}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> lines = new ArrayList<>();
+		final List<RationalVector> lines = new ArrayList<>();
 
-		final List<MatrixQ128> parameters = new ArrayList<>();
-		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 1, 1, -2, 0)));
-		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 0, 0, 0, 1)));
+		final List<RationalVector> parameters = new ArrayList<>();
+		parameters.add(RationalVector.fromIntList(List.of(0, 1, 1, -2, 0)));
+		parameters.add(RationalVector.fromIntList(List.of(0, 0, 0, 0, 1)));
 
 		return new GeneratorRepresentation(lines, parameters, 5);
 	}
@@ -60,14 +59,14 @@ public class GeneratorRepresentationTest {
 		 * Q = {(0, 1, 1, -2, 0), (0, 0, 0, 0, 1)}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> lines = new ArrayList<>();
-		lines.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
-		lines.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
-		lines.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 1, 0, 0)));
+		final List<RationalVector> lines = new ArrayList<>();
+		lines.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		lines.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		lines.add(RationalVector.fromIntList(List.of(1, 1, 1, 0, 0)));
 
-		final List<MatrixQ128> parameters = new ArrayList<>();
-		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 1, 1, -2, 0)));
-		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 0, 0, 0, 1)));
+		final List<RationalVector> parameters = new ArrayList<>();
+		parameters.add(RationalVector.fromIntList(List.of(0, 1, 1, -2, 0)));
+		parameters.add(RationalVector.fromIntList(List.of(0, 0, 0, 0, 1)));
 
 		return new GeneratorRepresentation(lines, parameters, 5);
 	}
@@ -79,14 +78,14 @@ public class GeneratorRepresentationTest {
 		 * Q = {(0, 1, 1, -2, 0), (0, 0, 0, 0, 1)}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> lines = new ArrayList<>();
-		lines.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 0, 2, 0, 0)));
-		lines.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
+		final List<RationalVector> lines = new ArrayList<>();
+		lines.add(RationalVector.fromIntList(List.of(1, 0, 2, 0, 0)));
+		lines.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
 
-		final List<MatrixQ128> parameters = new ArrayList<>();
-		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 1, 1, -2, 0)));
-		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 1, 0, 0, 0)));
-		parameters.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 0, 0, 0, 1)));
+		final List<RationalVector> parameters = new ArrayList<>();
+		parameters.add(RationalVector.fromIntList(List.of(0, 1, 1, -2, 0)));
+		parameters.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		parameters.add(RationalVector.fromIntList(List.of(0, 0, 0, 0, 1)));
 
 		return new GeneratorRepresentation(lines, parameters, 5);
 	}
@@ -98,15 +97,13 @@ public class GeneratorRepresentationTest {
 		 * Q = {(0, 1/2, 4), (2, 4/3, 5), (7, 13/7, 1/3)}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> lines = new ArrayList<>();
+		final List<RationalVector> lines = new ArrayList<>();
 
-		final List<MatrixQ128> parameters = new ArrayList<>();
-		parameters.add(CongruenceUtil
-				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.valueOf(1, 2), Rational.valueOf(4, 1))));
-		parameters.add(CongruenceUtil
-				.getRowVectorFromRationalList(List.of(Rational.TWO, Rational.valueOf(4, 3), Rational.valueOf(5, 1))));
-		parameters.add(CongruenceUtil.getRowVectorFromRationalList(
-				List.of(Rational.valueOf(7, 1), Rational.valueOf(13, 7), Rational.valueOf(1, 3))));
+		final List<RationalVector> parameters = new ArrayList<>();
+		parameters.add(new RationalVector(List.of(Rational.ZERO, Rational.valueOf(1, 2), Rational.valueOf(4, 1))));
+		parameters.add(new RationalVector(List.of(Rational.TWO, Rational.valueOf(4, 3), Rational.valueOf(5, 1))));
+		parameters.add(
+				new RationalVector(List.of(Rational.valueOf(7, 1), Rational.valueOf(13, 7), Rational.valueOf(1, 3))));
 
 		return new GeneratorRepresentation(lines, parameters, 3);
 	}
@@ -118,11 +115,11 @@ public class GeneratorRepresentationTest {
 		 * Q = {(0, 2)}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> equalities = new ArrayList<>();
-		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ONE)));
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ONE)));
 
-		final List<MatrixQ128> congruences = new ArrayList<>();
-		congruences.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.TWO)));
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.TWO)));
 
 		return new GeneratorRepresentation(equalities, congruences, 2);
 	}
@@ -134,10 +131,10 @@ public class GeneratorRepresentationTest {
 		 * Q = {}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> equalities = new ArrayList<>();
-		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ONE)));
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE)));
 
-		final List<MatrixQ128> congruences = new ArrayList<>();
+		final List<RationalVector> congruences = new ArrayList<>();
 
 		return new GeneratorRepresentation(equalities, congruences, 2);
 	}
@@ -149,11 +146,11 @@ public class GeneratorRepresentationTest {
 		 * Q = {}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> equalities = new ArrayList<>();
-		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ZERO)));
-		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ONE)));
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ZERO)));
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE)));
 
-		final List<MatrixQ128> congruences = new ArrayList<>();
+		final List<RationalVector> congruences = new ArrayList<>();
 
 		return new GeneratorRepresentation(equalities, congruences, 2);
 	}
@@ -165,15 +162,12 @@ public class GeneratorRepresentationTest {
 		 * Q = {(0, 0, 10/3)}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> equalities = new ArrayList<>();
-		equalities.add(CongruenceUtil
-				.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ZERO, Rational.valueOf(4, 3))));
-		equalities.add(CongruenceUtil
-				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ONE, Rational.valueOf(-2, 3))));
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ZERO, Rational.valueOf(4, 3))));
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE, Rational.valueOf(-2, 3))));
 
-		final List<MatrixQ128> congruences = new ArrayList<>();
-		congruences.add(CongruenceUtil
-				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(10, 3))));
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(10, 3))));
 
 		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
@@ -185,12 +179,11 @@ public class GeneratorRepresentationTest {
 		 * Q = {(0, 0, 3)}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> equalities = new ArrayList<>();
-		equalities.add(CongruenceUtil.getRowVectorFromRationalList(List.of(Rational.ONE, Rational.ONE, Rational.ONE)));
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ONE, Rational.ONE)));
 
-		final List<MatrixQ128> congruences = new ArrayList<>();
-		congruences.add(CongruenceUtil
-				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(3, 1))));
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(3, 1))));
 
 		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
@@ -202,9 +195,9 @@ public class GeneratorRepresentationTest {
 		 * Q = {}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> equalities = new ArrayList<>();
+		final List<RationalVector> equalities = new ArrayList<>();
 
-		final List<MatrixQ128> congruences = new ArrayList<>();
+		final List<RationalVector> congruences = new ArrayList<>();
 
 		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
@@ -216,14 +209,13 @@ public class GeneratorRepresentationTest {
 		 * Q = {(0, 4/3, 0), (1, 0, 1), (0, 2, 1), (1, 0, -1)}
 		 */
 		// @formatter:on
-		final List<MatrixQ128> equalities = new ArrayList<>();
+		final List<RationalVector> equalities = new ArrayList<>();
 
-		final List<MatrixQ128> congruences = new ArrayList<>();
-		congruences.add(CongruenceUtil
-				.getRowVectorFromRationalList(List.of(Rational.ZERO, Rational.valueOf(4, 3), Rational.ZERO)));
-		congruences.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 0, 1)));
-		congruences.add(CongruenceUtil.getRowVectorFromIntList(List.of(0, 2, 1)));
-		congruences.add(CongruenceUtil.getRowVectorFromIntList(List.of(1, 0, -1)));
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.valueOf(4, 3), Rational.ZERO)));
+		congruences.add(RationalVector.fromIntList(List.of(1, 0, 1)));
+		congruences.add(RationalVector.fromIntList(List.of(0, 2, 1)));
+		congruences.add(RationalVector.fromIntList(List.of(1, 0, -1)));
 
 		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
@@ -267,18 +259,18 @@ public class GeneratorRepresentationTest {
 			return false;
 		}
 
-		final List<MatrixQ128> lines = generators.getLines();
-		final List<MatrixQ128> parameters = generators.getParameters();
+		final List<RationalVector> lines = generators.getLines();
+		final List<RationalVector> parameters = generators.getParameters();
 
-		final List<MatrixQ128> vectors = new ArrayList<>(lines);
+		final List<RationalVector> vectors = new ArrayList<>(lines);
 		vectors.addAll(parameters);
 
 		for (int i = 0; i < vectors.size(); i++) {
 			final var vector = vectors.get(i);
 			final var pivot = CongruenceUtil.firstPivot(vector);
-			final var pivotValue = vector.get(0, pivot);
+			final var pivotValue = vector.get(pivot);
 
-			if (pivotValue.compareTo(RationalNumber.ZERO) < 0) {
+			if (pivotValue.compareTo(Rational.ZERO) < 0) {
 				return false;
 			}
 			for (int j = i + 1; j < vectors.size(); j++) {
