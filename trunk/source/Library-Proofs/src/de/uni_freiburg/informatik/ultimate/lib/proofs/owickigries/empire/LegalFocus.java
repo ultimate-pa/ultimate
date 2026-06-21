@@ -287,18 +287,18 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 			return new IFocusedRegionHeuristic<>() {
 				@Override
 				public Comparator<Pair<Region<P>, IPredicate>> getPreference() {
-					return Comparator.comparing(Pair::getFirst, Comparator.comparing(this::containsOnlyISLPredicate)
+					return Comparator.comparing(Pair::getFirst, Comparator.comparing(this::containsNotOnlyISLPredicate)
 							.thenComparing(Comparator.comparing(Region::size)));
 				}
 
 				@Override
 				public Comparator<Region<P>> getPreference(final IPredicate law) {
-					return Comparator.comparing(this::containsOnlyISLPredicate)
+					return Comparator.comparing(this::containsNotOnlyISLPredicate)
 							.thenComparing(Comparator.comparing(Region::size));
 				}
 
-				private boolean containsOnlyISLPredicate(final Region<P> region) {
-					return region.getPlaces().stream().allMatch(p -> p instanceof ISLPredicate);
+				private boolean containsNotOnlyISLPredicate(final Region<P> region) {
+					return region.getPlaces().stream().anyMatch(p -> !(p instanceof ISLPredicate));
 				}
 			};
 		}
