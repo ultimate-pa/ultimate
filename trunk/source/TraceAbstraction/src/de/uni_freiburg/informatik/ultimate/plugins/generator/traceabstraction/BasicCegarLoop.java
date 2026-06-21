@@ -378,7 +378,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
 
 		if (mPref.dumpAutomata()) {
-			super.writeAutomatonToFile(mInterpolAutomaton, getIteration(), "RawFloydHoareAutomaton");
+			writeAutomatonToFile(mInterpolAutomaton, getIteration(), "RawFloydHoareAutomaton");
 		}
 
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
