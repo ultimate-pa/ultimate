@@ -105,14 +105,14 @@ class JoinHandler {
 			final IcfgLocation exitLoc, final IPredicate sharedExit) {
 		final IPredicate atExit = mTools.addLocationUpdateForThread(state, joinedThread, exitLoc);
 		final Term exitFormula = sharedExit.getFormula();
-		return mTools.mapBuckets(atExit,
-				bucket -> mTools.predicate(SmtUtils.and(mTools.getScript(), bucket.getFormula(), exitFormula)));
+		return mTools.mapPartitions(atExit,
+				partition -> mTools.predicate(SmtUtils.and(mTools.getScript(), partition.getFormula(), exitFormula)));
 	}
 
 	// edge case, join assign transition
 	IPredicate projectJoinAssignedVars(final IPredicate state, final IIcfgTransition<IcfgLocation> transition) {
 		if (state instanceof AbstractLocationPartitionedPredicate) {
-			return mTools.mapBuckets(state, bucket -> projectJoinAssignedVars(bucket, transition));
+			return mTools.mapPartitions(state, partition -> projectJoinAssignedVars(partition, transition));
 		}
 		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join) || isTrivial(state)) {
 			return state;

@@ -68,13 +68,16 @@ public final class ThreadModularSetup {
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		concurrentTools.configureStaticAnalysis(ghostVars, activityPreanalysis);
-		final AbstractLocationPartitionedDomain bucketDomain = usesBuckets(settings) && ghostVars != null
-				? AbstractLocationPartitionedDomain.create(baseDomain, tools, ghostVars.getLocationTermVariablesByThread()) : null;
-		if (bucketDomain != null) {
-			logger.info("Bucket domain enabled");
-			concurrentTools.setBucketDomain(bucketDomain);
+		final AbstractLocationPartitionedDomain partitionedDomain =
+				usesLocationPartitioning(settings) && ghostVars != null
+				? AbstractLocationPartitionedDomain.create(baseDomain, tools,
+						ghostVars.getLocationTermVariablesByThread())
+				: null;
+		if (partitionedDomain != null) {
+			logger.info("Abstract-location partitioned domain enabled");
+			concurrentTools.setLocationPartitionedDomain(partitionedDomain);
 		}
-		final IDomain domain = bucketDomain != null ? bucketDomain : baseDomain;
+		final IDomain domain = partitionedDomain != null ? partitionedDomain : baseDomain;
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
 				ghostVars, locationIds, icfg.getProcedureEntryNodes());
 		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services, script,
@@ -96,7 +99,7 @@ public final class ThreadModularSetup {
 				proofChecker, joinedThreads, locationIds);
 	}
 
-	private static boolean usesBuckets(final ThreadModularSifaSettings settings) {
+	private static boolean usesLocationPartitioning(final ThreadModularSifaSettings settings) {
 		if (!settings.useBuckets()) {
 			return false;
 		}

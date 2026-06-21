@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -23,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedLocationUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.GlobalLocationState;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.ObservedThreadStateRecorder;
@@ -37,8 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -54,7 +52,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
 	private ThreadAnalysisContext mThreadContext;
 	private ObservedThreadStateRecorder mObservedStateRecorder;
-	private AbstractLocationPartitionedDomain mBucketDomain;
+	private AbstractLocationPartitionedDomain mPartitionedDomain;
+	private AbstractLocationPartitionedLocationUpdater mPartitionLocationUpdater;
 	// Per-thread cache of existential projections over the ghost location var: Term identity is safe in SmtInterpol.
 	// Persists across outer iterations since the ghost loc var for a thread never changes.
 	private final Map<String, IdentityHashMap<Term, Term>> mLocProjectionCache = new HashMap<>();
@@ -99,6 +98,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			final ThreadActivityPreanalysis activityPreanalysis) {
 		mGhostVariables = ghostVariables;
 		mThreadActivityPreanalysis = activityPreanalysis;
+		mPartitionLocationUpdater = new AbstractLocationPartitionedLocationUpdater(this, ghostVariables);
 		mInitialStateFactory.configureStaticAnalysis(ghostVariables);
 		mJoinHandler.configureStaticAnalysis(ghostVariables);
 	}
@@ -108,7 +108,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			final RelationalPredicatePostcondition postcondition) {
 		IThreadLocalDomainContext.setIfApplicable(domain, threadId);
 		final ArrayList<String> sortedInterferenceThreadIds = interference != null
-				? new ArrayList<>(interference.threadIds()) : new ArrayList<>();
+				? new ArrayList<>(interference.threadIds())
+				: new ArrayList<>();
 		Collections.sort(sortedInterferenceThreadIds);
 		final boolean includeSelfInterference = mThreadActivityPreanalysis.getMultiForkedThreads().contains(threadId);
 		mThreadContext = new ThreadAnalysisContext(threadId, interference, domain, postcondition,
@@ -118,12 +119,11 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mInitialStateFactory.configureForThread(locationPredicates, domain);
 	}
 
-
 	@Override
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		resetBucketKeyRelevance();
+		resetPartitionKeyRelevance();
 		mObservedStateRecorder.recordTransitionInputState(transition, input);
-		final IPredicate spResult = mapBuckets(input, bucket -> super.post(bucket, transition));
+		final IPredicate spResult = mapPartitions(input, partition -> super.post(partition, transition));
 		final IPredicate joinProjected = mJoinHandler.projectJoinAssignedVars(spResult, transition);
 		return updateGhostvarsAndApplyInterferences(joinProjected, transition);
 	}
@@ -146,7 +146,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	}
 
 	public IPredicate postNoOpTransition(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		resetBucketKeyRelevance();
+		resetPartitionKeyRelevance();
 		if (transition instanceof LocationMarkerTransition) {
 			mObservedStateRecorder.recordTransitionInputState(transition, input);
 			return applyInterferences(input, transition.getTarget());
@@ -158,21 +158,21 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (Optimizations.trivialState(state, mThreadContext.interference())) {
 			return state;
 		}
-		final Set<String> activeThreadIds =
-				Optimizations.filterApplicable(mThreadContext, location, mThreadActivityPreanalysis);
+		final Set<String> activeThreadIds = Optimizations.filterApplicable(mThreadContext, location,
+				mThreadActivityPreanalysis);
 		if (activeThreadIds.isEmpty()) {
 			return state;
 		}
-		if (mBucketDomain != null) {
-			mBucketDomain.setRelevantThreadIds(activeThreadIds);
+		if (mPartitionedDomain != null) {
+			mPartitionedDomain.setRelevantThreadIds(activeThreadIds);
 		}
-		return mThreadContext.interference().applyUntilFixpoint(state, activeThreadIds,
-				mThreadContext.domain(), mSettings.innerWideningThreshold(), getStats());
+		return mThreadContext.interference().applyUntilFixpoint(state, activeThreadIds, mThreadContext.domain(),
+				mSettings.innerWideningThreshold(), getStats());
 	}
 
-	private void resetBucketKeyRelevance() {
-		if (mBucketDomain != null) {
-			mBucketDomain.setRelevantThreadIds(null);
+	private void resetPartitionKeyRelevance() {
+		if (mPartitionedDomain != null) {
+			mPartitionedDomain.setRelevantThreadIds(null);
 		}
 	}
 
@@ -197,77 +197,21 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	public IPredicate addLocationUpdateForThread(final IPredicate postState, final String threadId,
 			final IcfgLocation targetLocation) {
-		if (postState instanceof final AbstractLocationPartitionedPredicate bp && mBucketDomain != null) {
+		if (postState instanceof final AbstractLocationPartitionedPredicate partitionedPredicate
+				&& mPartitionedDomain != null) {
 			if (!mGhostVariables.tracksLocationPrecisely(threadId)) {
 				return postState;
 			}
 			final Integer targetAbstractId = mGhostVariables.getAbstractLocationIdOrNull(targetLocation);
 			if (targetAbstractId == null) {
-				final IPredicate flat = predicate(bp.getFormula());
+				final IPredicate flat = predicate(partitionedPredicate.getFormula());
 				final IPredicate updated = addLocationUpdateForThreadPlain(flat, threadId, targetLocation);
-				return mBucketDomain.alpha(updated);
+				return mPartitionedDomain.alpha(updated);
 			}
-			final String locVarName = mGhostVariables.getLocationTermVar(threadId).getName();
-			final Map<GlobalLocationState, IPredicate> result = new LinkedHashMap<>();
-			for (final var entry : bp.partitions().entrySet()) {
-				final IPredicate updatedValue =
-						addLocationUpdateForThreadBucketValue(entry.getValue(), threadId, targetLocation);
-				final Map<String, Integer> newLocs = new LinkedHashMap<>(entry.getKey().locs());
-				newLocs.put(locVarName, targetAbstractId);
-				result.merge(new GlobalLocationState(newLocs), updatedValue, mBucketDomain.underlyingDomain()::join);
-			}
-			return mBucketDomain.buildPredicateFromPartitionsMap(result);
+			return mPartitionLocationUpdater.updatePartitions(partitionedPredicate, threadId, targetLocation,
+					targetAbstractId, mPartitionedDomain);
 		}
-		return mapBuckets(postState, bucket -> addLocationUpdateForThreadPlain(bucket, threadId, targetLocation));
-	}
-
-	private IPredicate addLocationUpdateForThreadBucketValue(final IPredicate postState, final String threadId,
-			final IcfgLocation targetLocation) {
-		final Term locConstraint = mGhostVariables.createLocationConstraint(threadId, targetLocation);
-		if (SmtUtils.isTrueLiteral(postState.getFormula())) {
-			return predicate(locConstraint);
-		}
-		final TermVariable currentLocTv = mGhostVariables.getLocationTermVar(threadId);
-		final Term projected = syntacticallyForgetLocVar(postState.getFormula(), currentLocTv);
-		return predicate(SmtUtils.and(getScript(), projected, locConstraint));
-	}
-
-	private Term syntacticallyForgetLocVar(final Term term, final TermVariable locVar) {
-		if (!containsFreeVar(term, locVar)) {
-			return term;
-		}
-		if (term instanceof final ApplicationTerm app) {
-			final String function = app.getFunction().getName();
-			if ("and".equals(function)) {
-				final ArrayList<Term> kept = new ArrayList<>();
-				for (final Term param : app.getParameters()) {
-					final Term projected = syntacticallyForgetLocVar(param, locVar);
-					if (!SmtUtils.isTrueLiteral(projected)) {
-						kept.add(projected);
-					}
-				}
-				return kept.isEmpty() ? getScript().term("true") : SmtUtils.and(getScript(), kept);
-			}
-			if ("or".equals(function)) {
-				final ArrayList<Term> projected = new ArrayList<>();
-				for (final Term param : app.getParameters()) {
-					projected.add(syntacticallyForgetLocVar(param, locVar));
-				}
-				return SmtUtils.or(getScript(), projected);
-			}
-		}
-		if (term instanceof final QuantifiedFormula qf) {
-			if (Arrays.asList(qf.getVariables()).contains(locVar)) {
-				return term;
-			}
-			return getScript().quantifier(qf.getQuantifier(), qf.getVariables(),
-					syntacticallyForgetLocVar(qf.getSubformula(), locVar));
-		}
-		return getScript().term("true");
-	}
-
-	private static boolean containsFreeVar(final Term term, final TermVariable var) {
-		return Arrays.asList(term.getFreeVars()).contains(var);
+		return mapPartitions(postState, partition -> addLocationUpdateForThreadPlain(partition, threadId, targetLocation));
 	}
 
 	private IPredicate addLocationUpdateForThreadPlain(final IPredicate postState, final String threadId,
@@ -285,24 +229,23 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		final TermVariable currentLocTv = mGhostVariables.getLocationTermVar(threadId);
 		final Term stateTerm = postState.getFormula();
 		final Term projected = mLocProjectionCache.computeIfAbsent(threadId, k -> new IdentityHashMap<>())
-				.computeIfAbsent(stateTerm,
-						k -> RelationalPredicateUtils.existentiallyProject(k, Set.of(currentLocTv), mServices,
-								getManagedScript()));
+				.computeIfAbsent(stateTerm, k -> RelationalPredicateUtils.existentiallyProject(k, Set.of(currentLocTv),
+						mServices, getManagedScript()));
 		final Term combined = SmtUtils.and(getScript(), projected, locConstraint);
 		return predicate(combined);
 	}
 
-	public void setBucketDomain(final AbstractLocationPartitionedDomain bucketDomain) {
-		mBucketDomain = bucketDomain;
+	public void setLocationPartitionedDomain(final AbstractLocationPartitionedDomain partitionedDomain) {
+		mPartitionedDomain = partitionedDomain;
 	}
 
-	IPredicate mapBuckets(final IPredicate state, final Function<IPredicate, IPredicate> operation) {
-		if (!(state instanceof final AbstractLocationPartitionedPredicate buckets)) {
+	IPredicate mapPartitions(final IPredicate state, final Function<IPredicate, IPredicate> operation) {
+		if (!(state instanceof final AbstractLocationPartitionedPredicate partitionedState)) {
 			return operation.apply(state);
 		}
 		final Map<GlobalLocationState, IPredicate> result = new LinkedHashMap<>();
-		buckets.partitions().forEach((key, bucketState) -> result.put(key, operation.apply(bucketState)));
-		return mBucketDomain.buildPredicateFromPartitionsMap(result);
+		partitionedState.partitions().forEach((key, partition) -> result.put(key, operation.apply(partition)));
+		return mPartitionedDomain.buildPredicateFromPartitionsMap(result);
 	}
 
 	private boolean hasGhostLocationTracking() {

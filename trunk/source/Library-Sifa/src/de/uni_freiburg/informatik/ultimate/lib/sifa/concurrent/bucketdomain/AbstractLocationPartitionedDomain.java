@@ -101,8 +101,7 @@ public final class AbstractLocationPartitionedDomain implements IDomain, IThread
 	public ResultForAlteredInputs isSubsetEq(final IPredicate subset, final IPredicate superset) {
 		final Map<GlobalLocationState, IPredicate> subParts = getPartitions(subset);
 		final Map<GlobalLocationState, IPredicate> supParts = getPartitions(superset);
-		// needed so we dont unnecesarily wrap a normal predicate into an unknown bucket
-		// (input could be wrapped or not, we dont care)
+		// Avoid wrapping two plain predicates into the unknown partition.
 		if (bothUnpartitioned(subParts, supParts)) {
 			return mUnderlyingDomain.isSubsetEq(subParts.get(GlobalLocationState.UNKNOWN),
 					supParts.get(GlobalLocationState.UNKNOWN));

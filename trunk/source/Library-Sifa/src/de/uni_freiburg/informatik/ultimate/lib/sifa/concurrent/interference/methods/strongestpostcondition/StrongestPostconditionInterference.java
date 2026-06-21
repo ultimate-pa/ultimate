@@ -119,15 +119,17 @@ public final class StrongestPostconditionInterference implements IInterference {
 
 	private IPredicate applyGroupToFrontier(final IPredicate frontier, final ThreadedKey key,
 			final RelationalInterference relationalInterference, final IDomain domain) {
-		if (frontier instanceof final AbstractLocationPartitionedPredicate buckets && domain instanceof final AbstractLocationPartitionedDomain bucketDomain) {
-			return applyGroupToBucketFrontier(buckets, key, relationalInterference, bucketDomain);
+		if (frontier instanceof final AbstractLocationPartitionedPredicate partitionedFrontier
+				&& domain instanceof final AbstractLocationPartitionedDomain partitionedDomain) {
+			return applyGroupToPartitionedFrontier(partitionedFrontier, key, relationalInterference, partitionedDomain);
 		}
 		return applyGroupToState(frontier, relationalInterference, true);
 	}
 
 	// Apply per partition, update partition key directly from interference metadata -- no DNF re-split.
-	private IPredicate applyGroupToBucketFrontier(final AbstractLocationPartitionedPredicate frontier, final ThreadedKey key,
-			final RelationalInterference relationalInterference, final AbstractLocationPartitionedDomain bucketDomain) {
+	private IPredicate applyGroupToPartitionedFrontier(final AbstractLocationPartitionedPredicate frontier,
+			final ThreadedKey key, final RelationalInterference relationalInterference,
+			final AbstractLocationPartitionedDomain partitionedDomain) {
 		final String locationVarName = mLocationVarNameByThread.get(key.threadId());
 		final int sourceLocation = key.pair().sourceAbstractLocation();
 		final int targetLocation = key.pair().targetAbstractLocation();
@@ -141,13 +143,13 @@ public final class StrongestPostconditionInterference implements IInterference {
 				continue;
 			}
 			final GlobalLocationState newKey = withUpdatedLocation(entry.getKey(), locationVarName, targetLocation);
-			result.merge(newKey, post, bucketDomain.underlyingDomain()::join);
+			result.merge(newKey, post, partitionedDomain.underlyingDomain()::join);
 		}
 		if (result.isEmpty()) {
 			return mPostcondition.getPredicateFactory().newPredicate(
 					mPostcondition.getManagedScript().getScript().term("false"));
 		}
-		return bucketDomain.buildPredicateFromPartitionsMap(result);
+		return partitionedDomain.buildPredicateFromPartitionsMap(result);
 	}
 
 	private static GlobalLocationState withUpdatedLocation(final GlobalLocationState key,
@@ -160,10 +162,10 @@ public final class StrongestPostconditionInterference implements IInterference {
 		return new GlobalLocationState(updated);
 	}
 
-	private static boolean contradictsSourceLocation(final GlobalLocationState bucketKey,
+	private static boolean contradictsSourceLocation(final GlobalLocationState partitionKey,
 			final String locationVarName, final int sourceLocation) {
-		final Integer bucketLocation = bucketKey.locs().get(locationVarName);
-		return bucketLocation != null && bucketLocation.intValue() != sourceLocation;
+		final Integer partitionLocation = partitionKey.locs().get(locationVarName);
+		return partitionLocation != null && partitionLocation.intValue() != sourceLocation;
 	}
 
 	private IPredicate applyGroupToState(final IPredicate frontier,
