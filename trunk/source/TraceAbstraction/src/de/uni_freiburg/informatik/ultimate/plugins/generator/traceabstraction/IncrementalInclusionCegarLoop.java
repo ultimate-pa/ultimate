@@ -231,7 +231,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			}
 			if (mPref.dumpAutomata()) {
 				for (int i = 0; i < mInterpolantAutomata.size(); i++) {
-					super.writeAutomatonToFile(mInterpolantAutomata.get(i), getIteration(), "InterpolantAutomaton" + i);
+					writeAutomatonToFile(mInterpolantAutomata.get(i), getIteration(), "InterpolantAutomaton" + i);
 				}
 			}
 		} finally {
@@ -253,7 +253,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 		}
 		if (mPref.dumpAutomata()) {
 			for (final AbstractInterpolantAutomaton<L> element : mInterpolantAutomata) {
-				super.writeAutomatonToFile(element, getIteration(), "EnhancedInterpolantAutomaton");
+				writeAutomatonToFile(element, getIteration(), "EnhancedInterpolantAutomaton");
 			}
 		}
 	}

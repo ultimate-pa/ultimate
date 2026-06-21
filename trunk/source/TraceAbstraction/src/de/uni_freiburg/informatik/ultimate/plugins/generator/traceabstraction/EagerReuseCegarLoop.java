@@ -119,7 +119,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 		final int oneBasedi = iteration + 1;
 
 		if (mPref.dumpAutomata()) {
-			super.writeAutomatonToFile(reuseAut, "ReusedAutomata" + oneBasedi);
+			writeAutomatonToFile(reuseAut, "ReusedAutomata" + oneBasedi);
 		}
 
 		if (reuseAut instanceof AbstractInterpolantAutomaton) {

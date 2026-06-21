@@ -358,7 +358,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		// initialize dump of debugging output to files if necessary
 		if (mPref.dumpAutomata()) {
 			final TaskIdentifier tid = new SubtaskIterationIdentifier(null, mIteration);
-			mDumper = new Dumper(mLogger, this.getDumpAutomataPath(tid.toString()));
+			mDumper = new Dumper(mLogger, getDumpAutomataPath(tid.toString()));
 		}
 		try {
 			if (!computeInitialAbstraction()) {
@@ -395,7 +395,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mArtifactAutomaton = mAbstraction;
 		}
 		if (mPref.dumpAutomata()) {
-			this.writeAutomatonToFile(mAbstraction, "InitialAbstraction");
+			writeAutomatonToFile(mAbstraction, "InitialAbstraction");
 		}
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 
@@ -428,7 +428,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				}
 				if (mPref.dumpAutomata()) {
 					final TaskIdentifier tid = new SubtaskIterationIdentifier(null, mIteration);
-					mDumper = new Dumper(mLogger, this.getDumpAutomataPath(tid.toString()));
+					mDumper = new Dumper(mLogger, getDumpAutomataPath(tid.toString()));
 				}
 
 				try {
@@ -510,7 +510,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 		final boolean newMaximumReached = mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-			this.writeAutomatonToFile(mAbstraction, "BiggestAutomaton");
+			writeAutomatonToFile(mAbstraction, "BiggestAutomaton");
 		}
 	}
 
@@ -651,7 +651,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final TaskIdentifier tid) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
-		final String fullAutomataPath = this.getDumpAutomataPath(tid.toString());
+		final String fullAutomataPath = getDumpAutomataPath(tid.toString());
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(getServices()),
 				determineAutomatonName(automaton), fullAutomataPath, mDumpAutomataFormat, "", automaton);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
@@ -659,24 +659,24 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final String suffix) {
 		final TaskIdentifier tid = new SubtaskStringIdentifier(null, suffix);
-		this.writeAutomatonToFile(automaton, tid);
+		writeAutomatonToFile(automaton, tid);
 	}
 
 	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final int iteration) {
 		final TaskIdentifier tid = new SubtaskIterationIdentifier(null, iteration);
-		this.writeAutomatonToFile(automaton, tid);
+		writeAutomatonToFile(automaton, tid);
 	}
 
 	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final int iteration,
 			final String suffix) {
 		final TaskIdentifier tid = new SubtaskStringIdentifier(new SubtaskIterationIdentifier(null, iteration), suffix);
-		this.writeAutomatonToFile(automaton, tid);
+		writeAutomatonToFile(automaton, tid);
 	}
 
 	protected void writeAutomataToFile(final TaskIdentifier tid, final String atsHeaderMessage,
 			final String atsCommands, final NamedAutomaton<L, IPredicate>... automata) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
-		final String fullAutomataPath = this.getDumpAutomataPath(tid.toString());
+		final String fullAutomataPath = getDumpAutomataPath(tid.toString());
 		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(getServices()), fullAutomataPath,
 				mDumpAutomataFormat, atsHeaderMessage, atsCommands, automata);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
@@ -685,7 +685,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected void writeAutomataToFile(final int iteration, final String suffix, final String atsHeaderMessage,
 			final String atsCommands, final NamedAutomaton<L, IPredicate>... automata) {
 		final TaskIdentifier tid = new SubtaskStringIdentifier(new SubtaskIterationIdentifier(null, iteration), suffix);
-		this.writeAutomataToFile(tid, atsHeaderMessage, atsCommands, automata);
+		writeAutomataToFile(tid, atsHeaderMessage, atsCommands, automata);
 	}
 
 	private String determineAutomatonName(final IAutomaton<L, IPredicate> automaton) {

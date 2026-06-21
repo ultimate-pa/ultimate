@@ -393,7 +393,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 
 			if (mPref.dumpAutomata()) {
-				super.writeAutomatonToFile(subtrahend, getIteration(), "AbstractionAfterDifference");
+				writeAutomatonToFile(subtrahend, getIteration(), "AbstractionAfterDifference");
 			}
 			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
 
@@ -413,7 +413,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 			mAbstraction = diff.getResult();
 			if (mPref.dumpAutomata()) {
-				super.writeAutomatonToFile(mAbstraction, getIteration(), "AbstractionAfterDifferenceAndDeadEndRemoval");
+				writeAutomatonToFile(mAbstraction, getIteration(), "AbstractionAfterDifferenceAndDeadEndRemoval");
 			}
 
 		} finally {
