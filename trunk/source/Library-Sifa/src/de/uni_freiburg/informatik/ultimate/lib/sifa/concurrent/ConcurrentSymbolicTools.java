@@ -211,7 +211,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			return mPartitionLocationUpdater.updatePartitions(partitionedPredicate, threadId, targetLocation,
 					targetAbstractId, mPartitionedDomain);
 		}
-		return mapPartitions(postState, partition -> addLocationUpdateForThreadPlain(partition, threadId, targetLocation));
+		return mapPartitions(postState,
+				partition -> addLocationUpdateForThreadPlain(partition, threadId, targetLocation));
 	}
 
 	private IPredicate addLocationUpdateForThreadPlain(final IPredicate postState, final String threadId,

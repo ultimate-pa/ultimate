@@ -32,8 +32,7 @@ public final class AbstractLocationPartitionedLocationUpdater {
 		final String locVarName = mGhostVariables.getLocationTermVar(threadId).getName();
 		final Map<GlobalLocationState, IPredicate> result = new LinkedHashMap<>();
 		for (final var partition : partitionedPredicate.partitions().entrySet()) {
-			final IPredicate updatedValue = updatePartitionValue(partition.getValue(), threadId,
-					targetLocation);
+			final IPredicate updatedValue = updatePartitionValue(partition.getValue(), threadId, targetLocation);
 			final Map<String, Integer> newLocs = new LinkedHashMap<>(partition.getKey().locs());
 			newLocs.put(locVarName, targetAbstractId);
 			result.merge(new GlobalLocationState(newLocs), updatedValue, partitionedDomain.underlyingDomain()::join);

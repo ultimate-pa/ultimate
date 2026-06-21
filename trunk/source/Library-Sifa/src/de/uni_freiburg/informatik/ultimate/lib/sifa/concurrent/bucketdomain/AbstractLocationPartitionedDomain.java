@@ -93,8 +93,8 @@ public final class AbstractLocationPartitionedDomain implements IDomain, IThread
 			allBottom &= partitionResult.isTrueForAbstraction();
 			anyAbstracted |= partitionResult.wasAbstracted();
 		}
-		return new ResultForAlteredInputs(buildPredicateFromPartitionsMap(checkedPartitions), mTools.bottom(), allBottom,
-				anyAbstracted);
+		return new ResultForAlteredInputs(buildPredicateFromPartitionsMap(checkedPartitions), mTools.bottom(),
+				allBottom, anyAbstracted);
 	}
 
 	@Override
@@ -118,8 +118,19 @@ public final class AbstractLocationPartitionedDomain implements IDomain, IThread
 			isSubset &= r.isTrueForAbstraction();
 			wasAbstracted |= r.wasAbstracted();
 		}
-		return new ResultForAlteredInputs(buildPredicateFromPartitionsMap(checkedSub), buildPredicateFromPartitionsMap(checkedSup),
-				isSubset, wasAbstracted);
+		return new ResultForAlteredInputs(buildPredicateFromPartitionsMap(checkedSub),
+				buildPredicateFromPartitionsMap(checkedSup), isSubset, wasAbstracted);
+	}
+
+	// when no bucket info is available yet, assume the thread starts at its entry.
+	public AbstractLocationPartitionedPredicate seedAtLocation(final IPredicate plain, final String locVarName,
+			final int abstractLocation) {
+		final GlobalLocationState key = new GlobalLocationState(Map.of(locVarName, abstractLocation));
+		return AbstractLocationPartitionedPredicate.create(Map.of(key, plain), plain);
+	}
+
+	public AbstractLocationPartitionedPredicate seedAtUnknown(final IPredicate plain) {
+		return AbstractLocationPartitionedPredicate.create(Map.of(GlobalLocationState.UNKNOWN, plain), plain);
 	}
 
 	public IPredicate buildPredicateFromPartitionsMap(final Map<GlobalLocationState, IPredicate> partitions) {
@@ -132,7 +143,8 @@ public final class AbstractLocationPartitionedDomain implements IDomain, IThread
 		return AbstractLocationPartitionedPredicate.create(nonEmpty, mTools.orT(disjuncts));
 	}
 
-	private Map<GlobalLocationState, IPredicate> pruneToActiveThreads(final Map<GlobalLocationState, IPredicate> partitions) {
+	private Map<GlobalLocationState, IPredicate> pruneToActiveThreads(
+			final Map<GlobalLocationState, IPredicate> partitions) {
 		final Map<GlobalLocationState, IPredicate> pruned = new LinkedHashMap<>();
 		partitions.forEach((key, value) -> pruned.merge(restrictToActiveThreads(key), value, mUnderlyingDomain::join));
 		return pruned;

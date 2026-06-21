@@ -32,37 +32,45 @@ public final class StrongestPostconditionInterference implements IInterference {
 
 	private final Map<ThreadedKey, RelationalInterference> mInterferenceByKey;
 	private final Map<String, String> mLocationVarNameByThread;
+	// Minimum source abstract location per thread
+	private final Map<String, Integer> mEntryAbstractLocByThread;
 	private final RelationalPredicatePostcondition mPostcondition;
 	// True once this object was created by widen(). Widening can narrow the
 	// relational pre-state, causing SP=false for actually-feasible interferences.
 	// The fallback to unconditionalPostState is only sound to use after widening.
 	private final boolean mIsWidened;
 	// Per-relation cache: PreparedRelation identity → (state Term identity → SP result).
-	private final IdentityHashMap<PreparedRelation, IdentityHashMap<Term, IPredicate>> mSpCache =
-			new IdentityHashMap<>();
+	private final IdentityHashMap<PreparedRelation, IdentityHashMap<Term, IPredicate>> mSpCache = new IdentityHashMap<>();
 
-	public StrongestPostconditionInterference(
-			final Map<ThreadedKey, RelationalInterference> interferenceByKey,
+	public StrongestPostconditionInterference(final Map<ThreadedKey, RelationalInterference> interferenceByKey,
 			final Map<String, String> locationVarNameByThread, final RelationalPredicatePostcondition postcondition) {
 		this(interferenceByKey, locationVarNameByThread, postcondition, false);
 	}
 
-	private StrongestPostconditionInterference(
-			final Map<ThreadedKey, RelationalInterference> interferenceByKey,
+	private StrongestPostconditionInterference(final Map<ThreadedKey, RelationalInterference> interferenceByKey,
 			final Map<String, String> locationVarNameByThread, final RelationalPredicatePostcondition postcondition,
 			final boolean isWidened) {
 		mInterferenceByKey = Map.copyOf(interferenceByKey);
 		mLocationVarNameByThread = Map.copyOf(locationVarNameByThread);
+		mEntryAbstractLocByThread = computeEntryAbstractLocs(interferenceByKey);
 		mPostcondition = postcondition;
 		mIsWidened = isWidened;
+	}
+
+	private static Map<String, Integer> computeEntryAbstractLocs(
+			final Map<ThreadedKey, RelationalInterference> interferenceByKey) {
+		final Map<String, Integer> result = new LinkedHashMap<>();
+		for (final ThreadedKey key : interferenceByKey.keySet()) {
+			result.merge(key.threadId(), key.pair().sourceAbstractLocation(), Math::min);
+		}
+		return Map.copyOf(result);
 	}
 
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final Set<String> activeThreadIds,
 			final IDomain domain, final int wideningThreshold, final SifaStats stats) {
-		if (mInterferenceByKey.isEmpty()
-				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isTrueLiteral(state.getFormula()))
-				|| SmtUtils.isFalseLiteral(state.getFormula())) {
+		if (mInterferenceByKey.isEmpty() || (!(state instanceof AbstractLocationPartitionedPredicate)
+				&& SmtUtils.isTrueLiteral(state.getFormula())) || SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
 		final List<Entry<ThreadedKey, RelationalInterference>> active = buildActive(activeThreadIds);
@@ -119,14 +127,26 @@ public final class StrongestPostconditionInterference implements IInterference {
 
 	private IPredicate applyGroupToFrontier(final IPredicate frontier, final ThreadedKey key,
 			final RelationalInterference relationalInterference, final IDomain domain) {
-		if (frontier instanceof final AbstractLocationPartitionedPredicate partitionedFrontier
-				&& domain instanceof final AbstractLocationPartitionedDomain partitionedDomain) {
-			return applyGroupToPartitionedFrontier(partitionedFrontier, key, relationalInterference, partitionedDomain);
+		if (domain instanceof final AbstractLocationPartitionedDomain partitionedDomain) {
+			final AbstractLocationPartitionedPredicate partitioned = frontier instanceof final AbstractLocationPartitionedPredicate p
+					? p
+					: seedAsEntryPartition(frontier, key.threadId(), partitionedDomain);
+			return applyGroupToPartitionedFrontier(partitioned, key, relationalInterference, partitionedDomain);
 		}
 		return applyGroupToState(frontier, relationalInterference, true);
 	}
 
-	// Apply per partition, update partition key directly from interference metadata -- no DNF re-split.
+	// when no bucket info is available yet, assume the thread starts at its entry.
+	private AbstractLocationPartitionedPredicate seedAsEntryPartition(final IPredicate frontier, final String threadId,
+			final AbstractLocationPartitionedDomain domain) {
+		final String locVarName = mLocationVarNameByThread.get(threadId);
+		final Integer entryLoc = locVarName != null ? mEntryAbstractLocByThread.get(threadId) : null;
+		if (locVarName == null || entryLoc == null) {
+			return domain.seedAtUnknown(frontier);
+		}
+		return domain.seedAtLocation(frontier, locVarName, entryLoc);
+	}
+
 	private IPredicate applyGroupToPartitionedFrontier(final AbstractLocationPartitionedPredicate frontier,
 			final ThreadedKey key, final RelationalInterference relationalInterference,
 			final AbstractLocationPartitionedDomain partitionedDomain) {
@@ -146,14 +166,23 @@ public final class StrongestPostconditionInterference implements IInterference {
 			result.merge(newKey, post, partitionedDomain.underlyingDomain()::join);
 		}
 		if (result.isEmpty()) {
-			return mPostcondition.getPredicateFactory().newPredicate(
-					mPostcondition.getManagedScript().getScript().term("false"));
+			if (!mIsWidened) {
+				return mPostcondition.getPredicateFactory()
+						.newPredicate(mPostcondition.getManagedScript().getScript().term("false"));
+			}
+			// After outer-fixpoint widening the pre-state can be narrowed, causing SP=false
+			// for all partitions. Fall back to unconditional post at the interference target location.
+			final IPredicate fallback = relationalInterference.unconditionalPostState();
+			if (locationVarName != null) {
+				return partitionedDomain.seedAtLocation(fallback, locationVarName, targetLocation);
+			}
+			return partitionedDomain.seedAtUnknown(fallback);
 		}
 		return partitionedDomain.buildPredicateFromPartitionsMap(result);
 	}
 
-	private static GlobalLocationState withUpdatedLocation(final GlobalLocationState key,
-			final String locationVarName, final int newLocation) {
+	private static GlobalLocationState withUpdatedLocation(final GlobalLocationState key, final String locationVarName,
+			final int newLocation) {
 		if (locationVarName == null) {
 			return key;
 		}
@@ -168,12 +197,11 @@ public final class StrongestPostconditionInterference implements IInterference {
 		return partitionLocation != null && partitionLocation.intValue() != sourceLocation;
 	}
 
-	private IPredicate applyGroupToState(final IPredicate frontier,
-			final RelationalInterference relationalInterference, final boolean allowWidenedFallback) {
+	private IPredicate applyGroupToState(final IPredicate frontier, final RelationalInterference relationalInterference,
+			final boolean allowWidenedFallback) {
 		final PreparedRelation prepared = relationalInterference.preparedRelationalInterference();
 		final IPredicate sp = mSpCache.computeIfAbsent(prepared, k -> new IdentityHashMap<>())
-				.computeIfAbsent(frontier.getFormula(),
-						k -> mPostcondition.strongestPostcondition(frontier, prepared));
+				.computeIfAbsent(frontier.getFormula(), k -> mPostcondition.strongestPostcondition(frontier, prepared));
 		if (!SmtUtils.isFalseLiteral(sp.getFormula())) {
 			return sp;
 		}
@@ -211,10 +239,10 @@ public final class StrongestPostconditionInterference implements IInterference {
 			if (otherGroup == null) {
 				widenedGroup = entry.getValue();
 			} else {
-				final IPredicate widenedRelationalInterference =
-						domain.widen(entry.getValue().relationalInterference(), otherGroup.relationalInterference());
-				final IPredicate widenedPostState =
-						domain.widen(entry.getValue().unconditionalPostState(), otherGroup.unconditionalPostState());
+				final IPredicate widenedRelationalInterference = domain.widen(entry.getValue().relationalInterference(),
+						otherGroup.relationalInterference());
+				final IPredicate widenedPostState = domain.widen(entry.getValue().unconditionalPostState(),
+						otherGroup.unconditionalPostState());
 				widenedGroup = new RelationalInterference(widenedRelationalInterference,
 						mPostcondition.prepareRelation(widenedRelationalInterference), widenedPostState);
 			}
@@ -240,8 +268,9 @@ public final class StrongestPostconditionInterference implements IInterference {
 		for (final Entry<ThreadedKey, RelationalInterference> entry : mInterferenceByKey.entrySet()) {
 			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey().threadId());
 			final RelationalInterference otherGroup = typedOther.mInterferenceByKey.get(entry.getKey());
-			if (otherGroup == null || !domain.isSubsetEq(entry.getValue().relationalInterference(),
-					otherGroup.relationalInterference()).isTrueForAbstraction()) {
+			if (otherGroup == null || !domain
+					.isSubsetEq(entry.getValue().relationalInterference(), otherGroup.relationalInterference())
+					.isTrueForAbstraction()) {
 				return false;
 			}
 		}
