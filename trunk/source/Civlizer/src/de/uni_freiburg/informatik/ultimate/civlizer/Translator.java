@@ -337,7 +337,7 @@ public final class Translator extends BoogieVisitor {
 		mWriter.println(") returns (out : bool) {");
 
 		// improve that
-		Expression condition;
+		Expression condition = null;
 		if (statement instanceof final IfStatement ifStmt) {
 			condition = ifStmt.getCondition();
 		} else if (statement instanceof final WhileStatement whileStmt) {
