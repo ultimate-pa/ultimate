@@ -696,7 +696,7 @@ public class ACSLHandler implements IACSLHandler {
 		if (node.getInterruptStmt() != null) {
 			for (final InterruptStatement stmt : node.getInterruptStmt()) {
 				// TODO: dispatch interrupt stmt
-				final int i = 0;
+				main.dispatch(stmt, main.getAcslHook());
 			}
 		}
 
