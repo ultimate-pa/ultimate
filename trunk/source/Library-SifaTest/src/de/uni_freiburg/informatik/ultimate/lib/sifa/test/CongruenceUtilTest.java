@@ -67,10 +67,6 @@ public class CongruenceUtilTest {
 				RationalVector.fromIntList(List.of(4, 5, 6)));
 		Assert.assertTrue(matrix1Rows.get(0).equals(rows1.get(0)));
 		Assert.assertTrue(matrix1Rows.get(1).equals(rows1.get(1)));
-		/*
-		 * System.out.println(matrix1);
-		 * System.out.RationalMatrix.fromIntListout.println(rows1);
-		 */
 
 		final var matrix2 = RationalMatrix.fromIntList(List.of(1, 2, 3, 4, 5, 6), 3, 2);
 		final var matrix2Rows = matrix2.getRowVectors();
@@ -100,7 +96,7 @@ public class CongruenceUtilTest {
 		Assert.assertTrue(matrix3.equals(matrix4));
 
 		final List<RationalVector> rows5 = List.of();
-		final var matrix5 = RationalMatrix.fromRowVectors(rows5, 5);
+		final var matrix5 = RationalMatrix.fromRowVectors(rows5, 0);
 		Assert.assertEquals(matrix5.getColumnCount(), 0);
 		Assert.assertEquals(matrix5.getRowCount(), 0);
 	}

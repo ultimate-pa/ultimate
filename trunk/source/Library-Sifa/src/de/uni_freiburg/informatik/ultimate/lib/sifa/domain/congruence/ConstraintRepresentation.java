@@ -274,7 +274,7 @@ public class ConstraintRepresentation {
 		minimize();
 
 		final List<RationalVector> equalities = getEqualities();
-		final List<RationalVector> congruences = getCongruences();
+		final List<RationalVector> congruences = new ArrayList<>(getCongruences());
 		// Sorting the congruence's by last pivot is needed for the rest
 		congruences.sort((v1, v2) -> (CongruenceUtil.lastPivot(v1) < CongruenceUtil.lastPivot(v2)) ? 1 : -1);
 

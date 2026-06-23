@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.math3.fraction.BigFraction;
 import org.apache.commons.math3.fraction.BigFractionField;
@@ -99,8 +100,28 @@ public class RationalVector {
 	}
 
 	@Override
+	public int hashCode() {
+		return Objects.hash(mVector);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final RationalVector other = (RationalVector) obj;
+		return Objects.equals(mVector, other.mVector);
+	}
+
+	@Override
 	public String toString() {
-		return mVector.toString();
+		return asList().toString();
 	}
 
 }
