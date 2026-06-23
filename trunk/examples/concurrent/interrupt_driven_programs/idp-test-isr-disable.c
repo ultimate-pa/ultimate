@@ -33,7 +33,7 @@ int main(void)
     
     // Verification time grows drastically if the number of iterations is higher, e.g. 200. Then Ultimate does not find a counterexample even for "trivial"
     // errors such as "assert false"
-    while (n < 100) {
+    while (n < 500) {
         assert(!step_in_isr);
         n++;
         assert(!step_in_isr);

@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.BetterLockstepOrder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.IDPLockStepAlternating;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.LoopLockstepOrder.PredicateWithLastThread;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.PartialOrderReductionFacade;
@@ -372,6 +373,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		IDfsVisitor<L, IPredicate> visitor = new AcceptingRunSearchVisitor<>(this::isGoalState);
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
+		}
+
+		if (mPOR.getDfsOrder() instanceof IDPLockStepAlternating<?, ?>) {
+			visitor = ((IDPLockStepAlternating<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
 		}
 
 		if (PartialOrderReductionFacade.ENABLE_COVERING_OPTIMIZATION) {

@@ -115,10 +115,11 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 		return attributeName.equals("isr_label") && positionAttribute.equals(isrLabelPosition);
 	}
 
-	private static String getIsrId(final Label label) {
+	private static int getIsrId(final Label label) {
 		final var attributes = label.getAttributes();
 		final var isrIdString = attributes[2].getName();
-		return isrIdString;
+		final var isrIdInt = Integer.parseInt(isrIdString);
+		return isrIdInt;
 	}
 
 	private enum VisitorMode {

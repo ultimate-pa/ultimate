@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadE
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -97,7 +98,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	public static final boolean ENABLE_MULTI_PERSISTENT_SETS = true;
 
 	public enum OrderType {
-		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP, IDP_MAIN, IDP_ISR
+		BY_SERIAL_NUMBER, PSEUDO_LOCKSTEP, RANDOM, POSITIONAL_RANDOM, LOOP_LOCKSTEP, IDP_MAIN, IDP_ISR,
+		IDP_LOCKSTEP_ALTERNATING
 	}
 
 	private final IUltimateServiceProvider mServices;
@@ -218,8 +220,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 							.thenComparing(Comparator.comparing(x -> x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparingInt(Object::hashCode)));
 		}
-		case IDP_MAIN -> new IDPMainOrder<>();
-		case IDP_ISR -> new IDPIsrOrder<>();
+		case IDP_MAIN -> new IDPMainOrder<>(l -> l);
+		case IDP_ISR -> new IDPIsrOrder<>(l -> l);
+		case IDP_LOCKSTEP_ALTERNATING -> new IDPLockStepAlternating<>(mServices, this::normalizePredicate,
+				l -> InterruptAnnotations.getAnnotation(l));
 		case PSEUDO_LOCKSTEP -> new BetterLockstepOrder<>(this::normalizePredicate);
 		case RANDOM -> new RandomDfsOrder<>(randomOrderSeed, false);
 		case POSITIONAL_RANDOM -> new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);

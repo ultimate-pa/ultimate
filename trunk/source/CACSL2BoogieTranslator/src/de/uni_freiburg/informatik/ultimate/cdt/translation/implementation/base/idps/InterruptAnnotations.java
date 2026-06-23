@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 public class InterruptAnnotations extends ModernAnnotations {
 	private static final long serialVersionUID = 1L;
 	private final ISRLocation mIsrLocation;
-	private final Object mIsrId;
+	private final int mIsrId;
 
-	public InterruptAnnotations(final ISRLocation isrLocation, final Object isrId) {
+	public InterruptAnnotations(final ISRLocation isrLocation, final int isrId) {
 		mIsrLocation = isrLocation;
 		mIsrId = isrId;
 	}
@@ -49,7 +49,7 @@ public class InterruptAnnotations extends ModernAnnotations {
 				this);
 	}
 
-	public Object getIsrId() {
+	public int getIsrId() {
 		return mIsrId;
 	}
 
@@ -59,6 +59,22 @@ public class InterruptAnnotations extends ModernAnnotations {
 
 	public static InterruptAnnotations getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, InterruptAnnotations.class);
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder res = new StringBuilder("interrupt level: ");
+		switch (getIsrLocation()) {
+		case ENTRY:
+			res.append("entry");
+			break;
+		case ISR:
+			res.append("inner");
+		default:
+			break;
+		}
+		res.append(", interrupt id: ").append(getIsrId());
+		return res.toString();
 	}
 
 	@Override
