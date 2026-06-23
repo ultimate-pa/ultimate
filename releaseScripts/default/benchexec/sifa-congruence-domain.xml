@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="120" hardtimelimit="130" cpuCores="2">
+  <resultfiles></resultfiles>
+  <option name="--force-no-wrapper" />
+  <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
+  <option name="--preprocessor.replace.while.statements.and.if-then-else.statements">true</option>
+
+  <rundefinition name="SIFA-CON">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="--sifa.abstract.domain">"CongruenceDomain"</option>
+  </rundefinition>
+
+  <rundefinition name="SIFA-INT">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="--sifa.abstract.domain">"IntervalDomain"</option>
+  </rundefinition>
+
+  <rundefinition name="SIFA-CON+INT">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
+	<option name="--sifa.abstract.domain">"CompoundDomain"</option>
+	<option name="--sifa.compounddomain.intern.domains">"CongruenceDomain;IntervalDomain"</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan-CON">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+	<option name="--sifa.abstract.domain">"CongruenceDomain"</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan-INT">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+	<option name="--sifa.abstract.domain">"IntervalDomain"</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan-CON+INT">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+	<option name="--sifa.abstract.domain">"CompoundDomain"</option>
+	<option name="--sifa.compounddomain.intern.domains">"CongruenceDomain;IntervalDomain"</option>
+  </rundefinition>
+
+  <tasks name="ReachSafety">
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Arays.set</includesfile>
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/BitVectors.set</includesfile>
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/ControlFlow.set</includesfile>
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Heap.set</includesfile>
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Loops.set</includesfile>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+</benchmark>
