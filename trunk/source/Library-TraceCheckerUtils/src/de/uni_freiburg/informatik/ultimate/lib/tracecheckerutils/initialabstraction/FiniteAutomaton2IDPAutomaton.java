@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstrac
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
@@ -39,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -59,6 +62,7 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mFiniteAutomaton;
 	private final Function<S, IcfgLocation[]> mState2LocationsFunction;
+	private final Map<IElement, InterruptAnnotations> mInterruptAnnotations = new HashMap<>();
 
 	/**
 	 * Construct an IDP-DFA
@@ -104,10 +108,10 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 		final var stateIcfgLocations = List.of(mState2LocationsFunction.apply(state));
 		final var isrLocations = new ArrayList<IcfgLocation>(stateIcfgLocations.size());
 		for (final IcfgLocation icfgLocation : stateIcfgLocations) {
-			if (!InterruptAnnotations.hasAnnotation(icfgLocation)) {
+			final var annotation = getInterruptAnnotation(icfgLocation);
+			if (annotation == null) {
 				continue;
 			}
-			final var annotation = InterruptAnnotations.getAnnotation(icfgLocation);
 			if (annotation.getIsrLocation() == ISRLocation.ENTRY) {
 				// If the successor is an entry edge, the ISR is not active yet
 				continue;
@@ -123,6 +127,10 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 		// If one (and only one) ISR is active, the transition has to be part of this ISR, i.e. has to be a successor of
 		// the active ISR-location in the CFG
 		return transition.getLetter().getSource() == singleIsrLocation;
+	}
+
+	private InterruptAnnotations getInterruptAnnotation(final IElement element) {
+		return mInterruptAnnotations.computeIfAbsent(element, e -> InterruptAnnotations.getAnnotation(e));
 	}
 
 	@Override

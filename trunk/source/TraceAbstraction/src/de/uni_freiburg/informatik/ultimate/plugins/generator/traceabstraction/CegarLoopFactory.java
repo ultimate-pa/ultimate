@@ -182,10 +182,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				requireNoReuse("POR-based analysis");
 				requireNoWitnesses(witnessTransformer, "POR-based analysis");
 				if (mIndependenceProviderFactory == null) {
-					// mIndependenceProviderFactory =
-					// new IndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
 					mIndependenceProviderFactory =
-							new InterruptIndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory);
+							new InterruptIndependenceProviderFactory<>(mBaseServices, mPrefs, mCopyFactory, root);
 				}
 				final var initialAbstr = createPartialOrderAbstraction(services, predicateFactory,
 						stateFactoryForRefinement, root, errorLocs);

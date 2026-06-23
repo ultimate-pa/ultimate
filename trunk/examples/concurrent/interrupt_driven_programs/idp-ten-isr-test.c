@@ -6,6 +6,7 @@
 // Global state
 bool button_state = false;
 bool step_in_isr = false;
+int n = 0;
 
 // Shared Constants
 #define BTN_PRESSED true
@@ -26,7 +27,6 @@ int main(void)
     
     HAL_GPIO_Enable_All_Int();
 
-    int n = 0;
     while (1) {
         assert(!step_in_isr);
         n++;
@@ -39,11 +39,13 @@ int main(void)
 }
 
 void isr1_gpio(void) {
+    int old_n = n;
     step_in_isr = true;
     bool st = HAL_GPIO_Read(1);
     if (st == BTN_PRESSED) { HAL_GPIO_Write(10, ON); button_state = st; }
     else { HAL_GPIO_Write(10, OFF); button_state = st; }
     step_in_isr = false;
+    assert(old_n == n);
 }
 
 void HAL_GPIO_Enable_All_Int(void) { /* logic... */ }

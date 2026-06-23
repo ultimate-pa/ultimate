@@ -27,22 +27,26 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.Comparator;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
-public class IDPIsrOrder<L extends IIcfgTransition<?>, S> implements IDfsOrder<L, S> {
+public class IDPIsrOrder<L extends IAction, S> implements IDfsOrder<L, S> {
 
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
+	private final Function<L, IElement> mLetterToIE;
 
-	public IDPIsrOrder() {
+	public IDPIsrOrder(final Function<L, IElement> letterToIE) {
+		mLetterToIE = letterToIE;
 	}
 
 	@Override
 	public Comparator<L> getOrder(final S state) {
-		return new IDPIsrComparator<>(mDefaultComparator);
+		return new IDPIsrComparator<>(mDefaultComparator, mLetterToIE);
 	}
 
 	@Override
@@ -50,17 +54,19 @@ public class IDPIsrOrder<L extends IIcfgTransition<?>, S> implements IDfsOrder<L
 		return true;
 	}
 
-	public static final class IDPIsrComparator<L extends IIcfgTransition<?>> implements Comparator<L> {
+	public static final class IDPIsrComparator<L extends IAction> implements Comparator<L> {
 		private final Comparator<L> mFallback;
+		private final Function<L, IElement> mLetterToIElement;
 
-		public IDPIsrComparator(final Comparator<L> fallback) {
+		public IDPIsrComparator(final Comparator<L> fallback, final Function<L, IElement> letterToIE) {
 			mFallback = fallback;
+			mLetterToIElement = letterToIE;
 		}
 
 		@Override
 		public int compare(final L x, final L y) {
-			final var xBelongsToIsr = InterruptAnnotations.hasAnnotation(x);
-			final var yBelongsToIsr = InterruptAnnotations.hasAnnotation(y);
+			final var xBelongsToIsr = InterruptAnnotations.hasAnnotation(mLetterToIElement.apply(x));
+			final var yBelongsToIsr = InterruptAnnotations.hasAnnotation(mLetterToIElement.apply(y));
 
 			if (xBelongsToIsr && !yBelongsToIsr) {
 				return 1;
