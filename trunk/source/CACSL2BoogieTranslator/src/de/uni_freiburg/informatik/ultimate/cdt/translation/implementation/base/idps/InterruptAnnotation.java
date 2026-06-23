@@ -44,9 +44,8 @@ public class InterruptAnnotation extends ModernAnnotations {
 		mIsrId = isrId;
 	}
 
-	public InterruptAnnotation annotate(final IElement element) {
-		return (InterruptAnnotation) element.getPayload().getAnnotations().put(InterruptAnnotation.class.getName(),
-				this);
+	public void annotate(final IElement element) {
+		element.getPayload().getAnnotations().put(InterruptAnnotation.class.getName(), this);
 	}
 
 	public int getIsrId() {
