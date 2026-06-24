@@ -224,7 +224,7 @@ public class PEAMinimization {
 				}
 
 				if (destinationClass.size() > 1) {
-					mergedGuard = mergedGuard.and(destination.getStateInv());
+					mergedGuard = mergedGuard.and(destination.getStateInv().prime(mConstVars));
 				}
 
 				// skip if we already have a transition to destination
