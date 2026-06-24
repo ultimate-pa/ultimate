@@ -1,0 +1,44 @@
+package de.uni_freiburg.informatik.ultimate.civlizer.model;
+
+import de.uni_freiburg.informatik.ultimate.boogie.ast;
+import de.uni_freiburg.informatik.ultimate.boogie.type;
+
+CivlProgram ::= declarations : CivlDeclaration[];
+
+CivlDeclaration ::=
+	 {/**
+	   A thin wrapper around normal Boogie declarations that do not require a Civl-specific AST.
+	   Specifically, this is used for declarations of types, constants, global variables, axioms and functions.
+	   */
+	   BoogieDeclaration}
+		decl : de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration
+
+	| {YieldProcedure}
+        /* Note: Different from Boogie procedures, type parameters and general attributes are currently not supported */
+        disappearingLayer : int
+        identifier        : String
+        inParams          : ParameterDeclaration[]
+        outParams         : ParameterDeclaration[]
+        requires          : ?de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement[]
+        ensures           : ?de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement[]
+        body              : ?de.uni_freiburg.informatik.ultimate.boogie.ast.Body
+        refines           : ?AnonymousAction
+
+    | {YieldInvariant}
+        introductionLayer : int
+        identifier        : String
+        params            : ParameterDeclaration[]
+        preserves         : de.uni_freiburg.informatik.ultimate.boogie.ast.Expression[]
+        ;
+
+ParameterDeclaration ::=
+        identifier : String
+        type       : de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType
+        linearity  : Linearity { IN,OUT,INOUT,NONE }
+        ;
+
+AnonymousAction ::=
+        introductionLayer : int
+        disappearingLayer : int
+        body              : de.uni_freiburg.informatik.ultimate.boogie.ast.Body
+        ;

@@ -143,6 +143,8 @@ trunk/examples/witness-generation-validation/regression/**/*.yml
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ValidExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/WildcardExpression.java
 
+/trunk/source/Civlizer/src/de/uni_freiburg/informatik/ultimate/civlizer/model/*.java
+
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/GeneratedBoogieAstTransformer.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/GeneratedBoogieAstVisitor.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/AtomicStatement.java

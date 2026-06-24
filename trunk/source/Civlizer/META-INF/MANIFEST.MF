@@ -12,7 +12,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.boogie.parser,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- de.uni_freiburg.informatik.ultimate.lib.proofs
+ de.uni_freiburg.informatik.ultimate.lib.proofs,
+ de.uni_freiburg.informatik.ultimate.astbuilder
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.civlizer
 Bundle-RequiredExecutionEnvironment: JavaSE-21
