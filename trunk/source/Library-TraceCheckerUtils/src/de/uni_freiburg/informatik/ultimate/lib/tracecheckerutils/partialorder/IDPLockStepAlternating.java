@@ -113,16 +113,21 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 			assert !yHasIA || yIA.getIsrLocation() == ISRLocation.ENTRY;
 			Integer res = null;
 			if (mLastIA == null) {
+				// If state entry has no inter. annotation, prefer edges with annotation
 				res = Boolean.compare(yHasIA, xHasIA);
 			} else if (isEntryAnnotation(mLastIA)) {
+				// If state entry was an entry annotation prefer inner edges of the same interrupt
 				final var xIsISRsucc = isInnerAnnotation(xIA) && belongToSameInterrupt(xIA, mLastIA);
 				final var yIsISRsucc = isInnerAnnotation(yIA) && belongToSameInterrupt(yIA, mLastIA);
 				res = Boolean.compare(yIsISRsucc, xIsISRsucc);
 			} else if (isEntryAnnotation(xIA) || isEntryAnnotation(yIA)) {
+				// If state entry is an edge of an ISR that is not an entry and x/y is an entry edge of the same
+				// interrupt, prefer edges that are not interrupt entries of the same ISR
 				final var xIsISREntry = isEntryAnnotation(xIA) && belongToSameInterrupt(xIA, mLastIA);
 				final var yIsISREntry = isEntryAnnotation(yIA) && belongToSameInterrupt(yIA, mLastIA);
 				res = Boolean.compare(xIsISREntry, yIsISREntry);
 			} else {
+				// Prefer edge without interrupt annotation otherwise
 				res = Boolean.compare(xHasIA, yHasIA);
 			}
 			if (res != 0) {
