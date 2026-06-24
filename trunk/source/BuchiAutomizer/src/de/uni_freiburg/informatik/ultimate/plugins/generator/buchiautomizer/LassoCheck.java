@@ -83,6 +83,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadCurrentTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -347,12 +349,21 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			// state of the loop.
 			final Set<IcfgLocation> loopLocs = PredicateUtils.getLocations(loopStates.getFirst());
 			final Set<TransFormula> guards = new HashSet<>();
+
+			// TODO: after debugging is finished, skip rest of the loop once we find a guard with formula 'true'
 			for (final IcfgLocation threadLoc : loopLocs) {
 				if (loopThreads.contains(threadLoc.getProcedure())) {
 					continue;
 				}
 				for (final IcfgEdge edge : threadLoc.getOutgoingEdges()) {
-					guards.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
+					// we need to filter out join edges bc. their guard is always 'true'
+					if (edge instanceof IcfgJoinThreadOtherTransition
+							|| edge instanceof IcfgJoinThreadCurrentTransition) {
+						// to avoid the list of guards being empty
+						guards.add(TransFormulaUtils.negate(edge.getTransformula(), mManagedScript, mServices));
+					} else {
+						guards.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
+					}
 				}
 			}
 
@@ -360,14 +371,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final UnmodifiableTransFormula notGuardDisj = TransFormulaUtils
 					.negate(TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, null, false, true,
 							guards.toArray(UnmodifiableTransFormula[]::new)), mManagedScript, mServices);
-			// TODO: do sth separate if guard disj is true - then we can add whatever loop TS we want to the loop,
-			// no?
+
 			// For now, take sup. invariant false and constant ranking function f = 0
 			final boolean falseGuard = (SmtUtils.isFalseLiteral(notGuardDisj.getFormula()));
 			// TODO: do this properly
-			if (mBspm == null) {
-				mLogger.warn("Why is bspm null here?");
-			}
 			if (falseGuard && mBspm.equals(null)) {
 				final TerminationArgument constArg = constructTrivialTerminationArgument();
 				// TODO: figure out why mBspm is null here

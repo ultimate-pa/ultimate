@@ -31,7 +31,7 @@ modifies x;
 procedure t2()
 modifies x;
 {
-	x := -1;
+	x := -2;
 }
 
 
