@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadE
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -223,7 +223,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case IDP_MAIN -> new IDPMainOrder<>(l -> l);
 		case IDP_ISR -> new IDPIsrOrder<>(l -> l);
 		case IDP_LOCKSTEP_ALTERNATING -> new IDPLockStepAlternating<>(mServices, this::normalizePredicate,
-				l -> InterruptAnnotations.getAnnotation(l));
+				l -> InterruptAnnotation.getAnnotation(l));
 		case PSEUDO_LOCKSTEP -> new BetterLockstepOrder<>(this::normalizePredicate);
 		case RANDOM -> new RandomDfsOrder<>(randomOrderSeed, false);
 		case POSITIONAL_RANDOM -> new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
