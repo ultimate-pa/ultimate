@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -374,7 +375,7 @@ public class IcfgBacktranslator extends
 			// we assume that all other edges are "virtual" edges (i.e., root edges).
 			// a root edge is either a goto or null, i.e., we separate the rcfg
 			final BoogieIcfgLocation pp = (BoogieIcfgLocation) oldEdge.getTarget();
-			if (!pp.getProcedure().equals("ULTIMATE.start")) {
+			if (!pp.getProcedure().equals(BoogieUtils.START_PROCEDURE)) {
 				mLogger.info("Ignoring RootEdge to procedure " + pp.getProcedure());
 				return null;
 			}

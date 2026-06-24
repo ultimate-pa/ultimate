@@ -89,9 +89,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		ONLY_ONE_CEGAR, ONE_CEGAR_PER_THREAD_INSTANCE, ONE_CEGAR_PER_ERROR_LOCATION,
 	}
 
-	public static final String ULTIMATE_INIT = "ULTIMATE.init";
-	public static final String ULTIMATE_START = "ULTIMATE.start";
-
 	private static final long MILLISECONDS_PER_SECOND = 1000L;
 
 	private final ILogger mLogger;
