@@ -37,8 +37,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -62,7 +62,7 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 	// Store the dependences for pairs where at least one is part of an ISR
 	private final Map<Pair<Set<L>, Set<L>>, Dependence> mIsrDependenceCache;
 	private final Map<IElement, Boolean> mHasInterruptAnnotation = new HashMap<>();
-	private final Map<IElement, InterruptAnnotations> mInterruptAnnotation = new HashMap<>();
+	private final Map<IElement, InterruptAnnotation> mInterruptAnnotation = new HashMap<>();
 	private final Map<String, Set<L>> mProcNameToIsrEntries = new HashMap<>();
 
 	private final IIcfg<?> mIcfg;
@@ -199,11 +199,11 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 
 	private boolean hasInterruptAnnotation(final IElement element) {
 		return mHasInterruptAnnotation.computeIfAbsent(element,
-				e -> mInterruptAnnotation.computeIfAbsent(e, e1 -> InterruptAnnotations.getAnnotation(e1)) != null);
+				e -> mInterruptAnnotation.computeIfAbsent(e, e1 -> InterruptAnnotation.getAnnotation(e1)) != null);
 	}
 
-	private InterruptAnnotations getInterruptAnnotation(final IElement element) {
-		return mInterruptAnnotation.computeIfAbsent(element, e -> InterruptAnnotations.getAnnotation(e));
+	private InterruptAnnotation getInterruptAnnotation(final IElement element) {
+		return mInterruptAnnotation.computeIfAbsent(element, e -> InterruptAnnotation.getAnnotation(e));
 	}
 
 	@Override

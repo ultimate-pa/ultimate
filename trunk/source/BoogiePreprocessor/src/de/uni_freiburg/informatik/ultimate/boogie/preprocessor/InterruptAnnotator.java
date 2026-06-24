@@ -32,14 +32,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 
 /**
- * Visit all procedures of a Boogie unit and add interrupt annotations (see {@link InterruptAnnotations}) to all
+ * Visit all procedures of a Boogie unit and add interrupt annotations (see {@link InterruptAnnotation}) to all
  * statements between two enclosing labels that mark an ISR.
  */
 public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObserver {
@@ -84,7 +84,7 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 				assert !isISRLabel(statement, "exit");
 				return;
 			}
-			final var newInterruptAnno = new InterruptAnnotations(ISRLocation.ISR, getIsrId(statement));
+			final var newInterruptAnno = new InterruptAnnotation(ISRLocation.ISR, getIsrId(statement));
 			mContext = new VisitorContext(VisitorMode.ISR_INNER, newInterruptAnno);
 		} else {
 			if (!isISRLabel(statement, "exit")) {
@@ -99,7 +99,7 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 	private void addAnnotationIfInContext(final Statement statement) {
 		if (mContext.visitorMode == VisitorMode.NORMAL) {
 			return;
-		} else if (InterruptAnnotations.hasAnnotation(statement)) {
+		} else if (InterruptAnnotation.hasAnnotation(statement)) {
 			return;
 		}
 		mContext.currentAnnotation.annotate(statement);
@@ -130,7 +130,7 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 	 * Record that stores state information about the visitor. More precisely it stores whether the currently visited
 	 * node is part of an ISR and also the corresponding InterruptAnnotation
 	 */
-	private record VisitorContext(VisitorMode visitorMode, InterruptAnnotations currentAnnotation) {
+	private record VisitorContext(VisitorMode visitorMode, InterruptAnnotation currentAnnotation) {
 	}
 
 	@Override

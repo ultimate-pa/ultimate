@@ -34,18 +34,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 /**
  * Annotations for Boogie statements belonging to an interrupt-service-routine.
  */
-public class InterruptAnnotations extends ModernAnnotations {
+public class InterruptAnnotation extends ModernAnnotations {
 	private static final long serialVersionUID = 1L;
 	private final ISRLocation mIsrLocation;
 	private final int mIsrId;
 
-	public InterruptAnnotations(final ISRLocation isrLocation, final int isrId) {
+	public InterruptAnnotation(final ISRLocation isrLocation, final int isrId) {
 		mIsrLocation = isrLocation;
 		mIsrId = isrId;
 	}
 
-	public InterruptAnnotations annotate(final IElement element) {
-		return (InterruptAnnotations) element.getPayload().getAnnotations().put(InterruptAnnotations.class.getName(),
+	public InterruptAnnotation annotate(final IElement element) {
+		return (InterruptAnnotation) element.getPayload().getAnnotations().put(InterruptAnnotation.class.getName(),
 				this);
 	}
 
@@ -57,8 +57,8 @@ public class InterruptAnnotations extends ModernAnnotations {
 		return mIsrLocation;
 	}
 
-	public static InterruptAnnotations getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, InterruptAnnotations.class);
+	public static InterruptAnnotation getAnnotation(final IElement node) {
+		return ModelUtils.getAnnotation(node, InterruptAnnotation.class);
 	}
 
 	@Override
@@ -82,10 +82,10 @@ public class InterruptAnnotations extends ModernAnnotations {
 		if (other == this || other == null) {
 			return this;
 		}
-		if (!(other instanceof InterruptAnnotations)) {
+		if (!(other instanceof InterruptAnnotation)) {
 			return super.merge(other);
 		}
-		final InterruptAnnotations otherAnnotations = (InterruptAnnotations) other;
+		final InterruptAnnotation otherAnnotations = (InterruptAnnotation) other;
 		final var otherLoc = otherAnnotations.getIsrLocation();
 		final var otherId = otherAnnotations.getIsrId();
 		if (getIsrLocation().equals(otherLoc) && getIsrId() == otherId) {
@@ -96,7 +96,7 @@ public class InterruptAnnotations extends ModernAnnotations {
 	}
 
 	public static boolean hasAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, InterruptAnnotations.class) != null;
+		return ModelUtils.getAnnotation(node, InterruptAnnotation.class) != null;
 	}
 
 	public enum ISRLocation {

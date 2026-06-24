@@ -30,7 +30,7 @@ import java.util.Comparator;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
@@ -65,8 +65,8 @@ public class IDPIsrOrder<L extends IAction, S> implements IDfsOrder<L, S> {
 
 		@Override
 		public int compare(final L x, final L y) {
-			final var xBelongsToIsr = InterruptAnnotations.hasAnnotation(mLetterToIElement.apply(x));
-			final var yBelongsToIsr = InterruptAnnotations.hasAnnotation(mLetterToIElement.apply(y));
+			final var xBelongsToIsr = InterruptAnnotation.hasAnnotation(mLetterToIElement.apply(x));
+			final var yBelongsToIsr = InterruptAnnotation.hasAnnotation(mLetterToIElement.apply(y));
 
 			if (xBelongsToIsr && !yBelongsToIsr) {
 				return 1;

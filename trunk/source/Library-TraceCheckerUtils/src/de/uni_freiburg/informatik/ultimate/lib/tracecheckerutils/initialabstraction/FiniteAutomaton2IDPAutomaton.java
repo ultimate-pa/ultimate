@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -62,7 +62,7 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mFiniteAutomaton;
 	private final Function<S, IcfgLocation[]> mState2LocationsFunction;
-	private final Map<IElement, InterruptAnnotations> mInterruptAnnotations = new HashMap<>();
+	private final Map<IElement, InterruptAnnotation> mInterruptAnnotations = new HashMap<>();
 
 	/**
 	 * Construct an IDP-DFA
@@ -129,8 +129,8 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 		return transition.getLetter().getSource() == singleIsrLocation;
 	}
 
-	private InterruptAnnotations getInterruptAnnotation(final IElement element) {
-		return mInterruptAnnotations.computeIfAbsent(element, e -> InterruptAnnotations.getAnnotation(e));
+	private InterruptAnnotation getInterruptAnnotation(final IElement element) {
+		return mInterruptAnnotations.computeIfAbsent(element, e -> InterruptAnnotation.getAnnotation(e));
 	}
 
 	@Override

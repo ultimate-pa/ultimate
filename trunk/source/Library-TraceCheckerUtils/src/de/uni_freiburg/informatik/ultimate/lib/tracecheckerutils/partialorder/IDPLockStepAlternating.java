@@ -35,8 +35,8 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotations.ISRLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L, S> {
 	private final Map<Object, L> mEntryEdge = new HashMap<>();
 	private final Function<S, Object> mNormalizer;
-	private final Function<L, InterruptAnnotations> mLetterToInterruptAnno;
+	private final Function<L, InterruptAnnotation> mLetterToInterruptAnno;
 
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
@@ -52,7 +52,7 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 	private final ILogger mLogger;
 
 	public IDPLockStepAlternating(final IUltimateServiceProvider services, final Function<S, Object> normalizer,
-			final Function<L, InterruptAnnotations> letterToIA) {
+			final Function<L, InterruptAnnotation> letterToIA) {
 		mNormalizer = normalizer;
 		mLetterToInterruptAnno = letterToIA;
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -75,7 +75,7 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 		return mNormalizer.apply(state);
 	}
 
-	private InterruptAnnotations getLetterAnnotation(final L letter) {
+	private InterruptAnnotation getLetterAnnotation(final L letter) {
 		return mLetterToInterruptAnno.apply(letter);
 	}
 
@@ -89,13 +89,13 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 	}
 
 	public static final class IDPAlternatingComparator<L extends IAction> implements Comparator<L> {
-		private final InterruptAnnotations mLastIA;
+		private final InterruptAnnotation mLastIA;
 		private final Comparator<L> mFallback;
-		private final Function<L, InterruptAnnotations> mGetLetterIA;
+		private final Function<L, InterruptAnnotation> mGetLetterIA;
 		ILogger mLogger;
 
-		public IDPAlternatingComparator(final ILogger logger, final InterruptAnnotations lastIA,
-				final Comparator<L> fallback, final Function<L, InterruptAnnotations> getLetterIA) {
+		public IDPAlternatingComparator(final ILogger logger, final InterruptAnnotation lastIA,
+				final Comparator<L> fallback, final Function<L, InterruptAnnotation> getLetterIA) {
 			mLastIA = lastIA;
 			mFallback = fallback;
 			mGetLetterIA = getLetterIA;
@@ -142,15 +142,15 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 			return mFallback.compare(x, y);
 		}
 
-		private static boolean belongToSameInterrupt(final InterruptAnnotations iA1, final InterruptAnnotations iA2) {
+		private static boolean belongToSameInterrupt(final InterruptAnnotation iA1, final InterruptAnnotation iA2) {
 			return iA1.getIsrId() == iA2.getIsrId();
 		}
 
-		private static boolean isEntryAnnotation(final InterruptAnnotations interruptAnnotation) {
+		private static boolean isEntryAnnotation(final InterruptAnnotation interruptAnnotation) {
 			return interruptAnnotation != null && interruptAnnotation.getIsrLocation() == ISRLocation.ENTRY;
 		}
 
-		private static boolean isInnerAnnotation(final InterruptAnnotations interruptAnnotation) {
+		private static boolean isInnerAnnotation(final InterruptAnnotation interruptAnnotation) {
 			return interruptAnnotation != null && interruptAnnotation.getIsrLocation() == ISRLocation.ISR;
 		}
 
