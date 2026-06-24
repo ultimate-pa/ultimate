@@ -191,7 +191,8 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	@Override
 	public Iterable<OutgoingCallTransition<L, IPredicate>> callSuccessors(final IPredicate state, final L letter) {
 		// the wrapped automaton should not have any call transitions
-		assert !mWrappedAutomaton.callSuccessors(state, letter).iterator().hasNext() : "Illegal ";
+		assert !mWrappedAutomaton.callSuccessors(state, letter).iterator().hasNext()
+				: "Call transitions are not supported";
 		return mWrappedAutomaton.callSuccessors(state, letter);
 	}
 
@@ -205,7 +206,8 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(final IPredicate state,
 			final IPredicate hier, final L letter) {
 		// the wrapped automaton should not have any return transitions
-		assert !mWrappedAutomaton.returnSuccessors(state, hier, letter).iterator().hasNext() : "Illegal ";
+		assert !mWrappedAutomaton.returnSuccessors(state, hier, letter).iterator().hasNext()
+				: "Call return transitions are not supported";
 		return mWrappedAutomaton.returnSuccessors(state, hier, letter);
 	}
 

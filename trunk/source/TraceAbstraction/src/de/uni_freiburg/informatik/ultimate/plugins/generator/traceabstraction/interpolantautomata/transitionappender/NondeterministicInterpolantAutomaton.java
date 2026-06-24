@@ -166,7 +166,6 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 		}
 		for (final IPredicate succCand : mNonTrivialPredicates) {
 			if (!inputSuccs.contains(succCand)) {
-				// TODO: replace with known predicates for fairness
 				final Validity sat;
 				if (mFairMode) {
 					// in fair mode, call and return ts should not occur (not supported for concurrent programs
@@ -210,13 +209,19 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	 * Add all successors of input automaton. As an optimization, we omit the "true" state if it is a successor.
 	 * Additionally, we also add all successors of the "true" state.
 	 */
+	// TODO: disable this optimization for the fair mode
 	@Override
 	protected void addInputAutomatonSuccs(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		final Collection<IPredicate> succs = sch.getSuccsInterpolantAutomaton(resPred, resHier, letter);
-		copyAllButTrue(inputSuccs, succs);
-		final Collection<IPredicate> succsOfTrue = sch.getSuccsInterpolantAutomaton(mIaTrueState, resHier, letter);
-		copyAllButTrue(inputSuccs, succsOfTrue);
+		if (mFairMode) {
+			copyAll(inputSuccs, succs);
+		} else {
+			copyAllButTrue(inputSuccs, succs);
+			final Collection<IPredicate> succsOfTrue = sch.getSuccsInterpolantAutomaton(mIaTrueState, resHier, letter);
+			copyAllButTrue(inputSuccs, succsOfTrue);
+		}
+		// for concurrency, resHier should always be null, so no need for fairMode adaptations
 		if (resHier != null) {
 			final Collection<IPredicate> succsForResPredTrue =
 					sch.getSuccsInterpolantAutomaton(resPred, mIaTrueState, letter);
@@ -227,7 +232,6 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 		}
 	}
 
-	// TODO: Find out what this does for fairness
 	protected void copyAllButTrue(final Set<IPredicate> target, final Collection<IPredicate> source) {
 		for (final IPredicate pred : source) {
 			if (pred == mIaTrueState) {
@@ -236,6 +240,16 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 				target.add(pred);
 			}
 		}
+	}
+
+	/**
+	 * In fair mode use this instead of copyAllButTrue
+	 *
+	 * @param target
+	 * @param source
+	 */
+	protected void copyAll(final Set<IPredicate> target, final Collection<IPredicate> source) {
+		target.addAll(source);
 	}
 
 	// TODO: Find out what this does for fairness
