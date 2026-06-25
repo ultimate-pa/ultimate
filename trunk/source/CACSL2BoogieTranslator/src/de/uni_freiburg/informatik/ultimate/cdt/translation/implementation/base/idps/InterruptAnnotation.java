@@ -69,6 +69,7 @@ public class InterruptAnnotation extends ModernAnnotations {
 			break;
 		case ISR:
 			res.append("inner");
+			break;
 		default:
 			break;
 		}
@@ -89,9 +90,12 @@ public class InterruptAnnotation extends ModernAnnotations {
 		final var otherId = otherAnnotations.getIsrId();
 		if (getIsrLocation().equals(otherLoc) && getIsrId() == otherId) {
 			return other;
+		} else if (getIsrLocation() == ISRLocation.ENTRY) {
+			return this;
 		}
 		assert otherId == getIsrId();
-		return this;
+		assert otherLoc == ISRLocation.ENTRY;
+		return other;
 	}
 
 	public static boolean hasAnnotation(final IElement node) {
