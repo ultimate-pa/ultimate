@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -199,11 +201,11 @@ public final class BitvectorUtils {
 			result = new Bvand().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvor:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvor(x, y))
+			result = new NaryBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvor(x, y))
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvxor:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvxor(x, y))
+			result = new NaryBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvxor(x, y))
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvnot:
@@ -275,7 +277,8 @@ public final class BitvectorUtils {
 			}
 			assert (getNumberOfIndices() == 0 && indices == null || getNumberOfIndices() == indices.length)
 					: "Wrong number of indices:" + Arrays.toString(indices);
-			if (getNumberOfParams() != params.length) {
+			// accept more than two params
+			if (getNumberOfParams() != -1 && getNumberOfParams() != params.length) {
 				throw new AssertionError(String.format("%s: params expected %s, params provided %s", funcname,
 						getNumberOfParams(), params.length));
 			}
@@ -522,6 +525,171 @@ public final class BitvectorUtils {
 		}
 	}
 
+	private static class NaryBitvectorOperation_BitvectorResult extends BitvectorOperation {
+
+		private final String mName;
+		private final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> mConstantSimplification;
+
+		public NaryBitvectorOperation_BitvectorResult(final String name,
+				final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> function) {
+			mName = name;
+			mConstantSimplification = function;
+		}
+
+		@Override
+		public String getFunctionName() {
+			return mName;
+		}
+
+		@Override
+		public boolean isCommutative() {
+			return true; // AND, OR und XOR are all commutative!
+		}
+
+		@Override
+		public int getNumberOfIndices() {
+			return 0;
+		}
+
+		@Override
+		public int getNumberOfParams() {
+			return -1; // for accepting more than two params
+		}
+
+		@Override
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
+			// calculate all literals together
+			BitvectorConstant result = bvs[0];
+			for (int i = 1; i < bvs.length; i++) {
+				result = mConstantSimplification.apply(result).apply(bvs[i]);
+			}
+			return constructTerm(script, result);
+		}
+
+		@Override
+		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
+				final BitvectorConstant[] bvs) {
+
+			// 1. Flattening
+			final List<Term> flatArgs = new ArrayList<>();
+			for (final Term p : params) {
+				final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(p, getFunctionName());
+				if (appTerm != null) {
+					flatArgs.addAll(Arrays.asList(appTerm.getParameters()));
+				} else {
+					flatArgs.add(p);
+				}
+			}
+
+			// 2. Split and Sort
+			// Constante --> Literal, Variable --> Non-Literal
+			final List<BitvectorConstant> constants = new ArrayList<>();
+			final List<Term> variables = new ArrayList<>();
+
+			for (final Term t : flatArgs) {
+				final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(t);
+				if (bc != null) {
+					constants.add(bc);
+				} else {
+					variables.add(t);
+				}
+			}
+			final Term[] sortedVariables = CommuhashUtils.sortByHashCode(variables.toArray(new Term[0]));
+
+			// 3. Constant Folding
+			BitvectorConstant mergedConstant = null;
+			if (!constants.isEmpty()) {
+				mergedConstant = constants.get(0);
+				for (int i = 1; i < constants.size(); i++) {
+					mergedConstant = mConstantSimplification.apply(mergedConstant).apply(constants.get(i));
+				}
+			}
+
+			// 4. Duplicate Elimination --> stattdessen mit einem Hashset arbeiten --> dann müssen die unique sein
+			final List<Term> uniqueVariables = removeDuplicates(sortedVariables, getFunctionName());
+
+			// 5. Absorption & Annihilation
+			if (mergedConstant != null) {
+				final BigInteger value = mergedConstant.getValue();
+
+				// Extract bit width and calculate the "all ones" value (2^n - 1)
+				// schauen gibts sowas schon --> allOnes
+				final int bitWidth = Integer.parseInt(mergedConstant.getStringIndex());
+				final BigInteger allOnes = BigInteger.valueOf(2).pow(bitWidth).subtract(BigInteger.ONE);
+
+				if (value.equals(BigInteger.ZERO)) {
+					if (getFunctionName().equals("bvand")) {
+						// Annihilation: X AND 0 = 0. Ignore rest of formula.
+						return constructTerm(script, mergedConstant);
+					} else if (getFunctionName().equals("bvor") || getFunctionName().equals("bvxor")) {
+						// Absorption: X OR 0 = X, X XOR 0 = X. The 0 drops out.
+						mergedConstant = null;
+					}
+				} else if (value.equals(allOnes)) {
+					if (getFunctionName().equals("bvor")) {
+						// Annihilation: X OR 1111 = 1111
+						return constructTerm(script, mergedConstant);
+					} else if (getFunctionName().equals("bvand")) {
+						// Absorption: X AND 1111 = X
+						mergedConstant = null;
+					}
+				}
+			}
+
+			// 6. final construction
+			final List<Term> finalArgs = new ArrayList<>();
+			if (mergedConstant != null) {
+				finalArgs.add(constructTerm(script, mergedConstant));
+			}
+			finalArgs.addAll(uniqueVariables);
+
+			// handle edge cases
+			if (finalArgs.isEmpty()) {
+				// If everything is gone, 0 remains. We get the sort (type) from the very first parameter.
+				// Fall prüfen kann sein dass das gar nicht eintreten kann
+				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, params[0].getSort());
+			} else if (finalArgs.size() == 1) {
+				// If only one element remains, we don't need an operator anymore (e.g., "AND(V1)" becomes "V1")
+				return finalArgs.get(0);
+			} else {
+				// Normal case: assemble the list back into an operator node
+				// vielleicht die neue verwenden
+				return SmtUtils.oldAPITerm(script, getFunctionName(), indices, null, finalArgs.toArray(new Term[0]));
+			}
+		}
+
+		private static List<Term> removeDuplicates(final Term[] sortedVariables, final String operatorName) {
+			final List<Term> uniqueVariables = new ArrayList<>();
+
+			int i = 0;
+			while (i < sortedVariables.length) {
+				final Term current = sortedVariables[i];
+				int count = 1;
+
+				// count identical neighbors
+				while (i + 1 < sortedVariables.length && current.equals(sortedVariables[i + 1])) {
+					count++;
+					i++;
+				}
+
+				if (operatorName.equals("bvxor")) {
+					if (count % 2 != 0) {
+						// Nilpotenz
+						uniqueVariables.add(current);
+					}
+				} else {
+					// Idempotenz
+					uniqueVariables.add(current);
+				}
+
+				i++;
+			}
+
+			return uniqueVariables;
+		}
+	}
+
 	private static class RegularBitvectorOperation_BooleanResult extends RegularBitvectorOperation {
 
 		private final String mName;
@@ -608,7 +776,8 @@ public final class BitvectorUtils {
 
 	}
 
-	private static class Bvand extends RegularBitvectorOperation_BitvectorResult {
+	private static class Bvand extends NaryBitvectorOperation_BitvectorResult { // now extends new
+																				// NaryBitvectorOperation
 
 		public Bvand() {
 			super("bvand", x -> y -> BitvectorConstant.bvand(x, y));

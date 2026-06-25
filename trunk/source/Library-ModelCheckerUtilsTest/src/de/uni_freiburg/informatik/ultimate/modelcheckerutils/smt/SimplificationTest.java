@@ -1280,6 +1280,110 @@ public class SimplificationTest {
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void bvaddAbsorption() { // Testing new class allowing multiple elements
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvand (_ bv2 8) x (_ bv1 8))";
+		final String simplified = "(_ bv0 8)";
+
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
+	// Dave Tests:
+	@Test
+	public void bvandFlatteningOnlyVariables() {
+		// (let ((x ...)) ...) deklariert die Variablen direkt im SMT-LIB-String!
+		final String formulaAsString =
+				"(let ((x (_ bv0 8)) (y (_ bv0 8)) (z (_ bv0 8))) (bvand x (bvand y (bvand y z))))";
+		final String expected = "(let ((x (_ bv0 8)) (y (_ bv0 8)) (z (_ bv0 8))) (bvand x y z))";
+
+		runSimplificationTest(new de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl[0], formulaAsString,
+				expected, SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvandIdentityElimination() {
+		// Wir deklarieren x direkt im String und prüfen, ob (x AND 255) zu x wird
+		final String formulaAsString = "(let ((x (_ bv0 8))) (bvand x (_ bv255 8)))";
+		final String expected = "(let ((x (_ bv0 8))) x)";
+
+		runSimplificationTest(new de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl[0], formulaAsString,
+				expected, SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvorAbsorptionMax() {
+		// Testet die Absorption bei OR: (x OR 255) -> 255
+		// Für einen 8-Bit-Vektor ist 255 (0xFF, also nur Einsen) das absorbierende Element.
+		final String formulaAsString = "(let ((x (_ bv0 8))) (bvor x (_ bv255 8)))";
+		final String expected = "(let ((x (_ bv0 8))) (_ bv255 8))";
+
+		runSimplificationTest(new de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl[0], formulaAsString,
+				expected, SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvxorFlattening() {
+		// Testet, ob geschachtelte XOR-Operationen flachgeklopft werden: (x XOR (y XOR z)) -> x XOR y XOR z
+		final String formulaAsString = "(let ((x (_ bv0 8)) (y (_ bv0 8)) (z (_ bv0 8))) (bvxor x (bvxor y z)))";
+		final String expected = "(let ((x (_ bv0 8)) (y (_ bv0 8)) (z (_ bv0 8))) (bvxor x y z))";
+
+		runSimplificationTest(new de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl[0], formulaAsString,
+				expected, SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvorIdentityZero() {
+		// Testet das neutrale Element bei OR: (x OR 0) -> x
+		// Die Null muss komplett aus der Operation verschwinden.
+		final String formulaAsString = "(let ((x (_ bv5 8))) (bvor x (_ bv0 8)))";
+		final String expected = "(_ bv5 8)"; // Oder "x", falls x als Variable übrig bleibt
+
+		runSimplificationTest(new de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl[0], formulaAsString,
+				expected, SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvxorLiteralEvaluation() {
+		// Testet die Vorauswertung von Literalen bei XOR: (12 XOR x XOR 3) -> (15 XOR x)
+		// Da 12 (1100) XOR 3 (0011) = 15 (1111)
+		final String formulaAsString = "(let ((x (_ bv0 8))) (bvxor (_ bv12 8) x (_ bv3 8)))";
+		final String expected = "(let ((x (_ bv0 8))) (bvxor (_ bv15 8) x))";
+
+		runSimplificationTest(new de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl[0], formulaAsString,
+				expected, SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvxorIdentityZero() {
+		// Testet, dass die 0 bei XOR verschwindet: (x XOR 0) -> x
+		final String formulaAsString = "(let ((x (_ bv7 8))) (bvxor x (_ bv0 8)))";
+		final String expected = "(_ bv7 8)";
+
+		runSimplificationTest(new de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl[0], formulaAsString,
+				expected, SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvxorLiteralEvaluationWithVariable() {
+		// 1. Wir holen uns das zugrundeliegende Skript
+		final de.uni_freiburg.informatik.ultimate.logic.Script script = mMgdScript.getScript();
+
+		// 2. Wir deklarieren x als globalen 8-Bit-Bitvektor direkt im SMT-Kontext
+		final de.uni_freiburg.informatik.ultimate.logic.Sort bvSort = script.sort("BitVec", new String[] { "8" });
+		script.declareFun("x", new de.uni_freiburg.informatik.ultimate.logic.Sort[0], bvSort);
+
+		// 3. Die verschachtelte Testformel: (12 XOR (x XOR 3))
+		final String formulaAsString = "(bvxor (_ bv12 8) (bvxor x (_ bv3 8)))";
+		final String expected = "(bvxor (_ bv15 8) x)";
+
+		// 4. Wir übergeben ein leeres Array für FunDecl, da x bereits deklariert ist!
+		runSimplificationTest(new de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl[0], formulaAsString,
+				expected, SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	// -----
+
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final SimplificationTechnique simplificationTechnique,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
