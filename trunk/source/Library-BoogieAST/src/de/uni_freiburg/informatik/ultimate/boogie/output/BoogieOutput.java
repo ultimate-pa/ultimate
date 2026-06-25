@@ -2,7 +2,9 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2018 Lars Nitzke (lars.nitzke@outlook.com)
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * Copyright (C) 2026 Dominik Klumpp (klumpp@lix.polytechnique.fr)
  * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2026 École Polytechnique
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -26,12 +28,10 @@
  * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Boogie printer observer.
- */
 package de.uni_freiburg.informatik.ultimate.boogie.output;
 
 import java.io.PrintWriter;
+import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -96,16 +96,28 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 
 /**
+ * Writes pretty-printed representations of Boogie AST nodes to an output stream.
+ *
  * @author hoenicke
+ * @author Dominik Klumpp (klumpp@lix.polytechnique.fr)
  */
-public class BoogieOutput {
+public class BoogieOutput implements AutoCloseable {
+	protected static final int PRECEDENCE_IFF = 0;
+	protected static final int PRECEDENCE_IMPLIES = 1;
+	protected static final int PRECEDENCE_LOGICAL_OR = 3;
+	protected static final int PRECEDENCE_LOGICAL_AND = 4;
+	protected static final int PRECEDENCE_COMPARISON = 5;
+	protected static final int PRECEDENCE_BITVEC_CONCAT = 6;
+	protected static final int PRECEDENCE_ADDITION = 7;
+	protected static final int PRECEDENCE_MULTIPLICATION = 8;
+	protected static final int PRECEDENCE_UNARY_MINUS_NEGATION = 9;
+	protected static final int PRECEDENCE_ACCESS = 10;
+	protected static final int PRECEDENCE_OLD = 11;
 
-	private static final String LINEBREAK = System.getProperty("line.separator");
+	protected static final int PRECEDENCE_TYPE_NAMED = 0;
+	protected static final int PRECEDENCE_TYPE_STRUCT_ARRAY = 1;
 
-	/**
-	 * The file writer.
-	 */
-	PrintWriter mWriter;
+	protected final PrintWriter mWriter;
 
 	public BoogieOutput(final PrintWriter output) {
 		mWriter = output;
@@ -113,256 +125,150 @@ public class BoogieOutput {
 
 	public void printBoogieProgram(final Unit unit) {
 		for (final Declaration d : unit.getDeclarations()) {
-			if (d instanceof TypeDeclaration) {
-				printTypeDeclaration((TypeDeclaration) d);
-			} else if (d instanceof ConstDeclaration) {
-				printConstDeclaration((ConstDeclaration) d);
-			} else if (d instanceof VariableDeclaration) {
-				printVarDeclaration((VariableDeclaration) d, "");
-			} else if (d instanceof FunctionDeclaration) {
-				printFunctionDeclaration((FunctionDeclaration) d);
-			} else if (d instanceof Axiom) {
-				printAxiom((Axiom) d);
-			} else if (d instanceof Procedure) {
-				printProcedure((Procedure) d);
+			switch (d) {
+			case final Axiom a -> printAxiom(a);
+			case final ConstDeclaration c -> printConstDeclaration(c);
+			case final FunctionDeclaration f -> printFunctionDeclaration(f);
+			case final Procedure p -> printProcedure(p);
+			case final TypeDeclaration t -> printTypeDeclaration(t);
+			case final VariableDeclaration v -> printVariableDeclaration(v);
 			}
 		}
 	}
 
+	public void printExpression(final Expression expr) {
+		printExpression(expr, 0);
+	}
+
 	/**
-	 * Append a given expression.
+	 * Print a given expression.
 	 *
-	 * @param sb
-	 *            the StringBUilder to append to.
 	 * @param expr
 	 *            the expression to print.
 	 * @param precedence
-	 *            the precedence of the surrounding operator. 0: if and only if 1: implies 3: logical or 4: logical and
-	 *            5: comparison 6: bitvec concat 7: addition 8: multiplication 9: unary minus/logical not 10:
-	 *            struct/array/bitvector access 11: old
+	 *            the precedence of the surrounding operator (see the {@code PRECEDENCE_*} constants defined above).
 	 */
-	private void appendExpression(final StringBuilder sb, final Expression expr, int precedence) {
-		if (expr instanceof BinaryExpression) {
-			final BinaryExpression binexpr = (BinaryExpression) expr;
-			int opPrec, lPrec, rPrec;
-			String op;
+	protected void printExpression(final Expression expr, int precedence) {
+		switch (expr) {
+		case final BinaryExpression binexpr -> {
+			final String op = getOperatorString(binexpr.getOperator());
+			final int opPrec = getOperatorPrecedence(binexpr.getOperator());
+			final int lPrec, rPrec;
 			switch (binexpr.getOperator()) {
-			case LOGICIFF:
-				op = " <==> ";
-				opPrec = 0;
-				lPrec = 1;
-				rPrec = 0;
+			case LOGICIFF, LOGICIMPLIES:
+				lPrec = opPrec + 1;
+				rPrec = opPrec;
 				break;
-			case LOGICIMPLIES:
-				op = " ==> ";
-				opPrec = 1;
-				lPrec = 2;
-				rPrec = 1;
+			case BITVECCONCAT, ARITHPLUS, ARITHMINUS, ARITHMUL, ARITHDIV, ARITHMOD:
+				lPrec = opPrec;
+				rPrec = opPrec + 1;
 				break;
+			case COMPEQ, COMPNEQ, COMPLT, COMPLEQ, COMPGT, COMPGEQ, COMPPO:
+				lPrec = opPrec + 1;
+				rPrec = opPrec + 1;
+				break;
+
 			case LOGICOR:
-				op = " || ";
-				opPrec = 3;
-				lPrec = 5;
-				rPrec = 3;
+				lPrec = PRECEDENCE_LOGICAL_AND + 1;
+				rPrec = opPrec;
 				break;
 			case LOGICAND:
-				if (precedence == 3) {
-					precedence = 5;
+				if (precedence == PRECEDENCE_LOGICAL_OR) {
+					precedence = opPrec + 1;
 				}
-				op = " && ";
-				opPrec = 4;
-				lPrec = 5;
-				rPrec = 4;
-				break;
-			case COMPEQ:
-				op = " == ";
-				opPrec = 5;
-				lPrec = 6;
-				rPrec = 6;
-				break;
-			case COMPNEQ:
-				op = " != ";
-				opPrec = 5;
-				lPrec = 6;
-				rPrec = 6;
-				break;
-			case COMPLT:
-				op = " < ";
-				opPrec = 5;
-				lPrec = 6;
-				rPrec = 6;
-				break;
-			case COMPLEQ:
-				op = " <= ";
-				opPrec = 5;
-				lPrec = 6;
-				rPrec = 6;
-				break;
-			case COMPGT:
-				op = " > ";
-				opPrec = 5;
-				lPrec = 6;
-				rPrec = 6;
-				break;
-			case COMPGEQ:
-				op = " >= ";
-				opPrec = 5;
-				lPrec = 6;
-				rPrec = 6;
-				break;
-			case COMPPO:
-				op = " <: ";
-				opPrec = 5;
-				lPrec = 6;
-				rPrec = 6;
-				break;
-			case BITVECCONCAT:
-				op = " ++ ";
-				opPrec = 6;
-				lPrec = 6;
-				rPrec = 7;
-				break;
-			case ARITHPLUS:
-				op = " + ";
-				opPrec = 7;
-				lPrec = 7;
-				rPrec = 8;
-				break;
-			case ARITHMINUS:
-				op = " - ";
-				opPrec = 7;
-				lPrec = 7;
-				rPrec = 8;
-				break;
-			case ARITHMUL:
-				op = " * ";
-				opPrec = 8;
-				lPrec = 8;
-				rPrec = 9;
-				break;
-			case ARITHDIV:
-				op = " / ";
-				opPrec = 8;
-				lPrec = 8;
-				rPrec = 9;
-				break;
-			case ARITHMOD:
-				op = " % ";
-				opPrec = 8;
-				lPrec = 8;
-				rPrec = 9;
+				lPrec = opPrec + 1;
+				rPrec = opPrec;
 				break;
 			default:
 				throw new IllegalArgumentException(expr.toString());
 			}
 			if (precedence > opPrec) {
-				sb.append("(");
+				mWriter.print("(");
 			}
-			appendExpression(sb, binexpr.getLeft(), lPrec);
-			sb.append(op);
-			appendExpression(sb, binexpr.getRight(), rPrec);
+			printExpression(binexpr.getLeft(), lPrec);
+			mWriter.print(op);
+			printExpression(binexpr.getRight(), rPrec);
 			if (precedence > opPrec) {
-				sb.append(")");
+				mWriter.print(")");
 			}
-		} else if (expr instanceof UnaryExpression) {
-			final UnaryExpression unexpr = (UnaryExpression) expr;
-			String op;
-			int opPrec;
-			switch (unexpr.getOperator()) {
-			case ARITHNEGATIVE:
-				op = "-";
-				opPrec = 9;
-				break;
-			case LOGICNEG:
-				op = "!";
-				opPrec = 9;
-				break;
-			case OLD:
-				op = "old";
-				opPrec = 11;
-				break;
-			default:
-				throw new IllegalArgumentException(expr.toString());
-			}
+		}
+		case final UnaryExpression unexpr -> {
+			final String op = getOperatorString(unexpr.getOperator());
+			final int opPrec = getOperatorPrecedence(unexpr.getOperator());
 			if (precedence > opPrec) {
-				sb.append("(");
+				mWriter.print("(");
 			}
-			sb.append(op);
-			if (op == "old") {
-				sb.append("(");
-				appendExpression(sb, unexpr.getExpr(), 0);
-				sb.append(")");
+			mWriter.print(op);
+			if (unexpr.getOperator() == UnaryExpression.Operator.OLD) {
+				mWriter.print("(");
+				printExpression(unexpr.getExpr());
+				mWriter.print(")");
 			} else {
-				appendExpression(sb, unexpr.getExpr(), opPrec);
+				printExpression(unexpr.getExpr(), opPrec);
 			}
 			if (precedence > opPrec) {
-				sb.append(")");
+				mWriter.print(")");
 			}
-		} else if (expr instanceof BitVectorAccessExpression) {
-			final BitVectorAccessExpression bvexpr = (BitVectorAccessExpression) expr;
-			if (precedence > 10) {
-				sb.append("(");
+		}
+		case final BitVectorAccessExpression bvexpr -> {
+			if (precedence > PRECEDENCE_ACCESS) {
+				mWriter.print("(");
 			}
-			appendExpression(sb, bvexpr.getBitvec(), 10);
-			sb.append("[").append(bvexpr.getEnd()).append(":");
-			sb.append(bvexpr.getStart()).append("]");
-			if (precedence > 10) {
-				sb.append(")");
+			printExpression(bvexpr.getBitvec(), PRECEDENCE_ACCESS);
+			mWriter.print("[");
+			mWriter.print(bvexpr.getEnd());
+			mWriter.print(":");
+			mWriter.print(bvexpr.getStart());
+			mWriter.print("]");
+			if (precedence > PRECEDENCE_ACCESS) {
+				mWriter.print(")");
 			}
-		} else if (expr instanceof StructAccessExpression) {
-			final StructAccessExpression strexpr = (StructAccessExpression) expr;
-			if (precedence > 10) {
-				sb.append("(");
+		}
+		case final StructAccessExpression strexpr -> {
+			if (precedence > PRECEDENCE_ACCESS) {
+				mWriter.print("(");
 			}
-			appendExpression(sb, strexpr.getStruct(), 10);
-			sb.append("!");
-			sb.append(strexpr.getField());
-			if (precedence > 10) {
-				sb.append(")");
+			printExpression(strexpr.getStruct(), PRECEDENCE_ACCESS);
+			mWriter.print("!");
+			mWriter.print(strexpr.getField());
+			if (precedence > PRECEDENCE_ACCESS) {
+				mWriter.print(")");
 			}
-		} else if (expr instanceof ArrayAccessExpression) {
-			final ArrayAccessExpression arrexpr = (ArrayAccessExpression) expr;
-			if (precedence > 10) {
-				sb.append("(");
+		}
+		case final ArrayAccessExpression arrexpr -> {
+			if (precedence > PRECEDENCE_ACCESS) {
+				mWriter.print("(");
 			}
-			appendExpression(sb, arrexpr.getArray(), 10);
-			sb.append("[");
-			String comma = "";
-			for (final Expression indExpr : arrexpr.getIndices()) {
-				sb.append(comma);
-				appendExpression(sb, indExpr, 0);
-				comma = ",";
+			printExpression(arrexpr.getArray(), PRECEDENCE_ACCESS);
+			mWriter.print("[");
+			printExpressionList(arrexpr.getIndices());
+			mWriter.print("]");
+			if (precedence > PRECEDENCE_ACCESS) {
+				mWriter.print(")");
 			}
-			sb.append("]");
-			if (precedence > 10) {
-				sb.append(")");
+		}
+		case final ArrayStoreExpression arrexpr -> {
+			if (precedence > PRECEDENCE_ACCESS) {
+				mWriter.print("(");
 			}
-		} else if (expr instanceof ArrayStoreExpression) {
-			final ArrayStoreExpression arrexpr = (ArrayStoreExpression) expr;
-			if (precedence > 10) {
-				sb.append("(");
+			printExpression(arrexpr.getArray(), PRECEDENCE_ACCESS);
+			mWriter.print("[");
+			printExpressionList(arrexpr.getIndices());
+			mWriter.print(" := ");
+			printExpression(arrexpr.getValue());
+			mWriter.print("]");
+			if (precedence > PRECEDENCE_ACCESS) {
+				mWriter.print(")");
 			}
-			appendExpression(sb, arrexpr.getArray(), 10);
-			sb.append("[");
-			String comma = "";
-			for (final Expression indExpr : arrexpr.getIndices()) {
-				sb.append(comma);
-				appendExpression(sb, indExpr, 0);
-				comma = ",";
-			}
-			sb.append(" := ");
-			appendExpression(sb, arrexpr.getValue(), 0);
-			sb.append("]");
-			if (precedence > 10) {
-				sb.append(")");
-			}
-		} else if (expr instanceof BitvecLiteral) {
-			final BitvecLiteral bvlit = (BitvecLiteral) expr;
-			sb.append(bvlit.getValue()).append("bv").append(bvlit.getLength());
-		} else if (expr instanceof IntegerLiteral) {
-			sb.append(((IntegerLiteral) expr).getValue());
-		} else if (expr instanceof RealLiteral) {
-			final String value = ((RealLiteral) expr).getValue();
+		}
+		case final BitvecLiteral bvlit -> {
+			mWriter.print(bvlit.getValue());
+			mWriter.print("bv");
+			mWriter.print(bvlit.getLength());
+		}
+		case final IntegerLiteral intlit -> mWriter.print(intlit.getValue());
+		case final RealLiteral reallit -> {
+			final String value = reallit.getValue();
 			String realValue;
 			try {
 				// produce decimal literal for integer values, e.g., write 1.0 if RealLiteral is 1
@@ -370,381 +276,346 @@ public class BoogieOutput {
 			} catch (final NumberFormatException ex) {
 				realValue = value;
 			}
-			sb.append(realValue);
-		} else if (expr instanceof BooleanLiteral) {
-			sb.append(((BooleanLiteral) expr).getValue());
-		} else if (expr instanceof StringLiteral) {
-			sb.append('"').append(((StringLiteral) expr).getValue()).append('"');
-		} else if (expr instanceof StructConstructor) {
-			final StructConstructor struct = (StructConstructor) expr;
+			mWriter.print(realValue);
+		}
+		case final BooleanLiteral boollit -> mWriter.print(boollit.getValue());
+		case final StringLiteral strlit -> {
+			mWriter.print('"');
+			mWriter.print(strlit.getValue());
+			mWriter.print('"');
+		}
+		case final StructConstructor struct -> {
 			String comma = "";
-			sb.append("{ ");
+			mWriter.print("{ ");
 			final String[] fieldNames = struct.getFieldIdentifiers();
 			final Expression[] fieldExprs = struct.getFieldValues();
 			for (int i = 0; i < fieldNames.length; i++) {
-				sb.append(comma).append(fieldNames[i]);
-				sb.append(": ");
-				appendExpression(sb, fieldExprs[i]);
+				mWriter.print(comma);
+				mWriter.print(fieldNames[i]);
+				mWriter.print(": ");
+				printExpression(fieldExprs[i]);
 				comma = ", ";
 			}
-			sb.append(" }");
-		} else if (expr instanceof WildcardExpression) {
-			sb.append("*");
-		} else if (expr instanceof IdentifierExpression) {
-			sb.append(((IdentifierExpression) expr).getIdentifier());
-		} else if (expr instanceof FunctionApplication) {
-			final FunctionApplication app = (FunctionApplication) expr;
-			sb.append(app.getIdentifier()).append("(");
-			String comma = "";
-			for (final Expression arg : app.getArguments()) {
-				sb.append(comma);
-				appendExpression(sb, arg, 0);
-				comma = ", ";
-			}
-			sb.append(")");
-		} else if (expr instanceof IfThenElseExpression) {
-			final IfThenElseExpression ite = (IfThenElseExpression) expr;
+			mWriter.print(" }");
+		}
+		case final WildcardExpression wildExpr -> mWriter.print("*");
+		case final IdentifierExpression id -> mWriter.print(id.getIdentifier());
+		case final FunctionApplication app -> {
+			mWriter.print(app.getIdentifier());
+			mWriter.print("(");
+			printExpressionList(app.getArguments());
+			mWriter.print(")");
+		}
+		case final IfThenElseExpression ite -> {
 			/* we always append parentheses, just to be sure. */
-			sb.append("(if ");
-			appendExpression(sb, ite.getCondition(), 0);
-			sb.append(" then ");
-			appendExpression(sb, ite.getThenPart(), 0);
-			sb.append(" else ");
-			appendExpression(sb, ite.getElsePart(), 0);
-			sb.append(")");
-		} else if (expr instanceof QuantifierExpression) {
-			final QuantifierExpression quant = (QuantifierExpression) expr;
-			sb.append("(");
-			sb.append(quant.isUniversal() ? "forall" : "exists");
+			mWriter.print("(if ");
+			printExpression(ite.getCondition());
+			mWriter.print(" then ");
+			printExpression(ite.getThenPart());
+			mWriter.print(" else ");
+			printExpression(ite.getElsePart());
+			mWriter.print(")");
+		}
+		case final QuantifierExpression quant -> {
+			mWriter.print("(");
+			mWriter.print(quant.isUniversal() ? "forall" : "exists");
 			final String[] typeParams = quant.getTypeParams();
 			if (typeParams.length > 0) {
-				sb.append(" <");
-				String comma = "";
-				for (final String t : typeParams) {
-					sb.append(comma).append(t);
-					comma = ",";
-				}
-				sb.append(">");
+				mWriter.print(" <");
+				printStringList(typeParams);
+				mWriter.print(">");
 			}
 			if (quant.getParameters().length > 0) {
-				sb.append(" ");
-				appendVarList(sb, quant.getParameters());
+				mWriter.print(" ");
+				printVarList(quant.getParameters());
 			}
-			sb.append(" :: ");
-			appendAttributes(sb, quant.getAttributes());
-			appendExpression(sb, quant.getSubformula(), 0);
-			sb.append(")");
-		} else {
-			sb.append(expr.toString());
+			mWriter.print(" :: ");
+			printAttributesWithTrailingSpace(quant.getAttributes());
+			printExpression(quant.getSubformula());
+			mWriter.print(")");
+		}
 		}
 	}
 
-	/**
-	 * Appends a type.
-	 *
-	 * @param sb
-	 *            the StringBuilder to append to.
-	 * @param type
-	 *            ASTType
-	 * @param precedence
-	 *            TODO: what is precedence?
-	 */
-	public void appendType(final StringBuilder sb, final ASTType type, final int precedence) {
-		if (type instanceof NamedType) {
-			final NamedType nt = (NamedType) type;
+	protected static String getOperatorString(final UnaryExpression.Operator operator) {
+		return switch (operator) {
+		case ARITHNEGATIVE -> "-";
+		case LOGICNEG -> "!";
+		case OLD -> "old";
+		};
+	}
+
+	protected static String getOperatorString(final BinaryExpression.Operator operator) {
+		return switch (operator) {
+		case ARITHDIV -> " / ";
+		case ARITHMINUS -> " - ";
+		case ARITHMOD -> " % ";
+		case ARITHMUL -> " * ";
+		case ARITHPLUS -> " + ";
+		case BITVECCONCAT -> " ++ ";
+		case COMPEQ -> " == ";
+		case COMPGEQ -> " >= ";
+		case COMPGT -> " > ";
+		case COMPLEQ -> " <= ";
+		case COMPLT -> " < ";
+		case COMPNEQ -> " != ";
+		case COMPPO -> " <: ";
+		case LOGICAND -> " && ";
+		case LOGICIFF -> " <==> ";
+		case LOGICIMPLIES -> " ==> ";
+		case LOGICOR -> " || ";
+		};
+	}
+
+	protected static int getOperatorPrecedence(final UnaryExpression.Operator operator) {
+		return switch (operator) {
+		case ARITHNEGATIVE -> PRECEDENCE_UNARY_MINUS_NEGATION;
+		case LOGICNEG -> PRECEDENCE_UNARY_MINUS_NEGATION;
+		case OLD -> PRECEDENCE_OLD;
+		};
+	}
+
+	protected static int getOperatorPrecedence(final BinaryExpression.Operator operator) {
+		return switch (operator) {
+		case LOGICIFF -> PRECEDENCE_IFF;
+		case LOGICIMPLIES -> PRECEDENCE_IMPLIES;
+		case LOGICOR -> PRECEDENCE_LOGICAL_OR;
+		case LOGICAND -> PRECEDENCE_LOGICAL_AND;
+		case COMPEQ, COMPNEQ, COMPLT, COMPLEQ, COMPGT, COMPGEQ, COMPPO -> PRECEDENCE_COMPARISON;
+		case BITVECCONCAT -> PRECEDENCE_BITVEC_CONCAT;
+		case ARITHPLUS, ARITHMINUS -> PRECEDENCE_ADDITION;
+		case ARITHMUL, ARITHDIV, ARITHMOD -> PRECEDENCE_MULTIPLICATION;
+		};
+	}
+
+	public void printType(final ASTType type) {
+		printType(type, 0);
+	}
+
+	protected void printType(final ASTType type, final int precedence) {
+		switch (type) {
+		case final NamedType nt -> {
 			final ASTType[] args = nt.getTypeArgs();
 
-			if (precedence > 0 && args.length > 0) {
-				sb.append("(");
+			if (precedence > PRECEDENCE_TYPE_NAMED && args.length > 0) {
+				mWriter.print("(");
 			}
-			sb.append(nt.getName());
+			mWriter.print(nt.getName());
 			for (int i = 0; i < args.length; i++) {
-				sb.append(" ");
-				appendType(sb, args[i], i < args.length - 1 ? 2 : 1);
+				mWriter.print(" ");
+				printType(args[i], i < args.length - 1 ? 2 : 1);
 			}
-			if (precedence > 0 && args.length > 0) {
-				sb.append(")");
+			if (precedence > PRECEDENCE_TYPE_NAMED && args.length > 0) {
+				mWriter.print(")");
 			}
-		} else if (type instanceof ArrayType) {
-			final ArrayType at = (ArrayType) type;
-			if (precedence > 1) {
-				sb.append("(");
+		}
+		case final ArrayType at -> {
+			if (precedence > PRECEDENCE_TYPE_STRUCT_ARRAY) {
+				mWriter.print("(");
 			}
 			if (at.getTypeParams().length > 0) {
-				String comma = "<";
-				for (final String id : at.getTypeParams()) {
-					sb.append(comma).append(id);
-					comma = ",";
-				}
-				sb.append(">");
+				mWriter.print("<");
+				printStringList(at.getTypeParams());
+				mWriter.print(">");
 			}
-			String comma = "[";
-			for (final ASTType indexType : at.getIndexTypes()) {
-				sb.append(comma);
-				appendType(sb, indexType, 0);
-				comma = ",";
+			mWriter.print("[");
+			printList(at.getIndexTypes(), this::printType);
+			mWriter.print("]");
+			printType(at.getValueType(), 0);
+			if (precedence > PRECEDENCE_TYPE_STRUCT_ARRAY) {
+				mWriter.print(")");
 			}
-			sb.append("]");
-			appendType(sb, at.getValueType(), 0);
-			if (precedence > 1) {
-				sb.append(")");
+		}
+		case final StructType st -> {
+			if (precedence > PRECEDENCE_TYPE_STRUCT_ARRAY) {
+				mWriter.print("(");
 			}
-		} else if (type instanceof StructType) {
-			final StructType st = (StructType) type;
-			if (precedence > 1) {
-				sb.append("(");
+			mWriter.print("{ ");
+			printVarList(st.getFields());
+			mWriter.print(" }");
+			if (precedence > PRECEDENCE_TYPE_STRUCT_ARRAY) {
+				mWriter.print(")");
 			}
-			sb.append("{ ");
-			appendVarList(sb, st.getFields());
-			sb.append(" }");
-			if (precedence > 1) {
-				sb.append(")");
-			}
-		} else if (type instanceof PrimitiveType) {
-			sb.append(((PrimitiveType) type).getName());
+		}
+		case final PrimitiveType primitive -> mWriter.print(primitive.getName());
 		}
 	}
 
-	/**
-	 * Append attributes.
-	 *
-	 * @param sb
-	 *            the StringBuilder to append to.
-	 * @param attributes
-	 *            the attributes to handle.
-	 */
-	public void appendAttributes(final StringBuilder sb, final Attribute[] attributes) {
+	private void printAttributesWithTrailingSpace(final Attribute... attributes) {
+		if (attributes == null || attributes.length == 0) {
+			return;
+		}
+		printAttributes(attributes);
+		mWriter.print(" ");
+	}
+
+	public void printAttributes(final Attribute... attributes) {
 		if (attributes == null) {
 			return;
 		}
+		String space = "";
 		for (final Attribute a : attributes) {
-			if (a instanceof NamedAttribute) {
-				final NamedAttribute attr = (NamedAttribute) a;
-				sb.append("{ :").append(attr.getName());
-				String comma = " ";
-				for (final Expression value : attr.getValues()) {
-					sb.append(comma);
-					appendExpression(sb, value, 0);
-					comma = ",";
+			mWriter.print(space);
+			switch (a) {
+			case final NamedAttribute attr -> {
+				mWriter.print("{ :");
+				mWriter.print(attr.getName());
+				if (attr.getValues().length > 0) {
+					mWriter.print(" ");
+					printExpressionList(attr.getValues());
 				}
-				sb.append(" } ");
-			} else if (a instanceof Trigger) {
-				sb.append("{ ");
-				String comma = "";
-				for (final Expression value : ((Trigger) a).getTriggers()) {
-					sb.append(comma);
-					appendExpression(sb, value, 0);
-					comma = ",";
-				}
-				sb.append(" } ");
+				mWriter.print(" }");
 			}
+			case final Trigger trig -> {
+				mWriter.print("{ ");
+				printExpressionList(trig.getTriggers());
+				mWriter.print(" }");
+			}
+			}
+			space = " ";
 		}
 	}
 
-	public void appendExpression(final StringBuilder sb, final Expression expr) {
-		appendExpression(sb, expr, 0);
-	}
-
 	/**
-	 * Append the string representation of vls (comma separated list of declarations) to the stringbuilder sb.
+	 * Print the string representation of vls (comma separated list of declarations).
 	 *
-	 * @param sb
-	 *            the string builder where we append to
 	 * @param vls
-	 *            the variable declaration that are appended.
+	 *            the variable declaration that are printed.
 	 */
-	public void appendVarList(final StringBuilder sb, final VarList[] vls) {
+	public void printVarList(final VarList... vls) {
 		String comma = "";
 		for (final VarList vl : vls) {
-			sb.append(comma);
+			mWriter.print(comma);
 			if (vl.getIdentifiers().length > 0) {
 				/*
 				 * identifiers array can only be empty for function parameters (unnamed parameter).
 				 */
-				String subcomma = "";
-				for (final String id : vl.getIdentifiers()) {
-					sb.append(subcomma).append(id);
-					subcomma = ", ";
-				}
-				sb.append(" : ");
+				printStringList(vl.getIdentifiers());
+				mWriter.print(" : ");
 			}
-			appendType(sb, vl.getType(), 0);
+			printType(vl.getType());
 			if (vl.getWhereClause() != null) {
-				sb.append(" where ");
-				appendExpression(sb, vl.getWhereClause(), 0);
+				mWriter.print(" where ");
+				printExpression(vl.getWhereClause());
 			}
 			comma = ", ";
 		}
 	}
 
-	/**
-	 * Print type declaration.
-	 *
-	 * @param decl
-	 *            the type declaration.
-	 */
 	public void printTypeDeclaration(final TypeDeclaration decl) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("type ");
-		appendAttributes(sb, decl.getAttributes());
+		mWriter.print("type ");
+		printAttributesWithTrailingSpace(decl.getAttributes());
 		final ASTType synonym = decl.getSynonym();
 		if (synonym == null && decl.isFinite()) {
-			sb.append("finite ");
+			mWriter.print("finite ");
 		}
-		sb.append(decl.getIdentifier());
+		mWriter.print(decl.getIdentifier());
 		for (final String args : decl.getTypeParams()) {
-			sb.append(" ").append(args);
+			mWriter.print(" ");
+			mWriter.print(args);
 		}
 		if (synonym != null) {
-			sb.append(" = ");
-			appendType(sb, synonym, 0);
+			mWriter.print(" = ");
+			printType(synonym);
 		}
-		sb.append(";");
-		mWriter.println(sb.toString());
+		mWriter.print(";");
 	}
 
-	/**
-	 * Print function declaration.
-	 *
-	 * @param decl
-	 *            the function declaration.
-	 */
 	public void printFunctionDeclaration(final FunctionDeclaration decl) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("function ");
-		appendAttributes(sb, decl.getAttributes());
-		sb.append(decl.getIdentifier());
+		mWriter.print("function ");
+		printAttributesWithTrailingSpace(decl.getAttributes());
+		mWriter.print(decl.getIdentifier());
 		if (decl.getTypeParams().length > 0) {
-			String comma = "<";
-			for (final String id : decl.getTypeParams()) {
-				sb.append(comma).append(id);
-				comma = ",";
-			}
-			sb.append(">");
+			mWriter.print("<");
+			printStringList(decl.getTypeParams());
+			mWriter.print(">");
 		}
-		sb.append("(");
-		appendVarList(sb, decl.getInParams());
-		sb.append(") returns (");
-		appendVarList(sb, new VarList[] { decl.getOutParam() });
-		sb.append(")");
+		mWriter.print("(");
+		printVarList(decl.getInParams());
+		mWriter.print(") returns (");
+		printVarList(decl.getOutParam());
+		mWriter.print(")");
 		if (decl.getBody() != null) {
-			sb.append(" { ");
-			appendExpression(sb, decl.getBody(), 0);
-			sb.append(" }");
+			mWriter.print(" { ");
+			printExpression(decl.getBody());
+			mWriter.print(" }");
 		} else {
-			sb.append(";");
+			mWriter.print(";");
 		}
-		mWriter.println(sb.toString());
 	}
 
-	/**
-	 * Print procedure.
-	 *
-	 * @param decl
-	 *            the procedure to print.
-	 */
 	public void printProcedure(final Procedure decl) {
-		final StringBuilder sb = new StringBuilder();
-		appendProcedure(sb, decl);
-		mWriter.print(sb.toString());
-	}
-
-	public void appendProcedure(final StringBuilder sb, final Procedure decl) {
 		if (decl.getSpecification() != null) {
-			sb.append("procedure ");
+			mWriter.print("procedure ");
 		} else {
-			sb.append("implementation ");
+			mWriter.print("implementation ");
 		}
-		appendAttributes(sb, decl.getAttributes());
-		sb.append(decl.getIdentifier());
+		printAttributesWithTrailingSpace(decl.getAttributes());
+		mWriter.print(decl.getIdentifier());
 		if (decl.getTypeParams().length > 0) {
-			String comma = "<";
-			for (final String id : decl.getTypeParams()) {
-				sb.append(comma).append(id);
-				comma = ",";
-			}
-			sb.append(">");
+			mWriter.print("<");
+			printStringList(decl.getTypeParams());
+			mWriter.print(">");
 		}
-		sb.append("(");
-		appendVarList(sb, decl.getInParams());
-		sb.append(") returns (");
-		appendVarList(sb, decl.getOutParams());
-		sb.append(")");
+		mWriter.print("(");
+		printVarList(decl.getInParams());
+		mWriter.print(") returns (");
+		printVarList(decl.getOutParams());
+		mWriter.print(")");
 		if (decl.getBody() == null) {
-			sb.append(";");
+			mWriter.print(";");
 		}
 		if (decl.getSpecification() != null) {
-			sb.append(LINEBREAK);
+			mWriter.println();
 			for (final Specification spec : decl.getSpecification()) {
-				appendSpecification(sb, spec);
+				printSpecification(spec);
 			}
 		}
 		if (decl.getBody() != null) {
-			sb.append("{" + LINEBREAK);
-			appendBody(sb, decl.getBody());
-			sb.append("}" + LINEBREAK);
+			mWriter.println("{");
+			printBody(decl.getBody());
+			mWriter.println("}");
 		}
-		sb.append(LINEBREAK);
+		mWriter.println();
 	}
 
-	/**
-	 * Print specification.
-	 *
-	 * @param spec
-	 *            the specification to print.
-	 */
 	public void printSpecification(final Specification spec) {
-		final StringBuilder sb = new StringBuilder();
-		appendSpecification(sb, spec);
-		mWriter.print(sb.toString());
-	}
-
-	public void appendSpecification(final StringBuilder sb, final Specification spec) {
 		if (spec.isFree()) {
-			sb.append("free ");
+			mWriter.print("free ");
 		}
-		if (spec instanceof RequiresSpecification) {
-			sb.append("requires ");
-			appendExpression(sb, ((RequiresSpecification) spec).getFormula(), 0);
-		} else if (spec instanceof EnsuresSpecification) {
-			sb.append("ensures ");
-			appendExpression(sb, ((EnsuresSpecification) spec).getFormula(), 0);
-		} else if (spec instanceof ModifiesSpecification) {
-			sb.append("modifies ");
-			String comma = "";
-			for (final VariableLHS id : ((ModifiesSpecification) spec).getIdentifiers()) {
-				sb.append(comma).append(id.getIdentifier());
-				comma = ", ";
-			}
-		} else if (spec instanceof LoopInvariantSpecification) {
-			sb.append("invariant ");
-			appendExpression(sb, ((LoopInvariantSpecification) spec).getFormula(), 0);
-		} else {
-			throw new IllegalArgumentException(spec.toString());
+		switch (spec) {
+		case final RequiresSpecification requires:
+			mWriter.print("requires ");
+			printExpression(requires.getFormula());
+			break;
+		case final EnsuresSpecification ensures:
+			mWriter.print("ensures ");
+			printExpression(ensures.getFormula());
+			break;
+		case final ModifiesSpecification modifies:
+			mWriter.print("modifies ");
+			printLHSList(modifies.getIdentifiers());
+			break;
+		case final LoopInvariantSpecification invariant:
+			mWriter.print("invariant ");
+			printExpression(invariant.getFormula());
+			break;
 		}
-		sb.append(";").append(LINEBREAK);
+		mWriter.println(";");
 	}
 
-	/**
-	 * Print body.
-	 *
-	 * @param body
-	 *            the body to print.
-	 */
 	public void printBody(final Body body) {
-		final StringBuilder sb = new StringBuilder();
-		appendBody(sb, body);
-		mWriter.print(sb.toString());
-	}
-
-	public void appendBody(final StringBuilder sb, final Body body) {
 		for (final VariableDeclaration decl : body.getLocalVars()) {
-			appendVariableDeclaration(sb, decl, "    ");
+			printVariableDeclaration(decl, "    ");
 		}
 		if (body.getLocalVars().length > 0) {
-			sb.append(LINEBREAK);
+			mWriter.println();
 		}
-		appendBlock(sb, body.getBlock(), "");
+		printBlock(body.getBlock(), "");
+	}
+
+	public void printBlock(final Statement[] block) {
+		printBlock(block, "");
 	}
 
 	/**
@@ -756,275 +627,185 @@ public class BoogieOutput {
 	 *            the current indent level.
 	 */
 	public void printBlock(final Statement[] block, final String indent) {
-		final StringBuilder sb = new StringBuilder();
-		appendBlock(sb, block, indent);
-		mWriter.print(sb.toString());
-	}
-
-	public void appendBlock(final StringBuilder sb, final Statement[] block) {
-		appendBlock(sb, block, "");
-	}
-
-	public void appendBlock(final StringBuilder sb, final Statement[] block, final String indent) {
 		final String nextIndent = indent + "    ";
 		for (final Statement s : block) {
 			if (s instanceof final Label l) {
 				// SF: Labels aren't on the first column anymore, they are
 				// treated as pragmas if they are. Added " "
-				sb.append(indent + "  " + l.getName());
+				mWriter.print(indent + "  " + l.getName());
 				if (l.getAttributes() != null && l.getAttributes().length > 0) {
-					sb.append(' ');
-					appendAttributes(sb, l.getAttributes());
+					mWriter.print(" ");
+					printAttributes(l.getAttributes());
+					mWriter.print(" ");
 				}
-				sb.append(":" + LINEBREAK);
+				mWriter.println(":");
 			} else {
-				appendStatement(sb, s, nextIndent);
+				printStatement(s, nextIndent);
 			}
 		}
 
 	}
 
-	public void appendStatement(final StringBuilder sb, final Statement s) {
-		appendStatement(sb, s, "");
+	public void printStatement(final Statement s) {
+		printStatement(s, "");
 	}
 
 	/**
-	 * Add the string representation of the statement to the string builder.
+	 * Print the statement.
 	 *
-	 * @param sb
-	 *            the string builder where the string will be appended to.
 	 * @param s
 	 *            the statement to print.
 	 * @param indent
 	 *            The current identation
 	 */
-	public void appendStatement(final StringBuilder sb, final Statement s, final String indent) {
-		sb.append(indent);
-		if (s instanceof AssertStatement) {
-			final AssertStatement assertstmt = (AssertStatement) s;
-			sb.append("assert ");
-			appendAttributes(sb, assertstmt.getAttributes());
-			appendExpression(sb, assertstmt.getFormula(), 0);
-			sb.append(";");
-		} else if (s instanceof AssumeStatement) {
-			final AssumeStatement assumestmt = (AssumeStatement) s;
-			sb.append("assume ");
-			appendAttributes(sb, assumestmt.getAttributes());
-			appendExpression(sb, assumestmt.getFormula(), 0);
-			sb.append(";");
-		} else if (s instanceof HavocStatement) {
-			final HavocStatement havoc = (HavocStatement) s;
-			sb.append("havoc ");
-			String comma = "";
-			for (final VariableLHS id : havoc.getIdentifiers()) {
-				sb.append(comma).append(id.getIdentifier());
-				comma = ", ";
-			}
-			sb.append(";");
-		} else if (s instanceof AssignmentStatement) {
-			final AssignmentStatement stmt = (AssignmentStatement) s;
-			String comma = "";
-			for (final LeftHandSide lhs : stmt.getLhs()) {
-				sb.append(comma);
-				appendLHS(sb, lhs);
-				comma = ", ";
-			}
-			sb.append(" := ");
-			comma = "";
-			for (final Expression rhs : stmt.getRhs()) {
-				sb.append(comma);
-				appendExpression(sb, rhs, 0);
-				comma = ", ";
-			}
-			sb.append(";");
-		} else if (s instanceof CallStatement) {
-			final CallStatement call = (CallStatement) s;
-			String comma;
-			sb.append("call ");
-			appendAttributes(sb, call.getAttributes());
+	public void printStatement(final Statement s, final String indent) {
+		mWriter.print(indent);
+		switch (s) {
+		case final AssertStatement assertstmt -> {
+			mWriter.print("assert ");
+			printAttributesWithTrailingSpace(assertstmt.getAttributes());
+			printExpression(assertstmt.getFormula());
+			mWriter.print(";");
+		}
+		case final AssumeStatement assumestmt -> {
+			mWriter.print("assume ");
+			printAttributesWithTrailingSpace(assumestmt.getAttributes());
+			printExpression(assumestmt.getFormula());
+			mWriter.print(";");
+		}
+		case final HavocStatement havoc -> {
+			mWriter.print("havoc ");
+			printLHSList(havoc.getIdentifiers());
+			mWriter.print(";");
+		}
+		case final AssignmentStatement stmt -> {
+			printLHSList(stmt.getLhs());
+			mWriter.print(" := ");
+			printExpressionList(stmt.getRhs());
+			mWriter.print(";");
+		}
+		case final CallStatement call -> {
+			mWriter.print("call ");
+			printAttributesWithTrailingSpace(call.getAttributes());
 			if (call.isForall()) {
-				sb.append("forall ");
+				mWriter.print("forall ");
 			}
 			if (call.getLhs().length > 0) {
-				comma = "";
-				for (final VariableLHS lhs : call.getLhs()) {
-					sb.append(comma).append(lhs.getIdentifier());
-					comma = ", ";
-				}
-				sb.append(" := ");
+				printLHSList(call.getLhs());
+				mWriter.print(" := ");
 			}
-			sb.append(call.getMethodName());
-			sb.append("(");
-			comma = "";
-			for (final Expression arg : call.getArguments()) {
-				sb.append(comma);
-				appendExpression(sb, arg, 0);
-				comma = ", ";
-			}
-			sb.append(");");
-		} else if (s instanceof ForkStatement) {
-			final ForkStatement fork = (ForkStatement) s;
-			String comma = "";
-			sb.append("fork ");
-			for (final Expression threadId : fork.getThreadID()) {
-				sb.append(comma);
-				sb.append(BoogiePrettyPrinter.print(threadId));
-				comma = ", ";
-			}
-			sb.append(" ").append(fork.getProcedureName());
-			sb.append("(");
-			comma = "";
-			for (final Expression arg : fork.getArguments()) {
-				sb.append(comma);
-				appendExpression(sb, arg, 0);
-				comma = ", ";
-			}
-			sb.append(");");
-		} else if (s instanceof JoinStatement) {
-			final JoinStatement join = (JoinStatement) s;
-			String comma = "";
-			sb.append("join ");
-			for (final Expression threadId : join.getThreadID()) {
-				sb.append(comma).append(BoogiePrettyPrinter.print(threadId));
-				comma = ", ";
-			}
+			mWriter.print(call.getMethodName());
+			mWriter.print("(");
+			printExpressionList(call.getArguments());
+			mWriter.print(");");
+		}
+		case final ForkStatement fork -> {
+			mWriter.print("fork ");
+			printExpressionList(fork.getThreadID());
+			mWriter.print(" ");
+			mWriter.print(fork.getProcedureName());
+			mWriter.print("(");
+			printExpressionList(fork.getArguments());
+			mWriter.print(");");
+		}
+		case final JoinStatement join -> {
+			mWriter.print("join ");
+			printExpressionList(join.getThreadID());
 			if (join.getLhs().length > 0) {
-				sb.append(" assign ");
-				comma = "";
-				for (final VariableLHS lhs : join.getLhs()) {
-					sb.append(comma).append(lhs.getIdentifier());
-					comma = ", ";
-				}
+				mWriter.print(" assign ");
+				printLHSList(join.getLhs());
 			}
-			sb.append(";");
-		} else if (s instanceof BreakStatement) {
-			final String label = ((BreakStatement) s).getLabel();
-			sb.append("break");
+			mWriter.print(";");
+		}
+		case final BreakStatement breakStmt -> {
+			final String label = breakStmt.getLabel();
+			mWriter.print("break");
 			if (label != null) {
-				sb.append(" ").append(label);
+				mWriter.print(" ");
+				mWriter.print(label);
 			}
-			sb.append(";");
-		} else if (s instanceof ReturnStatement) {
-			sb.append("return;");
-		} else if (s instanceof GotoStatement) {
-			sb.append("goto ");
-			String comma = "";
-			for (final String label : ((GotoStatement) s).getLabels()) {
-				sb.append(comma).append(label);
-				comma = ", ";
-			}
-			sb.append(";");
-		} else if (s instanceof IfStatement) {
-			IfStatement stmt = (IfStatement) s;
+			mWriter.print(";");
+		}
+		case final ReturnStatement retStmt -> mWriter.print("return;");
+		case final GotoStatement gotoStmt -> {
+			mWriter.print("goto ");
+			printStringList(gotoStmt.getLabels());
+			mWriter.print(";");
+		}
+		case IfStatement stmt -> {
 			Statement[] elsePart;
 			while (true) {
-				sb.append("if (");
-				appendExpression(sb, stmt.getCondition(), 0);
-				sb.append(") {" + LINEBREAK);
-				appendBlock(sb, stmt.getThenPart(), indent);
-				sb.append(indent).append("}");
+				mWriter.print("if (");
+				printExpression(stmt.getCondition());
+				mWriter.println(") {");
+				printBlock(stmt.getThenPart(), indent);
+				mWriter.print(indent);
+				mWriter.print("}");
 				elsePart = stmt.getElsePart();
-				if (elsePart.length != 1 || !(elsePart[0] instanceof IfStatement)) {
+				if (elsePart.length != 1 || !(elsePart[0] instanceof final IfStatement elseIf)) {
 					break;
 				}
-				stmt = (IfStatement) elsePart[0];
-				sb.append(" else ");
+				stmt = elseIf;
+				mWriter.print(" else ");
 			}
 			if (elsePart.length > 0) {
-				sb.append(" else {" + LINEBREAK);
-				appendBlock(sb, stmt.getElsePart(), indent);
-				sb.append(indent).append("}");
+				mWriter.println(" else {");
+				printBlock(stmt.getElsePart(), indent);
+				mWriter.print(indent);
+				mWriter.print("}");
 			}
-		} else if (s instanceof WhileStatement) {
-			final WhileStatement stmt = (WhileStatement) s;
-			sb.append("while (");
-			appendExpression(sb, stmt.getCondition(), 0);
-			sb.append(")" + LINEBREAK);
+		}
+		case final WhileStatement stmt -> {
+			mWriter.print("while (");
+			printExpression(stmt.getCondition());
+			mWriter.println(")");
 			for (final LoopInvariantSpecification spec : stmt.getInvariants()) {
-				sb.append(indent).append("    ");
-				if (spec.isFree()) {
-					sb.append("free ");
-				}
-				sb.append("invariant ");
-				appendExpression(sb, spec.getFormula(), 0);
-				sb.append(";" + LINEBREAK);
+				mWriter.print(indent);
+				mWriter.print("    ");
+				printSpecification(spec);
 			}
-			sb.append(indent).append("{" + LINEBREAK);
-			appendBlock(sb, stmt.getBody(), indent);
-			sb.append(indent).append("}");
-		} else if (s instanceof Label) {
-			sb.append(((Label) s).getName()).append(":");
-		} else if (s instanceof AtomicStatement) {
-			final AtomicStatement stmt = (AtomicStatement) s;
-			sb.append("atomic {").append(LINEBREAK);
-			appendBlock(sb, stmt.getBody(), indent);
-			sb.append(indent).append("}");
-		} else {
-			throw new IllegalArgumentException(s.toString());
+			mWriter.print(indent);
+			mWriter.println("{");
+			printBlock(stmt.getBody(), indent);
+			mWriter.print(indent);
+			mWriter.print("}");
 		}
-		sb.append(LINEBREAK);
+		case final Label label -> {
+			mWriter.print(label.getName());
+			mWriter.print(":");
+		}
+		case final AtomicStatement stmt -> {
+			mWriter.println("atomic {");
+			printBlock(stmt.getBody(), indent);
+			mWriter.print(indent);
+			mWriter.print("}");
+		}
+		}
+		mWriter.println();
 	}
 
-	/*
-	 *
-	 * Print statement.
-	 *
-	 * @param s the statement to print.
-	 *
-	 * @param indent the current indent level.
-	 *
-	 * public void printStatement(final Statement s, final String indent) { final StringBuilder sb = new
-	 * StringBuilder(); appendStatement(sb, s, indent); mWriter.print(sb.toString()); }
-	 */
-
-	/**
-	 * Append left hand side.
-	 *
-	 * @param sb
-	 *            the StringBuilder to append to.
-	 * @param lhs
-	 *            the left hand side
-	 */
-	private void appendLHS(final StringBuilder sb, final LeftHandSide lhs) {
-		if (lhs instanceof VariableLHS) {
-			sb.append(((VariableLHS) lhs).getIdentifier());
-		} else if (lhs instanceof ArrayLHS) {
-			final ArrayLHS arrlhs = (ArrayLHS) lhs;
-			appendLHS(sb, arrlhs.getArray());
-			sb.append("[");
-			String comma = "";
-			for (final Expression index : arrlhs.getIndices()) {
-				sb.append(comma);
-				appendExpression(sb, index, 0);
-				comma = ",";
-			}
-			sb.append("]");
-		} else if (lhs instanceof StructLHS) {
-			final StructLHS strlhs = (StructLHS) lhs;
-			appendLHS(sb, strlhs.getStruct());
-			sb.append("!");
-			sb.append(strlhs.getField());
-		} else {
-			throw new IllegalArgumentException(lhs.toString());
+	protected void printLHS(final LeftHandSide lhs) {
+		switch (lhs) {
+		case final VariableLHS varLHS -> mWriter.print(varLHS.getIdentifier());
+		case final ArrayLHS arrlhs -> {
+			printLHS(arrlhs.getArray());
+			mWriter.print("[");
+			printExpressionList(arrlhs.getIndices());
+			mWriter.print("]");
+		}
+		case final StructLHS strlhs -> {
+			printLHS(strlhs.getStruct());
+			mWriter.print("!");
+			mWriter.print(strlhs.getField());
+		}
 		}
 	}
 
-	/**
-	 * Print Axiom.
-	 *
-	 * @param decl
-	 *            the axiom to print.
-	 */
 	public void printAxiom(final Axiom decl) {
-		mWriter.println(appendAxiom(new StringBuilder(), decl).toString());
-	}
-
-	public StringBuilder appendAxiom(final StringBuilder sb, final Axiom decl) {
-		sb.append("axiom ");
-		appendAttributes(sb, decl.getAttributes());
-		appendExpression(sb, decl.getFormula(), 0);
-		sb.append(";");
-		return sb;
+		mWriter.print("axiom ");
+		printAttributesWithTrailingSpace(decl.getAttributes());
+		printExpression(decl.getFormula());
+		mWriter.print(";");
 	}
 
 	/**
@@ -1035,55 +816,66 @@ public class BoogieOutput {
 	 * @param indent
 	 *            the current indent level.
 	 */
-	public void printVarDeclaration(final VariableDeclaration decl, final String indent) {
-		final StringBuilder sb = new StringBuilder();
-		appendVariableDeclaration(sb, decl, indent);
-		mWriter.println(sb.toString());
+	public void printVariableDeclaration(final VariableDeclaration decl, final String indent) {
+		mWriter.print(indent);
+		mWriter.print("var ");
+		printAttributesWithTrailingSpace(decl.getAttributes());
+		printVarList(decl.getVariables());
+		mWriter.println(";");
 	}
 
-	protected void appendVariableDeclaration(final StringBuilder sb, final VariableDeclaration decl,
-			final String indent) {
-		sb.append(indent).append("var ");
-		appendAttributes(sb, decl.getAttributes());
-		appendVarList(sb, decl.getVariables());
-		sb.append(";");
-		sb.append(LINEBREAK);
+	public void printVariableDeclaration(final VariableDeclaration decl) {
+		printVariableDeclaration(decl, "");
 	}
 
-	public void appendVariableDeclaration(final StringBuilder sb, final VariableDeclaration decl) {
-		appendVariableDeclaration(sb, decl, "");
-	}
-
-	/**
-	 * Print constant declaration.
-	 *
-	 * @param decl
-	 *            the constant declaration to print.
-	 */
 	public void printConstDeclaration(final ConstDeclaration decl) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("const ");
-		appendAttributes(sb, decl.getAttributes());
+		mWriter.print("const ");
+		printAttributesWithTrailingSpace(decl.getAttributes());
 		if (decl.isUnique()) {
-			sb.append("unique ");
+			mWriter.print("unique ");
 		}
-		appendVarList(sb, new VarList[] { decl.getVarList() });
+		printVarList(decl.getVarList());
 		if (decl.getParentInfo() != null) {
-			sb.append(" <:");
+			mWriter.print(" <:");
 			String comma = " ";
 			for (final ParentEdge edge : decl.getParentInfo()) {
-				sb.append(comma);
+				mWriter.print(comma);
 				if (edge.isUnique()) {
-					sb.append("unique ");
+					mWriter.print("unique ");
 				}
-				sb.append(edge.getIdentifier());
+				mWriter.print(edge.getIdentifier());
 				comma = ", ";
 			}
 		}
 		if (decl.isComplete()) {
-			sb.append(" complete");
+			mWriter.print(" complete");
 		}
-		sb.append(";");
-		mWriter.println(sb.toString());
+		mWriter.print(";");
+	}
+
+	protected void printStringList(final String[] list) {
+		printList(list, mWriter::print);
+	}
+
+	protected void printExpressionList(final Expression[] expressions) {
+		printList(expressions, this::printExpression);
+	}
+
+	protected void printLHSList(final LeftHandSide[] leftHandSides) {
+		printList(leftHandSides, this::printLHS);
+	}
+
+	protected <T> void printList(final T[] list, final Consumer<T> printer) {
+		String comma = "";
+		for (final T item : list) {
+			mWriter.print(comma);
+			printer.accept(item);
+			comma = ", ";
+		}
+	}
+
+	@Override
+	public void close() {
+		mWriter.close();
 	}
 }

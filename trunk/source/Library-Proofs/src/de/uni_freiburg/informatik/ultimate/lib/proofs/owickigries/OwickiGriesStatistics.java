@@ -30,7 +30,6 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAnnotation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
@@ -74,8 +73,7 @@ abstract class OwickiGriesStatistics extends AbstractStatisticsDataProvider {
 		mEmpireTime.stop();
 	}
 
-	public void reportEmpireStatistics(final IStatisticsDataProvider empireStatistics,
-			final EmpireAnnotation<?> empire) {
+	public void reportEmpireStatistics(final IStatisticsDataProvider empireStatistics) {
 		mEmpireStatistics = empireStatistics;
 
 		// TODO measure size etc

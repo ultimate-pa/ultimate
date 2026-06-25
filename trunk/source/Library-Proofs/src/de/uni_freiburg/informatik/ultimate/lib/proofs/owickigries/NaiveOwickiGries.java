@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorP
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -48,7 +47,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.PetriFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.TransformFloydHoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.naive.NaiveOwickiGriesConstruction;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.naive.PetriFloydHoare;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -124,8 +126,8 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		mStatistics.startOwickiGriesComputation();
 		OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation;
 		try {
-			final OwickiGriesConstruction<L, P> construction = new OwickiGriesConstruction<>(mServices, mCsToolkit,
-					mProgram, reachableMarkings, floydHoare, mSettings.useHittingSets());
+			final NaiveOwickiGriesConstruction<L, P> construction = new NaiveOwickiGriesConstruction<>(mServices,
+					mCsToolkit, mProgram, reachableMarkings, floydHoare, mSettings.useHittingSets());
 			annotation = construction.getResult();
 			mStatistics.reportOwickiGries(annotation);
 		} finally {
@@ -199,8 +201,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		}
 
 		@Override
-		public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet,
-				final BranchingProcess<L, P> refinedNetUnfolding) {
+		public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet) {
 			mFinalAbstraction = refinedNet;
 		}
 
@@ -246,7 +247,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		private final TimeTracker mFloydHoareValidityTime = new TimeTracker();
 
 		public Statistics(final ILogger logger) {
-			super(logger, null, OwickiGriesConstruction.class);
+			super(logger, null, NaiveOwickiGriesConstruction.class);
 
 			declareTimeTracker("Floyd-Hoare computation time", mFloydHoareTime);
 			declareTimeTracker("Floyd-Hoare validity check time", mFloydHoareValidityTime);

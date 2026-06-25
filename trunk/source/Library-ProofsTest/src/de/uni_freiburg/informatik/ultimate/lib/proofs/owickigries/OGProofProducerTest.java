@@ -41,10 +41,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorP
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries.FocusComputation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireOwickiGries.FocusComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings.OwickiGriesComputation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
@@ -67,7 +66,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final IPetriNetSuccessorProvider<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding,
 			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences)
 			throws AutomataLibraryException, IOException {
 		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s.", program.sizeInformation());
@@ -82,7 +80,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		for (int i = 0; i < mProofs.size(); ++i) {
 			producer.refine(mUnifiers.get(i), mProofs.get(i), mBacktranslations.get(i));
 		}
-		producer.finalize(refinedPetriNet, unfolding);
+		producer.finalize(refinedPetriNet);
 
 		// let producer compute the proof
 		assert producer.isReadyToComputeProof();
@@ -166,56 +164,19 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.NAIVE, false, false);
 		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
-		}
-	}
-
-	public static final class CrownsOG extends OGProofProducerTest {
-		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new CrownsOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
-					Function.identity());
-		}
-
-		@Override
-		protected OwickiGriesSettings getSettings() {
-			return new OwickiGriesSettings(OwickiGriesComputation.CROWN, false, false);
-		}
-	}
-
-	public static final class GraphEmpireOG extends OGProofProducerTest {
-		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new GraphEmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory);
-		}
-
-		@Override
-		protected OwickiGriesSettings getSettings() {
-			return new OwickiGriesSettings(OwickiGriesComputation.SYMBOLIC_EXECUTION, false, false);
-		}
 	}
 
 	public static final class EmpireAutomatonOG extends OGProofProducerTest {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+			return new EmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
 					FocusComputation.UNFOCUSED);
 		}
 
 		@Override
 		protected OwickiGriesSettings getSettings() {
-			return new OwickiGriesSettings(OwickiGriesComputation.AUTOMATA, false, false);
-		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
+			return new OwickiGriesSettings(OwickiGriesComputation.EMPIRE, false, false);
 		}
 	}
 
@@ -223,7 +184,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+			return new EmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
 					FocusComputation.GLOBAL);
 		}
 
@@ -231,29 +192,19 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
 		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
-		}
 	}
 
 	public static final class ModularLegalFocusOG extends OGProofProducerTest {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+			return new EmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
 					FocusComputation.MODULAR);
 		}
 
 		@Override
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
-		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
 		}
 	}
 
@@ -267,11 +218,6 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.DIR_LEGAL_FOCUS, false, false);
-		}
-
-		@Override
-		protected boolean requiresUnfoldingAndDifference() {
-			return false;
 		}
 	}
 }

@@ -160,9 +160,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 
 public class CfgBuilder {
-
-	private static final String ULTIMATE_START = "ULTIMATE.start";
-
 	/**
 	 * ILogger for this plugin.
 	 */
@@ -324,13 +321,14 @@ public class CfgBuilder {
 		AtomicBlockAnalyzer.ensureAtomicCompositionIsComplete(mIcfg, mLogger);
 
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
-				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(Entry::getValue).collect(Collectors.toSet());
+				.filter(a -> a.getKey().equals(BoogieUtils.START_PROCEDURE)).map(Entry::getValue)
+				.collect(Collectors.toSet());
 		if (initialNodes.isEmpty()) {
 			mLogger.info("Using library mode");
 			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
 		} else {
 			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
-					+ ULTIMATE_START + ")");
+					+ BoogieUtils.START_PROCEDURE + ")");
 			icfg.getInitialNodes().addAll(initialNodes);
 		}
 		ModelUtils.copyAnnotations(unit, icfg);
@@ -765,7 +763,7 @@ public class CfgBuilder {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
-				if (st instanceof final Label laSt) {
+				if (st instanceof final Label laSt && isAuxiliaryLabel(laSt)) {
 					final int gotoTarget = mGotoTargetCounter.getOrDefault(laSt.getName(), 0);
 					if (gotoTarget == 0) {
 						// not target of a goto

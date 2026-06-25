@@ -104,39 +104,6 @@ public final class Territory<P, R extends Region<P>> {
 	}
 
 	/**
-	 * Calculates the treaty, i.e., the set of all markings represented by this territory.
-	 *
-	 * The markings in the treaty are computed by picking one place per region of the territory.
-	 *
-	 * NOTE: This method is typically be extremely expensive. Except for sanity checks in assertions (which are skipped
-	 * while running in production), calling this method should be avoided whenever possible.
-	 *
-	 * @return the territory's treaty
-	 */
-	public Set<Marking<P>> getTreaty() {
-		final Set<Marking<P>> treatySet = new HashSet<>();
-		final Set<R> territoryRegions = new HashSet<>(mRegions);
-		getAllMarkings(territoryRegions, new HashSet<>(), treatySet);
-		return treatySet;
-	}
-
-	private void getAllMarkings(final Set<R> remainingTerritory, final Set<P> currentMarking,
-			final Set<Marking<P>> treaty) {
-		if (remainingTerritory.isEmpty()) {
-			treaty.add(new Marking<>(ImmutableSet.of(currentMarking)));
-			return;
-		}
-		final R currentRegion = remainingTerritory.iterator().next();
-		remainingTerritory.remove(currentRegion);
-
-		for (final P place : currentRegion.getPlaces()) {
-			currentMarking.add(place);
-			getAllMarkings(new HashSet<>(remainingTerritory), new HashSet<>(currentMarking), treaty);
-			currentMarking.remove(place);
-		}
-	}
-
-	/**
 	 * Retrieves the size of the territory.
 	 *
 	 * @return the number of regions in the territory

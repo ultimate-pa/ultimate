@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -55,14 +54,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableG
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedEmpireAutomaton;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedEmpireAutomaton.State;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedEmpireProduct;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedEmpireProduct.ProductState;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedLegalEmpireToOG;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedLegalFocus;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpire;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpire.State;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireProduct;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireProduct.ProductState;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedEmpireToOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directed.DirectedLegalFocus;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -128,11 +125,11 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 
 	@Override
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
-		final List<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> empireAutomata;
+		final List<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> empires;
 		mStatistics.startEmpireComputation();
 		try {
-			empireAutomata = getEmpireAutomata();
-			mProduct = constructProduct(empireAutomata);
+			empires = getEmpires();
+			mProduct = constructProduct(empires);
 		} finally {
 			mStatistics.stopEmpireComputation();
 		}
@@ -140,8 +137,8 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		final DirectedLegalFocus<L, P> legalFocus;
 		mStatistics.startFocusComputation();
 		try {
-			mLogger.info("Computing focus for %d empire automata", empireAutomata.size());
-			legalFocus = new DirectedLegalFocus<>(new HashSet<>(empireAutomata), mProgram);
+			mLogger.info("Computing focus for %d empires", empires.size());
+			legalFocus = new DirectedLegalFocus<>(new HashSet<>(empires), mProgram);
 		} finally {
 			mStatistics.stopFocusComputation();
 		}
@@ -164,21 +161,20 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		return productConstruction.getProductAutomaton();
 	}
 
-	private List<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> getEmpireAutomata() {
-		final var lazyAutomata =
-				mProofs.stream().map(proof -> new DirectedEmpireAutomaton<L, P>(mProgram, proof, mServices))
-						.collect(Collectors.toList());
+	private List<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> getEmpires() {
+		final var lazyEmpires = mProofs.stream().map(proof -> new DirectedEmpire<L, P>(mProgram, proof, mServices))
+				.collect(Collectors.toList());
 		final var automata = new ArrayList<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>>();
-		for (final DirectedEmpireAutomaton<L, P> empireAutomaton : lazyAutomata) {
-			mLogger.info("Exploring empire automaton...");
+		for (final DirectedEmpire<L, P> empire : lazyEmpires) {
+			mLogger.info("Exploring empire...");
 			try {
-				final var automaton = new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices),
-						empireAutomaton);
+				final var automaton =
+						new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices), empire);
 				automata.add(automaton);
-				mLogger.info("Explored empire automaton has %s", automaton.sizeInformation());
+				mLogger.info("Explored empire has %s", automaton.sizeInformation());
 			} catch (final AutomataOperationCanceledException aoce) {
 				throw new ToolchainCanceledException(aoce,
-						new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
+						new RunningTaskInfo(getClass(), "collecting reachable states of empire"));
 			}
 		}
 		return automata;
@@ -201,8 +197,7 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 	}
 
 	@Override
-	public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet,
-			final BranchingProcess<L, P> refinedNetUnfolding) {
+	public void finalize(final IPetriNetSuccessorProvider<L, P> refinedNet) {
 		// nothing to do here
 	}
 
@@ -211,10 +206,10 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		return mProgram;
 	}
 
-	private DirectedLegalEmpireToOG<L, P> getOwickiGriesAnnotation(
+	private DirectedEmpireToOwickiGries<L, P> getOwickiGriesAnnotation(
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
 			final DirectedLegalFocus<L, P> legalFocus) {
-		return new DirectedLegalEmpireToOG<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures, mProduct,
+		return new DirectedEmpireToOwickiGries<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures, mProduct,
 				legalFocus, possibleInterferences);
 	}
 
@@ -227,12 +222,8 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		private final TimeTracker mFocusTimer = new TimeTracker();
 
 		public Statistics(final ILogger logger) {
-			super(logger, EmpireComputation.class, EmpireToOwickiGries.class);
+			super(logger, DirectedEmpire.class, DirectedEmpireToOwickiGries.class);
 			declareTimeTracker("Focus computation time", mFocusTimer);
-		}
-
-		public void reportEmpire(final IStatisticsDataProvider statistics) {
-			reportEmpireStatistics(statistics, null);
 		}
 
 		private void startFocusComputation() {

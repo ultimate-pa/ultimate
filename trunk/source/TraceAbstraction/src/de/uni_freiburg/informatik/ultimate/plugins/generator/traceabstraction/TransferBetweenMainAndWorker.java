@@ -314,7 +314,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> transferAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
 			final IEmptyStackStateFactory<STATE> emptyStateFactory, final Mode mode) {
-
+		final long setuptime = System.nanoTime() / 1000000000;
 		VpAlphabet<LETTER> alphabet;
 		Set<LETTER> internalAlphabet;
 		Set<LETTER> callAlphabet;
@@ -387,26 +387,49 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 				result.addInternalTransition(state, transferredLetter, succesor);
 				dequeue.add(succesor);
 			}
-			final Set<STATE> copyAllStates = new HashSet<>(allStates);
-			for (final STATE potentialhier : copyAllStates) {
-				for (final STATE hierPred : hierPredStates) {
-					for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : automaton
-							.returnSuccessorsGivenHier(potentialhier, hierPred)) {
 
-						final STATE succesor = returnTransition.getSucc();
-						final STATE hier = returnTransition.getHierPred();
-						if (!result.contains(succesor)) {
-							allStates.add(succesor);
-							result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
+			if (automaton instanceof NestedWordAutomaton) {
+				for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : ((NestedWordAutomaton<LETTER, STATE>) automaton)
+						.returnSuccessors(state)) {
+
+					final STATE succesor = returnTransition.getSucc();
+					final STATE hier = returnTransition.getHierPred();
+					if (!result.contains(succesor)) {
+						allStates.add(succesor);
+						result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
+					}
+					if (!result.contains(hier)) {
+						allStates.add(hier);
+						result.addState(automaton.isInitial(hier), automaton.isFinal(hier), hier);
+					}
+					final LETTER transferredLetter = transferEdge(returnTransition.getLetter());
+					returnAlphabet.add(transferredLetter);
+					result.addReturnTransition(state, hier, transferredLetter, succesor);
+					dequeue.add(succesor);
+				}
+
+			} else {
+				final Set<STATE> copyAllStates = new HashSet<>(allStates);
+				for (final STATE potentialhier : copyAllStates) {
+					for (final STATE hierPred : hierPredStates) {
+						for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : automaton
+								.returnSuccessorsGivenHier(potentialhier, hierPred)) {
+
+							final STATE succesor = returnTransition.getSucc();
+							final STATE hier = returnTransition.getHierPred();
+							if (!result.contains(succesor)) {
+								allStates.add(succesor);
+								result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
+							}
+							if (!result.contains(hier)) {
+								allStates.add(hier);
+								result.addState(automaton.isInitial(hier), automaton.isFinal(hier), hier);
+							}
+							final LETTER transferredLetter = transferEdge(returnTransition.getLetter());
+							returnAlphabet.add(transferredLetter);
+							result.addReturnTransition(potentialhier, hier, transferredLetter, succesor);
+							dequeue.add(succesor);
 						}
-						if (!result.contains(hier)) {
-							allStates.add(hier);
-							result.addState(automaton.isInitial(hier), automaton.isFinal(hier), hier);
-						}
-						final LETTER transferredLetter = transferEdge(returnTransition.getLetter());
-						returnAlphabet.add(transferredLetter);
-						result.addReturnTransition(potentialhier, hier, transferredLetter, succesor);
-						dequeue.add(succesor);
 					}
 				}
 			}

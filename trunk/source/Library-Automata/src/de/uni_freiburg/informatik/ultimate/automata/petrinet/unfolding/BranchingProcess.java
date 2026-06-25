@@ -28,12 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,9 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
@@ -529,61 +525,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				}
 			}
 		}
-	}
-
-	/**
-	 * Compute all cuts (maximal co-sets) of the Branching Process
-	 *
-	 * @return List of all cuts
-	 */
-	public List<ImmutableList<Condition<LETTER, PLACE>>> computeCuts(final boolean ignoreCutoffs) {
-		final var corelation = getCoRelation();
-
-		final Condition<LETTER, PLACE>[] conditions;
-		if (ignoreCutoffs) {
-			conditions = getConditions().stream().filter(c -> !c.getPredecessorEvent().isCutoffEvent())
-					.toArray(Condition[]::new);
-		} else {
-			conditions = getConditions().toArray(Condition[]::new);
-		}
-		final var cosets = new ArrayList<ImmutableList<Condition<LETTER, PLACE>>>();
-		final var worklist = new ArrayDeque<Pair<ImmutableList<Condition<LETTER, PLACE>>, Integer>>();
-		worklist.add(new Pair<>(ImmutableList.empty(), 0));
-
-		while (!worklist.isEmpty()) {
-			final var pair = worklist.pop();
-			final var coset = pair.getFirst();
-			final int minIndex = pair.getSecond();
-			boolean isMaximal = true;
-
-			ImmutableList<Condition<LETTER, PLACE>> extendedCoset = null;
-
-			for (int i = minIndex; i < conditions.length; ++i) {
-				final Condition<LETTER, PLACE> candidate = conditions[i];
-				final boolean acceptCandidate = corelation.isCoset(coset, candidate);
-				if (acceptCandidate) {
-					if (extendedCoset != null) {
-						worklist.push(new Pair<>(extendedCoset, i));
-					}
-
-					isMaximal = false;
-					extendedCoset = new ImmutableList<>(candidate, coset);
-				}
-			}
-			if (extendedCoset != null) {
-				worklist.push(new Pair<>(extendedCoset, conditions.length));
-			}
-
-			for (int i = 0; isMaximal && i < minIndex; ++i) {
-				isMaximal &= coset.contains(conditions[i]) || !corelation.isCoset(coset, conditions[i]);
-			}
-
-			if (isMaximal) {
-				cosets.add(coset);
-			}
-		}
-
-		return cosets;
 	}
 
 	@Override

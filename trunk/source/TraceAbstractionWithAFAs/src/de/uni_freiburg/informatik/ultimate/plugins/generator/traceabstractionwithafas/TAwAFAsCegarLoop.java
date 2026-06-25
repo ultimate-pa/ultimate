@@ -551,7 +551,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 					oldAbstraction, determinized, psd2, exploitSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
-		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton);
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton, mRefinementResult.getPredicateUnifier());
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 

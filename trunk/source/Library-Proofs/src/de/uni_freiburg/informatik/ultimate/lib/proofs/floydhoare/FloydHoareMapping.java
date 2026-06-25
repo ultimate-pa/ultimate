@@ -27,11 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
  * A simple implementation of {@link IFloydHoareAnnotation} backed by a map.
@@ -117,14 +115,5 @@ public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 
 		sb.append("----------------------------------------");
 		return sb.toString();
-	}
-
-	public long size() {
-		final long mapSize = mAnnotation.entrySet().stream()
-				.collect(Collectors.summingLong(x -> new DAGSize().size(x.getValue().getFormula())));
-		if (mDefaultPredicate == null) {
-			return mapSize;
-		}
-		return mapSize + new DAGSize().size(mDefaultPredicate.getFormula());
 	}
 }

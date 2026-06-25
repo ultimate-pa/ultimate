@@ -12,8 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
- de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter,
- org.yaml.snakeyaml
+ de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter
 Import-Package: junit.framework,
  org.junit,
  org.junit.runner,
