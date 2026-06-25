@@ -385,7 +385,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		if (NON_EA_INDUCTIVITY_CHECK) {
-			final boolean inductive = checkInterpolantAutomatonInductivity(mInterpolAutomaton);
+			final boolean inductive =
+					checkInterpolantAutomatonInductivity(mInterpolAutomaton, mRefinementResult.getPredicateUnifier());
 			if (!inductive) {
 				throw new AssertionError("not inductive");
 			}
@@ -399,7 +400,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		// unAssertCodeBlock unlocks a ManagedScript. If assertions are disabled, this remains locked. This leads to
 		// exceptions if other callers try to lock it. With assertions enabled, the line below causes the ManagedScript
 		// to be unlocked and no exceptions occur.
-		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton);
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton, mRefinementResult.getPredicateUnifier());
 	}
 
 	protected static boolean
@@ -555,7 +556,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		assert isInterpolantAutomatonOfSingleStateType(
 				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
 		assert checkInterpolantAutomatonInductivity(
-				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
+				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult(),
+				mRefinementResult.getPredicateUnifier());
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(
@@ -658,10 +660,11 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		throw new IllegalStateException("Floyd-Hoare automata have not been stored");
 	}
 
-	protected boolean checkInterpolantAutomatonInductivity(final INestedWordAutomaton<L, IPredicate> automaton) {
-		return NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
-				new IncrementalHoareTripleChecker(mCsToolkit, false), mRefinementResult.getPredicateUnifier(),
-				automaton, true).getResult();
+	protected boolean checkInterpolantAutomatonInductivity(final INestedWordAutomaton<L, IPredicate> automaton,
+			final IPredicateUnifier predicateUnifier) {
+		final var htc = new IncrementalHoareTripleChecker(mCsToolkit, false);
+		return NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(), htc,
+				predicateUnifier, automaton, true).getResult();
 	}
 
 	public IPreconditionProvider getPreconditionProvider() {

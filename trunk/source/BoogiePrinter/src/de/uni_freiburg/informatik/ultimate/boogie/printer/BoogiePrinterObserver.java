@@ -60,13 +60,12 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		if (root instanceof Unit) {
+		if (root instanceof final Unit unit) {
 			final PrintWriter writer = openTempFile(root);
 			if (writer != null) {
-				final Unit unit = (Unit) root;
-				final BoogieOutput output = new BoogieOutput(writer);
-				output.printBoogieProgram(unit);
-				writer.close();
+				try (final BoogieOutput output = new BoogieOutput(writer)) {
+					output.printBoogieProgram(unit);
+				}
 			}
 			return false;
 		}

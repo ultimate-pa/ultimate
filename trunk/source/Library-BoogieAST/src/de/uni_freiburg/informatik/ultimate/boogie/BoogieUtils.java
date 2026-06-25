@@ -53,8 +53,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * Provides static auxiliary methods for Boogie.
  */
 public class BoogieUtils {
-
 	public static final String AUXILIARY_LABEL = "auxiliary_label";
+
+	public static final String INIT_PROCEDURE = "ULTIMATE.init";
+	public static final String START_PROCEDURE = "ULTIMATE.start";
 
 	// A prefix that is added to the names of ghost variables during backtranslation.
 	public static final String GHOST_VARIABLE_PREFIX = "~ghost~";
