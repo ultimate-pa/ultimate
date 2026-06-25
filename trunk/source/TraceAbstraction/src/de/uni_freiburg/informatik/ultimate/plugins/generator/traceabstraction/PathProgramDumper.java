@@ -241,16 +241,11 @@ public class PathProgramDumper {
 		final File file = new File(filename);
 		mLogger.warn("Writing path program to file " + file.getAbsolutePath());
 
-		PrintWriter writer;
-		try {
-			writer = new PrintWriter(new FileWriter(file));
-			final BoogieOutput output = new BoogieOutput(writer);
+		try (final BoogieOutput output = new BoogieOutput(new PrintWriter(new FileWriter(file)))) {
 			output.printBoogieProgram(unit);
-			writer.close();
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
-
 	}
 
 	private TypeSortTranslator constructFakeTypeSortTranslator(final ManagedScript managedScript) {
