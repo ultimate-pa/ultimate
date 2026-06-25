@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.boogie;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -201,6 +203,17 @@ public class BoogieUtils {
 				map.put(label, occ + 1);
 			}
 		}
+	}
+
+	public static List<Statement> flattenAtomicStatements(final Statement statement) {
+		return getFlattenedStatements(statement).toList();
+	}
+
+	static Stream<Statement> getFlattenedStatements(final Statement statement) {
+		if (statement instanceof AtomicStatement) {
+			return Arrays.stream(((AtomicStatement) statement).getBody()).flatMap(BoogieUtils::getFlattenedStatements);
+		}
+		return Stream.of(statement);
 	}
 
 }

@@ -38,39 +38,20 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -102,17 +83,17 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	private String mCurrentProcedure;
 	private ILocation mCurrentStatement;
 
-	private final Set<String> mGlobalVariables;
-	private final Map<ILocation, Set<String>> mStatementVariablesMap;
-	private final Map<ILocation, Set<String>> mStatementParametersMap;
-	private final Map<String, Map<String, ASTType>> mProcedureVariablesMap;
+	private final Set<String> mGlobalVariables = new HashSet<>();
+	private final Map<ILocation, Set<String>> mStatementVariablesMap = new HashMap<>();
+	private final Map<ILocation, Set<String>> mStatementParametersMap = new HashMap<>();
+	private final Map<String, Map<String, ASTType>> mProcedureVariablesMap = new HashMap<>();
 
-	private final Map<String, Expression> mEntryAnnotationMap;
-	private final Map<String, Expression> mExitAnnotationMap;
+	private final Map<String, Expression> mEntryAnnotationMap = new HashMap<>();
+	private final Map<String, Expression> mExitAnnotationMap = new HashMap<>();
 
-	private final Map<String, List<Tid>> mAssociationTidMap;
-	private final Map<String, List<Tid>> mUsedTidMap;
-	private final Map<String, List<Tid>> mAllTidMap;
+	private final Map<String, List<Tid>> mAssociationTidMap = new HashMap<>();
+	private final Map<String, List<Tid>> mUsedTidMap = new HashMap<>();
+	private final Map<String, List<Tid>> mAllTidMap = new HashMap<>();
 	private final Set<Tid> mTids;
 
 	ThreadTemplateVisitor(final Unit boogieFile, final BoogieIcfgContainer icfg) {
@@ -120,17 +101,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		mCurrentProcedure = null;
 		mCurrentStatement = null;
 
-		mGlobalVariables = new HashSet<>();
-		mStatementVariablesMap = new HashMap<>();
-		mStatementParametersMap = new HashMap<>();
-		mProcedureVariablesMap = new HashMap<>();
-
-		mEntryAnnotationMap = new HashMap<>();
-		mExitAnnotationMap = new HashMap<>();
-
-		mAssociationTidMap = new HashMap<>();
-		mUsedTidMap = new HashMap<>();
-		mAllTidMap = new HashMap<>();
 		mTids = new HashSet<>();
 
 		for (final Declaration elem : boogieFile.getDeclarations()) {
@@ -195,6 +165,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		return mExitAnnotationMap;
 	}
 
+	// TODO instead of collecting global variables, check the type of variables
 	boolean containsGlobalVariables(final Statement stmt) {
 		if (mStatementVariablesMap.get(stmt.getLoc()) == null || mGlobalVariables == null) {
 			return false;
@@ -203,6 +174,10 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		return !Collections.disjoint(mStatementVariablesMap.get(stmt.getLoc()), mGlobalVariables);
 	}
 
+	// TODO instead of collecting the local variables of each procedure, inspect the variables
+	//
+	// TODO beyond just a boolean, it might be useful to know WHICH local vars are READ and which are ASSIGNED
+	// TODO but this is probably already implemented somewhere in Ultimate (?)
 	boolean containsLocalVariables(final String procName, final Statement stmt) {
 		if (mStatementVariablesMap.get(stmt.getLoc()) == null || mGlobalVariables == null) {
 			return false;
@@ -217,6 +192,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		switch (decl) {
 		case final VariableDeclaration varDecl -> {
 			for (final VarList varList : varDecl.getVariables()) {
+				// TODO doesn't this also catch local variable declarations?
 				Collections.addAll(mGlobalVariables, varList.getIdentifiers());
 			}
 		}
@@ -239,7 +215,7 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		final Expression exitInvariant = (Expression) WitnessInvariant.getAnnotation(icfgExitLoc).getInvariant();
 		mExitAnnotationMap.put(mCurrentProcedure, exitInvariant);
 
-		final Map res = new HashMap<>();
+		final Map<String, ASTType> res = new HashMap<>();
 
 		for (final VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
 			for (final VarList varList : varDecl.getVariables()) {
@@ -280,7 +256,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 			for (final String id : mStatementVariablesMap.getOrDefault(stmt.getLoc(), new HashSet<>())) {
 				if (mProcedureVariablesMap.get(mCurrentProcedure).containsKey(id)) {
-
 					parameters.add(id);
 				}
 			}
@@ -291,213 +266,69 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	@Override
 	protected Statement processStatement(final Statement statement) {
-
 		mCurrentStatement = statement.getLoc();
-
-		switch (statement) {
-		case final AssertStatement assertStmt -> visit(assertStmt);
-		case final AssignmentStatement assignStmt -> visit(assignStmt);
-		case final AssumeStatement assumeStmt -> visit(assumeStmt);
-		case final AtomicStatement atomicStmt -> visit(atomicStmt);
-		case final BreakStatement breakStmt -> visit(breakStmt);
-		case final CallStatement callStmt -> visit(callStmt);
-		case final ForkStatement forkStmt -> visit(forkStmt);
-		case final GotoStatement gotoStmt -> visit(gotoStmt);
-		case final HavocStatement havocStmt -> visit(havocStmt);
-		case final IfStatement ifStmt -> visit(ifStmt);
-		case final JoinStatement joinStmt -> visit(joinStmt);
-		case final Label label -> visit(label);
-		case final ReturnStatement returnStmt -> visit(returnStmt);
-		case final WhileStatement whileStmt -> visit(whileStmt);
-		}
-
-		return statement;
-	}
-
-	@Override
-	protected void visit(final WhileStatement statement) {
-		processExpression(statement.getCondition());
-		for (final Statement stmt : statement.getBody()) {
-			processStatement(stmt);
-		}
+		return super.processStatement(statement);
 	}
 
 	@Override
 	protected void visit(final AtomicStatement statement) {
 		for (final Statement stmt : statement.getBody()) {
 			processStatement(stmt);
-			final Set<String> res = mStatementVariablesMap.getOrDefault(statement.getLoc(), new HashSet());
-			res.addAll(mStatementVariablesMap.getOrDefault(stmt.getLoc(), new HashSet()));
-			mStatementVariablesMap.put(statement.getLoc(), res);
-		}
-	}
 
-	@Override
-	protected void visit(final IfStatement statement) {
-		processExpression(statement.getCondition());
-		for (final Statement stmt : statement.getThenPart()) {
-			processStatement(stmt);
-		}
-		for (final Statement stmt : statement.getElsePart()) {
-			processStatement(stmt);
+			mStatementVariablesMap.computeIfAbsent(statement.getLoc(), x -> new HashSet<>())
+					.addAll(mStatementVariablesMap.getOrDefault(stmt.getLoc(), new HashSet<>()));
 		}
 	}
 
 	@Override
 	protected void visit(final ForkStatement statement) {
-
 		final Tid tid = new Tid(statement.getThreadID());
 
-		List<Tid> tids = mAssociationTidMap.getOrDefault(statement.getProcedureName(), new ArrayList<>());
-
+		List<Tid> tids = mAssociationTidMap.computeIfAbsent(statement.getProcedureName(), x -> new ArrayList<>());
 		if (!tids.contains(tid)) {
 			tids.add(tid);
 		}
 
-		mAssociationTidMap.put(statement.getProcedureName(), tids);
-
-		tids = mUsedTidMap.getOrDefault(mCurrentProcedure, new ArrayList<>());
-
+		tids = mUsedTidMap.computeIfAbsent(mCurrentProcedure, x -> new ArrayList<>());
 		if (!tids.contains(tid)) {
 			tids.add(tid);
 		}
-
-		mUsedTidMap.put(mCurrentProcedure, tids);
 	}
 
 	@Override
 	protected void visit(final JoinStatement statement) {
-
 		final Tid tid = new Tid(statement.getThreadID());
 
-		final List<Tid> tids = mUsedTidMap.getOrDefault(mCurrentProcedure, new ArrayList<>());
-
+		final List<Tid> tids = mUsedTidMap.computeIfAbsent(mCurrentProcedure, x -> new ArrayList<>());
 		if (!tids.contains(tid)) {
 			tids.add(tid);
 		}
-
-		mUsedTidMap.put(mCurrentProcedure, tids);
 	}
 
 	@Override
 	protected void visit(final HavocStatement statement) {
-		// empty because it may be overridden (but does not have to)
-		Set<String> res;
 		for (final VariableLHS var : statement.getIdentifiers()) {
-			res = mStatementVariablesMap.getOrDefault(mCurrentStatement, new HashSet());
-			res.add(var.getIdentifier());
-			mStatementVariablesMap.put(mCurrentStatement, res);
+			mStatementVariablesMap.computeIfAbsent(mCurrentStatement, x -> new HashSet<>()).add(var.getIdentifier());
 		}
-	}
-
-	/*
-	 * protected void visit(final CallStatement statement) { // empty because it may be overridden (but does not have
-	 * to) }
-	 */
-
-	@Override
-	protected void visit(final AssignmentStatement statement) {
-		for (final LeftHandSide lhs : statement.getLhs()) {
-			processLeftHandSide(lhs);
-		}
-
-		for (final Expression rhs : statement.getRhs()) {
-			processExpression(rhs);
-		}
-	}
-
-	@Override
-	protected void visit(final AssumeStatement statement) {
-		processExpression(statement.getFormula());
-	}
-
-	@Override
-	protected void visit(final AssertStatement statement) {
-		processExpression(statement.getFormula());
 	}
 
 	@Override
 	protected void visit(final VariableLHS lhs) {
-		final Set<String> res = mStatementVariablesMap.getOrDefault(mCurrentStatement, new HashSet());
-		res.add(lhs.getIdentifier());
-		mStatementVariablesMap.put(mCurrentStatement, res);
-	}
-
-	@Override
-	protected void visit(final UnaryExpression expr) {
-		processExpression(expr.getExpr());
-	}
-
-	@Override
-	protected void visit(final StructConstructor expr) {
-		for (final Expression fieldExpr : expr.getFieldValues()) {
-			processExpression(fieldExpr);
-		}
-	}
-
-	@Override
-	protected void visit(final StructAccessExpression expr) {
-		processExpression(expr.getStruct());
+		mStatementVariablesMap.computeIfAbsent(mCurrentStatement, x -> new HashSet<>()).add(lhs.getIdentifier());
 	}
 
 	@Override
 	protected void visit(final QuantifierExpression expr) {
-
 		for (final VarList varList : expr.getParameters()) {
-			for (final String id : varList.getIdentifiers()) {
-
-				final Set<String> res = mStatementVariablesMap.getOrDefault(mCurrentStatement, new HashSet<>());
-
-				res.add(id);
-				mStatementVariablesMap.put(mCurrentStatement, res);
-			}
+			Collections.addAll(mStatementVariablesMap.computeIfAbsent(mCurrentStatement, x -> new HashSet<>()),
+					varList.getIdentifiers());
 		}
 
 		processExpression(expr.getSubformula());
 	}
 
 	@Override
-	protected void visit(final IfThenElseExpression expr) {
-		processExpression(expr.getCondition());
-		processExpression(expr.getThenPart());
-		processExpression(expr.getElsePart());
-	}
-
-	@Override
 	protected void visit(final IdentifierExpression expr) {
-
-		final Set<String> res = mStatementVariablesMap.getOrDefault(mCurrentStatement, new HashSet<>());
-
-		res.add(expr.getIdentifier());
-		mStatementVariablesMap.put(mCurrentStatement, res);
-	}
-
-	@Override
-	protected void visit(final FunctionApplication expr) {
-
-		for (final Expression arg : expr.getArguments()) {
-			processExpression(arg);
-		}
-	}
-
-	@Override
-	protected void visit(final BinaryExpression expr) {
-		processExpression(expr.getLeft());
-		processExpression(expr.getRight());
-	}
-
-	@Override
-	protected void visit(final ArrayAccessExpression expr) {
-
-		processExpression(expr.getArray());
-
-		for (final Expression index : expr.getIndices()) {
-			processExpression(index);
-		}
-	}
-
-	@Override
-	protected void visit(final BitVectorAccessExpression expr) {
-		processExpression(expr.getBitvec());
+		mStatementVariablesMap.computeIfAbsent(mCurrentStatement, x -> new HashSet<>()).add(expr.getIdentifier());
 	}
 }

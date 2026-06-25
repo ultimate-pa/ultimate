@@ -26,12 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -43,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * This class initializes the Civlizer.
@@ -137,7 +135,6 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-
 		if (root instanceof final Unit boogieFile) {
 			mProgramAndProof.setBoogieAst(boogieFile);
 			mLogger.warn(boogieFile);
@@ -149,65 +146,13 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 			mProgramAndProof.setIcfg(icfg);
 			mProgramAndProof.setProof(proof);
-
-			// TODO Below is demo code showing how to access invariants and ghosts. Remove it once no longer needed.
-			// get ghost declarations including initial values
-			// mLogger.fatal("declared ghosts and initial values: %s",
-			// WitnessGhostDeclaration.getAnnotation(icfg).getGhostAndInitialValues());
-
-			// final var initialLoc = icfg.getProcedureEntryNodes().get("ULTIMATE.start");
-			// final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
-			// final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
-			// mLogger.fatal("Annotation at %s is %s", codeLocation, invariant);
-			// IcfgEdge
-			mLogger.fatal("TEST");
-			final var programPoints = icfg.getProgramPoints();
-
-			for (final Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
-				for (final BoogieIcfgLocation location : innerMap.values()) {
-
-					System.out.println(location.getBoogieASTNode());
-
-					for (final var edge : location.getOutgoingEdges()) {
-						if (WitnessGhostUpdate.getAnnotation(edge) != null) {
-							final Map<?, ?> update = WitnessGhostUpdate.getAnnotation(edge).getUpdate();
-
-							for (final Map.Entry<?, ?> updateEntry : update.entrySet()) {
-								mLogger.warn("update is %s, %s", updateEntry.getValue(), updateEntry.getKey());
-							}
-						}
-					}
-				}
-			}
-
-			mLogger.fatal("TEST");
-
-			/*
-			 * var programPoints = icfg.getProgramPoints();
-			 *
-			 * for (Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
-			 *
-			 * for (Map.Entry<?, BoogieIcfgLocation> entry : innerMap.entrySet()) {
-			 *
-			 * var key = entry.getKey(); BoogieIcfgLocation value = entry.getValue();
-			 *
-			 * System.out.println(key); System.out.println(value);
-			 *
-			 * final var update = WitnessGhostUpdate.getAnnotation(value);
-			 *
-			 * mLogger.fatal("Update is %s", update); } }
-			 */
 		}
 
 		if (mProgramAndProof.isFull()) {
-
-			// mLogger.warn("TEST TEST TEST");
-			// mLogger.warn("Annotation at %s", (Expression)
-			// WitnessInvariant.getAnnotation(mProgramAndProof.getBoogieAst()).getInvariant());
-			// mLogger.warn("TEST TEST TEST");
-
 			final Translator translation = new Translator(mProgramAndProof);
-			translation.translate();
+			try (final var printer = new CivlOutput(new PrintWriter("/tmp/temporary.bpl"))) {
+				printer.print(translation.getResult());
+			}
 		}
 
 		return false;

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,32 +35,46 @@ import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.AnonymousAction;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.BoogieDeclaration;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.CivlDeclaration;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.CivlProgram;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration.Linearity;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.YieldInvariant;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.YieldProcedure;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
@@ -91,12 +104,23 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnn
  * </p>
  *
  * @author Gabriel Tréca (gabriel.treca@polytechnique.edu)
+ * @author Dominik Klumpp (klumpp@lix.polytechnique.fr)
  */
-public final class Translator extends BoogieVisitor {
+public final class Translator {
+	public static final int LAYER_BASE = 0;
+	public static final int LAYER_IMPLEMENTATIONS = 1;
+	public static final int LAYER_GHOST_VARS = 2;
+	public static final int LAYER_TOP = LAYER_GHOST_VARS;
+
+	private static final String JOIN_POOL_NAME = "join_pool";
 
 	private final ProgramAndProof mProgramAndProof;
-	private final StringBuilderWriter mWriter;
-	private final BoogieOutput mOutput;
+
+	private final ASTType mStartTidType;
+	private final ASTType mTidType;
+
+	private final List<CivlDeclaration> mDeclarations = new ArrayList<>();
+	private final CivlProgram mResult;
 
 	/**
 	 * Creates a translator for the specified program and proof. Preprocesses the input and initializes the output
@@ -108,188 +132,233 @@ public final class Translator extends BoogieVisitor {
 	public Translator(final ProgramAndProof programAndProof) {
 		programAndProof.preprocess();
 		mProgramAndProof = programAndProof;
-		try {
-			mWriter = new StringBuilderWriter();
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-		mOutput = new BoogieOutput(mWriter);
-	}
 
-	/**
-	 * Translates the given Boogie program and proof into a Civl program.
-	 *
-	 * @param programAndProof
-	 *            the Boogie program together with its proof annotations and thread information
-	 * @return a string containing the generated Civl program
-	 */
-	public String translate() {
-
-		addTidsType();
-
-		addGhostVar();
-
-		mWriter.println("var {:layer 0,2} {:linear} join_pool : Set (One Tid);\n");
-
+		// Declarations for thread management operations
+		mStartTidType = declareStartTidType();
+		mTidType = addTidsType();
 		addThreadControlFlow();
 
+		declareGhostVariables();
+
 		for (final Declaration elem : mProgramAndProof.getBoogieAst().getDeclarations()) {
-			processDeclaration(elem);
+			final var processedDecl = processDeclaration(elem);
+			mDeclarations.add(processedDecl);
 		}
 
-		return toString();
+		mResult = new CivlProgram(mDeclarations.toArray(CivlDeclaration[]::new));
 	}
 
-	private void addStringList(final List<String> list, final String sep) {
-		mWriter.print(String.join(sep, list));
+	public CivlProgram getResult() {
+		return mResult;
 	}
 
-	private void addTidConst(final Tid tid) {
-		mWriter.print("const unique const_");
-		mWriter.print(tid.toString());
-		mWriter.println(" : Tid;");
+	private void addTidConst(final Tid tid, final ASTType tidType) {
+		final ILocation loc = null;
+		final var tidConstDecl = new ConstDeclaration(loc, new Attribute[0], true,
+				new VarList(loc, new String[] { "const_" + tid.toString() }, tidType), null, false);
+		declare(tidConstDecl);
 	}
 
-	private void addTidsType() {
+	private void declare(final Declaration decl) {
+		mDeclarations.add(new BoogieDeclaration(decl));
+	}
 
-		mWriter.println("\ntype StartTid;");
-		mWriter.println("const unique const_start_tid : StartTid;");
-		mWriter.println("type Tid;");
+	private ASTType declareStartTidType() {
+		final ILocation loc = null;
+
+		final var startTidType = new NamedType(loc, "StartTid", new ASTType[0]);
+		final var startTidTypeDecl =
+				new TypeDeclaration(loc, new Attribute[0], false, startTidType.getName(), new String[0]);
+		declare(startTidTypeDecl);
+
+		final var startTidConstDecl = new ConstDeclaration(loc, new Attribute[0], true,
+				new VarList(loc, new String[] { "const_start_tid" }, startTidType), null, false);
+		declare(startTidConstDecl);
+
+		return startTidType;
+	}
+
+	private ASTType addTidsType() {
+		final ILocation loc = null;
+
+		final var tidType = new NamedType(loc, "Tid", new ASTType[0]);
+		final var tidTypeDecl = new TypeDeclaration(loc, new Attribute[0], false, tidType.getName(), new String[0]);
+		declare(tidTypeDecl);
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getTids()) {
-			addTidConst(tid);
+			addTidConst(tid, tidType);
 		}
 
-		mWriter.print("\n");
+		return tidType;
 	}
 
-	private void addGhostVar() {
+	private void declareGhostVariables() {
 		for (final OwickiGriesAnnotation proof : mProgramAndProof.getProof()) {
 			for (int i = 0; i < proof.getGhostVariables().size(); i++) {
-				mWriter.print("var {:layer 2,2} ~ghost~");
-				mWriter.print(String.valueOf(i));
-				mWriter.print(" : int;\n\n"); // ??? TODO improve
+				// ??? TODO improve
+				final var ghostDecl = createGlobalVariableDeclaration("~ghost~" + i, BoogieType.TYPE_INT,
+						LAYER_GHOST_VARS, LAYER_TOP, false);
+				declare(ghostDecl);
 			}
 		}
 	}
 
-	private void addFork(final String procName) {
-		mWriter.println("yield procedure {:layer 0} fork_" + procName + "({:linear_in} tid : One Tid);\n"
-				+ "refines atomic action {:layer 1, 2} _ {}");
+	private static VariableDeclaration createGlobalVariableDeclaration(final String name, final BoogieType type,
+			final int introductionLayer, final int disappearingLayer, final boolean linear) {
+		final ILocation loc = null;
+
+		final var layerAttribute = CivlUtils.createLayerAttribute(introductionLayer, disappearingLayer);
+		final Attribute[] attributes;
+		if (linear) {
+			attributes = new Attribute[] { layerAttribute, CivlUtils.createLinearityAttribute(Linearity.INOUT) };
+		} else {
+			attributes = new Attribute[] { layerAttribute };
+		}
+
+		return new VariableDeclaration(loc, attributes,
+				new VarList[] { new VarList(loc, new String[] { name }, type.toASTType(loc)) });
 	}
 
-	private void addTerminate() {
-		mWriter.println("""
-				yield procedure {:layer 0} terminate({:linear_in} tid : One Tid);
-				refines atomic action {:layer 1, 2} _ {
-					call One_Put(join_pool, tid);
-				}
-				""");
+	private static ASTType makeOne(final ASTType innerType) {
+		return new NamedType(null, "One", new ASTType[] { innerType });
 	}
 
-	private void addJoin() {
-		// linear_out try TODO
-		mWriter.println("""
-				yield procedure {:layer 0} join({:linear_out} tid : One Tid);
-				refines atomic action {:layer 1, 2} _ {
-					assume Set_Contains(join_pool, tid);
-					call One_Get(join_pool, tid);
-				}
-				""");
+	// Creates the following yield procedure:
+	//
+	// yield procedure {:layer 0} fork_<procName>({:linear_in} tid : One Tid);
+	// refines atomic action {:layer 1, 2} _ {}
+	//
+	private YieldProcedure addFork(final String procName) {
+		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.IN);
+		final var refinedAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
+				new Body(null, new VariableDeclaration[0], new Statement[0]));
+		return new YieldProcedure(LAYER_BASE, "fork_" + procName, new ParameterDeclaration[] { tidParam },
+				new ParameterDeclaration[0], new CallStatement[0], new CallStatement[0], null, refinedAction);
+	}
+
+	// Creates the following yield procedure:
+	//
+	// yield procedure {:layer 0} terminate({:linear_in} tid : One Tid);
+	// refines atomic action {:layer 1, 2} _ {
+	// call One_Put(join_pool, tid);
+	// }
+	//
+	private YieldProcedure addTerminate() {
+		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.IN);
+		final var putCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "One_Put",
+				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
+		final var refinedAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
+				new Body(null, new VariableDeclaration[0], new Statement[] { putCall }));
+		return new YieldProcedure(LAYER_BASE, "terminate", new ParameterDeclaration[] { tidParam },
+				new ParameterDeclaration[0], new CallStatement[0], new CallStatement[0], null, refinedAction);
+	}
+
+	// Creates the following yield procedure:
+	//
+	// yield procedure {:layer 0} join({:linear_out} tid : One Tid);
+	// refines atomic action {:layer 1, 2} _ {
+	// call One_Get(join_pool, tid);
+	// }
+	//
+	private YieldProcedure addJoin() {
+		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.OUT);
+		final var getCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "One_Get",
+				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
+		final var refinedAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
+				new Body(null, new VariableDeclaration[0], new Statement[] { getCall }));
+		return new YieldProcedure(LAYER_BASE, "join", new ParameterDeclaration[] { tidParam },
+				new ParameterDeclaration[0], new CallStatement[0], new CallStatement[0], null, refinedAction);
+	}
+
+	private static Expression getJoinPoolExpression() {
+		return new IdentifierExpression(null, JOIN_POOL_NAME);
+	}
+
+	private static Expression getParameterExpression(final ParameterDeclaration paramDecl) {
+		return new IdentifierExpression(null, paramDecl.getIdentifier());
 	}
 
 	private void addThreadControlFlow() {
-		mWriter.print("\n");
+		final var joinPoolDecl = declareJoinPool();
+		mDeclarations.add(new BoogieDeclaration(joinPoolDecl));
 
 		for (final String procName : mProgramAndProof.getTemplateVisitor().getAssociationTidMap().keySet()) {
-			addFork(procName);
-			mWriter.print("\n");
+			final var forkDecl = addFork(procName);
+			mDeclarations.add(forkDecl);
 		}
 
-		addTerminate();
-		addJoin();
+		final var terminateDecl = addTerminate();
+		mDeclarations.add(terminateDecl);
+
+		final var joinDecl = addJoin();
+		mDeclarations.add(joinDecl);
 	}
 
-	@Override
-	public String toString() {
-		return mWriter.toString();
+	private VariableDeclaration declareJoinPool() {
+		final var attributes = new Attribute[] { CivlUtils.createLayerAttribute(LAYER_BASE, LAYER_TOP),
+				CivlUtils.createLinearityAttribute(Linearity.INOUT) };
+		final ASTType poolType = new NamedType(null, "Set", new ASTType[] { makeOne(mTidType) });
+		final var joinPoolDecl = new VariableDeclaration(null, attributes,
+				new VarList[] { new VarList(null, new String[] { JOIN_POOL_NAME }, poolType) });
+		return joinPoolDecl;
 	}
 
-	@Override
-	protected Declaration processDeclaration(final Declaration decl) {
-		switch (decl) {
-		case final Axiom axiom -> mOutput.printAxiom(axiom);
-		case final ConstDeclaration constDecl -> mOutput.printConstDeclaration(constDecl);
-		case final FunctionDeclaration funDecl -> visit(funDecl);
-		case final Procedure proc -> visit(proc);
-		case final TypeDeclaration typeDecl -> visit(typeDecl);
-		case final VariableDeclaration varDecl -> {
-			// this case is already handled by processVariableDeclaration
+	private CivlDeclaration processDeclaration(final Declaration decl) {
+		return switch (decl) {
+		case final Procedure proc -> processProcedure(proc);
+		case final VariableDeclaration varDecl -> processGlobalVariableDeclaration(varDecl);
 
-			// ???
-			for (final VarList varl : varDecl.getVariables()) {
+		// These declarations are passed through without changes.
+		case final Axiom axiom -> new BoogieDeclaration(decl);
+		case final ConstDeclaration constDecl -> new BoogieDeclaration(decl);
+		case final FunctionDeclaration funDecl -> new BoogieDeclaration(decl);
+		case final TypeDeclaration typeDecl -> new BoogieDeclaration(decl);
+		};
+	}
 
-				final int len = varl.getIdentifiers().length;
-				mWriter.print("var {:layer 0,2} ");
+	// Add layer attribute to declaration of global program variables.
+	private static CivlDeclaration processGlobalVariableDeclaration(final VariableDeclaration varDecl) {
+		final var oldAttributes = varDecl.getAttributes();
 
-				for (int i = 0; i < len - 1; i++) {
-					mWriter.print(varl.getIdentifiers()[i]);
-					mWriter.print(", ");
-				}
+		final var newAttributes = new Attribute[oldAttributes.length + 1];
+		newAttributes[0] = CivlUtils.createLayerAttribute(LAYER_BASE, LAYER_TOP);
+		System.arraycopy(oldAttributes, 0, newAttributes, 1, oldAttributes.length);
 
-				mWriter.print(varl.getIdentifiers()[len - 1]);
-				mWriter.print(" : ");
-				mWriter.print(BoogiePrettyPrinter.print(varl.getType()));
-				mWriter.print(";\n\n");
-			}
-		}
-		}
-		return decl;
+		final var newDecl = new VariableDeclaration(varDecl.getLoc(), newAttributes, varDecl.getVariables());
+		return new BoogieDeclaration(newDecl);
 	}
 
 	private void addYieldInvariants(final String procName, final Expression annotation, final Statement statement,
 			final Set<Tid> tidNeedsLinearity, final int counter) {
-
-		mWriter.print("yield invariant {:layer 2} ");
-		mWriter.print("yield_");
-		mWriter.print(procName);
-		mWriter.print("_");
-		mWriter.print(Integer.toString(counter));
-
-		mWriter.print("(");
-		List<String> tids = new ArrayList<>();
+		final var params = new ArrayList<ParameterDeclaration>();
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
-			tids.add("{:linear} start_tid : One StartTid");
+			params.add(new ParameterDeclaration("start_tid", makeOne(mStartTidType), Linearity.INOUT));
 		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
 				Collections.emptyList())) {
-			if (tidNeedsLinearity.contains(tid)) {
-				tids.add("{:linear} " + tid.toString() + " : One Tid");
-			} else {
-				tids.add(" " + tid.toString() + " : One Tid");
-			}
+			params.add(new ParameterDeclaration(tid.toString(), makeOne(mTidType),
+					tidNeedsLinearity.contains(tid) ? Linearity.INOUT : Linearity.NONE));
 		}
-		addStringList(tids, ", ");
-		mWriter.println(");");
 
-		mWriter.print("preserves ");
-		tids = new ArrayList<>();
+		// TODO invariants may refer to local variables (then these need to be added as parameters as well)
+
+		final var preserves = new ArrayList<Expression>();
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
-			tids.add("start_tid->val == const_start_tid");
+			preserves.add(new BinaryExpression(null, BinaryExpression.Operator.COMPEQ,
+					new StructAccessExpression(null, new IdentifierExpression(null, "start_tid"), "val"),
+					new IdentifierExpression(null, "const_start_tid")));
 		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
 				Collections.emptyList())) {
-			tids.add(tid.toString() + "->val == const_" + tid.toString());
+			preserves.add(new BinaryExpression(null, BinaryExpression.Operator.COMPEQ,
+					new StructAccessExpression(null, new IdentifierExpression(null, tid.toString()), "val"),
+					new IdentifierExpression(null, "const_" + tid.toString())));
 		}
-		addStringList(tids, " && ");
-		mWriter.print(";\n");
 
 		if (annotation != null) {
-			mWriter.print("preserves ");
-			mWriter.print(BoogiePrettyPrinter.print(annotation));
-			mWriter.print(";\n");
+			preserves.add(annotation);
 		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
@@ -298,103 +367,71 @@ public final class Translator extends BoogieVisitor {
 					.stream().filter(entry -> entry.getValue().contains(tid)).map(Map.Entry::getKey).findFirst();
 
 			if (forked_proc.isPresent() && !procName.equals(forked_proc.get())) {
-
 				// TODO set at the end of the procedure
 				final var initialLoc = mProgramAndProof.getIcfg().getProcedureExitNodes().get(forked_proc.get());
 				final var invariant = (Expression) WitnessInvariant.getAnnotation(initialLoc).getInvariant();
-				final var codeLocation = (BoogieLocation) ILocation.getAnnotation(initialLoc);
 
-				mWriter.print("preserves ");
-				mWriter.print("(Set_Contains(join_pool, " + tid.toString() + ")) ==> (");
-				mWriter.print(BoogiePrettyPrinter.print(invariant));
-				mWriter.print(");\n");
+				preserves
+						.add(new BinaryExpression(null, BinaryExpression.Operator.LOGICIMPLIES,
+								new FunctionApplication(null, "Set_Contains", new Expression[] {
+										getJoinPoolExpression(), new IdentifierExpression(null, tid.toString()) }),
+								invariant));
 			}
 		}
 
-		mWriter.print("\n");
+		final var invDecl = new YieldInvariant(LAYER_TOP, "yield_" + procName + "_" + counter,
+				params.toArray(ParameterDeclaration[]::new), preserves.toArray(Expression[]::new));
+		mDeclarations.add(invDecl);
 	}
 
 	private void addNonAtomicStatement(final String procName, final Statement statement,
 			final Set<Tid> tidNeedsLinearity, final int counter) {
-		final List<String> arguments = new ArrayList<>();
-
-		for (final Map.Entry<String, ASTType> var : mProgramAndProof.getTemplateVisitor().getProcedureVariablesMap()
-				.get(procName).entrySet()) {
-			if (mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(statement.getLoc())
-					.contains(var.getKey())) {
-				arguments.add(var.getKey() + " : " + var.getValue());
-			}
-		}
-
-		final BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
-
-		mWriter.print("yield procedure {:layer 2} ");
-		mWriter.print("condition_" + procName + "_" + counter);
-		mWriter.print("_stmt_");
-		mWriter.print(Integer.toString(counter));
-
-		mWriter.print("(");
-		addStringList(arguments, ", ");
-		mWriter.println(") returns (out : bool) {");
-
 		// improve that
-		Expression condition = null;
+		final Expression condition;
 		if (statement instanceof final IfStatement ifStmt) {
 			condition = ifStmt.getCondition();
 		} else if (statement instanceof final WhileStatement whileStmt) {
 			condition = whileStmt.getCondition();
+		} else {
+			throw new IllegalArgumentException("should only be called with if and while statements");
 		}
 
-		final LeftHandSide[] outVariable = { new VariableLHS(statement.getLoc(), "out") };
-
-		mWriter.print(BoogiePrettyPrinter
-				.print(new AssignmentStatement(statement.getLoc(), outVariable, new Expression[] { condition })));
-
-		mWriter.println("}\n");
+		// TODO (Dominik:) I didn't understand what is happening here, so I did not reimplement it yet.
+		// final LeftHandSide[] outVariable = { new VariableLHS(statement.getLoc(), "out") };
+		//
+		// mWriter.print(BoogiePrettyPrinter
+		// .print(new AssignmentStatement(statement.getLoc(), outVariable, new Expression[] { condition })));
 	}
 
 	private void addAtomicStatement(final String procName, final Statement statement, final int counter) {
 		// IfStatement, ReturnStatement, CallStatement, WhileStatement, BreakStatement
 
-		final List<String> arguments = new ArrayList<>();
-		final List<String> returns = new ArrayList<>();
+		final List<ParameterDeclaration> inParams = new ArrayList<>();
+		final List<ParameterDeclaration> outParams = new ArrayList<>();
 
 		for (final Map.Entry<String, ASTType> var : mProgramAndProof.getTemplateVisitor().getProcedureVariablesMap()
 				.get(procName).entrySet()) {
 			if (mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(statement.getLoc())
 					.contains(var.getKey())) {
-				arguments.add(var.getKey() + "_in : " + var.getValue());
-				returns.add(var.getKey() + " : " + var.getValue());
+				inParams.add(new ParameterDeclaration(var.getKey() + "_in", var.getValue(), Linearity.NONE));
+				outParams.add(new ParameterDeclaration(var.getKey(), var.getValue(), Linearity.NONE));
 			}
 		}
 
-		mWriter.print("yield procedure {:layer 0} ");
-		mWriter.print(procName);
-		mWriter.print("_stmt_");
-		mWriter.print(Integer.toString(counter));
-
-		mWriter.print("(");
-		addStringList(arguments, ", ");
-		mWriter.print(") returns (");
-		addStringList(returns, ", ");
-		mWriter.println(");");
-
-		mWriter.println("refines atomic action {:layer 1,2} _ {");
+		final var body = new ArrayList<Statement>();
 		for (final String var : mProgramAndProof.getTemplateVisitor().getStatementParametersMap()
 				.get(statement.getLoc())) {
-			mWriter.print("    ");
-			mWriter.print(var + " := " + var + "_in");
-			mWriter.println(";");
+			body.add(new AssignmentStatement(null, new LeftHandSide[] { new VariableLHS(null, var) },
+					new Expression[] { new IdentifierExpression(null, var + "_in") }));
 		}
+		body.addAll(BoogieUtils.flattenAtomicStatements(statement));
 
-		if (statement instanceof final AtomicStatement atom) {
-			for (final Statement stmt : atom.getBody()) {
-				mWriter.println(BoogiePrettyPrinter.print(stmt));
-			}
-		} else {
-			mWriter.println(BoogiePrettyPrinter.print(statement));
-		}
-		mWriter.println("}\n");
+		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
+				new Body(null, new VariableDeclaration[0], body.toArray(Statement[]::new)));
+		final var yieldProc = new YieldProcedure(LAYER_BASE, procName + "_stmt_" + counter,
+				inParams.toArray(ParameterDeclaration[]::new), outParams.toArray(ParameterDeclaration[]::new),
+				new CallStatement[0], new CallStatement[0], null, atomicAction);
+		mDeclarations.add(yieldProc);
 	}
 
 	private void addStatement(final String procName, final Statement statement, final Set<Tid> tidNeedsLinearity,
@@ -408,58 +445,34 @@ public final class Translator extends BoogieVisitor {
 		}
 	}
 
-	void writeBody(final Procedure decl) {
+	Body writeBody(final Procedure decl) {
 		final BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
-
-		mOutput.printBody(transformer.transformBody(decl.getIdentifier(), decl.getBody()));
+		return transformer.transformBody(decl.getIdentifier(), decl.getBody());
 	}
 
-	void writeProcedure(final Procedure decl) {
-		final BodyTransformer transformer = new BodyTransformer(mProgramAndProof);
+	private YieldProcedure writeProcedure(final Procedure decl) {
+		final var inParams = new ArrayList<ParameterDeclaration>();
 
-		mWriter.print("yield procedure {:layer 2} ");
-		mWriter.print(decl.getIdentifier());
-
-		mWriter.print("(");
-		List<String> tids = new ArrayList<>();
 		if (BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())) {
-			tids.add("{:linear} start_tid : One StartTid");
+			inParams.add(new ParameterDeclaration("start_tid", makeOne(mStartTidType), Linearity.INOUT));
 		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(decl.getIdentifier(),
 				Collections.emptyList())) {
-			tids.add("{:linear_in} " + tid.toString() + " : One Tid");
-		}
-		addStringList(tids, ", ");
-		mWriter.println(")");
-
-		mWriter.print("requires call yield_");
-		mWriter.print(decl.getIdentifier());
-		mWriter.print("_0");
-		mWriter.print("(");
-		tids = new ArrayList<>();
-		if (BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())) {
-			tids.add("start_tid");
+			inParams.add(new ParameterDeclaration(tid.toString(), makeOne(mTidType), Linearity.IN));
 		}
 
-		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(decl.getIdentifier(),
-				Collections.emptyList())) {
-			tids.add(tid.toString());
-		}
-		addStringList(tids, ", ");
-		mWriter.println(");");
+		// TODO avoid hardcoding invariant name here
+		final var requires = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
+				"yield_" + decl.getIdentifier() + "_0",
+				inParams.stream().map(Translator::getParameterExpression).toArray(Expression[]::new));
 
-		mWriter.println("{");
-
-		writeBody(decl);
-
-		mWriter.print("}\n\n");
-
-		mWriter.flush(); // automatic flush ? TODO
+		final var body = writeBody(decl);
+		return new YieldProcedure(LAYER_TOP, decl.getIdentifier(), inParams.toArray(ParameterDeclaration[]::new),
+				new ParameterDeclaration[0], new CallStatement[] { requires }, new CallStatement[0], body, null);
 	}
 
-	@Override
-	protected void visit(final Procedure decl) {
+	private YieldProcedure processProcedure(final Procedure decl) {
 		// test
 		final Map<ILocation, Expression> map = mProgramAndProof.getAnnotationMap(decl.getIdentifier());
 
@@ -521,6 +534,6 @@ public final class Translator extends BoogieVisitor {
 				mProgramAndProof.getTemplateVisitor().getExitAnnotationMap().get(decl.getIdentifier()), null,
 				tidNeedsLinearity, counter);
 
-		writeProcedure(decl);
+		return writeProcedure(decl);
 	}
 }

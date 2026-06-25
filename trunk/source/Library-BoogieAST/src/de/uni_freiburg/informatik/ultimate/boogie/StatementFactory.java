@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -103,14 +102,6 @@ public class StatementFactory {
 
 	public static AtomicStatement constructAtomicStatement(final ILocation loc, final Stream<Statement> statements) {
 		return new AtomicStatement(loc,
-				statements.flatMap(StatementFactory::getFlattenedStatements).toArray(Statement[]::new));
-	}
-
-	private static Stream<Statement> getFlattenedStatements(final Statement statement) {
-		if (statement instanceof AtomicStatement) {
-			return Arrays.stream(((AtomicStatement) statement).getBody())
-					.flatMap(StatementFactory::getFlattenedStatements);
-		}
-		return Stream.of(statement);
+				statements.flatMap(BoogieUtils::getFlattenedStatements).toArray(Statement[]::new));
 	}
 }
