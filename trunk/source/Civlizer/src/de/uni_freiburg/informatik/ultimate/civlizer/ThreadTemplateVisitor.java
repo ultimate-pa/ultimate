@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -250,7 +251,8 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 		mProcedureVariablesMap.put(mCurrentProcedure, res);
 
-		if (!mCurrentProcedure.equals("ULTIMATE.start") && !mAssociationTidMap.containsKey(mCurrentProcedure)) {
+		if (!mCurrentProcedure.equals(BoogieUtils.START_PROCEDURE)
+				&& !mAssociationTidMap.containsKey(mCurrentProcedure)) {
 			mAssociationTidMap.put(mCurrentProcedure, new ArrayList<>());
 		}
 

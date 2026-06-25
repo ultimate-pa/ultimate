@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -257,7 +258,7 @@ public final class Translator extends BoogieVisitor {
 
 		mWriter.print("(");
 		List<String> tids = new ArrayList<>();
-		if ("ULTIMATE.start".equals(procName)) {
+		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
 			tids.add("{:linear} start_tid : One StartTid");
 		}
 
@@ -274,7 +275,7 @@ public final class Translator extends BoogieVisitor {
 
 		mWriter.print("preserves ");
 		tids = new ArrayList<>();
-		if ("ULTIMATE.start".equals(procName)) {
+		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
 			tids.add("start_tid->val == const_start_tid");
 		}
 
@@ -421,7 +422,7 @@ public final class Translator extends BoogieVisitor {
 
 		mWriter.print("(");
 		List<String> tids = new ArrayList<>();
-		if ("ULTIMATE.start".equals(decl.getIdentifier())) {
+		if (BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())) {
 			tids.add("{:linear} start_tid : One StartTid");
 		}
 
@@ -437,7 +438,7 @@ public final class Translator extends BoogieVisitor {
 		mWriter.print("_0");
 		mWriter.print("(");
 		tids = new ArrayList<>();
-		if ("ULTIMATE.start".equals(decl.getIdentifier())) {
+		if (BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())) {
 			tids.add("start_tid");
 		}
 

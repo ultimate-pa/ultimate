@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -133,13 +134,13 @@ final class BodyTransformer extends BoogieTransformer {
 
 		final int size =
 				mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(name, Collections.emptyList()).size()
-						+ (name.equals("ULTIMATE.start") ? 1 : 0);
+						+ (name.equals(BoogieUtils.START_PROCEDURE) ? 1 : 0);
 
 		final Expression[] tids = new Expression[size];
 
 		int i = 0;
 
-		if (name.equals("ULTIMATE.start")) {
+		if (name.equals(BoogieUtils.START_PROCEDURE)) {
 			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), "start_tid",
 					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null));
 			i++;
@@ -269,7 +270,7 @@ final class BodyTransformer extends BoogieTransformer {
 		newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
 				"yield_" + mCurrentProcedure + "_" + mAtomicStatementCounter, mCurrentTids));
 
-		if (mCurrentProcedure != "ULTIMATE.start") {
+		if (mCurrentProcedure != BoogieUtils.START_PROCEDURE) {
 			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
 					mCurrentTids));
 		}
