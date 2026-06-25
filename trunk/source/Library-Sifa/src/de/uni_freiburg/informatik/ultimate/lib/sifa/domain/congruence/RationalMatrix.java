@@ -6,19 +6,35 @@ import java.util.Objects;
 
 import org.apache.commons.math3.fraction.BigFraction;
 import org.apache.commons.math3.fraction.BigFractionField;
-import org.apache.commons.math3.linear.Array2DRowFieldMatrix;
 import org.apache.commons.math3.linear.FieldLUDecomposition;
 import org.apache.commons.math3.linear.FieldMatrix;
+import org.apache.commons.math3.linear.SparseFieldMatrix;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class RationalMatrix {
 
-	private final FieldMatrix<BigFraction> mMatrix;
+	private final SparseFieldMatrix<BigFraction> mMatrix;
 	private final boolean mIsEmpty;
 
-	private RationalMatrix(final FieldMatrix<BigFraction> matrix) {
+	private RationalMatrix(final SparseFieldMatrix<BigFraction> matrix) {
 		mMatrix = matrix;
+		mIsEmpty = false;
+	}
+
+	private RationalMatrix(final FieldMatrix<BigFraction> matrix) {
+		final SparseFieldMatrix<BigFraction> sparseMatrix = new SparseFieldMatrix<>(BigFractionField.getInstance(),
+				matrix.getRowDimension(), matrix.getColumnDimension());
+
+		for (int i = 0; i < matrix.getRowDimension(); i++) {
+			for (int j = 0; j < matrix.getColumnDimension(); j++) {
+				final BigFraction entry = matrix.getEntry(i, j);
+				if (!entry.equals(BigFraction.ZERO)) {
+					sparseMatrix.setEntry(i, j, entry);
+				}
+			}
+		}
+		mMatrix = sparseMatrix;
 		mIsEmpty = false;
 	}
 
@@ -31,8 +47,7 @@ public class RationalMatrix {
 		if (rowCount == 0 || columnCount == 0) {
 			return new RationalMatrix();
 		}
-
-		return new RationalMatrix(new Array2DRowFieldMatrix<>(BigFractionField.getInstance(), rowCount, columnCount));
+		return new RationalMatrix(new SparseFieldMatrix<>(BigFractionField.getInstance(), rowCount, columnCount));
 	}
 
 	public static RationalMatrix fromRowVectors(final List<RationalVector> rowVectors, final int columnCount) {
@@ -40,7 +55,7 @@ public class RationalMatrix {
 			return new RationalMatrix();
 		}
 
-		final FieldMatrix<BigFraction> matrix = new Array2DRowFieldMatrix<>(BigFractionField.getInstance(),
+		final SparseFieldMatrix<BigFraction> matrix = new SparseFieldMatrix<>(BigFractionField.getInstance(),
 				rowVectors.size(), columnCount);
 
 		for (int i = 0; i < rowVectors.size(); i++) {
@@ -55,7 +70,7 @@ public class RationalMatrix {
 			return new RationalMatrix();
 		}
 
-		final FieldMatrix<BigFraction> matrix = new Array2DRowFieldMatrix<>(BigFractionField.getInstance(), rowCount,
+		final SparseFieldMatrix<BigFraction> matrix = new SparseFieldMatrix<>(BigFractionField.getInstance(), rowCount,
 				columnVectors.size());
 
 		for (int i = 0; i < columnVectors.size(); i++) {
