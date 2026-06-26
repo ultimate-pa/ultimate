@@ -14,29 +14,29 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class RationalMatrix {
 
-	private final SparseFieldMatrix<BigFraction> mMatrix;
+	private final FieldMatrix<BigFraction> mMatrix;
 	private final boolean mIsEmpty;
 
-	private RationalMatrix(final SparseFieldMatrix<BigFraction> matrix) {
+	private RationalMatrix(final FieldMatrix<BigFraction> matrix) {
 		mMatrix = matrix;
 		mIsEmpty = false;
 	}
 
-	private RationalMatrix(final FieldMatrix<BigFraction> matrix) {
-		final SparseFieldMatrix<BigFraction> sparseMatrix = new SparseFieldMatrix<>(BigFractionField.getInstance(),
-				matrix.getRowDimension(), matrix.getColumnDimension());
-
-		for (int i = 0; i < matrix.getRowDimension(); i++) {
-			for (int j = 0; j < matrix.getColumnDimension(); j++) {
-				final BigFraction entry = matrix.getEntry(i, j);
-				if (!entry.equals(BigFraction.ZERO)) {
-					sparseMatrix.setEntry(i, j, entry);
-				}
-			}
-		}
-		mMatrix = sparseMatrix;
-		mIsEmpty = false;
-	}
+//	private RationalMatrix(final FieldMatrix<BigFraction> matrix) {
+//		final SparseFieldMatrix<BigFraction> sparseMatrix = new SparseFieldMatrix<>(BigFractionField.getInstance(),
+//				matrix.getRowDimension(), matrix.getColumnDimension());
+//
+//		for (int i = 0; i < matrix.getRowDimension(); i++) {
+//			for (int j = 0; j < matrix.getColumnDimension(); j++) {
+//				final BigFraction entry = matrix.getEntry(i, j);
+//				if (!entry.equals(BigFraction.ZERO)) {
+//					sparseMatrix.setEntry(i, j, entry);
+//				}
+//			}
+//		}
+//		mMatrix = sparseMatrix;
+//		mIsEmpty = false;
+//	}
 
 	private RationalMatrix() {
 		mMatrix = null;

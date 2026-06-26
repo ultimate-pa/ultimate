@@ -22,32 +22,31 @@ public class RationalVector {
 	}
 
 	public static RationalVector getUnitVector(final int i, final int vectorLength) {
-		final SparseFieldVector<BigFraction> vector = new SparseFieldVector<>(BigFractionField.getInstance(),
-				vectorLength);
+		final FieldVector<BigFraction> vector = new SparseFieldVector<>(BigFractionField.getInstance(), vectorLength);
 		vector.setEntry(i, BigFraction.ONE);
 		return new RationalVector(vector);
 	}
 
-	private final SparseFieldVector<BigFraction> mVector;
+	private final FieldVector<BigFraction> mVector;
 
-	RationalVector(final SparseFieldVector<BigFraction> vector) {
+	RationalVector(final FieldVector<BigFraction> vector) {
 		mVector = vector;
 	}
 
-	RationalVector(final FieldVector<BigFraction> vector) {
-		final SparseFieldVector<BigFraction> sparseVector = new SparseFieldVector<>(BigFractionField.getInstance(),
-				vector.getDimension());
-		for (int i = 0; i < vector.getDimension(); i++) {
-			final BigFraction entry = vector.getEntry(i);
-			if (!entry.equals(BigFraction.ZERO)) {
-				sparseVector.setEntry(i, entry);
-			}
-		}
-		mVector = sparseVector;
-	}
+//	RationalVector(final FieldVector<BigFraction> vector) {
+//		final SparseFieldVector<BigFraction> sparseVector = new SparseFieldVector<>(BigFractionField.getInstance(),
+//				vector.getDimension());
+//		for (int i = 0; i < vector.getDimension(); i++) {
+//			final BigFraction entry = vector.getEntry(i);
+//			if (!entry.equals(BigFraction.ZERO)) {
+//				sparseVector.setEntry(i, entry);
+//			}
+//		}
+//		mVector = sparseVector;
+//	}
 
 	public RationalVector(final List<Rational> rationalList) {
-		final SparseFieldVector<BigFraction> vector = new SparseFieldVector<>(BigFractionField.getInstance(),
+		final FieldVector<BigFraction> vector = new SparseFieldVector<>(BigFractionField.getInstance(),
 				rationalList.size());
 		for (int i = 0; i < rationalList.size(); i++) {
 			vector.setEntry(i, getBigFractionFromRational(rationalList.get(i)));
