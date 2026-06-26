@@ -233,7 +233,7 @@ terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT
 terminal LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
 terminal FORALL, EXISTS, IFF, IMPLIES, AND, OR, NOT, SEPARATED;
 terminal GLOBALLY, FINALLY, UNTIL, NEXT, WEAKUNTIL, RELEASE;
-terminal TRUE, FALSE, OLD, AT, RESULT, BLOCK_LENGTH, BASE_ADDR;
+terminal TRUE, FALSE, OLD, AT, ALL, RESULT, BLOCK_LENGTH, BASE_ADDR;
 terminal VALID, VALID_INDEX, VALID_RANGE, FRESH, DOLLAR;
 terminal QUESTION, MINUS, PLUS, AMP, SLASH, PERCENT, LSQUARE, RSQUARE;
 terminal GLOBAL, INVARIANT, VARIANT, DECREASES, FOR, LABEL, ASSERT, SEMICOLON, NULL, EMPTY, LTL;
@@ -258,6 +258,7 @@ terminal LSTART, GSTART;
 
 non terminal String identifier, string, any_identifier, identifier_or_typename, label_name, type_spec;
 non terminal Expression lexpr, lexpr_inner, lexpr_rel, lexpr_end_rel, constant, constant_option, ltlexpr;
+non terminal Expression interrupt_identifier, interrupt_argref, interrupt_retref;
 non terminal CodeAnnot code_annotation;
 non terminal LoopAnnot loop_annot_stack, loop_annot_opt, loop_annotations;
 non terminal String[] ne_behavior_name_list, behavior_name_list;
@@ -532,6 +533,7 @@ lexpr_inner::=
 | BASE_ADDR:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new BaseAddrExpression(expr), l$, r$); :}
 | BLOCK_LENGTH:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new BlockLengthExpression(expr), l$, r$); :}
 | RESULT:e {: RESULT = setNodeLocationFromSymbols(new ACSLResultExpression(), e$); :}
+| ALL:e {: RESULT = setNodeLocationFromSymbols(new ACSLAllExpression(), e$); :}
 | SEPARATED:l LPAR ne_lexpr_list:e RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
 | identifier:e1 LPAR ne_lexpr_list:e2 RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, r$); :}
 | identifier:e1 LBRACE ne_tvar_list:e2 RBRACE LPAR ne_lexpr_list:e3 RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, r$); :}
@@ -1152,36 +1154,50 @@ code_annotation::=
 
 /*** interrupt annotations ***/
 
+interrupt_identifier::=
+  IDENTIFIER:s {: RESULT = setNodeLocationFromSymbols(new StringLiteral(s), s$); :}
+;
+
+interrupt_argref::=
+  interrupt_identifier:e {: RESULT = e; :}
+| ALL:e {: RESULT = setNodeLocationFromSymbols(new ACSLAllExpression(), e$); :}
+;
+
+interrupt_retref::=
+  interrupt_identifier:e {: RESULT = e; :}
+| RESULT:e {: RESULT = setNodeLocationFromSymbols(new ACSLResultExpression(), e$); :}
+;
+
 interrupts::=
   /* epsilon */ {: RESULT = new ArrayList<InterruptStatement>(); :}
-| ne_interrupts:interrupts {: 
+| ne_interrupts:interrupts {:
     RESULT = interrupts;
   :}
 ;
 
 ne_interrupts::=
-  INTERRUPT:i SERVICE ROUTINE IDENTIFIER:id SEMICOLON:s interrupts:interrupts {:
-  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptServiceRoutine(id), i$, s$);
+  INTERRUPT:i SERVICE ROUTINE interrupt_identifier:irq SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptServiceRoutine(irq), i$, s$);
   	interrupts.add(intStmt);
   	RESULT = interrupts;
   :}
-| INTERRUPT:i MASKING ENABLE IDENTIFIER:id SEMICOLON:s interrupts:interrupts {:
-  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptMasking(id, true), i$, s$);
+| INTERRUPT:i MASKING ENABLE interrupt_argref:irq SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptMasking(irq, true), i$, s$);
   	interrupts.add(intStmt);
   	RESULT = interrupts;
   :}
-| INTERRUPT:i MASKING DISABLE IDENTIFIER:id SEMICOLON:s interrupts:interrupts {:
-  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptMasking(id, false), i$, s$);
+| INTERRUPT:i MASKING DISABLE interrupt_argref:irq SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptMasking(irq, false), i$, s$);
   	interrupts.add(intStmt);
   	RESULT = interrupts;
   :}
-| INTERRUPT:i PRIORITY GET IDENTIFIER:id SEMICOLON:s interrupts:interrupts {:
-  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptPriorityGet(id), i$, s$);
+| INTERRUPT:i PRIORITY GET interrupt_retref:irq SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptPriorityGet(irq), i$, s$);
   	interrupts.add(intStmt);
   	RESULT = interrupts;
   :}
-| INTERRUPT:i PRIORITY SET IDENTIFIER:id constant:prio SEMICOLON:s interrupts:interrupts {:
-  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptPrioritySet(id, prio), i$, s$);
+| INTERRUPT:i PRIORITY SET interrupt_argref:irq constant:prio SEMICOLON:s interrupts:interrupts {:
+  	InterruptStatement intStmt = setNodeLocationFromSymbols(new InterruptPrioritySet(irq, prio), i$, s$);
   	interrupts.add(intStmt);
   	RESULT = interrupts;
   :}

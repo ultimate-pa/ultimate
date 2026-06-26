@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.model.acsl;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLAllExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
@@ -112,6 +113,7 @@ public class ACSLPrettyPrinter {
 
 	private static String printExpression(final Expression expression) {
 		return switch (expression) {
+		case final ACSLAllExpression all -> "\\all";
 		case final ACSLResultExpression res -> "\\result";
 		case final ArrayAccessExpression arrayAccess -> "%s[%s]".formatted(
 				printExpression(arrayAccess.getArray(), arrayAccess), printExpression(arrayAccess.getIndex()));

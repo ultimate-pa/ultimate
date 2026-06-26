@@ -65,6 +65,7 @@ trunk/examples/witness-generation-validation/regression/**/*.yml
 /trunk/source/.sonarlint/*
 /trunk/source/*.log
 
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLAllExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLProblemNode.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLResultExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLTransformer.java

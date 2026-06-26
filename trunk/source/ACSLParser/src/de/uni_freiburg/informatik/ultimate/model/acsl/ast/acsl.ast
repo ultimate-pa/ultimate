@@ -99,14 +99,14 @@ ContractStatement ::=
 
 InterruptStatement ::=
  	{ InterruptServiceRoutine }
- 		identifier : String
+ 		identifier : Expression
  	| { InterruptMasking }
- 		identifier : String
+ 		identifier : Expression
  		enabled : Boolean
  	| { InterruptPriorityGet }
- 		identifier : String
+ 		identifier : Expression
  	| { InterruptPrioritySet }
- 		identifier : String
+ 		identifier : Expression
  		priority : Expression
  	;
 
@@ -226,6 +226,8 @@ Expression ::=
         expression : Expression
 	| { /** represents the result value, which is used in contracts */ 
 		ACSLResultExpression }
+	| { /** represents the all value, which is used in interrupt references */ 
+		ACSLAllExpression }
 	| { FieldAccessExpression }
 		/** access on fields, like a.x */
 		struct : Expression
