@@ -40,7 +40,7 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\data\\bin\\svcompC
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Output\ directory=C\:\\data\\bin\\svcompC
 #Mon Oct 13 17:18:26 CEST 2014
 file_export_version=3.0
 \!/instance/CDTParser=
