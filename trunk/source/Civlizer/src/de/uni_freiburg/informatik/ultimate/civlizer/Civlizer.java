@@ -54,6 +54,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	private ILogger mLogger;
 
 	private ProgramAndProof mProgramAndProof;
+	private boolean mProcessed;
 
 	@Override
 	public String getPluginName() {
@@ -148,7 +149,8 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			mProgramAndProof.setProof(proof);
 		}
 
-		if (mProgramAndProof.isFull()) {
+		if (mProgramAndProof.isFull() && !mProcessed) {
+			mProcessed = true;
 			final Translator translation = new Translator(mProgramAndProof);
 			try (final var printer = new CivlOutput(new PrintWriter("/tmp/temporary.bpl"))) {
 				printer.print(translation.getResult());
