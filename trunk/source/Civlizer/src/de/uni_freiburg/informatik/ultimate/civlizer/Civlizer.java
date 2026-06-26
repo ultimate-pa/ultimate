@@ -26,17 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.civlizer.preferences.CivlizerPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.FilePrinterUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
@@ -52,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
+	private IPreferenceProvider mPrefs;
 
 	private ProgramAndProof mProgramAndProof;
 	private boolean mProcessed;
@@ -108,13 +113,14 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return null; // new PreferenceInitializer();
+		return new CivlizerPreferenceInitializer();
 	}
 
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Civlizer.class);
+		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -152,7 +158,12 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 		if (mProgramAndProof.isFull() && !mProcessed) {
 			mProcessed = true;
 			final Translator translation = new Translator(mProgramAndProof);
-			try (final var printer = new CivlOutput(new PrintWriter("/tmp/temporary.bpl"))) {
+
+			final var outputFileSettings = FilePrinterUtils.OutputFileSettings.fromPrinterPreferences(mPrefs,
+					"Civlizer_", "_UID", ".civl.bpl");
+			final File outputFile = FilePrinterUtils.openOutputFile(outputFileSettings, root, mLogger);
+			mLogger.info("Writing civlized program to %s", outputFile);
+			try (final var printer = new CivlOutput(new PrintWriter(outputFile))) {
 				printer.print(translation.getResult());
 			}
 		}
