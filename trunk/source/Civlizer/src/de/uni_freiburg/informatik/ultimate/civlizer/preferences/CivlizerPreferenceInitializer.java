@@ -30,9 +30,20 @@ import de.uni_freiburg.informatik.ultimate.civlizer.Activator;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.FilePrinterUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 
 public class CivlizerPreferenceInitializer extends UltimatePreferenceInitializer {
+	public static final String LABEL_RUN_CIVL_ON_OUTPUT = "Run Civl on output file";
+	private static final boolean DEF_RUN_CIVL_ON_OUTPUT = false;
+
+	public static final String LABEL_CIVL_WORKING_DIRECTORY = "Working directory for Civl";
+	private static final String DEF_CIVL_WORKING_DIRECTORY = "";
+
+	public static final String LABEL_CIVL_COMMAND = "Command to run Civl";
+	private static final String DEF_CIVL_COMMAND = "Source/BoogieDriver/bin/Debug/net8.0/BoogieDriver";
+
 	public CivlizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -42,6 +53,16 @@ public class CivlizerPreferenceInitializer extends UltimatePreferenceInitializer
 		return new BaseUltimatePreferenceItem[] {
 				// Printer settings
 				new UltimatePreferenceItemGroup("Printer settings",
-						FilePrinterUtils.getPrinterPreferences("civlizer.civl.bpl")) };
+						FilePrinterUtils.getPrinterPreferences("civlizer.civl.bpl")),
+
+				// Civl runner settings
+				new UltimatePreferenceItemGroup("Civl runner settings",
+						new UltimatePreferenceItem<>(LABEL_RUN_CIVL_ON_OUTPUT, DEF_RUN_CIVL_ON_OUTPUT,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CIVL_WORKING_DIRECTORY, DEF_CIVL_WORKING_DIRECTORY,
+								PreferenceType.Directory),
+						new UltimatePreferenceItem<>(LABEL_CIVL_COMMAND, DEF_CIVL_COMMAND, PreferenceType.String)),
+
+		};
 	}
 }

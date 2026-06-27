@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -165,6 +166,14 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			mLogger.info("Writing civlized program to %s", outputFile);
 			try (final var printer = new CivlOutput(new PrintWriter(outputFile))) {
 				printer.print(translation.getResult());
+			}
+
+			if (mPrefs.getBoolean(CivlizerPreferenceInitializer.LABEL_RUN_CIVL_ON_OUTPUT)) {
+				final String workingDir = mPrefs.getString(CivlizerPreferenceInitializer.LABEL_CIVL_WORKING_DIRECTORY);
+				final String civlCommand = mPrefs.getString(CivlizerPreferenceInitializer.LABEL_CIVL_COMMAND);
+
+				final var runner = new CivlRunner(mServices, Paths.get(workingDir), civlCommand);
+				runner.runOnFile(outputFile);
 			}
 		}
 
