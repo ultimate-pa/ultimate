@@ -86,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadCurrentTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -312,26 +311,44 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// concat feasible
 		final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
 		final UnmodifiableTransFormula stemTF = computeTF(stem.getWord());
-		// ------------------------------------------------------------------------------------------------------------
-		// checking loop termination before we check lasso
-		// termination is a workaround.
-		// We want to avoid supporting invariants in possible
-		// yet the termination argument simplification of the
-		// LassoChecker is not optimal. Hence we first check
-		// only the loop, which guarantees that there are no
-		// supporting invariants.
+		// checking loop termination before we check lasso termination is a workaround. We want to avoid supporting
+		// invariants in possible yet the termination argument simplification of the LassoChecker is not optimal. Hence
+		// we first check only the loop, which guarantees that there are no supporting invariants.
 
-		// TODO: V- Add fairness check for the trace
-		// (1) identify loop/nonloop threads
-		// (2) Unroll the loop statement by statement, for each honda: - get guards of outgoing non-loop ts - build
-		// modified loop, check if it terminates
+		// TODO: think about what to count for statistics wrt fairness. How do we handle the A_fair checks without
+		// messing up the statistics?
+		final ILassoCheckResult<L> loopTermination =
+				checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
+		// If the trace terminates there is no need to check fairness
+		if (loopTermination instanceof TerminationResult<L>) {
+			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
+			return loopTermination;
+		}
+		final var terminationCheckResult =
+				checkLassoTermination(stemTF, loopTF, counterexample, modifiableGlobalsAtHonda);
+		switch (terminationCheckResult) {
+		case final TerminationResult<L> tr:
+			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
+			return tr;
+		case final NonterminationResult<L> nr:
+			mLassoAnalysisResults.increment(LassoAnalysisResults.LASSO_NONTERMINATING);
+			break;
+		case final UnknownResult<L> ur:
+			mLassoAnalysisResults.increment(LassoAnalysisResults.TERMINATION_UNKNOWN);
+			break;
+		default:
+			throw new AssertionError("Impossible case");
+		}
 
-		// TODO: just add a skip/direct fairness return here--------------------------------------------------------
-		assert !mCsToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty() : "Concurrent program expected";
-
-		final Set<String> threads = mCsToolkit.getProcedures();
+//---------------------------------------------------- Fairness stuff --------------------------------------------------
+		// All traces of a sequential program are fair
+		if (mCsToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+			mLogger.warn("Fairness settings are being used for a sequential program!");
+			return terminationCheckResult;
+		}
 
 		// identify loop threads = all threads that from which a statement on the loop originates
+		final Set<String> threads = mCsToolkit.getProcedures();
 		final Set<String> loopThreads = new HashSet<>();
 		for (final L st : loop.getWord()) {
 			loopThreads.add(st.getSource().getProcedure());
@@ -339,173 +356,166 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final Set<String> nonLoopThreads = threads;
 		nonLoopThreads.removeAll(loopThreads);
 
-		// If there are no non-loop threads, the trace is definitely fair and we can proceed to check termination
-		if (!nonLoopThreads.isEmpty()) { // Iterate through the loop states and check for outgoing non-loop edges.
-			final NestedRun<L, IPredicate> loopRun = counterexample.getLoop();
-			final int loopLen = loopRun.getLength();
-			final List<IPredicate> loopStates = loopRun.getStateSequence();
-
-			// get negated disjunction of guards of outgoing non-loop edges. the guard disj. is the same for every
-			// state of the loop.
-			final Set<IcfgLocation> loopLocs = PredicateUtils.getLocations(loopStates.getFirst());
-			final Set<TransFormula> guards = new HashSet<>();
-
-			// TODO: after debugging is finished, skip rest of the loop once we find a guard with formula 'true'
-			for (final IcfgLocation threadLoc : loopLocs) {
-				if (loopThreads.contains(threadLoc.getProcedure())) {
-					continue;
-				}
-				for (final IcfgEdge edge : threadLoc.getOutgoingEdges()) {
-					// we need to filter out join edges bc. their guard is always 'true'
-					if (edge instanceof IcfgJoinThreadOtherTransition
-							|| edge instanceof IcfgJoinThreadCurrentTransition) {
-						// to avoid the list of guards being empty
-						guards.add(TransFormulaUtils.negate(edge.getTransformula(), mManagedScript, mServices));
-					} else {
-						guards.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
-					}
-				}
-			}
-
-			// disjunction of terms should be equivalent to parallel comp of respective TransFormulae
-			final UnmodifiableTransFormula notGuardDisj = TransFormulaUtils
-					.negate(TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, null, false, true,
-							guards.toArray(UnmodifiableTransFormula[]::new)), mManagedScript, mServices);
-
-			// For now, take sup. invariant false and constant ranking function f = 0
-			final boolean falseGuard = (SmtUtils.isFalseLiteral(notGuardDisj.getFormula()));
-			// TODO: do this properly
-			if (falseGuard && mBspm.equals(null)) {
-				final TerminationArgument constArg = constructTrivialTerminationArgument();
-				// TODO: figure out why mBspm is null here
-				final UnfairnessResult<L> unf = new UnfairnessResult<>(mBspm.computePredicates(constArg,
-						REMOVE_SUPERFLUOUS_SUPPORTING_INVARIANTS, stemTF, loopTF, modifiableGlobalsAtHonda),
-						loopThreads, notGuardDisj);
-				return unf;
-
-			}
-			// we unroll the loop state by state and check if the resulting P(A_fair) terminates
-			Set<IProgramNonOldVar> newHondaModGlobals = modifiableGlobalsAtHonda;
-			NestedRun<L, IPredicate> newStemRun = counterexample.getStem();
-			NestedRun<L, IPredicate> newLoopRun = counterexample.getLoop();
-			NestedWord<L> newStem = stem.getWord();
-			NestedWord<L> unguardedLoop = loop.getWord();
-			// Set<IProgramNonOldVar> modifiableGlobalsAtHonda = mModifiableGlobalsAtHonda;
-			for (int i = 0; i < loopLen; i++) {
-				// TODO: this is ugly, think of sth better
-				// get the transformulae of the current unrolling
-				if (i > 0) {
-					// TODO: V- add skip if the ts leading to this state doesnt modify guard vars
-
-					// loop transition leading from previous to current honda
-					// if this transition does not alter variables from the guard term, we can skip this honda
-					final L currentTS = loopRun.getWord().asList().get(i - 1);
-
-					// TODO: �berlegen, was mehr sinn macht
-					newStemRun = newStemRun.concatenate(newLoopRun.getSubRun(0, 1));
-					newLoopRun = newLoopRun.getSubRun(1, loopLen - 1).concatenate(newLoopRun.getSubRun(0, 1));
-					newStem = stem.getWord().concatenate(loop.getWord().getSubWord(0, i));
-					unguardedLoop =
-							loop.getWord().getSubWord(i, loopLen - 1).concatenate(loop.getWord().getSubWord(0, i));
-
-					final IPredicate newHonda = loopStates.get(i);
-					newHondaModGlobals =
-							PredicateUtils.streamLocations(newHonda)
-									.flatMap(x -> mCsToolkit.getModifiableGlobalsTable()
-											.getModifiedBoogieVars(x.getProcedure()).stream())
-									.collect(Collectors.toSet());
-				}
-				final UnmodifiableTransFormula newStemTF = computeTF(newStem);
-				final UnmodifiableTransFormula unguardedLoopTF = computeTF(unguardedLoop);
-				final UnmodifiableTransFormula guardedLoopTF =
-						TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false, false,
-								mSimplificationTechnique, List.of(notGuardDisj, unguardedLoopTF));
-
-				// first check whether the loop part already terminates -- wenn der loop infeasible ist, m�ssen wir
-				// den automaten irgendwie anders bauen
-				// TODO: das sollte schöner gehen
-
-				final boolean withStem = newStem.length() > 0;
-				final boolean contArr = SmtUtils.containsArrayVariables(newStemTF.getFormula())
-						|| SmtUtils.containsArrayVariables(loopTF.getFormula());
-
-				// TODO: check infeasibility of the new loop - either directly from transformula or maybe take the not G
-				// as pre + postcondition?
-				if (SmtUtils.isFalseLiteral(guardedLoopTF.getFormula())) {
-					// TODO: solve the problem of infeasible loops properly
-					final TerminationArgument ta = constructTrivialTerminationArgument();
-					final BspmResult bspmres =
-							mBspm.computePredicates(ta, false, stemTF, guardedLoopTF, modifiableGlobalsAtHonda);
-					return new UnfairnessResult<>(bspmres, loopThreads, notGuardDisj);
-
-				}
-				// negated guard as pre and postcondition?
-				// check if the loop alone is already unfair
-				final ILassoCheckResult<L> res = synthesize_wo_counterexample(false, true, null, null,
-						unguardedLoop.length() + 1, guardedLoopTF, contArr, newHondaModGlobals);
-
-				// TODO: V - this could be nicer
-				switch (res) {
-				case final TerminationResult<L> term:
-					// the loop without preconditions is enough to prove unfairness
-					return new UnfairnessResult<>(term.result(), loopThreads, notGuardDisj);
-				case final InfeasibilityResult<L> inf:
-					// TODO: Vfind a sane way to do this
-					mLogger.warn("Infeasibility, könnte noch fehlerhaft sein!");
-					final TerminationArgument infArg = constructTrivialTerminationArgument();
-					final BspmResult infRes =
-							mBspm.computePredicates(infArg, false, newStemTF, unguardedLoopTF, newHondaModGlobals);
-					return new UnfairnessResult(infRes, loopThreads, notGuardDisj);
-				// TODO: find merge next two cases
-				case final NonterminationResult<L> nonterm:
-					if (withStem) {
-						final ILassoCheckResult<L> progTerm =
-								checkFairProgramTermination(loopThreads, newStem, newStemTF, notGuardDisj,
-										unguardedLoop, guardedLoopTF, contArr, unguardedLoopTF, newHondaModGlobals, 3);
-						if (progTerm instanceof UnfairnessResult<L>) {
-							return progTerm;
-						}
-					}
-					break;
-
-				case final UnknownResult<L> uk:
-					if (withStem) {
-						final ILassoCheckResult<L> progTerm =
-								checkFairProgramTermination(loopThreads, newStem, newStemTF, notGuardDisj,
-										unguardedLoop, guardedLoopTF, contArr, unguardedLoopTF, newHondaModGlobals, 3);
-						if (progTerm instanceof UnfairnessResult<L>) {
-							return progTerm;
-						}
-					}
-					break;
-				default:
-					mLogger.warn("Unexpected type!");
-					break;
-				}
-			}
-
+		// If there are no non-loop threads, the trace is definitely fair.
+		if (nonLoopThreads.isEmpty()) {
+			return terminationCheckResult;
 		}
 
-		// checking loop termination before we check lasso termination is a workaround.
-		// We want to avoid supporting invariants in possible yet the termination argument simplification of the
-		// LassoChecker is not optimal. Hence we first check only the loop, which guarantees that there are no
-		// supporting invariants.
-		final ILassoCheckResult<L> loopTermination =
-				checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
-		if (loopTermination instanceof TerminationResult<L>) {
-			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
-			return loopTermination;
+		// Iterate through the loop states and check for outgoing non-loop edges. Get the negated disjunction of their
+		// guards.
+		// Note: the guard disj. is the same for every state of the loop.
+
+		final NestedRun<L, IPredicate> loopRun = counterexample.getLoop();
+		final int loopLen = loopRun.getLength();
+		final List<IPredicate> loopStates = loopRun.getStateSequence();
+
+		final Set<IcfgLocation> loopLocs = PredicateUtils.getLocations(loopStates.getFirst());
+		final Set<Term> guards = new HashSet<>();
+		final Set<UnmodifiableTransFormula> guardTF = new HashSet<>();
+
+		// TODO: after debugging is finished, skip rest of the loop once we find a guard with formula 'true'
+		for (final IcfgLocation threadLoc : loopLocs) {
+			if (loopThreads.contains(threadLoc.getProcedure())) {
+				continue;
+			}
+			for (final IcfgEdge edge : threadLoc.getOutgoingEdges()) {
+				// we need to filter out join edges bc. their guard is always 'true'
+				if (edge instanceof IcfgJoinThreadOtherTransition || edge instanceof IcfgJoinThreadCurrentTransition) {
+					// to avoid the list of guards being empty
+					guards.add(
+							TransFormulaUtils.negate(edge.getTransformula(), mManagedScript, mServices).getFormula());
+					guardTF.add(TransFormulaUtils.negate(edge.getTransformula(), mManagedScript, mServices));
+				} else {
+					guards.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices)
+							.getFormula());
+					guardTF.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
+				}
+			}
 		}
-		final var result = checkLassoTermination(stemTF, loopTF, counterexample, modifiableGlobalsAtHonda);
-		switch (result) {
-		case final TerminationResult<L> tr ->
-				mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
-		case final NonterminationResult<L> nr ->
-				mLassoAnalysisResults.increment(LassoAnalysisResults.LASSO_NONTERMINATING);
-		case final UnknownResult<L> ur -> mLassoAnalysisResults.increment(LassoAnalysisResults.TERMINATION_UNKNOWN);
-		default -> throw new AssertionError("Impossible case");
+
+		// TODO: how do we get a predicate - or at least the actual program vars ?
+		// TODO: remove the 'duplicate' not guard disj. once we've found out how to get the predicate from it
+		final Term notGuardDisj = SmtUtils.not(mManagedScript.getScript(),
+				SmtUtils.or(mManagedScript.getScript(), guards.toArray(Term[]::new)));
+
+		// disjunction of terms should be equivalent to parallel comp of respective TransFormulae
+		final UnmodifiableTransFormula notGuardDisjTF =
+				TransFormulaUtils.negate(TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, null,
+						false, true, guardTF.toArray(UnmodifiableTransFormula[]::new)), mManagedScript, mServices);
+
+		// If the the guard disjunction is 'true', there is always an enabled non-loop edge and the trace is obviously
+		// unfair. We take a trivial termination argument (const. ranking funktion + si "false") for the unfairness
+		// result
+		if (SmtUtils.isFalseLiteral(notGuardDisj)) {
+			// TODO: what do we to about the stem postcondition...
+			final UnmodifiableTransFormula guardedLoopTF =
+					TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false, false,
+							mSimplificationTechnique, List.of(notGuardDisjTF, computeTF(loop.getWord())));
+			final TerminationArgument constArg = constructTrivialTerminationArgument();
+			return new UnfairnessResult<>(
+					mBspm.computePredicates(constArg, false, stemTF, guardedLoopTF, modifiableGlobalsAtHonda),
+					loopThreads, notGuardDisj, counterexample);
+
 		}
-		return result;
+		// For traces whose fairness is not obvious:
+		// We unroll the loop state by state and check if the resulting P(A_fair) terminates
+		Set<IProgramNonOldVar> newHondaModGlobals = modifiableGlobalsAtHonda;
+		NestedLassoRun<L, IPredicate> currentUnrolling = counterexample;
+		NestedRun<L, IPredicate> newStemRun = counterexample.getStem();
+		NestedRun<L, IPredicate> newLoopRun = counterexample.getLoop();
+		NestedWord<L> newStem = stem.getWord();
+		NestedWord<L> unguardedLoop = loop.getWord();
+		for (int i = 0; i < loopLen; i++) {
+			// TODO: this is ugly, think of sth better
+			// get the transformulae of the current unrolling
+			if (i > 0) {
+				// TODO: V- add skip if the ts leading to this state doesnt modify guard vars
+
+				// loop transition leading from previous to current honda
+				// if this transition does not alter variables from the guard term, we can skip this honda
+				final L currentTS = loopRun.getWord().asList().get(i - 1);
+
+				// TODO: �berlegen, was mehr sinn macht
+				newStemRun = newStemRun.concatenate(newLoopRun.getSubRun(0, 1));
+				newLoopRun = newLoopRun.getSubRun(1, loopLen - 1).concatenate(newLoopRun.getSubRun(0, 1));
+				newStem = stem.getWord().concatenate(loop.getWord().getSubWord(0, i));
+				unguardedLoop = loop.getWord().getSubWord(i, loopLen - 1).concatenate(loop.getWord().getSubWord(0, i));
+				currentUnrolling = new NestedLassoRun<>(newStemRun, newLoopRun);
+				final IPredicate newHonda = loopStates.get(i);
+				newHondaModGlobals = PredicateUtils.streamLocations(newHonda).flatMap(
+						x -> mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(x.getProcedure()).stream())
+						.collect(Collectors.toSet());
+			}
+			final UnmodifiableTransFormula newStemTF = computeTF(newStem);
+			final UnmodifiableTransFormula unguardedLoopTF = computeTF(unguardedLoop);
+			final UnmodifiableTransFormula guardedLoopTF =
+					TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false, false,
+							mSimplificationTechnique, List.of(notGuardDisjTF, unguardedLoopTF));
+
+			// first check whether the loop part already terminates
+			// TODO: das sollte schöner gehen
+
+			final boolean withStem = newStem.length() > 0;
+			final boolean contArr = SmtUtils.containsArrayVariables(newStemTF.getFormula())
+					|| SmtUtils.containsArrayVariables(loopTF.getFormula());
+
+			// TODO: check infeasibility of the new loop - either directly from transformula or maybe take the not G
+			// as pre + postcondition?
+			if (SmtUtils.isFalseLiteral(guardedLoopTF.getFormula())) {
+				// TODO: solve the problem of infeasible loops properly
+				final TerminationArgument ta = constructTrivialTerminationArgument();
+				final BspmResult bspmres =
+						mBspm.computePredicates(ta, false, stemTF, guardedLoopTF, modifiableGlobalsAtHonda);
+				return new UnfairnessResult<>(bspmres, loopThreads, notGuardDisj, currentUnrolling);
+
+			}
+			// negated guard as pre and postcondition?
+			// check if the loop alone is already unfair
+
+			final ILassoCheckResult<L> res = synthesize_wo_counterexample(false, true, null, null,
+					unguardedLoop.length() + 1, guardedLoopTF, contArr, newHondaModGlobals);
+
+			// TODO: V - this could be nicer
+			switch (res) {
+			case final TerminationResult<L> term:
+				// the loop without preconditions is enough to prove unfairness
+				return new UnfairnessResult<>(term.result, loopThreads, notGuardDisj, currentUnrolling);
+			case final InfeasibilityResult<L> inf:
+				// if the (modified!) loop is infeasible, A_fair terminates and the trace is unfair
+				mLogger.warn("Infeasibility, könnte noch fehlerhaft sein!");
+				final TerminationArgument infArg = constructTrivialTerminationArgument();
+				final BspmResult infRes =
+						mBspm.computePredicates(infArg, false, newStemTF, unguardedLoopTF, newHondaModGlobals);
+				return new UnfairnessResult<>(infRes, loopThreads, notGuardDisj, currentUnrolling);
+			// TODO: merge nonterm/unknown cases
+			case final NonterminationResult<L> nonterm:
+				if (withStem) {
+					// if there is no stem, the lasso analysis already checked the whole program
+					final ILassoCheckResult<L> progTerm = checkFairProgramTermination(loopThreads, currentUnrolling,
+							newStemTF, guardedLoopTF, notGuardDisj, contArr, unguardedLoopTF, newHondaModGlobals, 3);
+					if (progTerm instanceof UnfairnessResult<L>) {
+						return progTerm;
+					}
+				}
+				return terminationCheckResult;
+
+			case final UnknownResult<L> uk:
+				if (withStem) {
+					final ILassoCheckResult<L> progTerm = checkFairProgramTermination(loopThreads, currentUnrolling,
+							newStemTF, guardedLoopTF, notGuardDisj, contArr, unguardedLoopTF, newHondaModGlobals, 3);
+					if (progTerm instanceof UnfairnessResult<L>) {
+						return progTerm;
+					}
+				}
+				break;
+			default:
+				mLogger.warn("Unexpected type!");
+				break;
+			}
+		}
+		// If we can't prove unfairness bc of G for any state of the loop, we have to assume the trace is fair
+		return terminationCheckResult;
+
 	}
 
 	/**
@@ -1006,57 +1016,61 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	}
 
 	// -------------------- fairness stuff -------------------------------------------------------------------------
-	/*
+	/**
 	 * (Approximately) checks whether P(A_fair(trace, guard)) terminates by trying a few 'unrollings' of the program. If
 	 * one terminates we check whether its termination argument is sufficient for the whole program.
 	 *
 	 *
 	 *
-	 * @param stemTF - transition formula of the stem
+	 * @param stemTF
+	 *            - transition formula of the stem
 	 *
-	 * @param loopTF - transition formula for the second loop (the one with negated guard disjunction in front)
+	 * @param loopTF
+	 *            - transition formula for the second loop (the one with negated guard disjunction in front)
 	 *
-	 * @param unguardedLoopTF - transition formula for the first loop
+	 * @param unguardedLoopTF
+	 *            - transition formula for the first loop
 	 *
-	 * @param num_unrollings - how many traces of form [stem (loop)^i (assume not G; loop)^omega] we want to try, should
-	 * be greater than 0
+	 * @param num_unrollings
+	 *            - how many traces of form [stem (loop)^i (assume not G; loop)^omega] we want to try, should be greater
+	 *            than 0
 	 */
-	private ILassoCheckResult<L> checkFairProgramTermination(final Set<String> loopThreads, final NestedWord<L> stem,
-			final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTF, final NestedWord<L> ugLoop,
-			final UnmodifiableTransFormula notG, final boolean containsArray,
+	private ILassoCheckResult<L> checkFairProgramTermination(final Set<String> loopThreads,
+			final NestedLassoRun<L, IPredicate> lasso, final UnmodifiableTransFormula stemTF,
+			final UnmodifiableTransFormula loopTF, final Term notG, final boolean containsArray,
 			final UnmodifiableTransFormula unguardedLoopTF, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final int num_unrollings) throws IOException {
 		UnmodifiableTransFormula urStemTF = stemTF;
-		NestedWord<L> urStemWord = stem;
-		final NestedWord<L> ugLoopWord = ugLoop;
-		final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> stemCheck;
-		// TODO: think about whether we count the stem(loop)^\omega as zeroth or first unrolling
+		NestedWord<L> urStemWord = lasso.getStem().getWord();
+		final NestedWord<L> ugLoopWord = lasso.getLoop().getWord();
+
 		for (int i = 0; i < num_unrollings; i++) {
 			final ILassoCheckResult<L> res = synthesize_wo_counterexample(true, false, urStemWord, urStemTF,
-					ugLoop.length() + 1, loopTF, containsArray, modifiableGlobalsAtHonda);
+					ugLoopWord.length() + 1, loopTF, containsArray, modifiableGlobalsAtHonda);
 			switch (res) {
 			case final UnknownResult<L> uk:
-				return new UnknownResult<>();
-			// if only this unrolling is infeasible, it doesn't help proving the rest of the program
+				return new UnknownResult<>();// if only this unrolling is infeasible, it doesn't help proving the rest
+												// of the program
 			case final InfeasibilityResult<L> inf:
-				break;
-			// One trace of P(A_fair) doesn't terminate --> P doesn't terminate --> G might not hold inf. often
+				break;// One trace of P(A_fair) doesn't terminate --> P doesn't terminate --> G might not hold inf.
+						// often
 			case final NonterminationResult<L> nonterm:
 				// TODO: differentiate between nonterminating and unknown?
 				return new UnknownResult<>();
 			case final TerminationResult<L> ter:
 				// TODO: closed Formula oder Formula?
 				final Term supInv = ter.result().getSiConjunction().getFormula();
-				// TODO: check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
+				// check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
 				assert !SmtUtils.isTrueLiteral(supInv) : "Nontrivial supporting invariant expected";
+
 				// Note: this only checks whether {si} loop {si} holds - sufficient bc we know that all shorter
 				// unrollings terminate
-
 				final boolean sufficient =
 						mBspm.isSupportingInvariant(new Term[] { supInv }, unguardedLoopTF, modifiableGlobalsAtHonda);
 				if (sufficient) {
-					return new UnfairnessResult<>(ter.result(), loopThreads, notG);
+					return new UnfairnessResult<>(ter.result(), loopThreads, notG, lasso);
 				}
+				break;
 			default:
 				mLogger.error("wrong type found!");
 				break;
@@ -1127,8 +1141,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 *
 	 * @param notG negated disj. of guards of outgoing non-loop statements at the honda
 	 */
-	public record UnfairnessResult<L extends IIcfgTransition<?>>(BspmResult result, Set<String> loopThreads,
-			UnmodifiableTransFormula notG) implements ILassoCheckResult<L> {
+	public record UnfairnessResult<L extends IIcfgTransition<?>>(BspmResult result, Set<String> loopThreads, Term notG,
+			NestedLassoRun<L, IPredicate> unrolling) implements ILassoCheckResult<L> {
 
 	}
 

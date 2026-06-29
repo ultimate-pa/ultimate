@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -57,7 +57,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate> {
 	NondeterministicInterpolantAutomaton<L> mWrappedAutomaton;
 	Set<String> mLoopThreads;
-	UnmodifiableTransFormula mNotG;
+	Term mNotG;
 	Set<IPredicate> mStemStates;
 	Set<IPredicate> mLoopStates;
 
@@ -104,7 +104,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton, final Set<String> loopthreads,
 			final NestedMap3<IPredicate, L, IPredicate, IsContained> originalTS, final Set<IPredicate> stemInterpolants,
 			final Set<IPredicate> loopInterpolants, final Map<IPredicate, Pair<IPredicate, IPredicate>> loopMap,
-			final IPredicate honda, final UnmodifiableTransFormula notG, final ReplacingBuchiHoareTripleChecker htc) {
+			final IPredicate honda, final Term notG, final ReplacingBuchiHoareTripleChecker htc) {
 
 		mWrappedAutomaton = automaton;
 		mLoopThreads = loopthreads;
