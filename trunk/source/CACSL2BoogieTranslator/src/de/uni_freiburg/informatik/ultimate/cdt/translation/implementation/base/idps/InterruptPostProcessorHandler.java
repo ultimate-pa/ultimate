@@ -26,9 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
@@ -36,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IPostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InterruptPostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -43,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public class InterruptPostProcessorHandler {
+public class InterruptPostProcessorHandler implements IPostProcessor {
 	private final InterruptPostProcessor mInterruptPostProcessor;
 	private final ISRInfo mIsrInfo;
 	private final InterruptServiceRoutines mInterruptServiceRoutines;
@@ -54,103 +53,20 @@ public class InterruptPostProcessorHandler {
 			final ProcedureManager procedureManager, final CHandler chandler, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final List<Declaration> declarations) {
 		mTranslationMode = settings.interruptTranslationMode();
-		mIsrInfo = getIsrInfo(settings);
-		final var isrBuilder = new InterruptServiceRoutinesBuilder(declarations, mIsrInfo, logger);
-		mInterruptServiceRoutines = isrBuilder.getInterruptServiceRoutines();
 		mInterruptPostProcessor = new InterruptPostProcessor(logger, settings, procedureManager, chandler,
 				auxVarInfoBuilder, expressionTranslation, mInterruptServiceRoutines);
-	}
-
-	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
-			final List<Statement> additionalInitializations) {
-		if (mTranslationMode == InterruptTranslationMode.NONE) {
-			return List.of();
-		}
-		return mInterruptPostProcessor.postProcess(loc, hook, additionalInitializations);
 	}
 
 	public List<Statement> getAdditionalInitializations() {
 		return mInterruptPostProcessor.getAdditionalInitializations();
 	}
 
-	private ISRInfo getIsrInfo(final TranslationSettings settings) {
-		final var currentInfo = settings.currentIsrInfo();
-		if (currentInfo == CurrentIsrInfo.INFO_1) {
-			return TestISRInfo.isrInfo1();
-		} else if (currentInfo == CurrentIsrInfo.INFO_2) {
-			return TestISRInfo.isrInfo2();
-		} else if (currentInfo == CurrentIsrInfo.INFO_10) {
-			return TestISRInfo.isrInfo10();
-		} else if (currentInfo == CurrentIsrInfo.INFO_1_DISABLE) {
-			return TestISRInfo.isrInfo1Disable();
-		} else {
-			return TestISRInfo.isrInfoLarge();
+	@Override
+	public List<Declaration> postProcess(ILocation loc, IASTNode hook, List<Statement> additionalInitializations) {
+		if (mTranslationMode == InterruptTranslationMode.NONE) {
+			return List.of();
 		}
+		return mInterruptPostProcessor.postProcess(loc, hook, additionalInitializations);
 	}
 
-	private static class TestISRInfo {
-		public static ISRInfo isrInfo1() {
-			final var isr = "isr_gpio";
-			final var numToISR = new HashMap<Integer, String>();
-			numToISR.put(1, isr);
-			final var reqEnable = "HAL_GPIO_Enable_Int";
-			final var numToReqEnable = new HashMap<Integer, String>();
-			numToReqEnable.put(1, reqEnable);
-			return new ISRInfo(numToISR, numToReqEnable, null, null, null, null);
-		}
-
-		public static ISRInfo isrInfo1Disable() {
-			final var isr = "isr_gpio";
-			final var numToISR = new HashMap<Integer, String>();
-			numToISR.put(1, isr);
-			final var reqEnable = "HAL_GPIO_Enable_Int";
-			final var numToReqEnable = new HashMap<Integer, String>();
-			numToReqEnable.put(1, reqEnable);
-			final var reqDisable = "HAL_GPIO_Disable_Int";
-			final var numToReqDisable = new HashMap<Integer, String>();
-			numToReqDisable.put(1, reqDisable);
-			return new ISRInfo(numToISR, numToReqEnable, numToReqDisable, null, null, null);
-		}
-
-		public static ISRInfo isrInfo2() {
-			final var isr1 = "isr1_gpio";
-			final var isr2 = "isr2_gpio";
-			final var numToISR = new HashMap<Integer, String>();
-			numToISR.put(1, isr1);
-			numToISR.put(2, isr2);
-			final var reqEnable1 = "HAL_GPIO_Enable_Int1";
-			final var reqEnable2 = "HAL_GPIO_Enable_Int2";
-			final var numToReqEnable = new HashMap<Integer, String>();
-			numToReqEnable.put(1, reqEnable1);
-			numToReqEnable.put(2, reqEnable2);
-			return new ISRInfo(numToISR, numToReqEnable, null, null, null, null);
-		}
-
-		public static ISRInfo isrInfo10() {
-			final Map<Integer, String> numToISR = new HashMap<>();
-			final Map<Integer, String> numToReqEnable = new HashMap<>();
-
-			for (int i = 1; i <= 10; i++) {
-				final String isrName = "isr" + 1 + "_gpio";
-
-				numToISR.put(i, isrName);
-			}
-
-			final String reqEnableAllString = "HAL_GPIO_Enable_All_Int";
-			return new ISRInfo(numToISR, numToReqEnable, null, reqEnableAllString, null, null);
-		}
-
-		public static ISRInfo isrInfoLarge() {
-			final var isr = "HAL_GPIO_EXTI_Callback";
-			final var numToISR = new HashMap<Integer, String>();
-			numToISR.put(1, isr);
-			final var reqEnable = "HAL_NVIC_EnableIRQ";
-			final var numToReqEnable = new HashMap<Integer, String>();
-			numToReqEnable.put(1, reqEnable);
-			final var reqDisable = "HAL_NVIC_DisableIRQ";
-			final var numToReqDisable = new HashMap<Integer, String>();
-			numToReqDisable.put(1, reqDisable);
-			return new ISRInfo(numToISR, numToReqEnable, numToReqDisable, null, null, null);
-		}
-	}
 }

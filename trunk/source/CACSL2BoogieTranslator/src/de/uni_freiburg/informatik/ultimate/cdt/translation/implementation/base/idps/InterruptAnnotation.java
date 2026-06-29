@@ -24,8 +24,10 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceRoutine;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -35,25 +37,32 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * Annotations for Boogie statements belonging to an interrupt-service-routine.
  */
 public class InterruptAnnotation extends ModernAnnotations {
-	private static final long serialVersionUID = 1L;
-	private final ISRLocation mIsrLocation;
-	private final int mIsrId;
 
-	public InterruptAnnotation(final ISRLocation isrLocation, final int isrId) {
-		mIsrLocation = isrLocation;
-		mIsrId = isrId;
+	private static final long serialVersionUID = 1L;
+
+	private final ISRLocation mLoc;
+
+	private final InterruptServiceRoutine mIsr;
+
+	public InterruptAnnotation(final ISRLocation loc, final InterruptServiceRoutine isr) {
+		mLoc = loc;
+		mIsr = isr;
 	}
 
 	public void annotate(final IElement element) {
 		element.getPayload().getAnnotations().put(InterruptAnnotation.class.getName(), this);
 	}
 
-	public int getIsrId() {
-		return mIsrId;
+	public InterruptServiceRoutine getIsr() {
+		return mIsr;
 	}
 
-	public ISRLocation getIsrLocation() {
-		return mIsrLocation;
+	public InterruptRequest getIrq() {
+		return getIsr().getIrq();
+	}
+
+	public ISRLocation getLocation() {
+		return mLoc;
 	}
 
 	public static InterruptAnnotation getAnnotation(final IElement node) {
@@ -63,7 +72,7 @@ public class InterruptAnnotation extends ModernAnnotations {
 	@Override
 	public String toString() {
 		final StringBuilder res = new StringBuilder("interrupt level: ");
-		switch (getIsrLocation()) {
+		switch (getLocation()) {
 		case ENTRY:
 			res.append("entry");
 			break;
@@ -73,7 +82,7 @@ public class InterruptAnnotation extends ModernAnnotations {
 		default:
 			break;
 		}
-		res.append(", interrupt id: ").append(getIsrId());
+		res.append(", interrupt request num: ").append(getIrq().getNum());
 		return res.toString();
 	}
 
@@ -82,19 +91,22 @@ public class InterruptAnnotation extends ModernAnnotations {
 		if (other == this || other == null) {
 			return this;
 		}
+
 		if (!(other instanceof InterruptAnnotation)) {
 			return super.merge(other);
 		}
-		final InterruptAnnotation otherAnnotations = (InterruptAnnotation) other;
-		final var otherLoc = otherAnnotations.getIsrLocation();
-		final var otherId = otherAnnotations.getIsrId();
-		if (getIsrLocation().equals(otherLoc) && getIsrId() == otherId) {
+
+		final InterruptAnnotation otherAnnotation = InterruptAnnotation.class.cast(other);
+		final var otherLoc = otherAnnotation.getLocation();
+		final var otherIrq = otherAnnotation.getIrq();
+		if (getLocation().equals(otherLoc) && getIrq().equals(otherIrq)) {
 			return other;
-		} else if (getIsrLocation() == ISRLocation.ENTRY) {
+		} else if (getLocation() == ISRLocation.ENTRY) {
 			return this;
 		}
-		assert otherId == getIsrId();
+		assert getIrq().equals(otherIrq);
 		assert otherLoc == ISRLocation.ENTRY;
+
 		return other;
 	}
 
@@ -105,4 +117,5 @@ public class InterruptAnnotation extends ModernAnnotations {
 	public enum ISRLocation {
 		ISR, ENTRY
 	}
+
 }

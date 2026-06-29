@@ -76,8 +76,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation.ISRLocation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptServiceRoutines;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.IInterruptFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceRoutine;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -112,24 +113,24 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private final InterruptTranslationMode mTranslationMode;
 
-	private final InterruptServiceRoutines mISR;
+	private final List<IInterruptFunction> mInterruptFuncs;
 
 	private Map<Integer, IdentifierExpression> mAuxVarExpressions = null;
 
 	private final List<Statement> mAdditionalInitializations = new ArrayList<>();
-	private final ISRLoopSearchVisitor mLoopSearchVisitor;
+	private final IsrLoopSearchVisitor mLoopSearchVisitor;
 
 	public InterruptPostProcessor(final ILogger logger, final TranslationSettings settings,
 			final ProcedureManager procedureManager, final CHandler chandler, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final ExpressionTranslation expressionTranslation, final InterruptServiceRoutines isrs) {
+			final ExpressionTranslation expressionTranslation, final List<IInterruptFunction> interruptFuncs) {
 		mLogger = logger;
 		mProcedureManager = procedureManager;
 		mCHandler = chandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mExpressionTranslation = expressionTranslation;
 		mTranslationMode = settings.interruptTranslationMode();
-		mISR = isrs;
-		mLoopSearchVisitor = new ISRLoopSearchVisitor(isrs);
+		mInterruptFuncs = interruptFuncs;
+		mLoopSearchVisitor = new IsrLoopSearchVisitor(isrs);
 	}
 
 	@Override
@@ -139,19 +140,19 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final var realization3 = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 
+		mLogger.info("Verify Interrupt-Driven Program with %d Interrupt Service Routines", mIsrs.size());
+
 		// Get the ghost variables that signal whether an ISR is enabled
-		mAuxVarExpressions = constructAuxVarExpressions(mISR.getISRMap().keySet());
+		mAuxVarExpressions = constructAuxVarExpressions(mIsrs);
 
-		mLogger.info("Verify IDP with %d ISRs", mAuxVarExpressions.size());
-
-		// Add thread gpio procedures
-		final var threadGpioProcedureMap = constructThreadGpioProc();
-		final var threadGpioProcedures = new ArrayList<>(threadGpioProcedureMap.values());
-		decl.addAll(threadGpioProcedures);
+		// Add thread procedures
+		final var threadProcedureMap = constructThreadProc();
+		final var threadProcedures = new ArrayList<>(threadProcedureMap.values());
+		decl.addAll(threadProcedures);
 
 		// Add fork statements to the main procedure
 		if (!realization3) {
-			addForksToProcedure(mISR.getMainProcedure(), threadGpioProcedures);
+			addForksToProcedure(mISR.getMainProcedure(), threadProcedures);
 		}
 
 		// Add atomic block and variable assignment true to request enabled functions
@@ -160,7 +161,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 		// Add fork statements in request enable procedure instead of the main procedure
 		if (realization3) {
-			addForksToRequestEnable(mISR.getRequestEnable(), threadGpioProcedureMap);
+			addForksToRequestEnable(mISR.getRequestEnable(), threadProcedureMap);
 		}
 		// Add atomic block and variable assignment false to request disabled functions if
 		annotateRequestProcedures(lhsMap, mISR.getRequestDisable(), false);
@@ -174,7 +175,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
 
 		if (realization3) {
-			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadGpioProcedureMap);
+			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadProcedureMap);
 		}
 
 		// Add interrupt enabled variable declarations
@@ -185,20 +186,20 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return decl;
 	}
 
-	private void addForksToProcedure(final Procedure mainProcedure, final List<Procedure> threadGpioProcedures) {
-		final List<Statement> newBlock = constructForkStatements(mainProcedure, threadGpioProcedures, -1);
+	private void addForksToProcedure(final Procedure mainProcedure, final List<Procedure> threadProcedures) {
+		final List<Statement> newBlock = constructForkStatements(mainProcedure, threadProcedures, -1);
 		final var body = mainProcedure.getBody();
 		newBlock.addAll(Arrays.asList(body.getBlock()));
 		body.setBlock(newBlock.toArray(new Statement[0]));
 	}
 
 	private void addForksToRequestEnableAll(final Procedure mainProcedure,
-			final Map<Integer, Procedure> threadGpioProceduresMap) {
+			final Map<Integer, Procedure> threadProceduresMap) {
 		if (mainProcedure == null) {
 			return;
 		}
 		final var statements = new ArrayList<Statement>();
-		for (final Entry<Integer, Procedure> entry : threadGpioProceduresMap.entrySet()) {
+		for (final Entry<Integer, Procedure> entry : threadProceduresMap.entrySet()) {
 			final var irq = entry.getKey();
 			final var proc = entry.getValue();
 			final var fork = constructForkStatements(mainProcedure, List.of(proc), -irq);
@@ -213,11 +214,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private void addForksToRequestEnable(final Map<Integer, Procedure> intEnabledProcedures,
-			final Map<Integer, Procedure> threadGpioProceduresMap) {
+			final Map<Integer, Procedure> threadProceduresMap) {
 		for (final Entry<Integer, Procedure> entry : intEnabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
 			final var proc = entry.getValue();
-			final var threadGpioProcedure = threadGpioProceduresMap.get(irq);
+			final var threadGpioProcedure = threadProceduresMap.get(irq);
 			assert threadGpioProcedure != null;
 
 			final var thrNum = -irq;
@@ -300,13 +301,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return declarations;
 	}
 
-	private Map<Integer, IdentifierExpression> constructAuxVarExpressions(final Collection<Integer> identifiers) {
+	private Map<Integer, IdentifierExpression> constructAuxVarExpressions(final List<InterruptServiceRoutine> isrs) {
 		final var idExpressions = new HashMap<Integer, IdentifierExpression>();
-		for (final Integer irq : identifiers) {
-			final var id = "#isr_" + irq + "_enabled";
+		for (final InterruptServiceRoutine isr : isrs) {
+			final int irqNum = isr.getIrq().getNum();
+			final var id = "#isr_" + irqNum + "_enabled";
 			final var enabledExpr = ExpressionFactory.constructIdentifierExpression(mIgnoreLoc, BoogieType.TYPE_BOOL,
 					id, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-			idExpressions.put(irq, enabledExpr);
+			idExpressions.put(irqNum, enabledExpr);
 		}
 		return idExpressions;
 	}
@@ -371,41 +373,36 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mProcedureManager.endProcedureScope(mCHandler);
 	}
 
-	private Map<Integer, Procedure> constructThreadGpioProc() {
+	private Map<Integer, Procedure> constructThreadProc() {
 		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
 		final var procedures = new HashMap<Integer, Procedure>();
 		final var oneThreadPerISR = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR
 				|| mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 		if (oneThreadPerISR) {
 			mLogger.info("Source-to-source translation of interrupt program with realization 1");
-			final var isrGpios = mISR.getISRMap().entrySet();
-			for (final Entry<Integer, Procedure> entry : isrGpios) {
-				final var irq = entry.getKey();
-				final var isr = entry.getValue();
-				final var procId = isr.getIdentifier();
-				final var idExpression = mAuxVarExpressions.get(irq);
-				assert idExpression != null : "There exists no identifier expression for the IRQ: " + irq;
-				procedures.put(irq, constructOneInterruptThreadGpioProc(procId, idExpression, irq));
+			for (final InterruptServiceRoutine isr : mIsrs) {
+				final int irqNum = isr.getIrq().getNum();
+				final var idExpression = mAuxVarExpressions.get(irqNum);
+				assert idExpression != null : "There exists no identifier expression for the IRQ " + irqNum;
+				procedures.put(irqNum, constructOneThreadPerIsr(isr, idExpression));
 			}
 		} else {
 			mLogger.info("Source-to-source translation of interrupt program with realization 2");
-			procedures.put(-1, constructAllInterruptsThreadGpioProc());
+			procedures.put(-1, constructOneThreadForAllIsrs());
 		}
 		return procedures;
 	}
 
 	// Realization 1
-	private Procedure constructOneInterruptThreadGpioProc(final String identifier,
-			final IdentifierExpression threadEnabledId, final Integer irq) {
-		final var procName = constructThreadGpioID(identifier, irq);
-
-		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for ISR " + identifier);
-
+	private Procedure constructOneThreadPerIsr(final InterruptServiceRoutine isr,
+			final IdentifierExpression threadEnabledId) {
+		final String procName = constructThreadName(isr);
+		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for IRQ " + isr.getIrq().getName());
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final var whileStmt = constructIsrWhileLoop(identifier, threadEnabledId, irq);
+		final var whileStmt = constructIsrWhileLoop(isr, threadEnabledId);
 		builder.addStatement(whileStmt);
 		final var body = mProcedureManager.constructBody(mIgnoreLoc,
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
@@ -416,10 +413,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	// Realization 2
-
-	private Procedure constructAllInterruptsThreadGpioProc() {
-		final var procName = constructThreadGpioID("all", 0);
-		mLogger.info("Adding auxilliary ISR-Thread function " + procName);
+	private Procedure constructOneThreadForAllIsrs() {
+		final var procName = constructThreadName("all");
+		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for all IRQs");
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
@@ -458,29 +454,27 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return statements;
 	}
 
-	private Statement constructIsrWhileLoop(final String identifier, final IdentifierExpression threadEnabledId,
-			final Integer isrNum) {
-		final var enabledExpr = threadEnabledId;
-		final var ifStmt = getIfStatement(identifier, enabledExpr, isrNum);
-		final var block = getIsrBlock(ifStmt, identifier);
+	private Statement constructIsrWhileLoop(final InterruptServiceRoutine isr,
+			final IdentifierExpression threadEnabledId) {
+		final var ifStmt = getIfStatement(isr, threadEnabledId);
+		final var block = getIsrBlock(ifStmt, isr);
 		final var forkJoin = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
-		final var while_condition = forkJoin ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
-		return new WhileStatement(mIgnoreLoc, while_condition, new LoopInvariantSpecification[0], block);
+		final var loopCondition = forkJoin ? threadEnabledId : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
+		return new WhileStatement(mIgnoreLoc, loopCondition, new LoopInvariantSpecification[0], block);
 	}
 
 	private Statement constructAllIsrWhileLoop(final AuxVarInfo auxVarInfo) {
 		final var atomicStatements = new ArrayList<Statement>();
-		for (final Entry<Integer, Procedure> entry : mISR.getISRMap().entrySet()) {
+		for (final InterruptServiceRoutine isr : mIsrs) {
 			final var ifStatements = new ArrayList<Statement>();
 			final var boolHavoc = getHavocBoolStatements(auxVarInfo);
 			ifStatements.addAll(boolHavoc);
-			final var irq = entry.getKey();
-			final var identifier = entry.getValue().getIdentifier();
-			final var threadEnabledId = mAuxVarExpressions.get(irq);
+			final int irqNum = isr.getIrq().getNum();
+			final var threadEnabledId = mAuxVarExpressions.get(irqNum);
 			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
-			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ: " + irq;
-			ifStatements.add(getIfStatement(identifier, enabledExpression, irq));
-			final var block = getIsrBlock(ifStatements, identifier);
+			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ " + irqNum;
+			ifStatements.add(getIfStatement(isr, enabledExpression));
+			final var block = getIsrBlock(ifStatements, isr);
 			atomicStatements.addAll(block);
 		}
 		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
@@ -488,28 +482,28 @@ public class InterruptPostProcessor implements IPostProcessor {
 				atomicStatements.toArray(new Statement[0]));
 	}
 
-	private List<Statement> getIsrBlock(final List<Statement> ifStatements, final String identifier) {
-		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(identifier)) {
+	private List<Statement> getIsrBlock(final List<Statement> ifStatements, final InterruptServiceRoutine isr) {
+		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(isr)) {
 			return ifStatements;
 		}
 		return List.of(StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements));
 	}
 
-	private Statement[] getIsrBlock(final Statement ifStatement, final String identifier) {
-		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(identifier)) {
+	private Statement[] getIsrBlock(final Statement ifStatement, final InterruptServiceRoutine isr) {
+		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(isr)) {
 			return new Statement[] { ifStatement };
 		}
 		return new Statement[] { StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStatement)) };
 	}
 
-	private Statement getIfStatement(final String identifier, final Expression enabledExpr, final int id) {
-		final var interruptAnnotation = new InterruptAnnotation(ISRLocation.ENTRY, id);
-		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
-				new Expression[0]);
-		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(identifier)) {
-			mLogger.info("Add interrupt labels to call of function: " + identifier);
+	private Statement getIfStatement(final InterruptServiceRoutine isr, final Expression enabledExpr) {
+		final var interruptAnnotation = new InterruptAnnotation(ISRLocation.ENTRY, isr);
+		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0],
+				isr.getProcedure().getIdentifier(), new Expression[0]);
+		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(isr)) {
+			mLogger.info("Add interrupt labels to call of function: " + isr.getProcedure().getIdentifier());
 			final var ifStmt = StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr,
-					labelISRStatement(then, id), new Statement[0]);
+					labelIsrStatement(then, isr), new Statement[0]);
 			// TODO: Handle annotation for contains case
 			interruptAnnotation.annotate(ifStmt);
 			return ifStmt;
@@ -518,9 +512,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 				new Statement[0]);
 	}
 
-	private Statement[] labelISRStatement(final Statement isrStatement, final Integer isrId) {
-		final var labelName = "~isr" + isrId;
-		final var isrNumAttribute = new NamedAttribute(mIgnoreLoc, Integer.toString(isrId), new Expression[0]);
+	private Statement[] labelIsrStatement(final Statement isrStatement, final InterruptServiceRoutine isr) {
+		final String irqNum = Integer.toString(isr.getIrq().getNum());
+		final var labelName = "~isr" + irqNum;
+		final var isrNumAttribute = new NamedAttribute(mIgnoreLoc, irqNum, new Expression[0]);
 		final var isrAttribute = new NamedAttribute(mIgnoreLoc, "isr_label", new Expression[0]);
 		final var entryAttribute = new NamedAttribute(mIgnoreLoc, "entry", new Expression[0]);
 		final var exitAttribute = new NamedAttribute(mIgnoreLoc, "exit", new Expression[0]);
@@ -538,8 +533,12 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return ExpressionFactory.and(mIgnoreLoc, List.of(threadEnabledId, isOne));
 	}
 
-	private String constructThreadGpioID(final String identifier, final Integer irq) {
-		return "#isr_" + irq + "_" + identifier + "_thread";
+	private static String constructThreadName(final InterruptServiceRoutine isr) {
+		return "#isr_" + Integer.toString(isr.getIrq().getNum()) + "_" + isr.getProcedure().getIdentifier() + "_thread";
+	}
+
+	private static String constructThreadName(final String identifier) {
+		return "#isr_" + identifier + "_thread";
 	}
 
 	private Map<Integer, VariableLHS> getVariableLHSs() {
@@ -553,34 +552,32 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return mAdditionalInitializations;
 	}
 
-	private static class ISRLoopSearchVisitor {
+	private static class IsrLoopSearchVisitor {
 
-		private final InterruptServiceRoutines mISR;
-		private final Map<String, Boolean> mContainsLoop;
+		private final Map<InterruptServiceRoutine, Boolean> mContainsLoop;
 
-		public ISRLoopSearchVisitor(final InterruptServiceRoutines interruptServiceRoutines) {
-			mISR = interruptServiceRoutines;
-			mContainsLoop = visitISRs();
+		private IsrLoopSearchVisitor(final List<InterruptServiceRoutine> isrs) {
+			mContainsLoop = visitIsrs(isrs);
 		}
 
-		private Map<String, Boolean> visitISRs() {
-			final var containsLoopMap = new HashMap<String, Boolean>();
-			for (final Procedure proc : mISR.getISRMap().values()) {
-				final var containsLoop = visitProc(proc);
-				containsLoopMap.put(proc.getIdentifier(), true);
+		private Map<InterruptServiceRoutine, Boolean> visitIsrs(final List<InterruptServiceRoutine> isrs) {
+			final var containsLoopMap = new HashMap<InterruptServiceRoutine, Boolean>();
+			for (final InterruptServiceRoutine isr : isrs) {
+				final boolean containsLoop = visitProc(isr.getProcedure());
+				containsLoopMap.put(isr, containsLoop);
 			}
 			return containsLoopMap;
 		}
 
-		private Boolean visitProc(final Procedure proc) {
+		private boolean visitProc(final Procedure proc) {
 			return visitBody(proc.getBody());
 		}
 
-		private Boolean visitBody(final Body body) {
+		private boolean visitBody(final Body body) {
 			return visitBlock(body.getBlock());
 		}
 
-		private Boolean visitBlock(final Statement[] statements) {
+		private boolean visitBlock(final Statement[] statements) {
 			for (final Statement statement : statements) {
 				if (visitStatement(statement)) {
 					return true;
@@ -589,7 +586,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 			return false;
 		}
 
-		private Boolean visitStatement(final Statement statement) {
+		private boolean visitStatement(final Statement statement) {
 			// TODO: Add handling for call statements
 			if (statement instanceof WhileStatement || statement instanceof CallStatement
 					|| statement instanceof ForkStatement || statement instanceof GotoStatement
@@ -603,9 +600,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 			return false;
 		}
 
-		public Boolean containsLoop(final String identifier) {
-			final var contains = mContainsLoop.get(identifier);
-			assert contains != null;
+		private boolean containsLoop(final InterruptServiceRoutine isr) {
+			final boolean contains = mContainsLoop.get(isr);
 			return contains;
 		}
 	}
