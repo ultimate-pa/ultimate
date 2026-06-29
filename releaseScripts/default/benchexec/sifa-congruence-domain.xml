@@ -38,7 +38,7 @@
   </rundefinition>
 
   <tasks name="ReachSafety">
-    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Arays.set</includesfile>
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Arrays.set</includesfile>
     <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/BitVectors.set</includesfile>
     <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/ControlFlow.set</includesfile>
     <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Heap.set</includesfile>
