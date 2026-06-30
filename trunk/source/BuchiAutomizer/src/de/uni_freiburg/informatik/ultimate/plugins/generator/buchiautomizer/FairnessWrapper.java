@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /*
  * Wrapper for a nondeterministic interpolant automaton (certified module from termination analysis) to filter out
@@ -61,8 +60,8 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	Set<IPredicate> mStemStates;
 	Set<IPredicate> mLoopStates;
 
-	// maps base loop predicates to upper/lower loop predicates
-	Map<IPredicate, Pair<IPredicate, IPredicate>> mLoopPredicateMap;
+	// maps base loop predicates to upper loop predicates
+	Map<IPredicate, IPredicate> mLoopPredicateMap;
 	IPredicate mHonda;
 	BuchiHoareTripleChecker mHTC;
 	NestedMap3<IPredicate, L, IPredicate, IsContained> mOriginalEdges;
@@ -103,8 +102,8 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 */
 	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton, final Set<String> loopthreads,
 			final NestedMap3<IPredicate, L, IPredicate, IsContained> originalTS, final Set<IPredicate> stemInterpolants,
-			final Set<IPredicate> loopInterpolants, final Map<IPredicate, Pair<IPredicate, IPredicate>> loopMap,
-			final IPredicate honda, final Term notG, final ReplacingBuchiHoareTripleChecker htc) {
+			final Set<IPredicate> loopInterpolants, final Map<IPredicate, IPredicate> loopMap, final IPredicate honda,
+			final Term notG, final ReplacingBuchiHoareTripleChecker htc) {
 
 		mWrappedAutomaton = automaton;
 		mLoopThreads = loopthreads;
@@ -212,8 +211,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	}
 
 	/**
-	 * Checks whether adding an edge is allowed according to unfairness generalization rules. Contains questionable type
-	 * casts.
+	 * Checks whether adding an edge is allowed according to unfairness generalization rules.
 	 *
 	 * @param source
 	 *            source node of the edge
@@ -242,23 +240,21 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		assert !mStemStates.contains(target) : "Illegal Edge from loop to stem!";
 		// for loop edges we need to check if they form valid hoare triples with the unfairness predicates
 		if (mLoopStates.contains(source) && !isHonda(target)) {
-			final Pair<IPredicate, IPredicate> sourcePreds = mLoopPredicateMap.get(source);
-			final Pair<IPredicate, IPredicate> targetPreds = mLoopPredicateMap.get(target);
+			final IPredicate sourcePred = mLoopPredicateMap.get(source);
+			final IPredicate targetPred = mLoopPredicateMap.get(target);
 			boolean u = false;
-			boolean l = false;
+			final boolean l = false;
 
 			// check if the upper loop ts forms a valid hoare triple
-			u = mHTC.checkInternal(sourcePreds.getFirst(), (IInternalAction) ts,
-					targetPreds.getFirst()) == Validity.VALID;
-			// check if the lower loop forms a valid hoare triple
-			l = mHTC.checkInternal(sourcePreds.getSecond(), (IInternalAction) ts,
-					targetPreds.getSecond()) == Validity.VALID;
+			final var uppercheck = mHTC.checkInternal(sourcePred, (IInternalAction) ts, targetPred);
+			u = mHTC.checkInternal(sourcePred, (IInternalAction) ts, targetPred) == Validity.VALID;
 
-			return u && l;
+			return u;
 		}
 
 		// the honda is slightly special since we have a virtual 'assume not G' edge "splitting" it
-		// TODO: think about honda cases
+		// TODO: think about honda cases -if the honda is the source, maybe if {hondaPrime} edge {target} is valid for
+		// guarded loop
 		return false;
 	}
 

@@ -28,9 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -77,13 +75,12 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	 */
 	protected final boolean mSecondChance;
 	boolean mFairMode; // set to true if the automaton should preserve fairness
-	Map<IPredicate, IPredicate> mReplacementMap; // maps predicates to "unified" predicates known to the htc
 
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
-			final boolean secondChance, final boolean fairMode, final Map<IPredicate, IPredicate> replacementMap) {
+			final boolean secondChance, final boolean fairMode) {
 		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, inputInterpolantAutomaton);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		mSecondChance = secondChance;
@@ -94,7 +91,6 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 		assert SmtUtils.isFalseLiteral(mIaFalseState.getFormula());
 		assert isFalsePresent(allPredicates);
 		mFairMode = fairMode;
-		mReplacementMap = replacementMap;
 		mNonTrivialPredicates = new HashSet<>();
 		for (final IPredicate state : allPredicates) {
 			addIfNontrivialPredicate(state);
@@ -113,7 +109,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 			final IPredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
 			final boolean secondChance) {
 		this(services, csToolkit, hoareTripleChecker, inputInterpolantAutomaton, predicateUnifier,
-				conservativeSuccessorCandidateSelection, secondChance, false, new HashMap<>());
+				conservativeSuccessorCandidateSelection, secondChance, false);
 	}
 
 	@Override
@@ -169,8 +165,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 				final Validity sat;
 				if (mFairMode) {
 					// in fair mode, call and return ts should not occur (not supported for concurrent programs
-					sat = sch.computeSuccWithSolver(mReplacementMap.get(resPred), resHier, letter,
-							mReplacementMap.get(succCand));
+					sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
 
 				} else {
 					sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);

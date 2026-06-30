@@ -45,6 +45,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	private final TreeMap<Integer, Integer> mModuleSizeTrivial = new TreeMap<>();
 	private final TreeMap<Integer, Integer> mModuleSizeDeterministic = new TreeMap<>();
 	private final TreeMap<Integer, Integer> mModuleSizeNondeterministic = new TreeMap<>();
+	private final TreeMap<Integer, Integer> mModuleSizeUnfair = new TreeMap<>();
 	private final TreeMap<Integer, String> mRankingFunction = new TreeMap<>();
 	/**
 	 * Is there a remainder module? A remainder module contains remaining traces if decomposition into modules failed.
@@ -69,6 +70,10 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 
 	public void reportNonDeterministicModule(final Integer iteration, final Integer size) {
 		mModuleSizeNondeterministic.put(iteration, size);
+	}
+
+	public void reportUnfairModule(final Integer iteration, final Integer size) {
+		mModuleSizeUnfair.put(iteration, size);
 	}
 
 	public void reportRankingFunction(final Integer iteration, final RankingFunction rankingFunction,

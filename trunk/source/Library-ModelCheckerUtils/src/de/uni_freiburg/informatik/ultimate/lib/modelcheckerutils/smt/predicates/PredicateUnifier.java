@@ -190,7 +190,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 * Add predicate. Store this predicate without further simplification. Throw an exception if this PredicateUnifier
 	 * stores already an equivalent predicate.
 	 */
-	void declarePredicate(final IPredicate predicate) {
+	public void declarePredicate(final IPredicate predicate) {
 		final PredicateComparison pc = new PredicateComparison(predicate.getFormula(), predicate.getVars(), null, null);
 		if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
 			final IPredicate other = pc.getEquivalantLeqQuantifiedPredicate();

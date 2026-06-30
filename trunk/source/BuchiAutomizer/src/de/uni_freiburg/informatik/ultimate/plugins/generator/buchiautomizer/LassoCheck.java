@@ -225,7 +225,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mTrySimplificationTerminationArgument = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SIMPLIFY);
 		mTryTwofoldRefinement = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mCsToolkit = csToolkit;
-		// TODO: V - marker added here
 		mManagedScript = mCsToolkit.getManagedScript();
 		mBspm = bspm;
 		mGetControlConfiguration = getControlConfiguration;
@@ -382,12 +381,14 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				// we need to filter out join edges bc. their guard is always 'true'
 				if (edge instanceof IcfgJoinThreadOtherTransition || edge instanceof IcfgJoinThreadCurrentTransition) {
 					// to avoid the list of guards being empty
-					guards.add(
-							TransFormulaUtils.negate(edge.getTransformula(), mManagedScript, mServices).getFormula());
-					guardTF.add(TransFormulaUtils.negate(edge.getTransformula(), mManagedScript, mServices));
+					/*
+					 * guards.add( TransFormulaUtils.negate(edge.getTransformula(), mManagedScript,
+					 * mServices).getFormula()); guardTF.add(TransFormulaUtils.negate(edge.getTransformula(),
+					 * mManagedScript, mServices));
+					 */
 				} else {
-					guards.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices)
-							.getFormula());
+					guards.add(TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, edge.getTransformula(),
+							true));
 					guardTF.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
 				}
 			}
@@ -1058,7 +1059,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				// TODO: differentiate between nonterminating and unknown?
 				return new UnknownResult<>();
 			case final TerminationResult<L> ter:
-				// TODO: closed Formula oder Formula?
 				final Term supInv = ter.result().getSiConjunction().getFormula();
 				// check whether si is trivial - shouldn't happen, otherwise, why didn't loop only terminate?
 				assert !SmtUtils.isTrueLiteral(supInv) : "Nontrivial supporting invariant expected";
