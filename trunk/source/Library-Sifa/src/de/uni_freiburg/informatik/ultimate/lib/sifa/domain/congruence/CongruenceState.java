@@ -174,7 +174,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	@Override
 	public CongruenceState widen(final CongruenceState other) {
 
-		final var sth = 0;
+		final var sth = this;
 
 		if (isBottom()) {
 			return other;
@@ -222,6 +222,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		final ConstraintRepresentation newConstraints = new ConstraintRepresentation(newEqualities, newCongruences,
 				upperConstraints.getVectorLength());
+		final var x = new CongruenceState(newVarToIndex, newConstraints);
 		return new CongruenceState(newVarToIndex, newConstraints);
 	}
 

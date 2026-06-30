@@ -209,8 +209,7 @@ public class GeneratorRepresentation {
 				paddedParameters.add(newParameter);
 			}
 		}
-		return new GeneratorRepresentation(reorderedLineMatrix.getRowVectors(), paddedParameters, resultColumnCount,
-				isMinimal());
+		return new GeneratorRepresentation(reorderedLineMatrix.getRowVectors(), paddedParameters, resultColumnCount);
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
@@ -240,7 +239,7 @@ public class GeneratorRepresentation {
 		final RationalMatrix generatorMatrix = RationalMatrix.fromRowVectors(vectorList, mVectorLength);
 
 		if (!generatorMatrix.isSquare()) {
-			throw new AssertionError("generatorMatrix is not square. \n generatorMatrix: " + generatorMatrix);
+			throw new AssertionError("generatorMatrix is not square. generatorMatrix:  \n" + generatorMatrix);
 		}
 
 		final RationalMatrix constraintMatrix = generatorMatrix.invert().transpose();

@@ -364,7 +364,7 @@ public class ConstraintRepresentation {
 		final RationalMatrix constraintMatrix = RationalMatrix.fromRowVectors(vectorList, mVectorLength);
 
 		if (!constraintMatrix.isSquare()) {
-			throw new AssertionError("constraintMatrix is not square. \n generatorMatrix: " + constraintMatrix);
+			throw new AssertionError("constraintMatrix is not square. \n constraintMatrix: \n" + constraintMatrix);
 		}
 
 		final RationalMatrix generatorMatrix = constraintMatrix.invert().transpose();
