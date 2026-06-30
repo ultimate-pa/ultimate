@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -236,12 +237,15 @@ public class MainTranslator {
 		final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer = new TypeSizeAndOffsetComputer(typeSizes,
 				expressionTranslation, typeHandler, translationSettings.useBitpreciseBitfields());
 
-		final CHandler mainCHandler = new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler,
-				expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes);
+		final InterruptFunctionHandler interruptFuncHandler = new InterruptFunctionHandler();
+
+		final CHandler mainCHandler =
+				new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler, expressionTranslation,
+						typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes, interruptFuncHandler);
 
 		final PreprocessorHandler ppHandler = new PreprocessorHandler(reporter, locationFactory);
 		final ACSLHandler acslHandler = new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation,
-				typeHandler, procedureManager, locationFactory, mainCHandler, memoryPointer);
+				typeHandler, procedureManager, locationFactory, mainCHandler, memoryPointer, interruptFuncHandler);
 
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witness, locationFactory, typeHandler,
 				mainCHandler, ppHandler, acslHandler);

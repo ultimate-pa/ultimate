@@ -23,23 +23,30 @@
 
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class InterruptServiceRoutine extends InterruptFunction {
+public class InterruptFunctionHandler {
 
-	public InterruptServiceRoutine(final Procedure proc, final InterruptRequest irq) {
-		super(proc, irq);
+	private final List<IInterruptFunction> mFuncs;
+
+	public InterruptFunctionHandler() {
+		mFuncs = new ArrayList<>();
 	}
 
-	@Override
-	public boolean isServiceFunction() {
-		return true;
+	public List<IInterruptFunction> getInterruptFunctions() {
+		return mFuncs;
 	}
 
-	@Override
-	public boolean isManagementFunction() {
-		return false;
+	public List<InterruptServiceFunction> getIsrs() {
+		return getInterruptFunctions().stream()
+				.filter(f -> f instanceof InterruptServiceFunction && f.isServiceFunction())
+				.map(f -> InterruptServiceFunction.class.cast(f)).collect(Collectors.toList());
+	}
+
+	public void register(final IInterruptFunction func) {
+		mFuncs.add(func);
 	}
 
 }

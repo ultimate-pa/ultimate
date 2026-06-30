@@ -51,7 +51,10 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptMasking;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptPriorityGet;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptPrioritySet;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptServiceRoutine;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
@@ -172,7 +175,7 @@ public interface IACSLHandler {
 	Result visit(IDispatcher main, Contract node);
 
 	/**
-	 * Translates an InterruptStatement.
+	 * Translates an InterruptServiceRoutine.
 	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
@@ -180,7 +183,40 @@ public interface IACSLHandler {
 	 *            the node to visit
 	 * @return a result object
 	 */
-	Result visit(IDispatcher main, InterruptStatement node);
+	Result visit(IDispatcher main, InterruptServiceRoutine node);
+
+	/**
+	 * Translates an InterruptMasking.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(IDispatcher main, InterruptMasking node);
+
+	/**
+	 * Translates an InterruptPriorityGet.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(IDispatcher main, InterruptPriorityGet node);
+
+	/**
+	 * Translates an InterruptPrioritySet.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(IDispatcher main, InterruptPrioritySet node);
 
 	/**
 	 * Translates an Requires.

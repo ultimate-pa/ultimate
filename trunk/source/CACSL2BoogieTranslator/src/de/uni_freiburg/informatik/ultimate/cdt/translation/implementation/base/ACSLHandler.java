@@ -68,6 +68,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptPriorityFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -82,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InterruptResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -116,6 +121,10 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptMasking;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptPriorityGet;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptPrioritySet;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptServiceRoutine;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
@@ -180,13 +189,14 @@ public class ACSLHandler implements IACSLHandler {
 	private final CHandler mCHandler;
 	private final CExpressionTranslator mCExpressionTranslator;
 	private final IMemoryPointer mMemoryPointer;
+	private final InterruptFunctionHandler mInterruptFuncHandler;
 
 	private final ScopedHashMap<String, LRValue> mBoundVariables = new ScopedHashMap<>();
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
 			final ProcedureManager procedureManager, final LocationFactory locationFactory, final CHandler chandler,
-			final IMemoryPointer memoryPointer) {
+			final IMemoryPointer memoryPointer, final InterruptFunctionHandler interruptFuncHandler) {
 		mWitnessInvariantMode = witnessInvariantMode;
 		mSymboltable = symboltable;
 		mExpressionTranslation = expressionTranslation;
@@ -198,6 +208,7 @@ public class ACSLHandler implements IACSLHandler {
 		mCExpressionTranslator = chandler.getCExpressionTranslator().disableChecksForUndefinedBehavior();
 		mCHandler = chandler;
 		mMemoryPointer = memoryPointer;
+		mInterruptFuncHandler = interruptFuncHandler;
 	}
 
 	@Override
@@ -695,8 +706,8 @@ public class ACSLHandler implements IACSLHandler {
 
 		if (node.getInterruptStmt() != null) {
 			for (final InterruptStatement stmt : node.getInterruptStmt()) {
-				// TODO: dispatch interrupt stmt
-				main.dispatch(stmt, main.getAcslHook());
+				final InterruptResult res = (InterruptResult) main.dispatch(stmt, main.getAcslHook());
+				mInterruptFuncHandler.register(res.getInterruptFunction());
 			}
 		}
 
@@ -711,9 +722,47 @@ public class ACSLHandler implements IACSLHandler {
 	}
 
 	@Override
-	public Result visit(final IDispatcher main, final InterruptStatement node) {
-		mSpecType = ACSLHandler.SPEC_TYPE.NOT;
-		return null;
+	public Result visit(final IDispatcher main, final InterruptServiceRoutine node) {
+
+		// Check if node.getIdentifier() is an enum specifier (lookup in symbol table)
+		// If enum specifier -> get static value as IRQ and use specifier as IRQ name
+		// If not specifier -> register name as IRQ name and assign free value
+
+		// Find corresponding procedure for this interrupt result annotation
+
+		final SymbolTableValue symbol = mSymboltable.findCSymbol(main.getAcslHook(), node.getIdentifier());
+		if (symbol != null) {
+			// Get static value of integer data type as IRQ and use specifier as IRQ name
+			symbol.getCType().getUnderlyingType();
+		} else {
+			// Register identifier name as IRQ name and assign free IRQ number
+			final ExpressionResult res = (ExpressionResult) main.dispatch(node.getIdentifier());
+			res.getCType().isIntegerType();
+		}
+
+		return new InterruptResult(new InterruptServiceFunction(null, irq));
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final InterruptMasking node) {
+		final InterruptMaskingFunction.Operation op = (node.getEnabled()) ? InterruptMaskingFunction.Operation.ENABLE
+				: InterruptMaskingFunction.Operation.DISABLE;
+
+		return new InterruptResult(new InterruptMaskingFunction(null, irq, op));
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final InterruptPriorityGet node) {
+		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.GET;
+
+		return new InterruptResult(new InterruptPriorityFunction(null, irq, op));
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final InterruptPrioritySet node) {
+		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.SET;
+
+		return new InterruptResult(new InterruptPriorityFunction(null, irq, op));
 	}
 
 	@Override

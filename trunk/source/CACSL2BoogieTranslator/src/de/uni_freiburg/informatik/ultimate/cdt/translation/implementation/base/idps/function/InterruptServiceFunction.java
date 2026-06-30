@@ -21,40 +21,25 @@
  * plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.IInterruptFunction;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequest;
 
-/**
- * Holds an interrupt function.
- *
- * @author Manuel Bentele
- */
-public class InterruptResult extends Result {
+public class InterruptServiceFunction extends InterruptFunction {
 
-	/**
-	 * Stores interrupt function.
-	 */
-	private final IInterruptFunction mInterruptFunc;
-
-	/**
-	 * Create new result with an interrupt function.
-	 *
-	 * @param interruptFunc
-	 *            Interrupt functions.
-	 */
-	public InterruptResult(final IInterruptFunction interruptFunc) {
-		super(null);
-		mInterruptFunc = interruptFunc;
+	public InterruptServiceFunction(final Procedure proc, final InterruptRequest irq) {
+		super(proc, irq);
 	}
 
-	/**
-	 * Return the interrupt function.
-	 *
-	 * @return Interrupt function.
-	 */
-	public IInterruptFunction getInterruptFunction() {
-		return mInterruptFunc;
+	@Override
+	public boolean isServiceFunction() {
+		return true;
+	}
+
+	@Override
+	public boolean isManagementFunction() {
+		return false;
 	}
 
 }

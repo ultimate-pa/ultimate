@@ -171,6 +171,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InterruptPostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -181,7 +182,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptPostProcessorHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AssertLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AtomicLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
@@ -299,6 +300,8 @@ public class CHandler {
 	private final FunctionHandler mFunctionHandler;
 
 	private final PostProcessor mPostProcessor;
+
+	private final InterruptPostProcessor mInterruptPostProcessor;
 
 	private final INameHandler mNameHandler;
 
@@ -493,6 +496,8 @@ public class CHandler {
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 
+		mInterruptPostProcessor = null;
+
 		mIsInLibraryMode = false;
 	}
 
@@ -514,7 +519,8 @@ public class CHandler {
 			final StaticObjectsHandler staticObjectsHandler, final TypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final INameHandler nameHandler,
-			final FlatSymbolTable symbolTable, final TypeSizes typeSizes) {
+			final FlatSymbolTable symbolTable, final TypeSizes typeSizes,
+			final InterruptFunctionHandler interruptFuncHandler) {
 		assert prerunCHandler.mIsPrerun : "CHandler not in prerun mode";
 		mIsPrerun = false;
 
@@ -586,6 +592,8 @@ public class CHandler {
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
+		mInterruptPostProcessor = new InterruptPostProcessor(mLogger, mSettings, mProcedureManager, this,
+				mAuxVarInfoBuilder, mExpressionTranslation, interruptFuncHandler);
 		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryFunction());
 		copyGlobalsFromPrerun(prerunCHandler.mSymbolTable);
 	}
@@ -735,10 +743,10 @@ public class CHandler {
 		}
 
 		if (!mIsPrerun) {
-			// S2S transformation of interrupt programs to thread-based programs if enabled
-			final var interruptPostProcessor = getInterruptPostProcessorHandler();
-			mDeclarations.addAll(interruptPostProcessor.postProcess(loc, globalHook, additionalInitializations));
-			additionalInitializations.addAll(interruptPostProcessor.getAdditionalInitializations());
+			// Source-to-source transformation of interrupt programs to thread-based programs if enabled
+			assert mInterruptPostProcessor != null;
+			mDeclarations.addAll(mInterruptPostProcessor.postProcess(loc, globalHook, additionalInitializations));
+			additionalInitializations.addAll(mInterruptPostProcessor.getAdditionalInitializations());
 		}
 
 		mDeclarations.addAll(0, mPostProcessor.postProcess(loc, globalHook, additionalInitializations));
@@ -810,11 +818,6 @@ public class CHandler {
 				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		propChecks.forEach(x -> x.annotate(boogieUnit));
 		return new CHandlerTranslationResult(boogieUnit, mSymbolTable.getBoogieCIdentifierMapping());
-	}
-
-	private InterruptPostProcessorHandler getInterruptPostProcessorHandler() {
-		return new InterruptPostProcessorHandler(mLogger, mSettings, mProcedureManager, this, mAuxVarInfoBuilder,
-				mExpressionTranslation, mDeclarations);
 	}
 
 	private List<Statement> handleWitnessDeclarations(final IDispatcher dispatcher) {

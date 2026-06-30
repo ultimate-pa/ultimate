@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceRoutine;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -42,9 +42,9 @@ public class InterruptAnnotation extends ModernAnnotations {
 
 	private final ISRLocation mLoc;
 
-	private final InterruptServiceRoutine mIsr;
+	private final InterruptServiceFunction mIsr;
 
-	public InterruptAnnotation(final ISRLocation loc, final InterruptServiceRoutine isr) {
+	public InterruptAnnotation(final ISRLocation loc, final InterruptServiceFunction isr) {
 		mLoc = loc;
 		mIsr = isr;
 	}
@@ -53,7 +53,7 @@ public class InterruptAnnotation extends ModernAnnotations {
 		element.getPayload().getAnnotations().put(InterruptAnnotation.class.getName(), this);
 	}
 
-	public InterruptServiceRoutine getIsr() {
+	public InterruptServiceFunction getIsr() {
 		return mIsr;
 	}
 
