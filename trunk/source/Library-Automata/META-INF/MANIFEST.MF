@@ -312,5 +312,5 @@ Import-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.st
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg
+ de.uni_freiburg.informatik.ultimate.lib.icfg
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.automata
