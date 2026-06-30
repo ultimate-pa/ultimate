@@ -117,6 +117,10 @@ public class LocalUnrealizabilityCheck {
 		}
 
 		final Set<Set<AnnotatedReq>> groups = groupVcsBySymbols(reqs);
+		mLogger.info("INPUTS: " + mReqSymbolTable.getInputVars());
+		final Set<String> tmp = new HashSet<>(mReqSymbolTable.getStateVars());
+		tmp.removeAll(mReqSymbolTable.getInputVars());
+		mLogger.info("OUTPUTS: " + tmp);
 		mLogger.info("Checking local unrealizability: " + reqs.size() + " requirements in " + groups.size()
 				+ " variable groups, max subset size " + maxSubsetSize);
 
@@ -135,7 +139,9 @@ public class LocalUnrealizabilityCheck {
 				new CompleteRtInconsistencyCheck.UnionFind(reqs.size()); // could be in its own class an not in
 																			// CompleteRtInconsistencyCheck
 
-		final Set<String> outputVarNames = mReqSymbolTable.getOutputVars();
+		// final Set<String> outputVarNames = mReqSymbolTable.getOutputVars();
+		final Set<String> outputVarNames = new HashSet<>(mReqSymbolTable.getStateVars());
+		outputVarNames.removeAll(mReqSymbolTable.getInputVars());
 		final Map<NonTheorySymbol<?>, List<Integer>> symbolToReqIndices = new HashMap<>();
 		for (int i = 0; i < reqs.size(); i++) {
 			for (final CritPhaseComputer.CritPhase critPhase : reqs.get(i).critPhases().values()) {
