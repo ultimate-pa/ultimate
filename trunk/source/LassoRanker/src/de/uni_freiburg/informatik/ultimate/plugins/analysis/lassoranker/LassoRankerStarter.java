@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Nes
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.ParallelTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
@@ -94,9 +95,8 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -126,7 +126,7 @@ public class LassoRankerStarter {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		// Omit check to enable Stefans BlockEncoding
-		// checkRCFGBuilderSettings();
+		// checkIcfgBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
 		mCsToolkit = mIcfg.getCfgSmtToolkit();
 		mRankVarConstructor = new RankVarConstructor(mIcfg.getCfgSmtToolkit());
@@ -551,17 +551,17 @@ public class LassoRankerStarter {
 	}
 
 	// FIXME: allow also Stefans BlockEncoding
-	private void checkRCFGBuilderSettings() {
-		final IPreferenceProvider store = RcfgPreferenceInitializer.getPreferences(mServices);
-		final boolean removeGoto = store.getBoolean(RcfgPreferenceInitializer.LABEL_REMOVE_GOTO_EDGES);
-		final CodeBlockSize codeBlockSize = store.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE,
-				RcfgPreferenceInitializer.CodeBlockSize.class);
+	private void checkIcfgBuilderSettings() {
+		final IPreferenceProvider store = IcfgPreferenceInitializer.getPreferences(mServices);
+		final boolean removeGoto = store.getBoolean(IcfgPreferenceInitializer.LABEL_REMOVE_GOTO_EDGES);
+		final CodeBlockSize codeBlockSize = store.getEnum(IcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE,
+				IcfgPreferenceInitializer.CodeBlockSize.class);
 		if (codeBlockSize != CodeBlockSize.LoopFreeBlock) {
 			throw new UnsupportedOperationException(
-					"Unsupported input: Use the large block encoding of the RCFGBuilder");
+					"Unsupported input: Use the large block encoding of the IcfgBuilder");
 		}
 		if (!removeGoto) {
-			throw new UnsupportedOperationException("Unsupported input: Let RCFGBuilder remove goto edges");
+			throw new UnsupportedOperationException("Unsupported input: Let IcfgBuilder remove goto edges");
 		}
 	}
 

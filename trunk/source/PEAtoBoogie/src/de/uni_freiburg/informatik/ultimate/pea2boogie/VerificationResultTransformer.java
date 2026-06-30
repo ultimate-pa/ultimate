@@ -60,6 +60,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
@@ -102,10 +106,6 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsis
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 

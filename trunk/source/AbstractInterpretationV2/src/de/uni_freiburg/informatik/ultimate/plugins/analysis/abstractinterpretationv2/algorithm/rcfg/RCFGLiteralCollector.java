@@ -42,6 +42,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Call;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -54,16 +57,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 /**
  * Collects literals of type int or real found in an RCFG. Some widening operators can use these.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCollector {
+public class RCFGLiteralCollector extends IcfgEdgeVisitor implements ILiteralCollector {
 
 	private final Set<String> mLiterals;
 	private final Set<BigDecimal> mNumberLiterals;

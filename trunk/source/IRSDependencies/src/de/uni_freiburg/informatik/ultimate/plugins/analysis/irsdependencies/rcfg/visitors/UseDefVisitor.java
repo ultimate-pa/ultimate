@@ -62,16 +62,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Call;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.RootEdge;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.UseDefSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 public class UseDefVisitor extends SimpleRCFGVisitor {
 

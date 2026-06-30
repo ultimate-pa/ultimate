@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CoinflipMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
@@ -246,27 +246,27 @@ public final class TAPreferences {
 	}
 
 	public SolverMode solverMode() {
-		return mPrefs.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
+		return mPrefs.getEnum(IcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 	}
 
 	public String commandExternalSolver() {
-		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
+		return mPrefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 	}
 
 	public Logics logicForExternalSolver() {
-		return Logics.valueOf(mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
+		return Logics.valueOf(mPrefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
 	}
 
 	public boolean dumpSmtScriptToFile() {
-		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
+		return mPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 	}
 
 	public boolean compressDumpedSmtScript() {
-		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
+		return mPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
 	}
 
 	public String pathOfDumpedScript() {
-		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_DUMP_PATH);
+		return mPrefs.getString(IcfgPreferenceInitializer.LABEL_DUMP_PATH);
 	}
 
 	/**
@@ -472,7 +472,7 @@ public final class TAPreferences {
 	}
 
 	public boolean fakeNonIncrementalSolver() {
-		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
+		return mPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 	}
 
 	public RefinementStrategy getRefinementStrategy() {
