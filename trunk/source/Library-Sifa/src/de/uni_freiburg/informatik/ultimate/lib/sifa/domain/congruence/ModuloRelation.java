@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ModTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -92,10 +93,28 @@ public class ModuloRelation {
 		final Term rhs = bnr.getRhs();
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
 
-		// TODO: Check
-
 		final ModTerm modTermRhs = ModTerm.of(rhs);
 		final ModTerm modTermLhs = ModTerm.of(lhs);
+
+		// Checking that divisor and dividend don't contain a mod themselves
+		final var checker = new SubtermPropertyChecker(x -> SmtUtils.isFunctionApplication(x, "mod"));
+		if (modTermRhs != null) {
+			if (checker.isSatisfiedBySomeSubterm(modTermRhs.getDivident())) {
+				return List.of();
+			}
+			if (checker.isSatisfiedBySomeSubterm(modTermRhs.getDivisor())) {
+				return List.of();
+			}
+		}
+
+		if (modTermLhs != null) {
+			if (checker.isSatisfiedBySomeSubterm(modTermLhs.getDivident())) {
+				return List.of();
+			}
+			if (checker.isSatisfiedBySomeSubterm(modTermLhs.getDivisor())) {
+				return List.of();
+			}
+		}
 
 		if (modTermRhs == null && modTermLhs == null) {
 			// Not a ModuloRelation
