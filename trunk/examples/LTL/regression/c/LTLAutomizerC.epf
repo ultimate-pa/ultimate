@@ -266,10 +266,10 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=false
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory?=false
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/File\ name\:=boogiePrinter.bpl
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\Users\\greif\\AppData\\Local\\Temp\\
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Output\ file\ name=boogiePrinter.bpl
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Output\ directory=C\:\\Users\\greif\\AppData\\Local\\Temp\\
 #Fri Dec 09 13:35:39 CET 2016
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Command\ to\ execute\ witness\ verifier=
 @de.uni_freiburg.informatik.ultimate.witnessprinter=0.0.1

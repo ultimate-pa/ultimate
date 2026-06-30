@@ -31,9 +31,8 @@
 package de.uni_freiburg.informatik.ultimate.req.printer;
 
 import java.io.BufferedWriter;
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -41,8 +40,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.FilePrinterUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -51,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPatter
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
-import de.uni_freiburg.informatik.ultimate.req.printer.preferences.PreferenceInitializer;
 
 /**
  * @author hoenicke
@@ -115,55 +113,18 @@ public class ReqPrinterObserver implements IUnmanagedObserver {
 	}
 
 	private PrintWriter openTempFile(final IElement root) {
-		final String path = getPath(root);
+		final var prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final var outputFileSettings = FilePrinterUtils.OutputFileSettings.fromPrinterPreferences(prefs,
+				ReqPrinter.class.getSimpleName() + "_", "_UID", ".req");
+		final var file = FilePrinterUtils.openOutputFile(outputFileSettings, root, mLogger);
+
+		mLogger.info("Writing to file " + file.getAbsolutePath());
 		try {
-			final File file;
-			if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(PreferenceInitializer.UNIQUE_NAME_LABEL)) {
-				file = File.createTempFile(
-						ReqPrinter.class.getSimpleName() + "_"
-								+ new File(ILocation.getAnnotation(root).getFileName()).getName() + "_UID",
-						".req", new File(path));
-			} else {
-				final String filename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-						.getString(PreferenceInitializer.FILE_NAME_LABEL);
-				file = new File(path + File.separatorChar + filename);
-				if ((!file.isFile() || !file.canWrite()) && file.exists()) {
-					mLogger.warn("Cannot write to: " + file.getAbsolutePath());
-					return null;
-				}
-
-				if (file.exists()) {
-					mLogger.info("File already exists and will be overwritten: " + file.getAbsolutePath());
-				}
-				file.createNewFile();
-			}
-			mLogger.info("Writing to file " + file.getAbsolutePath());
 			return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file))), false);
-
-		} catch (final IOException e) {
-			mLogger.fatal("Cannot open file", e);
-			return null;
+		} catch (final FileNotFoundException e) {
+			mLogger.fatal("Cannot find file: " + file.getAbsolutePath(), e);
+			throw new IllegalStateException("Cannot find file: " + file.toString(), e);
 		}
-	}
-
-	private String getPath(final IElement root) {
-		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
-			final ILocation loc = ILocation.getAnnotation(root);
-			final File inputFile = new File(loc.getFileName());
-			final String path;
-			if (inputFile.isDirectory()) {
-				path = inputFile.getPath();
-			} else {
-				path = inputFile.getParent();
-			}
-			if (path != null) {
-				return path;
-			}
-			mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
-		}
-		return mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.DUMP_PATH_LABEL);
 	}
 
 	@Override

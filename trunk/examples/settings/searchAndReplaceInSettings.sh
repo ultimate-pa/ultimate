@@ -11,9 +11,8 @@
 # ./searchAndReplaceInSettings.sh [OLDSTRING] [NEWSTRING]
 #
 # The replacement will be done in all subfolders of trunk/examples/settings
-# and in /trunk/examples/source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/
 #
-# Check if your replacement was succesfull using
+# Check if your replacement was successful using
 # grep -ir SOME_KEYWORD .
 #
 # Author: Matthias Heizmann, Claus Schaetzle
@@ -22,7 +21,7 @@
 
 # Convert a raw string into a basic regular expression for a sed s/.../.../ command
 sedQuote() {
-    sed 's/[][/\.*$^]/\\&/g' <<< "$*"
+    echo "$*" | sed 's/[][/\.*$^]/\\&/g'
 }
 
 echo "Replacing the OLDSTRING with NEWSTRING in each .epf file"
@@ -30,6 +29,5 @@ echo "OLDSTRING: $1"
 echo "NEWSTRING: $2"
 old="$(sedQuote "$1")"
 new="$(sedQuote "$2")"
-find .. ../../source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/ \
-	-name \*.epf -exec sed -i -e "s/$old/$new/g" {} +
+find .. -name \*.epf -exec sed -i -e "s/$old/$new/g" {} +
 
