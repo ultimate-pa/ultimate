@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.CurrentIsrInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
@@ -379,9 +378,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
 						new UltimatePreferenceItem<>(LABEL_INTERRUPT_TRANSLATION_MODE, InterruptTranslationMode.NONE,
 								DESC_INTERRUPT_TRANSLATION_MODE, PreferenceType.Combo,
-								InterruptTranslationMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CURRENT_ISR_INFO, CurrentIsrInfo.INFO_1,
-								PreferenceType.Combo, CurrentIsrInfo.values())),
+								InterruptTranslationMode.values())),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),

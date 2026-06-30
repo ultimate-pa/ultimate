@@ -179,9 +179,9 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 			final var currentTransition = bfsQueue.poll();
 			final var interruptAnnotation = getInterruptAnnotation(currentTransition);
 			final var hasIA = interruptAnnotation != null;
-			if (hasIA && interruptAnnotation.getIsrLocation() == ISRLocation.ISR) {
+			if (hasIA && interruptAnnotation.getLocation() == ISRLocation.ISR) {
 				continue;
-			} else if (hasIA && interruptAnnotation.getIsrLocation() == ISRLocation.ENTRY) {
+			} else if (hasIA && interruptAnnotation.getLocation() == ISRLocation.ENTRY) {
 				isrEntryTransitions.add((L) currentTransition);
 				continue;
 			}

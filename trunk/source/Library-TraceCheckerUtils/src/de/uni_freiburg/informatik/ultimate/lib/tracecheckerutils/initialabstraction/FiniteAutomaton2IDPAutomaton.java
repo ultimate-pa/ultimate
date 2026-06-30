@@ -112,7 +112,7 @@ public class FiniteAutomaton2IDPAutomaton<L extends IIcfgTransition<?>, S extend
 			if (annotation == null) {
 				continue;
 			}
-			if (annotation.getIsrLocation() == ISRLocation.ENTRY) {
+			if (annotation.getLocation() == ISRLocation.ENTRY) {
 				// If the successor is an entry edge, the ISR is not active yet
 				continue;
 			}

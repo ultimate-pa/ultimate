@@ -109,8 +109,8 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 			final var yIA = mGetLetterIA.apply(y);
 			final boolean xHasIA = xIA != null;
 			final boolean yHasIA = yIA != null;
-			assert !xHasIA || xIA.getIsrLocation() == ISRLocation.ENTRY;
-			assert !yHasIA || yIA.getIsrLocation() == ISRLocation.ENTRY;
+			assert !xHasIA || xIA.getLocation() == ISRLocation.ENTRY;
+			assert !yHasIA || yIA.getLocation() == ISRLocation.ENTRY;
 			Integer res = null;
 			if (mLastIA == null) {
 				// If state entry has no inter. annotation, prefer edges with annotation
@@ -143,15 +143,15 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 		}
 
 		private static boolean belongToSameInterrupt(final InterruptAnnotation iA1, final InterruptAnnotation iA2) {
-			return iA1.getIsrId() == iA2.getIsrId();
+			return iA1.getIrq().equals(iA2.getIrq());
 		}
 
 		private static boolean isEntryAnnotation(final InterruptAnnotation interruptAnnotation) {
-			return interruptAnnotation != null && interruptAnnotation.getIsrLocation() == ISRLocation.ENTRY;
+			return interruptAnnotation != null && interruptAnnotation.getLocation() == ISRLocation.ENTRY;
 		}
 
 		private static boolean isInnerAnnotation(final InterruptAnnotation interruptAnnotation) {
-			return interruptAnnotation != null && interruptAnnotation.getIsrLocation() == ISRLocation.ISR;
+			return interruptAnnotation != null && interruptAnnotation.getLocation() == ISRLocation.ISR;
 		}
 
 		@Override
