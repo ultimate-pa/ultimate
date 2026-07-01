@@ -343,7 +343,9 @@ public class LocalUnrealizabilityCheck {
 		final TermVariable[] freeVarArray = vcDisjunction.getFreeVars();
 
 		final Set<String> inputVarNames = mReqSymbolTable.getInputVars();
-		final Set<String> outputVarNames = mReqSymbolTable.getOutputVars();
+		// final Set<String> outputVarNames = mReqSymbolTable.getOutputVars();
+		final Set<String> outputVarNames = new HashSet<>(mReqSymbolTable.getStateVars());
+		outputVarNames.removeAll(mReqSymbolTable.getInputVars());
 
 		final Set<TermVariable> inputVars = new HashSet<>();
 		final Set<TermVariable> outputVars = new HashSet<>();
