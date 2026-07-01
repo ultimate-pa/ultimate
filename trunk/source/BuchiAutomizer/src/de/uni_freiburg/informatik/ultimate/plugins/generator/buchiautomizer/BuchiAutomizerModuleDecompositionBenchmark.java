@@ -45,6 +45,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	private final TreeMap<Integer, Integer> mModuleSizeTrivial = new TreeMap<>();
 	private final TreeMap<Integer, Integer> mModuleSizeDeterministic = new TreeMap<>();
 	private final TreeMap<Integer, Integer> mModuleSizeNondeterministic = new TreeMap<>();
+	// the unfair modules are currently nondeterministic
 	private final TreeMap<Integer, Integer> mModuleSizeUnfair = new TreeMap<>();
 	private final TreeMap<Integer, String> mRankingFunction = new TreeMap<>();
 	/**
@@ -103,8 +104,8 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		if (mHasRemainderModule == null) {
 			return "Decomposition not yet finished";
 		}
-		final int modules =
-				mModuleSizeTrivial.size() + mModuleSizeDeterministic.size() + mModuleSizeNondeterministic.size();
+		final int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
+				+ mModuleSizeNondeterministic.size() + mModuleSizeUnfair.size();
 		if (modules == 0) {
 			if (!mHasRemainderModule) {
 				return "Trivial decomposition. There is no loop in your program.";
@@ -125,7 +126,9 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		sb.append(mModuleSizeDeterministic.size());
 		sb.append(" deterministic, ");
 		sb.append(mModuleSizeNondeterministic.size());
-		sb.append(" nondeterministic)");
+		sb.append(" nondeterministic, ");
+		sb.append(mModuleSizeUnfair.size());
+		sb.append(" unfair)");
 		if (mHasRemainderModule) {
 			if (mRemainderModuleNonterminationKnown) {
 				sb.append(" and one nonterminating remainder module.");
@@ -144,6 +147,14 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		}
 		for (final Entry<Integer, Integer> entry : mModuleSizeNondeterministic.entrySet()) {
 			sb.append("One nondeterministic module has ");
+			sb.append(mRankingFunction.get(entry.getKey()));
+			sb.append(" and consists of ");
+			sb.append(entry.getValue());
+			sb.append(" locations. ");
+		}
+
+		for (final Entry<Integer, Integer> entry : mModuleSizeUnfair.entrySet()) {
+			sb.append("One unfair module has ");
 			sb.append(mRankingFunction.get(entry.getKey()));
 			sb.append(" and consists of ");
 			sb.append(entry.getValue());
@@ -186,9 +197,12 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		header.add("Min Locs nondeterministic modules");
 		header.add("Avg Locs nondeterministic modules");
 		header.add("Max Locs nondeterministic modules");
+		header.add("Min Locs unfair modules");
+		header.add("Avg Locs unfair modules");
+		header.add("Max Locs unfair modules");
 
-		final int modules =
-				mModuleSizeTrivial.size() + mModuleSizeDeterministic.size() + mModuleSizeNondeterministic.size();
+		final int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
+				+ mModuleSizeNondeterministic.size() + mModuleSizeUnfair.size();
 
 		final ArrayList<String> row = new ArrayList<>();
 		row.add(String.valueOf(modules));
@@ -216,10 +230,16 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			row.add(null);
 			row.add(null);
 			row.add(null);
+			// TODO: marker added for unfairness
+			row.add(null);
+			row.add(null);
+			row.add(null);
 		} else {
 			row.add(String.valueOf(mModuleSizeTrivial.size()));
 			row.add(String.valueOf(mModuleSizeDeterministic.size()));
 			row.add(String.valueOf(mModuleSizeNondeterministic.size()));
+			// TODO: marker added for unfairness
+			row.add(String.valueOf(mModuleSizeUnfair.size()));
 			if (mHasRemainderModule == null) {
 				row.add("Decomposition not yet finished");
 			} else if (mHasRemainderModule) {
@@ -235,6 +255,8 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			final MinAvgMax triv = getMinAvgMax(mModuleSizeTrivial);
 			final MinAvgMax determinisic = getMinAvgMax(mModuleSizeDeterministic);
 			final MinAvgMax nondet = getMinAvgMax(mModuleSizeNondeterministic);
+			// TODO: marker added for unfairness
+			final MinAvgMax unfair = getMinAvgMax(mModuleSizeUnfair);
 			row.add(String.valueOf(triv.min));
 			row.add(String.valueOf(triv.avg));
 			row.add(String.valueOf(triv.max));
@@ -244,6 +266,11 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			row.add(String.valueOf(nondet.min));
 			row.add(String.valueOf(nondet.avg));
 			row.add(String.valueOf(nondet.max));
+			// TODO: marker added for unfairness
+
+			row.add(String.valueOf(unfair.min));
+			row.add(String.valueOf(unfair.avg));
+			row.add(String.valueOf(unfair.max));
 
 		}
 		final ICsvProvider<String> rtr = new SimpleCsvProvider<>(header);

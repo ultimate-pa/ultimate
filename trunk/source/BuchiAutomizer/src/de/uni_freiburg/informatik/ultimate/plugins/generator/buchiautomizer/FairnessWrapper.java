@@ -42,27 +42,26 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
-/*
+/**
  * Wrapper for a nondeterministic interpolant automaton (certified module from termination analysis) to filter out
- * transitions that are illegal in the context of fairness. Used for the generalization of an unfair trace when doing termination under fairness
- * We assume that no states were pruned in the input automaton.
+ * transitions that are illegal in the context of fairness. Used for the generalization of an unfair trace when doing
+ * termination under fairness. We assume that no states were pruned in the input automaton.
  */
 public class FairnessWrapper<L extends IIcfgTransition<?>>
 		implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate> {
 	NondeterministicInterpolantAutomaton<L> mWrappedAutomaton;
 	Set<String> mLoopThreads;
-	Term mNotG;
 	Set<IPredicate> mStemStates;
 	Set<IPredicate> mLoopStates;
 
 	// maps base loop predicates to upper loop predicates
 	Map<IPredicate, IPredicate> mLoopPredicateMap;
 	IPredicate mHonda;
+	IPredicate mHondaPrime;
 	BuchiHoareTripleChecker mHTC;
 	NestedMap3<IPredicate, L, IPredicate, IsContained> mOriginalEdges;
 
@@ -76,41 +75,43 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 * @param automaton
 	 *            the automaton to wrap
 	 *
-	 * @param originalTS
-	 *            set of edges of the original lasso; take from interpolant automaton
-	 *
 	 * @param loopthreads
 	 *            the set of threads whose statements are part of the counterexample's loop
 	 *
-	 * @param stemInterpolants
+	 * @param originalTS
+	 *            set of edges of the original lasso; take from interpolant automaton
 	 *
+	 * @param stemInterpolants
 	 *            the interpolants of the stem of the lasso
 	 *
 	 * @param loopInterpolants
 	 *            the interpolants of the loop of the lasso
 	 *
+	 * @param loopMap
+	 *            maps the predicates on the lower, guarded loop to their counterparts on the upper, unguarded loop (in
+	 *            A_fair)
 	 *
 	 * @param honda
 	 *            predicate of the lasso's honda
 	 *
-	 * @param notG
-	 *            - negated disjunction of guards of non-loop thread statements at the honda
-	 * @param htc
-	 *            - atm we need a replacing hoare triple checker here to circumvent the duplicate predicate problem
+	 * @param hondaPrime
+	 *            predicate of the state reached after taking the "not G" ts from the honda
 	 *
+	 * @param htc
+	 *            we need a replacing hoare triple checker here to circumvent the duplicate predicate problem
 	 *
 	 */
 	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton, final Set<String> loopthreads,
 			final NestedMap3<IPredicate, L, IPredicate, IsContained> originalTS, final Set<IPredicate> stemInterpolants,
 			final Set<IPredicate> loopInterpolants, final Map<IPredicate, IPredicate> loopMap, final IPredicate honda,
-			final Term notG, final ReplacingBuchiHoareTripleChecker htc) {
+			final IPredicate hondaPrime, final ReplacingBuchiHoareTripleChecker htc) {
 
 		mWrappedAutomaton = automaton;
 		mLoopThreads = loopthreads;
 		mStemStates = stemInterpolants;
 		mLoopStates = loopInterpolants;
 		mHonda = honda;
-		mNotG = notG;
+		mHondaPrime = hondaPrime;
 		mHTC = htc;
 		mOriginalEdges = originalTS;
 		mLoopPredicateMap = loopMap;
@@ -149,24 +150,22 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 
 	@Override
 	public String sizeInformation() {
-		// TODO implement
-		return "size information not implemented yet";
+		final int num_ts = mAlreadyConstructedTS.size();
+		return "Number of states: " + size() + ", number of transitions: " + num_ts;
 	}
 
 	/**
 	 * Returns all internal successor transitions that are legal for unfairness generalization
+	 *
 	 */
 	@Override
+	// TODO: think about caching
 	public Iterable<OutgoingInternalTransition<L, IPredicate>> internalSuccessors(final IPredicate state,
 			final L letter) {
 		final List<OutgoingInternalTransition<L, IPredicate>> filteredTS = new ArrayList<>();
 		for (final OutgoingInternalTransition<L, IPredicate> ts : mWrappedAutomaton.internalSuccessors(state, letter)) {
 			for (final IPredicate target : mWrappedAutomaton.successorPredicates(state, letter)) {
-				// TODO: for debugging, remove later
-				// TODO: Warum haben dieselben Kanten unterschiedliche ids?
-				final boolean c = mAlreadyConstructedTS.contains(ts);
-				final IPredicate p = mOrigins.get(ts);
-				final boolean o = mOrigins.get(ts) == state;
+
 				if (mAlreadyConstructedTS.contains(ts) && (mOrigins.get(ts) == state)) {
 					filteredTS.add(ts);
 				} else {
@@ -201,7 +200,6 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 * @return an empty iterable
 	 */
 	@Override
-	// TODO: remove
 	public Iterable<OutgoingReturnTransition<L, IPredicate>> returnSuccessors(final IPredicate state,
 			final IPredicate hier, final L letter) {
 		// the wrapped automaton should not have any return transitions
@@ -223,59 +221,57 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 */
 	boolean isLegalTS(final IPredicate source, final L ts, final IPredicate target) {
 		// we keep the edges of the original lasso
-		// TODO: we need to make sure they are only added ONCE and in the right place...
 		if (isOriginalEdge(source, ts, target)) {
 			return true;
 		}
-		// adding additional non-loop ts is forbidden (we need to guarantee that nonloop thread locations remain
+		// adding additional non-loop ts is forbidden (we need to guarantee that non-loop-thread locations remain
 		// unchanged)
 		if (!isLoopEdge(ts)) {
 			return false;
 		}
-		// for stem states we allow all loop ts that form valid hoare triples; and the predicates should be the same as
-		// for termination
+		// for stem states we allow all loop-thread transitions that form valid hoare triples
 		if (mStemStates.contains(source) && mStemStates.contains(target)) {
 			return true;
 		}
 		assert !mStemStates.contains(target) : "Illegal Edge from loop to stem!";
-		// for loop edges we need to check if they form valid hoare triples with the unfairness predicates
-		if (mLoopStates.contains(source) && !isHonda(target)) {
-			final IPredicate sourcePred = mLoopPredicateMap.get(source);
-			final IPredicate targetPred = mLoopPredicateMap.get(target);
-			boolean u = false;
-			final boolean l = false;
-
-			// check if the upper loop ts forms a valid hoare triple
-			final var uppercheck = mHTC.checkInternal(sourcePred, (IInternalAction) ts, targetPred);
-			u = mHTC.checkInternal(sourcePred, (IInternalAction) ts, targetPred) == Validity.VALID;
-
-			return u;
+		// for loop transitions we need to check if they form valid hoare triples on both the upper (unguarded) and
+		// lower(guarded) loop.
+		// Note that the honda is not part of the loop states
+		if (mLoopStates.contains(source)) {
+			return mHTC.checkInternal(mLoopPredicateMap.get(source), (IInternalAction) ts,
+					mLoopPredicateMap.get(target)) == Validity.VALID;
 		}
 
-		// the honda is slightly special since we have a virtual 'assume not G' edge "splitting" it
-		// TODO: think about honda cases -if the honda is the source, maybe if {hondaPrime} edge {target} is valid for
-		// guarded loop
+		// the honda is slightly special since we have a virtual 'assume not G' edge "splitting" it. For incoming edges
+		// we use the hondaPredicate, for outgoing edges hondaPrime
+		if (source == mHonda) {
+			return ((mHTC.checkInternal(mLoopPredicateMap.get(source), (IInternalAction) ts,
+					mLoopPredicateMap.get(target)) == Validity.VALID)
+					&& (mHTC.checkInternal(mHondaPrime, (IInternalAction) ts, target) == Validity.VALID));
+		}
 		return false;
 	}
 
-	// TODO: find out how to compare states
-	boolean isHonda(final IPredicate state) {
-		return state == mHonda;
-	}
-
-	/*
+	/**
 	 * Check if an edge was part of the original lasso trace (the counterexample)
+	 *
+	 * @param source
+	 *            source node of the edge
+	 * @param ts
+	 *            the edge
+	 * @param target
+	 *            target node of the edge
+	 *
+	 * @return true iff the input transition was part of the counterexample
 	 */
-	// TODO: Does this work? If so remove the unnecessary res
 	boolean isOriginalEdge(final IPredicate source, final L ts, final IPredicate target) {
-		final boolean res = mOriginalEdges.get(source, ts, target) == IsContained.IsContained;
-		return res;
+		return mOriginalEdges.get(source, ts, target) == IsContained.IsContained;
 	}
 
 	/**
 	 * Checks whether the input transition originates from a loop thread.
 	 *
-	 * @param an
+	 * @param ts
 	 *            edge of the wrapped automaton
 	 *
 	 * @return true if the edge originates from a loop thread
@@ -285,7 +281,6 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	}
 
 	public void switchToReadonlyMode() {
-		// since the input automaton can to it...
 		mWrappedAutomaton.switchToReadonlyMode();
 	}
 

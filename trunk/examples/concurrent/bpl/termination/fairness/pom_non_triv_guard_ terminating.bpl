@@ -31,4 +31,5 @@ procedure t2()
 modifies x;
 {
 	assume x > 0;
+	x := -2;
 }

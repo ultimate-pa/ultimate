@@ -45,6 +45,8 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 
 	private final TreeMap<Integer, String> mModuleFinite = new TreeMap<>();
 	private final TreeMap<Integer, String> mModuleBuchi = new TreeMap<>();
+	private final TreeMap<Integer, String> mModuleUnfair = new TreeMap<>();
+
 	/**
 	 * Is there a remainder module? A remainder module contains remaining traces if decomposition into modules failed.
 	 * Null if yet unknown.
@@ -68,6 +70,13 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 		final String stringRepresentation = (AutomatonDefinitionPrinter.toString(new AutomataLibraryServices(mServices),
 				"buchiAutomatonIteration" + iteration, automaton));
 		mModuleBuchi.put(iteration, stringRepresentation);
+	}
+
+	public void reportUnfairModule(final Integer iteration,
+			final INwaOutgoingLetterAndTransitionProvider<?, IPredicate> automaton) {
+		final String stringRepresentation = (AutomatonDefinitionPrinter.toString(new AutomataLibraryServices(mServices),
+				"buchiAutomatonIteration" + iteration, automaton));
+		mModuleUnfair.put(iteration, stringRepresentation);
 	}
 
 	public void reportRemainderModule(final boolean nonterminationKnown) {
@@ -100,6 +109,10 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 			sb.append(System.lineSeparator());
 		}
 		for (final Entry<Integer, String> entry : mModuleBuchi.entrySet()) {
+			sb.append(entry.getValue());
+			sb.append(System.lineSeparator());
+		}
+		for (final Entry<Integer, String> entry : mModuleUnfair.entrySet()) {
 			sb.append(entry.getValue());
 			sb.append(System.lineSeparator());
 		}

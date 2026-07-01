@@ -21,7 +21,7 @@ public class ReplacingBuchiHoareTripleChecker extends BuchiHoareTripleChecker {
 
 	@Override
 	public Validity checkInternal(IPredicate pre, final IInternalAction act, final IPredicate succ) {
-		pre = replaceIfRankDecreasePredicate(pre);
+		pre = replaceIfRankDecreasePredicate(mReplacementMap.get(pre));
 		return mIHoareTripleChecker.checkInternal(mReplacementMap.get(pre), act, mReplacementMap.get(succ));
 	}
 
