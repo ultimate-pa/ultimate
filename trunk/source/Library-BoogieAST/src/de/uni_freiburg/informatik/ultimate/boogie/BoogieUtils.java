@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * Provides static auxiliary methods for Boogie.
  */
 public class BoogieUtils {
-	public static final String AUXILIARY_LABEL = "auxiliary_label";
+	private static final String AUXILIARY_LABEL = "auxiliary_label";
 
 	public static final String INIT_PROCEDURE = "ULTIMATE.init";
 	public static final String START_PROCEDURE = "ULTIMATE.start";
