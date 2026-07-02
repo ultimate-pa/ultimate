@@ -13,7 +13,7 @@
 	</rundefinition>
 
   <tasks name="SVCOMP ConcurrencySafety-Main">
-		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+		<includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
 	</tasks>
 </benchmark>
