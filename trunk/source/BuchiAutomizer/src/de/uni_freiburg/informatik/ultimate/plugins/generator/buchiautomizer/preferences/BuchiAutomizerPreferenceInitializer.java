@@ -144,6 +144,9 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	private static final NcsbImplementation DEF_NCSB_IMPLEMENTATION = NcsbImplementation.ORIGINAL;
 	public static final String LABEL_AUTOMATON_TYPE = "Automaton type for concurrent programs";
 	private static final AutomatonTypeConcurrent DEF_AUTOMATON_TYPE = AutomatonTypeConcurrent.BUCHI_AUTOMATON;
+//TODO: marker fairness addition
+	public static String LABEL_ASSUME_STRONG_FAIRNESS = "Assuming strong fairness";
+	public static boolean DEF_ASSUME_STRONG_FAIRNESS = true;
 
 	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
@@ -152,6 +155,10 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
+				// TODO: marker fairness
+				new UltimatePreferenceItem<>(LABEL_ASSUME_STRONG_FAIRNESS, DEF_ASSUME_STRONG_FAIRNESS,
+						PreferenceType.Boolean),
+
 				new UltimatePreferenceItem<>(LABEL_IGNORE_DOWN_STATES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DETERMINIZATION_ON_DEMAND, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,

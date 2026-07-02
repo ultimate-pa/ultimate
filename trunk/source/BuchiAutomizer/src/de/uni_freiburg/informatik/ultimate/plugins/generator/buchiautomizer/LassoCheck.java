@@ -158,6 +158,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private final AnalysisType mGntaAnalysisType;
 	private final int mGntaDirections;
 	private final boolean mTrySimplificationTerminationArgument;
+	private final boolean mAssumeFairness;
 
 	/**
 	 * Try all templates but use the one that was found first. This is only useful to test all templates at once.
@@ -224,6 +225,8 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mTemplateBenchmarkMode = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TEMPLATE_BENCHMARK_MODE);
 		mTrySimplificationTerminationArgument = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SIMPLIFY);
 		mTryTwofoldRefinement = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
+		mAssumeFairness = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_ASSUME_STRONG_FAIRNESS);
+
 		mCsToolkit = csToolkit;
 		mManagedScript = mCsToolkit.getManagedScript();
 		mBspm = bspm;
@@ -314,8 +317,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		// invariants in possible yet the termination argument simplification of the LassoChecker is not optimal. Hence
 		// we first check only the loop, which guarantees that there are no supporting invariants.
 
-		// TODO: think about what to count for statistics wrt fairness. How do we handle the A_fair checks without
-		// messing up the statistics?
 		final ILassoCheckResult<L> loopTermination =
 				checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
 		// If the trace terminates there is no need to check fairness
@@ -340,6 +341,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		}
 
 //---------------------------------------------------- Fairness stuff --------------------------------------------------
+		if (!mAssumeFairness) {
+			return terminationCheckResult;
+		}
+
 		// All traces of a sequential program are fair
 		if (mCsToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			mLogger.warn("Fairness settings are being used for a sequential program!");
