@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
@@ -763,7 +762,7 @@ public class CfgBuilder {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
-				if (st instanceof final Label laSt && isAuxiliaryLabel(laSt)) {
+				if (st instanceof final Label laSt && BoogieUtils.isAuxiliaryLabel(laSt)) {
 					final int gotoTarget = mGotoTargetCounter.getOrDefault(laSt.getName(), 0);
 					if (gotoTarget == 0) {
 						// not target of a goto
@@ -1103,28 +1102,10 @@ public class CfgBuilder {
 				endStatementSequence((StatementSequence) currentElement, newLoc);
 				resultLoc = newLoc;
 			}
-			if (!isAuxiliaryLabel(st)) {
+			if (!BoogieUtils.isAuxiliaryLabel(st)) {
 				mIcfg.getLocationsOfInterest().add(resultLoc);
 			}
 			return resultLoc;
-		}
-
-		/**
-		 * Auxiliary labels identified by an {@link NamedAttribute}.
-		 */
-		private boolean isAuxiliaryLabel(final Label st) {
-			if (st.getAttributes() == null) {
-				return false;
-			}
-			for (final NamedAttribute attr : st.getAttributes()) {
-				if (attr.getName().equals(BoogieUtils.AUXILIARY_LABEL)) {
-					if (attr.getValues().length != 0) {
-						throw new AssertionError("Attribut must not have values");
-					}
-					return true;
-				}
-			}
-			return false;
 		}
 
 		private BoogieIcfgLocation buildGoto(final BoogieIcfgLocation currentLocation, final GotoStatement st) {
