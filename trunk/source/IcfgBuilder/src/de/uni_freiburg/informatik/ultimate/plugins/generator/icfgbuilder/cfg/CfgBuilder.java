@@ -1352,6 +1352,7 @@ public class CfgBuilder {
 						mLogger.info("dead code at ProgramPoint " + entry.getValue() + ": " + outEdge);
 						mImplementationSummarys.remove(outEdge);
 					}
+					mIcfg.getLocationsOfInterest().remove(entry.getValue());
 				}
 			}
 		}
