@@ -728,7 +728,7 @@ public class ACSLHandler implements IACSLHandler {
 		// If enum specifier -> get static value as IRQ and use specifier as IRQ name
 		// If not specifier -> register name as IRQ name and assign free value
 
-		// Find corresponding procedure for this interrupt result annotation
+		// Find corresponding procedure "proc" for this interrupt result annotation
 
 		final SymbolTableValue symbol = mSymboltable.findCSymbol(main.getAcslHook(), node.getIdentifier());
 		if (symbol != null) {
@@ -740,7 +740,7 @@ public class ACSLHandler implements IACSLHandler {
 			res.getCType().isIntegerType();
 		}
 
-		return new InterruptResult(new InterruptServiceFunction(null, irq));
+		return new InterruptResult(new InterruptServiceFunction(proc, irq));
 	}
 
 	@Override
@@ -748,21 +748,21 @@ public class ACSLHandler implements IACSLHandler {
 		final InterruptMaskingFunction.Operation op = (node.getEnabled()) ? InterruptMaskingFunction.Operation.ENABLE
 				: InterruptMaskingFunction.Operation.DISABLE;
 
-		return new InterruptResult(new InterruptMaskingFunction(null, irq, op));
+		return new InterruptResult(new InterruptMaskingFunction(proc, irq, op));
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptPriorityGet node) {
 		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.GET;
 
-		return new InterruptResult(new InterruptPriorityFunction(null, irq, op));
+		return new InterruptResult(new InterruptPriorityFunction(proc, irq, op));
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptPrioritySet node) {
 		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.SET;
 
-		return new InterruptResult(new InterruptPriorityFunction(null, irq, op));
+		return new InterruptResult(new InterruptPriorityFunction(proc, irq, op));
 	}
 
 	@Override
