@@ -76,7 +76,6 @@ public class AbstractInterpretation implements IAnalysis {
 	public void setInputDefinition(final ModelType graphType) {
 		final String creator = graphType.getCreator();
 		switch (creator) {
-		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder":
 			mObserver = new ArrayList<>();
 			mObserver.add(new AbstractInterpretationRcfgObserver(mServices));

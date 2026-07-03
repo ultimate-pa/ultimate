@@ -23,10 +23,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"
-         version="0.0.0"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"
          version="0.0.0"/>
 

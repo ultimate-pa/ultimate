@@ -318,7 +318,6 @@
 		<module>../LTL2aut</module>
 		<module>../PeaExampleGenerator</module>
 		<module>../PEAtoBoogie</module>
-		<module>../RCFGBuilder</module>
 		<module>../IcfgBuilder</module>
 		<module>../ReachingDefinitions</module>
 		<module>../Referee</module>

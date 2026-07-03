@@ -92,7 +92,6 @@ public class IrsDependencies implements IAnalysis {
 		final String creator = graphType.getCreator();
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder":
-		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mLogger.info("Preparing to process RCFG...");
 			mObservers.add(new RCFGLoopDetectorObserver(mServices));
 
