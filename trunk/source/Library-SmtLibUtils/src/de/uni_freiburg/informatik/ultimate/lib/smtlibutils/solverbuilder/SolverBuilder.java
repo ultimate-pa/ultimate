@@ -812,9 +812,6 @@ public final class SolverBuilder {
 	public enum ExternalSolver {
 		Z3("z3 -smt2 -in SMTLIB2_COMPLIANT=true", "z3 -smt2 -in SMTLIB2_COMPLIANT=true" + " -t:%d", Logics.ALL),
 
-		CVC4("cvc4 --incremental --print-success --lang smt",
-				"cvc4 --incremental --print-success --lang smt" + " --tlimit-per=%d", Logics.ALL),
-
 		CVC5("cvc5 --incremental --print-success --lang smt",
 				"cvc5 --incremental --print-success --lang smt" + " --tlimit-per=%d", Logics.ALL),
 
