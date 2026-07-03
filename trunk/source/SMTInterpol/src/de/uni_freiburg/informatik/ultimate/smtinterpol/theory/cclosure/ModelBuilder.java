@@ -165,7 +165,7 @@ public class ModelBuilder {
 	public void fillInTermValues(final List<CCTerm> terms, final CCTerm trueNode, final CCTerm falseNode) {
 		final Set<CCTerm> delayed = new HashSet<>();
 		for (final CCTerm ccterm : terms) {
-			if (ccterm == ccterm.mRepStar && !ccterm.isFunc()) {
+			if (ccterm == ccterm.mRepStar) {
 				Term value;
 				final Term smtterm = ccterm.getFlatTerm();
 				final Sort sort = smtterm.getSort();
@@ -223,14 +223,11 @@ public class ModelBuilder {
 
 	public void fillInFunctions(final List<CCTerm> terms, final Model model, final Theory t) {
 		for (final CCTerm term : terms) {
-			if (!term.isFunc()) {
-				add(model, term, mModelValues.get(term.getRepresentative()), t);
-			}
+			add(model, term, mModelValues.get(term.getRepresentative()), t);
 		}
 	}
 
 	private void add(final Model model, final CCTerm term, final Term value, final Theory t) {
-		assert !term.isFunc();
 		if (term instanceof CCBaseTerm) {
 			final CCBaseTerm bt = (CCBaseTerm) term;
 			final Term btTerm = bt.getFlatTerm();
@@ -253,16 +250,16 @@ public class ModelBuilder {
 		return name == "/" || name == "div" || name == "mod";
 	}
 
-	private boolean isUndefinedFor(FunctionSymbol fs, ArrayDeque<Term> args) {
+	private boolean isUndefinedFor(FunctionSymbol fs, Term[] args) {
 		if (fs.isSelector()) {
 			final DataType datatype = (DataType) fs.getParameterSorts()[0].getSortSymbol();
-			final ApplicationTerm arg = (ApplicationTerm) args.getFirst();
+			final ApplicationTerm arg = (ApplicationTerm) args[0];
 			final Constructor c = datatype.getConstructor(arg.getFunction().getName());
 			// A selector is undefined if the argument's constructor doesn't match
 			return !Arrays.asList(c.getSelectors()).contains(fs.getName());
 		} else if (isDivision(fs)) {
 			// A division by zero is undefined
-			return NumericSortInterpretation.toRational(args.getLast()) == Rational.ZERO;
+			return NumericSortInterpretation.toRational(args[1]) == Rational.ZERO;
 		} else if (fs.getName() == Interpolator.EQ) {
 			return true;
 		}
@@ -270,26 +267,19 @@ public class ModelBuilder {
 	}
 
 	private void addApp(final Model model, final CCAppTerm app, final Term value, final Theory t) {
-		final ArrayDeque<Term> args = new ArrayDeque<>();
-		CCTerm walk = app;
-		while (walk instanceof CCAppTerm) {
-			final CCAppTerm appwalk = (CCAppTerm) walk;
-			args.addFirst(mModelValues.get(appwalk.getArg().getRepresentative()));
-			walk = appwalk.getFunc();
+		CCTerm[] ccArgs = app.getArguments();
+		Term[] args = new Term[ccArgs.length];
+		for (int i = 0; i < args.length; i++) {
+			args[i] = mModelValues.get(ccArgs[i].getRepresentative());
 		}
-		// Now, walk is the CCBaseTerm corresponding the the function
-		// If we did not enqueue an argument, we can extend the model.
-		final CCBaseTerm base = (CCBaseTerm) walk;
-		if (base.isFunctionSymbol()) {
-			final FunctionSymbol fs = base.getFunctionSymbol();
-			if (!fs.isIntern() || isUndefinedFor(fs, args)) {
-				model.map(fs, args.toArray(new Term[args.size()]), value);
-			} else if (fs.getName() == SMTInterpolConstants.DIFF) {
-				final ArraySortInterpretation arraySort = (ArraySortInterpretation) model
-						.provideSortInterpretation(fs.getParameterSorts()[0]);
-				assert args.size() == 2;
-				arraySort.addDiff(args.getFirst(), args.getLast(), value);
-			}
+		final FunctionSymbol fs = app.getFunctionSymbol();
+		if (!fs.isIntern() || isUndefinedFor(fs, args)) {
+			model.map(fs, args, value);
+		} else if (fs.getName() == SMTInterpolConstants.DIFF) {
+			final ArraySortInterpretation arraySort = (ArraySortInterpretation) model
+					.provideSortInterpretation(fs.getParameterSorts()[0]);
+			assert args.length == 2;
+			arraySort.addDiff(args[0], args[1], value);
 		}
 	}
 

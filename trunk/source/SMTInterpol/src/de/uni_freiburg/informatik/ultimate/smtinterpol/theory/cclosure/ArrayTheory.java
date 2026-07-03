@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -180,33 +181,6 @@ public class ArrayTheory implements ITheory {
 			mTerm = ccterm;
 			mPrimaryEdge = mSecondaryEdge = null;
 			mPrimaryStore = null;
-		}
-
-		/**
-		 * Fill the select information for the current node. This needs to be called when a new array node is created.
-		 * It finds all select applications using the ccterm information and adds them to the mSelects hash map.
-		 */
-		public void computeSelects() {
-			mSelects = new LinkedHashMap<>();
-			for (CCParentInfo info = mTerm.mCCPars; info != null; info = info.mNext) {
-				if (info.mCCParents == null || info.mCCParents.isEmpty()) {
-					continue;
-				}
-				final CCTerm funcTerm = info.mCCParents.iterator().next().getData().getFunc();
-				if (!(funcTerm instanceof CCBaseTerm)
-						|| ((CCBaseTerm) funcTerm).getFunctionSymbol().getName() != "select") {
-					continue;
-				}
-				for (final CCAppTerm.Parent pa : info.mCCParents) {
-					final CCParentInfo selectas = pa.getData().getRepresentative().mCCPars.getExistingParentInfo(0);
-					for (final CCAppTerm.Parent spa : selectas.mCCParents) {
-						final CCAppTerm select = spa.getData();
-						assert (getArrayFromSelect(select).getRepresentative() == mTerm);
-						assert (select != null);
-						mSelects.put(select.mArg.getRepresentative(), select);
-					}
-				}
-			}
 		}
 
 		/**
@@ -708,7 +682,11 @@ public class ArrayTheory implements ITheory {
 	@Override
 	public Clause finalCheck() {
 		do {
-			final Clause conflict = checkpoint();
+			Clause conflict = mCClosure.checkpoint();
+			if (conflict != null) {
+				return conflict;
+			}
+			conflict = checkpoint();
 			if (conflict != null) {
 				return conflict;
 			}
@@ -937,8 +915,14 @@ public class ArrayTheory implements ITheory {
 					Term nodeValue;
 					if (hasFiniteIndexSort(node.mTerm.getFlatTerm().getSort())) {
 						// the array is based on a certain const value, see computeWeakEqExt()
-						final CCTerm value = (CCTerm) mArrayModels.get(node).get(null);
-						nodeValue = t.term(SMTLIBConstants.CONST, null, arraySort, builder.getModelValue(value));
+						final Term valueTerm;
+						if (hasFiniteElemSort(node.mTerm.getFlatTerm().getSort())) {
+							final CCTerm value = (CCTerm) mArrayModels.get(node).get(null);
+							valueTerm = builder.getModelValue(value);
+						} else {
+							valueTerm = model.extendFresh(valueSort);
+						}
+						nodeValue = t.term(SMTLIBConstants.CONST, null, arraySort, valueTerm);
 					} else {
 						// this is not a weakly related to a constant array. Use some fresh array.
 						nodeValue = model.extendFresh(arraySort);
@@ -1023,111 +1007,82 @@ public class ArrayTheory implements ITheory {
 		mDiffs.add(diff);
 	}
 
-	public static boolean isStoreTerm(final CCTerm term) {
-		final CCBaseTerm base = getBaseTerm(term);
-		if (base.isFunctionSymbol()) {
-			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.STORE);
+	public static boolean isSelectTerm(final CCTerm term) {
+		if (term instanceof CCAppTerm) {
+			return ((CCAppTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.SELECT);
 		}
 		return false;
 	}
 
-	public static boolean isSelectTerm(final CCTerm term) {
-		final CCBaseTerm base = getBaseTerm(term);
-		if (base.isFunctionSymbol()) {
-			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.SELECT);
+	public static boolean isStoreTerm(final CCTerm term) {
+		if (term instanceof CCAppTerm) {
+			return ((CCAppTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.STORE);
 		}
 		return false;
 	}
 
 	public static boolean isConstTerm(final CCTerm term) {
-		final CCBaseTerm base = getBaseTerm(term);
-		if (base.isFunctionSymbol()) {
-			return base.getFunctionSymbol().getName().equals(SMTLIBConstants.CONST);
+		if (term instanceof CCAppTerm) {
+			return ((CCAppTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.CONST);
 		}
 		return false;
 	}
 
 	public static boolean isDiffTerm(final CCTerm term) {
-		final CCBaseTerm base = getBaseTerm(term);
-		if (base.isFunctionSymbol()) {
-			return base.getFunctionSymbol().getName().equals(SMTInterpolConstants.DIFF);
+		if (term instanceof CCAppTerm) {
+			return ((CCAppTerm) term).getFunctionSymbol().getName().equals(SMTInterpolConstants.DIFF);
 		}
 		return false;
 	}
 
 	public static CCTerm getArrayFromSelect(final CCAppTerm select) {
 		assert isSelectTerm(select);
-		return getSecondToLastArgument(select);
+		return select.getArgument(0);
 	}
 
 	public static CCTerm getIndexFromSelect(final CCAppTerm select) {
 		assert isSelectTerm(select);
-		return select.getArg();
+		return select.getArgument(1);
 	}
 
 	public static CCTerm getArrayFromStore(final CCAppTerm store) {
 		assert isStoreTerm(store);
-		return getThirdToLastArgument(store);
+		return store.getArgument(0);
 	}
 
 	public static CCTerm getIndexFromStore(final CCAppTerm store) {
 		assert isStoreTerm(store);
-		return getSecondToLastArgument(store);
+		return store.getArgument(1);
 	}
 
 	public static CCTerm getValueFromStore(final CCAppTerm store) {
 		assert isStoreTerm(store);
-		return store.getArg();
+		return store.getArgument(2);
 	}
 
 	public static CCTerm getValueFromConst(final CCAppTerm constArr) {
 		assert isConstTerm(constArr);
-		return constArr.getArg();
+		return constArr.getArgument(0);
 	}
 
 	public static CCTerm getLeftFromDiff(final CCAppTerm diff) {
 		assert isDiffTerm(diff);
-		return getSecondToLastArgument(diff);
+		return diff.getArgument(0);
 	}
 
 	public static CCTerm getRightFromDiff(final CCAppTerm diff) {
 		assert isDiffTerm(diff);
-		return diff.getArg();
+		return diff.getArgument(1);
 	}
 
 	public static Sort getArraySortFromSelect(final CCAppTerm select) {
 		assert isSelectTerm(select);
-		return getBaseTerm(select).getFunctionSymbol().getParameterSorts()[0];
+		return select.getFunctionSymbol().getParameterSorts()[0];
 	}
 
 	public static Sort getArraySortFromStore(final CCAppTerm store) {
 		assert isStoreTerm(store);
-		return getBaseTerm(store).getFunctionSymbol().getParameterSorts()[0];
-	}
-
-	private static CCBaseTerm getBaseTerm(final CCTerm term) {
-		if (term instanceof CCBaseTerm) {
-			return (CCBaseTerm) term;
-		} else {
-			CCTerm func = term;
-			while (func instanceof CCAppTerm) {
-				func = ((CCAppTerm) func).getFunc();
-			}
-			assert func instanceof CCBaseTerm;
-			return (CCBaseTerm) func;
-		}
-	}
-
-	private static CCTerm getSecondToLastArgument(final CCTerm term) {
-		assert term instanceof CCAppTerm;
-		final CCTerm func = ((CCAppTerm) term).getFunc();
-		assert func instanceof CCAppTerm;
-		return ((CCAppTerm) func).getArg();
-	}
-
-	private static CCTerm getThirdToLastArgument(final CCTerm term) {
-		assert term instanceof CCAppTerm;
-		return getSecondToLastArgument(((CCAppTerm) term).getFunc());
+		return store.getFunctionSymbol().getParameterSorts()[0];
 	}
 
 	CCAppTerm findConst(final CCTerm value) {
@@ -1408,18 +1363,42 @@ public class ArrayTheory implements ITheory {
 		}
 	}
 
+	/**
+	 * Fill the select information for the current node. This needs to be called when a new array node is created.
+	 * It finds all select applications using the ccterm information and adds them to the mSelects hash map.
+	 */
+	private void collectSelects(Sort arraySort) {
+		final Sort indexSort = arraySort.getArguments()[0];
+		final FunctionSymbol selectFsym = arraySort.getTheory().getFunction(SMTLIBConstants.SELECT, arraySort, indexSort);
+		for (final CCTerm select : mCClosure.getAllFuncApps(selectFsym)) {
+			final CCAppTerm selectApp = (CCAppTerm) select;
+			final CCTerm array = getArrayFromSelect(selectApp);
+			final CCTerm index = getIndexFromSelect(selectApp);
+			final ArrayNode node = mCongRoots.get(array.getRepresentative());
+			node.mSelects.put(index.getRepresentative(), selectApp);
+		}
+	}
+
+
+
 	private boolean buildWeakEq() {
 		mNumBuildWeakEQ++;
 		final long startTime = System.nanoTime();
+		final HashSet<Sort> arraySorts = new HashSet<>();
 		mCongRoots = new LinkedHashMap<>();
 		for (final CCTerm array : mArrays) {
 			final CCTerm rep = array.getRepresentative();
 			if (!mCongRoots.containsKey(rep)) {
 				final ArrayNode node = new ArrayNode(rep);
-				node.computeSelects();
+				node.mSelects = new LinkedHashMap<>();
 				mCongRoots.put(rep, node);
+				arraySorts.add(array.getFlatTerm().getSort());
 			}
 		}
+		for (final Sort arraySort : arraySorts) {
+			collectSelects(arraySort);
+		}
+
 		for (final CCAppTerm term : mConsts) {
 			setConst(term);
 		}
@@ -1460,7 +1439,7 @@ public class ArrayTheory implements ITheory {
 		 */
 		mArrayModels = new LinkedHashMap<>();
 		final HashMap<Sort, CCTerm> defaultValue = new HashMap<>();
-		final HashMap<Map<CCTerm, Object>, ArrayNode> inverse = new HashMap<>();
+		final HashMap<Sort, HashMap<Map<CCTerm, Object>, ArrayNode>> inverse = new HashMap<>();
 		final HashSet<SymmetricPair<ArrayNode>> propEqualities = new LinkedHashSet<>();
 		final ArrayDeque<ArrayNode> todoQueue = new ArrayDeque<>(mCongRoots.values());
 		while (!todoQueue.isEmpty()) {
@@ -1483,26 +1462,33 @@ public class ArrayTheory implements ITheory {
 					constRep = getValueFromConst(weakRep.mConstTerm).getRepresentative();
 					nodeMapping.put(null, constRep);
 				} else if (hasFiniteIndexSort(arraySort)) {
-					// For finite index sorts, we cannot just assume a fresh array. We need
-					// to start with some const array.
-					constRep = defaultValue.get(arraySort);
-					if (constRep == null) {
-						// we set the constRep to the first select term. If there is no select term, we
-						// create one.
-						if (weakRep.mSelects.isEmpty()) {
-							// just create the (select a (diff a a)) term
-							final Term array = weakRep.mTerm.getFlatTerm();
-							final Theory theory = array.getTheory();
-							final Term diffTerm = theory.term(SMTInterpolConstants.DIFF, array, array);
-							final Term selectTerm = theory.term(SMTLIBConstants.SELECT, array, diffTerm);
-							mClausifier.addTermAxioms(selectTerm, new SourceAnnotation("", null));
-							assert mCongRoots == null;
-							return true;
+					// For finite index sorts we cannot just assume that non weak-equivalent arrays
+					// are different. Instead we start all arrays with the same const value. If the
+					// element sort is also finite, we need to choose a value from the domain, and
+					// we choose some select term. If the element sort is infinite, we choose a
+					// fresh value for the array.
+					if (hasFiniteElemSort(arraySort)) {
+						constRep = defaultValue.get(arraySort);
+						if (constRep == null) {
+							// we set the constRep to the first select term. If there is no select term, we
+							// create one.
+							if (weakRep.mSelects.isEmpty()) {
+								// just create the (select a (diff a a)) term
+								final Term array = weakRep.mTerm.getFlatTerm();
+								final Theory theory = array.getTheory();
+								final Term diffTerm = theory.term(SMTInterpolConstants.DIFF, array, array);
+								final Term selectTerm = theory.term(SMTLIBConstants.SELECT, array, diffTerm);
+								mClausifier.addTermAxioms(selectTerm, new SourceAnnotation("", null));
+								cleanCaches();
+								return true;
+							}
+							constRep = weakRep.mSelects.values().iterator().next().getRepresentative();
+							defaultValue.put(arraySort, constRep);
 						}
-						constRep = weakRep.mSelects.values().iterator().next().getRepresentative();
+						nodeMapping.put(null, constRep);
+					} else {
+						nodeMapping.put(null, node.mTerm.mFlatTerm.getSort());
 					}
-					defaultValue.put(arraySort, constRep);
-					nodeMapping.put(null, constRep);
 				} else if (mNeedDiffIndexLevel >= 0) {
 					// If we have quantified array indices, we need to handle extensionality for
 					// arrays that are not weakly equivalent. Unless the arrays have different
@@ -1534,7 +1520,7 @@ public class ArrayTheory implements ITheory {
 				}
 			}
 			mArrayModels.put(node, nodeMapping);
-			final ArrayNode prev = inverse.put(nodeMapping, node);
+			final ArrayNode prev = inverse.computeIfAbsent(arraySort, s -> new HashMap<>()).put(nodeMapping, node);
 			if (prev != null) {
 				propEqualities.add(new SymmetricPair<>(prev, node));
 			}
@@ -1569,6 +1555,13 @@ public class ArrayTheory implements ITheory {
 		assert sort.isArraySort();
 		assert sort.getArguments().length == 2;
 		final Sort indexSort = sort.getArguments()[0];
+		return !mClausifier.isStablyInfinite(indexSort);
+	}
+
+	private boolean hasFiniteElemSort(Sort sort) {
+		assert sort.isArraySort();
+		assert sort.getArguments().length == 2;
+		final Sort indexSort = sort.getArguments()[1];
 		return !mClausifier.isStablyInfinite(indexSort);
 	}
 

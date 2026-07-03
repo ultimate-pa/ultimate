@@ -21,97 +21,43 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CCAppTerm extends CCTerm {
-	final CCTerm mFunc, mArg;
-	final Parent mLeftParInfo, mRightParInfo;
+	final FunctionSymbol mFunc;
+	final CCTerm[] mArgs;
 	Term mSmtTerm;
 
-	class Parent extends SimpleListable<Parent> {
-		private boolean mMark = false;
+	CongruenceTrigger mCongTrigger;
+	FindTriggerTrigger mFindTrigger;
 
-		CCAppTerm getData() {
-			return CCAppTerm.this;
-		}
-
-		public final boolean isMarked() {
-			assert (!mMark || CCAppTerm.this.mRepStar.mNumMembers > 1);
-			return mMark;
-		}
-
-		@Override
-		public String toString() {
-			return CCAppTerm.this.toString();
-		}
-	}
-
-	public CCAppTerm(final boolean isFunc, final int parentPos, final CCTerm func, final CCTerm arg,
+	public CCAppTerm(FunctionSymbol fsym, final CCTerm[] args,
 			final CClosure engine, final boolean isFromQuant) {
-		super(isFunc, parentPos, HashUtils.hashJenkins(func.hashCode(), arg),
-				(!isFromQuant ? 0 : Math.max(func.mAge, arg.mAge + 1)));
-		mFunc = func;
-		mArg = arg;
-		mLeftParInfo = new Parent();
-		mRightParInfo = new Parent();
+		super(HashUtils.hashJenkins(fsym.hashCode(), (Object[]) args), isFromQuant ? CCAppTerm.computeAge(args) : 0);
+		mFunc = fsym;
+		mArgs = args;
 	}
 
-	public CCTerm getFunc() {
+	private final static int computeAge(CCTerm[] args) {
+		int age = 1;
+		for (int i = 0; i < args.length; i++) {
+			age = Math.max(age, args[i].mAge + 1);
+		}
+		return age;
+	}
+
+	public FunctionSymbol getFunctionSymbol() {
 		return mFunc;
 	}
 
-	public CCTerm getArg() {
-		return mArg;
+	public CCTerm[] getArguments() {
+		return mArgs;
 	}
 
-	/**
-	 * Add this app term to the parent info lists of its function and argument. Also adds it to the mCCPars of all the
-	 * oldReps on the path to the repStar, which is necessary for unmerging correctly.
-	 *
-	 * @param engine
-	 *            the congruence closure engine.
-	 */
-	public void addParentInfo(final CClosure engine) {
-		CCTerm func = mFunc;
-		CCTerm arg = mArg;
-
-		/*
-		 * Store the parent info in all mCCPars of the representatives occuring on the path to the root, so that it is
-		 * still present when we unmerge later.
-		 *
-		 * Also find the first congruent application term.
-		 */
-		while (func.mRep != func || arg.mRep != arg) {
-			if (arg.mMergeTime < func.mMergeTime) {
-				// Reverse arg rep
-				arg.mCCPars.addParentInfo(func.mParentPosition, mRightParInfo, false, null);
-				arg = arg.mRep;
-			} else {
-				// Reverse func rep
-				func.mCCPars.addParentInfo(0, mLeftParInfo, false, null);
-				func = func.mRep;
-			}
-		}
-		func.mCCPars.addParentInfo(0, mLeftParInfo, true, engine);
-		arg.mCCPars.addParentInfo(func.mParentPosition, mRightParInfo, true, engine);
-		assert invariant();
-		assert func.invariant();
-		assert arg.invariant();
-	}
-
-	public void unlinkParentInfos() {
-		mLeftParInfo.removeFromList();
-		mRightParInfo.removeFromList();
-	}
-
-	public void markParentInfos() {
-		mLeftParInfo.mMark = mRightParInfo.mMark = true;
-	}
-
-	public void unmarkParentInfos() {
-		mLeftParInfo.mMark = mRightParInfo.mMark = false;
+	public CCTerm getArgument(int argPosition) {
+		return mArgs[argPosition];
 	}
 
 	@Override
@@ -119,9 +65,7 @@ public class CCAppTerm extends CCTerm {
 		final StringBuilder sb = new StringBuilder();
 		final HashMap<CCAppTerm, Integer> visited = new HashMap<>();
 		final ArrayDeque<Object> todo = new ArrayDeque<>();
-		todo.add(")");
 		todo.add(this);
-		todo.add("(");
 		while (!todo.isEmpty()) {
 			final Object item = todo.removeLast();
 			if (item instanceof String) {
@@ -133,15 +77,13 @@ public class CCAppTerm extends CCTerm {
 					sb.append("@" + id);
 				} else {
 					visited.put(app, visited.size());
-					if (app.mArg instanceof CCAppTerm) {
-						todo.add(")");
-						todo.add(app.mArg);
-						todo.add("(");
-					} else {
-						todo.add(app.mArg);
+					todo.add(")");
+					for (int i = app.mArgs.length - 1; i >= 0; i--) {
+						todo.add(app.mArgs[i]);
+						todo.add(" ");
 					}
-					todo.add(" ");
-					todo.add(app.mFunc);
+					todo.add(app.mFunc.getApplicationString());
+					todo.add("(");
 				}
 			} else if (item instanceof CCBaseTerm) {
 				sb.append(item);

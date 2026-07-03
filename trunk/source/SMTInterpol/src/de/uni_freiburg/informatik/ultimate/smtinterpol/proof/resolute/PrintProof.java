@@ -110,12 +110,16 @@ public class PrintProof extends PrintTerm {
 				} else {
 					assert annots.length == 1;
 					final Object[] params = (Object[]) annots[0].getValue();
-					mTodo.add(")");
-					for (int i = params.length - 1; i >= 0; i--) {
-						mTodo.add(params[i]);
-						mTodo.add(" ");
+					if (params.length == 0) {
+						mTodo.add(annots[0].getKey().substring(1));
+					} else {
+						mTodo.add(")");
+						for (int i = params.length - 1; i >= 0; i--) {
+							mTodo.add(params[i]);
+							mTodo.add(" ");
+						}
+						mTodo.add("(" + annots[0].getKey().substring(1));
 					}
-					mTodo.add("(" + annots[0].getKey().substring(1));
 					return;
 				}
 			}

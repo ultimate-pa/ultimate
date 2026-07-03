@@ -73,7 +73,7 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 
 		@Override
 		public String toString() {
-			return "Info[" + mRhsEntry.mOther + "," + mLhsEntry.mOther + "]";
+			return "Info[" + mLhsEntry.mOther + "," + mRhsEntry.mOther + "]";
 		}
 
 //		public void addExtensionalityDiseq(ConvertFormula converter) {

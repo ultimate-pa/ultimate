@@ -85,10 +85,10 @@ public class WeakCongruencePath extends CongruencePath {
 
 	public Clause computeSelectOverWeakEQ(final CCAppTerm select1, final CCAppTerm select2,
 			final boolean produceProofs) {
-		final CCTerm i1 = select1.getArg();
-		final CCTerm i2 = select2.getArg();
-		final CCTerm a = ((CCAppTerm) select1.getFunc()).getArg();
-		final CCTerm b = ((CCAppTerm) select2.getFunc()).getArg();
+		final CCTerm i1 = ArrayTheory.getIndexFromSelect(select1);
+		final CCTerm i2 = ArrayTheory.getIndexFromSelect(select2);
+		final CCTerm a = ArrayTheory.getArrayFromSelect(select1);
+		final CCTerm b = ArrayTheory.getArrayFromSelect(select2);
 		computePath(i1, i2);
 		final WeakSubPath weakPath =
 				computeWeakPath(a, b, i1, produceProofs);
@@ -98,18 +98,18 @@ public class WeakCongruencePath extends CongruencePath {
 	}
 
 	public Clause computeSelectConstOverWeakEQ(final CCAppTerm select1, final CCAppTerm const2, final boolean produceProofs) {
-		final CCTerm value2 = const2.getArg();
+		final CCTerm value2 = ArrayTheory.getValueFromConst(const2);
 
-		final CCTerm i1 = select1.getArg();
-		final CCTerm a = ((CCAppTerm) select1.getFunc()).getArg();
+		final CCTerm i1 = ArrayTheory.getIndexFromSelect(select1);
+		final CCTerm a = ArrayTheory.getArrayFromSelect(select1);
 		final WeakSubPath weakPath = computeWeakPath(a, const2, i1, produceProofs);
 		mAllPaths.addFirst(weakPath);
 		return generateClause(new SymmetricPair<>(select1, value2), produceProofs, RuleKind.READ_CONST_WEAKEQ);
 	}
 
 	public Clause computeConstOverWeakEQ(final CCAppTerm const1, final CCAppTerm const2, final boolean produceProofs) {
-		final CCTerm value1 = const1.getArg();
-		final CCTerm value2 = const2.getArg();
+		final CCTerm value1 = ArrayTheory.getValueFromConst(const1);
+		final CCTerm value2 = ArrayTheory.getValueFromConst(const2);
 
 		final HashSet<CCTerm> storeIndices = new HashSet<>();
 		final Cursor start = new Cursor(const1, mArrayTheory.mCongRoots.get(const1.getRepresentative()));

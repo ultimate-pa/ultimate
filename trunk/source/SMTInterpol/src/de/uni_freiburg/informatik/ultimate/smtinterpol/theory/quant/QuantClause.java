@@ -31,6 +31,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -449,11 +450,8 @@ public class QuantClause {
 			final FunctionSymbol func = entry.getKey();
 			final BitSet pos = entry.getValue();
 			for (int i = pos.nextSetBit(0); i >= 0; i = pos.nextSetBit(i + 1)) {
-				final Collection<CCTerm> argTerms = mQuantTheory.mCClosure.getArgTermsForFunc(func, i);
-				if (argTerms != null) {
-					for (final CCTerm ccTerm : argTerms) {
-						interestingTerms.add(ccTerm.getFlatTerm());
-					}
+				for (CCAppTerm appTerm : mQuantTheory.getCClosure().getAllFuncApps(func)) {
+					interestingTerms.add(appTerm.getArgument(i).getFlatTerm());
 				}
 			}
 		}
@@ -477,11 +475,11 @@ public class QuantClause {
 					storeSorts[2] = func.getReturnSort();
 				}
 				final FunctionSymbol storeFun = mQuantTheory.getTheory().getFunction("store", storeSorts);
-				final List<CCTerm> allStores = mQuantTheory.getCClosure().getAllFuncApps(storeFun);
+				final List<CCAppTerm> allStores = mQuantTheory.getCClosure().getAllFuncApps(storeFun);
 
 				// Add all indices of store terms in the weak equivalence class of this array
-				for (final CCTerm st : allStores) {
-					final CCTerm stArr = ArrayTheory.getArrayFromStore((CCAppTerm) st);
+				for (final CCAppTerm st : allStores) {
+					final CCTerm stArr = ArrayTheory.getArrayFromStore(st);
 					if (weakRep == null ? stArr.getFlatTerm().getSort() == array.getSort()
 							: weakRep == mQuantTheory.getClausifier().getArrayTheory().getWeakRep(stArr)) {
 						final Term indexTerm = ArrayTheory.getIndexFromStore((CCAppTerm) st).getFlatTerm();
@@ -498,14 +496,14 @@ public class QuantClause {
 						}
 					}
 				}
-				if (funcName == "select") {
+				if (funcName == SMTLIBConstants.SELECT) {
 					// Get all select terms of the appropriate sort
 					final Sort[] selectSorts = func.getParameterSorts();
-					final FunctionSymbol selectFun = mQuantTheory.getTheory().getFunction("select", selectSorts);
-					final List<CCTerm> allSelects = mQuantTheory.getCClosure().getAllFuncApps(selectFun);
+					final FunctionSymbol selectFun = mQuantTheory.getTheory().getFunction(SMTLIBConstants.SELECT, selectSorts);
+					final List<CCAppTerm> allSelects = mQuantTheory.getCClosure().getAllFuncApps(selectFun);
 					// Add all select indices of select terms on arrays in the weak equivalence class of this array
-					for (final CCTerm sel : allSelects) {
-						final CCTerm selArr = ArrayTheory.getArrayFromSelect((CCAppTerm) sel);
+					for (final CCAppTerm sel : allSelects) {
+						final CCTerm selArr = ArrayTheory.getArrayFromSelect(sel);
 						if (weakRep == null ? selArr.getFlatTerm().getSort() == array.getSort()
 								: weakRep == mQuantTheory.getClausifier().getArrayTheory().getWeakRep(selArr)) {
 							final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) sel);
@@ -518,10 +516,10 @@ public class QuantClause {
 				// Get all select terms of the appropriate sort
 				final Sort[] selectSorts = Arrays.copyOf(func.getParameterSorts(), 2);
 				final FunctionSymbol selectFun = mQuantTheory.getTheory().getFunction("select", selectSorts);
-				final List<CCTerm> allSelects = mQuantTheory.getCClosure().getAllFuncApps(selectFun);
+				final List<CCAppTerm> allSelects = mQuantTheory.getCClosure().getAllFuncApps(selectFun);
 				// Add all select terms on arrays in the weak equivalence class of this array
-				for (final CCTerm sel : allSelects) {
-					final CCTerm selArr = ArrayTheory.getArrayFromSelect((CCAppTerm) sel);
+				for (final CCAppTerm sel : allSelects) {
+					final CCTerm selArr = ArrayTheory.getArrayFromSelect(sel);
 					if (weakRep == null ? selArr.getFlatTerm().getSort() == array.getSort()
 							: weakRep == mQuantTheory.getClausifier().getArrayTheory().getWeakRep(selArr)) {
 						interestingTerms.add(sel.getFlatTerm());

@@ -973,7 +973,6 @@ public class InstantiationManager {
 				if (arLit.isNegated()) {
 					val = val.negate();
 				}
-
 				final long time = System.nanoTime();
 				if (val != mDefaultValueForLitDawgs) {
 					partialSubs.set(varPosInClause, subs);
@@ -1093,7 +1092,7 @@ public class InstantiationManager {
 		final MutableAffineTerm at = new MutableAffineTerm();
 		for (final Entry<Map<Term, Integer>, Rational> entry : smtAff.getSummands().entrySet()) {
 			final Polynomial sharedMonomial = new Polynomial();
-			sharedMonomial.add(entry.getValue());
+			sharedMonomial.add(Rational.ONE);
 			for (final Entry<Term, Integer> factor : entry.getKey().entrySet()) {
 				final Term sharedTerm;
 				if (factor.getKey().getFreeVars().length == 0) {
@@ -1462,7 +1461,7 @@ public class InstantiationManager {
 			return mDefaultValueForLitDawgs;
 		}
 		final InfinitesimalNumber upperBound = mQuantTheory.mLinArSolve.getUpperBound(mat);
-		smtAff.mul(Rational.MONE);
+		mat.negate();
 		final InfinitesimalNumber negLowerBound = mQuantTheory.mLinArSolve.getUpperBound(mat);
 		if (upperBound.signum() == 0 && negLowerBound.signum() == 0) {
 			return InstanceValue.TRUE;

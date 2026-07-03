@@ -615,6 +615,7 @@ public class DPLLEngine {
 			assert lit.getAtom().mDecideLevel == decision;
 			i++;
 		}
+		assert decision >= mBaseLevel : "mCurrentDecideLevel dropped below mBaseLevel";
 		return decision == mCurrentDecideLevel;
 	}
 
@@ -1004,6 +1005,9 @@ public class DPLLEngine {
 		int i = mDPLLStack.size();
 		while (i > 0) {
 			final Literal lit = mDPLLStack.get(--i);
+			if (lit.getAtom().mDecideLevel <= mBaseLevel) {
+				break;
+			}
 			if (conflict.contains(lit)) {
 				break;
 			}
@@ -1485,9 +1489,9 @@ public class DPLLEngine {
 				backtrackLiteral(lit);
 			}
 			mDPLLStack.clear();
-			for (final ITheory t : mTheories) {
-				t.backtrackAll();
-			}
+		}
+		for (final ITheory t : mTheories) {
+			t.backtrackAll();
 		}
 		unlearnClauses(targetstacklevel);
 		assert mCurrentDecideLevel == 0;
@@ -1929,6 +1933,7 @@ public class DPLLEngine {
 		}
 		assert mCurrentDecideLevel == 0;
 		mBaseLevel = 0;
+		mNumSolvedAtoms = mDPLLStack.size();
 		/* clear unsat clause, if it has assumptions */
 		if (mUnsatClause != null && mUnsatClause.getSize() > 0) {
 			mUnsatClause = null;
