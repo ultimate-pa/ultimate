@@ -75,12 +75,7 @@ public class EMReverseTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 		updatedRegister[mOutRegIndex] = appTerm;
 
 		if (mArg != null) { // Reverse
-			assert appTerm instanceof CCAppTerm;
-			CCAppTerm partialApp = appTerm;
-			for (int i = 0; i < mFunc.getParameterSorts().length - mArgPos - 1; i++) {
-				partialApp = (CCAppTerm) partialApp.getFunc();
-			}
-			final CCTerm candArg = partialApp.getArg();
+			final CCTerm candArg = appTerm.getArgument(mArgPos);
 			final int termDecisionLevel = mEMatching.getQuantTheory().getCClosure()
 					.getDecideLevelForPath(mArg, candArg);
 
@@ -89,6 +84,11 @@ public class EMReverseTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 		} else { // Find
 			mEMatching.addCode(mRemainingCode, updatedRegister, mDecisionLevel);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "EMReverse[" + mFunc.getName() + "," + mArgPos + "," + mArg + "]";
 	}
 
 }

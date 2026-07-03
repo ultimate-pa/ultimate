@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
  * is enabled, also the paths are collected and remembered.
  *
  *
- * @author hoenicke
+ * @author Jochen Hoenicke
  *
  */
 public class CongruencePath {
@@ -52,7 +52,7 @@ public class CongruencePath {
 	 *
 	 * This data structure is only in use if proof production is enabled.
 	 *
-	 * @author hoenicke
+	 * @author Jochen Hoenicke
 	 */
 	public static class SubPath {
 		ArrayList<CCTerm> mTermsOnPath;
@@ -149,19 +149,10 @@ public class CongruencePath {
 	 * @param end the other function application term.
 	 */
 	private void computeCCPath(CCAppTerm start, CCAppTerm end) {
-		while (true) {
-			/* Compute path and interpolation info for func and arg */
-			mTodo.addFirst(new SymmetricPair<>(start.mArg, end.mArg));
-
-			/*
-			 * We do not have explicit edges between partial function applications. Hence start.func and end.func must
-			 * be equal or congruent.
-			 */
-			if (start.mFunc == end.mFunc) {
-				break;
-			}
-			start = (CCAppTerm) start.mFunc;
-			end = (CCAppTerm) end.mFunc;
+		CCTerm[] startArgs = start.getArguments();
+		CCTerm[] endArgs = end.getArguments();
+		for (int i = 0; i < startArgs.length; i++) {
+			mTodo.addFirst(new SymmetricPair<>(startArgs[i], endArgs[i]));
 		}
 	}
 

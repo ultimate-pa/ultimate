@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 
@@ -54,8 +55,8 @@ public class FindCode implements ICode {
 		if (mFunc.getParameterSorts().length > 0) {
 			mEMatching.installFindTrigger(mFunc, mOutRegIndex, mRemainingCode, register, decisionLevel);
 		}
-		final List<CCTerm> funcApps = mCClosure.getAllFuncApps(mFunc);
-		for (final CCTerm cand : funcApps) {
+		final List<CCAppTerm> funcApps = mCClosure.getAllFuncApps(mFunc);
+		for (final CCAppTerm cand : funcApps) {
 			final CCTerm[] updatedReg = Arrays.copyOf(register, register.length);
 			updatedReg[mOutRegIndex] = cand;
 			mEMatching.addCode(mRemainingCode, updatedReg, decisionLevel > 0 ? decisionLevel : 0);

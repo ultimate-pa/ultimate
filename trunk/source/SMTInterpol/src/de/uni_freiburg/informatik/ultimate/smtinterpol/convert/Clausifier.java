@@ -222,8 +222,11 @@ public class Clausifier {
 	 * @return the ccterm.
 	 */
 	public CCTerm createCCTerm(final Term term, final SourceAnnotation source) {
+		final boolean wasRunning = mIsRunning;
+		mIsRunning = true;
 		final CCTerm ccterm = new CCTermBuilder(this, source).convert(term);
-		if (!mIsRunning) {
+		mIsRunning = wasRunning;
+		if (!wasRunning) {
 			run();
 		}
 		return ccterm;
@@ -283,6 +286,8 @@ public class Clausifier {
 	public void addTermAxioms(final Term term, final SourceAnnotation source) {
 		final int termFlags = getTermFlags(term);
 		if ((termFlags & Clausifier.AUX_AXIOM_ADDED) == 0) {
+			final boolean wasRunning = mIsRunning;
+			mIsRunning = true;
 			setTermFlags(term, termFlags | Clausifier.AUX_AXIOM_ADDED);
 			if (term instanceof ApplicationTerm) {
 				CCTerm ccTerm = getCCTerm(term);
@@ -373,6 +378,7 @@ public class Clausifier {
 			if (term instanceof MatchTerm) {
 				addMatchAxiom((MatchTerm) term, source);
 			}
+			mIsRunning = wasRunning;
 		}
 		if (!mIsRunning) {
 			run();

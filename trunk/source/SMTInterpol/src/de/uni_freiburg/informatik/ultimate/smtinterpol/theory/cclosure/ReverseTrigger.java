@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
  * @author Tanja Schindler, Jochen Hoenicke
  */
 public abstract class ReverseTrigger extends SimpleListable<ReverseTrigger> {
+	SignatureTrigger mSignatureTrigger;
+
 	/**
 	 * Get the argument on which the reverse trigger is installed.
 	 *

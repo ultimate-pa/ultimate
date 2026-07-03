@@ -115,8 +115,8 @@ public class CongruentAddTest {
 		mAB = (CCEquality) eqab.getLiteral(mSource);
 		mBC = (CCEquality) eqbc.getLiteral(mSource);
 		mCD = (CCEquality) eqcd.getLiteral(mSource);
-		mFc = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mC, mSource);
-		mFb = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mB, mSource);
+		mFc = mClosure.createAppTerm(mF, new CCTerm[] { mC }, mSource);
+		mFb = mClosure.createAppTerm(mF, new CCTerm[] { mB }, mSource);
 		mEqualities = new CCEquality[3];// NOCHECKSTYLE
 		for (int i = 0; i < 3; ++i) {
 			mEqualities[i] = mClosure.createCCEquality(1, mTerms[2 * i], mTerms[2 * i + 1]);
@@ -125,10 +125,10 @@ public class CongruentAddTest {
 
 	@Test
 	public void testCase1() {
-		final CCTerm t1 = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mTerms[0], mSource);
+		final CCTerm t1 = mClosure.createAppTerm(mF, new CCTerm[] { mTerms[0] }, mSource);
 		Clause conflict = mTerms[0].merge(mClosure, mTerms[1], mEqualities[0]);
 		Assert.assertNull(conflict);
-		final CCTerm t2 = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mTerms[1], mSource);
+		final CCTerm t2 = mClosure.createAppTerm(mF, new CCTerm[] { mTerms[1] }, mSource);
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
 		Assert.assertSame(t1.getRepresentative(), t2.getRepresentative());
@@ -138,8 +138,8 @@ public class CongruentAddTest {
 	public void testCase2() {
 		Clause conflict = mTerms[2].merge(mClosure, mTerms[3], mEqualities[1]);// NOCHECKSTYLE
 		Assert.assertNull(conflict);
-		final CCTerm t1 = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mTerms[2], mSource);
-		final CCTerm t2 = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mTerms[3], mSource);
+		final CCTerm t1 = mClosure.createAppTerm(mF, new CCTerm[] { mTerms[2] }, mSource);
+		final CCTerm t2 = mClosure.createAppTerm(mF, new CCTerm[] { mTerms[3] }, mSource);
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
 		Assert.assertSame(t1.getRepresentative(), t2.getRepresentative());
@@ -149,11 +149,11 @@ public class CongruentAddTest {
 	public void testCase3() {
 		Clause conflict = mTerms[4].merge(mClosure, mTerms[5], mEqualities[2]);// NOCHECKSTYLE
 		Assert.assertNull(conflict);
-		final CCTerm gsub1 = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mTerms[4], mSource);
-		final CCTerm gsub2 = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mTerms[5], mSource);
+		final CCTerm gsub1 = mClosure.createAppTerm(mF, new CCTerm[] { mTerms[4] }, mSource);
+		final CCTerm gsub2 = mClosure.createAppTerm(mF, new CCTerm[] { mTerms[5] }, mSource);
 		Assert.assertNotSame(gsub1.getRepresentative(), gsub2.getRepresentative());
-		final CCTerm t1 = mClosure.createAppTerm(false, mClosure.getFuncTerm(mG), gsub1, mSource);
-		final CCTerm t2 = mClosure.createAppTerm(false, mClosure.getFuncTerm(mG), gsub2, mSource);
+		final CCTerm t1 = mClosure.createAppTerm(mG, new CCTerm[] { gsub1 }, mSource);
+		final CCTerm t2 = mClosure.createAppTerm(mG, new CCTerm[] { gsub2 }, mSource);
 		Assert.assertNotSame(t1.getRepresentative(), t2.getRepresentative());
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
@@ -171,12 +171,8 @@ public class CongruentAddTest {
 		for (int i = 0; i < 3; ++i) {
 			Assert.assertSame(mTerms[2 * i].getRepresentative(), mTerms[2 * i + 1].getRepresentative());
 		}
-		final CCTerm h0 = mClosure.createAppTerm(true, mClosure.getFuncTerm(mH), mTerms[0], mSource);
-		final CCTerm h02 = mClosure.createAppTerm(true, h0, mTerms[2], mSource);
-		final CCTerm h024 = mClosure.createAppTerm(false, h02, mTerms[4], mSource);
-		final CCTerm h1 = mClosure.createAppTerm(true, mClosure.getFuncTerm(mH), mTerms[1], mSource);
-		final CCTerm h13 = mClosure.createAppTerm(true, h1, mTerms[3], mSource);
-		final CCTerm h135 = mClosure.createAppTerm(false, h13, mTerms[5], mSource);
+		final CCTerm h024 = mClosure.createAppTerm(mH, new CCTerm[] { mTerms[0], mTerms[2], mTerms[4] }, mSource);
+		final CCTerm h135 = mClosure.createAppTerm(mH, new CCTerm[] { mTerms[1], mTerms[3], mTerms[5] }, mSource);
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
 		Assert.assertSame(h024.getRepresentative(), h135.getRepresentative());
@@ -187,32 +183,36 @@ public class CongruentAddTest {
 		mDPLL.increaseDecideLevel();
 		Clause conflict = mDPLL.setLiteral(mAB);
 		Assert.assertNull(conflict);
+		conflict = mClosure.checkpoint();
+		Assert.assertNull(conflict);
 		mDPLL.increaseDecideLevel();
 		conflict = mDPLL.setLiteral(mCD);
+		Assert.assertNull(conflict);
+		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
 		mDPLL.increaseDecideLevel();
 		conflict = mDPLL.setLiteral(mBC);
 		Assert.assertNull(conflict);
-		// System.err.println("a.repStar = " + a.getRepresentative());
-		// System.err.println("b.repStar = " + b.getRepresentative());
-		// System.err.println("c.repStar = " + c.getRepresentative());
+		System.err.println("a.repStar = " + mA.getRepresentative());
+		System.err.println("b.repStar = " + mB.getRepresentative());
+		System.err.println("c.repStar = " + mC.getRepresentative());
 		// Create congruence closure
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
 		long time = System.nanoTime();
-		mFa = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mA, mSource);
+		mFa = mClosure.createAppTerm(mF, new CCTerm[] { mA }, mSource);
 		time -= System.nanoTime();
 		mClosure.getLogger().info("f(a)-creation time: %d ns", -time);
 		// We can even remove this step and still get an error
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
-		// System.err.println("fa.repStar = " + fa.getRepresentative());
-		// System.err.println("fb.repStar = " + fb.getRepresentative());
-		// System.err.println("fc.repStar = " + fc.getRepresentative());
+		System.err.println("fa.repStar = " + mFa.getRepresentative());
+		System.err.println("fb.repStar = " + mFb.getRepresentative());
+		System.err.println("fc.repStar = " + mFc.getRepresentative());
 		Assert.assertSame(mFa.getRepresentative(), mFb.getRepresentative());
 		Assert.assertSame(mFb.getRepresentative(), mFc.getRepresentative());
 		time = System.nanoTime();
-		mFd = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mD, mSource);
+		mFd = mClosure.createAppTerm(mF, new CCTerm[] { mD }, mSource);
 		time -= System.nanoTime();
 		mClosure.getLogger().info("f(d)-creation time: %d ns", -time);
 		conflict = mClosure.checkpoint();

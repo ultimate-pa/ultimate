@@ -52,10 +52,7 @@ public class GetArgCode implements ICode {
 		final CCTerm appTerm = register[mAppTermRegIndex];
 		assert appTerm instanceof CCAppTerm;
 		CCAppTerm partialApp = (CCAppTerm) appTerm;
-		for (int i = 0; i < mFunc.getParameterSorts().length - mArgPos - 1; i++) {
-			partialApp = (CCAppTerm) ((CCAppTerm) partialApp).getFunc();
-		}
-		final CCTerm arg = partialApp.getArg();
+		CCTerm arg = partialApp.getArgument(mArgPos);
 		final CCTerm[] updatedRegister = Arrays.copyOf(register, register.length);
 		updatedRegister[mOutRegIndex] = arg;
 		mEMatching.addCode(mRemainingCode, updatedRegister, decisionLevel);

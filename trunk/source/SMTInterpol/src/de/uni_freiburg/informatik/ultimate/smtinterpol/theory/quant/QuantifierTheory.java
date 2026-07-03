@@ -220,7 +220,13 @@ public class QuantifierTheory implements ITheory {
 			switch (mInstantiationMethod) {
 			case E_MATCHING_CONFLICT:
 				mNumCheckpointsWithNewEval++;
-				mEMatching.run();
+				do {
+					mEMatching.run();
+					conflict = mCClosure.checkpoint();
+				} while (conflict == null && !mEMatching.isDone());
+				if (conflict != null) {
+					return conflict;
+				}
 				potentiallyInterestingInstances = mInstantiationManager.findConflictAndUnitInstancesWithEMatching();
 				if (Config.PROFILE_TIME) {
 					mFindEmatchingTime += System.nanoTime() - time;
@@ -232,7 +238,13 @@ public class QuantifierTheory implements ITheory {
 				break;
 			case E_MATCHING_EAGER:
 				mNumCheckpointsWithNewEval++;
-				mEMatching.run();
+				do {
+					mEMatching.run();
+					conflict = mCClosure.checkpoint();
+				} while (conflict == null && !mEMatching.isDone());
+				if (conflict != null) {
+					return conflict;
+				}
 				potentiallyInterestingInstances = mInstantiationManager.computeEMatchingInstances();
 				if (Config.PROFILE_TIME) {
 					mFindEmatchingTime += System.nanoTime() - time;
@@ -277,7 +289,13 @@ public class QuantifierTheory implements ITheory {
 
 			boolean foundNonSat = false;
 			if (mInstantiationMethod == InstantiationMethod.E_MATCHING_LAZY) {
-				mEMatching.run();
+				do {
+					mEMatching.run();
+					conflict = mCClosure.checkpoint();
+				} while (conflict == null && !mEMatching.isDone());
+				if (conflict != null) {
+					return conflict;
+				}
 				potentiallyInterestingInstances = mInstantiationManager.computeEMatchingInstances();
 				if (Config.PROFILE_TIME) {
 					mFindEmatchingTime += System.nanoTime() - time;
@@ -290,7 +308,13 @@ public class QuantifierTheory implements ITheory {
 					}
 				}
 			} else if (mInstantiationMethod == InstantiationMethod.E_MATCHING_CONFLICT_LAZY) {
-				mEMatching.run();
+				do {
+					mEMatching.run();
+					conflict = mCClosure.checkpoint();
+				} while (conflict == null && !mEMatching.isDone());
+				if (conflict != null) {
+					return conflict;
+				}
 				potentiallyInterestingInstances = mInstantiationManager.findConflictAndUnitInstancesWithEMatching();
 				if (Config.PROFILE_TIME) {
 					mFindEmatchingTime += System.nanoTime() - time;

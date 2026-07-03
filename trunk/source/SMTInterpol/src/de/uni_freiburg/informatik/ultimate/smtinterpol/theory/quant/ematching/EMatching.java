@@ -198,11 +198,17 @@ public class EMatching {
 		}
 		while (!mTodoStack.isEmpty() && !mQuantTheory.getEngine().isTerminationRequested()) {
 			final Triple<ICode, CCTerm[], Integer> code = mTodoStack.pop();
+			mQuantTheory.getLogger().debug("EM-Code: %s", code);
+			assert code.getThird() <= mQuantTheory.getEngine().getDecideLevel();
 			code.getFirst().execute(code.getSecond(), code.getThird());
 		}
 		if (Config.PROFILE_TIME) {
 			mQuantTheory.addEMatchingTime(System.nanoTime() - time);
 		}
+	}
+
+	public boolean isDone() {
+		return mTodoStack.isEmpty();
 	}
 
 	/**
@@ -215,14 +221,17 @@ public class EMatching {
 	 *            the current decision level.
 	 */
 	public void undo(final int decisionLevel) {
+		mQuantTheory.getLogger().debug("Ematching undo: %d", decisionLevel);
 		final Iterator<Entry<Integer, EMUndoInformation>> it = mUndoInformation.entrySet().iterator();
 		while (it.hasNext()) {
 			final Entry<Integer, EMUndoInformation> undo = it.next();
 			if (undo.getKey() > decisionLevel) {
+				mQuantTheory.getLogger().debug("Undo Ematching for level %d", undo.getKey());
 				undo.getValue().undo();
 				it.remove();
 			}
 		}
+		mQuantTheory.getLogger().debug("Remaining levels: %s", mUndoInformation.keySet());
 		final Deque<Triple<ICode, CCTerm[], Integer>> undoneTodoStack = new ArrayDeque<>();
 		for (final Triple<ICode, CCTerm[], Integer> todo : mTodoStack) {
 			if (todo.getThird() <= decisionLevel) {
@@ -268,6 +277,7 @@ public class EMatching {
 	void addCode(final ICode code, final CCTerm[] register, final int decisionLevel) {
 		final Triple<ICode, CCTerm[], Integer> todo =
 				new Triple<>(code, register, decisionLevel);
+		assert decisionLevel <= mQuantTheory.getEngine().getDecideLevel();
 		mTodoStack.add(todo);
 	}
 
@@ -339,9 +349,10 @@ public class EMatching {
 	 */
 	void installFindTrigger(final FunctionSymbol func, final int regIndex, final ICode remainingCode,
 			final CCTerm[] register, final int decisionLevel) {
+		mQuantTheory.getLogger().debug("Install Find Trigger: FIND %s (decide@%d)", func, decisionLevel);
 		final EMReverseTrigger trigger =
 				new EMReverseTrigger(this, remainingCode, func, -1, null, register, regIndex, decisionLevel);
-		mQuantTheory.getCClosure().insertReverseTrigger(func, trigger);
+		mQuantTheory.getCClosure().insertFindTrigger(func, trigger);
 		addUndoInformation(trigger, decisionLevel);
 	}
 
@@ -365,6 +376,9 @@ public class EMatching {
 	 */
 	void installReverseTrigger(final FunctionSymbol func, final CCTerm arg, final int argPos,
 			final int regIndex, final ICode remainingCode, final CCTerm[] register, final int decisionLevel) {
+		mQuantTheory.getLogger().debug("Install Reverse Trigger: REV %s,%d on %s (decide@%d)", func, argPos, arg,
+				decisionLevel);
+		assert decisionLevel <= mQuantTheory.getClausifier().getEngine().getDecideLevel();
 		final EMReverseTrigger trigger =
 				new EMReverseTrigger(this, remainingCode, func, argPos, arg, register, regIndex, decisionLevel);
 		mQuantTheory.getCClosure().insertReverseTrigger(func, arg, argPos, trigger);

@@ -77,9 +77,9 @@ public class DTReverseTrigger extends ReverseTrigger {
 		mClausifier.getLogger().debug("DTReverseTrigger: %s on %s", appTerm, mArg);
 		final ApplicationTerm argAT = (ApplicationTerm) mArg.mFlatTerm;
 		final SymmetricPair<CCTerm>[] reason;
-		if (appTerm.getArg() != mArg) {
+		if (appTerm.getArgument(0) != mArg) {
 			reason = new SymmetricPair[] {
-				new SymmetricPair<>(appTerm.getArg(), mArg)
+				new SymmetricPair<>(appTerm.getArgument(0), mArg)
 			};
 		} else {
 			reason = new SymmetricPair[0];
@@ -87,7 +87,7 @@ public class DTReverseTrigger extends ReverseTrigger {
 		if (mFunctionSymbol.getName() == "is") {
 			// If appTerm is a "is" function, check if it tests for the constructor of mArg.
 			// If so set the function equal to true else to false.
-			final FunctionSymbol fs = ((CCBaseTerm)appTerm.mFunc).getFunctionSymbol();
+			final FunctionSymbol fs = appTerm.getFunctionSymbol();
 			final Term truthValue;
 			if (fs.getIndices()[0].equals(argAT.getFunction().getName())) {
 				truthValue = mClausifier.getTheory().mTrue;
@@ -121,5 +121,4 @@ public class DTReverseTrigger extends ReverseTrigger {
 			throw new AssertionError("selector function not part of constructor");
 		}
 	}
-
 }

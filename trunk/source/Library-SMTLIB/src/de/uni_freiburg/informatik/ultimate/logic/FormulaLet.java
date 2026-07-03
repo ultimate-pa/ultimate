@@ -455,6 +455,9 @@ public class FormulaLet extends NonRecursive {
 		}
 
 		public void enqueueBuildLetTerms(final FormulaLet let) {
+			if (mTermInfo.mLettedTerms == null) {
+				return;
+			}
 			for (final ArrayList<TermInfo> letList: mTermInfo.mLettedTerms) {
 				assert !letList.isEmpty();
 				final TermVariable[] tvs = new TermVariable[letList.size()];
@@ -584,6 +587,9 @@ public class FormulaLet extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive engine) {
+			if (mTermInfo.mLettedTerms == null) {
+				return;
+			}
 			final List<TermInfo> lettedTerms = mTermInfo.mLettedTerms.getFirst();
 			if (lettedTerms.isEmpty()) {
 				// no terms want to be letted by us.
@@ -871,6 +877,10 @@ public class FormulaLet extends NonRecursive {
 						ancestor = ancestor.mParent;
 					}
 					// Tell our ancestor, that he needs to let us
+					if (letPos.mLettedTerms == null) {
+						letPos.mLettedTerms = new ArrayDeque<>();
+						letPos.mLettedTerms.addFirst(new ArrayList<>());
+					}
 					letPos.mLettedTerms.getFirst().add(info);
 				}
 			}
@@ -924,8 +934,6 @@ public class FormulaLet extends NonRecursive {
 			final Term term = mTermInfo.mTerm;
 			// Enqueue the walker that will collect the let definitions later so that they
 			// are collected at the right position.
-			mTermInfo.mLettedTerms = new ArrayDeque<>();
-			mTermInfo.mLettedTerms.addFirst(new ArrayList<>());
 			let.enqueueWalker(new CollectLets(mTermInfo));
 
 			if (term instanceof LambdaTerm) {
