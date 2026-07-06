@@ -147,6 +147,13 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			command.append(')');
 			return command.toString();
 		}
+
+		protected static List<Term> flatten(final Term t) {
+			if (t instanceof final ApplicationTerm aTerm && "and".equals(aTerm.getFunction().getName())) {
+				return Arrays.asList(aTerm.getParameters());
+			}
+			return Collections.singletonList(t);
+		}
 	}
 
 	private final class SmtInterpolInterpolation extends InterpolationAdapter {
@@ -294,17 +301,6 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		private Term readInterpolants() {
 			return ScriptorWithGetInterpolants.super.mExecutor.parseTerm();
 		}
-
-		private List<Term> flatten(final Term t) {
-			if (t instanceof ApplicationTerm) {
-				final ApplicationTerm aTerm = (ApplicationTerm) t;
-				if ("and".equals(aTerm.getFunction().getName())) {
-					return Arrays.asList(aTerm.getParameters());
-				}
-			}
-			return Collections.singletonList(t);
-		}
-
 	}
 
 	private final class BitwuzlaInterpolation extends InterpolationAdapter {
@@ -335,15 +331,11 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		protected void formatTerm(final StringBuilder builder, final Term term) {
 			final PrintTerm pt = new PrintTerm();
 			builder.append('(');
-			if (term instanceof final ApplicationTerm app && "and".equals(app.getFunction().getName())) {
-				String sep = "";
-				for (final Term t : app.getParameters()) {
-					builder.append(sep);
-					pt.append(builder, t);
-					sep = " ";
-				}
-			} else {
-				pt.append(builder, term);
+			String sep = "";
+			for (final Term t : flatten(term)) {
+				builder.append(sep);
+				pt.append(builder, t);
+				sep = " ";
 			}
 			builder.append(')');
 		}
