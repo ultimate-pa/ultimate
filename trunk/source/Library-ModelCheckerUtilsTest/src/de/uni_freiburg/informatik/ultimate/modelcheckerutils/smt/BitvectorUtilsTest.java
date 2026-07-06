@@ -276,9 +276,6 @@ public class BitvectorUtilsTest {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(script, "(bvxor x x)");
 		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
 
-		// Set a breakpoint on the line below (the UnfTransformer.transform call, or the return statement inside
-		// NaryBitvectorOperation_BitvectorResult.simplify_NonConstantCase that handles finalArgs.isEmpty()) to see
-		// the branch fire directly, without any later simplification pass in between.
 		final Term unf = new UnfTransformer(script).transform(letFree);
 
 		final Term expected = TermParseUtils.parseTerm(script, "(_ bv0 8)");
