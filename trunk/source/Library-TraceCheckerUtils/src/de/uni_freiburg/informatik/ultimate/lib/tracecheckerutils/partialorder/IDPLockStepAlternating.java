@@ -46,8 +46,9 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 	private final Function<S, Object> mNormalizer;
 	private final Function<L, InterruptAnnotation> mLetterToInterruptAnno;
 
-	private final Comparator<L> mDefaultComparator =
-			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
+	private final IDfsOrder<L, S> mAlternativeOrder;
+
+	private final Function<S, Comparator<L>> mDefaultComparator;
 
 	private final ILogger mLogger;
 
@@ -56,6 +57,19 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 		mNormalizer = normalizer;
 		mLetterToInterruptAnno = letterToIA;
 		mLogger = services.getLoggingService().getLogger(getClass());
+		mAlternativeOrder = null;
+
+		mDefaultComparator = (s -> Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode));
+		// mLogger.setLevel(LogLevel.DEBUG);
+	}
+
+	public IDPLockStepAlternating(final IUltimateServiceProvider services, final Function<S, Object> normalizer,
+			final Function<L, InterruptAnnotation> letterToIA, final IDfsOrder<L, S> alternativeOrder) {
+		mNormalizer = normalizer;
+		mLetterToInterruptAnno = letterToIA;
+		mLogger = services.getLoggingService().getLogger(getClass());
+		mAlternativeOrder = alternativeOrder;
+		mDefaultComparator = alternativeOrder::getOrder;
 		// mLogger.setLevel(LogLevel.DEBUG);
 	}
 
@@ -65,7 +79,7 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 		final L entryEdge = mEntryEdge.get(key);
 
 		final var lastIA = entryEdge != null ? getLetterAnnotation(entryEdge) : null;
-		return new IDPAlternatingComparator<>(mLogger, lastIA, mDefaultComparator, mLetterToInterruptAnno);
+		return new IDPAlternatingComparator<>(mLogger, lastIA, mDefaultComparator.apply(state), mLetterToInterruptAnno);
 	}
 
 	private Object normalize(final S state) {
@@ -84,8 +98,19 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 		return true;
 	}
 
-	public <V extends IDfsVisitor<L, S>> WrapperVisitor<L, S, V> wrapVisitor(final V underlying) {
-		return new Visitor<>(underlying);
+	public <V extends IDfsVisitor<L, S>> WrapperVisitor<L, S, IDfsVisitor<L, S>> wrapVisitor(final V underlying) {
+		final WrapperVisitor<L, S, IDfsVisitor<L, S>> visitor = new Visitor<>(underlying);
+		return wrapAlternativeVisitor(visitor);
+	}
+
+	public WrapperVisitor<L, S, IDfsVisitor<L, S>>
+			wrapAlternativeVisitor(final WrapperVisitor<L, S, IDfsVisitor<L, S>> underlying) {
+		if (mAlternativeOrder == null) {
+			return underlying;
+		} else if (mAlternativeOrder instanceof final BetterLockstepOrder<L, S> betterLockstepOrder) {
+			return betterLockstepOrder.wrapVisitor(underlying);
+		}
+		return underlying;
 	}
 
 	public static final class IDPAlternatingComparator<L extends IAction> implements Comparator<L> {
@@ -96,10 +121,11 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 
 		public IDPAlternatingComparator(final ILogger logger, final InterruptAnnotation lastIA,
 				final Comparator<L> fallback, final Function<L, InterruptAnnotation> getLetterIA) {
+			mLogger = logger;
+
 			mLastIA = lastIA;
 			mFallback = fallback;
 			mGetLetterIA = getLetterIA;
-			mLogger = logger;
 		}
 
 		@Override
@@ -109,8 +135,6 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 			final var yIA = mGetLetterIA.apply(y);
 			final boolean xHasIA = xIA != null;
 			final boolean yHasIA = yIA != null;
-			assert !xHasIA || xIA.getIsrLocation() == ISRLocation.ENTRY;
-			assert !yHasIA || yIA.getIsrLocation() == ISRLocation.ENTRY;
 			Integer res = null;
 			if (mLastIA == null) {
 				// If state entry has no inter. annotation, prefer edges with annotation
@@ -143,7 +167,7 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 		}
 
 		private static boolean belongToSameInterrupt(final InterruptAnnotation iA1, final InterruptAnnotation iA2) {
-			return iA1.getIsrId() == iA2.getIsrId();
+			return iA1.getIsrId() <= iA2.getIsrId();
 		}
 
 		private static boolean isEntryAnnotation(final InterruptAnnotation interruptAnnotation) {

@@ -223,7 +223,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case IDP_MAIN -> new IDPMainOrder<>(l -> l);
 		case IDP_ISR -> new IDPIsrOrder<>(l -> l);
 		case IDP_LOCKSTEP_ALTERNATING -> new IDPLockStepAlternating<>(mServices, this::normalizePredicate,
-				l -> InterruptAnnotation.getAnnotation(l));
+				l -> InterruptAnnotation.getAnnotation(l), new BetterLockstepOrder<>(this::normalizePredicate));
 		case PSEUDO_LOCKSTEP -> new BetterLockstepOrder<>(this::normalizePredicate);
 		case RANDOM -> new RandomDfsOrder<>(randomOrderSeed, false);
 		case POSITIONAL_RANDOM -> new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
@@ -235,6 +235,14 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			yield order;
 		}
 		};
+	}
+
+	private IDfsOrder<L, IPredicate> getSerialNumberDfsOrder(final Collection<? extends IcfgLocation> errorLocs) {
+		final Set<String> errorThreads = errorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
+		return new ConstantDfsOrder<>(
+				Comparator.<L, Boolean> comparing(x -> !errorThreads.contains(x.getPrecedingProcedure()))
+						.thenComparing(Comparator.comparing(x -> x.getPrecedingProcedure()))
+						.thenComparing(Comparator.comparingInt(Object::hashCode)));
 	}
 
 	private final IPersistentSetChoice<L, IPredicate> createPersistentSets(final IIcfg<?> icfg,
