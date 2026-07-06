@@ -981,10 +981,15 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		WOLF,
 		/**
+		 * Bitvector strategy that tries SP/WP with bitwuzla, Z3 and Mathsat with a low interpolant threshold (similar
+		 * to {@link #WOLF}, but in a different order and dependent on floats)
+		 */
+		FOX,
+		/**
 		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold (similar to
 		 * {@link #WOLF}, but in a different order and dependent on floats)
 		 */
-		FOX,
+		OLDFOX,
 		/**
 		 * Bitvector strategy similar to {@link #WOLF}, but no {@link AssertCodeBlockOrder} for Mathsat, and
 		 * {@link InterpolationTechnique#FPandBPonlyIfFpWasNotPerfect} for all solvers.
