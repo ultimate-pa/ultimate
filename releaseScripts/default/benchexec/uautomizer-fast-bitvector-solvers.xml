@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
-<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="180s" hardtimelimit="180s" memlimit="8 GB" cpuCores="2">
+<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="90s" hardtimelimit="95s" memlimit="8 GB" cpuCores="2">
 
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper"/>
@@ -81,7 +81,6 @@
 
   <tasks name="MemSafety64">
     <includesfile>../../../trunk/examples/svcomp/SoftwareSystems-DeviceDriversLinux64.set</includesfile>
-    <includesfile>../../../trunk/examples/svcomp/Juliet.set</includesfile>
     <propertyfile>../../../trunk/examples/svcomp/properties/valid-memsafety.prp</propertyfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Bitvector.epf</option>
   </tasks>
