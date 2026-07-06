@@ -606,17 +606,25 @@ public final class BitvectorUtils {
 				}
 			}
 
-			// 4. Duplicate Elimination --> stattdessen mit einem Hashset arbeiten --> dann müssen die unique sein
+			// 4. Duplicate Elimination
+			// Note: a plain Set is NOT enough here. bvand/bvor are idempotent (X AND X == X), so presence alone
+			// would suffice - but bvxor is nilpotent (X XOR X == 0): an even count cancels out, an odd count
+			// leaves one copy (e.g. X XOR X XOR X == X). That's a parity check, not a presence check, so
+			// removeDuplicates() below counts runs of equal terms (after sorting) and, per getFunctionName(),
+			// either keeps one copy (bvand/bvor) or keeps it only if the run length is odd (bvxor). The sort is
+			// also needed independently to reach the canonical "Commuhash Normal Form" argument order.
 			final List<Term> uniqueVariables = removeDuplicates(sortedVariables, getFunctionName());
 
 			// 5. Absorption & Annihilation
 			if (mergedConstant != null) {
 				final BigInteger value = mergedConstant.getValue();
 
-				// Extract bit width and calculate the "all ones" value (2^n - 1)
-				// schauen gibts sowas schon --> allOnes
-				final int bitWidth = Integer.parseInt(mergedConstant.getStringIndex());
-				final BigInteger allOnes = BigInteger.valueOf(2).pow(bitWidth).subtract(BigInteger.ONE);
+				// The bit width is available directly as a BigInteger via getIndex(), no need to go through
+				// getStringIndex() and parse it back into an int.
+				// The "all ones" value (2^n - 1) does not need to be computed by hand either: BitvectorConstant
+				// already provides this via its maxValue(...) factory method, which we reuse here for consistency
+				// with the rest of the codebase and to avoid duplicating the 2^n - 1 formula.
+				final BigInteger allOnes = BitvectorConstant.maxValue(mergedConstant.getIndex()).getValue();
 
 				if (value.equals(BigInteger.ZERO)) {
 					if (getFunctionName().equals("bvand")) {
@@ -646,16 +654,24 @@ public final class BitvectorUtils {
 
 			// handle edge cases
 			if (finalArgs.isEmpty()) {
+
+				// This branch is reachable, not dead code: it is hit whenever every argument cancels out, which
+				// can only happen for bvxor (nilpotence, e.g. "x XOR x" with no constant involved at all) since
+				// bvand/bvor only ever drop the constant, never a variable. See test bvxorNilpotencePairCancels
+				// in BitvectorUtilTest.java for a concrete example that exercises exactly this path.
 				// If everything is gone, 0 remains. We get the sort (type) from the very first parameter.
-				// Fall prüfen kann sein dass das gar nicht eintreten kann
 				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, params[0].getSort());
 			} else if (finalArgs.size() == 1) {
 				// If only one element remains, we don't need an operator anymore (e.g., "AND(V1)" becomes "V1")
 				return finalArgs.get(0);
 			} else {
-				// Normal case: assemble the list back into an operator node
-				// vielleicht die neue verwenden
-				return SmtUtils.oldAPITerm(script, getFunctionName(), indices, null, finalArgs.toArray(new Term[0]));
+				// Use CommuhashUtils.term instead of SmtUtils.oldAPITerm here, not just for style: bvand/bvor/bvxor
+				// are registered as commutative in CommuhashUtils.isKnownToBeCommutative, so CommuhashUtils.term
+				// re-sorts ALL parameters by hash code before constructing the term. CommuhashUtils.term fixes this by
+				// sorting the full parameter list (constant included) right before term construction.
+				return CommuhashUtils.term(script, getFunctionName(), SmtUtils.toStringArray(indices), null,
+						finalArgs.toArray(new Term[0]));
+
 			}
 		}
 
