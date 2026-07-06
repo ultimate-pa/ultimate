@@ -67,8 +67,6 @@
   <tasks name="ReachSafety32">
     <includesfile>../../../trunk/examples/svcomp/BitVectors.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/Floats.set</includesfile>
-    <include>../../../trunk/examples/svcomp/hardness-nfm22/hardness_floatingpointinfluence*.yml</include>
-    <include>../../../trunk/examples/svcomp/hardness-nfm22/hardness_operatoramount*.yml</include>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf</option>
   </tasks>
