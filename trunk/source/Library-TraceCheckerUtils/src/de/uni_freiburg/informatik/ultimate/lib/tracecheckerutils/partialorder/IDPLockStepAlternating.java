@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
@@ -41,6 +42,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
+/**
+ * A preference order that approximates a schedule in which the context alternates between the main process and the
+ * interrupt-service-routines. After each statement of the main program, an ISR determined by an alternative preference
+ * order is scheduled next. After an ISR was scheduled, the next statement of the main program is preferred. This order
+ * can be combined with a number of alternative orders, namely: {@link BetterLockstepOrder}, {@link LoopLockstepOrder},
+ * {@link RandomDfsOrder}, {@link ConstantDfsOrder}.
+ *
+ * The order determines whether the last step was part on an ISR or part of the main program by recording the first edge
+ * through which the state was first reached using a wrapper DFS visitor. The order is only working if this visitor is
+ * used. If the alternative order also requires a specific visitor, this visitor is automatically wrapped by the wrapper
+ * visitor of this class.
+ *
+ * @param <L>
+ *            Type of the edges
+ * @param <S>
+ *            Type of the states
+ */
 public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L, S> {
 	private final Map<Object, L> mEntryEdge = new HashMap<>();
 	private final Function<S, Object> mNormalizer;
@@ -52,6 +70,14 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 
 	private final ILogger mLogger;
 
+	/**
+	 * Construct an order without alternative preference order. Instead a default comparator employing the procedure id
+	 * and hash code is instrumented.
+	 *
+	 * @param services
+	 * @param normalizer
+	 * @param letterToIA
+	 */
 	public IDPLockStepAlternating(final IUltimateServiceProvider services, final Function<S, Object> normalizer,
 			final Function<L, InterruptAnnotation> letterToIA) {
 		mNormalizer = normalizer;
@@ -63,6 +89,16 @@ public class IDPLockStepAlternating<L extends IAction, S> implements IDfsOrder<L
 		// mLogger.setLevel(LogLevel.DEBUG);
 	}
 
+	/**
+	 * Construct an order that is composed with an alternative order which chooses the preferred next ISR in case the
+	 * alternating order is currently preferring the ISRs. Also the alternative order is used to resolve non-determinism
+	 * in the case that no edge is preferred by the alternating order.
+	 *
+	 * @param services
+	 * @param normalizer
+	 * @param letterToIA
+	 * @param alternativeOrder
+	 */
 	public IDPLockStepAlternating(final IUltimateServiceProvider services, final Function<S, Object> normalizer,
 			final Function<L, InterruptAnnotation> letterToIA, final IDfsOrder<L, S> alternativeOrder) {
 		mNormalizer = normalizer;
