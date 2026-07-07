@@ -67,6 +67,17 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 
 	private final IIcfg<?> mIcfg;
 
+	/**
+	 * Constructor for an AtomicInterruptIndependenceRelation for the program represented as ICFG and wrt. the
+	 * underlying independence relation. The resulting independence relation checks for independence of the whole isr
+	 * instead of just the single statement if at least one of the two statements is part of an isr and returns the
+	 * independence of underlying in all other cases.
+	 *
+	 * @param underlying
+	 *            Independence relation to be modified wrt. interrupts
+	 * @param icfg
+	 *            ICFG of the IDP annotated with InterruptAnnotations
+	 */
 	public AtomicInterruptIndependenceRelation(final IIndependenceRelation<S, L> underlying, final IIcfg<?> icfg) {
 		mUnderlying = underlying;
 		mIsrDependenceCache = new HashMap<>();
