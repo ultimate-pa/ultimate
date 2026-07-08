@@ -14,7 +14,7 @@ modifies;
   x := 0;
   if (*) {
       assume x !=0;
-      Label1 { :auxiliary_label true} :
+      Label1 { :auxiliary_label} :
   } else {
   }
   assert false;

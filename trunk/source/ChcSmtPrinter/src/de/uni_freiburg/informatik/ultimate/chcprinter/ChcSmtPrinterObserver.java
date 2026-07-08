@@ -30,10 +30,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.chcprinter.preferences.ChcSmtPrinterPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.FilePrinterUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -96,7 +95,9 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		final HcSymbolTable symbolTable = annot.getSymbolTable();
 		final ManagedScript mgdScript = annot.getScript();
 
-		final File file = openTempFile(root);
+		final var outputFileSettings =
+				FilePrinterUtils.OutputFileSettings.fromPrinterPreferences(mPref, "ChcSmtPrinter_", "_UID", ".smt2");
+		final File file = FilePrinterUtils.openOutputFile(outputFileSettings, root, mLogger);
 		mLogger.info("Writing to file " + file.getAbsolutePath());
 		final LoggingScript loggingScript = new LoggingScript(new NoopScript(), file.getAbsolutePath(), true, USE_CSE);
 
@@ -133,51 +134,5 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		}
 
 		return true;
-	}
-
-	private File openTempFile(final IElement root) {
-		String path;
-		if (mPref.getBoolean(ChcSmtPrinterPreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
-			final ILocation loc = ILocation.getAnnotation(root);
-			final File inputFile = new File(loc.getFileName());
-			if (inputFile.isDirectory()) {
-				path = inputFile.getPath();
-			} else {
-				path = inputFile.getParent();
-			}
-			if (path == null) {
-				mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
-				path = mPref.getString(ChcSmtPrinterPreferenceInitializer.DUMP_PATH_LABEL);
-			}
-		} else {
-			path = mPref.getString(ChcSmtPrinterPreferenceInitializer.DUMP_PATH_LABEL);
-		}
-
-		if (mPref.getBoolean(ChcSmtPrinterPreferenceInitializer.UNIQUE_NAME_LABEL)) {
-			try {
-				return File.createTempFile(
-						"ChcSmtPrinter_" + new File(ILocation.getAnnotation(root).getFileName()).getName() + "_UID",
-						".smt2", new File(path));
-			} catch (final IOException e) {
-				throw new IllegalStateException("Could not create temporary file", e);
-			}
-		}
-
-		final String filename = mPref.getString(ChcSmtPrinterPreferenceInitializer.FILE_NAME_LABEL);
-		final File file = new File(path + File.separatorChar + filename);
-
-		if (file.exists()) {
-			if (!file.isFile() || !file.canWrite()) {
-				throw new IllegalStateException("Cannot write to " + file.getAbsolutePath());
-			}
-			mLogger.info("File already exists and will be overwritten: " + file.getAbsolutePath());
-		} else {
-			try {
-				file.createNewFile();
-			} catch (final IOException e) {
-				throw new IllegalStateException("Could not create file: " + file.toString(), e);
-			}
-		}
-		return file;
 	}
 }

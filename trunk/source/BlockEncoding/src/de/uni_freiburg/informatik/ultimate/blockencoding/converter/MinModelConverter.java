@@ -47,15 +47,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.RootEdge;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 
 /**
  * This class is like BlockEncoder, the start point where every function in the program is converted back to an RCFG. An
@@ -91,11 +91,11 @@ public class MinModelConverter {
 	 * @return the converted rootNode
 	 */
 	public RootNode startConversion(final RootNode root) {
-		final RootNode newRoot = new RootNode(ILocation.getAnnotation(root), root.getRootAnnot());
+		final RootNode newRoot = new RootNode(ILocation.getAnnotation(root), root.getRootAnnot(), Activator.PLUGIN_ID);
 		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
 		final boolean simplify = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY);
+				.getBoolean(IcfgPreferenceInitializer.LABEL_SIMPLIFY);
 		mConvertVisitor = new ConversionVisitor(mBoogie2SMT, root, getRatingHeuristic(), mServices, simplify);
 		for (final IcfgEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
@@ -112,7 +112,7 @@ public class MinModelConverter {
 			}
 		}
 		// Now we have to update the RootAnnot, which is created while executing
-		// the RCFGBuilder (this is needed for example for the
+		// the IcfgBuilder (this is needed for example for the
 		// HoareAnnotations)
 		updateRootAnnot(newRoot.getRootAnnot());
 		mLogger.info(EncodingStatistics.reportStatistics());

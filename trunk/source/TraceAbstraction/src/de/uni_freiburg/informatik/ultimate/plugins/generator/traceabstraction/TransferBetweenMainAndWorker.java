@@ -50,6 +50,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Call;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -70,12 +76,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class TransferBetweenMainAndWorker<LETTER, STATE> {
@@ -184,10 +184,11 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	}
 
 	private SequentialComposition getTransferSeqComp(final SequentialComposition seqComp) {
-		final SequentialComposition newSeqComp = new SequentialComposition(seqComp.getSerialNumber(),
-				(BoogieIcfgLocation) seqComp.getSource(), (BoogieIcfgLocation) seqComp.getTarget(), mWorkerCsToolkit,
-				seqComp.getSimplify(), seqComp.getExtPqe(), mIUltiamteServices,
-				getTransferredCodeBlocks(seqComp.getCodeBlocks()), seqComp.getSimplificationTechnique());
+		final SequentialComposition newSeqComp =
+				new SequentialComposition(seqComp.getSerialNumber(), (BoogieIcfgLocation) seqComp.getSource(),
+						(BoogieIcfgLocation) seqComp.getTarget(), mWorkerCsToolkit, seqComp.getSimplify(),
+						seqComp.getExtPqe(), mIUltiamteServices, getTransferredCodeBlocks(seqComp.getCodeBlocks()),
+						seqComp.getSimplificationTechnique(), mLogger, false);
 		newSeqComp.setPayload(seqComp.getPayload());
 		return newSeqComp;
 	}
@@ -314,7 +315,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> transferAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
 			final IEmptyStackStateFactory<STATE> emptyStateFactory, final Mode mode) {
-
+		final long setuptime = System.nanoTime() / 1000000000;
 		VpAlphabet<LETTER> alphabet;
 		Set<LETTER> internalAlphabet;
 		Set<LETTER> callAlphabet;
@@ -387,26 +388,49 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 				result.addInternalTransition(state, transferredLetter, succesor);
 				dequeue.add(succesor);
 			}
-			final Set<STATE> copyAllStates = new HashSet<>(allStates);
-			for (final STATE potentialhier : copyAllStates) {
-				for (final STATE hierPred : hierPredStates) {
-					for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : automaton
-							.returnSuccessorsGivenHier(potentialhier, hierPred)) {
 
-						final STATE succesor = returnTransition.getSucc();
-						final STATE hier = returnTransition.getHierPred();
-						if (!result.contains(succesor)) {
-							allStates.add(succesor);
-							result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
+			if (automaton instanceof NestedWordAutomaton) {
+				for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : ((NestedWordAutomaton<LETTER, STATE>) automaton)
+						.returnSuccessors(state)) {
+
+					final STATE succesor = returnTransition.getSucc();
+					final STATE hier = returnTransition.getHierPred();
+					if (!result.contains(succesor)) {
+						allStates.add(succesor);
+						result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
+					}
+					if (!result.contains(hier)) {
+						allStates.add(hier);
+						result.addState(automaton.isInitial(hier), automaton.isFinal(hier), hier);
+					}
+					final LETTER transferredLetter = transferEdge(returnTransition.getLetter());
+					returnAlphabet.add(transferredLetter);
+					result.addReturnTransition(state, hier, transferredLetter, succesor);
+					dequeue.add(succesor);
+				}
+
+			} else {
+				final Set<STATE> copyAllStates = new HashSet<>(allStates);
+				for (final STATE potentialhier : copyAllStates) {
+					for (final STATE hierPred : hierPredStates) {
+						for (final OutgoingReturnTransition<LETTER, STATE> returnTransition : automaton
+								.returnSuccessorsGivenHier(potentialhier, hierPred)) {
+
+							final STATE succesor = returnTransition.getSucc();
+							final STATE hier = returnTransition.getHierPred();
+							if (!result.contains(succesor)) {
+								allStates.add(succesor);
+								result.addState(automaton.isInitial(succesor), automaton.isFinal(succesor), succesor);
+							}
+							if (!result.contains(hier)) {
+								allStates.add(hier);
+								result.addState(automaton.isInitial(hier), automaton.isFinal(hier), hier);
+							}
+							final LETTER transferredLetter = transferEdge(returnTransition.getLetter());
+							returnAlphabet.add(transferredLetter);
+							result.addReturnTransition(potentialhier, hier, transferredLetter, succesor);
+							dequeue.add(succesor);
 						}
-						if (!result.contains(hier)) {
-							allStates.add(hier);
-							result.addState(automaton.isInitial(hier), automaton.isFinal(hier), hier);
-						}
-						final LETTER transferredLetter = transferEdge(returnTransition.getLetter());
-						returnAlphabet.add(transferredLetter);
-						result.addReturnTransition(potentialhier, hier, transferredLetter, succesor);
-						dequeue.add(succesor);
 					}
 				}
 			}

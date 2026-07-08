@@ -88,8 +88,8 @@ file witness.graphml.
 3. Choosing the right parameters
 3.1 Property files
 You can use property files as defined by the latest SV-COMP
-(e.g., for 2021, <https://sv-comp.sosy-lab.org/2021/rules.php> and
-<https://github.com/sosy-lab/sv-benchmarks/releases/tag/svcomp21>).
+(e.g., for 2026, <https://sv-comp.sosy-lab.org/2026/rules.php> and
+<https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks/-/tree/svcomp26>).
 * valid-memsafety.prp
    The result is 'TRUE' iff all pointer dereferences are valid,
    all deallocations are valid, and all allocated memory is eventually freed.

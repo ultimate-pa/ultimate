@@ -194,7 +194,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), determinized).getResult();
-				assert checkInterpolantAutomatonInductivity(test);
+				assert checkInterpolantAutomatonInductivity(test, mRefinementResult.getPredicateUnifier());
 
 				progress = true;
 				break;
@@ -216,7 +216,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<L, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), nondet).getResult();
-				assert checkInterpolantAutomatonInductivity(test);
+				assert checkInterpolantAutomatonInductivity(test, mRefinementResult.getPredicateUnifier());
 				progress = true;
 				break;
 			}

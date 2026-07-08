@@ -30,6 +30,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -88,11 +89,11 @@ public final class SFO {
 	/**
 	 * String holding "ULTIMATE.init".
 	 */
-	public static final String INIT = "ULTIMATE.init";
+	public static final String INIT = BoogieUtils.INIT_PROCEDURE;
 	/**
 	 * String holding "ULTIMATE.start".
 	 */
-	public static final String START = "ULTIMATE.start";
+	public static final String START = BoogieUtils.START_PROCEDURE;
 
 	/**
 	 * The empty String.
