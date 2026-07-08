@@ -100,6 +100,11 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 	@Override
 	public Term toTerm(final Script script) {
+
+		if (isBottom()) {
+			return script.term("false");
+		}
+
 		final ConstraintRepresentation constraints = getConstraintRepresentation();
 		final List<RationalVector> equalities = constraints.getEqualities();
 		final List<RationalVector> congruences = constraints.getCongruences();
@@ -168,6 +173,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
 				selfReorderedGenerators.getVectorLength());
 
+		final var sth = new CongruenceState(newVarToIndex, newGenerators);
 		return new CongruenceState(newVarToIndex, newGenerators);
 	}
 
@@ -175,6 +181,10 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	public CongruenceState widen(final CongruenceState other) {
 
 		final var sth = this;
+		final var one = getConstraintRepresentation();
+		one.minimize();
+		final var two = other.getConstraintRepresentation();
+		two.minimize();
 
 		if (isBottom()) {
 			return other;
@@ -229,6 +239,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	@Override
 	public boolean isBottom() {
 		final ConstraintRepresentation constraints = getConstraintRepresentation();
+		final var sth = constraints.isUnsat();
 		return constraints.isUnsat();
 	}
 

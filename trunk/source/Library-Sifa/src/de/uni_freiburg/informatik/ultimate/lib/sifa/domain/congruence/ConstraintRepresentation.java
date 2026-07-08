@@ -99,10 +99,10 @@ public class ConstraintRepresentation {
 	}
 
 	private void markAsUnsat() {
-		mEqualities = List.of(unsatVector(mVectorLength));
-		mCongruences = List.of();
-		mIsMinimal = true;
-		mIsStrongMinimal = true;
+//		mEqualities = List.of(unsatVector(mVectorLength));
+//		mCongruences = List.of();
+//		mIsMinimal = true;
+//		mIsStrongMinimal = true;
 	}
 
 	public boolean isUnsat() {
@@ -197,16 +197,16 @@ public class ConstraintRepresentation {
 					break;
 				}
 
-				if (pivot == -1) {
-					// vector is empty, can be deleted
-					// We do that later though
-				} else if (pivot == 0 && !congruence.get(pivot).denominator().equals(BigInteger.ONE)) {
-					// We just have a constant
-					// The constant is not whole and so it's not 0 mod 1
-					// So the congruence is unsatisfiable and so is the whole system
-					markAsUnsat();
-					return;
-				}
+//				if (pivot == -1) {
+//					// vector is empty, can be deleted
+//					// We do that later though
+//				} else if (pivot == 0 && !congruence.get(pivot).denominator().equals(BigInteger.ONE)) {
+//					// We just have a constant
+//					// The constant is not whole and so it's not 0 mod 1
+//					// So the congruence is unsatisfiable and so is the whole system
+//					markAsUnsat();
+//					return;
+//				}
 			}
 
 			// If no such congruence is found i is already so large that there is no rest we
