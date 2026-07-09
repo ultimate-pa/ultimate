@@ -14,68 +14,6 @@
     <option name="--traceabstraction.trace.refinement.strategy">FOX_BW_IN</option>
   </rundefinition>  
 
-  <!--
-  <rundefinition name="Fox">
-    <option name="--traceabstraction.trace.refinement.strategy">FOX</option>
-  </rundefinition>
-  
-  <rundefinition name="OldFox">
-    <option name="--traceabstraction.trace.refinement.strategy">OLDFOX</option>
-  </rundefinition>
-
-  <rundefinition name="Z3">
-    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
-    <option name="--traceabstraction.smt.solver">External_ModelsAndUnsatCoreMode</option>
-    <option name="--traceabstraction.command.for.external.solver">z3 -smt2 -in SMTLIB2_COMPLIANT=true</option>
-  </rundefinition>
-
-  <rundefinition name="CVC4">
-    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
-    <option name="--traceabstraction.smt.solver">External_ModelsAndUnsatCoreMode</option>
-    <option name="--traceabstraction.command.for.external.solver">cvc4 --incremental --print-success --lang smt</option>
-  </rundefinition>
-
-  <rundefinition name="CVC5">
-    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
-    <option name="--traceabstraction.smt.solver">External_ModelsAndUnsatCoreMode</option>
-    <option name="--traceabstraction.command.for.external.solver">cvc5 --incremental --print-success --lang smt</option>
-  </rundefinition>
-
-  <rundefinition name="MathSAT">
-    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
-    <option name="--traceabstraction.smt.solver">External_ModelsAndUnsatCoreMode</option>
-    <option name="--traceabstraction.command.for.external.solver">mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -unsat_core_generation=3</option>
-  </rundefinition>
-
-  <rundefinition name="MathSAT interpolation">
-    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
-    <option name="--traceabstraction.smt.solver">External_MathsatInterpolationMode</option>
-    <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
-    <option name="--traceabstraction.command.for.external.solver">mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -theory.bv.eager=false -theory.fp.enabled=false</option>
-  </rundefinition>
-
-  <rundefinition name="bitwuzla">
-    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
-    <option name="--traceabstraction.smt.solver">External_ModelsAndUnsatCoreMode</option>
-    <option name="--traceabstraction.command.for.external.solver">bitwuzla</option>
-  </rundefinition>
-
-  <rundefinition name="bitwuzla interpolation">
-    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
-    <option name="--traceabstraction.smt.solver">External_BitwuzlaInterpolationMode</option>
-    <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
-    <option name="--traceabstraction.command.for.external.solver">bitwuzla --produce-interpolants</option>
-  </rundefinition>
-  -->
-
-  <!--
-  <tasks name="canary">
-    <include>../../../trunk/examples/svcomp/bitvector/gcd_2.yml</include>
-    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf</option>
-  </tasks>
-  -->
-
   <tasks name="ReachSafety32">
     <includesfile>../../../trunk/examples/svcomp/BitVectors.set</includesfile>
     <includesfile>../../../trunk/examples/svcomp/Floats.set</includesfile>
