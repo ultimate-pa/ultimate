@@ -433,10 +433,16 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleBitwuzla(final InterpolationTechnique technique,
 				final AssertCodeBlockOrder... order) {
-			return createModuleWrapperIfNecessary(
-					new IpTcStrategyModuleBitwuzla<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
-							mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-							mPredicateUnifier, mPredicateFactory, technique));
+			final AssertionOrderModulation<L> modulation =
+					new AssertionOrderModulation<>(mPathProgramCache, mLogger, order);
+			final IIpTcStrategyModule<?, L> module = switch (technique) {
+			case Craig_NestedInterpolation, Craig_TreeInterpolation ->
+					new IpTcStrategyModuleBitwuzlaCraig<>(mTaskIdentifier, mServices, mPrefs, mCounterexample,
+							mPrecondition, mPostcondition, modulation, mPredicateUnifier, mPredicateFactory, technique);
+			default -> new IpTcStrategyModuleBitwuzla<>(mTaskIdentifier, mServices, mPrefs, mCounterexample,
+					mPrecondition, mPostcondition, modulation, mPredicateUnifier, mPredicateFactory, technique);
+			};
+			return createModuleWrapperIfNecessary(module);
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAbstractInterpretation() {
