@@ -74,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelSmtAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.DachshundRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FixedRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FoxBitwuzlaFirstRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FoxBitwuzlaInterpolationFirstRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FoxRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LazyTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LizardRefinementStrategy;
@@ -227,6 +229,10 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new WolfRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case FOX:
 			return new FoxRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case FOX_BW:
+			return new FoxBitwuzlaFirstRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case FOX_BW_IN:
+			return new FoxBitwuzlaInterpolationFirstRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case OLDFOX:
 			return new OldFoxRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case BEAR:

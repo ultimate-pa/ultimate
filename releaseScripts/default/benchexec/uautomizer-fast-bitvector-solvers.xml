@@ -6,6 +6,15 @@
   <option name="--force-no-wrapper"/>
   <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
+  <rundefinition name="Fox (bitwuzla first)">
+    <option name="--traceabstraction.trace.refinement.strategy">FOX_BW</option>
+  </rundefinition>
+
+  <rundefinition name="Fox (bitwuzla interpolation first)">
+    <option name="--traceabstraction.trace.refinement.strategy">FOX_BW_IN</option>
+  </rundefinition>  
+
+  <!--
   <rundefinition name="Fox">
     <option name="--traceabstraction.trace.refinement.strategy">FOX</option>
   </rundefinition>
@@ -57,12 +66,15 @@
     <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
     <option name="--traceabstraction.command.for.external.solver">bitwuzla --produce-interpolants</option>
   </rundefinition>
+  -->
 
+  <!--
   <tasks name="canary">
     <include>../../../trunk/examples/svcomp/bitvector/gcd_2.yml</include>
     <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
     <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf</option>
   </tasks>
+  -->
 
   <tasks name="ReachSafety32">
     <includesfile>../../../trunk/examples/svcomp/BitVectors.set</includesfile>
