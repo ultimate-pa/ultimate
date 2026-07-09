@@ -54,6 +54,8 @@ public class Phase implements Comparable<Phase> {
 
 	/**
 	 * The phase bits used by the powerset construction. This is only set for automata built from CounterExample traces.
+	 *
+	 * totalization and minimization should also be able to set this
 	 */
 	PhaseBits phaseBits;
 
@@ -298,5 +300,9 @@ public class Phase implements Comparable<Phase> {
 
 	public boolean isTerminal() {
 		return mIsTerminal;
+	}
+
+	public void setPhaseBits(final PhaseBits newPhaseBits) {
+		phaseBits = newPhaseBits;
 	}
 }

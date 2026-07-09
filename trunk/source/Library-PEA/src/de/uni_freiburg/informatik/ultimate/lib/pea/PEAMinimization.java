@@ -162,15 +162,19 @@ public class PEAMinimization {
 			final Phase rep = mEquivalenceClasses.find(equivalenceClassList.get(0));
 
 			final Phase mergedLocation = new Phase(rep.getName() + "_merged", CDD.FALSE, rep.getClockInv());
+			mergedLocation.setPhaseBits(rep.getPhaseBits());
 
 			for (final Phase location : equivalenceClass) {
 				// generate state invariant
 				final CDD mergedStateInv = mergedLocation.getStateInv();
 				mergedLocation.setStateInv(mergedStateInv.or(location.getStateInv()));
 
-				if (location.isInit()) {
-					mergedLocation.setInit(true);
-				}
+				// does vacuity work?
+				// assertEquals(rep.getPhaseBits(), location.getPhaseBits());
+
+//				if (location.isInit()) {
+//					mergedLocation.setInit(true);
+//				}
 
 			}
 			if (!rep.getTerminal()) {

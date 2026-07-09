@@ -42,12 +42,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PEAMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
@@ -56,9 +58,12 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaToBoogie;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorInfo;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorType;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -70,7 +75,7 @@ public class Req2Pea implements IReq2Pea {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResultUtil;
-	private final List<ReqPeas> mPattern2Peas;
+	private List<ReqPeas> mPattern2Peas;
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
 	private final Durations mDurations;
@@ -92,13 +97,50 @@ public class Req2Pea implements IReq2Pea {
 		reqs.stream().forEach(mDurations::addNonInitPattern);
 		mPattern2Peas = generatePeas(requirements, mDurations);
 
+		final Set<String> constVars = builder.getConstIds();
+
+		final IPreferenceProvider prefProvider =
+				mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
+
+		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
+
+		final List<ReqPeas> minimizedPeas = new ArrayList<>();
+		final List<Entry<CounterTrace, PhaseEventAutomata>> minimizedCt2pea = new ArrayList<>();
 		for (final ReqPeas reqpea : mPattern2Peas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
-				builder.addPea(reqpea.getPattern(), pea.getValue());
+			final PatternType<?> pattern = reqpea.getPattern();
+			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqpea.getCounterTrace2Pea();
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
+				final PhaseEventAutomata peaToMinimize = pea.getValue();
+				if (minimize) {
+					final PEAMinimization minimizePea = new PEAMinimization(peaToMinimize, constVars);
+					final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
+					builder.addPea(pattern, minimizedPea);
+					minimizedCt2pea.add(new Pair<>(pea.getKey(), minimizedPea));
+				} else {
+					builder.addPea(reqpea.getPattern(), pea.getValue());
+				}
 			}
+			minimizedPeas.add(new ReqPeas(pattern, minimizedCt2pea));
+		}
+
+		if (minimize) {
+			mPattern2Peas = minimizedPeas;
 		}
 
 		mSymbolTable = builder.constructSymbolTable();
+
+//		final IPreferenceProvider prefProvider =
+//				mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
+//
+//		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
+//
+//		if (minimize) {
+//
+//			final PhaseEventAutomata originalPea = pea.getValue();
+//			final PEAMinimization minimizePea = new PEAMinimization(originalPea, mSymbolTable.getConstVars());
+//			final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
+//		}
+
 		final Set<Entry<String, ErrorInfo>> errors = builder.getErrors();
 		for (final Entry<String, ErrorInfo> entry : errors) {
 			if (entry.getValue().getType() == ErrorType.SYNTAX_ERROR) {
@@ -180,6 +222,30 @@ public class Req2Pea implements IReq2Pea {
 		}
 
 		mLogger.info(String.format("Finished transforming %s requirements to PEAs", patterns.size()));
+
+//		final IPreferenceProvider prefProvider =
+//				mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
+//
+//		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
+//
+//		final List<ReqPeas> minimizedPeas = new ArrayList<>();
+//		if (minimize) {
+//			for (final Entry<PatternType<?>, ReqPeas> entry : req2automata.entrySet()) {
+//				final ReqPeas reqPeas = entry.getValue();
+//				final PatternType<?> pat = entry.getKey();
+//				final List<Entry<CounterTrace, PhaseEventAutomata>> peaList = new ArrayList<>();
+//				final List<Entry<CounterTrace, PhaseEventAutomata>> ct2peas = reqPeas.getCounterTrace2Pea();
+//				for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : ct2peas) {
+//					final PhaseEventAutomata pea = ct2pea.getValue();
+//					final PEAMinimization minimizePea = new PEAMinimization(pea);
+//
+//				}
+//
+//				// final PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
+//				final PhaseEventAutomata totalisedPea = minimizePea.getTotalisedPEA();
+//				final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
+//			}
+//		}
 
 		return req2automata.entrySet().stream().map(Entry::getValue).collect(Collectors.toList());
 	}

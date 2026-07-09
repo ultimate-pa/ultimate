@@ -5,6 +5,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 //mapt eine Phase in einem pea auf den höchsten index der phase
 //zum index: da wir auch states wie stinit haben, werden diese auf 0 gemapt, alle anderen states werden um daher um eine
 //zahl nach oben gesetzt: stinit-->0, st0-->1; st0123-->4
+
+// TODO: handling of minimized/totalized PEAs
 public class PEAPhaseIndexMap {
 
 	private Phase phase;

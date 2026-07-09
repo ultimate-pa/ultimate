@@ -122,8 +122,8 @@ public class PEAComplement {
 			final CDD totalisedClockInvariant = totalisedPhase.getClockInvariant();
 			final CDD strictClockInvariantDNF = totalisedClockInvariant.toDNF_CDD();
 			final List<RangeDecision> modifiedClockConstraints = new ArrayList<>();
-			final CDD nonStrictClockInvariant = strictConstraintHandling(strictClockInvariantDNF, CDD.TRUE,
-					modifiedClockConstraints);
+			final CDD nonStrictClockInvariant =
+					strictConstraintHandling(strictClockInvariantDNF, CDD.TRUE, modifiedClockConstraints);
 
 			totalisedPhase.setModifiedConstraints(modifiedClockConstraints);
 			totalisedPhase.setClockInv(nonStrictClockInvariant);
@@ -162,8 +162,8 @@ public class PEAComplement {
 				guardToSink =
 						guardToSink.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(noResetClockInv)));
 			} else {
-				guardToSink = guardToSink.or(guardUnprimed.and(successorStateInv)
-						.and(RangeDecision.strict(successorClockInv)));
+				guardToSink = guardToSink
+						.or(guardUnprimed.and(successorStateInv).and(RangeDecision.strict(successorClockInv)));
 			}
 		}
 		final Set<String> unprimedVars = clockVarSet;
@@ -214,7 +214,7 @@ public class PEAComplement {
 	 *
 	 * @param sinkPhase
 	 */
-	private void computeInitialTransitionSink(final PhaseEventAutomata pea, final Phase sinkPhase) {
+	private static void computeInitialTransitionSink(final PhaseEventAutomata pea, final Phase sinkPhase) {
 		CDD initialTransitionSinkGuard = CDD.FALSE;
 		final List<Phase> initialPhases = pea.getInit();
 		for (final Phase phase : initialPhases) {
@@ -268,6 +268,7 @@ public class PEAComplement {
 			final Phase copiedPhase =
 					new Phase(phase.getName(), phase.getStateInv(), addClockSuffixCDD(phase.getClockInv(), suffix));
 			copiedPhase.setTerminal(phase.getTerminal());
+			copiedPhase.setPhaseBits(phase.getPhaseBits());
 			copy.put(copiedPhase.getName(), copiedPhase);
 			if (phase.getInitialTransition() != null) {
 				final InitialTransition initialTransition = phase.getInitialTransition();
