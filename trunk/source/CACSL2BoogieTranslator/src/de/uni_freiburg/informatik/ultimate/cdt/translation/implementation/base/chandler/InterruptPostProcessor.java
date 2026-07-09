@@ -44,18 +44,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -117,7 +112,6 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Map<Integer, IdentifierExpression> mAuxVarExpressions = null;
 
 	private final List<Statement> mAdditionalInitializations = new ArrayList<>();
-	private final ISRLoopSearchVisitor mLoopSearchVisitor;
 
 	public InterruptPostProcessor(final ILogger logger, final TranslationSettings settings,
 			final ProcedureManager procedureManager, final CHandler chandler, final AuxVarInfoBuilder auxVarInfoBuilder,
@@ -129,13 +123,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mExpressionTranslation = expressionTranslation;
 		mTranslationMode = settings.interruptTranslationMode();
 		mISR = isrs;
-		mLoopSearchVisitor = new ISRLoopSearchVisitor(isrs);
 	}
 
 	@Override
 	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations) {
-		// TODO: Add exclusion of these two settings directly to settings
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final var realization3 = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 
@@ -173,9 +165,13 @@ public class InterruptPostProcessor implements IPostProcessor {
 		// Add atomic block and variable assignment true to request enabled all function
 		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
 
+		// TODO: Add variable assignment to false for request disable all
+
 		if (realization3) {
 			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadGpioProcedureMap);
 		}
+
+		// TODO: Support forks in disable all
 
 		// Add interrupt enabled variable declarations
 		decl.addAll(constructAuxVarEnableDeclarations());
@@ -464,8 +460,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final var ifStmt = getIfStatement(identifier, enabledExpr, isrNum);
 		final var block = getIsrBlock(ifStmt, identifier);
 		final var forkJoin = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
-		final var while_condition = forkJoin ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
-		return new WhileStatement(mIgnoreLoc, while_condition, new LoopInvariantSpecification[0], block);
+		final var whileCondition = forkJoin ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
+		return new WhileStatement(mIgnoreLoc, whileCondition, new LoopInvariantSpecification[0], block);
 	}
 
 	private Statement constructAllIsrWhileLoop(final AuxVarInfo auxVarInfo) {
@@ -489,14 +485,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private List<Statement> getIsrBlock(final List<Statement> ifStatements, final String identifier) {
-		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(identifier)) {
+		if (ADD_ISR_LABELS) {
 			return ifStatements;
 		}
 		return List.of(StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements));
 	}
 
 	private Statement[] getIsrBlock(final Statement ifStatement, final String identifier) {
-		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(identifier)) {
+		if (ADD_ISR_LABELS) {
 			return new Statement[] { ifStatement };
 		}
 		return new Statement[] { StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStatement)) };
@@ -506,11 +502,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final var interruptAnnotation = new InterruptAnnotation(ISRLocation.ENTRY, id);
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0], identifier,
 				new Expression[0]);
-		if (ADD_ISR_LABELS && mLoopSearchVisitor.containsLoop(identifier)) {
+		if (ADD_ISR_LABELS) {
 			mLogger.info("Add interrupt labels to call of function: " + identifier);
 			final var ifStmt = StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr,
 					labelISRStatement(then, id), new Statement[0]);
-			// TODO: Handle annotation for contains case
 			interruptAnnotation.annotate(ifStmt);
 			return ifStmt;
 		}
@@ -531,7 +526,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return new Statement[] { entryLabel, isrStatement, exitLabel };
 	}
 
-	private Expression getEnabledExpression(final IdentifierExpression threadEnabledId, final AuxVarInfo auxVarInfo) {
+	private Expression getEnabledExpression(final Expression threadEnabledId, final AuxVarInfo auxVarInfo) {
 		final CPrimitive cType = new CPrimitive(CPrimitives.BOOL);
 		final Expression isOne = ExpressionFactory.newBinaryExpression(mIgnoreLoc, Operator.COMPEQ, auxVarInfo.getExp(),
 				mExpressionTranslation.constructLiteralForIntegerType(mIgnoreLoc, cType, BigInteger.ONE));
@@ -551,62 +546,5 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	public List<Statement> getAdditionalInitializations() {
 		return mAdditionalInitializations;
-	}
-
-	private static class ISRLoopSearchVisitor {
-
-		private final InterruptServiceRoutines mISR;
-		private final Map<String, Boolean> mContainsLoop;
-
-		public ISRLoopSearchVisitor(final InterruptServiceRoutines interruptServiceRoutines) {
-			mISR = interruptServiceRoutines;
-			mContainsLoop = visitISRs();
-		}
-
-		private Map<String, Boolean> visitISRs() {
-			final var containsLoopMap = new HashMap<String, Boolean>();
-			for (final Procedure proc : mISR.getISRMap().values()) {
-				final var containsLoop = visitProc(proc);
-				containsLoopMap.put(proc.getIdentifier(), true);
-			}
-			return containsLoopMap;
-		}
-
-		private Boolean visitProc(final Procedure proc) {
-			return visitBody(proc.getBody());
-		}
-
-		private Boolean visitBody(final Body body) {
-			return visitBlock(body.getBlock());
-		}
-
-		private Boolean visitBlock(final Statement[] statements) {
-			for (final Statement statement : statements) {
-				if (visitStatement(statement)) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private Boolean visitStatement(final Statement statement) {
-			// TODO: Add handling for call statements
-			if (statement instanceof WhileStatement || statement instanceof CallStatement
-					|| statement instanceof ForkStatement || statement instanceof GotoStatement
-					|| statement instanceof JoinStatement) {
-				return true;
-			} else if (statement instanceof final IfStatement ifStatement) {
-				return visitBlock(ifStatement.getThenPart()) || visitBlock(ifStatement.getElsePart());
-			} else if (statement instanceof final AtomicStatement atomicStatement) {
-				return visitBlock(atomicStatement.getBody());
-			}
-			return false;
-		}
-
-		public Boolean containsLoop(final String identifier) {
-			final var contains = mContainsLoop.get(identifier);
-			assert contains != null;
-			return contains;
-		}
 	}
 }
