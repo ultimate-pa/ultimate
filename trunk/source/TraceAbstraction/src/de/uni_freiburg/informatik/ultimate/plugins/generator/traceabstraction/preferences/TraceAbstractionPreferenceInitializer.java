@@ -940,12 +940,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		TOOTHLESS_TAIPAN,
 		/**
-		 * Integer strategy that tries Craig interpolation with SMTInterpol, SP/WP with Z3 and CVC4 with a high
+		 * Integer strategy that tries Craig interpolation with SMTInterpol, SP/WP with Z3 and CVC5 with a high
 		 * interpolant threshold.
 		 */
 		PENGUIN,
 		/**
-		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold
+		 * Bitvector strategy that tries SP/WP with CVC5, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WALRUS,
 		/**
@@ -977,12 +977,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		BADGER,
 		/**
-		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold
+		 * Bitvector strategy that tries SP/WP with bitwuzla, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WOLF,
 		/**
-		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold (similar to
-		 * {@link #WOLF}, but in a different order and dependent on floats)
+		 * Bitvector strategy that tries SP/WP with bizwuzla, Z3 and Mathsat with a low interpolant threshold (similar
+		 * to {@link #WOLF}, but in a different order and dependent on floats)
 		 */
 		FOX,
 		/**
@@ -991,7 +991,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		BEAR,
 		/**
-		 * Heavy-weight bitvector strategy that tries SP with CVC4, Z3 and Mathsat with a high interpolant threshold
+		 * Heavy-weight bitvector strategy that tries SP with bitwuzla, Z3 and Mathsat with a high interpolant threshold
 		 */
 		WARTHOG,
 		/**
