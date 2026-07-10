@@ -105,8 +105,8 @@ public class Req2Pea implements IReq2Pea {
 		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
 
 		final List<ReqPeas> minimizedPeas = new ArrayList<>();
-		final List<Entry<CounterTrace, PhaseEventAutomata>> minimizedCt2pea = new ArrayList<>();
 		for (final ReqPeas reqpea : mPattern2Peas) {
+			final List<Entry<CounterTrace, PhaseEventAutomata>> minimizedCt2pea = new ArrayList<>();
 			final PatternType<?> pattern = reqpea.getPattern();
 			final List<Entry<CounterTrace, PhaseEventAutomata>> ct2pea = reqpea.getCounterTrace2Pea();
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
@@ -129,17 +129,17 @@ public class Req2Pea implements IReq2Pea {
 
 		mSymbolTable = builder.constructSymbolTable();
 
-//		final IPreferenceProvider prefProvider =
-//				mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
-//
-//		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
-//
-//		if (minimize) {
-//
-//			final PhaseEventAutomata originalPea = pea.getValue();
-//			final PEAMinimization minimizePea = new PEAMinimization(originalPea, mSymbolTable.getConstVars());
-//			final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
-//		}
+		//		final IPreferenceProvider prefProvider =
+		//				mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
+		//
+		//		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
+		//
+		//		if (minimize) {
+		//
+		//			final PhaseEventAutomata originalPea = pea.getValue();
+		//			final PEAMinimization minimizePea = new PEAMinimization(originalPea, mSymbolTable.getConstVars());
+		//			final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
+		//		}
 
 		final Set<Entry<String, ErrorInfo>> errors = builder.getErrors();
 		for (final Entry<String, ErrorInfo> entry : errors) {
@@ -210,9 +210,9 @@ public class Req2Pea implements IReq2Pea {
 			if (old != null) {
 				final String msg = String.format("Duplicate automata: %s and %s",
 						old.getCounterTrace2Pea().stream().map(a -> a.getValue().getName())
-								.collect(Collectors.joining(",")),
+						.collect(Collectors.joining(",")),
 						pea.getCounterTrace2Pea().stream().map(Entry::getValue).map(PhaseEventAutomata::getName)
-								.collect(Collectors.joining(",")));
+						.collect(Collectors.joining(",")));
 				mResultUtil.transformationError(pat, msg);
 			}
 		}
@@ -223,29 +223,29 @@ public class Req2Pea implements IReq2Pea {
 
 		mLogger.info(String.format("Finished transforming %s requirements to PEAs", patterns.size()));
 
-//		final IPreferenceProvider prefProvider =
-//				mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
-//
-//		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
-//
-//		final List<ReqPeas> minimizedPeas = new ArrayList<>();
-//		if (minimize) {
-//			for (final Entry<PatternType<?>, ReqPeas> entry : req2automata.entrySet()) {
-//				final ReqPeas reqPeas = entry.getValue();
-//				final PatternType<?> pat = entry.getKey();
-//				final List<Entry<CounterTrace, PhaseEventAutomata>> peaList = new ArrayList<>();
-//				final List<Entry<CounterTrace, PhaseEventAutomata>> ct2peas = reqPeas.getCounterTrace2Pea();
-//				for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : ct2peas) {
-//					final PhaseEventAutomata pea = ct2pea.getValue();
-//					final PEAMinimization minimizePea = new PEAMinimization(pea);
-//
-//				}
-//
-//				// final PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
-//				final PhaseEventAutomata totalisedPea = minimizePea.getTotalisedPEA();
-//				final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
-//			}
-//		}
+		//		final IPreferenceProvider prefProvider =
+		//				mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
+		//
+		//		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
+		//
+		//		final List<ReqPeas> minimizedPeas = new ArrayList<>();
+		//		if (minimize) {
+		//			for (final Entry<PatternType<?>, ReqPeas> entry : req2automata.entrySet()) {
+		//				final ReqPeas reqPeas = entry.getValue();
+		//				final PatternType<?> pat = entry.getKey();
+		//				final List<Entry<CounterTrace, PhaseEventAutomata>> peaList = new ArrayList<>();
+		//				final List<Entry<CounterTrace, PhaseEventAutomata>> ct2peas = reqPeas.getCounterTrace2Pea();
+		//				for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : ct2peas) {
+		//					final PhaseEventAutomata pea = ct2pea.getValue();
+		//					final PEAMinimization minimizePea = new PEAMinimization(pea);
+		//
+		//				}
+		//
+		//				// final PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
+		//				final PhaseEventAutomata totalisedPea = minimizePea.getTotalisedPEA();
+		//				final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
+		//			}
+		//		}
 
 		return req2automata.entrySet().stream().map(Entry::getValue).collect(Collectors.toList());
 	}
