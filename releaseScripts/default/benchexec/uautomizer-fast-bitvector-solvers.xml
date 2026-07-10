@@ -1,18 +1,22 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
-<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="90s" hardtimelimit="95s" memlimit="8 GB" cpuCores="2">
+<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="300s" hardtimelimit="320s" memlimit="8 GB" cpuCores="2">
 
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper"/>
   <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 
+  <rundefinition name="Fox">
+    <option name="--traceabstraction.trace.refinement.strategy">FOX</option>
+  </rundefinition>
+  
+  <rundefinition name="OldFox">
+    <option name="--traceabstraction.trace.refinement.strategy">OLDFOX</option>
+  </rundefinition>
+
   <rundefinition name="Fox (bitwuzla first)">
     <option name="--traceabstraction.trace.refinement.strategy">FOX_BW</option>
   </rundefinition>
-
-  <rundefinition name="Fox (bitwuzla interpolation first)">
-    <option name="--traceabstraction.trace.refinement.strategy">FOX_BW_IN</option>
-  </rundefinition>  
 
   <tasks name="ReachSafety32">
     <includesfile>../../../trunk/examples/svcomp/BitVectors.set</includesfile>
