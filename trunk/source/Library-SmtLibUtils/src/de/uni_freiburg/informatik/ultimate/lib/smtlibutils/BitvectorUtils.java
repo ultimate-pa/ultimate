@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Function;
 
@@ -543,7 +544,7 @@ public final class BitvectorUtils {
 
 		@Override
 		public boolean isCommutative() {
-			return true; // AND, OR und XOR are all commutative!
+			return true; // bvand, bvor and bvxor are all commutative
 		}
 
 		@Override
@@ -571,7 +572,86 @@ public final class BitvectorUtils {
 		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
 				final BitvectorConstant[] bvs) {
 
-			// 1. Flattening
+			// 1. Flatten nested applications of the same operator into one argument list.
+			final List<Term> flatArgs = flatten(params);
+
+			// 2. Split into literals and non-literals, then sort the non-literals into Commuhash normal form.
+			// The order is deterministic and puts equal terms next to each other, which the later steps rely on.
+			final List<BitvectorConstant> literals = new ArrayList<>();
+			final List<Term> nonLiterals = new ArrayList<>();
+			splitIntoLiteralsAndNonLiterals(flatArgs, literals, nonLiterals);
+			final Term[] sortedNonLiterals = CommuhashUtils.sortByHashCode(nonLiterals.toArray(new Term[0]));
+
+			// 3. Constant folding: merge all literals into a single constant.
+			BitvectorConstant mergedConstant = null;
+			if (!literals.isEmpty()) {
+				mergedConstant = literals.get(0);
+				for (int i = 1; i < literals.size(); i++) {
+					mergedConstant = mConstantSimplification.apply(mergedConstant).apply(literals.get(i));
+				}
+			}
+
+			// 4. Duplicate handling is folded into the collection step instead of a separate pass: bvand/bvor are
+			// idempotent (X op X = X), so we keep one copy per term; bvxor is nilpotent (X xor X = 0), so a term
+			// survives only for an odd count. Two dedicated collectors handle these two cases.
+			final List<Term> reducedNonLiterals;
+			if (getFunctionName().equals("bvxor")) {
+				reducedNonLiterals = collectXor(sortedNonLiterals);
+			} else {
+				reducedNonLiterals = collectIdempotent(sortedNonLiterals);
+			}
+
+			// 5. Absorption and annihilation of the merged constant.
+			if (mergedConstant != null) {
+				final BigInteger value = mergedConstant.getValue();
+				if (value.equals(BigInteger.ZERO)) {
+					// Annihilation: X bvand 0 = 0. For bvor/bvxor the 0 is absorbed and drops out.
+					if (getFunctionName().equals("bvand")) {
+						return constructTerm(script, mergedConstant);
+					}
+					mergedConstant = null;
+				} else if (isAllOnes(mergedConstant)) {
+					// Annihilation: X bvor 1..1 = 1..1. Absorbed by bvand (drops out); kept as-is for bvxor.
+					if (getFunctionName().equals("bvor")) {
+						return constructTerm(script, mergedConstant);
+					}
+					if (getFunctionName().equals("bvand")) {
+						mergedConstant = null;
+					}
+				}
+			}
+
+			// 6. Assemble the result from the surviving constant and non-literals.
+			final List<Term> finalArgs = new ArrayList<>();
+			if (mergedConstant != null) {
+				finalArgs.add(constructTerm(script, mergedConstant));
+			}
+			finalArgs.addAll(reducedNonLiterals);
+
+			// Every argument cancelled out. This is only possible for bvxor (e.g. "x xor x"); bvand/bvor always
+			// keep at least one non-literal. The neutral result is 0, with the sort taken from the first parameter.
+			if (finalArgs.isEmpty()) {
+				if (!getFunctionName().equals("bvxor")) {
+					throw new AssertionError("only bvxor can eliminate all arguments: " + getFunctionName());
+				}
+				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, params[0].getSort());
+			}
+			// A single remaining argument needs no operator wrapper (e.g. "bvand(x)" is just "x").
+			if (finalArgs.size() == 1) {
+				return finalArgs.get(0);
+			}
+			// CommuhashUtils.term sorts the whole argument list (constant included) into Commuhash normal form,
+			// the canonical order in which these commutative operators are stored elsewhere.
+			return CommuhashUtils.term(script, getFunctionName(), SmtUtils.toStringArray(indices), null,
+					finalArgs.toArray(new Term[0]));
+		}
+
+		/**
+		 * Flattens nested applications of the same operator into a single argument list, e.g. the arguments of (bvand a
+		 * (bvand b c)) become [a, b, c]. Only one level is unwrapped per argument on purpose: the parameters are built
+		 * bottom-up and are therefore already flat, so a recursive descent would be redundant.
+		 */
+		private List<Term> flatten(final Term[] params) {
 			final List<Term> flatArgs = new ArrayList<>();
 			for (final Term p : params) {
 				final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(p, getFunctionName());
@@ -581,128 +661,62 @@ public final class BitvectorUtils {
 					flatArgs.add(p);
 				}
 			}
+			return flatArgs;
+		}
 
-			// 2. Split and Sort
-			// Constante --> Literal, Variable --> Non-Literal
-			final List<BitvectorConstant> constants = new ArrayList<>();
-			final List<Term> variables = new ArrayList<>();
-
+		/**
+		 * Splits the flattened arguments into bitvector literals (collected as BitvectorConstants for the folding in
+		 * step 3) and non-literals (kept as terms). Results are written into the two given lists.
+		 */
+		private static void splitIntoLiteralsAndNonLiterals(final List<Term> flatArgs,
+				final List<BitvectorConstant> literals, final List<Term> nonLiterals) {
 			for (final Term t : flatArgs) {
 				final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(t);
 				if (bc != null) {
-					constants.add(bc);
+					literals.add(bc);
 				} else {
-					variables.add(t);
+					nonLiterals.add(t);
 				}
-			}
-			final Term[] sortedVariables = CommuhashUtils.sortByHashCode(variables.toArray(new Term[0]));
-
-			// 3. Constant Folding
-			BitvectorConstant mergedConstant = null;
-			if (!constants.isEmpty()) {
-				mergedConstant = constants.get(0);
-				for (int i = 1; i < constants.size(); i++) {
-					mergedConstant = mConstantSimplification.apply(mergedConstant).apply(constants.get(i));
-				}
-			}
-
-			// 4. Duplicate Elimination
-			// Note: a plain Set is NOT enough here. bvand/bvor are idempotent (X AND X == X), so presence alone
-			// would suffice - but bvxor is nilpotent (X XOR X == 0): an even count cancels out, an odd count
-			// leaves one copy (e.g. X XOR X XOR X == X). That's a parity check, not a presence check, so
-			// removeDuplicates() below counts runs of equal terms (after sorting) and, per getFunctionName(),
-			// either keeps one copy (bvand/bvor) or keeps it only if the run length is odd (bvxor). The sort is
-			// also needed independently to reach the canonical "Commuhash Normal Form" argument order.
-			final List<Term> uniqueVariables = removeDuplicates(sortedVariables, getFunctionName());
-
-			// 5. Absorption & Annihilation
-			if (mergedConstant != null) {
-				final BigInteger value = mergedConstant.getValue();
-
-				// The bit width is available directly as a BigInteger via getIndex(), no need to go through
-				// getStringIndex() and parse it back into an int.
-				// The "all ones" value (2^n - 1) does not need to be computed by hand either: BitvectorConstant
-				// already provides this via its maxValue(...) factory method, which we reuse here for consistency
-				// with the rest of the codebase and to avoid duplicating the 2^n - 1 formula.
-				final BigInteger allOnes = BitvectorConstant.maxValue(mergedConstant.getIndex()).getValue();
-
-				if (value.equals(BigInteger.ZERO)) {
-					if (getFunctionName().equals("bvand")) {
-						// Annihilation: X AND 0 = 0. Ignore rest of formula.
-						return constructTerm(script, mergedConstant);
-					} else if (getFunctionName().equals("bvor") || getFunctionName().equals("bvxor")) {
-						// Absorption: X OR 0 = X, X XOR 0 = X. The 0 drops out.
-						mergedConstant = null;
-					}
-				} else if (value.equals(allOnes)) {
-					if (getFunctionName().equals("bvor")) {
-						// Annihilation: X OR 1111 = 1111
-						return constructTerm(script, mergedConstant);
-					} else if (getFunctionName().equals("bvand")) {
-						// Absorption: X AND 1111 = X
-						mergedConstant = null;
-					}
-				}
-			}
-
-			// 6. final construction
-			final List<Term> finalArgs = new ArrayList<>();
-			if (mergedConstant != null) {
-				finalArgs.add(constructTerm(script, mergedConstant));
-			}
-			finalArgs.addAll(uniqueVariables);
-
-			// handle edge cases
-			if (finalArgs.isEmpty()) {
-
-				// This branch is reachable, not dead code: it is hit whenever every argument cancels out, which
-				// can only happen for bvxor (nilpotence, e.g. "x XOR x" with no constant involved at all) since
-				// bvand/bvor only ever drop the constant, never a variable. See test bvxorNilpotencePairCancels
-				// in BitvectorUtilTest.java for a concrete example that exercises exactly this path.
-				// If everything is gone, 0 remains. We get the sort (type) from the very first parameter.
-				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, params[0].getSort());
-			} else if (finalArgs.size() == 1) {
-				// If only one element remains, we don't need an operator anymore (e.g., "AND(V1)" becomes "V1")
-				return finalArgs.get(0);
-			} else {
-				// Use CommuhashUtils.term instead of SmtUtils.oldAPITerm here, not just for style: bvand/bvor/bvxor
-				// are registered as commutative in CommuhashUtils.isKnownToBeCommutative, so CommuhashUtils.term
-				// re-sorts ALL parameters by hash code before constructing the term. CommuhashUtils.term fixes this by
-				// sorting the full parameter list (constant included) right before term construction.
-				return CommuhashUtils.term(script, getFunctionName(), SmtUtils.toStringArray(indices), null,
-						finalArgs.toArray(new Term[0]));
-
 			}
 		}
 
-		private static List<Term> removeDuplicates(final Term[] sortedVariables, final String operatorName) {
-			final List<Term> uniqueVariables = new ArrayList<>();
+		/**
+		 * Collector for the idempotent operators bvand/bvor: since X op X = X every term is kept exactly once. The
+		 * input is already sorted, so a {@link LinkedHashSet} removes duplicates while preserving that order.
+		 */
+		private static List<Term> collectIdempotent(final Term[] sortedNonLiterals) {
+			return new ArrayList<>(new LinkedHashSet<>(Arrays.asList(sortedNonLiterals)));
+		}
 
+		/**
+		 * Collector for the nilpotent operator bvxor: since X xor X = 0 a term survives only if it occurs an odd number
+		 * of times. The input is sorted, so equal terms are adjacent and can be counted in a single pass.
+		 */
+		private static List<Term> collectXor(final Term[] sortedNonLiterals) {
+			final List<Term> result = new ArrayList<>();
 			int i = 0;
-			while (i < sortedVariables.length) {
-				final Term current = sortedVariables[i];
+			while (i < sortedNonLiterals.length) {
+				final Term current = sortedNonLiterals[i];
 				int count = 1;
-
-				// count identical neighbors
-				while (i + 1 < sortedVariables.length && current.equals(sortedVariables[i + 1])) {
+				while (i + 1 < sortedNonLiterals.length && current.equals(sortedNonLiterals[i + 1])) {
 					count++;
 					i++;
 				}
-
-				if (operatorName.equals("bvxor")) {
-					if (count % 2 != 0) {
-						// Nilpotenz
-						uniqueVariables.add(current);
-					}
-				} else {
-					// Idempotenz
-					uniqueVariables.add(current);
+				if (count % 2 != 0) {
+					result.add(current);
 				}
-
 				i++;
 			}
+			return result;
+		}
 
-			return uniqueVariables;
+		/**
+		 * @return true iff the given bitvector constant is the all-ones value (2^width - 1), i.e. every bit is set.
+		 *         Kept as a small reusable check (used here for absorption/annihilation) instead of recomputing the
+		 *         2^width - 1 formula inline.
+		 */
+		private static boolean isAllOnes(final BitvectorConstant bv) {
+			return bv.getValue().equals(BitvectorConstant.maxValue(bv.getIndex()).getValue());
 		}
 	}
 
@@ -792,8 +806,7 @@ public final class BitvectorUtils {
 
 	}
 
-	private static class Bvand extends NaryBitvectorOperation_BitvectorResult { // now extends new
-																				// NaryBitvectorOperation
+	private static class Bvand extends NaryBitvectorOperation_BitvectorResult {
 
 		public Bvand() {
 			super("bvand", x -> y -> BitvectorConstant.bvand(x, y));
@@ -802,6 +815,7 @@ public final class BitvectorUtils {
 		@Override
 		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
 				final BitvectorConstant[] bvs) {
+			// Fast path: if any argument is the literal 0, bvand annihilates to 0 without further work.
 			for (final BitvectorConstant bvConst : bvs) {
 				if (bvConst != null && bvConst.getValue().equals(BigInteger.ZERO)) {
 					return constructTerm(script, bvConst);
