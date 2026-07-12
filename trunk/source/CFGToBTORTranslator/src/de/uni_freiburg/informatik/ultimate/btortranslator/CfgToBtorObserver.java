@@ -156,26 +156,29 @@ public class CfgToBtorObserver extends BaseObserver {
 		final ArrayList<AbstractResult> results = new ArrayList<>();
 		while (witnessScan.hasNextLine()) {
 			if (witnessScan.hasNext("sat")) {
-				witnessScan.skip("sat\n");
+				witnessScan.next();
+				// witnessScan.skip("sat\n");
 				final int errorIndex = determineErrorLocation(witnessScan);
 				final AbstractResult nResult = constructErrorTrace(witnessScan, icfg, processor);
 				results.add(nResult);
 
 			} else if (witnessScan.hasNext("unsat")) {
-				witnessScan.skip("unsat\n");
-				// final int errorIndex = determineErrorLocation(witnessScan);
+				witnessScan.next();
+				// witnessScan.skip("unsat\n");
+				final int errorIndex = determineErrorLocation(witnessScan);
 
 				// Error location is not reachable within the timeout limit.
 				// TODO: (@xinyu) make this correct, send unknown result unless an unsat result is returned
 				// TODO: (@xinyu) handle multiple sat results, or unsat followed by sat, etc etc
-				for (final BoogieIcfgLocation loc : errorLocations) {
-					final PositiveResult<IIcfgElement> pResult =
-							new PositiveResult<>(Activator.PLUGIN_ID, loc, mServices.getBacktranslationService());
-					results.add(pResult);
-				}
-				break;
+				final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
+						errorLocations.get(errorIndex), mServices.getBacktranslationService());
+				results.add(pResult);
+				// positive results appear to be ignored, `no result` is returned
 			} else if (witnessScan.hasNext("\\.")) {
 				break;
+			} else {
+				witnessScan.nextLine();
+				// witnessScan.next();
 			}
 		}
 		return results;
@@ -218,15 +221,18 @@ public class CfgToBtorObserver extends BaseObserver {
 			// TODO: (@xinyu) take parameters as inputs.
 			final ProcessBuilder processBuilder = new ProcessBuilder();
 			// Run k-induction with kmax of 50.
-			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", "--kind", "-kmax", "50",
+			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", "--kind", "-kmax", "5",
 					btorFile.getAbsolutePath());
+
+//			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", "--kind", "-kmax", "5",
+//					btorFile.getAbsolutePath());
 
 			// Run btormc process with timeout and extract process output.
 			// TODO: (@xinyu) take timeout as input.
 			final Process process = processBuilder.start();
 			final StringBuilder btormcOutput = new StringBuilder();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			final boolean finished = process.waitFor(50, TimeUnit.SECONDS);
+			final boolean finished = process.waitFor(500, TimeUnit.SECONDS);
 			String line;
 			while (finished && (line = reader.readLine()) != null) {
 				btormcOutput.append(line + "\n");
@@ -237,7 +243,7 @@ public class CfgToBtorObserver extends BaseObserver {
 				System.out.println(process.exitValue());
 			} else {
 				System.out.println("timeout");
-
+				process.destroyForcibly();
 			}
 
 			// Assume one initial node for trace generation.
@@ -258,13 +264,18 @@ public class CfgToBtorObserver extends BaseObserver {
 				} else {
 					final ArrayList<AbstractResult> results =
 							parseResults(btormcWitness, errorLocations, icfg, processor);
+					boolean allSafe = true;
 					for (final AbstractResult result : results) {
+						if (!(result instanceof PositiveResult)) {
+							allSafe = false;
+						}
 						mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 					}
-
+					if (allSafe) {
+						mServices.getResultService().reportResult(Activator.PLUGIN_ID, AllSpecificationsHoldResult
+								.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, errorLocations.size()));
+					}
 				}
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						AllSpecificationsHoldResult.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, 0));
 			} else {
 				// no error states
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,

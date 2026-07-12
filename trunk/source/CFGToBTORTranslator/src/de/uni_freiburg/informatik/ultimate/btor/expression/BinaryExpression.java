@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.btor.BtorSort;
+import de.uni_freiburg.informatik.ultimate.btor.MaxDepthException;
 
 public abstract class BinaryExpression extends BtorExpression {
 
@@ -30,14 +31,20 @@ public abstract class BinaryExpression extends BtorExpression {
 	@Override
 	public int hashCode() {
 		final int hash = name().hashCode();
-		return hash * left.hashCode() * right.hashCode();
+		return hash * System.identityHashCode(left) * System.identityHashCode(right);
 	}
 
 	@Override
 	public int dumpExpression(int currentLine, final OutputStreamWriter writer,
-			final HashMap<BtorSort, Integer> sortMap) throws IOException {
-		currentLine = left.dumpExpression(currentLine, writer, sortMap);
-		currentLine = right.dumpExpression(currentLine, writer, sortMap);
+			final HashMap<BtorSort, Integer> sortMap, final int maxDepth) throws IOException, MaxDepthException {
+		if (maxDepth == 0 && nid == 0) {
+			throw new MaxDepthException(currentLine);
+		}
+		if (nid != 0) {
+			return currentLine;
+		}
+		currentLine = left.dumpExpression(currentLine, writer, sortMap, maxDepth - 1);
+		currentLine = right.dumpExpression(currentLine, writer, sortMap, maxDepth - 1);
 		if (!assignnid(currentLine)) {
 			return currentLine;
 		}

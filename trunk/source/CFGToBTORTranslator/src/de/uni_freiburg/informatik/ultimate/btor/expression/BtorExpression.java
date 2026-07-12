@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.btor.BtorSort;
+import de.uni_freiburg.informatik.ultimate.btor.MaxDepthException;
 
 public abstract class BtorExpression {
 	protected final BtorSort sort;
@@ -30,7 +31,7 @@ public abstract class BtorExpression {
 
 	// write expression to output stream
 	public abstract int dumpExpression(int currentLine, final OutputStreamWriter writer,
-			final HashMap<BtorSort, Integer> sortMap) throws IOException;
+			final HashMap<BtorSort, Integer> sortMap, int maxDepth) throws IOException, MaxDepthException;
 
 	@Override
 	public boolean equals(final Object other) {

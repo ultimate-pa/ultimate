@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.btor.BtorSort;
+import de.uni_freiburg.informatik.ultimate.btor.MaxDepthException;
 
 public abstract class TernaryExpression extends BtorExpression {
 
@@ -38,15 +39,21 @@ public abstract class TernaryExpression extends BtorExpression {
 	@Override
 	public int hashCode() {
 		final int hash = name().hashCode();
-		return hash * first.hashCode() * second.hashCode() * third.hashCode();
+		return hash * System.identityHashCode(first) * System.identityHashCode(second) * System.identityHashCode(third);
 	}
 
 	@Override
 	public int dumpExpression(int currentLine, final OutputStreamWriter writer,
-			final HashMap<BtorSort, Integer> sortMap) throws IOException {
-		currentLine = first.dumpExpression(currentLine, writer, sortMap);
-		currentLine = second.dumpExpression(currentLine, writer, sortMap);
-		currentLine = third.dumpExpression(currentLine, writer, sortMap);
+			final HashMap<BtorSort, Integer> sortMap, final int maxDepth) throws IOException, MaxDepthException {
+		if (maxDepth == 0 && nid == 0) {
+			throw new MaxDepthException(currentLine);
+		}
+		if (nid != 0) {
+			return currentLine;
+		}
+		currentLine = first.dumpExpression(currentLine, writer, sortMap, maxDepth - 1);
+		currentLine = second.dumpExpression(currentLine, writer, sortMap, maxDepth - 1);
+		currentLine = third.dumpExpression(currentLine, writer, sortMap, maxDepth - 1);
 		if (!assignnid(currentLine)) {
 			return currentLine;
 		}

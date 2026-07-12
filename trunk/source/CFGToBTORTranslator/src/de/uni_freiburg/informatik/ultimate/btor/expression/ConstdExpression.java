@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.btor.BtorSort;
+import de.uni_freiburg.informatik.ultimate.btor.MaxDepthException;
 
 public class ConstdExpression extends BtorExpression {
 
@@ -35,7 +36,7 @@ public class ConstdExpression extends BtorExpression {
 
 	@Override
 	public int dumpExpression(final int currentLine, final OutputStreamWriter writer,
-			final HashMap<BtorSort, Integer> sortMap) throws IOException {
+			final HashMap<BtorSort, Integer> sortMap, int maxDepth) throws IOException, MaxDepthException {
 		if (!assignnid(currentLine)) {
 			return currentLine;
 		}

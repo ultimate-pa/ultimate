@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -232,6 +231,21 @@ public class BtorScript {
 		return sorts;
 	}
 
+	private void dumpExpressions(final OutputStreamWriter textStreamWriter, final Deque<BtorExpression> worklist)
+			throws IOException {
+		final int maxDepth = 30;
+		while (!worklist.isEmpty()) {
+			final BtorExpression expression = worklist.pop();
+			try {
+				currentLine = expression.dumpExpression(currentLine, textStreamWriter, sortMap, maxDepth);
+
+			} catch (final MaxDepthException e) {
+				worklist.addLast(expression);
+				currentLine = e.currentLine;
+			}
+		}
+	}
+
 	public void dumpScript(final OutputStreamWriter writer) throws IOException {
 		if (textExists) {
 			writer.write(text.toString());
@@ -272,18 +286,20 @@ public class BtorScript {
 			textStreamWriter.flush();
 		}
 
-		final ArrayList<BtorExpression> expressionWorklist = new ArrayList<>();
+		final ArrayDeque<BtorExpression> initExpressionWorklist = new ArrayDeque<>();
+		final ArrayDeque<BtorExpression> expressionWorklist = new ArrayDeque<>();
 
 		for (final BtorExpression expression : expressionSet.keySet()) {
 			if (expression instanceof InitExpression) {
-				currentLine = expression.dumpExpression(currentLine, textStreamWriter, sortMap);
+				initExpressionWorklist.push(expression);
 			} else {
-				expressionWorklist.add(expression);
+				expressionWorklist.push(expression);
 			}
 		}
-		for (final BtorExpression expression : expressionWorklist) {
-			currentLine = expression.dumpExpression(currentLine, textStreamWriter, sortMap);
-		}
+
+		dumpExpressions(textStreamWriter, initExpressionWorklist);
+		dumpExpressions(textStreamWriter, expressionWorklist);
+
 		textStreamWriter.flush();
 		text.append(textStream.toString());
 		writer.write(text.toString());

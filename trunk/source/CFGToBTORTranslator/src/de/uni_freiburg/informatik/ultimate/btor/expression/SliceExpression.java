@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.btor.BtorSort;
+import de.uni_freiburg.informatik.ultimate.btor.MaxDepthException;
 
 public class SliceExpression extends BtorExpression {
 
@@ -31,13 +32,19 @@ public class SliceExpression extends BtorExpression {
 	@Override
 	public int hashCode() {
 		final int hash = "slice".hashCode();
-		return hash * upper * lower * child.hashCode();
+		return hash * upper * lower * System.identityHashCode(child);
 	}
 
 	@Override
 	public int dumpExpression(int currentLine, final OutputStreamWriter writer,
-			final HashMap<BtorSort, Integer> sortMap) throws IOException {
-		currentLine = child.dumpExpression(currentLine, writer, sortMap);
+			final HashMap<BtorSort, Integer> sortMap, final int maxDepth) throws IOException, MaxDepthException {
+		if (maxDepth == 0 && nid == 0) {
+			throw new MaxDepthException(currentLine);
+		}
+		if (nid != 0) {
+			return currentLine;
+		}
+		currentLine = child.dumpExpression(currentLine, writer, sortMap, maxDepth - 1);
 		if (!assignnid(currentLine)) {
 			return currentLine;
 		}
