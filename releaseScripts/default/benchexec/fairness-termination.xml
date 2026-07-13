@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="120" hardtimelimit="130" cpuCores="2">
+
+  <resultfiles></resultfiles>
+  <option name="--full-output" />
+  
+  <rundefinition name="Default">
+    <option name="--buchiautomizer.assuming.strong.fairness">false</option>
+	</rundefinition>
+  
+  <rundefinition name="Fairness">
+    <option name="--buchiautomizer.assuming.strong.fairness">true</option>
+	</rundefinition>
+
+  <tasks name="SVCOMP ConcurrencySafety-Main">
+		<includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
+	</tasks>
+</benchmark>
