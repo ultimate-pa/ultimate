@@ -93,8 +93,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class InterruptPostProcessor implements IPostProcessor {
 
-	private static final boolean ADD_ISR_LABELS = true;
-
 	private final ILogger mLogger;
 
 	private final ProcedureManager mProcedureManager;
@@ -108,6 +106,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private final ILocation mIgnoreLoc = LocationFactory.createIgnoreCLocation();
 
 	private final InterruptTranslationMode mTranslationMode;
+	private final boolean mAnnotateInterrupts;
 
 	private final String mEntryFunction;
 
@@ -129,6 +128,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mExpressionTranslation = expressionTranslation;
 		mTranslationMode = settings.interruptTranslationMode();
+		mAnnotateInterrupts = settings.annotateInterrupts();
 		mEntryFunction = settings.getEntryFunction();
 		mInterruptFuncHandler = interruptFuncHandler;
 		mIrqHandler = irqHandler;
@@ -492,14 +492,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private List<Statement> getIsrBlock(final List<Statement> ifStatements, final InterruptServiceFunction isr) {
-		if (ADD_ISR_LABELS) {
+		if (mAnnotateInterrupts) {
 			return ifStatements;
 		}
 		return List.of(StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements));
 	}
 
 	private Statement[] getIsrBlock(final Statement ifStatement, final InterruptServiceFunction isr) {
-		if (ADD_ISR_LABELS) {
+		if (mAnnotateInterrupts) {
 			return new Statement[] { ifStatement };
 		}
 		return new Statement[] { StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStatement)) };
@@ -509,7 +509,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final var interruptAnnotation = new InterruptAnnotation(ISRLocation.ENTRY, isr);
 		final var then = StatementFactory.constructCallStatement(mIgnoreLoc, false, new VariableLHS[0],
 				isr.getProcedure().getIdentifier(), new Expression[0]);
-		if (ADD_ISR_LABELS) {
+		if (mAnnotateInterrupts) {
 			mLogger.info("Add interrupt labels to call of function: " + isr.getProcedure().getIdentifier());
 			final var ifStmt = StatementFactory.constructIfStatement(mIgnoreLoc, enabledExpr,
 					labelIsrStatement(then, isr), new Statement[0]);

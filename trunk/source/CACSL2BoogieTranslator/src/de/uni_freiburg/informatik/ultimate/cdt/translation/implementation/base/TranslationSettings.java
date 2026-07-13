@@ -92,6 +92,7 @@ public final class TranslationSettings {
 	private final boolean mFixedAddressesForInitialization;
 
 	private final InterruptTranslationMode mInterruptTranslationMode;
+	private final boolean mAnnotateInterrupts;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -155,6 +156,8 @@ public final class TranslationSettings {
 
 		mInterruptTranslationMode = ups.getEnum(CACSLPreferenceInitializer.LABEL_INTERRUPT_TRANSLATION_MODE,
 				InterruptTranslationMode.class);
+		mAnnotateInterrupts = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ADD_INTERRUPT_ANNOTATIONS);
+
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -172,7 +175,7 @@ public final class TranslationSettings {
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
 			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization,
-			final InterruptTranslationMode interruptTranslationMode) {
+			final InterruptTranslationMode interruptTranslationMode, final boolean addInterruptAnnotations) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -205,6 +208,7 @@ public final class TranslationSettings {
 		mMemoryAddressing = memoryAddressingPreference;
 		mFixedAddressesForInitialization = fixedAddressesForInitialization;
 		mInterruptTranslationMode = interruptTranslationMode;
+		mAnnotateInterrupts = addInterruptAnnotations;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -347,6 +351,10 @@ public final class TranslationSettings {
 		return mInterruptTranslationMode;
 	}
 
+	public boolean annotateInterrupts() {
+		return mAnnotateInterrupts;
+	}
+
 	public TranslationSettings setMemoryStructurePreference(final MemoryStructure memoryStructure) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
@@ -357,7 +365,7 @@ public final class TranslationSettings {
 				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
-				mFixedAddressesForInitialization, mInterruptTranslationMode);
+				mFixedAddressesForInitialization, mInterruptTranslationMode, mAnnotateInterrupts);
 	}
 
 	/**
