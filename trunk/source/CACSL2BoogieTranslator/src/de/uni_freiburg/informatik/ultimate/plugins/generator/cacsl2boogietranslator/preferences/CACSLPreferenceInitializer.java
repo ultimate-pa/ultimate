@@ -182,6 +182,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"If this is set to one of the two realizations, the program is assumed to be an "
 					+ "interrupt-driven program and will be translated to a thread-based program.";
 
+	public static final String LABEL_ADD_INTERRUPT_ANNOTATIONS = "Annotate interrupts";
+	public static final String DESC_ADD_INTERRUPT_ANNOTATIONS =
+			"If this setting is enabled, statements belonging to an ISR are annotated which is necessary for IDP"
+					+ "verification using the IDP-automata abstraction.";
+
 	// TODO: Remove this as soon as Parser form C-File works
 	public static final String LABEL_CURRENT_ISR_INFO = "Current ISR Info";
 
@@ -381,7 +386,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								DESC_INTERRUPT_TRANSLATION_MODE, PreferenceType.Combo,
 								InterruptTranslationMode.values()),
 						new UltimatePreferenceItem<>(LABEL_CURRENT_ISR_INFO, CurrentIsrInfo.INFO_1,
-								PreferenceType.Combo, CurrentIsrInfo.values())),
+								PreferenceType.Combo, CurrentIsrInfo.values()),
+						new UltimatePreferenceItem<>(LABEL_ADD_INTERRUPT_ANNOTATIONS, false,
+								DESC_ADD_INTERRUPT_ANNOTATIONS, PreferenceType.Boolean)),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),

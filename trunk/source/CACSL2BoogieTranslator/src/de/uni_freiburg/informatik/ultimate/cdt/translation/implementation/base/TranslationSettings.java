@@ -93,7 +93,7 @@ public final class TranslationSettings {
 	private final boolean mFixedAddressesForInitialization;
 
 	private final InterruptTranslationMode mInterruptTranslationMode;
-
+	private final boolean mAnnotateInterrupts;
 	// TODO: Remove this as soon as Parser form C-File works
 	private final CurrentIsrInfo mCurrentIsrInfo;
 
@@ -160,6 +160,8 @@ public final class TranslationSettings {
 		mInterruptTranslationMode = ups.getEnum(CACSLPreferenceInitializer.LABEL_INTERRUPT_TRANSLATION_MODE,
 				InterruptTranslationMode.class);
 		mCurrentIsrInfo = ups.getEnum(CACSLPreferenceInitializer.LABEL_CURRENT_ISR_INFO, CurrentIsrInfo.class);
+		mAnnotateInterrupts = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ADD_INTERRUPT_ANNOTATIONS);
+
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -177,7 +179,8 @@ public final class TranslationSettings {
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
 			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization,
-			final InterruptTranslationMode interruptTranslationMode, final CurrentIsrInfo currentIsrInfo) {
+			final InterruptTranslationMode interruptTranslationMode, final CurrentIsrInfo currentIsrInfo,
+			final boolean addInterruptAnnotations) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -211,6 +214,7 @@ public final class TranslationSettings {
 		mFixedAddressesForInitialization = fixedAddressesForInitialization;
 		mInterruptTranslationMode = interruptTranslationMode;
 		mCurrentIsrInfo = currentIsrInfo;
+		mAnnotateInterrupts = addInterruptAnnotations;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -357,6 +361,10 @@ public final class TranslationSettings {
 		return mCurrentIsrInfo;
 	}
 
+	public boolean annotateInterrupts() {
+		return mAnnotateInterrupts;
+	}
+
 	public TranslationSettings setMemoryStructurePreference(final MemoryStructure memoryStructure) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
@@ -367,7 +375,7 @@ public final class TranslationSettings {
 				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
-				mFixedAddressesForInitialization, mInterruptTranslationMode, mCurrentIsrInfo);
+				mFixedAddressesForInitialization, mInterruptTranslationMode, mCurrentIsrInfo, mAnnotateInterrupts);
 	}
 
 	/**
