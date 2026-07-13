@@ -160,30 +160,30 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 		// Add fork statements to the main procedure
 		if (!realization3) {
-			addForksToProcedure(mISR.getMainProcedure(), threadProcedures);
+//			addForksToProcedure(mISR.getMainProcedure(), threadProcedures);
 		}
 
 		// Add atomic block and variable assignment true to request enabled functions
 		final var lhsMap = getVariableLHSs();
-		annotateRequestProcedures(lhsMap, mISR.getRequestEnable(), true);
+//		annotateRequestProcedures(lhsMap, mISR.getRequestEnable(), true);
 
 		// Add fork statements in request enable procedure instead of the main procedure
 		if (realization3) {
-			addForksToRequestEnable(mISR.getRequestEnable(), threadProcedureMap);
+//			addForksToRequestEnable(mISR.getRequestEnable(), threadProcedureMap);
 		}
 		// Add atomic block and variable assignment false to request disabled functions if
-		annotateRequestProcedures(lhsMap, mISR.getRequestDisable(), false);
+//		annotateRequestProcedures(lhsMap, mISR.getRequestDisable(), false);
 
 		// Add join statements to request disable procedure
 		if (realization3) {
-			addJoinsToRequestDisable(mISR.getRequestDisable());
+//			addJoinsToRequestDisable(mISR.getRequestDisable());
 		}
 
 		// Add atomic block and variable assignment true to request enabled all function
-		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
+//		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
 
 		if (realization3) {
-			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadProcedureMap);
+//			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadProcedureMap);
 		}
 
 		// Add interrupt enabled variable declarations

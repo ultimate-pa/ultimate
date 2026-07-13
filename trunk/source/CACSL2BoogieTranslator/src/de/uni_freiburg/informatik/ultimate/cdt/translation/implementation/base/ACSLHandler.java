@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptPriorityFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -730,7 +729,7 @@ public class ACSLHandler implements IACSLHandler {
 
 		// Find corresponding procedure "proc" for this interrupt result annotation
 
-		final SymbolTableValue symbol = mSymboltable.findCSymbol(main.getAcslHook(), node.getIdentifier());
+		final SymbolTableValue symbol = null;// mSymboltable.findCSymbol(main.getAcslHook(), node.getIdentifier());
 		if (symbol != null) {
 			// Get static value of integer data type as IRQ and use specifier as IRQ name
 			symbol.getCType().getUnderlyingType();
@@ -740,7 +739,7 @@ public class ACSLHandler implements IACSLHandler {
 			res.getCType().isIntegerType();
 		}
 
-		return new InterruptResult(new InterruptServiceFunction(proc, irq));
+		return new InterruptResult(null /* new InterruptServiceFunction(proc, irq) */);
 	}
 
 	@Override
@@ -748,21 +747,21 @@ public class ACSLHandler implements IACSLHandler {
 		final InterruptMaskingFunction.Operation op = (node.getEnabled()) ? InterruptMaskingFunction.Operation.ENABLE
 				: InterruptMaskingFunction.Operation.DISABLE;
 
-		return new InterruptResult(new InterruptMaskingFunction(proc, irq, op));
+		return new InterruptResult(null /* new InterruptMaskingFunction(proc, irq, op) */);
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptPriorityGet node) {
 		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.GET;
 
-		return new InterruptResult(new InterruptPriorityFunction(proc, irq, op));
+		return new InterruptResult(null /* new InterruptPriorityFunction(proc, irq, op) */);
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptPrioritySet node) {
 		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.SET;
 
-		return new InterruptResult(new InterruptPriorityFunction(proc, irq, op));
+		return new InterruptResult(null /* new InterruptPriorityFunction(proc, irq, op) */);
 	}
 
 	@Override
