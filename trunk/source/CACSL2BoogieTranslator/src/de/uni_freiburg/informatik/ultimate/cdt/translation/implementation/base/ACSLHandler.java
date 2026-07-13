@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.i
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptPriorityFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -722,21 +723,35 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptServiceRoutine node) {
-
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		// Check if node.getIdentifier() is an enum specifier (lookup in symbol table)
 		// If enum specifier -> get static value as IRQ and use specifier as IRQ name
 		// If not specifier -> register name as IRQ name and assign free value
 
 		// Find corresponding procedure "proc" for this interrupt result annotation
 
-		final SymbolTableValue symbol = null;// mSymboltable.findCSymbol(main.getAcslHook(), node.getIdentifier());
-		if (symbol != null) {
-			// Get static value of integer data type as IRQ and use specifier as IRQ name
-			symbol.getCType().getUnderlyingType();
+		final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = node.getIdentifier();
+		if (expr instanceof final de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral literal) {
+			final String irqName = literal.getValue();
+			final SymbolTableValue symbol = mSymboltable.findCSymbol(main.getAcslHook(), irqName);
+			if (symbol != null) {
+				// Lookup enum specifier from identifier name and use static value of specifier as IRQ number
+				if (CEnum.replaceEnumWithInt(symbol.getCType()).getUnderlyingType().isIntegerType() && symbol
+						.getConstantValue() instanceof final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral specifier) {
+					final int irqNum = Integer.parseInt(specifier.getValue());
+					assert irqNum >= 0;
+					// call creation of new irq (irqName, irqNum)
+				} else {
+					throw new UnsupportedSyntaxException(loc,
+							"InterruptServiceRoutine does not have an integer literal as enum specifier");
+				}
+			} else {
+				// Register identifier name as IRQ name and assign free IRQ number
+				// Call creation of new irq (irqName)
+			}
 		} else {
-			// Register identifier name as IRQ name and assign free IRQ number
-			final ExpressionResult res = (ExpressionResult) main.dispatch(node.getIdentifier());
-			res.getCType().isIntegerType();
+			throw new UnsupportedSyntaxException(loc,
+					"InterruptServiceRoutine must have a string literal as identifier");
 		}
 
 		return new InterruptResult(null /* new InterruptServiceFunction(proc, irq) */);
