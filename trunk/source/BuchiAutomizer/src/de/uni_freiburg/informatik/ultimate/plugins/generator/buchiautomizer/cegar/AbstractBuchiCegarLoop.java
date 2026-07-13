@@ -419,6 +419,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 					mAbstraction = refineFiniteInternal(mAbstraction, ir.refinementEngineResult());
 					break;
 				case final UnfairnessResult<L> unf:
+					mLogger.warn("Unfairness generalization. Guard used " + unf.notG());
 					mAbstraction = refineUnfair(unf);
 					break;
 				case final TerminationResult<L> tr:

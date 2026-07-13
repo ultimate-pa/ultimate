@@ -399,11 +399,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			}
 		}
 
-		// TODO: how do we get a predicate - or at least the actual program vars ?
-		// TODO: remove the 'duplicate' not guard disj. once we've found out how to get the predicate from it
-		final Term notGuardDisj = SmtUtils.not(mManagedScript.getScript(),
+		Term notGuardDisj = SmtUtils.not(mManagedScript.getScript(),
 				SmtUtils.or(mManagedScript.getScript(), guards.toArray(Term[]::new)));
-
+		notGuardDisj = SmtUtils.simplify(mManagedScript, notGuardDisj, mServices, mSimplificationTechnique);
 		// disjunction of terms should be equivalent to parallel comp of respective TransFormulae
 		final UnmodifiableTransFormula notGuardDisjTF =
 				TransFormulaUtils.negate(TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, null,

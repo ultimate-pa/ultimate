@@ -27,8 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,10 +62,6 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	IPredicate mHondaPrime;
 	BuchiHoareTripleChecker mHTC;
 	NestedMap3<IPredicate, L, IPredicate, IsContained> mOriginalEdges;
-
-	// cache the already constructed transitions
-	HashSet<OutgoingInternalTransition<L, IPredicate>> mAlreadyConstructedTS = new HashSet<>();
-	HashMap<OutgoingInternalTransition<L, IPredicate>, IPredicate> mOrigins = new HashMap<>();
 
 	/**
 	 * Unfairness Wrapper.
@@ -150,8 +144,9 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 
 	@Override
 	public String sizeInformation() {
-		final int num_ts = mAlreadyConstructedTS.size();
-		return "Number of states: " + size() + ", number of transitions: " + num_ts;
+		return "Number of states: " + size() + ". Wrapped Automaton: " + mWrappedAutomaton.sizeInformation()
+				+ " states, " + mWrappedAutomaton.computeNumberOfInternalTransitions() + " transitions.";
+
 	}
 
 	/**
@@ -165,15 +160,8 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 		final List<OutgoingInternalTransition<L, IPredicate>> filteredTS = new ArrayList<>();
 		for (final OutgoingInternalTransition<L, IPredicate> ts : mWrappedAutomaton.internalSuccessors(state, letter)) {
 			for (final IPredicate target : mWrappedAutomaton.successorPredicates(state, letter)) {
-
-				if (mAlreadyConstructedTS.contains(ts) && (mOrigins.get(ts) == state)) {
+				if (isLegalTS(state, ts.getLetter(), target)) {
 					filteredTS.add(ts);
-				} else {
-					if (isLegalTS(state, ts.getLetter(), target)) {
-						filteredTS.add(ts);
-						mAlreadyConstructedTS.add(ts);
-						mOrigins.put(ts, state);
-					}
 				}
 			}
 		}

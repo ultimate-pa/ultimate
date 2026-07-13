@@ -1,5 +1,6 @@
 /**
-* 2 non-loop threads, 1 disabled, 1 enabled, trivial combined guard disjunction
+* 
+* terminates under fairness
 */
 
 var x: int;
@@ -11,7 +12,7 @@ modifies x;
 
   fork 1 t1();
   fork 2 t2();
-  fork 3 t3();
+  fork 3 t2();
   join 1;
   join 2;
   join 3;
@@ -32,15 +33,9 @@ modifies x;
 procedure t2()
 modifies x;
 {
-	assume x >= 0;
 	x := -2;
 }
 
-procedure t3()
-modifies x;
-{
-	assume x <= 0;
-	x := -2;
-}
+
 
 
