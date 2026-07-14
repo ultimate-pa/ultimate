@@ -262,10 +262,15 @@ public final class Translator {
 	//
 	private YieldProcedure addJoin() {
 		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.OUT);
+
+		final var setContain = new FunctionApplication(null, "Set_Contains",
+				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
+
+		final var assume = new AssumeStatement(null, setContain);
 		final var getCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "One_Get",
 				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
 		final var refinedAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
-				new Body(null, new VariableDeclaration[0], new Statement[] { getCall }));
+				new Body(null, new VariableDeclaration[0], new Statement[] { assume, getCall }));
 		return new YieldProcedure(LAYER_BASE, "join", new ParameterDeclaration[] { tidParam },
 				new ParameterDeclaration[0], new CallStatement[0], new CallStatement[0], null, refinedAction);
 	}
