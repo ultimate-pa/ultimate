@@ -61,7 +61,8 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * Extracted from {@link SimplificationTest} into its own file; reuses {@link SimplificationTest#runSimplificationTest}
  * so the test-running/-checking logic is not duplicated.
  *
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Roman Vintonyak
+ * @author David Enoghama
  *
  */
 public class BitvectorUtilsTest {

@@ -526,6 +526,12 @@ public final class BitvectorUtils {
 		}
 	}
 
+	/**
+	 *
+	 * @author Roman Vintonyak
+	 * @author David Enoghama
+	 *
+	 */
 	private static class NaryBitvectorOperation_BitvectorResult extends BitvectorOperation {
 
 		private final String mName;
