@@ -571,4 +571,13 @@ public class BitvectorUtilsTest {
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void bvConstantsCase() {
+		final String formulaAsString = "(bvand (_ bv1 8) (_ bv3 8) (_ bv7 8))";
+		final String expected = "(_ bv1 8)";
+
+		SimplificationTest.runSimplificationTest(new FunDecl[0], formulaAsString, expected,
+				SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 }
