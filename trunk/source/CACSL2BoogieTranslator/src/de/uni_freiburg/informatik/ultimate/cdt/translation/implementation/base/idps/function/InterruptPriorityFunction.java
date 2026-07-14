@@ -35,6 +35,11 @@ public class InterruptPriorityFunction extends InterruptManagementFunction {
 		mOp = op;
 	}
 
+	public InterruptPriorityFunction(final InterruptRequest irq, final Operation op) {
+		super(irq);
+		mOp = op;
+	}
+
 	public Operation getOperation() {
 		return mOp;
 	}

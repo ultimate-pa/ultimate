@@ -93,6 +93,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.IInterruptFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -181,6 +183,8 @@ public class FunctionHandler {
 
 	private final IMemoryPointer mMemoryPointer;
 
+	private final InterruptFunctionHandler mInterruptFuncHandler;
+
 	/**
 	 *
 	 * @param logger
@@ -201,7 +205,8 @@ public class FunctionHandler {
 			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final CHandler chandler, final LocationFactory locFac,
 			final FlatSymbolTable symbolTable, final ExpressionResultTransformer expressionResultTransformer,
-			final Set<IASTNode> variablesOnHeap, final IMemoryPointer pointer) {
+			final Set<IASTNode> variablesOnHeap, final IMemoryPointer pointer,
+			final InterruptFunctionHandler interruptFuncHandler) {
 		mLogger = logger;
 		mNameHandler = nameHandler;
 		mExpressionTranslation = expressionTranslation;
@@ -218,6 +223,7 @@ public class FunctionHandler {
 		mCalledFunctions = new HashSet<>();
 		mDefinedFunctions = new HashSet<>();
 		mMemoryPointer = pointer;
+		mInterruptFuncHandler = interruptFuncHandler;
 	}
 
 	/**
@@ -313,7 +319,10 @@ public class FunctionHandler {
 			assert type != null;
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, definedProcInfo, node.getDeclarator());
+
+		final ArrayList<IInterruptFunction> interruptFuncs = new ArrayList<>();
+		Specification[] spec =
+				handleSpecFromACSLContract(main, contract, definedProcInfo, node.getDeclarator(), interruptFuncs);
 
 		if (!definedProcInfo.hasDeclaration()) {
 			// we have not seen this procedure yet, make a new declaration, register the procedure
@@ -413,6 +422,11 @@ public class FunctionHandler {
 				proc.getOutParams(), null, body);
 
 		mProcedureManager.endProcedureScope(mCHandler);
+
+		for (final IInterruptFunction interruptFunc : interruptFuncs) {
+			interruptFunc.setProcedure(definedProcInfo.getDeclaration());
+			mInterruptFuncHandler.register(interruptFunc);
+		}
 
 		return new Result(impl);
 	}
@@ -808,8 +822,9 @@ public class FunctionHandler {
 	 * @param methodName
 	 * @return
 	 */
-	private Specification[] makeBoogieSpecFromACSLContract(final IDispatcher main, final List<ACSLNode> contract,
-			final BoogieProcedureInfo procInfo, final IASTDeclarator hook) {
+	private Specification[] handleSpecFromACSLContract(final IDispatcher main, final List<ACSLNode> contract,
+			final BoogieProcedureInfo procInfo, final IASTDeclarator hook,
+			final List<IInterruptFunction> interruptFunctions) {
 		if (contract == null || contract.isEmpty()) {
 			return new Specification[0];
 		}
@@ -821,6 +836,7 @@ public class FunctionHandler {
 			assert retranslateRes instanceof ContractResult;
 			final ContractResult resContr = (ContractResult) retranslateRes;
 			specs.addAll(Arrays.asList(resContr.getSpecs()));
+			interruptFunctions.addAll(Arrays.asList(resContr.getInterruptFunctions()));
 		}
 		for (final Specification spec : specs) {
 			if (spec instanceof ModifiesSpecification) {
@@ -1046,7 +1062,7 @@ public class FunctionHandler {
 
 		final Attribute[] attr = {};
 		final String[] typeParams = {};
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, procInfo, hook);
+		Specification[] spec = handleSpecFromACSLContract(main, contract, procInfo, hook, null);
 
 		if (funcType.getResultType().isVoidType()) {
 			if (mProcedureManager.isCalledBeforeDeclared(procInfo)) {

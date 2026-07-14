@@ -30,12 +30,17 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.i
 
 public abstract class InterruptFunction implements IInterruptFunction {
 
-	private final Procedure mProc;
+	private Procedure mProc;
 
 	private final InterruptRequest mIrq;
 
 	public InterruptFunction(final Procedure proc, final InterruptRequest irq) {
 		mProc = Objects.requireNonNull(proc);
+		mIrq = Objects.requireNonNull(irq);
+	}
+
+	public InterruptFunction(final InterruptRequest irq) {
+		mProc = null;
 		mIrq = Objects.requireNonNull(irq);
 	}
 
@@ -47,6 +52,12 @@ public abstract class InterruptFunction implements IInterruptFunction {
 	@Override
 	public Procedure getProcedure() {
 		return mProc;
+	}
+
+	@Override
+	public void setProcedure(final Procedure proc) {
+		assert Objects.isNull(mProc);
+		mProc = proc;
 	}
 
 	@Override

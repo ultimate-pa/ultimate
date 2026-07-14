@@ -68,8 +68,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequest;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequestHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.IInterruptFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptPriorityFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
@@ -191,7 +192,6 @@ public class ACSLHandler implements IACSLHandler {
 	private final CHandler mCHandler;
 	private final CExpressionTranslator mCExpressionTranslator;
 	private final IMemoryPointer mMemoryPointer;
-	private final InterruptFunctionHandler mInterruptFuncHandler;
 	private final InterruptRequestHandler mIrqHandler;
 
 	private final ScopedHashMap<String, LRValue> mBoundVariables = new ScopedHashMap<>();
@@ -199,8 +199,7 @@ public class ACSLHandler implements IACSLHandler {
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
 			final ProcedureManager procedureManager, final LocationFactory locationFactory, final CHandler chandler,
-			final IMemoryPointer memoryPointer, final InterruptFunctionHandler interruptFuncHandler,
-			final InterruptRequestHandler irqHandler) {
+			final IMemoryPointer memoryPointer, final InterruptRequestHandler irqHandler) {
 		mWitnessInvariantMode = witnessInvariantMode;
 		mSymboltable = symboltable;
 		mExpressionTranslation = expressionTranslation;
@@ -212,7 +211,6 @@ public class ACSLHandler implements IACSLHandler {
 		mCExpressionTranslator = chandler.getCExpressionTranslator().disableChecksForUndefinedBehavior();
 		mCHandler = chandler;
 		mMemoryPointer = memoryPointer;
-		mInterruptFuncHandler = interruptFuncHandler;
 		mIrqHandler = irqHandler;
 	}
 
@@ -709,10 +707,10 @@ public class ACSLHandler implements IACSLHandler {
 			spec.addAll(Arrays.asList(((ContractResult) main.dispatch(stmt, main.getAcslHook())).getSpecs()));
 		}
 
+		final ArrayList<IInterruptFunction> interruptFuncs = new ArrayList<>();
 		if (node.getInterruptStmt() != null) {
 			for (final InterruptStatement stmt : node.getInterruptStmt()) {
-				final InterruptResult res = (InterruptResult) main.dispatch(stmt, main.getAcslHook());
-				mInterruptFuncHandler.register(res.getInterruptFunction());
+				interruptFuncs.add(((InterruptResult) main.dispatch(stmt, main.getAcslHook())).getInterruptFunction());
 			}
 		}
 
@@ -723,68 +721,80 @@ public class ACSLHandler implements IACSLHandler {
 
 		// TODO : node.getCompleteness();
 		mSpecType = ACSLHandler.SPEC_TYPE.NOT;
-		return new ContractResult(spec.toArray(new Specification[spec.size()]));
+		return new ContractResult(spec.toArray(new Specification[spec.size()]),
+				interruptFuncs.toArray(new IInterruptFunction[interruptFuncs.size()]));
+	}
+
+	private InterruptRequest handleInterruptReference(final IDispatcher main, final ILocation loc,
+			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression ref) {
+		return switch (ref) {
+		case final de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral identifier ->
+				handleInterruptIdentifier(main, loc, identifier);
+		case final de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLAllExpression ignored -> null;
+		default -> throw new UnsupportedSyntaxException(loc, "Unsupported interrupt reference: " + ref.toString());
+		};
+	}
+
+	private InterruptRequest handleInterruptIdentifier(final IDispatcher main, final ILocation loc,
+			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral identifier) {
+		final String irqName = identifier.getValue();
+		final SymbolTableValue symbol = mSymboltable.findCSymbol(main.getAcslHook(), irqName);
+
+		// Register identifier name as IRQ name and assign free IRQ number
+		if (symbol == null) {
+			if (mIrqHandler.register(irqName)) {
+				return mIrqHandler.getIrq(irqName);
+			}
+
+			throw new UnsupportedSyntaxException(loc, "Interrupt request '" + irqName + "' cannot be registered");
+		}
+
+		// Lookup enum specifier from identifier name and use static value of specifier as IRQ number
+		if (CEnum.replaceEnumWithInt(symbol.getCType()).getUnderlyingType().isIntegerType() && symbol
+				.getConstantValue() instanceof final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral specifier) {
+			final int irqNum = Integer.parseInt(specifier.getValue());
+			if (mIrqHandler.register(irqName, irqNum)) {
+				return mIrqHandler.getIrq(irqName);
+			}
+
+			throw new UnsupportedSyntaxException(loc, "Interrupt identifier '" + irqName + "' cannot be registered");
+		}
+
+		throw new IncorrectSyntaxException(loc, "Incorrect interrupt identifier: " + irqName);
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptServiceRoutine node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = node.getIdentifier();
-
-		if (expr instanceof final de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral literal) {
-			final String irqName = literal.getValue();
-			final SymbolTableValue symbol = mSymboltable.findCSymbol(main.getAcslHook(), irqName);
-			if (symbol != null) {
-				// Lookup enum specifier from identifier name and use static value of specifier as IRQ number
-				if (CEnum.replaceEnumWithInt(symbol.getCType()).getUnderlyingType().isIntegerType() && symbol
-						.getConstantValue() instanceof final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral specifier) {
-					final int irqNum = Integer.parseInt(specifier.getValue());
-					if (!mIrqHandler.register(irqName, irqNum)) {
-						throw new UnsupportedSyntaxException(loc,
-								"InterruptRequest '" + irqName + "' of InterruptServiceRoutine cannot be registered");
-					} else {
-						return new InterruptResult(new InterruptServiceFunction(proc, mIrqHandler.getIrq(irqName)));
-					}
-				} else {
-					throw new IncorrectSyntaxException(loc,
-							"InterruptServiceRoutine does not have an integer literal as enum specifier");
-				}
-			} else {
-				// Register identifier name as IRQ name and assign free IRQ number
-				if (!mIrqHandler.register(irqName)) {
-					throw new UnsupportedSyntaxException(loc,
-							"InterruptRequest '" + irqName + "' of InterruptServiceRoutine cannot be registered");
-				} else {
-					return new InterruptResult(new InterruptServiceFunction(proc, mIrqHandler.getIrq(irqName)));
-				}
-			}
-		} else {
-			throw new IncorrectSyntaxException(loc, "InterruptServiceRoutine must have a string literal as identifier");
-		}
-
-		return null;
+		assert node.getIdentifier() instanceof de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
+		final InterruptRequest irq = handleInterruptIdentifier(main, loc,
+				de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral.class.cast(node.getIdentifier()));
+		return new InterruptResult(new InterruptServiceFunction(irq));
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptMasking node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		final InterruptRequest irq = handleInterruptReference(main, loc, node.getIdentifier());
 		final InterruptMaskingFunction.Operation op = (node.getEnabled()) ? InterruptMaskingFunction.Operation.ENABLE
 				: InterruptMaskingFunction.Operation.DISABLE;
-
-		return new InterruptResult(null /* new InterruptMaskingFunction(proc, irq, op) */);
+		return new InterruptResult(new InterruptMaskingFunction(irq, op));
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptPriorityGet node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		final InterruptRequest irq = handleInterruptReference(main, loc, node.getIdentifier());
 		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.GET;
-
-		return new InterruptResult(null /* new InterruptPriorityFunction(proc, irq, op) */);
+		return new InterruptResult(new InterruptPriorityFunction(irq, op));
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final InterruptPrioritySet node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		final InterruptRequest irq = handleInterruptReference(main, loc, node.getIdentifier());
 		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.SET;
-
-		return new InterruptResult(null /* new InterruptPriorityFunction(proc, irq, op) */);
+		return new InterruptResult(new InterruptPriorityFunction(irq, op));
 	}
 
 	@Override

@@ -41,7 +41,7 @@ public class InterruptResult extends Result {
 	 * Create new result with an interrupt function.
 	 *
 	 * @param interruptFunc
-	 *            Interrupt functions.
+	 *            Interrupt function.
 	 */
 	public InterruptResult(final IInterruptFunction interruptFunc) {
 		super(null);

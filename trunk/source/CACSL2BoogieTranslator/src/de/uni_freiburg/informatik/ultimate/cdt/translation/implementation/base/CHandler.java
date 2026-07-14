@@ -182,6 +182,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequestHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AssertLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AtomicLibraryModel;
@@ -375,6 +376,8 @@ public class CHandler {
 
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
+	private final InterruptFunctionHandler mInterruptFunctionHandler;
+
 	private final TranslationSettings mSettings;
 
 	private final ExpressionResultTransformer mExprResultTransformer;
@@ -465,6 +468,9 @@ public class CHandler {
 		mProcedureManager = new ProcedureManager(mLogger, settings);
 
 		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, mProcedureManager);
+
+		mInterruptFunctionHandler = null;
+
 		mMemoryHandler = new MemoryHandler(mTypeSizes, mNameHandler, settings.useSmtBoolArrayWorkaround(), mTypeHandler,
 				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings,
 				mMemoryPointer);
@@ -481,7 +487,7 @@ public class CHandler {
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, mProcedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
-				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
+				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer, null);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
@@ -519,8 +525,7 @@ public class CHandler {
 			final StaticObjectsHandler staticObjectsHandler, final TypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final INameHandler nameHandler,
-			final FlatSymbolTable symbolTable, final TypeSizes typeSizes,
-			final InterruptFunctionHandler interruptFuncHandler) {
+			final FlatSymbolTable symbolTable, final TypeSizes typeSizes, final InterruptRequestHandler irqHandler) {
 		assert prerunCHandler.mIsPrerun : "CHandler not in prerun mode";
 		mIsPrerun = false;
 
@@ -563,6 +568,8 @@ public class CHandler {
 
 		mAuxVarInfoBuilder = new AuxVarInfoBuilder(nameHandler, typeHandler, procedureManager);
 
+		mInterruptFunctionHandler = new InterruptFunctionHandler();
+
 		// the memory handler also retains information from the prerun
 		mMemoryHandler = new MemoryHandler(prerunCHandler.mMemoryHandler, typeSizes, nameHandler, typeHandler,
 				expressionTranslation, procedureManager, typeSizeAndOffsetComputer, mAuxVarInfoBuilder, mSettings);
@@ -578,7 +585,7 @@ public class CHandler {
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, procedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
-				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
+				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer, mInterruptFunctionHandler);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
@@ -593,7 +600,7 @@ public class CHandler {
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 		mInterruptPostProcessor = new InterruptPostProcessor(mLogger, mSettings, mProcedureManager, this,
-				mAuxVarInfoBuilder, mExpressionTranslation, interruptFuncHandler);
+				mAuxVarInfoBuilder, mExpressionTranslation, mInterruptFunctionHandler);
 		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryFunction());
 		copyGlobalsFromPrerun(prerunCHandler.mSymbolTable);
 	}

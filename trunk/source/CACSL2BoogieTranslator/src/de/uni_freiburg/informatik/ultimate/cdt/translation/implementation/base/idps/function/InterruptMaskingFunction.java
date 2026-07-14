@@ -35,8 +35,8 @@ public class InterruptMaskingFunction extends InterruptManagementFunction {
 		mOp = op;
 	}
 
-	public InterruptMaskingFunction(final Procedure proc, final Operation op) {
-		super(proc);
+	public InterruptMaskingFunction(final InterruptRequest irq, final Operation op) {
+		super(irq);
 		mOp = op;
 	}
 

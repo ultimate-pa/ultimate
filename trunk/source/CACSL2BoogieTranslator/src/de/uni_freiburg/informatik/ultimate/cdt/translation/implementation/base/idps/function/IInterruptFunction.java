@@ -30,6 +30,8 @@ public interface IInterruptFunction {
 
 	Procedure getProcedure();
 
+	void setProcedure(Procedure proc);
+
 	boolean allIrqs();
 
 	InterruptRequest getIrq();

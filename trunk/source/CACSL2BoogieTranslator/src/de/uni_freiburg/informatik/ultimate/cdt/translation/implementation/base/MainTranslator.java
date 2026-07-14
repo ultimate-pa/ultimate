@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequestHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -238,17 +237,14 @@ public class MainTranslator {
 		final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer = new TypeSizeAndOffsetComputer(typeSizes,
 				expressionTranslation, typeHandler, translationSettings.useBitpreciseBitfields());
 
-		final InterruptFunctionHandler interruptFuncHandler = new InterruptFunctionHandler();
 		final InterruptRequestHandler irqHandler = new InterruptRequestHandler();
 
-		final CHandler mainCHandler =
-				new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler, expressionTranslation,
-						typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes, interruptFuncHandler);
+		final CHandler mainCHandler = new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler,
+				expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes, irqHandler);
 
 		final PreprocessorHandler ppHandler = new PreprocessorHandler(reporter, locationFactory);
-		final ACSLHandler acslHandler =
-				new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation, typeHandler, procedureManager,
-						locationFactory, mainCHandler, memoryPointer, interruptFuncHandler, irqHandler);
+		final ACSLHandler acslHandler = new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation,
+				typeHandler, procedureManager, locationFactory, mainCHandler, memoryPointer, irqHandler);
 
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witness, locationFactory, typeHandler,
 				mainCHandler, ppHandler, acslHandler);

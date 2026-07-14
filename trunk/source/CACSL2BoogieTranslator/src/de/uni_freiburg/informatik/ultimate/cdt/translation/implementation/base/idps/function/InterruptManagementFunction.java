@@ -32,8 +32,8 @@ public abstract class InterruptManagementFunction extends InterruptFunction {
 		super(proc, irq);
 	}
 
-	public InterruptManagementFunction(final Procedure proc) {
-		super(proc);
+	public InterruptManagementFunction(final InterruptRequest irq) {
+		super(irq);
 	}
 
 	@Override

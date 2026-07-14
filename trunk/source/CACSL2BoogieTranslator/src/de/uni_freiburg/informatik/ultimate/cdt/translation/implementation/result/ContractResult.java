@@ -32,6 +32,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.IInterruptFunction;
 
 /**
  * @author Markus Lindenmann
@@ -46,18 +47,40 @@ public class ContractResult extends Result {
 	private final Specification[] mSpecs;
 
 	/**
+	 * Interrupt functions.
+	 */
+	private final IInterruptFunction[] mInterruptFuncs;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param specs
+	 *            a specification array.
+	 * @param interruptFunctions
+	 *            an interrupt function array.
+	 */
+	public ContractResult(final Specification[] specs, final IInterruptFunction[] interruptFunctions) {
+		super(null);
+		mSpecs = specs;
+		mInterruptFuncs = interruptFunctions;
+	}
+
+	/**
 	 * Constructor.
 	 *
 	 * @param specs
 	 *            a specification array.
 	 */
 	public ContractResult(final Specification[] specs) {
-		super(null);
-		mSpecs = specs;
+		this(specs, null);
 	}
 
 	public Specification[] getSpecs() {
 		return mSpecs;
+	}
+
+	public IInterruptFunction[] getInterruptFunctions() {
+		return mInterruptFuncs;
 	}
 
 }

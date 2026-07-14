@@ -32,6 +32,10 @@ public class InterruptServiceFunction extends InterruptFunction {
 		super(proc, irq);
 	}
 
+	public InterruptServiceFunction(final InterruptRequest irq) {
+		super(irq);
+	}
+
 	@Override
 	public boolean isServiceFunction() {
 		return true;
