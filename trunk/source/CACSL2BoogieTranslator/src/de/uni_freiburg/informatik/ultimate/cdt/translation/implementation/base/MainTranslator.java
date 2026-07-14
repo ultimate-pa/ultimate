@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequestHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
@@ -238,14 +239,16 @@ public class MainTranslator {
 				expressionTranslation, typeHandler, translationSettings.useBitpreciseBitfields());
 
 		final InterruptFunctionHandler interruptFuncHandler = new InterruptFunctionHandler();
+		final InterruptRequestHandler irqHandler = new InterruptRequestHandler();
 
 		final CHandler mainCHandler =
 				new CHandler(prerunCHandler, procedureManager, staticObjectsHandler, typeHandler, expressionTranslation,
 						typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes, interruptFuncHandler);
 
 		final PreprocessorHandler ppHandler = new PreprocessorHandler(reporter, locationFactory);
-		final ACSLHandler acslHandler = new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation,
-				typeHandler, procedureManager, locationFactory, mainCHandler, memoryPointer, interruptFuncHandler);
+		final ACSLHandler acslHandler =
+				new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation, typeHandler, procedureManager,
+						locationFactory, mainCHandler, memoryPointer, interruptFuncHandler, irqHandler);
 
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witness, locationFactory, typeHandler,
 				mainCHandler, ppHandler, acslHandler);

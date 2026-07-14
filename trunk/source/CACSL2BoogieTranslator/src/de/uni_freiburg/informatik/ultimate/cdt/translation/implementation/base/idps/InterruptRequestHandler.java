@@ -31,12 +31,27 @@ import java.util.Set;
  *
  * @author Manuel Bentele
  */
-public class InterruptRequestManager {
+public class InterruptRequestHandler {
 
 	private final Set<InterruptRequest> mIrqs;
 
-	public InterruptRequestManager() {
+	private int mIrqFreeNum;
+
+	public InterruptRequestHandler() {
 		mIrqs = new HashSet<>();
+		mIrqFreeNum = 0;
+	}
+
+	public boolean register(final String name) {
+		final boolean registered = mIrqs.add(new InterruptRequest(name, mIrqFreeNum));
+		mIrqFreeNum = registered ? mIrqFreeNum + 1 : mIrqFreeNum;
+		return registered;
+	}
+
+	public boolean register(final String name, final int num) {
+		final boolean registered = mIrqs.add(new InterruptRequest(name, mIrqFreeNum));
+		mIrqFreeNum = registered ? mIrqFreeNum + 1 : mIrqFreeNum;
+		return registered;
 	}
 
 	public boolean register(final InterruptRequest irq) {

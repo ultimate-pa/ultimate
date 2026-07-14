@@ -68,9 +68,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequestHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptPriorityFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -190,13 +192,15 @@ public class ACSLHandler implements IACSLHandler {
 	private final CExpressionTranslator mCExpressionTranslator;
 	private final IMemoryPointer mMemoryPointer;
 	private final InterruptFunctionHandler mInterruptFuncHandler;
+	private final InterruptRequestHandler mIrqHandler;
 
 	private final ScopedHashMap<String, LRValue> mBoundVariables = new ScopedHashMap<>();
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
 			final ProcedureManager procedureManager, final LocationFactory locationFactory, final CHandler chandler,
-			final IMemoryPointer memoryPointer, final InterruptFunctionHandler interruptFuncHandler) {
+			final IMemoryPointer memoryPointer, final InterruptFunctionHandler interruptFuncHandler,
+			final InterruptRequestHandler irqHandler) {
 		mWitnessInvariantMode = witnessInvariantMode;
 		mSymboltable = symboltable;
 		mExpressionTranslation = expressionTranslation;
@@ -209,6 +213,7 @@ public class ACSLHandler implements IACSLHandler {
 		mCHandler = chandler;
 		mMemoryPointer = memoryPointer;
 		mInterruptFuncHandler = interruptFuncHandler;
+		mIrqHandler = irqHandler;
 	}
 
 	@Override
@@ -724,13 +729,8 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final InterruptServiceRoutine node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		// Check if node.getIdentifier() is an enum specifier (lookup in symbol table)
-		// If enum specifier -> get static value as IRQ and use specifier as IRQ name
-		// If not specifier -> register name as IRQ name and assign free value
-
-		// Find corresponding procedure "proc" for this interrupt result annotation
-
 		final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression expr = node.getIdentifier();
+
 		if (expr instanceof final de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral literal) {
 			final String irqName = literal.getValue();
 			final SymbolTableValue symbol = mSymboltable.findCSymbol(main.getAcslHook(), irqName);
@@ -739,22 +739,30 @@ public class ACSLHandler implements IACSLHandler {
 				if (CEnum.replaceEnumWithInt(symbol.getCType()).getUnderlyingType().isIntegerType() && symbol
 						.getConstantValue() instanceof final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral specifier) {
 					final int irqNum = Integer.parseInt(specifier.getValue());
-					assert irqNum >= 0;
-					// call creation of new irq (irqName, irqNum)
+					if (!mIrqHandler.register(irqName, irqNum)) {
+						throw new UnsupportedSyntaxException(loc,
+								"InterruptRequest '" + irqName + "' of InterruptServiceRoutine cannot be registered");
+					} else {
+						return new InterruptResult(new InterruptServiceFunction(proc, mIrqHandler.getIrq(irqName)));
+					}
 				} else {
-					throw new UnsupportedSyntaxException(loc,
+					throw new IncorrectSyntaxException(loc,
 							"InterruptServiceRoutine does not have an integer literal as enum specifier");
 				}
 			} else {
 				// Register identifier name as IRQ name and assign free IRQ number
-				// Call creation of new irq (irqName)
+				if (!mIrqHandler.register(irqName)) {
+					throw new UnsupportedSyntaxException(loc,
+							"InterruptRequest '" + irqName + "' of InterruptServiceRoutine cannot be registered");
+				} else {
+					return new InterruptResult(new InterruptServiceFunction(proc, mIrqHandler.getIrq(irqName)));
+				}
 			}
 		} else {
-			throw new UnsupportedSyntaxException(loc,
-					"InterruptServiceRoutine must have a string literal as identifier");
+			throw new IncorrectSyntaxException(loc, "InterruptServiceRoutine must have a string literal as identifier");
 		}
 
-		return new InterruptResult(null /* new InterruptServiceFunction(proc, irq) */);
+		return null;
 	}
 
 	@Override
