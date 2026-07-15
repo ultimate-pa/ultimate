@@ -403,4 +403,25 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	public boolean isComplemented() {
 		return mName.endsWith(PEAComplement.COMPLEMENT_POSTFIX);
 	}
+
+	public PhaseEventAutomata removeSink() {
+		final List<Phase> phaseList = new ArrayList<>();
+		for (final Phase phase : mPhases) {
+			if (phase.getName().contains("sink")) {
+				continue;
+			}
+			final Phase newPhase =
+					new Phase(phase.getName(), phase.getStateInv(), phase.getClockInv(), phase.getStoppedClocks());
+			newPhase.setPhaseBits(phase.getPhaseBits());
+			for (final Transition transition : phase.getTransitions()) {
+				if (!transition.getDest().getName().contains("sink")) {
+					newPhase.addTransition(transition.getDest(), transition.getGuard(), transition.getResets());
+				}
+			}
+			phaseList.add(newPhase);
+		}
+		final PhaseEventAutomata newPEA =
+				new PhaseEventAutomata(mName, phaseList, mInit, mClocks, mVariables, mEvents, mDeclarations);
+		return newPEA;
+	}
 }

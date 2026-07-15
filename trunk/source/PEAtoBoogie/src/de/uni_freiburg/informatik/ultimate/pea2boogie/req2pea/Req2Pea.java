@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaToBoogie;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorInfo;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorType;
@@ -103,6 +104,8 @@ public class Req2Pea implements IReq2Pea {
 				mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
 
 		final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
+		final PEATransformerMode mode =
+				prefProvider.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE, PEATransformerMode.class);
 
 		final List<ReqPeas> minimizedPeas = new ArrayList<>();
 		for (final ReqPeas reqpea : mPattern2Peas) {
@@ -113,7 +116,10 @@ public class Req2Pea implements IReq2Pea {
 				final PhaseEventAutomata peaToMinimize = pea.getValue();
 				if (minimize) {
 					final PEAMinimization minimizePea = new PEAMinimization(peaToMinimize, constVars);
-					final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
+					PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
+					if (mode == PEATransformerMode.REQ_CHECK) {
+						minimizedPea = minimizedPea.removeSink();
+					}
 					builder.addPea(pattern, minimizedPea);
 					minimizedCt2pea.add(new Pair<>(pea.getKey(), minimizedPea));
 				} else {
@@ -130,18 +136,6 @@ public class Req2Pea implements IReq2Pea {
 		}
 
 		mSymbolTable = builder.constructSymbolTable();
-
-		// final IPreferenceProvider prefProvider =
-		// mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
-		//
-		// final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
-		//
-		// if (minimize) {
-		//
-		// final PhaseEventAutomata originalPea = pea.getValue();
-		// final PEAMinimization minimizePea = new PEAMinimization(originalPea, mSymbolTable.getConstVars());
-		// final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
-		// }
 
 		final Set<Entry<String, ErrorInfo>> errors = builder.getErrors();
 		for (final Entry<String, ErrorInfo> entry : errors) {
