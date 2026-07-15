@@ -97,7 +97,7 @@ Sometimes, it can be beneficial to avoid this costly SMT call and use a conserva
 
 Different SMT solvers can be used to check independence of statements.
 
-* Possible Values: `Z3`, `BITWUZLA`, `MATHSAT`, `SMTINTERPOL`, `PRINCESS`
+* Possible Values: `Z3`, `BITWUZLA`, `CVC5`, `MATHSAT`, `SMTINTERPOL`, `PRINCESS`
 * Default Value: `Z3`
 * Command Line: `--traceabstraction.smt.solver.used.for.commutativity.in.por <arg>`
 * Settings Directive:
