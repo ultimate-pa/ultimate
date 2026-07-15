@@ -25,6 +25,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class InterruptFunctionHandler {
@@ -43,6 +44,10 @@ public class InterruptFunctionHandler {
 		return getInterruptFunctions().stream()
 				.filter(f -> f instanceof InterruptServiceFunction && f.isServiceFunction())
 				.map(f -> InterruptServiceFunction.class.cast(f)).collect(Collectors.toList());
+	}
+
+	public void apply(final Class<IInterruptFunction> cls, final Consumer<IInterruptFunction> action) {
+		getInterruptFunctions().stream().filter(cls::isInstance).forEach(action);
 	}
 
 	public void register(final IInterruptFunction func) {
