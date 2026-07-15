@@ -68,7 +68,6 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 	private final ProcedureResourceCache mProcResCache;
 	private DagInterpreter mDagInterpreter;
 	private final IPredicate mInitialState;
-	// TODO: inital state auch in smbolictools
 
 	/**
 	 * Creates a new interpreter for manually specified locations of interest.

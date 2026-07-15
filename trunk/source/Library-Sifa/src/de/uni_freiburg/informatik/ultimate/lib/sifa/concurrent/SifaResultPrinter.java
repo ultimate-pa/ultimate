@@ -20,6 +20,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 public final class SifaResultPrinter {
 
+	public static final String BUILD_TAG = "thread-modular";
+
 	private final ILogger mLogger;
 	private final Map<IcfgLocation, Integer> mAbstractLocationIds;
 	private final ThreadActivityPreanalysis mActivityPreanalysis;
@@ -37,7 +39,7 @@ public final class SifaResultPrinter {
 			return;
 		}
 
-		mLogger.info("=== SIFA Analysis Results ===");
+		mLogger.info("=== SIFA Analysis Results [%s] ===", BUILD_TAG);
 		mLogger.info("");
 
 		final List<String> procedures = new ArrayList<>(icfg.getProcedureEntryNodes().keySet());
@@ -109,8 +111,8 @@ public final class SifaResultPrinter {
 		}
 		for (final IcfgEdge edge : location.getOutgoingEdges()) {
 			final String code = formatSourceCode(edge);
-			if (!code.equals("[skip]") && !code.equals("[<null>]")) {
-				mLogger.info("  %s", code.substring(1, code.length() - 1));
+			if (!code.equals("skip") && !code.equals("<null>")) {
+				mLogger.info("  %s", code);
 			}
 		}
 	}
@@ -141,10 +143,10 @@ public final class SifaResultPrinter {
 		if (edge instanceof CodeBlock) {
 			final String code = ((CodeBlock) edge).getPrettyPrintedStatements();
 			if (code != null && !code.isEmpty()) {
-				return "[" + code.trim().replace("\n", "; ") + "]";
+				return code.trim().replace("\n", "; ");
 			}
 		}
-		return "[" + formatTransformula(edge.getTransformula()) + "]";
+		return formatTransformula(edge.getTransformula());
 	}
 
 	private String formatTransformula(final UnmodifiableTransFormula transformula) {

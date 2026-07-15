@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -74,8 +75,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
 	private static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
 	private static final String[] VALUES_ABSTRACT_DOMAIN = { ExplicitValueDomain.class.getSimpleName(),
-			IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), EqDomain.class.getSimpleName(),
-			CompoundDomain.class.getSimpleName() };
+			IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
+			EqDomain.class.getSimpleName(), CompoundDomain.class.getSimpleName() };
 
 	public static final String LABEL_LOOP_SUMMARIZER = "Loop Summarizer";
 	private static final String DEFAULT_LOOP_SUMMARIZER = FixpointLoopSummarizer.class.getSimpleName();
@@ -113,7 +114,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			InterferenceApplicatorType.class;
 
 	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction";
-	private static final LocationAbstractionType DEFAULT_LOCATION_ABSTRACTION = LocationAbstractionType.SPLIT_AT_GUARD_AND_EXIT;
+	private static final LocationAbstractionType DEFAULT_LOCATION_ABSTRACTION = LocationAbstractionType.SPLIT_AT_GUARD;
 	private static final LocationAbstractionType[] VALUES_LOCATION_ABSTRACTION = LocationAbstractionType.values();
 	public static final Class<LocationAbstractionType> CLASS_LOCATION_ABSTRACTION = LocationAbstractionType.class;
 
@@ -133,6 +134,25 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_USE_BUCKETS = "Use Buckets";
 	private static final String TOOLTIP_USE_BUCKETS = "Partition the abstract state into per-interference buckets (disable to test applicators without bucket overhead)";
 	private static final boolean DEFAULT_USE_BUCKETS = true;
+
+	public static final String LABEL_MAX_BUCKETS = "Max. Buckets";
+	private static final String TOOLTIP_MAX_BUCKETS =
+			"Maximum number of abstract-location buckets before surplus buckets are merged into the catch-all bucket";
+	private static final int DEFAULT_MAX_BUCKETS = ThreadModularSifaSettings.DEFAULT_MAX_BUCKETS;
+
+	public static final String LABEL_MAX_DISJUNCTS_PER_BUCKET = "Max. Disjuncts per Bucket";
+	private static final String TOOLTIP_MAX_DISJUNCTS_PER_BUCKET =
+			"Maximum number of disjuncts retained in each abstract-location bucket before joining surplus disjuncts";
+	private static final int DEFAULT_MAX_DISJUNCTS_PER_BUCKET =
+			ThreadModularSifaSettings.DEFAULT_MAX_DISJUNCTS_PER_BUCKET;
+
+	public static final String LABEL_LOCKSET_AWARE_INTERFERENCE = "Lockset-Aware Interference";
+	private static final String TOOLTIP_LOCKSET_AWARE_INTERFERENCE = "Filter out interferences whose write point definitely holds a lock the observer also holds (requires frontend-tagged lock variables; STRONGEST_POSTCONDITION only)";
+	private static final boolean DEFAULT_LOCKSET_AWARE_INTERFERENCE = false;
+
+	public static final String LABEL_PUBLISH_ON_ACQUIRE = "Publish On Acquire";
+	private static final String TOOLTIP_PUBLISH_ON_ACQUIRE = "Re-establish a lock-protected global's published value when the observer acquires the lock (numeric privatization; requires Lockset-Aware Interference; STRONGEST_POSTCONDITION only)";
+	private static final boolean DEFAULT_PUBLISH_ON_ACQUIRE = false;
 
 	public static final String LABEL_PROOF_CHECK = "Proof Check";
 	private static final String TOOLTIP_PROOF_CHECK =
@@ -270,6 +290,14 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				TOOLTIP_JOIN_PRECISION, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_USE_BUCKETS, DEFAULT_USE_BUCKETS,
 				TOOLTIP_USE_BUCKETS, PreferenceType.Boolean));
+		containerConcurrent.addItem(integer(LABEL_MAX_BUCKETS, TOOLTIP_MAX_BUCKETS, DEFAULT_MAX_BUCKETS,
+				1, Integer.MAX_VALUE));
+		containerConcurrent.addItem(integer(LABEL_MAX_DISJUNCTS_PER_BUCKET, TOOLTIP_MAX_DISJUNCTS_PER_BUCKET,
+				DEFAULT_MAX_DISJUNCTS_PER_BUCKET, 1, Integer.MAX_VALUE));
+		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_LOCKSET_AWARE_INTERFERENCE,
+				DEFAULT_LOCKSET_AWARE_INTERFERENCE, TOOLTIP_LOCKSET_AWARE_INTERFERENCE, PreferenceType.Boolean));
+		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_PUBLISH_ON_ACQUIRE,
+				DEFAULT_PUBLISH_ON_ACQUIRE, TOOLTIP_PUBLISH_ON_ACQUIRE, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_PROOF_CHECK, DEFAULT_PROOF_CHECK,
 				TOOLTIP_PROOF_CHECK, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_RESULT_PRINT, DEFAULT_RESULT_PRINT,

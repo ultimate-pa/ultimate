@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition.NamedServiceCallback;
@@ -62,10 +63,18 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static final String PROP_INPUT_DIR = "sifa.regression.inputDir";
 	private static final String PROP_FILE_ENDING = "sifa.regression.fileEnding";
 	private static final String PROP_METHODS = "sifa.regression.methods";
+	private static final String PROP_LOCATION_TRACKING_MODE = "sifa.regression.locationTrackingMode";
 	private static final String PROP_USE_BUCKETS = "sifa.regression.useBuckets";
+	private static final String PROP_MAX_BUCKETS = "sifa.regression.maxBuckets";
+	private static final String PROP_MAX_DISJUNCTS_PER_BUCKET = "sifa.regression.maxDisjunctsPerBucket";
+	private static final String PROP_LOCKSET_AWARE = "sifa.regression.locksetAware";
+	private static final String PROP_PUBLISH_ON_ACQUIRE = "sifa.regression.publishOnAcquire";
+	private static final String PROP_PUBLISH_DEBUG = "sifa.regression.publishDebug";
 	private static final String PROP_JOIN_PRECISION = "sifa.regression.joinPrecision";
 	private static final String PROP_MAX_PARALLEL_EXPLICIT_VALUES = "sifa.regression.maxParallelExplicitValues";
 	private static final String PROP_ABSTRACT_DOMAIN = "sifa.regression.abstractDomain";
+	private static final String PROP_COMPOUND_DOMAINS = "sifa.regression.compoundDomains";
+	private static final String PROP_MAX_PARALLEL_INTERVALS = "sifa.regression.maxParallelIntervals";
 	private static final String PROP_MAX_PARALLEL_OCTAGON = "sifa.regression.maxParallelOctagon";
 	private static final String PROP_LOCATION_ABSTRACTION = "sifa.regression.locationAbstraction";
 	private static final String PROP_MAX_DISJUNCTIONS = "sifa.regression.maxDisjunctions";
@@ -75,6 +84,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static final String SETTINGS = "examples/concurrent/bpl/regression/thread-modular-sifa/testSettings.epf";
 	private static final String INPUT_DIR = "examples/concurrent/bpl/regression/thread-modular-sifa";
 	private static final String FILE_ENDING = ".bpl";
+	private static final String EXCLUDE_REGEX = ".*/scaling/.*";
 	private static final long TIMEOUT_MS = 30_000L;
 
 	/*
@@ -106,8 +116,10 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static final int MAX_DISJUNCTIONS = 8;
 	private static final boolean JOIN_PRECISION = true;
 	private static final boolean USE_BUCKETS = true;
+	private static final boolean LOCKSET_AWARE = false;
+	private static final boolean PUBLISH_ON_ACQUIRE = false;
 	private static final boolean PROOF_CHECK = false;
-	private static final boolean RESULT_PRINT = false;
+	private static final boolean RESULT_PRINT = true;
 
 	// private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARD_AND_EXIT";
 	// private static final String LOCATION_ABSTRACTION = "SINGLETON";
@@ -137,15 +149,35 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 				prefs.put("Interference Applicator", method);
 
 				// Apply common experiment settings. Change the constants above to adjust runs.
+				final String locationTrackingMode = System.getProperty(PROP_LOCATION_TRACKING_MODE);
+				if (locationTrackingMode != null && !locationTrackingMode.isBlank()) {
+					prefs.put("Location Tracking Mode", locationTrackingMode);
+				}
 				prefs.put("Abstract Domain", System.getProperty(PROP_ABSTRACT_DOMAIN, ABSTRACT_DOMAIN));
+				final String compoundDomains = System.getProperty(PROP_COMPOUND_DOMAINS);
+				if (compoundDomains != null && !compoundDomains.isBlank()) {
+					prefs.put("CompoundDomain Intern Domains", compoundDomains);
+				}
 				prefs.put("Fluid", FLUID);
 				prefs.put("Max. Parallel Explicit Values",
 						Integer.getInteger(PROP_MAX_PARALLEL_EXPLICIT_VALUES, MAX_PARALLEL_EXPLICIT_VALUES));
+				final Integer maxParallelIntervals = Integer.getInteger(PROP_MAX_PARALLEL_INTERVALS);
+				if (maxParallelIntervals != null) {
+					prefs.put("Max. Parallel Intervals", maxParallelIntervals);
+				}
 				prefs.put("Max. Parallel Octagon",
 						Integer.getInteger(PROP_MAX_PARALLEL_OCTAGON, MAX_PARALLEL_OCTAGON));
 				prefs.put("Join Precision", Boolean.parseBoolean(
 						System.getProperty(PROP_JOIN_PRECISION, Boolean.toString(JOIN_PRECISION))));
-				prefs.put("Use Buckets", Boolean.getBoolean(PROP_USE_BUCKETS) || USE_BUCKETS);
+				prefs.put("Use Buckets", Boolean.parseBoolean(
+							System.getProperty(PROP_USE_BUCKETS, Boolean.toString(USE_BUCKETS))));
+				putIntegerIfPresent(prefs, "Max. Buckets", PROP_MAX_BUCKETS);
+				putIntegerIfPresent(prefs, "Max. Disjuncts per Bucket", PROP_MAX_DISJUNCTS_PER_BUCKET);
+				prefs.put("Lockset-Aware Interference", Boolean.parseBoolean(
+						System.getProperty(PROP_LOCKSET_AWARE, Boolean.toString(LOCKSET_AWARE))));
+				prefs.put("Publish On Acquire", Boolean.parseBoolean(
+						System.getProperty(PROP_PUBLISH_ON_ACQUIRE, Boolean.toString(PUBLISH_ON_ACQUIRE))));
+				putBooleanIfPresent(prefs, "Publish Debug", PROP_PUBLISH_DEBUG);
 				prefs.put("Proof Check", PROOF_CHECK);
 				prefs.put("Result Print", RESULT_PRINT);
 				prefs.put("Location Abstraction",
@@ -164,6 +196,22 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 		return super.createTestCases();
 	}
 
+	private static void putIntegerIfPresent(final IPreferenceProvider prefs, final String preferenceLabel,
+			final String propertyName) {
+		final Integer value = Integer.getInteger(propertyName);
+		if (value != null) {
+			prefs.put(preferenceLabel, value);
+		}
+	}
+
+	private static void putBooleanIfPresent(final IPreferenceProvider prefs, final String preferenceLabel,
+			final String propertyName) {
+		final String value = System.getProperty(propertyName);
+		if (value != null && !value.isBlank()) {
+			prefs.put(preferenceLabel, Boolean.parseBoolean(value));
+		}
+	}
+
 	private void addTestCases(final File toolchainFile, final File settingsFile, final Collection<File> inputFiles,
 			final String name, final UnaryOperator<IUltimateServiceProvider> callback) {
 		final long timeout = getTimeout();
@@ -176,7 +224,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static List<File> selectInputFiles() {
 		final File inputDir = resolveTrunkOrAbsoluteFile(getInputDir());
 		final String includeRegex = System.getProperty(PROP_INCLUDE_REGEX);
-		final String excludeRegex = System.getProperty(PROP_EXCLUDE_REGEX);
+		final String excludeRegex = System.getProperty(PROP_EXCLUDE_REGEX, EXCLUDE_REGEX);
 		final int maxFiles = Integer.getInteger(PROP_MAX_FILES, -1);
 
 		List<File> inputFiles = TestUtil.getFiles(inputDir, getFileEnding()).stream()

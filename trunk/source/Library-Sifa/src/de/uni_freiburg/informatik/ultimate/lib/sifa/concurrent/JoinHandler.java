@@ -15,23 +15,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-// Handles the two join-specific state transformations in post(): variable projection and exit summary import.
 class JoinHandler {
 
 	private final ConcurrentSymbolicTools mTools;
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private GhostVariableManager mGhostVariables;
-	// Caches keyed by join-thread name and edge identity respectively; both are fixed after configureStaticAnalysis.
 	private final Map<String, Set<TermVariable>> mGhostVarsToProjectCache = new HashMap<>();
 	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedVarsCache =
 			new IdentityHashMap<>();
@@ -53,7 +50,6 @@ class JoinHandler {
 		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join)) {
 			return state;
 		}
-		// auch wenn nicht eindeutig vlt mit disjunciton versuchen
 		final String joinedThread = activityPreanalysis
 				.getJoinedThreadForJoin((IIcfgJoinTransitionThreadCurrent<IcfgLocation>) join);
 		if (joinedThread == null) {
@@ -70,7 +66,6 @@ class JoinHandler {
 		return intersectStateAndExitLocationState(state, joinedThread, exitLoc, globalizedExit);
 	}
 
-	// Returns the exit state of the joined thread projected to global variables, or null if trivial/absent.
 	private IPredicate globalExitState(final ThreadAnalysisContext threadContext, final IcfgLocation exitLoc,
 			final String joinedThread) {
 		final IPredicate exitState = threadContext.locationPredicates().get(exitLoc);
@@ -105,15 +100,10 @@ class JoinHandler {
 			final IcfgLocation exitLoc, final IPredicate sharedExit) {
 		final IPredicate atExit = mTools.addLocationUpdateForThread(state, joinedThread, exitLoc);
 		final Term exitFormula = sharedExit.getFormula();
-		return mTools.mapPartitions(atExit,
-				partition -> mTools.predicate(SmtUtils.and(mTools.getScript(), partition.getFormula(), exitFormula)));
+		return mTools.predicate(SmtUtils.and(mTools.getScript(), atExit.getFormula(), exitFormula));
 	}
 
-	// edge case, join assign transition
 	IPredicate projectJoinAssignedVars(final IPredicate state, final IIcfgTransition<IcfgLocation> transition) {
-		if (state instanceof AbstractLocationPartitionedPredicate) {
-			return mTools.mapPartitions(state, partition -> projectJoinAssignedVars(partition, transition));
-		}
 		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join) || isTrivial(state)) {
 			return state;
 		}

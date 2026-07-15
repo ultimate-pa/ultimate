@@ -35,9 +35,7 @@ public final class GuardedUpdateUtils {
 		if (preOnly.isEmpty()) {
 			return null;
 		}
-		final Term guard = preOnly.size() == 1 ? preOnly.get(0)
-				: SmtUtils.and(managedScript.getScript(), preOnly.toArray(new Term[0]));
-		return predicateFactory.newPredicate(guard);
+		return predicateFactory.newPredicate(SmtUtils.and(managedScript.getScript(), preOnly));
 	}
 
 }

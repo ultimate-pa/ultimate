@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,8 +88,8 @@ public class RelationalPredicatePostcondition {
 
 	public Set<TermVariable> primedVariablesIn(final IPredicate relationalPredicate) {
 		if (mProjectAllGlobalPreVars) {
-			return Set.copyOf(mAllGlobalPrimedToUnprimed.keySet().stream().map(TermVariable.class::cast)
-					.collect(Collectors.toSet()));
+			return mAllGlobalPrimedToUnprimed.keySet().stream().map(TermVariable.class::cast)
+					.collect(Collectors.toUnmodifiableSet());
 		}
 		final Set<TermVariable> primedVariables = new HashSet<>();
 		for (final IProgramVar pv : relationalPredicate.getVars()) {
@@ -113,7 +113,7 @@ public class RelationalPredicatePostcondition {
 
 		final Set<TermVariable> preVarsToProject = preparedRelation.preVarsToProject();
 		final Term projected;
-		if (preVarsToProject.isEmpty() || !hasFreeVarIn(conjunction, preVarsToProject)) {
+		if (preVarsToProject.isEmpty() || !RelationalPredicateUtils.hasFreeVarIn(conjunction, preVarsToProject)) {
 			projected = conjunction;
 		} else {
 			if (mStats != null) {
@@ -122,7 +122,7 @@ public class RelationalPredicatePostcondition {
 				mStats.startMax(SifaStats.Key.INTERFERENCE_QE_MAX_TIME);
 			}
 			projected = RelationalPredicateUtils.existentiallyProject(conjunction, preVarsToProject, mServices,
-					mManagedScript, mStats);
+					mManagedScript);
 			if (mStats != null) {
 				mStats.stop(SifaStats.Key.INTERFERENCE_QE_TIME);
 				mStats.stopMax(SifaStats.Key.INTERFERENCE_QE_MAX_TIME);
@@ -131,22 +131,13 @@ public class RelationalPredicatePostcondition {
 
 		final Map<Term, Term> primedToUnprimed = preparedRelation.primedToUnprimed();
 		final Term renamed;
-		if (primedToUnprimed.isEmpty() || !hasFreeVarIn(projected, primedToUnprimed.keySet())) {
+		if (primedToUnprimed.isEmpty() || !RelationalPredicateUtils.hasFreeVarIn(projected, primedToUnprimed.keySet())) {
 			renamed = projected;
 		} else {
 			renamed = Substitution.apply(mManagedScript, primedToUnprimed, projected);
 		}
 
 		return mPredicateFactory.newPredicate(renamed);
-	}
-
-	private static boolean hasFreeVarIn(final Term term, final Set<? extends Term> candidates) {
-		for (final TermVariable freeVar : term.getFreeVars()) {
-			if (candidates.contains(freeVar)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	public IUltimateServiceProvider getServices() {

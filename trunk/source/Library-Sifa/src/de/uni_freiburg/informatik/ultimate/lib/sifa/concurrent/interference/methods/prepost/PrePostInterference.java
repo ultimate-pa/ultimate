@@ -2,17 +2,15 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.met
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.ThreadedKey;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.KeyedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
@@ -21,44 +19,41 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public final class PrePostInterference implements IInterference {
+public final class PrePostInterference extends KeyedInterferenceSet<PrePostInterference.PrePostPair> {
 
 	public record PrePostPair(IPredicate preState, IPredicate postState) {
 	}
 
-	private final Map<ThreadedKey, PrePostPair> mInterferenceByKey;
 	private final ManagedScript mManagedScript;
-	private final IPredicate mFalsePredicate;
 
-	public PrePostInterference(final Map<ThreadedKey, PrePostPair> interferenceByKey,
-			final ManagedScript managedScript, final IPredicate falsePredicate) {
-		mInterferenceByKey = Map.copyOf(interferenceByKey);
+	public PrePostInterference(final Map<InterferenceGroupKey, PrePostPair> summaryByKey,
+			final Map<String, Set<IcfgLocation>> preForkSourcesByThread, final ManagedScript managedScript) {
+		super(summaryByKey, preForkSourcesByThread);
 		mManagedScript = managedScript;
-		mFalsePredicate = falsePredicate;
 	}
 
 	@Override
-	public IPredicate applyUntilFixpoint(final IPredicate state, final Set<String> activeThreadIds,
-			final IDomain domain, final int wideningThreshold, final SifaStats stats) {
-		if (mInterferenceByKey.isEmpty()
-				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isTrueLiteral(state.getFormula()))
-				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isFalseLiteral(state.getFormula()))) {
+	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
+			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
+			final int wideningThreshold, final SifaStats stats) {
+		if (mSummaryByKey.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
+				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-		final ArrayList<Entry<ThreadedKey, PrePostPair>> active = buildActive(activeThreadIds);
-		if (active.isEmpty()) {
+		final List<Entry<InterferenceGroupKey, PrePostPair>> applicable =
+				selectApplicableSummaries(observerThreadId, activeThreadIds, observerLockset, stats);
+		if (applicable.isEmpty()) {
 			return state;
 		}
 		IPredicate current = state;
 		IPredicate frontier = state;
-		// Copy to allow removal of fired pairs without re-checking them.
-		final ArrayList<Entry<ThreadedKey, PrePostPair>> remaining = new ArrayList<>(active);
+		final ArrayList<Entry<InterferenceGroupKey, PrePostPair>> remaining = new ArrayList<>(applicable);
 		for (int iteration = 1;; iteration++) {
 			stats.increment(Key.INTERFERENCE_INNER_ITERATIONS);
 			boolean hasGenerated = false;
 			IPredicate generated = state;
-			for (final Iterator<Entry<ThreadedKey, PrePostPair>> iterator = remaining.iterator();
-						iterator.hasNext();) {
+			for (final Iterator<Entry<InterferenceGroupKey, PrePostPair>> iterator = remaining.iterator();
+					iterator.hasNext();) {
 				final PrePostPair pair = iterator.next().getValue();
 				if (!SmtUtils.isTrueLiteral(pair.preState().getFormula()) && !intersects(frontier, pair.preState())) {
 					continue;
@@ -94,72 +89,6 @@ public final class PrePostInterference implements IInterference {
 		}
 	}
 
-	private ArrayList<Entry<ThreadedKey, PrePostPair>> buildActive(final Set<String> activeThreadIds) {
-		final ArrayList<Entry<ThreadedKey, PrePostPair>> active = new ArrayList<>();
-		for (final Entry<ThreadedKey, PrePostPair> e : mInterferenceByKey.entrySet()) {
-			if (activeThreadIds.contains(e.getKey().threadId())) {
-				active.add(e);
-			}
-		}
-		return active;
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return mInterferenceByKey.isEmpty();
-	}
-
-	@Override
-	public Set<String> threadIds() {
-		final Set<String> ids = new LinkedHashSet<>();
-		mInterferenceByKey.keySet().forEach(k -> ids.add(k.threadId()));
-		return Set.copyOf(ids);
-	}
-
-	@Override
-	public IInterference widen(final IInterference other, final IDomain domain) {
-		if (!(other instanceof final PrePostInterference typedOther)) {
-			throw new IllegalArgumentException(
-					"Cannot widen PrePostInterference with " + other.getClass().getSimpleName());
-		}
-		final Map<ThreadedKey, PrePostPair> widened = new LinkedHashMap<>();
-		for (final Entry<ThreadedKey, PrePostPair> entry : mInterferenceByKey.entrySet()) {
-			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey().threadId());
-			final PrePostPair otherGroup = typedOther.mInterferenceByKey.get(entry.getKey());
-			final PrePostPair widenedGroup = otherGroup == null ? entry.getValue()
-					: new PrePostPair(domain.widen(entry.getValue().preState(), otherGroup.preState()),
-							domain.widen(entry.getValue().postState(), otherGroup.postState()));
-			if (!isTrivialPair(widenedGroup)) {
-				widened.put(entry.getKey(), widenedGroup);
-			}
-		}
-		for (final Entry<ThreadedKey, PrePostPair> entry : typedOther.mInterferenceByKey.entrySet()) {
-			if (!widened.containsKey(entry.getKey()) && !isTrivialPair(entry.getValue())) {
-				widened.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return widened.isEmpty() ? null
-				: new PrePostInterference(widened, mManagedScript, mFalsePredicate);
-	}
-
-	@Override
-	public boolean isSubsumedBy(final IInterference other, final IDomain domain) {
-		if (!(other instanceof final PrePostInterference typedOther)) {
-			return false;
-		}
-		for (final Entry<ThreadedKey, PrePostPair> entry : mInterferenceByKey.entrySet()) {
-			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey().threadId());
-			final PrePostPair otherGroup = typedOther.mInterferenceByKey.get(entry.getKey());
-			if (otherGroup == null
-					|| !domain.isSubsetEq(entry.getValue().preState(), otherGroup.preState()).isTrueForAbstraction()
-					|| !domain.isSubsetEq(entry.getValue().postState(), otherGroup.postState())
-							.isTrueForAbstraction()) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	private boolean intersects(final IPredicate state, final IPredicate preState) {
 		final Script script = mManagedScript.getScript();
 		final Term guardedState =
@@ -168,8 +97,26 @@ public final class PrePostInterference implements IInterference {
 				&& SmtUtils.checkSatTerm(script, guardedState) != Script.LBool.UNSAT;
 	}
 
-	private static boolean isTrivialPair(final PrePostPair pair) {
-		return SmtUtils.isFalseLiteral(pair.preState().getFormula())
-				|| SmtUtils.isFalseLiteral(pair.postState().getFormula());
+	@Override
+	protected PrePostPair widenSummaries(final PrePostPair left, final PrePostPair right, final IDomain domain) {
+		return new PrePostPair(domain.widen(left.preState(), right.preState()),
+				domain.widen(left.postState(), right.postState()));
+	}
+
+	@Override
+	protected boolean isTrivialSummary(final PrePostPair summary) {
+		return SmtUtils.isFalseLiteral(summary.preState().getFormula())
+				|| SmtUtils.isFalseLiteral(summary.postState().getFormula());
+	}
+
+	@Override
+	protected boolean summaryIsSubsumedBy(final PrePostPair left, final PrePostPair right, final IDomain domain) {
+		return domain.isSubsetEq(left.preState(), right.preState()).isTrueForAbstraction()
+				&& domain.isSubsetEq(left.postState(), right.postState()).isTrueForAbstraction();
+	}
+
+	@Override
+	protected KeyedInterferenceSet<PrePostPair> withSummaries(final Map<InterferenceGroupKey, PrePostPair> summaries) {
+		return new PrePostInterference(summaries, mPreForkSourcesByThread, mManagedScript);
 	}
 }

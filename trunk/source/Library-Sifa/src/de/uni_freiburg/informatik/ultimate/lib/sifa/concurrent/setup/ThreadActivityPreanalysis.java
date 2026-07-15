@@ -95,37 +95,53 @@ public final class ThreadActivityPreanalysis {
 		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> joinedThreadByJoin = enableJoinPrecision
 				? computeTrackedJoinMap(icfg, threadIds, selfForkingThreads)
 				: Map.of();
-		final Map<IcfgLocation, Set<String>> definitelyJoinedByLocation =
-				joinedThreadByJoin.isEmpty() ? Map.of() : computeDefinitelyJoinedByLocation(icfg, joinedThreadByJoin);
+		final Map<IcfgLocation, Set<String>> definitelyJoinedByLocation = joinedThreadByJoin.isEmpty() ? Map.of()
+				: computeDefinitelyJoinedByLocation(icfg, joinedThreadByJoin);
 		return new ThreadActivityPreanalysis(Map.copyOf(finalizedActiveThreads), Map.copyOf(definitelyJoinedByLocation),
 				Map.copyOf(joinedThreadByJoin), Set.copyOf(selfForkingThreads));
 	}
 
-	private static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> computeTrackedJoinMap(
-			final IIcfg<IcfgLocation> icfg, final Set<String> threadIds, final Set<String> selfForkingThreads) {
+	/**
+	 * Matches each join transition to the forked procedure whose fork-id arguments it joins on. Pass null threadIds
+	 * to match against every forked procedure.
+	 */
+	public static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> matchJoinsToThreads(
+			final IIcfg<IcfgLocation> icfg, final Set<String> threadIds) {
 		final var concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
 		final Map<List<Term>, String> threadByForkId = new LinkedHashMap<>();
-		final Map<String, Integer> forkCount = new HashMap<>();
 		for (final var fork : concurrency.getThreadInstanceMap().keySet()) {
 			final String threadId = fork.getNameOfForkedProcedure();
 			if (threadIds != null && !threadIds.contains(threadId)) {
 				continue;
 			}
-			threadByForkId.put(List.of(fork.getForkSmtArguments().getThreadIdArguments().terms()), threadId);
-			forkCount.merge(threadId, 1, Integer::sum);
+			threadByForkId.putIfAbsent(List.of(fork.getForkSmtArguments().getThreadIdArguments().terms()), threadId);
 		}
-		final Map<String, Integer> joinCount = new HashMap<>();
-		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> candidates = new LinkedHashMap<>();
+		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> matched = new LinkedHashMap<>();
 		for (final var join : concurrency.getJoinTransitions()) {
-			final String threadId = threadByForkId.get(List.of(join.getJoinSmtArguments().getThreadIdArguments().terms()));
+			final String threadId = threadByForkId
+					.get(List.of(join.getJoinSmtArguments().getThreadIdArguments().terms()));
 			if (threadId != null) {
-				joinCount.merge(threadId, 1, Integer::sum);
-				candidates.put(join, threadId);
+				matched.put(join, threadId);
 			}
 		}
+		return matched;
+	}
+
+	private static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> computeTrackedJoinMap(
+			final IIcfg<IcfgLocation> icfg, final Set<String> threadIds, final Set<String> selfForkingThreads) {
+		final Map<String, Integer> forkCount = new HashMap<>();
+		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
+			final String threadId = fork.getNameOfForkedProcedure();
+			if (threadIds.contains(threadId)) {
+				forkCount.merge(threadId, 1, Integer::sum);
+			}
+		}
+		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> candidates =
+				new LinkedHashMap<>(matchJoinsToThreads(icfg, threadIds));
+		final Map<String, Integer> joinCount = new HashMap<>();
+		candidates.values().forEach(threadId -> joinCount.merge(threadId, 1, Integer::sum));
 		candidates.entrySet().removeIf(e -> forkCount.getOrDefault(e.getValue(), 0) != 1
-				|| joinCount.getOrDefault(e.getValue(), 0) != 1
-				|| selfForkingThreads.contains(e.getValue()));
+				|| joinCount.getOrDefault(e.getValue(), 0) != 1 || selfForkingThreads.contains(e.getValue()));
 		return Map.copyOf(candidates);
 	}
 
@@ -171,7 +187,8 @@ public final class ThreadActivityPreanalysis {
 	private static Set<String> updatedJoinedSet(final Set<String> before, final IcfgEdge edge,
 			final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> joinedThreadByJoin) {
 		Set<String> result = before;
-		if (edge instanceof final IIcfgForkTransitionThreadCurrent<?> fork && before.contains(fork.getNameOfForkedProcedure())) {
+		if (edge instanceof final IIcfgForkTransitionThreadCurrent<?> fork
+				&& before.contains(fork.getNameOfForkedProcedure())) {
 			result = new HashSet<>(before);
 			result.remove(fork.getNameOfForkedProcedure());
 		}
@@ -238,9 +255,7 @@ public final class ThreadActivityPreanalysis {
 
 		final Set<String> candidateThreads = new HashSet<>(icfg.getProgramPoints().keySet());
 		candidateThreads.addAll(directForkTargets.keySet());
-		if (threadIds != null) {
-			candidateThreads.retainAll(threadIds);
-		}
+		candidateThreads.retainAll(threadIds);
 
 		final Map<String, Set<String>> transitiveForkTargets = new HashMap<>();
 		for (final String threadId : candidateThreads) {
@@ -256,18 +271,13 @@ public final class ThreadActivityPreanalysis {
 					pendingForkTargets.addLast(nestedTarget);
 				}
 			}
-			if (threadIds != null) {
-				reachableForkTargets.retainAll(threadIds);
-			}
+			reachableForkTargets.retainAll(threadIds);
 			transitiveForkTargets.put(threadId, Set.copyOf(reachableForkTargets));
 		}
 		return Map.copyOf(transitiveForkTargets);
 	}
 
 	private static Set<String> restrictToConfiguredThreads(final Set<String> threads, final Set<String> threadIds) {
-		if (threadIds == null) {
-			return new HashSet<>(threads);
-		}
 		final Set<String> restrictedThreads = new HashSet<>(threads);
 		restrictedThreads.retainAll(threadIds);
 		return restrictedThreads;
@@ -288,7 +298,6 @@ public final class ThreadActivityPreanalysis {
 		return edge instanceof IIcfgForkTransitionThreadOther<?> || edge instanceof IIcfgJoinTransitionThreadOther<?>;
 	}
 
-	/** Threads that may be active at this location */
 	public Set<String> getActiveThreadsAt(final IcfgLocation location) {
 		if (location == null) {
 			return Set.of();
@@ -297,7 +306,6 @@ public final class ThreadActivityPreanalysis {
 		return result != null ? result : Set.of();
 	}
 
-	/** Whether a thread may be active at this location */
 	public boolean mayBeActiveAt(final IcfgLocation location, final String threadId) {
 		if (location == null) {
 			return true;
@@ -318,7 +326,6 @@ public final class ThreadActivityPreanalysis {
 		return mJoinedThreadByJoin.get(join);
 	}
 
-	/** Threads that may have multiple concurrent instances */
 	public Set<String> getMultiForkedThreads() {
 		return mMultiForkedThreads;
 	}

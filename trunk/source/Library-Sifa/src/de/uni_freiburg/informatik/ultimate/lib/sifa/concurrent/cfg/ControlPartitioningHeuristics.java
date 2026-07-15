@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -23,70 +24,39 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Inte
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
+public class ControlPartitioningHeuristics {
 	private final ManagedScript mManagedScript;
-	private final Script mScript;
-	private final IIcfg<LOC> mIcfg;
+	private final IIcfg<IcfgLocation> mIcfg;
 	private final Set<IProgramNonOldVar> mGlobals;
 	private final Map<TermVariable, IProgramVar> mTermToGlobalMap;
 	private final IUltimateServiceProvider mServices;
-	private final Map<LOC, Integer> mMutexVarSplitMapWithExitMarked;
-	private final Map<LOC, Integer> mMutexVarSplitMapWithoutExitMarked;
-	private final Map<LOC, Integer> mMutexVarSplitMapWithAllVarLinesMarked;
 
-	@SuppressWarnings("unchecked")
-	public HeuristicLocationAbstraction(final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
+	public ControlPartitioningHeuristics(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
-		mScript = mManagedScript.getScript();
-		mIcfg = (IIcfg<LOC>) icfg;
+		mIcfg = icfg;
 		mGlobals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
 		mTermToGlobalMap = mGlobals.stream().collect(Collectors.toMap(IProgramVar::getTermVariable, v -> v));
 		mServices = services;
-		mMutexVarSplitMapWithExitMarked = threePhaseMutexSplitting();
-		mMutexVarSplitMapWithoutExitMarked = collapseExitPhase(mMutexVarSplitMapWithExitMarked);
-		mMutexVarSplitMapWithAllVarLinesMarked = splitAtGuardsAndWrites(computeFoundationalBaseMapping());
 	}
 
-	public StaticAbstractLocationMap<LOC> guardSplitting() {
-		return new StaticAbstractLocationMap<>(this::entryExitMarked, mIcfg);
+	public Map<IcfgLocation, Integer> guardSplitting() {
+		return threePhaseMutexSplitting();
 	}
 
-	public StaticAbstractLocationMap<LOC> guardAndExitSplitting() {
-		return new StaticAbstractLocationMap<>(this::entryExitMarked, mIcfg);
+	public Map<IcfgLocation, Integer> allVarOccurrencesSplit() {
+		return allVarOccurrencesSplit(Set.of());
 	}
 
-	public StaticAbstractLocationMap<LOC> allVarOccurrencesSplit() {
-		return new StaticAbstractLocationMap<>(this::allVarOccurrencesMarked, mIcfg);
+	public Map<IcfgLocation, Integer> allVarOccurrencesSplit(final Set<IProgramVar> excludedVars) {
+		return splitAtGuardsAndWrites(computeFoundationalBaseMapping(excludedVars), excludedVars);
 	}
 
-	private int entryExitMarked(final LOC loc) {
-		return mMutexVarSplitMapWithExitMarked.get(loc);
-	}
-
-	private int entryOnlyMarked(final LOC loc) {
-		return mMutexVarSplitMapWithoutExitMarked.get(loc);
-	}
-
-	private int allVarOccurrencesMarked(final LOC loc) {
-		return mMutexVarSplitMapWithAllVarLinesMarked.get(loc);
-	}
-
-	private Map<LOC, Integer> collapseExitPhase(final Map<LOC, Integer> mapWithExitPhase) {
-		// TODO: hack that presumes one guarded section
-		final Map<LOC, Integer> collapsedMap = new HashMap<>();
-		for (final var entry : mapWithExitPhase.entrySet()) {
-			collapsedMap.put(entry.getKey(), entry.getValue() == 3 ? 2 : entry.getValue());
-		}
-		return collapsedMap;
-	}
-
-	private Map<LOC, Set<IProgramVar>> computeMutexVars(final boolean fullyPrecise) {
-		final Map<LOC, Set<IProgramVar>> mutexGuardToVarsMap = new HashMap<>();
-		for (final LOC loc : collectReachableFromEntries()) {
+	private Map<IcfgLocation, Set<IProgramVar>> computeMutexVars(final boolean fullyPrecise) {
+		final Map<IcfgLocation, Set<IProgramVar>> mutexGuardToVarsMap = new HashMap<>();
+		for (final IcfgLocation loc : collectReachableFromEntries()) {
 			final List<IcfgEdge> outgoing = loc.getOutgoingEdges();
 			if (!shouldDifferentiate(outgoing, fullyPrecise)) {
 				continue;
@@ -99,46 +69,46 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return mutexGuardToVarsMap;
 	}
 
-	private Map<LOC, Integer> computeFoundationalBaseMapping() {
-		final Set<LOC> reachableFromEntries = collectReachableFromEntries();
-		final Map<LOC, LOC> parent = new HashMap<>();
-		for (final LOC loc : reachableFromEntries) {
+	private Map<IcfgLocation, Integer> computeFoundationalBaseMapping(final Set<IProgramVar> excludedVars) {
+		final Set<IcfgLocation> reachableFromEntries = collectReachableFromEntries();
+		final Map<IcfgLocation, IcfgLocation> parent = new HashMap<>();
+		for (final IcfgLocation loc : reachableFromEntries) {
 			parent.put(loc, loc);
 		}
 
-		for (final LOC source : reachableFromEntries) {
+		for (final IcfgLocation source : reachableFromEntries) {
 			final String procedure = source.getProcedure();
 			for (final IcfgEdge edge : source.getOutgoingEdges()) {
 				final IcfgLocation target = edge.getTarget();
 				if (target == null || !procedure.equals(target.getProcedure()) || !parent.containsKey(target)) {
 					continue;
 				}
-				if (!isFoundationalSplitEdge(edge)) {
-					union(parent, source, castLocation(target));
+				if (!isFoundationalSplitEdge(edge, excludedVars)) {
+					union(parent, source, target);
 				}
 			}
 		}
 
-		final Map<String, Set<LOC>> locationsByProcedure = groupByProcedure(reachableFromEntries);
-		final Map<LOC, Integer> result = new HashMap<>();
+		final Map<String, Set<IcfgLocation>> locationsByProcedure = groupByProcedure(reachableFromEntries);
+		final Map<IcfgLocation, Integer> result = new HashMap<>();
 		for (final String procedure : sortedKeys(locationsByProcedure)) {
 			assignProcedureComponentIds(procedure, locationsByProcedure.get(procedure), parent, result);
 		}
 		return result;
 	}
 
-	private void assignProcedureComponentIds(final String procedure, final Set<LOC> procedureLocations,
-			final Map<LOC, LOC> parent, final Map<LOC, Integer> result) {
+	private void assignProcedureComponentIds(final String procedure, final Set<IcfgLocation> procedureLocations,
+			final Map<IcfgLocation, IcfgLocation> parent, final Map<IcfgLocation, Integer> result) {
 		if (procedureLocations == null || procedureLocations.isEmpty()) {
 			return;
 		}
 
-		final LOC entry = castLocation(mIcfg.getProcedureEntryNodes().get(procedure));
-		final LOC entryRep = entry != null && parent.containsKey(entry) ? find(parent, entry) : null;
-		final Map<LOC, Integer> compToId = new HashMap<>();
+		final IcfgLocation entry = mIcfg.getProcedureEntryNodes().get(procedure);
+		final IcfgLocation entryRep = entry != null && parent.containsKey(entry) ? find(parent, entry) : null;
+		final Map<IcfgLocation, Integer> compToId = new HashMap<>();
 		int nextId = 2;
-		for (final LOC loc : orderedLocations(procedureLocations)) {
-			final LOC rep = find(parent, loc);
+		for (final IcfgLocation loc : orderedLocations(procedureLocations)) {
+			final IcfgLocation rep = find(parent, loc);
 			final int id;
 			if (entryRep != null && rep.equals(entryRep)) {
 				id = 1;
@@ -159,23 +129,28 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		}
 	}
 
-	private Map<LOC, Integer> splitAtGuardsAndWrites(final Map<LOC, Integer> foundationalMap) {
-		final Map<LOC, Integer> abstractLocationMapping = new HashMap<>(foundationalMap);
-		final Map<LOC, Set<IProgramVar>> mutexGuardToVarsMap = computeMutexVars(false);
+	private Map<IcfgLocation, Integer> splitAtGuardsAndWrites(final Map<IcfgLocation, Integer> foundationalMap,
+			final Set<IProgramVar> excludedVars) {
+		final Map<IcfgLocation, Integer> abstractLocationMapping = new HashMap<>(foundationalMap);
+		final Map<IcfgLocation, Set<IProgramVar>> mutexGuardToVarsMap = computeMutexVars(false);
+		if (!excludedVars.isEmpty()) {
+			mutexGuardToVarsMap.values().forEach(vars -> vars.removeAll(excludedVars));
+			mutexGuardToVarsMap.values().removeIf(Set::isEmpty);
+		}
 		if (mutexGuardToVarsMap.isEmpty()) {
 			return abstractLocationMapping;
 		}
 		final Set<IProgramVar> relevantGuardVars = mutexGuardToVarsMap.values().stream().flatMap(Set::stream)
 				.collect(Collectors.toSet());
-		final Map<String, Set<LOC>> locationsByProcedure = groupByProcedure(foundationalMap.keySet());
+		final Map<String, Set<IcfgLocation>> locationsByProcedure = groupByProcedure(foundationalMap.keySet());
 		for (final String procedure : sortedKeys(locationsByProcedure)) {
-			final Set<LOC> procedureLocations = locationsByProcedure.get(procedure);
+			final Set<IcfgLocation> procedureLocations = locationsByProcedure.get(procedure);
 			if (procedureLocations == null || procedureLocations.isEmpty()) {
 				continue;
 			}
 			int nextFreshId = nextFreshIdForProcedure(procedureLocations, abstractLocationMapping);
-			for (final LOC loc : orderedLocationsInProcedureFlow(procedure, procedureLocations)) {
-				if (!mutexGuardToVarsMap.containsKey(loc) && !writesRelevantGuardVar(loc, relevantGuardVars)) {
+			for (final IcfgLocation loc : orderedLocationsInProcedureFlow(procedure, procedureLocations)) {
+				if (!mutexGuardToVarsMap.containsKey(loc) && !writesAnyOf(loc, relevantGuardVars)) {
 					continue;
 				}
 				abstractLocationMapping.put(loc, nextFreshId);
@@ -185,20 +160,20 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return abstractLocationMapping;
 	}
 
-	private Map<LOC, Integer> threePhaseMutexSplitting() {
-		final Map<LOC, Integer> result = singletonPerProcedureMapping();
-		final Map<LOC, Set<IProgramVar>> mutexGuardToVarsMap = computeMutexVars(true);
+	private Map<IcfgLocation, Integer> threePhaseMutexSplitting() {
+		final Map<IcfgLocation, Integer> result = singletonPerProcedureMapping();
+		final Map<IcfgLocation, Set<IProgramVar>> mutexGuardToVarsMap = computeMutexVars(true);
 		if (mutexGuardToVarsMap.isEmpty()) {
 			return result;
 		}
 
-		final Map<String, Set<LOC>> locationsByProcedure = groupByProcedure(result.keySet());
+		final Map<String, Set<IcfgLocation>> locationsByProcedure = groupByProcedure(result.keySet());
 		for (final String procedure : sortedKeys(locationsByProcedure)) {
-			final Set<LOC> procedureLocations = locationsByProcedure.get(procedure);
+			final Set<IcfgLocation> procedureLocations = locationsByProcedure.get(procedure);
 			if (procedureLocations == null || procedureLocations.isEmpty()) {
 				continue;
 			}
-			final List<LOC> ordered = orderedLocationsInProcedureFlow(procedure, procedureLocations);
+			final List<IcfgLocation> ordered = orderedLocationsInProcedureFlow(procedure, procedureLocations);
 			if (ordered.isEmpty()) {
 				continue;
 			}
@@ -233,12 +208,12 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return result;
 	}
 
-	private int firstMutexInteractionIndex(final List<LOC> ordered,
-			final Map<LOC, Set<IProgramVar>> mutexGuardToVarsMap, final Set<IProgramVar> guardVars) {
+	private int firstMutexInteractionIndex(final List<IcfgLocation> ordered,
+			final Map<IcfgLocation, Set<IProgramVar>> mutexGuardToVarsMap, final Set<IProgramVar> guardVars) {
 		int firstGuard = -1;
 		int firstWrite = -1;
 		for (int i = 0; i < ordered.size(); i++) {
-			final LOC loc = ordered.get(i);
+			final IcfgLocation loc = ordered.get(i);
 			if (firstGuard < 0 && mutexGuardToVarsMap.containsKey(loc)) {
 				firstGuard = i;
 			}
@@ -252,7 +227,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return firstGuard >= 0 ? firstGuard : firstWrite;
 	}
 
-	private int lastGuardVarWriteIndex(final List<LOC> ordered, final Set<IProgramVar> guardVars) {
+	private int lastGuardVarWriteIndex(final List<IcfgLocation> ordered, final Set<IProgramVar> guardVars) {
 		int lastWrite = -1;
 		for (int i = 0; i < ordered.size(); i++) {
 			if (writesAnyOf(ordered.get(i), guardVars)) {
@@ -262,7 +237,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return lastWrite;
 	}
 
-	private boolean writesAnyOf(final LOC loc, final Set<IProgramVar> vars) {
+	private boolean writesAnyOf(final IcfgLocation loc, final Set<IProgramVar> vars) {
 		if (vars.isEmpty()) {
 			return false;
 		}
@@ -274,40 +249,36 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return false;
 	}
 
-	private Map<LOC, Integer> singletonPerProcedureMapping() {
-		final Map<LOC, Integer> result = new HashMap<>();
-		for (final LOC loc : collectReachableFromEntries()) {
+	private Map<IcfgLocation, Integer> singletonPerProcedureMapping() {
+		final Map<IcfgLocation, Integer> result = new HashMap<>();
+		for (final IcfgLocation loc : collectReachableFromEntries()) {
 			result.put(loc, 1);
 		}
 		return result;
 	}
 
-	private int nextFreshIdForProcedure(final Set<LOC> procedureLocations, final Map<LOC, Integer> mapping) {
+	private int nextFreshIdForProcedure(final Set<IcfgLocation> procedureLocations, final Map<IcfgLocation, Integer> mapping) {
 		return procedureLocations.stream().map(mapping::get).filter(id -> id != null).max(Integer::compareTo).orElse(0)
 				+ 1;
 	}
 
-	private boolean writesRelevantGuardVar(final LOC loc, final Set<IProgramVar> relevantGuardVars) {
-		return writesAnyOf(loc, relevantGuardVars);
-	}
-
-	private Map<String, Set<LOC>> groupByProcedure(final Set<LOC> locations) {
-		final Map<String, Set<LOC>> locationsByProcedure = new HashMap<>();
-		for (final LOC loc : locations) {
+	private Map<String, Set<IcfgLocation>> groupByProcedure(final Set<IcfgLocation> locations) {
+		final Map<String, Set<IcfgLocation>> locationsByProcedure = new HashMap<>();
+		for (final IcfgLocation loc : locations) {
 			locationsByProcedure.computeIfAbsent(loc.getProcedure(), ignored -> new LinkedHashSet<>()).add(loc);
 		}
 		return locationsByProcedure;
 	}
 
-	private List<LOC> orderedLocationsInProcedureFlow(final String procedure, final Set<LOC> procedureLocations) {
-		final LOC entry = castLocation(mIcfg.getProcedureEntryNodes().get(procedure));
+	private List<IcfgLocation> orderedLocationsInProcedureFlow(final String procedure, final Set<IcfgLocation> procedureLocations) {
+		final IcfgLocation entry = mIcfg.getProcedureEntryNodes().get(procedure);
 		if (entry == null) {
 			return orderedLocations(procedureLocations);
 		}
-		final LinkedHashSet<LOC> ordered = new LinkedHashSet<>();
-		final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(entry);
+		final LinkedHashSet<IcfgLocation> ordered = new LinkedHashSet<>();
+		final IcfgLocationIterator<IcfgLocation> iter = new IcfgLocationIterator<>(entry);
 		while (iter.hasNext()) {
-			final LOC loc = iter.next();
+			final IcfgLocation loc = iter.next();
 			if (procedure.equals(loc.getProcedure()) && procedureLocations.contains(loc)) {
 				ordered.add(loc);
 			}
@@ -316,9 +287,9 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return new ArrayList<>(ordered);
 	}
 
-	private List<LOC> orderedLocations(final Set<LOC> locations) {
-		final List<LOC> ordered = new ArrayList<>(locations);
-		ordered.sort(Comparator.comparing((final LOC loc) -> loc.getProcedure()).thenComparing(Object::toString));
+	private List<IcfgLocation> orderedLocations(final Set<IcfgLocation> locations) {
+		final List<IcfgLocation> ordered = new ArrayList<>(locations);
+		ordered.sort(Comparator.comparing((final IcfgLocation loc) -> loc.getProcedure()).thenComparing(Object::toString));
 		return ordered;
 	}
 
@@ -326,41 +297,42 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return map.keySet().stream().sorted().toList();
 	}
 
-	private Set<LOC> collectReachableFromEntries() {
-		final Set<LOC> reachableFromEntries = new LinkedHashSet<>();
+	private Set<IcfgLocation> collectReachableFromEntries() {
+		final Set<IcfgLocation> reachableFromEntries = new LinkedHashSet<>();
 		new IcfgLocationIterator<>(mIcfg.getProcedureEntryNodes().values()).asStream()
 				.forEach(reachableFromEntries::add);
 		return reachableFromEntries;
 	}
 
-	private boolean isFoundationalSplitEdge(final IcfgEdge edge) {
-		return InterferenceUtils.modifiesGlobals(edge.getTransformula());
+	private boolean isFoundationalSplitEdge(final IcfgEdge edge, final Set<IProgramVar> excludedVars) {
+		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
+			return true;
+		}
+		if (excludedVars.isEmpty()) {
+			return InterferenceUtils.modifiesGlobals(edge.getTransformula());
+		}
+		return !excludedVars.containsAll(InterferenceUtils.getChangedGlobals(edge.getTransformula()));
 	}
 
-	@SuppressWarnings("unchecked")
-	private LOC castLocation(final IcfgLocation location) {
-		return (LOC) location;
-	}
-
-	private LOC find(final Map<LOC, LOC> parent, final LOC location) {
-		final LOC currentParent = parent.get(location);
+	private IcfgLocation find(final Map<IcfgLocation, IcfgLocation> parent, final IcfgLocation location) {
+		final IcfgLocation currentParent = parent.get(location);
 		if (currentParent == null || currentParent.equals(location)) {
 			return location;
 		}
-		final LOC root = find(parent, currentParent);
+		final IcfgLocation root = find(parent, currentParent);
 		parent.put(location, root);
 		return root;
 	}
 
-	private void union(final Map<LOC, LOC> parent, final LOC left, final LOC right) {
-		final LOC leftRoot = find(parent, left);
-		final LOC rightRoot = find(parent, right);
+	private void union(final Map<IcfgLocation, IcfgLocation> parent, final IcfgLocation left, final IcfgLocation right) {
+		final IcfgLocation leftRoot = find(parent, left);
+		final IcfgLocation rightRoot = find(parent, right);
 		if (!leftRoot.equals(rightRoot)) {
 			parent.put(rightRoot, leftRoot);
 		}
 	}
 
-	public Set<IProgramVar> getGuardVars(final List<IcfgEdge> outgoing, final boolean fullyPrecise) {
+	private Set<IProgramVar> getGuardVars(final List<IcfgEdge> outgoing, final boolean fullyPrecise) {
 		if (fullyPrecise) {
 			return getGuardVarsStrict(outgoing);
 		}
@@ -374,14 +346,13 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return allVars;
 	}
 
-	public Set<IProgramVar> getGuardVarsStrict(final List<IcfgEdge> outgoing) {
+	private Set<IProgramVar> getGuardVarsStrict(final List<IcfgEdge> outgoing) {
 		final List<Term> guards = collectGuardTerms(outgoing);
 		if (guards.isEmpty()) {
 			return Set.of();
 		}
 		final Set<IProgramVar> freeVars = new HashSet<>();
 		for (final Term guard : guards) {
-			// Keep guards separate; complementary guards can collapse to true
 			final Term simplified = SmtUtils.simplify(mManagedScript, guard, mServices,
 					SimplificationTechnique.POLY_PAC);
 			if (SmtUtils.isTrueLiteral(simplified) || SmtUtils.isFalseLiteral(simplified)) {
@@ -393,7 +364,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return freeVars;
 	}
 
-	public boolean shouldDifferentiate(final List<IcfgEdge> outgoing, final boolean fullyPrecise) {
+	private boolean shouldDifferentiate(final List<IcfgEdge> outgoing, final boolean fullyPrecise) {
 		if (fullyPrecise) {
 			return shouldDifferentiateStrict(outgoing);
 		}
@@ -406,7 +377,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return false;
 	}
 
-	public boolean shouldDifferentiateStrict(final List<IcfgEdge> outgoing) {
+	private boolean shouldDifferentiateStrict(final List<IcfgEdge> outgoing) {
 		return !getGuardVarsStrict(outgoing).isEmpty();
 	}
 

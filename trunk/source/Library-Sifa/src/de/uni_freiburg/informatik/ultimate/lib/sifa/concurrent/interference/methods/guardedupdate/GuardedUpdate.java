@@ -11,10 +11,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public record GuardedUpdate(IPredicate guard, IPredicate effect, Set<TermVariable> modifiedGlobals,
 		List<Term> guardDisjuncts, boolean hasFalseEffect) {
 
-	public GuardedUpdate(final IPredicate guard, final IPredicate effect) {
-		this(guard, effect, Set.of());
-	}
-
 	public GuardedUpdate(final IPredicate guard, final IPredicate effect, final Set<TermVariable> modifiedGlobals) {
 		this(guard, effect, modifiedGlobals, guard == null ? List.of() : List.of(SmtUtils.getDisjuncts(guard.getFormula())),
 				SmtUtils.isFalseLiteral(effect.getFormula()));
@@ -27,9 +23,5 @@ public record GuardedUpdate(IPredicate guard, IPredicate effect, Set<TermVariabl
 
 	public boolean hasGuard() {
 		return guard != null;
-	}
-
-	public Set<TermVariable> modifiedGlobalsOrEmpty() {
-		return modifiedGlobals;
 	}
 }

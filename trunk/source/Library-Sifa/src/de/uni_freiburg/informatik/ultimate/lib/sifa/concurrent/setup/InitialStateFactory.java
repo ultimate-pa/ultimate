@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -71,7 +71,7 @@ public final class InitialStateFactory {
 	 * For a non-main thread, start from every place where some other thread can fork it and join those states.
 	 */
 	private Set<IPredicate> collectForkStates(final String threadId) {
-		final Set<IPredicate> states = new HashSet<>();
+		final Set<IPredicate> states = new LinkedHashSet<>();
 		final ConcurrencyInformation concInfo = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : concInfo.getThreadInstanceMap().keySet()) {
 			if (!fork.getNameOfForkedProcedure().equals(threadId)) {
@@ -87,9 +87,9 @@ public final class InitialStateFactory {
 	}
 
 	/*
-	 * The new thread should start right after the fork.
-	 * We cannot just use the post-state at the fork target, because that may already contain interferences, even from
-	 * the freshly forked thread itself. So we use the fork source state and only apply the fork-local location updates.
+	 * The new thread should start right after the fork. We cannot just use the post-state at the fork target, because
+	 * that may already contain interferences (even from itself). So we use the fork source state and only apply the
+	 * fork-local location updates.
 	 */
 	private IPredicate applyForkEffects(final IPredicate forkState,
 			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork) {

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -22,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Inte
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -88,8 +86,10 @@ public class TransFormulaToInterferencePredicate {
 				: Set.copyOf(additionallyModifiedGlobals);
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.add(translateBase(tf));
-		conjuncts.add(createIdentityConstraintsForUnchangedGlobals(tf, interferingThread, forkedThreadId, extraModified));
-		addLocationConstraints(conjuncts, interferingThread, sourceLocation, targetLocation, forkedThreadId, forkedEntry);
+		conjuncts.add(
+				createIdentityConstraintsForUnchangedGlobals(tf, interferingThread, forkedThreadId, extraModified));
+		addLocationConstraints(conjuncts, interferingThread, sourceLocation, targetLocation, forkedThreadId,
+				forkedEntry);
 		return mPredicateFactory.newPredicate(SmtUtils.and(mManagedScript.getScript(), conjuncts));
 	}
 
@@ -121,7 +121,6 @@ public class TransFormulaToInterferencePredicate {
 		final Set<IProgramVar> modified = InterferenceUtils.getChangedGlobals(tf, additionallyModifiedGlobals);
 		final TermVariable interferingLoc = getLocationTermVarOrNull(interferingThread);
 		final TermVariable forkedLoc = getLocationTermVarOrNull(forkedThreadId);
-
 		final List<Term> conjuncts = new ArrayList<>();
 		for (final IProgramVar pv : mSymbolTable.getAllGlobalBaseVars()) {
 			if (shouldKeepIdentityConstraint(pv, modified, interferingLoc, forkedLoc)) {
@@ -199,10 +198,6 @@ public class TransFormulaToInterferencePredicate {
 		return RelationalPredicateUtils.existentiallyProject(formula, localVars, mServices, mManagedScript);
 	}
 
-	public PrimedDefaultIcfgSymbolTable getSymbolTable() {
-		return mSymbolTable;
-	}
-
 	public IUltimateServiceProvider getServices() {
 		return mServices;
 	}
@@ -213,10 +208,6 @@ public class TransFormulaToInterferencePredicate {
 
 	public BasicPredicateFactory getPredicateFactory() {
 		return mPredicateFactory;
-	}
-
-	public GhostVariableManager getGhostVariables() {
-		return mGhostVariables;
 	}
 
 	public boolean isLocationStutterStep(final IcfgLocation sourceLocation, final IcfgLocation targetLocation) {
@@ -233,8 +224,7 @@ public class TransFormulaToInterferencePredicate {
 	}
 
 	public IcfgLocation getEntryLocation(final String threadId) {
-		final IcfgLocation entry = mEntryLocations.get(threadId);
-		return entry != null ? entry : mGhostVariables == null ? null : mGhostVariables.getEntryLocation(threadId);
+		return mEntryLocations.get(threadId);
 	}
 
 	public TermVariable getLocationTermVarOrNull(final String threadId) {
@@ -248,7 +238,6 @@ public class TransFormulaToInterferencePredicate {
 		final Set<TermVariable> toProject = new HashSet<>();
 		preState.getVars().stream().filter(var -> !var.isGlobal()).map(IProgramVar::getTermVariable)
 				.forEach(toProject::add);
-		// Ghost location variables are global program variables but local to the interference source thread.
 		if (mGhostVariables != null) {
 			final Set<TermVariable> ghostLocVars = mGhostVariables.getLocationTermVariables();
 			for (final TermVariable fv : preState.getFormula().getFreeVars()) {

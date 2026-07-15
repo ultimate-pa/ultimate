@@ -1,9 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations;
 
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
@@ -18,19 +17,19 @@ public final class RelationalPredicateUtils {
 
 	public static Term existentiallyProject(final Term formula, final Set<TermVariable> varsToProject,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript) {
-		return existentiallyProject(formula, varsToProject, services, mgdScript, null);
-	}
-
-	public static Term existentiallyProject(final Term formula, final Set<TermVariable> varsToProject,
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final SifaStats stats) {
 		if (varsToProject.isEmpty()) {
 			return formula;
 		}
 		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), Script.EXISTS, varsToProject, formula);
-		final Term lightResult = PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
-		if (stats != null) {
-			stats.increment(SifaStats.Key.INTERFERENCE_QE_LIGHT);
+		return PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
+	}
+
+	public static boolean hasFreeVarIn(final Term term, final Set<? extends Term> candidates) {
+		for (final TermVariable freeVar : term.getFreeVars()) {
+			if (candidates.contains(freeVar)) {
+				return true;
+			}
 		}
-		return lightResult;
+		return false;
 	}
 }

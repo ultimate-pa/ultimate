@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -10,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -42,16 +44,14 @@ public class GhostVariableManager {
 	public static GhostVariableManager create(final ManagedScript managedScript,
 			final Map<IcfgLocation, Integer> locationIds, final Set<String> threadIds,
 			final Map<String, IcfgLocation> entryLocations, final PrimedDefaultIcfgSymbolTable symbolTable,
-			final Set<String> impreciseLocationThreads, final boolean createLocations) {
+			final Set<String> impreciseLocationThreads) {
 		final GhostVariableManager manager =
 				new GhostVariableManager(managedScript, locationIds, entryLocations, impreciseLocationThreads);
-		if (createLocations) {
-			managedScript.lock(manager);
-			try {
-				manager.initializeLocationVariables(threadIds, symbolTable);
-			} finally {
-				managedScript.unlock(manager);
-			}
+		managedScript.lock(manager);
+		try {
+			manager.initializeLocationVariables(threadIds, symbolTable);
+		} finally {
+			managedScript.unlock(manager);
 		}
 		return manager;
 	}
@@ -74,8 +74,9 @@ public class GhostVariableManager {
 
 	public Set<TermVariable> getLocationTermVariables() {
 		if (mCachedLocationTermVariables == null) {
-			mCachedLocationTermVariables = mLocationVars.values().stream()
-					.map(GhostProgramVar::getTermVariable).collect(Collectors.toUnmodifiableSet());
+			final Set<TermVariable> all = new HashSet<>();
+			mLocationVars.values().forEach(v -> all.add(v.getTermVariable()));
+			mCachedLocationTermVariables = Collections.unmodifiableSet(all);
 		}
 		return mCachedLocationTermVariables;
 	}
@@ -153,10 +154,6 @@ public class GhostVariableManager {
 
 	public Integer getAbstractLocationIdOrNull(final IcfgLocation location) {
 		return mLocationIds.get(location);
-	}
-
-	public Map<IcfgLocation, Integer> getAbstractLocationIds() {
-		return Map.copyOf(mLocationIds);
 	}
 
 	public boolean tracksLocationPrecisely(final String threadId) {

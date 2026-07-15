@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -16,7 +17,7 @@ public final class ObservedThreadStateRecorder {
 
 	private final IDomain mDomain;
 	private final GhostVariableManager mGhostVariables;
-	private final Map<IcfgLocation, IPredicate> mObservedLocationStates = new HashMap<>();
+	private final Map<IcfgLocation, IPredicate> mObservedLocationStates = new LinkedHashMap<>();
 
 	public ObservedThreadStateRecorder(final IDomain domain, final GhostVariableManager ghostVariables) {
 		mDomain = domain;
@@ -24,7 +25,7 @@ public final class ObservedThreadStateRecorder {
 	}
 
 	public Map<IcfgLocation, IPredicate> snapshotObservedStates() {
-		return Map.copyOf(mObservedLocationStates);
+		return Collections.unmodifiableMap(new LinkedHashMap<>(mObservedLocationStates));
 	}
 
 	public void recordTransitionInputState(final IIcfgTransition<IcfgLocation> transition,
@@ -43,14 +44,11 @@ public final class ObservedThreadStateRecorder {
 	}
 
 	private boolean shouldCaptureTransitionInputForInterference(final IIcfgTransition<IcfgLocation> transition) {
-		if (transition instanceof LocationMarkerTransition) {
+		if (transition instanceof LocationMarkerTransition || !(transition instanceof final IcfgEdge edge)) {
 			return false;
 		}
-		if (transition instanceof final IcfgEdge edge && InterferenceUtils.hasRelevantInterferenceEffect(edge)) {
+		if (InterferenceUtils.hasRelevantInterferenceEffect(edge)) {
 			return true;
-		}
-		if (!(transition instanceof IcfgEdge)) {
-			return false;
 		}
 		if (mGhostVariables == null) {
 			return true;

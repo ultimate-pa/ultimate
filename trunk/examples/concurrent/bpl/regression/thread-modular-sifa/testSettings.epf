@@ -69,8 +69,6 @@
 file_export_version=3.0
 #Wed Feb 25 13:16:12 CET 2026
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=/Users/dk/src/ultimate/trunk/examples/concurrent/bpl/regression/thread-modular-sifa/08_read_write_lock_called_thread_safe.bpl
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=/Users/dk/src/ultimate/trunk/examples/toolchains/SifaThreadModular.xml
 @de.uni_freiburg.informatik.ultimate.gui=0.3.1
 file_export_version=3.0
 #Wed Feb 25 13:16:12 CET 2026
@@ -88,14 +86,14 @@ file_export_version=3.0
 file_export_version=3.0
 #Wed Feb 25 13:16:12 CET 2026
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Abstract\ Domain=ExplicitValueDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Abstract\ Domain=OctagonDomain
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Fluid=SizeLimitFluid
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Inner\ Interference\ Widening\ Threshold=5
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Interference\ Applicator=STRONGEST_POSTCONDITION
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Location\ Abstraction=SPLIT_AT_GUARD_AND_EXIT
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Location\ Abstraction=SPLIT_AT_GUARDS_AND_WRITES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Location\ Tracking\ Mode=GHOST_VARIABLES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Equality=1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Explicit\ Values=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Explicit\ Values=2
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Intervals=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Octagon=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Outer\ Interference\ Widening\ Threshold=3
@@ -103,6 +101,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/SizeLimitFluid\ Max.\ Disjunctions=8
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Join\ Precision=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Guard\ Bucket\ Split=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Use\ Buckets=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Proof\ Check=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Result\ Print=false
 @de.uni_freiburg.informatik.ultimate.plugins.sifa=0.3.1

@@ -8,36 +8,8 @@
   <option name="--sifa.proof.check">false</option>
   <option name="--sifa.result.print">false</option>
 
-<<<<<<< HEAD
-  <rundefinition name="strongestpost-buckets">
-    <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
-    <option name="--sifa.use.buckets">true</option>
-  </rundefinition>
-
-  <rundefinition name="prepost">
-    <option name="--sifa.interference.applicator">PREPOST</option>
-    <option name="--sifa.use.buckets">false</option>
-  </rundefinition>
-
-  <rundefinition name="guarded-exact-update">
-    <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
-    <option name="--sifa.use.buckets">true</option>
-  </rundefinition>
-
-  <rundefinition name="post-state">
-    <option name="--sifa.interference.applicator">POST_STATE</option>
-    <option name="--sifa.use.buckets">false</option>
-  </rundefinition>
-
-  <rundefinition name="unary-globals">
-    <option name="--sifa.interference.applicator">UNARY_GLOBALS</option>
-  </rundefinition>
-
-  <rundefinition name="none">
-    <option name="--sifa.interference.applicator">NONE</option>
-    <option name="--sifa.use.buckets">false</option>
-=======
-  <rundefinition name="none">
+  <!-- UNSOUND BY DESIGN -->
+  <rundefinition name="none-UNSOUND-timing-only">
     <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
     <option name="--sifa.interference.applicator">NONE</option>
     <option name="--sifa.use.buckets">false</option>
@@ -47,55 +19,90 @@
     <option name="--sifa.location.abstraction">SINGLETON</option>
   </rundefinition>
 
-  <rundefinition name="post-state">
+  <rundefinition name="explicitvalue-poststate-guard-lockset-publish">
     <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
     <option name="--sifa.interference.applicator">POST_STATE</option>
     <option name="--sifa.use.buckets">false</option>
-    <option name="--sifa.max.parallel.explicit.values">4</option>
+    <option name="--sifa.max.parallel.explicit.values">2</option>
     <option name="--sifa.join.precision">true</option>
-    <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
-    <option name="--sifa.location.abstraction">SPLIT_AT_GUARD</option>
-    <option name="--sifa.inner.interference.widening.threshold">5</option>
+    <option name="--sifa.location.tracking.mode">NONE</option>
+    <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.inner.interference.widening.threshold">20</option>
+    <option name="--sifa.lockset-aware.interference">true</option>
+    <option name="--sifa.publish.on.acquire">true</option>
   </rundefinition>
 
-  <rundefinition name="strongestpost-ev">
+  <rundefinition name="explicitvalue-strongestpost-guard-lockset-publish">
     <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
     <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
     <option name="--sifa.use.buckets">false</option>
-    <option name="--sifa.max.parallel.explicit.values">4</option>
+    <option name="--sifa.max.parallel.explicit.values">2</option>
     <option name="--sifa.join.precision">true</option>
     <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
-    <option name="--sifa.location.abstraction">SPLIT_AT_GUARDS_AND_WRITES</option>
-    <option name="--sifa.inner.interference.widening.threshold">5</option>
+    <option name="--sifa.location.abstraction">SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS</option>
+    <option name="--sifa.inner.interference.widening.threshold">20</option>
+    <option name="--sifa.lockset-aware.interference">true</option>
+    <option name="--sifa.publish.on.acquire">true</option>
   </rundefinition>
 
-  <rundefinition name="strongestpost-octagon-buckets">
+  <rundefinition name="octagon-poststate-guard-lockset-publish">
+    <option name="--sifa.abstract.domain">OctagonDomain</option>
+    <option name="--sifa.interference.applicator">POST_STATE</option>
+    <option name="--sifa.use.buckets">true</option>
+    <option name="--sifa.max.parallel.octagon">2</option>
+    <option name="--sifa.max.disjuncts.per.bucket">4</option>
+    <option name="--sifa.join.precision">true</option>
+    <option name="--sifa.location.tracking.mode">NONE</option>
+    <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.inner.interference.widening.threshold">20</option>
+    <option name="--sifa.lockset-aware.interference">true</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+  </rundefinition>
+
+  <rundefinition name="octagon-strongestpost-guard-lockset-publish">
     <option name="--sifa.abstract.domain">OctagonDomain</option>
     <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
     <option name="--sifa.use.buckets">true</option>
-    <option name="--sifa.max.parallel.octagon">1</option>
+    <option name="--sifa.max.parallel.octagon">2</option>
+    <option name="--sifa.max.disjuncts.per.bucket">4</option>
     <option name="--sifa.join.precision">true</option>
     <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
-    <option name="--sifa.location.abstraction">SPLIT_AT_GUARDS_AND_WRITES</option>
-    <option name="--sifa.inner.interference.widening.threshold">5</option>
+    <option name="--sifa.location.abstraction">SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS</option>
+    <option name="--sifa.inner.interference.widening.threshold">20</option>
+    <option name="--sifa.lockset-aware.interference">true</option>
+    <option name="--sifa.publish.on.acquire">true</option>
   </rundefinition>
 
-  <rundefinition name="guarded-exact-update-octagon-buckets">
-    <option name="--sifa.abstract.domain">OctagonDomain</option>
+  <rundefinition name="explicitvalue-guardedupdate-guard-lockset-publish">
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
     <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
+    <option name="--sifa.use.buckets">false</option>
+    <option name="--sifa.max.parallel.explicit.values">2</option>
+    <option name="--sifa.join.precision">true</option>
+    <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
+    <option name="--sifa.location.abstraction">SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS</option>
+    <option name="--sifa.inner.interference.widening.threshold">20</option>
+    <option name="--sifa.lockset-aware.interference">true</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+  </rundefinition>
+
+  <!-- Same configuration as examples/concurrent/c/regression/thread-modular-sifa-smoke/cSettings.epf -->
+  <rundefinition name="interval-strongestpost-guard-lockset-publish">
+    <option name="--sifa.abstract.domain">IntervalDomain</option>
+    <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
     <option name="--sifa.use.buckets">true</option>
-    <option name="--sifa.max.parallel.octagon">1</option>
     <option name="--sifa.join.precision">true</option>
     <option name="--sifa.location.tracking.mode">GHOST_VARIABLES</option>
     <option name="--sifa.location.abstraction">SPLIT_AT_GUARDS_AND_WRITES</option>
     <option name="--sifa.inner.interference.widening.threshold">5</option>
->>>>>>> 56e31d8a90 (Clean up AbstractLocationPartitionedDomain (renamed from BucketDomain))
+    <option name="--sifa.lockset-aware.interference">true</option>
+    <option name="--sifa.publish.on.acquire">true</option>
   </rundefinition>
 
   <tasks name="SVCOMP-Concurrency">
-    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>
     <!-- Exclude pthread-wmm to speedup evaluation -->
-    <exclude>${benchmark_path}/../../../trunk/examples/svcomp/pthread-wmm/*.yml</exclude>
-    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+    <exclude>../../../trunk/examples/svcomp/pthread-wmm/*.yml</exclude>
+    <propertyfile>../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
   </tasks>
 </benchmark>

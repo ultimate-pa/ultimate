@@ -110,8 +110,8 @@ public class DagInterpreter {
 			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegr) {
 
 		// TODO should we use fluid and IDomain.alpha after join in worklist?
-		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist = new PriorityWorklist<>(
-				mTopsortCache.topsort(dag), mDomain::join);
+		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
+				new PriorityWorklist<>(mTopsortCache.topsort(dag), mDomain::join);
 
 		overlay.sources(dag).forEach(source -> worklist.add(source, initalInput));
 
@@ -120,7 +120,7 @@ public class DagInterpreter {
 			logWorklistEntry(worklist);
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> curNode = worklist.getWork();
 			// TODO alternatively abstract outputs before putting them into the worklist
-			final IPredicate curInput = fluidAbstraction(worklist.getInput(), curNode);
+			final IPredicate curInput = fluidAbstraction(worklist.getInput());
 			final IPredicate curOutput = ipretNode(curNode, curInput, loiStorage, enterCallRegr);
 			logWorklistEntryDone(curOutput);
 			if (earlyExitAfterStep(overlay, curNode, curOutput)) {
@@ -241,7 +241,7 @@ public class DagInterpreter {
 		return output;
 	}
 
-	private IPredicate fluidAbstraction(IPredicate pred, final RegexDagNode<IIcfgTransition<IcfgLocation>> node) {
+	private IPredicate fluidAbstraction(IPredicate pred) {
 		logConsiderAbstraction();
 		if (mFluid.shallBeAbstracted(pred)) {
 			logFluidAbstractionYes();

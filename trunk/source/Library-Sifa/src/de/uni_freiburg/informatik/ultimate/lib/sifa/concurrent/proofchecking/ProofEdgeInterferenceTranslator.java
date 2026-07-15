@@ -8,25 +8,21 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
-/** Basic translation regardless of interference settings, used for soundness proof of analysis. */
 public final class ProofEdgeInterferenceTranslator {
 
 	private final TransFormulaToInterferencePredicate mTranslator;
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final GhostVariableManager mGhostVariables;
-	private final boolean mIncludeInterferencePreState;
 
 	public ProofEdgeInterferenceTranslator(final TransFormulaToInterferencePredicate translator,
-			final RelationalPredicatePostcondition postcondition, final GhostVariableManager ghostVariables,
-			final boolean includeInterferencePreState) {
+			final RelationalPredicatePostcondition postcondition, final GhostVariableManager ghostVariables) {
 		mTranslator = Objects.requireNonNull(translator);
 		mPostcondition = Objects.requireNonNull(postcondition);
 		mGhostVariables = ghostVariables;
-		mIncludeInterferencePreState = includeInterferencePreState;
 	}
 
 	public IPredicate tryTranslateInterferenceEdge(final String interferingThread, final IcfgLocation sourceLocation,
@@ -42,7 +38,7 @@ public final class ProofEdgeInterferenceTranslator {
 				&& !mTranslator.isLocationStutterStep(sourceLocation, targetLocation);
 		final boolean isInterferenceRelevant =
 				InterferenceUtils.hasRelevantInterferenceEffect(edge) || locationChanges;
-		if (!isInterferenceRelevant || (mIncludeInterferencePreState && sourcePreState == null)) {
+		if (!isInterferenceRelevant || sourcePreState == null) {
 			return null;
 		}
 
@@ -50,9 +46,6 @@ public final class ProofEdgeInterferenceTranslator {
 				createTransitionPredicate(interferingThread, sourceLocation, targetLocation, tf, forkedThreadId, edge);
 		if (edgePredicate == null) {
 			return null;
-		}
-		if (!mIncludeInterferencePreState) {
-			return edgePredicate;
 		}
 		return withSourcePreState(sourcePreState, edgePredicate);
 	}

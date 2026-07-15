@@ -10,72 +10,61 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeTraverser;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicatePostcondition;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.TransFormulaToInterferencePredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public final class UnaryGlobalInterferenceFactory implements IInterferenceFactory {
+public final class UnaryGlobalInterferenceFactory
+		extends GroupedInterferenceFactory<Map<String, Map<IProgramVar, IPredicate>>> {
 
-	private final InterferenceEdgeTraverser mTraverser;
 	private final IUltimateServiceProvider mServices;
-	private final RelationalPredicatePostcondition mPostcondition;
 	private final IDomain mDomain;
-	private final BasicPredicateFactory mPredicateFactory;
-	private final ManagedScript mManagedScript;
-	private final IPredicate mTruePredicate;
-	private final IPredicate mFalsePredicate;
 
-	public UnaryGlobalInterferenceFactory(final InterferenceEdgeTraverser traverser,
+	public UnaryGlobalInterferenceFactory(final InterferenceEdgeCollector edgeCollector,
 			final IUltimateServiceProvider services, final TransFormulaToInterferencePredicate translator,
 			final RelationalPredicatePostcondition postcondition, final IDomain domain,
-			final BasicPredicateFactory predicateFactory, final ManagedScript managedScript) {
-		mTraverser = traverser;
+			final BasicPredicateFactory predicateFactory, final ManagedScript managedScript,
+			final MustLocksetAnalysis locksetInfo) {
+		super(edgeCollector, translator, postcondition, managedScript, predicateFactory, locksetInfo, Map.of());
 		mServices = services;
-		mPostcondition = postcondition;
 		mDomain = domain;
-		mPredicateFactory = predicateFactory;
-		mManagedScript = managedScript;
-		mTruePredicate = predicateFactory.newPredicate(managedScript.getScript().term("true"));
-		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
 	}
 
 	@Override
-	public IInterference buildFromAllStates(final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates) {
-		final Map<IcfgLocation, IPredicate> allStates = mergeStates(perThreadStates);
-		// threadId → (global → summary predicate)
-		final Map<String, Map<IProgramVar, IPredicate>> summaryByThread = new LinkedHashMap<>();
-		for (final TranslatedInterferenceOfEdge edge : mTraverser.collect(allStates)) {
-			if (edge.changedGlobals().isEmpty()) {
-				continue;
-			}
-			final String threadId = edge.source().getProcedure();
-			final Map<IcfgLocation, IPredicate> threadStates = perThreadStates.get(threadId);
-			if (threadStates == null) {
-				continue;
-			}
-			final IPredicate postState = computeEdgeLocalPostState(edge, threadStates);
-			if (postState == null || SmtUtils.isFalseLiteral(postState.getFormula())) {
-				continue;
-			}
-			final Map<IProgramVar, IPredicate> threadSummary =
-					summaryByThread.computeIfAbsent(threadId, k -> new LinkedHashMap<>());
-			for (final IProgramVar global : edge.changedGlobals()) {
-				final IPredicate unarySummary = SmtUtils.isTrueLiteral(postState.getFormula()) ? mTruePredicate
-						: projectToSingleGlobal(postState, global);
-				threadSummary.merge(global, unarySummary, mDomain::join);
-			}
+	protected Map<String, Map<IProgramVar, IPredicate>> createAccumulator() {
+		return new LinkedHashMap<>();
+	}
+
+	@Override
+	protected void accumulateEdgeSummary(final Map<String, Map<IProgramVar, IPredicate>> accumulator,
+			final TranslatedInterferenceOfEdge edge, final Map<IcfgLocation, IPredicate> threadStates) {
+		final IPredicate postState = computeEdgeLocalPostState(edge, threadStates);
+		if (postState == null || SmtUtils.isFalseLiteral(postState.getFormula())) {
+			return;
 		}
-		return summaryByThread.isEmpty() ? null
-				: UnaryGlobalInterference.create(summaryByThread, mServices, mManagedScript, mPredicateFactory);
+		final Map<IProgramVar, IPredicate> threadSummary =
+				accumulator.computeIfAbsent(edge.source().getProcedure(), k -> new LinkedHashMap<>());
+		for (final IProgramVar global : edge.changedGlobals()) {
+			final IPredicate unarySummary = SmtUtils.isTrueLiteral(postState.getFormula()) ? mTruePredicate
+					: projectToSingleGlobal(postState, global);
+			threadSummary.merge(global, unarySummary, mDomain::join);
+		}
+	}
+
+	@Override
+	protected IInterferenceSet buildInterferenceSet(final Map<String, Map<IProgramVar, IPredicate>> accumulator) {
+		return accumulator.isEmpty() ? null
+				: UnaryGlobalInterference.create(accumulator, mServices, mManagedScript, mPredicateFactory);
 	}
 
 	private IPredicate computeEdgeLocalPostState(final TranslatedInterferenceOfEdge edge,
@@ -84,10 +73,8 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 		if (sourceState == null || SmtUtils.isFalseLiteral(sourceState.getFormula())) {
 			return mFalsePredicate;
 		}
-		final Term combined = SmtUtils.andWithExtendedLocalSimplification(mManagedScript.getScript(),
-				sourceState.getFormula(), edge.transitionPredicate().getFormula());
-		final IPredicate relationalInterference = mPredicateFactory.newPredicate(combined);
-		return mPostcondition.strongestPostcondition(mTruePredicate, relationalInterference);
+		final IPredicate relationalInterference = conjoin(sourceState, edge.transitionPredicate());
+		return unconditionalPostStateOf(relationalInterference);
 	}
 
 	private IPredicate projectToSingleGlobal(final IPredicate sharedState, final IProgramVar global) {
@@ -108,12 +95,5 @@ public final class UnaryGlobalInterferenceFactory implements IInterferenceFactor
 			}
 		}
 		return false;
-	}
-
-	private static Map<IcfgLocation, IPredicate> mergeStates(
-			final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates) {
-		final Map<IcfgLocation, IPredicate> merged = new LinkedHashMap<>();
-		perThreadStates.values().forEach(merged::putAll);
-		return merged;
 	}
 }

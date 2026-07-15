@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -67,17 +67,6 @@ public final class InterferenceUtils {
 		return changedGlobals.isEmpty() ? Set.of() : Set.copyOf(changedGlobals);
 	}
 
-	public static Set<TermVariable> getChangedGlobalTermVars(final TransFormula tf) {
-		return getChangedGlobals(tf).stream().map(IProgramVar::getTermVariable)
-				.collect(Collectors.toUnmodifiableSet());
-	}
-
-	public static Set<TermVariable> getChangedGlobalTermVars(final TransFormula tf,
-			final Set<IProgramVar> additionallyChangedGlobals) {
-		return getChangedGlobals(tf, additionallyChangedGlobals).stream().map(IProgramVar::getTermVariable)
-				.collect(Collectors.toUnmodifiableSet());
-	}
-
 	public static boolean modifiesGlobals(final TransFormula tf) {
 		return !getChangedGlobals(tf).isEmpty();
 	}
@@ -120,7 +109,7 @@ public final class InterferenceUtils {
 	}
 
 	public static boolean shouldSkipTrivialPredicate(final IPredicate predicate) {
-		return predicate == null || SmtUtils.isTrueLiteral(predicate.getFormula()) || SmtUtils.isFalseLiteral(predicate.getFormula());
+		return predicate == null || SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 
 	public static IPredicate projectToGlobalState(final IPredicate state, final IUltimateServiceProvider services,

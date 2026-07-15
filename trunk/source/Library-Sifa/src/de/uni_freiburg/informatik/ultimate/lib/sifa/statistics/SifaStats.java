@@ -249,17 +249,17 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 
 		/** Domain joins that collapsed disjuncts after hitting max parallel states */
 		DOMAIN_MAX_DISJUNCTS_JOINS(KeyType.COUNTER),
-		/** Number of strongest postcondition calls during interference application */
-		INTERFERENCE_SP_APPLICATIONS(KeyType.COUNTER),
-		INTERFERENCE_SP_TIME(KeyType.TIMER),
 		INTERFERENCE_QE_APPLICATIONS(KeyType.COUNTER),
 		INTERFERENCE_QE_TIME(KeyType.TIMER),
 		INTERFERENCE_QE_MAX_TIME(KeyType.MAX_TIMER),
-		INTERFERENCE_QE_LIGHT(KeyType.COUNTER),
-		INTERFERENCE_QE_FULL(KeyType.COUNTER),
 		INTERFERENCE_INNER_ITERATIONS(KeyType.COUNTER),
 		INTERFERENCE_INNER_WIDENINGS(KeyType.COUNTER),
-		INTERFERENCE_OUTER_WIDENINGS(KeyType.COUNTER),;
+		INTERFERENCE_OUTER_WIDENINGS(KeyType.COUNTER),
+		INTERFERENCE_LOCKSET_FILTERED(KeyType.COUNTER),
+		/** Summaries in the interference set after each outer-round build (sums over rounds) */
+		INTERFERENCE_SUMMARIES_BUILT(KeyType.COUNTER),
+		/** Summaries that passed all applicability filters and were applied to a state */
+		INTERFERENCE_SUMMARIES_APPLIED(KeyType.COUNTER),;
 
 		private final KeyType mType;
 

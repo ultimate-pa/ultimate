@@ -1,105 +1,58 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.poststate;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.ThreadedKey;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.KeyedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
-public final class PostStateInterference implements IInterference {
+public final class PostStateInterference extends KeyedInterferenceSet<IPredicate> {
 
-	private final Map<ThreadedKey, IPredicate> mInterferenceByKey;
-
-	public PostStateInterference(final Map<ThreadedKey, IPredicate> interferenceByKey) {
-		mInterferenceByKey = Map.copyOf(interferenceByKey);
+	public PostStateInterference(final Map<InterferenceGroupKey, IPredicate> summaryByKey,
+			final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
+		super(summaryByKey, preForkSourcesByThread);
 	}
 
 	@Override
-	public IPredicate applyUntilFixpoint(final IPredicate state, final Set<String> activeThreadIds,
-			final IDomain domain, final int wideningThreshold, final SifaStats stats) {
-		final Collection<IPredicate> filtered = buildFiltered(activeThreadIds);
-		if (filtered.isEmpty()) {
+	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
+			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
+			final int wideningThreshold, final SifaStats stats) {
+		final List<Entry<InterferenceGroupKey, IPredicate>> applicable =
+				selectApplicableSummaries(observerThreadId, activeThreadIds, observerLockset, stats);
+		if (applicable.isEmpty()) {
 			return state;
 		}
 		IPredicate result = state;
-		for (final IPredicate groupedInterference : filtered) {
-			result = domain.join(result, groupedInterference);
+		for (final Entry<InterferenceGroupKey, IPredicate> entry : applicable) {
+			result = domain.join(result, entry.getValue());
 		}
 		return result;
 	}
 
-	private Collection<IPredicate> buildFiltered(final Set<String> activeThreadIds) {
-		final List<IPredicate> filtered = new ArrayList<>();
-		for (final Entry<ThreadedKey, IPredicate> e : mInterferenceByKey.entrySet()) {
-			if (activeThreadIds.contains(e.getKey().threadId())) {
-				filtered.add(e.getValue());
-			}
-		}
-		return filtered;
+	@Override
+	protected IPredicate widenSummaries(final IPredicate left, final IPredicate right, final IDomain domain) {
+		return domain.widen(left, right);
 	}
 
 	@Override
-	public boolean isEmpty() {
-		return mInterferenceByKey.isEmpty();
+	protected boolean isTrivialSummary(final IPredicate summary) {
+		return SmtUtils.isFalseLiteral(summary.getFormula());
 	}
 
 	@Override
-	public Set<String> threadIds() {
-		final Set<String> ids = new LinkedHashSet<>();
-		mInterferenceByKey.keySet().forEach(k -> ids.add(k.threadId()));
-		return Set.copyOf(ids);
+	protected boolean summaryIsSubsumedBy(final IPredicate left, final IPredicate right, final IDomain domain) {
+		return domain.isSubsetEq(left, right).isTrueForAbstraction();
 	}
 
 	@Override
-	public IInterference widen(final IInterference other, final IDomain domain) {
-		if (!(other instanceof final PostStateInterference typedOther)) {
-			throw new IllegalArgumentException(
-					"Cannot widen PostStateInterference with " + other.getClass().getSimpleName());
-		}
-		final Map<ThreadedKey, IPredicate> widened = new LinkedHashMap<>();
-		for (final Entry<ThreadedKey, IPredicate> entry : mInterferenceByKey.entrySet()) {
-			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey().threadId());
-			final IPredicate otherGroup = typedOther.mInterferenceByKey.get(entry.getKey());
-			final IPredicate widenedGroup = otherGroup == null ? entry.getValue()
-					: domain.widen(entry.getValue(), otherGroup);
-			if (!SmtUtils.isFalseLiteral(widenedGroup.getFormula())) {
-				widened.put(entry.getKey(), widenedGroup);
-			}
-		}
-		for (final Entry<ThreadedKey, IPredicate> entry : typedOther.mInterferenceByKey.entrySet()) {
-			if (!widened.containsKey(entry.getKey())
-					&& !SmtUtils.isFalseLiteral(entry.getValue().getFormula())) {
-				widened.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return widened.isEmpty() ? null : new PostStateInterference(widened);
+	protected KeyedInterferenceSet<IPredicate> withSummaries(final Map<InterferenceGroupKey, IPredicate> summaries) {
+		return new PostStateInterference(summaries, mPreForkSourcesByThread);
 	}
-
-	@Override
-	public boolean isSubsumedBy(final IInterference other, final IDomain domain) {
-		if (!(other instanceof final PostStateInterference typedOther)) {
-			return false;
-		}
-		for (final Entry<ThreadedKey, IPredicate> entry : mInterferenceByKey.entrySet()) {
-			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey().threadId());
-			final IPredicate otherGroup = typedOther.mInterferenceByKey.get(entry.getKey());
-			if (otherGroup == null
-					|| !domain.isSubsetEq(entry.getValue(), otherGroup).isTrueForAbstraction()) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 }

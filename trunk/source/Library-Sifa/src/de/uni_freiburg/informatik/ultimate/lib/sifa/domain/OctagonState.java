@@ -150,5 +150,4 @@ public final class OctagonState implements IAbstractState<OctagonState> {
 	public boolean isBottom() {
 		return cachedSelectiveClosure().hasNegativeSelfLoop();
 	}
-
 }

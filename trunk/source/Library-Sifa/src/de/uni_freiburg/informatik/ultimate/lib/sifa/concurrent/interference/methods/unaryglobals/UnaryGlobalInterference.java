@@ -14,9 +14,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.RelationalPredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -25,13 +24,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-/**
- * A very coarse interference abstraction that keeps one unary summary predicate per changed global variable,
- * stored per-thread for precise filtering and convergence checking.
- */
-public final class UnaryGlobalInterference implements IInterference {
+public final class UnaryGlobalInterference implements IInterferenceSet {
 
-	/** Precomputed per-thread data for fast application. */
 	private record PerThreadData(
 			Map<IProgramVar, IPredicate> summaryByGlobal,
 			Set<TermVariable> varsToForget,
@@ -47,15 +41,11 @@ public final class UnaryGlobalInterference implements IInterference {
 		}
 
 		private static Term buildCombined(final Map<IProgramVar, IPredicate> summaryByGlobal, final Script script) {
-			Term combined = script.term("true");
-			for (final IPredicate s : summaryByGlobal.values()) {
-				combined = SmtUtils.and(script, combined, s.getFormula());
-			}
-			return combined;
+			return SmtUtils.and(script,
+					summaryByGlobal.values().stream().map(IPredicate::getFormula).toList());
 		}
 	}
 
-	// threadId → per-thread data; LinkedHashMap preserves insertion order for deterministic iteration
 	private final Map<String, PerThreadData> mDataByThread;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
@@ -80,10 +70,11 @@ public final class UnaryGlobalInterference implements IInterference {
 	}
 
 	@Override
-	public IPredicate applyUntilFixpoint(final IPredicate state, final Set<String> activeThreadIds,
-			final IDomain domain, final int wideningThreshold, final SifaStats stats) {
-		if (mDataByThread.isEmpty()
-				|| (!(state instanceof AbstractLocationPartitionedPredicate) && SmtUtils.isTrueLiteral(state.getFormula()))
+	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
+			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
+			final int wideningThreshold,
+			final SifaStats stats) {
+		if (mDataByThread.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
@@ -128,12 +119,17 @@ public final class UnaryGlobalInterference implements IInterference {
 	}
 
 	@Override
+	public int summaryCount() {
+		return mDataByThread.values().stream().mapToInt(data -> data.summaryByGlobal().size()).sum();
+	}
+
+	@Override
 	public Set<String> threadIds() {
 		return mDataByThread.keySet();
 	}
 
 	@Override
-	public IInterference widen(final IInterference other, final IDomain domain) {
+	public IInterferenceSet widen(final IInterferenceSet other, final IDomain domain) {
 		if (!(other instanceof final UnaryGlobalInterference typedOther)) {
 			throw new IllegalArgumentException(
 					"Cannot widen UnaryGlobalInterference with " + other.getClass().getSimpleName());
@@ -152,7 +148,6 @@ public final class UnaryGlobalInterference implements IInterference {
 				result.put(entry.getKey(), widenedSummary);
 			}
 		}
-		// Include threads present only in other (no widen needed, just copy)
 		for (final Entry<String, PerThreadData> entry : typedOther.mDataByThread.entrySet()) {
 			if (!result.containsKey(entry.getKey())) {
 				result.put(entry.getKey(), new LinkedHashMap<>(entry.getValue().summaryByGlobal()));
@@ -163,7 +158,7 @@ public final class UnaryGlobalInterference implements IInterference {
 	}
 
 	@Override
-	public boolean isSubsumedBy(final IInterference other, final IDomain domain) {
+	public boolean isSubsumedBy(final IInterferenceSet other, final IDomain domain) {
 		if (!(other instanceof final UnaryGlobalInterference typedOther)) {
 			return false;
 		}

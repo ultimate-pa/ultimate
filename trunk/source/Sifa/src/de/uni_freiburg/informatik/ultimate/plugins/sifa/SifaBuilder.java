@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstr
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas.PrimedDefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -134,11 +134,18 @@ public class SifaBuilder {
 					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD));
 			final boolean joinPrecision = mPrefs.getBoolean(SifaPreferences.LABEL_JOIN_PRECISION);
 			final boolean useBuckets = mPrefs.getBoolean(SifaPreferences.LABEL_USE_BUCKETS);
+			final int maxBuckets = Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_MAX_BUCKETS));
+			final int maxDisjunctsPerBucket =
+					Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_MAX_DISJUNCTS_PER_BUCKET));
+			final boolean locksetAwareInterference =
+					mPrefs.getBoolean(SifaPreferences.LABEL_LOCKSET_AWARE_INTERFERENCE);
+			final boolean publishOnAcquire = mPrefs.getBoolean(SifaPreferences.LABEL_PUBLISH_ON_ACQUIRE);
 			final boolean proofCheck = mPrefs.getBoolean(SifaPreferences.LABEL_PROOF_CHECK);
 			final boolean resultPrint = mPrefs.getBoolean(SifaPreferences.LABEL_RESULT_PRINT);
 			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
 					interferenceApplicator, outerWideningThreshold, innerWideningThreshold,
-					joinPrecision, useBuckets, proofCheck, resultPrint);
+					joinPrecision, useBuckets, locksetAwareInterference, publishOnAcquire, proofCheck,
+					resultPrint, maxBuckets, maxDisjunctsPerBucket);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);

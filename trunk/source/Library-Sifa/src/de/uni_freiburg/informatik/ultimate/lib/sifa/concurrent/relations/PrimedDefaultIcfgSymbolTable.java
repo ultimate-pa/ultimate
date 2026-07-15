@@ -1,6 +1,5 @@
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.primedFormulas;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -23,6 +22,7 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 	private final ManagedScript mManagedScript;
 	private final Map<IProgramVar, TermVariable> mPrimedVars = new HashMap<>();
 	private final Set<IProgramVar> mGhostVars = new HashSet<>();
+	private Set<IProgramVar> mCachedGlobalBaseVars;
 
 	public PrimedDefaultIcfgSymbolTable(final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ManagedScript managedScript) {
@@ -33,6 +33,7 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 	}
 
 	public void registerGhostVariable(final IProgramVar ghostVar) {
+		mCachedGlobalBaseVars = null;
 		mGhostVars.add(ghostVar);
 		mTermVariable2ProgramVar.put(ghostVar.getTermVariable(), ghostVar);
 
@@ -41,7 +42,6 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		mTermVariable2ProgramVar.put(primedTv, new PrimedProgramVar(ghostVar, primedTv));
 		mPrimedVars.put(ghostVar, primedTv);
 
-		// Required for closed-formula computation
 		addDefaultConstant(ghostVar);
 		addPrimedConstant(ghostVar);
 	}
@@ -53,25 +53,19 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		return rtr;
 	}
 
-	public Map<IProgramVar, TermVariable> getPrimedVars() {
-		return Collections.unmodifiableMap(mPrimedVars);
-	}
-
 	public Set<IProgramVar> getAllGlobalBaseVars() {
+		if (mCachedGlobalBaseVars != null) {
+			return mCachedGlobalBaseVars;
+		}
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramVar pv : mTermVariable2ProgramVar.values()) {
-			if (!pv.isGlobal()) {
-				continue;
-			}
-			if (pv.isOldvar()) {
-				continue;
-			}
-			if (isPrimedVar(pv)) {
+			if (!pv.isGlobal() || pv.isOldvar() || isPrimedVar(pv)) {
 				continue;
 			}
 			result.add(pv);
 		}
-		return result;
+		mCachedGlobalBaseVars = result;
+		return mCachedGlobalBaseVars;
 	}
 
 	public TermVariable getPrimedVar(final IProgramVar var) {
@@ -171,7 +165,6 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 
 		@Override
 		public ApplicationTerm getDefaultConstant() {
-			// primed var's default constant is the primed constant (post-state view)
 			return mBase.getPrimedConstant();
 		}
 

@@ -1,207 +1,188 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.IThreadLocalDomainContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-// IDomain wrapper that partitions abstract states by thread control location combinations.
-// Combinations as in the Cartesian product |T1| x |T2| x ... x |Tn| over thread locations.
 public final class AbstractLocationPartitionedDomain implements IDomain, IThreadLocalDomainContext {
+	private static final Map<String, Term> UNKNOWN = Map.of();
+
 	private final IDomain mUnderlyingDomain;
 	private final SymbolicTools mTools;
-	private final Map<String, String> mThreadIdByLocVarName;
-	private String mCurrentThreadId;
-	private Set<String> mRelevantThreadIds;
+	private final Set<String> mLocVarNames;
+	private final int mMaxBuckets;
+	private final int mMaxDisjunctsPerBucket;
 
 	private AbstractLocationPartitionedDomain(final IDomain underlying, final SymbolicTools tools,
-			final Map<String, TermVariable> locVarsByThread) {
+			final Set<String> locVarNames, final int maxBuckets, final int maxDisjunctsPerBucket) {
 		mUnderlyingDomain = underlying;
 		mTools = tools;
-		final var threadByLocVarName = new LinkedHashMap<String, String>();
-		for (final var entry : locVarsByThread.entrySet()) {
-			threadByLocVarName.put(entry.getValue().getName(), entry.getKey());
-		}
-		mThreadIdByLocVarName = Map.copyOf(threadByLocVarName);
+		mLocVarNames = Set.copyOf(locVarNames);
+		mMaxBuckets = maxBuckets;
+		mMaxDisjunctsPerBucket = maxDisjunctsPerBucket;
 	}
 
 	public static AbstractLocationPartitionedDomain create(final IDomain underlying, final SymbolicTools tools,
-			final Map<String, TermVariable> locVarsByThread) {
-		return new AbstractLocationPartitionedDomain(underlying, tools, locVarsByThread);
-	}
-
-	public IDomain underlyingDomain() {
-		return mUnderlyingDomain;
+			final Map<String, TermVariable> locVarsByThread, final int maxBuckets, final int maxDisjunctsPerBucket) {
+		final Set<String> names = new LinkedHashSet<>();
+		locVarsByThread.values().forEach(tv -> names.add(tv.getName()));
+		return new AbstractLocationPartitionedDomain(underlying, tools, names, maxBuckets, maxDisjunctsPerBucket);
 	}
 
 	@Override
 	public void setCurrentThreadId(final String threadId) {
-		mCurrentThreadId = threadId;
 		if (mUnderlyingDomain instanceof final IThreadLocalDomainContext ctx) {
 			ctx.setCurrentThreadId(threadId);
 		}
 	}
 
-	public void setRelevantThreadIds(final Set<String> relevantThreadIds) {
-		mRelevantThreadIds = relevantThreadIds == null ? null : Set.copyOf(relevantThreadIds);
-	}
-
-	@Override
-	public IPredicate alpha(final IPredicate pred) {
-		if (pred instanceof final AbstractLocationPartitionedPredicate bp) {
-			return alphaEachPartition(bp.partitions());
-		}
-		return mUnderlyingDomain.alpha(pred);
-	}
-
-	private IPredicate alphaEachPartition(final Map<GlobalLocationState, IPredicate> partitions) {
-		final Map<GlobalLocationState, IPredicate> abstracted = new LinkedHashMap<>();
-		partitions.forEach((key, state) -> abstracted.put(key, mUnderlyingDomain.alpha(state)));
-		return buildPredicateFromPartitionsMap(abstracted);
-	}
-
 	@Override
 	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
-		return combinePartitions(lhs, rhs, mUnderlyingDomain::join);
+		return combine(lhs, rhs, mUnderlyingDomain::join);
 	}
 
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
-		return combinePartitions(old, widenWith, mUnderlyingDomain::widen);
+		return combine(old, widenWith, mUnderlyingDomain::widen);
+	}
+
+	@Override
+	public IPredicate alpha(final IPredicate pred) {
+		return mUnderlyingDomain.alpha(pred);
 	}
 
 	@Override
 	public ResultForAlteredInputs isEqBottom(final IPredicate pred) {
-		if (!(pred instanceof final AbstractLocationPartitionedPredicate bp)) {
-			return mUnderlyingDomain.isEqBottom(pred);
-		}
-		final Map<GlobalLocationState, IPredicate> checkedPartitions = new LinkedHashMap<>();
-		boolean allBottom = true;
-		boolean anyAbstracted = false;
-		for (final var entry : bp.partitions().entrySet()) {
-			final ResultForAlteredInputs partitionResult = mUnderlyingDomain.isEqBottom(entry.getValue());
-			checkedPartitions.put(entry.getKey(), partitionResult.getLhs());
-			allBottom &= partitionResult.isTrueForAbstraction();
-			anyAbstracted |= partitionResult.wasAbstracted();
-		}
-		return new ResultForAlteredInputs(buildPredicateFromPartitionsMap(checkedPartitions), mTools.bottom(),
-				allBottom, anyAbstracted);
+		return mUnderlyingDomain.isEqBottom(pred);
 	}
 
 	@Override
 	public ResultForAlteredInputs isSubsetEq(final IPredicate subset, final IPredicate superset) {
-		final Map<GlobalLocationState, IPredicate> subParts = getPartitions(subset);
-		final Map<GlobalLocationState, IPredicate> supParts = getPartitions(superset);
-		// Avoid wrapping two plain predicates into the unknown partition.
-		if (bothUnpartitioned(subParts, supParts)) {
-			return mUnderlyingDomain.isSubsetEq(subParts.get(GlobalLocationState.UNKNOWN),
-					supParts.get(GlobalLocationState.UNKNOWN));
+		return mUnderlyingDomain.isSubsetEq(subset, superset);
+	}
+
+	private IPredicate combine(final IPredicate lhs, final IPredicate rhs, final BinaryOperator<IPredicate> op) {
+		final Map<Map<String, Term>, IPredicate> left = bucketize(lhs);
+		final Map<Map<String, Term>, IPredicate> right = bucketize(rhs);
+		final Set<Map<String, Term>> keys = new LinkedHashSet<>(left.keySet());
+		keys.addAll(right.keySet());
+		final List<Term> disjuncts = new ArrayList<>();
+		for (final Map<String, Term> key : keys) {
+			final IPredicate l = left.get(key);
+			final IPredicate r = right.get(key);
+			final IPredicate combined;
+			if (l == null) {
+				combined = r;
+			} else if (r == null) {
+				combined = l;
+			} else {
+				combined = op.apply(l, r);
+			}
+			if (!SmtUtils.isFalseLiteral(combined.getFormula())) {
+				disjuncts.add(combined.getFormula());
+			}
 		}
-		final Map<GlobalLocationState, IPredicate> checkedSub = new LinkedHashMap<>();
-		final Map<GlobalLocationState, IPredicate> checkedSup = new LinkedHashMap<>(supParts);
-		boolean isSubset = true;
-		boolean wasAbstracted = false;
-		for (final var entry : subParts.entrySet()) {
-			final IPredicate sup = supParts.getOrDefault(entry.getKey(), mTools.bottom());
-			final ResultForAlteredInputs r = mUnderlyingDomain.isSubsetEq(entry.getValue(), sup);
-			checkedSub.put(entry.getKey(), r.getLhs());
-			checkedSup.put(entry.getKey(), r.getRhs());
-			isSubset &= r.isTrueForAbstraction();
-			wasAbstracted |= r.wasAbstracted();
-		}
-		return new ResultForAlteredInputs(buildPredicateFromPartitionsMap(checkedSub),
-				buildPredicateFromPartitionsMap(checkedSup), isSubset, wasAbstracted);
-	}
-
-	// when no bucket info is available yet, assume the thread starts at its entry.
-	public AbstractLocationPartitionedPredicate seedAtLocation(final IPredicate plain, final String locVarName,
-			final int abstractLocation) {
-		final GlobalLocationState key = new GlobalLocationState(Map.of(locVarName, abstractLocation));
-		return AbstractLocationPartitionedPredicate.create(Map.of(key, plain), plain);
-	}
-
-	public AbstractLocationPartitionedPredicate seedAtUnknown(final IPredicate plain) {
-		return AbstractLocationPartitionedPredicate.create(Map.of(GlobalLocationState.UNKNOWN, plain), plain);
-	}
-
-	public IPredicate buildPredicateFromPartitionsMap(final Map<GlobalLocationState, IPredicate> partitions) {
-		final Map<GlobalLocationState, IPredicate> pruned = pruneToActiveThreads(partitions);
-		final Map<GlobalLocationState, IPredicate> nonEmpty = filterBottom(pruned);
-		if (nonEmpty.isEmpty()) {
+		if (disjuncts.isEmpty()) {
 			return mTools.bottom();
 		}
-		final List<Term> disjuncts = nonEmpty.values().stream().map(IPredicate::getFormula).toList();
-		return AbstractLocationPartitionedPredicate.create(nonEmpty, mTools.orT(disjuncts));
+		return mTools.orT(disjuncts);
 	}
 
-	private Map<GlobalLocationState, IPredicate> pruneToActiveThreads(
-			final Map<GlobalLocationState, IPredicate> partitions) {
-		final Map<GlobalLocationState, IPredicate> pruned = new LinkedHashMap<>();
-		partitions.forEach((key, value) -> pruned.merge(restrictToActiveThreads(key), value, mUnderlyingDomain::join));
-		return pruned;
-	}
-
-	private GlobalLocationState restrictToActiveThreads(final GlobalLocationState locState) {
-		if (locState.locs().isEmpty()) {
-			return GlobalLocationState.UNKNOWN;
+	private Map<Map<String, Term>, IPredicate> bucketize(final IPredicate pred) {
+		final Map<Map<String, Term>, List<Term>> groups = new LinkedHashMap<>();
+		for (final Term disjunct : mTools.dnfDisjuncts(pred)) {
+			groups.computeIfAbsent(keyOf(disjunct), k -> new ArrayList<>()).add(disjunct);
 		}
-		final Map<String, Integer> pruned = new LinkedHashMap<>();
-		for (final var entry : locState.locs().entrySet()) {
-			if (isRelevantThread(mThreadIdByLocVarName.get(entry.getKey()))) {
-				pruned.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return pruned.isEmpty() ? GlobalLocationState.UNKNOWN : new GlobalLocationState(pruned);
-	}
-
-	private boolean isRelevantThread(final String threadId) {
-		if (threadId == null || threadId.equals(mCurrentThreadId)) {
-			return false;
-		}
-		return mRelevantThreadIds == null || mRelevantThreadIds.contains(threadId);
-	}
-
-	private Map<GlobalLocationState, IPredicate> filterBottom(final Map<GlobalLocationState, IPredicate> partitions) {
-		final Map<GlobalLocationState, IPredicate> result = new LinkedHashMap<>();
-		partitions.forEach((key, value) -> {
-			if (!SmtUtils.isFalseLiteral(value.getFormula())) {
-				result.put(key, value);
-			}
-		});
+		foldSurplusBucketsIntoCatchAll(groups);
+		final Map<Map<String, Term>, IPredicate> result = new LinkedHashMap<>();
+		groups.forEach((key, terms) -> result.put(key, capDisjuncts(terms)));
 		return result;
 	}
 
-	private IPredicate combinePartitions(final IPredicate lhs, final IPredicate rhs,
-			final BinaryOperator<IPredicate> op) {
-		final Map<GlobalLocationState, IPredicate> left = getPartitions(lhs);
-		final Map<GlobalLocationState, IPredicate> right = getPartitions(rhs);
-		if (bothUnpartitioned(left, right)) {
-			return op.apply(left.get(GlobalLocationState.UNKNOWN), right.get(GlobalLocationState.UNKNOWN));
+	private Map<String, Term> keyOf(final Term disjunct) {
+		final Map<String, Term> key = new LinkedHashMap<>();
+		for (final Term conjunct : SmtUtils.getConjuncts(disjunct)) {
+			addLocationEquality(key, conjunct);
 		}
-		final Map<GlobalLocationState, IPredicate> result = new LinkedHashMap<>(left);
-		right.forEach((k, v) -> result.merge(k, v, op));
-		return buildPredicateFromPartitionsMap(result);
+		return Map.copyOf(key);
 	}
 
-	private static boolean bothUnpartitioned(final Map<GlobalLocationState, IPredicate> left,
-			final Map<GlobalLocationState, IPredicate> right) {
-		return left.size() <= 1 && right.size() <= 1 && left.containsKey(GlobalLocationState.UNKNOWN)
-				&& right.containsKey(GlobalLocationState.UNKNOWN);
+	private void addLocationEquality(final Map<String, Term> key, final Term conjunct) {
+		final ApplicationTerm appl = SmtUtils.getFunctionApplication(conjunct, "=");
+		if (appl == null) {
+			return;
+		}
+		final Term[] params = appl.getParameters();
+		String locVarName = null;
+		Term constant = null;
+		for (final Term param : params) {
+			if (param instanceof final TermVariable tv && mLocVarNames.contains(tv.getName())) {
+				locVarName = tv.getName();
+			} else if (param instanceof ConstantTerm) {
+				constant = param;
+			}
+		}
+		if (locVarName != null && constant != null) {
+			key.put(locVarName, constant);
+		}
 	}
 
-	private Map<GlobalLocationState, IPredicate> getPartitions(final IPredicate pred) {
-		if (pred instanceof final AbstractLocationPartitionedPredicate bp) {
-			return bp.partitions();
+	private void foldSurplusBucketsIntoCatchAll(final Map<Map<String, Term>, List<Term>> groups) {
+		final List<Map<String, Term>> keyed = new ArrayList<>();
+		for (final Map<String, Term> key : groups.keySet()) {
+			if (!key.isEmpty()) {
+				keyed.add(key);
+			}
 		}
-		return Map.of(GlobalLocationState.UNKNOWN, pred);
+		if (keyed.size() <= mMaxBuckets) {
+			return;
+		}
+		keyed.sort(Comparator.comparing(AbstractLocationPartitionedDomain::canonicalKey));
+		final List<Term> catchAll = groups.computeIfAbsent(UNKNOWN, k -> new ArrayList<>());
+		for (final Map<String, Term> surplus : keyed.subList(mMaxBuckets, keyed.size())) {
+			catchAll.addAll(groups.remove(surplus));
+		}
+	}
+
+	private static String canonicalKey(final Map<String, Term> key) {
+		return key.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> e.getKey() + "=" + e.getValue())
+				.collect(Collectors.joining(";"));
+	}
+
+	private IPredicate capDisjuncts(final List<Term> terms) {
+		if (terms.size() <= mMaxDisjunctsPerBucket) {
+			return mTools.orT(terms);
+		}
+		final List<IPredicate> preds = new ArrayList<>(terms.size());
+		terms.forEach(t -> preds.add(mTools.predicate(t)));
+		final List<Term> joined = new ArrayList<>(mMaxDisjunctsPerBucket);
+		int sourceIdx = 0;
+		for (int targetIdx = 0; targetIdx < mMaxDisjunctsPerBucket; targetIdx++) {
+			final int remainingTargets = mMaxDisjunctsPerBucket - targetIdx;
+			final int groupSize = (int) Math.ceil((preds.size() - sourceIdx) / (double) remainingTargets);
+			IPredicate acc = preds.get(sourceIdx);
+			for (int i = sourceIdx + 1; i < sourceIdx + groupSize; i++) {
+				acc = mUnderlyingDomain.join(acc, preds.get(i));
+			}
+			joined.add(acc.getFormula());
+			sourceIdx += groupSize;
+		}
+		return mTools.orT(joined);
 	}
 }
