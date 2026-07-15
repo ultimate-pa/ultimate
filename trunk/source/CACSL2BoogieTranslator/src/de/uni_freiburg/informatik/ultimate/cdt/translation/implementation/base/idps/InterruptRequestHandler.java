@@ -39,7 +39,7 @@ public class InterruptRequestHandler {
 
 	public InterruptRequestHandler() {
 		mIrqs = new HashSet<>();
-		mIrqFreeNum = 0;
+		mIrqFreeNum = 1;
 	}
 
 	public boolean register(final String name) {
