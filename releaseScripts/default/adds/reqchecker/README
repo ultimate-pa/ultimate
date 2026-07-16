@@ -31,11 +31,17 @@ This archive also contains binaries for the following theorem provers.
   * Windows (mathsat.exe, gmp.dll, mathsat.dll)
     MathSAT5 version 5.6.17 (7c1b8284717f) (Jun  9 2026 17:44:03, gmp 6.3.0, msvc 19.50, 64-bit, reentrant)
 
+* CVC5 (<https://github.com/cvc5/cvc5>)
+  * Linux (cvc5)
+    cvc5 1.3.4 [git f3b21c4 on branch HEAD]
+  * Windows (cvc5.exe)
+    cvc5 1.3.4 [git f3b21c4 on branch HEAD]
+
 For each of these theorem provers, a corresponding license file (z3-LICENSE,
-bitwuzla-LICENSE, mathsat-LICENSE) can be found in our archive. Please consult
-these files for additional restrictions regarding your application. If these
-restrictions apply, you must delete the corresponding binaries. This might not
-necessarily affect your application.
+bitwuzla-LICENSE, mathsat-LICENSE, cvc5-LICENSE) can be found in our archive.
+Please consult these files for additional restrictions regarding your
+application. If these restrictions apply, you must delete the corresponding
+binaries. This might not necessarily affect your application.
 
 -------------------------------------------------------------------------------
 
