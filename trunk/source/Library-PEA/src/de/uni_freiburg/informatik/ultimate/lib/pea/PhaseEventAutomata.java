@@ -420,8 +420,14 @@ public class PhaseEventAutomata implements Comparable<Object> {
 			}
 			phaseList.add(newPhase);
 		}
-		final PhaseEventAutomata newPEA =
-				new PhaseEventAutomata(mName, phaseList, mInit, mClocks, mVariables, mEvents, mDeclarations);
+		final List<InitialTransition> initialTransitions = new ArrayList<>();
+		for (final InitialTransition initialTransition : mInit) {
+			if (!initialTransition.getDest().getName().contains("sink")) {
+				initialTransitions.add(initialTransition);
+			}
+		}
+		final PhaseEventAutomata newPEA = new PhaseEventAutomata(mName, phaseList, initialTransitions, mClocks,
+				mVariables, mEvents, mDeclarations);
 		return newPEA;
 	}
 }
