@@ -127,6 +127,26 @@ public abstract class KeyedInterferenceSet<G> implements IInterferenceSet {
 		return true;
 	}
 
+	@Override
+	public final boolean isSubsumedByForThreads(final IInterferenceSet other, final IDomain domain,
+			final Set<String> relevantThreadIds) {
+		if (getClass() != other.getClass()) {
+			return false;
+		}
+		final KeyedInterferenceSet<G> typedOther = (KeyedInterferenceSet<G>) other;
+		for (final Entry<InterferenceGroupKey, G> entry : mSummaryByKey.entrySet()) {
+			if (!relevantThreadIds.contains(entry.getKey().threadId())) {
+				continue;
+			}
+			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey().threadId());
+			final G otherSummary = typedOther.mSummaryByKey.get(entry.getKey());
+			if (otherSummary == null || !summaryIsSubsumedBy(entry.getValue(), otherSummary, domain)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	protected abstract G widenSummaries(G left, G right, IDomain domain);
 
 	protected abstract boolean isTrivialSummary(G summary);

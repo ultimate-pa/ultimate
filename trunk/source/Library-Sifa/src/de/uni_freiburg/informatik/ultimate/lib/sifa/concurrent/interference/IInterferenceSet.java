@@ -20,4 +20,14 @@ public interface IInterferenceSet {
 	IInterferenceSet widen(IInterferenceSet other, IDomain domain);
 
 	boolean isSubsumedBy(IInterferenceSet other, IDomain domain);
+
+	/**
+	 * Like {@link #isSubsumedBy}, but restricted to summaries whose writer thread is in relevantThreadIds.
+	 * Used to decide whether a single observer thread's interference input grew since the previous outer round.
+	 * The default conservatively checks full subsumption, which implies the restricted one.
+	 */
+	default boolean isSubsumedByForThreads(final IInterferenceSet other, final IDomain domain,
+			final Set<String> relevantThreadIds) {
+		return isSubsumedBy(other, domain);
+	}
 }

@@ -259,7 +259,9 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		/** Summaries in the interference set after each outer-round build (sums over rounds) */
 		INTERFERENCE_SUMMARIES_BUILT(KeyType.COUNTER),
 		/** Summaries that passed all applicability filters and were applied to a state */
-		INTERFERENCE_SUMMARIES_APPLIED(KeyType.COUNTER),;
+		INTERFERENCE_SUMMARIES_APPLIED(KeyType.COUNTER),
+		/** Outer-round thread re-analyses skipped because the thread's inputs were unchanged */
+		THREAD_REANALYSES_SKIPPED(KeyType.COUNTER),;
 
 		private final KeyType mType;
 
