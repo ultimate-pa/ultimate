@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script generates a directory that contains the DeltaDebugger 
-# It takes additional binaries from the adds/ folder. Currently, we use z3, bitwuzla and mathsat
+# It takes additional binaries from the adds/ folder. Currently, we use z3, bitwuzla, mathsat and cvc5.
 # It also adds README, Ultimate.py, and various license files
 # In contrast to createZip, it does not add toolchains or settings files and it does not generate a .zip, only the directory 
 
@@ -28,6 +28,7 @@ if [ "$1" == "linux" ]; then
 	ARCHPATH="products/DeltaDebugger/linux/gtk/x86_64"
 	Z3PATH="adds/z3"
 	BITWUZLAPATH="adds/bitwuzla"
+	CVC5PATH="adds/cvc5"
 	MATHSATPATH="adds/mathsat"
 elif [ "$1" == "win32" ]; then
 	echo "Building .zip for win32..."
@@ -35,6 +36,7 @@ elif [ "$1" == "win32" ]; then
 	ARCHPATH="products/DeltaDebugger/win32/win32/x86_64"
 	Z3PATH="adds/z3.exe"
 	BITWUZLAPATH="adds/bitwuzla.exe"
+	CVC5PATH="adds/cvc5.exe"
 	MATHSATPATH="adds/mathsat.exe adds/gmp.dll adds/mathsat.dll"
 else
     echo "Wrong argument: ""$1"" -- use 'linux' or 'win32'"		
@@ -68,6 +70,7 @@ exit_on_fail cp adds/README "$TARGETDIR"/
 exit_on_fail cp ${Z3PATH} "$TARGETDIR"/
 exit_on_fail cp ${MATHSATPATH} "$TARGETDIR"/
 exit_on_fail cp ${BITWUZLAPATH} "$TARGETDIR"/
+exit_on_fail cp ${CVC5PATH} "$TARGETDIR"/
 
 echo "Modifying Ultimate.py with version and toolname"
 ## replacing version value in Ultimate.py
