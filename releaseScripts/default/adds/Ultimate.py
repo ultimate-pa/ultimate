@@ -679,6 +679,7 @@ def debug_environment():
     solver_versions = [
         ("z3", "-version"),
         ("mathsat", "-version"),
+        ("cvc5", "--version"),
         ("bitwuzla", "--version"),
     ]
     for solver, vflag in solver_versions:
