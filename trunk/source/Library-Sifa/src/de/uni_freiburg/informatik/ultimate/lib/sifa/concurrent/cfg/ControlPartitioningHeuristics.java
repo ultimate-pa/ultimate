@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -257,7 +258,8 @@ public class ControlPartitioningHeuristics {
 		return result;
 	}
 
-	private int nextFreshIdForProcedure(final Set<IcfgLocation> procedureLocations, final Map<IcfgLocation, Integer> mapping) {
+	private int nextFreshIdForProcedure(final Set<IcfgLocation> procedureLocations,
+			final Map<IcfgLocation, Integer> mapping) {
 		return procedureLocations.stream().map(mapping::get).filter(id -> id != null).max(Integer::compareTo).orElse(0)
 				+ 1;
 	}
@@ -270,7 +272,8 @@ public class ControlPartitioningHeuristics {
 		return locationsByProcedure;
 	}
 
-	private List<IcfgLocation> orderedLocationsInProcedureFlow(final String procedure, final Set<IcfgLocation> procedureLocations) {
+	private List<IcfgLocation> orderedLocationsInProcedureFlow(final String procedure,
+			final Set<IcfgLocation> procedureLocations) {
 		final IcfgLocation entry = mIcfg.getProcedureEntryNodes().get(procedure);
 		if (entry == null) {
 			return orderedLocations(procedureLocations);
@@ -289,7 +292,8 @@ public class ControlPartitioningHeuristics {
 
 	private List<IcfgLocation> orderedLocations(final Set<IcfgLocation> locations) {
 		final List<IcfgLocation> ordered = new ArrayList<>(locations);
-		ordered.sort(Comparator.comparing((final IcfgLocation loc) -> loc.getProcedure()).thenComparing(Object::toString));
+		ordered.sort(
+				Comparator.comparing((final IcfgLocation loc) -> loc.getProcedure()).thenComparing(Object::toString));
 		return ordered;
 	}
 
@@ -308,10 +312,17 @@ public class ControlPartitioningHeuristics {
 		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
 			return true;
 		}
+		if (isDataRaceSelfCheckAssertNeedingInterference(edge)) {
+			return true;
+		}
 		if (excludedVars.isEmpty()) {
 			return InterferenceUtils.modifiesGlobals(edge.getTransformula());
 		}
 		return !excludedVars.containsAll(InterferenceUtils.getChangedGlobals(edge.getTransformula()));
+	}
+
+	private boolean isDataRaceSelfCheckAssertNeedingInterference(final IcfgEdge edge) {
+		return DataRaceAnnotation.getAnnotation(edge) != null;
 	}
 
 	private IcfgLocation find(final Map<IcfgLocation, IcfgLocation> parent, final IcfgLocation location) {
@@ -324,7 +335,8 @@ public class ControlPartitioningHeuristics {
 		return root;
 	}
 
-	private void union(final Map<IcfgLocation, IcfgLocation> parent, final IcfgLocation left, final IcfgLocation right) {
+	private void union(final Map<IcfgLocation, IcfgLocation> parent, final IcfgLocation left,
+			final IcfgLocation right) {
 		final IcfgLocation leftRoot = find(parent, left);
 		final IcfgLocation rightRoot = find(parent, right);
 		if (!leftRoot.equals(rightRoot)) {

@@ -35,26 +35,29 @@ public final class PublishOnAcquire {
 	private final Set<IProgramVar> mLockVars;
 	private final Map<IProgramVar, MutexInvariant> mInvariants;
 	private final Set<IcfgLocation> mSequentialLocations;
+	private final Set<TermVariable> mGlobalTvs;
 
 	private PublishOnAcquire(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final BasicPredicateFactory predicateFactory, final Set<IProgramVar> lockVars,
-			final Map<IProgramVar, MutexInvariant> invariants, final Set<IcfgLocation> sequentialLocations) {
+			final Map<IProgramVar, MutexInvariant> invariants, final Set<IcfgLocation> sequentialLocations,
+			final Set<TermVariable> globalTvs) {
 		mServices = services;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mLockVars = lockVars;
 		mInvariants = invariants;
 		mSequentialLocations = sequentialLocations;
+		mGlobalTvs = globalTvs;
 	}
 
 	public static PublishOnAcquire disabled() {
-		return new PublishOnAcquire(null, null, null, Set.of(), Map.of(), Set.of());
+		return new PublishOnAcquire(null, null, null, Set.of(), Map.of(), Set.of(), Set.of());
 	}
 
-	public static PublishOnAcquire discoverProtectedGlobalsAndPublishEdges(final IIcfg<IcfgLocation> icfg, final MustLocksetAnalysis locksetInfo,
-			final String entryProcedure, final ThreadActivityPreanalysis threadActivity,
-			final IUltimateServiceProvider services, final ManagedScript managedScript,
-			final BasicPredicateFactory predicateFactory) {
+	public static PublishOnAcquire discoverProtectedGlobalsAndPublishEdgesDuringPreanalysis(
+			final IIcfg<IcfgLocation> icfg, final MustLocksetAnalysis locksetInfo, final String entryProcedure,
+			final ThreadActivityPreanalysis threadActivity, final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory) {
 		final Set<IProgramVar> lockVars = locksetInfo.getLockVars();
 		if (lockVars.isEmpty()) {
 			return disabled();
@@ -65,8 +68,10 @@ public final class PublishOnAcquire {
 		if (invariants.isEmpty()) {
 			return disabled();
 		}
+		final Set<TermVariable> globalTvs = new LinkedHashSet<>();
+		icfg.getCfgSmtToolkit().getSymbolTable().getGlobals().forEach(g -> globalTvs.add(g.getTermVariable()));
 		return new PublishOnAcquire(services, managedScript, predicateFactory, lockVars, invariants,
-				sequentialLocationsOf(icfg, isSequential));
+				sequentialLocationsOf(icfg, isSequential), globalTvs);
 	}
 
 	private static Predicate<IcfgLocation> onlyOwnThreadCanBeActive(final String entryProcedure,
@@ -128,8 +133,20 @@ public final class PublishOnAcquire {
 		}
 		final Set<TermVariable> protectedTvs = termVariablesOf(protectedVars);
 		final Term withoutProtected = existentiallyRemove(afterFormula, protectedTvs);
-		final IPredicate preservedProtected = retainOnly(beforeInterference, protectedTvs);
+		final Set<TermVariable> protectedTvsAndUntouchableThreadLocalTvs =
+				withThreadLocalFreeVars(protectedTvs, beforeInterference);
+		final IPredicate preservedProtected = retainOnly(beforeInterference, protectedTvsAndUntouchableThreadLocalTvs);
 		return conjoin(withoutProtected, preservedProtected.getFormula());
+	}
+
+	private Set<TermVariable> withThreadLocalFreeVars(final Set<TermVariable> tvs, final IPredicate predicate) {
+		final Set<TermVariable> result = new LinkedHashSet<>(tvs);
+		for (final TermVariable tv : predicate.getFormula().getFreeVars()) {
+			if (!mGlobalTvs.contains(tv)) {
+				result.add(tv);
+			}
+		}
+		return result;
 	}
 
 	public boolean isSubsumedBy(final PublishOnAcquire other, final IDomain domain) {
@@ -181,7 +198,7 @@ public final class PublishOnAcquire {
 					entry.getValue().withChangedPublished(newPublished.apply(entry.getKey(), entry.getValue())));
 		}
 		return new PublishOnAcquire(mServices, mManagedScript, mPredicateFactory, mLockVars, Map.copyOf(updated),
-				mSequentialLocations);
+				mSequentialLocations, mGlobalTvs);
 	}
 
 	private IPredicate recomputeJoinedPublishEdgePostStates(final MutexInvariant invariant,

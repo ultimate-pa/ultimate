@@ -68,7 +68,8 @@ public final class ThreadModularSetup {
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		concurrentTools.initializeStaticAnalysis(ghostVars, activityPreanalysis, locksetInfo);
 		final PublishOnAcquire lockInvariants = settings.publishOnAcquire()
-				? PublishOnAcquire.discoverProtectedGlobalsAndPublishEdges(icfg, locksetInfo, MAIN_THREAD, activityPreanalysis, services, script, factory)
+				? PublishOnAcquire.discoverProtectedGlobalsAndPublishEdgesDuringPreanalysis(icfg, locksetInfo,
+						MAIN_THREAD, activityPreanalysis, services, script, factory)
 				: PublishOnAcquire.disabled();
 		if (settings.publishOnAcquire()) {
 			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !lockInvariants.isEmpty());
