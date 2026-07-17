@@ -406,6 +406,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 	public PhaseEventAutomata removeSink() {
 		final List<Phase> phaseList = new ArrayList<>();
+		final List<InitialTransition> initialTransitions = new ArrayList<>();
 		for (final Phase phase : mPhases) {
 			if (phase.getName().contains("sink")) {
 				continue;
@@ -418,14 +419,17 @@ public class PhaseEventAutomata implements Comparable<Object> {
 					newPhase.addTransition(transition.getDest(), transition.getGuard(), transition.getResets());
 				}
 			}
+
+			final InitialTransition initialTransition = phase.getInitialTransition();
+
+			if (initialTransition != null) {
+				newPhase.setInitialTransition(initialTransition);
+				initialTransitions.add(initialTransition);
+
+			}
 			phaseList.add(newPhase);
 		}
-		final List<InitialTransition> initialTransitions = new ArrayList<>();
-		for (final InitialTransition initialTransition : mInit) {
-			if (!initialTransition.getDest().getName().contains("sink")) {
-				initialTransitions.add(initialTransition);
-			}
-		}
+
 		final PhaseEventAutomata newPEA = new PhaseEventAutomata(mName, phaseList, initialTransitions, mClocks,
 				mVariables, mEvents, mDeclarations);
 		return newPEA;
