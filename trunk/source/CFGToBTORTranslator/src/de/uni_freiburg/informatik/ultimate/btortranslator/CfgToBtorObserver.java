@@ -169,7 +169,6 @@ public class CfgToBtorObserver extends BaseObserver {
 
 				// Error location is not reachable within the timeout limit.
 				// TODO: (@xinyu) make this correct, send unknown result unless an unsat result is returned
-				// TODO: (@xinyu) handle multiple sat results, or unsat followed by sat, etc etc
 				final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_ID,
 						errorLocations.get(errorIndex), mServices.getBacktranslationService());
 				results.add(pResult);
@@ -221,8 +220,8 @@ public class CfgToBtorObserver extends BaseObserver {
 			// TODO: (@xinyu) take parameters as inputs.
 			final ProcessBuilder processBuilder = new ProcessBuilder();
 			// Run k-induction with kmax of 50.
-			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", "--kind", "-kmax", "5",
-					btorFile.getAbsolutePath());
+			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", "--kind", "-kmax", "200",
+					"--stop-first", "0", btorFile.getAbsolutePath());
 
 //			processBuilder.command("/usr/local/bin/btormc", "--trace-gen-full", "--kind", "-kmax", "5",
 //					btorFile.getAbsolutePath());
@@ -232,7 +231,7 @@ public class CfgToBtorObserver extends BaseObserver {
 			final Process process = processBuilder.start();
 			final StringBuilder btormcOutput = new StringBuilder();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			final boolean finished = process.waitFor(500, TimeUnit.SECONDS);
+			final boolean finished = process.waitFor(190, TimeUnit.SECONDS);
 			String line;
 			while (finished && (line = reader.readLine()) != null) {
 				btormcOutput.append(line + "\n");
@@ -265,10 +264,26 @@ public class CfgToBtorObserver extends BaseObserver {
 					final ArrayList<AbstractResult> results =
 							parseResults(btormcWitness, errorLocations, icfg, processor);
 					boolean allSafe = true;
-					for (final AbstractResult result : results) {
-						if (!(result instanceof PositiveResult)) {
-							allSafe = false;
+
+					for (final BoogieIcfgLocation errorLocation : errorLocations) {
+						boolean locationSafe = false;
+						for (final AbstractResult result : results) {
+							if (result instanceof PositiveResult) {
+								final PositiveResult positiveResult = (PositiveResult) result;
+								if (errorLocation.equals(positiveResult.getElement())) {
+									locationSafe = true;
+									break;
+								}
+							}
 						}
+						if (!locationSafe) {
+							allSafe = false;
+							break;
+						}
+
+					}
+
+					for (final AbstractResult result : results) {
 						mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 					}
 					if (allSafe) {
