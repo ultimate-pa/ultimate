@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -49,11 +50,11 @@ public class ConstraintRepresentation {
 	}
 
 	public List<RationalVector> getEqualities() {
-		return mEqualities;
+		return new ArrayList<>(mEqualities);
 	}
 
 	public List<RationalVector> getCongruences() {
-		return mCongruences;
+		return new ArrayList<>(mCongruences);
 	}
 
 	public int getVectorLength() {
@@ -99,10 +100,10 @@ public class ConstraintRepresentation {
 	}
 
 	private void markAsUnsat() {
-//		mEqualities = List.of(unsatVector(mVectorLength));
-//		mCongruences = List.of();
-//		mIsMinimal = true;
-//		mIsStrongMinimal = true;
+		mEqualities = List.of(unsatVector(mVectorLength));
+		mCongruences = List.of();
+		mIsMinimal = true;
+		mIsStrongMinimal = true;
 	}
 
 	public boolean isUnsat() {
@@ -133,6 +134,18 @@ public class ConstraintRepresentation {
 		return getVectorLength() - getEqualities().size();
 	}
 
+	public ConstraintRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
+			final int resultColumnCount) {
+
+		final RationalMatrix reorderedEqualityMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
+				getEqualityMatrix());
+		final RationalMatrix reorderedCongruenceMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
+				getCongruenceMatrix());
+
+		return new ConstraintRepresentation(reorderedEqualityMatrix.getRowVectors(),
+				reorderedCongruenceMatrix.getRowVectors(), resultColumnCount);
+	}
+
 	public void minimize() {
 		if (mIsMinimal) {
 			return;
@@ -152,10 +165,10 @@ public class ConstraintRepresentation {
 			if (pivot == -1) {
 				// vector is empty, can be deleted
 				equalitiesToDelete.add(i);
-			} else if (pivot == 0) {
-				// equality is unsatisfiable and so is the whole system
-				markAsUnsat();
-				return;
+//			} else if (pivot == 0) {
+//				// equality is unsatisfiable and so is the whole system
+//				markAsUnsat();
+//				return;
 
 			} else {
 				// Make pivotValue positive

@@ -144,14 +144,25 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		// Compute the reordered forms of the generators
 		final Map<Integer, Integer> reorderMap = CongruenceUtil.getReorderForMaps(mVarToIndex, newVarToIndex);
 		reorderMap.put(0, 0);
-		final GeneratorRepresentation generators = getGeneratorRepresentation();
-		final GeneratorRepresentation reorderedGenerators = generators.getReorderedForm(reorderMap, newColumnCount);
+//		final GeneratorRepresentation generators = getGeneratorRepresentation();
+//		final GeneratorRepresentation reorderedGenerators = generators.getReorderedForm(reorderMap, newColumnCount);
+//
+//		return new CongruenceState(newVarToIndex, reorderedGenerators);
+		final ConstraintRepresentation constraints = getConstraintRepresentation();
+		final ConstraintRepresentation reorderedConstraints = constraints.getReorderedForm(reorderMap, newColumnCount);
 
-		return new CongruenceState(newVarToIndex, reorderedGenerators);
+		return new CongruenceState(newVarToIndex, reorderedConstraints);
 	}
 
 	@Override
 	public CongruenceState join(final CongruenceState other) {
+		if (isBottom()) {
+			return other;
+		}
+		if (other.isBottom()) {
+			return this;
+		}
+
 		// Compute the new VarToIndex
 		final Map<Term, Integer> selfVarToIndex = getVarToIndex();
 		final Map<Term, Integer> otherVarToIndex = other.getVarToIndex();
@@ -238,9 +249,11 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 	@Override
 	public boolean isBottom() {
-		final ConstraintRepresentation constraints = getConstraintRepresentation();
-		final var sth = constraints.isUnsat();
-		return constraints.isUnsat();
+//		final ConstraintRepresentation constraints = getConstraintRepresentation();
+//		final var sth = constraints.isUnsat();
+//		return constraints.isUnsat();
+		final GeneratorRepresentation generators = getGeneratorRepresentation();
+		return generators.isUnsat();
 	}
 
 }

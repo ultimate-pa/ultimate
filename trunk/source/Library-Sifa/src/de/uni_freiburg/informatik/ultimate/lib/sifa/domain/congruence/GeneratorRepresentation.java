@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -61,11 +62,11 @@ public class GeneratorRepresentation {
 	}
 
 	public List<RationalVector> getLines() {
-		return mLines;
+		return new ArrayList<>(mLines);
 	}
 
 	public List<RationalVector> getParameters() {
-		return mParameters;
+		return new ArrayList<>(mParameters);
 	}
 
 	public int getVectorLength() {
@@ -74,6 +75,28 @@ public class GeneratorRepresentation {
 
 	public boolean isMinimal() {
 		return mIsMinimal;
+	}
+
+	public boolean isUnsat() {
+		minimize();
+		for (final RationalVector line : getLines()) {
+			if (!line.get(0).equals(Rational.ZERO)) {
+				return false;
+			}
+		}
+		for (final RationalVector parameter : getParameters()) {
+			final Rational constantFactor = parameter.get(0);
+			if (!constantFactor.equals(Rational.ZERO)) {
+				final BigInteger absNumerator = constantFactor.numerator().abs();
+				final BigInteger absDenominator = constantFactor.denominator().abs();
+
+				if (absNumerator.compareTo(absDenominator) <= 0) {
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	public void minimize() {
@@ -199,17 +222,29 @@ public class GeneratorRepresentation {
 		final RationalMatrix reorderedParameterMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
 				getParameterMatrix());
 
-		// We pad the parameters with vectors that correspond to x ≡1 0, for all
-		// variables x that got newly added to our context. This avoids them appearing
-		// as x = 0. Since we only care about whole numbers x ≡1 0 holds trivially.
-		final List<RationalVector> paddedParameters = reorderedParameterMatrix.getRowVectors();
+//		// We pad the parameters with vectors that correspond to x ≡1 0, for all
+//		// variables x that got newly added to our context. This avoids them appearing
+//		// as x = 0. Since we only care about whole numbers x ≡1 0 holds trivially.
+//		final List<RationalVector> paddedParameters = reorderedParameterMatrix.getRowVectors();
+//		for (int i = 0; i < resultColumnCount; i++) {
+//			if (!reorderMap.containsValue(i)) {
+//				final RationalVector newParameter = RationalVector.getUnitVector(i, resultColumnCount);
+//				paddedParameters.add(newParameter);
+//			}
+//		}
+//		return new GeneratorRepresentation(reorderedLineMatrix.getRowVectors(), paddedParameters, resultColumnCount);
+
+		// We pad the lines with vectors that correspond to nothing in the constraint
+		// representation to avoid adding information. This avoids them appearing
+		// as x = 0.
+		final List<RationalVector> paddedLines = reorderedLineMatrix.getRowVectors();
 		for (int i = 0; i < resultColumnCount; i++) {
 			if (!reorderMap.containsValue(i)) {
-				final RationalVector newParameter = RationalVector.getUnitVector(i, resultColumnCount);
-				paddedParameters.add(newParameter);
+				final RationalVector newLine = RationalVector.getUnitVector(i, resultColumnCount);
+				paddedLines.add(newLine);
 			}
 		}
-		return new GeneratorRepresentation(reorderedLineMatrix.getRowVectors(), paddedParameters, resultColumnCount);
+		return new GeneratorRepresentation(paddedLines, reorderedParameterMatrix.getRowVectors(), resultColumnCount);
 	}
 
 	public ConstraintRepresentation computeConstraintRepresentation() {
