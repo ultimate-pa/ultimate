@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class FairnessWrapper<L extends IIcfgTransition<?>>
 		implements INwaOutgoingLetterAndTransitionProvider<L, IPredicate> {
 	NondeterministicInterpolantAutomaton<L> mWrappedAutomaton;
-	Set<String> mLoopThreads;
+	Set<String> mNonLoopThreads;
 	Set<IPredicate> mStemStates;
 	Set<IPredicate> mLoopStates;
 
@@ -69,7 +69,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 * @param automaton
 	 *            the automaton to wrap
 	 *
-	 * @param loopthreads
+	 * @param nonloopthreads
 	 *            the set of threads whose statements are part of the counterexample's loop
 	 *
 	 * @param originalTS
@@ -95,13 +95,13 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 *            we need a replacing hoare triple checker here to circumvent the duplicate predicate problem
 	 *
 	 */
-	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton, final Set<String> loopthreads,
+	public FairnessWrapper(final NondeterministicInterpolantAutomaton<L> automaton, final Set<String> nonloopthreads,
 			final NestedMap3<IPredicate, L, IPredicate, IsContained> originalTS, final Set<IPredicate> stemInterpolants,
 			final Set<IPredicate> loopInterpolants, final Map<IPredicate, IPredicate> loopMap, final IPredicate honda,
 			final IPredicate hondaPrime, final ReplacingBuchiHoareTripleChecker htc) {
 
 		mWrappedAutomaton = automaton;
-		mLoopThreads = loopthreads;
+		mNonLoopThreads = nonloopthreads;
 		mStemStates = stemInterpolants;
 		mLoopStates = loopInterpolants;
 		mHonda = honda;
@@ -265,7 +265,7 @@ public class FairnessWrapper<L extends IIcfgTransition<?>>
 	 * @return true if the edge originates from a loop thread
 	 */
 	boolean isLoopEdge(final L ts) {
-		return mLoopThreads.contains(ts.getSource().getProcedure());
+		return !mNonLoopThreads.contains(ts.getSource().getProcedure());
 	}
 
 	public void switchToReadonlyMode() {

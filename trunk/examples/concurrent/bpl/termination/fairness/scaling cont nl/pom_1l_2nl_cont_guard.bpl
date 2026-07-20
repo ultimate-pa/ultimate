@@ -1,5 +1,6 @@
 /**
-* triviales terminierendes programm zu testzwecken
+* 
+* terminates under fairness
 */
 
 var x: int;
@@ -11,8 +12,10 @@ modifies x;
 
   fork 1 t1();
   fork 2 t2();
+  fork 3 t2();
   join 1;
   join 2;
+  join 3;
 }
 
 
@@ -22,7 +25,7 @@ modifies x;
 procedure t1()
 modifies x;
 {
-	while (x <= 3){
+	while (x >= 0){
 	x := x + 1;
 	}
 }
@@ -30,7 +33,10 @@ modifies x;
 procedure t2()
 modifies x;
 {
-	x := -1;
+	assume x > 2;
+	x := -2;
 }
+
+
 
 

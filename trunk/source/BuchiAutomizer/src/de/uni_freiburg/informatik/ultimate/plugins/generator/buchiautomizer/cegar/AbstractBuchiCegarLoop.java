@@ -617,7 +617,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			for (int i = 0; i < unifiedStemInterpolants.length - 1; i++) {
 				// we may only merge states with no non-loop edge inbetween
 				if ((unifiedStemInterpolants[i] == unifiedStemInterpolants[i + 1])
-						&& !unfairRes.loopThreads().contains(stemWord.getSymbol(i + 1).getSource().getProcedure())) {
+						&& unfairRes.nonLoopThreads().contains(stemWord.getSymbol(i + 1).getSource().getProcedure())) {
 					stemInterpolants[i] = mPredicateFactory.newPredicate(unifiedStemInterpolants[i].getFormula());
 					correspUnifiedPred.put(stemInterpolants[i], unifiedStemInterpolants[i]);
 
@@ -733,7 +733,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mServices, mCsToolkitWithRankVars, rbhtc, inputAutomaton, pu, false, true, true);
 
 		// Wrap the interpolant automaton to filter out transitions that may lead to fair runs being accepted
-		final FairnessWrapper<L> generalizedAutomaton = new FairnessWrapper<>(tbwAutomaton, unfairRes.loopThreads(),
+		final FairnessWrapper<L> generalizedAutomaton = new FairnessWrapper<>(tbwAutomaton, unfairRes.nonLoopThreads(),
 				originalEdges, stemSet, loopSet, loopMap, hondaPredicate, hondaPrime, rbhtc);
 
 		// disabled bc the it doesnt work with ununified predicates -.-

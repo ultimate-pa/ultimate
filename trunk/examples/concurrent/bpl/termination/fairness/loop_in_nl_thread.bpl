@@ -1,11 +1,11 @@
-/*
-* terminating with non-false guard disj - moment, terminiert das tatsächlich? --> Nein
+/**
+* program mit loop im nicht-loop thread um generalisierungsauswirkungen zu testen.//
 */
 
-var x: int;
+var x, y: int;
 
 procedure ULTIMATE.start()
-modifies x;
+modifies x,y;
 {
   x := 0;
 
@@ -28,8 +28,13 @@ modifies x;
 }
 
 procedure t2()
-modifies x;
-{
-	assume x > 20;
+modifies x,y;
+{	
+	while (y>0){
+	y:= y-1;
+	y := y;
+	}
 	x := -2;
 }
+
+

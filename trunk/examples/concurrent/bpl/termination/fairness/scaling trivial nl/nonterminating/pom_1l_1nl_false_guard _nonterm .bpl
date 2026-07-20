@@ -1,5 +1,6 @@
-/*
-* terminating with non-false guard disj - moment, terminiert das tatsächlich? --> Nein
+/**
+* 
+* nonterminating under fairness
 */
 
 var x: int;
@@ -30,6 +31,10 @@ modifies x;
 procedure t2()
 modifies x;
 {
-	assume x > 20;
+	assume false;
 	x := -2;
 }
+
+
+
+

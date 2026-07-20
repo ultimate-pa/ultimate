@@ -1,5 +1,6 @@
-/*
-* terminating with non-false guard disj - moment, terminiert das tatsächlich? --> Nein
+/**
+* 
+* nonterminating under fairness
 */
 
 var x: int;
@@ -11,8 +12,10 @@ modifies x;
 
   fork 1 t1();
   fork 2 t2();
+  fork 3 t2();
   join 1;
   join 2;
+  join 3;
 }
 
 
@@ -30,6 +33,9 @@ modifies x;
 procedure t2()
 modifies x;
 {
-	assume x > 20;
-	x := -2;
+	x := -1;
 }
+
+
+
+

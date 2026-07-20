@@ -357,7 +357,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		for (final L st : loop.getWord()) {
 			loopThreads.add(st.getSource().getProcedure());
 		}
-		final Set<String> nonLoopThreads = threads;
+		Set<String> nonLoopThreads = threads;
 		nonLoopThreads.removeAll(loopThreads);
 
 		// If there are no non-loop threads, the trace is definitely fair.
@@ -385,17 +385,21 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			for (final IcfgEdge edge : threadLoc.getOutgoingEdges()) {
 				// we need to filter out join edges bc. their guard is always 'true'
 				if (edge instanceof IcfgJoinThreadOtherTransition || edge instanceof IcfgJoinThreadCurrentTransition) {
-					// to avoid the list of guards being empty
-					/*
-					 * guards.add( TransFormulaUtils.negate(edge.getTransformula(), mManagedScript,
-					 * mServices).getFormula()); guardTF.add(TransFormulaUtils.negate(edge.getTransformula(),
-					 * mManagedScript, mServices));
-					 */
-				} else {
-					guards.add(TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, edge.getTransformula(),
-							true));
-					guardTF.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
+					continue;
 				}
+
+				final Term GuardTerm =
+						TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, edge.getTransformula(), true);
+				guards.add(GuardTerm);
+				guardTF.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
+				// TODO: test this! --> bringt nicht wirklich was
+				if (SmtUtils.isTrueLiteral(GuardTerm)) {
+					nonLoopThreads = new HashSet<>();
+					nonLoopThreads.add(threadLoc.getProcedure());
+					// break;
+
+				}
+
 			}
 		}
 
@@ -418,7 +422,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			final TerminationArgument constArg = constructTrivialTerminationArgument();
 			return new UnfairnessResult<>(
 					mBspm.computePredicates(constArg, false, stemTF, guardedLoopTF, modifiableGlobalsAtHonda),
-					loopThreads, notGuardDisj, counterexample);
+					nonLoopThreads, notGuardDisj, counterexample);
 
 		}
 		// For traces whose fairness is not obvious:
@@ -470,7 +474,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final TerminationArgument ta = constructTrivialTerminationArgument();
 				final BspmResult bspmres =
 						mBspm.computePredicates(ta, false, stemTF, guardedLoopTF, modifiableGlobalsAtHonda);
-				return new UnfairnessResult<>(bspmres, loopThreads, notGuardDisj, currentUnrolling);
+				return new UnfairnessResult<>(bspmres, nonLoopThreads, notGuardDisj, currentUnrolling);
 
 			}
 			// negated guard as pre and postcondition?
@@ -483,19 +487,19 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			switch (res) {
 			case final TerminationResult<L> term:
 				// the loop without preconditions is enough to prove unfairness
-				return new UnfairnessResult<>(term.result, loopThreads, notGuardDisj, currentUnrolling);
+				return new UnfairnessResult<>(term.result, nonLoopThreads, notGuardDisj, currentUnrolling);
 			case final InfeasibilityResult<L> inf:
 				// if the (modified!) loop is infeasible, A_fair terminates and the trace is unfair
 				mLogger.warn("Infeasibility, könnte noch fehlerhaft sein!");
 				final TerminationArgument infArg = constructTrivialTerminationArgument();
 				final BspmResult infRes =
 						mBspm.computePredicates(infArg, false, newStemTF, unguardedLoopTF, newHondaModGlobals);
-				return new UnfairnessResult<>(infRes, loopThreads, notGuardDisj, currentUnrolling);
+				return new UnfairnessResult<>(infRes, nonLoopThreads, notGuardDisj, currentUnrolling);
 			// TODO: merge nonterm/unknown cases
 			case final NonterminationResult<L> nonterm:
 				if (withStem) {
 					// if there is no stem, the lasso analysis already checked the whole program
-					final ILassoCheckResult<L> progTerm = checkFairProgramTermination(loopThreads, currentUnrolling,
+					final ILassoCheckResult<L> progTerm = checkFairProgramTermination(nonLoopThreads, currentUnrolling,
 							newStemTF, guardedLoopTF, notGuardDisj, contArr, unguardedLoopTF, newHondaModGlobals, 3);
 					if (progTerm instanceof UnfairnessResult<L>) {
 						return progTerm;
@@ -505,7 +509,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 			case final UnknownResult<L> uk:
 				if (withStem) {
-					final ILassoCheckResult<L> progTerm = checkFairProgramTermination(loopThreads, currentUnrolling,
+					final ILassoCheckResult<L> progTerm = checkFairProgramTermination(nonLoopThreads, currentUnrolling,
 							newStemTF, guardedLoopTF, notGuardDisj, contArr, unguardedLoopTF, newHondaModGlobals, 3);
 					if (progTerm instanceof UnfairnessResult<L>) {
 						return progTerm;
@@ -1039,7 +1043,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	 *            - how many traces of form [stem (loop)^i (assume not G; loop)^omega] we want to try, should be greater
 	 *            than 0
 	 */
-	private ILassoCheckResult<L> checkFairProgramTermination(final Set<String> loopThreads,
+	private ILassoCheckResult<L> checkFairProgramTermination(final Set<String> nonLoopThreads,
 			final NestedLassoRun<L, IPredicate> lasso, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF, final Term notG, final boolean containsArray,
 			final UnmodifiableTransFormula unguardedLoopTF, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
@@ -1071,7 +1075,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 				final boolean sufficient =
 						mBspm.isSupportingInvariant(new Term[] { supInv }, unguardedLoopTF, modifiableGlobalsAtHonda);
 				if (sufficient) {
-					return new UnfairnessResult<>(ter.result(), loopThreads, notG, lasso);
+					return new UnfairnessResult<>(ter.result(), nonLoopThreads, notG, lasso);
 				}
 				break;
 			default:
@@ -1083,7 +1087,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			urStemTF = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, true, false, false,
 					mSimplificationTechnique, List.of(urStemTF, unguardedLoopTF));
 		}
-
 		return new UnknownResult<>();
 	}
 
@@ -1140,12 +1143,12 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	/*
 	 * @param result bspm result containing the termination argument
 	 *
-	 * @param oopThreads threads whose statements are part of the loop
+	 * @param oopThreads threads whose statements are not part of the loop
 	 *
 	 * @param notG negated disj. of guards of outgoing non-loop statements at the honda
 	 */
-	public record UnfairnessResult<L extends IIcfgTransition<?>>(BspmResult result, Set<String> loopThreads, Term notG,
-			NestedLassoRun<L, IPredicate> unrolling) implements ILassoCheckResult<L> {
+	public record UnfairnessResult<L extends IIcfgTransition<?>>(BspmResult result, Set<String> nonLoopThreads,
+			Term notG, NestedLassoRun<L, IPredicate> unrolling) implements ILassoCheckResult<L> {
 
 	}
 
