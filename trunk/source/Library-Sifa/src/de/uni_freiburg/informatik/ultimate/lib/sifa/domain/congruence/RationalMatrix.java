@@ -185,18 +185,20 @@ public class RationalMatrix {
 
 	@Override
 	public String toString() {
-		final StringBuilder out = new StringBuilder("[ ");
+		final StringBuilder out = new StringBuilder("\n[ ");
 
 		for (int i = 0; i < getRowCount(); i++) {
 			if (i != 0) {
 				out.append("\n");
 			}
 			for (int j = 0; j < getColumnCount(); j++) {
-				out.append(get(i, j)).append(", ");
+				out.append(get(i, j));
+				if (j != getColumnCount() - 1) {
+					out.append(", ");
+				}
 			}
-			out.append("\n");
 		}
-		out.append(" ]");
+		out.append(" ]\n");
 		return out.toString();
 	}
 
