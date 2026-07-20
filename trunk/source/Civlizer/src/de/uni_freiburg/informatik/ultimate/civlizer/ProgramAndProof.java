@@ -64,6 +64,8 @@ final class ProgramAndProof {
 	// private final Map<ILocation, Set<Expression>> mAnnotationMap = null;
 	private ThreadTemplateVisitor mTemplateVisitor = null;
 
+	private BoogieStatementIdMap mStatementIdMap = null;
+
 	ProgramAndProof() {
 	}
 
@@ -103,6 +105,10 @@ final class ProgramAndProof {
 		return mGhostUpdateMap;
 	}
 
+	BoogieStatementIdMap getStatementIdMap() {
+		return mStatementIdMap;
+	}
+
 	/**
 	 * Preprocesses the ICFC to extract ghost updates and initialize auxiliary structures.
 	 *
@@ -119,6 +125,7 @@ final class ProgramAndProof {
 	void preprocess() {
 		mTemplateVisitor = new ThreadTemplateVisitor(mBoogieAst, mIcfg);
 		mGhostUpdateMap = new HashMap<>();
+		mStatementIdMap = new BoogieStatementIdMap(mBoogieAst);
 
 		// improve readability TODO
 

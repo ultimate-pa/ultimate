@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -345,9 +346,15 @@ public final class Translator {
 		return new BoogieDeclaration(newDecl);
 	}
 
-	static CallStatement callYieldInvariants(final String procName, final int counter, final Expression[] input) {
+	CallStatement callYieldInvariants(final String procName, final int counter, final IdentifierExpression[] input,
+			final Expression annotation) {
+		final List<IdentifierExpression> params = Arrays.asList(input);
+
+		params.addAll(new ArrayList(mProgramAndProof.getStatementIdMap().getExpressionMap().getOrDefault(annotation,
+				Collections.emptySet())));
+
 		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
-				"yield_" + procName + "_" + counter, input);
+				"yield_" + procName + "_" + counter, params.toArray(Expression[]::new));
 	}
 
 	void addYieldInvariants(final String procName, final int counter, final Expression annotation,
@@ -363,7 +370,12 @@ public final class Translator {
 					tidNeedsLinearity.contains(tid) ? Linearity.INOUT : Linearity.NONE));
 		}
 
-		// TODO invariants may refer to local variables (then these need to be added as parameters as well)
+		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getExpressionMap()
+				.getOrDefault(annotation, Collections.emptySet())) {
+			// TODO maybe change type later
+			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
+			params.add(new ParameterDeclaration(id.getIdentifier(), type, Linearity.NONE));
+		}
 
 		final var preserves = new ArrayList<Expression>();
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
@@ -406,37 +418,56 @@ public final class Translator {
 		mDeclarations.add(invDecl);
 	}
 
-	static CallStatement callCondition(final String procName, final int counter, final Expression[] input) {
+	CallStatement callCondition(final String procName, final int counter, final Expression condition) {
+
+		final List<IdentifierExpression> params = new ArrayList<>(mProgramAndProof.getStatementIdMap()
+				.getExpressionMap().getOrDefault(condition, Collections.emptySet()));
+
 		return new CallStatement(null, new NamedAttribute[0], false,
-				new VariableLHS[] { new VariableLHS(null, "condition") }, "condition_" + procName + "_" + counter,
-				input);
+				new VariableLHS[] { new VariableLHS(null, "condition") }, "cond_" + procName + "_" + counter,
+				params.toArray(IdentifierExpression[]::new));
 	}
 
-	// TODO add parameter
-	private void addCondition(final String procName, final int counter, final Expression condition) {
+	// TODO add locality of parameter
+	void addCondition(final String procName, final int counter, final Expression condition) {
 		// maybe modify: new ParameterDeclaration("out", new PrimitiveType(null, "int"),
 		// ParameterDeclaration.Linearity.NONE)
+
+		final List<ParameterDeclaration> params = new ArrayList<>();
+
+		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getExpressionMap()
+				.getOrDefault(condition, Collections.emptySet())) {
+			// TODO maybe change type later
+			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
+			params.add(new ParameterDeclaration(id.getIdentifier(), type, Linearity.NONE));
+		}
+
 		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
 				new Body(null, new VariableDeclaration[0], new Statement[] { new AssignmentStatement(null,
 						new LeftHandSide[] { new VariableLHS(null, "out") }, new Expression[] { condition }) }));
-		final var yieldProc = new YieldProcedure(LAYER_BASE, procName + "_stmt_" + counter, new ParameterDeclaration[0],
-				new ParameterDeclaration[] { new ParameterDeclaration("out", new PrimitiveType(null, "int"),
+		final var yieldProc = new YieldProcedure(LAYER_BASE, "cond_" + procName + "_" + counter,
+				params.toArray(ParameterDeclaration[]::new),
+				new ParameterDeclaration[] { new ParameterDeclaration("out", new PrimitiveType(null, "bool"),
 						ParameterDeclaration.Linearity.NONE) },
 				new CallStatement[0], new CallStatement[0], null, atomicAction);
 		mDeclarations.add(yieldProc);
 	}
 
-	private void addNonAtomicStatement(final String procName, final Statement statement, final int counter) {
-		// improve that
-		final Expression condition;
-		if (statement instanceof final IfStatement ifStmt) {
-			condition = ifStmt.getCondition();
-		} else if (statement instanceof final WhileStatement whileStmt) {
-			condition = whileStmt.getCondition();
-		} else {
-			throw new IllegalArgumentException("should only be called with if and while statements");
+	CallStatement callAtomicStatement(final String procName, final Statement statement, final int counter) {
+
+		final List<Expression> inParams = new ArrayList<>();
+		final List<VariableLHS> outParams = new ArrayList<>();
+
+		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getStatementMap()
+				.getOrDefault(statement, Collections.emptySet())) {
+			// TODO maybe change type later
+			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
+			inParams.add(new IdentifierExpression(null, id.getIdentifier() + "_in"));
+			outParams.add(new VariableLHS(null, id.getIdentifier()));
 		}
-		addCondition(procName, counter, condition);
+
+		return new CallStatement(null, new NamedAttribute[0], false, outParams.toArray(VariableLHS[]::new),
+				procName + "_stmt_" + counter, inParams.toArray(Expression[]::new));
 	}
 
 	private void addAtomicStatement(final String procName, final Statement statement, final int counter) {
@@ -445,20 +476,20 @@ public final class Translator {
 		final List<ParameterDeclaration> inParams = new ArrayList<>();
 		final List<ParameterDeclaration> outParams = new ArrayList<>();
 
-		for (final Map.Entry<String, ASTType> var : mProgramAndProof.getTemplateVisitor().getProcedureVariablesMap()
-				.get(procName).entrySet()) {
-			if (mProgramAndProof.getTemplateVisitor().getStatementParametersMap().get(statement.getLoc())
-					.contains(var.getKey())) {
-				inParams.add(new ParameterDeclaration(var.getKey() + "_in", var.getValue(), Linearity.NONE));
-				outParams.add(new ParameterDeclaration(var.getKey(), var.getValue(), Linearity.NONE));
-			}
+		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getStatementMap()
+				.getOrDefault(statement, Collections.emptySet())) {
+			// TODO maybe change type later
+			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
+			inParams.add(new ParameterDeclaration(id.getIdentifier() + "_in", type, Linearity.NONE));
+			outParams.add(new ParameterDeclaration(id.getIdentifier(), type, Linearity.NONE));
 		}
 
 		final var body = new ArrayList<Statement>();
-		for (final String var : mProgramAndProof.getTemplateVisitor().getStatementParametersMap()
-				.get(statement.getLoc())) {
-			body.add(new AssignmentStatement(null, new LeftHandSide[] { new VariableLHS(null, var) },
-					new Expression[] { new IdentifierExpression(null, var + "_in") }));
+		// TODO improve this later
+		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getStatementMap()
+				.getOrDefault(statement, Collections.emptySet())) {
+			body.add(new AssignmentStatement(null, new LeftHandSide[] { new VariableLHS(null, id.getIdentifier()) },
+					new Expression[] { new IdentifierExpression(null, id.getIdentifier() + "_in") }));
 		}
 		body.addAll(BoogieUtils.flattenAtomicStatements(statement));
 
@@ -476,8 +507,10 @@ public final class Translator {
 				|| statement instanceof AssumeStatement || statement instanceof HavocStatement
 				|| statement instanceof AtomicStatement) {
 			addAtomicStatement(procName, statement, counter);
-		} else if (statement instanceof IfStatement || statement instanceof WhileStatement) {
-			addNonAtomicStatement(procName, statement, counter);
+		} else if (statement instanceof final IfStatement ifStmt) {
+			addCondition(procName, counter, ifStmt.getCondition());
+		} else if (statement instanceof final WhileStatement whileStmt) {
+			addCondition(procName, counter, whileStmt.getCondition());
 		}
 	}
 
@@ -504,14 +537,13 @@ public final class Translator {
 			inParams.add(new ParameterDeclaration(tid.toString(), makeOne(mTidType), Linearity.IN));
 		}
 
-		// TODO avoid hardcoding invariant name here
-		// TODO use call to yield invariant here
-		addYieldInvariants(decl.getIdentifier(), 0,
-				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier()), null,
-				tidNeedsLinearity);
+		final Expression annotation =
+				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier());
+		addYieldInvariants(decl.getIdentifier(), 0, annotation, null, tidNeedsLinearity);
 
 		final var requires = callYieldInvariants(decl.getIdentifier(), 0,
-				inParams.stream().map(Translator::getParameterExpression).toArray(Expression[]::new));
+				inParams.stream().map(Translator::getParameterExpression).toArray(IdentifierExpression[]::new),
+				annotation);
 
 		final var body = writeBody(decl);
 		return new YieldProcedure(LAYER_TOP, decl.getIdentifier(), inParams.toArray(ParameterDeclaration[]::new),
