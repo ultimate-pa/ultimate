@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.met
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -30,6 +31,13 @@ public final class GuardedUpdateInterferenceFactory
 		extends GroupedInterferenceFactory<Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>>> {
 
 	private Map<String, Map<Integer, LocationMoveSummary>> mLocationMoveSummaries;
+
+	private final Map<TranslatedInterferenceOfEdge, SummaryOfPreviousRound> mSummariesOfPreviousRound =
+			new IdentityHashMap<>();
+	private final Map<IPredicate, IPredicate> mSharedStateProjections = new IdentityHashMap<>();
+
+	private record SummaryOfPreviousRound(IPredicate sourceState, GuardedUpdate update) {
+	}
 
 	public GuardedUpdateInterferenceFactory(final InterferenceEdgeCollector edgeCollector,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
@@ -61,9 +69,19 @@ public final class GuardedUpdateInterferenceFactory
 			accumulateLocationMoveClosure(accumulator, edge);
 			return;
 		}
-		final IPredicate sharedPreState = mTranslator.projectPreStateToSharedState(sourceState);
-		final GuardedUpdate update = tryCreateUpdate(edge, sharedPreState);
-		if (update == null || InterferenceUtils.shouldSkipTrivialPredicate(update.effect())) {
+		final SummaryOfPreviousRound previous = mSummariesOfPreviousRound.get(edge);
+		final GuardedUpdate update;
+		if (previous != null && previous.sourceState() == sourceState) {
+			update = previous.update();
+		} else {
+			final IPredicate sharedPreState =
+					mSharedStateProjections.computeIfAbsent(sourceState, mTranslator::projectPreStateToSharedState);
+			final GuardedUpdate created = tryCreateUpdate(edge, sharedPreState);
+			update = created != null && InterferenceUtils.shouldSkipTrivialPredicate(created.effect()) ? null
+					: created;
+			mSummariesOfPreviousRound.put(edge, new SummaryOfPreviousRound(sourceState, update));
+		}
+		if (update == null) {
 			return;
 		}
 		accumulator.computeIfAbsent(groupKeyFor(edge), key -> new LinkedHashMap<>()).put(edge, update);

@@ -79,6 +79,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static final String PROP_LOCATION_ABSTRACTION = "sifa.regression.locationAbstraction";
 	private static final String PROP_MAX_DISJUNCTIONS = "sifa.regression.maxDisjunctions";
 	private static final String PROP_INNER_WIDENING_THRESHOLD = "sifa.regression.innerWideningThreshold";
+	private static final String PROP_OUTER_WIDENING_THRESHOLD = "sifa.regression.outerWideningThreshold";
 
 	private static final String TOOLCHAIN = "SifaThreadModular.xml";
 	private static final String SETTINGS = "examples/concurrent/bpl/regression/thread-modular-sifa/testSettings.epf";
@@ -187,6 +188,10 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 				final Integer innerWideningThreshold = Integer.getInteger(PROP_INNER_WIDENING_THRESHOLD);
 				if (innerWideningThreshold != null) {
 					prefs.put("Inner Interference Widening Threshold", innerWideningThreshold);
+				}
+				final Integer outerWideningThreshold = Integer.getInteger(PROP_OUTER_WIDENING_THRESHOLD);
+				if (outerWideningThreshold != null) {
+					prefs.put("Outer Interference Widening Threshold", outerWideningThreshold);
 				}
 
 				return s;
