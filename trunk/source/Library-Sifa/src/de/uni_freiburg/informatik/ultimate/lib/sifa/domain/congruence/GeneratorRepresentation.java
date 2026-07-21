@@ -90,7 +90,7 @@ public class GeneratorRepresentation {
 				final BigInteger absNumerator = constantFactor.numerator().abs();
 				final BigInteger absDenominator = constantFactor.denominator().abs();
 
-				if (absNumerator.compareTo(absDenominator) <= 0) {
+				if (absNumerator.equals(BigInteger.ONE)) {
 					return false;
 				}
 			}
