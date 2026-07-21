@@ -46,6 +46,10 @@ public class InterruptFunctionHandler {
 				.map(f -> InterruptServiceFunction.class.cast(f)).collect(Collectors.toList());
 	}
 
+	public <T extends IInterruptFunction> List<T> getFunctions(final Class<T> cls) {
+		return getInterruptFunctions().stream().filter(cls::isInstance).map(cls::cast).collect(Collectors.toList());
+	}
+
 	public void apply(final Class<IInterruptFunction> cls, final Consumer<IInterruptFunction> action) {
 		getInterruptFunctions().stream().filter(cls::isInstance).forEach(action);
 	}

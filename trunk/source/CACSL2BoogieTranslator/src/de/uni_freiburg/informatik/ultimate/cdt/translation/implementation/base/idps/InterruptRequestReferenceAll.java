@@ -23,54 +23,23 @@
 
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
- * Manages interrupt requests (IRQs).
+ * Interrupt request (IRQ) reference of all available interrupts.
  *
  * @author Manuel Bentele
  */
-public class InterruptRequestHandler {
+public final class InterruptRequestReferenceAll implements IInterruptRequestReference {
 
-	private final Map<Integer, InterruptRequest> mIrqs;
+	public static final InterruptRequestReferenceAll INSTANCE = new InterruptRequestReferenceAll();
 
-	private int mIrqFreeNum;
-
-	public InterruptRequestHandler() {
-		mIrqs = new HashMap<>();
-		mIrqFreeNum = 1;
+	private InterruptRequestReferenceAll() {
 	}
 
-	public boolean register(final String name) {
-		return register(name, mIrqFreeNum);
-	}
-
-	public boolean register(final String name, final int num) {
-		final InterruptRequest irq = new InterruptRequest(name, mIrqFreeNum);
-
-		if (mIrqs.putIfAbsent(num, irq) == null) {
-			mIrqFreeNum += 1;
-			return true;
-		}
-
-		throw new AssertionError("IRQ mapping contains already an registered IRQ with number " + num);
-	}
-
-	public InterruptRequest getIrq(final String name) {
-		return mIrqs.values().stream().filter(irq -> irq.getName().equals(name)).findFirst().orElse(null);
-	}
-
-	public InterruptRequest getIrq(final int num) {
-		return mIrqs.getOrDefault(num, null);
-	}
-
-	public boolean hasIrq(final String name) {
-		return (getIrq(name) != null) ? true : false;
-	}
-
-	public boolean hasIrq(final int num) {
-		return mIrqs.containsKey(num);
+	@Override
+	public List<InterruptRequest> resolve(final List<InterruptRequest> available) {
+		return available;
 	}
 
 }

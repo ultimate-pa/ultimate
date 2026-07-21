@@ -10,7 +10,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.boogie.parser,
- de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator
+ de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
+ de.uni_freiburg.informatik.ultimate.acsl.parser;bundle-version="[0.3.0,1.0.0)"
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.boogie.symboltable

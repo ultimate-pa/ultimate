@@ -29,11 +29,14 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation.ISRLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -84,7 +87,7 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 				assert !isISRLabel(statement, "exit");
 				return;
 			}
-			final var newInterruptAnno = new InterruptAnnotation(ISRLocation.ISR, getIsrId(statement));
+			final var newInterruptAnno = new InterruptAnnotation(ISRLocation.ISR, getIsr(statement));
 			mContext = new VisitorContext(VisitorMode.ISR_INNER, newInterruptAnno);
 		} else {
 			if (!isISRLabel(statement, "exit")) {
@@ -115,11 +118,11 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 		return attributeName.equals("isr_label") && positionAttribute.equals(isrLabelPosition);
 	}
 
-	private static InterruptServiceRoutine getIsrId(final Label label) {
-		final var attributes = label.getAttributes();
-		final var isrIdString = attributes[2].getName();
-		final var isrIdInt = Integer.parseInt(isrIdString);
-		return isrIdInt;
+	private static InterruptServiceFunction getIsr(final Label label) {
+		final NamedAttribute[] attributes = label.getAttributes();
+		final String irqNameStr = attributes[2].getName();
+		final String irqNumStr = attributes[4].getName();
+		return new InterruptServiceFunction(new InterruptRequest(irqNameStr, Integer.parseInt(irqNumStr)));
 	}
 
 	private enum VisitorMode {

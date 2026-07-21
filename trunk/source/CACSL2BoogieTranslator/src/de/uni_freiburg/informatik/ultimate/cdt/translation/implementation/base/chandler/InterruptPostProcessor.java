@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.i
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptTranslationMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -175,27 +176,37 @@ public class InterruptPostProcessor implements IPostProcessor {
 			addForksToProcedure(mainProcedure, threadProcedures);
 		}
 
+		final Map<Integer, Procedure> reqEnableFuncs =
+				mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class).stream()
+						.filter(f -> f.getOperation() == InterruptMaskingFunction.Operation.ENABLE)
+						.collect(Collectors.toMap(f -> f.getIrq().getNum(), f -> f.getProcedure()));
+
+		final Map<Integer, Procedure> reqDisableFuncs =
+				mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class).stream()
+						.filter(f -> f.getOperation() == InterruptMaskingFunction.Operation.DISABLE)
+						.collect(Collectors.toMap(f -> f.getIrq().getNum(), f -> f.getProcedure()));
+
 		// Add atomic block and variable assignment true to request enabled functions
 		final var lhsMap = getVariableLHSs();
-		annotateRequestProcedures(lhsMap, mISR.getRequestEnable(), true);
+		annotateRequestProcedures(lhsMap, reqEnableFuncs, true);
 
 		// Add fork statements in request enable procedure instead of the main procedure
 		if (realization3) {
-			addForksToRequestEnable(mISR.getRequestEnable(), threadProcedureMap);
+			addForksToRequestEnable(reqEnableFuncs, threadProcedureMap);
 		}
 		// Add atomic block and variable assignment false to request disabled functions if
-		annotateRequestProcedures(lhsMap, mISR.getRequestDisable(), false);
+		annotateRequestProcedures(lhsMap, reqDisableFuncs, false);
 
 		// Add join statements to request disable procedure
 		if (realization3) {
-			addJoinsToRequestDisable(mISR.getRequestDisable());
+			addJoinsToRequestDisable(reqDisableFuncs);
 		}
 
 		// Add atomic block and variable assignment true to request enabled all function
-		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
+//		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
 
 		if (realization3) {
-			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadProcedureMap);
+//			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadProcedureMap);
 		}
 
 		// Add interrupt enabled variable declarations

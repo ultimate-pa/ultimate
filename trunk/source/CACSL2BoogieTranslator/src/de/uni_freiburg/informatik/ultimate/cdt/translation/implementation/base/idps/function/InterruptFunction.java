@@ -39,6 +39,11 @@ public abstract class InterruptFunction implements IInterruptFunction {
 		mIrq = Objects.requireNonNull(irq);
 	}
 
+	public InterruptFunction() {
+		mProc = null;
+		mIrq = null;
+	}
+
 	public InterruptFunction(final InterruptRequest irq) {
 		mProc = null;
 		mIrq = Objects.requireNonNull(irq);
