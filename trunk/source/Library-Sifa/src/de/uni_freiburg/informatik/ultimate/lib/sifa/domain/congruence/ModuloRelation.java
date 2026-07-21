@@ -14,7 +14,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecke
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermOperations;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -53,8 +54,11 @@ public class ModuloRelation {
 
 	public static List<ModuloRelation> of(final Term lhs, final Term rhs, final RelationSymbol relationSymbol,
 			final BigInteger modInt, final Script script) {
-		final PolynomialRelation polynomialRelation = PolynomialRelation.of(script, relationSymbol, lhs, rhs);
-		final AffineTerm affineTerm = EqualityRelation.getAffineTerm(polynomialRelation);
+		final var affineTermTransformer = new AffineTermTransformer(script);
+		final AffineTerm rhsAffine = (AffineTerm) affineTermTransformer.transform(rhs);
+		final AffineTerm lhsAffine = (AffineTerm) affineTermTransformer.transform(lhs);
+		final AffineTerm affineTerm = (AffineTerm) PolynomialTermOperations.sum(lhsAffine.mul(Rational.MONE),
+				rhsAffine);
 
 		if (affineTerm == null) {
 			// We can only handle affine polynomials
