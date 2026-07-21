@@ -153,7 +153,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_PUBLISH_ON_ACQUIRE = "Publish On Acquire";
 	private static final String TOOLTIP_PUBLISH_ON_ACQUIRE = "Re-establish a lock-protected global's published value when the observer acquires the lock (numeric privatization; requires Lockset-Aware Interference; STRONGEST_POSTCONDITION only)";
-	private static final boolean DEFAULT_PUBLISH_ON_ACQUIRE = true;
+	private static final boolean DEFAULT_PUBLISH_ON_ACQUIRE = false;
 
 	public static final String LABEL_PROOF_CHECK = "Proof Check";
 	private static final String TOOLTIP_PROOF_CHECK =
