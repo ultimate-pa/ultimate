@@ -23,33 +23,11 @@
 
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
-import java.util.Objects;
-
 /**
  * Interrupt request (IRQ) reference.
  *
  * @author Manuel Bentele
  */
-public abstract class InterruptRequestReference implements IInterruptRequestReference {
-
-	private final InterruptRequest mIrq;
-
-	public InterruptRequestReference() {
-		mIrq = null;
-	}
-
-	public InterruptRequestReference(final InterruptRequest irq) {
-		mIrq = Objects.requireNonNull(irq);
-	}
-
-	@Override
-	public InterruptRequest getIrq() {
-		return mIrq;
-	}
-
-	@Override
-	public Type getType() {
-		return (mIrq != null) ? Type.ONE : Type.ALL;
-	}
+public sealed interface IInterruptReference permits InterruptReferenceSingle, InterruptReferenceAll {
 
 }

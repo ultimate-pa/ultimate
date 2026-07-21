@@ -26,32 +26,26 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.IInterruptReference;
 
-public abstract class InterruptFunction implements IInterruptFunction {
+public abstract class InterruptFunction<T extends IInterruptReference> implements IInterruptFunction<T> {
 
 	private Procedure mProc;
 
-	private final InterruptRequest mIrq;
+	private T mIntReqRef;
 
-	public InterruptFunction(final Procedure proc, final InterruptRequest irq) {
-		mProc = Objects.requireNonNull(proc);
-		mIrq = Objects.requireNonNull(irq);
+	public InterruptFunction(final T ref) {
+		this(null, ref);
 	}
 
-	public InterruptFunction() {
-		mProc = null;
-		mIrq = null;
+	public InterruptFunction(final Procedure proc, final T ref) {
+		mProc = proc;
+		mIntReqRef = ref;
 	}
 
-	public InterruptFunction(final InterruptRequest irq) {
-		mProc = null;
-		mIrq = Objects.requireNonNull(irq);
-	}
-
-	public InterruptFunction(final Procedure proc) {
-		mProc = Objects.requireNonNull(proc);
-		mIrq = null;
+	@Override
+	public T getInterruptReference() {
+		return mIntReqRef;
 	}
 
 	@Override
@@ -63,16 +57,6 @@ public abstract class InterruptFunction implements IInterruptFunction {
 	public void setProcedure(final Procedure proc) {
 		assert Objects.isNull(mProc);
 		mProc = proc;
-	}
-
-	@Override
-	public boolean allIrqs() {
-		return Objects.isNull(mIrq);
-	}
-
-	@Override
-	public InterruptRequest getIrq() {
-		return mIrq;
 	}
 
 }

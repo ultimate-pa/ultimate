@@ -24,17 +24,15 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.IInterruptReference;
 
-public interface IInterruptFunction {
+public interface IInterruptFunction<T extends IInterruptReference> {
 
 	Procedure getProcedure();
 
 	void setProcedure(Procedure proc);
 
-	boolean allIrqs();
-
-	InterruptRequest getIrq();
+	T getInterruptReference();
 
 	boolean isServiceFunction();
 

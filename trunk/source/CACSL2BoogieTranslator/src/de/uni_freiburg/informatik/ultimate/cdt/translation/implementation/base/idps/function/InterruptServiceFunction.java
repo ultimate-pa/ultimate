@@ -24,15 +24,15 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptReferenceSingle;
 
-public class InterruptServiceFunction extends InterruptFunction {
+public class InterruptServiceFunction extends InterruptFunction<InterruptReferenceSingle> {
 
-	public InterruptServiceFunction(final Procedure proc, final InterruptRequest irq) {
+	public InterruptServiceFunction(final Procedure proc, final InterruptReferenceSingle irq) {
 		super(proc, irq);
 	}
 
-	public InterruptServiceFunction(final InterruptRequest irq) {
+	public InterruptServiceFunction(final InterruptReferenceSingle irq) {
 		super(irq);
 	}
 

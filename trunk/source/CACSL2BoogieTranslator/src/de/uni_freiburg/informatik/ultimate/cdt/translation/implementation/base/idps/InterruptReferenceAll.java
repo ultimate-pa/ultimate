@@ -26,19 +26,19 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.List;
 
 /**
- * Interrupt request (IRQ) reference of all available interrupts.
+ * Interrupt request (IRQ) reference for all available interrupts.
  *
  * @author Manuel Bentele
  */
-public final class InterruptRequestReferenceAll implements IInterruptRequestReference {
+public final class InterruptReferenceAll implements IInterruptReference {
 
-	public static final InterruptRequestReferenceAll INSTANCE = new InterruptRequestReferenceAll();
+	public static final InterruptReferenceAll INSTANCE = new InterruptReferenceAll();
 
-	private InterruptRequestReferenceAll() {
+	private InterruptReferenceAll() {
 	}
 
 	@Override
-	public List<InterruptRequest> resolve(final List<InterruptRequest> available) {
+	public List<InterruptRequest> resolve() {
 		return available;
 	}
 

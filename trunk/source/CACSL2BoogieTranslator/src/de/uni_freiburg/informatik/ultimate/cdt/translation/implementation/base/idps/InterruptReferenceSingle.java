@@ -26,13 +26,25 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.List;
 
 /**
- * Interrupt request (IRQ) reference.
+ * Interrupt request (IRQ) reference for one specific interrupt.
  *
  * @author Manuel Bentele
  */
-public sealed interface IInterruptRequestReference
-		permits InterruptRequestReferenceAll, InterruptRequestReferenceSingle {
+public final class InterruptReferenceSingle implements IInterruptReference {
 
-	List<InterruptRequest> resolve(List<InterruptRequest> available);
+	public final InterruptRequest mIrq;
+
+	public InterruptReferenceSingle(final InterruptRequest irq) {
+		mIrq = irq;
+	}
+
+	public InterruptRequest getIrq() {
+		return mIrq;
+	}
+
+	@Override
+	public List<InterruptRequest> resolve() {
+		return List.of(getIrq());
+	}
 
 }

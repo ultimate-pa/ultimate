@@ -58,7 +58,7 @@ public class InterruptAnnotation extends ModernAnnotations {
 	}
 
 	public InterruptRequest getIrq() {
-		return getIsr().getIrq();
+		return getIsr().getInterruptReference().getIrq();
 	}
 
 	public ISRLocation getLocation() {
