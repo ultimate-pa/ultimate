@@ -12,7 +12,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
  de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
  de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder,
  wrapped.org.ojalgo.ojalgo,
  wrapped.org.ejml.ejml-simple;bundle-version="0.45.1",
