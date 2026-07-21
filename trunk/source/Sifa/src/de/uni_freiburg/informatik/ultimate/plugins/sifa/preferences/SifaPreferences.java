@@ -89,7 +89,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_FLUID = "Fluid";
 	private static final String TOOLTIP_FLUID = "Decides when to apply abstraction";
-	private static final String DEFAULT_FLUID = AlwaysFluid.class.getSimpleName();
+	private static final String DEFAULT_FLUID = SizeLimitFluid.class.getSimpleName();
 	private static final String[] VALUES_FLUID = { NeverFluid.class.getSimpleName(),
 			SizeLimitFluid.class.getSimpleName(), AlwaysFluid.class.getSimpleName(),
 			LogSizeWrapperFluid.class.getSimpleName(), };
@@ -107,14 +107,15 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_INTERFERENCE_APPLICATOR = "Interference Applicator";
 	private static final InterferenceApplicatorType DEFAULT_INTERFERENCE_APPLICATOR =
-			InterferenceApplicatorType.STRONGEST_POSTCONDITION;
+			InterferenceApplicatorType.GUARDED_EXACT_UPDATE;
 	private static final InterferenceApplicatorType[] VALUES_INTERFERENCE_APPLICATOR =
 			InterferenceApplicatorType.values();
 	public static final Class<InterferenceApplicatorType> CLASS_INTERFERENCE_APPLICATOR =
 			InterferenceApplicatorType.class;
 
 	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction";
-	private static final LocationAbstractionType DEFAULT_LOCATION_ABSTRACTION = LocationAbstractionType.SPLIT_AT_GUARD;
+	private static final LocationAbstractionType DEFAULT_LOCATION_ABSTRACTION =
+			LocationAbstractionType.SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS;
 	private static final LocationAbstractionType[] VALUES_LOCATION_ABSTRACTION = LocationAbstractionType.values();
 	public static final Class<LocationAbstractionType> CLASS_LOCATION_ABSTRACTION = LocationAbstractionType.class;
 
@@ -124,16 +125,16 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_INNER_WIDENING_THRESHOLD = "Inner Interference Widening Threshold";
 	private static final String TOOLTIP_INNER_WIDENING_THRESHOLD = "Number of inner interference application iterations before widening";
-	private static final int DEFAULT_INNER_WIDENING_THRESHOLD = 2;
+	private static final int DEFAULT_INNER_WIDENING_THRESHOLD = 6;
 
 	public static final String LABEL_JOIN_PRECISION = "Join Precision";
 	private static final String TOOLTIP_JOIN_PRECISION = "Give exit locations of joined threads unique abstract location IDs for precise join semantics";
-	private static final boolean DEFAULT_JOIN_PRECISION = false;
+	private static final boolean DEFAULT_JOIN_PRECISION = true;
 
 
 	public static final String LABEL_USE_BUCKETS = "Use Buckets";
 	private static final String TOOLTIP_USE_BUCKETS = "Partition the abstract state into per-interference buckets (disable to test applicators without bucket overhead)";
-	private static final boolean DEFAULT_USE_BUCKETS = true;
+	private static final boolean DEFAULT_USE_BUCKETS = false;
 
 	public static final String LABEL_MAX_BUCKETS = "Max. Buckets";
 	private static final String TOOLTIP_MAX_BUCKETS =
@@ -148,11 +149,11 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_LOCKSET_AWARE_INTERFERENCE = "Lockset-Aware Interference";
 	private static final String TOOLTIP_LOCKSET_AWARE_INTERFERENCE = "Filter out interferences whose write point definitely holds a lock the observer also holds (requires frontend-tagged lock variables; STRONGEST_POSTCONDITION only)";
-	private static final boolean DEFAULT_LOCKSET_AWARE_INTERFERENCE = false;
+	private static final boolean DEFAULT_LOCKSET_AWARE_INTERFERENCE = true;
 
 	public static final String LABEL_PUBLISH_ON_ACQUIRE = "Publish On Acquire";
 	private static final String TOOLTIP_PUBLISH_ON_ACQUIRE = "Re-establish a lock-protected global's published value when the observer acquires the lock (numeric privatization; requires Lockset-Aware Interference; STRONGEST_POSTCONDITION only)";
-	private static final boolean DEFAULT_PUBLISH_ON_ACQUIRE = false;
+	private static final boolean DEFAULT_PUBLISH_ON_ACQUIRE = true;
 
 	public static final String LABEL_PROOF_CHECK = "Proof Check";
 	private static final String TOOLTIP_PROOF_CHECK =
@@ -168,7 +169,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	// settings specific to ExplicitValueDomain
 	public static final String LABEL_EXPLVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Explicit Values";
-	private static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 1;
+	private static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to IntervalDomain
 	public static final String LABEL_INTERVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Intervals";
@@ -176,7 +177,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	// settings specific to OctagonDomain
 	public static final String LABEL_OCTAGONDOM_MAX_PARALLEL_STATES = "Max. Parallel Octagon";
-	private static final int DEFAULT_OCTAGONDOM_MAX_PARALLEL_STATES = 1;
+	private static final int DEFAULT_OCTAGONDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to EqDomain
 	public static final String LABEL_EQDOM_MAX_PARALLEL_STATES = "Max. Parallel Equality";
