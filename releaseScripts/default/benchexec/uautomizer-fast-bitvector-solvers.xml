@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
-<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="300s" hardtimelimit="320s" memlimit="8 GB" cpuCores="2">
+<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="90s" hardtimelimit="95s" memlimit="8 GB" cpuCores="2">
 
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper"/>
   <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-
-  <rundefinition name="Fox">
-    <option name="--traceabstraction.trace.refinement.strategy">FOX</option>
-  </rundefinition>
-  
-  <rundefinition name="OldFox">
-    <option name="--traceabstraction.trace.refinement.strategy">OLDFOX</option>
+  <rundefinition name="MathSAT">
+    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
+    <option name="--traceabstraction.smt.solver">External_ModelsAndUnsatCoreMode</option>
+    <option name="--traceabstraction.command.for.external.solver">mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -unsat_core_generation=3</option>
   </rundefinition>
 
-  <rundefinition name="Fox (bitwuzla first)">
-    <option name="--traceabstraction.trace.refinement.strategy">FOX_BW</option>
+  <rundefinition name="MathSAT interpolation">
+    <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
+    <option name="--traceabstraction.smt.solver">External_MathsatInterpolationMode</option>
+    <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
+    <option name="--traceabstraction.command.for.external.solver">mathsat -theory.fp.to_bv_overflow_mode=1 -theory.fp.minmax_zero_mode=4 -theory.bv.div_by_zero_mode=1 -theory.bv.eager=false -theory.fp.enabled=false</option>
   </rundefinition>
 
   <tasks name="ReachSafety32">
