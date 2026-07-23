@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -69,6 +70,22 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	private final BiConsumer<IcfgLocation, IResult> mReportFunction;
 	private final String mPluginId;
 	private final String mPluginName;
+	private final List<String> mFailedTests = new ArrayList<>();
+
+	private int mTestCount = 0;
+	private int mTestPassed = 0;
+
+	public int getPassedTests() {
+		return mTestPassed;
+	}
+
+	public int getTotalTests() {
+		return mTestCount;
+	}
+
+	public List<String> getFailedTests() {
+		return mFailedTests;
+	}
 
 	/**
 	 * Constructor s.t. the {@link CegarLoopResultReporter} reports all created results immediately to
@@ -132,6 +149,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		final PositiveResult<IIcfgElement> pResult =
 				new PositiveResult<>(mPluginName, errorLoc, mServices.getBacktranslationService());
 		mReportFunction.accept(errorLoc, pResult);
+		checkRequirementTest(errorLoc, true);
 	}
 
 	private void reportCounterexampleResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
@@ -153,6 +171,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			cexResult = new CounterExampleResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);
 		}
 		mReportFunction.accept(errorLoc, cexResult);
+		checkRequirementTest(errorLoc, false);
 	}
 
 	private void reportLimitResult(final IcfgLocation errorLoc, final CegarLoopLocalResult<L> result) {
@@ -214,6 +233,35 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		final int lastPosition = pe.getLength() - 1;
 		final IIcfgTransition<?> last = pe.getTraceElement(lastPosition).getTraceElement();
 		return last.getTarget();
+	}
+
+	private void checkRequirementTest(final IcfgLocation errorLoc, final boolean propertyHolds) {
+
+		final Check check = Check.getAnnotation(errorLoc);
+
+		if (check == null) {
+			return;
+		}
+
+		final boolean isTestCasePositive = check.getSpec().contains(Spec.TESTCASE_POS);
+		final boolean isTestCaseNegative = check.getSpec().contains(Spec.TESTCASE_NEG);
+
+		if (!isTestCasePositive && !isTestCaseNegative) {
+			return;
+		}
+
+		mTestCount++;
+
+		// TESTCASE_POS ("has to hold"): test passed iff the trace is possible, i.e. the reachability trap fires
+		// (propertyHolds == false, since propertyHolds refers to the assert never being violated).
+		// TESTCASE_NEG ("is forbidden to hold"): test passed iff the trace is impossible, i.e. propertyHolds == true.
+		final boolean passed = isTestCasePositive ? !propertyHolds : propertyHolds;
+
+		if (passed) {
+			mTestPassed++;
+		} else {
+			mFailedTests.add(check.getNegativeMessage());
+		}
 	}
 
 }

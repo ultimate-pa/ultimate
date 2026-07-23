@@ -78,7 +78,9 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "eventually"     { return symbol(ReqSymbols.EVENTUALLY); }
    "every"          { return symbol(ReqSymbols.EVERY); }
    "for"            { return symbol(ReqSymbols.FOR); }
+   "forbidden"      { return symbol(ReqSymbols.FORBIDDEN); }
    "globally"       { return symbol(ReqSymbols.GLOBALLY); }
+   "has"            { return symbol(ReqSymbols.HAS); }
    "held"           { return symbol(ReqSymbols.HELD); }
    "hold"           { return symbol(ReqSymbols.HOLD); }
    "holds"          { return symbol(ReqSymbols.HOLDS); }
@@ -108,10 +110,12 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "that"           { return symbol(ReqSymbols.THAT); }
    "the"            { return symbol(ReqSymbols.THE); }
    "then"           { return symbol(ReqSymbols.THEN); }
+   "TestCase"       { return symbol(ReqSymbols.TESTCASE); }
    "time"           { return symbol(ReqSymbols.TIME); }
    "to"             { return symbol(ReqSymbols.TO); }
    "toggles"        { return symbol(ReqSymbols.TOGGLES); }
    "enables"        { return symbol(ReqSymbols.TOGGLES); }
+   "trace"          { return symbol(ReqSymbols.TRACE); }
    "transitions"    { return symbol(ReqSymbols.TRANSITIONS); }
    "twice"          { return symbol(ReqSymbols.TWICE); }
    "units"          { return symbol(ReqSymbols.UNITS); }

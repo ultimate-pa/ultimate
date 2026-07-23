@@ -1,0 +1,141 @@
+Input x01_a is bool
+Input x01_b is bool
+Input x02_a is bool
+Input x02_b is bool
+Input x03_a is bool
+Input x03_b is bool
+Input x04_a is bool
+Input x04_b is bool
+Input x05_a is bool
+Input x05_b is bool
+Input x06_a is bool
+Input x06_b is bool
+Input x07_a is bool
+Input x07_b is bool
+Input x08_a is bool
+Input x08_b is bool
+Input x09_a is bool
+Input x09_b is bool
+Input x10_a is bool
+Input x10_b is bool
+Input x11_a is bool
+Input x11_b is bool
+Input x12_a is bool
+Input x12_b is bool
+Input x13_a is bool
+Input x13_b is bool
+Input x14_a is bool
+Input x14_b is bool
+Input x15_a is bool
+Input x15_b is bool
+Input x16_a is bool
+Input x16_b is bool
+Input x17_a is bool
+Input x17_b is bool
+Input x18_a is bool
+Input x18_b is bool
+Input x19_a is bool
+Input x19_b is bool
+Input x20_a is bool
+Input x20_b is bool
+
+REQ01: Globally, it is always the case that if "x01_a" holds, then "x01_b" holds after at most "5" time units
+
+TC_REQ01_POS_1: Globally, TestCase for REQ01, trace has to hold: (4, x01_a && !x01_b), (1, x01_a && x01_b)
+TC_REQ01_NEG_1: Globally, TestCase for REQ01, trace is forbidden to hold: (6, x01_a && !x01_b), (1, x01_b)
+
+REQ02: Globally, it is always the case that if "x02_a" holds, then "x02_b" holds after at most "5" time units
+
+TC_REQ02_POS_1: Globally, TestCase for REQ02, trace has to hold: (4, x02_a && !x02_b), (1, x02_a && x02_b)
+TC_REQ02_NEG_1: Globally, TestCase for REQ02, trace is forbidden to hold: (6, x02_a && !x02_b), (1, x02_b)
+
+REQ03: Globally, it is always the case that if "x03_a" holds, then "x03_b" holds after at most "5" time units
+
+TC_REQ03_POS_1: Globally, TestCase for REQ03, trace has to hold: (4, x03_a && !x03_b), (1, x03_a && x03_b)
+TC_REQ03_NEG_1: Globally, TestCase for REQ03, trace is forbidden to hold: (6, x03_a && !x03_b), (1, x03_b)
+
+REQ04: Globally, it is always the case that if "x04_a" holds, then "x04_b" holds after at most "5" time units
+
+TC_REQ04_POS_1: Globally, TestCase for REQ04, trace has to hold: (4, x04_a && !x04_b), (1, x04_a && x04_b)
+TC_REQ04_NEG_1: Globally, TestCase for REQ04, trace is forbidden to hold: (6, x04_a && !x04_b), (1, x04_b)
+
+REQ05: Globally, it is always the case that if "x05_a" holds, then "x05_b" holds after at most "5" time units
+
+TC_REQ05_POS_1: Globally, TestCase for REQ05, trace has to hold: (4, x05_a && !x05_b), (1, x05_a && x05_b)
+TC_REQ05_NEG_1: Globally, TestCase for REQ05, trace is forbidden to hold: (6, x05_a && !x05_b), (1, x05_b)
+
+REQ06: Globally, it is always the case that if "x06_a" holds, then "x06_b" holds after at most "5" time units
+
+TC_REQ06_POS_1: Globally, TestCase for REQ06, trace has to hold: (4, x06_a && !x06_b), (1, x06_a && x06_b)
+TC_REQ06_NEG_1: Globally, TestCase for REQ06, trace is forbidden to hold: (6, x06_a && !x06_b), (1, x06_b)
+
+REQ07: Globally, it is always the case that if "x07_a" holds, then "x07_b" holds after at most "5" time units
+
+TC_REQ07_POS_1: Globally, TestCase for REQ07, trace has to hold: (4, x07_a && !x07_b), (1, x07_a && x07_b)
+TC_REQ07_NEG_1: Globally, TestCase for REQ07, trace is forbidden to hold: (6, x07_a && !x07_b), (1, x07_b)
+
+REQ08: Globally, it is always the case that if "x08_a" holds, then "x08_b" holds after at most "5" time units
+
+TC_REQ08_POS_1: Globally, TestCase for REQ08, trace has to hold: (4, x08_a && !x08_b), (1, x08_a && x08_b)
+TC_REQ08_NEG_1: Globally, TestCase for REQ08, trace is forbidden to hold: (6, x08_a && !x08_b), (1, x08_b)
+
+REQ09: Globally, it is always the case that if "x09_a" holds, then "x09_b" holds after at most "5" time units
+
+TC_REQ09_POS_1: Globally, TestCase for REQ09, trace has to hold: (4, x09_a && !x09_b), (1, x09_a && x09_b)
+TC_REQ09_NEG_1: Globally, TestCase for REQ09, trace is forbidden to hold: (6, x09_a && !x09_b), (1, x09_b)
+
+REQ10: Globally, it is always the case that if "x10_a" holds, then "x10_b" holds after at most "5" time units
+
+TC_REQ10_POS_1: Globally, TestCase for REQ10, trace has to hold: (4, x10_a && !x10_b), (1, x10_a && x10_b)
+TC_REQ10_NEG_1: Globally, TestCase for REQ10, trace is forbidden to hold: (6, x10_a && !x10_b), (1, x10_b)
+
+REQ11: Globally, it is always the case that if "x11_a" holds, then "x11_b" holds after at most "5" time units
+
+TC_REQ11_POS_1: Globally, TestCase for REQ11, trace has to hold: (4, x11_a && !x11_b), (1, x11_a && x11_b)
+TC_REQ11_NEG_1: Globally, TestCase for REQ11, trace is forbidden to hold: (6, x11_a && !x11_b), (1, x11_b)
+
+REQ12: Globally, it is always the case that if "x12_a" holds, then "x12_b" holds after at most "5" time units
+
+TC_REQ12_POS_1: Globally, TestCase for REQ12, trace has to hold: (4, x12_a && !x12_b), (1, x12_a && x12_b)
+TC_REQ12_NEG_1: Globally, TestCase for REQ12, trace is forbidden to hold: (6, x12_a && !x12_b), (1, x12_b)
+
+REQ13: Globally, it is always the case that if "x13_a" holds, then "x13_b" holds after at most "5" time units
+
+TC_REQ13_POS_1: Globally, TestCase for REQ13, trace has to hold: (4, x13_a && !x13_b), (1, x13_a && x13_b)
+TC_REQ13_NEG_1: Globally, TestCase for REQ13, trace is forbidden to hold: (6, x13_a && !x13_b), (1, x13_b)
+
+REQ14: Globally, it is always the case that if "x14_a" holds, then "x14_b" holds after at most "5" time units
+
+TC_REQ14_POS_1: Globally, TestCase for REQ14, trace has to hold: (4, x14_a && !x14_b), (1, x14_a && x14_b)
+TC_REQ14_NEG_1: Globally, TestCase for REQ14, trace is forbidden to hold: (6, x14_a && !x14_b), (1, x14_b)
+
+REQ15: Globally, it is always the case that if "x15_a" holds, then "x15_b" holds after at most "5" time units
+
+TC_REQ15_POS_1: Globally, TestCase for REQ15, trace has to hold: (4, x15_a && !x15_b), (1, x15_a && x15_b)
+TC_REQ15_NEG_1: Globally, TestCase for REQ15, trace is forbidden to hold: (6, x15_a && !x15_b), (1, x15_b)
+
+REQ16: Globally, it is always the case that if "x16_a" holds, then "x16_b" holds after at most "5" time units
+
+TC_REQ16_POS_1: Globally, TestCase for REQ16, trace has to hold: (4, x16_a && !x16_b), (1, x16_a && x16_b)
+TC_REQ16_NEG_1: Globally, TestCase for REQ16, trace is forbidden to hold: (6, x16_a && !x16_b), (1, x16_b)
+
+REQ17: Globally, it is always the case that if "x17_a" holds, then "x17_b" holds after at most "5" time units
+
+TC_REQ17_POS_1: Globally, TestCase for REQ17, trace has to hold: (4, x17_a && !x17_b), (1, x17_a && x17_b)
+TC_REQ17_NEG_1: Globally, TestCase for REQ17, trace is forbidden to hold: (6, x17_a && !x17_b), (1, x17_b)
+
+REQ18: Globally, it is always the case that if "x18_a" holds, then "x18_b" holds after at most "5" time units
+
+TC_REQ18_POS_1: Globally, TestCase for REQ18, trace has to hold: (4, x18_a && !x18_b), (1, x18_a && x18_b)
+TC_REQ18_NEG_1: Globally, TestCase for REQ18, trace is forbidden to hold: (6, x18_a && !x18_b), (1, x18_b)
+
+REQ19: Globally, it is always the case that if "x19_a" holds, then "x19_b" holds after at most "5" time units
+
+TC_REQ19_POS_1: Globally, TestCase for REQ19, trace has to hold: (4, x19_a && !x19_b), (1, x19_a && x19_b)
+TC_REQ19_NEG_1: Globally, TestCase for REQ19, trace is forbidden to hold: (6, x19_a && !x19_b), (1, x19_b)
+
+REQ20: Globally, it is always the case that if "x20_a" holds, then "x20_b" holds after at most "5" time units
+
+TC_REQ20_POS_1: Globally, TestCase for REQ20, trace has to hold: (4, x20_a && !x20_b), (1, x20_a && x20_b)
+TC_REQ20_NEG_1: Globally, TestCase for REQ20, trace is forbidden to hold: (6, x20_a && !x20_b), (1, x20_b)
+

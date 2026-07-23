@@ -105,6 +105,8 @@ public class ReqSymboltableBuilder {
 
 	private final UnionFind<String> mEquivalences;
 
+	private String mTestCaseClockVar;
+
 	public ReqSymboltableBuilder(final IUltimateServiceProvider services, final ILogger logger) {
 		mLogger = logger;
 		mServices = services;
@@ -209,11 +211,28 @@ public class ReqSymboltableBuilder {
 		addVar(name, BoogiePrimitiveType.toPrimitiveType(typeString), source, mStateVars);
 	}
 
+	/**
+	 * Registers (once) a free-running clock variable that is never reset by any PEA transition. Used by
+	 * TestCasePositivePattern/TestCaseNegativePattern to express fixed test-case traces as time-indexed assume
+	 * statements in the generated Boogie code.
+	 */
+	public String declareTestCaseClockVar() {
+		if (mTestCaseClockVar == null) {
+			String name = "testCaseClock";
+			while (mId2Type.containsKey(name)) {
+				name = "_" + name;
+			}
+			addVar(name, BoogieType.TYPE_REAL, null, mClockVars);
+			mTestCaseClockVar = name;
+		}
+		return mTestCaseClockVar;
+	}
+
 	public IReqSymbolTable constructSymbolTable() {
 		final String deltaVar = declareDeltaVar();
-		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mHistoryVars,
-				mConstVars, mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value, mInputVars, mOutputVars,
-				mBuiltinFunctions, mEquivalences);
+		return new ReqSymbolTable(deltaVar, mTestCaseClockVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars,
+				mPrimedVars, mHistoryVars, mConstVars, mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value,
+				mInputVars, mOutputVars, mBuiltinFunctions, mEquivalences);
 	}
 
 	public Set<String> getConstIds() {
@@ -365,17 +384,19 @@ public class ReqSymboltableBuilder {
 		private final Set<String> mPcVars;
 		private final Set<String> mClockVars;
 		private final String mDeltaVar;
+		private final String mTestCaseClockVar;
 		private final Set<String> mInputVars;
 		private final Set<String> mOutputVars;
 		private final Map<String, FunctionDeclaration> mBuildinFunctions;
 		private final UnionFind<String> mEquivalences;
 
-		private ReqSymbolTable(final String deltaVar, final Map<String, BoogieType> id2Type,
-				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs,
-				final Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars,
-				final Set<String> constVars, final Set<String> eventVars, final Set<String> pcVars,
-				final Set<String> clockVars, final Map<PatternType<?>, BoogieLocation> req2loc,
-				final Map<String, Expression> const2Value, final Set<String> inputVars, final Set<String> outputVars,
+		private ReqSymbolTable(final String deltaVar, final String testCaseClockVar,
+				final Map<String, BoogieType> id2Type, final Map<String, IdentifierExpression> id2idExp,
+				final Map<String, VariableLHS> id2VarLhs, final Set<String> stateVars, final Set<String> primedVars,
+				final Set<String> historyVars, final Set<String> constVars, final Set<String> eventVars,
+				final Set<String> pcVars, final Set<String> clockVars,
+				final Map<PatternType<?>, BoogieLocation> req2loc, final Map<String, Expression> const2Value,
+				final Set<String> inputVars, final Set<String> outputVars,
 				final Map<String, FunctionDeclaration> buildinFunctions, final UnionFind<String> equivalences) {
 			mId2Type = Collections.unmodifiableMap(id2Type);
 			mId2IdExpr = Collections.unmodifiableMap(id2idExp);
@@ -394,6 +415,7 @@ public class ReqSymboltableBuilder {
 			mOutputVars = Collections.unmodifiableSet(outputVars);
 			mBuildinFunctions = Collections.unmodifiableMap(buildinFunctions);
 			mDeltaVar = deltaVar;
+			mTestCaseClockVar = testCaseClockVar;
 			mEquivalences = equivalences;
 		}
 
@@ -415,6 +437,11 @@ public class ReqSymboltableBuilder {
 		@Override
 		public String getDeltaVarName() {
 			return mDeltaVar;
+		}
+
+		@Override
+		public String getTestCaseClockName() {
+			return mTestCaseClockVar;
 		}
 
 		@Override

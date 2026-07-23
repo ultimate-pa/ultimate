@@ -63,6 +63,10 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TriggerResponseDe
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityDelayPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCasePositivePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCaseNegativePattern;
 
 parser ReqParser;
 option symbols = ReqSymbols;
@@ -168,6 +172,7 @@ terminal LE, GREATER, LTEQ, GTEQ, NEQ, EQ, PARTORDER;
 terminal PLUS, MINUS;
 terminal TIMES, DIVIDE, MOD;
 terminal TRUE, FALSE;
+terminal TESTCASE, TRACE, HAS, FORBIDDEN;
 terminal String ID;
 terminal String TYPE;
 terminal String REALNUMBER;
@@ -187,6 +192,8 @@ non terminal List<Expression> exprCommaPlus, exprCommaStar;
 non terminal Expression exprImplies, exprImpliesNI, exprAnd, exprAndNI, exprOr, exprOrNI;
 non terminal Expression expr1NI, expr2NI, expr3NI, expr5NI; 
 non terminal Expression expr6NI, expr7NI, expr9NI;
+
+non terminal List<Pair<Rational,CDD>> testCaseTrace;
 
 precedence left LOR;
 precedence left LAND;
@@ -255,7 +262,11 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = r; :}
 	  	| IT IS ALWAYS THE CASE THAT rtpattern:r
 	  		{: RESULT = r; :}
-	  	;
+	  	| TESTCASE FOR ID:reqId COMMA TRACE HAS TO HOLD IDSEP testCaseTrace:t
+        	{: RESULT = new PatternBuilder(); RESULT.setType(TestCasePositivePattern.class); RESULT.addTargetReqId(reqId); RESULT.addTrace(t); :}
+	    | TESTCASE FOR ID:reqId COMMA TRACE IS FORBIDDEN TO HOLD IDSEP testCaseTrace:t
+	        {: RESULT = new PatternBuilder(); RESULT.setType(TestCaseNegativePattern.class); RESULT.addTargetReqId(reqId); RESULT.addTrace(t); :}
+	    ;
   
 opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD
       			{: RESULT = new PatternBuilder(); RESULT.setType(PrecedencePattern.class); RESULT.addCdd(s,r); :}
@@ -311,6 +322,13 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:s HOLDS COMMA? THEN expression:t HOLDS AFTER AT MOST duration:c2
 				{: RESULT = new PatternBuilder().setType(TriggerResponseDelayBoundL1Pattern.class).addCdd(t,s,r).addDuration(c1, c2); :}	
   			;
+  			
+  			
+testCaseTrace ::= LPAR num:n COMMA expr:e RPAR
+	  {: RESULT = new ArrayList<Pair<Rational,CDD>>(); RESULT.add(new Pair<>(n,e)); :}
+	| testCaseTrace:l COMMA LPAR num:n COMMA expr:e RPAR
+	  {: l.add(new Pair<>(n,e)); RESULT = l; :}
+	;
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}
  			;

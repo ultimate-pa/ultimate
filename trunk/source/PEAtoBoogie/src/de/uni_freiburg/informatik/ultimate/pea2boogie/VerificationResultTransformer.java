@@ -175,9 +175,11 @@ public class VerificationResultTransformer {
 		final Spec spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.REDUNDANCY) {
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.REDUNDANCY || spec == Spec.TESTCASE_POS) {
 			// a counterexample for consistency and vacuity and redundancy means that the
 			// requirements are consistent or non-vacuous or non-redundant
+			// a counterexample for TESTCASE_POS ("... trace has to hold: ...") means the fixed example trace is
+			// possible together with the requirement automaton, i.e. the test passed
 			isPositive = !isPositive;
 		}
 		final IElement element = oldRes.getElement();
@@ -606,6 +608,8 @@ public class VerificationResultTransformer {
 		case RTINCONSISTENT:
 		case COMPLEMENT:
 		case REDUNDANCY:
+		case TESTCASE_POS:
+		case TESTCASE_NEG:
 			return;
 		default:
 			throw new UnsupportedOperationException("Unknown spec type " + spec);

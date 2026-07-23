@@ -107,15 +107,21 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	private final IReqSymbolTable mSymbolTable;
 	private final List<ReqPeas> mReqPeas;
+	private final boolean mHasTestCasePatterns;
 
 	private final Durations mDurations;
 
+	/**
+	 * @param hasTestCasePatterns
+	 *            if true, getStateChecks() skips CONSISTENCY/VACUOUS/RTINCONSISTENT/REDUNDANCY entirely.
+	 */
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger, final List<ReqPeas> reqPeas,
-			final IReqSymbolTable symbolTable, final Durations durations) {
+			final IReqSymbolTable symbolTable, final Durations durations, final boolean hasTestCasePatterns) {
 		mLogger = logger;
 		mServices = services;
 		mSymbolTable = symbolTable;
 		mReqPeas = reqPeas;
+		mHasTestCasePatterns = hasTestCasePatterns;
 		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
@@ -126,6 +132,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	@Override
 	public List<Statement> getStateChecks() {
+		if (mHasTestCasePatterns) {
+			mLogger.info("Requirements file contains TestCase patterns - skipping normal requirement checks");
+			return Collections.emptyList();
+		}
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		// set preferences

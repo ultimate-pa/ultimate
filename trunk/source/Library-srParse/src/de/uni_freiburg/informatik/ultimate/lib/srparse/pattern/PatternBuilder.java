@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * {@link PatternBuilder} allows us to keep the state of the single patterns mostly immutable and the parser flexible.
@@ -68,7 +69,8 @@ public class PatternBuilder {
 			DurationBoundLPattern.class, PersistencePattern.class, PrecedenceChain12Pattern.class,
 			PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
 			ResponsePattern.class, UniversalityPattern.class, UniversalityDelayPattern.class,
-			InvarianceDelayPattern.class, ConditionalResponseBoundL1Pattern.class };
+			InvarianceDelayPattern.class, ConditionalResponseBoundL1Pattern.class, TestCasePositivePattern.class,
+			TestCaseNegativePattern.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
@@ -95,6 +97,7 @@ public class PatternBuilder {
 	private final List<CDD> mCDDs;
 	private final List<Rational> mDurations;
 	private final List<String> mDurationNames;
+	private String mTargetReqId;
 	private String mId;
 	private Class<? extends PatternType<?>> mClazz;
 	private SrParseScope<?> mScope;
@@ -107,6 +110,21 @@ public class PatternBuilder {
 
 	public PatternBuilder addCdd(final CDD... cdds) {
 		add(mCDDs, cdds);
+		return this;
+	}
+
+	/** Only for TestCasePositivePattern/TestCaseNegativePattern: which requirement this test checks against. */
+	public PatternBuilder addTargetReqId(final String id) {
+		mTargetReqId = id;
+		return this;
+	}
+
+	/** Only for TestCasePositivePattern/TestCaseNegativePattern: unpacks a parsed trace into cdds/durations. */
+	public PatternBuilder addTrace(final List<Pair<Rational, CDD>> trace) {
+		for (final Pair<Rational, CDD> segment : trace) {
+			addCdd(segment.getSecond());
+			addDuration(segment.getFirst().toString());
+		}
 		return this;
 	}
 
@@ -162,6 +180,12 @@ public class PatternBuilder {
 		if (mScope == null) {
 			throw new IllegalStateException("Scope of pattern not yet specified");
 		}
+		if (mClazz == TestCasePositivePattern.class) {
+			return new TestCasePositivePattern(mScope, mId, mCDDs, mDurations, mDurationNames, mTargetReqId);
+		}
+		if (mClazz == TestCaseNegativePattern.class) {
+			return new TestCaseNegativePattern(mScope, mId, mCDDs, mDurations, mDurationNames, mTargetReqId);
+		}
 		final PatternTypeConstructor constr = getConstructor(mClazz);
 		if (mDurationNames.stream().allMatch(Objects::isNull)) {
 			return constr.construct(mScope, mId, mCDDs, mDurations, Collections.emptyList());
@@ -199,6 +223,11 @@ public class PatternBuilder {
 		pb.mClazz = (Class<? extends PatternType<?>>) p.getClass();
 		pb.mDurationNames.addAll(p.getDurationNames());
 		pb.mCDDs.addAll(p.getCdds());
+		if (p instanceof TestCasePositivePattern) {
+			pb.mTargetReqId = ((TestCasePositivePattern) p).getTargetReqId();
+		} else if (p instanceof TestCaseNegativePattern) {
+			pb.mTargetReqId = ((TestCaseNegativePattern) p).getTargetReqId();
+		}
 		final Rational durationScale = durations.computeScalingFactor();
 		for (final Rational d : p.getDurations()) {
 			pb.mDurations.add(d.mul(durationScale));

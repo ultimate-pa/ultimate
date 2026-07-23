@@ -116,6 +116,12 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			require a previosu state to determine the successor state. Note: this will only work for the very first\
 			step independend of length or usefulness.""";
 
+	public static final String LABEL_TESTCASE_WHOLE_GRAPH = "TestCases test the whole graph";
+	private static final boolean DEF_TESTCASE_WHOLE_GRAPH = true;
+	private static final String DESC_TESTCASE_WHOLE_GRAPH = """
+			If enabled, every TestCase is checked against all requirements' PEAs, regardless of its "for R1" target\
+			 - more thorough but expensive. If disabled, only the target requirement's PEA is used - much cheaper.""";
+
 	public enum PEATransformerMode {
 		REQ_CHECK, REQ_TEST, REQ_RED
 	}
@@ -156,7 +162,9 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT, DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_GUESS_INITIAL, DEF_GUESS_INITIAL, DESC_GUESS_INITIAL,
-						PreferenceType.Boolean) };
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_TESTCASE_WHOLE_GRAPH, DEF_TESTCASE_WHOLE_GRAPH,
+						DESC_TESTCASE_WHOLE_GRAPH, PreferenceType.Boolean) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

@@ -26,10 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 
@@ -54,4 +56,8 @@ public interface IReq2Pea {
 	boolean hasErrors();
 
 	IReq2PeaAnnotator getAnnotator();
+
+	default List<PatternType<?>> getTestCasePatterns() {
+		return Collections.emptyList();
+	}
 }

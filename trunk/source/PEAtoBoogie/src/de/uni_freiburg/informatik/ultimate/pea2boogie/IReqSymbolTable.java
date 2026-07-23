@@ -60,6 +60,12 @@ public interface IReqSymbolTable {
 
 	String getDeltaVarName();
 
+	/**
+	 * Name of a free-running clock, never reset by a PEA transition. Used by
+	 * TestCasePositivePattern/TestCaseNegativePattern. Returns null if no TestCase pattern requested it.
+	 */
+	String getTestCaseClockName();
+
 	VariableLHS getVariableLhs(String clockVar);
 
 	Set<String> getClockVars();
