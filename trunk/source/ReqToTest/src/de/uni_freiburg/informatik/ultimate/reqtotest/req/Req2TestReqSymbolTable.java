@@ -366,4 +366,9 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public String getTestCaseClockName() {
+		return null;
+	}
+
 }
