@@ -21,30 +21,20 @@
  * plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference;
+
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
 
 /**
- * Interrupt request (IRQ) information.
+ * Interrupt request (IRQ) reference.
  *
  * @author Manuel Bentele
  */
-public class InterruptRequest {
+public sealed interface IInterruptReference permits AllInterrupts, SingleInterrupt {
 
-	private final String mName;
-
-	private final int mNum;
-
-	public InterruptRequest(final String name, final int num) {
-		mName = name;
-		mNum = num;
-	}
-
-	public String getName() {
-		return mName;
-	}
-
-	public int getNum() {
-		return mNum;
-	}
+	List<InterruptRequest> resolve(final InterruptRequestHandler handler);
 
 }

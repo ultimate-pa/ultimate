@@ -21,13 +21,52 @@
  * plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq;
+
+import java.util.Objects;
 
 /**
- * Interrupt request (IRQ) reference.
+ * Interrupt request (IRQ) information.
  *
  * @author Manuel Bentele
  */
-public sealed interface IInterruptReference permits InterruptReferenceSingle, InterruptReferenceAll {
+public class InterruptRequest {
+
+	private final String mName;
+
+	private final int mNum;
+
+	public InterruptRequest(final String name, final int num) {
+		mName = name;
+		mNum = num;
+	}
+
+	public String getName() {
+		return mName;
+	}
+
+	public int getNum() {
+		return mNum;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(getName(), Integer.valueOf(getNum()));
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final InterruptRequest other = InterruptRequest.class.cast(obj);
+		return Objects.equals(getName(), other.getName()) && getNum() == other.getNum();
+	}
 
 }

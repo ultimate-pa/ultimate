@@ -21,30 +21,28 @@
  * plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
+
 /**
- * Interrupt request (IRQ) reference for one specific interrupt.
+ * Interrupt request (IRQ) reference for one specific runtime interrupt supplied as a procedure parameter.
  *
  * @author Manuel Bentele
  */
-public final class InterruptReferenceSingle implements IInterruptReference {
+public final class DynamicInterruptParameter extends SingleInterrupt<VarList> {
 
-	public final InterruptRequest mIrq;
-
-	public InterruptReferenceSingle(final InterruptRequest irq) {
-		mIrq = irq;
-	}
-
-	public InterruptRequest getIrq() {
-		return mIrq;
+	public DynamicInterruptParameter(final VarList ref) {
+		super(ref);
 	}
 
 	@Override
-	public List<InterruptRequest> resolve() {
-		return List.of(getIrq());
+	public List<InterruptRequest> resolve(final InterruptRequestHandler handler) {
+		// TODO
 	}
 
 }

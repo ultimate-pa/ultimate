@@ -24,18 +24,18 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptReferenceAll;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.AllInterrupts;
 
 public class InterruptMaskingFunction extends InterruptManagementFunction {
 
 	private final Operation mOp;
 
-	public InterruptMaskingFunction(final Procedure proc, final InterruptReferenceAll irq, final Operation op) {
+	public InterruptMaskingFunction(final Procedure proc, final AllInterrupts irq, final Operation op) {
 		super(proc, irq);
 		mOp = op;
 	}
 
-	public InterruptMaskingFunction(final InterruptReferenceAll irq, final Operation op) {
+	public InterruptMaskingFunction(final AllInterrupts irq, final Operation op) {
 		super(irq);
 		mOp = op;
 	}

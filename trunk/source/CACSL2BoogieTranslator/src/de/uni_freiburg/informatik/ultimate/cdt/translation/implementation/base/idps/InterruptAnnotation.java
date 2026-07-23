@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -58,7 +59,7 @@ public class InterruptAnnotation extends ModernAnnotations {
 	}
 
 	public InterruptRequest getIrq() {
-		return getIsr().getInterruptReference().getIrq();
+		return getIsr().getIrqReference().getIrq();
 	}
 
 	public ISRLocation getLocation() {

@@ -21,10 +21,12 @@
  * plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Manages interrupt requests (IRQs).
@@ -55,6 +57,14 @@ public class InterruptRequestHandler {
 		}
 
 		throw new AssertionError("IRQ mapping contains already an registered IRQ with number " + num);
+	}
+
+	public List<InterruptRequest> getIrqs() {
+		return mIrqs.values().stream().collect(Collectors.toList());
+	}
+
+	public boolean hasIrq(final InterruptRequest irq) {
+		return getIrqs().contains(irq);
 	}
 
 	public InterruptRequest getIrq(final String name) {

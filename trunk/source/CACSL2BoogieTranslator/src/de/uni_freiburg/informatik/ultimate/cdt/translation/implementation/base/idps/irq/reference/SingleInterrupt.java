@@ -21,21 +21,24 @@
  * plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.IInterruptReference;
+/**
+ * Interrupt request (IRQ) reference for one specific interrupt.
+ *
+ * @author Manuel Bentele
+ */
+public abstract sealed class SingleInterrupt<T> implements IInterruptReference
+		permits StaticInterrupt, DynamicInterruptParameter {
 
-public interface IInterruptFunction<T extends IInterruptReference> {
+	private final T mIrqRef;
 
-	Procedure getProcedure();
+	public SingleInterrupt(final T irq) {
+		mIrqRef = irq;
+	}
 
-	void setProcedure(Procedure proc);
-
-	T getIrqReference();
-
-	boolean isServiceFunction();
-
-	boolean isManagementFunction();
+	public T getIrq() {
+		return mIrqRef;
+	}
 
 }

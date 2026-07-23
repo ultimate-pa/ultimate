@@ -21,21 +21,28 @@
  * plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.IInterruptReference;
+import java.util.List;
 
-public interface IInterruptFunction<T extends IInterruptReference> {
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
 
-	Procedure getProcedure();
+/**
+ * Interrupt request (IRQ) reference for one specific compile-time interrupt.
+ *
+ * @author Manuel Bentele
+ */
+public final class StaticInterrupt extends SingleInterrupt<InterruptRequest> {
 
-	void setProcedure(Procedure proc);
+	public StaticInterrupt(final InterruptRequest ref) {
+		super(ref);
+	}
 
-	T getIrqReference();
-
-	boolean isServiceFunction();
-
-	boolean isManagementFunction();
+	@Override
+	public List<InterruptRequest> resolve(final InterruptRequestHandler handler) {
+		final InterruptRequest current = getIrq();
+		return (handler.hasIrq(current)) ? List.of(current) : null;
+	}
 
 }

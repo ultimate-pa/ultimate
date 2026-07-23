@@ -21,25 +21,23 @@
  * plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference;
 
 import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
 
 /**
  * Interrupt request (IRQ) reference for all available interrupts.
  *
  * @author Manuel Bentele
  */
-public final class InterruptReferenceAll implements IInterruptReference {
-
-	public static final InterruptReferenceAll INSTANCE = new InterruptReferenceAll();
-
-	private InterruptReferenceAll() {
-	}
+public final class AllInterrupts implements IInterruptReference {
 
 	@Override
-	public List<InterruptRequest> resolve() {
-		return available;
+	public List<InterruptRequest> resolve(final InterruptRequestHandler handler) {
+		return handler.getIrqs();
 	}
 
 }

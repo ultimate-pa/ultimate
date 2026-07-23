@@ -26,13 +26,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.IInterruptReference;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.IInterruptReference;
 
 public abstract class InterruptFunction<T extends IInterruptReference> implements IInterruptFunction<T> {
 
 	private Procedure mProc;
 
-	private T mIntReqRef;
+	private T mIrqRef;
 
 	public InterruptFunction(final T ref) {
 		this(null, ref);
@@ -40,12 +40,12 @@ public abstract class InterruptFunction<T extends IInterruptReference> implement
 
 	public InterruptFunction(final Procedure proc, final T ref) {
 		mProc = proc;
-		mIntReqRef = ref;
+		mIrqRef = ref;
 	}
 
 	@Override
-	public T getInterruptReference() {
-		return mIntReqRef;
+	public T getIrqReference() {
+		return mIrqRef;
 	}
 
 	@Override

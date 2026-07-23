@@ -182,8 +182,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptRequestHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AssertLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AtomicLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
