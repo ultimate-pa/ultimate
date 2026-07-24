@@ -8,28 +8,34 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 
-// TODO local var change name
-final class BoogieStatementIdMap extends BoogieVisitor {
+final class LocalVariablesMap extends BoogieVisitor {
 
-	private final Deque<IdentifierExpression> mCurrentLocalVariables = new ArrayDeque<>();
+	private boolean mProcFlag;
+	private final Deque<String> mCurrentLocalVariables = new ArrayDeque<>();
 	private Statement mCurrentStatement = null;
 	private Expression mCurrentExpression = null;
 	private final Map<Statement, Set<IdentifierExpression>> mStatementMap = new HashMap<>();
 	private final Map<Expression, Set<IdentifierExpression>> mExpressionMap = new HashMap<>();
 
-	BoogieStatementIdMap(final Unit boogieAst) {
-		for (final Declaration decl : boogieAst.getDeclarations()) {
+	LocalVariablesMap(final ProgramAndProof programAndProof) {
+
+		mProcFlag = true;
+		for (final Declaration decl : programAndProof.getBoogieAst().getDeclarations()) {
 			processDeclaration(decl);
+		}
+
+		mProcFlag = false;
+		for (final Expression expr : programAndProof.getAnnotationMap().values()) {
+			mCurrentExpression = expr;
+			processExpression(expr);
 		}
 	}
 
@@ -49,8 +55,7 @@ final class BoogieStatementIdMap extends BoogieVisitor {
 			for (final VarList varList : varDecl.getVariables()) {
 				for (final String id : varList.getIdentifiers()) {
 					nVars++;
-					mCurrentLocalVariables.push(new IdentifierExpression(null, varList.getType().getBoogieType(), id,
-							DeclarationInformation.DECLARATIONINFO_GLOBAL));
+					mCurrentLocalVariables.push(id);
 				}
 			}
 		}
@@ -70,16 +75,15 @@ final class BoogieStatementIdMap extends BoogieVisitor {
 		return super.processStatement(statement);
 	}
 
-	@Override
-	public Expression processExpression(final Expression expr) {
-		mCurrentExpression = expr;
-		return super.processExpression(expr);
-	}
+	/*
+	 * @Override public Expression processExpression(final Expression expr) { mCurrentExpression = expr; return
+	 * super.processExpression(expr); }
+	 */
 
 	@Override
 	protected void visit(final IdentifierExpression expr) {
 		// TODO change idSet name maybe
-		if (mCurrentLocalVariables.contains(expr)) {
+		if (mProcFlag && mCurrentLocalVariables.stream().anyMatch(id -> id.equals(expr.getIdentifier()))) {
 			Set<IdentifierExpression> idSet = mStatementMap.get(mCurrentStatement);
 
 			if (idSet == null) {
@@ -89,11 +93,13 @@ final class BoogieStatementIdMap extends BoogieVisitor {
 
 			idSet.add(expr);
 
-			idSet = mExpressionMap.get(mCurrentStatement);
+		} else if (!mProcFlag && mStatementMap.values().stream().anyMatch(
+				varSet -> varSet.stream().anyMatch(var -> var.getIdentifier().equals(expr.getIdentifier())))) {
+			Set<IdentifierExpression> idSet = mExpressionMap.get(mCurrentExpression);
 
 			if (idSet == null) {
 				idSet = new HashSet<>();
-				mStatementMap.put(mCurrentStatement, idSet);
+				mExpressionMap.put(mCurrentExpression, idSet);
 			}
 
 			idSet.add(expr);

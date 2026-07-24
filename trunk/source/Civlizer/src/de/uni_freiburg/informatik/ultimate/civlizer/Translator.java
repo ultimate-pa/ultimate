@@ -77,6 +77,8 @@ import de.uni_freiburg.informatik.ultimate.civlizer.model.YieldInvariant;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.YieldProcedure;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 
 /**
@@ -113,8 +115,10 @@ public final class Translator {
 	public static final int LAYER_TOP = LAYER_GHOST_VARS;
 
 	private static final String JOIN_POOL_NAME = "join_pool";
-
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final ProgramAndProof mProgramAndProof;
+	private final LocalVariablesMap mLocalVariablesMap;
 
 	private final ASTType mStartTidType;
 	private final ASTType mTidType;
@@ -122,16 +126,12 @@ public final class Translator {
 	private final List<CivlDeclaration> mDeclarations = new ArrayList<>();
 	private final CivlProgram mResult;
 
-	/**
-	 * Creates a translator for the specified program and proof. Preprocesses the input and initializes the output
-	 * writer.
-	 *
-	 * @param programAndProof
-	 *            the program and proof to translate
-	 */
-	public Translator(final ProgramAndProof programAndProof) {
+	public Translator(final IUltimateServiceProvider services, final ProgramAndProof programAndProof) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(getClass());
 		programAndProof.preprocess();
 		mProgramAndProof = programAndProof;
+		mLocalVariablesMap = new LocalVariablesMap(programAndProof);
 
 		// Declarations for thread management operations
 		mStartTidType = declareStartTidType();
@@ -348,10 +348,10 @@ public final class Translator {
 
 	CallStatement callYieldInvariants(final String procName, final int counter, final IdentifierExpression[] input,
 			final Expression annotation) {
-		final List<IdentifierExpression> params = Arrays.asList(input);
+		// use to fix issue with addAll because Arrays.asList(input) return fix size
+		final List<IdentifierExpression> params = new ArrayList<>(Arrays.asList(input));
 
-		params.addAll(new ArrayList(mProgramAndProof.getStatementIdMap().getExpressionMap().getOrDefault(annotation,
-				Collections.emptySet())));
+		params.addAll(mLocalVariablesMap.getExpressionMap().getOrDefault(annotation, Collections.emptySet()));
 
 		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
 				"yield_" + procName + "_" + counter, params.toArray(Expression[]::new));
@@ -370,8 +370,8 @@ public final class Translator {
 					tidNeedsLinearity.contains(tid) ? Linearity.INOUT : Linearity.NONE));
 		}
 
-		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getExpressionMap()
-				.getOrDefault(annotation, Collections.emptySet())) {
+		for (final IdentifierExpression id : mLocalVariablesMap.getExpressionMap().getOrDefault(annotation,
+				Collections.emptySet())) {
 			// TODO maybe change type later
 			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
 			params.add(new ParameterDeclaration(id.getIdentifier(), type, Linearity.NONE));
@@ -420,8 +420,8 @@ public final class Translator {
 
 	CallStatement callCondition(final String procName, final int counter, final Expression condition) {
 
-		final List<IdentifierExpression> params = new ArrayList<>(mProgramAndProof.getStatementIdMap()
-				.getExpressionMap().getOrDefault(condition, Collections.emptySet()));
+		final List<IdentifierExpression> params =
+				new ArrayList<>(mLocalVariablesMap.getExpressionMap().getOrDefault(condition, Collections.emptySet()));
 
 		return new CallStatement(null, new NamedAttribute[0], false,
 				new VariableLHS[] { new VariableLHS(null, "condition") }, "cond_" + procName + "_" + counter,
@@ -435,8 +435,8 @@ public final class Translator {
 
 		final List<ParameterDeclaration> params = new ArrayList<>();
 
-		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getExpressionMap()
-				.getOrDefault(condition, Collections.emptySet())) {
+		for (final IdentifierExpression id : mLocalVariablesMap.getExpressionMap().getOrDefault(condition,
+				Collections.emptySet())) {
 			// TODO maybe change type later
 			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
 			params.add(new ParameterDeclaration(id.getIdentifier(), type, Linearity.NONE));
@@ -458,11 +458,11 @@ public final class Translator {
 		final List<Expression> inParams = new ArrayList<>();
 		final List<VariableLHS> outParams = new ArrayList<>();
 
-		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getStatementMap()
-				.getOrDefault(statement, Collections.emptySet())) {
+		for (final IdentifierExpression id : mLocalVariablesMap.getStatementMap().getOrDefault(statement,
+				Collections.emptySet())) {
 			// TODO maybe change type later
 			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
-			inParams.add(new IdentifierExpression(null, id.getIdentifier() + "_in"));
+			inParams.add(id);
 			outParams.add(new VariableLHS(null, id.getIdentifier()));
 		}
 
@@ -476,8 +476,8 @@ public final class Translator {
 		final List<ParameterDeclaration> inParams = new ArrayList<>();
 		final List<ParameterDeclaration> outParams = new ArrayList<>();
 
-		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getStatementMap()
-				.getOrDefault(statement, Collections.emptySet())) {
+		for (final IdentifierExpression id : mLocalVariablesMap.getStatementMap().getOrDefault(statement,
+				Collections.emptySet())) {
 			// TODO maybe change type later
 			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
 			inParams.add(new ParameterDeclaration(id.getIdentifier() + "_in", type, Linearity.NONE));
@@ -486,8 +486,8 @@ public final class Translator {
 
 		final var body = new ArrayList<Statement>();
 		// TODO improve this later
-		for (final IdentifierExpression id : mProgramAndProof.getStatementIdMap().getStatementMap()
-				.getOrDefault(statement, Collections.emptySet())) {
+		for (final IdentifierExpression id : mLocalVariablesMap.getStatementMap().getOrDefault(statement,
+				Collections.emptySet())) {
 			body.add(new AssignmentStatement(null, new LeftHandSide[] { new VariableLHS(null, id.getIdentifier()) },
 					new Expression[] { new IdentifierExpression(null, id.getIdentifier() + "_in") }));
 		}
@@ -515,7 +515,7 @@ public final class Translator {
 	}
 
 	Body writeBody(final Procedure decl) {
-		final BodyTransformer transformer = new BodyTransformer(this);
+		final BodyTransformer transformer = new BodyTransformer(mServices, this);
 		return transformer.transformBody(decl.getIdentifier(), decl.getBody());
 	}
 

@@ -158,7 +158,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 
 		if (mProgramAndProof.isFull() && !mProcessed) {
 			mProcessed = true;
-			final Translator translation = new Translator(mProgramAndProof);
+			final Translator translation = new Translator(mServices, mProgramAndProof);
 
 			final var outputFileSettings = FilePrinterUtils.OutputFileSettings.fromPrinterPreferences(mPrefs,
 					"Civlizer_", "_UID", ".civl.bpl");

@@ -34,7 +34,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
@@ -196,6 +198,14 @@ public class CivlOutput implements AutoCloseable {
 	private static final class CivlizedBoogieOutput extends BoogieOutput {
 		public CivlizedBoogieOutput(final PrintWriter output) {
 			super(output);
+		}
+
+		@Override
+		public void printSpecification(final Specification spec) {
+			if (spec instanceof LoopInvariantSpecification) {
+				// TODO Auto-generated method stub
+				super.printSpecification(spec);
+			}
 		}
 
 		@Override

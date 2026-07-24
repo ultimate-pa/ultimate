@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
@@ -66,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration.Linearity;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Transforms Boogie procedure bodies into their Civl thread template bodies.
@@ -95,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
  */
 final class BodyTransformer extends BoogieTransformer {
 
+	private final ILogger mLogger;
 	private final Translator mTranslator;
 	private String mCurrentProcedure;
 	private IdentifierExpression[] mCurrentTids;
@@ -107,7 +111,8 @@ final class BodyTransformer extends BoogieTransformer {
 	 * @param programAndProof
 	 *            the program together with its proof annotations and thread information
 	 */
-	BodyTransformer(final Translator translator) {
+	BodyTransformer(final IUltimateServiceProvider services, final Translator translator) {
+		mLogger = services.getLoggingService().getLogger(getClass());
 		mTranslator = translator;
 		mCurrentProcedure = null;
 		mCurrentTids = null;
@@ -171,6 +176,26 @@ final class BodyTransformer extends BoogieTransformer {
 		return processBody(body);
 	}
 
+	@Override
+	protected Body processBody(final Body body) {
+		final var newBody = super.processBody(body);
+
+		final var newStatements = new ArrayList<>(Arrays.asList(newBody.getBlock()));
+
+		final Expression annotation =
+				mTranslator.getProgramAndProof().getTemplateVisitor().getExitAnnotationMap().get(mCurrentProcedure);
+		mTranslator.addYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, annotation, null,
+				mTidNeedsLinearity);
+		newStatements.add(
+				mTranslator.callYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, mCurrentTids, annotation));
+
+		if (mCurrentProcedure != BoogieUtils.START_PROCEDURE) {
+			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
+					mCurrentTids));
+		}
+		return new Body(newBody.getLoc(), newBody.getLocalVars(), newStatements.toArray(Statement[]::new));
+	}
+
 	/**
 	 * Rewrites the statements of the current procedure.
 	 *
@@ -208,8 +233,8 @@ final class BodyTransformer extends BoogieTransformer {
 		}
 
 		// annotation map
-		final Map<ILocation, Expression> annotationMap =
-				mTranslator.getProgramAndProof().getAnnotationMap(mCurrentProcedure);
+		final Map<ILocation, Expression> annotationMap = mTranslator.getProgramAndProof().getAnnotationMap();
+		mLogger.warn(annotationMap);
 
 		for (final Statement statement : statements) { // ignore standard return
 			// skip return for now
@@ -231,12 +256,9 @@ final class BodyTransformer extends BoogieTransformer {
 			newStatements.add(mTranslator.callYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, mCurrentTids,
 					annotation));
 
-			// add statement
-			mTranslator.addStatement(mCurrentProcedure, statement, mTidNeedsLinearity, mAtomicStatementCounter);
-
 			if (statement instanceof final IfStatement ifStmt) {
-				// test
-				// mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition());
+
+				mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition());
 				newStatements.add(
 						mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition()));
 				newStatements
@@ -244,17 +266,20 @@ final class BodyTransformer extends BoogieTransformer {
 								processStatements(ifStmt.getThenPart()), processStatements(ifStmt.getElsePart())));
 
 			} else if (statement instanceof final WhileStatement whileStmt) {
-				// test
-				// mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
 
-				// TODO add parameter
+				mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
 				final Statement assignCondition =
 						mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
 
+				final Statement[] body = processStatements(whileStmt.getBody());
+				final Statement firstAnnotation = body[0];
+
+				// test invariant TODO change
 				newStatements.add(assignCondition);
-				newStatements.add(new WhileStatement(whileStmt.getLocation(),
-						new IdentifierExpression(whileStmt.getLoc(), "condition"), whileStmt.getInvariants(),
-						Stream.concat(Arrays.stream(processStatements(whileStmt.getBody())), Stream.of(assignCondition))
+				newStatements.add(new WhileStatement(null, new IdentifierExpression(whileStmt.getLoc(), "condition"),
+						new LoopInvariantSpecification[] { new LoopInvariantSpecification(null, false,
+								whileStmt.getCondition()) } /* whileStmt.getInvariants() */,
+						Stream.concat(Arrays.stream(body), Stream.of(firstAnnotation, assignCondition))
 								.toArray(Statement[]::new)));
 
 			} else if (statement instanceof ForkStatement || globalVar && !localVar) {
@@ -282,6 +307,7 @@ final class BodyTransformer extends BoogieTransformer {
 					newStatements.add(statement);
 				}
 			} else {
+				mTranslator.addStatement(mCurrentProcedure, statement, mTidNeedsLinearity, mAtomicStatementCounter);
 				newStatements
 						.add(mTranslator.callAtomicStatement(mCurrentProcedure, statement, mAtomicStatementCounter));
 			}
@@ -304,18 +330,6 @@ final class BodyTransformer extends BoogieTransformer {
 		mAtomicStatementCounter += 1;
 		// TODO add parameter
 
-		final Expression annotation =
-				mTranslator.getProgramAndProof().getTemplateVisitor().getExitAnnotationMap().get(mCurrentProcedure);
-		mTranslator.addYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, annotation, null,
-				mTidNeedsLinearity);
-		newStatements.add(
-				mTranslator.callYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, mCurrentTids, annotation));
-
-		if (mCurrentProcedure != BoogieUtils.START_PROCEDURE) {
-			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
-					mCurrentTids));
-		}
-
 		return newStatements.toArray(Statement[]::new);
 	}
 
@@ -326,6 +340,7 @@ final class BodyTransformer extends BoogieTransformer {
 	 *            the array of variable declarations
 	 * @return the processed declarations.
 	 */
+	// TODO put it in the condition
 	@Override
 	protected VariableDeclaration[] processLocalVariableDeclarations(final VariableDeclaration[] locals) {
 		final VariableDeclaration[] newLocals = new VariableDeclaration[locals.length + 1];
@@ -358,8 +373,8 @@ final class BodyTransformer extends BoogieTransformer {
 		if (statement instanceof AssertStatement || statement instanceof AssignmentStatement
 				|| statement instanceof AssumeStatement || statement instanceof AtomicStatement
 				|| statement instanceof HavocStatement) {
+			mTranslator.addStatement(mCurrentProcedure, statement, mTidNeedsLinearity, mAtomicStatementCounter);
 			newStatement = mTranslator.callAtomicStatement(mCurrentProcedure, statement, mAtomicStatementCounter);
-
 		} else if (statement instanceof final CallStatement call) {
 			final Expression[] args = call.getArguments();
 			final Expression[] newArgs = processExpressions(args);

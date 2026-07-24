@@ -34,9 +34,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -61,10 +63,8 @@ final class ProgramAndProof {
 	private BoogieIcfgContainer mIcfg = null;
 	private List<OwickiGriesAnnotation> mProof = null;
 	private Map<ILocation, Set<CallStatement>> mGhostUpdateMap = null;
-	// private final Map<ILocation, Set<Expression>> mAnnotationMap = null;
+	private Map<ILocation, Expression> mAnnotationMap = null;
 	private ThreadTemplateVisitor mTemplateVisitor = null;
-
-	private BoogieStatementIdMap mStatementIdMap = null;
 
 	ProgramAndProof() {
 	}
@@ -105,10 +105,6 @@ final class ProgramAndProof {
 		return mGhostUpdateMap;
 	}
 
-	BoogieStatementIdMap getStatementIdMap() {
-		return mStatementIdMap;
-	}
-
 	/**
 	 * Preprocesses the ICFC to extract ghost updates and initialize auxiliary structures.
 	 *
@@ -125,7 +121,7 @@ final class ProgramAndProof {
 	void preprocess() {
 		mTemplateVisitor = new ThreadTemplateVisitor(mBoogieAst, mIcfg);
 		mGhostUpdateMap = new HashMap<>();
-		mStatementIdMap = new BoogieStatementIdMap(mBoogieAst);
+		computeAnnotationMap();
 
 		// improve readability TODO
 
@@ -171,34 +167,37 @@ final class ProgramAndProof {
 		}
 	}
 
-	// Map<Integer, Expression>
-	Map<ILocation, Expression> getAnnotationMap(final String procName) {
-		final Map<ILocation, Expression> result = new HashMap<>();
-		for (final BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(procName).values()) {
+	private void computeAnnotationMap() {
 
-			final var codeLocation = ILocation.getAnnotation(loc);
+		mAnnotationMap = new HashMap<>();
 
-			if (!loc.isErrorLocation() && loc.getBoogieASTNode() instanceof Statement) {
+		for (final Declaration decl : mBoogieAst.getDeclarations()) {
+			if (decl instanceof final Procedure proc) {
+				for (final BoogieIcfgLocation loc : mIcfg.getProgramPoints().get(proc.getIdentifier()).values()) {
 
-				final Expression invariant = (WitnessInvariant.getAnnotation(loc) != null)
-						? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
-						: null;
+					final var codeLocation = ILocation.getAnnotation(loc);
 
-				// merge together
-				if (result.get(codeLocation) != null) {
-					final Expression buf = result.get(codeLocation);
-					result.put(codeLocation,
-							new BinaryExpression(codeLocation, BinaryExpression.Operator.LOGICAND, invariant, buf));
-				} else {
-					result.put(codeLocation, invariant);
+					if (!loc.isErrorLocation() && loc.getBoogieASTNode() instanceof Statement) {
+
+						final Expression invariant = (WitnessInvariant.getAnnotation(loc) != null)
+								? (Expression) WitnessInvariant.getAnnotation(loc).getInvariant()
+								: null;
+
+						// merge together
+						if (mAnnotationMap.get(codeLocation) != null) {
+							final Expression buf = mAnnotationMap.get(codeLocation);
+							mAnnotationMap.put(codeLocation, new BinaryExpression(codeLocation,
+									BinaryExpression.Operator.LOGICAND, invariant, buf));
+						} else {
+							mAnnotationMap.put(codeLocation, invariant);
+						}
+					}
 				}
 			}
-
-			System.out.println();
-			System.out.println("Location : " + codeLocation);
-			System.out.println(loc.getBoogieASTNode());
 		}
+	}
 
-		return result;
+	Map<ILocation, Expression> getAnnotationMap() {
+		return mAnnotationMap;
 	}
 }
