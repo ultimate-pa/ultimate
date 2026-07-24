@@ -648,6 +648,14 @@ public final class Boogie2ACSL {
 				lhs.cType(), resultRange);
 	}
 
+	private BigInterval applyWraparoundIfNecessary(final BigInterval range, final ICType type) {
+		if (type instanceof final CPrimitive primType && mTypeSizes.isUnsigned(primType)) {
+			final var divisor = mTypeSizes.getMaxValueOfPrimitiveType(primType).add(BigInteger.ONE);
+			return range.euclideanModulo(divisor);
+		}
+		return range;
+	}
+
 	private BacktranslatedExpression translateBinaryExpression(
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression expression, final ILocation context,
 			final Approximation permissibleApproximation) {
@@ -675,14 +683,14 @@ public final class Boogie2ACSL {
 				return lhs;
 			}
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
-			range = leftRange.subtract(rightRange);
+			range = applyWraparoundIfNecessary(leftRange.subtract(rightRange), resultType);
 			operator = Operator.ARITHMINUS;
 			break;
 		case ARITHMOD:
 			return translateModulo(lhs, rhs);
 		case ARITHMUL:
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
-			range = leftRange.multiply(rightRange);
+			range = applyWraparoundIfNecessary(leftRange.multiply(rightRange), resultType);
 			operator = Operator.ARITHMUL;
 			break;
 		case ARITHPLUS:
@@ -693,7 +701,7 @@ public final class Boogie2ACSL {
 				return lhs;
 			}
 			resultType = determineTypeForArithmeticOperation(leftType, rightType);
-			range = leftRange.add(rightRange);
+			range = applyWraparoundIfNecessary(leftRange.add(rightRange), resultType);
 			operator = Operator.ARITHPLUS;
 			break;
 		case COMPEQ:
@@ -786,9 +794,9 @@ public final class Boogie2ACSL {
 			if (innerTrans == null) {
 				return null;
 			}
-			range = innerTrans.range().negate();
-			resultExpr = new UnaryExpression(UnaryExpression.Operator.MINUS, innerTrans.expression());
 			cType = innerTrans.cType();
+			range = applyWraparoundIfNecessary(innerTrans.range().negate(), cType);
+			resultExpr = new UnaryExpression(UnaryExpression.Operator.MINUS, innerTrans.expression());
 			break;
 		}
 		case LOGICNEG: {
