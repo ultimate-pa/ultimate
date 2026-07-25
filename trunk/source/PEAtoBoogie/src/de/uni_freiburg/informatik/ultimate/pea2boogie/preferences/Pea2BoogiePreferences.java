@@ -64,7 +64,9 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final boolean DEF_COMPLETE_RT_INCONSISTENCY_CHECK = true;
 	private static final String DESC_COMPLETE_RT_INCONSISTENCY_CHECK = """
 			This check allows for a fast and complete analysis for rt-inconsistency by reducing the number of \
-			requirement combinations that need to be checked.""";
+			requirement combinations that need to be checked. \
+			Published in: Hauff et al., A Practical and Complete Method for Detecting rt-Inconsistencies in Real-Time
+			Requirements, https://doi.org/10.1007/978-3-032-21423-2_19""";
 
 	public static final String LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_MODE = "Complete rt-inconsistency check mode";
 	public static final CompleteRtInconsistencyCheckMode DEF_COMPLETE_RT_INCONSISTENCY_CHECK_MODE =
