@@ -207,7 +207,7 @@ public class CompleteRtInconsistencyCheck {
 		final Map<Integer, CritPhase> results = new HashMap<>();
 
 		final DCPhase[] phases = counterTrace.getPhases();
-		final List<Term> seepInvariants = new ArrayList<>(Arrays.asList(mScript.getTheory().mTrue));
+		final List<Term> seepInvariants = new ArrayList<>(Arrays.asList(mScript.term("true")));
 
 		for (int i = phases.length - 2; i >= 0; i--) {
 			final DCPhase phase = phases[i];
