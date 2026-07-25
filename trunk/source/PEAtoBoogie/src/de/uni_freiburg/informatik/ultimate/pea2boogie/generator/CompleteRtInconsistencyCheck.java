@@ -413,7 +413,7 @@ public class CompleteRtInconsistencyCheck {
 		final ArrayList<MusContainer> muses = musEnumerationScript.executeReMus(translator);
 
 		final List<List<String>> unsatCores = new ArrayList<>();
-		for (final var mus : muses) {
+		for (final MusContainer mus : muses) {
 			final ArrayList<String> unsatCore = new ArrayList<>();
 
 			for (final Term term : translator.translateToTerms(mus.getMus())) {
