@@ -15,11 +15,14 @@ modifies x;
   fork 3 t2();
   fork 4 t2();
   fork 5 t2();
+  fork 6 t2();
+
   join 1;
   join 2;
   join 3;
   join 4;
   join 5;
+  join 6;
 }
 
 
@@ -37,6 +40,7 @@ modifies x;
 procedure t2()
 modifies x;
 {
+	assume true;
 	x := -2;
 }
 

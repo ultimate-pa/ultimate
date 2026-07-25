@@ -1,7 +1,3 @@
-/**
-* should be terminating under fairness, nonterminating without
-* triviales termination arg sollte reichen
-*/
 
 var x: int;
 
@@ -30,9 +26,12 @@ modifies x;
 
 procedure t2()
 modifies x;
-{
-	assume x != 0;
+{	
+	x := x;
+	x := x;
 	x := -2;
 }
+
+
 
 

@@ -33,6 +33,7 @@ modifies x;
 procedure t2()
 modifies x;
 {
+	assume true;
 	x := -2;
 }
 

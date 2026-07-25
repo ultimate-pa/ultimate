@@ -1,7 +1,3 @@
-/**
-* 2 non-loop threads, 1 disabled, 1 enabled, trivial guard disjunction
-* terminates
-*/
 
 var x: int;
 
@@ -12,12 +8,8 @@ modifies x;
 
   fork 1 t1();
   fork 2 t2();
-  fork 3 t2();
-  fork 4 t2();
   join 1;
   join 2;
-  join 3;
-  join 4;
 }
 
 
@@ -34,8 +26,13 @@ modifies x;
 
 procedure t2()
 modifies x;
-{
+{	
+	x := x;
+	x := x;
+	x := x;
 	x := -2;
 }
+
+
 
 

@@ -1,7 +1,3 @@
-/**
-* should be terminating under fairness, nonterminating without
-* triviales termination arg sollte reichen
-*/
 
 var x: int;
 
@@ -25,14 +21,20 @@ modifies x;
 {
 	while (x >= 0){
 	x := x + 1;
+	x := x;
+	x := x;
+	x := x;
+	x := x;
 	}
 }
 
 procedure t2()
 modifies x;
-{
-	assume x != 0;
+{	
+	assume true;
 	x := -2;
 }
+
+
 
 

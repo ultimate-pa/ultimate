@@ -1,6 +1,6 @@
 /**
-* should be terminating under fairness, nonterminating without
-* triviales termination arg sollte reichen
+* 1 non-loop thread, 3 loopthreads, trivial guard disjunction
+* terminates
 */
 
 var x: int;
@@ -11,9 +11,15 @@ modifies x;
   x := 0;
 
   fork 1 t1();
-  fork 2 t2();
+  fork 2 t1();
+  fork 3 t1();
+  fork 4 t1();
+  fork 5 t2();
   join 1;
   join 2;
+  join 3;
+  join 4;
+  join 5;
 }
 
 
@@ -31,8 +37,6 @@ modifies x;
 procedure t2()
 modifies x;
 {
-	assume x != 0;
-	x := -2;
+	x := -5;
 }
-
 
