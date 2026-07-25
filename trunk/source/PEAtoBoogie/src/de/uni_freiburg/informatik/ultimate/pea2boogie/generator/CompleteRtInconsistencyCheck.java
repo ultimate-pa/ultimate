@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -355,8 +356,6 @@ public class CompleteRtInconsistencyCheck {
 	}
 
 	private Set<Set<MusElement>> enumerateMusesRemus(final Set<CritPhase> critPhases) {
-		Set<Set<MusElement>> result = new HashSet<>();
-
 		final SMTInterpol smtInterpol = new SMTInterpol();
 		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
 		smtInterpol.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
@@ -386,17 +385,17 @@ public class CompleteRtInconsistencyCheck {
 		final LBool sat = musEnumerationScript.checkSat();
 		mLogger.info("Check sat of asserted nvcs in group: " + sat);
 
-		if (LBool.UNSAT == musEnumerationScript.checkSat()) {
-			result = getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
-				final String reqName = s.substring(0, s.lastIndexOf('_'));
-				final String index = s.substring(s.lastIndexOf('_') + 1);
-				final boolean seeping = index.endsWith("s");
-				return new MusElement(reqName,
-						Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index), seeping);
-			}).collect(Collectors.toSet())).collect(Collectors.toSet());
+		if (sat != LBool.UNSAT) {
+			return Collections.emptySet();
 		}
 
-		return result;
+		return getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
+			final String reqName = s.substring(0, s.lastIndexOf('_'));
+			final String index = s.substring(s.lastIndexOf('_') + 1);
+			final boolean seeping = index.endsWith("s");
+			return new MusElement(reqName, Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index),
+					seeping);
+		}).collect(Collectors.toSet())).collect(Collectors.toSet());
 	}
 
 	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
