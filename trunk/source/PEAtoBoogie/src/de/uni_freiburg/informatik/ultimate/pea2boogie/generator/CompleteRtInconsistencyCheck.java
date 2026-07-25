@@ -199,11 +199,6 @@ public class CompleteRtInconsistencyCheck {
 						musElement -> Arrays.stream(annotatedReqs.get(musElement.reqName()).counterTrace().getPhases()))
 				.anyMatch(dcPhase -> (dcPhase.getBoundType() == CounterTrace.BOUND_GREATER
 						|| dcPhase.getBoundType() == CounterTrace.BOUND_GREATEREQUAL));
-
-//		return musElements.stream()
-//				.flatMap(
-//						musElement -> Arrays.stream(annotatedReqs.get(musElement.reqName()).counterTrace().getPhases()))
-//				.anyMatch(dcPhase -> dcPhase.getBoundType() != CounterTrace.BOUND_NONE);
 	}
 
 	private Map<Integer, CritPhase> computeCritPhases(final CounterTrace counterTrace, final String reqName) {
