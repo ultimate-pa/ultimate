@@ -133,6 +133,8 @@ public class CompleteRtInconsistencyCheck {
 	}
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> check() {
+		// TODO: Add option to filter groups and muses with size 1
+
 		final Set<Set<CritPhase>> groups = groupNvcsBySymbols(new ArrayList<>(mAnnotatedReqs.values()));
 
 		final Set<Set<MusElement>> muses = new HashSet<>();
@@ -157,8 +159,8 @@ public class CompleteRtInconsistencyCheck {
 		muses.removeIf(e -> hasUnsatCritPhases(e, mAnnotatedReqs));
 		mLogger.info("Size of nvc muses after filtering unsat crit phases: " + muses.size());
 
-		muses.removeIf(e -> !hasTimeBound(e, mAnnotatedReqs));
-		mLogger.info("Size of nvc muses after filtering time bound: " + muses.size());
+		muses.removeIf(e -> !hasLowerTimeBound(e, mAnnotatedReqs));
+		mLogger.info("Size of nvc muses after filtering lower time bound: " + muses.size());
 
 		final Set<Set<String>> uniqueMuses =
 				muses.stream().map(inner -> inner.stream().map(s -> s.reqName()).collect(Collectors.toSet()))
@@ -191,7 +193,7 @@ public class CompleteRtInconsistencyCheck {
 		return LBool.UNSAT == SmtUtils.checkSatTerm(mScript, SmtUtils.and(mScript, critPhaseInvariants));
 	}
 
-	private static boolean hasTimeBound(final Set<MusElement> musElements,
+	private static boolean hasLowerTimeBound(final Set<MusElement> musElements,
 			final Map<String, AnnotatedReq> annotatedReqs) {
 
 		return musElements.stream()
