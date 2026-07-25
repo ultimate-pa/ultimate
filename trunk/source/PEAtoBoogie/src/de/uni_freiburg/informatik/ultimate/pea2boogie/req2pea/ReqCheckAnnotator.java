@@ -364,11 +364,11 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = new ArrayList<>();
+		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets;
 		if (mCompleteRtInconsistencyCheck) {
 			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mCompleteRtInconsistencyCheckMode);
 			if (mCompleteRtInconsistencyCheckCandidateExtraction) {
-				return new ArrayList<>();
+				return Collections.emptyList();
 			}
 		} else {
 			subsets = CrossProducts.subArrays(consideredAutomata.toArray(new Entry[count]), actualCombinationNum,
