@@ -94,7 +94,7 @@ public class CompleteRtInconsistencyCheck {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final CompleteRtInconsistencyCheckMode mMode;
-	final Map<String, AnnotatedReq> mAnnotatedReqs;
+	private final Map<String, AnnotatedReq> mAnnotatedReqs;
 
 	private record AnnotatedReq(String name, PatternType<?> patternType, CounterTrace counterTrace,
 			PhaseEventAutomata pea, Map<Integer, CritPhase> critPhases) {
