@@ -398,7 +398,7 @@ public class CompleteRtInconsistencyCheck {
 		}).collect(Collectors.toSet())).collect(Collectors.toSet());
 	}
 
-	private ArrayList<ArrayList<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
+	private List<List<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
 		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
 			throw new SMTLIBException("Call checkSat to determine satisfiability.");
 		}
@@ -410,7 +410,7 @@ public class CompleteRtInconsistencyCheck {
 		final Translator translator = new Translator();
 		final ArrayList<MusContainer> muses = musEnumerationScript.executeReMus(translator);
 
-		final ArrayList<ArrayList<String>> unsatCores = new ArrayList<>();
+		final List<List<String>> unsatCores = new ArrayList<>();
 		for (final var mus : muses) {
 			final ArrayList<String> unsatCore = new ArrayList<>();
 
