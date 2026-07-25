@@ -355,6 +355,7 @@ public class CompleteRtInconsistencyCheck {
 		return result;
 	}
 
+	@Deprecated
 	private Set<Set<MusElement>> enumerateMusesRemus(final Set<CritPhase> critPhases) {
 		final SMTInterpol smtInterpol = new SMTInterpol();
 		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
@@ -398,6 +399,7 @@ public class CompleteRtInconsistencyCheck {
 		}).collect(Collectors.toSet())).collect(Collectors.toSet());
 	}
 
+	@Deprecated
 	private List<List<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
 		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
 			throw new SMTLIBException("Call checkSat to determine satisfiability.");
