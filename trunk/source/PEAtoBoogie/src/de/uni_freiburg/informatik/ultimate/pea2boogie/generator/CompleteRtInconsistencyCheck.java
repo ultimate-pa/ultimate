@@ -32,7 +32,6 @@ import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,12 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.srparse.LiteralUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
-import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -83,11 +77,6 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.Ma
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MusEnumeratorResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.SubsetSolver;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusContainer;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusOptions;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.Translator;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 public class CompleteRtInconsistencyCheck {
 	private final CddToSmtPreCheck mCddToSmtPreCheck;
@@ -147,8 +136,6 @@ public class CompleteRtInconsistencyCheck {
 			mLogger.info("Enumerate muses of nvc group size: " + group.size());
 			if (mMode == CompleteRtInconsistencyCheckMode.MARCO_BASIC) {
 				muses.addAll(enumerateMusesMarcoBasic(new ArrayList<>(group)));
-			} else if (mMode == CompleteRtInconsistencyCheckMode.REMUS) {
-				muses.addAll(enumerateMusesRemus(group));
 			} else if (mMode == CompleteRtInconsistencyCheckMode.EXPERIMENTAL_PYTHON) {
 				muses.addAll(enumerateMusesPython(new ArrayList<>(group)));
 			} else {
@@ -353,85 +340,6 @@ public class CompleteRtInconsistencyCheck {
 		}
 
 		return result;
-	}
-
-	@Deprecated
-	private Set<Set<MusElement>> enumerateMusesRemus(final Set<CritPhase> critPhases) {
-		final SMTInterpol smtInterpol = new SMTInterpol();
-		smtInterpol.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, true);
-		smtInterpol.setOption(SMTLIBConstants.INTERACTIVE_MODE, true);
-		smtInterpol.setLogic(Logics.ALL);
-
-		final MusEnumerationScript musEnumerationScript = new MusEnumerationScript(smtInterpol);
-		musEnumerationScript.setOption(MusOptions.LOG_ADDITIONAL_INFORMATION, false);
-		// musEnumerationScript.setOption(MusOptions.UNKNOWN_ALLOWED, true);
-
-		final TermTransferrer termTransferrer =
-				new TermTransferrer(mScript, new HistoryRecordingScript(musEnumerationScript));
-
-		for (final CritPhase critPhase : critPhases) {
-			final String name = critPhase.reqName + "_" + critPhase.index + (critPhase.seeping ? "s" : "");
-			musEnumerationScript.assertTerm(musEnumerationScript.annotate(termTransferrer.transform(critPhase.nvc),
-					new Annotation(":named", name)));
-
-			final String symbols = critPhase.symbols.stream()
-					.map(symbol -> String.format("(%s, %s)", symbol,
-							((ApplicationTerm) symbol.getSymbol()).getFunction().getReturnSort()))
-					.collect(Collectors.joining(", "));
-
-			mLogger.info(String.format("Assert nvc for mus enumeration: name=\"%s\", smt_expr=\"%s\", symbols=\"%s\"",
-					name, critPhase.nvc, symbols));
-		}
-
-		final LBool sat = musEnumerationScript.checkSat();
-		mLogger.info("Check sat of asserted nvcs in group: " + sat);
-
-		if (sat != LBool.UNSAT) {
-			return Collections.emptySet();
-		}
-
-		return getUnsatCores(musEnumerationScript).stream().map(core -> core.stream().map(s -> {
-			final String reqName = s.substring(0, s.lastIndexOf('_'));
-			final String index = s.substring(s.lastIndexOf('_') + 1);
-			final boolean seeping = index.endsWith("s");
-			return new MusElement(reqName, Integer.parseInt(seeping ? index.substring(0, index.length() - 1) : index),
-					seeping);
-		}).collect(Collectors.toSet())).collect(Collectors.toSet());
-	}
-
-	@Deprecated
-	private List<List<String>> getUnsatCores(final MusEnumerationScript musEnumerationScript) {
-		if (!musEnumerationScript.mAssertedTermsAreUnsat) {
-			throw new SMTLIBException("Call checkSat to determine satisfiability.");
-		}
-
-		if (!((boolean) musEnumerationScript.getOption(SMTLIBConstants.PRODUCE_UNSAT_CORES))) {
-			throw new SMTLIBException("Unsat core production must be enabled (you can do this via setOption).");
-		}
-
-		final Translator translator = new Translator();
-		final ArrayList<MusContainer> muses = musEnumerationScript.executeReMus(translator);
-
-		final List<List<String>> unsatCores = new ArrayList<>();
-		for (final MusContainer mus : muses) {
-			final ArrayList<String> unsatCore = new ArrayList<>();
-
-			for (final Term term : translator.translateToTerms(mus.getMus())) {
-				if (!(term instanceof final AnnotatedTerm annotatedTerm)) {
-					continue;
-				}
-
-				for (final Annotation annotation : annotatedTerm.getAnnotations()) {
-					if (":named".equals(annotation.getKey())) {
-						unsatCore.add(((String) annotation.getValue()).intern());
-						break;
-					}
-				}
-			}
-			unsatCores.add(unsatCore);
-		}
-
-		return unsatCores;
 	}
 
 	private class CddToSmtPreCheck extends CddToSmt {
