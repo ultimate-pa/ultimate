@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.Ma
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MusEnumeratorResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.SubsetSolver;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class CompleteRtInconsistencyCheck {
 	private final CddToSmtPreCheck mCddToSmtPreCheck;
@@ -125,7 +126,8 @@ public class CompleteRtInconsistencyCheck {
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> check() {
 		// TODO: Add option to filter groups and muses with size 1
 
-		final Set<Set<CritPhase>> groups = groupNvcsBySymbols(new ArrayList<>(mAnnotatedReqs.values()));
+		final List<AnnotatedReq> annotatedReqsList = new ArrayList<>(mAnnotatedReqs.values());
+		final Set<Set<CritPhase>> groups = groupNvcsBySymbols(annotatedReqsList);
 
 		final Set<Set<MusElement>> muses = new HashSet<>();
 		for (final var group : groups) {
@@ -241,35 +243,26 @@ public class CompleteRtInconsistencyCheck {
 		final List<CritPhase> critPhases =
 				annotatedReqs.stream().flatMap(ar -> ar.critPhases().values().stream()).collect(Collectors.toList());
 
-		final UnionFind unionFind = new UnionFind(critPhases.size());
+		final UnionFind<CritPhase> unionFind = new UnionFind<>();
+		for (final var critPhase : critPhases) {
+			unionFind.makeEquivalenceClass(critPhase);
+		}
 
-		// Map each symbol to the list of indices of critPhases that contain it
-		final Map<NonTheorySymbol<?>, List<Integer>> symbolToCritPhaseIndices = new HashMap<>();
-		for (int i = 0; i < critPhases.size(); i++) {
-			final var critPhase = critPhases.get(i);
+		// Map each symbol to the list of critPhases that contain it
+		final Map<NonTheorySymbol<?>, List<CritPhase>> symbolToCritPhases = new HashMap<>();
+		for (final var critPhase : critPhases) {
 			for (final var symbol : critPhase.symbols()) {
-				symbolToCritPhaseIndices.computeIfAbsent(symbol, k -> new ArrayList<>()).add(i);
+				symbolToCritPhases.computeIfAbsent(symbol, k -> new ArrayList<>()).add(critPhase);
 			}
 		}
 
 		// Union critPhases that share a symbol
-		for (final var indices : symbolToCritPhaseIndices.values()) {
-			assert !indices.isEmpty();
-
-			final int first = indices.get(0);
-			for (int j = 1; j < indices.size(); j++) {
-				unionFind.union(first, indices.get(j));
-			}
+		for (final var phases : symbolToCritPhases.values()) {
+			assert !phases.isEmpty();
+			unionFind.union(phases);
 		}
 
-		// Group by root
-		final Map<Integer, Set<CritPhase>> groups = new HashMap<>();
-		for (int i = 0; i < critPhases.size(); i++) {
-			final int root = unionFind.find(i);
-			groups.computeIfAbsent(root, k -> new HashSet<>()).add(critPhases.get(i));
-		}
-
-		return new HashSet<>(groups.values());
+		return new HashSet<>(unionFind.getAllEquivalenceClasses());
 	}
 
 	private Set<Set<MusElement>> enumerateMusesMarcoBasic(final List<CritPhase> critPhases) {
@@ -396,95 +389,6 @@ public class CompleteRtInconsistencyCheck {
 			}
 
 			return rtr;
-		}
-	}
-
-	private static class UnionFind {
-
-		private final int[] parent;
-		private final int[] rank;
-
-		/**
-		 * Create a UnionFind for elements 0..n-1.
-		 *
-		 * @param n
-		 *            number of elements (must be >= 0)
-		 */
-		public UnionFind(final int n) {
-			if (n < 0) {
-				throw new IllegalArgumentException("n must be non-negative");
-			}
-			parent = new int[n];
-			rank = new int[n];
-			for (int i = 0; i < n; i++) {
-				parent[i] = i;
-				rank[i] = 0;
-			}
-		}
-
-		/**
-		 * Find the representative (root) of the set that contains x. Uses path compression to flatten the tree.
-		 *
-		 * @param x
-		 *            element index
-		 * @return root of the set containing x
-		 * @throws IndexOutOfBoundsException
-		 *             if x is outside [0, n)
-		 */
-		public int find(final int x) {
-			checkIndex(x);
-			if (parent[x] != x) {
-				parent[x] = find(parent[x]);
-			}
-			return parent[x];
-		}
-
-		/**
-		 * Union the sets containing x and y. If already in the same set, does nothing. Uses union by rank.
-		 *
-		 * @param x
-		 *            element index
-		 * @param y
-		 *            element index
-		 * @throws IndexOutOfBoundsException
-		 *             if x or y is outside [0, n)
-		 */
-		public void union(final int x, final int y) {
-			final int rootX = find(x);
-			final int rootY = find(y);
-
-			if (rootX == rootY) {
-				return; // already in same set
-			}
-
-			if (rank[rootX] < rank[rootY]) {
-				parent[rootX] = rootY;
-			} else if (rank[rootX] > rank[rootY]) {
-				parent[rootY] = rootX;
-			} else {
-				parent[rootY] = rootX;
-				rank[rootX]++;
-			}
-		}
-
-		/**
-		 * Return true if x and y are in the same set.
-		 */
-		public boolean connected(final int x, final int y) {
-			return find(x) == find(y);
-		}
-
-		/**
-		 * Number of elements managed by this UnionFind.
-		 */
-		public int size() {
-			return parent.length;
-		}
-
-		private void checkIndex(final int x) {
-			if (x < 0 || x >= parent.length) {
-				throw new IndexOutOfBoundsException("Index out of range: " + x);
-			}
 		}
 	}
 }
