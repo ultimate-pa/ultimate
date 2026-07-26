@@ -60,18 +60,25 @@ public class MusEnumerator {
 		}
 	}
 
-	public static List<MusEnumeratorResult> enumerate(final SubsetSolver csolver, final MapSolver msolver,
+	public static List<MusEnumeratorResult> enumerate(final Script subsetSolverScript, final Script mapSolverScript,
+			final List<Term> constraints, final ILogger logger) {
+		final SubsetSolver subsetSolver = new SubsetSolver(subsetSolverScript, constraints);
+		final MapSolver mapSolver = new MapSolver(mapSolverScript, constraints.size());
+		return enumerate(subsetSolver, mapSolver, logger);
+	}
+
+	static List<MusEnumeratorResult> enumerate(final SubsetSolver csolver, final MapSolver msolver,
 			final ILogger logger) {
 		final List<MusEnumeratorResult> results = new ArrayList<>();
 
 		while (true) {
-			final Set<Integer> seed = msolver.nextSeed(); // MSolver -> checkSat / getModel
+			final Set<Integer> seed = msolver.nextSeed(); // MapSolver -> checkSat / getModel
 
 			if (seed == null) {
 				break;
 			}
 
-			if (csolver.checkSubset(seed)) { // CSolver -> checkSat
+			if (csolver.checkSubset(seed)) { // SubsetSolver -> checkSat
 				// Found MSS
 				final Set<Integer> mss = csolver.grow(new HashSet<>(seed));
 
@@ -82,7 +89,7 @@ public class MusEnumerator {
 				msolver.blockDown(mss);
 			} else {
 				// Found MUS
-				final Set<Integer> mus = csolver.shrink(seed); // CSolver -> seedFromCore -> getUnsatCore
+				final Set<Integer> mus = csolver.shrink(seed); // SubsetSolver -> seedFromCore -> getUnsatCore
 
 				if (!mus.isEmpty()) {
 					results.add(new MusEnumeratorResult(MusEnumeratorResult.Type.MUS, mus,
@@ -95,7 +102,7 @@ public class MusEnumerator {
 		return results;
 	}
 
-	public static class SubsetSolver {
+	static class SubsetSolver {
 		private final Script mScript;
 		private final List<Term> mConstraints;
 		private final Map<Integer, Term> mVarCache = new HashMap<>();
@@ -131,7 +138,8 @@ public class MusEnumerator {
 			return checkSubset(seed, false);
 		}
 
-		public boolean checkSubset(final Set<Integer> seed, final boolean doNotPopIfUnsat) { // <--- CSolver checkSat
+		public boolean checkSubset(final Set<Integer> seed, final boolean doNotPopIfUnsat) { // <--- SubsetSolver
+																								// checkSat
 			final Term[] assumptions = seed.stream().map(this::cVar).toArray(Term[]::new);
 
 			mScript.push(1);
@@ -214,7 +222,7 @@ public class MusEnumerator {
 		}
 	}
 
-	public static class MapSolver {
+	static class MapSolver {
 		private final Script mScript;
 		private final Set<Integer> mAllN = new HashSet<>();
 

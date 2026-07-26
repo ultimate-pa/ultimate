@@ -74,9 +74,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MapSolver;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MusEnumeratorResult;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.SubsetSolver;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
@@ -286,9 +284,8 @@ public class CompleteRtInconsistencyCheck {
 		final List<Term> constraints = critPhases.stream().map(critPhase -> termTransferrer.transform(critPhase.nvc))
 				.collect(Collectors.toList());
 
-		final SubsetSolver subsetSolver = new MusEnumerator.SubsetSolver(scriptSubsetSolver, constraints);
-		final MapSolver mapSolver = new MusEnumerator.MapSolver(scriptMapSolver, constraints.size());
-		final List<MusEnumeratorResult> musResults = MusEnumerator.enumerate(subsetSolver, mapSolver, mLogger);
+		final List<MusEnumeratorResult> musResults =
+				MusEnumerator.enumerate(scriptSubsetSolver, scriptMapSolver, constraints, mLogger);
 		scriptSubsetSolver.exit();
 		scriptMapSolver.exit();
 

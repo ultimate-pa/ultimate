@@ -42,60 +42,58 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MapSolver;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.MusEnumeratorResult;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.SubsetSolver;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 public class MusEnumeratorTest {
-	private Script mScriptCSolver;
-	private Script mScriptMSolver;
+	private Script mScriptSubsetSolver;
+	private Script mScriptMapSolver;
 
 	@Before
 	public void setUp() {
-		mScriptCSolver = UltimateMocks.createZ3Script();
-		mScriptCSolver.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
+		mScriptSubsetSolver = UltimateMocks.createZ3Script();
+		mScriptSubsetSolver.setOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, "true");
 
-		mScriptMSolver = UltimateMocks.createZ3Script();
-		mScriptCSolver.setOption(SMTLIBConstants.PRODUCE_MODELS, "true");
-		mScriptMSolver.setLogic(Logics.ALL);
+		mScriptMapSolver = UltimateMocks.createZ3Script();
+		mScriptMapSolver.setOption(SMTLIBConstants.PRODUCE_MODELS, "true");
+		mScriptMapSolver.setLogic(Logics.ALL);
 	}
 
 	@Test
 	public void testEnumerate() {
-		mScriptCSolver.setLogic(Logics.QF_LRA);
+		mScriptSubsetSolver.setLogic(Logics.QF_LRA);
 
-		final Sort realSort = mScriptCSolver.getTheory().getRealSort();
-		mScriptCSolver.declareFun("x", new Sort[0], realSort);
-		mScriptCSolver.declareFun("y", new Sort[0], realSort);
-		final Term x = mScriptCSolver.term("x");
-		final Term y = mScriptCSolver.term("y");
+		final Sort realSort = mScriptSubsetSolver.getTheory().getRealSort();
+		mScriptSubsetSolver.declareFun("x", new Sort[0], realSort);
+		mScriptSubsetSolver.declareFun("y", new Sort[0], realSort);
+		final Term x = mScriptSubsetSolver.term("x");
+		final Term y = mScriptSubsetSolver.term("y");
 
-		final Term zero = mScriptCSolver.numeral("0");
-		final Term one = mScriptCSolver.numeral("1");
-		final Term two = mScriptCSolver.numeral("2");
+		final Term zero = mScriptSubsetSolver.numeral("0");
+		final Term one = mScriptSubsetSolver.numeral("1");
+		final Term two = mScriptSubsetSolver.numeral("2");
 
 		final List<Term> constraints = new ArrayList<>() {
 			{
 				// 0: x > 2
-				add(SmtUtils.greater(mScriptCSolver, x, two));
+				add(SmtUtils.greater(mScriptSubsetSolver, x, two));
 				// 1: x < 1
-				add(SmtUtils.less(mScriptCSolver, x, one));
+				add(SmtUtils.less(mScriptSubsetSolver, x, one));
 				// 2: x < 0
-				add(SmtUtils.less(mScriptCSolver, x, zero));
+				add(SmtUtils.less(mScriptSubsetSolver, x, zero));
 				// 3: Or(x + y > 0, y < 0)
-				add(SmtUtils.or(mScriptCSolver,
-						SmtUtils.greater(mScriptCSolver, SmtUtils.sum(mScriptCSolver, "+", x, y), zero),
-						SmtUtils.less(mScriptCSolver, y, zero)));
+				add(SmtUtils.or(mScriptSubsetSolver,
+						SmtUtils.greater(mScriptSubsetSolver, SmtUtils.sum(mScriptSubsetSolver, "+", x, y), zero),
+						SmtUtils.less(mScriptSubsetSolver, y, zero)));
 				// 4: Or(y >= 0, x >= 0)
-				add(SmtUtils.or(mScriptCSolver, SmtUtils.geq(mScriptCSolver, y, zero),
-						SmtUtils.geq(mScriptCSolver, x, zero)));
+				add(SmtUtils.or(mScriptSubsetSolver, SmtUtils.geq(mScriptSubsetSolver, y, zero),
+						SmtUtils.geq(mScriptSubsetSolver, x, zero)));
 				// 5: Or(y < 0, x < 0)
-				add(SmtUtils.or(mScriptCSolver, SmtUtils.less(mScriptCSolver, y, zero),
-						SmtUtils.less(mScriptCSolver, x, zero)));
+				add(SmtUtils.or(mScriptSubsetSolver, SmtUtils.less(mScriptSubsetSolver, y, zero),
+						SmtUtils.less(mScriptSubsetSolver, x, zero)));
 				// 6: Or(y > 0, x < 0)
-				add(SmtUtils.or(mScriptCSolver, SmtUtils.greater(mScriptCSolver, y, zero),
-						SmtUtils.less(mScriptCSolver, x, zero)));
+				add(SmtUtils.or(mScriptSubsetSolver, SmtUtils.greater(mScriptSubsetSolver, y, zero),
+						SmtUtils.less(mScriptSubsetSolver, x, zero)));
 			}
 		};
 
@@ -121,10 +119,8 @@ public class MusEnumeratorTest {
 				new MusEnumeratorResult(MusEnumeratorResult.Type.MSS, Set.of(0, 3, 4, 5),
 						List.of(constraints.get(0), constraints.get(3), constraints.get(4), constraints.get(5))));
 
-		final SubsetSolver cSolver = new SubsetSolver(mScriptCSolver, constraints);
-		final MapSolver mSolver = new MapSolver(mScriptMSolver, constraints.size());
-
-		final Set<MusEnumeratorResult> actual = new HashSet<>(MusEnumerator.enumerate(cSolver, mSolver, null));
+		final Set<MusEnumeratorResult> actual =
+				new HashSet<>(MusEnumerator.enumerate(mScriptSubsetSolver, mScriptMapSolver, constraints, null));
 
 		assert expected.equals(actual) : "Expected: " + expected + ", but got: " + actual;
 	}
