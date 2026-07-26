@@ -271,25 +271,26 @@ public class CompleteRtInconsistencyCheck {
 	}
 
 	private Set<Set<MusElement>> enumerateMusesMarcoBasic(final List<CritPhase> critPhases) {
-		final Script scriptCSolver = SolverBuilder.buildAndInitializeSolver(mServices,
+		final Script scriptSubsetSolver = SolverBuilder.buildAndInitializeSolver(mServices,
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
 						.setUseExternalSolver(ExternalSolver.Z3),
-				"CSolver");
+				"SubsetSolver");
 
-		final Script scriptMSolver = SolverBuilder.buildAndInitializeSolver(mServices,
+		final Script scriptMapSolver = SolverBuilder.buildAndInitializeSolver(mServices,
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsMode)
 						.setUseExternalSolver(ExternalSolver.Z3),
-				"MSolver");
+				"MapSolver");
 
-		final TermTransferrer termTransferrer = new TermTransferrer(mScript, new HistoryRecordingScript(scriptCSolver));
+		final TermTransferrer termTransferrer =
+				new TermTransferrer(mScript, new HistoryRecordingScript(scriptSubsetSolver));
 		final List<Term> constraints = critPhases.stream().map(critPhase -> termTransferrer.transform(critPhase.nvc))
 				.collect(Collectors.toList());
 
-		final SubsetSolver cSolver = new MusEnumerator.SubsetSolver(scriptCSolver, constraints);
-		final MapSolver mSolver = new MusEnumerator.MapSolver(scriptMSolver, constraints.size());
-		final List<MusEnumeratorResult> musResults = MusEnumerator.enumerate(cSolver, mSolver, mLogger);
-		scriptCSolver.exit();
-		scriptMSolver.exit();
+		final SubsetSolver subsetSolver = new MusEnumerator.SubsetSolver(scriptSubsetSolver, constraints);
+		final MapSolver mapSolver = new MusEnumerator.MapSolver(scriptMapSolver, constraints.size());
+		final List<MusEnumeratorResult> musResults = MusEnumerator.enumerate(subsetSolver, mapSolver, mLogger);
+		scriptSubsetSolver.exit();
+		scriptMapSolver.exit();
 
 		final Set<Set<MusElement>> result =
 				musResults.stream().filter(musResult -> musResult.type() == MusEnumeratorResult.Type.MUS)
