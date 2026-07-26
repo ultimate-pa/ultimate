@@ -78,6 +78,21 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.MusEnumerator.Mu
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
+/**
+ * Implements the complete rt-inconsistency check for real-time requirements as described in
+ * "A Practical and Complete Method for Detecting rt-Inconsistencies in Real-Time Requirements" (Hauff et al., REFSQ
+ * 2026).
+ *
+ * The method consists of two steps:
+ * <ol>
+ * <li>Candidate extraction: compute all minimal weakly rt-inconsistent subsets by grouping non-violation conditions
+ * (NVCs) by shared symbols and enumerating minimal unsatisfiable subsets (MUSes) within each group.</li>
+ * <li>Contextual rt-inconsistency check: for each candidate, check whether it is contextually rt-inconsistent with
+ * respect to the full set of requirements (delegated to the existing tool chain).</li>
+ * </ol>
+ *
+ * The MUS enumeration can be configured via {@link CompleteRtInconsistencyCheckMode}.
+ */
 public class CompleteRtInconsistencyCheck {
 	private final CddToSmtPreCheck mCddToSmtPreCheck;
 	private final Script mScript;
@@ -86,10 +101,42 @@ public class CompleteRtInconsistencyCheck {
 	private final CompleteRtInconsistencyCheckMode mMode;
 	private final Map<String, AnnotatedReq> mAnnotatedReqs;
 
+	/**
+	 * A requirement annotated with its critical phases for rt-inconsistency analysis.
+	 *
+	 * @param name
+	 *            name of the requirement
+	 * @param patternType
+	 *            pattern type of the requirement
+	 * @param counterTrace
+	 *            countertrace representation of the requirement
+	 * @param pea
+	 *            phase event automaton of the requirement
+	 * @param critPhases
+	 *            map from critical phase index to {@link CritPhase}; a critical phase is a phase in which a violation of
+	 *            the requirement can become unavoidable by any extension of the interpretation segment
+	 */
 	private record AnnotatedReq(String name, PatternType<?> patternType, CounterTrace counterTrace,
 			PhaseEventAutomata pea, Map<Integer, CritPhase> critPhases) {
 	}
 
+	/**
+	 * A critical phase of a requirement, used for weak rt-inconsistency checking.
+	 *
+	 * @param reqName
+	 *            name of the requirement this critical phase belongs to
+	 * @param index
+	 *            phase index of this critical phase within the requirement's countertrace
+	 * @param invariant
+	 *            invariant (state expression) of the critical phase, used for the satisfiability condition Φ
+	 * @param nvc
+	 *            non-violation condition of the critical phase; specifies a valuation on observables that prevents
+	 *            reaching the last phase of the requirement, used for the unsatisfiability condition Ψ
+	 * @param seeping
+	 *            whether this critical phase was derived via seeping through multiple subsequent phases
+	 * @param symbols
+	 *            non-theory symbols occurring in the non-violation condition, used for grouping NVCs by shared symbols
+	 */
 	private record CritPhase(String reqName, Integer index, Term invariant, Term nvc, boolean seeping,
 			Set<NonTheorySymbol<?>> symbols) {
 		public CritPhase(final String reqName, final Integer index, final Term invariant, final Term nvc,
@@ -98,6 +145,17 @@ public class CompleteRtInconsistencyCheck {
 		}
 	}
 
+	/**
+	 * An element of a minimal unsatisfiable subset (MUS), identifying a critical phase that contributes to the
+	 * unsatisfiability of a group of non-violation conditions.
+	 *
+	 * @param reqName
+	 *            name of the requirement
+	 * @param critPhaseIndex
+	 *            index of the critical phase within the requirement
+	 * @param seeping
+	 *            whether the critical phase was derived via seeping
+	 */
 	private record MusElement(String reqName, Integer critPhaseIndex, boolean seeping) {
 	}
 
