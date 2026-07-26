@@ -135,7 +135,7 @@ public class BitvectorUtilsTest {
 	@Test
 	public void bvandFlatteningOnlyVariables() {
 		// x, y, z are declared as free (unconstrained) variables so that FormulaUnLet cannot substitute them away
-		// before simplification runs. This actually exercises simplify_NonConstantCase.
+		// before simplification runs. This actually exercises BitvectorUtils.simplifyBvand.
 		// Also tests duplicate elimination (idempotence): y occurs twice and must collapse to a single occurrence.
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
 		final String formulaAsString = "(bvand x (bvand y (bvand y z)))";
@@ -160,7 +160,7 @@ public class BitvectorUtilsTest {
 	public void bvorAbsorptionMax() {
 		// Tests absorption for OR: (x OR 255) -> 255
 		// For an 8-bit vector, 255 (0xFF, i.e. all ones) is the absorbing element.
-		// x is a free variable so this actually exercises the annihilation branch in simplify_NonConstantCase.
+		// x is a free variable so this actually exercises the annihilation branch in BitvectorUtils.simplifyBvor.
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		final String formulaAsString = "(bvor x (_ bv255 8))";
 		final String expected = "(_ bv255 8)";
@@ -198,7 +198,7 @@ public class BitvectorUtilsTest {
 	public void bvxorLiteralEvaluation() {
 		// Tests pre-evaluation of literals for XOR: (12 XOR x XOR 3) -> (15 XOR x)
 		// Since 12 (1100) XOR 3 (0011) = 15 (1111)
-		// x is a free variable so the two literals must actually be folded together by simplify_NonConstantCase.
+		// x is a free variable so the two literals must actually be folded together by BitvectorUtils.simplifyBvxor.
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		final String formulaAsString = "(bvxor (_ bv12 8) x (_ bv3 8))";
 		final String expected = "(bvxor (_ bv15 8) x)";
@@ -262,7 +262,7 @@ public class BitvectorUtilsTest {
 	@Test
 	public void bvxorNilpotencePairCancelsDuringUnfTransformer() {
 		// This test isolates the exact call that hits the finalArgs.isEmpty() branch in
-		// NaryBitvectorOperation_BitvectorResult.simplify_NonConstantCase, in case a breakpoint placed later
+		// BitvectorUtils.simplifyBvxor, in case a breakpoint placed later
 		// (e.g. inside SmtUtils.simplifyWithStatistics, which runs AFTER UnfTransformer in runSimplificationTest)
 		// never triggers: for a plain "(bvxor x x)" formula the whole term is already fully resolved to the
 		// zero-constant during the UnfTransformer pass, before simplifyWithStatistics even gets to see it. There
