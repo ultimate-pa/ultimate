@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -136,10 +137,14 @@ public class CompleteRtInconsistencyCheck {
 			}
 
 			mLogger.info("Enumerate muses of nvc group size: " + group.size());
+			final List<CritPhase> sortedGroup =
+					group.stream().sorted(Comparator.comparing(CritPhase::reqName).thenComparing(CritPhase::index))
+							.collect(Collectors.toList());
+
 			if (mMode == CompleteRtInconsistencyCheckMode.MARCO_BASIC) {
-				muses.addAll(enumerateMusesMarcoBasic(new ArrayList<>(group)));
+				muses.addAll(enumerateMusesMarcoBasic(new ArrayList<>(sortedGroup)));
 			} else if (mMode == CompleteRtInconsistencyCheckMode.EXPERIMENTAL_PYTHON) {
-				muses.addAll(enumerateMusesPython(new ArrayList<>(group)));
+				muses.addAll(enumerateMusesPython(new ArrayList<>(sortedGroup)));
 			} else {
 				throw new IllegalArgumentException("Unknown CompleteRtInconsistencyCheckMode: " + mMode);
 			}
