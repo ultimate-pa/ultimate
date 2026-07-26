@@ -305,6 +305,11 @@ public class CompleteRtInconsistencyCheck {
 		return result;
 	}
 
+	/**
+	 * Enumerates minimal unsatisfiable subsets (MUSes) by delegating to an external Python process
+	 * ({@code mus_enumerator}). The constraints and their symbols are serialized as JSON, passed to the process via
+	 * stdin, and the resulting MUSes are parsed from lines starting with "MUS".
+	 */
 	private Set<Set<MusElement>> enumerateMusesPython(final List<CritPhase> critPhases) {
 		final Set<Set<MusElement>> result = new HashSet<>();
 
