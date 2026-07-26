@@ -123,8 +123,6 @@ public class CompleteRtInconsistencyCheck {
 	}
 
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> check() {
-		// TODO: Add option to filter groups and muses with size 1
-
 		final List<AnnotatedReq> annotatedReqsList = new ArrayList<>(mAnnotatedReqs.values());
 		final Set<Set<CritPhase>> groups = groupNvcsBySymbols(annotatedReqsList);
 
