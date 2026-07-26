@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -312,17 +311,10 @@ public class ControlPartitioningHeuristics {
 		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
 			return true;
 		}
-		if (isDataRaceSelfCheckAssertNeedingInterference(edge)) {
-			return true;
-		}
 		if (excludedVars.isEmpty()) {
-			return InterferenceUtils.modifiesGlobals(edge.getTransformula());
+			return InterferenceUtils.referencesGlobals(edge.getTransformula());
 		}
-		return !excludedVars.containsAll(InterferenceUtils.getChangedGlobals(edge.getTransformula()));
-	}
-
-	private boolean isDataRaceSelfCheckAssertNeedingInterference(final IcfgEdge edge) {
-		return DataRaceAnnotation.getAnnotation(edge) != null;
+		return !excludedVars.containsAll(InterferenceUtils.getReferencedGlobals(edge.getTransformula()));
 	}
 
 	private IcfgLocation find(final Map<IcfgLocation, IcfgLocation> parent, final IcfgLocation location) {

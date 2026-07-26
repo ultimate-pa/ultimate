@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.KeyedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -108,7 +109,7 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 		boolean hasResult = false;
 		IPredicate result = mFalsePredicate;
 		for (final GuardedUpdate update : groupedInterference.updates()) {
-			final IPredicate post = applyUpdate(frontier, update);
+			final IPredicate post = applyUpdate(frontier, update, domain);
 			if (SmtUtils.isFalseLiteral(post.getFormula())) {
 				continue;
 			}
@@ -191,9 +192,12 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 		return domain.widen(left.effect(), right.effect());
 	}
 
-	private IPredicate applyUpdate(final IPredicate state, final GuardedUpdate update) {
+	private IPredicate applyUpdate(final IPredicate state, final GuardedUpdate update, final IDomain domain) {
 		if (update.hasFalseEffect()) {
 			return mFalsePredicate;
+		}
+		if (update.requiresArrayFallback() || InterferenceUtils.referencesArraySortedTerm(state.getFormula())) {
+			return domain.join(state, update.effect());
 		}
 
 		final Script script = mManagedScript.getScript();
@@ -225,6 +229,7 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 				: forgetChangedConjuncts(guardedState, update.modifiedGlobals(), script);
 		results.add(SmtUtils.and(script, projected, update.effect().getFormula()));
 	}
+
 
 	private static Term forgetChangedConjuncts(final Term formula, final Set<TermVariable> changedVars,
 			final Script script) {

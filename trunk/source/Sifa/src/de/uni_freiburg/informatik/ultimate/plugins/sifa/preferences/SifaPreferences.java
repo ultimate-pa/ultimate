@@ -121,7 +121,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_OUTER_WIDENING_THRESHOLD = "Outer Interference Widening Threshold";
 	private static final String TOOLTIP_OUTER_WIDENING_THRESHOLD = "Number of outer interference fixpoint iterations before widening";
-	private static final int DEFAULT_OUTER_WIDENING_THRESHOLD = 3;
+	private static final int DEFAULT_OUTER_WIDENING_THRESHOLD = 10;
 
 	public static final String LABEL_INNER_WIDENING_THRESHOLD = "Inner Interference Widening Threshold";
 	private static final String TOOLTIP_INNER_WIDENING_THRESHOLD = "Number of inner interference application iterations before widening";
@@ -134,7 +134,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_USE_BUCKETS = "Use Buckets";
 	private static final String TOOLTIP_USE_BUCKETS = "Partition the abstract state into per-interference buckets (disable to test applicators without bucket overhead)";
-	private static final boolean DEFAULT_USE_BUCKETS = false;
+	private static final boolean DEFAULT_USE_BUCKETS = true;
 
 	public static final String LABEL_MAX_BUCKETS = "Max. Buckets";
 	private static final String TOOLTIP_MAX_BUCKETS =

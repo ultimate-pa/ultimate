@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -28,6 +29,7 @@ public final class AbstractLocationPartitionedDomain implements IDomain, IThread
 	private final Set<String> mLocVarNames;
 	private final int mMaxBuckets;
 	private final int mMaxDisjunctsPerBucket;
+	private final WeakHashMap<IPredicate, Map<Map<String, Term>, IPredicate>> mBucketCache = new WeakHashMap<>();
 
 	private AbstractLocationPartitionedDomain(final IDomain underlying, final SymbolicTools tools,
 			final Set<String> locVarNames, final int maxBuckets, final int maxDisjunctsPerBucket) {
@@ -105,6 +107,10 @@ public final class AbstractLocationPartitionedDomain implements IDomain, IThread
 	}
 
 	private Map<Map<String, Term>, IPredicate> bucketize(final IPredicate pred) {
+		return mBucketCache.computeIfAbsent(pred, this::computeBuckets);
+	}
+
+	private Map<Map<String, Term>, IPredicate> computeBuckets(final IPredicate pred) {
 		final Map<Map<String, Term>, List<Term>> groups = new LinkedHashMap<>();
 		for (final Term disjunct : mTools.dnfDisjuncts(pred)) {
 			groups.computeIfAbsent(keyOf(disjunct), k -> new ArrayList<>()).add(disjunct);

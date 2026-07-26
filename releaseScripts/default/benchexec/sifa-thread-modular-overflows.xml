@@ -14,6 +14,8 @@
     <option name="--sifa.join.precision">false</option>
     <option name="--sifa.location.tracking.mode">NONE</option>
     <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
 
   <rundefinition name="explicitvalue-poststate-guard-lockset-publish">
@@ -21,14 +23,43 @@
     <option name="--sifa.interference.applicator">POST_STATE</option>
     <option name="--sifa.location.tracking.mode">NONE</option>
     <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+    <option name="--sifa.use.buckets">false</option>
+  </rundefinition>
+
+  <rundefinition name="explicitvalue-poststate-guard-lockset-nopublish">
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+    <option name="--sifa.interference.applicator">POST_STATE</option>
+    <option name="--sifa.location.tracking.mode">NONE</option>
+    <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
 
   <rundefinition name="explicitvalue-guardedupdate-guard-lockset-publish">
     <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
     <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+    <option name="--sifa.use.buckets">false</option>
+    <option name="--sifa.location.tracking.mode">NONE</option>
+    <option name="--sifa.location.abstraction">SINGLETON</option>
+  </rundefinition>
+
+  <rundefinition name="explicitvalue-guardedupdate-guard-lockset-nopublish">
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+    <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
+    <option name="--sifa.location.tracking.mode">NONE</option>
+    <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
 
   <rundefinition name="explicitvalue-strongestpost-guard-lockset-publish">
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+    <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+    <option name="--sifa.use.buckets">false</option>
+  </rundefinition>
+
+  <rundefinition name="explicitvalue-strongestpost-guard-lockset-partitioned">
     <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
     <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
   </rundefinition>
@@ -36,10 +67,11 @@
   <rundefinition name="none-octagon-UNSOUND-timing-only">
     <option name="--sifa.abstract.domain">OctagonDomain</option>
     <option name="--sifa.interference.applicator">NONE</option>
-    <option name="--sifa.max.parallel.octagon">2</option>
     <option name="--sifa.join.precision">false</option>
     <option name="--sifa.location.tracking.mode">NONE</option>
     <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
 
   <rundefinition name="octagon-poststate-guard-lockset-publish">
@@ -47,18 +79,41 @@
     <option name="--sifa.interference.applicator">POST_STATE</option>
     <option name="--sifa.location.tracking.mode">NONE</option>
     <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+    <option name="--sifa.use.buckets">false</option>
+  </rundefinition>
+
+  <rundefinition name="octagon-poststate-guard-lockset-nopublish">
+    <option name="--sifa.abstract.domain">OctagonDomain</option>
+    <option name="--sifa.interference.applicator">POST_STATE</option>
+    <option name="--sifa.location.tracking.mode">NONE</option>
+    <option name="--sifa.location.abstraction">SINGLETON</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
 
   <rundefinition name="octagon-guardedupdate-guard-lockset-publish">
     <option name="--sifa.abstract.domain">OctagonDomain</option>
     <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+    <option name="--sifa.use.buckets">false</option>
+  </rundefinition>
+
+  <rundefinition name="octagon-guardedupdate-guard-lockset-partitioned">
+    <option name="--sifa.abstract.domain">OctagonDomain</option>
+    <option name="--sifa.interference.applicator">GUARDED_EXACT_UPDATE</option>
+  </rundefinition>
+
+  <rundefinition name="octagon-strongestpost-guard-lockset-partitioned">
+    <option name="--sifa.abstract.domain">OctagonDomain</option>
+    <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
   </rundefinition>
 
   <rundefinition name="octagon-strongestpost-guard-lockset-publish">
     <option name="--sifa.abstract.domain">OctagonDomain</option>
     <option name="--sifa.interference.applicator">STRONGEST_POSTCONDITION</option>
+    <option name="--sifa.publish.on.acquire">true</option>
+    <option name="--sifa.use.buckets">false</option>
   </rundefinition>
-
 
   <tasks name="SVCOMP-Concurrency">
     <includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>

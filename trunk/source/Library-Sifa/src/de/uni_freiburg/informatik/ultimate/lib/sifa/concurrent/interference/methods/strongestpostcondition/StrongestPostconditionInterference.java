@@ -26,7 +26,8 @@ public final class StrongestPostconditionInterference
 		extends KeyedInterferenceSet<StrongestPostconditionInterference.RelationalInterference> {
 
 	public record RelationalInterference(IPredicate relationalInterference,
-			PreparedRelation preparedRelationalInterference, IPredicate unconditionalPostState) {
+			PreparedRelation preparedRelationalInterference, IPredicate unconditionalPostState,
+			boolean requiresArrayFallback) {
 	}
 
 	private final RelationalPredicatePostcondition mPostcondition;
@@ -73,7 +74,7 @@ public final class StrongestPostconditionInterference
 			boolean hasGenerated = false;
 			IPredicate generated = state;
 			for (final RelationalInterference summary : merged) {
-				final IPredicate post = applySummaryToState(frontier, summary, fallbackApplied);
+				final IPredicate post = applySummaryToState(frontier, summary, fallbackApplied, domain);
 				if (SmtUtils.isFalseLiteral(post.getFormula())) {
 					continue;
 				}
@@ -123,11 +124,14 @@ public final class StrongestPostconditionInterference
 		final IPredicate joinedRelation = domain.join(left.relationalInterference(), right.relationalInterference());
 		final IPredicate joinedPostState = domain.join(left.unconditionalPostState(), right.unconditionalPostState());
 		return new RelationalInterference(joinedRelation, mPostcondition.prepareRelation(joinedRelation),
-				joinedPostState);
+				joinedPostState, left.requiresArrayFallback() || right.requiresArrayFallback());
 	}
 
 	private IPredicate applySummaryToState(final IPredicate frontier, final RelationalInterference summary,
-			final Set<RelationalInterference> fallbackApplied) {
+			final Set<RelationalInterference> fallbackApplied, final IDomain domain) {
+		if (summary.requiresArrayFallback()) {
+			return domain.join(frontier, summary.unconditionalPostState());
+		}
 		final PreparedRelation prepared = summary.preparedRelationalInterference();
 		final IPredicate sp = mSpCache.computeIfAbsent(prepared, k -> new IdentityHashMap<>())
 				.computeIfAbsent(frontier.getFormula(), k -> mPostcondition.strongestPostcondition(frontier, prepared));
@@ -145,7 +149,7 @@ public final class StrongestPostconditionInterference
 		final IPredicate widenedPostState =
 				domain.widen(left.unconditionalPostState(), right.unconditionalPostState());
 		return new RelationalInterference(widenedRelation, mPostcondition.prepareRelation(widenedRelation),
-				widenedPostState);
+				widenedPostState, left.requiresArrayFallback() || right.requiresArrayFallback());
 	}
 
 	@Override

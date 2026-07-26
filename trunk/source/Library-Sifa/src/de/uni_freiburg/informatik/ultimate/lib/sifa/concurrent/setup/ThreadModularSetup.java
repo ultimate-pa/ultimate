@@ -74,17 +74,14 @@ public final class ThreadModularSetup {
 		if (settings.publishOnAcquire()) {
 			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !lockInvariants.isEmpty());
 		}
-		final boolean hasArrayGlobals = hasArrayTypedGlobals(icfg);
 		final AbstractLocationPartitionedDomain partitionedDomain =
-				usesLocationPartitioning(settings) && ghostVars != null && !hasArrayGlobals
+				settings.useBuckets() && ghostVars != null
 				? AbstractLocationPartitionedDomain.create(baseDomain, tools,
 						ghostVars.getLocationTermVariablesByThread(), settings.maxBuckets(),
 						settings.maxDisjunctsPerBucket())
 				: null;
 		if (partitionedDomain != null) {
 			logger.info("Abstract-location partitioned domain enabled");
-		} else if (usesLocationPartitioning(settings) && hasArrayGlobals) {
-			logger.info("Abstract-location partitioned domain disabled: array-typed shared globals present");
 		}
 		final IDomain domain = partitionedDomain != null ? partitionedDomain : baseDomain;
 		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
@@ -105,19 +102,6 @@ public final class ThreadModularSetup {
 
 		return new SetupResult(threadIds, domain, interferenceFactory, postcondition,
 				proofChecker, joinedThreads, locationIds, lockInvariants);
-	}
-
-	private static boolean usesLocationPartitioning(final ThreadModularSifaSettings settings) {
-		if (!settings.useBuckets()) {
-			return false;
-		}
-		final InterferenceApplicatorType type = settings.interferenceApplicatorType();
-		return type == InterferenceApplicatorType.STRONGEST_POSTCONDITION;
-	}
-
-	private static boolean hasArrayTypedGlobals(final IIcfg<IcfgLocation> icfg) {
-		return icfg.getCfgSmtToolkit().getSymbolTable().getGlobals().stream()
-				.anyMatch(v -> v.getSort().isArraySort());
 	}
 
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
@@ -161,6 +145,7 @@ public final class ThreadModularSetup {
 		return new LocationAbstraction().computeLocationAbstraction(settings.locationAbstractionType(),
 				services, icfg, locksetInfo);
 	}
+
 
 	private static Map<String, Set<IcfgLocation>> computePreForkSourcesByThread(final IIcfg<IcfgLocation> icfg,
 			final Set<String> multiForkedThreads) {
