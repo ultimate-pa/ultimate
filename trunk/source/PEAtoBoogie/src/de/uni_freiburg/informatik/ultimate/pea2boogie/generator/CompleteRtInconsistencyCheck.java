@@ -140,7 +140,7 @@ public class CompleteRtInconsistencyCheck {
 							.collect(Collectors.toList());
 
 			if (mMode == CompleteRtInconsistencyCheckMode.MARCO_BASIC) {
-				muses.addAll(enumerateMusesMarcoBasic(new ArrayList<>(sortedGroup)));
+				muses.addAll(enumerateMusesMarco(new ArrayList<>(sortedGroup)));
 			} else if (mMode == CompleteRtInconsistencyCheckMode.EXPERIMENTAL_PYTHON) {
 				muses.addAll(enumerateMusesPython(new ArrayList<>(sortedGroup)));
 			} else {
@@ -268,7 +268,13 @@ public class CompleteRtInconsistencyCheck {
 		return new HashSet<>(unionFind.getAllEquivalenceClasses());
 	}
 
-	private Set<Set<MusElement>> enumerateMusesMarcoBasic(final List<CritPhase> critPhases) {
+	/**
+	 * Enumerates minimal unsatisfiable subsets (MUSes) using the unoptimized basic variant of the MARCO algorithm,
+	 * implemented in Java with two Z3 solver instances.
+	 *
+	 * @see MusEnumerator
+	 */
+	private Set<Set<MusElement>> enumerateMusesMarco(final List<CritPhase> critPhases) {
 		final Script scriptSubsetSolver = SolverBuilder.buildAndInitializeSolver(mServices,
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode)
 						.setUseExternalSolver(ExternalSolver.Z3),
