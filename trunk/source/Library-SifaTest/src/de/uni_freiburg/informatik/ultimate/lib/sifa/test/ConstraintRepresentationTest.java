@@ -7,7 +7,6 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceUtil;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.ConstraintRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.RationalVector;
@@ -253,24 +252,25 @@ public class ConstraintRepresentationTest {
 	@Test
 	public void testGetMinimalForm() {
 		for (final ConstraintRepresentation constraints : getTestConstraints()) {
-			// System.out.println("-----------------------");
-			// System.out.println("constraints: " + constraints);
+//			System.out.println("-----------------------");
+//			System.out.println("constraints: " + constraints);
 			constraints.minimize();
-			// System.out.println("constraints: " + constraints);
-			// System.out.println(hasMinimalForm(constraints));
+//			System.out.println("constraints: " + constraints);
+//			System.out.println(hasMinimalForm(constraints));
+//			System.out.println("-----------------------");
 			Assert.assertTrue(hasMinimalForm(constraints));
 		}
 	}
 
 	@Test
 	public void testIsUnsat() {
-		Assert.assertFalse(getConstraints1().isUnsat());
-		Assert.assertFalse(getConstraints2().isUnsat());
-		Assert.assertTrue(getConstraints3().isUnsat());
-		Assert.assertFalse(getConstraints4().isUnsat());
-		Assert.assertFalse(getConstraints5().isUnsat());
-		Assert.assertTrue(getConstraints6().isUnsat());
-		Assert.assertFalse(getConstraints14().isUnsat());
+		Assert.assertFalse(getConstraints1().computeGeneratorRepresentation().isUnsat());
+		Assert.assertFalse(getConstraints2().computeGeneratorRepresentation().isUnsat());
+		Assert.assertTrue(getConstraints3().computeGeneratorRepresentation().isUnsat());
+		Assert.assertFalse(getConstraints4().computeGeneratorRepresentation().isUnsat());
+		Assert.assertFalse(getConstraints5().computeGeneratorRepresentation().isUnsat());
+		Assert.assertTrue(getConstraints6().computeGeneratorRepresentation().isUnsat());
+		Assert.assertFalse(getConstraints14().computeGeneratorRepresentation().isUnsat());
 	}
 
 	@Test
@@ -302,6 +302,94 @@ public class ConstraintRepresentationTest {
 		}
 	}
 
+	@Test
+	public void testTest1() {
+		final List<RationalVector> equalities = new ArrayList<>();
+		// equalities.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(RationalVector.fromIntList(List.of(1, 0, 0, 0, 0)));
+
+		final ConstraintRepresentation constraints = new ConstraintRepresentation(equalities, congruences, 5);
+		constraints.minimize();
+		System.out.println(constraints);
+		System.out.println();
+		System.out.println(constraints.computeGeneratorRepresentation());
+
+		final List<RationalVector> lines = new ArrayList<>();
+		lines.add(RationalVector.fromIntList(List.of(1, 0, 0, 0, 0)));
+
+		final List<RationalVector> parameters = new ArrayList<>();
+		lines.add(RationalVector.fromIntList(List.of(0, 1, 0, 0, 0)));
+		lines.add(RationalVector.fromIntList(List.of(0, 0, 1, 0, 0)));
+
+		final GeneratorRepresentation generators = new GeneratorRepresentation(lines, parameters, 5);
+		System.out.println();
+		System.out.println(generators.computeConstraintRepresentation());
+
+		System.out.println("---------------------------------------------------------------------");
+	}
+
+	@Test
+	public void testTest2() {
+		final List<RationalVector> equalities = new ArrayList<>();
+		// equalities.add(RationalVector.fromIntList(List.of(1, 0, 0, 0, 0)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(
+				List.of(Rational.valueOf(1, 2), Rational.ZERO, Rational.ZERO, Rational.ZERO, Rational.ZERO)));
+		congruences.add(RationalVector.fromIntList(List.of(1, 0, 0, 0, 0)));
+
+		final ConstraintRepresentation constraints = new ConstraintRepresentation(equalities, congruences, 5);
+		constraints.minimize();
+		System.out.println(constraints);
+		System.out.println();
+		System.out.println(constraints.computeGeneratorRepresentation());
+
+		System.out.println("---------------------------------------------------------------------");
+	}
+
+	@Test
+	public void testTest3() {
+		final List<RationalVector> equalities1 = new ArrayList<>();
+		equalities1.add(RationalVector.fromIntList(List.of(0, 1, 0, 0, 0)));
+
+		final List<RationalVector> congruences1 = new ArrayList<>();
+		congruences1.add(new RationalVector(
+				List.of(Rational.valueOf(1, 2), Rational.ZERO, Rational.ZERO, Rational.ZERO, Rational.ZERO)));
+
+		final ConstraintRepresentation constraints1 = new ConstraintRepresentation(equalities1, congruences1, 5);
+
+		final List<RationalVector> equalities2 = new ArrayList<>();
+		equalities2.add(RationalVector.fromIntList(List.of(0, 0, 1, 0, 0)));
+
+		final List<RationalVector> congruences2 = new ArrayList<>();
+		congruences2.add(new RationalVector(
+				List.of(Rational.valueOf(1, 1), Rational.ZERO, Rational.ZERO, Rational.ZERO, Rational.ZERO)));
+
+		final ConstraintRepresentation constraints2 = new ConstraintRepresentation(equalities2, congruences2, 5);
+
+		final GeneratorRepresentation generators1 = constraints1.computeGeneratorRepresentation();
+		final GeneratorRepresentation generators2 = constraints2.computeGeneratorRepresentation();
+
+		final List<RationalVector> lines = new ArrayList<>(generators1.getLines());
+		lines.addAll(generators2.getLines());
+
+		final List<RationalVector> parameters = new ArrayList<>(generators1.getParameters());
+		parameters.addAll(generators2.getParameters());
+
+		final GeneratorRepresentation generators3 = new GeneratorRepresentation(lines, parameters, 5);
+
+		System.out.println(generators3);
+		System.out.println();
+		generators3.minimize();
+		System.out.println(generators3);
+		System.out.println();
+		System.out.println(generators3.computeConstraintRepresentation());
+
+		System.out.println("---------------------------------------------------------------------");
+	}
+
 	public boolean hasMinimalForm(final ConstraintRepresentation constraints) {
 		if (!constraints.isMinimal()) {
 			return false;
@@ -310,8 +398,9 @@ public class ConstraintRepresentationTest {
 		final List<RationalVector> equalities = constraints.getEqualities();
 		final List<RationalVector> congruences = constraints.getCongruences();
 
+		// TODO Maybe remove the unsat check
 		// Check if it got set as unsatisfiable
-		if (constraints.isUnsat()) {
+		if (constraints.computeGeneratorRepresentation().isUnsat()) {
 			return true;
 		}
 
@@ -321,7 +410,7 @@ public class ConstraintRepresentationTest {
 
 		for (int i = 0; i < vectors.size(); i++) {
 			final var vector = vectors.get(i);
-			final var pivot = CongruenceUtil.lastPivot(vector);
+			final var pivot = vector.lastPivot();
 
 			if (pivot == -1) {
 				return false;
@@ -332,7 +421,7 @@ public class ConstraintRepresentationTest {
 			}
 			for (int j = i + 1; j < vectors.size(); j++) {
 				final var other = vectors.get(j);
-				if (pivot == CongruenceUtil.lastPivot(other)) {
+				if (pivot == other.lastPivot()) {
 					return false;
 				}
 			}
@@ -353,7 +442,7 @@ public class ConstraintRepresentationTest {
 
 		for (int i = 0; i < congruences.size(); i++) {
 			final RationalVector congruence = congruences.get(i);
-			final int pivot = CongruenceUtil.lastPivot(congruence);
+			final int pivot = congruence.lastPivot();
 			final Rational pivotElement = congruence.get(pivot);
 
 			for (int j = 0; j < congruences.size(); j++) {

@@ -18,32 +18,32 @@ public class CongruenceUtilTest {
 	@Test
 	public void testFirstPivot() {
 		final RationalVector vector0 = RationalVector.fromIntList(List.of(-1, 0, 1));
-		Assert.assertEquals(CongruenceUtil.firstPivot(vector0), 0);
+		Assert.assertEquals(vector0.firstPivot(), 0);
 
 		final RationalVector vector1 = RationalVector.fromIntList(List.of(0, 1, 2));
-		Assert.assertEquals(CongruenceUtil.firstPivot(vector1), 1);
+		Assert.assertEquals(vector1.firstPivot(), 1);
 
 		final RationalVector vector2 = RationalVector.fromIntList(List.of(0, 0, 1));
-		Assert.assertEquals(CongruenceUtil.firstPivot(vector2), 2);
+		Assert.assertEquals(vector2.firstPivot(), 2);
 
 		final RationalVector vector3 = RationalVector.fromIntList(List.of(0, 0, 0));
-		Assert.assertEquals(CongruenceUtil.firstPivot(vector3), 3);
+		Assert.assertEquals(vector3.firstPivot(), 3);
 
 	}
 
 	@Test
 	public void testLastPivot() {
 		final RationalVector vector0 = RationalVector.fromIntList(List.of(1, 0, -1));
-		Assert.assertEquals(CongruenceUtil.lastPivot(vector0), 2);
+		Assert.assertEquals(vector0.lastPivot(), 2);
 
 		final RationalVector vector1 = RationalVector.fromIntList(List.of(2, 1, 0));
-		Assert.assertEquals(CongruenceUtil.lastPivot(vector1), 1);
+		Assert.assertEquals(vector1.lastPivot(), 1);
 
 		final RationalVector vector2 = RationalVector.fromIntList(List.of(1, 0, 0));
-		Assert.assertEquals(CongruenceUtil.lastPivot(vector2), 0);
+		Assert.assertEquals(vector2.lastPivot(), 0);
 
 		final RationalVector vector3 = RationalVector.fromIntList(List.of(0, 0, 0));
-		Assert.assertEquals(CongruenceUtil.lastPivot(vector3), -1);
+		Assert.assertEquals(vector3.lastPivot(), -1);
 
 	}
 

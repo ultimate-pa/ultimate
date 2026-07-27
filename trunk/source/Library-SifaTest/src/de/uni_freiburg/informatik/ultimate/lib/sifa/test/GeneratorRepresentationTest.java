@@ -6,7 +6,6 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceUtil;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.ConstraintRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorRepresentation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.RationalVector;
@@ -244,12 +243,14 @@ public class GeneratorRepresentationTest {
 				getGenerators11(), getGenerators12(), getGenerators13());
 
 		for (int i = 0; i < constraints.size(); i++) {
-			// System.out.println("------------------------");
+			System.out.println("------------------------");
+			System.out.println(i);
+
 			final ConstraintRepresentation expected = constraints.get(i);
 			expected.minimize();
 			final ConstraintRepresentation result = generators.get(i).computeConstraintRepresentation();
-			// System.out.println(expected);
-			// System.out.println(result);
+			System.out.println(expected);
+			System.out.println(result);
 			Assert.assertTrue(expected.equals(result));
 		}
 	}
@@ -267,7 +268,7 @@ public class GeneratorRepresentationTest {
 
 		for (int i = 0; i < vectors.size(); i++) {
 			final var vector = vectors.get(i);
-			final var pivot = CongruenceUtil.firstPivot(vector);
+			final var pivot = vector.firstPivot();
 			final var pivotValue = vector.get(pivot);
 
 			if (pivotValue.compareTo(Rational.ZERO) < 0) {
@@ -275,7 +276,7 @@ public class GeneratorRepresentationTest {
 			}
 			for (int j = i + 1; j < vectors.size(); j++) {
 				final var other = vectors.get(j);
-				if (pivot == CongruenceUtil.firstPivot(other)) {
+				if (pivot == other.firstPivot()) {
 					return false;
 				}
 			}

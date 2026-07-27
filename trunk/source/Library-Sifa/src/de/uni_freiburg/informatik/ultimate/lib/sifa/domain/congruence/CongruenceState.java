@@ -25,18 +25,12 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		mVarToIndex = varToIndex;
 		mConstraints = constraints;
 		mGenerators = null;
-
-		// Init, Aint it ?
-
 	}
 
 	public CongruenceState(final Map<Term, Integer> varToIndex, final GeneratorRepresentation generators) {
 		mVarToIndex = varToIndex;
 		mConstraints = null;
 		mGenerators = generators;
-
-		// Init, Aint it ?
-
 	}
 
 	public ConstraintRepresentation getConstraintRepresentation() {
@@ -137,17 +131,16 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	}
 
 	public CongruenceState getReorderedForm(final Map<Term, Integer> newVarToIndex) {
-		// Compute the required lengths for the vectors.
+		// Compute the required lengths for the vectors
 		// +1 for the constant in the first place
 		final int newColumnCount = newVarToIndex.size() + 1;
 
-		// Compute the reordered forms of the generators
+		// Compute the reorder map for the variables
 		final Map<Integer, Integer> reorderMap = CongruenceUtil.getReorderForMaps(mVarToIndex, newVarToIndex);
+		// Add the mapping for the constant factor
 		reorderMap.put(0, 0);
-//		final GeneratorRepresentation generators = getGeneratorRepresentation();
-//		final GeneratorRepresentation reorderedGenerators = generators.getReorderedForm(reorderMap, newColumnCount);
-//
-//		return new CongruenceState(newVarToIndex, reorderedGenerators);
+
+		// Compute the reordered forms of the constraints
 		final ConstraintRepresentation constraints = getConstraintRepresentation();
 		final ConstraintRepresentation reorderedConstraints = constraints.getReorderedForm(reorderMap, newColumnCount);
 
@@ -184,18 +177,11 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
 				selfReorderedGenerators.getVectorLength());
 
-		final var sth = new CongruenceState(newVarToIndex, newGenerators);
 		return new CongruenceState(newVarToIndex, newGenerators);
 	}
 
 	@Override
 	public CongruenceState widen(final CongruenceState other) {
-
-		final var sth = this;
-		final var one = getConstraintRepresentation();
-		one.minimize();
-		final var two = other.getConstraintRepresentation();
-		two.minimize();
 
 		if (isBottom()) {
 			return other;
@@ -210,11 +196,12 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		final ConstraintRepresentation lowerConstraints = lower.getConstraintRepresentation();
 		lowerConstraints.minimize();
+		final GeneratorRepresentation lowerGenerators = lower.getGeneratorRepresentation();
 
 		final ConstraintRepresentation upperConstraints = upper.getConstraintRepresentation();
 		upperConstraints.stronglyMinimize();
 
-		if (lowerConstraints.isUnsat() || lowerConstraints.getDim() < upperConstraints.getDim()) {
+		if (lowerGenerators.isUnsat() || lowerConstraints.getDim() < upperConstraints.getDim()) {
 			return upper;
 		}
 
@@ -243,15 +230,12 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		final ConstraintRepresentation newConstraints = new ConstraintRepresentation(newEqualities, newCongruences,
 				upperConstraints.getVectorLength());
-		final var x = new CongruenceState(newVarToIndex, newConstraints);
+
 		return new CongruenceState(newVarToIndex, newConstraints);
 	}
 
 	@Override
 	public boolean isBottom() {
-//		final ConstraintRepresentation constraints = getConstraintRepresentation();
-//		final var sth = constraints.isUnsat();
-//		return constraints.isUnsat();
 		final GeneratorRepresentation generators = getGeneratorRepresentation();
 		return generators.isUnsat();
 	}

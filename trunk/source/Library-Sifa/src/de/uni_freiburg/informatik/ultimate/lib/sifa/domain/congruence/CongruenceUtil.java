@@ -16,28 +16,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CongruenceUtil {
 
-	public static int firstPivot(final RationalVector vector) {
-		final int k = vector.getLength();
-
-		for (int i = 0; i < k; i++) {
-			if (!vector.get(i).equals(Rational.ZERO)) {
-				return i;
-			}
-		}
-		return k;
-	}
-
-	public static int lastPivot(final RationalVector vector) {
-		final int k = vector.getLength();
-
-		for (int i = k - 1; i >= 0; i--) {
-			if (!vector.get(i).equals(Rational.ZERO)) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
 	/*
 	 * Eliminates the field in minuendVector by subtracting a multiple of the
 	 * subtrahendVector and returns the updated minuendVector
@@ -143,40 +121,9 @@ public class CongruenceUtil {
 		return newMap;
 	}
 
-//	private static long wholeDiv(final long x, final long y) {
-//		return Math.floorDiv(x, y);
-//	}
-
 	private static BigInteger wholeDiv(final BigInteger x, final BigInteger y) {
 		return x.divideAndRemainder(y)[0];
 	}
-
-//	public static long[] gcdext(final long x, final long y) {
-//		long oldR = x;
-//		long newR = y;
-//		long oldS = 1;
-//		long newS = 0;
-//		long oldT = 0;
-//		long newT = 1;
-//
-//		while (newR != 0) {
-//			final long q = wholeDiv(oldR, newR);
-//
-//			final long tempR = oldR;
-//			oldR = newR;
-//			newR = tempR - q * newR;
-//
-//			final long tempS = oldS;
-//			oldS = newS;
-//			newS = tempS - q * newS;
-//
-//			final long tempT = oldT;
-//			oldT = newT;
-//			newT = tempT - q * newT;
-//		}
-//
-//		return new long[] { oldR, oldS, oldT };
-//	}
 
 	public static BigInteger[] gcdext(final BigInteger x, final BigInteger y) {
 		BigInteger oldR = x;
@@ -205,14 +152,6 @@ public class CongruenceUtil {
 		return new BigInteger[] { oldR, oldS, oldT };
 	}
 
-//	public static long lcm(final long x, final long y) {
-//		final long gcd = gcdext(x, y)[0];
-//		if (gcd == 0) {
-//			return 0;
-//		}
-//		return Math.abs(Math.divideExact(x, gcd) * y);
-//	}
-
 	public static BigInteger lcm(final BigInteger x, final BigInteger y) {
 		final BigInteger gcd = x.gcd(y);
 		if (gcd.equals(BigInteger.ZERO)) {
@@ -220,15 +159,6 @@ public class CongruenceUtil {
 		}
 		return x.divideAndRemainder(gcd)[0].multiply(y).abs();
 	}
-
-//	public static long getCommonDenominator(final List<RationalNumber> rationalList) {
-//		long commonDenominator = 1;
-//		for (final RationalNumber rationalNumber : rationalList) {
-//			final long denominator = getDenominator(rationalNumber);
-//			commonDenominator = lcm(denominator, commonDenominator);
-//		}
-//		return commonDenominator;
-//	}
 
 	public static BigInteger getCommonDenominator(final List<Rational> list) {
 		BigInteger commonDenominator = BigInteger.ONE;
@@ -315,8 +245,8 @@ public class CongruenceUtil {
 	}
 
 	public static boolean isEqualsInLastNonZero(final RationalVector vector1, final RationalVector vector2) {
-		final int k = lastPivot(vector1);
-		if (k == lastPivot(vector2)) {
+		final int k = vector1.lastPivot();
+		if (k == vector2.lastPivot()) {
 			if (k == 0) {
 				return true;
 			}
@@ -328,5 +258,4 @@ public class CongruenceUtil {
 		}
 		return false;
 	}
-
 }

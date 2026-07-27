@@ -33,18 +33,6 @@ public class RationalVector {
 		mVector = vector;
 	}
 
-//	RationalVector(final FieldVector<BigFraction> vector) {
-//		final SparseFieldVector<BigFraction> sparseVector = new SparseFieldVector<>(BigFractionField.getInstance(),
-//				vector.getDimension());
-//		for (int i = 0; i < vector.getDimension(); i++) {
-//			final BigFraction entry = vector.getEntry(i);
-//			if (!entry.equals(BigFraction.ZERO)) {
-//				sparseVector.setEntry(i, entry);
-//			}
-//		}
-//		mVector = sparseVector;
-//	}
-
 	public RationalVector(final List<Rational> rationalList) {
 		final FieldVector<BigFraction> vector = new SparseFieldVector<>(BigFractionField.getInstance(),
 				rationalList.size());
@@ -109,6 +97,28 @@ public class RationalVector {
 
 	public RationalVector divide(final Rational factor) {
 		return new RationalVector(mVector.mapDivide(getBigFractionFromRational(factor)));
+	}
+
+	public int firstPivot() {
+		final int k = getLength();
+
+		for (int i = 0; i < k; i++) {
+			if (!get(i).equals(Rational.ZERO)) {
+				return i;
+			}
+		}
+		return k;
+	}
+
+	public int lastPivot() {
+		final int k = getLength();
+
+		for (int i = k - 1; i >= 0; i--) {
+			if (!get(i).equals(Rational.ZERO)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	@Override

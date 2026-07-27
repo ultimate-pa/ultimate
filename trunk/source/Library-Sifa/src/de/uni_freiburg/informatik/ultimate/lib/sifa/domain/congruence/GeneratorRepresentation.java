@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -44,6 +43,10 @@ public class GeneratorRepresentation {
 	}
 
 	public boolean equals(final GeneratorRepresentation other) {
+		if (isUnsat() && other.isUnsat()) {
+			return true;
+		}
+
 		if (!getLineMatrix().equals(other.getLineMatrix())) {
 			return false;
 		}
@@ -88,7 +91,6 @@ public class GeneratorRepresentation {
 			final Rational constantFactor = parameter.get(0);
 			if (!constantFactor.equals(Rational.ZERO)) {
 				final BigInteger absNumerator = constantFactor.numerator().abs();
-				final BigInteger absDenominator = constantFactor.denominator().abs();
 
 				if (absNumerator.equals(BigInteger.ONE)) {
 					return false;
@@ -113,7 +115,7 @@ public class GeneratorRepresentation {
 		// Making the line pivots unique
 		for (int i = 0; i < lines.size(); i++) {
 			RationalVector line = lines.get(i);
-			final int pivot = CongruenceUtil.firstPivot(line);
+			final int pivot = line.firstPivot();
 
 			if (pivot == line.getLength()) {
 				// line is empty, can be deleted
@@ -152,7 +154,7 @@ public class GeneratorRepresentation {
 			RationalVector parameter = null;
 			for (i = 0; i < parameters.size(); i++) {
 				parameter = parameters.get(i);
-				pivot = CongruenceUtil.firstPivot(parameter);
+				pivot = parameter.firstPivot();
 
 				if (pivot == index) {
 					break;
@@ -165,7 +167,7 @@ public class GeneratorRepresentation {
 			// Eliminate the pivot field from the following parameters
 			for (int j = i + 1; j < parameters.size(); j++) {
 				final RationalVector other = parameters.get(j);
-				final int otherPivot = CongruenceUtil.firstPivot(other);
+				final int otherPivot = other.firstPivot();
 
 				if (pivot == otherPivot) {
 					final Pair<RationalVector, RationalVector> pair = CongruenceUtil.hermitEliminateField(other,
@@ -179,7 +181,7 @@ public class GeneratorRepresentation {
 		// Scan for empty parameters
 		for (int i = 0; i < parameters.size(); i++) {
 			final RationalVector parameter = parameters.get(i);
-			final long pivot = CongruenceUtil.firstPivot(parameter);
+			final long pivot = parameter.firstPivot();
 
 			if (pivot == parameter.getLength()) {
 				// parameter is empty, can be deleted
@@ -195,7 +197,7 @@ public class GeneratorRepresentation {
 		// Make pivot values for parameters positive
 		for (int i = 0; i < parameters.size(); i++) {
 			RationalVector parameter = parameters.get(i);
-			final int pivot = CongruenceUtil.firstPivot(parameter);
+			final int pivot = parameter.firstPivot();
 			final var pivotValue = parameter.get(pivot);
 			if (pivotValue.compareTo(Rational.ZERO) < 0) {
 				parameter = parameter.negate();
@@ -214,39 +216,6 @@ public class GeneratorRepresentation {
 
 	}
 
-	public GeneratorRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
-			final int resultColumnCount) {
-
-		final RationalMatrix reorderedLineMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
-				getLineMatrix());
-		final RationalMatrix reorderedParameterMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
-				getParameterMatrix());
-
-//		// We pad the parameters with vectors that correspond to x ≡1 0, for all
-//		// variables x that got newly added to our context. This avoids them appearing
-//		// as x = 0. Since we only care about whole numbers x ≡1 0 holds trivially.
-//		final List<RationalVector> paddedParameters = reorderedParameterMatrix.getRowVectors();
-//		for (int i = 0; i < resultColumnCount; i++) {
-//			if (!reorderMap.containsValue(i)) {
-//				final RationalVector newParameter = RationalVector.getUnitVector(i, resultColumnCount);
-//				paddedParameters.add(newParameter);
-//			}
-//		}
-//		return new GeneratorRepresentation(reorderedLineMatrix.getRowVectors(), paddedParameters, resultColumnCount);
-
-		// We pad the lines with vectors that correspond to nothing in the constraint
-		// representation to avoid adding information. This avoids them appearing
-		// as x = 0.
-		final List<RationalVector> paddedLines = reorderedLineMatrix.getRowVectors();
-		for (int i = 0; i < resultColumnCount; i++) {
-			if (!reorderMap.containsValue(i)) {
-				final RationalVector newLine = RationalVector.getUnitVector(i, resultColumnCount);
-				paddedLines.add(newLine);
-			}
-		}
-		return new GeneratorRepresentation(paddedLines, reorderedParameterMatrix.getRowVectors(), resultColumnCount);
-	}
-
 	public ConstraintRepresentation computeConstraintRepresentation() {
 		minimize();
 
@@ -260,7 +229,7 @@ public class GeneratorRepresentation {
 
 		final Set<Integer> missingPivots = IntStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
 		for (final RationalVector vector : generatorList) {
-			missingPivots.remove(CongruenceUtil.firstPivot(vector));
+			missingPivots.remove(vector.firstPivot());
 		}
 
 		final List<RationalVector> fillerList = new ArrayList<>();

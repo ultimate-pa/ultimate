@@ -76,9 +76,9 @@ public class ConstraintRepresentation {
 	}
 
 	public boolean equals(final ConstraintRepresentation other) {
-		// Two unsat representations might not look the same, but still represent the
-		// same system.
-		if (isUnsat() && other.isUnsat()) {
+		// Two unsatisfiable representations might not look the same, but still
+		// represent the same system
+		if (computeGeneratorRepresentation().isUnsat() && other.computeGeneratorRepresentation().isUnsat()) {
 			return true;
 		}
 
@@ -97,32 +97,6 @@ public class ConstraintRepresentation {
 
 	public static ConstraintRepresentation getUnsat(final int vectorLength) {
 		return new ConstraintRepresentation(List.of(unsatVector(vectorLength)), List.of(), vectorLength, true, true);
-	}
-
-	private void markAsUnsat() {
-		mEqualities = List.of(unsatVector(mVectorLength));
-		mCongruences = List.of();
-		mIsMinimal = true;
-		mIsStrongMinimal = true;
-	}
-
-	public boolean isUnsat() {
-		minimize();
-		for (final RationalVector equality : getEqualities()) {
-			if (CongruenceUtil.lastPivot(equality) == 0) {
-				// markAsUnsat();
-				return true;
-			}
-		}
-		for (final RationalVector congruence : getCongruences()) {
-			final int pivot = CongruenceUtil.lastPivot(congruence);
-			if (pivot == 0 && !congruence.get(pivot).denominator().equals(BigInteger.ONE)) {
-				// markAsUnsat();
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	private static RationalVector unsatVector(final int length) {
@@ -160,7 +134,7 @@ public class ConstraintRepresentation {
 		// Making the equality pivots unique
 		for (int i = 0; i < equalities.size(); i++) {
 			RationalVector equality = equalities.get(i);
-			final int pivot = CongruenceUtil.lastPivot(equality);
+			final int pivot = equality.lastPivot();
 
 			if (pivot == -1) {
 				// vector is empty, can be deleted
@@ -204,22 +178,11 @@ public class ConstraintRepresentation {
 			RationalVector congruence = null;
 			for (i = 0; i < congruences.size(); i++) {
 				congruence = congruences.get(i);
-				pivot = CongruenceUtil.lastPivot(congruence);
+				pivot = congruence.lastPivot();
 
 				if (pivot == index) {
 					break;
 				}
-
-//				if (pivot == -1) {
-//					// vector is empty, can be deleted
-//					// We do that later though
-//				} else if (pivot == 0 && !congruence.get(pivot).denominator().equals(BigInteger.ONE)) {
-//					// We just have a constant
-//					// The constant is not whole and so it's not 0 mod 1
-//					// So the congruence is unsatisfiable and so is the whole system
-//					markAsUnsat();
-//					return;
-//				}
 			}
 
 			// If no such congruence is found i is already so large that there is no rest we
@@ -231,7 +194,7 @@ public class ConstraintRepresentation {
 			// We need to use the hermit elimination to preserve congruence's
 			for (int j = i + 1; j < congruences.size(); j++) {
 				final RationalVector other = congruences.get(j);
-				final long otherPivot = CongruenceUtil.lastPivot(other);
+				final long otherPivot = other.lastPivot();
 
 				if (pivot == otherPivot) {
 					final Pair<RationalVector, RationalVector> pair = CongruenceUtil.hermitEliminateField(other,
@@ -245,7 +208,7 @@ public class ConstraintRepresentation {
 		// Scan for empty congruence's
 		for (int i = 0; i < congruences.size(); i++) {
 			final RationalVector congruence = congruences.get(i);
-			final long pivot = CongruenceUtil.lastPivot(congruence);
+			final long pivot = congruence.lastPivot();
 
 			if (pivot == -1) {
 				// parameter is empty, can be deleted
@@ -261,7 +224,7 @@ public class ConstraintRepresentation {
 		// Make pivot values for congruence's positive
 		for (int i = 0; i < congruences.size(); i++) {
 			RationalVector congruence = congruences.get(i);
-			final int pivot = CongruenceUtil.lastPivot(congruence);
+			final int pivot = congruence.lastPivot();
 			final var pivotValue = congruence.get(pivot);
 
 			if (pivotValue.compareTo(Rational.ZERO) < 0) {
@@ -289,7 +252,7 @@ public class ConstraintRepresentation {
 		final List<RationalVector> equalities = getEqualities();
 		final List<RationalVector> congruences = new ArrayList<>(getCongruences());
 		// Sorting the congruence's by last pivot is needed for the rest
-		congruences.sort((v1, v2) -> (CongruenceUtil.lastPivot(v1) < CongruenceUtil.lastPivot(v2)) ? 1 : -1);
+		congruences.sort((v1, v2) -> (v1.lastPivot() < v2.lastPivot()) ? 1 : -1);
 
 		for (int i = 0; i < congruences.size(); i++) {
 			for (int j = 0; j < congruences.size(); j++) {
@@ -298,7 +261,7 @@ public class ConstraintRepresentation {
 				}
 				final RationalVector congruence = congruences.get(i);
 				final RationalVector other = congruences.get(j);
-				final int index = CongruenceUtil.lastPivot(other);
+				final int index = other.lastPivot();
 
 				final Rational indexValue = congruence.get(index);
 				final Rational otherIndexValue = other.get(index);
@@ -363,7 +326,7 @@ public class ConstraintRepresentation {
 
 		final Set<Integer> missingPivots = IntStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
 		for (final RationalVector vector : constraintList) {
-			missingPivots.remove(CongruenceUtil.lastPivot(vector));
+			missingPivots.remove(vector.lastPivot());
 		}
 
 		final List<RationalVector> fillerList = new ArrayList<>();
