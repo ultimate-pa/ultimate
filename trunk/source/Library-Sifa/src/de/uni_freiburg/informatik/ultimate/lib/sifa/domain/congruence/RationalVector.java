@@ -28,6 +28,8 @@ public class RationalVector {
 	}
 
 	private final FieldVector<BigFraction> mVector;
+	private Integer mFirstPivot = null;
+	private Integer mLastPivot = null;
 
 	RationalVector(final FieldVector<BigFraction> vector) {
 		mVector = vector;
@@ -100,24 +102,36 @@ public class RationalVector {
 	}
 
 	public int firstPivot() {
+		if (mFirstPivot != null) {
+			return mFirstPivot;
+		}
+
 		final int k = getLength();
 
 		for (int i = 0; i < k; i++) {
 			if (!get(i).equals(Rational.ZERO)) {
+				mFirstPivot = i;
 				return i;
 			}
 		}
+		mFirstPivot = k;
 		return k;
 	}
 
 	public int lastPivot() {
+		if (mLastPivot != null) {
+			return mLastPivot;
+		}
+
 		final int k = getLength();
 
 		for (int i = k - 1; i >= 0; i--) {
 			if (!get(i).equals(Rational.ZERO)) {
+				mLastPivot = i;
 				return i;
 			}
 		}
+		mLastPivot = -1;
 		return -1;
 	}
 
