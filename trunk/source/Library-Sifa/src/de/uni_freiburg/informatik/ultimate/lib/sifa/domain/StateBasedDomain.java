@@ -99,7 +99,6 @@ public class StateBasedDomain<STATE extends IAbstractState<STATE>> implements ID
 			resultStates = new ArrayList<>(productSize);
 			for (final STATE s1 : oldStates) {
 				for (final STATE s2 : widenWithStates) {
-					final var sth = s1.widen(s2);
 					resultStates.add(s1.widen(s2));
 				}
 			}
