@@ -118,7 +118,7 @@ public final class Translator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ProgramAndProof mProgramAndProof;
-	private final LocalVariablesMap mLocalVariablesMap;
+	private final VariablesInformation mVariablesInformation;
 
 	private final ASTType mStartTidType;
 	private final ASTType mTidType;
@@ -131,7 +131,7 @@ public final class Translator {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		programAndProof.preprocess();
 		mProgramAndProof = programAndProof;
-		mLocalVariablesMap = new LocalVariablesMap(programAndProof);
+		mVariablesInformation = new VariablesInformation(programAndProof);
 
 		// Declarations for thread management operations
 		mStartTidType = declareStartTidType();
@@ -151,6 +151,10 @@ public final class Translator {
 	ProgramAndProof getProgramAndProof() {
 		// is used in body transformer
 		return mProgramAndProof;
+	}
+
+	VariablesInformation getVariablesInformation() {
+		return mVariablesInformation;
 	}
 
 	ASTType getStartTidType() {
@@ -351,7 +355,7 @@ public final class Translator {
 		// use to fix issue with addAll because Arrays.asList(input) return fix size
 		final List<IdentifierExpression> params = new ArrayList<>(Arrays.asList(input));
 
-		params.addAll(mLocalVariablesMap.getExpressionMap().getOrDefault(annotation, Collections.emptySet()));
+		params.addAll(mVariablesInformation.getExpressionMap().getOrDefault(annotation, Collections.emptySet()));
 
 		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
 				"yield_" + procName + "_" + counter, params.toArray(Expression[]::new));
@@ -370,7 +374,7 @@ public final class Translator {
 					tidNeedsLinearity.contains(tid) ? Linearity.INOUT : Linearity.NONE));
 		}
 
-		for (final IdentifierExpression id : mLocalVariablesMap.getExpressionMap().getOrDefault(annotation,
+		for (final IdentifierExpression id : mVariablesInformation.getExpressionMap().getOrDefault(annotation,
 				Collections.emptySet())) {
 			// TODO maybe change type later
 			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
@@ -420,8 +424,8 @@ public final class Translator {
 
 	CallStatement callCondition(final String procName, final int counter, final Expression condition) {
 
-		final List<IdentifierExpression> params =
-				new ArrayList<>(mLocalVariablesMap.getExpressionMap().getOrDefault(condition, Collections.emptySet()));
+		final List<IdentifierExpression> params = new ArrayList<>(
+				mVariablesInformation.getExpressionMap().getOrDefault(condition, Collections.emptySet()));
 
 		return new CallStatement(null, new NamedAttribute[0], false,
 				new VariableLHS[] { new VariableLHS(null, "condition") }, "cond_" + procName + "_" + counter,
@@ -435,7 +439,7 @@ public final class Translator {
 
 		final List<ParameterDeclaration> params = new ArrayList<>();
 
-		for (final IdentifierExpression id : mLocalVariablesMap.getExpressionMap().getOrDefault(condition,
+		for (final IdentifierExpression id : mVariablesInformation.getExpressionMap().getOrDefault(condition,
 				Collections.emptySet())) {
 			// TODO maybe change type later
 			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
@@ -458,7 +462,7 @@ public final class Translator {
 		final List<Expression> inParams = new ArrayList<>();
 		final List<VariableLHS> outParams = new ArrayList<>();
 
-		for (final IdentifierExpression id : mLocalVariablesMap.getStatementMap().getOrDefault(statement,
+		for (final IdentifierExpression id : mVariablesInformation.getLocalStatementMap().getOrDefault(statement,
 				Collections.emptySet())) {
 			// TODO maybe change type later
 			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
@@ -476,7 +480,7 @@ public final class Translator {
 		final List<ParameterDeclaration> inParams = new ArrayList<>();
 		final List<ParameterDeclaration> outParams = new ArrayList<>();
 
-		for (final IdentifierExpression id : mLocalVariablesMap.getStatementMap().getOrDefault(statement,
+		for (final IdentifierExpression id : mVariablesInformation.getLocalStatementMap().getOrDefault(statement,
 				Collections.emptySet())) {
 			// TODO maybe change type later
 			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
@@ -486,7 +490,7 @@ public final class Translator {
 
 		final var body = new ArrayList<Statement>();
 		// TODO improve this later
-		for (final IdentifierExpression id : mLocalVariablesMap.getStatementMap().getOrDefault(statement,
+		for (final IdentifierExpression id : mVariablesInformation.getLocalStatementMap().getOrDefault(statement,
 				Collections.emptySet())) {
 			body.add(new AssignmentStatement(null, new LeftHandSide[] { new VariableLHS(null, id.getIdentifier()) },
 					new Expression[] { new IdentifierExpression(null, id.getIdentifier() + "_in") }));

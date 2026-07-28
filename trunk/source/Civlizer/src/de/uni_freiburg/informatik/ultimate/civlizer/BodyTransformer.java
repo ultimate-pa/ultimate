@@ -244,11 +244,8 @@ final class BodyTransformer extends BoogieTransformer {
 
 			mAtomicStatementCounter += 1;
 
-			final boolean globalVar =
-					mTranslator.getProgramAndProof().getTemplateVisitor().containsGlobalVariables(statement);
-
-			final boolean localVar = mTranslator.getProgramAndProof().getTemplateVisitor()
-					.containsLocalVariables(mCurrentProcedure, statement);
+			final boolean globalVar = mTranslator.getVariablesInformation().containGlobalVars(statement);
+			final boolean localVar = mTranslator.getVariablesInformation().containLocalVars(statement);
 
 			final var annotation = annotationMap.get(statement.getLoc());
 			mTranslator.addYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, annotation, null,
@@ -376,23 +373,11 @@ final class BodyTransformer extends BoogieTransformer {
 			mTranslator.addStatement(mCurrentProcedure, statement, mTidNeedsLinearity, mAtomicStatementCounter);
 			newStatement = mTranslator.callAtomicStatement(mCurrentProcedure, statement, mAtomicStatementCounter);
 		} else if (statement instanceof final CallStatement call) {
-			final Expression[] args = call.getArguments();
-			final Expression[] newArgs = processExpressions(args);
-			final VariableLHS[] lhs = call.getLhs();
-			final VariableLHS[] newLhs = processVariableLHSs(lhs);
-			final Attribute[] newAttr = processAttributes(call.getAttributes());
-			if (args != newArgs || lhs != newLhs || newAttr != call.getAttributes()) {
-				newStatement = new CallStatement(null, (NamedAttribute[]) newAttr, call.isForall(), newLhs,
-						call.getMethodName(), newArgs);
+			throw new UnsupportedOperationException("Procedure Call");
 
-				// create error
-			}
 		} else if (statement instanceof final ForkStatement forkstmt) {
 			final Expression[] threadId = forkstmt.getThreadID();
 			final String procName = forkstmt.getProcedureName();
-			final Expression[] arguments = forkstmt.getArguments();
-			final Expression[] newThreadId = processExpressions(threadId);
-			final Expression[] newArguments = processExpressions(arguments);
 
 			final Expression[] tids = { new IdentifierExpression(forkstmt.getLoc(), BoogieType.createPlaceholderType(0),
 					(new Tid(threadId)).toString(),
@@ -403,11 +388,6 @@ final class BodyTransformer extends BoogieTransformer {
 
 		} else if (statement instanceof final JoinStatement joinstmt) {
 			final Expression[] threadId = joinstmt.getThreadID();
-			final VariableLHS[] lhs = joinstmt.getLhs();
-			final Expression[] newThreadId = processExpressions(threadId);
-			final VariableLHS[] newLhs = processVariableLHSs(lhs);
-
-			// variable out to define TODO
 
 			final Expression[] tid = { new IdentifierExpression(joinstmt.getLoc(), BoogieType.createPlaceholderType(0),
 					(new Tid(threadId)).toString(),
@@ -420,7 +400,6 @@ final class BodyTransformer extends BoogieTransformer {
 			newStatement =
 					new CallStatement(joinstmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0], "join", tid); // LHS
 																															// TODO
-
 		}
 
 		if (newStatement == null) {

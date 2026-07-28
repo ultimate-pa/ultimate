@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -37,24 +36,13 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
@@ -81,12 +69,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private final BoogieIcfgContainer mIcfg;
 	private String mCurrentProcedure;
-	private ILocation mCurrentStatement;
-
-	private final Set<String> mGlobalVariables = new HashSet<>();
-	private final Map<ILocation, Set<String>> mStatementVariablesMap = new HashMap<>();
-	private final Map<ILocation, Set<String>> mStatementParametersMap = new HashMap<>();
-	private final Map<String, Map<String, ASTType>> mProcedureVariablesMap = new HashMap<>();
 
 	private final Map<String, Expression> mEntryAnnotationMap = new HashMap<>();
 	private final Map<String, Expression> mExitAnnotationMap = new HashMap<>();
@@ -99,7 +81,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	ThreadTemplateVisitor(final Unit boogieFile, final BoogieIcfgContainer icfg) {
 		mIcfg = icfg;
 		mCurrentProcedure = null;
-		mCurrentStatement = null;
 
 		mTids = new HashSet<>();
 
@@ -133,14 +114,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		}
 	}
 
-	Map<ILocation, Set<String>> getStatementParametersMap() {
-		return mStatementParametersMap;
-	}
-
-	Map<String, Map<String, ASTType>> getProcedureVariablesMap() {
-		return mProcedureVariablesMap;
-	}
-
 	Set<Tid> getTids() {
 		return mTids;
 	}
@@ -165,44 +138,6 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		return mExitAnnotationMap;
 	}
 
-	// TODO instead of collecting global variables, check the type of variables
-	boolean containsGlobalVariables(final Statement stmt) {
-		if (mStatementVariablesMap.get(stmt.getLoc()) == null || mGlobalVariables == null) {
-			return false;
-		}
-
-		return !Collections.disjoint(mStatementVariablesMap.get(stmt.getLoc()), mGlobalVariables);
-	}
-
-	// TODO instead of collecting the local variables of each procedure, inspect the variables
-	//
-	// TODO beyond just a boolean, it might be useful to know WHICH local vars are READ and which are ASSIGNED
-	// TODO but this is probably already implemented somewhere in Ultimate (?)
-	boolean containsLocalVariables(final String procName, final Statement stmt) {
-		if (mStatementVariablesMap.get(stmt.getLoc()) == null || mGlobalVariables == null) {
-			return false;
-		}
-
-		return !Collections.disjoint(mStatementVariablesMap.get(stmt.getLoc()),
-				mProcedureVariablesMap.get(procName).keySet());
-	}
-
-	@Override
-	protected Declaration processDeclaration(final Declaration decl) {
-		switch (decl) {
-		case final VariableDeclaration varDecl -> {
-			for (final VarList varList : varDecl.getVariables()) {
-				// TODO doesn't this also catch local variable declarations?
-				Collections.addAll(mGlobalVariables, varList.getIdentifiers());
-			}
-		}
-		case final Procedure proc -> visit(proc);
-		default -> {
-		}
-		}
-		return decl;
-	}
-
 	@Override
 	protected void visit(final Procedure decl) {
 		mCurrentProcedure = decl.getIdentifier();
@@ -215,69 +150,12 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		final Expression exitInvariant = (Expression) WitnessInvariant.getAnnotation(icfgExitLoc).getInvariant();
 		mExitAnnotationMap.put(mCurrentProcedure, exitInvariant);
 
-		final Map<String, ASTType> res = new HashMap<>();
-
-		for (final VariableDeclaration varDecl : decl.getBody().getLocalVars()) {
-			for (final VarList varList : varDecl.getVariables()) {
-				for (final String id : varList.getIdentifiers()) {
-					res.put(id, varList.getType());
-				}
-			}
-		}
-
-		mProcedureVariablesMap.put(mCurrentProcedure, res);
-
 		if (!mCurrentProcedure.equals(BoogieUtils.START_PROCEDURE)
 				&& !mAssociationTidMap.containsKey(mCurrentProcedure)) {
 			mAssociationTidMap.put(mCurrentProcedure, new ArrayList<>());
 		}
 
-		for (final Statement stmt : decl.getBody().getBlock()) {
-
-			// TEST
-
-			if (WitnessGhostUpdate.getAnnotation(stmt) != null) {
-				final Map<?, ?> update = WitnessGhostUpdate.getAnnotation(stmt).getUpdate();
-				if (update != null) {
-					for (final Map.Entry<?, ?> entryUpdate : update.entrySet()) {
-						final Object key = entryUpdate.getKey();
-						final Object value = entryUpdate.getValue();
-
-						System.out.println(key + " -> " + value);
-					}
-				}
-			}
-
-			// TEST
-
-			processStatement(stmt);
-
-			final Set<String> parameters = new HashSet<>();
-
-			for (final String id : mStatementVariablesMap.getOrDefault(stmt.getLoc(), new HashSet<>())) {
-				if (mProcedureVariablesMap.get(mCurrentProcedure).containsKey(id)) {
-					parameters.add(id);
-				}
-			}
-
-			mStatementParametersMap.put(stmt.getLoc(), parameters);
-		}
-	}
-
-	@Override
-	protected Statement processStatement(final Statement statement) {
-		mCurrentStatement = statement.getLoc();
-		return super.processStatement(statement);
-	}
-
-	@Override
-	protected void visit(final AtomicStatement statement) {
-		for (final Statement stmt : statement.getBody()) {
-			processStatement(stmt);
-
-			mStatementVariablesMap.computeIfAbsent(statement.getLoc(), x -> new HashSet<>())
-					.addAll(mStatementVariablesMap.getOrDefault(stmt.getLoc(), new HashSet<>()));
-		}
+		super.visit(decl);
 	}
 
 	@Override
@@ -303,32 +181,5 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 		if (!tids.contains(tid)) {
 			tids.add(tid);
 		}
-	}
-
-	@Override
-	protected void visit(final HavocStatement statement) {
-		for (final VariableLHS var : statement.getIdentifiers()) {
-			mStatementVariablesMap.computeIfAbsent(mCurrentStatement, x -> new HashSet<>()).add(var.getIdentifier());
-		}
-	}
-
-	@Override
-	protected void visit(final VariableLHS lhs) {
-		mStatementVariablesMap.computeIfAbsent(mCurrentStatement, x -> new HashSet<>()).add(lhs.getIdentifier());
-	}
-
-	@Override
-	protected void visit(final QuantifierExpression expr) {
-		for (final VarList varList : expr.getParameters()) {
-			Collections.addAll(mStatementVariablesMap.computeIfAbsent(mCurrentStatement, x -> new HashSet<>()),
-					varList.getIdentifiers());
-		}
-
-		processExpression(expr.getSubformula());
-	}
-
-	@Override
-	protected void visit(final IdentifierExpression expr) {
-		mStatementVariablesMap.computeIfAbsent(mCurrentStatement, x -> new HashSet<>()).add(expr.getIdentifier());
 	}
 }
