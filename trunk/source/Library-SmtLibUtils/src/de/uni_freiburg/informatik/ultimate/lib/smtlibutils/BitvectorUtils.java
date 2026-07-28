@@ -29,13 +29,10 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -655,9 +652,10 @@ public final class BitvectorUtils {
 	/**
 	 * Simplifies an n-ary bitwise application: flattens nested same-operator applications, folds all literal
 	 * operands into one constant, deduplicates non-literal operands, applies absorption/annihilation, and assembles
-	 * the final term - all in one pass over a single Set. Annihilation is checked directly inside the loop, since it
-	 * only depends on the folded constant itself; absorption (dropping an identity constant) has to wait until the
-	 * loop finishes, since it depends on whether any non-literal survived.
+	 * the final term - all in one pass over a single Set. Flattening happens inline (no intermediate list) and
+	 * annihilation is checked directly inside the loop, since it only depends on the folded constant itself;
+	 * absorption (dropping an identity constant) has to wait until the loop finishes, since it depends on whether
+	 * any non-literal survived.
 	 *
 	 * @param funcname
 	 *            one of {@link #BVAND}, {@link #BVOR}, {@link #BVXOR}
@@ -668,64 +666,53 @@ public final class BitvectorUtils {
 	private static Term bitwiseOperationHelper(final Script script, final Term[] params, final String funcname) {
 		final BinaryOperator<BitvectorConstant> fold;
 		final Predicate<BitvectorConstant> isAnnihilating;
+		final Predicate<BitvectorConstant> isIdentity;
 		switch (funcname) {
 		case BVAND:
 			fold = BitvectorConstant::bvand;
 			isAnnihilating = bc -> bc.getValue().equals(BigInteger.ZERO);
+			isIdentity = BitvectorUtils::isAllOnes;
 			break;
 		case BVOR:
 			fold = BitvectorConstant::bvor;
 			isAnnihilating = BitvectorUtils::isAllOnes;
+			isIdentity = bc -> bc.getValue().equals(BigInteger.ZERO);
 			break;
 		case BVXOR:
 			fold = BitvectorConstant::bvxor;
 			isAnnihilating = bc -> false; // bvxor has no annihilating constant, only an identity (0)
+			isIdentity = bc -> bc.getValue().equals(BigInteger.ZERO);
 			break;
 		default:
 			throw new AssertionError("unsupported operator for bitwiseOperationHelper: " + funcname);
 		}
-
-		final List<Term> flatArgs = Arrays.stream(params)
-				.flatMap(p -> {
-					final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(p, funcname);
-					return appTerm != null ? Arrays.stream(appTerm.getParameters()) : Stream.of(p);
-				})
-				.collect(Collectors.toList());
+		final boolean isXor = funcname.equals(BVXOR);
 
 		final Set<Term> result = new HashSet<>();
 		BitvectorConstant mergedConstant = null;
-		for (final Term t : flatArgs) {
-			final BitvectorConstant bc = constructBitvectorConstant(t);
-			if (bc != null) {
-				mergedConstant = (mergedConstant == null) ? bc : fold.apply(mergedConstant, bc);
-				if (isAnnihilating.test(mergedConstant)) {
-					return constructTerm(script, mergedConstant); // rest of params cannot change this anymore
-				}
-			} else {
-				final boolean isNewTerm = result.add(t);
-				if (!isNewTerm && funcname.equals(BVXOR)) {
-					result.remove(t); // second (or 4th, ...) occurrence cancels: X xor X = 0
+		for (final Term p : params) {
+			// Unwrap one level of nested same-operator application, or process p itself. Arguments are built
+			// bottom-up and are therefore already flat, so a recursive descent would be redundant.
+			final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(p, funcname);
+			final Term[] toProcess = appTerm != null ? appTerm.getParameters() : new Term[] { p };
+			for (final Term t : toProcess) {
+				final BitvectorConstant bc = constructBitvectorConstant(t);
+				if (bc != null) {
+					mergedConstant = (mergedConstant == null) ? bc : fold.apply(mergedConstant, bc);
+					if (isAnnihilating.test(mergedConstant)) {
+						return constructTerm(script, mergedConstant); // rest of params cannot change this anymore
+					}
+				} else {
+					final boolean isNewTerm = result.add(t);
+					if (!isNewTerm && isXor) {
+						result.remove(t); // second (or 4th, ...) occurrence cancels: X xor X = 0
+					}
 				}
 			}
 		}
 
-		if (mergedConstant != null) {
-			// Only the "identity drops if something else survives" case remains - annihilation already handled above.
-			switch (funcname) {
-			case BVAND:
-				if (isAllOnes(mergedConstant) && !result.isEmpty()) {
-					mergedConstant = null;
-				}
-				break;
-			case BVOR:
-			case BVXOR:
-				if (mergedConstant.getValue().equals(BigInteger.ZERO) && !result.isEmpty()) {
-					mergedConstant = null;
-				}
-				break;
-			default:
-				throw new AssertionError("unsupported operator for bitwiseOperationHelper: " + funcname);
-			}
+		if (mergedConstant != null && isIdentity.test(mergedConstant) && !result.isEmpty()) {
+			mergedConstant = null; // identity drops only if something else remains
 		}
 
 		if (mergedConstant != null) {
