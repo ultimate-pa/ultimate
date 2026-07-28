@@ -34,6 +34,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -235,12 +236,9 @@ public final class BitvectorUtils {
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvugt:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvugt(x, y))
-					.simplifiedResult(script, funcname, indices, params);
-			break;
 		case bvuge:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvuge(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			// Mirror to the "less" form instead of folding these separately, e.g. (bvugt a b) -> (bvult b a).
+			result = mirrorGreaterOperator(script, funcname, indices, params);
 			break;
 		case bvslt:
 			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvslt(x, y))
@@ -251,12 +249,9 @@ public final class BitvectorUtils {
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsgt:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsgt(x, y))
-					.simplifiedResult(script, funcname, indices, params);
-			break;
 		case bvsge:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsge(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			// Same mirroring for the signed "greater" operators, e.g. (bvsge a b) -> (bvsle b a).
+			result = mirrorGreaterOperator(script, funcname, indices, params);
 			break;
 		default:
 			if (BitvectorUtils.allTermsAreBitvectorConstants(params)) {
@@ -266,6 +261,24 @@ public final class BitvectorUtils {
 			break;
 		}
 		return result;
+	}
+
+	/**
+	 * Rewrites a "greater than" comparison ({@code bvugt}, {@code bvuge}, {@code bvsgt}, {@code bvsge}) into its
+	 * mirrored "less than" form by swapping the two operands, e.g. {@code (bvugt a b)} becomes {@code (bvult b a)}.
+	 * This keeps only 4 comparison operators in normal form instead of 8. The mirrored operator name comes from
+	 * {@link RelationSymbol#swapParameters()}; the actual term is then built by dispatching back into
+	 * {@link #unfTerm}, so the existing bvult/bvule/bvslt/bvsle handling (including constant folding) is reused
+	 * as-is instead of being duplicated here.
+	 *
+	 * @param params
+	 *            the two operands of the "greater than" comparison, in their original (unswapped) order
+	 * @return the term constructed for the mirrored "less than" comparison
+	 */
+	private static Term mirrorGreaterOperator(final Script script, final String funcname, final BigInteger[] indices,
+			final Term... params) {
+		final String mirroredFuncname = RelationSymbol.convert(funcname).swapParameters().toString();
+		return unfTerm(script, mirroredFuncname, indices, params[1], params[0]);
 	}
 
 	private static abstract class BitvectorOperation {
