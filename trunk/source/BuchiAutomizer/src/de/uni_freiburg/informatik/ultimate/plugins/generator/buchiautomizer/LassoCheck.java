@@ -159,6 +159,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 	private final int mGntaDirections;
 	private final boolean mTrySimplificationTerminationArgument;
 	private final boolean mAssumeFairness;
+	private final boolean mCheckFairnessFirst;
 
 	/**
 	 * Try all templates but use the one that was found first. This is only useful to test all templates at once.
@@ -226,6 +227,7 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		mTrySimplificationTerminationArgument = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SIMPLIFY);
 		mTryTwofoldRefinement = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mAssumeFairness = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_ASSUME_STRONG_FAIRNESS);
+		mCheckFairnessFirst = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_CHECK_FAIRNESS_FIRST);
 
 		mCsToolkit = csToolkit;
 		mManagedScript = mCsToolkit.getManagedScript();
@@ -311,42 +313,23 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			return new InfeasibilityResult<>(concatCheck);
 		}
 		// concat feasible
-		final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
 		final UnmodifiableTransFormula stemTF = computeTF(stem.getWord());
-		// checking loop termination before we check lasso termination is a workaround. We want to avoid supporting
-		// invariants in possible yet the termination argument simplification of the LassoChecker is not optimal. Hence
-		// we first check only the loop, which guarantees that there are no supporting invariants.
+		final UnmodifiableTransFormula loopTF = computeTF(loop.getWord());
+		ILassoCheckResult<L> terminationCheckResult = null;
 
-		final ILassoCheckResult<L> loopTermination =
-				checkLoopTermination(loopTF, counterexample, modifiableGlobalsAtHonda);
-		// If the trace terminates there is no need to check fairness
-		if (loopTermination instanceof TerminationResult<L>) {
-			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
-			return loopTermination;
-		}
-		final var terminationCheckResult =
-				checkLassoTermination(stemTF, loopTF, counterexample, modifiableGlobalsAtHonda);
-		switch (terminationCheckResult) {
-		case final TerminationResult<L> tr:
-			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
-			return tr;
-		case final NonterminationResult<L> nr:
-			mLassoAnalysisResults.increment(LassoAnalysisResults.LASSO_NONTERMINATING);
-			break;
-		case final UnknownResult<L> ur:
-			mLassoAnalysisResults.increment(LassoAnalysisResults.TERMINATION_UNKNOWN);
-			break;
-		default:
-			throw new AssertionError("Impossible case");
+		if (!mCheckFairnessFirst) {
+			terminationCheckResult = checkTermination(counterexample, modifiableGlobalsAtHonda);
 		}
 
 //---------------------------------------------------- Fairness stuff --------------------------------------------------
 		if (!mAssumeFairness) {
+			assert !mCheckFairnessFirst : "Fairness cannot be checked first, since fairness assumptions are disabled.";
 			return terminationCheckResult;
 		}
 
 		// All traces of a sequential program are fair
 		if (mCsToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+			assert !mCheckFairnessFirst : "Fairness cannot be checked first for sequential programs.";
 			mLogger.warn("Fairness settings are being used for a sequential program!");
 			return terminationCheckResult;
 		}
@@ -362,6 +345,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 		// If there are no non-loop threads, the trace is definitely fair.
 		if (nonLoopThreads.isEmpty()) {
+			if (mCheckFairnessFirst) {
+				terminationCheckResult = checkTermination(counterexample, modifiableGlobalsAtHonda);
+			}
 			return terminationCheckResult;
 		}
 
@@ -377,7 +363,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 		final Set<Term> guards = new HashSet<>();
 		final Set<UnmodifiableTransFormula> guardTF = new HashSet<>();
 
-		// TODO: after debugging is finished, skip rest of the loop once we find a guard with formula 'true'
 		for (final IcfgLocation threadLoc : loopLocs) {
 			if (loopThreads.contains(threadLoc.getProcedure())) {
 				continue;
@@ -392,12 +377,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, edge.getTransformula(), true);
 				guards.add(GuardTerm);
 				guardTF.add(TransFormulaUtils.computeGuard(edge.getTransformula(), mManagedScript, mServices));
-				// TODO: test this! --> bringt nicht wirklich was
 				if (SmtUtils.isTrueLiteral(GuardTerm)) {
 					nonLoopThreads = new HashSet<>();
 					nonLoopThreads.add(threadLoc.getProcedure());
-					// break;
-
+					break;
 				}
 
 			}
@@ -505,6 +488,9 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 						return progTerm;
 					}
 				}
+				if (mCheckFairnessFirst) {
+					terminationCheckResult = checkTermination(counterexample, modifiableGlobalsAtHonda);
+				}
 				return terminationCheckResult;
 
 			case final UnknownResult<L> uk:
@@ -522,8 +508,42 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			}
 		}
 		// If we can't prove unfairness bc of G for any state of the loop, we have to assume the trace is fair
+		if (mCheckFairnessFirst) {
+			terminationCheckResult = checkTermination(counterexample, modifiableGlobalsAtHonda);
+		}
 		return terminationCheckResult;
 
+	}
+
+	private ILassoCheckResult<L> checkTermination(final NestedLassoRun<L, IPredicate> lasso,
+			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) throws IOException {
+		final UnmodifiableTransFormula loopTF = computeTF(lasso.getLoop().getWord());
+		final UnmodifiableTransFormula stemTF = computeTF(lasso.getStem().getWord());
+		// checking loop termination before we check lasso termination is a workaround. We want to avoid supporting
+		// invariants in possible yet the termination argument simplification of the LassoChecker is not optimal. Hence
+		// we first check only the loop, which guarantees that there are no supporting invariants.
+
+		final ILassoCheckResult<L> loopTermination = checkLoopTermination(loopTF, lasso, modifiableGlobalsAtHonda);
+		// If the trace terminates there is no need to check fairness
+		if (loopTermination instanceof TerminationResult<L>) {
+			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
+			return loopTermination;
+		}
+		final ILassoCheckResult<L> res = checkLassoTermination(stemTF, loopTF, lasso, modifiableGlobalsAtHonda);
+		switch (res) {
+		case final TerminationResult<L> tr:
+			mLassoAnalysisResults.increment(LassoAnalysisResults.STEM_FEASIBLE_LOOP_TERMINATING);
+			return tr;
+		case final NonterminationResult<L> nr:
+			mLassoAnalysisResults.increment(LassoAnalysisResults.LASSO_NONTERMINATING);
+			break;
+		case final UnknownResult<L> ur:
+			mLassoAnalysisResults.increment(LassoAnalysisResults.TERMINATION_UNKNOWN);
+			break;
+		default:
+			throw new AssertionError("Impossible case");
+		}
+		return res;
 	}
 
 	/**

@@ -144,9 +144,11 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 	private static final NcsbImplementation DEF_NCSB_IMPLEMENTATION = NcsbImplementation.ORIGINAL;
 	public static final String LABEL_AUTOMATON_TYPE = "Automaton type for concurrent programs";
 	private static final AutomatonTypeConcurrent DEF_AUTOMATON_TYPE = AutomatonTypeConcurrent.BUCHI_AUTOMATON;
-//TODO: marker fairness addition
+	// fairness settings
 	public static String LABEL_ASSUME_STRONG_FAIRNESS = "Assuming strong fairness";
 	public static boolean DEF_ASSUME_STRONG_FAIRNESS = true;
+	public static String LABEL_CHECK_FAIRNESS_FIRST = "Checking fairness of trace before termination of trace";
+	public static boolean DEF_CHECK_FAIRNESS_FIRST = false;
 
 	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
@@ -157,6 +159,8 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 		return new UltimatePreferenceItem<?>[] {
 				// TODO: marker fairness
 				new UltimatePreferenceItem<>(LABEL_ASSUME_STRONG_FAIRNESS, DEF_ASSUME_STRONG_FAIRNESS,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CHECK_FAIRNESS_FIRST, DEF_CHECK_FAIRNESS_FIRST,
 						PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_IGNORE_DOWN_STATES, false, PreferenceType.Boolean),
