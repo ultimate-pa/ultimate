@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -75,8 +74,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
 	private static final String[] VALUES_ABSTRACT_DOMAIN = { ExplicitValueDomain.class.getSimpleName(),
 			IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), EqDomain.class.getSimpleName(),
-			CompoundDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(),
-			ArrayDomain.class.getSimpleName() };
+			CompoundDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName() };
 
 	public static final String LABEL_LOOP_SUMMARIZER = "Loop Summarizer";
 	private static final String DEFAULT_LOOP_SUMMARIZER = FixpointLoopSummarizer.class.getSimpleName();

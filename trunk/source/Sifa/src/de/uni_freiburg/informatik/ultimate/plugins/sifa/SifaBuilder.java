@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -144,9 +143,6 @@ public class SifaBuilder {
 		} else if (CongruenceDomain.class.getSimpleName().equals(domainName)) {
 			domain = new CongruenceDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES),
 					mLogger, () -> timer);
-		} else if (ArrayDomain.class.getSimpleName().equals(domainName)) {
-			domain = new ArrayDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES), mLogger,
-					() -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
 		}
