@@ -13,8 +13,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder,
- wrapped.org.ojalgo.ojalgo,
- wrapped.org.ejml.ejml-simple;bundle-version="0.45.1",
  org.apache.commons.math3;bundle-version="3.6.1"
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.sifa,
  de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing,
