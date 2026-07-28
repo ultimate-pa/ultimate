@@ -29,9 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -621,40 +625,7 @@ public final class BitvectorUtils {
 	 * @return the simplified term, or an unsimplified {@code bvand} application if no simplification was possible
 	 */
 	static Term simplifyBvand(final Script script, final Term[] params) {
-		for (final Term p : params) {
-			final BitvectorConstant bv = constructBitvectorConstant(p);
-			if (bv != null && bv.getValue().equals(BigInteger.ZERO)) {
-				return constructTerm(script, bv); // X bvand 0 = 0
-			}
-		}
 
-		final List<Term> flatArgs = flatten(params, "bvand");
-		final List<BitvectorConstant> literals = new ArrayList<>();
-		final List<Term> nonLiterals = new ArrayList<>();
-		splitIntoLiteralsAndNonLiterals(flatArgs, literals, nonLiterals);
-		final Term[] sortedNonLiterals = CommuhashUtils.sortByHashCode(nonLiterals.toArray(new Term[0]));
-		final List<Term> reducedNonLiterals = collectIdempotent(sortedNonLiterals);
-
-		BitvectorConstant mergedConstant = foldLiterals(literals, BitvectorConstant::bvand);
-		if (mergedConstant != null) {
-			if (mergedConstant.getValue().equals(BigInteger.ZERO)) {
-				return constructTerm(script, mergedConstant); // Annihilation
-			}
-			if (isAllOnes(mergedConstant) && !reducedNonLiterals.isEmpty()) {
-				mergedConstant = null; // Identitaet faellt nur weg, wenn noch etwas anderes uebrig ist
-			}
-		}
-
-		final List<Term> finalArgs = new ArrayList<>();
-		if (mergedConstant != null) {
-			finalArgs.add(constructTerm(script, mergedConstant));
-		}
-		finalArgs.addAll(reducedNonLiterals);
-
-		if (finalArgs.size() == 1) {
-			return finalArgs.get(0);
-		}
-		return CommuhashUtils.term(script, "bvand", null, null, finalArgs.toArray(new Term[0]));
 	}
 
 	/**
@@ -736,9 +707,9 @@ public final class BitvectorUtils {
 
 	/**
 	 * Flattens nested applications of {@code funcname} into a single argument list, e.g. for {@code funcname =
-	 * "bvand"} the arguments of {@code (bvand a (bvand b c))} become {@code [a, b, c]}. Only one level is unwrapped
-	 * per argument on purpose: arguments are built bottom-up and are therefore already flat, so a recursive descent
-	 * would be redundant.
+	 * "bvand"} the arguments of {@code (bvand a (bvand b c))} become {@code [a, b, c]}. Only one level is unwrapped per
+	 * argument on purpose: arguments are built bottom-up and are therefore already flat, so a recursive descent would
+	 * be redundant.
 	 *
 	 * @param params
 	 *            the top-level arguments of the application, some of which may themselves be {@code funcname}
@@ -799,8 +770,8 @@ public final class BitvectorUtils {
 	}
 
 	/**
-	 * Collector for the idempotent operators bvand/bvor: since X op X = X every term is kept exactly once. The input
-	 * is already sorted, so {@code distinct()} removes duplicates while preserving that order.
+	 * Collector for the idempotent operators bvand/bvor: since X op X = X every term is kept exactly once. The input is
+	 * already sorted, so {@code distinct()} removes duplicates while preserving that order.
 	 *
 	 * @param sortedNonLiterals
 	 *            non-literal operands, sorted into Commuhash normal form
@@ -843,5 +814,37 @@ public final class BitvectorUtils {
 	 */
 	private static boolean isAllOnes(final BitvectorConstant bv) {
 		return bv.getValue().equals(BitvectorConstant.maxValue(bv.getIndex()).getValue());
+	}
+
+	private static Set<Term> bitwiseOperationHelper(final Script script, final Term[] params, final String funcname,
+			final Predicate<BitvectorConstant> isAnihilating) {
+		final Set<Term> result = new HashSet<>();
+		final List<Term> result2 = new ArrayList<>();
+		for (final Term term : params) {
+			final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(term, funcname);
+			if (appTerm != null) {
+				result2.addAll(Arrays.asList(appTerm.getParameters()));
+			} else {
+				result2.add(term);
+			}
+		}
+
+		final BitvectorConstant currentBitvectorConstant = null;
+		for (final Term term : result2) {
+			final BitvectorConstant bc = constructBitvectorConstant(term);
+			if (bc != null) {
+				if (isAnihilating.test(bc)) {
+					return Collections.singleton(term);
+				}
+				literals.add(bc);
+			} else {
+				final boolean modified = result.add(term);
+				if (!modified && funcname.equals("bvxor")) {
+					result.remove(term);
+				}
+			}
+		}
+
+		return null;
 	}
 }
