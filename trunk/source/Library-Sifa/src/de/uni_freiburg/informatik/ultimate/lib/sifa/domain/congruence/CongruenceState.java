@@ -20,6 +20,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 	private final ConstraintRepresentation mConstraints;
 	private final GeneratorRepresentation mGenerators;
+	private Boolean mIsBottom = null;
 
 	public CongruenceState(final Map<Term, Integer> varToIndex, final ConstraintRepresentation constraints) {
 		mVarToIndex = varToIndex;
@@ -236,8 +237,11 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 	@Override
 	public boolean isBottom() {
+		if (mIsBottom != null) {
+			return mIsBottom;
+		}
 		final GeneratorRepresentation generators = getGeneratorRepresentation();
-		return generators.isUnsat();
+		mIsBottom = generators.isUnsat();
+		return mIsBottom;
 	}
-
 }
