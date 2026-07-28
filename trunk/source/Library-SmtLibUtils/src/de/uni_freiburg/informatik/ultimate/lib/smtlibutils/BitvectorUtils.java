@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +35,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -628,196 +627,20 @@ public final class BitvectorUtils {
 
 	}
 
-	/**
-	 * Simplifies a (possibly n-ary) application of {@code bvand}. Folds constant arguments into a single
-	 * {@link BitvectorConstant}, flattens nested {@code bvand} applications, removes duplicate operands (bvand is
-	 * idempotent: X bvand X = X), and applies the annihilating ({@code 0}) and identity ({@code 1...1}) constants.
-	 *
-	 * @param params
-	 *            the operands of the {@code bvand} application, not necessarily constant
-	 * @return the simplified term, or an unsimplified {@code bvand} application if no simplification was possible
-	 */
+	private static final String BVAND = "bvand";
+	private static final String BVOR = "bvor";
+	private static final String BVXOR = "bvxor";
+
 	static Term simplifyBvand(final Script script, final Term[] params) {
-
+		return bitwiseOperationHelper(script, params, BVAND);
 	}
 
-	/**
-	 * Simplifies a (possibly n-ary) application of {@code bvor}. Same algorithm as {@link #simplifyBvand}, mirrored:
-	 * {@code bvor} is idempotent, its annihilator is {@code 1...1} and its identity is {@code 0}.
-	 *
-	 * @param params
-	 *            the operands of the {@code bvor} application, not necessarily constant
-	 * @return the simplified term, or an unsimplified {@code bvor} application if no simplification was possible
-	 */
 	static Term simplifyBvor(final Script script, final Term[] params) {
-		final List<Term> flatArgs = flatten(params, "bvor");
-		final List<BitvectorConstant> literals = new ArrayList<>();
-		final List<Term> nonLiterals = new ArrayList<>();
-		splitIntoLiteralsAndNonLiterals(flatArgs, literals, nonLiterals);
-		final Term[] sortedNonLiterals = CommuhashUtils.sortByHashCode(nonLiterals.toArray(new Term[0]));
-		final List<Term> reducedNonLiterals = collectIdempotent(sortedNonLiterals);
-
-		BitvectorConstant mergedConstant = foldLiterals(literals, BitvectorConstant::bvor);
-		if (mergedConstant != null) {
-			if (isAllOnes(mergedConstant)) {
-				return constructTerm(script, mergedConstant); // Annihilation
-			}
-			if (mergedConstant.getValue().equals(BigInteger.ZERO) && !reducedNonLiterals.isEmpty()) {
-				mergedConstant = null; // Identitaet faellt nur weg, wenn noch etwas anderes uebrig ist
-			}
-		}
-
-		final List<Term> finalArgs = new ArrayList<>();
-		if (mergedConstant != null) {
-			finalArgs.add(constructTerm(script, mergedConstant));
-		}
-		finalArgs.addAll(reducedNonLiterals);
-
-		if (finalArgs.size() == 1) {
-			return finalArgs.get(0);
-		}
-		return CommuhashUtils.term(script, "bvor", null, null, finalArgs.toArray(new Term[0]));
+		return bitwiseOperationHelper(script, params, BVOR);
 	}
 
-	/**
-	 * Simplifies a (possibly n-ary) application of {@code bvxor}. Folds constant arguments, flattens nested
-	 * {@code bvxor} applications, and removes operand pairs that cancel out (bvxor is nilpotent: X bvxor X = 0), so an
-	 * operand survives only if it occurs an odd number of times. Unlike {@link #simplifyBvand}/{@link #simplifyBvor},
-	 * {@code bvxor} has no annihilating constant, only the identity {@code 0}.
-	 *
-	 * @param params
-	 *            the operands of the {@code bvxor} application, not necessarily constant
-	 * @return the simplified term, or an unsimplified {@code bvxor} application if no simplification was possible
-	 */
 	static Term simplifyBvxor(final Script script, final Term[] params) {
-		final List<Term> flatArgs = flatten(params, "bvxor");
-		final List<BitvectorConstant> literals = new ArrayList<>();
-		final List<Term> nonLiterals = new ArrayList<>();
-		splitIntoLiteralsAndNonLiterals(flatArgs, literals, nonLiterals);
-		final Term[] sortedNonLiterals = CommuhashUtils.sortByHashCode(nonLiterals.toArray(new Term[0]));
-		final List<Term> reducedNonLiterals = collectXor(sortedNonLiterals);
-
-		BitvectorConstant mergedConstant = foldLiterals(literals, BitvectorConstant::bvxor);
-		if (mergedConstant != null && mergedConstant.getValue().equals(BigInteger.ZERO)
-				&& !reducedNonLiterals.isEmpty()) {
-			mergedConstant = null; // kein Annihilator bei bvxor, nur Identitaet
-		}
-
-		final List<Term> finalArgs = new ArrayList<>();
-		if (mergedConstant != null) {
-			finalArgs.add(constructTerm(script, mergedConstant));
-		}
-		finalArgs.addAll(reducedNonLiterals);
-
-		if (finalArgs.isEmpty()) {
-			return constructTerm(script, BigInteger.ZERO, params[0].getSort()); // z.B. "x xor x" -> 0
-		}
-		if (finalArgs.size() == 1) {
-			return finalArgs.get(0);
-		}
-		return CommuhashUtils.term(script, "bvxor", null, null, finalArgs.toArray(new Term[0]));
-	}
-
-	/**
-	 * Flattens nested applications of {@code funcname} into a single argument list, e.g. for {@code funcname =
-	 * "bvand"} the arguments of {@code (bvand a (bvand b c))} become {@code [a, b, c]}. Only one level is unwrapped per
-	 * argument on purpose: arguments are built bottom-up and are therefore already flat, so a recursive descent would
-	 * be redundant.
-	 *
-	 * @param params
-	 *            the top-level arguments of the application, some of which may themselves be {@code funcname}
-	 *            applications
-	 * @param funcname
-	 *            name of the associative operator being flattened ({@code bvand}, {@code bvor} or {@code bvxor})
-	 * @return the flattened argument list
-	 */
-	private static List<Term> flatten(final Term[] params, final String funcname) {
-		final List<Term> flatArgs = new ArrayList<>();
-		for (final Term p : params) {
-			final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(p, funcname);
-			if (appTerm != null) {
-				flatArgs.addAll(Arrays.asList(appTerm.getParameters()));
-			} else {
-				flatArgs.add(p);
-			}
-		}
-		return flatArgs;
-	}
-
-	/**
-	 * Splits {@code flatArgs} into bitvector literals (collected as {@link BitvectorConstant}s, for folding via
-	 * {@link #foldLiterals}) and non-literals (kept as {@link Term}s). Results are written into the two given,
-	 * initially empty output lists.
-	 *
-	 * @param flatArgs
-	 *            the (already flattened) arguments to split
-	 * @param literals
-	 *            output: the arguments that are bitvector literals
-	 * @param nonLiterals
-	 *            output: the arguments that are not bitvector literals
-	 */
-	private static void splitIntoLiteralsAndNonLiterals(final List<Term> flatArgs,
-			final List<BitvectorConstant> literals, final List<Term> nonLiterals) {
-		for (final Term t : flatArgs) {
-			final BitvectorConstant bc = constructBitvectorConstant(t);
-			if (bc != null) {
-				literals.add(bc);
-			} else {
-				nonLiterals.add(t);
-			}
-		}
-	}
-
-	/**
-	 * Folds all literals into a single {@link BitvectorConstant}, applying {@code fold} left to right.
-	 *
-	 * @param literals
-	 *            the literals to fold, in any order
-	 * @param fold
-	 *            the constant semantics of the operator, e.g. {@code BitvectorConstant::bvand}
-	 * @return the folded constant, or {@code null} if {@code literals} is empty
-	 */
-	private static BitvectorConstant foldLiterals(final List<BitvectorConstant> literals,
-			final BinaryOperator<BitvectorConstant> fold) {
-		return literals.stream().reduce(fold).orElse(null);
-	}
-
-	/**
-	 * Collector for the idempotent operators bvand/bvor: since X op X = X every term is kept exactly once. The input is
-	 * already sorted, so {@code distinct()} removes duplicates while preserving that order.
-	 *
-	 * @param sortedNonLiterals
-	 *            non-literal operands, sorted into Commuhash normal form
-	 * @return the operands with duplicates removed, in the same order
-	 */
-	private static List<Term> collectIdempotent(final Term[] sortedNonLiterals) {
-		return Arrays.stream(sortedNonLiterals).distinct().collect(Collectors.toList());
-	}
-
-	/**
-	 * Collector for the nilpotent operator bvxor: since X xor X = 0 a term survives only if it occurs an odd number of
-	 * times. The input is sorted, so equal terms are adjacent and can be counted in a single pass.
-	 *
-	 * @param sortedNonLiterals
-	 *            non-literal operands, sorted into Commuhash normal form
-	 * @return the operands that occur an odd number of times, in the same order
-	 */
-	private static List<Term> collectXor(final Term[] sortedNonLiterals) {
-		final List<Term> result = new ArrayList<>();
-		int i = 0;
-		while (i < sortedNonLiterals.length) {
-			final Term current = sortedNonLiterals[i];
-			int count = 1;
-			while (i + 1 < sortedNonLiterals.length && current.equals(sortedNonLiterals[i + 1])) {
-				count++;
-				i++;
-			}
-			if (count % 2 != 0) {
-				result.add(current);
-			}
-			i++;
-		}
-		return result;
+		return bitwiseOperationHelper(script, params, BVXOR);
 	}
 
 	/**
@@ -829,35 +652,92 @@ public final class BitvectorUtils {
 		return bv.getValue().equals(BitvectorConstant.maxValue(bv.getIndex()).getValue());
 	}
 
-	private static Set<Term> bitwiseOperationHelper(final Script script, final Term[] params, final String funcname,
-			final Predicate<BitvectorConstant> isAnihilating) {
+	/**
+	 * Simplifies an n-ary bitwise application: flattens nested same-operator applications, folds all literal
+	 * operands into one constant, deduplicates non-literal operands, applies absorption/annihilation, and assembles
+	 * the final term - all in one pass over a single Set. Annihilation is checked directly inside the loop, since it
+	 * only depends on the folded constant itself; absorption (dropping an identity constant) has to wait until the
+	 * loop finishes, since it depends on whether any non-literal survived.
+	 *
+	 * @param funcname
+	 *            one of {@link #BVAND}, {@link #BVOR}, {@link #BVXOR}
+	 * @param params
+	 *            the top-level arguments of the application, not necessarily flattened or literal
+	 * @return the simplified term
+	 */
+	private static Term bitwiseOperationHelper(final Script script, final Term[] params, final String funcname) {
+		final BinaryOperator<BitvectorConstant> fold;
+		final Predicate<BitvectorConstant> isAnnihilating;
+		switch (funcname) {
+		case BVAND:
+			fold = BitvectorConstant::bvand;
+			isAnnihilating = bc -> bc.getValue().equals(BigInteger.ZERO);
+			break;
+		case BVOR:
+			fold = BitvectorConstant::bvor;
+			isAnnihilating = BitvectorUtils::isAllOnes;
+			break;
+		case BVXOR:
+			fold = BitvectorConstant::bvxor;
+			isAnnihilating = bc -> false; // bvxor has no annihilating constant, only an identity (0)
+			break;
+		default:
+			throw new AssertionError("unsupported operator for bitwiseOperationHelper: " + funcname);
+		}
+
+		final List<Term> flatArgs = Arrays.stream(params)
+				.flatMap(p -> {
+					final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(p, funcname);
+					return appTerm != null ? Arrays.stream(appTerm.getParameters()) : Stream.of(p);
+				})
+				.collect(Collectors.toList());
+
 		final Set<Term> result = new HashSet<>();
-		final List<Term> result2 = new ArrayList<>();
-		for (final Term term : params) {
-			final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(term, funcname);
-			if (appTerm != null) {
-				result2.addAll(Arrays.asList(appTerm.getParameters()));
-			} else {
-				result2.add(term);
-			}
-		}
-
-		final BitvectorConstant currentBitvectorConstant = null;
-		for (final Term term : result2) {
-			final BitvectorConstant bc = constructBitvectorConstant(term);
+		BitvectorConstant mergedConstant = null;
+		for (final Term t : flatArgs) {
+			final BitvectorConstant bc = constructBitvectorConstant(t);
 			if (bc != null) {
-				if (isAnihilating.test(bc)) {
-					return Collections.singleton(term);
+				mergedConstant = (mergedConstant == null) ? bc : fold.apply(mergedConstant, bc);
+				if (isAnnihilating.test(mergedConstant)) {
+					return constructTerm(script, mergedConstant); // rest of params cannot change this anymore
 				}
-				literals.add(bc);
 			} else {
-				final boolean modified = result.add(term);
-				if (!modified && funcname.equals("bvxor")) {
-					result.remove(term);
+				final boolean isNewTerm = result.add(t);
+				if (!isNewTerm && funcname.equals(BVXOR)) {
+					result.remove(t); // second (or 4th, ...) occurrence cancels: X xor X = 0
 				}
 			}
 		}
 
-		return null;
+		if (mergedConstant != null) {
+			// Only the "identity drops if something else survives" case remains - annihilation already handled above.
+			switch (funcname) {
+			case BVAND:
+				if (isAllOnes(mergedConstant) && !result.isEmpty()) {
+					mergedConstant = null;
+				}
+				break;
+			case BVOR:
+			case BVXOR:
+				if (mergedConstant.getValue().equals(BigInteger.ZERO) && !result.isEmpty()) {
+					mergedConstant = null;
+				}
+				break;
+			default:
+				throw new AssertionError("unsupported operator for bitwiseOperationHelper: " + funcname);
+			}
+		}
+
+		if (mergedConstant != null) {
+			result.add(constructTerm(script, mergedConstant)); // surviving literal joins the same set
+		}
+
+		if (result.isEmpty()) {
+			return constructTerm(script, BigInteger.ZERO, params[0].getSort()); // e.g. "x xor x" -> 0
+		}
+		if (result.size() == 1) {
+			return result.iterator().next();
+		}
+		return CommuhashUtils.term(script, funcname, null, null, result.toArray(new Term[0]));
 	}
 }
