@@ -75,11 +75,10 @@ public class ConstraintRepresentation {
 				+ getCongruenceMatrix() + ", mIsMinimal=" + mIsMinimal + ", mIsStrongMinimal=" + mIsStrongMinimal + "]";
 	}
 
-	public boolean equals(final ConstraintRepresentation other) {
-		// Two unsatisfiable representations might not look the same, but still
-		// represent the same system
-		if (computeGeneratorRepresentation().isUnsat() && other.computeGeneratorRepresentation().isUnsat()) {
-			return true;
+	@Override
+	public boolean equals(final Object object) {
+		if (!(object instanceof final ConstraintRepresentation other)) {
+			return false;
 		}
 
 		if (!getEqualityMatrix().equals(other.getEqualityMatrix())) {

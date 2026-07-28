@@ -224,11 +224,15 @@ public class ConstraintRepresentationTest {
 	public static ConstraintRepresentation getConstraints13() {
 		// @formatter:off
 		/*
-		 * 0 = 1
+		 * 1 = 0
+		 * x1 = 0
+		 * x2 = 0
 		 */
 		// @formatter:on
 		final List<RationalVector> equalities = new ArrayList<>();
-		equalities.add(new RationalVector(List.of(Rational.valueOf(-1, 1), Rational.ZERO, Rational.ZERO)));
+		equalities.add(RationalVector.getUnitVector(0, 3));
+		equalities.add(RationalVector.getUnitVector(1, 3));
+		equalities.add(RationalVector.getUnitVector(2, 3));
 
 		final List<RationalVector> congruences = new ArrayList<>();
 
@@ -298,7 +302,7 @@ public class ConstraintRepresentationTest {
 			final GeneratorRepresentation result = constraints.get(i).computeGeneratorRepresentation();
 			// System.out.println(expected);
 			// System.out.println(result);
-			Assert.assertTrue(expected.equals(result));
+			Assert.assertEquals(expected, result);
 		}
 	}
 

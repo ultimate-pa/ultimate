@@ -221,10 +221,6 @@ public class GeneratorRepresentationTest {
 
 	@Test
 	public void testMinimize() {
-		final var sth = getGenerators14();
-		sth.minimize();
-		Assert.assertTrue(hasMinimalForm(sth));
-
 		for (final GeneratorRepresentation generators : getTestGenerators()) {
 			// System.out.println(generators);
 			generators.minimize();
@@ -251,7 +247,7 @@ public class GeneratorRepresentationTest {
 			final ConstraintRepresentation result = generators.get(i).computeConstraintRepresentation();
 			System.out.println(expected);
 			System.out.println(result);
-			Assert.assertTrue(expected.equals(result));
+			Assert.assertEquals(expected, result);
 		}
 	}
 

@@ -42,9 +42,10 @@ public class GeneratorRepresentation {
 				+ ", mIsMinimal=" + isMinimal() + "]";
 	}
 
-	public boolean equals(final GeneratorRepresentation other) {
-		if (isUnsat() && other.isUnsat()) {
-			return true;
+	@Override
+	public boolean equals(final Object object) {
+		if (!(object instanceof final GeneratorRepresentation other)) {
+			return false;
 		}
 
 		if (!getLineMatrix().equals(other.getLineMatrix())) {
