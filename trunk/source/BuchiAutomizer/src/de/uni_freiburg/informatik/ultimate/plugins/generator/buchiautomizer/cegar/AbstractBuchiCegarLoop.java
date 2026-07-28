@@ -580,7 +580,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		final IPredicate[] unifiedStemInterpolants = getStemInterpolants(stem, unfairRes.result().getStemPrecondition(),
 				unfairRes.result().getStemPostcondition(), pu);
 
-		final IPredicate[] unifiedLoopInterpolants = getLoopInterpolants(loop, hondaPredicate, rankEqAndSiPrime, pu);
+		final IPredicate[] unifiedLoopInterpolants =
+				getLoopInterpolants(loop, hondaPredicate, pu.getOrConstructPredicate(rankEqAndSiPrime), pu);
 
 		final IHoareTripleChecker ehtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, pu);
@@ -796,6 +797,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 								bspmResult.getSiConjunction());
 				final IPredicate[] stemInterpolants = getStemInterpolants(mCounterexample.getStem(),
 						bspmResult.getStemPrecondition(), bspmResult.getStemPostcondition(), pu);
+
 				final IPredicate[] loopInterpolants =
 						getLoopInterpolants(mCounterexample.getLoop(), hondaPredicate, rankEqAndSi, pu);
 				// input automaton : lasso module (automaton recognizing only the lasso trace)
