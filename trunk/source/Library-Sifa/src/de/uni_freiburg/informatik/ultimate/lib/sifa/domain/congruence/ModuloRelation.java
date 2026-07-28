@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ModTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -69,7 +68,7 @@ public class ModuloRelation {
 			// Modulo equality
 			final ModuloRelation moduloRelation = new ModuloRelation(affineTerm, modInt);
 			return List.of(moduloRelation);
-			// TODO: Remove the other cases
+
 		} else if (relationSymbol.equals(RelationSymbol.DISTINCT) && modInt.compareTo(MAX_NEG_MOD_COUNT) <= 0) {
 			// Have an inequality with a mod value that's small enough
 			final List<ModuloRelation> list = new ArrayList<>();
@@ -82,7 +81,6 @@ public class ModuloRelation {
 			return list;
 		} else {
 			// Can't handle the other cases
-			// TODO: Overthink these cases again
 			return List.of();
 		}
 	}
@@ -204,14 +202,15 @@ public class ModuloRelation {
 
 	public RationalVector getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
-		// TODO: What does following line do when modInt is 2^32 ?
-		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mMod))
-				.collect(Collectors.toList());
-		final Rational rationalMod = Rational.valueOf(mMod, BigInteger.ONE);
-		final List<Rational> divProtoVector = modProtoVector.stream().map(rational -> rational.div(rationalMod))
-				.collect(Collectors.toList());
 
-		return new RationalVector(divProtoVector);
+		// Do mod on whole entries to make numbers smaller
+		// TODO: Look at if also possible for not whole numbers
+		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mMod))
+				.toList();
+		final RationalVector modVector = new RationalVector(modProtoVector);
+
+		// Divide every entry through mMod
+		return modVector.divide(mMod);
 	}
 
 }

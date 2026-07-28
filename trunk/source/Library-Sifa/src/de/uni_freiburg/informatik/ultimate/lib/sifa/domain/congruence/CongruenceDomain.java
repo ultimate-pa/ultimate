@@ -15,12 +15,14 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.StateBasedDomain;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * TODO: Do like OctagonDomain
+ */
 public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 
 	public CongruenceDomain(final SymbolicTools tools, final int maxDisjuncts, final ILogger logger,
 			final Supplier<IProgressAwareTimer> timeout) {
 		super(tools, maxDisjuncts, logger, timeout, new CongruenceStateProvider(tools.getScript()));
-		// TODO Auto-generated constructor stub
 	}
 
 	private static class CongruenceStateProvider implements IStateProvider<CongruenceState> {
@@ -86,7 +88,6 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 
 		@Override
 		public Term preprocessTerm(final Term term) {
-			// TODO Auto-generated method stub
 			return term;
 		}
 

@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CongruenceUtil {
 
-	/*
+	/**
 	 * Eliminates the field in minuendVector by subtracting a multiple of the
 	 * subtrahendVector and returns the updated minuendVector
 	 */
@@ -30,7 +30,7 @@ public class CongruenceUtil {
 		return v2.subtract(v1.multiply(factor));
 	}
 
-	/*
+	/**
 	 * Eliminates the field in minuendVector by subtracting a multiple of the
 	 * subtrahendVector in a way that conserves modulo relations and returns the
 	 * updated minuendVector and subtrahendVector
