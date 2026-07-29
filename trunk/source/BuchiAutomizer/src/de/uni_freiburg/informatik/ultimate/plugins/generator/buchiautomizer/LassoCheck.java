@@ -319,6 +319,10 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 		if (!mCheckFairnessFirst) {
 			terminationCheckResult = checkTermination(counterexample, modifiableGlobalsAtHonda);
+			// atm checkTermination should only return Termination,Nontermination and Unknown
+			if (terminationCheckResult instanceof TerminationResult) {
+				return terminationCheckResult;
+			}
 		}
 
 //---------------------------------------------------- Fairness stuff --------------------------------------------------
@@ -515,6 +519,15 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 
 	}
 
+	/**
+	 * Check the termination of a trace; Assumes that feasibility of the trace has already been checked.
+	 *
+	 * @param lasso
+	 *            - trace whose termination should be checked
+	 * @param modifiableGlobalsAtHonda
+	 * @return unknown, termination or nontermination result
+	 * @throws IOException
+	 */
 	private ILassoCheckResult<L> checkTermination(final NestedLassoRun<L, IPredicate> lasso,
 			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) throws IOException {
 		final UnmodifiableTransFormula loopTF = computeTF(lasso.getLoop().getWord());
@@ -796,7 +809,6 @@ public class LassoCheck<L extends IIcfgTransition<?>> {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
-		// TODO: catch infeasible loops here! Problem is that mBspm has mostly null fields here
 		if (!withStem) {
 			stemTF = TransFormulaBuilder.getTrivialTransFormula(mManagedScript);
 		}
