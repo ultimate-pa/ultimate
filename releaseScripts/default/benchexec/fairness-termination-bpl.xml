@@ -2,7 +2,9 @@
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="120" hardtimelimit="130" cpuCores="2">
 
   <resultfiles></resultfiles>
-  <option name="--full-output" />
+  <option name="--force-no-wrapper" />
+  <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerBplInline_IcfgBuilder.xml</option>
+  <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Termination-32bit-Automizer_Default.epf</option>
 
   <rundefinition name="NoFairness">
     <option name="--buchiautomizer.assuming.strong.fairness">false</option>
@@ -18,8 +20,8 @@
     <option name="--buchiautomizer.checking.fairness.of.trace.before.termination.of.trace">true</option>
   </rundefinition>
 
-  <tasks name="SVCOMP ConcurrencySafety-Main">
-    <includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+  <tasks name="FairnessBenchmarks">
+    <include>../../../trunk/examples/concurrent/bpl/termination/fairness/for evaluation/**/*.bpl</include>
     <propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
   </tasks>
 </benchmark>
