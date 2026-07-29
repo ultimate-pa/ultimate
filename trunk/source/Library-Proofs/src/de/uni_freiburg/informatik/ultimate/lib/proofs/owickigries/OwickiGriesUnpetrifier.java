@@ -217,7 +217,10 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 
 			// update ghost mirrors to reflect the updated value of the mirrored variable
 			for (final var pv : edge.getTransformula().getAssignedVars()) {
-				if (pv.isGlobal() || !mGhostMirrors.containsKey(pv)) {
+				if (pv.isGlobal() || !mGhostMirrors.containsKey(pv)
+						|| !pv.getProcedure().equals(edge.getPrecedingProcedure())) {
+					// We skip updates for globals, variables that don't need a mirror, and at call transitions where
+					// the mirrored variable is not in the caller's scope.
 					continue;
 				}
 				final var ghost = mGhostMirrors.get(pv);
