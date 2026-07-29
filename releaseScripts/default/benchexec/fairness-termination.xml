@@ -3,17 +3,23 @@
 
   <resultfiles></resultfiles>
   <option name="--full-output" />
-  
-  <rundefinition name="Default">
+
+  <rundefinition name="NoFairness">
     <option name="--buchiautomizer.assuming.strong.fairness">false</option>
-	</rundefinition>
-  
-  <rundefinition name="Fairness">
+  </rundefinition>
+
+  <rundefinition name="FairnessLast">
     <option name="--buchiautomizer.assuming.strong.fairness">true</option>
-	</rundefinition>
+    <option name="--buchiautomizer.checking.fairness.of.trace.before.termination.of.trace">false</option>
+  </rundefinition>
+
+  <rundefinition name="FairnessFirst">
+    <option name="--buchiautomizer.assuming.strong.fairness">true</option>
+    <option name="--buchiautomizer.checking.fairness.of.trace.before.termination.of.trace">true</option>
+  </rundefinition>
 
   <tasks name="SVCOMP ConcurrencySafety-Main">
-		<includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
-	</tasks>
+    <includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
+  </tasks>
 </benchmark>
