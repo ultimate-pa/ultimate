@@ -203,8 +203,8 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	private Map<L, GhostUpdate> computeUpdates(final IPetriNet<L, P> petrifiedProgram,
 			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
 		final var result = new HashMap<L, GhostUpdate>();
-		for (final var entry : annotation.getAssignmentMapping().entrySet()) {
-			final var transition = entry.getKey();
+
+		for (final var transition : petrifiedProgram.getTransitions()) {
 			final var edge = transition.getSymbol();
 			final var originalEdge = mUnpetrifyAction.apply(edge);
 			if (result.containsKey(originalEdge)) {
@@ -228,11 +228,13 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 			// TODO add updates of new ghost variables for thread IDs when edge is entryEdge of template
 			assert mThreadIdVars.isEmpty() : "missing update of ghost variables: " + mThreadIdVars;
 
-			final var combinedUpdate = GhostUpdate.combine(entry.getValue(), newUpdates);
+			final GhostUpdate oldUpdate = annotation.getAssignmentMapping().get(transition);
+			final GhostUpdate combinedUpdate = GhostUpdate.combine(oldUpdate, newUpdates);
 			if (combinedUpdate != null) {
 				result.put(originalEdge, combinedUpdate);
 			}
 		}
+
 		return result;
 	}
 
