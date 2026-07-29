@@ -157,7 +157,16 @@ public final class GhostUpdate {
 		if (oldUpdate == null) {
 			return new GhostUpdate(newUpdates);
 		}
-		return oldUpdate;
+
+		final var combinedMap = new HashMap<>(oldUpdate.mUpdates);
+		for (final var entry : newUpdates.entrySet()) {
+			if (combinedMap.containsKey(entry.getKey())) {
+				throw new IllegalArgumentException(
+						"Cannot combine conflicting ghost updates (conflicting variable: " + entry.getKey() + ")");
+			}
+			combinedMap.put(entry.getKey(), entry.getValue());
+		}
+		return new GhostUpdate(combinedMap);
 	}
 
 	/**
