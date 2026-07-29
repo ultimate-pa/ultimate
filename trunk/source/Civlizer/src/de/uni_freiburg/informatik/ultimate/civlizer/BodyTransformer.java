@@ -44,9 +44,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -269,14 +271,16 @@ final class BodyTransformer extends BoogieTransformer {
 						mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
 
 				final Statement[] body = processStatements(whileStmt.getBody());
-				final Statement firstAnnotation = body[0];
+				final CallStatement firstAnnotation = (CallStatement) body[0];
+				final LoopInvariantSpecification[] loopInvariant =
+						{ new LoopInvariantSpecification(null, false, new BooleanLiteral(null, true)),
+								new LoopInvariantSpecification(null, false, new FunctionApplication(null,
+										firstAnnotation.getMethodName(), firstAnnotation.getArguments())) };
 
 				// test invariant TODO change
 				newStatements.add(assignCondition);
 				newStatements.add(new WhileStatement(null, new IdentifierExpression(whileStmt.getLoc(), "condition"),
-						new LoopInvariantSpecification[] { new LoopInvariantSpecification(null, false,
-								whileStmt.getCondition()) } /* whileStmt.getInvariants() */,
-						Stream.concat(Arrays.stream(body), Stream.of(firstAnnotation, assignCondition))
+						loopInvariant, Stream.concat(Arrays.stream(body), Stream.of(firstAnnotation, assignCondition))
 								.toArray(Statement[]::new)));
 
 			} else if (statement instanceof ForkStatement || globalVar && !localVar) {
