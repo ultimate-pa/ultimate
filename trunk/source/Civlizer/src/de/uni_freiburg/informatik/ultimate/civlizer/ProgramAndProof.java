@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -118,53 +120,71 @@ final class ProgramAndProof {
 	 * </ul>
 	 * </p>
 	 */
+	/**
+	 * Preprocesses the ICFC by initializing auxiliary structures and extracting ghost updates from CFG edges.
+	 */
 	void preprocess() {
 		mTemplateVisitor = new ThreadTemplateVisitor(mBoogieAst, mIcfg);
 		mGhostUpdateMap = new HashMap<>();
+
 		computeAnnotationMap();
 
-		// improve readability TODO
-
-		final var programPoints = mIcfg.getProgramPoints();
-
-		for (final Map<?, BoogieIcfgLocation> innerMap : programPoints.values()) {
-			for (final BoogieIcfgLocation location : innerMap.values()) {
-
-				for (final var edge : location.getOutgoingEdges()) {
-					if (WitnessGhostUpdate.getAnnotation(edge) != null) {
-
-						final Set<CallStatement> assignments = new HashSet<>();
-						final ILocation loc = ILocation.getAnnotation(edge);
-
-						System.out.println();
-						System.out.println("Location : " + loc);
-						System.out.println("Edge : " + edge);
-
-						if (loc != null) {
-							final Map<?, ?> update = WitnessGhostUpdate.getAnnotation(edge).getUpdate();
-
-							// TODO improve readability
-
-							for (final Map.Entry<?, ?> updateEntry : update.entrySet()) {
-								System.out.println(updateEntry.getKey());
-								System.out.println(updateEntry.getValue());
-
-								final IntegerLiteral layerNum = new IntegerLiteral(loc, "2");
-
-								final CallStatement assign = new CallStatement(loc,
-										new NamedAttribute[] {
-												new NamedAttribute(loc, "layer", new Expression[] { layerNum }) },
-										false,
-										new VariableLHS[] { new VariableLHS(loc, updateEntry.getKey().toString()) },
-										"Copy", new Expression[] { (Expression) updateEntry.getValue() });
-								assignments.add(assign);
-							}
-							mGhostUpdateMap.put(loc, assignments);
-						}
-					}
-				}
-			}
+		for (final BoogieIcfgLocation location : getProgramLocations()) {
+			processGhostUpdates(location);
 		}
+	}
+
+	private Collection<BoogieIcfgLocation> getProgramLocations() {
+		final Collection<BoogieIcfgLocation> locations = new ArrayList<>();
+
+		for (final Map<?, BoogieIcfgLocation> programPoint : mIcfg.getProgramPoints().values()) {
+			locations.addAll(programPoint.values());
+		}
+
+		return locations;
+	}
+
+	private void processGhostUpdates(final BoogieIcfgLocation location) {
+		for (final var edge : location.getOutgoingEdges()) {
+			final WitnessGhostUpdate ghostUpdate = WitnessGhostUpdate.getAnnotation(edge);
+
+			if (ghostUpdate == null) {
+				continue;
+			}
+
+			final ILocation updateLocation = ILocation.getAnnotation(edge);
+
+			if (updateLocation == null) {
+				continue;
+			}
+
+			final Set<CallStatement> assignments =
+					createGhostUpdateAssignments(updateLocation, ghostUpdate.getUpdate());
+
+			mGhostUpdateMap.put(updateLocation, assignments);
+		}
+	}
+
+	private Set<CallStatement> createGhostUpdateAssignments(final ILocation location, final Map<?, ?> updates) {
+
+		final Set<CallStatement> assignments = new HashSet<>();
+
+		for (final Map.Entry<?, ?> update : updates.entrySet()) {
+			assignments.add(
+					createGhostUpdateAssignment(location, update.getKey().toString(), (Expression) update.getValue()));
+		}
+
+		return assignments;
+	}
+
+	private CallStatement createGhostUpdateAssignment(final ILocation location, final String variableName,
+			final Expression value) {
+
+		final IntegerLiteral layerNum = new IntegerLiteral(location, "2");
+
+		return new CallStatement(location,
+				new NamedAttribute[] { new NamedAttribute(location, "layer", new Expression[] { layerNum }) }, false,
+				new VariableLHS[] { new VariableLHS(location, variableName) }, "Copy", new Expression[] { value });
 	}
 
 	private void computeAnnotationMap() {

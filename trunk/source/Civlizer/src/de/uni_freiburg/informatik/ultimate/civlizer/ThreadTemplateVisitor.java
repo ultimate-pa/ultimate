@@ -24,11 +24,11 @@
  * licensors of the ULTIMATE Civlizer plug-in grant you additional permission
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,29 +46,23 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInv
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
- * Visitor over a Boogie AST that extracts thread-related metadata, variable usage information and annotation data from
- * a program.
+ * Visitor over a Boogie AST that extracts thread-related metadata and witness annotations.
  *
  * <p>
- * This visitor builds several internal mappings while traversing a Boogie program, including:
+ * For each procedure, this visitor collects:
  * <ul>
- * <li>Global and procedure-local variable usage per statement location</li>
- * <li>Procedure parameter usage derived from statements</li>
- * <li>Thread identifiers (TIDs) associated or used in thread template</li>
- * <li>Entry, exit, and final invariants extracted from witness annotations</li>
+ * <li>TIDs associated with the procedure when it is forked</li>
+ * <li>TIDs used by the procedure in fork and join statements</li>
+ * <li>The union of associated and used TIDs</li>
+ * <li>Entry and exit witness invariants</li>
  * </ul>
  *
  * <p>
- * The collected information is later used by the Civlizer analysis pipeline to reason about concurrency structure and
- * thread associations.
- *
- * <p>
- * Thread identifiers are represented using {@link Tid}, and are tracked in association, usage, and global TID sets.
+ * TIDs are represented by {@link Tid}.
  */
 final class ThreadTemplateVisitor extends BoogieVisitor {
 
 	private final BoogieIcfgContainer mIcfg;
-	private String mCurrentProcedure;
 
 	private final Map<String, Expression> mEntryAnnotationMap = new HashMap<>();
 	private final Map<String, Expression> mExitAnnotationMap = new HashMap<>();
@@ -76,44 +70,24 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	private final Map<String, List<Tid>> mAssociationTidMap = new HashMap<>();
 	private final Map<String, List<Tid>> mUsedTidMap = new HashMap<>();
 	private final Map<String, List<Tid>> mAllTidMap = new HashMap<>();
-	private final Set<Tid> mTids;
+
+	private final Set<Tid> mTids = new LinkedHashSet<>();
+
+	private String mCurrentProcedure;
 
 	ThreadTemplateVisitor(final Unit boogieFile, final BoogieIcfgContainer icfg) {
 		mIcfg = icfg;
-		mCurrentProcedure = null;
 
-		mTids = new HashSet<>();
-
-		for (final Declaration elem : boogieFile.getDeclarations()) {
-			processDeclaration(elem);
+		for (final Declaration declaration : boogieFile.getDeclarations()) {
+			processDeclaration(declaration);
 		}
 
-		for (final String key : mAssociationTidMap.keySet()) {
-			mAllTidMap.put(key, new ArrayList<>(mAssociationTidMap.get(key)));
-		}
-
-		for (final String key : mUsedTidMap.keySet()) {
-			final List<Tid> tids = mAllTidMap.computeIfAbsent(key, k -> new ArrayList<>());
-
-			for (final Tid tid : mUsedTidMap.get(key)) {
-				if (!tids.contains(tid)) {
-					tids.add(tid);
-				}
-			}
-		}
-
-		// remove duplicates per list
-		for (final List<Tid> list : mAllTidMap.values()) {
-			final Set<Tid> dedup = new LinkedHashSet<>(list);
-			list.clear();
-			list.addAll(dedup);
-		}
-
-		for (final List<Tid> tidList : mAllTidMap.values()) {
-			mTids.addAll(tidList);
-		}
+		buildAllTidMap();
 	}
 
+	/**
+	 * Returns all TIDs occurring in the thread template.
+	 */
 	Set<Tid> getTids() {
 		return mTids;
 	}
@@ -139,47 +113,76 @@ final class ThreadTemplateVisitor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(final Procedure decl) {
-		mCurrentProcedure = decl.getIdentifier();
+	protected void visit(final Procedure procedure) {
+		mCurrentProcedure = procedure.getIdentifier();
 
-		final var icfgEntryLoc = mIcfg.getProcedureEntryNodes().get(mCurrentProcedure);
-		final Expression entryInvariant = (Expression) WitnessInvariant.getAnnotation(icfgEntryLoc).getInvariant();
-		mEntryAnnotationMap.put(mCurrentProcedure, entryInvariant);
+		collectProcedureAnnotations(procedure);
 
-		final var icfgExitLoc = mIcfg.getProcedureExitNodes().get(mCurrentProcedure);
-		final Expression exitInvariant = (Expression) WitnessInvariant.getAnnotation(icfgExitLoc).getInvariant();
-		mExitAnnotationMap.put(mCurrentProcedure, exitInvariant);
-
-		if (!mCurrentProcedure.equals(BoogieUtils.START_PROCEDURE)
-				&& !mAssociationTidMap.containsKey(mCurrentProcedure)) {
-			mAssociationTidMap.put(mCurrentProcedure, new ArrayList<>());
+		// Every non-start procedure is guaranteed to have an entry in the
+		// association map, even if it is never forked.
+		if (!BoogieUtils.START_PROCEDURE.equals(mCurrentProcedure)) {
+			mAssociationTidMap.computeIfAbsent(mCurrentProcedure, key -> new ArrayList<>());
 		}
 
-		super.visit(decl);
+		super.visit(procedure);
 	}
 
 	@Override
 	protected void visit(final ForkStatement statement) {
 		final Tid tid = new Tid(statement.getThreadID());
 
-		List<Tid> tids = mAssociationTidMap.computeIfAbsent(statement.getProcedureName(), x -> new ArrayList<>());
-		if (!tids.contains(tid)) {
-			tids.add(tid);
-		}
-
-		tids = mUsedTidMap.computeIfAbsent(mCurrentProcedure, x -> new ArrayList<>());
-		if (!tids.contains(tid)) {
-			tids.add(tid);
-		}
+		addTid(mAssociationTidMap, statement.getProcedureName(), tid);
+		addTid(mUsedTidMap, mCurrentProcedure, tid);
 	}
 
 	@Override
 	protected void visit(final JoinStatement statement) {
 		final Tid tid = new Tid(statement.getThreadID());
 
-		final List<Tid> tids = mUsedTidMap.computeIfAbsent(mCurrentProcedure, x -> new ArrayList<>());
-		if (!tids.contains(tid)) {
-			tids.add(tid);
+		addTid(mUsedTidMap, mCurrentProcedure, tid);
+	}
+
+	private void collectProcedureAnnotations(final Procedure procedure) {
+		final String procedureName = procedure.getIdentifier();
+
+		final var entryNode = mIcfg.getProcedureEntryNodes().get(procedureName);
+		final var entryAnnotation = WitnessInvariant.getAnnotation(entryNode);
+		if (entryAnnotation != null) {
+			mEntryAnnotationMap.put(procedureName, (Expression) entryAnnotation.getInvariant());
+		}
+
+		final var exitNode = mIcfg.getProcedureExitNodes().get(procedureName);
+		final var exitAnnotation = WitnessInvariant.getAnnotation(exitNode);
+		if (exitAnnotation != null) {
+			mExitAnnotationMap.put(procedureName, (Expression) exitAnnotation.getInvariant());
+		}
+	}
+
+	private static void addTid(final Map<String, List<Tid>> tidMap, final String key, final Tid tid) {
+		tidMap.computeIfAbsent(key, ignored -> new ArrayList<>()).add(tid);
+	}
+
+	private void buildAllTidMap() {
+		for (final String procedure : mAssociationTidMap.keySet()) {
+			mAllTidMap.put(procedure, new ArrayList<>(mAssociationTidMap.get(procedure)));
+		}
+
+		for (final var entry : mUsedTidMap.entrySet()) {
+			final List<Tid> allTids = mAllTidMap.computeIfAbsent(entry.getKey(), ignored -> new ArrayList<>());
+
+			for (final Tid tid : entry.getValue()) {
+				if (!allTids.contains(tid)) {
+					allTids.add(tid);
+				}
+			}
+		}
+
+		// Preserve insertion order while removing duplicates.
+		for (final List<Tid> tids : mAllTidMap.values()) {
+			final Set<Tid> uniqueTids = new LinkedHashSet<>(tids);
+			tids.clear();
+			tids.addAll(uniqueTids);
+			mTids.addAll(uniqueTids);
 		}
 	}
 }
