@@ -50,7 +50,7 @@ public final class StrongestPostconditionInterferenceFactory
 		}
 		final RelationalInterference summary = new RelationalInterference(relationalInterference,
 				mPostcondition.prepareRelation(relationalInterference),
-				unconditionalPostStateOf(relationalInterference), writesArray(edge));
+				unconditionalPostStateOf(relationalInterference));
 		accumulator.merge(groupKeyFor(edge), summary, this::mergeSummaries);
 	}
 
@@ -66,10 +66,7 @@ public final class StrongestPostconditionInterferenceFactory
 		final IPredicate mergedRelation = disjoin(left.relationalInterference(), right.relationalInterference());
 		final IPredicate mergedPostState = disjoin(left.unconditionalPostState(), right.unconditionalPostState());
 		return new RelationalInterference(mergedRelation, mPostcondition.prepareRelation(mergedRelation),
-				mergedPostState, left.requiresArrayFallback() || right.requiresArrayFallback());
+				mergedPostState);
 	}
 
-	private static boolean writesArray(final TranslatedInterferenceOfEdge edge) {
-		return edge.changedGlobals().stream().anyMatch(v -> v.getTermVariable().getSort().isArraySort());
-	}
 }

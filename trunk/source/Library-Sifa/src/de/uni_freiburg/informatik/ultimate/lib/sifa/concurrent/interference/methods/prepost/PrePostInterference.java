@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.KeyedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -69,7 +70,13 @@ public final class PrePostInterference extends KeyedInterferenceSet<PrePostInter
 					generated = domain.join(generated, pair.postState());
 				}
 			}
-			if (!hasGenerated || domain.isSubsetEq(generated, current).isTrueForAbstraction()) {
+			if (!hasGenerated) {
+				return current;
+			}
+			final ResultForAlteredInputs genSubsetCur = domain.isSubsetEq(generated, current);
+			generated = genSubsetCur.getLhs();
+			current = genSubsetCur.getRhs();
+			if (genSubsetCur.isTrueForAbstraction()) {
 				return current;
 			}
 
@@ -81,10 +88,12 @@ public final class PrePostInterference extends KeyedInterferenceSet<PrePostInter
 			} else {
 				next = expanded;
 			}
-			if (domain.isSubsetEq(next, current).isTrueForAbstraction()) {
+			final ResultForAlteredInputs nextSubsetCur = domain.isSubsetEq(next, current);
+			current = nextSubsetCur.getRhs();
+			if (nextSubsetCur.isTrueForAbstraction()) {
 				return current;
 			}
-			current = next;
+			current = nextSubsetCur.getLhs();
 			frontier = generated;
 		}
 	}

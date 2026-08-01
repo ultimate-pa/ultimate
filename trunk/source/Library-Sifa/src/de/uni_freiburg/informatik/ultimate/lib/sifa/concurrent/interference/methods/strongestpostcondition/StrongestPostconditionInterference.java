@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Keye
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition.PreparedRelation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -26,8 +27,7 @@ public final class StrongestPostconditionInterference
 		extends KeyedInterferenceSet<StrongestPostconditionInterference.RelationalInterference> {
 
 	public record RelationalInterference(IPredicate relationalInterference,
-			PreparedRelation preparedRelationalInterference, IPredicate unconditionalPostState,
-			boolean requiresArrayFallback) {
+			PreparedRelation preparedRelationalInterference, IPredicate unconditionalPostState) {
 	}
 
 	private final RelationalPredicatePostcondition mPostcondition;
@@ -74,7 +74,7 @@ public final class StrongestPostconditionInterference
 			boolean hasGenerated = false;
 			IPredicate generated = state;
 			for (final RelationalInterference summary : merged) {
-				final IPredicate post = applySummaryToState(frontier, summary, fallbackApplied, domain);
+				final IPredicate post = applySummaryToState(frontier, summary, fallbackApplied);
 				if (SmtUtils.isFalseLiteral(post.getFormula())) {
 					continue;
 				}
@@ -85,7 +85,13 @@ public final class StrongestPostconditionInterference
 					generated = domain.join(generated, post);
 				}
 			}
-			if (!hasGenerated || domain.isSubsetEq(generated, current).isTrueForAbstraction()) {
+			if (!hasGenerated) {
+				return current;
+			}
+			final ResultForAlteredInputs genSubsetCur = domain.isSubsetEq(generated, current);
+			generated = genSubsetCur.getLhs();
+			current = genSubsetCur.getRhs();
+			if (genSubsetCur.isTrueForAbstraction()) {
 				return current;
 			}
 
@@ -97,10 +103,12 @@ public final class StrongestPostconditionInterference
 			} else {
 				next = expanded;
 			}
-			if (domain.isSubsetEq(next, current).isTrueForAbstraction()) {
+			final ResultForAlteredInputs nextSubsetCur = domain.isSubsetEq(next, current);
+			current = nextSubsetCur.getRhs();
+			if (nextSubsetCur.isTrueForAbstraction()) {
 				return current;
 			}
-			current = next;
+			current = nextSubsetCur.getLhs();
 			frontier = generated;
 		}
 	}
@@ -124,14 +132,11 @@ public final class StrongestPostconditionInterference
 		final IPredicate joinedRelation = domain.join(left.relationalInterference(), right.relationalInterference());
 		final IPredicate joinedPostState = domain.join(left.unconditionalPostState(), right.unconditionalPostState());
 		return new RelationalInterference(joinedRelation, mPostcondition.prepareRelation(joinedRelation),
-				joinedPostState, left.requiresArrayFallback() || right.requiresArrayFallback());
+				joinedPostState);
 	}
 
 	private IPredicate applySummaryToState(final IPredicate frontier, final RelationalInterference summary,
-			final Set<RelationalInterference> fallbackApplied, final IDomain domain) {
-		if (summary.requiresArrayFallback()) {
-			return domain.join(frontier, summary.unconditionalPostState());
-		}
+			final Set<RelationalInterference> fallbackApplied) {
 		final PreparedRelation prepared = summary.preparedRelationalInterference();
 		final IPredicate sp = mSpCache.computeIfAbsent(prepared, k -> new IdentityHashMap<>())
 				.computeIfAbsent(frontier.getFormula(), k -> mPostcondition.strongestPostcondition(frontier, prepared));
@@ -149,7 +154,7 @@ public final class StrongestPostconditionInterference
 		final IPredicate widenedPostState =
 				domain.widen(left.unconditionalPostState(), right.unconditionalPostState());
 		return new RelationalInterference(widenedRelation, mPostcondition.prepareRelation(widenedRelation),
-				widenedPostState, left.requiresArrayFallback() || right.requiresArrayFallback());
+				widenedPostState);
 	}
 
 	@Override

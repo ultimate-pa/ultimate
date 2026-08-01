@@ -15,10 +15,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.KeyedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -84,7 +84,13 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 					generated = domain.join(generated, post);
 				}
 			}
-			if (!hasGenerated || domain.isSubsetEq(generated, current).isTrueForAbstraction()) {
+			if (!hasGenerated) {
+				return current;
+			}
+			final ResultForAlteredInputs genSubsetCur = domain.isSubsetEq(generated, current);
+			generated = genSubsetCur.getLhs();
+			current = genSubsetCur.getRhs();
+			if (genSubsetCur.isTrueForAbstraction()) {
 				return current;
 			}
 
@@ -96,10 +102,12 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 			} else {
 				next = expanded;
 			}
-			if (domain.isSubsetEq(next, current).isTrueForAbstraction()) {
+			final ResultForAlteredInputs nextSubsetCur = domain.isSubsetEq(next, current);
+			current = nextSubsetCur.getRhs();
+			if (nextSubsetCur.isTrueForAbstraction()) {
 				return current;
 			}
-			current = next;
+			current = nextSubsetCur.getLhs();
 			frontier = generated;
 		}
 	}
@@ -195,9 +203,6 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 	private IPredicate applyUpdate(final IPredicate state, final GuardedUpdate update, final IDomain domain) {
 		if (update.hasFalseEffect()) {
 			return mFalsePredicate;
-		}
-		if (update.requiresArrayFallback() || InterferenceUtils.referencesArraySortedTerm(state.getFormula())) {
-			return domain.join(state, update.effect());
 		}
 
 		final Script script = mManagedScript.getScript();

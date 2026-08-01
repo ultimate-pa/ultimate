@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -83,14 +82,6 @@ public final class InterferenceUtils {
 
 	public static boolean referencesGlobals(final TransFormula tf) {
 		return !getReferencedGlobals(tf).isEmpty();
-	}
-
-	public static boolean referencesArraySortedTerm(final Term formula) {
-		return Stream.of(formula.getFreeVars()).anyMatch(v -> v.getSort().isArraySort());
-	}
-
-	public static boolean containsArraySortedVar(final Set<TermVariable> vars) {
-		return vars.stream().anyMatch(v -> v.getSort().isArraySort());
 	}
 
 	public static boolean writesAnyOf(final TransFormula tf, final Set<IProgramVar> vars) {
