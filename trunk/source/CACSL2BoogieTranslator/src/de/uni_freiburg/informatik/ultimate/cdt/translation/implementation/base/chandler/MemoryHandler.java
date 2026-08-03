@@ -373,9 +373,10 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.C_REALLOC)) {
-			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, mTypeHandler,
-					mTypeSizeAndOffsetComputer, mExpressionTranslation, mMemoryPointer, mMemoryModel,
-					mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+			final ConstructRealloc cr =
+					new ConstructRealloc(this, mProcedureManager, mTypeHandler, mTypeSizeAndOffsetComputer,
+							mExpressionTranslation, mMemoryPointer, mMemoryModel, mRequiredMemoryModelFeatures,
+							mMemoryModelDeclarationsHandler, mSettings.assumeHeapAllocationAlwaysSucceeds());
 			declarations.addAll(cr.declareRealloc(main, heapDataArrays));
 		}
 
