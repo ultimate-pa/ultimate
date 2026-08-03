@@ -169,7 +169,6 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 				Collections.emptySet()));
 
 		// StackAllocations == old(StackAllocations) + ~size
-		// #res!base == 0 || HeapAllocations == old(HeapAllocations) + ~size
 		final var oldExpr =
 				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression);
 		final var sumExpr = mExpressionTranslation.constructArithmeticExpression(tuLoc, IASTBinaryExpression.op_plus,
@@ -177,8 +176,20 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 		final var counterUpdateValueExpr =
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, counterExpression, sumExpr);
 
-		expressions.add(new Pair<>(ExpressionFactory.or(tuLoc, resIsNull, counterUpdateValueExpr),
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
+		if (canAllocFail) {
+			// #res!Base == 0 || HeapAllocations == old(HeapAllocations) + ~size
+			expressions.add(new Pair<>(ExpressionFactory.or(tuLoc, resIsNull, counterUpdateValueExpr),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
+			// #res!Base != 0 || HeapAllocations == old(HeapAllocations)
+			expressions.add(new Pair<>(
+					ExpressionFactory.or(tuLoc, ExpressionFactory.not(tuLoc, resIsNull),
+							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, counterExpression, oldExpr)),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
+		} else {
+			// HeapAllocations == old(HeapAllocations) + ~size
+			expressions.add(new Pair<>(counterUpdateValueExpr,
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
+		}
 
 		return expressions;
 	}
