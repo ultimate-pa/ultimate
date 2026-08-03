@@ -175,6 +175,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Whether allocInit should be used to for initial allocations."
 					+ "This speeds up the verification if there is a high amount of allocations that can be made initially.";
 
+	public static final String LABEL_HEAP_ALLOC_SUCCEEDS = "Assume that allocation on the heap always succeeds.";
+	private static final String DESC_HEAP_ALLOC_SUCCEEDS =
+			"If set to true, our model of the translated program assumes that functions that allocate heap-memory "
+					+ "(malloc, calloc, realloc) always succeeds, i.e., cannot return a null-pointer.";
+
 	public enum CheckMode {
 		IGNORE, ASSUME, CHECK
 	}
@@ -377,6 +382,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false, DESC_ENFORCE_IF_FOR_CONDITIONAL,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION, true,
-						DESC_FIXED_ADDRESSES_FOR_INITIALIZATION, PreferenceType.Boolean) };
+						DESC_FIXED_ADDRESSES_FOR_INITIALIZATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_HEAP_ALLOC_SUCCEEDS, true, DESC_HEAP_ALLOC_SUCCEEDS,
+						PreferenceType.Boolean) };
 	}
 }
