@@ -371,7 +371,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.Integer),
 						new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 								UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
-								PreferenceType.Combo, UndefinedFunctionBehaviour.values())),
+								PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
+						new UltimatePreferenceItem<>(LABEL_HEAP_ALLOC_SUCCEEDS, true, DESC_HEAP_ALLOC_SUCCEEDS,
+								PreferenceType.Boolean)),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
@@ -382,8 +384,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false, DESC_ENFORCE_IF_FOR_CONDITIONAL,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION, true,
-						DESC_FIXED_ADDRESSES_FOR_INITIALIZATION, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_HEAP_ALLOC_SUCCEEDS, true, DESC_HEAP_ALLOC_SUCCEEDS,
-						PreferenceType.Boolean) };
+						DESC_FIXED_ADDRESSES_FOR_INITIALIZATION, PreferenceType.Boolean) };
 	}
 }
