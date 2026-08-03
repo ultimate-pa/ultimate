@@ -619,7 +619,8 @@ public class CHandler {
 		final FunctionModelHelper helper =
 				new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
 						mTypeHandler, mSettings.getFunctionsCheckedForMemoryNeutrality().contains("main"),
-						mSettings.isSvcompMemtrackCompatibilityMode(), mMemoryPointer);
+						mSettings.isSvcompMemtrackCompatibilityMode(), mMemoryPointer,
+						mSettings.assumeHeapAllocationAlwaysSucceeds());
 
 		return List.of(new AssertLibraryModel(helper, mExprResultTransformer, mSettings.checkAssertions()),
 				new AtomicLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
