@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -267,9 +268,9 @@ public final class BitvectorUtils {
 	 * Rewrites a "greater than" comparison ({@code bvugt}, {@code bvuge}, {@code bvsgt}, {@code bvsge}) into its
 	 * mirrored "less than" form by swapping the two operands, e.g. {@code (bvugt a b)} becomes {@code (bvult b a)}.
 	 * This keeps only 4 comparison operators in normal form instead of 8. The mirrored operator name comes from
-	 * {@link RelationSymbol#swapParameters()}; the actual term is then built by dispatching back into
-	 * {@link #unfTerm}, so the existing bvult/bvule/bvslt/bvsle handling (including constant folding) is reused
-	 * as-is instead of being duplicated here.
+	 * {@link RelationSymbol#swapParameters()}; the actual term is then built by dispatching back into {@link #unfTerm},
+	 * so the existing bvult/bvule/bvslt/bvsle handling (including constant folding) is reused as-is instead of being
+	 * duplicated here.
 	 *
 	 * @param params
 	 *            the two operands of the "greater than" comparison, in their original (unswapped) order
@@ -624,20 +625,16 @@ public final class BitvectorUtils {
 
 	}
 
-	private static final String BVAND = "bvand";
-	private static final String BVOR = "bvor";
-	private static final String BVXOR = "bvxor";
-
 	static Term simplifyBvand(final Script script, final Term[] params) {
-		return bitwiseOperationHelper(script, params, BVAND);
+		return bitwiseOperationHelper(script, params, SMTLIBConstants.BVAND);
 	}
 
 	static Term simplifyBvor(final Script script, final Term[] params) {
-		return bitwiseOperationHelper(script, params, BVOR);
+		return bitwiseOperationHelper(script, params, SMTLIBConstants.BVOR);
 	}
 
 	static Term simplifyBvxor(final Script script, final Term[] params) {
-		return bitwiseOperationHelper(script, params, BVXOR);
+		return bitwiseOperationHelper(script, params, SMTLIBConstants.BVXOR);
 	}
 
 	/**
@@ -650,12 +647,11 @@ public final class BitvectorUtils {
 	}
 
 	/**
-	 * Simplifies an n-ary bitwise application: flattens nested same-operator applications, folds all literal
-	 * operands into one constant, deduplicates non-literal operands, applies absorption/annihilation, and assembles
-	 * the final term - all in one pass over a single Set. Flattening happens inline (no intermediate list) and
-	 * annihilation is checked directly inside the loop, since it only depends on the folded constant itself;
-	 * absorption (dropping an identity constant) has to wait until the loop finishes, since it depends on whether
-	 * any non-literal survived.
+	 * Simplifies an n-ary bitwise application: flattens nested same-operator applications, folds all literal operands
+	 * into one constant, deduplicates non-literal operands, applies absorption/annihilation, and assembles the final
+	 * term - all in one pass over a single Set. Flattening happens inline (no intermediate list) and annihilation is
+	 * checked directly inside the loop, since it only depends on the folded constant itself; absorption (dropping an
+	 * identity constant) has to wait until the loop finishes, since it depends on whether any non-literal survived.
 	 *
 	 * @param funcname
 	 *            one of {@link #BVAND}, {@link #BVOR}, {@link #BVXOR}
@@ -668,17 +664,17 @@ public final class BitvectorUtils {
 		final Predicate<BitvectorConstant> isAnnihilating;
 		final Predicate<BitvectorConstant> isIdentity;
 		switch (funcname) {
-		case BVAND:
+		case SMTLIBConstants.BVAND:
 			fold = BitvectorConstant::bvand;
 			isAnnihilating = bc -> bc.getValue().equals(BigInteger.ZERO);
 			isIdentity = BitvectorUtils::isAllOnes;
 			break;
-		case BVOR:
+		case SMTLIBConstants.BVOR:
 			fold = BitvectorConstant::bvor;
 			isAnnihilating = BitvectorUtils::isAllOnes;
 			isIdentity = bc -> bc.getValue().equals(BigInteger.ZERO);
 			break;
-		case BVXOR:
+		case SMTLIBConstants.BVXOR:
 			fold = BitvectorConstant::bvxor;
 			isAnnihilating = bc -> false; // bvxor has no annihilating constant, only an identity (0)
 			isIdentity = bc -> bc.getValue().equals(BigInteger.ZERO);
@@ -686,7 +682,7 @@ public final class BitvectorUtils {
 		default:
 			throw new AssertionError("unsupported operator for bitwiseOperationHelper: " + funcname);
 		}
-		final boolean isXor = funcname.equals(BVXOR);
+		final boolean isXor = funcname.equals(SMTLIBConstants.BVXOR);
 
 		final Set<Term> result = new HashSet<>();
 		BitvectorConstant mergedConstant = null;
