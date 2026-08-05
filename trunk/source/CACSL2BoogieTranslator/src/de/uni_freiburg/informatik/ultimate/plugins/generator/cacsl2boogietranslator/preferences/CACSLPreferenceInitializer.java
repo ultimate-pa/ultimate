@@ -372,7 +372,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 								UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 								PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
-						new UltimatePreferenceItem<>(LABEL_HEAP_ALLOC_SUCCEEDS, true, DESC_HEAP_ALLOC_SUCCEEDS,
+						new UltimatePreferenceItem<>(LABEL_HEAP_ALLOC_SUCCEEDS, false, DESC_HEAP_ALLOC_SUCCEEDS,
 								PreferenceType.Boolean)),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),
