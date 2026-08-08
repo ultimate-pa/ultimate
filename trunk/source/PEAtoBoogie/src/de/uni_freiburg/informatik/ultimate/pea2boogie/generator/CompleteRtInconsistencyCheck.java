@@ -263,7 +263,9 @@ public class CompleteRtInconsistencyCheck {
 					&& phase.getBoundType() != CounterTrace.BOUND_GREATEREQUAL) {
 
 				// Phase invariant does imply all subsequent invariants, seeping is unavoidable.
-				if (mScript.getTheory().mTrue == SmtUtils.implies(mScript, invariant, seepInvariants.getLast())) {
+				// seepInvariants.getLast() is the conjunction of all subsequent phase invariants
+				if (LBool.UNSAT == SmtUtils.checkSatTerm(mScript,
+						SmtUtils.not(mScript, SmtUtils.implies(mScript, invariant, seepInvariants.getLast())))) {
 					seepInvariants.add(seepInvariant);
 					continue;
 				}
@@ -274,7 +276,8 @@ public class CompleteRtInconsistencyCheck {
 				seepInvariants.add(seepInvariant);
 			} else {
 				// Found a critical phase with lower bound.
-				if (mScript.getTheory().mTrue == SmtUtils.implies(mScript, invariant, seepInvariants.getLast())) {
+				if (LBool.UNSAT == SmtUtils.checkSatTerm(mScript, SmtUtils.not(mScript, seepInvariants.getLast()))) {
+					// Subsequent invariants are trivially true, only the current phase matters
 					results.put(i,
 							new CritPhase(reqName, i, invariant, SmtUtils.not(mScript, invariant), results.size() > 0));
 				} else {
