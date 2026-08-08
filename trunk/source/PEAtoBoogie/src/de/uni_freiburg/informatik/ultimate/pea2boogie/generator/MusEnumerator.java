@@ -135,28 +135,9 @@ public class MusEnumerator {
 		}
 
 		public boolean checkSubset(final Set<Integer> seed) {
-			return checkSubset(seed, false);
-		}
-
-		public boolean checkSubset(final Set<Integer> seed, final boolean doNotPopIfUnsat) { // <--- SubsetSolver
-																								// checkSat
 			final Term[] assumptions = seed.stream().map(this::cVar).toArray(Term[]::new);
-
-			mScript.push(1);
-
-			for (final Term assumption : assumptions) {
-				mScript.assertTerm(assumption);
-			}
-
-			// TODO: CheckSatAssuming would be better, but is not available for z3
-			// final LBool result = mScript.checkSatAssuming(assumptions);
-			final LBool result = mScript.checkSat();
+			final LBool result = mScript.checkSatAssuming(assumptions);
 			assert result != LBool.UNKNOWN;
-
-			if (!doNotPopIfUnsat || result != LBool.UNSAT) {
-				mScript.pop(1);
-			}
-
 			return result == LBool.SAT;
 		}
 
@@ -175,8 +156,6 @@ public class MusEnumerator {
 		private List<Integer> seedFromCore() {
 			final List<Integer> result = new ArrayList<>();
 			final Term[] core = mScript.getUnsatCore();
-
-			mScript.pop(1);
 
 			for (final Term t : core) {
 				final String name = ((ApplicationTerm) t).getFunction().getName().substring(1);
@@ -197,7 +176,7 @@ public class MusEnumerator {
 
 				current.remove(i);
 
-				if (!checkSubset(current, true)) {
+				if (!checkSubset(current)) {
 					current = new HashSet<>(seedFromCore());
 				} else {
 					current.add(i);
