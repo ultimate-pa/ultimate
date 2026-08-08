@@ -139,7 +139,7 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	}
 
 	public enum CompleteRtInconsistencyCheckMode {
-		MARCO_BASIC, EXPERIMENTAL_PYTHON
+		MARCO_BASIC
 	}
 
 	public Pea2BoogiePreferences() {

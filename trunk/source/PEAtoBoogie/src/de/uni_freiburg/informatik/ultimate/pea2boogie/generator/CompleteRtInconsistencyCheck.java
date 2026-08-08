@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +42,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
@@ -195,13 +192,7 @@ public class CompleteRtInconsistencyCheck {
 					group.stream().sorted(Comparator.comparing(CritPhase::reqName).thenComparing(CritPhase::index))
 							.collect(Collectors.toList());
 
-			if (mMode == CompleteRtInconsistencyCheckMode.MARCO_BASIC) {
-				muses.addAll(enumerateMusesMarco(new ArrayList<>(sortedGroup)));
-			} else if (mMode == CompleteRtInconsistencyCheckMode.EXPERIMENTAL_PYTHON) {
-				muses.addAll(enumerateMusesPython(new ArrayList<>(sortedGroup)));
-			} else {
-				throw new IllegalArgumentException("Unknown CompleteRtInconsistencyCheckMode: " + mMode);
-			}
+			muses.addAll(enumerateMusesMarco(new ArrayList<>(sortedGroup)));
 		}
 		mLogger.info("Size of nvc muses: " + muses.size());
 
@@ -357,50 +348,6 @@ public class CompleteRtInconsistencyCheck {
 								.map(critPhase -> new MusElement(critPhase.reqName, critPhase.index, critPhase.seeping))
 								.collect(Collectors.toSet()))
 						.collect(Collectors.toSet());
-
-		return result;
-	}
-
-	/**
-	 * Enumerates minimal unsatisfiable subsets (MUSes) by delegating to an external Python process
-	 * ({@code mus_enumerator}). The constraints and their symbols are serialized as JSON, passed to the process via
-	 * stdin, and the resulting MUSes are parsed from lines starting with "MUS".
-	 */
-	private Set<Set<MusElement>> enumerateMusesPython(final List<CritPhase> critPhases) {
-		final Set<Set<MusElement>> result = new HashSet<>();
-
-		final String json = critPhases.stream().map(critPhase -> {
-			final String symbols = critPhase.symbols.stream()
-					.map(symbol -> String.format("{\"name\": \"%s\", \"sort\": \"%s\"}", symbol,
-							((ApplicationTerm) symbol.getSymbol()).getFunction().getReturnSort()))
-					.collect(Collectors.joining(", "));
-			final String name = critPhase.reqName + "_" + critPhase.index + (critPhase.seeping ? "s" : "");
-
-			return String.format("{\"name\": \"%s\", \"smt_expr\": \"%s\", \"symbols\": [%s]}", name, critPhase.nvc,
-					symbols);
-		}).collect(Collectors.joining("\n"));
-
-		final String[] command = { "mus_enumerator", json + "\n" };
-		try (final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices)) {
-			final BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			final BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-			input.lines().filter(line -> line.startsWith("MUS")).forEach(line -> {
-				mLogger.info(line);
-
-				final String[] parts = line.split("\\|");
-				final Set<MusElement> musElement = Arrays.stream(parts[1].trim().substring(4).split(","))
-						.map(String::trim).map(Integer::parseInt).map(critPhases::get)
-						.map(critPhase -> new MusElement(critPhase.reqName, critPhase.index, critPhase.seeping))
-						.collect(Collectors.toSet());
-				result.add(musElement);
-			});
-
-			error.lines().forEach(line -> mLogger.error("mus_enumerator stderr: " + line));
-
-		} catch (final Exception e) {
-			mLogger.fatal("Failed to start mus_enumerator process: ", e);
-		}
 
 		return result;
 	}
