@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+import java.util.Map;
+
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -69,7 +71,7 @@ public class CddToSmt {
 	private final Term mFalse;
 	private final IIdentifierTranslator[] mIdentifierTranslators;
 	private final IReqSymbolTable mReqSymboltable;
-	protected final Boogie2SMT mBoogieToSmt;
+	private final Boogie2SMT mBoogieToSmt;
 	private final PeaResultUtil mResultUtil;
 
 	public CddToSmt(final IUltimateServiceProvider services, final PeaResultUtil resultUtil, final Script script,
@@ -236,6 +238,18 @@ public class CddToSmt {
 			return programConst.getTerm();
 		}
 		throw new AssertionError("Unknown symbol " + name);
+	}
+
+	protected IProgramNonOldVar lookupProgramVar(final String name) {
+		return mBoogieToSmt.getBoogie2SmtSymbolTable().getGlobalsMap().get(name);
+	}
+
+	protected ProgramConst lookupProgramConst(final String name) {
+		return mBoogieToSmt.getBoogie2SmtSymbolTable().getConstsMap().get(name);
+	}
+
+	protected Map<String, ProgramConst> getBoogieConsts() {
+		return mBoogieToSmt.getBoogie2SmtSymbolTable().getConstsMap();
 	}
 
 	private final class AddDeclarationInformationToIdentifiers extends GeneratedBoogieAstTransformer {

@@ -360,17 +360,17 @@ public class CompleteRtInconsistencyCheck {
 				final IReqSymbolTable symboltable) {
 			super(services, resultUtil, script, boogieToSmt, boogieDeclarations, symboltable);
 
-			mConstants = createConstToValue(script, symboltable, boogieToSmt);
+			mConstants = createConstToValue(script, symboltable, getBoogieConsts());
 		}
 
 		@Override
 		public Term getTermVarTerm(final String name) {
-			final IProgramNonOldVar programVar = mBoogieToSmt.getBoogie2SmtSymbolTable().getGlobalsMap().get(name);
+			final IProgramNonOldVar programVar = lookupProgramVar(name);
 			if (programVar != null) {
 				return termVariableToConstant(mScript, (TermVariable) programVar.getTerm());
 			}
 
-			final ProgramConst programConst = mBoogieToSmt.getBoogie2SmtSymbolTable().getConstsMap().get(name);
+			final ProgramConst programConst = lookupProgramConst(name);
 			if (programConst != null) {
 				return mConstants.get(programConst.getDefaultConstant());
 			}
@@ -390,9 +390,8 @@ public class CompleteRtInconsistencyCheck {
 		}
 
 		private static Map<Term, Term> createConstToValue(final Script script, final IReqSymbolTable reqSymboltable,
-				final Boogie2SMT boogieToSmt) {
+				final Map<String, ProgramConst> boogieConsts) {
 			final Map<String, Expression> constToValue = reqSymboltable.getConstToValue();
-			final Map<String, ProgramConst> boogieConsts = boogieToSmt.getBoogie2SmtSymbolTable().getConstsMap();
 
 			final Map<Term, Term> rtr = new HashMap<>();
 			for (final Entry<String, Expression> constEntry : constToValue.entrySet()) {
