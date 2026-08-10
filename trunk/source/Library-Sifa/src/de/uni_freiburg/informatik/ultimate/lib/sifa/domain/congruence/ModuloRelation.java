@@ -111,7 +111,8 @@ public class ModuloRelation {
 		}
 		if ((modTermRhs == null && modTermLhs != null) || (modTermRhs != null && modTermLhs == null)) {
 			// We have a modulo on only one side
-			// We need to have constant on the non mod side
+			// We need to have a constant on the non mod side and the modulo has to be a
+			// constant
 			ModTerm modSide;
 			Term nonmodSide;
 
@@ -150,7 +151,7 @@ public class ModuloRelation {
 		} else if (modTermRhs != null && modTermLhs != null) {
 			// We have modulo on both sides
 			// We can handle the case that the modulo on both sides is equivalent and
-			// constant
+			// a constant
 
 			final Term finalLhs = modTermLhs.getDivident();
 			final Term finalRhs = modTermRhs.getDivident();
@@ -187,18 +188,31 @@ public class ModuloRelation {
 	}
 
 	private static Rational modRational(final Rational rational, final BigInteger mod) {
+		// We have a whole number and can do the normal mod
 		if (rational.denominator().equals(BigInteger.ONE)) {
 			final BigInteger newNumerator = rational.numerator().mod(mod);
 			return Rational.valueOf(newNumerator, BigInteger.ONE);
 		}
-		return rational;
+
+		// We don't have a whole number and need to calculate modulo the hard way
+		final Rational rationalMod = Rational.valueOf(mod, BigInteger.ONE);
+
+		Rational result = rational;
+		while (result.isNegative()) {
+			result = result.add(rationalMod);
+		}
+
+		while (result.compareTo(rationalMod) >= 0) {
+			result = result.sub(rationalMod);
+		}
+
+		return result;
 	}
 
 	public RationalVector getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
 
-		// Do mod on whole entries to make numbers smaller
-		// TODO: Look at if also possible for not whole numbers
+		// Do mod on entries to make numbers smaller
 		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mMod))
 				.toList();
 		final RationalVector modVector = new RationalVector(modProtoVector);
