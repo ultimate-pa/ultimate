@@ -12,6 +12,13 @@ import org.apache.commons.math3.linear.SparseFieldMatrix;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
+/**
+ * Class that represents a matrix with entries of type Rational. This is
+ * archived by wrapping FieldMatrix<BigFraction>. BigFraction like Rational
+ * utilizes BigInteger for its denominator and numerator so no precision is
+ * lost. Further the sparse version SparseFieldMatrix<BigFraction> is used, so
+ * only the non-zero entries are stored.
+ */
 public class RationalMatrix {
 
 	private final FieldMatrix<BigFraction> mMatrix;
@@ -22,27 +29,14 @@ public class RationalMatrix {
 		mIsEmpty = false;
 	}
 
-//	private RationalMatrix(final FieldMatrix<BigFraction> matrix) {
-//		final SparseFieldMatrix<BigFraction> sparseMatrix = new SparseFieldMatrix<>(BigFractionField.getInstance(),
-//				matrix.getRowDimension(), matrix.getColumnDimension());
-//
-//		for (int i = 0; i < matrix.getRowDimension(); i++) {
-//			for (int j = 0; j < matrix.getColumnDimension(); j++) {
-//				final BigFraction entry = matrix.getEntry(i, j);
-//				if (!entry.equals(BigFraction.ZERO)) {
-//					sparseMatrix.setEntry(i, j, entry);
-//				}
-//			}
-//		}
-//		mMatrix = sparseMatrix;
-//		mIsEmpty = false;
-//	}
-
 	private RationalMatrix() {
 		mMatrix = null;
 		mIsEmpty = true;
 	}
 
+	/**
+	 * Returns a matrix containing only zeros.
+	 */
 	public static RationalMatrix getZeroMatrix(final int rowCount, final int columnCount) {
 		if (rowCount == 0 || columnCount == 0) {
 			return new RationalMatrix();
@@ -50,6 +44,9 @@ public class RationalMatrix {
 		return new RationalMatrix(new SparseFieldMatrix<>(BigFractionField.getInstance(), rowCount, columnCount));
 	}
 
+	/**
+	 * Returns a matrix containing the given vectors as rows.
+	 */
 	public static RationalMatrix fromRowVectors(final List<RationalVector> rowVectors, final int columnCount) {
 		if (rowVectors.size() == 0 || columnCount == 0) {
 			return new RationalMatrix();
@@ -65,6 +62,9 @@ public class RationalMatrix {
 		return new RationalMatrix(matrix);
 	}
 
+	/**
+	 * Returns a matrix containing the given vectors as columns.
+	 */
 	public static RationalMatrix fromColumnVectors(final List<RationalVector> columnVectors, final int rowCount) {
 		if (rowCount == 0 || columnVectors.size() == 0) {
 			return new RationalMatrix();

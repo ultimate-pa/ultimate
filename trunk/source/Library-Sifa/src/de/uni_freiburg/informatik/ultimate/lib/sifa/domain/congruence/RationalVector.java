@@ -12,15 +12,31 @@ import org.apache.commons.math3.linear.SparseFieldVector;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
+/**
+ * Class that represents a vector with entries of type Rational. This is
+ * archived by wrapping FieldVector<BigFraction>. BigFraction like Rational
+ * utilizes BigInteger for its denominator and numerator so no precision is
+ * lost. Further the sparse version SparseFieldVector<BigFraction> is used, so
+ * only the non-zero entries are stored.
+ */
 public class RationalVector {
+	/**
+	 * Converts a Rational to a BigFraction.
+	 */
 	public static BigFraction getBigFractionFromRational(final Rational rational) {
 		return new BigFraction(rational.numerator(), rational.denominator());
 	}
 
+	/**
+	 * Converts a BigFraction to a Rational.
+	 */
 	public static Rational getRationalFromBigFraction(final BigFraction bigFraction) {
 		return Rational.valueOf(bigFraction.getNumerator(), bigFraction.getDenominator());
 	}
 
+	/**
+	 * Returns a vector with value 1 at index i and zero everywhere else.
+	 */
 	public static RationalVector getUnitVector(final int i, final int vectorLength) {
 		final FieldVector<BigFraction> vector = new SparseFieldVector<>(BigFractionField.getInstance(), vectorLength);
 		vector.setEntry(i, BigFraction.ONE);
@@ -60,8 +76,8 @@ public class RationalVector {
 		return mVector.getDimension();
 	}
 
-	public Rational get(final int column) {
-		final BigFraction entry = mVector.getEntry(column);
+	public Rational get(final int i) {
+		final BigFraction entry = mVector.getEntry(i);
 		return RationalVector.getRationalFromBigFraction(entry);
 	}
 
@@ -101,6 +117,9 @@ public class RationalVector {
 		return new RationalVector(mVector.mapDivide(getBigFractionFromRational(factor)));
 	}
 
+	/**
+	 * Returns the first index with a non-zero entry.
+	 */
 	public int firstPivot() {
 		if (mFirstPivot != null) {
 			return mFirstPivot;
@@ -118,6 +137,9 @@ public class RationalVector {
 		return k;
 	}
 
+	/**
+	 * Returns the last index with a non-zero entry.
+	 */
 	public int lastPivot() {
 		if (mLastPivot != null) {
 			return mLastPivot;
