@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.egraph;
 
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -8,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class EGraph {
 	private final IUltimateServiceProvider mServices;
@@ -17,11 +22,14 @@ public class EGraph {
 	 **/
 	private final UnionFind<Term> mUnionFind;
 
+	private final ArrayList<ApplicationTerm> mSelectTerms;
+
 	/**
 	 * Constructs a new empty e graph
 	 **/
 	public EGraph(final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		mUnionFind = new UnionFind<>();
+		mSelectTerms = new ArrayList<>();
 		mMgdScript = mgdScript;
 		mServices = services;
 
@@ -32,6 +40,9 @@ public class EGraph {
 			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term);
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().getName() == "select") {
+				mSelectTerms.add(appTerm);
+			}
 			final Term representative = mUnionFind.find(appTerm);
 			if (representative == null) {
 				mUnionFind.makeEquivalenceClass(appTerm);
@@ -59,4 +70,41 @@ public class EGraph {
 			}
 		}
 	}
+
+	private Deque<Pair<ApplicationTerm, ApplicationTerm>> getPossiblyUnionableSelectPairs() {
+		final Deque<Pair<ApplicationTerm, ApplicationTerm>> pairs = new LinkedList<>();
+		for (int i = 0; i < mSelectTerms.size() - 1; i++) {
+			for (int j = i + 1; j < mSelectTerms.size(); j++) {
+				final ApplicationTerm select1 = mSelectTerms.get(i);
+				final ApplicationTerm select2 = mSelectTerms.get(j);
+				if ((!areEquivalent(select1, select2))) {
+					pairs.add(new Pair<>(select1, select2));
+				}
+			}
+		}
+		return pairs;
+	}
+
+	private boolean areEquivalent(final Term a, final Term b) {
+		return mUnionFind.getContainingSet(a).equals(mUnionFind.getContainingSet(b));
+	}
+
+	public void postProcessSelects() {
+		final Deque<Pair<ApplicationTerm, ApplicationTerm>> worklist = getPossiblyUnionableSelectPairs();
+		while (!(worklist.isEmpty())) {
+			final Pair<ApplicationTerm, ApplicationTerm> candidate = worklist.pop();
+			final ApplicationTerm select1 = candidate.getFirst();
+			final ApplicationTerm select2 = candidate.getSecond();
+			if (areEquivalent(select1, select2)) {
+				continue;
+			}
+			if (areEquivalent(select1.getParameters()[0], select2.getParameters()[0])
+					&& areEquivalent(select1.getParameters()[1], select2.getParameters()[1])) {
+				mUnionFind.union(select1, select2);
+				worklist.addAll(getPossiblyUnionableSelectPairs());
+			}
+
+		}
+	}
+
 }
