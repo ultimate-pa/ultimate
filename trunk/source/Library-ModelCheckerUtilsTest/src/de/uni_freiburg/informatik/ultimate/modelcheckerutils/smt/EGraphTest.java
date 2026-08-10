@@ -106,18 +106,26 @@ public class EGraphTest {
 //	}
 
 //	@Test
-//	public void egraphTestExample01() {
+//	public void egraphTestExampleTransitivity() {
 //		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 //		final String formulaAsString = "(and (= x y) (= y 5) (= (+ x 5) z))";
 //		final String expectedResultAsString = "(or (< y 3) (< x 2))";
 //		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
 //	}
 
+//	@Test
+//	public void egraphTestExampleSelectCongruence() {
+//		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
+//				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+//		final String formulaAsString = "(and (= i (select a x)) (= x y) (= j (select a y)))";
+//		final String expectedResultAsString = "(or (< y 3) (< x 2))";
+//		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
+//	}
+
 	@Test
-	public void egraphTestExample02() {
-		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
-				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
-		final String formulaAsString = "(and (= i (select a x)) (= x y) (= j (select a y)))";
+	public void egraphTestExampleDistinct() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
+		final String formulaAsString = "(and (distinct x y) (distinct x z) (= y z))";
 		final String expectedResultAsString = "(or (< y 3) (< x 2))";
 		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
 	}

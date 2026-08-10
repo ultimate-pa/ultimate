@@ -2,15 +2,19 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.egraph;
 
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -23,6 +27,7 @@ public class EGraph {
 	private final UnionFind<Term> mUnionFind;
 
 	private final ArrayList<ApplicationTerm> mSelectTerms;
+	private final HashMap<ImmutableSet<Term>, HashSet<Term>> mDistinctSets;
 
 	/**
 	 * Constructs a new empty e graph
@@ -30,6 +35,7 @@ public class EGraph {
 	public EGraph(final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		mUnionFind = new UnionFind<>();
 		mSelectTerms = new ArrayList<>();
+		mDistinctSets = new HashMap<>();
 		mMgdScript = mgdScript;
 		mServices = services;
 
@@ -64,10 +70,47 @@ public class EGraph {
 			if (binaryEqRelation == null) {
 				addTerm(term);
 			} else {
-				addTerm(binaryEqRelation.getLhs());
-				addTerm(binaryEqRelation.getRhs());
-				mUnionFind.union(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
+				final Term lhs = binaryEqRelation.getLhs();
+				final Term rhs = binaryEqRelation.getRhs();
+
+				addTerm(lhs);
+				addTerm(rhs);
+
+				if (binaryEqRelation.getRelationSymbol() == RelationSymbol.DISTINCT) {
+					final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
+					final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
+					if (!(mDistinctSets.containsKey(leftEset))) {
+						mDistinctSets.put(leftEset, new HashSet<>(rightEset));
+
+					} else {
+						mDistinctSets.get(leftEset).addAll(rightEset);
+					}
+					if (!(mDistinctSets.containsKey(rightEset))) {
+						mDistinctSets.put(rightEset, new HashSet<>(leftEset));
+
+					} else {
+						mDistinctSets.get(rightEset).addAll(leftEset);
+					}
+
+				} else {
+					union(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
+				}
 			}
+		}
+	}
+
+	private void union(final Term a, final Term b) {
+		final ImmutableSet<Term> A = mUnionFind.getContainingSet(a);
+		final ImmutableSet<Term> B = mUnionFind.getContainingSet(b);
+
+		final boolean unioned = mUnionFind.union(a, b);
+		if (unioned) {
+			final ImmutableSet<Term> E = mUnionFind.getContainingSet(a);
+			final HashSet<Term> newDistinct = mDistinctSets.getOrDefault(A, new HashSet<>());
+			newDistinct.addAll(mDistinctSets.getOrDefault(B, new HashSet<>()));
+			mDistinctSets.remove(A);
+			mDistinctSets.remove(B);
+			mDistinctSets.put(E, newDistinct);
 		}
 	}
 
@@ -100,7 +143,7 @@ public class EGraph {
 			}
 			if (areEquivalent(select1.getParameters()[0], select2.getParameters()[0])
 					&& areEquivalent(select1.getParameters()[1], select2.getParameters()[1])) {
-				mUnionFind.union(select1, select2);
+				union(select1, select2);
 				worklist.addAll(getPossiblyUnionableSelectPairs());
 			}
 
