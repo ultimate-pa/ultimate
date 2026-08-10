@@ -84,6 +84,7 @@ public class ModuloRelation {
 		final ModTerm modTermRhs = ModTerm.of(rhs);
 		final ModTerm modTermLhs = ModTerm.of(lhs);
 
+		// TODO: What if equalities have this ?
 		// Checking that divisor and dividend don't contain a mod themselves
 		final var checker = new SubtermPropertyChecker(x -> SmtUtils.isFunctionApplication(x, "mod"));
 		if (modTermRhs != null) {
@@ -178,6 +179,13 @@ public class ModuloRelation {
 		return mEqualityRelation.getVars();
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder out = new StringBuilder().append(mEqualityRelation.sumString());
+		out.append(" ≡").append(mMod.toString()).append(" 0");
+		return out.toString();
+	}
+
 	private static Rational modRational(final Rational rational, final BigInteger mod) {
 		if (rational.denominator().equals(BigInteger.ONE)) {
 			final BigInteger newNumerator = rational.numerator().mod(mod);
@@ -198,5 +206,4 @@ public class ModuloRelation {
 		// Divide every entry through mMod
 		return modVector.divide(mMod);
 	}
-
 }

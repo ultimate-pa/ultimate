@@ -52,6 +52,31 @@ public class EqualityRelation {
 		return mVarToFactor.keySet();
 	}
 
+	public String sumString() {
+		final StringBuilder out = new StringBuilder();
+
+		for (final Term var : mVarToFactor.keySet()) {
+			final Rational factor = mVarToFactor.get(var);
+
+			if (factor.equals(Rational.MONE)) {
+				out.append("-");
+			} else if (!factor.equals(Rational.ONE)) {
+				out.append(factor.toString()).append("*");
+			}
+			out.append(var.toString()).append(" + ");
+		}
+		out.append(mResult.toString());
+
+		return out.toString();
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder out = new StringBuilder().append(sumString());
+		out.append(" = 0");
+		return out.toString();
+	}
+
 	public List<Rational> getProtoVector(final Map<Term, Integer> varToIndex) {
 		final int n = varToIndex.size() + 1;
 		final List<Rational> list = new ArrayList<>(Collections.nCopies(n, Rational.ZERO));
