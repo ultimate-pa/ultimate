@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -40,6 +41,11 @@ public class GeneratorRepresentation {
 	public String toString() {
 		return "GeneratorRepresentation [mLineMatrix=" + getLineMatrix() + ", mParameterMatrix=" + getParameterMatrix()
 				+ ", mIsMinimal=" + isMinimal() + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mLines, mParameters, mVectorLength, mIsMinimal);
 	}
 
 	@Override

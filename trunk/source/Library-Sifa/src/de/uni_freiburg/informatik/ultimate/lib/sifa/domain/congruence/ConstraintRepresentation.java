@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -73,6 +74,11 @@ public class ConstraintRepresentation {
 	public String toString() {
 		return "ConstraintRepresentation [mEqualityMatrix=" + getEqualityMatrix() + ", mCongruenceMatrix="
 				+ getCongruenceMatrix() + ", mIsMinimal=" + mIsMinimal + ", mIsStrongMinimal=" + mIsStrongMinimal + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mCongruences, mEqualities, mIsMinimal, mIsStrongMinimal, mVectorLength);
 	}
 
 	@Override
