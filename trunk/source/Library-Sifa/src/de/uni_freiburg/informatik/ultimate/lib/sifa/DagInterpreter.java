@@ -84,13 +84,13 @@ public class DagInterpreter {
 	}
 
 	/**
-	 * Interprets a DAG with starting from its source node using only edges from the
-	 * overlay and returns the computed predicate for the only marker in that
-	 * overlay. Bottom is returned in case the overlay contained no marker or the
+	 * Interprets a DAG with starting from its source node using only edges from the overlay and returns the computed
+	 * predicate for the only marker in that overlay. Bottom is returned in case the overlay contained no marker or the
 	 * marker was not reached.
 	 *
 	 * @return Value of the sink location after interpreting the DAG
-	 * @throws Exception The interpreter reached more than one marker in the overlay
+	 * @throws Exception
+	 *             The interpreter reached more than one marker in the overlay
 	 */
 	public IPredicate interpretForSingleMarker(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
@@ -100,18 +100,17 @@ public class DagInterpreter {
 	}
 
 	/**
-	 * Interprets a DAG starting from its source node using only edges from the
-	 * overlay. Results can be read from the given ILoiPredicateStorage. Calls are
-	 * not entered but only registered in the given IEnterCallRegistrar. Registered
-	 * calls should be processed after this function returns.
+	 * Interprets a DAG starting from its source node using only edges from the overlay. Results can be read from the
+	 * given ILoiPredicateStorage. Calls are not entered but only registered in the given IEnterCallRegistrar.
+	 * Registered calls should be processed after this function returns.
 	 */
 	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput,
 			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegr) {
 
 		// TODO should we use fluid and IDomain.alpha after join in worklist?
-		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist = new PriorityWorklist<>(
-				mTopsortCache.topsort(dag), mDomain::join);
+		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
+				new PriorityWorklist<>(mTopsortCache.topsort(dag), mDomain::join);
 
 		overlay.sources(dag).forEach(source -> worklist.add(source, initalInput));
 
@@ -133,8 +132,7 @@ public class DagInterpreter {
 	private boolean earlyExitAfterStep(final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay,
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> curNode, final IPredicate curOutput) {
 		boolean earlyExit = mTools.isBottomLiteral(curOutput);
-		// frequent non-trivial check would probably be more expensive than continued
-		// interpretation
+		// frequent non-trivial check would probably be more expensive than continued interpretation
 		// ==> check only before branches
 		if (!earlyExit && overlay.successorsOf(curNode).size() > 1) {
 			mStats.increment(SifaStats.Key.DAG_INTERPRETER_EARLY_EXIT_QUERIES_NONTRIVIAL);
@@ -161,8 +159,7 @@ public class DagInterpreter {
 		if (regex instanceof Epsilon) {
 			return input;
 		} else if (regex instanceof EmptySet<?>) {
-			// happens for instance when summarizing the procedure "f() { label: goto label;
-			// }"
+			// happens for instance when summarizing the procedure "f() { label: goto label; }"
 			return mTools.bottom();
 		} else if (regex instanceof Literal) {
 			return ipretTrans(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input, loiStorage,
@@ -244,8 +241,7 @@ public class DagInterpreter {
 		return pred;
 	}
 
-	// log messages
-	// -------------------------------------------------------------------------------
+	// log messages -------------------------------------------------------------------------------
 
 	private void logWorklistEntry(
 			final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist) {
@@ -299,8 +295,7 @@ public class DagInterpreter {
 
 	private static void logRegisterEnterCallDone() {
 		// nothing to do
-		// log message could be relevant if we interpreted registered entered calls
-		// immediately
+		// log message could be relevant if we interpreted registered entered calls immediately
 	}
 
 	private void logIpretCallReturnQuery(final IPredicate inputAfterCall) {

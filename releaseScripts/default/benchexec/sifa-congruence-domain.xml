@@ -3,7 +3,6 @@
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper" />
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
-  <option name="--preprocessor.replace.while.statements.and.if-then-else.statements">true</option>
 
   <rundefinition name="SIFA-CON">
     <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
