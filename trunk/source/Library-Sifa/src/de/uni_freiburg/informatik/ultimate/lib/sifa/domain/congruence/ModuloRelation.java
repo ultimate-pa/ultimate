@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class ModuloRelation {
-	public static BigInteger MAX_NEG_MOD_COUNT = BigInteger.valueOf(5);
 
 	final EqualityRelation mEqualityRelation;
 	final BigInteger mMod;
@@ -51,7 +49,7 @@ public class ModuloRelation {
 		return rational.numerator();
 	}
 
-	public static List<ModuloRelation> of(final Term lhs, final Term rhs, final RelationSymbol relationSymbol,
+	public static ModuloRelation of(final Term lhs, final Term rhs, final RelationSymbol relationSymbol,
 			final BigInteger modInt, final Script script) {
 		final var affineTermTransformer = new AffineTermTransformer(script);
 		final AffineTerm rhsAffine = (AffineTerm) affineTermTransformer.transform(rhs);
@@ -61,34 +59,22 @@ public class ModuloRelation {
 
 		if (affineTerm == null) {
 			// We can only handle affine polynomials
-			return List.of();
+			return null;
 		}
 
 		if (relationSymbol.equals(RelationSymbol.EQ)) {
 			// Modulo equality
 			final ModuloRelation moduloRelation = new ModuloRelation(affineTerm, modInt);
-			return List.of(moduloRelation);
-
-		} else if (relationSymbol.equals(RelationSymbol.DISTINCT) && modInt.compareTo(MAX_NEG_MOD_COUNT) <= 0) {
-			// Have an inequality with a mod value that's small enough
-			final List<ModuloRelation> list = new ArrayList<>();
-
-			for (BigInteger i = BigInteger.ONE; i.compareTo(modInt) < 0; i = i.add(BigInteger.ONE)) {
-				final AffineTerm offsetAffineTerm = affineTerm.add(Rational.valueOf(i, BigInteger.ONE));
-				final ModuloRelation moduloRelation = new ModuloRelation(offsetAffineTerm, modInt);
-				list.add(moduloRelation);
-			}
-			return list;
-		} else {
-			// Can't handle the other cases
-			return List.of();
+			return moduloRelation;
 		}
+		// Can't handle the other cases
+		return null;
 	}
 
-	public static List<ModuloRelation> of(final Term term, final Script script) {
+	public static ModuloRelation of(final Term term, final Script script) {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
 		if (bnr == null) {
-			return List.of();
+			return null;
 		}
 
 		final Term lhs = bnr.getLhs();
@@ -102,19 +88,19 @@ public class ModuloRelation {
 		final var checker = new SubtermPropertyChecker(x -> SmtUtils.isFunctionApplication(x, "mod"));
 		if (modTermRhs != null) {
 			if (checker.isSatisfiedBySomeSubterm(modTermRhs.getDivident())) {
-				return List.of();
+				return null;
 			}
 			if (checker.isSatisfiedBySomeSubterm(modTermRhs.getDivisor())) {
-				return List.of();
+				return null;
 			}
 		}
 
 		if (modTermLhs != null) {
 			if (checker.isSatisfiedBySomeSubterm(modTermLhs.getDivident())) {
-				return List.of();
+				return null;
 			}
 			if (checker.isSatisfiedBySomeSubterm(modTermLhs.getDivisor())) {
-				return List.of();
+				return null;
 			}
 		}
 
@@ -143,19 +129,19 @@ public class ModuloRelation {
 			final BigInteger modInt = getConstantIntFromConstantTerm(mod);
 			if (modInt == null) {
 				// We can only handle constant mods
-				return List.of();
+				return null;
 			}
 
 			final BigInteger nonmodSideInt = getConstantIntFromConstantTerm(nonmodSide);
 			if (nonmodSideInt == null) {
 				// We can't handle this case
-				return List.of();
+				return null;
 			}
 
 			if (modInt.compareTo(nonmodSideInt) <= 0) {
 				// This is unsatisfiable, since modInt <= nonmodSideInt, so whatever modSide is
 				// it will never match nonmodSide
-				return List.of(getUnsatModuloRelation(script));
+				return getUnsatModuloRelation(script);
 			}
 
 			return ModuloRelation.of(finalLhs, finalRhs, relationSymbol, modInt, script);
@@ -175,10 +161,10 @@ public class ModuloRelation {
 			final BigInteger modRhsInt = getConstantIntFromConstantTerm(modRhs);
 
 			if (modLhsInt == null || modRhsInt == null) {
-				return List.of();
+				return null;
 			}
 			if (!modLhsInt.equals(modRhsInt)) {
-				return List.of();
+				return null;
 			}
 
 			final BigInteger modInt = modLhsInt;

@@ -41,12 +41,11 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 			for (final Term conjunct : conjuncts) {
 
 				// Test for ModuloRelation
-				final List<ModuloRelation> conjunctModuloRelations = ModuloRelation.of(conjunct, mScript);
-				if (conjunctModuloRelations != null) {
-					moduloRelations.addAll(conjunctModuloRelations);
-					for (final ModuloRelation conjunctModuloRelation : conjunctModuloRelations) {
-						vars.addAll(conjunctModuloRelation.getVars());
-					}
+				final ModuloRelation conjunctModuloRelation = ModuloRelation.of(conjunct, mScript);
+				if (conjunctModuloRelation != null) {
+					moduloRelations.add(conjunctModuloRelation);
+					vars.addAll(conjunctModuloRelation.getVars());
+
 				} else {
 					// Otherwise test for EqualityRelation
 					final EqualityRelation conjunctEqualityRelation = EqualityRelation.of(conjunct, mScript);
