@@ -105,10 +105,19 @@ public class EGraphTest {
 //		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
 //	}
 
+//	@Test
+//	public void egraphTestExample01() {
+//		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
+//		final String formulaAsString = "(and (= x y) (= y 5) (= (+ x 5) z))";
+//		final String expectedResultAsString = "(or (< y 3) (< x 2))";
+//		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
+//	}
+
 	@Test
-	public void egraphTestExample01() {
-		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
-		final String formulaAsString = "(and (= x y) (= y 5) (= (+ x 5) z))";
+	public void egraphTestExample02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= i (select a x)) (= x y) (= j (select a y)))";
 		final String expectedResultAsString = "(or (< y 3) (< x 2))";
 		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
 	}
@@ -125,6 +134,7 @@ public class EGraphTest {
 
 		final EGraph egraph = new EGraph(mgdScript, services);
 		egraph.addFormula(unf);
+		egraph.postProcessSelects();
 	}
 
 	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term input) {
