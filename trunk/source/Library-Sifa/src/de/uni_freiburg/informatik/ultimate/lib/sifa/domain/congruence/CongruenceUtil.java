@@ -75,6 +75,11 @@ public class CongruenceUtil {
 		return new Pair<>(newMinuendVector, newSubtrahendVector);
 	}
 
+	/**
+	 * Reorders the columns of matrix according to the permutation given by map and
+	 * returns the resulting matrix with dimensions matrix.rowCount x
+	 * resultColumnCount.
+	 */
 	public static RationalMatrix reorderByColumns(final Map<Integer, Integer> map, final int resultColumnCount,
 			final RationalMatrix matrix) {
 		final List<RationalVector> columns = matrix.getColumnVectors();
@@ -88,6 +93,10 @@ public class CongruenceUtil {
 		return RationalMatrix.fromColumnVectors(resultColumns, matrix.getRowCount());
 	}
 
+	/**
+	 * Returns a new map that contains every key in map1 and map2 exactly once and
+	 * maps each key to a unique Integer.
+	 */
 	public static <K> Map<K, Integer> mergeMaps(final Map<K, Integer> map1, final Map<K, Integer> map2) {
 		final Map<K, Integer> newMap = new HashMap<>();
 
@@ -125,6 +134,13 @@ public class CongruenceUtil {
 		return x.divideAndRemainder(y)[0];
 	}
 
+	/**
+	 * Given two values x, y returns an array [r, s, t] for which it holds that:
+	 * <ul>
+	 * <li>r = gcd(x, y)
+	 * <li>s * x + t * y = r
+	 * </ul>
+	 */
 	public static BigInteger[] gcdext(final BigInteger x, final BigInteger y) {
 		BigInteger oldR = x;
 		BigInteger newR = y;
@@ -152,6 +168,9 @@ public class CongruenceUtil {
 		return new BigInteger[] { oldR, oldS, oldT };
 	}
 
+	/**
+	 * Returns the least common multiple (lcm) of x and y.
+	 */
 	public static BigInteger lcm(final BigInteger x, final BigInteger y) {
 		final BigInteger gcd = x.gcd(y);
 		if (gcd.equals(BigInteger.ZERO)) {
@@ -169,13 +188,18 @@ public class CongruenceUtil {
 		return commonDenominator;
 	}
 
+	/**
+	 * Returns the common denominator of the entries of the vector.
+	 */
 	public static BigInteger getCommonDenominator(final RationalVector vector) {
 		final List<Rational> list = vector.asList();
 		return getCommonDenominator(list);
 	}
 
+	// TODO: Add documentation
 	public static Term getSumTerm(final RationalVector vector, final Map<Integer, Term> indexToVar,
 			final Script script) {
+
 		final Set<Term> summands = new HashSet<>();
 		for (int i = 0; i < vector.getLength(); i++) {
 			final Rational rationalFactor = vector.get(i);
@@ -183,6 +207,7 @@ public class CongruenceUtil {
 			if (rationalFactor.equals(Rational.ZERO)) {
 				continue;
 			}
+
 			final BigInteger factor = rationalFactor.numerator();
 
 			Term term;
@@ -206,6 +231,11 @@ public class CongruenceUtil {
 		return sum;
 	}
 
+	/**
+	 * Takes a vector modeling a polynomial equality and a map from the indexes to
+	 * the variables. Returns an array containing two strings, each representing one
+	 * side of the equality.
+	 */
 	public static String[] getVectorStrings(final RationalVector vector, final Map<Integer, Term> indexToVar) {
 		String resultString = "0";
 		final Set<String> summands = new HashSet<>();
@@ -244,6 +274,10 @@ public class CongruenceUtil {
 		return new String[] { sum.toString(), resultString };
 	}
 
+	/**
+	 * Returns true if the last non-zero entries of vector1 and vector2 are equal
+	 * and located at the same index in their respective vectors.
+	 */
 	public static boolean isEqualsInLastNonZero(final RationalVector vector1, final RationalVector vector2) {
 		final int k = vector1.lastPivot();
 		if (k == vector2.lastPivot()) {
