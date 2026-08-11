@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEAMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -135,6 +136,14 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 		mReqPeas.add(new ReqPeas(pattern, minimizedCtPea));
 		mReqPeas.add(new ReqPeas(pattern, originalCtPea));
 		mSymbolTable = builder.constructSymbolTable();
+
+		for (final ReqPeas reqPeas : mReqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> aa : reqPeas.getCounterTrace2Pea()) {
+				final PhaseEventAutomata pea = aa.getValue();
+				final String peaString = DotWriterNew.createDotString(pea);
+				final int i = 0;
+			}
+		}
 
 		mLogger.log(LogLevel.INFO, "Number of locations original: " + totalisedPeaNumberOfLocations);
 		mLogger.log(LogLevel.INFO, "Number of locations minimized: " + minimizedPeaNumberOfLocations);

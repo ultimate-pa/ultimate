@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEAMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
@@ -131,8 +132,23 @@ public class Req2Pea implements IReq2Pea {
 			}
 		}
 
+		for (final ReqPeas reqPeas : mPattern2Peas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqPeas.getCounterTrace2Pea()) {
+				final PhaseEventAutomata pea = ct2pea.getValue();
+				final String peaString = DotWriterNew.createDotString(pea);
+				final int i = 0;
+			}
+		}
+
 		if (minimize) {
 			mPattern2Peas = minimizedPeas;
+		}
+		for (final ReqPeas reqPeas : minimizedPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqPeas.getCounterTrace2Pea()) {
+				final PhaseEventAutomata pea = ct2pea.getValue();
+				final String peaString = DotWriterNew.createDotString(pea);
+				final int i = 0;
+			}
 		}
 
 		mSymbolTable = builder.constructSymbolTable();

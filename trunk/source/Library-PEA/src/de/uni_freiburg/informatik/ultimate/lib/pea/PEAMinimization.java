@@ -54,6 +54,9 @@ public class PEAMinimization {
 	UnionFind<Phase> mEquivalenceClasses;
 	// Key: Equivalence Class Representative, Value: merged locations
 	private static HashMap<Phase, Phase> mMergedLocations;
+
+	// Key: Equivalence Class Representative location, Value: destinations of key
+	private static HashMap<Phase, Set<Phase>> mDestinations;
 	List<InitialTransition> mMergedInitialTransitions;
 
 	private final Set<String> mConstVars;
@@ -79,6 +82,7 @@ public class PEAMinimization {
 		mPEAComplement = new PEAComplement(mPEAtoMinimize, mConstVars);
 		mTotalisedPEA = mPEAComplement.getTotalisedPEA();
 		mPartitionByClockInv = new HashMap<>();
+		mDestinations = new HashMap<>();
 		mMergedLocations = new HashMap<>();
 		createPartitionByClockInv(mTotalisedPEA.getPhases());
 		mMergedInitialTransitions = new ArrayList<>();
@@ -209,7 +213,7 @@ public class PEAMinimization {
 		}
 	}
 
-	public void mergeOutgoingTransitions() {
+	public void mergeOutgoingTransitions2() {
 		for (final Phase rep : mEquivalenceClasses.getAllRepresentatives()) {
 			final HashSet<Phase> addedDestinations = new HashSet<>();
 			final Phase mergedLocation = mMergedLocations.get(rep);
@@ -226,6 +230,8 @@ public class PEAMinimization {
 				} else {
 					mergedGuard = mergedGuard.and(guard);
 				}
+
+				// TODO hier ist falsch
 
 				if (destinationClass.size() > 1) {
 					mergedGuard = mergedGuard.and(destination.getStateInv().prime(mConstVars));
@@ -245,6 +251,62 @@ public class PEAMinimization {
 
 				final Phase mergedDestination = mMergedLocations.get(destinationRep);
 				mergedLocation.addTransition(mergedDestination, mergedGuard, mergedResets);
+
+			}
+
+			// add stutter loop
+			CDD loopGuard = CDD.TRUE;
+			if (rep.getClockInv().isTimed()) {
+				loopGuard = RangeDecision.strict(mergedLocation.getClockInv());
+			}
+			mergedLocation.addTransition(mergedLocation, loopGuard, new String[0]);
+		}
+	}
+
+	public void mergeOutgoingTransitions() {
+		for (final Phase rep : mEquivalenceClasses.getAllRepresentatives()) {
+			final HashSet<Phase> addedDestinations = new HashSet<>();
+			final Phase mergedLocation = mMergedLocations.get(rep);
+			for (final Transition outgoingTransition : rep.getTransitions()) {
+				final Phase destination = outgoingTransition.getDest();
+				final Phase destinationRep = mEquivalenceClasses.find(destination);
+				final Set<Phase> destinationClass = mEquivalenceClasses.getContainingSet(destination);
+				final CDD guard = outgoingTransition.getGuard();
+				CDD mergedGuard = CDD.TRUE;
+
+				// skip if transition is "internal" to the equivalence class
+				if (rep == destinationRep) {
+					continue;
+				}
+
+				if (guard.isTimed()) {
+					final CDD guardWithRenamedClock = CDD.addClockSuffixCDD(guard, MIN_POSTFIX);
+					mergedGuard = mergedGuard.and(guardWithRenamedClock);
+				} else {
+					mergedGuard = mergedGuard.and(guard);
+				}
+
+				// TODO hier ist falsch
+				mergedGuard = mergedGuard.and(destination.getStateInv().prime(mConstVars));
+
+				if (destinationClass.size() > 1) {
+					mergedGuard = mergedGuard.and(destination.getStateInv().prime(mConstVars));
+				}
+
+				final String[] mergedResets = outgoingTransition.getResets().clone();
+
+				for (int i = 0; i < mergedResets.length; i++) {
+					mergedResets[i] = mergedResets[i] + MIN_POSTFIX;
+				}
+
+				final Phase mergedDestination = mMergedLocations.get(destinationRep);
+				mergedLocation.addTransition(mergedDestination, mergedGuard, mergedResets);
+				// if we already have a transition to destination,
+				// we need to add to the guard
+				if (!addedDestinations.add(destinationRep)) {
+					mergedLocation.addTransition(mergedDestination, destination.getStateInv().and(mergedGuard),
+							mergedResets);
+				}
 
 			}
 
