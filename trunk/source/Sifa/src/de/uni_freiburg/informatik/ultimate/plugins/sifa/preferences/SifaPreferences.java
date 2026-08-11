@@ -114,6 +114,10 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_EQDOM_MAX_PARALLEL_STATES = "Max. Parallel Equality";
 	private static final int DEFAULT_EQDOM_MAX_PARALLEL_STATES = 2;
 
+	// settings specific to CongruenceDomain
+	public static final String LABEL_CONGRUENCE_MAX_PARALLEL_STATES = "Max. Parallel Congruences";
+	private static final int DEFAULT_CONGRUENCE_MAX_PARALLEL_STATES = 2;
+
 	// settings specific to CompoundDomain
 	public static final String LABEL_COMPOUNDDOM_SUBDOM = "CompoundDomain Intern Domains";
 	private static final String DEFAULT_COMPOUNDDOM_SUBDOM =
@@ -191,6 +195,11 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		containerEqDom.addItem(
 				integer(LABEL_EQDOM_MAX_PARALLEL_STATES, DEFAULT_EQDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
 
+		final UltimatePreferenceItemContainer containerCongruenceDom =
+				new UltimatePreferenceItemContainer(CongruenceDomain.class.getSimpleName());
+		containerCongruenceDom.addItem(integer(LABEL_CONGRUENCE_MAX_PARALLEL_STATES, DEFAULT_CONGRUENCE_MAX_PARALLEL_STATES,
+				1, Integer.MAX_VALUE));
+
 		final UltimatePreferenceItemContainer containerCompoundDom =
 				new UltimatePreferenceItemContainer(CompoundDomain.class.getSimpleName());
 		containerCompoundDom.addItem(string(LABEL_COMPOUNDDOM_SUBDOM, TOOLTIP_COMPOUNDDOM_SUBDOM,
@@ -217,7 +226,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
 				//
 				containerExplValDom, containerIntervalDom, containerOctagonDom, containerEqDom, containerCompoundDom,
-				containerLogFluid, containerSizeLimitFluid };
+				containerCongruenceDom, containerLogFluid, containerSizeLimitFluid };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

@@ -140,7 +140,7 @@ public class SifaBuilder {
 			domain = new EqDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES), mServices,
 					mLogger, () -> timer);
 		} else if (CongruenceDomain.class.getSimpleName().equals(domainName)) {
-			domain = new CongruenceDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES),
+			domain = new CongruenceDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_CONGRUENCE_MAX_PARALLEL_STATES),
 					mLogger, () -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
