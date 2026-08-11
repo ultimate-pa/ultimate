@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -179,6 +180,9 @@ public class CongruenceUtil {
 		return x.divideAndRemainder(gcd)[0].multiply(y).abs();
 	}
 
+	/**
+	 * Returns the common denominator of the entries of the list.
+	 */
 	public static BigInteger getCommonDenominator(final List<Rational> list) {
 		BigInteger commonDenominator = BigInteger.ONE;
 		for (final Rational rational : list) {
@@ -196,6 +200,7 @@ public class CongruenceUtil {
 		return getCommonDenominator(list);
 	}
 
+	// TODO: Move to where it's used
 	// TODO: Add documentation
 	public static Term getSumTerm(final RationalVector vector, final Map<Integer, Term> indexToVar,
 			final Script script) {
@@ -231,6 +236,7 @@ public class CongruenceUtil {
 		return sum;
 	}
 
+	// TODO: Move to where it's used
 	/**
 	 * Takes a vector modeling a polynomial equality and a map from the indexes to
 	 * the variables. Returns an array containing two strings, each representing one
@@ -292,4 +298,13 @@ public class CongruenceUtil {
 		}
 		return false;
 	}
+
+	/**
+	 * Returns true if term contains a mod application.
+	 */
+	public static boolean containsMod(final Term term) {
+		final var checker = new SubtermPropertyChecker(x -> SmtUtils.isFunctionApplication(x, "mod"));
+		return checker.isSatisfiedBySomeSubterm(term);
+	}
+
 }

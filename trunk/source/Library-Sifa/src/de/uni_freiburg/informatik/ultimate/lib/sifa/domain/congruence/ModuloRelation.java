@@ -8,7 +8,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ModTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -84,23 +83,21 @@ public class ModuloRelation {
 		final ModTerm modTermRhs = ModTerm.of(rhs);
 		final ModTerm modTermLhs = ModTerm.of(lhs);
 
-		// TODO: What if equalities have this ?
 		// Checking that divisor and dividend don't contain a mod themselves
-		final var checker = new SubtermPropertyChecker(x -> SmtUtils.isFunctionApplication(x, "mod"));
 		if (modTermRhs != null) {
-			if (checker.isSatisfiedBySomeSubterm(modTermRhs.getDivident())) {
+			if (CongruenceUtil.containsMod(modTermRhs.getDivident())) {
 				return null;
 			}
-			if (checker.isSatisfiedBySomeSubterm(modTermRhs.getDivisor())) {
+			if (CongruenceUtil.containsMod(modTermRhs.getDivisor())) {
 				return null;
 			}
 		}
 
 		if (modTermLhs != null) {
-			if (checker.isSatisfiedBySomeSubterm(modTermLhs.getDivident())) {
+			if (CongruenceUtil.containsMod(modTermLhs.getDivident())) {
 				return null;
 			}
-			if (checker.isSatisfiedBySomeSubterm(modTermLhs.getDivisor())) {
+			if (CongruenceUtil.containsMod(modTermLhs.getDivisor())) {
 				return null;
 			}
 		}
@@ -188,24 +185,12 @@ public class ModuloRelation {
 	}
 
 	private static Rational modRational(final Rational rational, final BigInteger mod) {
-		// We have a whole number and can do the normal mod
-		if (rational.denominator().equals(BigInteger.ONE)) {
-			final BigInteger newNumerator = rational.numerator().mod(mod);
-			return Rational.valueOf(newNumerator, BigInteger.ONE);
-		}
-
-		// We don't have a whole number and need to calculate modulo the hard way
-		final Rational rationalMod = Rational.valueOf(mod, BigInteger.ONE);
-
-		Rational result = rational;
-		while (result.isNegative()) {
-			result = result.add(rationalMod);
-		}
-
-		while (result.compareTo(rationalMod) >= 0) {
-			result = result.sub(rationalMod);
-		}
-
+		// We bring the mod on the same denominator by multiplying it with
+		// rational.denominator
+		final BigInteger bigMod = rational.denominator().multiply(mod);
+		// Then we can simply calculate the mod of the numerators
+		final BigInteger numerator = rational.numerator().mod(bigMod);
+		final Rational result = Rational.valueOf(numerator, rational.denominator());
 		return result;
 	}
 
