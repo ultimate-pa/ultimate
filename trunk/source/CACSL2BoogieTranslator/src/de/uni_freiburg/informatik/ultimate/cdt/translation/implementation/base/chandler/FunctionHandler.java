@@ -759,14 +759,14 @@ public class FunctionHandler {
 			}
 
 			// Allocate the aux-var and add the writes of the parameters
+			// Assume that the allocation does not fail (i.e., not return null)
 			functionCallExpressionResultBuilder.addStatement(
 					memoryHandler.getUltimateMemAllocCall(currentOffset, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
-			functionCallExpressionResultBuilder.addStatements(writes);
-			translatedParams.add(auxvarinfo.getExp());
-			// Assume that the allocation does not fail (i.e., return null)
 			functionCallExpressionResultBuilder
 					.addStatement(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ,
 							auxvarinfo.getExp(), mMemoryPointer.constructNullPointer(loc, pointerType))));
+			functionCallExpressionResultBuilder.addStatements(writes);
+			translatedParams.add(auxvarinfo.getExp());
 		}
 
 		if (isCalleeSignatureNotYetDetermined) {
