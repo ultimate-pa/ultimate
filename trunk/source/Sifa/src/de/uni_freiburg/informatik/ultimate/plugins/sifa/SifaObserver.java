@@ -28,8 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.sifa;
 
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
@@ -82,8 +80,7 @@ public class SifaObserver extends BaseObserver {
 		mSifaComponents = new SifaBuilder(mServices, mLogger).construct(icfg, mServices.getProgressMonitorService());
 		final Map<IcfgLocation, IPredicate> predicates = mSifaComponents.getIcfgInterpreter().interpret();
 		reportStats(mSifaComponents.getStats());
-		reportResults(predicates,
-				icfg.getProcedureErrorNodes().values().stream().flatMap(x -> x.stream()).collect(Collectors.toSet()));
+		reportResults(predicates);
 	}
 
 	private void reportStats(final SifaStats stats) {
@@ -94,12 +91,10 @@ public class SifaObserver extends BaseObserver {
 				new StatisticsResult<>(Activator.PLUGIN_ID, shortDescription, csvProvider));
 	}
 
-	private void reportResults(final Map<IcfgLocation, IPredicate> predicates, final Set<IcfgLocation> set) {
+	private void reportResults(final Map<IcfgLocation, IPredicate> predicates) {
 		boolean allSafe = true;
 		for (final Map.Entry<IcfgLocation, IPredicate> loiPred : predicates.entrySet()) {
-			if (set.contains(loiPred.getKey())) {
-				allSafe &= reportSingleResult(loiPred);
-			}
+			allSafe &= reportSingleResult(loiPred);
 		}
 		if (allSafe) {
 			mLogger.info("✔ All error locations are guaranteed to be unreachable.");
