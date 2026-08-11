@@ -187,10 +187,10 @@ file_export_version=3.0
 file_export_version=3.0
 #Fri Oct 06 15:09:12 CEST 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\Users\\alex\\AppData\\Local\\Temp\\
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/File\ name\:=boogiePrinter.bpl
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory?=false
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Output\ directory=C\:\\Users\\alex\\AppData\\Local\\Temp\\
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Output\ file\ name=boogiePrinter.bpl
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming=false
 @de.uni_freiburg.informatik.ultimate.boogie.printer=0.1.21
 file_export_version=3.0
 #Fri Oct 06 15:09:12 CEST 2017
