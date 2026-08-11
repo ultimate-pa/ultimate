@@ -201,7 +201,7 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
 
-	public static GeneratorRepresentation getGenerators14() {
+	private static GeneratorRepresentation getGenerators14() {
 		// @formatter:off
 		/*
 		 * L = {}
@@ -230,7 +230,7 @@ public class GeneratorRepresentationTest {
 	}
 
 	@Test
-	public void testComputeConstraintRepresentation() {
+	public static void testComputeConstraintRepresentation() {
 		final List<ConstraintRepresentation> constraints = List.of(ConstraintRepresentationTest.getConstraints8(),
 				ConstraintRepresentationTest.getConstraints9(), ConstraintRepresentationTest.getConstraints10(),
 				ConstraintRepresentationTest.getConstraints11(), ConstraintRepresentationTest.getConstraints12(),
@@ -251,7 +251,7 @@ public class GeneratorRepresentationTest {
 		}
 	}
 
-	public boolean hasMinimalForm(final GeneratorRepresentation generators) {
+	private static boolean hasMinimalForm(final GeneratorRepresentation generators) {
 		if (!generators.isMinimal()) {
 			return false;
 		}
