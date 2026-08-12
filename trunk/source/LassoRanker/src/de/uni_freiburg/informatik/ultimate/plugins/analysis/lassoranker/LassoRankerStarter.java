@@ -89,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -446,10 +447,10 @@ public class LassoRankerStarter {
 		if (stem.length() == 0) {
 			stemExecution = IcfgProgramExecution.create(IcfgEdge.class);
 		} else {
-			stemExecution = IcfgProgramExecution.create(stem.asList(), Collections.emptyMap());
+			stemExecution = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(stem);
 		}
 		final IcfgProgramExecution<IcfgEdge> loopExecution =
-				IcfgProgramExecution.create(loop.asList(), Collections.emptyMap());
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(loop);
 		final IcfgEdge hondaEdge = loop.getSymbol(0);
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)
