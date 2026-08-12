@@ -176,7 +176,7 @@ public class EmpireOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 	private IExplicitEmpire<L, P, State<L, P>> computeEmpire() {
 		mStatistics.startEmpireComputation();
 		try {
-			final var lazyEmpire = new SaturatedEmpire<>(mProgram, mProofProduct, mServices);
+			final var lazyEmpire = new SaturatedEmpire<>(mServices, mProgram, mProofProduct);
 
 			mLogger.info("Exploring empire...");
 			final var empire = new EmpireReachableStates<>(mServices, lazyEmpire);

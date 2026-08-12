@@ -35,11 +35,37 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Represents an empire (automaton), as defined in our POPL'26 paper
+ *
+ * The Ghosts of Empires: Extracting Modularity from Interleaving-Based Proofs. Schüssele, Zumkeller, Lagunes-Rochin and
+ * Klumpp, POPL'26
+ *
+ * A valid empire represents a correctness proof of a Petri program. It maps abstractions of the history (the
+ * interleaving executed so far), represented by the automaton states, to assertions about the data state (represented
+ * as predicates) and control configuration (represented by {@link Territory} instances) reached after such a history.
+ *
+ * @param <L>
+ *            The type of letters in the empire resp. the proven Petri program
+ * @param <P>
+ *            The type of places in the proven Petri program
+ * @param <S>
+ *            The type of states in the empire
+ */
 public interface IEmpire<L, P, S> extends INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, S> {
+	/**
+	 * Maps an empire state to its "law", i.e., the corresponding data assertion
+	 */
 	IPredicate getLaw(S state);
 
+	/**
+	 * Maps an empire state to its "territory", which describes possible control configurations
+	 */
 	Territory<P, Region<P>> getTerritory(S state);
 
+	/**
+	 * Convenience method: Determines if the given state's territory contains the given place.
+	 */
 	default boolean containsPlace(final S state, final P place) {
 		// Convenience method.
 		return getTerritory(state).containsPlace(place);
@@ -52,33 +78,41 @@ public interface IEmpire<L, P, S> extends INwaOutgoingLetterAndTransitionProvide
 		return null;
 	}
 
+	/**
+	 * Empires do not support calls and returns.
+	 */
 	@Deprecated
 	@Override
 	default S getEmptyStackState() {
-		// Empires do not support calls and returns.
 		return null;
 	}
 
+	/**
+	 * There is no meaningful notion of final states in empires.
+	 */
 	@Deprecated
 	@Override
 	default boolean isFinal(final S state) {
-		// There is no meaningful notion of final states in empires.
 		return false;
 	}
 
+	/**
+	 * Empires do not support calls and returns.
+	 */
 	@Deprecated
 	@Override
 	default Iterable<OutgoingCallTransition<Transition<L, P>, S>> callSuccessors(final S state,
 			final Transition<L, P> letter) {
-		// Empires do not support calls and returns.
 		return List.of();
 	}
 
+	/**
+	 * Empires do not support calls and returns.
+	 */
 	@Deprecated
 	@Override
 	default Iterable<OutgoingReturnTransition<Transition<L, P>, S>> returnSuccessors(final S state, final S hier,
 			final Transition<L, P> letter) {
-		// Empires do not support calls and returns.
 		return List.of();
 	}
 }
