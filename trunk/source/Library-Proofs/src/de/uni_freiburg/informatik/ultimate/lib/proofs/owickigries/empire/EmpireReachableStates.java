@@ -54,6 +54,12 @@ public class EmpireReachableStates<L, P, S> implements IExplicitEmpire<L, P, S> 
 	private final IEmpire<L, P, S> mEmpire;
 	private final NestedWordAutomatonReachableStates<Transition<L, P>, S> mReachable;
 
+	/**
+	 * Creates a new instance of the class, which iteratively explores the states of the given empire.
+	 *
+	 * If the given empire might already be explicit, consider using the static
+	 * {@link #makeExplicit(IUltimateServiceProvider, IEmpire)} method instead.
+	 */
 	public EmpireReachableStates(final IUltimateServiceProvider services, final IEmpire<L, P, S> empire) {
 		mEmpire = empire;
 		try {
@@ -64,6 +70,10 @@ public class EmpireReachableStates<L, P, S> implements IExplicitEmpire<L, P, S> 
 		}
 	}
 
+	/**
+	 * Turns a given empire into an explicit empire. If the given empire is already explicit, it is returned unchanged
+	 * (avoiding unnecessary effort). Otherwise, a new instance of this class is created and returned.
+	 */
 	public static <L, P, S> IExplicitEmpire<L, P, S> makeExplicit(final IUltimateServiceProvider services,
 			final IEmpire<L, P, S> empire) {
 		if (empire instanceof final IExplicitEmpire<L, P, S> explicitEmpire) {

@@ -50,6 +50,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * This is the main implementation of a legal focus function (see {@link ILegalFocusFunction}).
+ *
+ * It attempts to compute a legal focus that minimizes the size of the resulting O/G annotation, by initially focusing
+ * no regions and then iteratively adding regions to the focus as required by the conditions of the legal focus
+ * definition.
+ *
+ * As there are some situations in which there are multiple alternative regions that could be added to the focus to
+ * satisfy a rule, this class can be parameterized with a heuristic that chooses among the available alternatives.
+ *
+ * @param <S>
+ *            the type of empire states to which the focus is applied
+ * @param <L>
+ *            the type of transitions in the empire resp. the underlying Petri program
+ * @param <P>
+ *            the type of places in the underlying Petri program
+ */
 public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 	private final IPetriNet<L, P> mProgram;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInterpolantAutomaton;
@@ -61,21 +78,61 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 
 	private final HashRelation<Pair<S, Integer>, Region<P>> mLegalFocus;
 
-	public LegalFocus(final IExplicitEmpire<L, P, S> empire, final IPetriNet<L, P> net,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton, final int numLaws,
-			final Function<IPredicate, List<IPredicate>> splitConjuncts) {
-		this(empire, net, interpolantAutomaton, numLaws, splitConjuncts,
-				IFocusedRegionHeuristic.bySizeExcludingAuxilliaryPlaces());
+	/**
+	 * Computes a legal focus for the given empire.
+	 *
+	 * When multiple regions can be added to the focus, the
+	 * {@link IFocusedRegionHeuristic#bySizeExcludingAuxiliaryPlaces()} heuristic is used to choose one.
+	 *
+	 * @param empire
+	 *            the empire for which a legal focus is computed
+	 * @param program
+	 *            the underlying Petri program
+	 * @param interpolantAutomaton
+	 *            the interpolant automaton on which the empire is based
+	 * @param numberOfLawConjuncts
+	 *            the number of conjuncts each law of the interpolant automaton can be split into (typically, the number
+	 *            of individual interpolant automata whose union is given as interpolant automaton to this constructor)
+	 * @param splitConjuncts
+	 *            a function that decomposes a law of the empire (resp. state of the interpolant automaton) into the
+	 *            specified number of disjuncts
+	 */
+	public LegalFocus(final IExplicitEmpire<L, P, S> empire, final IPetriNet<L, P> program,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
+			final int numberOfLawConjuncts, final Function<IPredicate, List<IPredicate>> splitConjuncts) {
+		this(empire, program, interpolantAutomaton, numberOfLawConjuncts, splitConjuncts,
+				IFocusedRegionHeuristic.bySizeExcludingAuxiliaryPlaces());
 	}
 
+	/**
+	 * Computes a legal focus for the given empire.
+	 *
+	 * When multiple regions can be added to the focus, the given heuristic is used to choose one.
+	 *
+	 * @param empire
+	 *            the empire for which a legal focus is computed
+	 * @param program
+	 *            the underlying Petri program
+	 * @param interpolantAutomaton
+	 *            the interpolant automaton on which the empire is based
+	 * @param numberOfLawConjuncts
+	 *            the number of conjuncts each law of the interpolant automaton can be split into (typically, the number
+	 *            of individual interpolant automata whose union is given as interpolant automaton to this constructor)
+	 * @param splitConjuncts
+	 *            a function that decomposes a law of the empire (resp. state of the interpolant automaton) into the
+	 *            specified number of disjuncts
+	 * @param heuristic
+	 *            a heuristic used to choose among multiple regions that can be added to the focus
+	 */
 	public LegalFocus(final IExplicitEmpire<L, P, S> empire, final IPetriNet<L, P> program,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton, final int numLaws,
-			final Function<IPredicate, List<IPredicate>> splitConjuncts, final IFocusedRegionHeuristic<P> heuristic) {
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
+			final int numberOfLawConjuncts, final Function<IPredicate, List<IPredicate>> splitConjuncts,
+			final IFocusedRegionHeuristic<P> heuristic) {
 		mProgram = program;
 		mInterpolantAutomaton = interpolantAutomaton;
 		mEmpire = empire;
 
-		mNumLaws = numLaws;
+		mNumLaws = numberOfLawConjuncts;
 		mSplitConjuncts = Objects.requireNonNull(splitConjuncts);
 		mHeuristic = heuristic;
 
@@ -84,7 +141,7 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 
 	private HashRelation<Pair<S, Integer>, Region<P>> computeLegalFocus() {
 		// Begin the focus computation with states that enable transitions that would lead to "false".
-		// (Rule: inductive-false)
+		// (Rule: safe)
 		final Collection<S> finalStates = mEmpire.getStates().stream().filter(this::isFinalState).toList();
 		final var focus = computeFinalStateFocus(finalStates);
 
@@ -162,7 +219,7 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 	// When a state's territory enables a transition but the state has no outgoing edge for it, some of the conjuncts
 	// must go to "false" after the transition. For at least one such conjunct, at least one predecessor region of the
 	// transition must be focused.
-	// (Rule: inductive-false)
+	// (Rule: safe)
 	private HashRelation<Pair<S, Integer>, Region<P>> computeFinalStateFocus(final Collection<S> finalStates) {
 		final var focus = new HashRelation<Pair<S, Integer>, Region<P>>();
 		for (final S state : finalStates) {
@@ -275,6 +332,17 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 		return SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 
+	/**
+	 * A mechanism to choose between multiple ways to satisfy one of the conditions of a legal focus, by adding further
+	 * regions to the focus.
+	 *
+	 * Specifically, this choice is encapsulated as a partial order over pairs of regions and laws (i.e., predicates). A
+	 * minimal pair is considered most preferred, and thus the region in this pair is added to the focus of the law in
+	 * the pair.
+	 *
+	 * @param <P>
+	 *            the type of places in the considered regions
+	 */
 	public interface IFocusedRegionHeuristic<P> {
 		Comparator<Pair<Region<P>, IPredicate>> getPreference();
 
@@ -283,6 +351,9 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 			return (r1, r2) -> comparator.compare(new Pair<>(r1, law), new Pair<>(r2, law));
 		}
 
+		/**
+		 * A heuristic that always prefers smaller regions over larger regions (in terms of the number of places).
+		 */
 		static <P> IFocusedRegionHeuristic<P> bySize() {
 			return new IFocusedRegionHeuristic<>() {
 				@Override
@@ -297,7 +368,14 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 			};
 		}
 
-		static <P> IFocusedRegionHeuristic<P> bySizeExcludingAuxilliaryPlaces() {
+		/**
+		 * A heuristic that prefers places that do not contain auxiliary places, and among such regions, prefers smaller
+		 * over larger regions.
+		 *
+		 * A place is considered an auxiliary place for the purposes of this heuristic, if it is not an instance of the
+		 * {@link ISLPredicate} class.
+		 */
+		static <P> IFocusedRegionHeuristic<P> bySizeExcludingAuxiliaryPlaces() {
 			return new IFocusedRegionHeuristic<>() {
 				@Override
 				public Comparator<Pair<Region<P>, IPredicate>> getPreference() {

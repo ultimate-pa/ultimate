@@ -35,9 +35,21 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  * Abstract interface for legal focus.
  *
  * A legal focus assigns potentially different laws to different regions in the territory belonging to an empire. For
- * each region, the assigned law must be weaker than the state's full law, and satisfy additional conditions.
+ * each region, the assigned law must be weaker than the state's full law, and satisfy additional conditions:
  *
- * TODO Document additional conditions
+ * <ol>
+ * <li><em>safe</em>: if a transition is enabled in a state's territory, but the state has no outgoing edge for this
+ * transition (i.e., it must lead to "false"), then some predecessor region of the transition must be in the focus of
+ * some conjunct that suffices to derive "false" after the transition.</li>
+ *
+ * <li><em>inductive-edge</em>: if the focus successor region of a transition in some state contains the i-th law
+ * conjunct of the state, then the focus of some predecessor region of the transition must, in the predecessor state,
+ * contain the respective i-th law conjunct.</li>
+ *
+ * <li><em>bystanders</em>: executing a transition does not increase the focus of the transition's bystanders.</li>
+ * </ol>
+ *
+ * The formal definitions can be found in our POPL'26 paper, Section 6.
  *
  * @param <S>
  *            the type of states in the empire
