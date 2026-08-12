@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
-import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -117,14 +116,6 @@ public class EmpireReachableStates<L, P, S> implements IExplicitEmpire<L, P, S> 
 	@Override
 	public Set<S> getInitialStates() {
 		return mReachable.getInitialStates();
-	}
-
-	@Override
-	@Deprecated
-	// TODO We should not abuse the final states for empires, they do not represent any meaningful language.
-	// TODO Instead introduce a suitably-named new method.
-	public Collection<S> getFinalStates() {
-		return mReachable.getFinalStates();
 	}
 
 	@Override

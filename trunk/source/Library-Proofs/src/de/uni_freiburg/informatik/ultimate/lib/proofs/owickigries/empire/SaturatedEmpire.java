@@ -119,56 +119,6 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return mInitialState.equals(state);
 	}
 
-	/**
-	 * Determines a state s as final, if it contains an error place and the law is false, OR if there exists at least
-	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
-	 * successor law must be false.
-	 */
-	public boolean isFinal2(final State<P> state) {
-		final var successors = internalSuccessors(state);
-		final var succStates = new HashSet<State<P>>();
-		for (final OutgoingInternalTransition<Transition<L, P>, State<P>> outgoingInternalTransition : successors) {
-			final var succState = outgoingInternalTransition.getSucc();
-			succStates.add(succState);
-			if (state != succState) {
-				return false;
-			}
-		}
-		final var territory = state.territory();
-		final var enabledTransitions = territory.getEnabledTransitions(mProgram).collect(Collectors.toSet());
-		if (succStates.size() < enabledTransitions.size()) {
-			final var falseSuccessors = enabledTransitions.stream()
-					.anyMatch(t -> mInterpolantAutomaton.isFinal(getSuccessorLaw(state.law, t)));
-			if (!falseSuccessors) {
-				mLogger.debug("Bla");
-			}
-			assert falseSuccessors
-					: "There exists no successor for an enabled transition, but the successor law is not false";
-		}
-		// Check if there is at least one enabled transition, for which state has no successor
-		return succStates.size() < enabledTransitions.size();
-	}
-
-	/**
-	 * Determines a state s as final, if it contains an error place and the law is false, OR if there exists at least
-	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
-	 * successor law must be false.
-	 */
-	@Override
-	public boolean isFinal(final State<P> state) {
-		final var territory = state.territory();
-		final var enabledTransitions = territory.getEnabledTransitions(mProgram).collect(Collectors.toSet());
-		for (final Transition<L, P> transition : enabledTransitions) {
-			final var succ = internalSuccessors(state, transition);
-			if (!succ.iterator().hasNext()) {
-				assert mInterpolantAutomaton.isFinal(getSuccessorLaw(state.law, transition))
-						: "There is no successor, but the law is not false";
-				return true;
-			}
-		}
-		return false;
-	}
-
 	@Override
 	public int size() {
 		return -1;

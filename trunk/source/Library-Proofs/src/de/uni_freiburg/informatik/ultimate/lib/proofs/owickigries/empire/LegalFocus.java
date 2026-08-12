@@ -85,7 +85,8 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 	private HashRelation<Pair<S, Integer>, Region<P>> computeLegalFocus() {
 		// Begin the focus computation with states that enable transitions that would lead to "false".
 		// (Rule: inductive-false)
-		final var focus = computeFinalStateFocus(mEmpire.getFinalStates());
+		final Collection<S> finalStates = mEmpire.getStates().stream().filter(this::isFinalState).toList();
+		final var focus = computeFinalStateFocus(finalStates);
 
 		// Perform a backwards-BFS to propagate focus.
 		// (Rules: inductive-edge, bystanders)
@@ -201,6 +202,19 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 			}
 		}
 		return focus;
+	}
+
+	// Check if the state blocks any transition enabled by the state's territory (because it would lead to "false")
+	private boolean isFinalState(final S state) {
+		final var territory = mEmpire.getTerritory(state);
+		final var enabledTransitions = territory.getEnabledTransitions(mProgram).collect(Collectors.toSet());
+		for (final Transition<L, P> transition : enabledTransitions) {
+			final var succ = mEmpire.internalSuccessors(state, transition);
+			if (!succ.iterator().hasNext()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private record IndexAndRegion<P>(int lawIndex, Region<P> region) {
