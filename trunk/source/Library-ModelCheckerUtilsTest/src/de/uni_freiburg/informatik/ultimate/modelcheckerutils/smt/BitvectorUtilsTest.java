@@ -648,4 +648,51 @@ public class BitvectorUtilsTest {
 				SimplificationTechnique.POLY_PAC, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	// --- Extract-over-extend no-op ---
+
+	@Test
+	public void bvExtractOverSignExtend() {
+		// extract exactly undoes sign_extend when the width matches: ((_ extract 7 0) ((_ sign_extend 24) x)) -> x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "((_ extract 7 0) ((_ sign_extend 24) x))";
+		final String expected = "x";
+
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expected, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvExtractOverZeroExtend() {
+		// Same no-op for zero_extend: ((_ extract 7 0) ((_ zero_extend 24) x)) -> x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "((_ extract 7 0) ((_ zero_extend 24) x))";
+		final String expected = "x";
+
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expected, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvExtractOverSignExtendWrongWidthNotSimplified() {
+		// Guard: extracting MORE than the original width reaches into the padding bits (unknown for symbolic x), so
+		// the rule must not fire: ((_ extract 15 0) ((_ sign_extend 24) x)) must stay unsimplified.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "((_ extract 15 0) ((_ sign_extend 24) x))";
+		final String expected = "((_ extract 15 0) ((_ sign_extend 24) x))";
+
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expected, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvExtractOfPlainVariableNotSimplified() {
+		// Guard: no sign_extend/zero_extend underneath at all, so the rule must not touch it.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "y") };
+		final String formulaAsString = "((_ extract 7 0) y)";
+		final String expected = "((_ extract 7 0) y)";
+
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expected, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 }

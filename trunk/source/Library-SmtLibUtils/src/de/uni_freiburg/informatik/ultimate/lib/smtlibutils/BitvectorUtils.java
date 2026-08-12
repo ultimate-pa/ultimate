@@ -394,6 +394,34 @@ public final class BitvectorUtils {
 			return constructTerm(script, bv);
 		}
 
+		/**
+		 * Extract-over-extend no-op: sign_extend/zero_extend only add bits above the original value, so extracting
+		 * exactly the original width back out (starting at bit 0) always gives back the original value unchanged,
+		 * e.g. {@code (extract 2 0 (sign_extend 2 x))} -> {@code x} for a 3-bit x. Any other extract range may reach
+		 * into the padding bits, which depend on x's own (unknown, symbolic) sign/zero bit, so this only fires on an
+		 * exact width match.
+		 */
+		@Override
+		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
+				final BitvectorConstant[] bvs) {
+			final int hi = indices[0].intValueExact();
+			final int lo = indices[1].intValueExact();
+			if (lo == 0) {
+				ApplicationTerm extendApp = SmtUtils.getFunctionApplication(params[0], "sign_extend");
+				if (extendApp == null) {
+					extendApp = SmtUtils.getFunctionApplication(params[0], "zero_extend");
+				}
+				if (extendApp != null) {
+					final Term innerValue = extendApp.getParameters()[0];
+					final int innerWidth = Integer.parseInt(innerValue.getSort().getIndices()[0]);
+					if (hi == innerWidth - 1) {
+						return innerValue; // extract exactly undoes the extend
+					}
+				}
+			}
+			return super.simplify_NonConstantCase(script, indices, params, bvs);
+		}
+
 	}
 
 	private static class Sign_extend extends BitvectorOperation {
