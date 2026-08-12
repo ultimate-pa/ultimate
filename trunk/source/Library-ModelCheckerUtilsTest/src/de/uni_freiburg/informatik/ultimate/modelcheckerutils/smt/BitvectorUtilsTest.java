@@ -673,12 +673,25 @@ public class BitvectorUtilsTest {
 	}
 
 	@Test
-	public void bvExtractOverSignExtendWrongWidthNotSimplified() {
-		// Guard: extracting MORE than the original width reaches into the padding bits (unknown for symbolic x), so
-		// the rule must not fire: ((_ extract 15 0) ((_ sign_extend 24) x)) must stay unsimplified.
+	public void bvExtractOverSignExtendPartialReduction() {
+		// Extracting MORE than the original width but LESS than the full extended width keeps some padding bits,
+		// which is equivalent to a smaller extend, not the bare original value:
+		// ((_ extract 15 0) ((_ sign_extend 24) x)) -> ((_ sign_extend 8) x), for an 8-bit x.
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		final String formulaAsString = "((_ extract 15 0) ((_ sign_extend 24) x))";
-		final String expected = "((_ extract 15 0) ((_ sign_extend 24) x))";
+		final String expected = "((_ sign_extend 8) x)";
+
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expected, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void bvExtractOfFullExtendedWidthNotHandledByThisRule() {
+		// Guard: extracting the ENTIRE extended width (bit 31 of a 32-bit result) is out of scope for this rule -
+		// it's a different ("extract of full range") simplification, not yet implemented - so it must stay as-is.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "((_ extract 31 0) ((_ sign_extend 24) x))";
+		final String expected = "((_ extract 31 0) ((_ sign_extend 24) x))";
 
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expected, SimplificationTechnique.POLY_PAC,
 				mServices, mLogger, mMgdScript, mCsvWriter);
