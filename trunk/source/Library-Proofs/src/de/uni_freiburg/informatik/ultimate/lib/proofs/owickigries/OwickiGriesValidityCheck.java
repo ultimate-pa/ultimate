@@ -233,7 +233,7 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	}
 
 	private IPredicate getPlacePredicate(final P place) {
-		return mAnnotation.getFormulaMapping().get(place);
+		return mAnnotation.getAnnotationMap().get(place);
 	}
 
 	// TODO possibly cache?
@@ -241,7 +241,7 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 		final var transitionTf = getTransformula(transition);
 		UnmodifiableTransFormula combinedTf;
 
-		final var ghostUpdate = mAnnotation.getAssignmentMapping().get(transition);
+		final var ghostUpdate = mAnnotation.getGhostUpdateMap().get(transition);
 		if (ghostUpdate == null) {
 			combinedTf = transitionTf;
 		} else {
@@ -298,9 +298,9 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 
 	private IPredicate getGhostInitializationFormula() {
 		final List<IPredicate> terms = new ArrayList<>();
-		for (final IProgramVar var : mAnnotation.getGhostAssignment().keySet()) {
+		for (final IProgramVar var : mAnnotation.getInitialGhostValues().keySet()) {
 			terms.add(mPredicateFactory.newPredicate(
-					SmtUtils.binaryEquality(mScript, var.getTerm(), mAnnotation.getGhostAssignment().get(var))));
+					SmtUtils.binaryEquality(mScript, var.getTerm(), mAnnotation.getInitialGhostValues().get(var))));
 		}
 		return mPredicateFactory.and(terms);
 	}

@@ -280,7 +280,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final var petrifiedProof = (OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>) proof;
 
 		// TODO unpetrify IPredicates themselves
-		final var unpetrifiedFormulas = petrifiedProof.getFormulaMapping().entrySet().stream().map(e -> {
+		final var unpetrifiedFormulas = petrifiedProof.getAnnotationMap().entrySet().stream().map(e -> {
 			final var originalLoc = mLocationMap.get(e.getKey());
 			if (originalLoc == null) {
 				mLogger.warn("Unknown original location for %s", e.getKey());
@@ -290,12 +290,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		}).filter(x -> x != null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
 		// TODO unpetrify RHS of updates
-		final var unpetrifiedUpdates = petrifiedProof.getAssignmentMapping().entrySet().stream()
+		final var unpetrifiedUpdates = petrifiedProof.getGhostUpdateMap().entrySet().stream()
 				.map(e -> new Pair<>(mTransitionMap.get(e.getKey()), e.getValue()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
 		return new OwickiGriesAnnotation<>(null /* TODO */, null /* TODO */, null /* TODO */, unpetrifiedFormulas,
-				petrifiedProof.getGhostVariables(), petrifiedProof.getGhostAssignment(), unpetrifiedUpdates);
+				petrifiedProof.getInitialGhostValues(), unpetrifiedUpdates);
 	}
 
 	private static <L extends IIcfgTransition<?>> boolean

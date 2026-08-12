@@ -88,7 +88,7 @@ public class OwickiGriesUtils {
 
 		// Process declarations and initial values of ghost variables.
 		final var ghostsInits = new HashMap<String, Object>();
-		for (final var entry : annotation.getGhostAssignment().entrySet()) {
+		for (final var entry : annotation.getInitialGhostValues().entrySet()) {
 			final var ghost = entry.getKey();
 			final var expr = entry.getValue();
 
@@ -107,7 +107,7 @@ public class OwickiGriesUtils {
 		new WitnessGhostDeclaration<>(ghostsInits).annotate(icfg);
 
 		// Process ghost updates
-		for (final var entry : annotation.getAssignmentMapping().entrySet()) {
+		for (final var entry : annotation.getGhostUpdateMap().entrySet()) {
 			final var edge = (IIcfgTransition<?>) entry.getKey();
 			final GhostUpdate update = entry.getValue();
 
@@ -132,7 +132,7 @@ public class OwickiGriesUtils {
 
 		// Process location invariants.
 		final var failedGhostTvs = failedGhosts.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-		for (final var entry : annotation.getFormulaMapping().entrySet()) {
+		for (final var entry : annotation.getAnnotationMap().entrySet()) {
 			final IcfgLocation loc = entry.getKey();
 			final Term formula = entry.getValue().getFormula();
 			final Object invariant = backTranslatorService.translateExpressionWithContext(formula,
