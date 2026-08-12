@@ -442,8 +442,12 @@ public class LassoRankerStarter {
 	 */
 	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta, final NestedWord<IcfgEdge> stem,
 			final NestedWord<IcfgEdge> loop) {
-		final IcfgProgramExecution<IcfgEdge> stemExecution =
-				IcfgProgramExecution.create(stem.asList(), Collections.emptyMap());
+		final IcfgProgramExecution<IcfgEdge> stemExecution;
+		if (stem.length() == 0) {
+			stemExecution = IcfgProgramExecution.create(IcfgEdge.class);
+		} else {
+			stemExecution = IcfgProgramExecution.create(stem.asList(), Collections.emptyMap());
+		}
 		final IcfgProgramExecution<IcfgEdge> loopExecution =
 				IcfgProgramExecution.create(loop.asList(), Collections.emptyMap());
 		final IcfgEdge hondaEdge = loop.getSymbol(0);
