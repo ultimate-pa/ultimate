@@ -162,10 +162,10 @@ public class EmpireOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 
 		assert isReadyToComputeProof() : "Not ready to compute proof";
 
-		final IExplicitEmpire<L, P, State<L, P>> empire = computeEmpire();
+		final IExplicitEmpire<L, P, State<P>> empire = computeEmpire();
 		assert checkEmpireValidity(empire) : "Empire is invalid";
 
-		final ILegalFocusFunction<State<L, P>, P> legalFocus = computeFocus(empire);
+		final ILegalFocusFunction<State<P>, P> legalFocus = computeFocus(empire);
 
 		mOwickiGries = computeOwickiGriesAnnotation(empire, legalFocus);
 		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
@@ -173,7 +173,7 @@ public class EmpireOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 		return mOwickiGries;
 	}
 
-	private IExplicitEmpire<L, P, State<L, P>> computeEmpire() {
+	private IExplicitEmpire<L, P, State<P>> computeEmpire() {
 		mStatistics.startEmpireComputation();
 		try {
 			final var lazyEmpire = new SaturatedEmpire<>(mServices, mProgram, mProofProduct);
@@ -202,7 +202,7 @@ public class EmpireOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 		}
 	}
 
-	private ILegalFocusFunction<State<L, P>, P> computeFocus(final IExplicitEmpire<L, P, State<L, P>> empire) {
+	private ILegalFocusFunction<State<P>, P> computeFocus(final IExplicitEmpire<L, P, State<P>> empire) {
 		mLogger.info("Computing focus ...");
 		mStatistics.startFocusComputation();
 		try {
@@ -218,7 +218,7 @@ public class EmpireOwickiGries<L extends IAction, P> implements IPetriNetProofPr
 	}
 
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> computeOwickiGriesAnnotation(
-			final IExplicitEmpire<L, P, State<L, P>> empire, final ILegalFocusFunction<State<L, P>, P> legalFocus) {
+			final IExplicitEmpire<L, P, State<P>> empire, final ILegalFocusFunction<State<P>, P> legalFocus) {
 		mLogger.info("Converting empire to Owicki-Gries annotation...");
 		mStatistics.startOwickiGriesComputation();
 		try {

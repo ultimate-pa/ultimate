@@ -62,13 +62,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <P>
  *            The type of places in the Petri program for which an empire is computed
  */
-public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.State<L, P>> {
+public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.State<P>> {
 	private final ILogger mLogger;
 
 	private final IPetriNet<L, P> mProgram;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInterpolantAutomaton;
 
-	private final State<L, P> mInitialState;
+	private final State<P> mInitialState;
 
 	/**
 	 * Create a new instance of a saturated empire. The actual computation will be performed on-demand as the empire is
@@ -90,17 +90,17 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 				DataStructureUtils.getOneAndOnly(mInterpolantAutomaton.getInitialStates(), "initial law place");
 		final var regions =
 				mProgram.getInitialPlaces().stream().map(Region::singleton).collect(ImmutableSet.collector());
-		final State<L, P> state = new State<>(new Territory<>(regions), initialLaw);
+		final State<P> state = new State<>(new Territory<>(regions), initialLaw);
 		mInitialState = getMarkedSuccessor(state, Collections.emptySet());
 	}
 
 	@Override
-	public IPredicate getLaw(final State<L, P> state) {
+	public IPredicate getLaw(final State<P> state) {
 		return state.law();
 	}
 
 	@Override
-	public Territory<P, Region<P>> getTerritory(final State<L, P> state) {
+	public Territory<P, Region<P>> getTerritory(final State<P> state) {
 		return state.territory();
 	}
 
@@ -110,12 +110,12 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 	}
 
 	@Override
-	public Iterable<State<L, P>> getInitialStates() {
+	public Iterable<State<P>> getInitialStates() {
 		return List.of(mInitialState);
 	}
 
 	@Override
-	public boolean isInitial(final State<L, P> state) {
+	public boolean isInitial(final State<P> state) {
 		return mInitialState.equals(state);
 	}
 
@@ -124,10 +124,10 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
 	 * successor law must be false.
 	 */
-	public boolean isFinal2(final State<L, P> state) {
+	public boolean isFinal2(final State<P> state) {
 		final var successors = internalSuccessors(state);
-		final var succStates = new HashSet<State<L, P>>();
-		for (final OutgoingInternalTransition<Transition<L, P>, State<L, P>> outgoingInternalTransition : successors) {
+		final var succStates = new HashSet<State<P>>();
+		for (final OutgoingInternalTransition<Transition<L, P>, State<P>> outgoingInternalTransition : successors) {
 			final var succState = outgoingInternalTransition.getSucc();
 			succStates.add(succState);
 			if (state != succState) {
@@ -155,7 +155,7 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 	 * successor law must be false.
 	 */
 	@Override
-	public boolean isFinal(final State<L, P> state) {
+	public boolean isFinal(final State<P> state) {
 		final var territory = state.territory();
 		final var enabledTransitions = territory.getEnabledTransitions(mProgram).collect(Collectors.toSet());
 		for (final Transition<L, P> transition : enabledTransitions) {
@@ -180,15 +180,15 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 	}
 
 	@Override
-	public Set<Transition<L, P>> lettersInternal(final State<L, P> state) {
+	public Set<Transition<L, P>> lettersInternal(final State<P> state) {
 		final var places = state.territory().getPlaces();
 		return mProgram.getSuccessorTransitionProviders(places, places).stream()
 				.flatMap(p -> p.getTransitions().stream()).collect(Collectors.toSet());
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<Transition<L, P>, State<L, P>>>
-			internalSuccessors(final State<L, P> state, final Transition<L, P> letter) {
+	public Iterable<OutgoingInternalTransition<Transition<L, P>, State<P>>> internalSuccessors(final State<P> state,
+			final Transition<L, P> letter) {
 		// step 1: see if letter should lead to any successor at all or can be optimized away
 		// (iterate over alphabet and see which other transitions are enabled in the territory)
 		if (!state.territory().enables(letter)) {
@@ -233,14 +233,14 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return currentLaw == successorLaw && isStraightline(transition);
 	}
 
-	private boolean isCycle(final State<L, P> state, final Transition<L, P> transition, final IPredicate successorLaw) {
+	private boolean isCycle(final State<P> state, final Transition<L, P> transition, final IPredicate successorLaw) {
 		final var territory = state.territory();
 		final var law = state.law();
 		return territory.enables(transition) && isExtendingTransition(law, transition, successorLaw)
 				&& territory.getPlaces().containsAll(transition.getSuccessors());
 	}
 
-	private State<L, P> getMarkedSuccessor(final State<L, P> state, final Set<Region<P>> replacementBystanders) {
+	private State<P> getMarkedSuccessor(final State<P> state, final Set<Region<P>> replacementBystanders) {
 		final var newRegions = new LinkedHashSet<Region<P>>(state.territory().size());
 		boolean changed = false;
 		for (final var region : state.territory().getRegions()) {
@@ -263,7 +263,7 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return state;
 	}
 
-	private Region<P> extendRegion(final State<L, P> state, final Region<P> region,
+	private Region<P> extendRegion(final State<P> state, final Region<P> region,
 			final Set<Region<P>> replacementBystanders) {
 		final ArrayDeque<Transition<L, P>> worklist = new ArrayDeque<>();
 		for (final var provider : mProgram.getSuccessorTransitionProviders(region.getPlaces(), region.getPlaces())) {
@@ -310,12 +310,12 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return transition.getPredecessors().size() == 1 && transition.getSuccessors().size() == 1;
 	}
 
-	private Pair<State<L, P>, Set<Region<P>>> getReplacementSuccessor(final State<L, P> state,
+	private Pair<State<P>, Set<Region<P>>> getReplacementSuccessor(final State<P> state,
 			final Transition<L, P> transition, final IPredicate successorLaw) {
 		final Set<Region<P>> newBystanders = state.territory().getBystanders(transition);
 		final var regions = replaceRegions(transition, newBystanders);
 		final var newTerritory = new Territory<>(ImmutableSet.of(regions));
-		final var replacementState = new State<L, P>(newTerritory, successorLaw);
+		final var replacementState = new State<>(newTerritory, successorLaw);
 		return new Pair<>(replacementState, newBystanders);
 	}
 
@@ -328,7 +328,7 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return regions;
 	}
 
-	public record State<L, P>(Territory<P, Region<P>> territory, IPredicate law, int hash) {
+	public record State<P>(Territory<P, Region<P>> territory, IPredicate law, int hash) {
 		// Convenience constructor that computes the correct hash code. Always use this constructor.
 		public State(final Territory<P, Region<P>> territory, final IPredicate law) {
 			this(territory, law, Objects.hash(territory, law));
