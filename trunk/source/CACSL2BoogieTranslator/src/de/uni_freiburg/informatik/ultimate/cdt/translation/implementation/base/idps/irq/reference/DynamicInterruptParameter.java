@@ -42,7 +42,8 @@ public final class DynamicInterruptParameter extends SingleInterrupt<VarList> {
 
 	@Override
 	public List<InterruptRequest> resolve(final InterruptRequestHandler handler) {
-		// TODO
+		throw new UnsupportedOperationException(
+				"Resolving an interrupt request from a dynamic interrupt parameter is not implemented yet!");
 	}
 
 }

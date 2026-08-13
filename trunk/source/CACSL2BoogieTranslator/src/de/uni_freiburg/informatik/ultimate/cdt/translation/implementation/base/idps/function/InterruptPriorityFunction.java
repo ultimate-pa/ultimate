@@ -24,18 +24,18 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.AllInterrupts;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.IInterruptReference;
 
 public class InterruptPriorityFunction extends InterruptManagementFunction {
 
 	private final Operation mOp;
 
-	public InterruptPriorityFunction(final Procedure proc, final AllInterrupts irq, final Operation op) {
+	public InterruptPriorityFunction(final Procedure proc, final IInterruptReference irq, final Operation op) {
 		super(proc, irq);
 		mOp = op;
 	}
 
-	public InterruptPriorityFunction(final AllInterrupts irq, final Operation op) {
+	public InterruptPriorityFunction(final IInterruptReference irq, final Operation op) {
 		super(irq);
 		mOp = op;
 	}

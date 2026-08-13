@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.i
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.InterruptAnnotation.ISRLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.StaticInterrupt;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -122,7 +123,8 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 		final NamedAttribute[] attributes = label.getAttributes();
 		final String irqNameStr = attributes[2].getName();
 		final String irqNumStr = attributes[4].getName();
-		return new InterruptServiceFunction(new InterruptRequest(irqNameStr, Integer.parseInt(irqNumStr)));
+		return new InterruptServiceFunction(
+				new StaticInterrupt(new InterruptRequest(irqNameStr, Integer.parseInt(irqNumStr))));
 	}
 
 	private enum VisitorMode {

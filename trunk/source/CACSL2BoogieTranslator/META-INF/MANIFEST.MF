@@ -20,6 +20,8 @@ Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation,
  de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps,
  de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function,
+ de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq,
+ de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference,
  de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container,
  de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result,
  de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util,

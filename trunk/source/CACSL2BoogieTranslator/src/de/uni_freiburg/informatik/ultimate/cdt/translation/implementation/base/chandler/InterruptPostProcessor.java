@@ -179,7 +179,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final Map<Integer, Procedure> reqEnableFuncs =
 				mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class).stream()
 						.filter(f -> f.getOperation() == InterruptMaskingFunction.Operation.ENABLE)
-						.collect(Collectors.toMap(f -> f.getIrq().getNum(), f -> f.getProcedure()));
+						.collect(Collectors.toMap(f -> f.getIrqReference()., f -> f.getProcedure()));
 
 		final Map<Integer, Procedure> reqDisableFuncs =
 				mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class).stream()
@@ -335,7 +335,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Map<Integer, IdentifierExpression> constructAuxVarExpressions(final List<InterruptServiceFunction> isrs) {
 		final var idExpressions = new HashMap<Integer, IdentifierExpression>();
 		for (final InterruptServiceFunction isr : isrs) {
-			final int irqNum = isr.getIrq().getNum();
+			final int irqNum = isr.getIrqReference().getIrq().getNum();
 			final var id = "#isr_" + irqNum + "_enabled";
 			final var enabledExpr = ExpressionFactory.constructIdentifierExpression(mIgnoreLoc, BoogieType.TYPE_BOOL,
 					id, DeclarationInformation.DECLARATIONINFO_GLOBAL);
@@ -412,7 +412,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		if (oneThreadPerISR) {
 			mLogger.info("Source-to-source translation of interrupt program with realization 1");
 			for (final InterruptServiceFunction isr : isrs) {
-				final int irqNum = isr.getIrq().getNum();
+				final int irqNum = isr.getIrqReference().getIrq().getNum();
 				final var idExpression = mAuxVarExpressions.get(irqNum);
 				assert idExpression != null : "There exists no identifier expression for the IRQ " + irqNum;
 				procedures.put(irqNum, constructOneThreadPerIsr(isr, idExpression));
@@ -428,7 +428,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Procedure constructOneThreadPerIsr(final InterruptServiceFunction isr,
 			final IdentifierExpression threadEnabledId) {
 		final String procName = constructThreadName(isr);
-		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for IRQ " + isr.getIrq().getName());
+		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for IRQ "
+				+ isr.getIrqReference().getIrq().getName());
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
@@ -500,7 +501,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final var ifStatements = new ArrayList<Statement>();
 			final var boolHavoc = getHavocBoolStatements(auxVarInfo);
 			ifStatements.addAll(boolHavoc);
-			final int irqNum = isr.getIrq().getNum();
+			final int irqNum = isr.getIrqReference().getIrq().getNum();
 			final var threadEnabledId = mAuxVarExpressions.get(irqNum);
 			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
 			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ " + irqNum;
@@ -544,7 +545,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private Statement[] labelIsrStatement(final Statement isrStatement, final InterruptServiceFunction isr) {
-		final String irqNum = Integer.toString(isr.getIrq().getNum());
+		final String irqNum = Integer.toString(isr.getIrqReference().getIrq().getNum());
 		final var labelName = "~isr" + irqNum;
 		final var isrNumAttribute = new NamedAttribute(mIgnoreLoc, irqNum, new Expression[0]);
 		final var isrAttribute = new NamedAttribute(mIgnoreLoc, "isr_label", new Expression[0]);
@@ -565,7 +566,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private static String constructThreadName(final InterruptServiceFunction isr) {
-		return "#isr_" + Integer.toString(isr.getIrq().getNum()) + "_" + isr.getProcedure().getIdentifier() + "_thread";
+		return "#isr_" + Integer.toString(isr.getIrqReference().getIrq().getNum()) + "_"
+				+ isr.getProcedure().getIdentifier() + "_thread";
 	}
 
 	private static String constructThreadName(final String identifier) {

@@ -72,8 +72,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.i
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptPriorityFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.AllInterrupts;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.IInterruptReference;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.StaticInterrupt;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -707,7 +709,7 @@ public class ACSLHandler implements IACSLHandler {
 			spec.addAll(Arrays.asList(((ContractResult) main.dispatch(stmt, main.getAcslHook())).getSpecs()));
 		}
 
-		final ArrayList<IInterruptFunction> interruptFuncs = new ArrayList<>();
+		final ArrayList<IInterruptFunction<?>> interruptFuncs = new ArrayList<>();
 		if (node.getInterruptStmt() != null) {
 			for (final InterruptStatement stmt : node.getInterruptStmt()) {
 				interruptFuncs.add(((InterruptResult) main.dispatch(stmt, main.getAcslHook())).getInterruptFunction());
@@ -725,17 +727,17 @@ public class ACSLHandler implements IACSLHandler {
 				interruptFuncs.toArray(new IInterruptFunction[interruptFuncs.size()]));
 	}
 
-	private InterruptRequest handleInterruptReference(final IDispatcher main, final ILocation loc,
+	private IInterruptReference handleInterruptReference(final IDispatcher main, final ILocation loc,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression ref) {
 		return switch (ref) {
 		case final de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral identifier ->
 				handleInterruptIdentifier(main, loc, identifier);
-		case final de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLAllExpression ignored -> null;
+		case final de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLAllExpression ignored -> new AllInterrupts();
 		default -> throw new UnsupportedSyntaxException(loc, "Unsupported interrupt reference: " + ref.toString());
 		};
 	}
 
-	private InterruptRequest handleInterruptIdentifier(final IDispatcher main, final ILocation loc,
+	private StaticInterrupt handleInterruptIdentifier(final IDispatcher main, final ILocation loc,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral identifier) {
 		final String irqName = identifier.getValue();
 		final SymbolTableValue symbol = mSymboltable.findCSymbol(main.getAcslHook(), irqName);
@@ -743,7 +745,7 @@ public class ACSLHandler implements IACSLHandler {
 		// Register identifier name as IRQ name and assign free IRQ number
 		if (symbol == null) {
 			if (mIrqHandler.register(irqName)) {
-				return mIrqHandler.getIrq(irqName);
+				return new StaticInterrupt(mIrqHandler.getIrq(irqName));
 			}
 
 			throw new UnsupportedSyntaxException(loc, "Interrupt request '" + irqName + "' cannot be registered");
@@ -754,7 +756,7 @@ public class ACSLHandler implements IACSLHandler {
 				.getConstantValue() instanceof final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral specifier) {
 			final int irqNum = Integer.parseInt(specifier.getValue());
 			if (mIrqHandler.register(irqName, irqNum)) {
-				return mIrqHandler.getIrq(irqName);
+				return new StaticInterrupt(mIrqHandler.getIrq(irqName));
 			}
 
 			throw new UnsupportedSyntaxException(loc, "Interrupt identifier '" + irqName + "' cannot be registered");
@@ -767,7 +769,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final InterruptServiceRoutine node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		assert node.getIdentifier() instanceof de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
-		final InterruptRequest irq = handleInterruptIdentifier(main, loc,
+		final StaticInterrupt irq = handleInterruptIdentifier(main, loc,
 				de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral.class.cast(node.getIdentifier()));
 		return new InterruptResult(new InterruptServiceFunction(irq));
 	}
@@ -775,7 +777,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final InterruptMasking node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final InterruptRequest irq = handleInterruptReference(main, loc, node.getIdentifier());
+		final IInterruptReference irq = handleInterruptReference(main, loc, node.getIdentifier());
 		final InterruptMaskingFunction.Operation op = (node.getEnabled()) ? InterruptMaskingFunction.Operation.ENABLE
 				: InterruptMaskingFunction.Operation.DISABLE;
 		return new InterruptResult(new InterruptMaskingFunction(irq, op));
@@ -784,7 +786,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final InterruptPriorityGet node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final InterruptRequest irq = handleInterruptReference(main, loc, node.getIdentifier());
+		final IInterruptReference irq = handleInterruptReference(main, loc, node.getIdentifier());
 		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.GET;
 		return new InterruptResult(new InterruptPriorityFunction(irq, op));
 	}
@@ -792,7 +794,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final InterruptPrioritySet node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final InterruptRequest irq = handleInterruptReference(main, loc, node.getIdentifier());
+		final IInterruptReference irq = handleInterruptReference(main, loc, node.getIdentifier());
 		final InterruptPriorityFunction.Operation op = InterruptPriorityFunction.Operation.SET;
 		return new InterruptResult(new InterruptPriorityFunction(irq, op));
 	}
