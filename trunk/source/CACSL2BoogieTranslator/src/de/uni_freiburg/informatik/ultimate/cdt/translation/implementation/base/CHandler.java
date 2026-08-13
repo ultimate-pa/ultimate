@@ -121,8 +121,8 @@ import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.ICInternalBinding;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -3088,9 +3088,7 @@ public class CHandler {
 			}
 			return;
 		}
-		final BoogieIdExtractor bie = new BoogieIdExtractor();
-		bie.processExpression(expr);
-		for (final String id : bie.getIds()) {
+		for (final String id : BoogieVariableCollector.extractIds(expr)) {
 			final String cid = mSymbolTable.getCIdForBoogieId(id);
 			if (cid == null) {
 				// expression does not have a corresponding c identifier --> nothing to move on heap

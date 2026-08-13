@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
@@ -233,10 +233,9 @@ public class VerificationResultTransformer {
 	}
 
 	private static Set<String> extractRedundancySet(final Expression invariant) {
-		final BoogieIdExtractor idExtractor = new BoogieIdExtractor();
-		idExtractor.processExpression(invariant);
-		return idExtractor.getIds().stream().filter(id -> (id.endsWith("_total_pc") || id.endsWith("_total")))
-				.map(id -> id.split("_ct")[0]).collect(Collectors.toSet());
+		return BoogieVariableCollector.extractIds(invariant).stream()
+				.filter(id -> (id.endsWith("_total_pc") || id.endsWith("_total"))).map(id -> id.split("_ct")[0])
+				.collect(Collectors.toSet());
 	}
 
 	private String formatTimeSequenceMap(final List<Entry<Rational, Map<Term, Term>>> delta2var2value) {
