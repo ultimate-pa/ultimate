@@ -504,8 +504,8 @@ public final class Translator {
 	}
 
 	Body writeBody(final Procedure decl) {
-		final BodyTransformer transformer = new BodyTransformer(mServices, this);
-		return transformer.transformBody(decl.getIdentifier(), decl.getBody());
+		final BodyTransformer transformer = new BodyTransformer(mServices, this, decl.getIdentifier(), decl.getBody());
+		return transformer.getResult();
 	}
 
 	// TODO could be reduce a lot core of what i need to get ride
