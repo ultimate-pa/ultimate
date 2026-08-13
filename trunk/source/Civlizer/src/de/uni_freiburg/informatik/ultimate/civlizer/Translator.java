@@ -37,10 +37,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -51,9 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
@@ -65,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.AnonymousAction;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.BoogieDeclaration;
@@ -350,19 +345,19 @@ public final class Translator {
 		return new BoogieDeclaration(newDecl);
 	}
 
-	CallStatement callYieldInvariants(final String procName, final int counter, final IdentifierExpression[] input,
+	CallStatement callYieldInvariant(final YieldInvariant yieldInvariant, final IdentifierExpression[] input,
 			final Expression annotation) {
 		// use to fix issue with addAll because Arrays.asList(input) return fix size
 		final List<IdentifierExpression> params = new ArrayList<>(Arrays.asList(input));
 
 		params.addAll(mVariablesInformation.getExpressionMap().getOrDefault(annotation, Collections.emptySet()));
 
-		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
-				"yield_" + procName + "_" + counter, params.toArray(Expression[]::new));
+		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], yieldInvariant.getIdentifier(),
+				params.toArray(Expression[]::new));
 	}
 
-	void addYieldInvariants(final String procName, final int counter, final Expression annotation,
-			final Statement statement, final Set<Tid> tidNeedsLinearity) {
+	YieldInvariant addYieldInvariant(final String procName, final int counter, final Expression annotation,
+			final Set<Tid> tidNeedsLinearity) {
 		final var params = new ArrayList<ParameterDeclaration>();
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
 			params.add(new ParameterDeclaration("start_tid", makeOne(mStartTidType), Linearity.INOUT));
@@ -420,20 +415,21 @@ public final class Translator {
 		final var invDecl = new YieldInvariant(LAYER_TOP, "yield_" + procName + "_" + counter,
 				params.toArray(ParameterDeclaration[]::new), preserves.toArray(Expression[]::new));
 		mDeclarations.add(invDecl);
+		return invDecl;
 	}
 
-	CallStatement callCondition(final String procName, final int counter, final Expression condition) {
+	CallStatement callCondition(final YieldProcedure conditionProc, final Expression condition) {
 
 		final List<IdentifierExpression> params = new ArrayList<>(
 				mVariablesInformation.getExpressionMap().getOrDefault(condition, Collections.emptySet()));
 
 		return new CallStatement(null, new NamedAttribute[0], false,
-				new VariableLHS[] { new VariableLHS(null, "condition") }, "cond_" + procName + "_" + counter,
+				new VariableLHS[] { new VariableLHS(null, "condition") }, conditionProc.getIdentifier(),
 				params.toArray(IdentifierExpression[]::new));
 	}
 
 	// TODO add locality of parameter
-	void addCondition(final String procName, final int counter, final Expression condition) {
+	YieldProcedure addCondition(final String procName, final int counter, final Expression condition) {
 		// maybe modify: new ParameterDeclaration("out", new PrimitiveType(null, "int"),
 		// ParameterDeclaration.Linearity.NONE)
 
@@ -455,9 +451,10 @@ public final class Translator {
 						ParameterDeclaration.Linearity.NONE) },
 				new CallStatement[0], new CallStatement[0], null, atomicAction);
 		mDeclarations.add(yieldProc);
+		return yieldProc;
 	}
 
-	CallStatement callAtomicStatement(final String procName, final Statement statement, final int counter) {
+	CallStatement callAtomicStatement(final YieldProcedure statementProc, final Statement statement) {
 
 		final List<Expression> inParams = new ArrayList<>();
 		final List<VariableLHS> outParams = new ArrayList<>();
@@ -471,10 +468,10 @@ public final class Translator {
 		}
 
 		return new CallStatement(null, new NamedAttribute[0], false, outParams.toArray(VariableLHS[]::new),
-				procName + "_stmt_" + counter, inParams.toArray(Expression[]::new));
+				statementProc.getIdentifier(), inParams.toArray(Expression[]::new));
 	}
 
-	private void addAtomicStatement(final String procName, final Statement statement, final int counter) {
+	YieldProcedure addAtomicStatement(final String procName, final int counter, final Statement statement) {
 		// IfStatement, ReturnStatement, CallStatement, WhileStatement, BreakStatement
 
 		final List<ParameterDeclaration> inParams = new ArrayList<>();
@@ -503,19 +500,7 @@ public final class Translator {
 				inParams.toArray(ParameterDeclaration[]::new), outParams.toArray(ParameterDeclaration[]::new),
 				new CallStatement[0], new CallStatement[0], null, atomicAction);
 		mDeclarations.add(yieldProc);
-	}
-
-	void addStatement(final String procName, final Statement statement, final Set<Tid> tidNeedsLinearity,
-			final int counter) {
-		if (statement instanceof AssignmentStatement || statement instanceof AssertStatement
-				|| statement instanceof AssumeStatement || statement instanceof HavocStatement
-				|| statement instanceof AtomicStatement) {
-			addAtomicStatement(procName, statement, counter);
-		} else if (statement instanceof final IfStatement ifStmt) {
-			addCondition(procName, counter, ifStmt.getCondition());
-		} else if (statement instanceof final WhileStatement whileStmt) {
-			addCondition(procName, counter, whileStmt.getCondition());
-		}
+		return yieldProc;
 	}
 
 	Body writeBody(final Procedure decl) {
@@ -543,9 +528,9 @@ public final class Translator {
 
 		final Expression annotation =
 				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier());
-		addYieldInvariants(decl.getIdentifier(), 0, annotation, null, tidNeedsLinearity);
+		final var yieldInv = addYieldInvariant(decl.getIdentifier(), 0, annotation, tidNeedsLinearity);
 
-		final var requires = callYieldInvariants(decl.getIdentifier(), 0,
+		final var requires = callYieldInvariant(yieldInv,
 				inParams.stream().map(Translator::getParameterExpression).toArray(IdentifierExpression[]::new),
 				annotation);
 

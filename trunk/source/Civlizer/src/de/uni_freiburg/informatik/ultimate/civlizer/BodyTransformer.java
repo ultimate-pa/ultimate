@@ -95,9 +95,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * </p>
  *
  * @author Gabriel Tréca (gabriel.treca@polytechnique.edu)
+ * @author Dominik Klumpp (klumpp@lix.polytechnique.fr)
  */
 final class BodyTransformer extends BoogieTransformer {
-
 	private final ILogger mLogger;
 	private final Translator mTranslator;
 	private String mCurrentProcedure;
@@ -184,10 +184,9 @@ final class BodyTransformer extends BoogieTransformer {
 
 		final Expression annotation =
 				mTranslator.getProgramAndProof().getTemplateVisitor().getExitAnnotationMap().get(mCurrentProcedure);
-		mTranslator.addYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, annotation, null,
+		final var yieldInvariant = mTranslator.addYieldInvariant(mCurrentProcedure, mAtomicStatementCounter, annotation,
 				mTidNeedsLinearity);
-		newStatements.add(
-				mTranslator.callYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, mCurrentTids, annotation));
+		newStatements.add(mTranslator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation));
 
 		if (mCurrentProcedure != BoogieUtils.START_PROCEDURE) {
 			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
@@ -236,7 +235,8 @@ final class BodyTransformer extends BoogieTransformer {
 		final Map<ILocation, Expression> annotationMap = mTranslator.getProgramAndProof().getAnnotationMap();
 		mLogger.warn(annotationMap);
 
-		for (final Statement statement : statements) { // ignore standard return
+		for (final Statement statement : statements) {
+			// ignore standard return
 			// skip return for now
 			if (statement instanceof ReturnStatement) {
 				continue;
@@ -248,10 +248,9 @@ final class BodyTransformer extends BoogieTransformer {
 			final boolean localVar = mTranslator.getVariablesInformation().containLocalVars(statement);
 
 			final var annotation = annotationMap.get(statement.getLoc());
-			mTranslator.addYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, annotation, null,
-					mTidNeedsLinearity);
-			newStatements.add(mTranslator.callYieldInvariants(mCurrentProcedure, mAtomicStatementCounter, mCurrentTids,
-					annotation));
+			final var yieldInvariant = mTranslator.addYieldInvariant(mCurrentProcedure, mAtomicStatementCounter,
+					annotation, mTidNeedsLinearity);
+			newStatements.add(mTranslator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation));
 
 			if (statement instanceof final IfStatement ifStmt) {
 				newStatements.addAll(processIfStatement(ifStmt));
@@ -282,9 +281,9 @@ final class BodyTransformer extends BoogieTransformer {
 					newStatements.add(statement);
 				}
 			} else {
-				mTranslator.addStatement(mCurrentProcedure, statement, mTidNeedsLinearity, mAtomicStatementCounter);
-				newStatements
-						.add(mTranslator.callAtomicStatement(mCurrentProcedure, statement, mAtomicStatementCounter));
+				final var statementProc =
+						mTranslator.addAtomicStatement(mCurrentProcedure, mAtomicStatementCounter, statement);
+				newStatements.add(mTranslator.callAtomicStatement(statementProc, statement));
 			}
 
 			// Ghost update
@@ -309,18 +308,18 @@ final class BodyTransformer extends BoogieTransformer {
 	}
 
 	private List<Statement> processIfStatement(final IfStatement ifStmt) {
-		mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition());
-		final var conditionAssignment =
-				mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition());
+		final var conditionProc =
+				mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition());
+		final var conditionAssignment = mTranslator.callCondition(conditionProc, ifStmt.getCondition());
 		final var newIfStmt = new IfStatement(ifStmt.getLoc(), new IdentifierExpression(ifStmt.getLoc(), "condition"),
 				processStatements(ifStmt.getThenPart()), processStatements(ifStmt.getElsePart()));
 		return List.of(conditionAssignment, newIfStmt);
 	}
 
 	private List<Statement> processWhileStatement(final WhileStatement whileStmt) {
-		mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
-		final Statement assignCondition =
-				mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
+		final var conditionProc =
+				mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
+		final Statement assignCondition = mTranslator.callCondition(conditionProc, whileStmt.getCondition());
 
 		final Statement[] body = processStatements(whileStmt.getBody());
 		final CallStatement firstAnnotation = (CallStatement) body[0];
@@ -378,8 +377,9 @@ final class BodyTransformer extends BoogieTransformer {
 		if (statement instanceof AssertStatement || statement instanceof AssignmentStatement
 				|| statement instanceof AssumeStatement || statement instanceof AtomicStatement
 				|| statement instanceof HavocStatement) {
-			mTranslator.addStatement(mCurrentProcedure, statement, mTidNeedsLinearity, mAtomicStatementCounter);
-			newStatement = mTranslator.callAtomicStatement(mCurrentProcedure, statement, mAtomicStatementCounter);
+			final var statementProc =
+					mTranslator.addAtomicStatement(mCurrentProcedure, mAtomicStatementCounter, statement);
+			newStatement = mTranslator.callAtomicStatement(statementProc, statement);
 		} else if (statement instanceof CallStatement) {
 			throw new UnsupportedOperationException("Procedure Call");
 		} else if (statement instanceof final ForkStatement forkstmt) {
