@@ -32,14 +32,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
@@ -225,44 +222,6 @@ public class CivlOutput implements AutoCloseable {
 		}
 
 		@Override
-		public void printSpecification(final Specification spec) {
-			if (spec.isFree()) {
-				mWriter.print("free ");
-			}
-			switch (spec) {
-			case final RequiresSpecification requires:
-				mWriter.print("requires ");
-				printExpression(requires.getFormula());
-				break;
-			case final EnsuresSpecification ensures:
-				mWriter.print("ensures ");
-				printExpression(ensures.getFormula());
-				break;
-			case final ModifiesSpecification modifies:
-				mWriter.print("modifies ");
-				printLHSList(modifies.getIdentifiers());
-				break;
-			case final LoopInvariantSpecification invariant:
-				mWriter.print("invariant ");
-				printLoopInvariantSpecification(invariant);
-				break;
-			}
-			mWriter.println(";");
-		}
-
-		// Override the printing for the loop invariant in while
-		public void printLoopInvariantSpecification(final LoopInvariantSpecification invariant) {
-			switch (invariant.getFormula()) {
-			case final BooleanLiteral literal:
-				mWriter.print("{:yields} ");
-				break;
-			default:
-				mWriter.print("call ");
-			}
-			printExpression(invariant.getFormula());
-		}
-
-		@Override
 		protected void printLHS(final LeftHandSide lhs) {
 			// Civl uses '->' instead of '!' to access members of data types.
 			if (lhs instanceof final StructLHS strlhs) {
@@ -272,6 +231,30 @@ public class CivlOutput implements AutoCloseable {
 				return;
 			}
 			super.printLHS(lhs);
+		}
+
+		@Override
+		public void printSpecification(final Specification spec) {
+			// Civl loop invariants can use calls to yield invariants, and the { :yields } attribute.
+			if (spec instanceof final LoopInvariantSpecification invariant) {
+				if (invariant.isFree()) {
+					mWriter.print("free ");
+				}
+				mWriter.print("invariant ");
+				switch (invariant.getFormula()) {
+				case final BooleanLiteral literal:
+					mWriter.print("{ :yields } ");
+					break;
+				default:
+					mWriter.print("call ");
+				}
+				printExpression(invariant.getFormula());
+				mWriter.println(";");
+				return;
+			}
+
+			// For all other specifications, rely on the default behaviour of BoogieOutput.
+			super.printSpecification(spec);
 		}
 	}
 }

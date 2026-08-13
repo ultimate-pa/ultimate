@@ -48,13 +48,13 @@ public class CivlUtils {
 		return new NamedAttribute(null, name, new Expression[0]);
 	}
 
-	static Attribute createLayerAttribute(final int introductionLayer, final int disappearingLayer) {
+	static NamedAttribute createLayerAttribute(final int introductionLayer, final int disappearingLayer) {
 		final var introductionLit = new IntegerLiteral(null, BoogieType.TYPE_INT, String.valueOf(introductionLayer));
 		final var disappearingLit = new IntegerLiteral(null, BoogieType.TYPE_INT, String.valueOf(disappearingLayer));
 		return new NamedAttribute(null, "layer", new Expression[] { introductionLit, disappearingLit });
 	}
 
-	static Attribute createLayerAttribute(final int layer) {
+	static NamedAttribute createLayerAttribute(final int layer) {
 		final var lit = new IntegerLiteral(null, BoogieType.TYPE_INT, String.valueOf(layer));
 		return new NamedAttribute(null, "layer", new Expression[] { lit });
 	}

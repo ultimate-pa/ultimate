@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -291,8 +290,8 @@ final class BodyTransformer extends BoogieTransformer {
 				newStatements.add(processStatement(statement));
 			} else if (!globalVar) {
 
-				final NamedAttribute[] layer = { new NamedAttribute(statement.getLoc(), "layer", new Expression[] {
-						new IntegerLiteral(statement.getLoc(), "1"), new IntegerLiteral(statement.getLoc(), "2") }) };
+				final NamedAttribute[] layer =
+						{ CivlUtils.createLayerAttribute(Translator.LAYER_IMPLEMENTATIONS, Translator.LAYER_TOP) };
 
 				if (statement instanceof final AssertStatement assertStmt) {
 					newStatements.add(new AssertStatement(assertStmt.getLoc(), layer, assertStmt.getFormula()));
