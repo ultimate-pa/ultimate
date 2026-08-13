@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -271,10 +270,12 @@ final class BodyTransformer extends BoogieTransformer {
 
 				final Statement[] body = processStatements(whileStmt.getBody());
 				final CallStatement firstAnnotation = (CallStatement) body[0];
+				final var yieldsInvariant = new LoopInvariantSpecification(null, false, new BooleanLiteral(null, true));
+				new CivlAttributesAnnotation(CivlUtils.createYieldsAttribute()).annotate(yieldsInvariant);
+
 				final LoopInvariantSpecification[] loopInvariant =
-						{ new LoopInvariantSpecification(null, false, new BooleanLiteral(null, true)),
-								new LoopInvariantSpecification(null, false, new FunctionApplication(null,
-										firstAnnotation.getMethodName(), firstAnnotation.getArguments())) };
+						{ yieldsInvariant, new LoopInvariantSpecification(null, false,
+								CivlUtils.createYieldCallExpression(firstAnnotation)) };
 
 				// test invariant TODO change
 				newStatements.add(assignCondition);
@@ -375,9 +376,8 @@ final class BodyTransformer extends BoogieTransformer {
 				|| statement instanceof HavocStatement) {
 			mTranslator.addStatement(mCurrentProcedure, statement, mTidNeedsLinearity, mAtomicStatementCounter);
 			newStatement = mTranslator.callAtomicStatement(mCurrentProcedure, statement, mAtomicStatementCounter);
-		} else if (statement instanceof final CallStatement call) {
+		} else if (statement instanceof CallStatement) {
 			throw new UnsupportedOperationException("Procedure Call");
-
 		} else if (statement instanceof final ForkStatement forkstmt) {
 			final Expression[] threadId = forkstmt.getThreadID();
 			final String procName = forkstmt.getProcedureName();

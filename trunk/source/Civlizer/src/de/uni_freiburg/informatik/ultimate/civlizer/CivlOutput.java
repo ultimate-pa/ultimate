@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 import java.io.PrintWriter;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -235,21 +235,20 @@ public class CivlOutput implements AutoCloseable {
 
 		@Override
 		public void printSpecification(final Specification spec) {
-			// Civl loop invariants can use calls to yield invariants, and the { :yields } attribute.
+			// Civl loop invariants can have attributes, and use calls to yield invariants.
 			if (spec instanceof final LoopInvariantSpecification invariant) {
 				if (invariant.isFree()) {
 					mWriter.print("free ");
 				}
 				mWriter.print("invariant ");
-				switch (invariant.getFormula()) {
-				case final BooleanLiteral literal:
-					mWriter.print("{ :yields } ");
-					break;
-				default:
-					mWriter.print("call ");
+				printAttributesWithTrailingSpace(CivlAttributesAnnotation.getAttributes(invariant));
+				if (invariant.getFormula() instanceof final FunctionApplication funApp
+						&& CivlYieldCallAnnotation.isYieldCall(funApp)) {
+					printStatement(CivlUtils.recreateYieldCall(funApp));
+				} else {
+					printExpression(invariant.getFormula());
+					mWriter.println(";");
 				}
-				printExpression(invariant.getFormula());
-				mWriter.println(";");
 				return;
 			}
 

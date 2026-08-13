@@ -27,13 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration.Linearity;
 
 public class CivlUtils {
+	private static final Expression[] EMPTY_EXPRESSIONS = {};
+
 	private CivlUtils() {
 		// static utility class should not be instantiated
 	}
@@ -45,7 +50,7 @@ public class CivlUtils {
 		case INOUT -> "linear";
 		case NONE -> throw new IllegalArgumentException();
 		};
-		return new NamedAttribute(null, name, new Expression[0]);
+		return new NamedAttribute(null, name, EMPTY_EXPRESSIONS);
 	}
 
 	static NamedAttribute createLayerAttribute(final int introductionLayer, final int disappearingLayer) {
@@ -57,5 +62,23 @@ public class CivlUtils {
 	static NamedAttribute createLayerAttribute(final int layer) {
 		final var lit = new IntegerLiteral(null, BoogieType.TYPE_INT, String.valueOf(layer));
 		return new NamedAttribute(null, "layer", new Expression[] { lit });
+	}
+
+	static NamedAttribute createYieldsAttribute() {
+		return new NamedAttribute(null, "yields", EMPTY_EXPRESSIONS);
+	}
+
+	static Expression createYieldCallExpression(final CallStatement call) {
+		assert call.getLhs() == null || call.getLhs().length == 0 : "Call with outputs is not a yield call expression";
+		assert !call.isForall() : "Forall call is not a yield call expression";
+		final var funApp = new FunctionApplication(call.getLoc(), call.getMethodName(), call.getArguments());
+		new CivlYieldCallAnnotation().annotate(funApp);
+		return funApp;
+	}
+
+	static CallStatement recreateYieldCall(final FunctionApplication funApp) {
+		assert CivlYieldCallAnnotation.isYieldCall(funApp) : "Expression was not marked as a yield call.";
+		return new CallStatement(funApp.getLoc(), false, new VariableLHS[0], funApp.getIdentifier(),
+				funApp.getArguments());
 	}
 }

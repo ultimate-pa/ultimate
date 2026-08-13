@@ -441,7 +441,7 @@ public class BoogieOutput implements AutoCloseable {
 		}
 	}
 
-	private void printAttributesWithTrailingSpace(final Attribute... attributes) {
+	protected void printAttributesWithTrailingSpace(final Attribute... attributes) {
 		if (attributes == null || attributes.length == 0) {
 			return;
 		}
