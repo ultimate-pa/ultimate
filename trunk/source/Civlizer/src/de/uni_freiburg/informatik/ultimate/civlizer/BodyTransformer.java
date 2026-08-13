@@ -254,35 +254,9 @@ final class BodyTransformer extends BoogieTransformer {
 					annotation));
 
 			if (statement instanceof final IfStatement ifStmt) {
-
-				mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition());
-				newStatements.add(
-						mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition()));
-				newStatements
-						.add(new IfStatement(ifStmt.getLoc(), new IdentifierExpression(ifStmt.getLoc(), "condition"),
-								processStatements(ifStmt.getThenPart()), processStatements(ifStmt.getElsePart())));
-
+				newStatements.addAll(processIfStatement(ifStmt));
 			} else if (statement instanceof final WhileStatement whileStmt) {
-
-				mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
-				final Statement assignCondition =
-						mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
-
-				final Statement[] body = processStatements(whileStmt.getBody());
-				final CallStatement firstAnnotation = (CallStatement) body[0];
-				final var yieldsInvariant = new LoopInvariantSpecification(null, false, new BooleanLiteral(null, true));
-				new CivlAttributesAnnotation(CivlUtils.createYieldsAttribute()).annotate(yieldsInvariant);
-
-				final LoopInvariantSpecification[] loopInvariant =
-						{ yieldsInvariant, new LoopInvariantSpecification(null, false,
-								CivlUtils.createYieldCallExpression(firstAnnotation)) };
-
-				// test invariant TODO change
-				newStatements.add(assignCondition);
-				newStatements.add(new WhileStatement(null, new IdentifierExpression(whileStmt.getLoc(), "condition"),
-						loopInvariant, Stream.concat(Arrays.stream(body), Stream.of(firstAnnotation, assignCondition))
-								.toArray(Statement[]::new)));
-
+				newStatements.addAll(processWhileStatement(whileStmt));
 			} else if (statement instanceof ForkStatement || globalVar && !localVar) {
 				newStatements.add(processStatement(statement));
 			} else if (statement instanceof final JoinStatement joinStmt) {
@@ -332,6 +306,36 @@ final class BodyTransformer extends BoogieTransformer {
 		// TODO add parameter
 
 		return newStatements.toArray(Statement[]::new);
+	}
+
+	private List<Statement> processIfStatement(final IfStatement ifStmt) {
+		mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition());
+		final var conditionAssignment =
+				mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, ifStmt.getCondition());
+		final var newIfStmt = new IfStatement(ifStmt.getLoc(), new IdentifierExpression(ifStmt.getLoc(), "condition"),
+				processStatements(ifStmt.getThenPart()), processStatements(ifStmt.getElsePart()));
+		return List.of(conditionAssignment, newIfStmt);
+	}
+
+	private List<Statement> processWhileStatement(final WhileStatement whileStmt) {
+		mTranslator.addCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
+		final Statement assignCondition =
+				mTranslator.callCondition(mCurrentProcedure, mAtomicStatementCounter, whileStmt.getCondition());
+
+		final Statement[] body = processStatements(whileStmt.getBody());
+		final CallStatement firstAnnotation = (CallStatement) body[0];
+		final var yieldsInvariant = new LoopInvariantSpecification(null, false, new BooleanLiteral(null, true));
+		new CivlAttributesAnnotation(CivlUtils.createYieldsAttribute()).annotate(yieldsInvariant);
+
+		final LoopInvariantSpecification[] loopInvariant = { yieldsInvariant,
+				new LoopInvariantSpecification(null, false, CivlUtils.createYieldCallExpression(firstAnnotation)) };
+
+		// test invariant TODO change
+		final var newWhileStmt = new WhileStatement(null, new IdentifierExpression(whileStmt.getLoc(), "condition"),
+				loopInvariant, Stream.concat(Arrays.stream(body), Stream.of(firstAnnotation, assignCondition))
+						.toArray(Statement[]::new));
+
+		return List.of(assignCondition, newWhileStmt);
 	}
 
 	/**
