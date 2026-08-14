@@ -20,7 +20,7 @@
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
-		<tycho-version>5.0.0</tycho-version>
+		<tycho-version>5.0.3</tycho-version>
 		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
 		<sonar-version>5.2.0.4988</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
@@ -233,7 +233,7 @@
 					<dependency>
 						<groupId>org.eclipse.jdt</groupId>
 						<artifactId>ecj</artifactId>
-						<version>3.43.0</version>
+						<version>3.46.0</version>
 					</dependency>
 				</dependencies>
 			</plugin>

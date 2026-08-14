@@ -86,6 +86,34 @@ public class SwtEditorInput implements IEditorInput {
 		return false;
 	}
 
+	/**
+	 * Checks if the given node is an error location, i.e., the target of the last edge in any error trace.
+	 *
+	 * @param node
+	 *            The {@link VisualizationNode} to check.
+	 * @return {@code true} if the node's backing element is the last element of an error trace.
+	 */
+	public boolean isErrorLocation(final VisualizationNode node) {
+		if (mErrorTraces.isEmpty()) {
+			return false;
+		}
+		final Object backing = node.getBacking();
+		if (backing == null) {
+			return false;
+		}
+		for (final LinkedHashSet<Object> trace : mErrorTraces) {
+			// The last element in the trace is the error location
+			Object last = null;
+			for (final Object elem : trace) {
+				last = elem;
+			}
+			if (backing.equals(last)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public boolean exists() {
 		return false;

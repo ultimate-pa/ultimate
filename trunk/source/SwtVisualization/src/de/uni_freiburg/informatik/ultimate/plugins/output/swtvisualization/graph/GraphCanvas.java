@@ -59,6 +59,7 @@ public class GraphCanvas extends Canvas {
 	private SwtEditorInput mInput;
 	private GraphLayout mLayout;
 	private VisualizationNode mSelectedNode;
+	private VisualizationNode mDraggedNode;
 
 	// Pan & zoom state
 	private double mTranslateX = 0;
@@ -68,6 +69,7 @@ public class GraphCanvas extends Canvas {
 	// Drag state
 	private Point mDragStartPoint;
 	private boolean mIsDragging;
+	private boolean mIsDraggingNode;
 
 	// Colors
 	private Color mNodeColor;
@@ -75,6 +77,8 @@ public class GraphCanvas extends Canvas {
 	private Color mBackgroundColor;
 	private Color mEdgeColor;
 	private Color mCounterExampleColor;
+	private Color mRootColor;
+	private Color mErrorLocationColor;
 
 	// Callback for selection changes
 	private INodeSelectionListener mSelectionListener;
@@ -101,6 +105,20 @@ public class GraphCanvas extends Canvas {
 		addMouseListener(new MouseListener() {
 			@Override
 			public void mouseUp(final MouseEvent e) {
+				if (mIsDraggingNode && mDraggedNode != null) {
+					// Update the node position in the layout
+					final NodeLayoutInfo info = mLayout.getNodePositions().get(mDraggedNode);
+					if (info != null) {
+						final double newX = (e.x - mTranslateX) / mZoom;
+						final double newY = (e.y - mTranslateY) / mZoom;
+						info.setX(newX);
+						info.setY(newY);
+					}
+					mDraggedNode = null;
+					mIsDraggingNode = false;
+					setCursor(getDisplay().getSystemCursor(SWT.CURSOR_ARROW));
+					redraw();
+				}
 				if (mIsDragging) {
 					mIsDragging = false;
 					setCursor(getDisplay().getSystemCursor(SWT.CURSOR_ARROW));
@@ -111,10 +129,15 @@ public class GraphCanvas extends Canvas {
 			@Override
 			public void mouseDown(final MouseEvent e) {
 				if (e.button == 1) {
-					// Left click: try node selection
+					// Left click: try node selection or start node drag
 					final VisualizationNode hit = hitTest(e.x, e.y);
 					if (hit != null) {
 						setSelectedNode(hit);
+						// Start node dragging
+						mDraggedNode = hit;
+						mIsDraggingNode = true;
+						mDragStartPoint = new Point(e.x, e.y);
+						setCursor(getDisplay().getSystemCursor(SWT.CURSOR_SIZEALL));
 					} else {
 						// Start panning
 						mDragStartPoint = new Point(e.x, e.y);
@@ -138,7 +161,18 @@ public class GraphCanvas extends Canvas {
 		addMouseMoveListener(new MouseMoveListener() {
 			@Override
 			public void mouseMove(final MouseEvent e) {
-				if (mIsDragging && mDragStartPoint != null) {
+				if (mIsDraggingNode && mDraggedNode != null && mDragStartPoint != null) {
+					// Move the node by updating its layout position directly
+					final NodeLayoutInfo info = mLayout.getNodePositions().get(mDraggedNode);
+					if (info != null) {
+						final double dx = (e.x - mDragStartPoint.x) / mZoom;
+						final double dy = (e.y - mDragStartPoint.y) / mZoom;
+						info.setX(info.getX() + dx);
+						info.setY(info.getY() + dy);
+					}
+					mDragStartPoint = new Point(e.x, e.y);
+					redraw();
+				} else if (mIsDragging && mDragStartPoint != null) {
 					mTranslateX += e.x - mDragStartPoint.x;
 					mTranslateY += e.y - mDragStartPoint.y;
 					mDragStartPoint = new Point(e.x, e.y);
@@ -170,6 +204,8 @@ public class GraphCanvas extends Canvas {
 		mBackgroundColor = new Color(getDisplay(), new RGB(255, 255, 255));
 		mEdgeColor = new Color(getDisplay(), new RGB(0, 0, 0));
 		mCounterExampleColor = new Color(getDisplay(), new RGB(255, 0, 0));
+		mRootColor = new Color(getDisplay(), new RGB(100, 220, 100));
+		mErrorLocationColor = new Color(getDisplay(), new RGB(255, 100, 100));
 	}
 
 	/**
@@ -245,17 +281,28 @@ public class GraphCanvas extends Canvas {
 
 			final boolean isCounterExample = mInput.isCounterExampleEdge(edge);
 			gc.setForeground(isCounterExample ? mCounterExampleColor : mEdgeColor);
+			gc.setBackground(isCounterExample ? mCounterExampleColor : mEdgeColor);
 			gc.setLineWidth(isCounterExample ? 2 : 1);
 
+			// Compute edge endpoints at node borders (not centers)
+			final double angle = Math.atan2(ty - sy, tx - sx);
+			final int sourceW = (int) (sourceInfo.getWidth() * mZoom / 2.0);
+			final int sourceH = (int) (sourceInfo.getHeight() * mZoom / 2.0);
+			final int targetW = (int) (targetInfo.getWidth() * mZoom / 2.0);
+			final int targetH = (int) (targetInfo.getHeight() * mZoom / 2.0);
+
+			// Compute intersection points with node rectangles
+			final int[] start = clipToRectBorder(sx, sy, angle, sourceW, sourceH);
+			final int[] end = clipToRectBorder(tx, ty, angle + Math.PI, targetW, targetH);
+
 			if (backEdges.contains(edge)) {
-				// Draw back-edge as a curved line (simplified: use an offset)
-				drawCurvedEdge(gc, sx, sy, tx, ty);
+				drawCurvedEdge(gc, start[0], start[1], end[0], end[1]);
 			} else {
-				gc.drawLine(sx, sy, tx, ty);
+				gc.drawLine(start[0], start[1], end[0], end[1]);
 			}
 
-			// Draw arrowhead
-			drawArrowhead(gc, sx, sy, tx, ty);
+			// Draw arrowhead at target end
+			drawArrowhead(gc, start[0], start[1], end[0], end[1]);
 		}
 
 		// Draw nodes
@@ -270,7 +317,19 @@ public class GraphCanvas extends Canvas {
 			final int h = (int) (info.getHeight() * mZoom);
 
 			final boolean selected = node.equals(mSelectedNode);
-			gc.setBackground(selected ? mPickedColor : mNodeColor);
+			final boolean isRoot = node.equals(mInput.getRootNode());
+			final boolean isErrorLoc = mInput.isErrorLocation(node);
+
+			// Priority: selected > error location > root > normal
+			if (selected) {
+				gc.setBackground(mPickedColor);
+			} else if (isErrorLoc) {
+				gc.setBackground(mErrorLocationColor);
+			} else if (isRoot) {
+				gc.setBackground(mRootColor);
+			} else {
+				gc.setBackground(mNodeColor);
+			}
 			gc.fillRoundRectangle(x, y, w, h, ARC, ARC);
 			gc.setForeground(mEdgeColor);
 			gc.setLineWidth(selected ? 2 : 1);
@@ -304,6 +363,33 @@ public class GraphCanvas extends Canvas {
 		arrow[4] = (int) (ax + ARROW_SIZE / 2.0 * Math.cos(angle - Math.PI / 2));
 		arrow[5] = (int) (ay + ARROW_SIZE / 2.0 * Math.sin(angle - Math.PI / 2));
 		gc.fillPolygon(arrow);
+	}
+
+	/**
+	 * Computes the intersection of a ray from the center of a node rectangle with the rectangle's border.
+	 *
+	 * @param cx
+	 *            Center x of the node rectangle.
+	 * @param cy
+	 *            Center y of the node rectangle.
+	 * @param angle
+	 *            Direction angle from center toward the other node.
+	 * @param halfW
+	 *            Half width of the node rectangle.
+	 * @param halfH
+	 *            Half height of the node rectangle.
+	 * @return {@code int[2]} with the border intersection x and y coordinates.
+	 */
+	private int[] clipToRectBorder(final int cx, final int cy, final double angle, final int halfW, final int halfH) {
+		final double dx = Math.cos(angle);
+		final double dy = Math.sin(angle);
+		if (Math.abs(dx) < 1e-9 && Math.abs(dy) < 1e-9) {
+			return new int[] { cx, cy };
+		}
+		final double tX = Math.abs(dx) < 1e-9 ? Double.MAX_VALUE : halfW / Math.abs(dx);
+		final double tY = Math.abs(dy) < 1e-9 ? Double.MAX_VALUE : halfH / Math.abs(dy);
+		final double t = Math.min(tX, tY);
+		return new int[] { (int) (cx + t * dx), (int) (cy + t * dy) };
 	}
 
 	private void drawCurvedEdge(final GC gc, final int sx, final int sy, final int tx, final int ty) {
@@ -350,6 +436,8 @@ public class GraphCanvas extends Canvas {
 		mBackgroundColor.dispose();
 		mEdgeColor.dispose();
 		mCounterExampleColor.dispose();
+		mRootColor.dispose();
+		mErrorLocationColor.dispose();
 		super.dispose();
 	}
 }
