@@ -258,7 +258,6 @@ public class MusEnumerator {
 
 		public void blockDown(final Set<Integer> fromPoint) {
 			final Set<Integer> complement = complement(fromPoint);
-
 			final List<Term> lits = new ArrayList<>();
 			for (final int i : complement) {
 				if (mScript.getTheory().getFunctionSymbol(String.valueOf(i)) == null) {

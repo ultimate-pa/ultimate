@@ -372,7 +372,7 @@ public class MusEnumerationScript extends WrapperScript {
 		return executeReMus(translator);
 	}
 
-	public ArrayList<MusContainer> executeReMus(final Translator translator) {
+	private ArrayList<MusContainer> executeReMus(final Translator translator) {
 		if (translator.getNumberOfConstraints() != 0) {
 			throw new SMTLIBException("Translator must be new.");
 		}

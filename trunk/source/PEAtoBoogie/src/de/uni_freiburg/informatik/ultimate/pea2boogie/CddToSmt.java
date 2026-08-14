@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -56,8 +58,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-
-import java.util.Map;
 
 /**
  *
@@ -166,7 +166,7 @@ public class CddToSmt {
 		return rtr;
 	}
 
-	public Term toSmtForRange(final int childIdx, final String varname, final int[] limits) {
+	private Term toSmtForRange(final int childIdx, final String varname, final int[] limits) {
 		final Term var = getTermVarTerm(varname);
 
 		if (childIdx == 0) {
