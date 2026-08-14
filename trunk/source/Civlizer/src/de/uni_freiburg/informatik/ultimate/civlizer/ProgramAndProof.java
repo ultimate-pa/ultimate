@@ -29,24 +29,21 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
@@ -60,15 +57,17 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnn
  * </p>
  */
 final class ProgramAndProof {
+	private final ILogger mLogger;
 
 	private Unit mBoogieAst = null;
 	private BoogieIcfgContainer mIcfg = null;
 	private List<OwickiGriesAnnotation> mProof = null;
-	private Map<ILocation, Set<CallStatement>> mGhostUpdateMap = null;
+	private Map<GhostUpdateLocation, Map<String, Expression>> mGhostUpdateMap = null;
 	private Map<ILocation, Expression> mAnnotationMap = null;
 	private ThreadTemplateVisitor mTemplateVisitor = null;
 
-	ProgramAndProof() {
+	ProgramAndProof(final IUltimateServiceProvider services) {
+		mLogger = services.getLoggingService().getLogger(getClass());
 	}
 
 	ThreadTemplateVisitor getTemplateVisitor() {
@@ -103,7 +102,7 @@ final class ProgramAndProof {
 		return mBoogieAst != null && mIcfg != null && mProof != null;
 	}
 
-	Map<ILocation, Set<CallStatement>> getGhostUpdateMap() {
+	Map<GhostUpdateLocation, Map<String, Expression>> getGhostUpdateMap() {
 		return mGhostUpdateMap;
 	}
 
@@ -153,38 +152,21 @@ final class ProgramAndProof {
 			}
 
 			final ILocation updateLocation = ILocation.getAnnotation(edge);
-
 			if (updateLocation == null) {
 				continue;
 			}
 
-			final Set<CallStatement> assignments =
-					createGhostUpdateAssignments(updateLocation, ghostUpdate.getUpdate());
+			final boolean isNegatedCondition =
+					ConditionAnnotation.getAnnotation(edge) instanceof final ConditionAnnotation cond
+							&& cond.isNegated();
 
-			mGhostUpdateMap.put(updateLocation, assignments);
+			final var oldUpdates = mGhostUpdateMap.put(new GhostUpdateLocation(updateLocation, isNegatedCondition),
+					ghostUpdate.getUpdate());
+			if (oldUpdates != null) {
+				mLogger.warn("Overriding ghost updates at location %s\nold: %s\nnew: %s", updateLocation, oldUpdates,
+						ghostUpdate.getUpdate());
+			}
 		}
-	}
-
-	private Set<CallStatement> createGhostUpdateAssignments(final ILocation location, final Map<?, ?> updates) {
-
-		final Set<CallStatement> assignments = new HashSet<>();
-
-		for (final Map.Entry<?, ?> update : updates.entrySet()) {
-			assignments.add(
-					createGhostUpdateAssignment(location, update.getKey().toString(), (Expression) update.getValue()));
-		}
-
-		return assignments;
-	}
-
-	private CallStatement createGhostUpdateAssignment(final ILocation location, final String variableName,
-			final Expression value) {
-
-		final IntegerLiteral layerNum = new IntegerLiteral(location, "2");
-
-		return new CallStatement(location,
-				new NamedAttribute[] { new NamedAttribute(location, "layer", new Expression[] { layerNum }) }, false,
-				new VariableLHS[] { new VariableLHS(location, variableName) }, "Copy", new Expression[] { value });
 	}
 
 	private void computeAnnotationMap() {
@@ -219,5 +201,9 @@ final class ProgramAndProof {
 
 	Map<ILocation, Expression> getAnnotationMap() {
 		return mAnnotationMap;
+	}
+
+	public record GhostUpdateLocation(ILocation location, boolean isNegatedCondition) {
+		// simple record
 	}
 }

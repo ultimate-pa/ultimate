@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
@@ -47,9 +46,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -61,11 +62,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.civlizer.ProgramAndProof.GhostUpdateLocation;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration.Linearity;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -127,15 +130,12 @@ final class BodyTransformer extends BoogieTransformer {
 				+ (mProcedureName.equals(BoogieUtils.START_PROCEDURE) ? 1 : 0);
 
 		final IdentifierExpression[] tids = new IdentifierExpression[size];
-
 		int i = 0;
-
 		if (mProcedureName.equals(BoogieUtils.START_PROCEDURE)) {
 			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), "start_tid",
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			i++;
 		}
-
 		for (final Tid tid : mTranslator.getProgramAndProof().getTemplateVisitor().getAllTidMap()
 				.getOrDefault(mProcedureName, Collections.emptyList())) {
 			tids[i] = new IdentifierExpression(null, BoogieType.createPlaceholderType(0), tid.toString(),
@@ -204,14 +204,11 @@ final class BodyTransformer extends BoogieTransformer {
 	protected Statement[] processStatements(final Statement[] statements) {
 		final List<Statement> newStatements = new ArrayList<>();
 
-		// param
 		final var inParams = new ArrayList<ParameterDeclaration>();
-
 		if (BoogieUtils.START_PROCEDURE.equals(mProcedureName)) {
 			inParams.add(new ParameterDeclaration("start_tid", Translator.makeOne(mTranslator.getStartTidType()),
 					Linearity.INOUT));
 		}
-
 		for (final Tid tid : mTranslator.getProgramAndProof().getTemplateVisitor().getAllTidMap()
 				.getOrDefault(mProcedureName, Collections.emptyList())) {
 			inParams.add(new ParameterDeclaration(tid.toString(), Translator.makeOne(mTranslator.getTidType()),
@@ -219,59 +216,56 @@ final class BodyTransformer extends BoogieTransformer {
 		}
 
 		final Map<ILocation, Expression> annotationMap = mTranslator.getProgramAndProof().getAnnotationMap();
-		final Map<ILocation, Set<CallStatement>> ghostUpdateMap = mTranslator.getProgramAndProof().getGhostUpdateMap();
+		final var ghostUpdateMap = mTranslator.getProgramAndProof().getGhostUpdateMap();
 
 		for (final Statement statement : statements) {
-			if (statement instanceof ReturnStatement) {
-				throw new UnsupportedOperationException("Return statements not yet supported");
-			}
-
 			mAtomicStatementCounter += 1;
-
-			final boolean globalVar = mTranslator.getVariablesInformation().containGlobalVars(statement);
-			final boolean localVar = mTranslator.getVariablesInformation().containLocalVars(statement);
 
 			final var annotation = annotationMap.get(statement.getLoc());
 			final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
 					annotation, mTidNeedsLinearity);
-			newStatements.add(mTranslator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation));
+			final var annotationCheck = mTranslator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation);
 
-			if (statement instanceof final IfStatement ifStmt) {
+			final List<CallStatement> positiveGhostUpdates = createGhostUpdateAssignments(
+					ghostUpdateMap.get(new GhostUpdateLocation(statement.getLocation(), false)));
+
+			switch (statement) {
+			case final IfStatement ifStmt:
+				newStatements.add(annotationCheck);
 				newStatements.addAll(processIfStatement(ifStmt));
-			} else if (statement instanceof final WhileStatement whileStmt) {
-				newStatements.addAll(processWhileStatement(whileStmt));
-			} else if (statement instanceof ForkStatement || (globalVar && !localVar)) {
-				newStatements.add(processStatement(statement));
-			} else if (statement instanceof final JoinStatement joinStmt) {
+				break;
+			case final WhileStatement whileStmt:
+				newStatements.addAll(processWhileStatement(whileStmt, annotationCheck));
+				break;
+
+			case final GotoStatement gotoStmt:
+				throw new UnsupportedOperationException("Goto statements not yet supported");
+			case final BreakStatement breakStmt:
+				throw new UnsupportedOperationException("Break statements not yet supported");
+			case final ReturnStatement retStmt:
+				throw new UnsupportedOperationException("Return statements not yet supported");
+			case final CallStatement callStmt:
+				throw new UnsupportedOperationException("Procedure calls in concurrent programs must be inlined");
+
+			case final JoinStatement joinStmt:
 				// add tid when joined
 				mTidNeedsLinearity.add(new Tid(joinStmt.getThreadID()));
+				//$FALL-THROUGH$
+
+			default:
+				// case Label _ :
+				//
+				// case AssertStatement _:
+				// case AssignmentStatement _:
+				// case AssumeStatement _:
+				// case HavocStatement _:
+				// case AtomicStatement _:
+				//
+				// case ForkStatement _:
+				newStatements.add(annotationCheck);
 				newStatements.add(processStatement(statement));
-			} else if (!globalVar) {
-				final NamedAttribute[] layer =
-						{ CivlUtils.createLayerAttribute(Translator.LAYER_IMPLEMENTATIONS, Translator.LAYER_TOP) };
-
-				if (statement instanceof final AssertStatement assertStmt) {
-					newStatements.add(new AssertStatement(assertStmt.getLoc(), layer, assertStmt.getFormula()));
-				} else if (statement instanceof final AssumeStatement assumeStmt) {
-					newStatements.add(new AssumeStatement(assumeStmt.getLoc(), layer, assumeStmt.getFormula()));
-				} else if (statement instanceof final Label labelStmt) {
-					newStatements.add(new Label(labelStmt.getLoc(), labelStmt.getName()));
-				}
-				/*
-				 * else if (statements[i] instanceof final HavocStatement havoc) { maybe havoc }
-				 */
-				else {
-					newStatements.add(statement);
-				}
-			} else {
-				final var statementProc =
-						mTranslator.addAtomicStatement(mProcedureName, mAtomicStatementCounter, statement);
-				newStatements.add(mTranslator.callAtomicStatement(statementProc, statement));
-			}
-
-			// Ghost update
-			if (ghostUpdateMap != null && ghostUpdateMap.get(statement.getLocation()) != null) {
-				newStatements.addAll(ghostUpdateMap.get(statement.getLocation()));
+				newStatements.addAll(positiveGhostUpdates);
+				break;
 			}
 
 			mTidNeedsLinearity.clear();
@@ -292,6 +286,10 @@ final class BodyTransformer extends BoogieTransformer {
 	private List<Statement> processIfStatement(final IfStatement ifStmt) {
 		final List<Statement> result = new ArrayList<>();
 
+		final var ghostUpdateMap = mTranslator.getProgramAndProof().getGhostUpdateMap();
+		final var ghostUpdatePositive = ghostUpdateMap.get(new GhostUpdateLocation(ifStmt.getLoc(), false));
+		final var ghostUpdateNegative = ghostUpdateMap.get(new GhostUpdateLocation(ifStmt.getLoc(), true));
+
 		final Expression condition;
 		final var variableCollector = new BoogieVariableCollector(ifStmt.getCondition());
 		if (variableCollector.usesGlobalVariables()) {
@@ -303,41 +301,72 @@ final class BodyTransformer extends BoogieTransformer {
 			condition = ifStmt.getCondition();
 		}
 
-		final var newIfStmt = new IfStatement(ifStmt.getLoc(), condition, processStatements(ifStmt.getThenPart()),
-				processStatements(ifStmt.getElsePart()));
+		final var thenPart =
+				concatStatements(createGhostUpdateAssignments(ghostUpdatePositive).toArray(Statement[]::new),
+						processStatements(ifStmt.getThenPart()));
+		final var elsePart =
+				concatStatements(createGhostUpdateAssignments(ghostUpdateNegative).toArray(Statement[]::new),
+						processStatements(ifStmt.getElsePart()));
+
+		final var newIfStmt = new IfStatement(ifStmt.getLoc(), condition, thenPart, elsePart);
 		result.add(newIfStmt);
 
 		return result;
 	}
 
-	private List<Statement> processWhileStatement(final WhileStatement whileStmt) {
-		final Statement assignCondition;
+	private List<Statement> processWhileStatement(final WhileStatement whileStmt, final CallStatement loopInvariant) {
+		final List<Statement> result = new ArrayList<>();
+
+		final var ghostUpdateMap = mTranslator.getProgramAndProof().getGhostUpdateMap();
+		final var ghostUpdatePositive = ghostUpdateMap.get(new GhostUpdateLocation(whileStmt.getLoc(), false));
+		final var ghostUpdateNegative = ghostUpdateMap.get(new GhostUpdateLocation(whileStmt.getLoc(), true));
+
+		final Expression condition;
+		final Statement[] prologue;
 		final var variableCollector = new BoogieVariableCollector(whileStmt.getCondition());
-		if (variableCollector.usesGlobalVariables()) {
-			final var conditionProc =
-					mTranslator.addCondition(mProcedureName, mAtomicStatementCounter, whileStmt.getCondition());
-			assignCondition = mTranslator.callCondition(conditionProc, whileStmt.getCondition());
+		if (variableCollector.usesGlobalVariables() || ghostUpdatePositive != null) {
+			// In these cases, we need to transform the loop into a while(true) loop and evaluate the condition at the
+			// start of the body. If it does not hold, we break from the loop.
+
+			final Statement assignCondition;
+			if (variableCollector.usesGlobalVariables()) {
+				final var conditionProc =
+						mTranslator.addCondition(mProcedureName, mAtomicStatementCounter, whileStmt.getCondition());
+				assignCondition = mTranslator.callCondition(conditionProc, whileStmt.getCondition());
+			} else {
+				assignCondition = new AssignmentStatement(null, new LeftHandSide[] { getOrCreateConditionLHS() },
+						new Expression[] { whileStmt.getCondition() });
+			}
+
+			final var ifNotConditionBreak = new IfStatement(null,
+					new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, getOrCreateConditionVariable()),
+					new Statement[] { new BreakStatement(null) }, new Statement[0]);
+
+			prologue = concatStatements(new Statement[] { assignCondition, ifNotConditionBreak },
+					createGhostUpdateAssignments(ghostUpdatePositive).toArray(Statement[]::new));
+			condition = new BooleanLiteral(null, true);
 		} else {
-			// TODO It would be nice to entirely avoid the additional assignments here (as in the case of IfStatement).
-			// But this changes the structure of the loop (in particular, which assertion becomes the loop invariant).
-			// Also, we would need to consider the placement of the ghost update.
-			assignCondition = new AssignmentStatement(null, new LeftHandSide[] { getOrCreateConditionLHS() },
-					new Expression[] { whileStmt.getCondition() });
+			// In this case, we do not transform the loop and use the original loop condition.
+			prologue = new Statement[0];
+			condition = whileStmt.getCondition();
 		}
 
 		final Statement[] body = processStatements(whileStmt.getBody());
 
-		final CallStatement firstAnnotation = (CallStatement) body[0];
-		final var yieldsInvariant = new LoopInvariantSpecification(null, false, new BooleanLiteral(null, true));
-		new CivlAttributesAnnotation(CivlUtils.createYieldsAttribute()).annotate(yieldsInvariant);
-		final LoopInvariantSpecification[] loopInvariant = { yieldsInvariant,
-				new LoopInvariantSpecification(null, false, CivlUtils.createYieldCallExpression(firstAnnotation)) };
+		final var loopYieldsTrue = new LoopInvariantSpecification(null, false, new BooleanLiteral(null, true));
+		new CivlAttributesAnnotation(CivlUtils.createYieldsAttribute()).annotate(loopYieldsTrue);
 
-		// test invariant TODO change
-		final var newWhileStmt = new WhileStatement(null, getOrCreateConditionVariable(), loopInvariant, Stream
-				.concat(Arrays.stream(body), Stream.of(firstAnnotation, assignCondition)).toArray(Statement[]::new));
+		final LoopInvariantSpecification[] loopInvariantSpecs = { loopYieldsTrue,
+				new LoopInvariantSpecification(null, false, CivlUtils.createYieldCallExpression(loopInvariant)) };
 
-		return List.of(assignCondition, newWhileStmt);
+		final var newWhileStmt =
+				new WhileStatement(null, condition, loopInvariantSpecs, concatStatements(prologue, body));
+		result.add(newWhileStmt);
+
+		// add ghost updates for loop exit
+		result.addAll(createGhostUpdateAssignments(ghostUpdateNegative));
+
+		return result;
 	}
 
 	/**
@@ -354,50 +383,115 @@ final class BodyTransformer extends BoogieTransformer {
 	 */
 	@Override
 	protected Statement processStatement(final Statement statement) {
-		Statement newStatement = null;
-		// Label, IfStatement, AssignmentStatement, ReturnStatement, ForkStatement, CallStatement, JoinStatement,
-		// AssertStatement, WhileStatement, GotoStatement, AtomicStatement, AssumeStatement, BreakStatement,
-		// HavocStatement
+		switch (statement) {
+		case final Label label:
+			return label;
 
-		if (statement instanceof AssertStatement || statement instanceof AssignmentStatement
-				|| statement instanceof AssumeStatement || statement instanceof AtomicStatement
-				|| statement instanceof HavocStatement) {
+		case final ForkStatement forkStmt:
+			return processForkStatement(forkStmt);
+		case final JoinStatement joinStmt:
+			return processJoinStatement(joinStmt);
+
+		case final AssertStatement assertStmt:
+			return processSimpleStatement(assertStmt);
+		case final AssignmentStatement assignStmt:
+			return processSimpleStatement(assignStmt);
+		case final AssumeStatement assumeStmt:
+			return processSimpleStatement(assumeStmt);
+		case final HavocStatement havocStmt:
+			return processSimpleStatement(havocStmt);
+
+		case final GotoStatement gotoStmt:
+			throw new UnsupportedOperationException("Goto statements not yet supported");
+		case final BreakStatement breakStmt:
+			throw new UnsupportedOperationException("Break statements not yet supported");
+		case final ReturnStatement retStmt:
+			throw new UnsupportedOperationException("Return statements not yet supported");
+		case final AtomicStatement stomicStmt:
+			throw new UnsupportedOperationException("Atomic statements not yet supported");
+		case final CallStatement callStmt:
+			throw new UnsupportedOperationException("Procedure calls in concurrent programs must be inlined");
+
+		case final IfStatement ifStmt:
+			throw new IllegalStateException("`if` statements should be handled by processStatements()");
+		case final WhileStatement whileStmt:
+			throw new IllegalStateException("`while` statements should be handled by processStatements()");
+		}
+	}
+
+	private Statement processForkStatement(final ForkStatement forkStmt) {
+		// TODO support fork parameters
+		assert forkStmt.getArguments().length == 0 : "Arguments for forks are not yet supported";
+
+		final Expression[] forkThreadId = forkStmt.getThreadID();
+		final String procName = forkStmt.getProcedureName();
+
+		final Expression[] tids = { new IdentifierExpression(forkStmt.getLoc(), BoogieType.createPlaceholderType(0),
+				(new Tid(forkThreadId)).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
+
+		final var newFork = new CallStatement(forkStmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0],
+				"fork_" + procName, tids);
+		ModelUtils.copyAnnotations(forkStmt, newFork);
+		return newFork;
+	}
+
+	private Statement processJoinStatement(final JoinStatement joinStmt) {
+		// TODO support return values from joins
+		assert joinStmt.getLhs().length == 0 : "Return values from joins are not yet supported";
+
+		final Expression[] joinThreadId = joinStmt.getThreadID();
+		final Expression[] tid = { new IdentifierExpression(joinStmt.getLoc(), BoogieType.createPlaceholderType(0),
+				new Tid(joinThreadId).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
+
+		final var newJoin =
+				new CallStatement(joinStmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0], "join", tid);
+		ModelUtils.copyAnnotations(joinStmt, newJoin);
+		return newJoin;
+	}
+
+	private Statement processSimpleStatement(final Statement statement) {
+		assert statement instanceof AssertStatement || statement instanceof AssignmentStatement
+				|| statement instanceof AssumeStatement || statement instanceof HavocStatement
+				: "statement is not a simple statement: " + statement;
+
+		final Statement newStatement;
+		final var variableCollector = new BoogieVariableCollector(statement);
+		if (variableCollector.usesGlobalVariables()) {
 			final var statementProc =
 					mTranslator.addAtomicStatement(mProcedureName, mAtomicStatementCounter, statement);
 			newStatement = mTranslator.callAtomicStatement(statementProc, statement);
-		} else if (statement instanceof CallStatement) {
-			throw new UnsupportedOperationException("Procedure calls in concurrent programs must be inlined");
-		} else if (statement instanceof final ForkStatement forkStmt) {
-			// TODO support fork parameters
-			assert forkStmt.getArguments().length == 0 : "Arguments for forks are not yet supported";
+		} else {
+			final NamedAttribute[] layer =
+					{ CivlUtils.createLayerAttribute(Translator.LAYER_IMPLEMENTATIONS, Translator.LAYER_TOP) };
 
-			final Expression[] threadId = forkStmt.getThreadID();
-			final String procName = forkStmt.getProcedureName();
-
-			final Expression[] tids = { new IdentifierExpression(forkStmt.getLoc(), BoogieType.createPlaceholderType(0),
-					(new Tid(threadId)).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
-
-			newStatement = new CallStatement(forkStmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0],
-					"fork_" + procName, tids);
-
-		} else if (statement instanceof final JoinStatement joinStmt) {
-			// TODO support return values from joins
-			assert joinStmt.getLhs().length == 0 : "Return values from joins are not yet supported";
-
-			final Expression[] threadId = joinStmt.getThreadID();
-			final Expression[] tid = { new IdentifierExpression(joinStmt.getLoc(), BoogieType.createPlaceholderType(0),
-					new Tid(threadId).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
-
-			newStatement =
-					new CallStatement(joinStmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0], "join", tid);
+			if (statement instanceof final AssertStatement assertStmt) {
+				newStatement = new AssertStatement(assertStmt.getLoc(), layer, assertStmt.getFormula());
+			} else if (statement instanceof final AssumeStatement assumeStmt) {
+				newStatement = new AssumeStatement(assumeStmt.getLoc(), layer, assumeStmt.getFormula());
+			} else {
+				return statement;
+			}
 		}
 
-		if (newStatement == null) {
-			/* No recursion for label, havoc, break, return and goto */
-			return statement;
-		}
 		ModelUtils.copyAnnotations(statement, newStatement);
 		return newStatement;
+	}
+
+	private static List<CallStatement> createGhostUpdateAssignments(final Map<String, Expression> updates) {
+		if (updates == null) {
+			return List.of();
+		}
+		final List<CallStatement> assignments = new ArrayList<>();
+		for (final var update : updates.entrySet()) {
+			assignments.add(createGhostUpdateAssignment(update.getKey(), update.getValue()));
+		}
+		return assignments;
+	}
+
+	private static CallStatement createGhostUpdateAssignment(final String variableName, final Expression value) {
+		return new CallStatement(null,
+				new NamedAttribute[] { CivlUtils.createLayerAttribute(Translator.LAYER_GHOST_VARS) }, false,
+				new VariableLHS[] { new VariableLHS(null, variableName) }, "Copy", new Expression[] { value });
 	}
 
 	private IdentifierExpression getOrCreateConditionVariable() {
@@ -421,5 +515,19 @@ final class BodyTransformer extends BoogieTransformer {
 			mConditionVariable = new VariableDeclaration(null, new Attribute[0],
 					new VarList[] { new VarList(null, new String[] { "condition" }, new PrimitiveType(null, "bool")) });
 		}
+	}
+
+	private static Statement[] concatStatements(final Statement[] first, final Statement[] second) {
+		if (first.length == 0) {
+			return second;
+		}
+		if (second.length == 0) {
+			return first;
+		}
+
+		final Statement[] result = new Statement[first.length + second.length];
+		System.arraycopy(first, 0, result, 0, first.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
 	}
 }

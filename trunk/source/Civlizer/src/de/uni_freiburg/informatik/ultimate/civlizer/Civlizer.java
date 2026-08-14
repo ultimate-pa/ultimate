@@ -75,7 +75,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 	@Override
 	public void init() {
 		// not needed
-		mProgramAndProof = new ProgramAndProof();
+		mProgramAndProof = new ProgramAndProof(mServices);
 	}
 
 	@Override
