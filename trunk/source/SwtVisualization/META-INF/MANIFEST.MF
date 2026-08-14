@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SWT Visualization Plug-in
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.output.swtvisualization;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.3.1
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.gui
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.output.swtvisualization.Activator
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.output.swtvisualization

@@ -14,7 +14,7 @@
    </requires>
 
    <plugin
-         id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"
+         id="de.uni_freiburg.informatik.ultimate.plugins.output.swtvisualization"
          version="0.0.0"/>
 
    <plugin
@@ -28,12 +28,5 @@
    <plugin
          id="de.uni_freiburg.informatik.ultimate.gui.logging"
          version="0.0.0"/>
-
-   <plugin
-         id="edu.uci.ics.jung"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
 
 </feature>

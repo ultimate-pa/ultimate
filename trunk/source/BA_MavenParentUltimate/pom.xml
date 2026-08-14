@@ -330,6 +330,7 @@
 		<module>../SmtParser</module>
 		<module>../SMTSolverBridge</module>
 		<module>../SpaceExParser</module>
+		<module>../SwtVisualization</module>
 		<module>../SyntaxChecker</module>
 		<module>../TraceAbstraction</module>
 		<module>../TraceAbstractionWithAFAs</module>
