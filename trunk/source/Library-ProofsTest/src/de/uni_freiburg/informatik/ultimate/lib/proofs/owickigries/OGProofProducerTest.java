@@ -92,7 +92,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		validateAnnotation(program, annotation);
 
 		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
-				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
+				annotation.getGhostVariables().size(), annotation.getGhostUpdateMap().size(), annotation.size());
 		if (PRINT_FULL_PROOF) {
 			mLogger.info(annotation);
 		}
