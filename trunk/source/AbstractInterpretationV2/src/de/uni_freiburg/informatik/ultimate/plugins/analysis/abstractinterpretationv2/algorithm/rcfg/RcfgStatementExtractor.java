@@ -32,9 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 /**
  * Extracts a List of {@link Statement}s from a {@link IcfgEdge}.
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgStatementExtractor extends RCFGEdgeVisitor {
+public class RcfgStatementExtractor extends IcfgEdgeVisitor {
 
 	private List<Statement> mStatements;
 

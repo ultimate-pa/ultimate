@@ -295,6 +295,7 @@
 		<module>../Library-BoogieAST</module>
 		<module>../Library-CHC</module>
 		<module>../Library-CZT</module>
+		<module>../Library-Icfg</module>
 		<module>../Library-IcfgTransformer</module>
 		<module>../Library-Jung</module>
 		<module>../Library-LassoRanker</module>

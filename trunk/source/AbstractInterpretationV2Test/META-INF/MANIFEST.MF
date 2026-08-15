@@ -10,7 +10,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  org.junit,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder,
  de.uni_freiburg.informatik.ultimate.lib.test
 Import-Package: junit.framework,
  org.junit,

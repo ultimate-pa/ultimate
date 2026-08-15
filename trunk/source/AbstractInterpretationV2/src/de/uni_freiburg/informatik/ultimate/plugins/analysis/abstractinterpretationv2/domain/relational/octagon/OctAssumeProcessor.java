@@ -31,12 +31,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -45,9 +44,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -56,8 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -340,8 +338,7 @@ public class OctAssumeProcessor {
 				logger.debug("Unable to handle expression " + BoogiePrettyPrinter.print(boogieBinExp)
 						+ " with Octagons (not affine). Projecting to intervals.");
 			}
-			final Set<IProgramVarOrConst> relevantVars =
-					new VariableCollector(binExpr, variableProvider).getVariables();
+			final Set<IProgramVarOrConst> relevantVars = collectVariables(binExpr, variableProvider);
 
 			return projectAssumeOnIntervals(logger, oldStates, boogieBinExp, fallBackPostOperator, codeBlockFactory,
 					relevantVars);
@@ -654,36 +651,10 @@ public class OctAssumeProcessor {
 		}
 	}
 
-	/**
-	 * Collects all variables of a given Boogie {@link Expression};
-	 *
-	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	private static class VariableCollector extends BoogieVisitor {
-		private final Set<IProgramVarOrConst> mVariables;
-		private final IBoogieSymbolTableVariableProvider mVariableProvider;
-
-		private VariableCollector(final Expression expression,
-				final IBoogieSymbolTableVariableProvider variableProvider) {
-			mVariables = new HashSet<>();
-			mVariableProvider = variableProvider;
-			processExpression(expression);
-		}
-
-		private Set<IProgramVarOrConst> getVariables() {
-			return mVariables;
-		}
-
-		@Override
-		protected void visit(final VariableLHS lhs) {
-			mVariables.add(mVariableProvider.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false));
-		}
-
-		@Override
-		protected void visit(final IdentifierExpression expr) {
-			mVariables
-					.add(mVariableProvider.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false));
-		}
+	private static Set<IProgramVarOrConst> collectVariables(final Expression expr,
+			final IBoogieSymbolTableVariableProvider variableProvider) {
+		return new BoogieVariableCollector(expr, true, false).collectedOccurences().stream()
+				.map(occ -> variableProvider.getBoogieVar(occ.identifier(), occ.declarationInformation(), false))
+				.collect(Collectors.toSet());
 	}
 }

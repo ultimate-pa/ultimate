@@ -32,12 +32,12 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
-class UseCollector extends RCFGEdgeVisitor {
+class UseCollector extends IcfgEdgeVisitor {
 	private HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mUse;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mAnnotationProvider;
 	private final String mKey;

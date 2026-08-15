@@ -37,9 +37,8 @@ import java.io.PrintWriter;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
-import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.FilePrinterUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -61,11 +60,8 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) {
 		if (root instanceof final Unit unit) {
-			final PrintWriter writer = openTempFile(root);
-			if (writer != null) {
-				try (final BoogieOutput output = new BoogieOutput(writer)) {
-					output.printBoogieProgram(unit);
-				}
+			try (final BoogieOutput output = new BoogieOutput(openTempFile(root))) {
+				output.printBoogieProgram(unit);
 			}
 			return false;
 		}
@@ -73,60 +69,15 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	}
 
 	private PrintWriter openTempFile(final IElement root) {
-		String path;
-		String filename;
-		File file = null;
-
-		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
-			final ILocation loc = ILocation.getAnnotation(root);
-			final File inputFile = new File(loc.getFileName());
-			if (inputFile.isDirectory()) {
-				path = inputFile.getPath();
-			} else {
-				path = inputFile.getParent();
-			}
-			if (path == null) {
-				mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
-				path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-						.getString(PreferenceInitializer.DUMP_PATH_LABEL);
-			}
-		} else {
-			path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getString(PreferenceInitializer.DUMP_PATH_LABEL);
-		}
-
+		final var prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final var outputFileSettings =
+				FilePrinterUtils.OutputFileSettings.fromPrinterPreferences(prefs, "BoogiePrinter_", "_UID", ".bpl");
+		final File file = FilePrinterUtils.openOutputFile(outputFileSettings, root, mLogger);
 		try {
-			if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(PreferenceInitializer.UNIQUE_NAME_LABEL)) {
-				file = File.createTempFile(
-						"BoogiePrinter_" + new File(ILocation.getAnnotation(root).getFileName()).getName() + "_UID",
-						".bpl", new File(path));
-			} else {
-				filename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-						.getString(PreferenceInitializer.FILE_NAME_LABEL);
-				file = new File(path + File.separatorChar + filename);
-				if ((!file.isFile() || !file.canWrite()) && file.exists()) {
-					mLogger.warn("Cannot write to: " + file.getAbsolutePath());
-					return null;
-				}
-
-				if (file.exists()) {
-					mLogger.info("File already exists and will be overwritten: " + file.getAbsolutePath());
-				}
-				file.createNewFile();
-			}
-			mLogger.info("Writing to file " + file.getAbsolutePath());
 			return new PrintWriter(new FileWriter(file));
-
 		} catch (final IOException e) {
-			if (file != null) {
-				mLogger.fatal("Cannot open file: " + file.getAbsolutePath(), e);
-			} else {
-				mLogger.fatal("Cannot open file", e);
-			}
-
-			return null;
+			mLogger.fatal("Cannot open file: " + file.getAbsolutePath(), e);
+			throw new IllegalStateException("Could not open file: " + file.toString(), e);
 		}
 	}
 

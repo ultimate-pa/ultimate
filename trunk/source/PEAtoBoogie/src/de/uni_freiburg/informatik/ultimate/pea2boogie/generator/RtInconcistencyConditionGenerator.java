@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.EpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.IEpsilonTransformer;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -130,6 +131,8 @@ public class RtInconcistencyConditionGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final boolean mSeparateInvariantHandling;
+	private final PeaResultUtil mPeaResultUtil;
+	private final BoogieDeclarations mBoogieDeclarations;
 	private final CddToSmt mCddToSmt;
 
 	private final ConstructionCache<Term, Term> mProjectionCache;
@@ -186,7 +189,10 @@ public class RtInconcistencyConditionGenerator {
 		mGeneratedChecks = 0;
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
-		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
+
+		mPeaResultUtil = peaResultUtil;
+		mBoogieDeclarations = boogieDeclarations;
+		mCddToSmt = new CddToSmt(mServices, mPeaResultUtil, mScript, mBoogie2Smt, mBoogieDeclarations, mReqSymboltable);
 
 		final boolean useEpsilon =
 				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(Pea2BoogiePreferences.LABEL_USE_EPSILON);
@@ -268,7 +274,6 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private static Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
-
 		SolverSettings settings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setUseExternalSolver(ExternalSolver.Z3);
 		if (SOLVER_LOG_DIR != null) {
@@ -645,6 +650,13 @@ public class RtInconcistencyConditionGenerator {
 		public Collection<PatternType<?>> getResponsibleRequirements() {
 			return mResponsibleRequirements;
 		}
+
+	}
+
+	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
+			final CompleteRtInconsistencyCheckMode mode) {
+		return new CompleteRtInconsistencyCheck(reqPeas, mPeaResultUtil, mBoogie2Smt, mBoogieDeclarations,
+				mReqSymboltable, mScript, mServices, mLogger, mode).check();
 
 	}
 

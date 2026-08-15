@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.CegarRestartBehaviour;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.IErrorAutomatonBuilder.ErrorAutomatonType;
@@ -319,12 +319,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
 	private static final boolean DEF_SEPARATE_SOLVER = true;
 
-	public static final String LABEL_SOLVER = RcfgPreferenceInitializer.LABEL_SOLVER;
+	public static final String LABEL_SOLVER = IcfgPreferenceInitializer.LABEL_SOLVER;
 	private static final SolverMode DEF_SOLVER = SolverMode.Internal_SMTInterpol;
 
-	public static final String LABEL_ADDITIONAL_SMT_OPTIONS = RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS;
+	public static final String LABEL_ADDITIONAL_SMT_OPTIONS = IcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS;
 	private static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS =
-			RcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
+			IcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
 
 	public static final String LABEL_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL =
 			"Use minimal unsat core enumeration";
@@ -460,7 +460,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	// ========================================================================
 
-	public static final String DEF_EXTERNAL_SOLVER_COMMAND = RcfgPreferenceInitializer.Z3_DEFAULT;
+	public static final String DEF_EXTERNAL_SOLVER_COMMAND = IcfgPreferenceInitializer.Z3_DEFAULT;
 
 	public static final String LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
 			"Use predicate trie based predicate unification";
@@ -628,18 +628,18 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 								PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo,
 								SolverMode.values()),
-						new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT,
-								RcfgPreferenceInitializer.DEF_FAKE_NON_INCREMENTAL_SCRIPT, PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND,
+						new UltimatePreferenceItem<>(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT,
+								IcfgPreferenceInitializer.DEF_FAKE_NON_INCREMENTAL_SCRIPT, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND,
 								DEF_EXTERNAL_SOLVER_COMMAND, PreferenceType.String),
-						new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC,
-								RcfgPreferenceInitializer.DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
-						new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE, Boolean.FALSE,
+						new UltimatePreferenceItem<>(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC,
+								IcfgPreferenceInitializer.DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
+						new UltimatePreferenceItem<>(IcfgPreferenceInitializer.LABEL_DUMP_TO_FILE, Boolean.FALSE,
 								PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_PATH,
-								RcfgPreferenceInitializer.DEF_DUMP_PATH, PreferenceType.Directory),
-						new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE, false,
-								RcfgPreferenceInitializer.DESC_COMPRESS_SMT_DUMP_FILE, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(IcfgPreferenceInitializer.LABEL_DUMP_PATH,
+								IcfgPreferenceInitializer.DEF_DUMP_PATH, PreferenceType.Directory),
+						new UltimatePreferenceItem<>(IcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE, false,
+								IcfgPreferenceInitializer.DESC_COMPRESS_SMT_DUMP_FILE, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL,
 								DEF_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL,
 								DESC_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL, PreferenceType.Boolean),

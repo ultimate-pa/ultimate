@@ -157,6 +157,13 @@ public class Scriptor extends NoopScript {
 	}
 
 	@Override
+	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
+		mExecutor.input(SmtCommandUtils.CheckSatAssumingCommand.buildString(assumptions));
+		mStatus = mExecutor.parseCheckSatResult();
+		return mStatus;
+	}
+
+	@Override
 	public Term[] getAssertions() throws SMTLIBException {
 		mExecutor.input("(get-assertions)");
 		return mExecutor.parseGetAssertionsResult();

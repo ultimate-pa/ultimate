@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -236,6 +238,18 @@ public class CddToSmt {
 			return programConst.getTerm();
 		}
 		throw new AssertionError("Unknown symbol " + name);
+	}
+
+	protected IProgramNonOldVar lookupProgramVar(final String name) {
+		return mBoogieToSmt.getBoogie2SmtSymbolTable().getGlobalsMap().get(name);
+	}
+
+	protected ProgramConst lookupProgramConst(final String name) {
+		return mBoogieToSmt.getBoogie2SmtSymbolTable().getConstsMap().get(name);
+	}
+
+	protected Map<String, ProgramConst> getBoogieConsts() {
+		return mBoogieToSmt.getBoogie2SmtSymbolTable().getConstsMap();
 	}
 
 	private final class AddDeclarationInformationToIdentifiers extends GeneratedBoogieAstTransformer {

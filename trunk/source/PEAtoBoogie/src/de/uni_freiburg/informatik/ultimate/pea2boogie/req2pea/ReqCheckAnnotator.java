@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.CompleteRtInconsistencyCheckMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
@@ -95,6 +96,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private final BoogieLocation mUnitLocation;
 
 	private boolean mCheckVacuity;
+	private boolean mCompleteRtInconsistencyCheck;
+	private CompleteRtInconsistencyCheckMode mCompleteRtInconsistencyCheckMode;
+	private boolean mCompleteRtInconsistencyCheckCandidateExtraction;
 	private int mCombinationNum;
 	private boolean mCheckConsistency;
 	private boolean mCheckComplement;
@@ -130,6 +134,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// set preferences
 		mCheckVacuity = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
+		mCompleteRtInconsistencyCheck = prefs.getBoolean(Pea2BoogiePreferences.LABEL_COMPLETE_RT_INCONSISTENCY_CHECK);
+		mCompleteRtInconsistencyCheckMode =
+				prefs.getEnum(Pea2BoogiePreferences.LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_MODE,
+						CompleteRtInconsistencyCheckMode.class);
+		mCompleteRtInconsistencyCheckCandidateExtraction =
+				prefs.getBoolean(Pea2BoogiePreferences.LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION);
 
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
 			final int length = mReqPeas.size();
@@ -354,8 +364,17 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
-				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
+		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets;
+		if (mCompleteRtInconsistencyCheck) {
+			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mCompleteRtInconsistencyCheckMode);
+			if (mCompleteRtInconsistencyCheckCandidateExtraction) {
+				return Collections.emptyList();
+			}
+		} else {
+			subsets = CrossProducts.subArrays(consideredAutomata.toArray(new Entry[count]), actualCombinationNum,
+					new Entry[actualCombinationNum]);
+		}
+
 		int subsetsSize = subsets.size();
 		if (subsetsSize > 10000) {
 			mLogger.warn("Computing rt-inconsistency assertions for " + subsetsSize
