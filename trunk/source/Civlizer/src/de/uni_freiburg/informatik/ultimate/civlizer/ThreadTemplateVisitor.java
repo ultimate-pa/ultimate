@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
 
 /**
  * Visitor over a Boogie AST that extracts thread-related metadata and witness annotations.
