@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
@@ -60,6 +60,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
@@ -102,10 +106,6 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsis
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -233,10 +233,9 @@ public class VerificationResultTransformer {
 	}
 
 	private static Set<String> extractRedundancySet(final Expression invariant) {
-		final BoogieIdExtractor idExtractor = new BoogieIdExtractor();
-		idExtractor.processExpression(invariant);
-		return idExtractor.getIds().stream().filter(id -> (id.endsWith("_total_pc") || id.endsWith("_total")))
-				.map(id -> id.split("_ct")[0]).collect(Collectors.toSet());
+		return BoogieVariableCollector.extractIds(invariant).stream()
+				.filter(id -> (id.endsWith("_total_pc") || id.endsWith("_total"))).map(id -> id.split("_ct")[0])
+				.collect(Collectors.toSet());
 	}
 
 	private String formatTimeSequenceMap(final List<Entry<Rational, Map<Term, Term>>> delta2var2value) {

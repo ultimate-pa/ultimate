@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -77,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUti
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -282,7 +282,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final var petrifiedProof = (OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>) proof;
 
 		// TODO unpetrify IPredicates themselves
-		final var unpetrifiedFormulas = petrifiedProof.getFormulaMapping().entrySet().stream().map(e -> {
+		final var unpetrifiedFormulas = petrifiedProof.getAnnotationMap().entrySet().stream().map(e -> {
 			final var originalLoc = mLocationMap.get(e.getKey());
 			if (originalLoc == null) {
 				mLogger.warn("Unknown original location for %s", e.getKey());
@@ -292,12 +292,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		}).filter(x -> x != null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
 		// TODO unpetrify RHS of updates
-		final var unpetrifiedUpdates = petrifiedProof.getAssignmentMapping().entrySet().stream()
+		final var unpetrifiedUpdates = petrifiedProof.getGhostUpdateMap().entrySet().stream()
 				.map(e -> new Pair<>(mTransitionMap.get(e.getKey()), e.getValue()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
 		return new OwickiGriesAnnotation<>(null /* TODO */, null /* TODO */, null /* TODO */, unpetrifiedFormulas,
-				petrifiedProof.getGhostVariables(), petrifiedProof.getGhostAssignment(), unpetrifiedUpdates);
+				petrifiedProof.getInitialGhostValues(), unpetrifiedUpdates);
 	}
 
 	private static <L extends IIcfgTransition<?>> boolean

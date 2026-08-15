@@ -519,12 +519,6 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
             "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
         )
         ret.append("None")
-        # For now disable UnstructureCode in witness validation
-        # This is a workaround, in the future we always want to disable this.
-        ret.append(
-            "--preprocessor.replace.while.statements.and.if-then-else.statements"
-        )
-        ret.append("false")
         # For YAML violation witnesses, disable procedure inlining
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")

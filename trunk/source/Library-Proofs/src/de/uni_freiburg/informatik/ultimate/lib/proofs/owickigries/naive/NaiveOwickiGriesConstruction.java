@@ -110,13 +110,12 @@ public class NaiveOwickiGriesConstruction<L, P> {
 
 		mGhostVariables = getGhostVariables();
 		mHittingSet = useHittingSets ? getHittingSet() : null;
-		final Map<P, IPredicate> formulaMapping = getFormulaMapping();
-		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
-		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
+		final Map<P, IPredicate> annotationMap = getAnnotationMap();
+		final Map<Transition<L, P>, GhostUpdate> ghostUpdateMap = getGhostUpdateMap();
+		final Map<IProgramVar, Term> initialGhostValues = getInitialGhostValues();
 
 		mAnnotation = new OwickiGriesAnnotation<>(OwickiGriesUtils.getSpecificationForPetriNet(net, mFactory),
-				getPossibleInterferences(), mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
-				ghostInitAssignment, assignmentMapping);
+				getPossibleInterferences(), mSymbolTable, annotationMap, initialGhostValues, ghostUpdateMap);
 	}
 
 	/**
@@ -125,7 +124,7 @@ public class NaiveOwickiGriesConstruction<L, P> {
 	 *
 	 * @return a map with a predicate for each place in the Petri net
 	 */
-	private Map<P, IPredicate> getFormulaMapping() {
+	private Map<P, IPredicate> getAnnotationMap() {
 		final Map<P, IPredicate> mapping = new HashMap<>();
 		for (final P place : mNet.getPlaces()) {
 			final Map<IPredicate, List<Term>> disjunctsByLaw =
@@ -260,7 +259,7 @@ public class NaiveOwickiGriesConstruction<L, P> {
 	/**
 	 * @return initial value assignment of all ghost variables.
 	 */
-	private Map<IProgramVar, Term> getGhostInitAssignment() {
+	private Map<IProgramVar, Term> getInitialGhostValues() {
 		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
 		for (final P place : mNet.getInitialPlaces()) {
 			initAssignments.put(mGhostVariables.get(place), mScript.term("true"));
@@ -278,7 +277,7 @@ public class NaiveOwickiGriesConstruction<L, P> {
 	 * @return Map of Places' Ghost Variables assignments to Transitions
 	 *
 	 */
-	private Map<Transition<L, P>, GhostUpdate> getAssignmentMapping() {
+	private Map<Transition<L, P>, GhostUpdate> getGhostUpdateMap() {
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = new HashMap<>();
 		for (final Transition<L, P> transition : mNet.getTransitions()) {
 			final var assignment = getTransitionAssignment(transition);

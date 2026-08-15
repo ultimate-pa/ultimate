@@ -117,7 +117,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 		ghostVars.addAll(mThreadIdVars.values());
 
 		// collect initial values of old and new ghost variables
-		final Map<IProgramVar, Term> ghostInits = new HashMap<>(annotation.getGhostAssignment());
+		final Map<IProgramVar, Term> ghostInits = new HashMap<>(annotation.getInitialGhostValues());
 		for (final var entry : mGhostMirrors.entrySet()) {
 			// Initialize ghost mirrors to 0. They will be updated when the local variable they mirror is initialized.
 			final var zero =
@@ -130,7 +130,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 		// TODO unpetrify specification
 		final ThreadModularPrePostSpecification<LOC, List<LOC>> unpetrifiedSpec = null;
 		mOwickiGries = new OwickiGriesAnnotation<>(unpetrifiedSpec, possibleInterferences, mSymbolTable, formulaMapping,
-				ghostVars, ghostInits, ghostUpdates);
+				ghostInits, ghostUpdates);
 	}
 
 	public OwickiGriesAnnotation<L, LOC, List<LOC>> getResult() {
@@ -154,7 +154,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 	private Map<LOC, IPredicate> computeFormulaMapping(final IPetriNet<L, P> petrifiedProgram,
 			final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
 		final var result = new HashMap<LOC, IPredicate>();
-		for (final var entry : annotation.getFormulaMapping().entrySet()) {
+		for (final var entry : annotation.getAnnotationMap().entrySet()) {
 			final P place = entry.getKey();
 			if (isThreadUsageMonitorPlace(place)) {
 				continue;
@@ -231,7 +231,7 @@ public class OwickiGriesUnpetrifier<L extends IIcfgTransition<LOC>, P, LOC exten
 			// TODO add updates of new ghost variables for thread IDs when edge is entryEdge of template
 			assert mThreadIdVars.isEmpty() : "missing update of ghost variables: " + mThreadIdVars;
 
-			final GhostUpdate oldUpdate = annotation.getAssignmentMapping().get(transition);
+			final GhostUpdate oldUpdate = annotation.getGhostUpdateMap().get(transition);
 			final GhostUpdate combinedUpdate = GhostUpdate.combine(oldUpdate, newUpdates);
 			if (combinedUpdate != null) {
 				result.put(originalEdge, combinedUpdate);

@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * Provides static auxiliary methods for Boogie.
  */
 public class BoogieUtils {
-	public static final String AUXILIARY_LABEL = "auxiliary_label";
+	private static final String AUXILIARY_LABEL = "auxiliary_label";
 
 	public static final String INIT_PROCEDURE = "ULTIMATE.init";
 	public static final String START_PROCEDURE = "ULTIMATE.start";
@@ -83,6 +83,29 @@ public class BoogieUtils {
 	 */
 	public static Label constuctAuxiliaryLabel(final ILocation loc, final String name) {
 		return new Label(loc, name, new NamedAttribute[] { constructAuxiliaryLabelAttribute(loc) });
+	}
+
+	/**
+	 * Determines whether the given label is an auxiliary label. A label is considered auxiliary if it has an attribute
+	 * whose name equals {@code AUXILIARY_LABEL}.
+	 *
+	 * @param label
+	 *            the label to check
+	 * @return true iff the label is an auxiliary label
+	 */
+	public static boolean isAuxiliaryLabel(final Label label) {
+		if (label.getAttributes() == null) {
+			return false;
+		}
+		for (final NamedAttribute attr : label.getAttributes()) {
+			if (attr.getName().equals(AUXILIARY_LABEL)) {
+				if (attr.getValues().length != 0) {
+					throw new AssertionError("Attribute must not have values");
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

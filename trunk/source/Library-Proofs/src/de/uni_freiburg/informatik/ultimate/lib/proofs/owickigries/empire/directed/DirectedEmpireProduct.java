@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.directe
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
+// Matthias Z (2026-06-06): Maybe this class should implement the IEmpire interface?
+// The structure is practically the same and the empire product should again be an empire.
 public class DirectedEmpireProduct<L, P> {
 
 	private final List<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> mEmpires;
@@ -86,6 +88,7 @@ public class DirectedEmpireProduct<L, P> {
 		return interRegions;
 	}
 
+	// Matthias Z (2026-06-06): If this approach gets resumed in the future, this could also be done on-the-fly.
 	private INestedWordAutomaton<Transition<L, P>, ProductState<L, P>> constructProductAutomaton() {
 		final var alphabet = new VpAlphabet<>(mNet.getTransitions());
 		final var product = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet,

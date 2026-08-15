@@ -48,103 +48,75 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-// TODO document this class
-public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.State<L, P>> {
+/**
+ * This class computes the <em>saturated empire</em> as defined in our paper:
+ *
+ * The Ghosts of Empires: Extracting Modularity from Interleaving-Based Proofs. Schüssele, Zumkeller, Lagunes-Rochin and
+ * Klumpp, POPL'26
+ *
+ * See {@link IEmpire} for the general concept of empires. As of now (August 2026), this implementation represents our
+ * best algorithm for the construction of compact empires.
+ *
+ * @param <L>
+ *            The type of letters in the empire (and the Petri program for which an empire is computed)
+ * @param <P>
+ *            The type of places in the Petri program for which an empire is computed
+ */
+public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.State<P>> {
 	private final ILogger mLogger;
 
-	private final IPetriNet<L, P> mNet;
+	private final IPetriNet<L, P> mProgram;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInterpolantAutomaton;
 
-	private final State<L, P> mInitialState;
+	private final State<P> mInitialState;
 
-	public SaturatedEmpire(final IPetriNet<L, P> net,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
-			final IUltimateServiceProvider services) {
+	/**
+	 * Create a new instance of a saturated empire. The actual computation will be performed on-demand as the empire is
+	 * explored.
+	 *
+	 * @param program
+	 *            The Petri program for which to compute an empire
+	 * @param interpolantAutomaton
+	 *            An interpolant automaton which proves all traces of the Petri program infeasible
+	 */
+	public SaturatedEmpire(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton) {
 		mLogger = services.getLoggingService().getLogger(getClass());
-		mNet = net;
+		mProgram = program;
 		mInterpolantAutomaton = interpolantAutomaton;
 
 		// Construct initial state
 		final var initialLaw =
 				DataStructureUtils.getOneAndOnly(mInterpolantAutomaton.getInitialStates(), "initial law place");
-		final var regions = mNet.getInitialPlaces().stream().map(Region::singleton).collect(ImmutableSet.collector());
-		final State<L, P> state = new State<>(new Territory<>(regions), initialLaw);
+		final var regions =
+				mProgram.getInitialPlaces().stream().map(Region::singleton).collect(ImmutableSet.collector());
+		final State<P> state = new State<>(new Territory<>(regions), initialLaw);
 		mInitialState = getMarkedSuccessor(state, Collections.emptySet());
 	}
 
 	@Override
-	public IPredicate getLaw(final State<L, P> state) {
+	public IPredicate getLaw(final State<P> state) {
 		return state.law();
 	}
 
 	@Override
-	public Territory<P, Region<P>> getTerritory(final State<L, P> state) {
+	public Territory<P, Region<P>> getTerritory(final State<P> state) {
 		return state.territory();
 	}
 
 	@Override
 	public VpAlphabet<Transition<L, P>> getVpAlphabet() {
-		return new VpAlphabet<>(mNet.getTransitions());
+		return new VpAlphabet<>(mProgram.getTransitions());
 	}
 
 	@Override
-	public Iterable<State<L, P>> getInitialStates() {
+	public Iterable<State<P>> getInitialStates() {
 		return List.of(mInitialState);
 	}
 
 	@Override
-	public boolean isInitial(final State<L, P> state) {
+	public boolean isInitial(final State<P> state) {
 		return mInitialState.equals(state);
-	}
-
-	/**
-	 * Determines a state s as final, if it contains an error place and the law is false, OR if there exists at least
-	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
-	 * successor law must be false.
-	 */
-	public boolean isFinal2(final State<L, P> state) {
-		final var successors = internalSuccessors(state);
-		final var succStates = new HashSet<State<L, P>>();
-		for (final OutgoingInternalTransition<Transition<L, P>, State<L, P>> outgoingInternalTransition : successors) {
-			final var succState = outgoingInternalTransition.getSucc();
-			succStates.add(succState);
-			if (state != succState) {
-				return false;
-			}
-		}
-		final var territory = state.territory();
-		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
-		if (succStates.size() < enabledTransitions.size()) {
-			final var falseSuccessors = enabledTransitions.stream()
-					.anyMatch(t -> mInterpolantAutomaton.isFinal(getSuccessorLaw(state.law, t)));
-			if (!falseSuccessors) {
-				mLogger.debug("Bla");
-			}
-			assert falseSuccessors
-					: "There exists no successor for an enabled transition, but the successor law is not false";
-		}
-		// Check if there is at least one enabled transition, for which state has no successor
-		return succStates.size() < enabledTransitions.size();
-	}
-
-	/**
-	 * Determines a state s as final, if it contains an error place and the law is false, OR if there exists at least
-	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
-	 * successor law must be false.
-	 */
-	@Override
-	public boolean isFinal(final State<L, P> state) {
-		final var territory = state.territory();
-		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
-		for (final Transition<L, P> transition : enabledTransitions) {
-			final var succ = internalSuccessors(state, transition);
-			if (!succ.iterator().hasNext()) {
-				assert mInterpolantAutomaton.isFinal(getSuccessorLaw(state.law, transition))
-						: "There is no successor, but the law is not false";
-				return true;
-			}
-		}
-		return false;
 	}
 
 	@Override
@@ -158,15 +130,15 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 	}
 
 	@Override
-	public Set<Transition<L, P>> lettersInternal(final State<L, P> state) {
+	public Set<Transition<L, P>> lettersInternal(final State<P> state) {
 		final var places = state.territory().getPlaces();
-		return mNet.getSuccessorTransitionProviders(places, places).stream().flatMap(p -> p.getTransitions().stream())
-				.collect(Collectors.toSet());
+		return mProgram.getSuccessorTransitionProviders(places, places).stream()
+				.flatMap(p -> p.getTransitions().stream()).collect(Collectors.toSet());
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<Transition<L, P>, State<L, P>>>
-			internalSuccessors(final State<L, P> state, final Transition<L, P> letter) {
+	public Iterable<OutgoingInternalTransition<Transition<L, P>, State<P>>> internalSuccessors(final State<P> state,
+			final Transition<L, P> letter) {
 		// step 1: see if letter should lead to any successor at all or can be optimized away
 		// (iterate over alphabet and see which other transitions are enabled in the territory)
 		if (!state.territory().enables(letter)) {
@@ -211,14 +183,14 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return currentLaw == successorLaw && isStraightline(transition);
 	}
 
-	private boolean isCycle(final State<L, P> state, final Transition<L, P> transition, final IPredicate successorLaw) {
+	private boolean isCycle(final State<P> state, final Transition<L, P> transition, final IPredicate successorLaw) {
 		final var territory = state.territory();
 		final var law = state.law();
 		return territory.enables(transition) && isExtendingTransition(law, transition, successorLaw)
 				&& territory.getPlaces().containsAll(transition.getSuccessors());
 	}
 
-	private State<L, P> getMarkedSuccessor(final State<L, P> state, final Set<Region<P>> replacementBystanders) {
+	private State<P> getMarkedSuccessor(final State<P> state, final Set<Region<P>> replacementBystanders) {
 		final var newRegions = new LinkedHashSet<Region<P>>(state.territory().size());
 		boolean changed = false;
 		for (final var region : state.territory().getRegions()) {
@@ -241,10 +213,10 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return state;
 	}
 
-	private Region<P> extendRegion(final State<L, P> state, final Region<P> region,
+	private Region<P> extendRegion(final State<P> state, final Region<P> region,
 			final Set<Region<P>> replacementBystanders) {
 		final ArrayDeque<Transition<L, P>> worklist = new ArrayDeque<>();
-		for (final var provider : mNet.getSuccessorTransitionProviders(region.getPlaces(), region.getPlaces())) {
+		for (final var provider : mProgram.getSuccessorTransitionProviders(region.getPlaces(), region.getPlaces())) {
 			worklist.addAll(provider.getTransitions());
 		}
 
@@ -273,7 +245,7 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 
 			// The successor is added to the region. Any outgoing transitions become candidates for extension.
 			addedPlaces.add(successor);
-			worklist.addAll(mNet.getSuccessors(successor));
+			worklist.addAll(mProgram.getSuccessors(successor));
 		}
 
 		if (addedPlaces.isEmpty()) {
@@ -288,12 +260,12 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return transition.getPredecessors().size() == 1 && transition.getSuccessors().size() == 1;
 	}
 
-	private Pair<State<L, P>, Set<Region<P>>> getReplacementSuccessor(final State<L, P> state,
+	private Pair<State<P>, Set<Region<P>>> getReplacementSuccessor(final State<P> state,
 			final Transition<L, P> transition, final IPredicate successorLaw) {
 		final Set<Region<P>> newBystanders = state.territory().getBystanders(transition);
 		final var regions = replaceRegions(transition, newBystanders);
 		final var newTerritory = new Territory<>(ImmutableSet.of(regions));
-		final var replacementState = new State<L, P>(newTerritory, successorLaw);
+		final var replacementState = new State<>(newTerritory, successorLaw);
 		return new Pair<>(replacementState, newBystanders);
 	}
 
@@ -306,7 +278,7 @@ public class SaturatedEmpire<L, P> implements IEmpire<L, P, SaturatedEmpire.Stat
 		return regions;
 	}
 
-	public record State<L, P>(Territory<P, Region<P>> territory, IPredicate law, int hash) {
+	public record State<P>(Territory<P, Region<P>> territory, IPredicate law, int hash) {
 		// Convenience constructor that computes the correct hash code. Always use this constructor.
 		public State(final Territory<P, Region<P>> territory, final IPredicate law) {
 			this(territory, law, Objects.hash(territory, law));

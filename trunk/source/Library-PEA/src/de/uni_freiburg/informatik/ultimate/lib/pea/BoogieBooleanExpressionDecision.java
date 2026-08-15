@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -143,11 +142,8 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	public Map<String, String> getVars() {
 		final Map<String, String> vars = new HashMap<>();
 
-		final BoogieIdentifierCollector collector = new BoogieIdentifierCollector();
-		final List<IdentifierExpression> idents = collector.getIdentifiers(mExpression);
-
-		for (final IdentifierExpression ident : idents) {
-			vars.put(ident.getIdentifier(), null);
+		for (final String ident : collectIdentifiers(mExpression)) {
+			vars.put(ident, null);
 		}
 
 		return vars;
@@ -203,22 +199,9 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 		return true;
 	}
 
-	/**
-	 * Collects all identifier statements from a boogie expression
-	 */
-	private static final class BoogieIdentifierCollector extends BoogieVisitor {
-
-		private final ArrayList<IdentifierExpression> mIdentifiers = new ArrayList<>();
-
-		@Override
-		protected void visit(final IdentifierExpression expr) {
-			mIdentifiers.add(expr);
-		}
-
-		public List<IdentifierExpression> getIdentifiers(final Expression expr) {
-			processExpression(expr);
-			return mIdentifiers;
-		}
+	private static List<String> collectIdentifiers(final Expression expr) {
+		return new BoogieVariableCollector(expr, true, true).collectedOccurences().stream().map(occ -> occ.identifier())
+				.toList();
 	}
 
 	/**

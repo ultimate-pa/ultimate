@@ -50,14 +50,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
  *            the type of states in the empire
  */
 public interface IExplicitEmpire<L, P, S> extends IEmpire<L, P, S>, INestedWordAutomaton<Transition<L, P>, S> {
-
-	/**
-	 * @deprecated We should not abuse the final states for empires, they do not represent any meaningful language.
-	 *             Instead introduce a suitably-named new method.
-	 */
 	@Override
 	@Deprecated
-	Collection<S> getFinalStates();
+	default Collection<S> getFinalStates() {
+		return Collections.emptySet();
+	}
 
 	@Deprecated
 	@Override

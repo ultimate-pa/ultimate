@@ -14,6 +14,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.icfgtransformer,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+ de.uni_freiburg.informatik.ultimate.lib.icfg
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.acceleratedinterpolation

@@ -48,6 +48,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
+// Matthias Z (2026-06-06): This class was a nearly 1-to-1 copy from the original (SaturatedEmpire) class at the time.
+// If we would parametrize the empire and State record with the type of region, with some engineering effort most of
+// this class (maybe even the whole class) should be obsolete (besides the method extendAll).
 public class DirectedEmpire<L, P> implements IEmpire<L, P, DirectedEmpire.State<L, P>> {
 	private final ILogger mLogger;
 

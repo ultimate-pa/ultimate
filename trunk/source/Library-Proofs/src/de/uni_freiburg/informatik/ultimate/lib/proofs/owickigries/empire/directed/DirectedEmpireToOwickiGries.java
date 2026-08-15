@@ -106,13 +106,13 @@ public class DirectedEmpireToOwickiGries<L, P> {
 					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
 		}
 		mStateTerms = getStateTerms();
-		final Map<P, IPredicate> formulaMapping = getFormulaMap();
-		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
-		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
+		final Map<P, IPredicate> annotationMap = getAnnotationMap();
+		final Map<Transition<L, P>, GhostUpdate> ghostUpdateMap = getGhostUpdateMap();
+		final Map<IProgramVar, Term> ghostInitialValues = getInitialGhostValues();
 
-		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(
-				OwickiGriesUtils.getSpecificationForPetriNet(mNet, mFactory), possibleInterferences, newSymbolTable,
-				formulaMapping, Set.of(mGhostVariable), ghostInitAssignment, assignmentMapping);
+		mOwickiGriesAnnotation =
+				new OwickiGriesAnnotation<>(OwickiGriesUtils.getSpecificationForPetriNet(mNet, mFactory),
+						possibleInterferences, newSymbolTable, annotationMap, ghostInitialValues, ghostUpdateMap);
 	}
 
 	private IProgramVar createGhostVariable() {
@@ -130,7 +130,7 @@ public class DirectedEmpireToOwickiGries<L, P> {
 	/**
 	 * @return Map of P to the corresponding formula for each P depending on the legal focus
 	 */
-	private Map<P, IPredicate> getFormulaMap() {
+	private Map<P, IPredicate> getAnnotationMap() {
 		final Map<P, IPredicate> formulaMap = new HashMap<>();
 		for (final P place : mNet.getPlaces()) {
 			final var states = mProductAutomaton.getStates().stream()
@@ -160,7 +160,7 @@ public class DirectedEmpireToOwickiGries<L, P> {
 	/**
 	 * @return Map of transition to the corresponding formula for each transition in net
 	 */
-	private Map<Transition<L, P>, GhostUpdate> getAssignmentMapping() {
+	private Map<Transition<L, P>, GhostUpdate> getGhostUpdateMap() {
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = new HashMap<>();
 		for (final Transition<L, P> transition : mNet.getTransitions()) {
 			final var assignment = getTransitionAssignment(transition);
@@ -229,7 +229,7 @@ public class DirectedEmpireToOwickiGries<L, P> {
 	/**
 	 * @return Map of ghost variable to its init assignment (which is the numeral of the init state)
 	 */
-	private Map<IProgramVar, Term> getGhostInitAssignment() {
+	private Map<IProgramVar, Term> getInitialGhostValues() {
 		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
 		final var initState = DataStructureUtils.getOneAndOnly(mProductAutomaton.getInitialStates(), "initial state");
 		initAssignments.put(mGhostVariable, mStateTerms.get(initState));

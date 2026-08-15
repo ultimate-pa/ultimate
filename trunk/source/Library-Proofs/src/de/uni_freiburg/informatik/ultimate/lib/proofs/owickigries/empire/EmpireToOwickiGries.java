@@ -129,11 +129,11 @@ public class EmpireToOwickiGries<S, L, P> {
 
 		final Map<P, IPredicate> placeAnnotations = computePlaceAnnotations();
 		final Map<Transition<L, P>, GhostUpdate> ghostUpdates = computeGhostUpdateMapping();
-		final Map<IProgramVar, Term> initialGhostValuation = computeInitialGhostValuation();
+		final Map<IProgramVar, Term> initialGhostValues = computeInitialGhostValues();
 
-		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(
-				OwickiGriesUtils.getSpecificationForPetriNet(mProgram, mFactory), possibleInterferences, newSymbolTable,
-				placeAnnotations, Set.of(mGhostVariable), initialGhostValuation, ghostUpdates);
+		mOwickiGriesAnnotation =
+				new OwickiGriesAnnotation<>(OwickiGriesUtils.getSpecificationForPetriNet(mProgram, mFactory),
+						possibleInterferences, newSymbolTable, placeAnnotations, initialGhostValues, ghostUpdates);
 	}
 
 	private IProgramVar createGhostVariable() {
@@ -193,7 +193,7 @@ public class EmpireToOwickiGries<S, L, P> {
 	/**
 	 * @return Map of ghost variable to its init assignment (which is the numeral of the init state)
 	 */
-	private Map<IProgramVar, Term> computeInitialGhostValuation() {
+	private Map<IProgramVar, Term> computeInitialGhostValues() {
 		final var initState = DataStructureUtils.getOneAndOnly(mEmpire.getInitialStates(), "initial state");
 		return Map.of(mGhostVariable, mStateTerms.get(initState));
 	}

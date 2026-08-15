@@ -103,7 +103,7 @@ abstract class OwickiGriesStatistics extends AbstractStatisticsDataProvider {
 		// TODO measure size etc
 		// TODO log information
 		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
-				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
+				annotation.getGhostVariables().size(), annotation.getGhostUpdateMap().size(), annotation.size());
 		printModularityData(mLogger, annotation);
 	}
 
@@ -118,16 +118,16 @@ abstract class OwickiGriesStatistics extends AbstractStatisticsDataProvider {
 	// TODO temporary; integrate this into the regular statistics
 	public static void printModularityData(final ILogger logger, final OwickiGriesAnnotation<?, ?, ?> annotation) {
 		final MinMaxMed freeVars = new MinMaxMed();
-		freeVars.report(annotation.getFormulaMapping().values(), fm -> fm.getFormula().getFreeVars().length);
+		freeVars.report(annotation.getAnnotationMap().values(), fm -> fm.getFormula().getFreeVars().length);
 		logger.info("free variables mentioned in invariants: " + freeVars);
 
 		final MinMaxMed ghostVars = new MinMaxMed();
-		ghostVars.report(annotation.getFormulaMapping().values(),
+		ghostVars.report(annotation.getAnnotationMap().values(),
 				fm -> fm.getVars().stream().filter(annotation.getGhostVariables()::contains).count());
 		logger.info("ghost variables mentioned in invariants: " + ghostVars);
 
 		final MinMaxMed programVars = new MinMaxMed();
-		programVars.report(annotation.getFormulaMapping().values(),
+		programVars.report(annotation.getAnnotationMap().values(),
 				fm -> fm.getVars().stream().filter(Predicate.not(annotation.getGhostVariables()::contains)).count());
 		logger.info("program variables mentioned in invariants: " + programVars);
 	}

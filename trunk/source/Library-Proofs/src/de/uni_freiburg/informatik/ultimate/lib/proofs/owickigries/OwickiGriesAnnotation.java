@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  * An Owicki/Gries annotation of a concurrent program. Serves as proof of the program's correctness.
  *
  * We primarily use Owicki/Gries annotations for Petri programs. However, they can also be used for other models of
- * concurrent programs, such as interprocedural CFGs.
+ * concurrent programs, such as ICFGs with fork and join edges.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
@@ -80,94 +81,81 @@ public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProo
 	/**
 	 * "omega" - maps a place to a predicate that holds whenever the place has a token.
 	 */
-	private final Map<P, IPredicate> mFormulaMapping;
+	private final Map<P, IPredicate> mAnnotationMap;
 
 	/**
 	 * "gamma" - annotates transitions with assignments of ghost variables.
 	 */
-	private final Map<T, GhostUpdate> mAssignmentMapping;
+	private final Map<T, GhostUpdate> mGhostUpdateMap;
 
 	/**
-	 * Set of ghost variables used by the annotation.
+	 * The ghost variables used by the annotation, mapped to their initial values.
 	 */
-	private final Set<IProgramVar> mGhostVariables;
-
-	/**
-	 * Initial assignment of ghost variables.
-	 */
-	private final Map<IProgramVar, Term> mGhostInitAssignment;
+	private final Map<IProgramVar, Term> mGhostsAndInitialValues;
 
 	/**
 	 * Creates a new Owicki/Gries annotation.
 	 *
-	 * @param net
-	 *            The Petri program that is annotated.
+	 * @param specification
+	 *            The specification proven by this Owicki/Gries annotation.
+	 * @param possibleInterferences
+	 *            The possible interferences accounted for by this Owicki/Gries annotation
 	 * @param symbolTable
 	 *            A symbol table for the annotation, which includes the program variables as well as the ghost variables
-	 * @param formulaMapping
+	 * @param annotationMap
 	 *            The mapping from places to formulas.
-	 * @param ghostVariables
-	 *            The set of ghost variables used by the annotation.
-	 * @param ghostInitAssignment
-	 *            The initial assignment of ghost variables.
-	 * @param assignmentMapping
+	 * @param ghostsAndInitialValues
+	 *            The ghost variables used by the annotation, mapped to their initial values.
+	 * @param ghostUpdateMap
 	 *            The annotation of transitions with ghost assignments.
 	 */
 	public OwickiGriesAnnotation(final ThreadModularPrePostSpecification<P, M> specification,
 			final IPossibleInterferences<T, P> possibleInterferences, final IIcfgSymbolTable symbolTable,
-			final Map<P, IPredicate> formulaMapping, final Set<IProgramVar> ghostVariables,
-			final Map<IProgramVar, Term> ghostInitAssignment, final Map<T, GhostUpdate> assignmentMapping) {
-		assert ghostInitAssignment.keySet().stream().allMatch(ghostVariables::contains)
-				: "Initial value only allowed for ghost variables";
-
-		// TODO should we allow more here? e.g. any term that does not itself contain a ghost variable?
-		// TODO we cannot allow all terms there are, otherwise we might have contradictions: a==!b and b==a
-		// TODO (or, depending how we interpret it, the values depend on an order between ghost initializations)
-		// assert ghostInitAssignment.values().stream().allMatch(
-		// v -> v.getFreeVars().length == 0) : "Initial values must be literal terms without free variables";
-		assert ghostInitAssignment.values().stream().flatMap(t -> Arrays.stream(t.getFreeVars()))
-				.allMatch(v -> ghostVariables.stream().noneMatch(gv -> gv.getTermVariable().equals(v)))
+			final Map<P, IPredicate> annotationMap, final Map<IProgramVar, Term> ghostsAndInitialValues,
+			final Map<T, GhostUpdate> ghostUpdateMap) {
+		assert ghostsAndInitialValues.values().stream().flatMap(t -> Arrays.stream(t.getFreeVars()))
+				.allMatch(v -> ghostsAndInitialValues.keySet().stream().noneMatch(gv -> gv.getTermVariable().equals(v)))
 				: "Ghost variables initializations must not refer to other ghost variables";
 
-		assert assignmentMapping.values().stream().allMatch(u -> ghostVariables.containsAll(u.getAssignedVariables()))
+		assert ghostUpdateMap.values().stream()
+				.allMatch(u -> ghostsAndInitialValues.keySet().containsAll(u.getAssignedVariables()))
 				: "Only updates to ghost variables allowed";
 
 		mSpecification = specification;
 		mPossibleInterferences = possibleInterferences;
 
 		mSymbolTable = symbolTable;
-		mFormulaMapping = formulaMapping;
-		mGhostVariables = ghostVariables;
-		mGhostInitAssignment = ghostInitAssignment;
-		mAssignmentMapping = assignmentMapping;
+		mAnnotationMap = annotationMap;
+		mGhostsAndInitialValues = ghostsAndInitialValues;
+		mGhostUpdateMap = ghostUpdateMap;
 	}
 
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
 	}
 
-	public Map<P, IPredicate> getFormulaMapping() {
-		return mFormulaMapping;
+	public Map<P, IPredicate> getAnnotationMap() {
+		return Collections.unmodifiableMap(mAnnotationMap);
 	}
 
-	public Map<T, GhostUpdate> getAssignmentMapping() {
-		return mAssignmentMapping;
+	public Map<T, GhostUpdate> getGhostUpdateMap() {
+		return Collections.unmodifiableMap(mGhostUpdateMap);
 	}
 
 	public Set<IProgramVar> getGhostVariables() {
-		return mGhostVariables;
+		return Collections.unmodifiableSet(mGhostsAndInitialValues.keySet());
 	}
 
-	public Map<IProgramVar, Term> getGhostAssignment() {
-		return mGhostInitAssignment;
+	public Map<IProgramVar, Term> getInitialGhostValues() {
+		return Collections.unmodifiableMap(mGhostsAndInitialValues);
 	}
 
 	public long size() {
-		final long initSize = mGhostInitAssignment.entrySet().stream()
+		final long initSize = mGhostsAndInitialValues.entrySet().stream()
 				.collect(Collectors.summingLong(x -> new DAGSize().size(x.getValue())));
-		final long formulaSize = mFormulaMapping.entrySet().stream()
+		final long formulaSize = mAnnotationMap.entrySet().stream()
 				.collect(Collectors.summingLong(x -> new DAGSize().size(x.getValue().getFormula())));
-		final long assignSize = mAssignmentMapping.values().stream().collect(Collectors.summingLong(GhostUpdate::size));
+		final long assignSize = mGhostUpdateMap.values().stream().collect(Collectors.summingLong(GhostUpdate::size));
 		return initSize + formulaSize + assignSize;
 	}
 
@@ -176,13 +164,13 @@ public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProo
 		final var sb = new StringBuilder();
 
 		sb.append("Assertions:\n");
-		appendEntries(sb, mFormulaMapping);
+		appendEntries(sb, mAnnotationMap);
 
 		sb.append("\nGhost Variables (and initial values):\n");
-		appendEntries(sb, mGhostInitAssignment);
+		appendEntries(sb, mGhostsAndInitialValues);
 
 		sb.append("\nGhost Updates:\n");
-		appendEntries(sb, mAssignmentMapping);
+		appendEntries(sb, mGhostUpdateMap);
 
 		return sb.toString();
 	}

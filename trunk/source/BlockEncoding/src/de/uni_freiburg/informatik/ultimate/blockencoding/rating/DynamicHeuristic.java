@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinim
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Call;
 
 /**
  * The basic idea behind this heuristic is to compute, while converting, a average rating value per edge. Per preference
