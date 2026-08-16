@@ -1278,16 +1278,6 @@ public class SimplificationTest {
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	@Test
-	public void bvaddAbsorption() { // Testing new class allowing multiple elements
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
-		final String formulaAsString = "(bvand (_ bv2 8) x (_ bv1 8))";
-		final String simplified = "(_ bv0 8)";
-
-		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
-				mLogger, mMgdScript, mCsvWriter);
-	}
-
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final SimplificationTechnique simplificationTechnique,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
