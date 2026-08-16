@@ -382,6 +382,44 @@ public final class BitvectorUtils {
 			return constructTerm(script, bv);
 		}
 
+		/**
+		 * Extract-over-extend simplification: sign_extend/zero_extend only add bits above the original value, so
+		 * extracting bits [hi:0] where hi falls anywhere from the original width up to (but not including) the full
+		 * extended width always gives back a smaller extend of the original value, e.g.
+		 * {@code (extract 2 0 (sign_extend 2 x))} -> {@code (sign_extend 1 x)} for a 3-bit x, and the special case
+		 * {@code (extract 1 0 (sign_extend 2 x))} -> {@code x} where no padding bits survive at all. Extracting the
+		 * full extended width, or reaching outside it, is out of scope for this rule.
+		 */
+		@Override
+		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
+				final BitvectorConstant[] bvs) {
+			final int hi = indices[0].intValueExact();
+			final int lo = indices[1].intValueExact();
+			if (lo == 0) {
+				String extendFuncName = "sign_extend";
+				ApplicationTerm extendApp = SmtUtils.getFunctionApplication(params[0], extendFuncName);
+				if (extendApp == null) {
+					extendFuncName = "zero_extend";
+					extendApp = SmtUtils.getFunctionApplication(params[0], extendFuncName);
+				}
+				if (extendApp != null) {
+					final Term innerValue = extendApp.getParameters()[0];
+					final int innerWidth = Integer.parseInt(innerValue.getSort().getIndices()[0]);
+					final int extendedWidth = Integer.parseInt(extendApp.getSort().getIndices()[0]);
+					if (hi >= innerWidth - 1 && hi < extendedWidth - 1) {
+						final int reducedExtendAmount = hi - (innerWidth - 1);
+						if (reducedExtendAmount == 0) {
+							return innerValue; // extract exactly undoes the extend
+						}
+						// fewer padding bits survive than before - shrink the extend instead of dropping it
+						return unfTerm(script, extendFuncName,
+								new BigInteger[] { BigInteger.valueOf(reducedExtendAmount) }, innerValue);
+					}
+				}
+			}
+			return super.simplify_NonConstantCase(script, indices, params, bvs);
+		}
+
 	}
 
 	private static class Sign_extend extends BitvectorOperation {
