@@ -36,6 +36,7 @@ public class EGraph {
 		mUnionFind = new UnionFind<>();
 		mSelectTerms = new ArrayList<>();
 		mDistinctSets = new HashMap<>();
+
 		mMgdScript = mgdScript;
 		mServices = services;
 
@@ -43,10 +44,13 @@ public class EGraph {
 
 	private void addTerm(final Term term) {
 		if ((term instanceof ConstantTerm)) {
-			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term);
+			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term); // we add terms that do not appear on either side
+																		// of an equality/disequality relation so that
+																		// we do not need to check for deep equality
+																		// later on
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName() == "select") {
+			if (appTerm.getFunction().getName().equals("select")) {
 				mSelectTerms.add(appTerm);
 			}
 			final Term representative = mUnionFind.find(appTerm);
@@ -63,12 +67,12 @@ public class EGraph {
 	}
 
 	public void addFormula(final Term formula) {
-		final Term[] conjuncts = SmtUtils.cannibalize(mMgdScript, mServices, false, formula);
+		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
 
 		for (final Term term : conjuncts) {
 			final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
 			if (binaryEqRelation == null) {
-				addTerm(term);
+				addTerm(term); //
 			} else {
 				final Term lhs = binaryEqRelation.getLhs();
 				final Term rhs = binaryEqRelation.getRhs();
@@ -92,11 +96,14 @@ public class EGraph {
 						mDistinctSets.get(rightEset).addAll(leftEset);
 					}
 
-				} else {
+				} else if (binaryEqRelation.getRelationSymbol() == RelationSymbol.EQ) {
 					union(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
+				} else {
+					throw new AssertionError("unexpected relation symbol " + binaryEqRelation.getRelationSymbol());
 				}
 			}
 		}
+		postProcessSelects();
 	}
 
 	private void union(final Term a, final Term b) {
@@ -128,17 +135,31 @@ public class EGraph {
 		return pairs;
 	}
 
-	private boolean areEquivalent(final Term a, final Term b) {
+	public boolean areEquivalent(final Term a, final Term b) {
+		if (mUnionFind.find(a) == null) {
+			return false;
+		}
 		return mUnionFind.getContainingSet(a).equals(mUnionFind.getContainingSet(b));
 	}
 
-	public void postProcessSelects() {
+	public boolean areDistinct(final Term a, final Term b) {
+		if (!(mDistinctSets.containsKey(mUnionFind.getContainingSet(a)))
+				|| !(mDistinctSets.containsKey(mUnionFind.getContainingSet(b)))) {
+			return false;
+		}
+		return mDistinctSets.get(mUnionFind.getContainingSet(a)).contains(b)
+				|| mDistinctSets.get(mUnionFind.getContainingSet(b)).contains(a);
+
+	}
+
+	private void postProcessSelects() {
 		final Deque<Pair<ApplicationTerm, ApplicationTerm>> worklist = getPossiblyUnionableSelectPairs();
 		while (!(worklist.isEmpty())) {
 			final Pair<ApplicationTerm, ApplicationTerm> candidate = worklist.pop();
 			final ApplicationTerm select1 = candidate.getFirst();
 			final ApplicationTerm select2 = candidate.getSecond();
-			if (areEquivalent(select1, select2)) {
+			if (areEquivalent(select1, select2)) { // we check this to prevent more term pairs from getting added to the
+													// worklist
 				continue;
 			}
 			if (areEquivalent(select1.getParameters()[0], select2.getParameters()[0])
@@ -147,6 +168,21 @@ public class EGraph {
 				worklist.addAll(getPossiblyUnionableSelectPairs());
 			}
 
+		}
+	}
+
+	public enum Relation {
+		EQUAL, DISTINCT, UNKNOWN
+	}
+
+	public Relation getRelation(final Term a, final Term b) {
+
+		if (areEquivalent(a, b)) {
+			return Relation.EQUAL;
+		} else if (areDistinct(a, b)) {
+			return Relation.DISTINCT;
+		} else {
+			return Relation.UNKNOWN;
 		}
 	}
 
