@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 
 /**
  * Utility class to collect the variables occurring (as identifier expressions, or in left-hand-sides) in a Boogie AST.
@@ -71,8 +72,8 @@ public class BoogieVariableCollector extends BoogieVisitor {
 		process(node);
 	}
 
-	public BoogieVariableCollector(final Collection<? extends BoogieASTNode> nodes, final boolean ignoreOldNonOldContext,
-			final boolean ignoreLHS) {
+	public BoogieVariableCollector(final Collection<? extends BoogieASTNode> nodes,
+			final boolean ignoreOldNonOldContext, final boolean ignoreLHS) {
 		mIgnoreOldNonOldContext = ignoreOldNonOldContext;
 		mIgnoreLHS = ignoreLHS;
 		for (final BoogieASTNode node : nodes) {
@@ -115,7 +116,7 @@ public class BoogieVariableCollector extends BoogieVisitor {
 	}
 
 	public Stream<VariableOccurrence> nonGlobalVariables() {
-		return mResult.stream().filter(occ -> occ.declarationInformation().getStorageClass() == StorageClass.GLOBAL);
+		return mResult.stream().filter(occ -> occ.declarationInformation().getStorageClass() != StorageClass.GLOBAL);
 	}
 
 	public boolean usesNonGlobalVariables() {
@@ -125,7 +126,7 @@ public class BoogieVariableCollector extends BoogieVisitor {
 	public Stream<IdentifierExpressionOccurrence> nonGlobalVariablesRead() {
 		return mResult.stream()
 				.filter(occ -> occ instanceof IdentifierExpressionOccurrence
-						&& occ.declarationInformation().getStorageClass() == StorageClass.GLOBAL)
+						&& occ.declarationInformation().getStorageClass() != StorageClass.GLOBAL)
 				.map(occ -> (IdentifierExpressionOccurrence) occ);
 	}
 
@@ -136,7 +137,7 @@ public class BoogieVariableCollector extends BoogieVisitor {
 	public Stream<LeftHandSideOccurrence> nonGlobalVariablesAssigned() {
 		return mResult.stream()
 				.filter(occ -> occ instanceof LeftHandSideOccurrence
-						&& occ.declarationInformation().getStorageClass() == StorageClass.GLOBAL)
+						&& occ.declarationInformation().getStorageClass() != StorageClass.GLOBAL)
 				.map(occ -> (LeftHandSideOccurrence) occ);
 	}
 
@@ -167,13 +168,14 @@ public class BoogieVariableCollector extends BoogieVisitor {
 	@Override
 	protected void visit(final IdentifierExpression expr) {
 		mResult.add(new IdentifierExpressionOccurrence(expr.getIdentifier(), expr.getDeclarationInformation(),
-				mInOldContext));
+				(BoogieType) expr.getType(), mInOldContext));
 	}
 
 	@Override
 	protected void visit(final VariableLHS lhs) {
 		if (!mIgnoreLHS) {
-			mResult.add(new LeftHandSideOccurrence(lhs.getIdentifier(), lhs.getDeclarationInformation()));
+			mResult.add(new LeftHandSideOccurrence(lhs.getIdentifier(), lhs.getDeclarationInformation(),
+					(BoogieType) lhs.getType()));
 		}
 	}
 
@@ -199,13 +201,15 @@ public class BoogieVariableCollector extends BoogieVisitor {
 		String identifier();
 
 		DeclarationInformation declarationInformation();
+
+		BoogieType type();
 	}
 
 	public record IdentifierExpressionOccurrence(String identifier, DeclarationInformation declarationInformation,
-			boolean inOldContext) implements VariableOccurrence {
+			BoogieType type, boolean inOldContext) implements VariableOccurrence {
 	}
 
-	public record LeftHandSideOccurrence(String identifier, DeclarationInformation declarationInformation)
-			implements VariableOccurrence {
+	public record LeftHandSideOccurrence(String identifier, DeclarationInformation declarationInformation,
+			BoogieType type) implements VariableOccurrence {
 	}
 }
