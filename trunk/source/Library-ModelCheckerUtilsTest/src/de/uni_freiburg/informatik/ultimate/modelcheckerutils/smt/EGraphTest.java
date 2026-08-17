@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
@@ -15,16 +16,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.egraph.EGraph;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -88,6 +86,18 @@ public class EGraphTest {
 //		mCsvWriter.reportTestFinished();
 	}
 
+	private static class ExpectedRelation {
+		public String term1;
+		public String term2;
+		public EGraph.Relation relation;
+
+		public ExpectedRelation(final String term1, final String term2, final EGraph.Relation relation) {
+			this.term1 = term1;
+			this.term2 = term2;
+			this.relation = relation;
+		}
+	}
+
 //	@Test
 //	public void ddaExample6() {
 //		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x"), };
@@ -125,45 +135,36 @@ public class EGraphTest {
 	@Test
 	public void egraphTestExampleDistinct() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
-		final String formulaAsString = "(and (distinct x y) (distinct x z) (= y z))";
-		final String expectedResultAsString = "(or (< y 3) (< x 2))";
-		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
+		final String formulaAsString = "(and (distinct x y) (= y z))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "z", EGraph.Relation.DISTINCT));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
-	static void runEGraphTest(final FunDecl[] funDecls, final String eliminationInputAsString,
-			final String expectedResultAsString, final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript) {
+	static void runEGraphTest(final FunDecl[] funDecls, final String conjunctAsString,
+			final ArrayList<ExpectedRelation> expectedRelations, final IUltimateServiceProvider services,
+			final ILogger logger, final ManagedScript mgdScript) {
 		for (final FunDecl funDecl : funDecls) {
 			funDecl.declareFuns(mgdScript.getScript());
 		}
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), conjunctAsString);
 		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
 		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
 
 		final EGraph egraph = new EGraph(mgdScript, services);
 		egraph.addFormula(unf);
-		egraph.postProcessSelects();
-	}
-
-	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term input) {
-		script.echo(new QuotedObject("Start correctness check for simplification."));
-		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
-		script.echo(new QuotedObject("Finished correctness check for simplification. Result: " + lbool));
-		final String errorMessage;
-		switch (lbool) {
-		case SAT:
-			errorMessage = "Not logically equivalent to expected result: " + result;
-			break;
-		case UNKNOWN:
-			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
-			break;
-		case UNSAT:
-			errorMessage = null;
-			break;
-		default:
-			throw new AssertionError("unknown value " + lbool);
+		boolean allExpectedRelationsHold = true;
+		for (final ExpectedRelation expectedRelation : expectedRelations) {
+			final Term term1 = TermParseUtils.parseTerm(mgdScript.getScript(), expectedRelation.term1);
+			final Term term2 = TermParseUtils.parseTerm(mgdScript.getScript(), expectedRelation.term2);
+			final EGraph.Relation relationResult = egraph.getRelation(term1, term2);
+			if (relationResult != expectedRelation.relation) {
+				final String errorMessage = "Expected relation between " + term1 + " and " + term2 + ": "
+						+ expectedRelation.relation + ", got: " + relationResult;
+				MatcherAssert.assertThat(errorMessage, false);
+				allExpectedRelationsHold = false;
+			}
 		}
-		MatcherAssert.assertThat(errorMessage, lbool == LBool.UNSAT);
-		return lbool == LBool.UNSAT;
+		assert allExpectedRelationsHold;
 	}
 }
