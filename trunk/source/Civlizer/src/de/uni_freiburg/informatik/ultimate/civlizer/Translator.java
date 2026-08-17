@@ -433,7 +433,6 @@ public final class Translator {
 				params.toArray(IdentifierExpression[]::new));
 	}
 
-	// TODO add locality of parameter
 	YieldProcedure addCondition(final String procName, final int counter, final Expression condition) {
 		final List<ParameterDeclaration> params = new ArrayList<>();
 
@@ -505,24 +504,13 @@ public final class Translator {
 		return yieldProc;
 	}
 
-	Body writeBody(final Procedure decl) {
-		final BodyTransformer transformer = new BodyTransformer(mServices, this, decl.getIdentifier(), decl.getBody());
-		return transformer.getResult();
-	}
-
-	// TODO could be reduce a lot core of what i need to get ride
 	private YieldProcedure processProcedure(final Procedure decl) {
-
-		// TODO declare the declaration with bodyTransformer
-
 		final Set<Tid> tidNeedsLinearity = new HashSet<>(mProgramAndProof.getTemplateVisitor().getTids());
 
 		final var inParams = new ArrayList<ParameterDeclaration>();
-
 		if (BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())) {
 			inParams.add(new ParameterDeclaration("start_tid", makeOne(mStartTidType), Linearity.INOUT));
 		}
-
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(decl.getIdentifier(),
 				Collections.emptyList())) {
 			inParams.add(new ParameterDeclaration(tid.toString(), makeOne(mTidType), Linearity.IN));
@@ -536,7 +524,7 @@ public final class Translator {
 				inParams.stream().map(Translator::getParameterExpression).toArray(IdentifierExpression[]::new),
 				annotation);
 
-		final var body = writeBody(decl);
+		final var body = new BodyTransformer(mServices, this, decl.getIdentifier(), decl.getBody()).getResult();
 		return new YieldProcedure(LAYER_TOP, decl.getIdentifier(), inParams.toArray(ParameterDeclaration[]::new),
 				new ParameterDeclaration[0], new CallStatement[] { requires }, new CallStatement[0], body, null);
 	}
