@@ -34,8 +34,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector.IdentifierExpressionOccurrence;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -113,7 +117,6 @@ public final class Translator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ProgramAndProof mProgramAndProof;
-	private final VariablesInformation mVariablesInformation;
 
 	private final ASTType mStartTidType;
 	private final ASTType mTidType;
@@ -126,7 +129,6 @@ public final class Translator {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		programAndProof.preprocess();
 		mProgramAndProof = programAndProof;
-		mVariablesInformation = new VariablesInformation(programAndProof);
 
 		// Declarations for thread management operations
 		mStartTidType = declareStartTidType();
@@ -146,10 +148,6 @@ public final class Translator {
 	ProgramAndProof getProgramAndProof() {
 		// is used in body transformer
 		return mProgramAndProof;
-	}
-
-	VariablesInformation getVariablesInformation() {
-		return mVariablesInformation;
 	}
 
 	ASTType getStartTidType() {
@@ -345,12 +343,16 @@ public final class Translator {
 		return new BoogieDeclaration(newDecl);
 	}
 
-	CallStatement callYieldInvariant(final YieldInvariant yieldInvariant, final IdentifierExpression[] input,
+	static CallStatement callYieldInvariant(final YieldInvariant yieldInvariant, final IdentifierExpression[] input,
 			final Expression annotation) {
 		// use to fix issue with addAll because Arrays.asList(input) return fix size
 		final List<IdentifierExpression> params = new ArrayList<>(Arrays.asList(input));
 
-		params.addAll(mVariablesInformation.getExpressionMap().getOrDefault(annotation, Collections.emptySet()));
+		for (final var localVariable : collectLocalVariables(annotation)) {
+			assert !localVariable.inOldContext() : "Old() expressions not yet supported";
+			params.add(new IdentifierExpression(null, localVariable.type(), localVariable.identifier(),
+					localVariable.declarationInformation()));
+		}
 
 		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], yieldInvariant.getIdentifier(),
 				params.toArray(Expression[]::new));
@@ -369,11 +371,10 @@ public final class Translator {
 					tidNeedsLinearity.contains(tid) ? Linearity.INOUT : Linearity.NONE));
 		}
 
-		for (final IdentifierExpression id : mVariablesInformation.getExpressionMap().getOrDefault(annotation,
-				Collections.emptySet())) {
-			// TODO maybe change type later
-			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
-			params.add(new ParameterDeclaration(id.getIdentifier(), type, Linearity.NONE));
+		for (final var localVariable : collectLocalVariables(annotation)) {
+			assert !localVariable.inOldContext() : "Old() expressions not yet supported";
+			final ASTType type = localVariable.type().toASTType(null);
+			params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
 		}
 
 		final var preserves = new ArrayList<Expression>();
@@ -418,10 +419,14 @@ public final class Translator {
 		return invDecl;
 	}
 
-	CallStatement callCondition(final YieldProcedure conditionProc, final Expression condition) {
+	static CallStatement callCondition(final YieldProcedure conditionProc, final Expression condition) {
+		final List<IdentifierExpression> params = new ArrayList<>();
 
-		final List<IdentifierExpression> params = new ArrayList<>(
-				mVariablesInformation.getExpressionMap().getOrDefault(condition, Collections.emptySet()));
+		for (final var localVariable : collectLocalVariables(condition)) {
+			assert !localVariable.inOldContext() : "Old() expressions not yet supported";
+			params.add(new IdentifierExpression(null, localVariable.type(), localVariable.identifier(),
+					localVariable.declarationInformation()));
+		}
 
 		return new CallStatement(null, new NamedAttribute[0], false,
 				new VariableLHS[] { new VariableLHS(null, "condition") }, conditionProc.getIdentifier(),
@@ -430,16 +435,12 @@ public final class Translator {
 
 	// TODO add locality of parameter
 	YieldProcedure addCondition(final String procName, final int counter, final Expression condition) {
-		// maybe modify: new ParameterDeclaration("out", new PrimitiveType(null, "int"),
-		// ParameterDeclaration.Linearity.NONE)
-
 		final List<ParameterDeclaration> params = new ArrayList<>();
 
-		for (final IdentifierExpression id : mVariablesInformation.getExpressionMap().getOrDefault(condition,
-				Collections.emptySet())) {
-			// TODO maybe change type later
-			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
-			params.add(new ParameterDeclaration(id.getIdentifier(), type, Linearity.NONE));
+		for (final var localVariable : collectLocalVariables(condition)) {
+			assert !localVariable.inOldContext() : "Old() expressions not yet supported";
+			final ASTType type = localVariable.type().toASTType(null);
+			params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
 		}
 
 		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
@@ -454,44 +455,45 @@ public final class Translator {
 		return yieldProc;
 	}
 
-	CallStatement callAtomicStatement(final YieldProcedure statementProc, final Statement statement) {
+	static CallStatement callAtomicStatement(final YieldProcedure statementProc, final Statement statement) {
+		final var variableCollector = new BoogieVariableCollector(statement);
 
-		final List<Expression> inParams = new ArrayList<>();
-		final List<VariableLHS> outParams = new ArrayList<>();
-
-		for (final IdentifierExpression id : mVariablesInformation.getLocalStatementMap().getOrDefault(statement,
-				Collections.emptySet())) {
-			// TODO maybe change type later
-			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
-			inParams.add(id);
-			outParams.add(new VariableLHS(null, id.getIdentifier()));
-		}
+		final var inParams = variableCollector.nonGlobalVariablesRead()
+				.map(occ -> new IdentifierExpression(null, occ.type(), occ.identifier(), occ.declarationInformation()))
+				.toList();
+		final var outParams = variableCollector.nonGlobalVariablesAssigned()
+				.map(occ -> new VariableLHS(null, occ.type(), occ.identifier(), occ.declarationInformation())).toList();
 
 		return new CallStatement(null, new NamedAttribute[0], false, outParams.toArray(VariableLHS[]::new),
 				statementProc.getIdentifier(), inParams.toArray(Expression[]::new));
 	}
 
 	YieldProcedure addAtomicStatement(final String procName, final int counter, final Statement statement) {
-		// IfStatement, ReturnStatement, CallStatement, WhileStatement, BreakStatement
+		final var variableCollector = new BoogieVariableCollector(statement);
+		final var readLocalVariables =
+				variableCollector.nonGlobalVariablesRead().map(occ -> occ.identifier()).collect(Collectors.toSet());
+		final var assignedLocalVariables =
+				variableCollector.nonGlobalVariablesAssigned().map(occ -> occ.identifier()).collect(Collectors.toSet());
 
-		final List<ParameterDeclaration> inParams = new ArrayList<>();
-		final List<ParameterDeclaration> outParams = new ArrayList<>();
+		// declare in and out parameters (based on local variables)
+		final var inParams = variableCollector.nonGlobalVariablesRead()
+				.map(occ -> new ParameterDeclaration(
+						assignedLocalVariables.contains(occ.identifier()) ? occ.identifier() + "_in" : occ.identifier(),
+						occ.type().toASTType(null), Linearity.NONE))
+				.toList();
+		final var outParams = variableCollector.nonGlobalVariablesAssigned()
+				.map(occ -> new ParameterDeclaration(occ.identifier(), occ.type().toASTType(null), Linearity.NONE))
+				.toList();
 
-		for (final IdentifierExpression id : mVariablesInformation.getLocalStatementMap().getOrDefault(statement,
-				Collections.emptySet())) {
-			// TODO maybe change type later
-			final ASTType type = new NamedType(null, id.getType().toString(), new ASTType[0]);
-			inParams.add(new ParameterDeclaration(id.getIdentifier() + "_in", type, Linearity.NONE));
-			outParams.add(new ParameterDeclaration(id.getIdentifier(), type, Linearity.NONE));
-		}
+		// for local variables that are both read and written, initialize the out parameter to the in parameter
+		final var prologue = outParams.stream().filter(param -> readLocalVariables.contains(param.getIdentifier()))
+				.map(param -> new AssignmentStatement(null,
+						new LeftHandSide[] { new VariableLHS(null, param.getIdentifier()) },
+						new Expression[] { new IdentifierExpression(null, param.getIdentifier() + "_in") }))
+				.toList();
 
 		final var body = new ArrayList<Statement>();
-		// TODO improve this later
-		for (final IdentifierExpression id : mVariablesInformation.getLocalStatementMap().getOrDefault(statement,
-				Collections.emptySet())) {
-			body.add(new AssignmentStatement(null, new LeftHandSide[] { new VariableLHS(null, id.getIdentifier()) },
-					new Expression[] { new IdentifierExpression(null, id.getIdentifier() + "_in") }));
-		}
+		body.addAll(prologue);
 		body.addAll(BoogieUtils.flattenAtomicStatements(statement));
 
 		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
@@ -537,5 +539,11 @@ public final class Translator {
 		final var body = writeBody(decl);
 		return new YieldProcedure(LAYER_TOP, decl.getIdentifier(), inParams.toArray(ParameterDeclaration[]::new),
 				new ParameterDeclaration[0], new CallStatement[] { requires }, new CallStatement[0], body, null);
+	}
+
+	private static List<IdentifierExpressionOccurrence> collectLocalVariables(final Expression annotation) {
+		return new BoogieVariableCollector(annotation).nonGlobalVariablesRead()
+				// filter ghost variables (currently declared as QUANTIFIED)
+				.filter(occ -> occ.declarationInformation().getStorageClass() != StorageClass.QUANTIFIED).toList();
 	}
 }

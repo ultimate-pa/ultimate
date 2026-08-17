@@ -165,7 +165,7 @@ final class BodyTransformer extends BoogieTransformer {
 				mTranslator.getProgramAndProof().getTemplateVisitor().getExitAnnotationMap().get(mProcedureName);
 		final var yieldInvariant =
 				mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter, annotation, mTidNeedsLinearity);
-		newStatements.add(mTranslator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation));
+		newStatements.add(Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation));
 
 		if (mProcedureName != BoogieUtils.START_PROCEDURE) {
 			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
@@ -224,7 +224,7 @@ final class BodyTransformer extends BoogieTransformer {
 			final var annotation = annotationMap.get(statement.getLoc());
 			final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
 					annotation, mTidNeedsLinearity);
-			final var annotationCheck = mTranslator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation);
+			final var annotationCheck = Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation);
 
 			final List<CallStatement> positiveGhostUpdates = createGhostUpdateAssignments(
 					ghostUpdateMap.get(new GhostUpdateLocation(statement.getLocation(), false)));
@@ -295,7 +295,7 @@ final class BodyTransformer extends BoogieTransformer {
 		if (variableCollector.usesGlobalVariables()) {
 			final var conditionProc =
 					mTranslator.addCondition(mProcedureName, mAtomicStatementCounter, ifStmt.getCondition());
-			result.add(mTranslator.callCondition(conditionProc, ifStmt.getCondition()));
+			result.add(Translator.callCondition(conditionProc, ifStmt.getCondition()));
 			condition = getOrCreateConditionVariable();
 		} else {
 			condition = ifStmt.getCondition();
@@ -332,7 +332,7 @@ final class BodyTransformer extends BoogieTransformer {
 			if (variableCollector.usesGlobalVariables()) {
 				final var conditionProc =
 						mTranslator.addCondition(mProcedureName, mAtomicStatementCounter, whileStmt.getCondition());
-				assignCondition = mTranslator.callCondition(conditionProc, whileStmt.getCondition());
+				assignCondition = Translator.callCondition(conditionProc, whileStmt.getCondition());
 			} else {
 				assignCondition = new AssignmentStatement(null, new LeftHandSide[] { getOrCreateConditionLHS() },
 						new Expression[] { whileStmt.getCondition() });
@@ -419,7 +419,7 @@ final class BodyTransformer extends BoogieTransformer {
 		}
 	}
 
-	private Statement processForkStatement(final ForkStatement forkStmt) {
+	private static Statement processForkStatement(final ForkStatement forkStmt) {
 		// TODO support fork parameters
 		assert forkStmt.getArguments().length == 0 : "Arguments for forks are not yet supported";
 
@@ -435,7 +435,7 @@ final class BodyTransformer extends BoogieTransformer {
 		return newFork;
 	}
 
-	private Statement processJoinStatement(final JoinStatement joinStmt) {
+	private static Statement processJoinStatement(final JoinStatement joinStmt) {
 		// TODO support return values from joins
 		assert joinStmt.getLhs().length == 0 : "Return values from joins are not yet supported";
 
@@ -459,7 +459,7 @@ final class BodyTransformer extends BoogieTransformer {
 		if (variableCollector.usesGlobalVariables()) {
 			final var statementProc =
 					mTranslator.addAtomicStatement(mProcedureName, mAtomicStatementCounter, statement);
-			newStatement = mTranslator.callAtomicStatement(statementProc, statement);
+			newStatement = Translator.callAtomicStatement(statementProc, statement);
 		} else {
 			final NamedAttribute[] layer =
 					{ CivlUtils.createLayerAttribute(Translator.LAYER_IMPLEMENTATIONS, Translator.LAYER_TOP) };
