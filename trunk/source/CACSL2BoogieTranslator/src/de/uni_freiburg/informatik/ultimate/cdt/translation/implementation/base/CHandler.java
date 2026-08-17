@@ -378,6 +378,8 @@ public class CHandler {
 
 	private final InterruptFunctionHandler mInterruptFunctionHandler;
 
+	private final InterruptRequestHandler mIrqHandler;
+
 	private final TranslationSettings mSettings;
 
 	private final ExpressionResultTransformer mExprResultTransformer;
@@ -470,6 +472,7 @@ public class CHandler {
 		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, mProcedureManager);
 
 		mInterruptFunctionHandler = null;
+		mIrqHandler = null;
 
 		mMemoryHandler = new MemoryHandler(mTypeSizes, mNameHandler, settings.useSmtBoolArrayWorkaround(), mTypeHandler,
 				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings,
@@ -569,6 +572,7 @@ public class CHandler {
 		mAuxVarInfoBuilder = new AuxVarInfoBuilder(nameHandler, typeHandler, procedureManager);
 
 		mInterruptFunctionHandler = new InterruptFunctionHandler();
+		mIrqHandler = irqHandler;
 
 		// the memory handler also retains information from the prerun
 		mMemoryHandler = new MemoryHandler(prerunCHandler.mMemoryHandler, typeSizes, nameHandler, typeHandler,
@@ -600,7 +604,7 @@ public class CHandler {
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 		mInterruptPostProcessor = new InterruptPostProcessor(mLogger, mSettings, mProcedureManager, this,
-				mAuxVarInfoBuilder, mExpressionTranslation, mInterruptFunctionHandler);
+				mAuxVarInfoBuilder, mExpressionTranslation, mInterruptFunctionHandler, mIrqHandler);
 		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryFunction());
 		copyGlobalsFromPrerun(prerunCHandler.mSymbolTable);
 	}

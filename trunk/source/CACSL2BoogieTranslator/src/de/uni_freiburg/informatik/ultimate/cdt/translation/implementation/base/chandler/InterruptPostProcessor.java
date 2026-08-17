@@ -32,16 +32,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -55,14 +52,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -70,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
@@ -81,6 +75,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.i
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -119,7 +115,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private final InterruptFunctionHandler mInterruptFuncHandler;
 
-	private Map<Integer, IdentifierExpression> mAuxVarExpressions = null;
+	private final InterruptRequestHandler mIrqHandler;
+
+	private List<InterruptFunctionBoogieData> mIsrBoogieData = null;
 
 	private final List<Statement> mAdditionalInitializations = new ArrayList<>();
 
@@ -127,7 +125,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	public InterruptPostProcessor(final ILogger logger, final TranslationSettings settings,
 			final ProcedureManager procedureManager, final CHandler chandler, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final ExpressionTranslation expressionTranslation, final InterruptFunctionHandler interruptFuncHandler) {
+			final ExpressionTranslation expressionTranslation, final InterruptFunctionHandler interruptFuncHandler,
+			final InterruptRequestHandler irqHandler) {
 		mLogger = logger;
 		mProcedureManager = procedureManager;
 		mCHandler = chandler;
@@ -136,6 +135,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mTranslationMode = settings.interruptTranslationMode();
 		mEntryFunction = settings.getEntryFunction();
 		mInterruptFuncHandler = interruptFuncHandler;
+		mIrqHandler = irqHandler;
 		mLoopSearchVisitor = new IsrLoopSearchVisitor(mInterruptFuncHandler.getIsrs());
 	}
 
@@ -147,7 +147,6 @@ public class InterruptPostProcessor implements IPostProcessor {
 			return List.of();
 		}
 
-		// TODO: Add exclusion of these two settings directly to settings
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final var realization3 = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 
@@ -163,12 +162,17 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mLogger.info("Verify Interrupt-Driven Program with %d interrupt service routines",
 				mInterruptFuncHandler.getIsrs().size());
 
-		// Get the ghost variables that signal whether an ISR is enabled
-		mAuxVarExpressions = constructAuxVarExpressions(mInterruptFuncHandler.getIsrs());
+		// Generate Boogie variables and helper expressions for each ISR individually
+		mIsrBoogieData = mInterruptFuncHandler.getIsrs().stream()
+				.map(InterruptFunctionBoogieData::construct)
+				.collect(Collectors.toList());
 
-		// Add thread procedures
-		final var threadProcedureMap = constructThreadProc(mInterruptFuncHandler.getIsrs());
-		final var threadProcedures = new ArrayList<>(threadProcedureMap.values());
+		// Add thread procedures (stored in each InterruptFunctionBoogieData)
+		constructThreadProcedures();
+		final var threadProcedures = mIsrBoogieData.stream()
+				.map(InterruptFunctionBoogieData::getThreadProcedure)
+				.filter(java.util.Objects::nonNull)
+				.collect(Collectors.toList());
 		decl.addAll(threadProcedures);
 
 		// Add fork statements to the main procedure
@@ -176,43 +180,37 @@ public class InterruptPostProcessor implements IPostProcessor {
 			addForksToProcedure(mainProcedure, threadProcedures);
 		}
 
-		final Map<Integer, Procedure> reqEnableFuncs =
-				mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class).stream()
-						.filter(f -> f.getOperation() == InterruptMaskingFunction.Operation.ENABLE)
-						.collect(Collectors.toMap(f -> f.getIrqReference()., f -> f.getProcedure()));
-
-		final Map<Integer, Procedure> reqDisableFuncs =
-				mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class).stream()
-						.filter(f -> f.getOperation() == InterruptMaskingFunction.Operation.DISABLE)
-						.collect(Collectors.toMap(f -> f.getIrq().getNum(), f -> f.getProcedure()));
+		// Resolve masking functions to (irqNum, procedure) pairs, expanding AllInterrupts references
+		final Map<Integer, Procedure> reqEnableFuncs = resolveMaskingFunctionProcedures(
+				InterruptMaskingFunction.Operation.ENABLE);
+		final Map<Integer, Procedure> reqDisableFuncs = resolveMaskingFunctionProcedures(
+				InterruptMaskingFunction.Operation.DISABLE);
 
 		// Add atomic block and variable assignment true to request enabled functions
-		final var lhsMap = getVariableLHSs();
-		annotateRequestProcedures(lhsMap, reqEnableFuncs, true);
+		annotateRequestProcedures(reqEnableFuncs, true);
 
 		// Add fork statements in request enable procedure instead of the main procedure
 		if (realization3) {
-			addForksToRequestEnable(reqEnableFuncs, threadProcedureMap);
+			addForksToRequestEnable(reqEnableFuncs);
 		}
-		// Add atomic block and variable assignment false to request disabled functions if
-		annotateRequestProcedures(lhsMap, reqDisableFuncs, false);
+		// Add atomic block and variable assignment false to request disabled functions
+		annotateRequestProcedures(reqDisableFuncs, false);
 
 		// Add join statements to request disable procedure
 		if (realization3) {
 			addJoinsToRequestDisable(reqDisableFuncs);
 		}
 
-		// Add atomic block and variable assignment true to request enabled all function
-//		annotateRequestAllProcedures(lhsMap.values(), mISR.getRequestEnableAll(), true);
-
-		if (realization3) {
-//			addForksToRequestEnableAll(mISR.getRequestEnableAll(), threadProcedureMap);
+		// Add interrupt enabled variable declarations (one per ISR)
+		for (final var data : mIsrBoogieData) {
+			decl.add(data.getEnabledDeclaration());
 		}
 
-		// Add interrupt enabled variable declarations
-		decl.addAll(constructAuxVarEnableDeclarations());
-
-		mAdditionalInitializations.add(constructAuxVarEnabledInitializations(lhsMap.values()));
+		// Add initialization statements (set all enabled variables to false)
+		final var initLhs = mIsrBoogieData.stream()
+				.map(InterruptFunctionBoogieData::getEnabledLhs)
+				.collect(Collectors.toList());
+		mAdditionalInitializations.add(constructAuxVarEnabledInitializations(initLhs));
 
 		return decl;
 	}
@@ -224,19 +222,19 @@ public class InterruptPostProcessor implements IPostProcessor {
 		body.setBlock(newBlock.toArray(new Statement[0]));
 	}
 
-	private void addForksToRequestEnableAll(final Procedure mainProcedure,
-			final Map<Integer, Procedure> threadProceduresMap) {
+	private void addForksToRequestEnableAll(final Procedure mainProcedure) {
 		if (mainProcedure == null) {
 			return;
 		}
 		final var statements = new ArrayList<Statement>();
-		for (final Entry<Integer, Procedure> entry : threadProceduresMap.entrySet()) {
-			final var irq = entry.getKey();
-			final var proc = entry.getValue();
+		for (final var data : mIsrBoogieData) {
+			final var irq = data.getIrqNum();
+			final var proc = data.getThreadProcedure();
+			if (proc == null) {
+				continue;
+			}
 			final var fork = constructForkStatements(mainProcedure, List.of(proc), -irq);
-			final var idExpr = mAuxVarExpressions.get(irq);
-			assert idExpr != null;
-			final var ifStmt = constructForkIfStatement(idExpr, fork, true);
+			final var ifStmt = constructForkIfStatement(data.getEnabledExpression(), fork, true);
 			statements.add(ifStmt);
 		}
 		final var body = mainProcedure.getBody();
@@ -244,20 +242,19 @@ public class InterruptPostProcessor implements IPostProcessor {
 		body.setBlock(statements.toArray(new Statement[0]));
 	}
 
-	private void addForksToRequestEnable(final Map<Integer, Procedure> intEnabledProcedures,
-			final Map<Integer, Procedure> threadProceduresMap) {
+	private void addForksToRequestEnable(final Map<Integer, Procedure> intEnabledProcedures) {
 		for (final Entry<Integer, Procedure> entry : intEnabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
 			final var proc = entry.getValue();
-			final var threadProcedure = threadProceduresMap.get(irq);
-			assert threadProcedure != null;
+			final var data = getBoogieData(irq);
+			if (data == null || data.getThreadProcedure() == null) {
+				continue;
+			}
 
 			final var thrNum = -irq;
-			final List<Statement> fork = constructForkStatements(proc, List.of(threadProcedure), thrNum);
+			final List<Statement> fork = constructForkStatements(proc, List.of(data.getThreadProcedure()), thrNum);
 
-			final var idExpr = mAuxVarExpressions.get(irq);
-			assert idExpr != null;
-			final var newBlock = new ArrayList<>(List.of(constructForkIfStatement(idExpr, fork, true)));
+			final var newBlock = new ArrayList<>(List.of(constructForkIfStatement(data.getEnabledExpression(), fork, true)));
 			final var body = proc.getBody();
 			newBlock.addAll(Arrays.asList(body.getBlock()));
 			body.setBlock(newBlock.toArray(new Statement[0]));
@@ -268,10 +265,12 @@ public class InterruptPostProcessor implements IPostProcessor {
 		for (final Entry<Integer, Procedure> entry : intDisabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
 			final var proc = entry.getValue();
+			final var data = getBoogieData(irq);
+			if (data == null) {
+				continue;
+			}
 			final List<Statement> join = constructJoinStatement(proc, -irq);
-			final var idExpr = mAuxVarExpressions.get(irq);
-			assert idExpr != null;
-			final var newBlock = new ArrayList<>(List.of(constructForkIfStatement(idExpr, join, false)));
+			final var newBlock = new ArrayList<>(List.of(constructForkIfStatement(data.getEnabledExpression(), join, false)));
 			final var body = proc.getBody();
 			newBlock.addAll(Arrays.asList(body.getBlock()));
 			body.setBlock(newBlock.toArray(new Statement[0]));
@@ -309,39 +308,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return joinStatements;
 	}
 
-	private Statement constructForkIfStatement(final IdentifierExpression idExpr, final List<Statement> statements,
+	private Statement constructForkIfStatement(final Expression conditionExpr, final List<Statement> statements,
 			final boolean negated) {
-		Expression condition = idExpr;
+		Expression condition = conditionExpr;
 		if (negated) {
 			condition = ExpressionFactory.constructUnaryExpression(mIgnoreLoc,
-					de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG,
-					new IdentifierExpression(mIgnoreLoc, BoogieType.TYPE_BOOL, idExpr.getIdentifier(),
-							DeclarationInformation.DECLARATIONINFO_GLOBAL));
+					de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG, conditionExpr);
 		}
 		return StatementFactory.constructIfStatement(mIgnoreLoc, condition, statements);
-	}
-
-	private Set<Declaration> constructAuxVarEnableDeclarations() {
-		final var declarations = new HashSet<Declaration>();
-		final var astType = new PrimitiveType(mIgnoreLoc, "bool");
-		for (final IdentifierExpression identifierExpression : mAuxVarExpressions.values()) {
-			final var decl = new VariableDeclaration(mIgnoreLoc, new Attribute[0], new VarList[] {
-					new VarList(mIgnoreLoc, new String[] { identifierExpression.getIdentifier() }, astType) });
-			declarations.add(decl);
-		}
-		return declarations;
-	}
-
-	private Map<Integer, IdentifierExpression> constructAuxVarExpressions(final List<InterruptServiceFunction> isrs) {
-		final var idExpressions = new HashMap<Integer, IdentifierExpression>();
-		for (final InterruptServiceFunction isr : isrs) {
-			final int irqNum = isr.getIrqReference().getIrq().getNum();
-			final var id = "#isr_" + irqNum + "_enabled";
-			final var enabledExpr = ExpressionFactory.constructIdentifierExpression(mIgnoreLoc, BoogieType.TYPE_BOOL,
-					id, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-			idExpressions.put(irqNum, enabledExpr);
-		}
-		return idExpressions;
 	}
 
 	private Statement constructAuxVarEnabledInitializations(final Collection<VariableLHS> leftHandSides) {
@@ -352,33 +326,57 @@ public class InterruptPostProcessor implements IPostProcessor {
 				assignments);
 	}
 
-	private void annotateRequestProcedures(final Map<Integer, VariableLHS> lhsMap,
-			final Map<Integer, Procedure> intEnabledProcedures, final boolean enabled) {
+	private InterruptFunctionBoogieData getBoogieData(final int irqNum) {
+		return mIsrBoogieData.stream()
+				.filter(d -> d.getIrqNum() == irqNum)
+				.findFirst()
+				.orElse(null);
+	}
+
+	private Map<Integer, Procedure> resolveMaskingFunctionProcedures(final InterruptMaskingFunction.Operation op) {
+		final var result = new HashMap<Integer, Procedure>();
+		for (final var func : mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class)) {
+			if (func.getOperation() != op) {
+				continue;
+			}
+			final var irqRefs = func.getIrqReference().resolve(mIrqHandler);
+			if (irqRefs == null) {
+				continue;
+			}
+			for (final InterruptRequest irq : irqRefs) {
+				result.putIfAbsent(irq.getNum(), func.getProcedure());
+			}
+		}
+		return result;
+	}
+
+	private void annotateRequestProcedures(final Map<Integer, Procedure> intEnabledProcedures, final boolean enabled) {
 		if (intEnabledProcedures == null) {
 			return;
 		}
 		final String func = enabled ? " enable " : " disable ";
-		for (final Entry<Integer, VariableLHS> entry : lhsMap.entrySet()) {
-			final var irq = entry.getKey();
+		for (final var data : mIsrBoogieData) {
+			final var irq = data.getIrqNum();
 
 			mLogger.info("Adding IRQ" + func + "function for ISR " + irq);
 
-			final var lhs = entry.getValue();
 			final var intEnableProcedure = intEnabledProcedures.get(irq);
 			if (intEnableProcedure == null) {
 				mLogger.warn("There exists no IRQ" + func + "function for ISR " + irq);
 				continue;
 			}
-			annotateAuxVarAssignment(intEnableProcedure, enabled, List.of(lhs));
+			annotateAuxVarAssignment(intEnableProcedure, enabled, List.of(data.getEnabledLhs()));
 		}
 	}
 
-	private void annotateRequestAllProcedures(final Collection<VariableLHS> lhs, final Procedure intEnabledProcedure,
-			final boolean enabled) {
+	private void annotateRequestAllProcedures(final Procedure intEnabledProcedure, final boolean enabled) {
 		if (intEnabledProcedure == null) {
 			return;
 		}
-		annotateAuxVarAssignment(intEnabledProcedure, enabled, lhs);
+		final var allLhs = mIsrBoogieData.stream()
+				.map(InterruptFunctionBoogieData::getEnabledLhs)
+				.collect(Collectors.toList());
+		annotateAuxVarAssignment(intEnabledProcedure, enabled, allLhs);
 	}
 
 	private void annotateAuxVarAssignment(final Procedure intEnableProcedure, final boolean newValue,
@@ -404,37 +402,35 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mProcedureManager.endProcedureScope(mCHandler);
 	}
 
-	private Map<Integer, Procedure> constructThreadProc(final List<InterruptServiceFunction> isrs) {
+	private void constructThreadProcedures() {
 		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
-		final Map<Integer, Procedure> procedures = new HashMap<>();
 		final boolean oneThreadPerISR = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR
 				|| mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 		if (oneThreadPerISR) {
 			mLogger.info("Source-to-source translation of interrupt program with realization 1");
-			for (final InterruptServiceFunction isr : isrs) {
-				final int irqNum = isr.getIrqReference().getIrq().getNum();
-				final var idExpression = mAuxVarExpressions.get(irqNum);
-				assert idExpression != null : "There exists no identifier expression for the IRQ " + irqNum;
-				procedures.put(irqNum, constructOneThreadPerIsr(isr, idExpression));
+			for (final var data : mIsrBoogieData) {
+				data.setThreadProcedure(constructOneThreadPerIsr(data));
 			}
 		} else {
 			mLogger.info("Source-to-source translation of interrupt program with realization 2");
-			procedures.put(-1, constructOneThreadForAllIsrs());
+			final var allThreadProc = constructOneThreadForAllIsrs();
+			for (final var data : mIsrBoogieData) {
+				data.setThreadProcedure(allThreadProc);
+			}
 		}
-		return procedures;
 	}
 
 	// Realization 1
-	private Procedure constructOneThreadPerIsr(final InterruptServiceFunction isr,
-			final IdentifierExpression threadEnabledId) {
-		final String procName = constructThreadName(isr);
+	private Procedure constructOneThreadPerIsr(final InterruptFunctionBoogieData data) {
+		final String procName = data.constructThreadName();
+		final var isr = data.getIsr();
 		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for IRQ "
 				+ isr.getIrqReference().getIrq().getName());
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final var whileStmt = constructIsrWhileLoop(isr, threadEnabledId);
+		final var whileStmt = constructIsrWhileLoop(data);
 		builder.addStatement(whileStmt);
 		final var body = mProcedureManager.constructBody(mIgnoreLoc,
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
@@ -486,25 +482,24 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return statements;
 	}
 
-	private Statement constructIsrWhileLoop(final InterruptServiceFunction isr,
-			final IdentifierExpression threadEnabledId) {
-		final var ifStmt = getIfStatement(isr, threadEnabledId);
+	private Statement constructIsrWhileLoop(final InterruptFunctionBoogieData data) {
+		final var isr = data.getIsr();
+		final var enabledExpr = data.getEnabledExpression();
+		final var ifStmt = getIfStatement(isr, enabledExpr);
 		final var block = getIsrBlock(ifStmt, isr);
 		final var forkJoin = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
-		final var loopCondition = forkJoin ? threadEnabledId : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
+		final var loopCondition = forkJoin ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
 		return new WhileStatement(mIgnoreLoc, loopCondition, new LoopInvariantSpecification[0], block);
 	}
 
 	private Statement constructAllIsrWhileLoop(final AuxVarInfo auxVarInfo) {
 		final var atomicStatements = new ArrayList<Statement>();
-		for (final InterruptServiceFunction isr : mInterruptFuncHandler.getIsrs()) {
+		for (final var data : mIsrBoogieData) {
+			final var isr = data.getIsr();
 			final var ifStatements = new ArrayList<Statement>();
 			final var boolHavoc = getHavocBoolStatements(auxVarInfo);
 			ifStatements.addAll(boolHavoc);
-			final int irqNum = isr.getIrqReference().getIrq().getNum();
-			final var threadEnabledId = mAuxVarExpressions.get(irqNum);
-			final var enabledExpression = getEnabledExpression(threadEnabledId, auxVarInfo);
-			assert threadEnabledId != null : "There exists no IdentifierExpression of ISR with IRQ " + irqNum;
+			final var enabledExpression = data.constructEnabledExpressionForRealization2(auxVarInfo, mExpressionTranslation);
 			ifStatements.add(getIfStatement(isr, enabledExpression));
 			final var block = getIsrBlock(ifStatements, isr);
 			atomicStatements.addAll(block);
@@ -558,27 +553,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 		return new Statement[] { entryLabel, isrStatement, exitLabel };
 	}
 
-	private Expression getEnabledExpression(final IdentifierExpression threadEnabledId, final AuxVarInfo auxVarInfo) {
-		final CPrimitive cType = new CPrimitive(CPrimitives.BOOL);
-		final Expression isOne = ExpressionFactory.newBinaryExpression(mIgnoreLoc, Operator.COMPEQ, auxVarInfo.getExp(),
-				mExpressionTranslation.constructLiteralForIntegerType(mIgnoreLoc, cType, BigInteger.ONE));
-		return ExpressionFactory.and(mIgnoreLoc, List.of(threadEnabledId, isOne));
-	}
-
-	private static String constructThreadName(final InterruptServiceFunction isr) {
-		return "#isr_" + Integer.toString(isr.getIrqReference().getIrq().getNum()) + "_"
-				+ isr.getProcedure().getIdentifier() + "_thread";
-	}
-
 	private static String constructThreadName(final String identifier) {
 		return "#isr_" + identifier + "_thread";
-	}
-
-	private Map<Integer, VariableLHS> getVariableLHSs() {
-		return mAuxVarExpressions.entrySet().stream()
-				.collect(Collectors.toMap(Entry::getKey,
-						e -> ExpressionFactory.constructVariableLHS(mIgnoreLoc, BoogieType.TYPE_BOOL,
-								e.getValue().getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL)));
 	}
 
 	public List<Statement> getAdditionalInitializations() {

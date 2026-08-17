@@ -350,6 +350,7 @@
 		<!-- modules containing unit tests -->
 		<module>../AbstractInterpretationV2Test</module>
 		<module>../BoogiePreprocessorTest</module>
+		<module>../CACSL2BoogieTranslatorTest</module>
 		<module>../CoreRCPTest</module>
 		<module>../Library-AutomataTest</module>
 		<module>../Library-IcfgTransformerTest</module>
