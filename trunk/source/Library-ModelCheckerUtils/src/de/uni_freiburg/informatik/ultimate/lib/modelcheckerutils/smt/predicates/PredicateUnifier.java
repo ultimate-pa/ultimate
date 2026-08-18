@@ -91,7 +91,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 * (Rationale: case where quantifier elimination is possible but our quantifier elimination is not successful.)
 	 *
 	 */
-	private static final boolean DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES = false;
+	private static final boolean DUMP_ELIMINATION_OPPORTUNITIES = false;
 
 	protected final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
@@ -986,22 +986,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 						return other;
 					}
 					mEquivalentGtQuantifiedPredicates.add(other);
-					if (DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES) {
-						final String name = String.format("UnexploitedEliminationPossibility_%s_%s_Size%s",
-								Integer.toHexString(other.getFormula().hashCode()),
-								Integer.toHexString(mTerm.hashCode()), new DAGSize().treesize(other.getFormula()));
-						final String testString = SmtTestGenerationUtils.generateQuantifierEliminationTest(name,
-								other.getFormula(), mTerm);
-						try (FileWriter fw = new FileWriter(name + ".txt");
-								BufferedWriter bw = new BufferedWriter(fw);
-								PrintWriter out = new PrintWriter(bw)) {
-							out.println(testString);
-							out.close();
-							bw.close();
-							fw.close();
-						} catch (final IOException e) {
-							throw new AssertionError(e);
-						}
+					if (DUMP_ELIMINATION_OPPORTUNITIES) {
+						dumpEliminationOpportunities(mTerm, other.getFormula());
 					}
 				}
 			}
@@ -1027,6 +1013,24 @@ public class PredicateUnifier implements IPredicateUnifier {
 				result = "quantifier-free";
 			}
 			return result;
+		}
+
+		private static void dumpEliminationOpportunities(final Term newTerm, final Term existingTerm) {
+			final String name =
+					String.format("EliminationOpportunities_%s_%s_Size%s", Integer.toHexString(existingTerm.hashCode()),
+							Integer.toHexString(newTerm.hashCode()), new DAGSize().treesize(existingTerm));
+			final String testString =
+					SmtTestGenerationUtils.generateQuantifierEliminationTest(name, existingTerm, newTerm);
+			try (FileWriter fw = new FileWriter(name + ".txt");
+					BufferedWriter bw = new BufferedWriter(fw);
+					PrintWriter out = new PrintWriter(bw)) {
+				out.println(testString);
+				out.close();
+				bw.close();
+				fw.close();
+			} catch (final IOException e) {
+				throw new AssertionError(e);
+			}
 		}
 	}
 
