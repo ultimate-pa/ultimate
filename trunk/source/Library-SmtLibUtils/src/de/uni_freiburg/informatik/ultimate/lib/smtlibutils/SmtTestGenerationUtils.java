@@ -185,4 +185,25 @@ public final class SmtTestGenerationUtils {
 		sb.append(System.lineSeparator());
 		return sb.toString();
 	}
+
+	public static String generateSimplificationTest(final String methodName, final Term input,
+			final Term expectedResult) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("\t").append("@Test").append(System.lineSeparator());
+		sb.append("\t").append("public void ").append(methodName).append("() {").append(System.lineSeparator());
+		sb.append(generateStringForTestfile(input));
+		sb.append("\t\t").append("final String expectedResultAsString = ");
+		if (expectedResult != null) {
+			sb.append('\"').append(expectedResult).append('\"');
+		} else {
+			sb.append(expectedResult);
+		}
+		sb.append(";").append(System.lineSeparator());
+		sb.append("\t\t").append(
+				"SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);")
+				.append(System.lineSeparator());
+		sb.append("\t").append("}").append(System.lineSeparator());
+		sb.append(System.lineSeparator());
+		return sb.toString();
+	}
 }
