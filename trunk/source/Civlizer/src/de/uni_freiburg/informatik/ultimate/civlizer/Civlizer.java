@@ -149,11 +149,11 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 		}
 
 		if (root instanceof final BoogieIcfgContainer icfg) {
+			// TODO useful for debugging, but remove the following 2 lines before merging
 			final List<OwickiGriesAnnotation> proof = ProofAnnotation.getProofs(icfg, OwickiGriesAnnotation.class);
 			mLogger.warn(proof);
 
 			mProgramAndProof.setIcfg(icfg);
-			mProgramAndProof.setProof(proof);
 		}
 
 		if (mProgramAndProof.isFull() && !mProcessed) {

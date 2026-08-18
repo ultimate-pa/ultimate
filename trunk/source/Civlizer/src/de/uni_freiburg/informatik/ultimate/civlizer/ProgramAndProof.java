@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.civlizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 
 /**
  * Internal container that bundles together the Boogie AST, the generated ICFG, and the associated proof information.
@@ -61,7 +59,7 @@ final class ProgramAndProof {
 
 	private Unit mBoogieAst = null;
 	private BoogieIcfgContainer mIcfg = null;
-	private List<OwickiGriesAnnotation> mProof = null;
+
 	private Map<GhostUpdateLocation, Map<String, Expression>> mGhostUpdateMap = null;
 	private Map<ILocation, Expression> mAnnotationMap = null;
 	private ThreadTemplateVisitor mTemplateVisitor = null;
@@ -82,10 +80,6 @@ final class ProgramAndProof {
 		return mBoogieAst;
 	}
 
-	List<OwickiGriesAnnotation> getProof() {
-		return mProof;
-	}
-
 	void setBoogieAst(final Unit boogieAst) {
 		mBoogieAst = boogieAst;
 	}
@@ -94,12 +88,8 @@ final class ProgramAndProof {
 		mIcfg = icfg;
 	}
 
-	void setProof(final List<OwickiGriesAnnotation> proof) {
-		mProof = proof;
-	}
-
 	boolean isFull() {
-		return mBoogieAst != null && mIcfg != null && mProof != null;
+		return mBoogieAst != null && mIcfg != null;
 	}
 
 	Map<GhostUpdateLocation, Map<String, Expression>> getGhostUpdateMap() {

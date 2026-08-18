@@ -74,11 +74,11 @@ import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration.Linearity;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.YieldInvariant;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.YieldProcedure;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 
 /**
  * Translates an Ultimate Boogie AST and its associated proof annotations into a CIVL program representation and write
@@ -203,13 +203,14 @@ public final class Translator {
 	}
 
 	private void declareGhostVariables() {
-		for (final OwickiGriesAnnotation proof : mProgramAndProof.getProof()) {
-			for (int i = 0; i < proof.getGhostVariables().size(); i++) {
-				// ??? TODO improve
-				final var ghostDecl = createGlobalVariableDeclaration("~ghost~" + i, BoogieType.TYPE_INT,
-						LAYER_GHOST_VARS, LAYER_TOP, false);
-				declare(ghostDecl);
-			}
+		final var ghostDeclarations = WitnessGhostDeclaration.getAnnotation(mProgramAndProof.getIcfg());
+		if (ghostDeclarations == null) {
+			return;
+		}
+		for (final var entry : ghostDeclarations.getGhostAndInitialValues().entrySet()) {
+			final var ghostDecl = createGlobalVariableDeclaration(entry.getKey(), BoogieType.TYPE_INT, LAYER_GHOST_VARS,
+					LAYER_TOP, false);
+			declare(ghostDecl);
 		}
 	}
 
