@@ -1,0 +1,35 @@
+#Fri Apr 10 13:08:01 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=All
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PETRI_NET
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Owicki-Gries\ proof\ computation\ algorithm=LEGAL_FOCUS
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+
+
+#Fri Apr 10 13:08:01 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Replace\ while\ statements\ and\ if-then-else\ statements=false
+
+
+#Fri Apr 10 13:08:01 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ assume\ true\ statements=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+
+
+#Fri Apr 10 13:08:01 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Remove\ assume\ true\ statements=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+
+#Sat Mar 15 16:00:32 CET 2014
+file_export_version=3.0
+@UltimateCore=0.0.1
+/instance/UltimateCore/Generate\ benchmark\ results=false
