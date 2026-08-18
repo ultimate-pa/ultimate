@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CHandlerTranslationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedFunctionContract;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessDeclaration;
 
 public interface IDispatcher {
@@ -90,7 +91,7 @@ public interface IDispatcher {
 
 	NextACSL nextACSLStatement();
 
-	List<ACSLNode> getFunctionContractFromWitness(IASTNode node);
+	Set<ExtractedFunctionContract> getFunctionContractFromWitness(IASTNode node);
 
 	Set<IExtractedWitnessDeclaration> getWitnessDeclarations();
 }
