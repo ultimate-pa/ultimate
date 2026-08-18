@@ -87,11 +87,10 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class PredicateUnifier implements IPredicateUnifier {
 
 	/**
-	 * Option for writing a file if we find a quantified formula and a quantifier-free formula that are equivalent.
-	 * (Rationale: case where quantifier elimination is possible but our quantifier elimination is not successful.)
-	 *
+	 * If enabled, writes a file if we found a quantified formula and a quantifier-free formula that are equivalent.
+	 * (Rationale: identifies opportunities to improve quantifier elimination.)
 	 */
-	private static final boolean DUMP_ELIMINATION_OPPORTUNITIES = false;
+	private static final boolean DEBUG_DUMP_ELIMINATION_OPPORTUNITIES = false;
 
 	protected final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
@@ -986,7 +985,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 						return other;
 					}
 					mEquivalentGtQuantifiedPredicates.add(other);
-					if (DUMP_ELIMINATION_OPPORTUNITIES) {
+					if (DEBUG_DUMP_ELIMINATION_OPPORTUNITIES) {
 						dumpEliminationOpportunities(mTerm, other.getFormula());
 					}
 				}
