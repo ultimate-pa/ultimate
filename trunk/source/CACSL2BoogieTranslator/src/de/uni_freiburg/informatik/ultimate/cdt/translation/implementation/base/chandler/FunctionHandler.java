@@ -131,6 +131,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UndefinedFunctionBehaviour;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedFunctionContract;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -182,6 +183,8 @@ public class FunctionHandler {
 	private final Set<String> mDefinedFunctions;
 
 	private final IMemoryPointer mMemoryPointer;
+
+	private Set<ExtractedFunctionContract> mWitnessHints = Set.of();
 
 	/**
 	 *
@@ -276,7 +279,8 @@ public class FunctionHandler {
 	 */
 	public Result handleFunctionDefinition(final IDispatcher main, final MemoryHandler memoryHandler,
 			final IASTFunctionDefinition node, final CDeclaration cDec, final List<ACSLNode> contract,
-			final boolean isInLibraryMode) {
+			final boolean isInLibraryMode, final Set<ExtractedFunctionContract> witnessHints) {
+		mWitnessHints = witnessHints;
 
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final String definedProcName = cDec.getName();
@@ -391,8 +395,35 @@ public class FunctionHandler {
 			// 1)
 			handleFunctionsInParams(main, loc, memoryHandler, bodyResultBuilder, node, isInLibraryMode);
 			// 2)
+			for (final var hint : mWitnessHints) {
+				final Result requiresHint = hint.getRequiresHint(main, node.getBody());
+				switch (requiresHint) {
+				case final ExpressionResult er:
+					bodyResultBuilder.addAllExceptLrValue(er);
+					break;
+				case final SkipResult skip:
+					// Nothing to do
+					break;
+				default:
+					throw new AssertionError("Unexpected result: " + requiresHint);
+				}
+			}
 			final ExpressionResult bodyResult = (ExpressionResult) main.dispatch(node.getBody());
 			bodyResultBuilder.addAllExceptLrValue(bodyResult);
+
+			for (final var hint : mWitnessHints) {
+				final Result ensuresHint = hint.getEnsuresHint(main, node);
+				switch (ensuresHint) {
+				case final ExpressionResult er:
+					bodyResultBuilder.addAllExceptLrValue(er);
+					break;
+				case final SkipResult skip:
+					// Nothing to do
+					break;
+				default:
+					throw new AssertionError("Unexpected result: " + ensuresHint);
+				}
+			}
 
 			// 3) ,4)
 			mCHandler.updateStmtsAndDeclsAtScopeEnd(bodyResultBuilder, node);
@@ -633,6 +664,19 @@ public class FunctionHandler {
 			}
 		}
 
+		for (final var hint : mWitnessHints) {
+			final Result ensuresHint = hint.getEnsuresHint(main, node);
+			switch (ensuresHint) {
+			case final ExpressionResult er:
+				resultBuilder.addAllExceptLrValue(er);
+				break;
+			case final SkipResult skip:
+				// Nothing to do
+				break;
+			default:
+				throw new AssertionError("Unexpected result: " + ensuresHint);
+			}
+		}
 		resultBuilder.addStatement(new ReturnStatement(loc));
 		return resultBuilder.build();
 	}
