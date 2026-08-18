@@ -44,6 +44,9 @@ public class CivlizerPreferenceInitializer extends UltimatePreferenceInitializer
 	public static final String LABEL_CIVL_COMMAND = "Command to run Civl";
 	private static final String DEF_CIVL_COMMAND = "Source/BoogieDriver/bin/Debug/net8.0/BoogieDriver";
 
+	public static final String LABEL_CIVL_TIMEOUT = "Civl timeout in seconds";
+	private static final int DEF_CIVL_TIMEOUT = 30;
+
 	public CivlizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -61,7 +64,8 @@ public class CivlizerPreferenceInitializer extends UltimatePreferenceInitializer
 								PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_CIVL_WORKING_DIRECTORY, DEF_CIVL_WORKING_DIRECTORY,
 								PreferenceType.Directory),
-						new UltimatePreferenceItem<>(LABEL_CIVL_COMMAND, DEF_CIVL_COMMAND, PreferenceType.String)),
+						new UltimatePreferenceItem<>(LABEL_CIVL_COMMAND, DEF_CIVL_COMMAND, PreferenceType.String),
+						new UltimatePreferenceItem<>(LABEL_CIVL_TIMEOUT, DEF_CIVL_TIMEOUT, PreferenceType.Integer)),
 
 		};
 	}

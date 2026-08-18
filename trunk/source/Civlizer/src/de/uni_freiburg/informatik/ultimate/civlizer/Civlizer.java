@@ -171,9 +171,11 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			if (mPrefs.getBoolean(CivlizerPreferenceInitializer.LABEL_RUN_CIVL_ON_OUTPUT)) {
 				final String workingDir = mPrefs.getString(CivlizerPreferenceInitializer.LABEL_CIVL_WORKING_DIRECTORY);
 				final String civlCommand = mPrefs.getString(CivlizerPreferenceInitializer.LABEL_CIVL_COMMAND);
+				final int timeout = mPrefs.getInt(CivlizerPreferenceInitializer.LABEL_CIVL_TIMEOUT);
 
-				final var runner = new CivlRunner(mServices, Paths.get(workingDir), civlCommand);
-				runner.runOnFile(outputFile);
+				final var runner = new CivlRunner(mServices, Paths.get(workingDir), civlCommand, timeout);
+				final var result = runner.runOnFile(outputFile);
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 			}
 		}
 

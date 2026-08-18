@@ -31,43 +31,76 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
+import de.uni_freiburg.informatik.ultimate.civlizer.results.CivlFailureResult;
+import de.uni_freiburg.informatik.ultimate.civlizer.results.CivlSuccessResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public class CivlRunner {
-	// TODO make a setting
-	private static final int TIMEOUT_IN_SECONDS = 30;
+	private static final Pattern SUMMARY_LINE_REGEX =
+			Pattern.compile("Boogie program verifier finished with (\\d+) verified, (\\d+) errors");
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
 	private final Path mWorkingDirectory;
 	private final String mCivlCommand;
+	private final int mTimeout;
 
-	public CivlRunner(final IUltimateServiceProvider services, final Path workingDirectory, final String civlCommand) {
+	public CivlRunner(final IUltimateServiceProvider services, final Path workingDirectory, final String civlCommand,
+			final int timeout) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 
 		mWorkingDirectory = workingDirectory;
 		mCivlCommand = civlCommand;
+		mTimeout = timeout;
 	}
 
-	public void runOnFile(final File inputFile) throws IOException {
+	public IResult runOnFile(final File inputFile) throws IOException {
 		final String[] cmdArray = { mCivlCommand, inputFile.toPath().toAbsolutePath().toString() };
 		try (final MonitoredProcess civlProcess =
 				MonitoredProcess.exec(cmdArray, mWorkingDirectory.toAbsolutePath().toString(), null, mServices)) {
 			final String error = convertStreamToString(civlProcess.getErrorStream());
-			final String output = convertStreamToString(civlProcess.getInputStream());
+			final StringBuilder output = new StringBuilder();
 
-			mLogger.info("Waiting for %ds for Civl...", TIMEOUT_IN_SECONDS);
-			final MonitoredProcessState civlState = civlProcess.impatientWaitUntilTime(TIMEOUT_IN_SECONDS * 1000L);
+			mLogger.info("Waiting for %ds for Civl...", mTimeout);
+			final MonitoredProcessState civlState = civlProcess.impatientWaitUntilTime(mTimeout * 1000L);
 			mLogger.info("Return code was " + civlState.getReturnCode());
 
-			mLogger.warn("Civl output:\n%s", output);
-			mLogger.warn("Civl errors:\n%s", error);
+			Integer errorNum = null;
+			String summaryLine = null;
+			try (final var outScanner = new Scanner(civlProcess.getInputStream())) {
+				while (outScanner.hasNextLine()) {
+					final String line = outScanner.nextLine();
+
+					final var matcher = SUMMARY_LINE_REGEX.matcher(line);
+					if (errorNum == null && matcher.matches()) {
+						errorNum = Integer.parseInt(matcher.group(2));
+						summaryLine = line;
+					}
+
+					output.append(line);
+					output.append('\n');
+				}
+			}
+
+			if (errorNum == null) {
+				mLogger.warn("Civl output:\n%s", output);
+				mLogger.warn("Civl errors:\n%s", error);
+				throw new IllegalStateException("Could not parse verification result from Civl output");
+			}
+
+			if (errorNum.intValue() == 0) {
+				return new CivlSuccessResult(summaryLine);
+			}
+
+			return new CivlFailureResult(summaryLine, output.toString(), error);
 		}
 	}
 
